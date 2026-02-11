@@ -166,7 +166,6 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 			dbType:       args.Type,
 			description:  args.Description,
 			ephemeral:    args.Ephemeral,
-			expiryDate:   args.ExpiryDate,
 			id:           args.ID,
 			lastUsedDate: args.LastUsedDate,
 			localConfig:  args.Config,
@@ -176,20 +175,20 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 			node:         args.Node,
 			profiles:     args.Profiles,
 			project:      p,
-			isSnapshot:   args.Snapshot,
+			isSnapshot:   args.IsSnapshot,
 			stateful:     args.Stateful,
 		},
+	}
+
+	if args.IsSnapshot {
+		d.snapshotDescription = args.Snapshot.Description
+		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
 
 	// Get the architecture name.
 	archName, err := osarch.ArchitectureName(d.architecture)
 	if err == nil {
 		d.architectureName = archName
-	}
-
-	// Cleanup the zero values.
-	if d.expiryDate.IsZero() {
-		d.expiryDate = time.Time{}
 	}
 
 	if d.creationDate.IsZero() {
@@ -225,7 +224,6 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 			dbType:       args.Type,
 			description:  args.Description,
 			ephemeral:    args.Ephemeral,
-			expiryDate:   args.ExpiryDate,
 			id:           args.ID,
 			lastUsedDate: args.LastUsedDate,
 			localConfig:  args.Config,
@@ -235,20 +233,20 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 			node:         args.Node,
 			profiles:     args.Profiles,
 			project:      p,
-			isSnapshot:   args.Snapshot,
+			isSnapshot:   args.IsSnapshot,
 			stateful:     args.Stateful,
 		},
+	}
+
+	if args.IsSnapshot {
+		d.snapshotDescription = args.Snapshot.Description
+		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
 
 	// Get the architecture name.
 	archName, err := osarch.ArchitectureName(d.architecture)
 	if err == nil {
 		d.architectureName = archName
-	}
-
-	// Cleanup the zero values.
-	if d.expiryDate.IsZero() {
-		d.expiryDate = time.Time{}
 	}
 
 	if d.creationDate.IsZero() {
@@ -259,7 +257,7 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 		d.lastUsedDate = time.Time{}
 	}
 
-	if args.Snapshot {
+	if d.isSnapshot {
 		d.logger.Info("Creating instance snapshot", logger.Ctx{"ephemeral": d.ephemeral})
 	} else {
 		d.logger.Info("Creating instance", logger.Ctx{"ephemeral": d.ephemeral})
@@ -272,7 +270,7 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 	}
 
 	// When not a snapshot, perform full validation.
-	if !args.Snapshot {
+	if !d.isSnapshot {
 		// Validate expanded config (allows mixed instance types for profiles).
 		err = instance.ValidConfig(s.OS, d.expandedConfig, true, instancetype.Any)
 		if err != nil {
@@ -1620,7 +1618,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	if snapName != "" && expiry != nil {
-		err := d.snapshot(snapName, *expiry, false)
+		err := d.snapshot(snapName, *expiry, false, "")
 		if err != nil {
 			err = fmt.Errorf("Failed taking startup snapshot: %w", err)
 			op.Done(err)
@@ -5809,7 +5807,7 @@ func (d *qemu) IsPrivileged() bool {
 }
 
 // snapshot creates a snapshot of the instance.
-func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
+func (d *qemu) snapshot(name string, expiry time.Time, stateful bool, description string) error {
 	var err error
 	var monitor *qmp.Monitor
 
@@ -5845,7 +5843,7 @@ func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
 	}
 
 	// Create the snapshot.
-	err = d.snapshotCommon(d, name, expiry, stateful)
+	err = d.snapshotCommon(d, name, expiry, stateful, description)
 	if err != nil {
 		return err
 	}
@@ -5868,8 +5866,8 @@ func (d *qemu) snapshot(name string, expiry time.Time, stateful bool) error {
 }
 
 // Snapshot takes a new snapshot.
-func (d *qemu) Snapshot(name string, expiry time.Time, stateful bool) error {
-	return d.snapshot(name, expiry, stateful)
+func (d *qemu) Snapshot(name string, expiry time.Time, stateful bool, description string) error {
+	return d.snapshot(name, expiry, stateful, description)
 }
 
 // Restore restores an instance snapshot.
@@ -5900,7 +5898,11 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 				Profiles:     d.Profiles(),
 				Project:      d.Project().Name,
 				Type:         d.Type(),
-				Snapshot:     d.IsSnapshot(),
+				IsSnapshot:   d.IsSnapshot(),
+				Snapshot: db.SnapshotArgs{
+					Description: d.SnapshotDescription(),
+					ExpiryDate:  d.SnapshotExpiryDate(),
+				},
 			}
 
 			err := d.Update(args, false)
@@ -5967,7 +5969,11 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 			Profiles:     source.Profiles(),
 			Project:      source.Project().Name,
 			Type:         source.Type(),
-			Snapshot:     source.IsSnapshot(),
+			IsSnapshot:   source.IsSnapshot(),
+			Snapshot: db.SnapshotArgs{
+				Description: source.SnapshotDescription(),
+				ExpiryDate:  source.SnapshotExpiryDate(),
+			},
 		}
 	} else {
 		args = db.InstanceArgs{
@@ -5979,7 +5985,11 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 			Profiles:     d.Profiles(),
 			Project:      d.Project().Name,
 			Type:         d.Type(),
-			Snapshot:     d.IsSnapshot(),
+			IsSnapshot:   d.IsSnapshot(),
+			Snapshot: db.SnapshotArgs{
+				Description: d.SnapshotDescription(),
+				ExpiryDate:  d.SnapshotExpiryDate(),
+			},
 		}
 
 		args.Config["volatile.uuid.generation"] = source.LocalConfig()["volatile.uuid.generation"]
@@ -6384,8 +6394,6 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		return err
 	}
 
-	oldExpiryDate := d.expiryDate
-
 	// Revert local changes if update fails.
 	reverter.Add(func() {
 		d.description = oldDescription
@@ -6396,7 +6404,6 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		d.localConfig = oldLocalConfig
 		d.localDevices = oldLocalDevices
 		d.profiles = oldProfiles
-		d.expiryDate = oldExpiryDate
 	})
 
 	// Apply the various changes to local vars.
@@ -6406,7 +6413,6 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	d.localConfig = args.Config
 	d.localDevices = args.Devices
 	d.profiles = args.Profiles
-	d.expiryDate = args.ExpiryDate
 
 	// Expand the config.
 	err = d.expandConfig()
@@ -6691,7 +6697,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Snapshots should update only their descriptions and expiry date.
 		if d.IsSnapshot() {
-			return tx.UpdateInstanceSnapshot(d.id, d.description, d.expiryDate)
+			return tx.UpdateInstanceSnapshot(d.id, args.Snapshot.Description, args.Snapshot.ExpiryDate)
 		}
 
 		object, err := dbCluster.GetInstance(ctx, tx.Tx(), d.project.Name, d.name)
@@ -6702,7 +6708,6 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		object.Description = d.description
 		object.Architecture = d.architecture
 		object.Ephemeral = d.ephemeral
-		object.ExpiryDate = sql.NullTime{Time: d.expiryDate, Valid: true}
 
 		err = dbCluster.UpdateInstance(ctx, tx.Tx(), d.project.Name, d.name, *object)
 		if err != nil {
@@ -8464,7 +8469,8 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			architectureName, _ := osarch.ArchitectureName(d.Architecture())
 			apiInstSnap := &api.InstanceSnapshot{
 				InstanceSnapshotPut: api.InstanceSnapshotPut{
-					ExpiresAt: time.Time{},
+					ExpiresAt:           d.SnapshotExpiryDate(),
+					SnapshotDescription: d.SnapshotDescription(),
 				},
 				Architecture: architectureName,
 				CreatedAt:    d.CreationDate(),
@@ -9002,7 +9008,8 @@ func (d *qemu) Render() (any, any, error) {
 		snapState.Devices = d.localDevices.CloneNative()
 		snapState.Ephemeral = d.ephemeral
 		snapState.Profiles = profileNames
-		snapState.ExpiresAt = d.expiryDate
+		snapState.ExpiresAt = d.snapshotExpiryDate
+		snapState.SnapshotDescription = d.snapshotDescription
 
 		return &snapState, d.ETag(), nil
 	}
