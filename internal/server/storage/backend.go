@@ -8203,7 +8203,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 	}
 
 	// Define function to send a block volume.
-	sendBlockVol := func(vol drivers.Volume, conn io.ReadWriteCloser) error {
+	sendBlockVol := func(vol drivers.Volume, conn io.ReadWriteCloser, blockIndex int) error {
 		// Close when done to indicate to target side we are finished sending this volume.
 		defer func() { _ = conn.Close() }()
 
@@ -8214,7 +8214,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 
 		var nbdPath string
 		if inst.IsRunning() {
-			cleanupExport, path, err := inst.ExportQcow2Disk()
+			cleanupExport, path, err := inst.ExportQcow2Block(blockIndex)
 			if err != nil {
 				return err
 			}
@@ -8274,6 +8274,12 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 		return nil
 	}
 
+	// blockIndex identifies the block device by position rather than name.
+	// QEMU is unaware of snapshot names, but both snapshots and block
+	// devices are ordered from oldest to newest, allowing the index to
+	// reliably select the correct block device to export.
+	blockIndex := 0
+
 	// Send all snapshots to target.
 	for _, snapName := range volSrcArgs.Snapshots {
 		snapshot, err := vol.NewSnapshot(snapName)
@@ -8291,7 +8297,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 			}
 
 			if vol.IsVMBlock() || (vol.ContentType() == drivers.ContentTypeBlock && vol.Type() == drivers.VolumeTypeCustom) {
-				err = sendBlockVol(snapshot, conn)
+				err = sendBlockVol(snapshot, conn, blockIndex)
 				if err != nil {
 					return err
 				}
@@ -8302,6 +8308,8 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 		if err != nil {
 			return err
 		}
+
+		blockIndex += 1
 	}
 
 	// Send volume to target (ensure local volume is mounted if needed).
@@ -8314,7 +8322,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 		}
 
 		if vol.IsVMBlock() || (drivers.IsContentBlock(vol.ContentType()) && vol.Type() == drivers.VolumeTypeCustom) {
-			err := sendBlockVol(vol, conn)
+			err := sendBlockVol(vol, conn, blockIndex)
 			if err != nil {
 				return err
 			}
