@@ -768,9 +768,6 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 	}
 
 	if !args.IsSnapshot {
-		// Unset expiry date since instances don't expire.
-		args.ExpiryDate = time.Time{}
-
 		// Generate a cloud-init instance-id if not provided.
 		//
 		// This is generated here rather than in startCommon as only new
