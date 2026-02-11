@@ -279,6 +279,7 @@ run_standalone_storage() {
     run_test test_migration "migration"
     run_test test_projects_storage "projects and storage pools"
     run_test test_snap_expiry "snapshot expiry"
+    run_test test_snap_description "snapshot description"
     run_test test_snap_restore "snapshot restores"
     run_test test_snap_schedule "snapshot scheduling"
     run_test test_snapshots "container snapshots"
