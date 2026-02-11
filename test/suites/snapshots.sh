@@ -347,6 +347,31 @@ test_snap_expiry() {
     incus rm -f c2
 }
 
+test_snap_description() {
+    # shellcheck disable=2153
+    [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
+
+    # shellcheck disable=2039,3043
+    local incus_backend
+    incus_backend=$(storage_backend "$INCUS_DIR")
+
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    incus launch testimage c1
+    incus snapshot create c1
+    incus config show c1/snap0 | grep -q 'snapshot_description: ""'
+
+    incus config set c1/snap0 snapshot_description="test description"
+    incus config show c1/snap0 | grep -q 'snapshot_description: "test description"'
+
+    incus copy c1 c2
+    incus config show c2/snap0 | grep -q 'snapshot_description: "test description"'
+
+    incus rm -f c1
+    incus rm -f c2
+}
+
 test_snap_schedule() {
     # shellcheck disable=2153
     [ "${INCUS_BACKEND}" = "linstor" ] && echo "==> SKIP: Linstor can't currently handle copies with snapshots" && return
