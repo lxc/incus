@@ -7655,7 +7655,13 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		return err
 	}
 
-	rootDiskName := "incus_root"                  // Name of source disk device to sync from
+	// Selects all block devices related to this instance (backing, root disk, overlays).
+	blockDevs, err := d.fetchQcow2Blockdevs(monitor)
+	if err != nil {
+		return err
+	}
+
+	rootDiskName := blockDevs[len(blockDevs)-1]   // Name of source disk device to sync from. Last block device is the current root disk.
 	nbdTargetDiskName := "incus_root_nbd"         // Name of NBD disk device added to local VM to sync to.
 	rootSnapshotDiskName := "incus_root_snapshot" // Name of snapshot disk device to use.
 
@@ -10720,8 +10726,8 @@ func (d *qemu) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) er
 	return nil
 }
 
-// ExportQcow2Disk exports a qcow2 disk by exposing it through a QEMU NBD server.
-func (d *qemu) ExportQcow2Disk() (func(), string, error) {
+// ExportQcow2Block exports a qcow2 block device by exposing it through a QEMU NBD server.
+func (d *qemu) ExportQcow2Block(blockIndex int) (func(), string, error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, "", err
@@ -10754,10 +10760,23 @@ func (d *qemu) ExportQcow2Disk() (func(), string, error) {
 		return nil, "", fmt.Errorf("Failed starting NBD server: %w", err)
 	}
 
-	// Currently only exporting root disk is supported.
-	exportDiskPath := fmt.Sprintf("nbd+unix:///%s?socket=%s", qemuMigrationNBDExportName, socketPath)
+	// Selects all block devices related to this instance (backing, root disk, overlays).
+	blockDevs, err := d.fetchQcow2Blockdevs(monitor)
+	if err != nil {
+		return nil, "", err
+	}
 
-	err = monitor.NBDBlockExportAdd(qemuMigrationNBDExportName, false)
+	d.logger.Debug("Instance block devices:", logger.Ctx{"blockdev": blockDevs, "blockIndex": blockIndex})
+
+	if blockIndex < 0 || blockIndex >= len(blockDevs) {
+		return nil, "", fmt.Errorf("Incorrect block device index: %d", blockIndex)
+	}
+
+	exportBlockName := blockDevs[blockIndex]
+
+	exportDiskPath := fmt.Sprintf("nbd+unix:///%s?socket=%s", exportBlockName, socketPath)
+
+	err = monitor.NBDBlockExportAdd(exportBlockName, false)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed adding disk to NBD server: %w", err)
 	}

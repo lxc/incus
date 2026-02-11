@@ -100,7 +100,7 @@ type Instance interface {
 	CanLiveMigrate() bool
 	CreateQcow2Snapshot(snapshotName string, backingFilename string) error
 	DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) error
-	ExportQcow2Disk() (func(), string, error)
+	ExportQcow2Block(blockIndex int) (func(), string, error)
 
 	// Config handling.
 	Rename(newName string, applyTemplateTrigger bool) error
