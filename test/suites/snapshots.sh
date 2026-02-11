@@ -362,11 +362,11 @@ test_snap_description() {
     incus snapshot create c1
     incus config show c1/snap0 | grep -q 'snapshot_description: ""'
 
-    incus config set c1/snap0 snapshot_description="test description"
-    incus config show c1/snap0 | grep -q 'snapshot_description: "test description"'
+    incus config set c1/snap0 snapshot_description="test description" --property
+    incus config show c1/snap0 | grep -q 'snapshot_description: test description'
 
     incus copy c1 c2
-    incus config show c2/snap0 | grep -q 'snapshot_description: "test description"'
+    incus config show c2/snap0 | grep -q 'snapshot_description: test description'
 
     incus rm -f c1
     incus rm -f c2
