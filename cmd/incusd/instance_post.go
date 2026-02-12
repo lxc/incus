@@ -631,6 +631,15 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 	// Handle storage pool override.
 	if req.Pool != "" {
+		err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			_, err := tx.GetStoragePoolID(ctx, req.Pool)
+
+			return err
+		})
+		if response.IsNotFoundError(err) {
+			return fmt.Errorf("Can't find a storage pool '%s' for the instance to use", req.Pool)
+		}
+
 		rootDevKey, rootDev, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 		if err != nil {
 			return err
