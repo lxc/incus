@@ -145,9 +145,9 @@ const (
 	GoOtherSysBytes
 	// GoNextGCBytes represents the number of heap bytes when next garbage collection will take place.
 	GoNextGCBytes
-	// NodeBootTimeSeconds represents Unix time when the instance booted
+	// NodeBootTimeSeconds represents Unix time when the instance booted.
 	NodeBootTimeSeconds
-	// NodeTimeSeconds represents current Unix time on the instance
+	// NodeTimeSeconds represents current Unix time on the instance.
 	NodeTimeSeconds
 )
 
