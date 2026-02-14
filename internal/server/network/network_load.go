@@ -11,11 +11,12 @@ import (
 )
 
 var drivers = map[string]func() Network{
-	"bridge":   func() Network { return &bridge{} },
-	"macvlan":  func() Network { return &macvlan{} },
-	"sriov":    func() Network { return &sriov{} },
-	"ovn":      func() Network { return &ovn{} },
-	"physical": func() Network { return &physical{} },
+	"bridge":    func() Network { return &bridge{} },
+	"macvlan":   func() Network { return &macvlan{} },
+	"sriov":     func() Network { return &sriov{} },
+	"ovn":       func() Network { return &ovn{} },
+	"physical":  func() Network { return &physical{} },
+	"wireguard": func() Network { return &wireguard{} },
 }
 
 // ProjectNetwork is a composite type of project name and network name.

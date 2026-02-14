@@ -1577,3 +1577,93 @@ func ipInRanges(ipAddr net.IP, ipRanges []iprange.Range) bool {
 
 	return false
 }
+
+// GenerateRandomIPFromSubnet generates a random IP address from the given subnet,
+// avoiding the network address and the excludeIP.
+func GenerateRandomIPFromSubnet(subnet *net.IPNet, excludeIP net.IP) (net.IP, error) {
+	// Calculate subnet size
+	mask, bits := subnet.Mask.Size()
+	hostBits := bits - mask
+	if hostBits <= 1 {
+		return nil, fmt.Errorf("Subnet too small to generate random IP")
+	}
+
+	// Calculate number of usable IPs (excluding network and broadcast)
+	numIPs := big.NewInt(1)
+	numIPs.Lsh(numIPs, uint(hostBits))
+	numIPs.Sub(numIPs, big.NewInt(2)) // Subtract network and broadcast
+
+	if numIPs.Cmp(big.NewInt(0)) <= 0 {
+		return nil, fmt.Errorf("No usable IPs in subnet")
+	}
+
+	// Generate random offset (1 to numIPs, avoiding network and broadcast)
+	randomOffset, err := cryptoRand.Int(cryptoRand.Reader, numIPs)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to generate random offset: %w", err)
+	}
+
+	// Add 1 to skip network address
+	randomOffset.Add(randomOffset, big.NewInt(1))
+
+	// Calculate the IP
+	subnetIP := subnet.IP.To4()
+	if subnetIP == nil {
+		subnetIP = subnet.IP.To16()
+	}
+
+	subnetBig := big.NewInt(0)
+	subnetBig.SetBytes(subnetIP)
+	subnetBig.Add(subnetBig, randomOffset)
+
+	// Convert back to IP
+	var newIP net.IP
+	if subnet.IP.To4() != nil {
+		newIP = make(net.IP, 4)
+		ipInt := subnetBig.Uint64()
+		newIP[0] = byte(ipInt >> 24)
+		newIP[1] = byte(ipInt >> 16)
+		newIP[2] = byte(ipInt >> 8)
+		newIP[3] = byte(ipInt)
+	} else {
+		newIP = subnetBig.Bytes()
+		// Pad to 16 bytes for IPv6
+		if len(newIP) < 16 {
+			padded := make(net.IP, 16)
+			copy(padded[16-len(newIP):], newIP)
+			newIP = padded
+		}
+	}
+
+	// If the generated IP matches the exclude IP, try the next one
+	if newIP.Equal(excludeIP) {
+		randomOffset.Add(randomOffset, big.NewInt(1))
+		if randomOffset.Cmp(numIPs) > 0 {
+			randomOffset.SetInt64(1) // Wrap around
+		}
+
+		subnetBig.SetBytes(subnetIP)
+		subnetBig.Add(subnetBig, randomOffset)
+		if subnet.IP.To4() != nil {
+			ipInt := subnetBig.Uint64()
+			newIP[0] = byte(ipInt >> 24)
+			newIP[1] = byte(ipInt >> 16)
+			newIP[2] = byte(ipInt >> 8)
+			newIP[3] = byte(ipInt)
+		} else {
+			newIP = subnetBig.Bytes()
+			if len(newIP) < 16 {
+				padded := make(net.IP, 16)
+				copy(padded[16-len(newIP):], newIP)
+				newIP = padded
+			}
+		}
+	}
+
+	// Verify the IP is within the subnet
+	if !subnet.Contains(newIP) {
+		return nil, fmt.Errorf("Generated IP %s is not within subnet %s", newIP.String(), subnet.String())
+	}
+
+	return newIP, nil
+}
