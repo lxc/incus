@@ -1273,8 +1273,8 @@ func (m *Monitor) BlockCommit(deviceNodeName string, top string, base string) er
 	var args struct {
 		Device string `json:"device"`
 		JobID  string `json:"job-id"`
-		Top    string `json:"top-node"`
-		Base   string `json:"base-node"`
+		Top    string `json:"top-node,omitempty"`
+		Base   string `json:"base-node,omitempty"`
 	}
 
 	args.Device = deviceNodeName
