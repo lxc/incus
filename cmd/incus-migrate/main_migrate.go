@@ -222,8 +222,8 @@ func (m *Migration) askSourcePath(question string) error {
 		// Allow URLs.
 		isURL = false
 
-		_, err := url.Parse(s)
-		if err == nil {
+		u, err := url.Parse(s)
+		if err == nil && u.Scheme != "" && u.Host != "" {
 			isURL = true
 
 			return nil
