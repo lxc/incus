@@ -477,7 +477,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	state := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventAgentStarted, qmp.EventRTCChange}, event) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -512,6 +512,23 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 				return
 			}
 
+		case qmp.EventVMReset:
+			monitor, err := d.qmpConnect()
+			if err == nil {
+				if !monitor.IsInitialized() {
+					// If the VM isn't fully initialized yet, we want system_reset to be treated internally within QEMU.
+					break
+				}
+
+				if !d.needsFullRestart() {
+					// If a quick restart is possible, let QEMU handle it.
+					d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRestarted.Event(d, nil))
+
+					break
+				}
+			}
+
+			fallthrough
 		case qmp.EventVMShutdown:
 			target := "stop"
 			entry, ok := data["reason"]
@@ -695,6 +712,12 @@ func (d *qemu) onStop(target string) error {
 	// Set operation if missing.
 	if d.op == nil {
 		d.op = op.GetOperation()
+	}
+
+	// If QEMU is still running, stop it (handles reboot).
+	monitor, err := qmp.Connect(d.monitorPath(), qemuSerialChardevName, nil, d.QMPLogFilePath(), qemuDetachDisk(d.state, d.id))
+	if err == nil {
+		_ = monitor.Quit()
 	}
 
 	// Wait for QEMU process to end (to avoiding racing start when restarting).
@@ -1382,6 +1405,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	vsockFD := d.addFileDescriptor(&fdFiles, vsockF)
 
 	volatileSet := make(map[string]string)
+	volatileSet["volatile.vm.needs_reset"] = ""
 
 	// Update vsock ID in volatile if needed for recovery (do this before UpdateBackupFile() call).
 	oldVsockID := d.localConfig["volatile.vsock_id"]
@@ -2005,7 +2029,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Don't allow the monitor to trigger a disconnection shutdown event until cleanly started so that the
 	// onStop hook isn't triggered prematurely (as this function's reverter will clean up on failure to start).
-	monitor.SetOnDisconnectEvent(false)
+	monitor.SetInitialized(false)
 
 	// Early startup hook
 	err = d.startupHook(monitor, "early")
@@ -2089,14 +2113,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return fmt.Errorf("Failed resetting VM: %w", err)
 	}
 
-	// Set the equivalent of the -no-reboot flag (which we can't set because of the reset bug above) via QMP.
-	// This ensures that if the guest initiates a reboot that the SHUTDOWN event is generated instead with the
-	// reason set to "guest-reset" so that the event handler returned from getMonitorEventHandler() can restart
-	// the guest instead.
+	// Set our default actions. Those can still be overridden in the event handler when Incus is running.
 	actions := map[string]string{
 		"shutdown": "poweroff",
-		"reboot":   "shutdown", // Don't reset on reboot. Let us handle reboots.
-		"panic":    "pause",    // Pause on panics to allow investigation.
+		"reboot":   "reset",
+		"panic":    "exit-failure",
 	}
 
 	err = monitor.SetAction(actions)
@@ -2182,7 +2203,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// The VM started cleanly so now enable the unexpected disconnection event to ensure the onStop hook is
 	// run if QMP unexpectedly disconnects.
-	monitor.SetOnDisconnectEvent(true)
+	monitor.SetInitialized(true)
 	op.Done(nil)
 	return nil
 }
@@ -6487,6 +6508,14 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			if !isLiveUpdatable(key) {
 				return fmt.Errorf("Key %q cannot be updated when VM is running", key)
 			}
+		}
+
+		// Mark the VM as needing a full reset on next reboot.
+		err = d.VolatileSet(map[string]string{
+			"volatile.vm.needs_reset": "true",
+		})
+		if err != nil {
+			return err
 		}
 
 		// Apply live update for each key.
@@ -10863,4 +10892,41 @@ func currentQcow2OverlayIndex(names []string, prefix string) int {
 	}
 
 	return maxIndex
+}
+
+func (d *qemu) needsFullRestart() bool {
+	// Check if we have a pending change.
+	if d.localConfig["volatile.vm.needs_reset"] != "" {
+		return true
+	}
+
+	// Check if the QEMU binary has changed.
+	pid, _ := d.pid()
+	if pid <= 0 {
+		return true
+	}
+
+	exePath, _, err := d.qemuArchConfig(d.architecture)
+	if err != nil {
+		return true
+	}
+
+	var curExe unix.Stat_t
+	err = unix.Stat(fmt.Sprintf("/proc/%d/exe", pid), &curExe)
+	if err != nil {
+		return true
+	}
+
+	var nextExe unix.Stat_t
+	err = unix.Stat(exePath, &nextExe)
+	if err != nil {
+		return true
+	}
+
+	if curExe.Size != nextExe.Size || curExe.Ino != nextExe.Ino || curExe.Dev != nextExe.Dev {
+		return true
+	}
+
+	// Full restart isn't required.
+	return false
 }

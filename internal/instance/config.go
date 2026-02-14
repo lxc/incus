@@ -1222,6 +1222,13 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: QEMU VM definition name (used for migration between versions)
 	"volatile.vm.definition": validate.Optional(validate.IsAny),
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.needs_reset)
+	//
+	// ---
+	//  type: bool
+	//  shortdesc: Indicates that the VM needs a full reset on next reboot
+	"volatile.vm.needs_reset": validate.Optional(validate.IsBool),
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.rtc_adjustment)
 	// Real Time Clock adjustment time to allow virtual machines to run on a different base than the host.
 	// ---
