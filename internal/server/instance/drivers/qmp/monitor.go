@@ -27,6 +27,9 @@ var RingbufSize = 16
 // EventAgentStarted is the event sent once the agent has started.
 var EventAgentStarted = "AGENT-STARTED"
 
+// EventVMReset is the event sent when VM guest reboots.
+var EventVMReset = "RESET"
+
 // EventVMShutdown is the event sent when VM guest shuts down.
 var EventVMShutdown = "SHUTDOWN"
 
