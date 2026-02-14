@@ -2121,6 +2121,11 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: Size
+            snapshot_description:
+                description: Instance description
+                example: My description
+                type: string
+                x-go-name: SnapshotDescription
             stateful:
                 description: Whether the instance currently has saved state on disk
                 example: false
@@ -2159,11 +2164,20 @@ definitions:
                 format: date-time
                 type: string
                 x-go-name: ExpiresAt
+            snapshot_description:
+                description: Instance description
+                example: My description
+                type: string
+                x-go-name: SnapshotDescription
         title: InstanceSnapshotPut represents the modifiable fields of an instance snapshot.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     InstanceSnapshotsPost:
         properties:
+            description:
+                description: Snapshot description
+                type: string
+                x-go-name: Description
             expires_at:
                 description: When the snapshot expires (gets auto-deleted)
                 example: "2021-03-23T17:38:37.753398689-04:00"

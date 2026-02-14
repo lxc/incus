@@ -114,6 +114,7 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 			Ephemeral:   req.Ephemeral,
 			Name:        req.Name,
 			Profiles:    profiles,
+			IsSnapshot:  false,
 		}
 
 		if req.Source.Server != "" {
@@ -176,6 +177,7 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 		Ephemeral:   req.Ephemeral,
 		Name:        req.Name,
 		Profiles:    profiles,
+		IsSnapshot:  false,
 	}
 
 	if req.Architecture != "" {
@@ -246,6 +248,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		Name:         req.Name,
 		Profiles:     profiles,
 		Stateful:     req.Stateful,
+		IsSnapshot:   false,
 	}
 
 	storagePool, storagePoolProfile, localRootDiskDeviceKey, localRootDiskDevice, resp := instanceFindStoragePool(ctx, s, projectName, req)
@@ -610,6 +613,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 		Name:         req.Name,
 		Profiles:     profiles,
 		Stateful:     req.Stateful,
+		IsSnapshot:   false,
 	}
 
 	run := func(op *operations.Operation) error {

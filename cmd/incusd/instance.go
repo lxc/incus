@@ -467,15 +467,18 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				Architecture: srcSnap.Architecture(),
 				Config:       srcSnap.LocalConfig(),
 				Type:         opts.sourceInstance.Type(),
-				Snapshot:     true,
 				Devices:      snapLocalDevices,
 				Description:  srcSnap.Description(),
 				Ephemeral:    srcSnap.IsEphemeral(),
 				Name:         newSnapName,
 				Profiles:     srcSnap.Profiles(),
 				Project:      opts.targetInstance.Project,
-				ExpiryDate:   srcSnap.ExpiryDate(),
 				CreationDate: srcSnap.CreationDate(),
+				IsSnapshot:   true,
+				Snapshot: db.SnapshotArgs{
+					Description: srcSnap.SnapshotDescription(),
+					ExpiryDate:  srcSnap.SnapshotExpiryDate(),
+				},
 			}
 
 			// Create the snapshots.
@@ -577,7 +580,7 @@ func autoCreateInstanceSnapshots(ctx context.Context, s *state.State, instances 
 			return err
 		}
 
-		err = inst.Snapshot(snapshotName, expiry, false)
+		err = inst.Snapshot(snapshotName, expiry, false, "")
 		if err != nil {
 			l.Error("Error creating snapshot", logger.Ctx{"snapshot": snapshotName, "err": err})
 			return err
@@ -645,7 +648,12 @@ func pruneExpiredAndAutoCreateInstanceSnapshotsTask(d *Daemon) (task.Func, task.
 						parents[parentInstanceKey] = parent
 					}
 
-					expiredSnapshots = append(expiredSnapshots, snapshot.ToInstance(parent.Name, parent.Node, parent.Type, parent.Architecture))
+					inst, err := snapshot.ToInstance(ctx, tx.Tx(), parent.Name, parent.Node, parent.Type, parent.Architecture)
+					if err != nil {
+						return fmt.Errorf("Failed to parse snapshot %q to instance %q: %w", snapshot.Name, snapshot.Instance, err)
+					}
+
+					expiredSnapshots = append(expiredSnapshots, inst)
 				}
 
 				// Load expired snapshot configs.

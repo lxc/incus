@@ -325,7 +325,7 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 
 	snapshot := func(op *operations.Operation) error {
 		inst.SetOperation(op)
-		return inst.Snapshot(req.Name, expiry, req.Stateful)
+		return inst.Snapshot(req.Name, expiry, req.Stateful, req.Description)
 	}
 
 	resources := map[string][]api.URL{}
@@ -460,7 +460,7 @@ func snapshotPatch(s *state.State, r *http.Request, snapInst instance.Instance) 
 //	    $ref: "#/responses/InternalServerError"
 func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) response.Response {
 	// Validate the ETag
-	etag := []any{snapInst.ExpiryDate()}
+	etag := []any{snapInst.SnapshotExpiryDate()}
 	err := localUtil.EtagCheck(r, etag)
 	if err != nil {
 		return response.PreconditionFailed(err)
@@ -475,8 +475,7 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 
 	var do func(op *operations.Operation) error
 
-	_, err = rj.GetString("expires_at")
-	if err != nil {
+	if rj.IsEmpty() {
 		// Skip updating the snapshot since the requested key wasn't provided
 		do = func(op *operations.Operation) error {
 			return nil
@@ -506,9 +505,12 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 				Ephemeral:    snapInst.IsEphemeral(),
 				Profiles:     snapInst.Profiles(),
 				Project:      snapInst.Project().Name,
-				ExpiryDate:   configRaw.ExpiresAt,
 				Type:         snapInst.Type(),
-				Snapshot:     snapInst.IsSnapshot(),
+				IsSnapshot:   snapInst.IsSnapshot(),
+				Snapshot: db.SnapshotArgs{
+					Description: configRaw.SnapshotDescription,
+					ExpiryDate:  configRaw.ExpiresAt,
+				},
 			}
 
 			err = snapInst.Update(args, false)
@@ -581,7 +583,7 @@ func snapshotGet(snapInst instance.Instance) response.Response {
 		return response.SmartError(err)
 	}
 
-	etag := []any{snapInst.ExpiryDate()}
+	etag := []any{snapInst.SnapshotExpiryDate()}
 	return response.SyncResponseETag(true, render.(*api.InstanceSnapshot), etag)
 }
 
