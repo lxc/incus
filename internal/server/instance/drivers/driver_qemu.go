@@ -519,6 +519,13 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 					// If the VM isn't fully initialized yet, we want system_reset to be treated internally within QEMU.
 					break
 				}
+
+				if !d.needsFullRestart() {
+					// If a quick restart is possible, let QEMU handle it.
+					d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRestarted.Event(d, nil))
+
+					break
+				}
 			}
 
 			fallthrough
@@ -1398,6 +1405,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	vsockFD := d.addFileDescriptor(&fdFiles, vsockF)
 
 	volatileSet := make(map[string]string)
+	volatileSet["volatile.vm.needs_reset"] = ""
 
 	// Update vsock ID in volatile if needed for recovery (do this before UpdateBackupFile() call).
 	oldVsockID := d.localConfig["volatile.vsock_id"]
@@ -6502,6 +6510,14 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			}
 		}
 
+		// Mark the VM as needing a full reset on next reboot.
+		err = d.VolatileSet(map[string]string{
+			"volatile.vm.needs_reset": "true",
+		})
+		if err != nil {
+			return err
+		}
+
 		// Apply live update for each key.
 		for _, key := range changedConfig {
 			value := d.expandedConfig[key]
@@ -10876,4 +10892,41 @@ func currentQcow2OverlayIndex(names []string, prefix string) int {
 	}
 
 	return maxIndex
+}
+
+func (d *qemu) needsFullRestart() bool {
+	// Check if we have a pending change.
+	if d.localConfig["volatile.vm.needs_reset"] != "" {
+		return true
+	}
+
+	// Check if the QEMU binary has changed.
+	pid, _ := d.pid()
+	if pid <= 0 {
+		return true
+	}
+
+	exePath, _, err := d.qemuArchConfig(d.architecture)
+	if err != nil {
+		return true
+	}
+
+	var curExe unix.Stat_t
+	err = unix.Stat(fmt.Sprintf("/proc/%d/exe", pid), &curExe)
+	if err != nil {
+		return true
+	}
+
+	var nextExe unix.Stat_t
+	err = unix.Stat(exePath, &nextExe)
+	if err != nil {
+		return true
+	}
+
+	if curExe.Size != nextExe.Size || curExe.Ino != nextExe.Ino || curExe.Dev != nextExe.Dev {
+		return true
+	}
+
+	// Full restart isn't required.
+	return false
 }
