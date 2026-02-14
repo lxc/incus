@@ -945,6 +945,15 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 
 	err = monitor.MigrateIncoming(ctx, "migration")
 	if err != nil {
+		if errors.Is(err, qmp.ErrMonitorDisconnect) && util.PathExists(d.LogFilePath()) {
+			qemuError, err := os.ReadFile(d.LogFilePath())
+			if err != nil {
+				return err
+			}
+
+			return fmt.Errorf("QEMU crashed on VM restore: %s", string(qemuError))
+		}
+
 		return err
 	}
 
