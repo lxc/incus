@@ -3449,6 +3449,13 @@
 						}
 					},
 					{
+						"volatile.vm.needs_reset": {
+							"longdesc": "",
+							"shortdesc": "Indicates that the VM needs a full reset on next reboot",
+							"type": "bool"
+						}
+					},
+					{
 						"volatile.vm.rtc_adjustment": {
 							"longdesc": "Real Time Clock adjustment time to allow virtual machines to run on a different base than the host.",
 							"shortdesc": "Real Time Clock change adjustment",

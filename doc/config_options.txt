@@ -3091,6 +3091,12 @@ It is globally unique across all servers and projects.
 
 ```
 
+```{config:option} volatile.vm.needs_reset instance-volatile
+:shortdesc: "Indicates that the VM needs a full reset on next reboot"
+:type: "bool"
+
+```
+
 ```{config:option} volatile.vm.rtc_adjustment instance-volatile
 :shortdesc: "Real Time Clock change adjustment"
 :type: "int64"
