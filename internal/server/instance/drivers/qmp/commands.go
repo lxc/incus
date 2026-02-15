@@ -456,30 +456,35 @@ func (m *Monitor) QueryMigrate() (*MigrationStatus, error) {
 // MigrateWait waits until migration job reaches the specified status.
 // Returns nil if the migraton job reaches the specified status or an error if the migration job is in the failed
 // status.
-func (m *Monitor) MigrateWait(state string) error {
+func (m *Monitor) MigrateWait(ctx context.Context, state string) error {
 	// Wait until it completes or fails.
 	for {
-		// Prepare the response.
-		var resp struct {
-			Return struct {
-				Status string `json:"status"`
-			} `json:"return"`
-		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			// Prepare the response.
+			var resp struct {
+				Return struct {
+					Status string `json:"status"`
+				} `json:"return"`
+			}
 
-		err := m.Run("query-migrate", nil, &resp)
-		if err != nil {
-			return err
-		}
+			err := m.Run("query-migrate", nil, &resp)
+			if err != nil {
+				return err
+			}
 
-		if resp.Return.Status == "failed" {
-			return errors.New("Migrate call failed")
-		}
+			if resp.Return.Status == "failed" {
+				return errors.New("Migrate call failed")
+			}
 
-		if resp.Return.Status == state {
-			return nil
-		}
+			if resp.Return.Status == state {
+				return nil
+			}
 
-		time.Sleep(1 * time.Second)
+			time.Sleep(1 * time.Second)
+		}
 	}
 }
 
