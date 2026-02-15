@@ -1149,7 +1149,7 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 		return fmt.Errorf("Failed initializing state save to %q: %w", stateFile.Name(), err)
 	}
 
-	err = monitor.MigrateWait("completed")
+	err = monitor.MigrateWait(context.Background(), "completed")
 	if err != nil {
 		return fmt.Errorf("Failed saving state to %q: %w", stateFile.Name(), err)
 	}
@@ -7648,7 +7648,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs)
+			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs)
 			if err != nil {
 				return err
 			}
@@ -7687,7 +7687,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs) error {
+func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -8033,7 +8033,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 	// Non-shared storage snapshot transfer finalization.
 	if !sameSharedStorage {
 		// Wait until state transfer has reached pre-switchover state (the guest OS will remain paused).
-		err = monitor.MigrateWait("pre-switchover")
+		err = monitor.MigrateWait(ctx, "pre-switchover")
 		if err != nil {
 			return fmt.Errorf("Failed waiting for state transfer to reach pre-switchover stage: %w", err)
 		}
@@ -8059,7 +8059,7 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 	}
 
 	// Wait until the migration state transfer has completed (the guest OS will remain paused).
-	err = monitor.MigrateWait("completed")
+	err = monitor.MigrateWait(ctx, "completed")
 	if err != nil {
 		return fmt.Errorf("Failed waiting for state transfer to reach completed stage: %w", err)
 	}
