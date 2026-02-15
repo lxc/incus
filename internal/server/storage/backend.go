@@ -7914,6 +7914,19 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 
 // qcow2DeleteSnapshot deletes the QCOW2 volume snapshot.
 func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume, inst instance.Instance, op *operations.Operation) error {
+	// Lock this operation to ensure only one snapshot is deleted at a time.
+	// Other operations will wait until this one completes.
+	unlock, err := locking.Lock(context.TODO(), drivers.OperationLockName("Qcow2DeleteInstanceSnapshot", b.name, vol.Type(), vol.ContentType(), vol.Name()))
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	l := b.logger.AddContext(logger.Ctx{"name": b.name, "instance": vol.Name()})
+	l.Debug("qcow2DeleteInstanceSnapshot started")
+	defer l.Debug("qcow2DeleteInstanceSnapshot finished")
+
 	// Return if this is not a qcow2 image.
 	if vol.Config()["block.type"] != drivers.BlockVolumeTypeQcow2 {
 		return nil
