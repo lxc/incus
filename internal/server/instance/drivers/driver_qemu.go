@@ -7866,34 +7866,37 @@ func (d *qemu) migrateSendLive(pool storagePools.Pool, clusterMoveSourceName str
 		return err
 	}
 
-	// Notify the shared disks that they're going to be accessed from another system.
-	for _, dev := range d.expandedDevices.Sorted() {
-		if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
-			continue
-		}
+	// Notify the shared disks that they're going to be accessed from another system,
+	// but only when performing a move within the same storage pool.
+	if storagePool == "" {
+		for _, dev := range d.expandedDevices.Sorted() {
+			if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+				continue
+			}
 
-		// Load the pool for the disk.
-		diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
-		if err != nil {
-			return fmt.Errorf("Failed loading storage pool: %w", err)
-		}
+			// Load the pool for the disk.
+			diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
 
-		// Check that we're on shared storage.
-		if !diskPool.Driver().Info().Remote {
-			continue
-		}
+			// Check that we're on shared storage.
+			if !diskPool.Driver().Info().Remote {
+				continue
+			}
 
-		// Setup the volume entry.
-		extraSourceArgs := &localMigration.VolumeSourceArgs{
-			ClusterMove: true,
-		}
+			// Setup the volume entry.
+			extraSourceArgs := &localMigration.VolumeSourceArgs{
+				ClusterMove: true,
+			}
 
-		vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeBlock, project.StorageVolume(storageProjectName, dev.Config["source"]), nil)
+			vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeBlock, project.StorageVolume(storageProjectName, dev.Config["source"]), nil)
 
-		// Call MigrateVolume on the source.
-		err = diskPool.Driver().MigrateVolume(vol, nil, extraSourceArgs, nil)
-		if err != nil {
-			return fmt.Errorf("Failed to prepare device %q for migration: %w", dev.Name, err)
+			// Call MigrateVolume on the source.
+			err = diskPool.Driver().MigrateVolume(vol, nil, extraSourceArgs, nil)
+			if err != nil {
+				return fmt.Errorf("Failed to prepare device %q for migration: %w", dev.Name, err)
+			}
 		}
 	}
 
@@ -8437,47 +8440,57 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			return fmt.Errorf("Failed creating instance on target: %w", err)
 		}
 
+		isRemoteClusterMove := clusterMove && poolInfo.Remote
+		reverter.Add(func() {
+			// Delete the instance unless it is moved within the same cluster on a shared pool.
+			if (!isRemoteClusterMove && !storageMove) || storageMove {
+				_ = pool.DeleteInstance(d, d.op)
+			}
+		})
+
 		// Derive the effective storage project name from the instance config's project.
 		storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.project.Name, db.StoragePoolVolumeTypeCustom)
 		if err != nil {
 			return err
 		}
 
-		// Notify the shared disks that they're going to be accessed from another system.
-		for _, dev := range d.expandedDevices.Sorted() {
-			if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
-				continue
-			}
+		// Notify the shared disks that they're going to be accessed from another system,
+		// but only when performing a move within the same storage pool.
+		if !storageMove {
+			for _, dev := range d.expandedDevices.Sorted() {
+				if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+					continue
+				}
 
-			// Load the pool for the disk.
-			diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
-			if err != nil {
-				return fmt.Errorf("Failed loading storage pool: %w", err)
-			}
+				// Load the pool for the disk.
+				diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
+				if err != nil {
+					return fmt.Errorf("Failed loading storage pool: %w", err)
+				}
 
-			// Check that we're on shared storage.
-			if !diskPool.Driver().Info().Remote {
-				continue
-			}
+				// Check that we're on shared storage.
+				if !diskPool.Driver().Info().Remote {
+					continue
+				}
 
-			// Setup the volume entry.
-			extraTargetArgs := localMigration.VolumeTargetArgs{
-				ClusterMoveSourceName: args.ClusterMoveSourceName,
-				StoragePool:           args.StoragePool,
-			}
+				// Setup the volume entry.
+				extraTargetArgs := localMigration.VolumeTargetArgs{
+					ClusterMoveSourceName: args.ClusterMoveSourceName,
+					StoragePool:           args.StoragePool,
+				}
 
-			vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeBlock, project.StorageVolume(storageProjectName, dev.Config["source"]), nil)
+				vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeBlock, project.StorageVolume(storageProjectName, dev.Config["source"]), nil)
 
-			// Call MigrateVolume on the source.
-			err = diskPool.Driver().CreateVolumeFromMigration(vol, nil, extraTargetArgs, nil, nil)
-			if err != nil {
-				return fmt.Errorf("Failed to prepare device %q for migration: %w", dev.Name, err)
+				// Call CreateVolumeFromMigration on the target.
+				err = diskPool.Driver().CreateVolumeFromMigration(vol, nil, extraTargetArgs, nil, nil)
+				if err != nil {
+					return fmt.Errorf("Failed to prepare device %q for migration: %w", dev.Name, err)
+				}
 			}
 		}
 
 		// Only delete all instance volumes on error if the pool volume creation has succeeded to
 		// avoid deleting an existing conflicting volume.
-		isRemoteClusterMove := clusterMove && poolInfo.Remote
 		if !volTargetArgs.Refresh && !isRemoteClusterMove {
 			reverter.Add(func() {
 				snapshots, _ := d.Snapshots()
