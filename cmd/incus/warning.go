@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -27,7 +28,7 @@ type cmdWarning struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarning) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("warning")
+	cmd.Use = cli.U("warning")
 	cmd.Short = i18n.G("Manage warnings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage warnings`))
@@ -70,7 +71,7 @@ const defaultWarningColumns = "utSscpLl"
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]"))
+	cmd.Use = cli.U("list", u.RemoteColonOpt)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List warnings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -267,7 +268,7 @@ type cmdWarningAcknowledge struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningAcknowledge) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("acknowledge", i18n.G("[<remote>:]<warning-uuid>"))
+	cmd.Use = cli.U("acknowledge", u.WarningUUID.Remote())
 	cmd.Aliases = []string{"ack"}
 	cmd.Short = i18n.G("Acknowledge warning")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -311,7 +312,7 @@ type cmdWarningShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<warning-uuid>"))
+	cmd.Use = cli.U("show", u.WarningUUID.Remote())
 	cmd.Short = i18n.G("Show warning")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show warning`))
@@ -366,7 +367,7 @@ type cmdWarningDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<warning-uuid> [[<remote>:]<warning-uuid>...]"))
+	cmd.Use = cli.U("delete", u.WarningUUID.Remote().List(1))
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete warnings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(

@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/ioprogress"
@@ -25,7 +26,7 @@ type cmdImport struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("import", i18n.G("[<remote>:] <backup file> [<instance name>]"))
+	cmd.Use = cli.U("import", u.RemoteColonOpt, u.BackupFile, u.NewName(u.Instance).Optional())
 	cmd.Short = i18n.G("Import instance backups")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Import backups of instances including their snapshots.`))

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,7 +31,7 @@ type cmdPublish struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdPublish) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("publish", i18n.G("[<remote>:]<instance>[/<snapshot>] [<remote>:] [flags] [key=value...]"))
+	cmd.Use = cli.U("publish", u.MakePath(u.Instance, u.Snapshot.Optional()).Remote(), u.RemoteColonOpt, u.KV.List(0))
 	cmd.Short = i18n.G("Publish instances as images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Publish instances as images`))

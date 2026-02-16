@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -23,7 +24,7 @@ type cmdConfigMetadata struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadata) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("metadata")
+	cmd.Use = cli.U("metadata")
 	cmd.Short = i18n.G("Manage instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage instance metadata files`))
@@ -52,7 +53,7 @@ type cmdConfigMetadataEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadataEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<instance>"))
+	cmd.Use = cli.U("edit", u.Instance.Remote())
 	cmd.Short = i18n.G("Edit instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit instance metadata files`))
@@ -187,7 +188,7 @@ type cmdConfigMetadataShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadataShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<instance>"))
+	cmd.Use = cli.U("show", u.Instance.Remote())
 	cmd.Short = i18n.G("Show instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance metadata files`))

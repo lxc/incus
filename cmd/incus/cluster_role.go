@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/util"
@@ -20,7 +21,7 @@ type cmdClusterRole struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRole) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("role")
+	cmd.Use = cli.U("role")
 	cmd.Short = i18n.G("Manage cluster roles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Manage cluster roles`))
 
@@ -47,7 +48,7 @@ type cmdClusterRoleAdd struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("add", i18n.G("[<remote>:]<member> <role[,role...]>"))
+	cmd.Use = cli.U("add", u.Member.Remote(), u.Role.List(1, ","))
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add roles to a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -112,7 +113,7 @@ type cmdClusterRoleRemove struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("remove", i18n.G("[<remote>:]<member> <role[,role...]>"))
+	cmd.Use = cli.U("remove", u.Member.Remote(), u.Role.List(1, ","))
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove roles from a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(

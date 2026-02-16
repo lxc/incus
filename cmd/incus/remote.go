@@ -23,6 +23,7 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -45,7 +46,7 @@ type remoteColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemote) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("remote")
+	cmd.Use = cli.U("remote")
 	cmd.Short = i18n.G("Manage the list of remote servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage the list of remote servers`))
@@ -120,7 +121,7 @@ type cmdRemoteAdd struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("add", i18n.G("[<remote>] <IP|FQDN|URL|token>"))
+	cmd.Use = cli.U("add", u.NewName(u.Remote).Optional(), u.EitherPlaceholder(i18n.G("IP"), i18n.G("FQDN"), i18n.G("URL"), i18n.G("token")))
 	cmd.Short = i18n.G("Add new remote servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add new remote servers
@@ -673,7 +674,7 @@ type cmdRemoteGenerateCertificate struct {
 // Command generates the command definition.
 func (c *cmdRemoteGenerateCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("generate-certificate")
+	cmd.Use = cli.U("generate-certificate")
 	cmd.Short = i18n.G("Generate the client certificate")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manually trigger the generation of a client certificate`))
@@ -720,7 +721,7 @@ type cmdRemoteGetDefault struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteGetDefault) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("get-default")
+	cmd.Use = cli.U("get-default")
 	cmd.Short = i18n.G("Show the default remote")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show the default remote`))
@@ -741,7 +742,7 @@ type cmdRemoteGetClientCertificate struct {
 // Command returns a cobra.Command for get-client-certificate.
 func (c *cmdRemoteGetClientCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("get-client-certificate [<target>]")
+	cmd.Use = cli.U("get-client-certificate", u.Target(u.File).Optional())
 	cmd.Short = i18n.G("Print or retrieve the client certificate used by this Incus client")
 	cmd.RunE = c.Run
 
@@ -849,7 +850,7 @@ type cmdRemoteGetClientToken struct {
 // Command returns a cobra.Command for get-client-token.
 func (c *cmdRemoteGetClientToken) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("get-client-token <expiry>")
+	cmd.Use = cli.U("get-client-token", u.Expiry)
 	cmd.Short = i18n.G("Generate a client token derived from the client certificate")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Generate a client trust token derived from the existing client certificate and private key.
@@ -952,7 +953,7 @@ type cmdRemoteList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list")
+	cmd.Use = cli.U("list")
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List the available remotes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -1129,7 +1130,7 @@ type cmdRemoteRename struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("rename", i18n.G("<remote> <new-name>"))
+	cmd.Use = cli.U("rename", u.Remote, u.NewName(u.Remote))
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename remotes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -1210,7 +1211,7 @@ type cmdRemoteRemove struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("remove", i18n.G("<remote>"))
+	cmd.Use = cli.U("remove", u.Remote)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove remotes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -1276,7 +1277,7 @@ type cmdRemoteSwitch struct {
 func (c *cmdRemoteSwitch) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Aliases = []string{"set-default"}
-	cmd.Use = cli.Usage("switch", i18n.G("<remote>"))
+	cmd.Use = cli.U("switch", u.Remote)
 	cmd.Short = i18n.G("Switch the default remote")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Switch the default remote`))
@@ -1324,7 +1325,7 @@ type cmdRemoteSetURL struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteSetURL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("set-url", i18n.G("<remote> <URL>"))
+	cmd.Use = cli.U("set-url", u.Remote, u.URL)
 	cmd.Short = i18n.G("Set the URL for the remote")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set the URL for the remote`))

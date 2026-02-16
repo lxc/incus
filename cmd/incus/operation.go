@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -27,7 +28,7 @@ type operationColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperation) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("operation")
+	cmd.Use = cli.U("operation")
 	cmd.Short = i18n.G("List, show and delete background operations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List, show and delete background operations`))
@@ -60,7 +61,7 @@ type cmdOperationDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperationDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<operation> [[<remote>:]<operation>...]"))
+	cmd.Use = cli.U("delete", u.Operation.Remote().List(1))
 	cmd.Aliases = []string{"cancel", "rm", "remove"}
 	cmd.Short = i18n.G("Delete background operations (will attempt to cancel)")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -117,7 +118,7 @@ type cmdOperationList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperationList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]"))
+	cmd.Use = cli.U("list", u.RemoteColonOpt)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List background operations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -299,7 +300,7 @@ type cmdOperationShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperationShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<operation>"))
+	cmd.Use = cli.U("show", u.Operation.Remote())
 	cmd.Short = i18n.G("Show details on a background operation")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show details on a background operation`))

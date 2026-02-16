@@ -23,7 +23,7 @@ type cmdAdminWaitready struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminWaitready) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("waitready")
+	cmd.Use = cli.U("waitready")
 	cmd.Short = i18n.G("Wait for the daemon to be ready to process requests")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Wait for the daemon to be ready to process requests
 

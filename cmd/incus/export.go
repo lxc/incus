@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/archive"
@@ -29,7 +30,7 @@ type cmdExport struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("export", i18n.G("[<remote>:]<instance> [target] [--instance-only] [--optimized-storage]"))
+	cmd.Use = cli.U("export", u.Instance.Remote(), u.Target(u.File).Optional(), u.Dash("instance-only"), u.Dash("optimized-storage"))
 	cmd.Short = i18n.G("Export instance backups")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Export instances as backup tarballs.`))

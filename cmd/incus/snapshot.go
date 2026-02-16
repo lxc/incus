@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
@@ -28,7 +29,7 @@ type cmdSnapshot struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshot) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("snapshot")
+	cmd.Use = cli.U("snapshot")
 	cmd.Short = i18n.G("Manage instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage instance snapshots`))
@@ -77,7 +78,7 @@ type cmdSnapshotCreate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<instance> [<snapshot name>]"))
+	cmd.Use = cli.U("create", u.Instance.Remote(), u.NewName(u.Snapshot).Optional())
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create instance snapshot")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -225,7 +226,7 @@ type cmdSnapshotDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<instance> <snapshot name>"))
+	cmd.Use = cli.U("delete", u.Instance.Remote(), u.Snapshot)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -319,7 +320,7 @@ type snapshotColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]<instance>"))
+	cmd.Use = cli.U("list", u.Instance.Remote())
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -481,7 +482,7 @@ type cmdSnapshotRename struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("rename", i18n.G("[<remote>:]<instance> <old snapshot name> <new snapshot name>"))
+	cmd.Use = cli.U("rename", u.Instance.Remote(), u.Snapshot, u.NewName(u.Snapshot))
 	cmd.Short = i18n.G("Rename instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Rename instance snapshots`))
@@ -545,7 +546,7 @@ type cmdSnapshotRestore struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotRestore) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("restore", i18n.G("[<remote>:]<instance> <snapshot name>"))
+	cmd.Use = cli.U("restore", u.Instance.Remote(), u.Snapshot)
 	cmd.Short = i18n.G("Restore instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Restore instance from snapshots
@@ -627,7 +628,7 @@ type cmdSnapshotShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<instance> <snapshot>"))
+	cmd.Use = cli.U("show", u.Instance.Remote(), u.Snapshot)
 	cmd.Short = i18n.G("Show instance snapshot configuration")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance snapshot configuration`))

@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -27,7 +28,7 @@ type cmdNetworkAddressSet struct {
 // Command initializes the base network address set command and its subcommands.
 func (c *cmdNetworkAddressSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("address-set")
+	cmd.Use = cli.U("address-set")
 	cmd.Short = i18n.G("Manage network address sets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network address sets"))
 
@@ -89,7 +90,7 @@ type cmdNetworkAddressSetList struct {
 // Command initializes the list subcommand.
 func (c *cmdNetworkAddressSetList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]"))
+	cmd.Use = cli.U("list", u.RemoteColonOpt)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network address sets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("List available network address sets"))
@@ -184,7 +185,7 @@ type cmdNetworkAddressSetShow struct {
 // Command initializes the show subcommand.
 func (c *cmdNetworkAddressSetShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<address-set>"))
+	cmd.Use = cli.U("show", u.AddressSet.Remote())
 	cmd.Short = i18n.G("Show network address set configuration")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network address set configuration"))
 	cmd.RunE = c.Run
@@ -244,7 +245,7 @@ type cmdNetworkAddressSetCreate struct {
 // Command initializes the create subcommand.
 func (c *cmdNetworkAddressSetCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<address-set> [key=value...]"))
+	cmd.Use = cli.U("create", u.NewName(u.AddressSet).Remote(), u.KV.List(0))
 	cmd.Short = i18n.G("Create new network address sets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network address sets"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network address-set create as1
@@ -348,7 +349,7 @@ type cmdNetworkAddressSetSet struct {
 // Command initializes the set subcommand.
 func (c *cmdNetworkAddressSetSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("set", i18n.G("[<remote>:]<address-set> <key>=<value>..."))
+	cmd.Use = cli.U("set", u.AddressSet.Remote(), u.KV.List(1))
 	cmd.Short = i18n.G("Set network address set configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Set network address set configuration keys`))
 
@@ -424,7 +425,7 @@ type cmdNetworkAddressSetUnset struct {
 // Command initializes the unset subcommand.
 func (c *cmdNetworkAddressSetUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("unset", i18n.G("[<remote>:]<address-set> <key>"))
+	cmd.Use = cli.U("unset", u.AddressSet.Remote(), u.Key)
 	cmd.Short = i18n.G("Unset network address set configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network address set configuration keys"))
 	cmd.RunE = c.Run
@@ -467,7 +468,7 @@ type cmdNetworkAddressSetEdit struct {
 // Command initializes the edit subcommand.
 func (c *cmdNetworkAddressSetEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<address-set>"))
+	cmd.Use = cli.U("edit", u.AddressSet.Remote())
 	cmd.Short = i18n.G("Edit network address set configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network address set configurations as YAML"))
 	cmd.RunE = c.Run
@@ -588,7 +589,7 @@ type cmdNetworkAddressSetRename struct {
 // Command initializes the rename subcommand.
 func (c *cmdNetworkAddressSetRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("rename", i18n.G("[<remote>:]<address-set> <new-name>"))
+	cmd.Use = cli.U("rename", u.AddressSet.Remote(), u.NewName(u.AddressSet))
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename network address sets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Rename network address sets"))
@@ -643,7 +644,7 @@ type cmdNetworkAddressSetDelete struct {
 // Command initializes the delete subcommand.
 func (c *cmdNetworkAddressSetDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<address-set> [[<remote>:]<address-set>...]"))
+	cmd.Use = cli.U("delete", u.AddressSet.Remote().List(1))
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete network address sets")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network address sets"))
@@ -697,7 +698,7 @@ type cmdNetworkAddressSetAdd struct {
 // Command initializes the add subcommand.
 func (c *cmdNetworkAddressSetAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("add", i18n.G("[<remote>:]<address-set> <address>..."))
+	cmd.Use = cli.U("add", u.AddressSet.Remote(), u.Address.List(1))
 	cmd.Short = i18n.G("Add addresses to a network address set")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add addresses to a network address set"))
 
@@ -750,7 +751,7 @@ type cmdNetworkAddressSetRemove struct {
 // Command initializes the remove subcommand.
 func (c *cmdNetworkAddressSetRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("remove", i18n.G("[<remote>:]<address-set> <address>..."))
+	cmd.Use = cli.U("remove", u.AddressSet.Remote(), u.Address.List(1))
 	cmd.Short = i18n.G("Remove addresses from a network address set")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove addresses from a network address set"))
 

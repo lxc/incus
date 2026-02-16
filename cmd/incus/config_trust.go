@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -32,7 +33,7 @@ type cmdConfigTrust struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrust) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("trust")
+	cmd.Use = cli.U("trust")
 	cmd.Short = i18n.G("Manage trusted clients")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage trusted clients`))
@@ -88,7 +89,7 @@ type cmdConfigTrustAdd struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("add", i18n.G("[<remote>:]<name>"))
+	cmd.Use = cli.U("add", u.NewName(u.Client).Remote())
 	cmd.Short = i18n.G("Add new trusted client")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add new trusted client
@@ -171,7 +172,7 @@ type cmdConfigTrustAddCertificate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustAddCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("add-certificate", i18n.G("[<remote>:] <cert>"))
+	cmd.Use = cli.U("add-certificate", u.RemoteColonOpt, u.Placeholder(i18n.G("cert.crt")))
 	cmd.Short = i18n.G("Add new trusted client certificate")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add new trusted client certificate
@@ -280,7 +281,7 @@ type cmdConfigTrustEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<fingerprint>"))
+	cmd.Use = cli.U("edit", u.Fingerprint.Remote())
 	cmd.Short = i18n.G("Edit trust configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit trust configurations as YAML`))
@@ -406,7 +407,7 @@ type rowData struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]"))
+	cmd.Use = cli.U("list", u.RemoteColonOpt)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List trusted clients")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -611,7 +612,7 @@ type configTrustListTokenColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustListTokens) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list-tokens", i18n.G("[<remote>:]"))
+	cmd.Use = cli.U("list-tokens", u.RemoteColonOpt)
 	cmd.Short = i18n.G("List all active certificate add tokens")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List all active certificate add tokens
@@ -769,7 +770,7 @@ type cmdConfigTrustRemove struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("remove", i18n.G("[<remote>:]<fingerprint>"))
+	cmd.Use = cli.U("remove", u.Fingerprint.Remote())
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove trusted client")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -818,7 +819,7 @@ type cmdConfigTrustRevokeToken struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustRevokeToken) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("revoke-token", i18n.G("[<remote>:] <name>"))
+	cmd.Use = cli.U("revoke-token", u.RemoteColonOpt, u.Token)
 	cmd.Short = i18n.G("Revoke certificate add token")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Revoke certificate add token`))
@@ -891,7 +892,7 @@ type cmdConfigTrustShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<fingerprint>"))
+	cmd.Use = cli.U("show", u.Fingerprint.Remote())
 	cmd.Short = i18n.G("Show trust configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show trust configurations`))
