@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -37,7 +38,7 @@ type cmdExec struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdExec) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("exec", i18n.G("[<remote>:]<instance> [flags] [--] <command line>"))
+	cmd.Use = cli.U("exec", u.Instance.Remote(), u.Flags, u.Dash(""), u.Placeholder(i18n.G("command line>")))
 	cmd.Short = i18n.G("Execute commands in instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Execute commands in instances

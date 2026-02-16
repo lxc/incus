@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -20,7 +21,7 @@ type cmdLaunch struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdLaunch) Command() *cobra.Command {
 	cmd := c.init.Command()
-	cmd.Use = cli.Usage("launch", i18n.G("[<remote>:]<image> [<remote>:][<name>]"))
+	cmd.Use = cli.U("launch", u.Image.Remote(), u.NewName(u.Instance).Optional().Remote())
 	cmd.Short = i18n.G("Create and start instances from images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create and start instances from images`))

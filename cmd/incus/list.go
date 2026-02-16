@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
@@ -47,7 +48,7 @@ type cmdList struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list", i18n.G("[<remote>:] [<filter>...]"))
+	cmd.Use = cli.U("list", u.RemoteColonOpt, u.Filter.List(0))
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(

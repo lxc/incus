@@ -27,7 +27,7 @@ type cmdAdminShutdown struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("shutdown")
+	cmd.Use = cli.U("shutdown")
 	cmd.Short = i18n.G("Tell the daemon to shutdown all instances and exit")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Tell the daemon to shutdown all instances and exit
 

@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
@@ -29,7 +30,7 @@ type cmdConfig struct {
 // including options for device, edit, get, metadata, profile, set, show, template, trust, and unset.
 func (c *cmdConfig) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("config")
+	cmd.Use = cli.U("config")
 	cmd.Short = i18n.G("Manage instance and server configuration options")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Manage instance and server configuration options`))
@@ -92,7 +93,7 @@ type cmdConfigEdit struct {
 // Command creates a Cobra command to edit instance or server configurations using YAML, with optional flags for targeting cluster members.
 func (c *cmdConfigEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:][<instance>[/<snapshot>]]"))
+	cmd.Use = cli.U("edit", u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote())
 	cmd.Short = i18n.G("Edit instance or server configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit instance or server configurations as YAML`))
@@ -385,7 +386,7 @@ type cmdConfigGet struct {
 // with optional flags for expanded configuration and cluster targeting.
 func (c *cmdConfigGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("get", i18n.G("[<remote>:][<instance>] <key>"))
+	cmd.Use = cli.U("get", u.Instance.Optional().Remote(), u.Key)
 	cmd.Short = i18n.G("Get values for instance or server configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get values for instance or server configuration keys`))
@@ -522,7 +523,7 @@ type cmdConfigSet struct {
 // Command creates a new Cobra command to set instance or server configuration keys and returns it.
 func (c *cmdConfigSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("set", i18n.G("[<remote>:][<instance>] <key>=<value>..."))
+	cmd.Use = cli.U("set", u.Instance.Optional().Remote(), u.KV.List(1))
 	cmd.Short = i18n.G("Set instance or server configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set instance or server configuration keys
@@ -749,7 +750,7 @@ type cmdConfigShow struct {
 // Command sets up the "show" command, which displays instance or server configurations based on the provided arguments.
 func (c *cmdConfigShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:][<instance>[/<snapshot>]]"))
+	cmd.Use = cli.U("show", u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote())
 	cmd.Short = i18n.G("Show instance or server configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance or server configurations`))
@@ -881,7 +882,7 @@ type cmdConfigUnset struct {
 // Command generates a new "unset" command to remove specific configuration keys for an instance or server.
 func (c *cmdConfigUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("unset", i18n.G("[<remote>:][<instance>] <key>"))
+	cmd.Use = cli.U("unset", u.Instance.Optional().Remote(), u.Key)
 	cmd.Short = i18n.G("Unset instance or server configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Unset instance or server configuration keys`))
