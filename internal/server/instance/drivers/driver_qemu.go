@@ -6167,18 +6167,21 @@ func (d *qemu) detachDisk(name string) error {
 		return err
 	}
 
-	// Check if it's a special device (we don't store detached state on those).
-	if slices.Contains([]string{"agent:config", "cloud-init:config"}, config["source"]) {
-		return nil
-	}
-
-	// Find the disk device.
+	// Check if it's a special device or an inherited device for which we can't save state.
 	_, ok = d.localDevices[diskName]
-	if !ok {
-		// Device came from a profile, we can't save its state.
+	if !ok || slices.Contains([]string{"agent:config", "cloud-init:config"}, config["source"]) {
+		// Record that the instance devices got modified and a full reset will be needed to get a consistent state.
+		err = d.VolatileSet(map[string]string{
+			"volatile.vm.needs_reset": "true",
+		})
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 
+	// Record the device as detached.
 	d.localDevices[diskName]["attached"] = "false"
 
 	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
