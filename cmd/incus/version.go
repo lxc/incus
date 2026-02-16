@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/version"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -18,7 +19,7 @@ type cmdVersion struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdVersion) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("version", i18n.G("[<remote>:]"))
+	cmd.Use = cli.U("version", u.RemoteColonOpt)
 	cmd.Short = i18n.G("Show local and remote versions")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show local and remote versions`))

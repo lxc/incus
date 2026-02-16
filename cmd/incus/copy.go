@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
@@ -38,7 +39,7 @@ type cmdCopy struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdCopy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("copy", i18n.G("[<remote>:]<source>[/<snapshot>] [[<remote>:]<destination>]"))
+	cmd.Use = cli.U("copy", u.MakePath(u.Instance, u.Snapshot.Optional()).Remote(), u.NewName(u.Instance).Optional().Remote())
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy instances within or in between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(

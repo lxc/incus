@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -26,7 +27,7 @@ type cmdNetworkForward struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForward) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("forward")
+	cmd.Use = cli.U("forward")
 	cmd.Short = i18n.G("Manage network forwards")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network forwards"))
 
@@ -89,7 +90,7 @@ type networkForwardColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("list", i18n.G("[<remote>:]<network>"))
+	cmd.Use = cli.U("list", u.Network.Remote())
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network forwards")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -253,7 +254,7 @@ type cmdNetworkForwardShow struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("show", i18n.G("[<remote>:]<network> <listen_address>"))
+	cmd.Use = cli.U("show", u.Network.Remote(), u.ListenAddress)
 	cmd.Short = i18n.G("Show network forward configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network forward configurations"))
 	cmd.RunE = c.Run
@@ -333,7 +334,7 @@ type cmdNetworkForwardCreate struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("create", i18n.G("[<remote>:]<network> <listen_address> [key=value...]"))
+	cmd.Use = cli.U("create", u.Network.Remote(), u.ListenAddress, u.KV.List(0))
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network forwards")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network forwards"))
@@ -444,7 +445,7 @@ type cmdNetworkForwardGet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("get", i18n.G("[<remote>:]<network> <listen_address> <key>"))
+	cmd.Use = cli.U("get", u.Network.Remote(), u.ListenAddress, u.Key)
 	cmd.Short = i18n.G("Get values for network forward configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get values for network forward configuration keys"))
 
@@ -531,7 +532,7 @@ type cmdNetworkForwardSet struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("set", i18n.G("[<remote>:]<network> <listen_address> <key>=<value>..."))
+	cmd.Use = cli.U("set", u.Network.Remote(), u.ListenAddress, u.KV.List(1))
 	cmd.Short = i18n.G("Set network forward keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set network forward keys
@@ -641,7 +642,7 @@ type cmdNetworkForwardUnset struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("unset", i18n.G("[<remote>:]<network> <listen_address> <key>"))
+	cmd.Use = cli.U("unset", u.Network.Remote(), u.ListenAddress, u.Key)
 	cmd.Short = i18n.G("Unset network forward configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network forward keys"))
 	cmd.RunE = c.Run
@@ -690,7 +691,7 @@ type cmdNetworkForwardEdit struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("edit", i18n.G("[<remote>:]<network> <listen_address>"))
+	cmd.Use = cli.U("edit", u.Network.Remote(), u.ListenAddress)
 	cmd.Short = i18n.G("Edit network forward configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network forward configurations as YAML"))
 	cmd.RunE = c.Run
@@ -845,7 +846,7 @@ type cmdNetworkForwardDelete struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("delete", i18n.G("[<remote>:]<network> <listen_address>"))
+	cmd.Use = cli.U("delete", u.Network.Remote(), u.ListenAddress)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network forwards")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network forwards"))
@@ -923,7 +924,7 @@ type cmdNetworkForwardPort struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardPort) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("port")
+	cmd.Use = cli.U("port")
 	cmd.Short = i18n.G("Manage network forward ports")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network forward ports"))
 
@@ -939,7 +940,7 @@ func (c *cmdNetworkForwardPort) Command() *cobra.Command {
 // CommandAdd returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardPort) CommandAdd() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("add", i18n.G("[<remote>:]<network> <listen_address> <protocol> <listen_port(s)> <target_address> [<target_port(s)>]"))
+	cmd.Use = cli.U("add", u.Network.Remote(), u.ListenAddress, u.Protocol, u.ListenPort.List(1, ","), u.Target(u.Address), u.Target(u.Port).List(0, ","))
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add ports to a forward")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add ports to a forward"))
@@ -1025,7 +1026,7 @@ func (c *cmdNetworkForwardPort) RunAdd(cmd *cobra.Command, args []string) error 
 // CommandRemove returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkForwardPort) CommandRemove() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("remove", i18n.G("[<remote>:]<network> <listen_address> [<protocol>] [<listen_port(s)>]"))
+	cmd.Use = cli.U("remove", u.Network.Remote(), u.ListenAddress, u.Protocol.Optional(u.ListenPort.List(0, ",")))
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove ports from a forward")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove ports from a forward"))

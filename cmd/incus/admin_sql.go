@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	internalSQL "github.com/lxc/incus/v6/internal/sql"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -26,7 +27,7 @@ type cmdAdminSQL struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("sql", i18n.G("[<remote>]:<local|global> <query>"))
+	cmd.Use = cli.U("sql", u.EitherVerbatim("local", "global").Remote(), u.Query)
 	cmd.Short = i18n.G("Execute a SQL query against the local or global database")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Execute a SQL query against the local or global database
 

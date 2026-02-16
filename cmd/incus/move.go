@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -32,7 +33,7 @@ type cmdMove struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdMove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("move", i18n.G("[<remote>:]<instance> [<remote>:][<instance>]"))
+	cmd.Use = cli.U("move", u.Instance.Remote(), u.NewName(u.Instance).Optional().Remote())
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Move instances within or in between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -50,10 +51,7 @@ The pull transfer mode is the default as it is compatible with all server versio
     Move an instance between two hosts, renaming it if destination name differs.
 
 incus move <old name> <new name> [--instance-only]
-    Rename a local instance.
-
-incus move <instance>/<old snapshot name> <instance>/<new snapshot name>
-    Rename a snapshot.`))
+    Rename a local instance.`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the target instance")+"``")

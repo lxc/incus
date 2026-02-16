@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 )
@@ -20,7 +21,7 @@ type cmdManpage struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdManpage) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("manpage", i18n.G("<target>"))
+	cmd.Use = cli.U("manpage", u.Target(u.Directory))
 	cmd.Short = i18n.G("Generate manpages for all commands")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Generate manpages for all commands`))

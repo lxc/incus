@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 )
@@ -18,7 +19,7 @@ type cmdRename struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.Usage("rename", i18n.G("[<remote>:]<instance> <instance>"))
+	cmd.Use = cli.U("rename", u.Instance.Remote(), u.NewName(u.Instance))
 	cmd.Short = i18n.G("Rename instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Rename instances`))
