@@ -333,6 +333,14 @@ test_property() {
     incus config unset foo/s1 expires_at --property
     incus config show foo/s1 | grep -q "expires_at: 0001-01-01T00:00:00Z"
 
+    # Create a snap of the instance to set its description
+    incus snapshot create foo s2
+    incus config set foo/s2 snapshot_description="test for snapshot" --property
+    incus config get foo/s2 snapshot_description --property | grep -q "test for snapshot"
+    incus config show foo/s2 | grep -q "snapshot_description: test for snapshot"
+    incus config unset foo/s2 snapshot_description --property
+    ! incus config show foo/s2 | grep -q "snapshot_description: test for snapshot" || false
+
     # Create a storage volume, create a volume snapshot and set its expiration timestamp
     # shellcheck disable=2039,3043
     local storage_pool

@@ -13,7 +13,7 @@ import (
 )
 
 var instanceSnapshotObjects = RegisterStmt(`
-SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, instances_snapshots.stateful, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
+SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
   FROM instances_snapshots
   JOIN projects ON instances.project_id = projects.id
   JOIN instances ON instances_snapshots.instance_id = instances.id
@@ -21,7 +21,7 @@ SELECT instances_snapshots.id, projects.name AS project, instances.name AS insta
 `)
 
 var instanceSnapshotObjectsByID = RegisterStmt(`
-SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, instances_snapshots.stateful, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
+SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
   FROM instances_snapshots
   JOIN projects ON instances.project_id = projects.id
   JOIN instances ON instances_snapshots.instance_id = instances.id
@@ -30,7 +30,7 @@ SELECT instances_snapshots.id, projects.name AS project, instances.name AS insta
 `)
 
 var instanceSnapshotObjectsByProjectAndInstance = RegisterStmt(`
-SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, instances_snapshots.stateful, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
+SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
   FROM instances_snapshots
   JOIN projects ON instances.project_id = projects.id
   JOIN instances ON instances_snapshots.instance_id = instances.id
@@ -39,7 +39,7 @@ SELECT instances_snapshots.id, projects.name AS project, instances.name AS insta
 `)
 
 var instanceSnapshotObjectsByProjectAndInstanceAndName = RegisterStmt(`
-SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, instances_snapshots.stateful, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
+SELECT instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date
   FROM instances_snapshots
   JOIN projects ON instances.project_id = projects.id
   JOIN instances ON instances_snapshots.instance_id = instances.id
@@ -55,8 +55,8 @@ SELECT instances_snapshots.id FROM instances_snapshots
 `)
 
 var instanceSnapshotCreate = RegisterStmt(`
-INSERT INTO instances_snapshots (instance_id, name, creation_date, stateful, description, expiry_date)
-  VALUES ((SELECT instances.id FROM instances JOIN projects ON instances.project_id = projects.id WHERE projects.name = ? AND instances.name = ?), ?, ?, ?, ?, ?)
+INSERT INTO instances_snapshots (instance_id, name, creation_date, description, expiry_date)
+  VALUES ((SELECT instances.id FROM instances JOIN projects ON instances.project_id = projects.id WHERE projects.name = ? AND instances.name = ?), ?, ?, ?, ?)
 `)
 
 var instanceSnapshotRename = RegisterStmt(`
@@ -70,7 +70,7 @@ DELETE FROM instances_snapshots WHERE instance_id = (SELECT instances.id FROM in
 // instanceSnapshotColumns returns a string of column names to be used with a SELECT statement for the entity.
 // Use this function when building statements to retrieve database entries matching the InstanceSnapshot entity.
 func instanceSnapshotColumns() string {
-	return "instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, instances_snapshots.stateful, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date"
+	return "instances_snapshots.id, projects.name AS project, instances.name AS instance, instances_snapshots.name, instances_snapshots.creation_date, coalesce(instances_snapshots.description, ''), instances_snapshots.expiry_date"
 }
 
 // getInstanceSnapshots can be used to run handwritten sql.Stmts to return a slice of objects.
@@ -79,7 +79,7 @@ func getInstanceSnapshots(ctx context.Context, stmt *sql.Stmt, args ...any) ([]I
 
 	dest := func(scan func(dest ...any) error) error {
 		i := InstanceSnapshot{}
-		err := scan(&i.ID, &i.Project, &i.Instance, &i.Name, &i.CreationDate, &i.Stateful, &i.Description, &i.ExpiryDate)
+		err := scan(&i.ID, &i.Project, &i.Instance, &i.Name, &i.CreationDate, &i.Description, &i.ExpiryDate)
 		if err != nil {
 			return err
 		}
@@ -103,7 +103,7 @@ func getInstanceSnapshotsRaw(ctx context.Context, db dbtx, sql string, args ...a
 
 	dest := func(scan func(dest ...any) error) error {
 		i := InstanceSnapshot{}
-		err := scan(&i.ID, &i.Project, &i.Instance, &i.Name, &i.CreationDate, &i.Stateful, &i.Description, &i.ExpiryDate)
+		err := scan(&i.ID, &i.Project, &i.Instance, &i.Name, &i.CreationDate, &i.Description, &i.ExpiryDate)
 		if err != nil {
 			return err
 		}
@@ -371,16 +371,15 @@ func CreateInstanceSnapshot(ctx context.Context, db dbtx, object InstanceSnapsho
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	args := make([]any, 7)
+	args := make([]any, 6)
 
 	// Populate the statement arguments.
 	args[0] = object.Project
 	args[1] = object.Instance
 	args[2] = object.Name
 	args[3] = object.CreationDate
-	args[4] = object.Stateful
-	args[5] = object.Description
-	args[6] = object.ExpiryDate
+	args[4] = object.Description
+	args[5] = object.ExpiryDate
 
 	// Prepared statement to use.
 	stmt, err := Stmt(db, instanceSnapshotCreate)

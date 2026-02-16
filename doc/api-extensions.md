@@ -2995,3 +2995,7 @@ This allows to perform backups of instances, custom storage volumes and storage 
 ## `instance_snapshot_disk_only_restore`
 
 This adds support for only restoring the disk of a snapshotted instance.
+
+## `snapshot_description`
+
+This adds a `description` field to instance snapshot.

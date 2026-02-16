@@ -301,7 +301,11 @@ func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, project, 
 			return nil, fmt.Errorf("Failed to fetch snapshot %q of instance %q in project %q: %w", snapshotName, instanceName, project, err)
 		}
 
-		c := snapshot.ToInstance(instance.Name, instance.Node, instance.Type, instance.Architecture)
+		c, err := snapshot.ToInstance(ctx, tx.Tx(), instance.Name, instance.Node, instance.Type, instance.Architecture)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse snapshot %q to instance %q: %w", snapshotName, instanceName, err)
+		}
+
 		container = &c
 	} else {
 		container, err = cluster.GetInstance(ctx, tx.Tx(), project, name)
@@ -758,15 +762,12 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		args.Architecture = s.OS.Architectures[0]
 	}
 
-	err = ValidName(args.Name, args.Snapshot)
+	err = ValidName(args.Name, args.IsSnapshot)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	if !args.Snapshot {
-		// Unset expiry date since instances don't expire.
-		args.ExpiryDate = time.Time{}
-
+	if !args.IsSnapshot {
 		// Generate a cloud-init instance-id if not provided.
 		//
 		// This is generated here rather than in startCommon as only new
@@ -856,7 +857,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 			return err
 		}
 
-		if args.Snapshot {
+		if args.IsSnapshot {
 			parts := strings.SplitN(args.Name, instance.SnapshotDelimiter, 2)
 			instanceName := parts[0]
 			snapshotName := parts[1]
@@ -870,14 +871,25 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 				Instance:     instanceName,
 				Name:         snapshotName,
 				CreationDate: args.CreationDate,
-				Stateful:     args.Stateful,
-				Description:  args.Description,
-				ExpiryDate:   sql.NullTime{Time: args.ExpiryDate, Valid: true},
+				Description:  args.Snapshot.Description,
+				ExpiryDate:   sql.NullTime{Time: args.Snapshot.ExpiryDate, Valid: true},
 			}
 
 			id, err := cluster.CreateInstanceSnapshot(ctx, tx.Tx(), snapshot)
 			if err != nil {
 				return fmt.Errorf("Add snapshot info to the database: %w", err)
+			}
+
+			properties := cluster.InstanceSnapshotProperty{
+				InstanceSnapshotID: int(id),
+				Ephemeral:          args.Ephemeral,
+				Stateful:           args.Stateful,
+				Description:        args.Description,
+			}
+
+			_, err = cluster.CreateInstanceSnapshotProperty(ctx, tx.Tx(), properties)
+			if err != nil {
+				return err
 			}
 
 			err = cluster.CreateInstanceSnapshotConfig(ctx, tx.Tx(), id, args.Config)
@@ -896,7 +908,10 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 				return fmt.Errorf("Fetch created snapshot from the database: %w", err)
 			}
 
-			dbInst = s.ToInstance(instance.Name, instance.Node, instance.Type, instance.Architecture)
+			dbInst, err := s.ToInstance(ctx, tx.Tx(), instance.Name, instance.Node, instance.Type, instance.Architecture)
+			if err != nil {
+				return err
+			}
 
 			newArgs, err := tx.InstancesToInstanceArgs(ctx, false, dbInst)
 			if err != nil {
@@ -917,14 +932,13 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 			Name:         args.Name,
 			Node:         s.ServerName,
 			Type:         args.Type,
-			Snapshot:     args.Snapshot,
+			Snapshot:     args.IsSnapshot,
 			Architecture: args.Architecture,
 			Ephemeral:    args.Ephemeral,
 			CreationDate: args.CreationDate,
 			Stateful:     args.Stateful,
 			LastUseDate:  sql.NullTime{Time: args.LastUsedDate, Valid: true},
 			Description:  args.Description,
-			ExpiryDate:   sql.NullTime{Time: args.ExpiryDate, Valid: true},
 		}
 
 		instanceID, err := cluster.CreateInstance(ctx, tx.Tx(), dbInst)
@@ -1190,6 +1204,7 @@ func SnapshotToProtobuf(snap *api.InstanceSnapshot) *migration.Snapshot {
 		CreationDate: &creationDate,
 		LastUsedDate: &lastUsedDate,
 		ExpiryDate:   &expiryDate,
+		Description:  &snap.SnapshotDescription,
 	}
 }
 
@@ -1231,13 +1246,17 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		Config:       config,
 		Description:  inst.Description(),
 		Type:         inst.Type(),
-		Snapshot:     true,
 		Devices:      devices,
 		Ephemeral:    snap.GetEphemeral(),
 		Name:         inst.Name() + instance.SnapshotDelimiter + snap.GetName(),
 		Profiles:     profiles,
 		Stateful:     snap.GetStateful(),
 		Project:      inst.Project().Name,
+		IsSnapshot:   true,
+		Snapshot: db.SnapshotArgs{
+			Description: snap.GetDescription(),
+			ExpiryDate:  time.Time{},
+		},
 	}
 
 	if snap.GetCreationDate() != 0 {
@@ -1249,7 +1268,7 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 	}
 
 	if snap.GetExpiryDate() != 0 {
-		args.ExpiryDate = time.Unix(snap.GetExpiryDate(), 0)
+		args.Snapshot.ExpiryDate = time.Unix(snap.GetExpiryDate(), 0)
 	}
 
 	return &args, nil

@@ -24,10 +24,9 @@ import (
 // InstanceArgs is a value object holding all db-related details about an instance.
 type InstanceArgs struct {
 	// Don't set manually
-	ID       int
-	Node     string
-	Type     instancetype.Type
-	Snapshot bool
+	ID   int
+	Node string
+	Type instancetype.Type
 
 	// Creation only
 	Project      string
@@ -43,7 +42,8 @@ type InstanceArgs struct {
 	Name         string
 	Profiles     []api.Profile
 	Stateful     bool
-	ExpiryDate   time.Time
+	IsSnapshot   bool
+	Snapshot     SnapshotArgs
 }
 
 // GetInstanceNames returns the names of all containers the given project.
@@ -285,6 +285,61 @@ func (c *ClusterTx) InstanceList(ctx context.Context, instanceFunc func(inst Ins
 	}
 
 	return nil
+}
+
+// instanceSnapshotFill function loads snapshot metadata for all specified instances in a single query and then updates
+// the entries in the instances map.
+func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[int]InstanceArgs) error {
+	instances := *instanceArgs
+
+	var q strings.Builder
+
+	q.WriteString(`SELECT
+		id,
+		description,
+		expiry_date
+	FROM instances_snapshots
+	WHERE id IN (`)
+
+	q.Grow(len(instances) * 2) // We know the minimum length of the separators and integers.
+
+	first := true
+	for snapshotID := range instances {
+		if !first {
+			q.WriteString(",")
+		}
+
+		first = false
+
+		q.WriteString(fmt.Sprintf("%d", snapshotID))
+	}
+
+	q.WriteString(`)`)
+
+	return query.Scan(ctx, c.Tx(), q.String(), func(scan func(dest ...any) error) error {
+		var ID int
+		var description string
+		var expiryDate time.Time
+
+		err := scan(&ID, &description, &expiryDate)
+		if err != nil {
+			return err
+		}
+
+		_, found := instances[ID]
+		if !found {
+			return fmt.Errorf("Failed loading instance config, referenced instance %d not loaded", ID)
+		}
+
+		inst := instances[ID]
+		inst.Snapshot = SnapshotArgs{
+			Description: description,
+			ExpiryDate:  expiryDate,
+		}
+
+		instances[ID] = inst
+		return nil
+	})
 }
 
 // instanceConfigFill function loads config for all specified instances in a single query and then updates
@@ -594,14 +649,13 @@ func (c *ClusterTx) InstancesToInstanceArgs(ctx context.Context, fillProfiles bo
 			Name:         instance.Name,
 			Node:         instance.Node,
 			Type:         instance.Type,
-			Snapshot:     instance.Snapshot,
 			Architecture: instance.Architecture,
 			Ephemeral:    instance.Ephemeral,
 			CreationDate: instance.CreationDate,
 			Stateful:     instance.Stateful,
 			LastUsedDate: instance.LastUseDate.Time,
 			Description:  instance.Description,
-			ExpiryDate:   instance.ExpiryDate.Time,
+			IsSnapshot:   instance.Snapshot,
 		}
 
 		instanceArgs[instance.ID] = args
@@ -609,6 +663,14 @@ func (c *ClusterTx) InstancesToInstanceArgs(ctx context.Context, fillProfiles bo
 
 	if instanceCount > 0 && snapshotCount > 0 {
 		return nil, errors.New("Cannot use InstancesToInstanceArgs with mixed instance and instance snapshots")
+	}
+
+	// populate instance snapshot.
+	if snapshotCount > 0 {
+		err := c.instanceSnapshotFill(ctx, &instanceArgs)
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading instance snapshot: %w", err)
+		}
 	}
 
 	// Populate instance config.
@@ -817,7 +879,12 @@ func (c *ClusterTx) GetInstanceSnapshotsWithName(ctx context.Context, project st
 
 	instances := make([]cluster.Instance, len(snapshots))
 	for i, snapshot := range snapshots {
-		instances[i] = snapshot.ToInstance(instance.Name, instance.Node, instance.Type, instance.Architecture)
+		inst, err := snapshot.ToInstance(ctx, c.tx, instance.Name, instance.Node, instance.Type, instance.Architecture)
+		if err != nil {
+			return nil, err
+		}
+
+		instances[i] = inst
 	}
 
 	return instances, nil
@@ -826,7 +893,7 @@ func (c *ClusterTx) GetInstanceSnapshotsWithName(ctx context.Context, project st
 // GetLocalInstanceWithVsockID returns all available instances with the given config key and value.
 func (c *ClusterTx) GetLocalInstanceWithVsockID(ctx context.Context, vsockID int) (*cluster.Instance, error) {
 	q := `
-SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, ''), instances.expiry_date
+SELECT instances.id, projects.name AS project, instances.name, nodes.name AS node, instances.type, instances.architecture, instances.ephemeral, instances.creation_date, instances.stateful, instances.last_use_date, coalesce(instances.description, '')
   FROM instances JOIN projects ON instances.project_id = projects.id JOIN nodes ON instances.node_id = nodes.id JOIN instances_config ON instances.id = instances_config.instance_id
   WHERE instances.node_id = ? AND instances.type = ? AND instances_config.key = "volatile.vsock_id" AND instances_config.value = ? LIMIT 1
   `
@@ -834,7 +901,7 @@ SELECT instances.id, projects.name AS project, instances.name, nodes.name AS nod
 	inargs := []any{c.nodeID, instancetype.VM, vsockID}
 	inst := cluster.Instance{}
 
-	err := c.tx.QueryRowContext(ctx, q, inargs...).Scan(&inst.ID, &inst.Project, &inst.Name, &inst.Node, &inst.Type, &inst.Architecture, &inst.Ephemeral, &inst.CreationDate, &inst.Stateful, &inst.LastUseDate, &inst.Description, &inst.ExpiryDate)
+	err := c.tx.QueryRowContext(ctx, q, inargs...).Scan(&inst.ID, &inst.Project, &inst.Name, &inst.Node, &inst.Type, &inst.Architecture, &inst.Ephemeral, &inst.CreationDate, &inst.Stateful, &inst.LastUseDate, &inst.Description)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, api.StatusErrorf(http.StatusNotFound, "Instance not found")
@@ -1073,22 +1140,15 @@ func CreateInstanceConfig(ctx context.Context, tx *sql.Tx, id int, config map[st
 
 // UpdateInstance updates the description, architecture and ephemeral flag of
 // the instance with the given ID.
-func UpdateInstance(tx *sql.Tx, id int, description string, architecture int, ephemeral bool,
-	expiryDate time.Time,
-) error {
-	str := "UPDATE instances SET description=?, architecture=?, ephemeral=?, expiry_date=? WHERE id=?"
+func UpdateInstance(tx *sql.Tx, id int, description string, architecture int, ephemeral bool) error {
+	str := "UPDATE instances SET description=?, architecture=?, ephemeral=? WHERE id=?"
 	ephemeralInt := 0
 	if ephemeral {
 		ephemeralInt = 1
 	}
 
 	var err error
-	if expiryDate.IsZero() {
-		_, err = tx.Exec(str, description, architecture, ephemeralInt, "", id)
-	} else {
-		_, err = tx.Exec(str, description, architecture, ephemeralInt, expiryDate, id)
-	}
-
+	_, err = tx.Exec(str, description, architecture, ephemeralInt, id)
 	if err != nil {
 		return err
 	}
