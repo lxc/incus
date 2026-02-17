@@ -1438,7 +1438,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Generate the config drive.
-	err = d.generateConfigShare()
+	err = d.generateConfigShare(volatileSet)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -3096,7 +3096,7 @@ func (d *qemu) spiceCmdlineConfig() string {
 // a 9P share. Due to the unknown size of templates inside the images this directory is created
 // inside the VM's config volume so that it can be restricted by quota.
 // Requires the instance be mounted before calling this function.
-func (d *qemu) generateConfigShare() error {
+func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 	configDrivePath := filepath.Join(d.Path(), "config")
 
 	// Create config drive dir if doesn't exist, if it does exist, leave it around so we don't regenerate all
@@ -3367,13 +3367,9 @@ func (d *qemu) generateConfigShare() error {
 			return err
 		}
 
-		err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			// Remove the volatile key from the DB.
-			return tx.DeleteInstanceConfigKey(ctx, int64(d.id), key)
-		})
-		if err != nil {
-			return err
-		}
+		// Record that the instance devices got modified and a full reset will be needed to get a consistent state.
+		volatileSet[key] = ""
+		volatileSet["volatile.vm.needs_reset"] = "true"
 	}
 
 	err = d.templateApplyNow("start", templateFilesPath)
