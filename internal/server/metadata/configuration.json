@@ -2007,6 +2007,13 @@
 						}
 					},
 					{
+						"pci": {
+							"longdesc": "",
+							"shortdesc": "The PCI address of a USB controller to monitor",
+							"type": "string"
+						}
+					},
+					{
 						"productid": {
 							"longdesc": "",
 							"shortdesc": "The product ID of the USB device",
