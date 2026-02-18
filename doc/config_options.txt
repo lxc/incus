@@ -1763,6 +1763,12 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} pci devices-unix-hotplug
+:shortdesc: "The PCI address of a USB controller to monitor"
+:type: "string"
+
+```
+
 ```{config:option} productid devices-unix-hotplug
 :shortdesc: "The product ID of the USB device"
 :type: "string"
