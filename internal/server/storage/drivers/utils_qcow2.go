@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -403,6 +404,29 @@ func ConnectQemuNbd(devPath string, format string, detectZeroes string, readOnly
 	_, err = subprocess.RunCommand("qemu-nbd", args...)
 	if err != nil {
 		return "", err
+	}
+
+	// It can take a little while before the /dev/nbdX device is fully mapped.
+	var sz int64
+	for range 20 {
+		sz, err = BlockDiskSizeBytes(nbdPath)
+		if err != nil {
+			_ = DisconnectQemuNbd(nbdPath)
+
+			return "", err
+		}
+
+		if sz > 0 {
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	if sz == 0 {
+		_ = DisconnectQemuNbd(nbdPath)
+
+		return "", fmt.Errorf("NBD device %q not correctly mapped after 2s", nbdPath)
 	}
 
 	return nbdPath, nil
