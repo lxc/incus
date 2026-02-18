@@ -50,14 +50,14 @@ type Monitor struct {
 	path string
 	qmp  *qemuMachineProtocol
 
-	agentStarted      bool
-	agentStartedMu    sync.Mutex
-	disconnected      bool
-	chDisconnect      chan struct{}
-	eventHandler      func(name string, data map[string]any)
-	serialCharDev     string
-	initialized       bool
-	detachDisk        func(name string) error
+	agentStarted   bool
+	agentStartedMu sync.Mutex
+	disconnected   bool
+	chDisconnect   chan struct{}
+	eventHandler   func(name string, data map[string]any)
+	serialCharDev  string
+	initialized    bool
+	detachDisk     func(name string) error
 }
 
 // start handles the background goroutines for event handling and monitoring the ringbuffer.
