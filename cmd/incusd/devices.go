@@ -231,6 +231,11 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
 					continue
 				}
 
+				var pci string
+				if strings.HasPrefix(props["DEVPATH"], "/devices/pci") {
+					pci = filepath.Base(strings.Split(props["DEVPATH"], "/usb")[0])
+				}
+
 				vendor := ""
 				product := ""
 				if action == "add" {
@@ -261,6 +266,7 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
 					 */
 					vendor,
 					product,
+					pci,
 					major,
 					minor,
 					subsystem,
