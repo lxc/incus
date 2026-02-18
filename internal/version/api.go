@@ -513,6 +513,7 @@ var APIExtensions = []string{
 	"nic_sriov_security_trusted",
 	"direct_backup",
 	"instance_snapshot_disk_only_restore",
+	"unix_hotplug_pci",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
