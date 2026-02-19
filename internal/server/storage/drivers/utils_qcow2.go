@@ -338,6 +338,20 @@ func Qcow2DeleteConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operat
 		return err
 	}
 
+	// Remove the snapshot mount path from the storage device.
+	snapPath := snapVol.MountPath()
+	err = os.RemoveAll(snapPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Error removing snapshot mount path %q: %w", snapPath, err)
+	}
+
+	// Remove the parent snapshot directory if this is the last snapshot being removed.
+	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
+	err = deleteParentSnapshotDirIfEmpty(snapVol.pool, snapVol.volType, parentName)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
