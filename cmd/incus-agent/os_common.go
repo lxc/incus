@@ -4,7 +4,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"math"
 	"net"
@@ -20,7 +19,6 @@ import (
 
 	"github.com/lxc/incus/v6/internal/server/metrics"
 	"github.com/lxc/incus/v6/shared/api"
-	"github.com/lxc/incus/v6/shared/logger"
 )
 
 var (
@@ -272,15 +270,4 @@ func osReconfigureNetworkInterfaces() {
 
 func osExecWrapper(ctx context.Context, pty io.ReadWriteCloser) io.ReadWriteCloser {
 	return pty
-}
-
-func osGetListener(port int64) (net.Listener, error) {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		return nil, fmt.Errorf("Failed to listen on TCP: %w", err)
-	}
-
-	logger.Info("Started TCP listener")
-
-	return l, nil
 }
