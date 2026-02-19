@@ -3,9 +3,11 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
@@ -13,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FuturFusion/vsock"
 	"github.com/shirou/gopsutil/v4/disk"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -20,6 +23,7 @@ import (
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
 
+	"github.com/lxc/incus/v6/internal/ports"
 	"github.com/lxc/incus/v6/internal/server/metrics"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,7 +34,25 @@ var (
 	// https://dev.to/cosmic_predator/writing-a-windows-service-in-go-1d1m
 	osBaseWorkingDirectory = "C:\\"
 	osAgentConfigPath      = "C:\\Program Files\\Incus-Agent\\incus-agent.yml"
+	osVioSerialPath        = `\\.\org.linuxcontainers.incus`
 )
+
+func osGetListener(port int64) (net.Listener, error) {
+	const CIDAny uint32 = 4294967295 // Equivalent to VMADDR_CID_ANY.
+
+	// Setup the listener on wildcard CID for inbound connections from Incus.
+	// We use the VMADDR_CID_ANY CID so that if the VM's CID changes in the future the listener still works.
+	// A CID change can occur when restoring a stateful VM that was previously using one CID but is
+	// subsequently restored using a different one.
+	l, err := vsock.ListenContextID(CIDAny, ports.HTTPSDefaultPort, nil)
+	if err != nil {
+		return nil, fmt.Errorf("WINDOWS: Failed to listen on vsock: %w", err)
+	}
+
+	logger.Info("Started vsock listener")
+
+	return l, nil
+}
 
 // Start of Windows service code block
 // Inspired of https://github.com/golang/sys/blob/master/windows/svc/example/service.go
@@ -58,6 +80,14 @@ func (m *incusAgentService) Execute(args []string, r <-chan svc.ChangeRequest, c
 	}
 
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
+	// Start status notifier in background.
+	cancelStatusNotifier := m.agentCmd.startStatusNotifier(ctx, d.chConnected)
+	defer cancelStatusNotifier()
+
 loop:
 	for {
 		select {
