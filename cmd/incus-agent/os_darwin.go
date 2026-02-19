@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"os"
 	"os/exec"
 	"sort"
@@ -514,4 +515,15 @@ func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 			post.Cwd = osBaseWorkingDirectory
 		}
 	}
+}
+
+func osGetListener(port int64) (net.Listener, error) {
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to listen on TCP: %w", err)
+	}
+
+	logger.Info("Started TCP listener")
+
+	return l, nil
 }
