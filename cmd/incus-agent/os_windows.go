@@ -30,6 +30,7 @@ var (
 	// https://dev.to/cosmic_predator/writing-a-windows-service-in-go-1d1m
 	osBaseWorkingDirectory = "C:\\"
 	osAgentConfigPath      = "C:\\Program Files\\Incus-Agent\\incus-agent.yml"
+	osVioSerialPath        = `\\.\org.linuxcontainers.incus`
 )
 
 // Start of Windows service code block

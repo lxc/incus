@@ -30,6 +30,7 @@ import (
 var (
 	osBaseWorkingDirectory = "/"
 	osAgentConfigPath      = "/usr/local/etc/incus-agent.yml"
+	osVioSerialPath        = "/dev/virtio-ports/org.linuxcontainers.incus"
 )
 
 func parseBytes(b []byte) string {
