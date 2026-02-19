@@ -331,6 +331,7 @@ func classifyQcow2Blockdev(name string, rootDevName string) (*qcow2BlockdevInfo,
 }
 
 // filterAndSortQcow2Blockdevs selects qcow2 related block devices and sorts them in the correct order.
+// Backing blockdevs with higher indices represent older layers, while higher-index overlays represent newer layers.
 func filterAndSortQcow2Blockdevs(names []string, rootDevName string) []string {
 	items := make([]qcow2BlockdevInfo, 0, len(names))
 
@@ -344,6 +345,10 @@ func filterAndSortQcow2Blockdevs(names []string, rootDevName string) []string {
 	sort.Slice(items, func(i, j int) bool {
 		if items[i].kind != items[j].kind {
 			return items[i].kind < items[j].kind
+		}
+
+		if items[i].kind == backingBlockdevKind {
+			return items[i].index > items[j].index
 		}
 
 		return items[i].index < items[j].index
