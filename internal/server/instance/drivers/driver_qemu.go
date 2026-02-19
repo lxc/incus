@@ -381,8 +381,8 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 		return nil, errQemuAgentOffline
 	}
 
-	// Only Linux supports VirtIO vsock.
-	if d.GuestOS() != "unknown" {
+	// Only Linux and Windows support VirtIO vsock.
+	if d.GuestOS() == "darwin" {
 		// Get known network details.
 		networks, err := d.getNetworkState()
 		if err != nil {
