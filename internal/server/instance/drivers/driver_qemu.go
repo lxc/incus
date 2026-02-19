@@ -10640,28 +10640,24 @@ func (d *qemu) CreateQcow2Snapshot(snapshotName string, backingFilename string) 
 
 	defer func() { _ = f.Close() }()
 
-	// Fetch information about block devices.
-	blockdevNames, err := monitor.QueryNamedBlockNodes()
+	// Select all block devices related to a qcow2 backing chain.
+	blockDevs, err := d.fetchQcow2Blockdevs(monitor)
 	if err != nil {
-		return fmt.Errorf("Failed fetching block nodes names: %w", err)
+		return err
 	}
 
-	rootDevName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
+	rootDiskName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
 	if err != nil {
 		return fmt.Errorf("Failed getting instance root disk: %w", err)
 	}
 
-	escapedDeviceName := linux.PathNameEncode(rootDevName)
-	rootNodeName := d.blockNodeName(escapedDeviceName)
+	rootDiskName = d.blockNodeName(linux.PathNameEncode(rootDiskName))
 
 	// Fetch the current maximum overlay index.
-	overlayNodeIndex := currentQcow2OverlayIndex(blockdevNames, rootNodeName)
-	nextOverlayName := fmt.Sprintf("%s_overlay%d", rootNodeName, overlayNodeIndex+1)
+	overlayNodeIndex := currentQcow2OverlayIndex(blockDevs, rootDiskName)
+	nextOverlayName := fmt.Sprintf("%s_overlay%d", rootDiskName, overlayNodeIndex+1)
 
-	currentOverlayName := rootNodeName
-	if overlayNodeIndex >= 0 {
-		currentOverlayName = fmt.Sprintf("%s_overlay%d", rootNodeName, overlayNodeIndex)
-	}
+	currentRootNode := blockDevs[len(blockDevs)-1]
 
 	info, err := monitor.SendFileWithFDSet(nextOverlayName, f, false)
 	if err != nil {
@@ -10686,7 +10682,7 @@ func (d *qemu) CreateQcow2Snapshot(snapshotName string, backingFilename string) 
 	}
 
 	// Take a snapshot of the root disk and redirect writes to the snapshot disk.
-	err = monitor.BlockDevSnapshot(currentOverlayName, nextOverlayName)
+	err = monitor.BlockDevSnapshot(currentRootNode, nextOverlayName)
 	if err != nil {
 		return fmt.Errorf("Failed taking storage snapshot: %w", err)
 	}
@@ -10749,7 +10745,7 @@ func (d *qemu) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) er
 
 	err = monitor.RemoveBlockDevice(snapChildDevName)
 	if err != nil {
-		d.logger.Error("Remove block deevice error", logger.Ctx{"err": err})
+		d.logger.Error("Remove block device error", logger.Ctx{"err": err})
 		return err
 	}
 
