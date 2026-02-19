@@ -51,6 +51,7 @@ var (
 	osMetricsSupported     = true
 	osGuestAPISupport      = true
 	osAgentConfigPath      = "/etc/incus-agent.yml"
+	osVioSerialPath        = "/dev/virtio-ports/org.linuxcontainers.incus"
 )
 
 func runService(name string, agentCmd *cmdAgent) error {
