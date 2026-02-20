@@ -77,13 +77,10 @@ func (d *fanotify) load(ctx context.Context) error {
 
 func (d *fanotify) getEvents(ctx context.Context, mountFd int) {
 	for {
-		buf := make([]byte, 256)
+		buf := make([]byte, 4096)
 
-		// Although the event is less than 256 bytes, we read as much to ensure the entire event
-		// is captured and following events are readable. Using only binary.Read() would require
-		// more manual cleanup as otherwise bytes from a previous event would still be present and
-		// make everything unreadable.
-		_, err := unix.Read(d.fd, buf)
+		// Read enough bytes to handle multiple event records returned in one read call.
+		n, err := unix.Read(d.fd, buf)
 		if err != nil {
 			// Stop listening for events as the fanotify fd has been closed due to cleanup.
 			if ctx.Err() != nil || errors.Is(err, unix.EBADF) {
@@ -95,129 +92,121 @@ func (d *fanotify) getEvents(ctx context.Context, mountFd int) {
 			continue
 		}
 
-		rd := bytes.NewReader(buf)
+		processed := 0
+		for processed < n {
+			rd := bytes.NewReader(buf[processed:])
 
-		event := unix.FanotifyEventMetadata{}
-
-		err = binary.Read(rd, binary.LittleEndian, &event)
-		if err != nil {
-			d.logger.Error("Failed to read event metadata", logger.Ctx{"err": err})
-			continue
-		}
-
-		// Read event info fid
-		fid := fanotifyEventInfoFid{}
-
-		err = binary.Read(rd, binary.LittleEndian, &fid)
-		if err != nil {
-			d.logger.Error("Failed to read event fid", logger.Ctx{"err": err})
-			continue
-		}
-
-		// Although unix.FileHandle exists, it cannot be used with binary.Read() as the
-		// variables inside are not exported.
-		type fileHandleInfo struct {
-			Bytes uint32
-			Type  int32
-		}
-
-		// Read file handle information
-		fhInfo := fileHandleInfo{}
-
-		err = binary.Read(rd, binary.LittleEndian, &fhInfo)
-		if err != nil {
-			d.logger.Error("Failed to read file handle info", logger.Ctx{"err": err})
-			continue
-		}
-
-		// Read file handle
-		fileHandle := make([]byte, fhInfo.Bytes)
-
-		err = binary.Read(rd, binary.LittleEndian, fileHandle)
-		if err != nil {
-			d.logger.Error("Failed to read file handle", logger.Ctx{"err": err})
-			continue
-		}
-
-		fh := unix.NewFileHandle(fhInfo.Type, fileHandle)
-
-		fd, err := unix.OpenByHandleAt(mountFd, fh, 0)
-		if err != nil {
-			if !errors.Is(err, unix.ESTALE) {
-				d.logger.Error("Failed to open file", logger.Ctx{"err": err})
-			}
-
-			continue
-		}
-
-		unix.CloseOnExec(fd)
-
-		// Determine the directory of the created or deleted file.
-		target, err := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", fd))
-		if err != nil {
-			d.logger.Error("Failed to read symlink", logger.Ctx{"err": err})
-			continue
-		}
-
-		_ = unix.Close(fd)
-
-		// If the target file has been deleted, the returned value might contain a " (deleted)" suffix.
-		// This needs to be removed.
-		target = strings.TrimSuffix(target, " (deleted)")
-
-		// The file handle is followed by a null terminated string that identifies the
-		// created/deleted directory entry name.
-		sb := strings.Builder{}
-		sb.WriteString(target + "/")
-
-		for {
-			b, err := rd.ReadByte()
-			if err != nil || b == 0 {
-				break
-			}
-
-			err = sb.WriteByte(b)
+			event := unix.FanotifyEventMetadata{}
+			err = binary.Read(rd, binary.LittleEndian, &event)
 			if err != nil {
-				break
-			}
-		}
-
-		eventPath := filepath.Clean(sb.String())
-
-		// Check whether there's a watch on a specific file or directory.
-		d.mu.Lock()
-		for path := range d.watches {
-			if eventPath != path {
+				d.logger.Error("Failed to read event metadata", logger.Ctx{"err": err})
 				continue
 			}
 
-			var action Event
+			processed += int(event.Event_len)
 
+			// Kernel queue overflow means events were dropped before userspace could read them.
+			if event.Mask&unix.FAN_Q_OVERFLOW != 0 {
+				d.logger.Warn("fanotify queue overflow detected, events may have been dropped")
+			}
+
+			// Read event info fid
+			fid := fanotifyEventInfoFid{}
+
+			err = binary.Read(rd, binary.LittleEndian, &fid)
+			if err != nil {
+				d.logger.Error("Failed to read event fid", logger.Ctx{"err": err})
+				continue
+			}
+
+			// Although unix.FileHandle exists, it cannot be used with binary.Read() as the
+			// variables inside are not exported.
+			type fileHandleInfo struct {
+				Bytes uint32
+				Type  int32
+			}
+
+			// Read file handle information
+			fhInfo := fileHandleInfo{}
+
+			err = binary.Read(rd, binary.LittleEndian, &fhInfo)
+			if err != nil {
+				d.logger.Error("Failed to read file handle info", logger.Ctx{"err": err})
+				continue
+			}
+
+			// Read file handle
+			fileHandle := make([]byte, fhInfo.Bytes)
+
+			err = binary.Read(rd, binary.LittleEndian, fileHandle)
+			if err != nil {
+				d.logger.Error("Failed to read file handle", logger.Ctx{"err": err})
+				continue
+			}
+
+			fh := unix.NewFileHandle(fhInfo.Type, fileHandle)
+
+			fd, err := unix.OpenByHandleAt(mountFd, fh, 0)
+			if err != nil {
+				if !errors.Is(err, unix.ESTALE) {
+					d.logger.Error("Failed to open file", logger.Ctx{"err": err})
+				}
+
+				continue
+			}
+
+			// Determine the directory of the created or deleted file.
+			target, err := os.Readlink(fmt.Sprintf("/proc/self/fd/%d", fd))
+			_ = unix.Close(fd)
+			if err != nil {
+				d.logger.Error("Failed to read symlink", logger.Ctx{"err": err})
+				continue
+			}
+
+			// If the target file has been deleted, the returned value might contain a " (deleted)" suffix.
+			// This needs to be removed.
+			target = strings.TrimSuffix(target, " (deleted)")
+
+			// The file handle is followed by a null terminated string that identifies the
+			// created/deleted directory entry name.
+			sb := strings.Builder{}
+			sb.WriteString(target + "/")
+
+			for {
+				b, err := rd.ReadByte()
+				if err != nil || b == 0 {
+					break
+				}
+
+				err = sb.WriteByte(b)
+				if err != nil {
+					break
+				}
+			}
+
+			eventPath := filepath.Clean(sb.String())
+
+			var action Event
 			if event.Mask&unix.FAN_CREATE != 0 {
 				action = Add
 			} else if event.Mask&unix.FAN_DELETE != 0 || event.Mask&unix.FAN_DELETE_SELF != 0 {
 				action = Remove
+			} else {
+				continue
 			}
 
-			for identifier, f := range d.watches[path] {
-				go func(path string, action Event) {
-					ret := f(path, action.String())
-					if !ret {
-						d.mu.Lock()
-						defer d.mu.Unlock()
-
-						delete(d.watches[path], identifier)
-
-						if len(d.watches[path]) == 0 {
-							delete(d.watches, path)
-						}
+			d.mu.Lock()
+			for identifier, f := range d.watches[eventPath] {
+				ret := f(eventPath, action.String())
+				if !ret {
+					delete(d.watches[eventPath], identifier)
+					if len(d.watches[eventPath]) == 0 {
+						delete(d.watches, eventPath)
 					}
-				}(path, action)
+				}
 			}
 
-			break
+			d.mu.Unlock()
 		}
-
-		d.mu.Unlock()
 	}
 }
