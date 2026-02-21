@@ -481,6 +481,12 @@ func (d *common) DevicesPath() string {
 // LogPath returns the instance's log path.
 func (d *common) LogPath() string {
 	name := project.Instance(d.project.Name, d.name)
+	storageLogs := d.state.LocalConfig.StorageLogsVolume()
+
+	if storageLogs != "" {
+		return internalUtil.VarPath("logs", storageLogs, name)
+	}
+
 	return internalUtil.LogPath(name)
 }
 

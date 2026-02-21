@@ -5405,6 +5405,13 @@ Specify the volume using the syntax `POOL/VOLUME`.
 Set this option to the name of the local LINSTOR satellite node, should it be different from the Incus server name.
 ```
 
+```{config:option} storage.logs_volume server-miscellaneous
+:scope: "local"
+:shortdesc: "Volume to use to store instance log directories"
+:type: "string"
+Specify the volume using the syntax `POOL/VOLUME`.
+```
+
 <!-- config group server-miscellaneous end -->
 <!-- config group server-network start -->
 ```{config:option} network.hwaddr_pattern server-network
