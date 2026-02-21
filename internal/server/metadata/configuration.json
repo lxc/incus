@@ -1787,6 +1787,147 @@
 					}
 				]
 			},
+			"nic_wireguard": {
+				"keys": [
+					{
+						"host_name": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"shortdesc": "The name of the interface on the host",
+							"type": "string"
+						}
+					},
+					{
+						"hwaddr": {
+							"default": "randomly assigned",
+							"longdesc": "",
+							"shortdesc": "The MAC address of the new interface",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.gateway": {
+							"default": "auto",
+							"longdesc": "",
+							"shortdesc": "Whether to add an automatic default IPv4 gateway (can be `auto` or `none`)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.host_tables": {
+							"default": "254",
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of routing tables IDs to add IPv4 static routes to",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.neighbor_probe": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether to probe the parent network for IPv4 address availability using ARP",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv4.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv4 static routes to add on host to NIC",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.gateway": {
+							"default": "auto",
+							"longdesc": "",
+							"shortdesc": "Whether to add an automatic default IPv6 gateway (can be `auto` or `none`)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.host_tables": {
+							"default": "254",
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of routing tables IDs to add IPv6 static routes to",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.neighbor_probe": {
+							"default": "true",
+							"longdesc": "",
+							"shortdesc": "Whether to probe the parent network for IPv6 address availability using NDP",
+							"type": "bool"
+						}
+					},
+					{
+						"ipv6.routes": {
+							"longdesc": "",
+							"shortdesc": "Comma-delimited list of IPv6 static routes to add on host to NIC",
+							"type": "string"
+						}
+					},
+					{
+						"limits.egress": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for outgoing traffic (various suffixes supported, see {ref}`instances-limit-units`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.priority": {
+							"longdesc": "",
+							"shortdesc": "The priority for outgoing traffic, to be used by the kernel queuing discipline to prioritize network packets",
+							"type": "integer"
+						}
+					},
+					{
+						"mtu": {
+							"default": "parent MTU",
+							"longdesc": "",
+							"shortdesc": "The Maximum Transmit Unit (MTU) of the new interface",
+							"type": "integer"
+						}
+					},
+					{
+						"name": {
+							"default": "kernel assigned",
+							"longdesc": "",
+							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"network": {
+							"longdesc": "",
+							"required": "yes",
+							"shortdesc": "The managed WireGuard network to link the device to",
+							"type": "string"
+						}
+					},
+					{
+						"vrf": {
+							"longdesc": "",
+							"shortdesc": "The VRF on the host in which the host-side interface and routes are created",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"pci": {
 				"keys": [
 					{
@@ -4874,6 +5015,106 @@
 							"longdesc": "",
 							"shortdesc": "The VLAN ID to attach to",
 							"type": "integer"
+						}
+					}
+				]
+			}
+		},
+		"network_wireguard": {
+			"common": {
+				"keys": [
+					{
+						"interface": {
+							"condition": "-",
+							"defaultdesc": "Network name",
+							"longdesc": "",
+							"shortdesc": "WireGuard interface name",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.address": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv4 addresses and CIDR for the WireGuard interface (e.g., 10.0.0.1/24)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.address": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Comma-separated list of IPv6 addresses and CIDR for the WireGuard interface (e.g., 2001:db8::1/64)",
+							"type": "string"
+						}
+					},
+					{
+						"listen_port": {
+							"condition": "-",
+							"defaultdesc": "Auto-assigned by WireGuard",
+							"longdesc": "",
+							"shortdesc": "UDP port to listen on. If not specified or set to 0, WireGuard will automatically assign an available port.",
+							"type": "integer"
+						}
+					},
+					{
+						"mtu": {
+							"condition": "-",
+							"defaultdesc": "`1420`",
+							"longdesc": "",
+							"shortdesc": "The MTU of the WireGuard interface",
+							"type": "integer"
+						}
+					},
+					{
+						"private_key": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "WireGuard private key (base64 encoded). If not provided, one will be generated.",
+							"type": "string"
+						}
+					},
+					{
+						"user.*": {
+							"longdesc": "",
+							"shortdesc": "User-provided free-form key/value pairs",
+							"type": "string"
+						}
+					}
+				]
+			},
+			"peers": {
+				"keys": [
+					{
+						"peers.NAME.allowed_ips": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Allowed IPs for peer NAME (comma-separated CIDR addresses)",
+							"type": "string"
+						}
+					},
+					{
+						"peers.NAME.endpoint": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Endpoint address for peer NAME (IP:port or hostname:port)",
+							"type": "string"
+						}
+					},
+					{
+						"peers.NAME.persistent_keepalive": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Persistent keep-alive interval in seconds for peer NAME",
+							"type": "integer"
+						}
+					},
+					{
+						"peers.NAME.public_key": {
+							"condition": "-",
+							"longdesc": "",
+							"shortdesc": "Public key of peer NAME",
+							"type": "string"
 						}
 					}
 				]
