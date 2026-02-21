@@ -36,3 +36,9 @@ The full list of byte suffixes currently supported for storage and memory limits
 - TiB (1024^4)
 - PiB (1024^5)
 - EiB (1024^6)
+
+The most common units are:
+
+- kbit/Mbit/Gbit for network limits
+- MiB/GiB/TiB for memory and most disk limits
+- MB/GB/TB for some disk limits where spinning drives would have been common
