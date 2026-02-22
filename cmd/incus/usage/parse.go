@@ -1,6 +1,7 @@
 package usage
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -13,6 +14,10 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/cliconfig"
 )
+
+// ExplainOnly is a global switch putting the parser into explain mode, i.e. showing the user how
+// their arguments are parsed.
+var ExplainOnly = false
 
 func quote(s string) string {
 	return fmt.Sprintf(i18n.G("“%s”"), s)
@@ -104,11 +109,8 @@ func isParsingError(err error) bool {
 	}
 }
 
-type explainOnlyError struct{}
-
-func (e *explainOnlyError) Error() string {
-	return i18n.G("this command was called with --explain; its arguments are valid, but no further processing is done")
-}
+// ErrExplainOnly is returned when --explain is used and the CLI invocation is valid.
+var ErrExplainOnly = errors.New(i18n.G("This command was called with --explain; its arguments are valid, but no further processing is done"))
 
 // Parsed is the type of parsed atoms.
 type Parsed struct {
@@ -301,6 +303,10 @@ func (u Usage) Parse(conf *cliconfig.Config, cmd *cobra.Command, args []string, 
 		return nil, err
 	}
 
+	if ExplainOnly {
+		u.diagnose(cmd, result, parseRTL)
+		return nil, ErrExplainOnly
+	}
 
 	if parseRTL {
 		slices.Reverse(result)
