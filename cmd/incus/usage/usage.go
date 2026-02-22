@@ -16,7 +16,7 @@ func makeList(atom Atom, minOccurrences int, separator ...string) Atom {
 	return list{atom, minOccurrences, separator[0]}
 }
 
-// makeList is a helper function building optional atoms.
+// makeOptional is a helper function building optional atoms.
 func makeOptional(atom Atom, chain []Atom) Atom {
 	if len(chain) == 0 {
 		return optional{atom}
@@ -60,7 +60,7 @@ func (a alternative) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (a alternative) Remote() Atom {
-	return remote{a}
+	return remote{Remote, a, true}
 }
 
 // compound represents a sequence of atoms separated with a separator.
@@ -118,7 +118,7 @@ func (c compound) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (c compound) Remote() Atom {
-	return remote{c}
+	return remote{Remote, c, true}
 }
 
 // hide represents an atom whose internal value is hidden.
@@ -144,7 +144,7 @@ func (h hide) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (h hide) Remote() Atom {
-	return remote{h}
+	return remote{Remote, h, true}
 }
 
 // list represents a list of atoms of arbitrary length.
@@ -189,7 +189,7 @@ func (l list) Render() string {
 // Remote prefixes the atom with a remote.
 func (l list) Remote() Atom {
 	// It doesn't really make sense to prefix a list with a remote, so we distribute the operation.
-	return remote{l.atom}.List(l.minOccurrences, l.separator)
+	return remote{Remote, l.atom, true}.List(l.minOccurrences, l.separator)
 }
 
 // optional represents an optional atom.
@@ -215,7 +215,7 @@ func (o optional) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (o optional) Remote() Atom {
-	return remote{o}
+	return remote{Remote, o, true}
 }
 
 // placeholder represents a placeholder atom.
@@ -240,12 +240,14 @@ func (p placeholder) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (p placeholder) Remote() Atom {
-	return remote{p}
+	return remote{Remote, p, true}
 }
 
 // remote represents an atom prefixed with a remote.
 type remote struct {
-	suffix Atom
+	atom     Atom
+	suffix   Atom
+	optional bool
 }
 
 // List makes the atom accept a list.
@@ -260,7 +262,18 @@ func (r remote) Optional(chain ...Atom) Atom {
 
 // Render renders the atom's usage string.
 func (r remote) Render() string {
-	return RemoteColonOpt.Render() + r.suffix.Render()
+	suffix := r.suffix
+	if suffix == nil {
+		suffix = verbatim{}
+	}
+
+	var prefix Atom
+	prefix = compound{":", []Atom{r.atom, verbatim{""}}}
+	if r.optional {
+		prefix = prefix.Optional()
+	}
+
+	return prefix.Render() + suffix.Render()
 }
 
 // Remote prefixes the atom with a remote.
@@ -291,7 +304,7 @@ func (v verbatim) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (v verbatim) Remote() Atom {
-	return remote{v}
+	return remote{Remote, v, true}
 }
 
 // A few strings used throughout the Incus client.
@@ -334,7 +347,8 @@ var (
 	Query              = placeholder{i18n.G("query")}
 	Record             = placeholder{i18n.G("record")}
 	Remote             = placeholder{i18n.G("remote")}
-	RemoteColonOpt     = Colon(Remote).Optional()
+	RemoteColon        = remote{Remote, nil, false}
+	RemoteColonOpt     = remote{Remote, nil, true}
 	Role               = placeholder{i18n.G("role")}
 	Snapshot           = placeholder{i18n.G("snapshot")}
 	SymlinkTargetPath  = placeholder{i18n.G("symlink target path")}
@@ -404,6 +418,21 @@ func MakePath(atoms ...Atom) Atom {
 // Placeholder builds a placeholder atom from a string.
 func Placeholder(element string) placeholder {
 	return placeholder{element}
+}
+
+// Verbatim builds a verbatim atom from a string.
+func Verbatim(element string) verbatim {
+	return verbatim{element}
+}
+
+// Sequence builds a space-separated sequence of atoms.
+func Sequence(atoms ...Atom) Atom {
+	return compound{" ", atoms}
+}
+
+// MakeRemote transforms an atom into a remote.
+func MakeRemote(atom Atom, optional bool) remote {
+	return remote{atom, nil, optional}
 }
 
 // Flags is an atom to be deleted in the future indicating to cobra that command-line flags should
