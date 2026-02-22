@@ -10200,7 +10200,7 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 	if count > totalReservedCPUs {
 		// Cannot allocate more CPUs than the system provides.
 		if count > len(cpus) {
-			return errors.New("Cannot allocate more CPUs than available")
+			return fmt.Errorf("Requested CPU count of %d exceeds instance current maximum of %d, restart required", count, len(cpus))
 		}
 
 		// This shouldn't trigger, but if it does, don't panic.
