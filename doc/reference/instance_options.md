@@ -95,6 +95,14 @@ Incus supports both increasing and decreasing the memory allocation of virtual m
 Increasing the memory is done through memory hot plug, effectively adding virtual memory sticks to the VM.
 There is a limit of 16 virtual slots for this, limiting the number of memory increases that can be done without rebooting the VM.
 
+```{note}
+To avoid high resource usage and compatibility issues with guests, Incus limits memory hotplug to a maximum of 1TiB in clustered environments.
+On standalone hosts, the default limit matches the total memory amount of the host system.
+Some CPUs further reduce that amount based on how much memory they are able to address (physical / virtual bits).
+
+Exceeding that limit require the instance be stopped, its `memory.limit` updated and then started back up.
+```
+
 Decreasing memory is not done through hot remove as that has a high risk of causing guest issues.
 Instead the memory balloon device is used, causing memory pressure inside the guest and causing memory to be released.
 
@@ -144,6 +152,11 @@ Incus virtual machines default to having just one vCPU allocated, which shows up
 When `limits.cpu` is set to a single integer, Incus allocates multiple vCPUs and exposes them to the guest as full cores.
 Those vCPUs are not pinned to specific physical cores on the host.
 The number of vCPUs can be updated while the VM is running.
+
+```{note}
+To avoid high resource usage and compatibility issues with guests, Incus limits CPU hotplug to a maximum of 64 cores.
+VMs needing more than 64 CPU cores will need to be shut down to adjust their `limits.cpu` property.
+```
 
 When `limits.cpu` is set to a range or comma-separated list of CPU IDs (as provided by [`incus info --resources`](incus_info.md)), the vCPUs are pinned to those physical cores.
 In this scenario, Incus checks whether the CPU configuration lines up with a realistic hardware topology and if it does, it replicates that topology in the guest.
