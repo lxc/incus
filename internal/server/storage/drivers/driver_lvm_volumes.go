@@ -332,14 +332,14 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 		}
 	}
 
-	if d.clustered && vol.IsVMBlock() {
+	if d.clustered && (vol.IsVMBlock() || vol.IsCustomBlock()) {
 		// Set default block type to qcow2.
 		if vol.config["block.type"] == "" {
 			vol.config["block.type"] = BlockVolumeTypeQcow2
 		}
 
 		// If on qcow2, the block filesystem is btrfs.
-		if vol.config["block.type"] == BlockVolumeTypeQcow2 {
+		if vol.config["block.type"] == BlockVolumeTypeQcow2 && vol.IsVMBlock() {
 			vol.config["block.filesystem"] = "btrfs"
 		}
 	}
@@ -1833,9 +1833,12 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 
 	oldPath := snapVol.MountPath()
 	newPath := GetVolumeMountPath(d.name, snapVol.volType, newSnapVolName)
-	err = os.Rename(oldPath, newPath)
-	if err != nil {
-		return fmt.Errorf("Error renaming snapshot mount path from %q to %q: %w", oldPath, newPath, err)
+
+	if util.PathExists(oldPath) {
+		err = os.Rename(oldPath, newPath)
+		if err != nil {
+			return fmt.Errorf("Error renaming snapshot mount path from %q to %q: %w", oldPath, newPath, err)
+		}
 	}
 
 	return nil
