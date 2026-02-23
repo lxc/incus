@@ -6737,6 +6737,15 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 			return fmt.Errorf("Memory hotplug feature is disabled")
 		}
 
+		_, maxMem, _, err := monitor.MemoryConfiguration()
+		if err != nil {
+			return err
+		}
+
+		if newSizeBytes > maxMem {
+			return fmt.Errorf("Requested memory total of %s exceeds instance current maximum of %s, restart required", units.GetByteSizeStringIEC(newSizeBytes, 2), units.GetByteSizeStringIEC(maxMem, 2))
+		}
+
 		return d.hotplugMemory(monitor, newSizeBytes-curSizeBytes)
 	}
 
