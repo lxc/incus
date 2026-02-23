@@ -1273,3 +1273,13 @@ func VolumeSnapshotsToMigrationSnapshots(snapshots []*api.StorageVolumeSnapshot,
 
 	return migrationSnapshots, nil
 }
+
+// ProjectVolume returns a project scoped volume identifier.
+// It applies the appropriate '<project>_' prefix based on the volume type.
+func ProjectVolume(projectName string, volName string, volType drivers.VolumeType) string {
+	if volType == drivers.VolumeTypeContainer || volType == drivers.VolumeTypeVM {
+		return project.Instance(projectName, volName)
+	}
+
+	return project.StorageVolume(projectName, volName)
+}

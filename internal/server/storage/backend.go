@@ -2140,7 +2140,7 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	}
 
 	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || args.ClusterMoveSourceName == "" || args.StoragePool != "") {
-		err = b.qcow2CreateVolumeFromMigration(inst, vol, conn, args, &preFiller, op)
+		err = b.qcow2CreateVolumeFromMigration(vol, inst.Project().Name, conn, args, &preFiller, op)
 		if err != nil {
 			return err
 		}
@@ -2233,7 +2233,7 @@ func (b *backend) RenameInstance(inst instance.Instance, newName string, op *ope
 
 	// Perform qcow2 renaming before renaming database volumes.
 	if volume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-		err = b.qcow2Rename(vol, newName, inst, inst.Project().Name, op)
+		err = b.qcow2Rename(vol, newName, inst.Project().Name, op)
 		if err != nil {
 			return err
 		}
@@ -2597,7 +2597,7 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 	}
 
 	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || !args.ClusterMove || args.StorageMove) {
-		err = b.qcow2MigrateVolume(b.state, inst, vol, conn, args, op)
+		err = b.qcow2MigrateVolume(b.state, vol, inst.Project().Name, conn, args, op)
 		if err != nil {
 			return err
 		}
@@ -3167,7 +3167,7 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
-		err = b.qcow2CreateSnapshot(parentVol, vol, src, op)
+		err = b.qcow2CreateSnapshot(parentVol, vol, inst.Project().Name, op)
 		if err != nil {
 			return err
 		}
@@ -3223,15 +3223,21 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 		return err
 	}
 
+	// Load parent storage volume from database.
+	parentDBVol, err := VolumeDBGet(b, inst.Project().Name, parentName, volType)
+	if err != nil {
+		return err
+	}
+
 	contentType := InstanceContentType(inst)
 	volStorageName := project.Instance(inst.Project().Name, inst.Name())
 
 	// Rename storage volume snapshot.
 	snapVol := b.GetVolume(volType, contentType, volStorageName, srcDBVol.Config)
 
-	if srcDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-		parentVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, parentName), srcDBVol.Config)
-		err = b.qcow2RenameSnapshot(parentVol, snapVol, newVolName, inst.Type(), inst.Project().Name, op)
+	if parentDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		parentVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, parentName), parentDBVol.Config)
+		err = b.qcow2RenameSnapshot(parentVol, snapVol, newVolName, inst.Project().Name, op)
 		if err != nil {
 			return err
 		}
@@ -3309,6 +3315,12 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 
 	vol := b.GetVolume(volType, contentType, snapVolName, srcDBVol.Config)
 
+	// Load parent storage volume from database.
+	parentDBVol, err := VolumeDBGet(b, inst.Project().Name, parentName, volType)
+	if err != nil {
+		return err
+	}
+
 	volExists, err := b.driver.HasVolume(vol)
 	if err != nil {
 		return err
@@ -3324,9 +3336,9 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 	defer unlock()
 
 	if volExists {
-		if srcDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-			parentVol := b.GetVolume(volType, contentType, parentStorageName, srcDBVol.Config)
-			err = b.qcow2DeleteSnapshot(parentVol, vol, inst, op)
+		if parentDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+			parentVol := b.GetVolume(volType, contentType, parentStorageName, parentDBVol.Config)
+			err = b.qcow2DeleteSnapshot(parentVol, vol, inst.Project().Name, op)
 			if err != nil {
 				return err
 			}
@@ -3435,7 +3447,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 
 	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		snapVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, src.Name()), srcDBVol.Config)
-		err = b.qcow2RestoreSnapshot(vol, snapVol, inst.Type(), inst.Project().Name, op)
+		err = b.qcow2RestoreSnapshot(vol, snapVol, inst.Project().Name, op)
 		if err != nil {
 			return err
 		}
@@ -5214,10 +5226,18 @@ func (b *backend) MigrateCustomVolume(projectName string, conn io.ReadWriteClose
 		args.Refresh = *resp.Refresh
 	}
 
-	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, args.Info.Config.Volume.Config)
-	err = b.driver.MigrateVolume(vol, conn, args, op)
-	if err != nil {
-		return err
+	volConfig := args.Info.Config.Volume.Config
+	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, volConfig)
+	if volConfig["block.type"] == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || !args.ClusterMove || args.StorageMove) {
+		err = b.qcow2MigrateVolume(b.state, vol, projectName, conn, args, op)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = b.driver.MigrateVolume(vol, conn, args, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -5352,9 +5372,16 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 		}
 	}
 
-	err = b.driver.CreateVolumeFromMigration(vol, conn, args, nil, op)
-	if err != nil {
-		return err
+	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || args.ClusterMoveSourceName == "" || args.StoragePool != "") {
+		err = b.qcow2CreateVolumeFromMigration(vol, projectName, conn, args, nil, op)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = b.driver.CreateVolumeFromMigration(vol, conn, args, nil, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	eventCtx := logger.Ctx{"type": vol.Type()}
@@ -5961,6 +5988,40 @@ func (b *backend) MountCustomVolume(projectName, volName string, op *operations.
 		return nil, err
 	}
 
+	backingPaths := []string{}
+	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		// Get snapshots.
+		_, volName := project.StorageVolumeParts(vol.Name())
+		volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
+		if err != nil {
+			return nil, err
+		}
+
+		for _, snap := range volSnaps {
+			currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.StorageVolume(projectName, snap.Name), vol.Config())
+			err = b.driver.MountVolumeSnapshot(currentSnapVol, op)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// Get the location of the disk block device.
+		diskPath, err := b.driver.GetVolumeDiskPath(vol)
+		if err != nil {
+			return nil, err
+		}
+
+		// Fetch backing chain for a qcow2 formatted volume.
+		backingPaths, err = b.qcow2BackingPaths(vol, diskPath, projectName)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	l.Debug("Clustom volume backing paths", logger.Ctx{"backingPaths": backingPaths})
+
+	mountInfo.BackingPath = append(mountInfo.BackingPath, backingPaths...)
+
 	// Handle delegation.
 	if b.driver.CanDelegateVolume(vol) {
 		mountInfo.PostHooks = append(mountInfo.PostHooks, func(inst instance.Instance) error {
@@ -5992,6 +6053,22 @@ func (b *backend) UnmountCustomVolume(projectName, volName string, op *operation
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
+
+	if vol.Config()["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		// Get snapshots.
+		volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
+		if err != nil {
+			return false, err
+		}
+
+		for _, snap := range volSnaps {
+			currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.StorageVolume(projectName, snap.Name), vol.Config())
+			_, err = b.driver.UnmountVolumeSnapshot(currentSnapVol, op)
+			if err != nil && !errors.Is(err, drivers.ErrInUse) {
+				return false, err
+			}
+		}
+	}
 
 	return b.driver.UnmountVolume(vol, false, op)
 }
@@ -6148,6 +6225,19 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 		return err
 	}
 
+	if parentVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		// Get the parent volume.
+		volStorageParentName := project.StorageVolume(projectName, volName)
+		parentVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageParentName, parentVol.Config)
+
+		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
+		// vol will be used as the base.
+		err = b.qcow2CreateSnapshot(parentVol, vol, projectName, op)
+		if err != nil {
+			return err
+		}
+	}
+
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeSnapshotCreated.Event(vol, string(vol.Type()), projectName, op, logger.Ctx{"type": vol.Type()}))
 
 	reverter.Success()
@@ -6174,18 +6264,30 @@ func (b *backend) RenameCustomVolumeSnapshot(projectName, volName string, newSna
 		return err
 	}
 
+	// Get the parent volume.
+	parentVolume, err := VolumeDBGet(b, projectName, parentName, drivers.VolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
 
-	// There's no need to pass config as it's not needed when renaming a volume.
-	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, nil)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
+	newVolName := drivers.GetSnapshotVolumeName(parentName, newSnapshotName)
+
+	if parentVolume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		parentVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(parentVolume.ContentType), project.StorageVolume(projectName, parentName), parentVolume.Config)
+		err = b.qcow2RenameSnapshot(parentVol, vol, newVolName, projectName, op)
+		if err != nil {
+			return err
+		}
+	}
 
 	err = b.driver.RenameVolumeSnapshot(vol, newSnapshotName, op)
 	if err != nil {
 		return err
 	}
-
-	newVolName := drivers.GetSnapshotVolumeName(parentName, newSnapshotName)
 
 	err = b.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.RenameStoragePoolVolume(ctx, projectName, volName, newVolName, db.StoragePoolVolumeTypeCustom, b.ID())
@@ -6211,7 +6313,7 @@ func (b *backend) DeleteCustomVolumeSnapshot(projectName, volName string, op *op
 	l.Debug("DeleteCustomVolumeSnapshot started")
 	defer l.Debug("DeleteCustomVolumeSnapshot finished")
 
-	isSnap := internalInstance.IsSnapshot(volName)
+	parentName, _, isSnap := api.GetParentAndSnapshotName(volName)
 
 	if !isSnap {
 		return errors.New("Volume name must be a snapshot")
@@ -6219,6 +6321,12 @@ func (b *backend) DeleteCustomVolumeSnapshot(projectName, volName string, op *op
 
 	// Get the volume.
 	volume, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	// Get the parent volume.
+	parentVolume, err := VolumeDBGet(b, projectName, parentName, drivers.VolumeTypeCustom)
 	if err != nil {
 		return err
 	}
@@ -6237,8 +6345,7 @@ func (b *backend) DeleteCustomVolumeSnapshot(projectName, volName string, op *op
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
 
-	// There's no need to pass config as it's not needed when deleting a volume snapshot.
-	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, nil)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, volume.Config)
 
 	// Delete the snapshot from the storage device.
 	// Must come before DB VolumeDBDelete so that the volume ID is still available.
@@ -6248,9 +6355,17 @@ func (b *backend) DeleteCustomVolumeSnapshot(projectName, volName string, op *op
 	}
 
 	if volExists {
-		err := b.driver.DeleteVolumeSnapshot(vol, op)
-		if err != nil {
-			return err
+		if parentVolume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+			parentVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, project.StorageVolume(projectName, parentName), parentVolume.Config)
+			err = b.qcow2DeleteSnapshot(parentVol, vol, projectName, op)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := b.driver.DeleteVolumeSnapshot(vol, op)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -6316,6 +6431,17 @@ func (b *backend) RestoreCustomVolume(projectName, volName string, snapshotName 
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, curVol.Config)
+
+	if curVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		fullSnapName := fmt.Sprintf("%s/%s", volName, snapshotName)
+		snapVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, project.StorageVolume(projectName, fullSnapName), curVol.Config)
+		err = b.qcow2RestoreSnapshot(vol, snapVol, projectName, op)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 
 	err = b.driver.RestoreVolume(vol, snapshotName, op)
 	if err != nil {
@@ -7646,7 +7772,7 @@ func (b *backend) getFirstAdminStorageBucketPoolKey(projectName string, bucketNa
 }
 
 // qcow2Rename renames the QCOW2 volume.
-func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, inst instance.Instance, projectName string, op *operations.Operation) error {
+func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, projectName string, op *operations.Operation) error {
 	// Get snapshots.
 	_, volName := project.StorageVolumeParts(vol.Name())
 	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
@@ -7700,7 +7826,7 @@ func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, inst instan
 		return err
 	}
 
-	if inst.Type() == instancetype.VM {
+	if vol.IsVMBlock() {
 		fsVol := vol.NewVMBlockFilesystemVolume()
 		err := drivers.Qcow2RenameConfig(fsVol, newVolName, op)
 		if err != nil {
@@ -7712,13 +7838,13 @@ func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, inst instan
 }
 
 // qcow2CreateSnapshot creates the QCOW2 volume snapshot.
-func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume, src instance.Instance, op *operations.Operation) error {
+func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, op *operations.Operation) error {
 	// Return if this is not a qcow2 image.
 	if vol.Config()["block.type"] != drivers.BlockVolumeTypeQcow2 {
 		return nil
 	}
 
-	if src.Type() == instancetype.VM {
+	if vol.IsVMBlock() {
 		fsParentVol := vol.NewVMBlockFilesystemVolume()
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
 		err := drivers.Qcow2CreateConfigSnapshot(fsParentVol, fsVol, op)
@@ -7727,10 +7853,20 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		}
 	}
 
+	var inst instance.Instance
+	var err error
+
+	if vol.IsVMBlock() {
+		inst, err = instance.LoadByProjectAndName(b.state, projectName, vol.Name())
+		if err != nil {
+			return err
+		}
+	}
+
 	// For a running instance, mount the snapshot to increase the volume's refCount.
 	// The increased refCount protects against deallocating a volume that is
 	// currently in use by the instance.
-	if src.IsRunning() {
+	if inst != nil && inst.IsRunning() {
 		err := b.driver.MountVolumeSnapshot(snapVol, op)
 		if err != nil {
 			return err
@@ -7748,18 +7884,18 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			return err
 		}
 
-		if !src.IsRunning() {
-			err = drivers.Qcow2Create(parentDiskPath, snapVolDevPath, 0)
-			if err != nil {
-				return err
-			}
-		} else {
+		if inst != nil && inst.IsRunning() {
 			imgInfo, err := drivers.Qcow2Info(parentDiskPath)
 			if err != nil {
 				return err
 			}
 
 			err = drivers.Qcow2Create(parentDiskPath, "", int64(imgInfo.VirtualSize))
+			if err != nil {
+				return err
+			}
+		} else {
+			err = drivers.Qcow2Create(parentDiskPath, snapVolDevPath, 0)
 			if err != nil {
 				return err
 			}
@@ -7771,13 +7907,13 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		return err
 	}
 
-	if src.IsRunning() {
+	if inst != nil && inst.IsRunning() {
 		_, snapshotName, isSnap := api.GetParentAndSnapshotName(snapVol.Name())
 		if !isSnap {
 			return errors.New("Volume name must be a snapshot")
 		}
 
-		err = src.CreateQcow2Snapshot(snapshotName, snapVolDevPath)
+		err = inst.CreateQcow2Snapshot(snapshotName, snapVolDevPath)
 		if err != nil {
 			return err
 		}
@@ -7787,7 +7923,7 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 }
 
 // qcow2RestoreSnapshot restores the QCOW2 volume snapshot.
-func (b *backend) qcow2RestoreSnapshot(vol drivers.Volume, snapVol drivers.Volume, instanceType instancetype.Type, projectName string, op *operations.Operation) error {
+func (b *backend) qcow2RestoreSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, op *operations.Operation) error {
 	// Return if this is not a qcow2 image.
 	if vol.Config()["block.type"] != drivers.BlockVolumeTypeQcow2 {
 		return nil
@@ -7825,7 +7961,7 @@ func (b *backend) qcow2RestoreSnapshot(vol drivers.Volume, snapVol drivers.Volum
 		return err
 	}
 
-	if instanceType == instancetype.VM {
+	if vol.IsVMBlock() {
 		fsParentVol := vol.NewVMBlockFilesystemVolume()
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
 		err = drivers.Qcow2RestoreConfigSnapshot(fsParentVol, fsVol, op)
@@ -7838,13 +7974,13 @@ func (b *backend) qcow2RestoreSnapshot(vol drivers.Volume, snapVol drivers.Volum
 }
 
 // qcow2RenameSnapshot renames the QCOW2 volume snapshot.
-func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume, newVolName string, instanceType instancetype.Type, projectName string, op *operations.Operation) error {
+func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume, newVolName string, projectName string, op *operations.Operation) error {
 	// Return if this is not a qcow2 image.
 	if vol.Config()["block.type"] != drivers.BlockVolumeTypeQcow2 {
 		return nil
 	}
 
-	newSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(projectName, newVolName), nil)
+	newSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), ProjectVolume(projectName, newVolName, vol.Type()), nil)
 	newSnapVolDiskPath, err := b.driver.GetQcow2BackingFilePath(newSnapVol)
 	if err != nil {
 		return err
@@ -7883,7 +8019,7 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 
 		// Update the metadata of the snapshot which points to a renamed volume.
 		for _, snap := range volSnaps {
-			currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(projectName, snap.Name), nil)
+			currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), ProjectVolume(projectName, snap.Name, vol.Type()), nil)
 			currentSnapVolDiskPath, err := b.driver.GetQcow2BackingFilePath(currentSnapVol)
 			if err != nil {
 				return err
@@ -7908,7 +8044,7 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		return err
 	}
 
-	if instanceType == instancetype.VM {
+	if vol.IsVMBlock() {
 		fsParentVol := vol.NewVMBlockFilesystemVolume()
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
 		_, newName, _ := api.GetParentAndSnapshotName(newVolName)
@@ -7922,7 +8058,7 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 }
 
 // qcow2DeleteSnapshot deletes the QCOW2 volume snapshot.
-func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume, inst instance.Instance, op *operations.Operation) error {
+func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"backend": b.name, "instance": vol.Name()})
 	l.Debug("qcow2DeleteInstanceSnapshot started")
 	defer l.Debug("qcow2DeleteInstanceSnapshot finished")
@@ -7933,18 +8069,22 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 	}
 
 	_, volName := project.StorageVolumeParts(vol.Name())
-	parentInst, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, volName)
-	if err != nil {
-		return err
+	var parentInst instance.Instance
+	var err error
+	if vol.IsVMBlock() {
+		parentInst, err = instance.LoadByProjectAndName(b.state, projectName, volName)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Get snapshots.
-	volSnaps, err := VolumeDBSnapshotsGet(b, inst.Project().Name, volName, vol.Type())
+	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
 	if err != nil {
 		return err
 	}
 
-	_, snapName, _ := api.GetParentAndSnapshotName(inst.Name())
+	_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
 
 	snapIndex := -1
 	childName := vol.Name()
@@ -7957,19 +8097,16 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			snapIndex = index
 
 			if index+1 < len(volSnaps) {
-				childName = volSnaps[index+1].Name
-				if inst.Project().Name != api.ProjectDefaultName {
-					childName = project.StorageVolume(inst.Project().Name, volSnaps[index+1].Name)
-				}
+				childName = ProjectVolume(projectName, volSnaps[index+1].Name, vol.Type())
 			}
 
 			break
 		}
 	}
 
-	if parentInst.IsRunning() {
+	if parentInst != nil && parentInst.IsRunning() {
 		if snapIndex+1 < len(volSnaps) {
-			tmpVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(inst.Project().Name, volSnaps[snapIndex+1].Name), nil)
+			tmpVol := b.GetVolume(vol.Type(), vol.ContentType(), ProjectVolume(projectName, volSnaps[snapIndex+1].Name, vol.Type()), nil)
 			diskPath, err := b.driver.GetQcow2BackingFilePath(tmpVol)
 			if err != nil {
 				return err
@@ -8021,7 +8158,7 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			// Check which snapshot is the parent of the snapshot to be deleted.
 			// Record information about the snapshot that will be deleted.
 			for _, snap := range volSnaps {
-				currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(inst.Project().Name, snap.Name), nil)
+				currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), ProjectVolume(projectName, snap.Name, vol.Type()), nil)
 				currentSnapVolDiskPath, err := b.driver.GetQcow2BackingFilePath(currentSnapVol)
 				if err != nil {
 					return err
@@ -8050,7 +8187,7 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		}
 	}
 
-	if inst.Type() == instancetype.VM {
+	if vol.IsVMBlock() {
 		fsParentVol := vol.NewVMBlockFilesystemVolume()
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
 		err = drivers.Qcow2DeleteConfigSnapshot(fsParentVol, fsVol, op)
@@ -8133,7 +8270,7 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 	}
 
 	for _, snap := range volSnaps {
-		currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(projectName, snap.Name), nil)
+		currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), ProjectVolume(projectName, snap.Name, vol.Type()), nil)
 		currentSnapVolDiskPath, err := b.driver.GetQcow2BackingFilePath(currentSnapVol)
 		if err != nil {
 			return nil, err
@@ -8175,7 +8312,7 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 }
 
 // qcow2MigrateVolume migrates QCOW2 volume.
-func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol drivers.Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
+func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, projectName string, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"volName": vol.Name()})
 	l.Debug("qcow2MigrateVolume started")
 	defer l.Debug("qcow2MigrateVolume finished")
@@ -8193,6 +8330,16 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 		rsyncArgs = []string{"--exclude", "root.img"}
 	} else if vol.ContentType() == drivers.ContentTypeBlock && volSrcArgs.MigrationType.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC || vol.ContentType() == drivers.ContentTypeFS && volSrcArgs.MigrationType.FSType != migration.MigrationFSType_RSYNC {
 		return drivers.ErrNotSupported
+	}
+
+	var inst instance.Instance
+	var err error
+	if vol.IsVMBlock() {
+		_, volName := project.StorageVolumeParts(vol.Name())
+		inst, err = instance.LoadByProjectAndName(b.state, projectName, volName)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Define function to send a filesystem volume.
@@ -8226,7 +8373,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 		}
 
 		var nbdPath string
-		if inst.IsRunning() {
+		if inst != nil && inst.IsRunning() {
 			cleanupExport, path, err := inst.ExportQcow2Block(blockIndex)
 			if err != nil {
 				return err
@@ -8346,7 +8493,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, inst instance.Instance, vol
 }
 
 // qcow2CreateVolumeFromMigration creates a QCOW2 volume from a migration.
-func (b *backend) qcow2CreateVolumeFromMigration(src instance.Instance, vol drivers.Volume, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *drivers.VolumeFiller, op *operations.Operation) error {
+func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName string, conn io.ReadWriteCloser, volTargetArgs localMigration.VolumeTargetArgs, preFiller *drivers.VolumeFiller, op *operations.Operation) error {
 	l := b.logger.AddContext(nil)
 	l.Debug("qcow2CreateVolumeFromMigration started")
 	defer l.Debug("qcow2CreateVolumeFromMigration finished")
@@ -8488,7 +8635,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(src instance.Instance, vol driv
 				return err
 			}
 
-			err = b.qcow2CreateSnapshot(vol, snapVol, src, op)
+			err = b.qcow2CreateSnapshot(vol, snapVol, projectName, op)
 			if err != nil {
 				return err
 			}
