@@ -6210,6 +6210,25 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 	volStorageName := project.StorageVolume(projectName, fullSnapshotName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, parentVol.Config)
 
+	if parentVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		// Check that the volume isn't in use by running instances.
+		err = VolumeUsedByInstanceDevices(b.state, b.Name(), projectName, &parentVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+			inst, err := instance.Load(b.state, dbInst, project)
+			if err != nil {
+				return err
+			}
+
+			if inst.IsRunning() {
+				return fmt.Errorf("Volume is still in use by running instances")
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	// Lock this operation to ensure that the only one snapshot is made at the time.
 	// Other operations will wait for this one to finish.
 	unlock, err := locking.Lock(context.TODO(), drivers.OperationLockName("CreateCustomVolumeSnapshot", b.name, vol.Type(), contentType, volName))
@@ -6356,6 +6375,23 @@ func (b *backend) DeleteCustomVolumeSnapshot(projectName, volName string, op *op
 
 	if volExists {
 		if parentVolume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+			// Check that the volume isn't in use by running instances.
+			err = VolumeUsedByInstanceDevices(b.state, b.Name(), projectName, &parentVolume.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+				inst, err := instance.Load(b.state, dbInst, project)
+				if err != nil {
+					return err
+				}
+
+				if inst.IsRunning() {
+					return fmt.Errorf("Volume is still in use by running instances")
+				}
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
 			parentVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, project.StorageVolume(projectName, parentName), parentVolume.Config)
 			err = b.qcow2DeleteSnapshot(parentVol, vol, projectName, op)
 			if err != nil {
