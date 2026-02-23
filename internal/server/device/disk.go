@@ -1449,6 +1449,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 			// be returned as the path to the block device).
 			if d.config["pool"] != "" {
 				var revertFunc func()
+				var mountInfo *storagePools.MountInfo
 
 				// Derive the effective storage project name from the instance config's project.
 				storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.inst.Project().Name, db.StoragePoolVolumeTypeCustom)
@@ -1515,7 +1516,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					return &runConf, nil
 				}
 
-				revertFunc, mount.DevPath, _, err = d.mountPoolVolume()
+				revertFunc, mount.DevPath, mountInfo, err = d.mountPoolVolume()
 				if err != nil {
 					return nil, diskSourceNotFoundError{msg: "Failed mounting volume", err: err}
 				}
@@ -1523,6 +1524,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				reverter.Add(revertFunc)
 
 				mount.Opts = append(mount.Opts, d.detectVMPoolMountOpts()...)
+				mount.BackingPath = append(mount.BackingPath, mountInfo.BackingPath...)
 			}
 
 			if util.IsTrue(d.config["readonly"]) {
