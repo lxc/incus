@@ -232,6 +232,35 @@ func (m *Monitor) MachineDefinition() (string, error) {
 	return strings.TrimSuffix(resp.Return, "-machine"), nil
 }
 
+// MemoryConfiguration returns the current QEMU machine memory configuration (current, max, slots).
+func (m *Monitor) MemoryConfiguration() (int64, int64, int64, error) {
+	// Prepare the request.
+	var req struct {
+		Path     string `json:"path"`
+		Property string `json:"property"`
+	}
+
+	req.Path = "/machine"
+	req.Property = "memory"
+
+	// Prepare the response.
+	var resp struct {
+		Return struct {
+			Size    int64 `json:"size"`
+			Slots   int64 `json:"slots"`
+			MaxSize int64 `json:"max-size"`
+		} `json:"return"`
+	}
+
+	// Query the machine.
+	err := m.Run("qom-get", req, &resp)
+	if err != nil {
+		return -1, -1, -1, err
+	}
+
+	return resp.Return.Size, resp.Return.MaxSize, resp.Return.Slots, nil
+}
+
 // SendFile adds a new file descriptor to the QMP fd table associated to name.
 func (m *Monitor) SendFile(name string, file *os.File) error {
 	// Check if disconnected.
