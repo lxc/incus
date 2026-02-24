@@ -1444,40 +1444,45 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 		}
 	}
 
-	// Get MTU of host interface that connects to OVN integration bridge if exists.
-	iface, err := net.InterfaceByName(d.config["host_name"])
-	if err != nil {
-		d.logger.Warn("Failed getting host interface state for MTU", logger.Ctx{"host_name": d.config["host_name"], "err": err})
-	}
-
-	mtu := -1
-	if iface != nil {
-		mtu = iface.MTU
-	}
-
-	// Retrieve the host counters, as we report the values from the instance's point of view,
-	// those counters need to be reversed below.
-	hostCounters, err := resources.GetNetworkCounters(d.config["host_name"])
-	if err != nil {
-		return nil, fmt.Errorf("Failed getting network interface counters: %w", err)
-	}
-
-	network := api.InstanceStateNetwork{
+	n := api.InstanceStateNetwork{
 		Addresses: addresses,
-		Counters: api.InstanceStateNetworkCounters{
+		Hwaddr:    d.config["hwaddr"],
+		State:     "up",
+		Type:      "broadcast",
+	}
+
+	// When not on a nested NIC, fetch some details from the host.
+	if d.config["nested"] == "" {
+		// Get MTU of host interface that connects to OVN integration bridge if exists.
+		iface, err := net.InterfaceByName(d.config["host_name"])
+		if err != nil {
+			d.logger.Warn("Failed getting host interface state for MTU", logger.Ctx{"host_name": d.config["host_name"], "err": err})
+		}
+
+		mtu := -1
+		if iface != nil {
+			mtu = iface.MTU
+		}
+
+		// Retrieve the host counters, as we report the values from the instance's point of view,
+		// those counters need to be reversed below.
+		hostCounters, err := resources.GetNetworkCounters(d.config["host_name"])
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting network interface counters: %w", err)
+		}
+
+		n.Counters = api.InstanceStateNetworkCounters{
 			BytesReceived:   hostCounters.BytesSent,
 			BytesSent:       hostCounters.BytesReceived,
 			PacketsReceived: hostCounters.PacketsSent,
 			PacketsSent:     hostCounters.PacketsReceived,
-		},
-		Hwaddr:   d.config["hwaddr"],
-		HostName: d.config["host_name"],
-		Mtu:      mtu,
-		State:    "up",
-		Type:     "broadcast",
+		}
+
+		n.HostName = d.config["host_name"]
+		n.Mtu = mtu
 	}
 
-	return &network, nil
+	return &n, nil
 }
 
 // Register sets up anything needed on startup.
