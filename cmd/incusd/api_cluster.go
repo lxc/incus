@@ -1064,7 +1064,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 		}
 	}
 
-	err = d.ApplyServerPreseed(api.InitPreseed{Server: data})
+	err = d.ApplyServerPreseed(api.InitPreseed{InitLocalPreseed: data})
 	if err != nil {
 		return fmt.Errorf("Failed to initialize storage pools and networks: %w", err)
 	}
