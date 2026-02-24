@@ -620,11 +620,12 @@ func IsPCIAddress(value string) error {
 
 // IsCompressionAlgorithm validates whether a value is a valid compression algorithm and is available on the system.
 func IsCompressionAlgorithm(value string) error {
+	// none doesn't need any checking.
 	if value == "none" {
 		return nil
 	}
 
-	// Going to look up tar2sqfs executable binary
+	// Going to look up tar2sqfs executable binary.
 	if value == "squashfs" {
 		value = "tar2sqfs"
 	}
@@ -635,8 +636,32 @@ func IsCompressionAlgorithm(value string) error {
 		return err
 	}
 
+	if len(fields) == 0 {
+		return errors.New("Invalid compressor provided")
+	}
+
+	// Check that we're dealing with a supported option.
+	if !slices.Contains([]string{
+		"bzip2",
+		"gzip",
+		"lzma",
+		"pigz",
+		"pzstd",
+		"pxz",
+		"tar2sqfs",
+		"xz",
+		"zstd",
+	}, fields[0]) {
+		return fmt.Errorf("Compression algorithm %q isn't currently supported", fields[0])
+	}
+
+	// Check that the command exists on the system.
 	_, err = exec.LookPath(fields[0])
-	return err
+	if err != nil {
+		return fmt.Errorf("Compression algorithm %q isn't supported on this system", fields[0])
+	}
+
+	return nil
 }
 
 // IsArchitecture validates whether the value is a valid architecture name.
