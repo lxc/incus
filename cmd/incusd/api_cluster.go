@@ -963,6 +963,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 		delete(post.Config, "zfs.pool_name")
 
 		// Apply the node-specific config supplied by the user.
+		nodeSpecificConfig := db.NodeSpecificStorageConfig(pool.Driver)
 		for _, config := range memberConfig {
 			if config.Entity != "storage-pool" {
 				continue
@@ -972,7 +973,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 				continue
 			}
 
-			if !slices.Contains(db.NodeSpecificStorageConfig, config.Key) {
+			if !slices.Contains(nodeSpecificConfig, config.Key) {
 				logger.Warnf("Ignoring config key %q for storage pool %q", config.Key, config.Name)
 				continue
 			}
@@ -2777,7 +2778,7 @@ func clusterCheckStoragePoolsMatch(ctx context.Context, clusterDB *db.Cluster, r
 					return fmt.Errorf("Mismatching driver for storage pool %s", name)
 				}
 				// Exclude the keys which are node-specific.
-				exclude := db.NodeSpecificStorageConfig
+				exclude := db.NodeSpecificStorageConfig(pool.Driver)
 				err = localUtil.CompareConfigs(pool.Config, reqPool.Config, exclude)
 				if err != nil {
 					return fmt.Errorf("Mismatching config for storage pool %s: %w", name, err)
