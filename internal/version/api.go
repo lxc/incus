@@ -514,6 +514,7 @@ var APIExtensions = []string{
 	"direct_backup",
 	"instance_snapshot_disk_only_restore",
 	"unix_hotplug_pci",
+	"cluster_evacuating_restoring",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

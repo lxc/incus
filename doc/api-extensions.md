@@ -2957,3 +2957,7 @@ This adds support for only restoring the disk of a snapshotted instance.
 ## `unix_hotplug_pci`
 
 Adds a `pci` configuration key on the `unix-hotplug` device to allow filtering based on the USB controller PCI address.
+
+## `cluster_evacuating_restoring`
+
+Introduces new `Evacuating` and `Restoring` cluster member states.
