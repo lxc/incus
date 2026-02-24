@@ -195,14 +195,14 @@ func (r *ProtocolIncus) GetMetrics() (string, error) {
 // ApplyServerPreseed configures a target Incus server with the provided server and cluster configuration.
 func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	// Apply server configuration.
-	if len(config.Server.Config) > 0 {
+	if len(config.Config) > 0 {
 		// Get current config.
 		server, etag, err := r.GetServer()
 		if err != nil {
 			return fmt.Errorf("Failed to retrieve current server configuration: %w", err)
 		}
 
-		for k, v := range config.Server.Config {
+		for k, v := range config.Config {
 			server.Config[k] = fmt.Sprintf("%v", v)
 		}
 
@@ -214,7 +214,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	}
 
 	// Apply storage configuration.
-	if len(config.Server.StoragePools) > 0 {
+	if len(config.StoragePools) > 0 {
 		// Get the list of storagePools.
 		storagePoolNames, err := r.GetStoragePoolNames()
 		if err != nil {
@@ -264,7 +264,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 			return nil
 		}
 
-		for _, storagePool := range config.Server.StoragePools {
+		for _, storagePool := range config.StoragePools {
 			// New storagePool.
 			if !slices.Contains(storagePoolNames, storagePool.Name) {
 				err := createStoragePool(storagePool)
@@ -315,25 +315,25 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 
 	// Apply networks in the default project before other projects config applied (so that if the projects
 	// depend on a network in the default project they can have their config applied successfully).
-	for i := range config.Server.Networks {
+	for i := range config.Networks {
 		// Populate default project if not specified for backwards compatibility with earlier
 		// preseed dump files.
-		if config.Server.Networks[i].Project == "" {
-			config.Server.Networks[i].Project = api.ProjectDefaultName
+		if config.Networks[i].Project == "" {
+			config.Networks[i].Project = api.ProjectDefaultName
 		}
 
-		if config.Server.Networks[i].Project != api.ProjectDefaultName {
+		if config.Networks[i].Project != api.ProjectDefaultName {
 			continue
 		}
 
-		err := applyNetwork(config.Server.Networks[i])
+		err := applyNetwork(config.Networks[i])
 		if err != nil {
 			return err
 		}
 	}
 
 	// Apply project configuration.
-	if len(config.Server.Projects) > 0 {
+	if len(config.Projects) > 0 {
 		// Get the list of projects.
 		projectNames, err := r.GetProjectNames()
 		if err != nil {
@@ -378,7 +378,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 			return nil
 		}
 
-		for _, project := range config.Server.Projects {
+		for _, project := range config.Projects {
 			// New project.
 			if !slices.Contains(projectNames, project.Name) {
 				err := createProject(project)
@@ -398,12 +398,12 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	}
 
 	// Apply networks in non-default projects after project config applied (so that their projects exist).
-	for i := range config.Server.Networks {
-		if config.Server.Networks[i].Project == api.ProjectDefaultName {
+	for i := range config.Networks {
+		if config.Networks[i].Project == api.ProjectDefaultName {
 			continue
 		}
 
-		err := applyNetwork(config.Server.Networks[i])
+		err := applyNetwork(config.Networks[i])
 		if err != nil {
 			return err
 		}
@@ -454,25 +454,25 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	}
 
 	// Apply storage volumes in the default project before other projects config.
-	for i := range config.Server.StorageVolumes {
+	for i := range config.StorageVolumes {
 		// Populate default project if not specified.
-		if config.Server.StorageVolumes[i].Project == "" {
-			config.Server.StorageVolumes[i].Project = api.ProjectDefaultName
+		if config.StorageVolumes[i].Project == "" {
+			config.StorageVolumes[i].Project = api.ProjectDefaultName
 		}
 
 		// Populate default type if not specified.
-		if config.Server.StorageVolumes[i].Type == "" {
-			config.Server.StorageVolumes[i].Type = "custom"
+		if config.StorageVolumes[i].Type == "" {
+			config.StorageVolumes[i].Type = "custom"
 		}
 
-		err := applyStorageVolume(config.Server.StorageVolumes[i])
+		err := applyStorageVolume(config.StorageVolumes[i])
 		if err != nil {
 			return err
 		}
 	}
 
 	// Apply profile configuration.
-	if len(config.Server.Profiles) > 0 {
+	if len(config.Profiles) > 0 {
 		// Apply profile configuration.
 		applyProfile := func(profile api.InitProfileProjectPost) error {
 			// Get the current profile.
@@ -528,7 +528,7 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 			return nil
 		}
 
-		for _, profile := range config.Server.Profiles {
+		for _, profile := range config.Profiles {
 			if profile.Project == "" {
 				profile.Project = api.ProjectDefaultName
 			}
@@ -541,8 +541,8 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	}
 
 	// Apply certificate configuration.
-	if len(config.Server.Certificates) > 0 {
-		for _, certificate := range config.Server.Certificates {
+	if len(config.Certificates) > 0 {
+		for _, certificate := range config.Certificates {
 			err := r.CreateCertificate(certificate)
 			if err != nil {
 				return fmt.Errorf("Failed to create certificate %q: %w", certificate.Name, err)
@@ -574,8 +574,8 @@ func (r *ProtocolIncus) ApplyServerPreseed(config api.InitPreseed) error {
 	}
 
 	// Apply cluster group configurations.
-	if len(config.Server.ClusterGroups) > 0 {
-		for _, clusterGroup := range config.Server.ClusterGroups {
+	if len(config.ClusterGroups) > 0 {
+		for _, clusterGroup := range config.ClusterGroups {
 			// Check if it already exists.
 			existing, etag, err := r.GetClusterGroup(clusterGroup.Name)
 			if err == nil && existing != nil {
