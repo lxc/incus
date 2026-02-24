@@ -8960,6 +8960,16 @@ func (d *lxc) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error
 		out.AddSamples(metrics.ProcsTotal, metrics.Sample{Value: float64(pids)})
 	}
 
+	// Set the timestamps
+	startedAt, err := d.processStartedAt(d.InitPID())
+	if err != nil {
+		d.logger.Warn("Failed to get instance startup time", logger.Ctx{"err": err})
+	} else {
+		out.AddSamples(metrics.BootTimeSeconds, metrics.Sample{Value: float64(startedAt.Unix())})
+	}
+
+	out.AddSamples(metrics.TimeSeconds, metrics.Sample{Value: float64(time.Now().Unix())})
+
 	return out, nil
 }
 
