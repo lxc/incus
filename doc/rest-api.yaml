@@ -1371,10 +1371,65 @@ definitions:
         x-go-package: github.com/lxc/incus/v6/shared/api
     InitPreseed:
         properties:
-            Server:
-                $ref: '#/definitions/InitLocalPreseed'
+            certificates:
+                description: Certificates to add
+                example: PEM encoded certificate
+                items:
+                    $ref: '#/definitions/CertificatesPost'
+                type: array
+                x-go-name: Certificates
             cluster:
                 $ref: '#/definitions/InitClusterPreseed'
+            cluster_groups:
+                description: |-
+                    Cluster groups to add
+
+                    API extension: init_preseed_cluster_groups.
+                items:
+                    $ref: '#/definitions/ClusterGroupsPost'
+                type: array
+                x-go-name: ClusterGroups
+            config:
+                description: Server configuration map (refer to doc/server.md)
+                example:
+                    core.https_address: :8443
+                type: object
+                x-go-name: Config
+            networks:
+                description: Networks by project to add
+                example: Network on the "default" project
+                items:
+                    $ref: '#/definitions/InitNetworksProjectPost'
+                type: array
+                x-go-name: Networks
+            profiles:
+                description: Profiles to add
+                example: '"default" profile with a root disk device'
+                items:
+                    $ref: '#/definitions/InitProfileProjectPost'
+                type: array
+                x-go-name: Profiles
+            projects:
+                description: Projects to add
+                example: '"default" project'
+                items:
+                    $ref: '#/definitions/ProjectsPost'
+                type: array
+                x-go-name: Projects
+            storage_pools:
+                description: Storage Pools to add
+                example: local dir storage pool
+                items:
+                    $ref: '#/definitions/StoragePoolsPost'
+                type: array
+                x-go-name: StoragePools
+            storage_volumes:
+                description: Storage Volumes to add
+                example: local dir storage volume
+                items:
+                    $ref: '#/definitions/InitStorageVolumesProjectPost'
+                type: array
+                x-go-name: StorageVolumes
         title: InitPreseed represents initialization configuration that can be supplied to `init`.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
