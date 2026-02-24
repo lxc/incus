@@ -1577,3 +1577,17 @@ func ipInRanges(ipAddr net.IP, ipRanges []iprange.Range) bool {
 
 	return false
 }
+
+// ipInPointerRanges checks whether the given IP address is contained within any of the
+// provided pointer IP network ranges.
+func ipInPointerRanges(ipAddr net.IP, ipRanges []*iprange.Range) bool {
+	for _, r := range ipRanges {
+		if r == nil { // nil check since we're dealing with pointers here
+			continue
+		}
+
+		return r.ContainsIP(ipAddr)
+	}
+
+	return false
+}
