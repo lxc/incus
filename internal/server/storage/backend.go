@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -273,6 +274,10 @@ func (b *backend) Update(clientType request.ClientType, newDesc string, newConfi
 		return err
 	}
 
+	// Keep old config.
+	oldConfig := api.ConfigMap{}
+	maps.Copy(oldConfig, b.db.Config)
+
 	// Diff the configurations.
 	changedConfig, userOnly := b.detectChangedConfig(b.db.Config, newConfig)
 
@@ -284,7 +289,7 @@ func (b *backend) Update(clientType request.ClientType, newDesc string, newConfi
 
 	// Prevent shrinking the storage pool.
 	newSize, sizeChanged := changedConfig["size"]
-	if sizeChanged {
+	if sizeChanged && newSize != "" && newSize != drivers.MaxValue {
 		oldSizeBytes, _ := units.ParseByteSizeString(b.db.Config["size"])
 		newSizeBytes, _ := units.ParseByteSizeString(newSize)
 
@@ -301,6 +306,10 @@ func (b *backend) Update(clientType request.ClientType, newDesc string, newConfi
 			return err
 		}
 	}
+
+	// Check if anything was changed by Update.
+	updateChanges, _ := b.detectChangedConfig(oldConfig, b.driver.Config())
+	maps.Copy(newConfig, updateChanges)
 
 	// Update the database if something changed and we're in ClientTypeNormal mode.
 	if clientType == request.ClientTypeNormal && (len(changedConfig) > 0 || newDesc != b.db.Description) {

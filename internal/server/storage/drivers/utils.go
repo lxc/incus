@@ -30,6 +30,9 @@ import (
 // MinBlockBoundary minimum block boundary size to use.
 const MinBlockBoundary = 8192
 
+// MaxValue represents the maximum possible value.
+const MaxValue = "max"
+
 // blockBackedAllowedFilesystems allowed filesystems for block volumes.
 var blockBackedAllowedFilesystems = []string{"btrfs", "ext4", "xfs"}
 

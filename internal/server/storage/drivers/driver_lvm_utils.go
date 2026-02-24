@@ -137,6 +137,29 @@ func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
 	return true, tags, nil
 }
 
+// getPhysicalDevices lists PVs backing a volume group.
+func (d *lvm) getPhysicalDevices(vgName string) ([]string, error) {
+	args := []string{
+		"--noheadings",
+		"-o",
+		"pv_name",
+		"-S",
+		fmt.Sprintf("vg_name=%s", vgName),
+	}
+
+	devices, err := subprocess.RunCommand("pvs", args...)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{}
+	for _, line := range strings.Split(strings.TrimSpace(devices), "\n") {
+		result = append(result, strings.TrimSpace(line))
+	}
+
+	return result, nil
+}
+
 // volumeGroupExtentSize gets the volume group's physical extent size in bytes.
 func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
 	// Look for cached value.
@@ -167,6 +190,45 @@ func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
 	lvmExtentSize[d.name] = val
 
 	return val, nil
+}
+
+// volumeGroupSize gets the volume group's physical size in bytes.
+func (d *lvm) volumeGroupSize(vgName string) (int64, error) {
+	output, err := subprocess.TryRunCommand("vgs", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_size", vgName)
+	if err != nil {
+		if d.isLVMNotFoundExitError(err) {
+			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
+		}
+
+		return -1, err
+	}
+
+	output = strings.TrimSpace(output)
+	val, err := strconv.ParseInt(output, 10, 64)
+	if err != nil {
+		return -1, err
+	}
+
+	return val, nil
+}
+
+// resizePhysicalVolume resizes the given PV.
+func (d *lvm) resizePhysicalVolume(devPath string, size int64) error {
+	args := []string{
+		"-y",
+		devPath,
+	}
+
+	if size > 0 {
+		args = append(args, "--setphysicalvolumesize", fmt.Sprintf("%dB", size))
+	}
+
+	_, err := subprocess.RunCommand("pvresize", args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // countLogicalVolumes gets the count of volumes (both normal and thin) in a volume group.
@@ -968,15 +1030,15 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 	return true, nil
 }
 
-// getSourceType determines the source type based on the config["source"] value.
-func (d *lvm) getSourceType() lvmSourceType {
+// getSourceType determines the source type based on the source value.
+func (d *lvm) getSourceType(source string) lvmSourceType {
 	defaultSource := loopFilePath(d.name)
 
-	if d.config["source"] == "" || d.config["source"] == defaultSource {
+	if source == "" || source == defaultSource {
 		return lvmSourceTypeDefault
-	} else if filepath.IsAbs(d.config["source"]) {
+	} else if filepath.IsAbs(source) {
 		return lvmSourceTypePhysicalDevice
-	} else if d.config["source"] != "" {
+	} else if source != "" {
 		return lvmSourceTypeVolumeGroup
 	}
 
