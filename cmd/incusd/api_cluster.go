@@ -1430,7 +1430,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			// Skip servers that are offline.
-			if member.State == db.ClusterMemberStateEvacuated || member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+			if slices.Contains([]int{db.ClusterMemberStateEvacuated, db.ClusterMemberStateEvacuating, db.ClusterMemberStateRestoring}, member.State) || member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
 				continue
 			}
 

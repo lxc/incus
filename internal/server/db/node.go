@@ -56,9 +56,11 @@ var ClusterRoles = map[int]ClusterRole{
 
 // Numeric type codes identifying different cluster member states.
 const (
-	ClusterMemberStateCreated   = 0
-	ClusterMemberStatePending   = 1
-	ClusterMemberStateEvacuated = 2
+	ClusterMemberStateCreated    = 0
+	ClusterMemberStatePending    = 1
+	ClusterMemberStateEvacuated  = 2
+	ClusterMemberStateEvacuating = 3
+	ClusterMemberStateRestoring  = 4
 )
 
 // NodeInfo holds information about a single member in a cluster.
@@ -152,9 +154,18 @@ func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (
 	result.Status = "Online"
 	result.Message = "Fully operational"
 
-	if n.State == ClusterMemberStateEvacuated {
-		result.Status = "Evacuated"
+	if slices.Contains([]int{ClusterMemberStateEvacuated, ClusterMemberStateEvacuating, ClusterMemberStateRestoring}, n.State) {
 		result.Message = "Unavailable due to maintenance"
+
+		switch n.State {
+		case ClusterMemberStateEvacuated:
+			result.Status = "Evacuated"
+		case ClusterMemberStateEvacuating:
+			result.Status = "Evacuating"
+		case ClusterMemberStateRestoring:
+			result.Status = "Restoring"
+		default:
+		}
 	} else if n.IsOffline(args.OfflineThreshold) {
 		result.Status = "Offline"
 		result.Message = fmt.Sprintf("No heartbeat for %s (%s)", time.Since(n.Heartbeat), n.Heartbeat)
@@ -1226,7 +1237,7 @@ func (c *Cluster) LocalNodeIsEvacuated() bool {
 			return nil
 		}
 
-		isEvacuated = node.State == ClusterMemberStateEvacuated
+		isEvacuated = slices.Contains([]int{ClusterMemberStateEvacuated, ClusterMemberStateEvacuating, ClusterMemberStateRestoring}, node.State)
 		return nil
 	})
 	if err != nil {

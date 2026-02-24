@@ -121,8 +121,8 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	// Set cluster member status to EVACUATED.
-	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuated)
+	// Set cluster member status to EVACUATING.
+	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuating)
 	if err != nil {
 		return err
 	}
@@ -149,6 +149,12 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 
 	// Stop networks after evacuation.
 	networkShutdown(s)
+
+	// Set cluster member status to EVACUATED.
+	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuated)
+	if err != nil {
+		return err
+	}
 
 	reverter.Success()
 
@@ -310,8 +316,8 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 		reverter := revert.New()
 		defer reverter.Fail()
 
-		// Set node status to CREATED.
-		err := evacuateClusterSetState(s, originName, db.ClusterMemberStateCreated)
+		// Set node status to RESTORING.
+		err := evacuateClusterSetState(s, originName, db.ClusterMemberStateRestoring)
 		if err != nil {
 			return err
 		}
@@ -371,6 +377,12 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 		err = group.Wait()
 		if err != nil {
 			return fmt.Errorf("Failed to restore instances: %w", err)
+		}
+
+		// Set node status to CREATED.
+		err = evacuateClusterSetState(s, originName, db.ClusterMemberStateCreated)
+		if err != nil {
+			return err
 		}
 
 		reverter.Success()
