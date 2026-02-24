@@ -6,8 +6,8 @@ package api
 //
 // API extension: preseed.
 type InitPreseed struct {
-	Server  InitLocalPreseed    `yaml:",inline"`
-	Cluster *InitClusterPreseed `json:"cluster" yaml:"cluster"`
+	InitLocalPreseed `yaml:",inline"`
+	Cluster          *InitClusterPreseed `json:"cluster" yaml:"cluster"`
 }
 
 // InitLocalPreseed represents initialization configuration.
