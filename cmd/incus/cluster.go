@@ -1756,10 +1756,10 @@ func prepareClusterMemberServerFilters(filters []string, i any) []string {
 func NewInitPressed() *api.InitPreseed {
 	// Initialize config
 	config := api.InitPreseed{}
-	config.Server.Config = map[string]string{}
-	config.Server.Networks = []api.InitNetworksProjectPost{}
-	config.Server.StoragePools = []api.StoragePoolsPost{}
-	config.Server.Profiles = []api.InitProfileProjectPost{
+	config.Config = map[string]string{}
+	config.Networks = []api.InitNetworksProjectPost{}
+	config.StoragePools = []api.StoragePoolsPost{}
+	config.Profiles = []api.InitProfileProjectPost{
 		{
 			ProfilesPost: api.ProfilesPost{
 				Name: "default",
@@ -1826,7 +1826,7 @@ func askClustering(asker ask.Asker, config *api.InitPreseed, cluster incus.Insta
 	}
 
 	serverAddress = internalUtil.CanonicalNetworkAddress(serverAddress, ports.HTTPSDefaultPort)
-	config.Server.Config["core.https_address"] = serverAddress
+	config.Config["core.https_address"] = serverAddress
 
 	// Check if joining a cluster or creating a new one.
 	clusterJoin := false
@@ -2092,9 +2092,9 @@ func fillClusterConfig(config *api.InitPreseed) error {
 	// If clustering is enabled, and no cluster.https_address network address
 	// was specified, we fallback to core.https_address.
 	if config.Cluster != nil &&
-		config.Server.Config["core.https_address"] != "" &&
-		config.Server.Config["cluster.https_address"] == "" {
-		config.Server.Config["cluster.https_address"] = config.Server.Config["core.https_address"]
+		config.Config["core.https_address"] != "" &&
+		config.Config["cluster.https_address"] == "" {
+		config.Config["cluster.https_address"] = config.Config["core.https_address"]
 	}
 
 	return nil

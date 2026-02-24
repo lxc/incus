@@ -125,7 +125,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 				}
 
 				// Add to the default profile
-				config.Server.Profiles[0].Devices["eth0"] = map[string]string{
+				config.Profiles[0].Devices["eth0"] = map[string]string{
 					"type":    "nic",
 					"nictype": "macvlan",
 					"name":    "eth0",
@@ -133,7 +133,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 				}
 
 				if util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", interfaceName)) {
-					config.Server.Profiles[0].Devices["eth0"]["nictype"] = "bridged"
+					config.Profiles[0].Devices["eth0"]["nictype"] = "bridged"
 				}
 
 				break
@@ -162,7 +162,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		// Add to the default profile
-		config.Server.Profiles[0].Devices["eth0"] = map[string]string{
+		config.Profiles[0].Devices["eth0"] = map[string]string{
 			"type":    "nic",
 			"name":    "eth0",
 			"network": network.Name,
@@ -211,7 +211,7 @@ func (c *cmdAdminInit) askNetworking(config *api.InitPreseed, d incus.InstanceSe
 		}
 
 		// Add the new network
-		config.Server.Networks = append(config.Server.Networks, network)
+		config.Networks = append(config.Networks, network)
 		break
 	}
 
@@ -310,8 +310,8 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 		}
 
 		// Add to the default profile
-		if config.Server.Profiles[0].Devices["root"] == nil {
-			config.Server.Profiles[0].Devices["root"] = map[string]string{
+		if config.Profiles[0].Devices["root"] == nil {
+			config.Profiles[0].Devices["root"] = map[string]string{
 				"type": "disk",
 				"path": "/",
 				"pool": pool.Name,
@@ -348,7 +348,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 				pool.Config["source"] = source
 			}
 
-			config.Server.StoragePools = append(config.Server.StoragePools, pool)
+			config.StoragePools = append(config.StoragePools, pool)
 			break
 		}
 
@@ -361,7 +361,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 			if btrfsSubvolume {
 				pool.Config["source"] = internalUtil.VarPath("storage-pools", pool.Name)
-				config.Server.StoragePools = append(config.Server.StoragePools, pool)
+				config.StoragePools = append(config.StoragePools, pool)
 				break
 			}
 		}
@@ -377,7 +377,7 @@ func (c *cmdAdminInit) askStoragePool(config *api.InitPreseed, d incus.InstanceS
 
 				if zfsDataset {
 					pool.Config["source"] = "rpool/incus"
-					config.Server.StoragePools = append(config.Server.StoragePools, pool)
+					config.StoragePools = append(config.StoragePools, pool)
 					break
 				}
 			}
@@ -529,7 +529,7 @@ and make sure that your user can see and run the "thin_check" command before run
 			}
 		}
 
-		config.Server.StoragePools = append(config.Server.StoragePools, pool)
+		config.StoragePools = append(config.StoragePools, pool)
 		break
 	}
 
@@ -554,7 +554,7 @@ they otherwise would.`) + "\n\n")
 		}
 
 		if shareParentAllocation {
-			config.Server.Profiles[0].Config["security.privileged"] = "true"
+			config.Profiles[0].Config["security.privileged"] = "true"
 		}
 	}
 
@@ -609,7 +609,7 @@ they otherwise would.`) + "\n\n")
 				return err
 			}
 
-			config.Server.Config["core.https_address"] = internalUtil.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
+			config.Config["core.https_address"] = internalUtil.CanonicalNetworkAddressFromAddressAndPort(netAddr, int(netPort), ports.HTTPSDefaultPort)
 		}
 	}
 
@@ -620,7 +620,7 @@ they otherwise would.`) + "\n\n")
 	}
 
 	if !imageStaleRefresh {
-		config.Server.Config["images.auto_update_interval"] = "0"
+		config.Config["images.auto_update_interval"] = "0"
 	}
 
 	return nil

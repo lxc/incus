@@ -197,5 +197,5 @@ func (c *cmdAdminInit) RunAuto(d incus.InstanceServer, server *api.Server) (*api
 		}
 	}
 
-	return &api.InitPreseed{Server: config}, nil
+	return &api.InitPreseed{InitLocalPreseed: config}, nil
 }
