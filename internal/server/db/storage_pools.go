@@ -237,7 +237,7 @@ SELECT ?, key, value
 
 // CreateStoragePoolConfig adds a new entry in the storage_pools_config table.
 func (c *ClusterTx) CreateStoragePoolConfig(poolID, nodeID int64, config map[string]string) error {
-	return storagePoolConfigAdd(c.tx, poolID, nodeID, config)
+	return c.storagePoolConfigAdd(poolID, nodeID, config)
 }
 
 // StoragePoolState indicates the state of the storage pool or storage pool node.
@@ -780,7 +780,7 @@ func (c *ClusterTx) CreateStoragePool(ctx context.Context, poolName string, pool
 		return -1, err
 	}
 
-	err = storagePoolConfigAdd(c.tx, id, c.nodeID, poolConfig)
+	err = c.storagePoolConfigAdd(id, c.nodeID, poolConfig)
 	if err != nil {
 		return -1, err
 	}
@@ -789,22 +789,28 @@ func (c *ClusterTx) CreateStoragePool(ctx context.Context, poolName string, pool
 }
 
 // Add new storage pool config.
-func storagePoolConfigAdd(tx *sql.Tx, poolID, nodeID int64, poolConfig map[string]string) error {
+func (c *ClusterTx) storagePoolConfigAdd(poolID, nodeID int64, poolConfig map[string]string) error {
 	str := "INSERT INTO storage_pools_config (storage_pool_id, node_id, key, value) VALUES(?, ?, ?, ?)"
-	stmt, err := tx.Prepare(str)
+	stmt, err := c.tx.Prepare(str)
 	if err != nil {
 		return err
 	}
 
 	defer func() { _ = stmt.Close() }()
 
+	driver, err := c.GetStoragePoolDriver(context.Background(), poolID)
+	if err != nil {
+		return err
+	}
+
+	nodeSpecificConfig := NodeSpecificStorageConfig(driver)
 	for k, v := range poolConfig {
 		if v == "" {
 			continue
 		}
 
 		var nodeIDValue any
-		if !slices.Contains(NodeSpecificStorageConfig, k) {
+		if !slices.Contains(nodeSpecificConfig, k) {
 			nodeIDValue = nil
 		} else {
 			nodeIDValue = nodeID
@@ -841,7 +847,7 @@ func (c *ClusterTx) UpdateStoragePoolConfig(poolID, nodeID int64, config map[str
 		return err
 	}
 
-	return storagePoolConfigAdd(c.tx, poolID, nodeID, config)
+	return c.storagePoolConfigAdd(poolID, nodeID, config)
 }
 
 // Uupdate the storage pool description.
@@ -876,15 +882,22 @@ func (c *ClusterTx) RemoveStoragePool(ctx context.Context, poolName string) (*ap
 }
 
 // NodeSpecificStorageConfig lists all storage pool config keys which are node-specific.
-var NodeSpecificStorageConfig = []string{
-	"size",
-	"source",
-	"source.wipe",
-	"volatile.initial_source",
-	"zfs.pool_name",
-	"lvm.thinpool_name",
-	"lvm.vg_name",
-	"lvm.vg.force_reuse",
+func NodeSpecificStorageConfig(driverName string) []string {
+	configKeys := []string{
+		"source",
+		"source.wipe",
+		"volatile.initial_source",
+		"zfs.pool_name",
+		"lvm.thinpool_name",
+		"lvm.vg_name",
+		"lvm.vg.force_reuse",
+	}
+
+	if driverName != "lvmcluster" {
+		configKeys = append(configKeys, "size")
+	}
+
+	return configKeys
 }
 
 // IsRemoteStorage return whether a given pool is backed by remote storage.
