@@ -17,6 +17,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
@@ -27,29 +28,6 @@ import (
 
 // Date layout to be used throughout the client.
 const dateLayout = "2006/01/02 15:04 MST"
-
-// Batch operations.
-type batchResult struct {
-	err  error
-	name string
-}
-
-func runBatch(names []string, action func(name string) error) []batchResult {
-	chResult := make(chan batchResult, len(names))
-
-	for _, name := range names {
-		go func(name string) {
-			chResult <- batchResult{action(name), name}
-		}(name)
-	}
-
-	results := []batchResult{}
-	for range names {
-		results = append(results, <-chResult)
-	}
-
-	return results
-}
 
 // Add a device to an instance.
 func instanceDeviceAdd(client incus.InstanceServer, name string, devName string, dev map[string]string) error {
@@ -744,4 +722,13 @@ func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authN
 			}
 		}()
 	}
+}
+
+// formatRemote formats a remote object.
+func formatRemote(conf *config.Config, p *u.Parsed) string {
+	if p.RemoteName == conf.DefaultRemote {
+		return p.RemoteObject.String
+	}
+
+	return p.RemoteName + ":" + p.RemoteObject.String
 }

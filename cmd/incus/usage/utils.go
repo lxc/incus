@@ -21,3 +21,15 @@ func getInstanceServer(conf *cliconfig.Config, servers map[string]incus.Instance
 
 	return remoteServer, nil
 }
+
+// ParseString returns a parsed atom corresponding to a single string.
+func ParseString(s string) *Parsed {
+	p, _ := placeholder{}.Parse(nil, nil, nil, &[]string{s}, false)
+	return p
+}
+
+// ParseDefault returns a parsed atom corresponding to how the given atom is parsed without any
+// argument.
+func ParseDefault(atom Atom, conf *cliconfig.Config) (*Parsed, error) {
+	return atom.Parse(conf, nil, map[string]incus.InstanceServer{}, &[]string{}, false)
+}
