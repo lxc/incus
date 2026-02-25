@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
 	"github.com/lxc/incus/v6/shared/api"
@@ -31,10 +32,12 @@ type cmdAdminInit struct {
 	flagStoragePool     string
 }
 
+var cmdAdminInitUsage = u.Usage{u.Sequence(u.Flag("preseed"), u.Placeholder(i18n.G("preseed.yaml")).Optional()).Optional()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminInit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("init")
+	cmd.Use = cli.U("init", cmdAdminInitUsage...)
 	cmd.Short = i18n.G("Configure the daemon")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Configure the daemon`))
 	cmd.Example = `  init --minimal
@@ -62,6 +65,11 @@ func (c *cmdAdminInit) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
+	parsed, err := cmdAdminInitUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
+		return err
+	}
+
 	// Quick checks.
 	if c.flagAuto && c.flagPreseed {
 		return errors.New(i18n.G("Can't use --auto and --preseed together"))
@@ -115,7 +123,7 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 
 	switch {
 	case c.flagPreseed:
-		config, err = c.RunPreseed(cmd, args)
+		config, err = c.RunPreseed(parsed[0].List[1])
 		if err != nil {
 			return err
 		}

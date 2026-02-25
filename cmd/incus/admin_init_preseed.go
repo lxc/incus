@@ -7,31 +7,26 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
 // RunPreseed runs the actual command logic.
-func (c *cmdAdminInit) RunPreseed(cmd *cobra.Command, args []string) (*api.InitPreseed, error) {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 1)
-	if exit {
-		return nil, err
-	}
-
+func (c *cmdAdminInit) RunPreseed(p *u.Parsed) (*api.InitPreseed, error) {
 	// Read the YAML
 	var bytes []byte
+	var err error
 
-	if len(args) == 0 {
+	if p.Skipped || p.String == "-" {
 		bytes, err = io.ReadAll(os.Stdin)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
 		}
 	} else {
-		bytes, err = os.ReadFile(args[0])
+		bytes, err = os.ReadFile(p.String)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.G("Failed to read from file: %w"), err)
 		}
