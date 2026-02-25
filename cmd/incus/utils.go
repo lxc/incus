@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -14,6 +15,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -281,6 +283,46 @@ func getConfig(args ...string) (map[string]string, error) {
 	}
 
 	return values, nil
+}
+
+// kvToMap converts a parsed KV list to a KV map.
+func kvToMap(p *u.Parsed) (map[string]string, error) {
+	values := map[string]string{}
+
+	stdinRead := false
+	for _, kv := range p.List {
+		key := kv.StringList[0]
+		value := kv.StringList[1]
+		if value == "-" && !termios.IsTerminal(getStdinFd()) {
+			if stdinRead {
+				return nil, errors.New(i18n.G("Cannot read the stdin twice"))
+			}
+
+			buf, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return nil, fmt.Errorf(i18n.G("Can't read from stdin: %w"), err)
+			}
+
+			value = string(buf[:])
+		}
+
+		values[key] = value
+	}
+
+	return values, nil
+}
+
+// settable abstracts commands that set something.
+type settable interface {
+	set(cmd *cobra.Command, parsed []*u.Parsed) error
+}
+
+// unsetKey reparses the last argument passed to an `unset` command to make it suitable for `set`
+// commands.
+func unsetKey(s settable, cmd *cobra.Command, parsed []*u.Parsed) error {
+	i := len(parsed) - 1
+	parsed[i], _ = u.KV.List(0).Parse(nil, nil, nil, &[]string{parsed[i].String + "="}, false)
+	return s.set(cmd, parsed)
 }
 
 func readEnvironmentFile(path string) (map[string]string, error) {
