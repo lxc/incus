@@ -153,7 +153,7 @@ func daemonStorageSplitVolume(volume string) (string, string, error) {
 	return poolName, volumeName, nil
 }
 
-func daemonStorageValidate(s *state.State, target string) error {
+func daemonStorageValidate(s *state.State, volType string, target string) error {
 	// Check syntax.
 	if target == "" {
 		return nil

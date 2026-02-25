@@ -622,14 +622,14 @@ func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 
 		// Validate the storage volumes
 		if nodeValues["storage.backups_volume"] != "" && nodeValues["storage.backups_volume"] != newNodeConfig.StorageBackupsVolume() {
-			err := daemonStorageValidate(s, nodeValues["storage.backups_volume"])
+			err := daemonStorageValidate(s, "backups", nodeValues["storage.backups_volume"])
 			if err != nil {
 				return fmt.Errorf("Failed validation of %q: %w", "storage.backups_volume", err)
 			}
 		}
 
 		if nodeValues["storage.images_volume"] != "" && nodeValues["storage.images_volume"] != newNodeConfig.StorageImagesVolume() {
-			err := daemonStorageValidate(s, nodeValues["storage.images_volume"])
+			err := daemonStorageValidate(s, "images", nodeValues["storage.images_volume"])
 			if err != nil {
 				return fmt.Errorf("Failed validation of %q: %w", "storage.images_volume", err)
 			}
