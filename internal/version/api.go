@@ -518,6 +518,7 @@ var APIExtensions = []string{
 	"projects_restricted_image_servers",
 	"storage_lvmcluster_size",
 	"authorization_scriptlet_cert",
+	"lvmcluster_remove_snapshots",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

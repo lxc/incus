@@ -2976,3 +2976,10 @@ Adds support for specifying the `size` parameter when updating `lvmcluster` stor
 This adds two fields, `Chain` and `Certificate`, to the `details`
 argument of the authorization scriptlet, to give more information about
 the client to authorize.
+
+## `lvmcluster_remove_snapshots`
+
+It is a Boolean that defaults to `false`. When set to `true`, it instructs Incus
+to remove any required snapshots when attempting to restore another snapshot.
+
+This is necessary because `lvmcluster` only allows restoring the latest snapshot.
