@@ -1283,3 +1283,22 @@ func ProjectVolume(projectName string, volName string, volType drivers.VolumeTyp
 
 	return project.StorageVolume(projectName, volName)
 }
+
+// DisallowedStorageConfigForCreation returns a list of keys that cannot be specified
+// during pool creation.
+func DisallowedStorageConfigForCreation(driverName string) []string {
+	if driverName == "lvmcluster" {
+		return []string{"size"}
+	}
+
+	return []string{}
+}
+
+// ClusterWideStorageConfig returns a list of keys that are cluster wide.
+func ClusterWideStorageConfig(driverName string) []string {
+	if driverName == "lvmcluster" {
+		return []string{"size"}
+	}
+
+	return []string{}
+}
