@@ -2983,3 +2983,7 @@ It is a Boolean that defaults to `false`. When set to `true`, it instructs Incus
 to remove any required snapshots when attempting to restore another snapshot.
 
 This is necessary because `lvmcluster` only allows restoring the latest snapshot.
+
+## `daemon_storage_logs`
+
+This adds `storage.logs_volume` alongside the existing `storage.backups_volume` and `storage.images_volume`.

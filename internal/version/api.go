@@ -519,6 +519,7 @@ var APIExtensions = []string{
 	"storage_lvmcluster_size",
 	"authorization_scriptlet_cert",
 	"lvmcluster_remove_snapshots",
+	"daemon_storage_logs",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
