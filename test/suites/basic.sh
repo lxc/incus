@@ -201,6 +201,9 @@ test_basic_usage() {
     incus publish bar --alias=foo-image-compressed --compression="gzip --rsyncable" prop=val1
     incus image delete foo-image-compressed
 
+    ! incus publish bar --compression="ps" || false
+    ! incus export bar --compression="ps" || false
+
     # Test privileged container publish
     incus profile create priv
     incus profile set priv security.privileged true
