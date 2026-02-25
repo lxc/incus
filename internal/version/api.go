@@ -517,6 +517,7 @@ var APIExtensions = []string{
 	"cluster_evacuating_restoring",
 	"projects_restricted_image_servers",
 	"storage_lvmcluster_size",
+	"authorization_scriptlet_cert",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

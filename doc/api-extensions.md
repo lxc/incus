@@ -2970,3 +2970,9 @@ This allows specifying a comma separate list of image server domains from which 
 ## `storage_lvmcluster_size`
 
 Adds support for specifying the `size` parameter when updating `lvmcluster` storage pool.
+
+## `authorization_scriptlet_cert`
+
+This adds two fields, `Chain` and `Certificate`, to the `details`
+argument of the authorization scriptlet, to give more information about
+the client to authorize.
