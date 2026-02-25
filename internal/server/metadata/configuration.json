@@ -6607,10 +6607,10 @@
 					},
 					{
 						"size": {
-							"default": "auto (20% of free disk space, \u003e= 5 GiB and \u003c= 30 GiB)",
+							"default": "auto (20% of free disk space, \u003e= 5 GiB and \u003c= 30 GiB) for `lvm`.",
 							"longdesc": "",
 							"scope": "local",
-							"shortdesc": "Size of the storage pool when creating loop-based pools (in bytes, suffixes supported, can be increased to grow storage pool). Not usable with `lvmcluster`.",
+							"shortdesc": "Storage pool size (in bytes, suffixes supported, can be increased to grow storage pool). `lvmcluster` pools: cannot set at creation, but can be updated.",
 							"type": "string"
 						}
 					},
