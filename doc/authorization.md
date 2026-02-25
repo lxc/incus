@@ -75,7 +75,13 @@ Incus supports defining a scriptlet to manage fine-grained authorization, allowi
 
 To use scriptlet authorization, you can write a scriptlet in the `authorization.scriptlet` server configuration option implementing a function `authorize`, which takes three arguments:
 
-- `details`, an object with attributes `Username` (the user name or certificate fingerprint), `Protocol` (the authentication protocol), `IsAllProjectsRequest` (whether the request is made on all projects) and `ProjectName` (the project name)
+- `details`, an object with the following attributes:
+   - `Username`: the user name or certificate fingerprint
+   - `Protocol`: the authentication protocol
+   - `IsAllProjectsRequest`: whether the request is made on all projects
+   - `ProjectName`: the project name
+   - `Chain`: the certificate chain as a list of dissected x509 certificates
+   - `Certificate`: the certificate data stored in the database
 - `object`, the object on which the user requests authorization
 - `entitlement`, the authorization level asked by the user
 
