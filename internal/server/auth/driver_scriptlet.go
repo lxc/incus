@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"crypto/x509"
 	"net/http"
 
 	"github.com/lxc/incus/v6/internal/server/certificate"
@@ -13,6 +14,7 @@ import (
 // Scriptlet represents a scriptlet authorizer.
 type Scriptlet struct {
 	commonAuthorizer
+	certificates *certificate.Cache
 }
 
 // CheckPermission returns an error if the user does not have the given Entitlement on the given Object.
@@ -26,7 +28,18 @@ func (s *Scriptlet) CheckPermission(ctx context.Context, r *http.Request, object
 		return nil
 	}
 
-	authorized, err := authScriptlet.AuthorizationRun(logger.Log, details.actualDetails(), object.String(), string(entitlement))
+	actualDetails := details.actualDetails()
+	peerCertificates := []*x509.Certificate{}
+	var apiCert *api.CertificatePut
+
+	if r.TLS != nil {
+		peerCertificates = r.TLS.PeerCertificates
+		if s.certificates != nil {
+			apiCert = s.certificates.GetAPICertificate(actualDetails.Username)
+		}
+	}
+
+	authorized, err := authScriptlet.AuthorizationRun(logger.Log, actualDetails, peerCertificates, apiCert, object.String(), string(entitlement))
 	if err != nil {
 		return api.StatusErrorf(http.StatusForbidden, "Authorization scriptlet execution failed with error: %v", err)
 	}
@@ -60,8 +73,19 @@ func (s *Scriptlet) GetPermissionChecker(ctx context.Context, r *http.Request, e
 		return allowFunc(true), nil
 	}
 
+	actualDetails := details.actualDetails()
+	peerCertificates := []*x509.Certificate{}
+	var apiCert *api.CertificatePut
+
+	if r.TLS != nil {
+		peerCertificates = r.TLS.PeerCertificates
+		if s.certificates != nil {
+			apiCert = s.certificates.GetAPICertificate(actualDetails.Username)
+		}
+	}
+
 	permissionChecker := func(o Object) bool {
-		authorized, err := authScriptlet.AuthorizationRun(logger.Log, details.actualDetails(), o.String(), string(entitlement))
+		authorized, err := authScriptlet.AuthorizationRun(logger.Log, actualDetails, peerCertificates, apiCert, o.String(), string(entitlement))
 		if err != nil {
 			logger.Error("Authorization scriptlet execution failed", logger.Ctx{"err": err})
 			return false
@@ -79,5 +103,6 @@ func (s *Scriptlet) GetProjectAccess(ctx context.Context, projectName string) (*
 }
 
 func (s *Scriptlet) load(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
+	s.certificates = certificateCache
 	return nil
 }

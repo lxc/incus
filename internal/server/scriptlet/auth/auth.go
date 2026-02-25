@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/x509"
 	"errors"
 	"fmt"
 
@@ -15,7 +16,7 @@ import (
 )
 
 // AuthorizationRun runs the authorization scriptlet.
-func AuthorizationRun(l logger.Logger, details *common.RequestDetails, object string, entitlement string) (bool, error) {
+func AuthorizationRun(l logger.Logger, details *common.RequestDetails, peerCertificates []*x509.Certificate, apiCertificate *api.CertificatePut, object string, entitlement string) (bool, error) {
 	logFunc := log.CreateLogger(l, "Authorization scriptlet")
 
 	// Remember to match the entries in scriptletLoad.AuthorizationCompile() with this list so Starlark can
@@ -44,7 +45,17 @@ func AuthorizationRun(l logger.Logger, details *common.RequestDetails, object st
 		return false, errors.New("Scriptlet missing authorize function")
 	}
 
-	detailsv, err := scriptlet.StarlarkMarshal(details)
+	extendedDetails := struct {
+		*common.RequestDetails
+		Chain       []*x509.Certificate
+		Certificate *api.CertificatePut
+	}{
+		details,
+		peerCertificates,
+		apiCertificate,
+	}
+
+	detailsv, err := scriptlet.StarlarkMarshal(extendedDetails)
 	if err != nil {
 		return false, fmt.Errorf("Marshalling details failed: %w", err)
 	}
