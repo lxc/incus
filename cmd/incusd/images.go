@@ -1247,6 +1247,21 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	// Check if the project allows retrieving the image.
+	if !imageUpload && (req.Source.Type == "image" || req.Source.Type == "url") {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err := projectutils.AllowImageCreation(tx, projectName, req)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	// Begin background operation
 	run := func(op *operations.Operation) error {
 		var err error
