@@ -5139,6 +5139,13 @@
 						}
 					},
 					{
+						"restricted.images.servers": {
+							"longdesc": "Specify a comma-delimited list of image servers domains that are allowed for use in this project.\nIf this option is not set, all image servers are accessible.",
+							"shortdesc": "Which image servers (HTTP host) are allowed for us in this project",
+							"type": "string"
+						}
+					},
+					{
 						"restricted.networks.access": {
 							"longdesc": "Specify a comma-delimited list of network names that are allowed for use in this project.\nIf this option is not set, all networks are accessible.\n\nNote that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.",
 							"shortdesc": "Which network names are allowed for use in this project",

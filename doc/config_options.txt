@@ -4554,6 +4554,13 @@ This option specifies the host GID ranges that are allowed in the instance's {co
 This option specifies the host UID ranges that are allowed in the instance's {config:option}`instance-raw:raw.idmap` setting.
 ```
 
+```{config:option} restricted.images.servers project-restricted
+:shortdesc: "Which image servers (HTTP host) are allowed for us in this project"
+:type: "string"
+Specify a comma-delimited list of image servers domains that are allowed for use in this project.
+If this option is not set, all image servers are accessible.
+```
+
 ```{config:option} restricted.networks.access project-restricted
 :shortdesc: "Which network names are allowed for use in this project"
 :type: "string"
