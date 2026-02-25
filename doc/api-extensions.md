@@ -2966,3 +2966,7 @@ Introduces new `Evacuating` and `Restoring` cluster member states.
 
 Introduces a new `restricted.images.servers` project configuration option.
 This allows specifying a comma separate list of image server domains from which the user may download images.
+
+## `storage_lvmcluster_size`
+
+Adds support for specifying the `size` parameter when updating `lvmcluster` storage pool.
