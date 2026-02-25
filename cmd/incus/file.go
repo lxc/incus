@@ -985,10 +985,14 @@ func (c *cmdFileMount) Command() *cobra.Command {
 	cmd.Use = cli.U("mount", u.MakePath(u.Instance, u.Path.Optional()).Remote(), u.Target(u.Path).Optional())
 	cmd.Short = i18n.G("Mount files from instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Mount files from instances`))
+		`Mount files from instances.
+If no target path is provided, start an SSH SFTP listener instead.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file mount foo/root fooroot
-   To mount /root from the instance foo onto the local fooroot directory.`))
+   To mount /root from the instance foo onto the local fooroot directory.
+
+incus file mount foo
+   To start an SSH SFTP listener for the root filesystem of instance foo.`))
 
 	cmd.Flags().StringVar(&c.flagListen, "listen", "", i18n.G("Setup SSH SFTP listener on address:port instead of mounting"))
 	cmd.Flags().BoolVar(&c.flagAuthNone, "no-auth", false, i18n.G("Disable authentication when using SSH SFTP listener"))
@@ -1080,5 +1084,11 @@ func (c *cmdFileMount) Run(cmd *cobra.Command, args []string) error {
 		return sshfsMount(cmd.Context(), sftpConn, instName, instPath, targetPath)
 	}
 
-	return sshSFTPServer(cmd.Context(), func() (net.Conn, error) { return resource.server.GetInstanceFileSFTPConn(instName) }, instName, c.flagAuthNone, c.flagAuthUser, c.flagListen)
+	// Check the instance exists before starting the SFTP server.
+	_, _, err = resource.server.GetInstance(instName)
+	if err != nil {
+		return err
+	}
+
+	return sshSFTPServer(cmd.Context(), func() (net.Conn, error) { return resource.server.GetInstanceFileSFTPConn(instName) }, c.flagAuthNone, c.flagAuthUser, c.flagListen)
 }

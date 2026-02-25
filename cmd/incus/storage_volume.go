@@ -2699,7 +2699,13 @@ func (c *cmdStorageVolumeFileMount) Command() *cobra.Command {
 	cmd.Use = cli.U("mount", u.Pool.Remote(), u.Volume, u.Target(u.Path).Optional())
 	cmd.Short = i18n.G("Mount files from custom storage volumes")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Mount files from custom storage volumes`))
+		`Mount files from custom storage volumes.
+If no target path is provided, start an SSH SFTP listener instead.`))
+	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume file mount mypool myvolume localdir
+   To mount the storage volume myvolume from pool mypool onto the local directory localdir.
+
+incus storage volume file mount mypool myvolume
+   To start an SSH SFTP listener for the storage volume myvolume from pool mypool.`))
 
 	cmd.Flags().StringVar(&c.flagListen, "listen", "", i18n.G("Setup SSH SFTP listener on address:port instead of mounting"))
 	cmd.Flags().BoolVar(&c.flagAuthNone, "no-auth", false, i18n.G("Disable authentication when using SSH SFTP listener"))
@@ -2767,8 +2773,6 @@ func (c *cmdStorageVolumeFileMount) Run(cmd *cobra.Command, args []string) error
 	}
 
 	// Look for sshfs command if no SSH SFTP listener mode specified and a target mount path was specified.
-	entity := fmt.Sprintf("%s/%s/%s", resource.name, volType, volName)
-
 	if c.flagListen == "" && targetPath != "" {
 		// Connect to SFTP.
 		sftpConn, err := resource.server.GetStoragePoolVolumeFileSFTPConn(resource.name, volType, volName)
@@ -2778,12 +2782,19 @@ func (c *cmdStorageVolumeFileMount) Run(cmd *cobra.Command, args []string) error
 
 		defer func() { _ = sftpConn.Close() }()
 
+		entity := fmt.Sprintf("%s/%s/%s", resource.name, volType, volName)
 		return sshfsMount(cmd.Context(), sftpConn, entity, "", targetPath)
+	}
+
+	// Check if the pool and the volume exist before starting the SFTP server.
+	_, _, err = resource.server.GetStoragePoolVolume(resource.name, volType, volName)
+	if err != nil {
+		return err
 	}
 
 	return sshSFTPServer(cmd.Context(), func() (net.Conn, error) {
 		return resource.server.GetStoragePoolVolumeFileSFTPConn(resource.name, volType, volName)
-	}, entity, c.flagAuthNone, c.flagAuthUser, c.flagListen)
+	}, c.flagAuthNone, c.flagAuthUser, c.flagListen)
 }
 
 // Edit.

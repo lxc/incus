@@ -583,7 +583,7 @@ func sshfsMount(ctx context.Context, sftpConn net.Conn, entity string, relPath s
 
 // sshSFTPServer runs an SSH server listening on a random port of 127.0.0.1.
 // It provides an unauthenticated SFTP server connected to the instance's filesystem.
-func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), entity string, authNone bool, authUser string, listenAddr string) error {
+func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authNone bool, authUser string, listenAddr string) error {
 	randString := func(length int) string {
 		chars := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321")
 		randStr := make([]rune, length)
