@@ -75,6 +75,11 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 		req.Profiles = []string{"default"}
 	}
 
+	// Restricted projects aren't allowed to use pull migration.
+	if util.IsTrue(info.Project.Config["restricted"]) && req.Source.Type == "migration" && req.Source.Mode == "pull" {
+		return errors.New("Restricted projects aren't allowed to use pull mode migration")
+	}
+
 	err = checkInstanceCountLimit(info, instanceType)
 	if err != nil {
 		return err
@@ -263,6 +268,11 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 
 	if info == nil {
 		return nil
+	}
+
+	// Restricted projects aren't allowed to use pull migration.
+	if util.IsTrue(info.Project.Config["restricted"]) && req.Source.Type == "migration" && req.Source.Mode == "pull" {
+		return errors.New("Restricted projects aren't allowed to use pull mode migration")
 	}
 
 	// If "limits.disk" is not set, there's nothing to do.
