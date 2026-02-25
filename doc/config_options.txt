@@ -6505,6 +6505,14 @@ This value is required by some providers.
 
 ```
 
+```{config:option} lvmcluster.remove_snapshots storage_volume_lvm-common
+:condition: "-"
+:default: "same as `volume.lvmcluster.remove_snapshots` or `false`"
+:shortdesc: "Remove snapshots as needed"
+:type: "bool"
+
+```
+
 ```{config:option} security.shared storage_volume_lvm-common
 :condition: "custom block volume"
 :default: "same as `volume.security.shared` or `false`"
