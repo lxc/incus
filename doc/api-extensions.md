@@ -2961,3 +2961,8 @@ Adds a `pci` configuration key on the `unix-hotplug` device to allow filtering b
 ## `cluster_evacuating_restoring`
 
 Introduces new `Evacuating` and `Restoring` cluster member states.
+
+## `projects_restricted_image_servers`
+
+Introduces a new `restricted.images.servers` project configuration option.
+This allows specifying a comma separate list of image server domains from which the user may download images.
