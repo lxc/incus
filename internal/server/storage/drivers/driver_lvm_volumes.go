@@ -407,6 +407,15 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 		//  default: same as `volume.block.type`
 		//  shortdesc: Type of the block volume
 		rules["block.type"] = validate.Optional(validate.IsOneOf(BlockVolumeTypeRaw, BlockVolumeTypeQcow2))
+
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=lvmcluster.remove_snapshots)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: same as `volume.lvmcluster.remove_snapshots` or `false`
+		//  shortdesc: Remove snapshots as needed
+		rules["lvmcluster.remove_snapshots"] = validate.Optional(validate.IsBool)
 	}
 
 	return rules
