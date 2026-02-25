@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/operations"
+	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
@@ -64,6 +65,19 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 	var remote incus.ImageServer
 	var info *api.Image
+
+	// Check if the project allows retrieving the image.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		err := project.AllowImageDownload(tx, args.ProjectName, args.Server)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
 
 	// Default protocol is Incus. Copy so that local modifications aren't propagated to args.
 	protocol := args.Protocol

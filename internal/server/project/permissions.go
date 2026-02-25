@@ -50,8 +50,8 @@ func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName strin
 	return hiddenPools, nil
 }
 
-// AllowImageCreation returns an error if any project-specific restriction is violated when creating a new image.
-func AllowImageCreation(tx *db.ClusterTx, projectName string, req api.ImagesPost) error {
+// AllowImageDownload returns an error if any project-specific restriction is violated when downloading a new image.
+func AllowImageDownload(tx *db.ClusterTx, projectName string, uri string) error {
 	info, err := fetchProject(tx, projectName, true)
 	if err != nil {
 		return err
@@ -62,8 +62,8 @@ func AllowImageCreation(tx *db.ClusterTx, projectName string, req api.ImagesPost
 	}
 
 	// Check if we have image server restrictions.
-	if util.IsTrue(info.Project.Config["restricted"]) && req.Source.Type == "image" && info.Project.Config["restricted.images.servers"] != "" {
-		u, err := url.Parse(req.Source.Server)
+	if util.IsTrue(info.Project.Config["restricted"]) && info.Project.Config["restricted.images.servers"] != "" {
+		u, err := url.Parse(uri)
 		if err != nil {
 			return err
 		}
