@@ -100,3 +100,20 @@ func (c *Cache) GetProjects() map[string][]string {
 
 	return projects
 }
+
+// GetAPICertificate returns a read-only copy of the API certificate associated to the given
+// fingerprint.
+func (c *Cache) GetAPICertificate(fingerprint string) *api.CertificatePut {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	certificate, ok := c.apiCertificates[fingerprint]
+	if !ok {
+		return nil
+	}
+
+	newCertificate := certificate
+	newCertificate.Projects = make([]string, len(certificate.Projects))
+	copy(newCertificate.Projects, certificate.Projects)
+	return &newCertificate
+}
