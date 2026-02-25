@@ -2,92 +2,100 @@ package certificate
 
 import (
 	"crypto/x509"
-	"maps"
+	"encoding/pem"
 	"sync"
+
+	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 )
 
 // Cache represents an thread-safe in-memory cache of the certificates in the database.
 type Cache struct {
-	// certificates is a map of certificate Type to map of certificate fingerprint to x509.Certificate.
-	certificates map[Type]map[string]x509.Certificate
-
-	// projects is a map of certificate fingerprint to slice of projects the certificate is restricted to.
-	// If a certificate fingerprint is present in certificates, but not present in projects, it means the certificate is
-	// not restricted.
-	projects map[string][]string
-	mu       sync.RWMutex
-}
-
-// SetCertificatesAndProjects sets both certificates and projects on the Cache.
-func (c *Cache) SetCertificatesAndProjects(certificates map[Type]map[string]x509.Certificate, projects map[string][]string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.certificates = certificates
-	c.projects = projects
+	apiCertificates map[string]api.CertificatePut
+	certificates    map[string]*x509.Certificate
+	mu              sync.RWMutex
 }
 
 // SetCertificates sets the certificates on the Cache.
-func (c *Cache) SetCertificates(certificates map[Type]map[string]x509.Certificate) {
+func (c *Cache) SetCertificates(certificates []*api.Certificate) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.certificates = certificates
+	c.apiCertificates = make(map[string]api.CertificatePut, len(certificates))
+	c.certificates = make(map[string]*x509.Certificate, len(certificates))
+
+	for _, certificate := range certificates {
+		c.apiCertificates[certificate.Fingerprint] = certificate.CertificatePut
+
+		certBlock, _ := pem.Decode([]byte(certificate.Certificate))
+		if certBlock == nil {
+			logger.Warn("Failed decoding certificate", logger.Ctx{"name": certificate.Name})
+			continue
+		}
+
+		cert, err := x509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			logger.Warn("Failed parsing certificate", logger.Ctx{"name": certificate.Name, "err": err})
+			continue
+		}
+
+		c.certificates[certificate.Fingerprint] = cert
+	}
 }
 
-// SetProjects sets the projects on the Cache.
-func (c *Cache) SetProjects(projects map[string][]string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.projects = projects
-}
-
-// GetCertificatesAndProjects returns a read-only copy of the certificate and project maps.
+// GetCertificatesAndProjects returns certificate and project maps.
 func (c *Cache) GetCertificatesAndProjects() (map[Type]map[string]x509.Certificate, map[string][]string) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	certificates := make(map[Type]map[string]x509.Certificate, len(c.certificates))
-	for t, m := range c.certificates {
-		certificates[t] = make(map[string]x509.Certificate, len(m))
-		maps.Copy(certificates[t], m)
-	}
+	certificates := map[Type]map[string]x509.Certificate{}
+	projects := map[string][]string{}
+	for fingerprint, certificate := range c.apiCertificates {
+		certType, err := FromAPIType(certificate.Type)
+		if err != nil {
+			logger.Warn("Failed getting certificate type", logger.Ctx{"name": certificate.Name, "err": err})
+			continue
+		}
 
-	projects := make(map[string][]string, len(c.projects))
-	for f, projectNames := range c.projects {
-		projectNamesCopy := make([]string, 0, len(projectNames))
-		projectNamesCopy = append(projectNamesCopy, projectNames...)
-		projects[f] = projectNamesCopy
+		cert, ok := c.certificates[fingerprint]
+		if !ok {
+			logger.Warn("Certificate data not found", logger.Ctx{"name": certificate.Name})
+			continue
+		}
+
+		_, ok = certificates[certType]
+		if !ok {
+			certificates[certType] = map[string]x509.Certificate{}
+		}
+
+		certificates[certType][fingerprint] = *cert
+		if certificate.Restricted {
+			projects[fingerprint] = make([]string, len(certificate.Projects))
+			copy(projects[fingerprint], certificate.Projects)
+		}
 	}
 
 	return certificates, projects
 }
 
-// GetCertificates returns a read-only copy of the certificate map.
+// GetCertificates returns a certificate map.
 func (c *Cache) GetCertificates() map[Type]map[string]x509.Certificate {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	certificates := make(map[Type]map[string]x509.Certificate, len(c.certificates))
-	for t, m := range c.certificates {
-		certificates[t] = make(map[string]x509.Certificate, len(m))
-		maps.Copy(certificates[t], m)
-	}
-
+	certificates, _ := c.GetCertificatesAndProjects()
 	return certificates
 }
 
-// GetProjects returns a read-only copy of the project map.
+// GetProjects returns a project map.
 func (c *Cache) GetProjects() map[string][]string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	projects := make(map[string][]string, len(c.projects))
-	for f, projectNames := range c.projects {
-		projectNamesCopy := make([]string, 0, len(projectNames))
-		projectNamesCopy = append(projectNamesCopy, projectNames...)
-		projects[f] = projectNamesCopy
+	projects := map[string][]string{}
+
+	for fingerprint, certificate := range c.apiCertificates {
+		if certificate.Restricted {
+			projects[fingerprint] = make([]string, len(certificate.Projects))
+			copy(projects[fingerprint], certificate.Projects)
+		}
 	}
 
 	return projects

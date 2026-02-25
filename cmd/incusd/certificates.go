@@ -242,9 +242,6 @@ func updateCertificateCache(d *Daemon) {
 
 	logger.Debug("Refreshing trusted certificate cache")
 
-	newCerts := map[certificate.Type]map[string]x509.Certificate{}
-	newProjects := map[string][]string{}
-
 	var certs []*api.Certificate
 	var dbCerts []dbCluster.Certificate
 	var localCerts []dbCluster.Certificate
@@ -261,42 +258,16 @@ func updateCertificateCache(d *Daemon) {
 			if err != nil {
 				return err
 			}
+
+			if c.Type == certificate.TypeServer {
+				localCerts = append(localCerts, c)
+			}
 		}
 		return nil
 	})
 	if err != nil {
 		logger.Warn("Failed reading certificates from global database", logger.Ctx{"err": err})
 		return
-	}
-
-	for i, dbCert := range dbCerts {
-		_, found := newCerts[dbCert.Type]
-		if !found {
-			newCerts[dbCert.Type] = make(map[string]x509.Certificate)
-		}
-
-		certBlock, _ := pem.Decode([]byte(dbCert.Certificate))
-		if certBlock == nil {
-			logger.Warn("Failed decoding certificate", logger.Ctx{"name": dbCert.Name, "err": err})
-			continue
-		}
-
-		cert, err := x509.ParseCertificate(certBlock.Bytes)
-		if err != nil {
-			logger.Warn("Failed parsing certificate", logger.Ctx{"name": dbCert.Name, "err": err})
-			continue
-		}
-
-		newCerts[dbCert.Type][localtls.CertFingerprint(cert)] = *cert
-
-		if dbCert.Restricted {
-			newProjects[localtls.CertFingerprint(cert)] = certs[i].Projects
-		}
-
-		// Add server certs to list of certificates to store in local database to allow cluster restart.
-		if dbCert.Type == certificate.TypeServer {
-			localCerts = append(localCerts, dbCert)
-		}
 	}
 
 	// Write out the server certs to the local database to allow the cluster to restart.
@@ -309,7 +280,7 @@ func updateCertificateCache(d *Daemon) {
 		// continue functioning, and hopefully the write will succeed on next update.
 	}
 
-	d.clientCerts.SetCertificatesAndProjects(newCerts, newProjects)
+	d.clientCerts.SetCertificates(certs)
 }
 
 // updateCertificateCacheFromLocal loads trusted server certificates from local database into memory.
@@ -318,42 +289,31 @@ func updateCertificateCacheFromLocal(d *Daemon) error {
 
 	logger.Debug("Refreshing local trusted certificate cache")
 
-	newCerts := map[certificate.Type]map[string]x509.Certificate{}
-
+	var certs []*api.Certificate
 	var dbCerts []dbCluster.Certificate
 	var err error
 
 	err = s.DB.Node.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
 		dbCerts, err = tx.GetCertificates(ctx)
-		return err
+		if err != nil {
+			return err
+		}
+
+		certs = make([]*api.Certificate, len(dbCerts))
+		for i, c := range dbCerts {
+			certs[i], err = c.ToAPI(ctx, nil)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Failed reading certificates from local database: %w", err)
 	}
 
-	for _, dbCert := range dbCerts {
-		_, found := newCerts[dbCert.Type]
-		if !found {
-			newCerts[dbCert.Type] = make(map[string]x509.Certificate)
-		}
-
-		certBlock, _ := pem.Decode([]byte(dbCert.Certificate))
-		if certBlock == nil {
-			logger.Warn("Failed decoding certificate", logger.Ctx{"name": dbCert.Name, "err": err})
-			continue
-		}
-
-		cert, err := x509.ParseCertificate(certBlock.Bytes)
-		if err != nil {
-			logger.Warn("Failed parsing certificate", logger.Ctx{"name": dbCert.Name, "err": err})
-			continue
-		}
-
-		newCerts[dbCert.Type][localtls.CertFingerprint(cert)] = *cert
-	}
-
-	d.clientCerts.SetCertificates(newCerts)
-
+	d.clientCerts.SetCertificates(certs)
 	return nil
 }
 

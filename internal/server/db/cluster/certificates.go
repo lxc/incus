@@ -81,14 +81,16 @@ func (cert *Certificate) ToAPI(ctx context.Context, tx *sql.Tx) (*api.Certificat
 	resp.Type = cert.ToAPIType()
 	resp.Description = cert.Description
 
-	projects, err := GetCertificateProjects(ctx, tx, cert.ID)
-	if err != nil {
-		return nil, err
-	}
+	if tx != nil {
+		projects, err := GetCertificateProjects(ctx, tx, cert.ID)
+		if err != nil {
+			return nil, err
+		}
 
-	resp.Projects = make([]string, len(projects))
-	for i, p := range projects {
-		resp.Projects[i] = p.Name
+		resp.Projects = make([]string, len(projects))
+		for i, p := range projects {
+			resp.Projects[i] = p.Name
+		}
 	}
 
 	return &resp, nil
