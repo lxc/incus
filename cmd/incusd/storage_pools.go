@@ -498,9 +498,14 @@ func storagePoolPartiallyCreated(pool *api.StoragePool) bool {
 func storagePoolsPostCluster(ctx context.Context, s *state.State, pool *api.StoragePool, req api.StoragePoolsPost, clientType clusterRequest.ClientType) error {
 	// Check that no node-specific config key has been defined.
 	nodeSpecificConfig := db.NodeSpecificStorageConfig(req.Driver)
+	creationDisallowedConfig := storagePools.DisallowedStorageConfigForCreation(req.Driver)
 	for key := range req.Config {
 		if slices.Contains(nodeSpecificConfig, key) {
 			return fmt.Errorf("Config key %q is cluster member specific", key)
+		}
+
+		if slices.Contains(creationDisallowedConfig, key) {
+			return fmt.Errorf("Config key %q is not allowed during creation", key)
 		}
 	}
 
@@ -1009,10 +1014,13 @@ func doStoragePoolUpdate(s *state.State, pool storagePools.Pool, req api.Storage
 
 		sendPool := req
 		sendPool.Config = make(map[string]string)
-		nodeSpecificConfig := db.NodeSpecificStorageConfig(pool.Driver().Info().Name)
+		driverName := pool.Driver().Info().Name
+		nodeSpecificConfig := db.NodeSpecificStorageConfig(driverName)
+		clusterWideConfig := storagePools.ClusterWideStorageConfig(driverName)
 		for k, v := range req.Config {
 			// Don't forward node specific keys (these will be merged in on recipient node).
-			if slices.Contains(nodeSpecificConfig, k) {
+			// Don't forward cluster wide keys as performing operation on one node is enough.
+			if slices.Contains(nodeSpecificConfig, k) || slices.Contains(clusterWideConfig, k) {
 				continue
 			}
 
