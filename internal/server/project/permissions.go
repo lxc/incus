@@ -867,6 +867,7 @@ var allRestrictions = map[string]string{
 	"restricted.devices.disk.paths":        "",
 	"restricted.idmap.uid":                 "",
 	"restricted.idmap.gid":                 "",
+	"restricted.images.servers":            "",
 	"restricted.networks.access":           "",
 	"restricted.snapshots":                 "block",
 }

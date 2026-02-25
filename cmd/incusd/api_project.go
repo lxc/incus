@@ -1746,6 +1746,14 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  shortdesc: Which host GID ranges are allowed in `raw.idmap`
 		"restricted.idmap.gid": validate.Optional(validate.IsListOf(validate.IsUint32Range)),
 
+		// gendoc:generate(entity=project, group=restricted, key=restricted.images.servers)
+		// Specify a comma-delimited list of image servers domains that are allowed for use in this project.
+		// If this option is not set, all image servers are accessible.
+		// ---
+		//  type: string
+		//  shortdesc: Which image servers (HTTP host) are allowed for us in this project
+		"restricted.images.servers": validate.Optional(validate.IsListOf(validate.IsAny)),
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.access)
 		// Specify a comma-delimited list of network names that are allowed for use in this project.
 		// If this option is not set, all networks are accessible.
