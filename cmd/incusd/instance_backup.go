@@ -28,6 +28,7 @@ import (
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 // swagger:operation GET /1.0/instances/{name}/backups instances instance_backups_get
@@ -279,6 +280,13 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 
 	if direct && req.Target != nil {
 		return response.BadRequest(errors.New("application/octet-stream is not a valid content type when a target is defined"))
+	}
+
+	if req.CompressionAlgorithm != "" {
+		err := validate.IsCompressionAlgorithm(req.CompressionAlgorithm)
+		if err != nil {
+			return response.BadRequest(err)
+		}
 	}
 
 	var reader *io.PipeReader

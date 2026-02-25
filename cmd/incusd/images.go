@@ -326,6 +326,11 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 	var rootfsWriter io.Writer
 
 	if req.CompressionAlgorithm != "" {
+		err := validate.IsCompressionAlgorithm(req.CompressionAlgorithm)
+		if err != nil {
+			return nil, err
+		}
+
 		compress = req.CompressionAlgorithm
 	} else {
 		var p *api.Project
