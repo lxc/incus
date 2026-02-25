@@ -2,9 +2,15 @@ package project_test
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -209,13 +215,32 @@ func TestCheckClusterTargetRestriction_RestrictedTrueWithOverride(t *testing.T) 
 	req = req.WithContext(context.WithValue(req.Context(), request.CtxUsername, "my-certificate-fingerprint"))
 	certificateCache := &certificate.Cache{}
 
+	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	now := time.Now()
+	template := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: "test"},
+		NotBefore:             now,
+		NotAfter:              now.Add(5 * time.Minute),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &privKey.PublicKey, privKey)
+	require.NoError(t, err)
+
 	// Setting the certificate and not projects means the certificate is not restricted and therefore the user is an
 	// admin that can override the cluster target restriction.
-	certificateCache.SetCertificates(map[certificate.Type]map[string]x509.Certificate{
-		certificate.TypeClient: {
-			"my-certificate-fingerprint": x509.Certificate{},
+	certificateCache.SetCertificates([]*api.Certificate{{
+		Fingerprint: "my-certificate-fingerprint",
+		CertificatePut: api.CertificatePut{
+			Type:        api.CertificateTypeClient,
+			Certificate: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})),
 		},
-	})
+	}})
 
 	authorizer, err := auth.LoadAuthorizer(context.Background(), auth.DriverTLS, logger.Log, certificateCache)
 	require.NoError(t, err)
