@@ -1178,6 +1178,13 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: QEMU VM definition name (used for migration between versions)
 	"volatile.vm.definition": validate.Optional(validate.IsAny),
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.hotplug.memory)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Memory setup of the VM as needed for state restoration
+	"volatile.vm.hotplug.memory": validate.Optional(validate.IsAny),
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.needs_reset)
 	//
 	// ---
