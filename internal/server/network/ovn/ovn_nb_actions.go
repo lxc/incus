@@ -530,6 +530,9 @@ func (o *NB) CreateStaticMACBinding(ctx context.Context, portName OVNRouterPort,
 			return err
 		}
 	} else {
+		binding.LogicalPort = string(portName)
+		binding.IP = ip.String()
+		binding.MAC = mac.String()
 		operations, err = o.client.Where(&binding).Update(&binding)
 		if err != nil {
 			return err
