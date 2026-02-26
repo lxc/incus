@@ -147,6 +147,9 @@ test_filemanip() {
         unset -f incus
         command -v incus
     )
+
+    ! incus file mount doesnotexist || false
+
     $cmd file mount filemanip --listen=127.0.0.1:2022 --no-auth &
     mountPID=$!
     sleep 1

@@ -69,8 +69,18 @@ test_storage_volume_filemanip() {
     incus storage volume file create --type=symlink "${pool}" vol1/tmp/create-symlink foo
     [ "$(incus exec filemanip --project=test -- readlink /v1/tmp/create-symlink)" = "foo" ]
 
+    ! incus storage volume file mount "${pool}" doesnotexist || false
+    ! incus storage volume file mount doesnotexist vol1 || false
+
+    incus storage volume file mount "${pool}" vol1 --listen=127.0.0.1:2022 --no-auth &
+    mountPID=$!
+    sleep 1
+
+    output=$(curl -s -S --insecure sftp://127.0.0.1:2022/pull_file || true)
+    kill -9 ${mountPID}
     incus storage volume detach "${pool}" vol1 filemanip
     incus delete filemanip -f
+    [ "$output" = "pull" ]
 
     rm -rf "${TEST_DIR}"/source
     rm -rf "${TEST_DIR}/dest"
