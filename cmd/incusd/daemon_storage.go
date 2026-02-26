@@ -19,6 +19,7 @@ import (
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -81,7 +82,8 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 	if storageLogs != "" {
 		err := unmount("logs", storageLogs)
 		if err != nil {
-			return fmt.Errorf("Failed to unmount logs storage: %w", err)
+			// With the logs volume, we may be dealing with log files that are in use by Incus or dnsmasq, those will need a daemon restart.
+			logger.Warn("Unable to unmount logs storage, daemon restart required")
 		}
 	}
 
@@ -395,7 +397,11 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 		projectName, sourceVolumeName := project.StorageVolumeParts(sourceVolume)
 		_, err = pool.UnmountCustomVolume(projectName, sourceVolumeName, nil)
 		if err != nil {
-			return fmt.Errorf(`Failed to umount storage volume "%s/%s": %w`, sourcePool, sourceVolumeName, err)
+			if !isLogs {
+				return fmt.Errorf(`Failed to umount storage volume "%s/%s": %w`, sourcePool, sourceVolumeName, err)
+			}
+
+			logger.Warn("Unable to unmount logs storage, daemon restart required")
 		}
 
 		return nil
@@ -469,7 +475,11 @@ func daemonStorageMove(s *state.State, storageType string, target string) error 
 		projectName, sourceVolumeName := project.StorageVolumeParts(sourceVolume)
 		_, err = pool.UnmountCustomVolume(projectName, sourceVolumeName, nil)
 		if err != nil {
-			return fmt.Errorf(`Failed to umount storage volume "%s/%s": %w`, sourcePool, sourceVolumeName, err)
+			if !isLogs {
+				return fmt.Errorf(`Failed to umount storage volume "%s/%s": %w`, sourcePool, sourceVolumeName, err)
+			}
+
+			logger.Warn("Unable to unmount logs storage, daemon restart required")
 		}
 
 		return nil
