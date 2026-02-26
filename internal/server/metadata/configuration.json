@@ -3381,6 +3381,13 @@
 						}
 					},
 					{
+						"volatile.vm.hotplug.memory": {
+							"longdesc": "",
+							"shortdesc": "Memory setup of the VM as needed for state restoration",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.vm.needs_reset": {
 							"longdesc": "",
 							"shortdesc": "Indicates that the VM needs a full reset on next reboot",

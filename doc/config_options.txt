@@ -3031,6 +3031,12 @@ It is globally unique across all servers and projects.
 
 ```
 
+```{config:option} volatile.vm.hotplug.memory instance-volatile
+:shortdesc: "Memory setup of the VM as needed for state restoration"
+:type: "string"
+
+```
+
 ```{config:option} volatile.vm.needs_reset instance-volatile
 :shortdesc: "Indicates that the VM needs a full reset on next reboot"
 :type: "bool"
