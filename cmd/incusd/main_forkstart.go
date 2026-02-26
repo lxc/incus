@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	liblxc "github.com/lxc/go-lxc"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/internal/linux"
-	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -37,7 +37,7 @@ func (c *cmdForkstart) command() *cobra.Command {
 
 func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
-	if len(args) != 3 {
+	if len(args) != 4 {
 		_ = cmd.Help()
 
 		if len(args) == 0 {
@@ -55,6 +55,7 @@ func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 	name := args[0]
 	lxcpath := args[1]
 	configPath := args[2]
+	logDir := args[3]
 
 	err := linux.CloseRange(uint32(os.Stderr.Fd())+1, ^uint32(0), linux.CLOSE_RANGE_CLOEXEC)
 	if err != nil {
@@ -81,7 +82,7 @@ func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 	_ = os.Stdout.Close()
 
 	// Redirect stdout and stderr to a log file
-	logPath := internalUtil.LogPath(name, "forkstart.log")
+	logPath := filepath.Join(logDir, "forkstart.log")
 	if util.PathExists(logPath) {
 		_ = os.Remove(logPath)
 	}
