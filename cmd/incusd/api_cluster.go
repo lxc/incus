@@ -2983,13 +2983,41 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	// Validate the overrides.
-	if req.Action == "evacuate" && req.Mode != "" {
-		// Use the validator from the instance logic.
-		validator := internalInstance.InstanceConfigKeysAny["cluster.evacuate"]
-		err = validator(req.Mode)
+	// Handling of evacuation mode.
+	if req.Action == "evacuate" {
+		// Validate the mode if provided.
+		if req.Mode != "" {
+			validator := internalInstance.InstanceConfigKeysAny["cluster.evacuate"]
+			err = validator(req.Mode)
+			if err != nil {
+				return response.BadRequest(err)
+			}
+		}
+
+		// Get a count of the cluster members.
+		var serverCount int
+
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			nodes, err := tx.GetNodes(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed getting cluster members: %w", err)
+			}
+
+			serverCount = len(nodes)
+
+			return nil
+		})
 		if err != nil {
-			return response.BadRequest(err)
+			return response.InternalError(err)
+		}
+
+		// Handle single node clusters.
+		if serverCount == 1 {
+			if req.Mode == "" || req.Mode == "auto" {
+				req.Mode = "stop"
+			} else if req.Mode != "stop" {
+				return response.BadRequest(fmt.Errorf("Can't perform %q evacuation on a single node cluster", req.Mode))
+			}
 		}
 	}
 
