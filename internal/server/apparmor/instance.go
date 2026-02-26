@@ -250,6 +250,12 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			execPath = execPathFull
 		}
 
+		logPath := inst.LogPath()
+		logPathFull, err := filepath.EvalSymlinks(logPath)
+		if err == nil {
+			logPath = logPathFull
+		}
+
 		// Extra (read-only) config paths.
 		extraConfig := []string{}
 		if util.PathExists("/etc/ceph") {
@@ -270,7 +276,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"extra_config":   extraConfig,
 			"extra_binaries": extraBinaries,
 			"libraryPath":    strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
-			"logPath":        inst.LogPath(),
+			"logPath":        logPath,
 			"runPath":        inst.RunPath(),
 			"id":             inst.ID(),
 			"name":           InstanceProfileName(inst),
