@@ -1789,38 +1789,40 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 	}
 
 	// Prevent assigning all nodes the 'database-client' role.
-	clientNodes := 0
-	nodesCount := 0
-	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		nodesCount, err = tx.GetNodesCount(ctx)
-		if err != nil {
-			return fmt.Errorf("Failed loading nodes count: %w", err)
-		}
-
-		nodes, err := tx.GetNodes(ctx)
-		if err != nil {
-			return fmt.Errorf("Failed loading nodes: %w", err)
-		}
-
-		for _, n := range nodes {
-			// Ignore the node currently being updated.
-			if n.Name == member.Name {
-				continue
+	if slices.Contains(req.Roles, string(db.ClusterRoleDatabaseClient)) {
+		clientNodes := 1
+		nodesCount := 0
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			nodesCount, err = tx.GetNodesCount(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed loading nodes count: %w", err)
 			}
 
-			if slices.Contains(n.Roles, db.ClusterRoleDatabaseClient) {
-				clientNodes += 1
+			nodes, err := tx.GetNodes(ctx)
+			if err != nil {
+				return fmt.Errorf("Failed loading nodes: %w", err)
 			}
+
+			for _, n := range nodes {
+				// Ignore the node currently being updated.
+				if n.Name == member.Name {
+					continue
+				}
+
+				if slices.Contains(n.Roles, db.ClusterRoleDatabaseClient) {
+					clientNodes++
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return response.SmartError(err)
 		}
 
-		return nil
-	})
-	if err != nil {
-		return response.SmartError(err)
-	}
-
-	if clientNodes+1 >= nodesCount {
-		return response.BadRequest(errors.New("Assigning the 'database-client' role to all nodes is not allowed"))
+		if clientNodes >= nodesCount {
+			return response.BadRequest(errors.New("Assigning the 'database-client' role to all nodes is not allowed"))
+		}
 	}
 
 	// Convert the roles.
