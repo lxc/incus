@@ -16,11 +16,9 @@ import (
 	"github.com/lxc/incus/v6/internal/server/auth"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/lifecycle"
-	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/storage"
-	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/revert"
 )
@@ -105,13 +103,7 @@ var instanceExecOutputsCmd = APIEndpoint{
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceLogsGet(d *Daemon, r *http.Request) response.Response {
-	/* Let's explicitly *not* try to do a containerLoadByName here. In some
-	 * cases (e.g. when container creation failed), the container won't
-	 * exist in the DB but it does have some log files on disk.
-	 *
-	 * However, we should check this name and ensure it's a valid container
-	 * name just so that people can't list arbitrary directories.
-	 */
+	s := d.State()
 
 	projectName := request.ProjectParam(r)
 	name, err := url.PathUnescape(mux.Vars(r)["name"])
@@ -121,6 +113,12 @@ func instanceLogsGet(d *Daemon, r *http.Request) response.Response {
 
 	if internalInstance.IsSnapshot(name) {
 		return response.BadRequest(errors.New("Invalid instance name"))
+	}
+
+	// Ensure instance exists.
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// Handle requests targeted to a container on a different node
@@ -133,15 +131,9 @@ func instanceLogsGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	err = instance.ValidName(name, false)
-	if err != nil {
-		return response.BadRequest(err)
-	}
-
 	result := []string{}
 
-	fullName := project.Instance(projectName, name)
-	dents, err := os.ReadDir(internalUtil.LogPath(fullName))
+	dents, err := os.ReadDir(inst.LogPath())
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -223,17 +215,12 @@ func instanceLogGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	err = instance.ValidName(name, false)
-	if err != nil {
-		return response.BadRequest(err)
-	}
-
 	if !validLogFileName(file) {
 		return response.BadRequest(fmt.Errorf("Log file name %q not valid", file))
 	}
 
 	ent := response.FileResponseEntry{
-		Path:     internalUtil.LogPath(project.Instance(projectName, name), file),
+		Path:     filepath.Join(inst.LogPath(), file),
 		Filename: file,
 	}
 
@@ -302,11 +289,6 @@ func instanceLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	err = instance.ValidName(name, false)
-	if err != nil {
-		return response.BadRequest(err)
-	}
-
 	if !validLogFileName(file) {
 		return response.BadRequest(fmt.Errorf("Log file name %q not valid", file))
 	}
@@ -315,7 +297,7 @@ func instanceLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Only log files excluding qemu.log and lxc.log may be deleted"))
 	}
 
-	err = os.Remove(internalUtil.LogPath(project.Instance(projectName, name), file))
+	err = os.Remove(filepath.Join(inst.LogPath(), file))
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -402,11 +384,6 @@ func instanceExecOutputsGet(d *Daemon, r *http.Request) response.Response {
 
 	if resp != nil {
 		return resp
-	}
-
-	err = instance.ValidName(name, false)
-	if err != nil {
-		return response.BadRequest(err)
 	}
 
 	// Mount the instance's root volume
@@ -509,11 +486,6 @@ func instanceExecOutputGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	err = instance.ValidName(name, false)
-	if err != nil {
-		return response.BadRequest(err)
-	}
-
 	if !validExecOutputFileName(file) {
 		return response.BadRequest(fmt.Errorf("Exec record-output file name %q not valid", file))
 	}
@@ -602,11 +574,6 @@ func instanceExecOutputDelete(d *Daemon, r *http.Request) response.Response {
 	file, err := url.PathUnescape(mux.Vars(r)["file"])
 	if err != nil {
 		return response.SmartError(err)
-	}
-
-	err = instance.ValidName(name, false)
-	if err != nil {
-		return response.BadRequest(err)
 	}
 
 	if !validExecOutputFileName(file) {
