@@ -133,6 +133,12 @@ var errQemuAgentOffline = errors.New("VM agent isn't currently running")
 
 type monitorHook func(m *qmp.Monitor) error
 
+type qemuHotplugMemory struct {
+	Base  int64   `json:"base"`
+	Max   int64   `json:"max"`
+	Extra []int64 `json:"extra"`
+}
+
 // qemuLoad creates a Qemu instance from the supplied InstanceArgs.
 func qemuLoad(s *state.State, args db.InstanceArgs, p api.Project) (instance.Instance, error) {
 	// Create the instance struct.
@@ -1414,7 +1420,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	vsockFD := d.addFileDescriptor(&fdFiles, vsockF)
 
 	volatileSet := make(map[string]string)
-	volatileSet["volatile.vm.needs_reset"] = ""
+
+	if !stateful {
+		volatileSet["volatile.vm.hotplug.memory"] = ""
+		volatileSet["volatile.vm.needs_reset"] = ""
+	}
 
 	// Update vsock ID in volatile if needed for recovery (do this before UpdateBackupFile() call).
 	oldVsockID := d.localConfig["volatile.vsock_id"]
@@ -2083,6 +2093,24 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Restore the state.
 	if stateful {
+		// Add back any memory hotplug slot.
+		if d.localConfig["volatile.vm.hotplug.memory"] != "" {
+			memConf := &qemuHotplugMemory{}
+
+			err = json.Unmarshal([]byte(d.localConfig["volatile.vm.hotplug.memory"]), memConf)
+			if err != nil {
+				return err
+			}
+
+			for _, memSize := range memConf.Extra {
+				err := d.hotplugMemory(monitor, memSize)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// Receive the state.
 		err = d.restoreState(monitor)
 		if err != nil {
 			op.Done(err)
@@ -4311,6 +4339,26 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *
 	}
 
 	if conf != nil {
+		// Check if we're dealing with a live migration / stateful start.
+		if d.localConfig["volatile.vm.hotplug.memory"] != "" {
+			memConf := &qemuHotplugMemory{}
+
+			// Read back the recorded memory config.
+			err = json.Unmarshal([]byte(d.localConfig["volatile.vm.hotplug.memory"]), memConf)
+			if err != nil {
+				return err
+			}
+
+			// Override the CPU memory config too.
+			cpuOpts, err = d.getCPUOpts(cpuInfo, memConf.Base)
+			if err != nil {
+				return err
+			}
+
+			memSizeBytes = memConf.Base
+			maxMemoryBytes = memConf.Max
+		}
+
 		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeBytes / 1024 / 1024, maxMemoryBytes / 1024 / 1024})...)
 		*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
 	}
@@ -6757,16 +6805,64 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 			return fmt.Errorf("Memory hotplug feature is disabled")
 		}
 
-		_, maxMem, _, err := monitor.MemoryConfiguration()
+		// Grab the current memory configuration.
+		baseMem, maxMem, _, err := monitor.MemoryConfiguration()
 		if err != nil {
 			return err
 		}
 
+		// Make sure that we're not exceeding the VM's configured maximum.
 		if newSizeBytes > maxMem {
 			return fmt.Errorf("Requested memory total of %s exceeds instance current maximum of %s, restart required", units.GetByteSizeStringIEC(newSizeBytes, 2), units.GetByteSizeStringIEC(maxMem, 2))
 		}
 
-		return d.hotplugMemory(monitor, newSizeBytes-curSizeBytes)
+		// Add the memory.
+		err = d.hotplugMemory(monitor, newSizeBytes-curSizeBytes)
+		if err != nil {
+			return err
+		}
+
+		// Record the VM memory hotplug profile.
+		memConf := qemuHotplugMemory{
+			Base:  baseMem,
+			Max:   maxMem,
+			Extra: []int64{},
+		}
+
+		memDevs, err := monitor.GetMemdev()
+		if err != nil {
+			return err
+		}
+
+		memSlots := map[string]int64{}
+		memSlotsKeys := []string{}
+		for _, memDev := range memDevs {
+			// Skip base memory node.
+			if memDev.ID == "mem0" {
+				continue
+			}
+
+			memSlots[memDev.ID] = int64(memDev.Size)
+			memSlotsKeys = append(memSlotsKeys, memDev.ID)
+		}
+
+		// The list out of QEMU is in random order...
+		sort.Strings(memSlotsKeys)
+		for _, k := range memSlotsKeys {
+			memConf.Extra = append(memConf.Extra, memSlots[k])
+		}
+
+		memConfStr, err := json.Marshal(memConf)
+		if err != nil {
+			return err
+		}
+
+		err = d.VolatileSet(map[string]string{
+			"volatile.vm.hotplug.memory": string(memConfStr),
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	// Set effective memory size.
