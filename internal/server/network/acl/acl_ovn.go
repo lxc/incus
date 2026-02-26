@@ -1217,6 +1217,10 @@ func OVNApplyInstanceNICDefaultRules(client *ovn.NB, switchPortGroup ovn.OVNPort
 		return fmt.Errorf("Invalid egress action %q", egressAction)
 	}
 
+	if egressAction == "allow" {
+		egressAction = "allow-related"
+	}
+
 	rules := []ovn.OVNACLRule{
 		{
 			Direction: "to-lport",
