@@ -610,6 +610,7 @@ func (c *ClusterTx) getPartialNetworkByProjectAndName(ctx context.Context, tx *C
 
 	// Managed networks exist in the database.
 	network.Managed = true
+	network.Project = projectName
 
 	var q strings.Builder
 
