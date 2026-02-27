@@ -59,8 +59,6 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 		addr = "127.0.0.1" + addr
 	}
 
-	domain, _, _, _, _ := s.GlobalConfig.ACME()
-
 	client := http.Client{}
 	client.Transport = &http.Transport{
 		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
@@ -68,12 +66,22 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 		},
 	}
 
-	req, err := http.NewRequest("GET", "http://"+domain+r.URL.String(), nil)
+	// Get the forwarded host with fallback to the one from the request.
+	host := r.Header.Get("X-Incus-forwarded-host")
+
+	if host == "" {
+		host = r.Host
+	}
+
+	if host == "" {
+		host = r.URL.Host
+	}
+
+	// Prepare the request to lego.
+	req, err := http.NewRequest("GET", "http://"+host+r.URL.String(), nil)
 	if err != nil {
 		return response.InternalError(err)
 	}
-
-	req.Header = r.Header
 
 	resp, err := client.Do(req)
 	if err != nil {
