@@ -547,6 +547,8 @@ func (r *forwardedResponse) Render(w http.ResponseWriter) error {
 		forwarded.Header.Set(key, r.request.Header.Get(key))
 	}
 
+	forwarded.Header.Set("X-Incus-forwarded-host", r.request.Host)
+
 	httpClient, err := r.client.GetHTTPClient()
 	if err != nil {
 		return err
