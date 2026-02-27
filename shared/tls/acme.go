@@ -11,12 +11,24 @@ import (
 	"time"
 
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // CertificateNeedsUpdate returns true if the domain doesn't match the certificate's DNS names
 // or it's valid for less than the threshold.
 func CertificateNeedsUpdate(domain string, cert *x509.Certificate, threshold time.Duration) bool {
-	return !slices.Contains(cert.DNSNames, domain) || time.Now().After(cert.NotAfter.Add(-threshold))
+	if time.Now().After(cert.NotAfter.Add(-threshold)) {
+		return true
+	}
+
+	domains := util.SplitNTrimSpace(domain, ",", -1, false)
+	for _, entry := range domains {
+		if !slices.Contains(cert.DNSNames, entry) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // RunACMEChallenge runs an ACME challenge to fetch updated certificates with `lego`.
@@ -25,10 +37,14 @@ func RunACMEChallenge(ctx context.Context, dir, caURL, domain, email, challengeT
 
 	args := []string{
 		"--accept-tos",
-		"--domains", domain,
 		"--email", email,
 		"--path", dir,
 		"--server", caURL,
+	}
+
+	domains := util.SplitNTrimSpace(domain, ",", -1, false)
+	for _, entry := range domains {
+		args = append(args, "-d", entry)
 	}
 
 	switch challengeType {
@@ -63,17 +79,17 @@ func RunACMEChallenge(ctx context.Context, dir, caURL, domain, email, challengeT
 	}
 
 	// Load the generated certificate.
-	certData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.crt", domain)))
+	certData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.crt", domains[0])))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	caData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.issuer.crt", domain)))
+	caData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.issuer.crt", domains[0])))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	keyData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.key", domain)))
+	keyData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.key", domains[0])))
 	if err != nil {
 		return nil, nil, err
 	}
