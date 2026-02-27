@@ -148,7 +148,9 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	}
 
 	// Stop networks after evacuation.
-	networkShutdown(s)
+	if mode != "heal" {
+		networkShutdown(s)
+	}
 
 	// Set cluster member status to EVACUATED.
 	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuated)
