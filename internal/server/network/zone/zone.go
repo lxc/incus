@@ -156,6 +156,11 @@ func (d *zone) validateName(name string) error {
 		return nil
 	}
 
+	// Allow wildcards.
+	if strings.HasPrefix(name, "*.") {
+		return nil
+	}
+
 	return validate.IsAPIName(name, false)
 }
 
