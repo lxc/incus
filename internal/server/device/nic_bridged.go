@@ -1488,9 +1488,13 @@ func (d *nicBridged) setFilters() (err error) {
 	}
 
 	var aclRules []firewallDrivers.ACLRule
-
 	if config["security.acls"] != "" {
-		aclRules, err = acl.FirewallACLRules(d.state, d.name, d.inst.Project().Name, d.config)
+		networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, d.inst.Project().Name)
+		if err != nil {
+			return err
+		}
+
+		aclRules, err = acl.FirewallACLRules(d.state, d.name, networkProjectName, d.config)
 		if err != nil {
 			return err
 		}
