@@ -403,12 +403,34 @@ func (d *zone) Content() (*strings.Builder, error) {
 	// Get all managed networks across all projects.
 	var projectNetworks map[string]map[int64]api.Network
 	var zoneProjects map[string]string
+	instProjects := []string{d.projectName}
+
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		projectNetworks, err = tx.GetCreatedNetworks(ctx)
 		if err != nil {
 			return fmt.Errorf("Failed to load all networks: %w", err)
 		}
 
+		if d.projectName == api.ProjectDefaultName {
+			// Get all projects that don't have the network zone feature enabled.
+			projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+			if err != nil {
+				return fmt.Errorf("Failed to load all projects: %w", err)
+			}
+
+			for _, dbProject := range projects {
+				apiProject, err := dbProject.ToAPI(ctx, tx.Tx())
+				if err != nil {
+					return fmt.Errorf("Failed to load project %q: %w", dbProject.Name, err)
+				}
+
+				if !util.IsTrue(apiProject.Config["features.networks.zones"]) {
+					instProjects = append(instProjects, apiProject.Name)
+				}
+			}
+		}
+
+		// Get a map of zone names to project.
 		zones, err := dbCluster.GetNetworkZones(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed to load all network zones: %w", err)
@@ -494,52 +516,52 @@ func (d *zone) Content() (*strings.Builder, error) {
 				return record
 			}
 
-			if isReverse {
-				// Load network leases in correct project context for each forward zone referenced.
-				for _, forwardZoneName := range util.SplitNTrimSpace(n.Config()["dns.zone.forward"], ",", -1, true) {
-					// Get forward zone's project.
-					forwardZoneProjectName := zoneProjects[forwardZoneName]
-					if forwardZoneProjectName == "" {
-						return nil, fmt.Errorf("Associated project not found for zone %q", forwardZoneName)
-					}
+			for _, instProjectName := range instProjects {
+				if isReverse {
+					// Load network leases in correct project context for each forward zone referenced.
+					for _, forwardZoneName := range util.SplitNTrimSpace(n.Config()["dns.zone.forward"], ",", -1, true) {
+						if !slices.Contains(instProjects, zoneProjects[forwardZoneName]) {
+							continue
+						}
 
-					// Load the leases for the forward zone project.
-					leases, err := n.Leases(forwardZoneProjectName, request.ClientTypeNormal)
+						// Load the leases for the forward zone project.
+						leases, err := n.Leases(instProjectName, request.ClientTypeNormal)
+						if err != nil {
+							return nil, err
+						}
+
+						// Convert leases to usable PTR records.
+						for _, lease := range leases {
+							ip := net.ParseIP(lease.Address)
+
+							// Get the record.
+							record := genRecord(fmt.Sprintf("%s.%s", lease.Hostname, forwardZoneName), ip)
+							if record == nil {
+								continue
+							}
+
+							records = append(records, record)
+						}
+					}
+				} else {
+					// Load the leases in the forward zone's project.
+					leases, err := n.Leases(instProjectName, request.ClientTypeNormal)
 					if err != nil {
 						return nil, err
 					}
 
-					// Convert leases to usable PTR records.
+					// Convert leases to usable records.
 					for _, lease := range leases {
 						ip := net.ParseIP(lease.Address)
 
 						// Get the record.
-						record := genRecord(fmt.Sprintf("%s.%s", lease.Hostname, forwardZoneName), ip)
+						record := genRecord(lease.Hostname, ip)
 						if record == nil {
 							continue
 						}
 
 						records = append(records, record)
 					}
-				}
-			} else {
-				// Load the leases in the forward zone's project.
-				leases, err := n.Leases(d.projectName, request.ClientTypeNormal)
-				if err != nil {
-					return nil, err
-				}
-
-				// Convert leases to usable records.
-				for _, lease := range leases {
-					ip := net.ParseIP(lease.Address)
-
-					// Get the record.
-					record := genRecord(lease.Hostname, ip)
-					if record == nil {
-						continue
-					}
-
-					records = append(records, record)
 				}
 			}
 		}
