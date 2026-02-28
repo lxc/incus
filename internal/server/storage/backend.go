@@ -3174,9 +3174,14 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		volStorageParentName := project.Instance(inst.Project().Name, src.Name())
 		parentVol := b.GetVolume(volType, contentType, volStorageParentName, srcDBVol.Config)
 
+		rootDiskName, _, err := internalInstance.GetRootDiskDevice(src.ExpandedDevices().CloneNative())
+		if err != nil {
+			return err
+		}
+
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
-		err = b.qcow2CreateSnapshot(parentVol, vol, inst.Project().Name, op)
+		err = b.qcow2CreateSnapshot(parentVol, vol, src.Project().Name, src, rootDiskName, op)
 		if err != nil {
 			return err
 		}
@@ -3347,7 +3352,17 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 	if volExists {
 		if parentDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
 			parentVol := b.GetVolume(volType, contentType, parentStorageName, parentDBVol.Config)
-			err = b.qcow2DeleteSnapshot(parentVol, vol, inst.Project().Name, op)
+			rootDiskName, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+			if err != nil {
+				return err
+			}
+
+			src, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, parentName)
+			if err != nil {
+				return err
+			}
+
+			err = b.qcow2DeleteSnapshot(parentVol, vol, src.Project().Name, src, rootDiskName, op)
 			if err != nil {
 				return err
 			}
@@ -6244,25 +6259,6 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 	volStorageName := project.StorageVolume(projectName, fullSnapshotName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, parentVol.Config)
 
-	if parentVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-		// Check that the volume isn't in use by running instances.
-		err = VolumeUsedByInstanceDevices(b.state, b.Name(), projectName, &parentVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
-			inst, err := instance.Load(b.state, dbInst, project)
-			if err != nil {
-				return err
-			}
-
-			if inst.IsRunning() {
-				return fmt.Errorf("Volume is still in use by running instances")
-			}
-
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-	}
-
 	// Lock this operation to ensure that the only one snapshot is made at the time.
 	// Other operations will wait for this one to finish.
 	unlock, err := locking.Lock(context.TODO(), drivers.OperationLockName("CreateCustomVolumeSnapshot", b.name, vol.Type(), contentType, volName))
@@ -6279,13 +6275,18 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 	}
 
 	if parentVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		inst, devName, err := b.volumeUsedByRunningInstance(parentVol, projectName)
+		if err != nil {
+			return err
+		}
+
 		// Get the parent volume.
 		volStorageParentName := project.StorageVolume(projectName, volName)
-		parentVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageParentName, parentVol.Config)
+		parentVolume := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageParentName, parentVol.Config)
 
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
-		err = b.qcow2CreateSnapshot(parentVol, vol, projectName, op)
+		err = b.qcow2CreateSnapshot(parentVolume, vol, projectName, inst, devName, op)
 		if err != nil {
 			return err
 		}
@@ -6409,25 +6410,13 @@ func (b *backend) DeleteCustomVolumeSnapshot(projectName, volName string, op *op
 
 	if volExists {
 		if parentVolume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
-			// Check that the volume isn't in use by running instances.
-			err = VolumeUsedByInstanceDevices(b.state, b.Name(), projectName, &parentVolume.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
-				inst, err := instance.Load(b.state, dbInst, project)
-				if err != nil {
-					return err
-				}
-
-				if inst.IsRunning() {
-					return fmt.Errorf("Volume is still in use by running instances")
-				}
-
-				return nil
-			})
+			inst, devName, err := b.volumeUsedByRunningInstance(parentVolume, projectName)
 			if err != nil {
 				return err
 			}
 
 			parentVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, project.StorageVolume(projectName, parentName), parentVolume.Config)
-			err = b.qcow2DeleteSnapshot(parentVol, vol, projectName, op)
+			err = b.qcow2DeleteSnapshot(parentVol, vol, projectName, inst, devName, op)
 			if err != nil {
 				return err
 			}
@@ -7930,7 +7919,7 @@ func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, projectName
 }
 
 // qcow2CreateSnapshot creates the QCOW2 volume snapshot.
-func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, op *operations.Operation) error {
+func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, inst instance.Instance, devName string, op *operations.Operation) error {
 	// Return if this is not a qcow2 image.
 	if vol.Config()["block.type"] != drivers.BlockVolumeTypeQcow2 {
 		return nil
@@ -7940,16 +7929,6 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		fsParentVol := vol.NewVMBlockFilesystemVolume()
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
 		err := drivers.Qcow2CreateConfigSnapshot(fsParentVol, fsVol, op)
-		if err != nil {
-			return err
-		}
-	}
-
-	var inst instance.Instance
-	var err error
-
-	if vol.IsVMBlock() {
-		inst, err = instance.LoadByProjectAndName(b.state, projectName, vol.Name())
 		if err != nil {
 			return err
 		}
@@ -7970,12 +7949,12 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		return err
 	}
 
-	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, parentOp *operations.Operation) error {
-		parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
-		if err != nil {
-			return err
-		}
+	parentDiskPath, err := b.driver.GetVolumeDiskPath(vol)
+	if err != nil {
+		return err
+	}
 
+	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, parentOp *operations.Operation) error {
 		if inst != nil && inst.IsRunning() {
 			imgInfo, err := drivers.Qcow2Info(parentDiskPath)
 			if err != nil {
@@ -8005,7 +7984,7 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			return errors.New("Volume name must be a snapshot")
 		}
 
-		err = inst.CreateQcow2Snapshot(snapshotName, snapVolDevPath)
+		err = inst.CreateQcow2Snapshot(parentDiskPath, devName, snapshotName, snapVolDevPath)
 		if err != nil {
 			return err
 		}
@@ -8189,7 +8168,7 @@ func (b *backend) qcow2RenameSnapshot(vol drivers.Volume, snapVol drivers.Volume
 }
 
 // qcow2DeleteSnapshot deletes the QCOW2 volume snapshot.
-func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, op *operations.Operation) error {
+func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, inst instance.Instance, devName string, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"backend": b.name, "instance": vol.Name()})
 	l.Debug("qcow2DeleteInstanceSnapshot started")
 	defer l.Debug("qcow2DeleteInstanceSnapshot finished")
@@ -8200,14 +8179,6 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 	}
 
 	_, volName := project.StorageVolumeParts(vol.Name())
-	var parentInst instance.Instance
-	var err error
-	if vol.IsVMBlock() {
-		parentInst, err = instance.LoadByProjectAndName(b.state, projectName, volName)
-		if err != nil {
-			return err
-		}
-	}
 
 	// Get snapshots.
 	volSnaps, err := VolumeDBSnapshotsGet(b, projectName, volName, vol.Type())
@@ -8235,7 +8206,7 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		}
 	}
 
-	if parentInst != nil && parentInst.IsRunning() {
+	if inst != nil && inst.IsRunning() {
 		if snapIndex+1 < len(volSnaps) {
 			tmpVol := b.GetVolume(vol.Type(), vol.ContentType(), ProjectVolume(projectName, volSnaps[snapIndex+1].Name, vol.Type()), nil)
 			diskPath, err := b.driver.GetQcow2BackingFilePath(tmpVol)
@@ -8246,7 +8217,7 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			backingFilename = diskPath
 		}
 
-		err = parentInst.DeleteQcow2Snapshot(snapIndex, backingFilename)
+		err = inst.DeleteQcow2Snapshot(devName, snapIndex, backingFilename)
 		if err != nil {
 			return err
 		}
@@ -8766,7 +8737,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 				return err
 			}
 
-			err = b.qcow2CreateSnapshot(vol, snapVol, projectName, op)
+			err = b.qcow2CreateSnapshot(vol, snapVol, projectName, nil, "", op)
 			if err != nil {
 				return err
 			}
@@ -8837,4 +8808,45 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 
 	reverter.Success()
 	return nil
+}
+
+// volumeUsedByRunningInstance returns the name of the running instance and the
+// device name through which the specified volume is attached.
+//
+// If the volume is attached to more than one running instance, an error is
+// returned, as the caller expects the volume to be in use by at most one
+// running instance.
+func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName string) (instance.Instance, string, error) {
+	var inst instance.Instance
+	var devName string
+	runningInstCount := 0
+
+	err := VolumeUsedByInstanceDevices(b.state, b.Name(), projectName, &vol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+		i, err := instance.Load(b.state, dbInst, project)
+		if err != nil {
+			return err
+		}
+
+		if !i.IsRunning() {
+			return nil
+		}
+
+		runningInstCount += 1
+		inst = i
+
+		if len(usedByDevices) > 0 {
+			devName = usedByDevices[0]
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if runningInstCount > 1 {
+		return nil, "", errors.New("Volume is attached to multiple running instances")
+	}
+
+	return inst, devName, nil
 }
