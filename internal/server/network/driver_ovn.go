@@ -462,6 +462,21 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		//  default: `true`
 		"ipv4.dhcp": validate.Optional(validate.IsBool),
 
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.dhcp.gateway)
+		//
+		// ---
+		//  type: string
+		//  condition: IPv4 DHCP
+		//  default: IPv4 address
+		//  shortdesc: Address of the gateway for the subnet (use `none` to turn off gateway announcement)
+		"ipv4.dhcp.gateway": validate.Optional(func(value string) error {
+			if value == "none" {
+				return nil
+			}
+
+			return validate.IsNetworkAddressV4(value)
+		}),
+
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.dhcp.expiry)
 		//
 		// ---
@@ -1307,6 +1322,26 @@ func (n *ovn) getDomainName() string {
 	}
 
 	return "incus"
+}
+
+// getGateway returns OVN DHCP domain name.
+func (n *ovn) getGatewayIpv4() (net.IP, error) {
+	addr := n.config["ipv4.dhcp.gateway"]
+
+	if addr == "none" {
+		return nil, nil
+	}
+
+	if addr != "" {
+		return net.ParseIP(addr), nil
+	}
+
+	routerIntPortIPv4, _, err := n.parseRouterIntPortIPv4Net()
+	if err != nil {
+		return nil, err
+	}
+
+	return routerIntPortIPv4, nil
 }
 
 // getDNSSearchList returns OVN DHCP DNS search list. If no search list set returns getDomainName() as list.
@@ -3105,10 +3140,15 @@ func (n *ovn) setup(update bool) error {
 			leaseTime = duration
 		}
 
+		dhcpV4Gateway, err := n.getGatewayIpv4()
+		if err != nil {
+			return fmt.Errorf("Failed parsing router's internal port IPv4 Net: %w", err)
+		}
+
 		opts := &networkOVN.OVNDHCPv4Opts{
 			ServerID:           routerIntPortIPv4,
 			ServerMAC:          routerMAC,
-			Router:             routerIntPortIPv4,
+			Router:             dhcpV4Gateway,
 			DomainName:         n.getDomainName(),
 			LeaseTime:          leaseTime,
 			MTU:                bridgeMTU,
