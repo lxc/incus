@@ -98,8 +98,8 @@ type Instance interface {
 	Backups() ([]backup.InstanceBackup, error)
 	UpdateBackupFile() error
 	CanLiveMigrate() bool
-	CreateQcow2Snapshot(snapshotName string, backingFilename string) error
-	DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) error
+	CreateQcow2Snapshot(diskPath string, devName string, snapshotName string, backingFilename string) error
+	DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
 	ExportQcow2Block(blockIndex int) (func(), string, error)
 
 	// Config handling.

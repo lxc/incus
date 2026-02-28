@@ -10681,52 +10681,30 @@ func (d *qemu) GuestOS() string {
 }
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.
-func (d *qemu) CreateQcow2Snapshot(snapshotName string, backingFilename string) error {
+func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName string, backingFilename string) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
 
-	snap, err := instance.LoadByProjectAndName(d.state, d.project.Name, fmt.Sprintf("%s/%s", d.name, snapshotName))
+	f, err := os.OpenFile(devPath, unix.O_RDWR, 0)
 	if err != nil {
-		return fmt.Errorf("Load by project and name: %w", err)
-	}
-
-	pool, err := storagePools.LoadByInstance(d.state, snap)
-	if err != nil {
-		return fmt.Errorf("Load by instance: %w", err)
-	}
-
-	mountInfoRoot, err := pool.MountInstance(d, d.op)
-	if err != nil {
-		return fmt.Errorf("Mount instance: %w", err)
-	}
-
-	defer func() { _ = pool.UnmountInstance(d, d.op) }()
-
-	f, err := os.OpenFile(mountInfoRoot.DiskPath, unix.O_RDWR, 0)
-	if err != nil {
-		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", mountInfoRoot.DiskPath, err)
+		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", devPath, err)
 	}
 
 	defer func() { _ = f.Close() }()
 
+	devName = d.blockNodeName(linux.PathNameEncode(devName))
+
 	// Select all block devices related to a qcow2 backing chain.
-	blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
 	if err != nil {
 		return err
 	}
 
-	rootDiskName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
-	if err != nil {
-		return fmt.Errorf("Failed getting instance root disk: %w", err)
-	}
-
-	rootDiskName = d.blockNodeName(linux.PathNameEncode(rootDiskName))
-
 	// Fetch the current maximum overlay index.
-	overlayNodeIndex := currentQcow2OverlayIndex(blockDevs, rootDiskName)
-	nextOverlayName := fmt.Sprintf("%s_overlay%d", rootDiskName, overlayNodeIndex+1)
+	overlayNodeIndex := currentQcow2OverlayIndex(blockDevs, devName)
+	nextOverlayName := fmt.Sprintf("%s_overlay%d", devName, overlayNodeIndex+1)
 
 	currentRootNode := blockDevs[len(blockDevs)-1]
 
@@ -10794,19 +10772,21 @@ func (d *qemu) fetchRootBlockDeviceChain(m *qmp.Monitor) ([]string, error) {
 }
 
 // DeleteQcow2Snapshot deletes a qcow2 snapshot for a running instance.
-func (d *qemu) DeleteQcow2Snapshot(snapshotIndex int, backingFilename string) error {
+func (d *qemu) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
 	}
 
+	devName = d.blockNodeName(linux.PathNameEncode(devName))
+
 	// Select all block devices related to a qcow2 backing chain.
-	blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
 	if err != nil {
 		return err
 	}
 
-	d.logger.Debug("QCOW2 blockdev chain:", logger.Ctx{"blockdev": blockDevs, "snapshotIndex": snapshotIndex})
+	d.logger.Debug("QCOW2 blockdev chain:", logger.Ctx{"blockdev": blockDevs, "snapshotIndex": snapshotIndex, "devName": devName})
 
 	if snapshotIndex < 0 || (snapshotIndex+1) >= len(blockDevs) {
 		return fmt.Errorf("Incorrect snapshot index: %d", snapshotIndex)
