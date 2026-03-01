@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 
@@ -44,6 +45,9 @@ type Config struct {
 
 	// Defaults holds default settings for a client or daemon
 	Defaults DefaultSettings `yaml:"defaults"`
+
+	// Mutex to control concurrent access.
+	mu sync.Mutex
 }
 
 // GlobalConfigPath returns a joined path of the global configuration directory and passed arguments.
@@ -88,6 +92,10 @@ func (c *Config) OIDCTokenPath(remote string) string {
 
 // SaveOIDCTokens saves OIDC tokens to disk.
 func (c *Config) SaveOIDCTokens() {
+	// Lock to prevent concurrent access to oidcTokens.
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	tokenParentPath := c.ConfigPath("oidctokens")
 
 	if !util.PathExists(tokenParentPath) {
