@@ -801,6 +801,7 @@ var (
 	Remote             = placeholder{i18n.G("remote")}
 	RemoteColon        = remote{Remote, nil, false}
 	RemoteColonOpt     = remote{Remote, nil, true}
+	RemoteImage        = compound{":", []Atom{optional{Remote}, Image}}
 	Role               = placeholder{i18n.G("role")}
 	Snapshot           = placeholder{i18n.G("snapshot")}
 	StorageVolumeType  = hide{alternative{[]Atom{verbatim{"custom"}, verbatim{"image"}, verbatim{"container"}, verbatim{"virtual-machine"}}}, placeholder{i18n.G("type")}}
