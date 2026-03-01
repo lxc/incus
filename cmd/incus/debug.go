@@ -38,10 +38,12 @@ type cmdDebugMemory struct {
 	flagFormat string
 }
 
+var cmdDebugMemoryUsage = u.Usage{u.Instance.Remote(), u.Target(u.File)}
+
 // Command returns command definition for the memory debug command.
 func (c *cmdDebugMemory) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("dump-memory", u.Instance.Remote(), u.Target(u.File).Optional(), u.Dash("format"))
+	cmd.Use = cli.U("dump-memory", cmdDebugMemoryUsage...)
 	cmd.Short = i18n.G("Export a virtual machine's memory state")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Export the current memory state of a running virtual machine into a dump file.
@@ -58,33 +60,21 @@ func (c *cmdDebugMemory) Command() *cobra.Command {
 
 // Run executes the memory debug command.
 func (c *cmdDebugMemory) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Connect to the daemon
-	remote, name, err := conf.ParseRemote(args[0])
+	parsed, err := cmdDebugMemoryUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
-
-	path := args[1]
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	path := parsed[1].String
 
 	target, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 
-	rc, err := d.GetInstanceDebugMemory(name, c.flagFormat)
+	rc, err := d.GetInstanceDebugMemory(instanceName, c.flagFormat)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to dump instance memory: %w"), err)
 	}
