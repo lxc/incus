@@ -26,10 +26,12 @@ type cmdDelete struct {
 	flagInteractive    bool
 }
 
+var cmdDeleteUsage = u.Usage{u.Instance.Remote().List(1)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("delete", u.Instance.Remote().List(1))
+	cmd.Use = cli.U("delete", cmdDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -46,9 +48,9 @@ func (c *cmdDelete) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdDelete) promptDelete(name string) error {
+func (c *cmdDelete) promptDelete(p *u.Parsed) error {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf(i18n.G("Remove %s (yes/no): "), name)
+	fmt.Printf(i18n.G("Remove %s (yes/no): "), formatRemote(c.global.conf, p))
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
@@ -69,94 +71,99 @@ func (c *cmdDelete) doDelete(d incus.InstanceServer, name string) error {
 	return op.Wait()
 }
 
+func (c *cmdDelete) deleteOne(p *u.Parsed) error {
+	conf := c.global.conf
+	d := p.RemoteServer
+	instanceName := p.RemoteObject.String
+
+	connInfo, err := d.GetConnectionInfo()
+	if err != nil {
+		return err
+	}
+
+	if c.flagInteractive {
+		err := c.promptDelete(p)
+		if err != nil {
+			return err
+		}
+	}
+
+	ct, _, err := d.GetInstance(instanceName)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed checking instance %s exists: %w"), formatRemote(conf, p), err)
+	}
+
+	if ct.StatusCode != 0 && ct.StatusCode != api.Stopped {
+		if !c.flagForce {
+			return fmt.Errorf(i18n.G("The instance %s is currently running, stop it first or pass --force"), formatRemote(conf, p))
+		}
+
+		req := api.InstanceStatePut{
+			Action:  "stop",
+			Timeout: -1,
+			Force:   true,
+		}
+
+		op, err := d.UpdateInstanceState(instanceName, req, "")
+		if err != nil {
+			return err
+		}
+
+		err = op.Wait()
+		if err != nil {
+			return fmt.Errorf(i18n.G("Stopping the instance %s failed: %s"), formatRemote(conf, p), err)
+		}
+
+		if ct.Ephemeral {
+			return nil
+		}
+	}
+
+	if c.flagForceProtected && util.IsTrue(ct.ExpandedConfig["security.protection.delete"]) {
+		// Refresh in case we had to stop it above.
+		ct, etag, err := d.GetInstance(instanceName)
+		if err != nil {
+			return err
+		}
+
+		ct.Config["security.protection.delete"] = "false"
+		op, err := d.UpdateInstance(instanceName, ct.Writable(), etag)
+		if err != nil {
+			return err
+		}
+
+		err = op.Wait()
+		if err != nil {
+			return err
+		}
+	}
+
+	err = c.doDelete(d, instanceName)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed deleting instance %s in project %q: %w"), formatRemote(conf, p), connInfo.Project, err)
+	}
+
+	return nil
+}
+
 // Run runs the actual command logic.
 func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, -1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args...)
+	parsed, err := cmdDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	// Check that everything exists.
-	err = instancesExist(resources)
-	if err != nil {
-		return err
+	var errs []error
+	for _, p := range parsed[0].List {
+		err := c.deleteOne(p)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
 
-	// Process with deletion.
-	for _, resource := range resources {
-		connInfo, err := resource.server.GetConnectionInfo()
-		if err != nil {
-			return err
-		}
-
-		if c.flagInteractive {
-			err := c.promptDelete(resource.name)
-			if err != nil {
-				return err
-			}
-		}
-
-		ct, _, err := resource.server.GetInstance(resource.name)
-		if err != nil {
-			return err
-		}
-
-		if ct.StatusCode != 0 && ct.StatusCode != api.Stopped {
-			if !c.flagForce {
-				return errors.New(i18n.G("The instance is currently running, stop it first or pass --force"))
-			}
-
-			req := api.InstanceStatePut{
-				Action:  "stop",
-				Timeout: -1,
-				Force:   true,
-			}
-
-			op, err := resource.server.UpdateInstanceState(resource.name, req, "")
-			if err != nil {
-				return err
-			}
-
-			err = op.Wait()
-			if err != nil {
-				return fmt.Errorf(i18n.G("Stopping the instance failed: %s"), err)
-			}
-
-			if ct.Ephemeral {
-				continue
-			}
-		}
-
-		if c.flagForceProtected && util.IsTrue(ct.ExpandedConfig["security.protection.delete"]) {
-			// Refresh in case we had to stop it above.
-			ct, etag, err := resource.server.GetInstance(resource.name)
-			if err != nil {
-				return err
-			}
-
-			ct.Config["security.protection.delete"] = "false"
-			op, err := resource.server.UpdateInstance(resource.name, ct.Writable(), etag)
-			if err != nil {
-				return err
-			}
-
-			err = op.Wait()
-			if err != nil {
-				return err
-			}
-		}
-
-		err = c.doDelete(resource.server, resource.name)
-		if err != nil {
-			return fmt.Errorf(i18n.G("Failed deleting instance %q in project %q: %w"), resource.name, connInfo.Project, err)
-		}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
+
 	return nil
 }
