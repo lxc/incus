@@ -3800,7 +3800,7 @@
 							"condition": "IPv4 DHCP",
 							"default": "IPv4 address",
 							"longdesc": "",
-							"shortdesc": "Address of the gateway for the subnet",
+							"shortdesc": "Address of the gateway for the subnet (use `none` to turn off gateway announcement)",
 							"type": "string"
 						}
 					},
@@ -4417,6 +4417,15 @@
 							"default": "`1h`",
 							"longdesc": "",
 							"shortdesc": "When to expire DHCP leases",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.dhcp.gateway": {
+							"condition": "IPv4 DHCP",
+							"default": "IPv4 address",
+							"longdesc": "",
+							"shortdesc": "Address of the gateway for the subnet (use `none` to turn off gateway announcement)",
 							"type": "string"
 						}
 					},
