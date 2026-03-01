@@ -861,11 +861,6 @@ func Colon(a Atom) Atom {
 	return compound{":", []Atom{a, verbatim{""}}}
 }
 
-// Dash builds an optional flag from a string.
-func Dash(flag string) Atom {
-	return verbatim{"--" + flag}.Optional()
-}
-
 // MakePath builds an atom compound separated by `/`.
 func MakePath(atoms ...Atom) Atom {
 	return compound{"/", atoms}

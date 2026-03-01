@@ -27,10 +27,12 @@ type cmdExport struct {
 	flagCompressionAlgorithm string
 }
 
+var cmdExportUsage = u.Usage{u.Instance.Remote(), u.Target(u.File).Optional()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("export", u.Instance.Remote(), u.Target(u.File).Optional(), u.Dash("instance-only"), u.Dash("optimized-storage"))
+	cmd.Use = cli.U("export", cmdExportUsage...)
 	cmd.Short = i18n.G("Export instance backups")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Export instances as backup tarballs.`))
@@ -53,31 +55,15 @@ incus export u1 -
 
 // Run runs the actual command logic.
 func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 2)
-	if exit {
-		return err
-	}
-
-	// Connect to the daemon.
-	remote, name, err := conf.ParseRemote(args[0])
+	parsed, err := cmdExportUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
-
-	var targetName string
-	if len(args) > 1 {
-		targetName = args[1]
-	} else {
-		targetName = name + ".backup"
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	hasTarget := !parsed[1].Skipped
+	targetName := parsed[1].Get(instanceName + ".backup")
 
 	// Check if the target path already exists.
 	if util.PathExists(targetName) {
@@ -103,11 +89,11 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 
 	if d.HasExtension("direct_backup") {
 		getter = func(backupReq *incus.BackupFileRequest) error {
-			return d.CreateInstanceBackupStream(name, req, backupReq)
+			return d.CreateInstanceBackupStream(instanceName, req, backupReq)
 		}
 	} else {
 		// Send the request
-		op, err := d.CreateInstanceBackup(name, req)
+		op, err := d.CreateInstanceBackup(instanceName, req)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Create instance backup: %w"), err)
 		}
@@ -152,14 +138,14 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 
 		defer func() {
 			// Delete backup after we're done
-			op, err = d.DeleteInstanceBackup(name, backupName)
+			op, err = d.DeleteInstanceBackup(instanceName, backupName)
 			if err == nil {
 				_ = op.Wait()
 			}
 		}()
 
 		getter = func(backupReq *incus.BackupFileRequest) error {
-			_, err := d.GetInstanceBackupFile(name, backupName, backupReq)
+			_, err := d.GetInstanceBackupFile(instanceName, backupName, backupReq)
 			return err
 		}
 	}
@@ -196,7 +182,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Detect backup file type and rename file accordingly
-	if len(args) <= 1 {
+	if !hasTarget {
 		_, err := target.Seek(0, io.SeekStart)
 		if err != nil {
 			return err
@@ -207,7 +193,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = os.Rename(targetName, name+ext)
+		err = os.Rename(targetName, instanceName+ext)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Failed to rename export file: %w"), err)
 		}
