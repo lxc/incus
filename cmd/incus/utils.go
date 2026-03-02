@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"sort"
@@ -773,4 +774,9 @@ func formatRemote(conf *config.Config, p *u.Parsed) string {
 	}
 
 	return p.RemoteName + ":" + p.RemoteObject.String
+}
+
+// normalizePath normalizes a path and return whether it looks like a directory.
+func normalizePath(path string) (string, bool) {
+	return filepath.Clean(path), path == "" || strings.HasSuffix(path, "/")
 }
