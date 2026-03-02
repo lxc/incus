@@ -377,7 +377,8 @@ func (d Xtables) networkSetupOutboundNAT(networkName string, subnet *net.IPNet, 
 // networkSetupICMPDHCPDNSAccess sets up basic iptables overrides for ICMP, DHCP and DNS.
 func (d Xtables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersion uint) error {
 	var rules [][]string
-	if ipVersion == 4 {
+	switch ipVersion {
+	case 4:
 		rules = [][]string{
 			{"4", networkName, "filter", "INPUT", "-i", networkName, "-p", "udp", "--dport", "67", "-j", "ACCEPT"},
 			{"4", networkName, "filter", "INPUT", "-i", networkName, "-p", "udp", "--dport", "53", "-j", "ACCEPT"},
@@ -392,7 +393,8 @@ func (d Xtables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersion uin
 			rules = append(rules, []string{"4", networkName, "filter", "INPUT", "-i", networkName, "-p", "icmp", "-m", "icmp", "--icmp-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT"})
 			rules = append(rules, []string{"4", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "icmp", "-m", "icmp", "--icmp-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT"})
 		}
-	} else if ipVersion == 6 {
+
+	case 6:
 		rules = [][]string{
 			{"6", networkName, "filter", "INPUT", "-i", networkName, "-p", "udp", "--dport", "547", "-j", "ACCEPT"},
 			{"6", networkName, "filter", "INPUT", "-i", networkName, "-p", "udp", "--dport", "53", "-j", "ACCEPT"},
@@ -411,7 +413,8 @@ func (d Xtables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersion uin
 		for _, icmpType := range []int{1, 2, 3, 4, 128, 134, 135, 136, 143} {
 			rules = append(rules, []string{"6", networkName, "filter", "OUTPUT", "-o", networkName, "-p", "icmpv6", "-m", "icmp6", "--icmpv6-type", fmt.Sprintf("%d", icmpType), "-j", "ACCEPT"})
 		}
-	} else {
+
+	default:
 		return errors.New("Invalid IP version")
 	}
 
@@ -707,20 +710,20 @@ func (d Xtables) aclRuleSubjectToACLMatch(direction string, ipVersion uint, subj
 			ip, _, _ = net.ParseCIDR(subjectCriterion)
 		}
 
-		if ip != nil {
-			var subjectIPVersion uint = 4
-			if ip.To4() == nil {
-				subjectIPVersion = 6
-			}
-
-			if ipVersion != subjectIPVersion {
-				continue // Skip subjects that not for the xtables tool we are using.
-			}
-
-			fieldParts = append(fieldParts, subjectCriterion)
-		} else {
+		if ip == nil {
 			return nil, fmt.Errorf("Unsupported xtables subject %q", subjectCriterion)
 		}
+
+		var subjectIPVersion uint = 4
+		if ip.To4() == nil {
+			subjectIPVersion = 6
+		}
+
+		if ipVersion != subjectIPVersion {
+			continue // Skip subjects that not for the xtables tool we are using.
+		}
+
+		fieldParts = append(fieldParts, subjectCriterion)
 	}
 
 	if len(fieldParts) > 0 {
@@ -748,8 +751,8 @@ func (d Xtables) aclRulePortToACLMatch(direction string, portCriteria ...string)
 }
 
 // NetworkClear removes network rules from filter, mangle and nat tables.
-// If delete is true then network-specific chains are also removed.
-func (d Xtables) NetworkClear(networkName string, delete bool, ipVersions []uint) error {
+// If removeChains is true then network-specific chains are also removed.
+func (d Xtables) NetworkClear(networkName string, removeChains bool, ipVersions []uint) error {
 	comments := []string{
 		d.networkIPTablesComment(networkName),
 		d.networkForwardIPTablesComment(networkName),
@@ -777,7 +780,7 @@ func (d Xtables) NetworkClear(networkName string, delete bool, ipVersions []uint
 		}
 
 		// Remove network specific chains (and any rules in them) if deleting.
-		if delete {
+		if removeChains {
 			// Remove the NIC filter chain if it exists.
 			nicFilterChain := fmt.Sprintf("%s_%s", iptablesChainNICFilterPrefix, networkName)
 			exists, hasRules, err := d.iptablesChainExists(ipVersion, "filter", nicFilterChain)
@@ -1098,10 +1101,11 @@ func (d Xtables) generateFilterEbtablesRules(hostName string, hwAddr string, IPv
 // there's no managed network setup step available to create it and add jump rules).
 //
 // IMPORTANT NOTE: These rules are generated in reverse order and should only be used in combination with iptablesPrepend.
-func (d Xtables) generateFilterIptablesRules(parentName string, hostName string, hwAddr string, IPv6Nets []*net.IPNet, parentManaged bool) (rules [][]string, err error) {
+func (d Xtables) generateFilterIptablesRules(parentName string, hostName string, hwAddr string, IPv6Nets []*net.IPNet, parentManaged bool) ([][]string, error) {
+	rules := [][]string{}
 	mac, err := net.ParseMAC(hwAddr)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	macHex := hex.EncodeToString(mac)
@@ -1156,7 +1160,7 @@ func (d Xtables) generateFilterIptablesRules(parentName string, hostName string,
 		}
 	}
 
-	return
+	return rules, nil
 }
 
 // matchEbtablesRule compares an active rule to a supplied match rule to see if they match.
@@ -1215,11 +1219,14 @@ func (d Xtables) matchEbtablesRule(activeRule []string, matchRule []string, dele
 // iptablesAdd adds an iptables rule.
 func (d Xtables) iptablesAdd(ipVersion uint, comment string, table string, method string, chain string, rule ...string) error {
 	var cmd string
-	if ipVersion == 4 {
+	switch ipVersion {
+	case 4:
 		cmd = "iptables"
-	} else if ipVersion == 6 {
+
+	case 6:
 		cmd = "ip6tables"
-	} else {
+
+	default:
 		return errors.New("Invalid IP version")
 	}
 
@@ -1254,13 +1261,16 @@ func (d Xtables) iptablesPrepend(ipVersion uint, comment string, table string, c
 func (d Xtables) iptablesClear(ipVersion uint, comments []string, fromTables ...string) error {
 	var cmd string
 	var tablesFile string
-	if ipVersion == 4 {
+	switch ipVersion {
+	case 4:
 		cmd = "iptables"
 		tablesFile = "/proc/self/net/ip_tables_names"
-	} else if ipVersion == 6 {
+
+	case 6:
 		cmd = "ip6tables"
 		tablesFile = "/proc/self/net/ip6_tables_names"
-	} else {
+
+	default:
 		return errors.New("Invalid IP version")
 	}
 
@@ -1429,11 +1439,14 @@ func (d Xtables) InstanceClearNetPrio(projectName string, instanceName string, d
 // iptablesChainExists checks whether a chain exists in a table, and whether it has any rules.
 func (d Xtables) iptablesChainExists(ipVersion uint, table string, chain string) (bool, bool, error) {
 	var cmd string
-	if ipVersion == 4 {
+	switch ipVersion {
+	case 4:
 		cmd = "iptables"
-	} else if ipVersion == 6 {
+
+	case 6:
 		cmd = "ip6tables"
-	} else {
+
+	default:
 		return false, false, errors.New("Invalid IP version")
 	}
 
@@ -1460,11 +1473,14 @@ func (d Xtables) iptablesChainExists(ipVersion uint, table string, chain string)
 // iptablesChainCreate creates a chain in a table.
 func (d Xtables) iptablesChainCreate(ipVersion uint, table string, chain string) error {
 	var cmd string
-	if ipVersion == 4 {
+	switch ipVersion {
+	case 4:
 		cmd = "iptables"
-	} else if ipVersion == 6 {
+
+	case 6:
 		cmd = "ip6tables"
-	} else {
+
+	default:
 		return errors.New("Invalid IP version")
 	}
 
@@ -1480,11 +1496,14 @@ func (d Xtables) iptablesChainCreate(ipVersion uint, table string, chain string)
 // iptablesChainDelete deletes a chain in a table.
 func (d Xtables) iptablesChainDelete(ipVersion uint, table string, chain string, flushFirst bool) error {
 	var cmd string
-	if ipVersion == 4 {
+	switch ipVersion {
+	case 4:
 		cmd = "iptables"
-	} else if ipVersion == 6 {
+
+	case 6:
 		cmd = "ip6tables"
-	} else {
+
+	default:
 		return errors.New("Invalid IP version")
 	}
 
