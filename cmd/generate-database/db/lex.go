@@ -84,7 +84,7 @@ func activeCriteria(filter []string, ignoredFilter []string) string {
 // selectObjects in order to scan a single row.
 func destFunc(slice string, entity string, importType string, fields []*Field) string {
 	var builder strings.Builder
-	writeLine := func(line string) { builder.WriteString(fmt.Sprintf("%s\n", line)) }
+	writeLine := func(line string) { fmt.Fprintf(&builder, "%s\n", line) }
 
 	writeLine(`func(scan func(dest ...any) error) error {`)
 
