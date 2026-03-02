@@ -67,6 +67,12 @@ func (l *StarttlsListener) Accept() (net.Conn, error) {
 func (l *StarttlsListener) Config(cert *localtls.CertInfo) {
 	config := util.ServerTLSConfig(cert)
 
+	// Always use network certificate's DNS name rather than server cert, so that it matches.
+	x509Cert, err := cert.PublicKeyX509()
+	if err == nil && len(x509Cert.DNSNames) > 0 {
+		config.ServerName = x509Cert.DNSNames[0]
+	}
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
