@@ -142,7 +142,7 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	})
 
 	// Special case restriction checks on volatile.* keys.
-	strip := false
+	strip := false // nolint:staticcheck
 
 	if slices.Contains([]string{"copy", "migration"}, req.Source.Type) {
 		// Allow stripping volatile keys if dealing with a copy or migration.
@@ -446,9 +446,9 @@ func getAggregateLimits(info *projectInfo, aggregateKeys []string) (map[string]a
 	}
 
 	for _, key := range aggregateKeys {
-		max := int64(-1)
-		limit := info.Project.Config[key]
-		if limit != "" {
+		limit := int64(-1)
+		limitStr := info.Project.Config[key]
+		if limitStr != "" {
 			keyName := key
 
 			// Handle pool-specific limits.
@@ -457,7 +457,7 @@ func getAggregateLimits(info *projectInfo, aggregateKeys []string) (map[string]a
 			}
 
 			parser := aggregateLimitConfigValueParsers[keyName]
-			max, err = parser(info.Project.Config[key])
+			limit, err = parser(limitStr)
 			if err != nil {
 				return nil, err
 			}
@@ -465,7 +465,7 @@ func getAggregateLimits(info *projectInfo, aggregateKeys []string) (map[string]a
 
 		resource := api.ProjectStateResource{
 			Usage: totals[key],
-			Limit: max,
+			Limit: limit,
 		}
 
 		result[key] = resource
@@ -493,12 +493,12 @@ func checkAggregateLimits(info *projectInfo, aggregateKeys []string) error {
 		}
 
 		parser := aggregateLimitConfigValueParsers[keyName]
-		max, err := parser(info.Project.Config[key])
+		limit, err := parser(info.Project.Config[key])
 		if err != nil {
 			return err
 		}
 
-		if totals[key] > max {
+		if totals[key] > limit {
 			return fmt.Errorf("Reached maximum aggregate value %q for %q in project %q", info.Project.Config[key], key, info.Project.Name)
 		}
 	}
@@ -825,18 +825,18 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		return nil
 	}
 
-	for _, instance := range instances {
-		instType, err := instancetype.New(instance.Type)
+	for _, inst := range instances {
+		instType, err := instancetype.New(inst.Type)
 		if err != nil {
 			return err
 		}
 
-		err = entityConfigChecker(instType, instance.Name, instance.Config)
+		err = entityConfigChecker(instType, inst.Name, inst.Config)
 		if err != nil {
 			return err
 		}
 
-		err = entityDevicesChecker(instType, instance.Name, instance.Devices)
+		err = entityDevicesChecker(instType, inst.Name, inst.Devices)
 		if err != nil {
 			return err
 		}
@@ -869,7 +869,7 @@ func CheckRestrictedDevicesDiskPaths(projectConfig map[string]string, sourcePath
 
 	// Clean, then add trailing slash, to ensure we are prefix matching on whole path.
 	sourcePath = fmt.Sprintf("%s/", filepath.Clean(sourcePath))
-	for _, parentSourcePath := range strings.SplitN(projectConfig["restricted.devices.disk.paths"], ",", -1) {
+	for _, parentSourcePath := range strings.Split(projectConfig["restricted.devices.disk.paths"], ",") {
 		// Clean, then add trailing slash, to ensure we are prefix matching on whole path.
 		parentSourcePathTrailing := fmt.Sprintf("%s/", filepath.Clean(parentSourcePath))
 		if strings.HasPrefix(sourcePath, parentSourcePathTrailing) {
@@ -990,8 +990,8 @@ func AllowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req
 	}
 
 	// Change the instance being updated.
-	for i, instance := range info.Instances {
-		if instance.Name != instanceName {
+	for i, inst := range info.Instances {
+		if inst.Name != instanceName {
 			continue
 		}
 
@@ -1202,8 +1202,8 @@ func validateInstanceCountLimit(instances []api.Instance, key, value, project st
 	}
 
 	count := 0
-	for _, instance := range instances {
-		if instance.Type == dbType.String() {
+	for _, inst := range instances {
+		if inst.Type == dbType.String() {
 			count++
 		}
 	}
@@ -1350,10 +1350,10 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 	}
 
 	instances := make([]api.Instance, 0, len(dbInstances))
-	for _, instance := range dbInstances {
-		apiInstance, err := instance.ToAPI(ctx, tx.Tx(), dbInstanceDevices, dbProfileConfigs, dbProfileDevices)
+	for _, inst := range dbInstances {
+		apiInstance, err := inst.ToAPI(ctx, tx.Tx(), dbInstanceDevices, dbProfileConfigs, dbProfileDevices)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get API data for instance %q in project %q: %w", instance.Name, instance.Project, err)
+			return nil, fmt.Errorf("Failed to get API data for instance %q in project %q: %w", inst.Name, inst.Project, err)
 		}
 
 		instances = append(instances, *apiInstance)
@@ -1385,17 +1385,17 @@ func expandInstancesConfigAndDevices(instances []api.Instance, profiles []api.Pr
 		profilesByName[profile.Name] = profile
 	}
 
-	for i, instance := range instances {
-		apiProfiles := make([]api.Profile, len(instance.Profiles))
+	for i, inst := range instances {
+		apiProfiles := make([]api.Profile, len(inst.Profiles))
 
-		for j, name := range instance.Profiles {
+		for j, name := range inst.Profiles {
 			profile := profilesByName[name]
 			apiProfiles[j] = profile
 		}
 
-		expandedInstances[i] = instance
-		expandedInstances[i].Config = db.ExpandInstanceConfig(instance.Config, apiProfiles)
-		expandedInstances[i].Devices = db.ExpandInstanceDevices(deviceconfig.NewDevices(instance.Devices), apiProfiles).CloneNative()
+		expandedInstances[i] = inst
+		expandedInstances[i].Config = db.ExpandInstanceConfig(inst.Config, apiProfiles)
+		expandedInstances[i].Devices = db.ExpandInstanceDevices(deviceconfig.NewDevices(inst.Devices), apiProfiles).CloneNative()
 	}
 
 	return expandedInstances, nil
@@ -1439,8 +1439,8 @@ func getTotalsAcrossProjectEntities(info *projectInfo, keys []string, skipUnset 
 		}
 	}
 
-	for _, instance := range info.Instances {
-		limits, err := getInstanceLimits(instance, keys, skipUnset)
+	for _, inst := range info.Instances {
+		limits, err := getInstanceLimits(inst, keys, skipUnset)
 		if err != nil {
 			return nil, err
 		}
