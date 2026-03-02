@@ -18,10 +18,12 @@ type cmdManpage struct {
 	flagAll    bool
 }
 
+var cmdManpageUsage = u.Usage{u.Target(u.Directory)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdManpage) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("manpage", u.Target(u.Directory))
+	cmd.Use = cli.U("manpage", cmdManpageUsage...)
 	cmd.Short = i18n.G("Generate manpages for all commands")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Generate manpages for all commands`))
@@ -46,11 +48,12 @@ func (c *cmdManpage) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdManpage) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
+	parsed, err := cmdManpageUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	target := parsed[0].String
 
 	// If asked to do all commands, mark them all visible.
 	for _, c := range c.global.cmd.Commands() {
@@ -71,20 +74,20 @@ func (c *cmdManpage) Run(cmd *cobra.Command, args []string) error {
 
 		opts := doc.GenManTreeOptions{
 			Header:           header,
-			Path:             args[0],
+			Path:             target,
 			CommandSeparator: ".",
 		}
 
 		err = doc.GenManTreeFromOpts(c.global.cmd, opts)
 
 	case "md":
-		err = doc.GenMarkdownTree(c.global.cmd, args[0])
+		err = doc.GenMarkdownTree(c.global.cmd, target)
 
 	case "rest":
-		err = doc.GenReSTTree(c.global.cmd, args[0])
+		err = doc.GenReSTTree(c.global.cmd, target)
 
 	case "yaml":
-		err = doc.GenYamlTree(c.global.cmd, args[0])
+		err = doc.GenYamlTree(c.global.cmd, target)
 	}
 
 	return err
