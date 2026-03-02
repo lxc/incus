@@ -45,10 +45,12 @@ type cmdList struct {
 	shorthandFilters map[string]func(*api.Instance, *api.InstanceState, string) bool
 }
 
+var cmdListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list", u.RemoteColonOpt, u.Filter.List(0))
+	cmd.Use = cli.U("list", cmdListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -399,13 +401,13 @@ func (c *cmdList) showInstances(instances []api.InstanceFull, filters []string, 
 
 // Run runs the actual command logic.
 func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, -1)
-	if exit {
+	parsed, err := cmdListUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	filters := parsed[1].StringList
 
 	if c.global.flagProject != "" && c.flagAllProjects {
 		return errors.New(i18n.G("Can't specify --project with --all-projects"))
@@ -418,42 +420,6 @@ func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
 		if slices.Contains(formatOptions, "raw") {
 			c.rawFormat = true
 		}
-	}
-
-	// Parse the remote
-	var remote string
-	var name string
-	var filters []string
-
-	if len(args) != 0 {
-		filters = args
-		if strings.Contains(args[0], ":") && !strings.Contains(args[0], "=") {
-			var err error
-			remote, name, err = conf.ParseRemote(args[0])
-			if err != nil {
-				return err
-			}
-
-			filters = args[1:]
-		} else if !strings.Contains(args[0], "=") {
-			remote = conf.DefaultRemote
-			name = args[0]
-			filters = args[1:]
-		}
-	}
-
-	if name != "" {
-		filters = append(filters, name)
-	}
-
-	if remote == "" {
-		remote = conf.DefaultRemote
-	}
-
-	// Connect to the daemon.
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
 	}
 
 	// Get the list of columns
