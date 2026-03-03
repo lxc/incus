@@ -1116,7 +1116,12 @@ func (d *linstor) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 		return nil
 	}
 
-	return d.updateResourceDefinition(vol, changedConfig)
+	err := d.updateResourceDefinition(vol, changedConfig)
+	if err != nil {
+		return err
+	}
+
+	return d.updateVolume(vol, changedConfig)
 }
 
 // GetVolumeUsage returns the disk space used by the volume.

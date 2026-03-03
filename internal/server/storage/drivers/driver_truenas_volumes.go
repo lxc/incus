@@ -955,7 +955,7 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 		}
 	}
 
-	return nil
+	return d.updateVolume(vol, changedConfig)
 }
 
 // CacheVolumeSnapshots fetches snapshot usage properties for all snapshots on the volume.

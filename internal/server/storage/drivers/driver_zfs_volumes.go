@@ -1807,7 +1807,7 @@ func (d *zfs) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 		}
 	}
 
-	return nil
+	return d.updateVolume(vol, changedConfig)
 }
 
 // CacheVolumeSnapshots fetches snapshot usage properties for all snapshots on the volume.
