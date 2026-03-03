@@ -31,10 +31,13 @@ type cmdRemoteProxy struct {
 	flagTimeout int
 }
 
+// Not the most beautiful way to encode it, but this command is an outlier in that regard.
+var cmdRemoteProxyUsage = u.Usage{u.Either(u.Remote, u.Colon(u.Remote)), u.Target(u.Placeholder(i18n.G("socket file")))}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRemoteProxy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("proxy", u.Colon(u.Remote), u.Target(u.Placeholder(i18n.G("socket file"))))
+	cmd.Use = cli.U("proxy", cmdRemoteProxyUsage...)
 	cmd.Short = i18n.G("Run a local API proxy")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Run a local API proxy for the remote`))
@@ -48,19 +51,18 @@ func (c *cmdRemoteProxy) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdRemoteProxy) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
+	parsed, err := cmdRemoteProxyUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
 
+	remoteName := parsed[0].String
+	path := parsed[1].String
+
 	// Detect remote name.
-	remoteName := args[0]
 	if !strings.HasSuffix(remoteName, ":") {
 		remoteName = remoteName + ":"
 	}
-
-	path := args[1]
 
 	remote := c.global.conf.Remotes[strings.TrimSuffix(remoteName, ":")]
 	remote.KeepAlive = 0
