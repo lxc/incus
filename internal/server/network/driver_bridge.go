@@ -295,8 +295,14 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  type: string
 		//  condition: IPv4 DHCP
 		//  default: IPv4 address
-		//  shortdesc: Address of the gateway for the subnet
-		"ipv4.dhcp.gateway": validate.Optional(validate.IsNetworkAddressV4),
+		//  shortdesc: Address of the gateway for the subnet (use `none` to turn off gateway announcement)
+		"ipv4.dhcp.gateway": validate.Optional(func(value string) error {
+			if value == "none" {
+				return nil
+			}
+
+			return validate.IsNetworkAddressV4(value)
+		}),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv4.dhcp.expiry)
 		//
@@ -1414,7 +1420,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-no-override", "--dhcp-authoritative", fmt.Sprintf("--dhcp-leasefile=%s", internalUtil.VarPath("networks", n.name, "dnsmasq.leases")), fmt.Sprintf("--dhcp-hostsfile=%s", internalUtil.VarPath("networks", n.name, "dnsmasq.hosts"))}...)
 			}
 
-			if n.config["ipv4.dhcp.gateway"] != "" {
+			switch n.config["ipv4.dhcp.gateway"] {
+			case "":
+			case "none":
+				dnsmasqCmd = append(dnsmasqCmd, "--dhcp-option=3")
+			default:
 				dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--dhcp-option-force=3,%s", n.config["ipv4.dhcp.gateway"]))
 			}
 
