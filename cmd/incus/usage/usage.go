@@ -771,7 +771,7 @@ var (
 	Client             = placeholder{i18n.G("client")}
 	CommandLine        = list{placeholder{i18n.G("command-line argument")}, 1, " "}
 	Device             = placeholder{i18n.G("device")}
-	Direction          = placeholder{i18n.G("direction")}
+	Direction          = alternative{[]Atom{verbatim{"ingress"}, verbatim{"egress"}}}
 	Directory          = placeholder{i18n.G("directory")}
 	Driver             = placeholder{i18n.G("driver")}
 	EndOfFlags         = hide{optional{verbatim{"--"}}, verbatim{"[flags] [--]"}}
