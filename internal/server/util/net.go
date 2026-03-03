@@ -62,6 +62,7 @@ func (l *inMemoryListener) Addr() net.Addr {
 
 type inMemoryAddr struct{}
 
+// Network returns the network name (implements net.Addr).
 func (a *inMemoryAddr) Network() string {
 	return "memory"
 }

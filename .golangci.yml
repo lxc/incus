@@ -75,6 +75,8 @@ linters:
         source: '^// Example:'
       - path: internal/util/
         text: "avoid meaningless package names"
+      - path: internal/server/util/
+        text: "avoid meaningless package names"
     paths:
       - third_party$
       - builtin$
