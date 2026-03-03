@@ -21,7 +21,7 @@ func NewTestOS(t *testing.T) (*OS, func()) {
 		require.NoError(t, os.RemoveAll(dir))
 	}
 
-	os := &OS{
+	testOS := &OS{
 		// FIXME: setting mock mode can be avoided once daemon tasks
 		// are fixed to exit gracefully. See daemon.go.
 		MockMode: true,
@@ -32,10 +32,10 @@ func NewTestOS(t *testing.T) (*OS, func()) {
 		RunDir:   filepath.Join(dir, "run"),
 	}
 
-	_, err = os.Init()
+	_, err = testOS.Init()
 	require.NoError(t, err)
 
-	return os, cleanup
+	return testOS, cleanup
 }
 
 // SetupTestCerts populates the given test directory with server certificates.
