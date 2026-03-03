@@ -2435,7 +2435,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		initCmd = strings.ReplaceAll(initCmd, "\\(", "(")
 		initCmd = strings.ReplaceAll(initCmd, "\\)", ")")
 
-		if len(entrypoint) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init"}, entrypoint[0]) {
+		if len(entrypoint) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init", "/usr/bin/init"}, entrypoint[0]) {
 			// For regular init systems, call them directly as PID1.
 			err = lxcSetConfigItem(cc, "lxc.init.cmd", initCmd)
 			if err != nil {
