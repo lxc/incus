@@ -28,10 +28,12 @@ type cmdQuery struct {
 	flagData     string
 }
 
+var cmdQueryUsage = u.Usage{u.Placeholder(i18n.G("API path")).Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdQuery) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("query", u.Placeholder(i18n.G("API path")).Remote())
+	cmd.Use = cli.U("query", cmdQueryUsage...)
 	cmd.Short = i18n.G("Send a raw query to the server")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Send a raw query to the server`))
@@ -64,13 +66,13 @@ func (c *cmdQuery) pretty(input any) string {
 
 // Run runs the actual command logic.
 func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
+	parsed, err := cmdQueryUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	path := parsed[0].RemoteObject.String
 
 	if c.global.flagProject != "" {
 		return errors.New(i18n.G("--project cannot be used with the query command"))
@@ -80,21 +82,9 @@ func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Action %q isn't supported by this tool"), c.flagAction)
 	}
 
-	// Parse the remote
-	remote, path, err := conf.ParseRemote(args[0])
-	if err != nil {
-		return err
-	}
-
 	// Validate path
 	if !strings.HasPrefix(path, "/") {
 		return errors.New(i18n.G("Query path must start with /"))
-	}
-
-	// Attempt to connect
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
 	}
 
 	// Guess the encoding of the input
