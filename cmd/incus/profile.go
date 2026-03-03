@@ -107,10 +107,12 @@ type cmdProfileAdd struct {
 	profile *cmdProfile
 }
 
+var cmdProfileAddUsage = u.Usage{u.Instance.Remote(), u.Profile}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("add", u.Instance.Remote(), u.Profile)
+	cmd.Use = cli.U("add", cmdProfileAddUsage...)
 	cmd.Short = i18n.G("Add profiles to instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add profiles to instances`))
@@ -134,33 +136,24 @@ func (c *cmdProfileAdd) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileAdd) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdProfileAddUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	profileName := parsed[1].String
 
 	// Add the profile
-	inst, etag, err := resource.server.GetInstance(resource.name)
+	inst, etag, err := d.GetInstance(instanceName)
 	if err != nil {
 		return err
 	}
 
-	inst.Profiles = append(inst.Profiles, args[1])
+	inst.Profiles = append(inst.Profiles, profileName)
 
-	op, err := resource.server.UpdateInstance(resource.name, inst.Writable(), etag)
+	op, err := d.UpdateInstance(instanceName, inst.Writable(), etag)
 	if err != nil {
 		return err
 	}
@@ -171,7 +164,7 @@ func (c *cmdProfileAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Profile %s added to %s")+"\n", args[1], resource.name)
+		fmt.Printf(i18n.G("Profile %s added to %s")+"\n", profileName, formatRemote(c.global.conf, parsed[0]))
 	}
 
 	return nil
@@ -181,12 +174,16 @@ func (c *cmdProfileAdd) Run(cmd *cobra.Command, args []string) error {
 type cmdProfileAssign struct {
 	global  *cmdGlobal
 	profile *cmdProfile
+
+	flagNoProfiles bool
 }
+
+var cmdProfileAssignUsage = u.Usage{u.Instance.Remote(), u.Either(u.Profile.List(1, ","), u.Flag("no-profiles"))}
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileAssign) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("assign", u.Instance.Remote(), u.Profile.List(1, ","))
+	cmd.Use = cli.U("assign", cmdProfileAssignUsage...)
 	cmd.Aliases = []string{"apply"}
 	cmd.Short = i18n.G("Assign sets of profiles to instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -198,10 +195,11 @@ func (c *cmdProfileAssign) Command() *cobra.Command {
 incus profile assign foo default
     Reset "foo" to only using the "default" profile.
 
-incus profile assign foo ''
+incus profile assign foo --no-profiles
     Remove all profile from "foo"`))
 
 	cmd.RunE = c.Run
+	cmd.Flags().BoolVar(&c.flagNoProfiles, "no-profiles", false, i18n.G("Remove all profiles from the instance"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -216,37 +214,31 @@ incus profile assign foo ''
 
 // Run runs the actual command logic.
 func (c *cmdProfileAssign) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdProfileAssignUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	profiles := parsed[1].StringList
 
-	// Assign the profiles
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
-
-	inst, etag, err := resource.server.GetInstance(resource.name)
+	inst, etag, err := d.GetInstance(instanceName)
 	if err != nil {
 		return err
 	}
 
-	if args[1] != "" {
-		inst.Profiles = strings.Split(args[1], ",")
+	if parsed[1].BranchID == 0 {
+		if c.flagNoProfiles {
+			return errors.New(i18n.G("--no-profiles cannot be used together with other arguments"))
+		}
+
+		inst.Profiles = profiles
 	} else {
-		inst.Profiles = nil
+		inst.Profiles = []string{}
 	}
 
-	op, err := resource.server.UpdateInstance(resource.name, inst.Writable(), etag)
+	op, err := d.UpdateInstance(instanceName, inst.Writable(), etag)
 	if err != nil {
 		return err
 	}
@@ -256,12 +248,12 @@ func (c *cmdProfileAssign) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if args[1] == "" {
-		args[1] = i18n.G("(none)")
-	}
-
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Profiles %s applied to %s")+"\n", args[1], resource.name)
+		if parsed[1].BranchID == 0 {
+			fmt.Printf(i18n.G("Profiles %s applied to %s")+"\n", parsed[1].String, formatRemote(c.global.conf, parsed[0]))
+		} else {
+			fmt.Printf(i18n.G("All profiles removed from %s")+"\n", formatRemote(c.global.conf, parsed[0]))
+		}
 	}
 
 	return nil
@@ -276,10 +268,12 @@ type cmdProfileCopy struct {
 	flagRefresh       bool
 }
 
+var cmdProfileCopyUsage = u.Usage{u.Profile.Remote(), u.NewName(u.Profile).Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileCopy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("copy", u.Profile.Remote(), u.NewName(u.Profile).Remote())
+	cmd.Use = cli.U("copy", cmdProfileCopyUsage...)
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy profiles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -306,42 +300,29 @@ func (c *cmdProfileCopy) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileCopy) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args...)
+	parsed, err := cmdProfileCopyUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	source := resources[0]
-	dest := resources[1]
-
-	if source.name == "" {
-		return errors.New(i18n.G("Missing source profile name"))
-	}
-
-	if dest.name == "" {
-		dest.name = source.name
-	}
+	srcServer := parsed[0].RemoteServer
+	srcProfile := parsed[0].RemoteObject.String
+	dstServer := parsed[1].RemoteServer
+	dstProfile := parsed[1].RemoteObject.String
 
 	// Copy the profile
-	profile, _, err := source.server.GetProfile(source.name)
+	profile, _, err := srcServer.GetProfile(srcProfile)
 	if err != nil {
 		return err
 	}
 
 	if c.flagTargetProject != "" {
-		dest.server = dest.server.UseProject(c.flagTargetProject)
+		dstServer = dstServer.UseProject(c.flagTargetProject)
 	}
 
 	// Refresh the profile if requested.
 	if c.flagRefresh {
-		err := dest.server.UpdateProfile(dest.name, profile.Writable(), "")
+		err := dstServer.UpdateProfile(dstProfile, profile.Writable(), "")
 		if err == nil || !api.StatusErrorCheck(err, http.StatusNotFound) {
 			return err
 		}
@@ -349,10 +330,10 @@ func (c *cmdProfileCopy) Run(cmd *cobra.Command, args []string) error {
 
 	newProfile := api.ProfilesPost{
 		ProfilePut: profile.Writable(),
-		Name:       dest.name,
+		Name:       dstProfile,
 	}
 
-	return dest.server.CreateProfile(newProfile)
+	return dstServer.CreateProfile(newProfile)
 }
 
 // Create.
@@ -363,10 +344,12 @@ type cmdProfileCreate struct {
 	flagDescription string
 }
 
+var cmdProfileCreateUsage = u.Usage{u.NewName(u.Profile).Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("create", u.NewName(u.Profile).Remote())
+	cmd.Use = cli.U("create", cmdProfileCreateUsage...)
 	cmd.Short = i18n.G("Create profiles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Create profiles`))
@@ -393,13 +376,14 @@ incus profile create p1 < config.yaml
 
 // Run runs the actual command logic.
 func (c *cmdProfileCreate) Run(cmd *cobra.Command, args []string) error {
-	var stdinData api.ProfilePut
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
+	parsed, err := cmdProfileCreateUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	profileName := parsed[0].RemoteObject.String
+	var stdinData api.ProfilePut
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
@@ -414,34 +398,22 @@ func (c *cmdProfileCreate) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
-	if err != nil {
-		return err
-	}
-
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing profile name"))
-	}
-
 	// Create the profile
 	profile := api.ProfilesPost{}
-	profile.Name = resource.name
+	profile.Name = profileName
 	profile.ProfilePut = stdinData
 
 	if c.flagDescription != "" {
 		profile.Description = c.flagDescription
 	}
 
-	err = resource.server.CreateProfile(profile)
+	err = d.CreateProfile(profile)
 	if err != nil {
 		return err
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Profile %s created")+"\n", resource.name)
+		fmt.Printf(i18n.G("Profile %s created")+"\n", formatRemote(c.global.conf, parsed[0]))
 	}
 
 	return nil
@@ -453,10 +425,12 @@ type cmdProfileDelete struct {
 	profile *cmdProfile
 }
 
+var cmdProfileDeleteUsage = u.Usage{u.Profile.Remote().List(1)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("delete", u.Profile.Remote().List(1))
+	cmd.Use = cli.U("delete", cmdProfileDeleteUsage...)
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete profiles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -473,32 +447,31 @@ func (c *cmdProfileDelete) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileDelete) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, -1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args...)
+	parsed, err := cmdProfileDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	for _, resource := range resources {
-		if resource.name == "" {
-			return errors.New(i18n.G("Missing profile name"))
-		}
+	var errs []error
+
+	for _, p := range parsed[0].List {
+		d := p.RemoteServer
+		profileName := p.RemoteObject.String
 
 		// Delete the profile
-		err = resource.server.DeleteProfile(resource.name)
+		err = d.DeleteProfile(profileName)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 
 		if !c.global.flagQuiet {
-			fmt.Printf(i18n.G("Profile %s deleted")+"\n", resource.name)
+			fmt.Printf(i18n.G("Profile %s deleted")+"\n", formatRemote(c.global.conf, p))
 		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	return nil
@@ -510,10 +483,12 @@ type cmdProfileEdit struct {
 	profile *cmdProfile
 }
 
+var cmdProfileEditUsage = u.Usage{u.Profile.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("edit", u.Profile.Remote())
+	cmd.Use = cli.U("edit", cmdProfileEditUsage...)
 	cmd.Short = i18n.G("Edit profile configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit profile configurations as YAML`))
@@ -557,23 +532,13 @@ func (c *cmdProfileEdit) helpTemplate() string {
 
 // Run runs the actual command logic.
 func (c *cmdProfileEdit) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdProfileEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing profile name"))
-	}
+	d := parsed[0].RemoteServer
+	profileName := parsed[0].RemoteObject.String
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
@@ -588,11 +553,11 @@ func (c *cmdProfileEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		return resource.server.UpdateProfile(resource.name, newdata, "")
+		return d.UpdateProfile(profileName, newdata, "")
 	}
 
 	// Extract the current value
-	profile, etag, err := resource.server.GetProfile(resource.name)
+	profile, etag, err := d.GetProfile(profileName)
 	if err != nil {
 		return err
 	}
@@ -613,7 +578,7 @@ func (c *cmdProfileEdit) Run(cmd *cobra.Command, args []string) error {
 		newdata := api.ProfilePut{}
 		err = yaml.Unmarshal(content, &newdata)
 		if err == nil {
-			err = resource.server.UpdateProfile(resource.name, newdata, etag)
+			err = d.UpdateProfile(profileName, newdata, etag)
 		}
 
 		// Respawn the editor
@@ -648,10 +613,12 @@ type cmdProfileGet struct {
 	flagIsProperty bool
 }
 
+var cmdProfileGetUsage = u.Usage{u.Profile.Remote(), u.Key}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("get", u.Profile.Remote(), u.Key)
+	cmd.Use = cli.U("get", cmdProfileGetUsage...)
 	cmd.Short = i18n.G("Get values for profile configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Get values for profile configuration keys`))
@@ -677,40 +644,31 @@ func (c *cmdProfileGet) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileGet) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdProfileGetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing profile name"))
-	}
+	d := parsed[0].RemoteServer
+	profileName := parsed[0].RemoteObject.String
+	key := parsed[1].String
 
 	// Get the configuration key
-	profile, _, err := resource.server.GetProfile(resource.name)
+	profile, _, err := d.GetProfile(profileName)
 	if err != nil {
 		return err
 	}
 
 	if c.flagIsProperty {
 		w := profile.Writable()
-		res, err := getFieldByJSONTag(&w, args[1])
+		res, err := getFieldByJSONTag(&w, key)
 		if err != nil {
-			return fmt.Errorf(i18n.G("The property %q does not exist on the profile %q: %v"), args[1], resource.name, err)
+			return fmt.Errorf(i18n.G("The property %q does not exist on the profile %q: %v"), profileName, formatRemote(c.global.conf, parsed[0]), err)
 		}
 
 		fmt.Printf("%v\n", res)
 	} else {
-		fmt.Printf("%s\n", profile.Config[args[1]])
+		fmt.Printf("%s\n", profile.Config[key])
 	}
 
 	return nil
@@ -725,10 +683,12 @@ type cmdProfileList struct {
 	flagAllProjects bool
 }
 
+var cmdProfileListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list", u.RemoteColonOpt, u.Filter.List(0))
+	cmd.Use = cli.U("list", cmdProfileListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List profiles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -832,34 +792,17 @@ func (c *cmdProfileList) usedByColumnData(profile api.Profile) string {
 
 // Run runs the actual command logic.
 func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, -1)
-	if exit {
-		return err
-	}
-
-	if c.global.flagProject != "" && c.flagAllProjects {
-		return errors.New(i18n.G("Can't specify --project with --all-projects"))
-	}
-
-	// Parse remote and filters.
-	remote := ""
-	filters := []string{}
-
-	if len(args) != 0 {
-		filters = args
-		if strings.Contains(args[0], ":") && !strings.Contains(args[0], "=") {
-			remote = args[0]
-			filters = args[1:]
-		}
-	}
-
-	resources, err := c.global.parseServers(remote)
+	parsed, err := cmdProfileListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	d := parsed[0].RemoteServer
+	filters := parsed[1].StringList
+
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
 
 	flattenedFilters := []string{}
 	for _, filter := range filters {
@@ -877,9 +820,9 @@ func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
 	// List profiles
 	var profiles []api.Profile
 	if c.flagAllProjects {
-		profiles, err = resource.server.GetProfilesAllProjectsWithFilter(serverFilters)
+		profiles, err = d.GetProfilesAllProjectsWithFilter(serverFilters)
 	} else {
-		profiles, err = resource.server.GetProfilesWithFilter(serverFilters)
+		profiles, err = d.GetProfilesWithFilter(serverFilters)
 	}
 
 	if err != nil {
@@ -917,10 +860,12 @@ type cmdProfileRemove struct {
 	profile *cmdProfile
 }
 
+var cmdProfileRemoveUsage = u.Usage{u.Instance.Remote(), u.Profile}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("remove", u.Instance.Remote(), u.Profile)
+	cmd.Use = cli.U("remove", cmdProfileRemoveUsage...)
 	cmd.Short = i18n.G("Remove profiles from instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Remove profiles from instances`))
@@ -944,37 +889,28 @@ func (c *cmdProfileRemove) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileRemove) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdProfileRemoveUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	profileName := parsed[1].String
 
 	// Remove the profile
-	inst, etag, err := resource.server.GetInstance(resource.name)
+	inst, etag, err := d.GetInstance(instanceName)
 	if err != nil {
 		return err
 	}
 
-	if !slices.Contains(inst.Profiles, args[1]) {
-		return fmt.Errorf(i18n.G("Profile %s isn't currently applied to %s"), args[1], resource.name)
+	if !slices.Contains(inst.Profiles, profileName) {
+		return fmt.Errorf(i18n.G("Profile %s isn't currently applied to %s"), profileName, formatRemote(c.global.conf, parsed[0]))
 	}
 
 	profiles := []string{}
 	for _, profile := range inst.Profiles {
-		if profile == args[1] {
+		if profile == profileName {
 			continue
 		}
 
@@ -983,7 +919,7 @@ func (c *cmdProfileRemove) Run(cmd *cobra.Command, args []string) error {
 
 	inst.Profiles = profiles
 
-	op, err := resource.server.UpdateInstance(resource.name, inst.Writable(), etag)
+	op, err := d.UpdateInstance(instanceName, inst.Writable(), etag)
 	if err != nil {
 		return err
 	}
@@ -994,7 +930,7 @@ func (c *cmdProfileRemove) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Profile %s removed from %s")+"\n", args[1], resource.name)
+		fmt.Printf(i18n.G("Profile %s removed from %s")+"\n", profileName, formatRemote(c.global.conf, parsed[0]))
 	}
 
 	return nil
@@ -1006,10 +942,12 @@ type cmdProfileRename struct {
 	profile *cmdProfile
 }
 
+var cmdProfileRenameUsage = u.Usage{u.Profile.Remote(), u.NewName(u.Profile)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("rename", u.Profile.Remote(), u.NewName(u.Profile))
+	cmd.Use = cli.U("rename", cmdProfileRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename profiles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -1030,32 +968,23 @@ func (c *cmdProfileRename) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileRename) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdProfileRenameUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing profile name"))
-	}
+	d := parsed[0].RemoteServer
+	profileName := parsed[0].RemoteObject.String
+	newProfileName := parsed[1].String
 
 	// Rename the profile
-	err = resource.server.RenameProfile(resource.name, api.ProfilePost{Name: args[1]})
+	err = d.RenameProfile(profileName, api.ProfilePost{Name: newProfileName})
 	if err != nil {
 		return err
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("Profile %s renamed to %s")+"\n", resource.name, args[1])
+		fmt.Printf(i18n.G("Profile %s renamed to %s")+"\n", formatRemote(c.global.conf, parsed[0]), newProfileName)
 	}
 
 	return nil
@@ -1069,10 +998,12 @@ type cmdProfileSet struct {
 	flagIsProperty bool
 }
 
+var cmdProfileSetUsage = u.Usage{u.Profile.Remote(), u.LegacyKV.List(1)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("set", u.Profile.Remote(), u.KV.List(1))
+	cmd.Use = cli.U("set", cmdProfileSetUsage...)
 	cmd.Short = i18n.G("Set profile configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Set profile configuration keys
@@ -1098,34 +1029,17 @@ For backward compatibility, a single configuration key may still be set with:
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileSet) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, -1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+// set runs the post-parsing command logic.
+func (c *cmdProfileSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
+	d := parsed[0].RemoteServer
+	profileName := parsed[0].RemoteObject.String
+	keys, err := kvToMap(parsed[1])
 	if err != nil {
 		return err
-	}
-
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing profile name"))
 	}
 
 	// Get the profile
-	profile, etag, err := resource.server.GetProfile(resource.name)
-	if err != nil {
-		return err
-	}
-
-	// Set the configuration key
-	keys, err := getConfig(args[1:]...)
+	profile, etag, err := d.GetProfile(profileName)
 	if err != nil {
 		return err
 	}
@@ -1149,7 +1063,17 @@ func (c *cmdProfileSet) Run(cmd *cobra.Command, args []string) error {
 		maps.Copy(writable.Config, keys)
 	}
 
-	return resource.server.UpdateProfile(resource.name, writable, etag)
+	return d.UpdateProfile(profileName, writable, etag)
+}
+
+// Run runs the actual command logic.
+func (c *cmdProfileSet) Run(cmd *cobra.Command, args []string) error {
+	parsed, err := cmdProfileSetUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	return c.set(cmd, parsed)
 }
 
 // Show.
@@ -1158,10 +1082,12 @@ type cmdProfileShow struct {
 	profile *cmdProfile
 }
 
+var cmdProfileShowUsage = u.Usage{u.Profile.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("show", u.Profile.Remote())
+	cmd.Use = cli.U("show", cmdProfileShowUsage...)
 	cmd.Short = i18n.G("Show profile configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show profile configurations`))
@@ -1181,26 +1107,16 @@ func (c *cmdProfileShow) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileShow) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdProfileShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing profile name"))
-	}
+	d := parsed[0].RemoteServer
+	profileName := parsed[0].RemoteObject.String
 
 	// Show the profile
-	profile, _, err := resource.server.GetProfile(resource.name)
+	profile, _, err := d.GetProfile(profileName)
 	if err != nil {
 		return err
 	}
@@ -1224,10 +1140,12 @@ type cmdProfileUnset struct {
 	flagIsProperty bool
 }
 
+var cmdProfileUnsetUsage = u.Usage{u.Profile.Remote(), u.Key}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdProfileUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("unset", u.Profile.Remote(), u.Key)
+	cmd.Use = cli.U("unset", cmdProfileUnsetUsage...)
 	cmd.Short = i18n.G("Unset profile configuration keys")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Unset profile configuration keys`))
@@ -1252,14 +1170,11 @@ func (c *cmdProfileUnset) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdProfileUnset) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
+	parsed, err := cmdProfileUnsetUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
 
 	c.profileSet.flagIsProperty = c.flagIsProperty
-
-	args = append(args, "")
-	return c.profileSet.Run(cmd, args)
+	return unsetKey(c.profileSet, cmd, parsed)
 }
