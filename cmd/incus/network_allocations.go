@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -28,10 +29,12 @@ type networkAllocationColumn struct {
 	Data func(api.NetworkAllocations) string
 }
 
+var cmdNetworkListAllocationsUsage = u.Usage{u.RemoteColonOpt}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdNetworkListAllocations) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list-allocations")
+	cmd.Use = cli.U("list-allocations", cmdNetworkListAllocationsUsage...)
 	cmd.Short = i18n.G("List network allocations in use")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List network allocations in use
@@ -128,28 +131,22 @@ func (c *cmdNetworkListAllocations) macAddressColumnData(alloc api.NetworkAlloca
 }
 
 // Run runs the actual command logic.
-func (c *cmdNetworkListAllocations) Run(_ *cobra.Command, args []string) error {
-	remote := ""
-	if len(args) > 0 {
-		remote = args[0]
-	}
-
-	resources, err := c.global.parseServers(remote)
+func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error {
+	parsed, err := cmdNetworkListAllocationsUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-	server := resource.server.UseProject(c.flagProject)
+	d := parsed[0].RemoteServer.UseProject(c.flagProject)
 
 	var addresses []api.NetworkAllocations
 	if c.flagAllProjects {
-		addresses, err = server.GetNetworkAllocationsAllProjects()
+		addresses, err = d.GetNetworkAllocationsAllProjects()
 		if err != nil {
 			return err
 		}
 	} else {
-		addresses, err = server.GetNetworkAllocations()
+		addresses, err = d.GetNetworkAllocations()
 		if err != nil {
 			return err
 		}
