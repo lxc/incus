@@ -3192,6 +3192,25 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		return err
 	}
 
+	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+		// Load the pool for the disk.
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		_, snapshotName, _ := api.GetParentAndSnapshotName(inst.Name())
+		err = diskPool.CreateCustomVolumeSnapshot(inst.Project().Name, dev.Config["source"], snapshotName, time.Time{}, op)
+		if err != nil {
+			return fmt.Errorf("Failed to create device snapshot for volume %q: %w", dev.Config["source"], err)
+		}
+
+		return nil
+	}, op)
+	if err != nil {
+		return err
+	}
+
 	reverter.Success()
 	return nil
 }
@@ -3349,15 +3368,15 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 
 	defer unlock()
 
+	src, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, parentName)
+	if err != nil {
+		return err
+	}
+
 	if volExists {
 		if parentDBVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
 			parentVol := b.GetVolume(volType, contentType, parentStorageName, parentDBVol.Config)
 			rootDiskName, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
-			if err != nil {
-				return err
-			}
-
-			src, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, parentName)
 			if err != nil {
 				return err
 			}
@@ -3382,6 +3401,24 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 
 	// Remove the snapshot volume record from the database if exists.
 	err = VolumeDBDelete(b, inst.Project().Name, inst.Name(), vol.Type())
+	if err != nil {
+		return err
+	}
+
+	err = b.forEachDependentDiskType(src, func(dev deviceConfig.DeviceNamed) error {
+		// Load the pool for the disk.
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		err = diskPool.DeleteCustomVolumeSnapshot(inst.Project().Name, fmt.Sprintf("%s/%s", dev.Config["source"], snapName), op)
+		if err != nil {
+			return fmt.Errorf("Failed to delete snapshot for volume %q: %w", dev.Config["source"], err)
+		}
+
+		return nil
+	}, op)
 	if err != nil {
 		return err
 	}
@@ -8854,4 +8891,19 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 	}
 
 	return inst, devName, nil
+}
+
+func (b *backend) forEachDependentDiskType(inst instance.Instance, diskAction func(dev deviceConfig.DeviceNamed) error, op *operations.Operation) error {
+	for _, dev := range inst.ExpandedDevices().Sorted() {
+		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+			continue
+		}
+
+		err := diskAction(dev)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
