@@ -560,6 +560,10 @@ func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error
 		rules["volatile.rootfs.size"] = validate.Optional(validate.IsInt64)
 	}
 
+	if vol.Type() == drivers.VolumeTypeCustom {
+		rules["dependent"] = validate.Optional(validate.IsBool)
+	}
+
 	return rules
 }
 

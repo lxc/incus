@@ -571,7 +571,7 @@ func (d *lvm) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 		return errors.New("block.type cannot be changed after creation")
 	}
 
-	return nil
+	return d.updateVolume(vol, changedConfig)
 }
 
 // GetVolumeUsage returns the disk space used by the volume (this is not currently supported).

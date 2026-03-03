@@ -189,6 +189,21 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 		return errors.New("security.unmapped and security.shifted are mutually exclusive")
 	}
 
+	// Check that dependent and security.shared are not set together.
+	if util.IsTrue(vol.config["dependent"]) && util.IsTrue(vol.config["security.shared"]) {
+		return errors.New("dependent and security.shared are mutually exclusive")
+	}
+
+	return nil
+}
+
+// updateVolume applies the common changes for all drivers of a volume configuration change.
+func (d *common) updateVolume(vol Volume, changedConfig map[string]string) error {
+	_, changed := changedConfig["dependent"]
+	if changed {
+		return errors.New("dependent cannot be changed")
+	}
+
 	return nil
 }
 
