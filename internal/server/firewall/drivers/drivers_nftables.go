@@ -671,7 +671,6 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 					nftRules.defaultInRuleConverted = nftRules.defaultInRule
 				}
 			} else {
-
 				if rule.Action == "reject" {
 					// Always convert ingress reject rules to drop rules to address nftables limitation.
 					rule.Action = "drop"
@@ -709,14 +708,14 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 
 		switch rule.Direction {
 		case "ingress":
-			switch {
-			case rule.Action == "drop":
+			switch rule.Action {
+			case "drop":
 				nftRules.outDropRules = append(nftRules.outDropRules, newNftRules...)
 
-			case rule.Action == "reject":
+			case "reject":
 				nftRules.outDropRules = append(nftRules.outDropRules, newNftRules...)
 
-			case rule.Action == "allow":
+			case "allow":
 				nftRules.outAcceptRules = append(nftRules.outAcceptRules, newNftRules...)
 
 			default:
@@ -724,11 +723,11 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 			}
 
 		case "egress":
-			switch {
-			case rule.Action == "drop":
+			switch rule.Action {
+			case "drop":
 				nftRules.inDropRules = append(nftRules.inDropRules, newNftRules...)
 
-			case rule.Action == "reject":
+			case "reject":
 				nftRules.inRejectRules = append(nftRules.inRejectRules, newNftRules...)
 
 				// Generate reject rule converted to a drop rule.
@@ -741,7 +740,7 @@ func (d Nftables) aclRulesToNftRules(hostName string, aclRules []ACLRule) (*nftR
 
 				nftRules.inRejectRulesConverted = append(nftRules.inRejectRulesConverted, newNftRules...)
 
-			case rule.Action == "allow":
+			case "allow":
 				if len(nft4Rules) != 0 {
 					nftRules.inAcceptRules4 = append(nftRules.inAcceptRules4, nft4Rules...)
 				}
