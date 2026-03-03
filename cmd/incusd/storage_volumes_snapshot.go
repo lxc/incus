@@ -34,6 +34,7 @@ import (
 	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
@@ -198,6 +199,10 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	if util.IsTrue(parentDBVolume.Config["dependent"]) {
+		return response.BadRequest(fmt.Errorf("Direct snapshots are not allowed for dependent volumes"))
 	}
 
 	// Get the snapshot pattern.
@@ -1176,12 +1181,30 @@ func storagePoolVolumeSnapshotTypeDelete(d *Daemon, r *http.Request) response.Re
 		return resp
 	}
 
-	snapshotDelete := func(op *operations.Operation) error {
-		pool, err := storagePools.LoadByName(s, poolName)
+	pool, err := storagePools.LoadByName(s, poolName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Get the parent volume.
+	var parentDBVolume *db.StorageVolume
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		parentDBVolume, err = tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, volumeType, volumeName, true)
 		if err != nil {
 			return err
 		}
 
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if util.IsTrue(parentDBVolume.Config["dependent"]) {
+		return response.BadRequest(fmt.Errorf("Direct snapshot removal is not allowed for dependent volumes"))
+	}
+
+	snapshotDelete := func(op *operations.Operation) error {
 		return pool.DeleteCustomVolumeSnapshot(projectName, fullSnapshotName, op)
 	}
 
