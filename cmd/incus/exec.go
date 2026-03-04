@@ -35,10 +35,12 @@ type cmdExec struct {
 	interactive bool
 }
 
+var cmdExecUsage = u.Usage{u.Instance.Remote(), u.EndOfFlags, u.CommandLine}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdExec) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("exec", u.Instance.Remote(), u.Flags, u.Dash(""), u.Placeholder(i18n.G("command line>")))
+	cmd.Use = cli.U("exec", cmdExecUsage...)
 	cmd.Short = i18n.G("Execute commands in instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Execute commands in instances
@@ -98,12 +100,14 @@ func (c *cmdExec) sendTermSize(control *websocket.Conn) error {
 // Run runs the actual command logic.
 func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, -1)
-	if exit {
+	parsed, err := cmdExecUsage.Parse(conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	command := parsed[2].StringList
 
 	if c.flagForceInteractive && c.flagForceNonInteractive {
 		return errors.New(i18n.G("You can't pass -t and -T at the same time"))
@@ -111,17 +115,6 @@ func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
 
 	if c.flagMode != "auto" && (c.flagForceInteractive || c.flagForceNonInteractive) {
 		return errors.New(i18n.G("You can't pass -t or -T at the same time as --mode"))
-	}
-
-	// Connect to the daemon
-	remote, name, err := conf.ParseRemote(args[0])
-	if err != nil {
-		return err
-	}
-
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
 	}
 
 	// Set the environment
@@ -192,7 +185,7 @@ func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
 
 	// Prepare the command
 	req := api.InstanceExecPost{
-		Command:     args[1:],
+		Command:     command,
 		WaitForWS:   true,
 		Interactive: c.interactive,
 		Environment: env,
@@ -212,7 +205,7 @@ func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run the command in the instance
-	op, err := d.ExecInstance(name, req, &execArgs)
+	op, err := d.ExecInstance(instanceName, req, &execArgs)
 	if err != nil {
 		return err
 	}

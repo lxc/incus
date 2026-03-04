@@ -769,10 +769,12 @@ var (
 	BackupFile         = placeholder{i18n.G("backup file")}
 	Bucket             = placeholder{i18n.G("bucket")}
 	Client             = placeholder{i18n.G("client")}
+	CommandLine        = list{placeholder{i18n.G("command-line argument")}, 1, " "}
 	Device             = placeholder{i18n.G("device")}
 	Direction          = placeholder{i18n.G("direction")}
 	Directory          = placeholder{i18n.G("directory")}
 	Driver             = placeholder{i18n.G("driver")}
+	EndOfFlags         = hide{optional{verbatim{"--"}}, verbatim{"[flags] [--]"}}
 	Expiry             = placeholder{i18n.G("expiry")}
 	File               = placeholder{i18n.G("file")}
 	Filter             = placeholder{i18n.G("filter")}
@@ -893,10 +895,6 @@ func Flag(name string) Atom {
 func MakeRemote(atom Atom, optional bool) remote {
 	return remote{atom, nil, optional}
 }
-
-// Flags is an atom to be deleted in the future indicating to cobra that command-line flags should
-// be where this atom is put. It will be replaced with something more correct semantically.
-var Flags = verbatim{"flags"}.Optional()
 
 // Usage is the type of CLI usages.
 type Usage []Atom
