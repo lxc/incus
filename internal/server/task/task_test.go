@@ -14,7 +14,7 @@ import (
 // The given task is executed immediately by the scheduler.
 func TestTask_ExecuteImmediately(t *testing.T) {
 	f, wait := newFunc(t, 1)
-	defer startTask(t, f, task.Every(time.Second))()
+	defer startTask(t, f, task.Every(time.Second))() //nolint:revive
 	wait(100 * time.Millisecond)
 }
 
@@ -22,7 +22,7 @@ func TestTask_ExecuteImmediately(t *testing.T) {
 // elapsed.
 func TestTask_ExecutePeriodically(t *testing.T) {
 	f, wait := newFunc(t, 2)
-	defer startTask(t, f, task.Every(250*time.Millisecond))()
+	defer startTask(t, f, task.Every(250*time.Millisecond))() //nolint:revive
 	wait(100 * time.Millisecond)
 	wait(400 * time.Millisecond)
 }
@@ -43,7 +43,7 @@ func TestTask_Reset(t *testing.T) {
 // If the interval is zero, the task function is never run.
 func TestTask_ZeroInterval(t *testing.T) {
 	f, _ := newFunc(t, 0)
-	defer startTask(t, f, task.Every(0*time.Millisecond))()
+	defer startTask(t, f, task.Every(0*time.Millisecond))() //nolint:revive
 
 	// Sleep a little bit to prove that the task function does not get run.
 	time.Sleep(100 * time.Millisecond)
@@ -56,7 +56,7 @@ func TestTask_ScheduleError(t *testing.T) {
 	}
 
 	f, _ := newFunc(t, 0)
-	defer startTask(t, f, schedule)()
+	defer startTask(t, f, schedule)() //nolint:revive
 
 	// Sleep a little bit to prove that the task function does not get run.
 	time.Sleep(100 * time.Millisecond)
@@ -76,7 +76,7 @@ func TestTask_ScheduleTemporaryError(t *testing.T) {
 	}
 
 	f, wait := newFunc(t, 1)
-	defer startTask(t, f, schedule)()
+	defer startTask(t, f, schedule)() //nolint:revive
 
 	// The task gets executed since the schedule error is temporary and gets
 	// resolved.
@@ -90,7 +90,7 @@ func TestTask_SkipFirst(t *testing.T) {
 		i++
 	}
 
-	defer startTask(t, f, task.Every(250*time.Millisecond, task.SkipFirst))()
+	defer startTask(t, f, task.Every(250*time.Millisecond, task.SkipFirst))() //nolint:revive
 	time.Sleep(400 * time.Millisecond)
 	assert.Equal(t, 1, i) // The function got executed only once, not twice.
 }
