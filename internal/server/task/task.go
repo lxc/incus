@@ -80,7 +80,6 @@ func (t *Task) loop(ctx context.Context) {
 				if delay < 0 {
 					delay = immediately
 				}
-
 			} else {
 				// Don't execute the task function, and set the
 				// delay to run it immediately whenever the
