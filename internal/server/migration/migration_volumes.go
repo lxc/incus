@@ -107,11 +107,12 @@ func TypesToHeader(types ...Type) *migration.MigrationHeader {
 		}
 
 		for _, feature := range preferredType.Features {
-			if feature == "compress" {
+			switch feature {
+			case "compress":
 				features.Compress = &hasFeature
-			} else if feature == migration.ZFSFeatureMigrationHeader {
+			case migration.ZFSFeatureMigrationHeader:
 				features.MigrationHeader = &hasFeature
-			} else if feature == migration.ZFSFeatureZvolFilesystems {
+			case migration.ZFSFeatureZvolFilesystems:
 				features.HeaderZvols = &hasFeature
 			}
 		}
@@ -127,11 +128,12 @@ func TypesToHeader(types ...Type) *migration.MigrationHeader {
 		}
 
 		for _, feature := range preferredType.Features {
-			if feature == migration.BTRFSFeatureMigrationHeader {
+			switch feature {
+			case migration.BTRFSFeatureMigrationHeader:
 				features.MigrationHeader = &hasFeature
-			} else if feature == migration.BTRFSFeatureSubvolumes {
+			case migration.BTRFSFeatureSubvolumes:
 				features.HeaderSubvolumes = &hasFeature
-			} else if feature == migration.BTRFSFeatureSubvolumeUUIDs {
+			case migration.BTRFSFeatureSubvolumeUUIDs:
 				features.HeaderSubvolumeUuids = &hasFeature
 			}
 		}
@@ -153,13 +155,14 @@ func TypesToHeader(types ...Type) *migration.MigrationHeader {
 		}
 
 		for _, feature := range t.Features {
-			if feature == "xattrs" {
+			switch feature {
+			case "xattrs":
 				features.Xattrs = &hasFeature
-			} else if feature == "delete" {
+			case "delete":
 				features.Delete = &hasFeature
-			} else if feature == "compress" {
+			case "compress":
 				features.Compress = &hasFeature
-			} else if feature == "bidirectional" {
+			case "bidirectional":
 				features.Bidirectional = &hasFeature
 			}
 		}
@@ -193,11 +196,12 @@ func MatchTypes(offer *migration.MigrationHeader, fallbackType migration.Migrati
 
 			// We got a match, now extract the relevant offered features.
 			var offeredFeatures []string
-			if offerFSType == migration.MigrationFSType_ZFS {
+			switch offerFSType {
+			case migration.MigrationFSType_ZFS:
 				offeredFeatures = offer.GetZfsFeaturesSlice()
-			} else if offerFSType == migration.MigrationFSType_BTRFS {
+			case migration.MigrationFSType_BTRFS:
 				offeredFeatures = offer.GetBtrfsFeaturesSlice()
-			} else if offerFSType == migration.MigrationFSType_RSYNC {
+			case migration.MigrationFSType_RSYNC:
 				offeredFeatures = offer.GetRsyncFeaturesSlice()
 			}
 

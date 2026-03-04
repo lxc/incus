@@ -20,6 +20,7 @@ const (
 	toMigrateLive       = "To migrate the container, stop the container before migration or install CRIU"
 )
 
+// nolint:revive
 var (
 	ErrNoLiveMigrationSource = fmt.Errorf("%s CRIU isn't installed on the source server. %s on the source server", unableToLiveMigrate, toMigrateLive)
 	ErrNoLiveMigrationTarget = fmt.Errorf("%s CRIU isn't installed on the target server. %s on the target server", unableToLiveMigrate, toMigrateLive)
