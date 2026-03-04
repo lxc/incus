@@ -121,6 +121,32 @@ func (c compound) Remote() Atom {
 	return remote{c}
 }
 
+// hide represents an atom whose internal value is hidden.
+type hide struct {
+	atom        Atom
+	replacement Atom
+}
+
+// List makes the atom accept a list.
+func (h hide) List(minOccurrences int, separator ...string) Atom {
+	return makeList(h, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (h hide) Optional(chain ...Atom) Atom {
+	return makeOptional(h, chain)
+}
+
+// Render renders the atom's usage string.
+func (h hide) Render() string {
+	return h.replacement.Render()
+}
+
+// Remote prefixes the atom with a remote.
+func (h hide) Remote() Atom {
+	return remote{h}
+}
+
 // list represents a list of atoms of arbitrary length.
 type list struct {
 	atom           Atom
