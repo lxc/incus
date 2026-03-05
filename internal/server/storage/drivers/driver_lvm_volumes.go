@@ -936,6 +936,48 @@ func (d *lvm) ListVolumes() ([]Volume, error) {
 	return volList, nil
 }
 
+// ActivateTask allows running a function while the volume is active (but not mounted).
+func (d *lvm) ActivateTask(vol Volume, task func(devPath string, op *operations.Operation) error, op *operations.Operation) error {
+	// Prevent concurrent mounting actions.
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	// Setup a reverter.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Activate the volume.
+	activated, err := d.activateVolume(vol)
+	if err != nil {
+		return err
+	}
+
+	if !activated {
+		return errors.New("Volume is already active, can't run exclusive activation task")
+	}
+
+	// Get the device path.
+	volDevPath, err := d.lvmDevPath(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name))
+	if err != nil {
+		return err
+	}
+
+	// Run the task.
+	taskErr := task(volDevPath, op)
+
+	// Deactivate the volume.
+	_, err = d.deactivateVolume(vol)
+	if err != nil {
+		return err
+	}
+
+	return taskErr
+}
+
 // MountVolume mounts a volume and increments ref counter. Please call UnmountVolume() when done with the volume.
 func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 	unlock, err := vol.MountLock()

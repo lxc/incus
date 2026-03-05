@@ -75,6 +75,9 @@ type Driver interface {
 	GetVolumeDiskPath(vol Volume) (string, error)
 	ListVolumes() ([]Volume, error)
 
+	// ActivateTask is a low-level access function to get to the underlying storage.
+	ActivateTask(vol Volume, task func(devPath string, op *operations.Operation) error, op *operations.Operation) error
+
 	// MountVolume mounts a storage volume (if not mounted) and increments reference counter.
 	MountVolume(vol Volume, op *operations.Operation) error
 
