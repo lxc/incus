@@ -567,3 +567,8 @@ func (d *common) GetQcow2BackingFilePath(vol Volume) (string, error) {
 func (d *common) Qcow2DeletionCleanup(vol Volume, childName string) error {
 	return ErrNotSupported
 }
+
+// ActivateTask allows running a low-level task with the volume active.
+func (d *common) ActivateTask(vol Volume, task func(devPath string, op *operations.Operation) error, op *operations.Operation) error {
+	return ErrNotSupported
+}
