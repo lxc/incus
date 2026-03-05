@@ -141,11 +141,11 @@ test_config_profiles() {
     incus profile create two
     incus profile assign foo one,two
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "one two" ]
-    incus profile assign foo ""
+    incus profile assign foo --no-profiles
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "" ]
     incus profile apply foo one # backwards compat check with `incus profile apply`
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "one" ]
-    incus profile assign foo ""
+    incus profile assign foo --no-profiles
     incus profile add foo one
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "one" ]
     incus profile remove foo one
