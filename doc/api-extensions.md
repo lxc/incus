@@ -2987,3 +2987,7 @@ This is necessary because `lvmcluster` only allows restoring the latest snapshot
 ## `daemon_storage_logs`
 
 This adds `storage.logs_volume` alongside the existing `storage.backups_volume` and `storage.images_volume`.
+
+## `instances_debug_repair`
+
+This adds a new API at `POST /1.0/instances/NAME/debug/repair` to trigger low-level repair actions.
