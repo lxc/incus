@@ -1751,6 +1751,16 @@ definitions:
         title: InstanceConsolePost represents an instance console request.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
+    InstanceDebugRepairPost:
+        properties:
+            action:
+                description: The desired repair action.
+                example: rebuild-config-volume
+                type: string
+                x-go-name: Action
+        title: InstanceDebugRepairPost represents an instance repair request.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
     InstanceExecPost:
         properties:
             command:
@@ -9878,6 +9888,35 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get memory debug information of an instance
+            tags:
+                - instances
+    /1.0/instances/{name}/debug/repair:
+        get:
+            description: Runs an internal repair action on the instance.
+            operationId: instance_debug_repair_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: State
+                  in: body
+                  name: state
+                  schema:
+                    $ref: '#/definitions/InstanceDebugRepairPost'
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Trigger a repair action on the instance.
             tags:
                 - instances
     /1.0/instances/{name}/exec:
