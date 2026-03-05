@@ -39,11 +39,11 @@ test_systemd() {
     assert_systemd_credentials_value xxx yyy
 
     # Mutually exclusive credential and credential-binary keys
-    ! incus config set foo systemd.credential-binary.foo YmF6========= || false
+    ! incus config set foo systemd.credential-binary.foo=YmF6========= || false
     incus config unset foo systemd.credential.foo
 
     # Base64 credential with superfluous padding
-    incus config set foo systemd.credential-binary.foo YmF6=========
+    incus config set foo systemd.credential-binary.foo=YmF6=========
     assert_systemd_credentials_entries 2
     assert_systemd_credentials_value foo baz
     assert_systemd_credentials_value xxx yyy
