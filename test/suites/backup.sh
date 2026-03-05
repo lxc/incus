@@ -97,7 +97,7 @@ EOF
         # Recover container and custom volume that isn't mounted.
         incus init testimage c1
         incus storage volume create "${poolName}" vol1_test
-        incus storage volume attach "${poolName}" vol1_test c1 /mnt
+        incus storage volume attach "${poolName}" vol1_test c1 vol1_test /mnt
         incus start c1
         incus exec c1 --project test -- mount | grep /mnt
         echo "hello world" | incus exec c1 --project test -- tee /mnt/test.txt
@@ -714,7 +714,7 @@ test_backup_volume_export_with_project() {
     incus storage volume create "${custom_vol_pool}" testvol
 
     # Attach storage volume to the test container and start.
-    incus storage volume attach "${custom_vol_pool}" testvol c1 /mnt
+    incus storage volume attach "${custom_vol_pool}" testvol c1 testvol /mnt
     incus start c1
 
     # Create file on the custom volume.
@@ -810,8 +810,8 @@ test_backup_volume_export_with_project() {
     incus storage volume get "${custom_vol_pool}" testvol/test-snap1 user.foo | grep -Fx "test-snap1"
 
     incus storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol.tar.gz" testvol2
-    incus storage volume attach "${custom_vol_pool}" testvol c1 /mnt
-    incus storage volume attach "${custom_vol_pool}" testvol2 c1 /mnt2
+    incus storage volume attach "${custom_vol_pool}" testvol c1 testvol /mnt
+    incus storage volume attach "${custom_vol_pool}" testvol2 c1 testvol2 /mnt2
     incus start c1
     incus exec c1 --project "$project" -- stat /mnt/test
     incus exec c1 --project "$project" -- stat /mnt2/test
@@ -838,8 +838,8 @@ test_backup_volume_export_with_project() {
         incus storage volume get "${custom_vol_pool}" testvol/test-snap1 user.foo | grep -Fx "test-snap1"
 
         incus storage volume import "${custom_vol_pool}" "${INCUS_DIR}/testvol-optimized.tar.gz" testvol2
-        incus storage volume attach "${custom_vol_pool}" testvol c1 /mnt
-        incus storage volume attach "${custom_vol_pool}" testvol2 c1 /mnt2
+        incus storage volume attach "${custom_vol_pool}" testvol c1 testvol /mnt
+        incus storage volume attach "${custom_vol_pool}" testvol2 c1 testvol2 /mnt2
         incus start c1
         incus exec c1 --project "$project" -- stat /mnt/test
         incus exec c1 --project "$project" -- stat /mnt2/test

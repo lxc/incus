@@ -126,9 +126,9 @@ do_storage_driver_truenas() {
 
     [ "$(call_truenas_tool dataset list --no-headers -o incus:content_type "${truenas_dataset}/custom/default_vol2")" = "block" ]
 
-    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c1 /mnt
-    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c3 /mnt
-    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c21 /mnt
+    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c1 vol1 /mnt
+    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c3 vol1 /mnt
+    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c21 vol1 /mnt
 
     incus start c1
     incus start c3

@@ -521,7 +521,7 @@ migration() {
     incus_remote init testimage l1:c1
     incus_remote storage create l1:dir dir
     incus_remote storage volume create l1:dir vol1
-    incus_remote storage volume attach l1:dir vol1 c1 /mnt
+    incus_remote storage volume attach l1:dir vol1 c1 vol1 /mnt
     mkdir "$INCUS_DIR/testvol2"
     incus_remote config device add l1:c1 vol2 disk source="$INCUS_DIR/testvol2" path=/vol2
     incus_remote snapshot create l1:c1 # Take snapshot with disk devices still attached.

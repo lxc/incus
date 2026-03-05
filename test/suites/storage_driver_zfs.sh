@@ -304,9 +304,9 @@ do_storage_driver_zfs() {
     incus storage volume create incustest-"$(basename "${INCUS_DIR}")" vol3 zfs.block_mode=false
     [ "$(zfs get -H -o value type incustest-"$(basename "${INCUS_DIR}")/custom/default_vol3")" = "filesystem" ]
 
-    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c1 /mnt
-    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c3 /mnt
-    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c21 /mnt
+    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c1 vol1 /mnt
+    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c3 vol1 /mnt
+    incus storage volume attach incustest-"$(basename "${INCUS_DIR}")" vol1 c21 vol1 /mnt
 
     incus start c1
     incus start c3

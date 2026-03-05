@@ -32,7 +32,7 @@ test_storage_volume_import() {
 
     # cannot attach ISO storage volumes to containers
     incus init testimage c1
-    ! incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" c1 foo || false
+    ! incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" foo c1 || false
 
     # cannot change storage volume config
     ! incus storage volume set "incustest-$(basename "${INCUS_DIR}")" foo size=1GiB || false

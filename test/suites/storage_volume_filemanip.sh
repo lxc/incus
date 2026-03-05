@@ -11,7 +11,7 @@ test_storage_volume_filemanip() {
     incus launch testimage filemanip
     pool="incustest-$(basename "${INCUS_DIR}")"
     incus storage volume create "${pool}" vol1
-    incus storage volume attach "${pool}" vol1 filemanip /v1
+    incus storage volume attach "${pool}" vol1 filemanip vol1 /v1
 
     # missing files should return 404
     err=$(my_curl -o /dev/null -w "%{http_code}" -X GET "https://${INCUS_ADDR}/1.0/instances/filemanip/files?path=/tmp/foo")
