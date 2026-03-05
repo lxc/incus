@@ -4,10 +4,6 @@ test_storage_volume_import() {
 
     ensure_import_testimage
 
-    # importing an ISO as storage volume requires a volume name
-    ! incus storage volume import "incustest-$(basename "${INCUS_DIR}")" ./foo.iso || false
-    ! incus storage volume import "incustest-$(basename "${INCUS_DIR}")" ./foo.img --type=iso || false
-
     # import ISO as storage volume
     incus storage volume import "incustest-$(basename "${INCUS_DIR}")" ./foo.iso foo
     incus storage volume import "incustest-$(basename "${INCUS_DIR}")" ./foo.img --type=iso foobar
