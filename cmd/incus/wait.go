@@ -21,9 +21,11 @@ type cmdWait struct {
 	flagTimeOut  int
 }
 
+var cmdWaitUsage = u.Usage{u.Instance.Remote(), u.Placeholder(i18n.G("condition"))}
+
 func (c *cmdWait) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("wait", u.Instance.Remote(), u.Placeholder(i18n.G("condition")))
+	cmd.Use = cli.U("wait", cmdWaitUsage...)
 	cmd.Short = i18n.G("Wait for an instance to satisfy a condition")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Wait for an instance to satisfy a condition
@@ -56,26 +58,16 @@ Supported Conditions:
 
 // Run runs the actual command logic.
 func (c *cmdWait) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Handle remote.
-	remote, name, err := conf.ParseRemote(args[0])
+	parsed, err := cmdWaitUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	condition := parsed[1].String
 
-	inst, _, err := d.GetInstance(name)
+	inst, _, err := d.GetInstance(instanceName)
 	if err != nil {
 		return err
 	}
@@ -83,7 +75,7 @@ func (c *cmdWait) Run(cmd *cobra.Command, args []string) error {
 	start := time.Now()
 
 	for {
-		ok, err := c.checkCondition(d, inst, args[1])
+		ok, err := c.checkCondition(d, inst, condition)
 		if err != nil {
 			return err
 		}
@@ -93,7 +85,7 @@ func (c *cmdWait) Run(cmd *cobra.Command, args []string) error {
 		}
 
 		if c.flagTimeOut > 0 && time.Since(start) > time.Duration(c.flagTimeOut)*time.Second {
-			return fmt.Errorf("Timeout for instance %s for condition: %s", inst.Name, args[1])
+			return fmt.Errorf("Timeout for instance %s for condition: %s", formatRemote(c.global.conf, parsed[0]), condition)
 		}
 
 		time.Sleep(time.Duration(c.flagInterval) * time.Second)

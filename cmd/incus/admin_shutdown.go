@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 )
@@ -24,10 +25,12 @@ type cmdAdminShutdown struct {
 	flagTimeout int
 }
 
+var cmdAdminShutdownUsage = u.Usage{}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdAdminShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("shutdown")
+	cmd.Use = cli.U("shutdown", cmdAdminShutdownUsage...)
 	cmd.Short = i18n.G("Tell the daemon to shutdown all instances and exit")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Tell the daemon to shutdown all instances and exit
 
@@ -44,7 +47,12 @@ func (c *cmdAdminShutdown) Command() *cobra.Command {
 }
 
 // Run runs the actual command logic.
-func (c *cmdAdminShutdown) Run(_ *cobra.Command, _ []string) error {
+func (c *cmdAdminShutdown) Run(cmd *cobra.Command, args []string) error {
+	_, err := cmdAdminShutdownUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
+		return err
+	}
+
 	connArgs := &incus.ConnectionArgs{
 		SkipGetServer: true,
 	}

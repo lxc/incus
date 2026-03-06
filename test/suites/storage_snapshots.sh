@@ -28,7 +28,7 @@ test_storage_volume_snapshots() {
 
     incus storage volume create "${storage_pool}" "${storage_volume}"
     incus launch testimage c1 -s "${storage_pool}"
-    incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
+    incus storage volume attach "${storage_pool}" "${storage_volume}" c1 "${storage_volume}" /mnt
     # Create file on volume
     echo foobar > "${TEST_DIR}/testfile"
     incus file push "${TEST_DIR}/testfile" c1/mnt/testfile
@@ -41,28 +41,28 @@ test_storage_volume_snapshots() {
     # This will create a snapshot named 'snap0'
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
     incus storage volume snapshot list "${storage_pool}" "${storage_volume}" | grep -q "snap0"
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'name: snap0'
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 0001-01-01T00:00:00Z'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep 'name: snap0'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep 'expires_at: 0001-01-01T00:00:00Z'
 
     # edit volume snapshot description
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | sed 's/^description:.*/description: foo/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep -q 'description: foo'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | sed 's/^description:.*/description: foo/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep -q 'description: foo'
 
     # edit volume snapshot expiry date
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | sed 's/^expires_at:.*/expires_at: 2100-01-02T15:04:05Z/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | sed 's/^expires_at:.*/expires_at: 2100-01-02T15:04:05Z/' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
     # Depending on the timezone of the runner, some values will be different.
     # Both the year (2100) and the month (01) will be constant though.
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep -q '^expires_at: 2100-01'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep -q '^expires_at: 2100-01'
     # Reset/remove expiry date
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | sed '/^expires_at:/d' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep -q '^expires_at: 0001-01-01T00:00:00Z'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | sed '/^expires_at:/d' | incus storage volume edit "${storage_pool}" "${storage_volume}/snap0"
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep -q '^expires_at: 0001-01-01T00:00:00Z'
 
     incus storage volume set "${storage_pool}" "${storage_volume}" snapshots.expiry '1d'
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
-    ! incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap1" | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
+    ! incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap1 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}" --no-expiry
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap2" | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap2 | grep -q 'expires_at: 0001-01-01T00:00:00Z' || false
 
     incus storage volume snapshot rm "${storage_pool}" "${storage_volume}" "snap2"
     incus storage volume snapshot rm "${storage_pool}" "${storage_volume}" "snap1"
@@ -70,12 +70,12 @@ test_storage_volume_snapshots() {
     # Test snapshot renaming
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
     incus storage volume snapshot list "${storage_pool}" "${storage_volume}" | grep -q "snap1"
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap1" | grep 'name: snap1'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap1 | grep 'name: snap1'
     incus storage volume snapshot rename "${storage_pool}" "${storage_volume}" snap1 foo
     incus storage volume snapshot list "${storage_pool}" "${storage_volume}" | grep -q "foo"
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/foo" | grep 'name: foo'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" foo | grep 'name: foo'
 
-    incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
+    incus storage volume attach "${storage_pool}" "${storage_volume}" c1 "${storage_volume}" /mnt
     # Delete file on volume
     incus file delete c1/mnt/testfile
 
@@ -92,7 +92,7 @@ test_storage_volume_snapshots() {
     incus start c1
     incus storage volume detach "${storage_pool}" "${storage_volume}" c1
     incus storage volume snapshot restore "${storage_pool}" "${storage_volume}" foo
-    incus storage volume attach "${storage_pool}" "${storage_volume}" c1 /mnt
+    incus storage volume attach "${storage_pool}" "${storage_volume}" c1 "${storage_volume}" /mnt
 
     # Validate file
     incus exec c1 -- test -f /mnt/testfile
@@ -112,10 +112,10 @@ test_storage_volume_snapshots() {
     # Check snapshot pattern
     incus storage volume create "${storage_pool}" "vol1"
     incus storage volume snapshot create "${storage_pool}" "vol1"
-    incus storage volume snapshot show "${storage_pool}" "vol1/snap0"
+    incus storage volume snapshot show "${storage_pool}" "vol1" "snap0"
     incus storage volume set "${storage_pool}" "vol1" snapshots.pattern="test%d"
     incus storage volume snapshot create "${storage_pool}" "vol1"
-    incus storage volume snapshot show "${storage_pool}" "vol1/test0"
+    incus storage volume snapshot show "${storage_pool}" "vol1" "test0"
     incus storage volume delete "${storage_pool}" "vol1"
 
     # Check snapshot restore of type block volumes.
@@ -131,13 +131,13 @@ test_storage_volume_snapshots() {
     # Check snapshot copy (mode pull).
     incus launch testimage "c1"
     incus storage volume create "${storage_pool}" "vol1"
-    incus storage volume attach "${storage_pool}" "vol1" "c1" /mnt
+    incus storage volume attach "${storage_pool}" "vol1" "c1" "vol1" /mnt
     incus exec "c1" -- touch /mnt/foo
     incus delete -f "c1"
     incus storage volume snapshot create "${storage_pool}" "vol1" "snap0"
     incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode pull
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool}" "vol2"
@@ -145,7 +145,7 @@ test_storage_volume_snapshots() {
     # Check snapshot copy (mode pull, remote).
     incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode pull
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool}" "vol2"
@@ -153,7 +153,7 @@ test_storage_volume_snapshots() {
     # Check snapshot copy (mode push).
     incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode push
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool}" "vol2"
@@ -161,7 +161,7 @@ test_storage_volume_snapshots() {
     # Check snapshot copy (mode push, remote).
     incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode push
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool}" "vol2"
@@ -169,7 +169,7 @@ test_storage_volume_snapshots() {
     # Check snapshot copy (mode relay).
     incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool}/vol2" --mode relay
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool}" "vol2"
@@ -177,7 +177,7 @@ test_storage_volume_snapshots() {
     # Check snapshot copy (mode relay, remote).
     incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool}/vol2" --mode relay
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool}" "vol2"
@@ -186,7 +186,7 @@ test_storage_volume_snapshots() {
     incus storage create "${storage_pool2}" dir
     incus storage volume copy "${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool2}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool2}" "vol2"
@@ -196,13 +196,13 @@ test_storage_volume_snapshots() {
     incus storage create "${storage_pool2}" dir
     incus storage volume copy "${storage_pool}/vol1/snap0" "test:${storage_pool2}/vol2"
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool2}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool2}" "vol2"
     incus storage volume copy "test:${storage_pool}/vol1/snap0" "${storage_pool2}/vol2"
     incus launch testimage "c1"
-    incus storage volume attach "${storage_pool2}" "vol2" "c1" /mnt
+    incus storage volume attach "${storage_pool2}" "vol2" "c1" "vol2" /mnt
     incus exec "c1" -- test -f /mnt/foo
     incus delete -f "c1"
     incus storage volume delete "${storage_pool2}" "vol2"

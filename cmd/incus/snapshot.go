@@ -75,10 +75,12 @@ type cmdSnapshotCreate struct {
 	flagReuse    bool
 }
 
+var cmdSnapshotCreateUsage = u.Usage{u.Instance.Remote(), u.NewName(u.Snapshot).Optional()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("create", u.Instance.Remote(), u.NewName(u.Snapshot).Optional())
+	cmd.Use = cli.U("create", cmdSnapshotCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create instance snapshot")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -112,20 +114,22 @@ incus snapshot create u1 snap0 < config.yaml
 
 // Run runs the actual command logic.
 func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
-	var stdinData api.InstanceSnapshotPut
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 2)
-	if exit {
+	parsed, err := cmdSnapshotCreateUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	hasSnapName := !parsed[1].Skipped
+	snapName := parsed[1].String
 
 	if c.flagNoExpiry && c.flagExpiry != "" {
 		return errors.New(i18n.G("Can't use both --no-expiry and --expiry"))
 	}
 
 	// If stdin isn't a terminal, read text from it
+	var stdinData api.InstanceSnapshotPut
 	if !termios.IsTerminal(getStdinFd()) {
 		contents, err := io.ReadAll(os.Stdin)
 		if err != nil {
@@ -138,37 +142,10 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	var snapname string
-	if len(args) < 2 {
-		snapname = ""
-	} else {
-		snapname = args[1]
-	}
-
-	remote, name, err := conf.ParseRemote(args[0])
-	if err != nil {
-		return err
-	}
-
-	if instance.IsSnapshot(name) {
-		if snapname != "" {
-			return fmt.Errorf(i18n.G("Invalid instance name: %s"), name)
-		}
-
-		fields := strings.SplitN(name, instance.SnapshotDelimiter, 2)
-		name = fields[0]
-		snapname = fields[1]
-	}
-
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
-
-	if c.flagReuse && snapname != "" {
-		snap, _, _ := d.GetInstanceSnapshot(name, snapname)
+	if c.flagReuse && hasSnapName {
+		snap, _, _ := d.GetInstanceSnapshot(instanceName, snapName)
 		if snap != nil {
-			op, err := d.DeleteInstanceSnapshot(name, snapname)
+			op, err := d.DeleteInstanceSnapshot(instanceName, snapName)
 			if err != nil {
 				return err
 			}
@@ -181,7 +158,7 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	req := api.InstanceSnapshotsPost{
-		Name:     snapname,
+		Name:     snapName,
 		Stateful: c.flagStateful,
 	}
 
@@ -207,7 +184,7 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 		req.ExpiresAt = &stdinData.ExpiresAt
 	}
 
-	op, err := d.CreateInstanceSnapshot(name, req)
+	op, err := d.CreateInstanceSnapshot(instanceName, req)
 	if err != nil {
 		return err
 	}
@@ -223,10 +200,12 @@ type cmdSnapshotDelete struct {
 	flagInteractive bool
 }
 
+var cmdSnapshotDeleteUsage = u.Usage{u.Instance.Remote(), u.Snapshot}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("delete", u.Instance.Remote(), u.Snapshot)
+	cmd.Use = cli.U("delete", cmdSnapshotDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -249,27 +228,24 @@ func (c *cmdSnapshotDelete) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdSnapshotDelete) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdSnapshotDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	snapName := parsed[1].String
+
 	// Process with deletion.
 	if c.flagInteractive {
-		err := c.promptDelete(resources[0].name, args[1])
+		err := c.promptDelete(parsed[0], snapName)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = c.doDelete(resources[0].server, resources[0].name, args[1])
+	err = c.doDelete(d, instanceName, snapName)
 	if err != nil {
 		return err
 	}
@@ -277,9 +253,9 @@ func (c *cmdSnapshotDelete) Run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *cmdSnapshotDelete) promptDelete(instName string, name string) error {
+func (c *cmdSnapshotDelete) promptDelete(p *u.Parsed, name string) error {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf(i18n.G("Remove snapshot %s from %s (yes/no): "), name, instName)
+	fmt.Printf(i18n.G("Remove snapshot %s from %s (yes/no): "), name, formatRemote(c.global.conf, p))
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSuffix(input, "\n")
 
@@ -312,6 +288,8 @@ type cmdSnapshotList struct {
 	flagColumns string
 }
 
+var cmdSnapshotListUsage = u.Usage{u.Instance.Remote()}
+
 type snapshotColumn struct {
 	Name string
 	Data func(api.InstanceSnapshot) string
@@ -320,7 +298,7 @@ type snapshotColumn struct {
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list", u.Instance.Remote())
+	cmd.Use = cli.U("list", cmdSnapshotListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -426,23 +404,13 @@ func (c *cmdSnapshotList) statefulColumnData(snapshot api.InstanceSnapshot) stri
 
 // Run runs the actual command logic.
 func (c *cmdSnapshotList) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	remote, instanceName, err := conf.ParseRemote(args[0])
+	parsed, err := cmdSnapshotListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
 
 	snapshots, err := d.GetInstanceSnapshots(instanceName)
 	if err != nil {
@@ -479,10 +447,12 @@ type cmdSnapshotRename struct {
 	snapshot *cmdSnapshot
 }
 
+var cmdSnapshotRenameUsage = u.Usage{u.Instance.Remote(), u.Snapshot, u.NewName(u.Snapshot)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("rename", u.Instance.Remote(), u.Snapshot, u.NewName(u.Snapshot))
+	cmd.Use = cli.U("rename", cmdSnapshotRenameUsage...)
 	cmd.Short = i18n.G("Rename instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Rename instance snapshots`))
@@ -506,27 +476,18 @@ func (c *cmdSnapshotRename) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdSnapshotRename) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 3, 3)
-	if exit {
-		return err
-	}
-
-	// Check the remotes
-	remote, instanceName, err := conf.ParseRemote(args[0])
+	parsed, err := cmdSnapshotRenameUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	snapName := parsed[1].String
+	newSnapName := parsed[2].String
 
 	// Snapshot rename
-	op, err := d.RenameInstanceSnapshot(instanceName, args[1], api.InstanceSnapshotPost{Name: args[2]})
+	op, err := d.RenameInstanceSnapshot(instanceName, snapName, api.InstanceSnapshotPost{Name: newSnapName})
 	if err != nil {
 		return err
 	}
@@ -543,10 +504,12 @@ type cmdSnapshotRestore struct {
 	flagDiskOnly bool
 }
 
+var cmdSnapshotRestoreUsage = u.Usage{u.Instance.Remote(), u.Snapshot}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotRestore) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("restore", u.Instance.Remote(), u.Snapshot)
+	cmd.Use = cli.U("restore", cmdSnapshotRestoreUsage...)
 	cmd.Short = i18n.G("Restore instance snapshots")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Restore instance from snapshots
@@ -579,39 +542,23 @@ If --diskonly is passed, then only the disk will be restored.`))
 
 // Run runs the actual command logic.
 func (c *cmdSnapshotRestore) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Connect to the daemon.
-	remote, name, err := conf.ParseRemote(args[0])
+	parsed, err := cmdSnapshotRestoreUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
-
-	// Setup the snapshot restore
-	snapname := args[1]
-	if !instance.IsSnapshot(snapname) {
-		snapname = fmt.Sprintf("%s/%s", name, snapname)
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	snapName := parsed[1].String
 
 	req := api.InstancePut{
-		Restore:  snapname,
+		Restore:  instanceName + "/" + snapName,
 		Stateful: c.flagStateful,
 		DiskOnly: c.flagDiskOnly,
 	}
 
 	// Restore the snapshot
-	op, err := d.UpdateInstance(name, req, "")
+	op, err := d.UpdateInstance(instanceName, req, "")
 	if err != nil {
 		return err
 	}
@@ -625,10 +572,12 @@ type cmdSnapshotShow struct {
 	snapshot *cmdSnapshot
 }
 
+var cmdSnapshotShowUsage = u.Usage{u.Instance.Remote(), u.Snapshot}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdSnapshotShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("show", u.Instance.Remote(), u.Snapshot)
+	cmd.Use = cli.U("show", cmdSnapshotShowUsage...)
 	cmd.Short = i18n.G("Show instance snapshot configuration")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance snapshot configuration`))
@@ -652,22 +601,17 @@ func (c *cmdSnapshotShow) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdSnapshotShow) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdSnapshotShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	snapName := parsed[1].String
 
 	// Snapshot
-	snap, _, err := resource.server.GetInstanceSnapshot(resource.name, args[1])
+	snap, _, err := d.GetInstanceSnapshot(instanceName, snapName)
 	if err != nil {
 		return err
 	}

@@ -102,8 +102,8 @@ test_storage_local_volume_handling() {
         incus storage volume copy "${pool}/vol1" "${pool}/vol1copy"
 
         # Ensure the target snapshots are there
-        incus storage volume snapshot show "${pool}" vol1copy/snap0
-        incus storage volume snapshot show "${pool}" vol1copy/snap1
+        incus storage volume snapshot show "${pool}" vol1copy snap0
+        incus storage volume snapshot show "${pool}" vol1copy snap1
 
         # Check snapshot volume config was copied
         incus storage volume get "${pool}" vol1copy user.foo | grep -Fx "postsnap1"
@@ -115,8 +115,8 @@ test_storage_local_volume_handling() {
         incus storage volume copy "${pool}/vol1" "${pool}1/vol1"
 
         # Ensure the target snapshots are there
-        incus storage volume snapshot show "${pool}1" vol1/snap0
-        incus storage volume snapshot show "${pool}1" vol1/snap1
+        incus storage volume snapshot show "${pool}1" vol1 snap0
+        incus storage volume snapshot show "${pool}1" vol1 snap1
 
         # Check snapshot volume config was copied
         incus storage volume get "${pool}1" vol1 user.foo | grep -Fx "postsnap1"
@@ -127,8 +127,8 @@ test_storage_local_volume_handling() {
         incus storage volume copy --volume-only "${pool}/vol1" "${pool}1/vol2"
 
         # Ensure the target snapshots are not there
-        ! incus storage volume snapshot show "${pool}1" vol2/snap0 || false
-        ! incus storage volume snapshot show "${pool}1" vol2/snap1 || false
+        ! incus storage volume snapshot show "${pool}1" vol2 snap0 || false
+        ! incus storage volume snapshot show "${pool}1" vol2 snap1 || false
 
         # Check snapshot volume config was copied
         incus storage volume get "${pool}1" vol2 user.foo | grep -Fx "postsnap1"
@@ -177,7 +177,7 @@ test_storage_local_volume_handling() {
                     # Copy volume with snapshots
                     incus storage volume copy "${source_pool}/vol1" "${target_pool}/vol1"
                     # Ensure the target snapshot is there
-                    incus storage volume snapshot show "${target_pool}" vol1/snap0
+                    incus storage volume snapshot show "${target_pool}" vol1 snap0
                     # Copy volume only
                     incus storage volume copy --volume-only "${source_pool}/vol1" "${target_pool}/vol2"
                     # Copy snapshot to volume
@@ -212,7 +212,7 @@ test_storage_local_volume_handling() {
                     # create custom block volume with a snapshot
                     incus storage volume create "${source_pool}" vol2 --type=block size=4194304
                     incus storage volume snapshot create "${source_pool}" vol2
-                    incus storage volume snapshot show "${source_pool}" vol2/snap0 | grep -q 'content_type: block'
+                    incus storage volume snapshot show "${source_pool}" vol2 snap0 | grep -q 'content_type: block'
 
                     # restore snapshot
                     incus storage volume snapshot restore "${source_pool}" vol2 snap0
@@ -221,18 +221,18 @@ test_storage_local_volume_handling() {
                     # copy with snapshots
                     incus storage volume copy "${source_pool}/vol2" "${target_pool}/vol2"
                     incus storage volume show "${target_pool}" vol2 | grep -q 'content_type: block'
-                    incus storage volume snapshot show "${target_pool}" vol2/snap0 | grep -q 'content_type: block'
+                    incus storage volume snapshot show "${target_pool}" vol2 snap0 | grep -q 'content_type: block'
 
                     # copy without snapshots
                     incus storage volume copy "${source_pool}/vol2" "${target_pool}/vol3" --volume-only
                     incus storage volume show "${target_pool}" vol3 | grep -q 'content_type: block'
-                    ! incus storage volume snapshot show "${target_pool}" vol3/snap0 | grep -q 'content_type: block' || false
+                    ! incus storage volume snapshot show "${target_pool}" vol3 snap0 | grep -q 'content_type: block' || false
 
                     # move images
                     incus storage volume move "${source_pool}/vol2" "${target_pool}/vol4"
                     ! incus storage volume show "${source_pool}" vol2 | grep -q 'content_type: block' || false
                     incus storage volume show "${target_pool}" vol4 | grep -q 'content_type: block'
-                    incus storage volume snapshot show "${target_pool}" vol4/snap0 | grep -q 'content_type: block'
+                    incus storage volume snapshot show "${target_pool}" vol4 snap0 | grep -q 'content_type: block'
 
                     # check refreshing volumes
 

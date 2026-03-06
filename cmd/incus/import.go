@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -23,10 +22,12 @@ type cmdImport struct {
 	flagDevice  []string
 }
 
+var cmdImportUsage = u.Usage{u.RemoteColonOpt, u.BackupFile, u.NewName(u.Instance).Optional()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("import", u.RemoteColonOpt, u.BackupFile, u.NewName(u.Instance).Optional())
+	cmd.Use = cli.U("import", cmdImportUsage...)
 	cmd.Short = i18n.G("Import instance backups")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Import backups of instances including their snapshots.`))
@@ -44,46 +45,21 @@ func (c *cmdImport) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 3)
-	if exit {
-		return err
-	}
-
-	srcFilePosition := 0
-
-	// Parse remote (identify 1st argument is remote by looking for a colon at the end).
-	remote := ""
-	if len(args) > 1 && strings.HasSuffix(args[0], ":") {
-		remote = args[0]
-		srcFilePosition = 1
-	}
-
-	// Parse source file (this could be 1st or 2nd argument depending on whether a remote is specified first).
-	srcFile := ""
-	if len(args) >= srcFilePosition+1 {
-		srcFile = args[srcFilePosition]
-	}
-
-	// Parse instance name.
-	instanceName := ""
-	if len(args) >= srcFilePosition+2 {
-		instanceName = args[srcFilePosition+1]
-	}
-
-	resources, err := c.global.parseServers(remote)
+	parsed, err := cmdImportUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	d := parsed[0].RemoteServer
+	backupFile := parsed[1].String
+	instanceName := parsed[2].String
 
 	var file *os.File
-	if srcFile == "-" {
+	if backupFile == "-" {
 		file = os.Stdin
 		c.global.flagQuiet = true
 	} else {
-		file, err = os.Open(srcFile)
+		file, err = os.Open(backupFile)
 		if err != nil {
 			return err
 		}
@@ -117,7 +93,7 @@ func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
 		Devices:  c.flagDevice,
 	}
 
-	op, err := resource.server.CreateInstanceFromBackup(createArgs)
+	op, err := d.CreateInstanceFromBackup(createArgs)
 	if err != nil {
 		return err
 	}

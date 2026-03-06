@@ -58,10 +58,12 @@ type cmdOperationDelete struct {
 	operation *cmdOperation
 }
 
+var cmdOperationDeleteUsage = u.Usage{u.Operation.Remote().List(1)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperationDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("delete", u.Operation.Remote().List(1))
+	cmd.Use = cli.U("delete", cmdOperationDeleteUsage...)
 	cmd.Aliases = []string{"cancel", "rm", "remove"}
 	cmd.Short = i18n.G("Delete background operations (will attempt to cancel)")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -74,32 +76,31 @@ func (c *cmdOperationDelete) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdOperationDelete) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, -1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args...)
+	parsed, err := cmdOperationDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	for _, resource := range resources {
-		if resource.name == "" {
-			return errors.New(i18n.G("Missing operation name"))
-		}
+	var errs []error
+
+	for _, p := range parsed[0].List {
+		d := p.RemoteServer
+		operationName := p.RemoteObject.String
 
 		// Delete the operation
-		err = resource.server.DeleteOperation(resource.name)
+		err = d.DeleteOperation(operationName)
 		if err != nil {
-			return err
+			errs = append(errs, err)
+			continue
 		}
 
 		if !c.global.flagQuiet {
-			fmt.Printf(i18n.G("Operation %s deleted")+"\n", resource.name)
+			fmt.Printf(i18n.G("Operation %s deleted")+"\n", formatRemote(c.global.conf, p))
 		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	return nil
@@ -115,10 +116,12 @@ type cmdOperationList struct {
 	flagAllProjects bool
 }
 
+var cmdOperationListUsage = u.Usage{u.RemoteColonOpt}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperationList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list", u.RemoteColonOpt)
+	cmd.Use = cli.U("list", cmdOperationListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List background operations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -230,34 +233,19 @@ func (c *cmdOperationList) locationColumnData(op api.Operation) string {
 
 // Run runs the actual command logic.
 func (c *cmdOperationList) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	remote := ""
-	if len(args) == 1 {
-		remote = args[0]
-	}
-
-	resources, err := c.global.parseServers(remote)
+	parsed, err := cmdOperationListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-	if resource.name != "" {
-		return errors.New(i18n.G("Filtering isn't supported yet"))
-	}
+	d := parsed[0].RemoteServer
 
 	// Get operations
 	var operations []api.Operation
 	if c.flagAllProjects {
-		operations, err = resource.server.GetOperationsAllProjects()
+		operations, err = d.GetOperationsAllProjects()
 	} else {
-		operations, err = resource.server.GetOperations()
+		operations, err = d.GetOperations()
 	}
 
 	if err != nil {
@@ -265,7 +253,7 @@ func (c *cmdOperationList) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Parse column flags.
-	columns, err := c.parseColumns(resource.server.IsClustered())
+	columns, err := c.parseColumns(d.IsClustered())
 	if err != nil {
 		return err
 	}
@@ -297,10 +285,12 @@ type cmdOperationShow struct {
 	operation *cmdOperation
 }
 
+var cmdOperationShowUsage = u.Usage{u.Operation.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdOperationShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("show", u.Operation.Remote())
+	cmd.Use = cli.U("show", cmdOperationShowUsage...)
 	cmd.Short = i18n.G("Show details on a background operation")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show details on a background operation`))
@@ -315,22 +305,16 @@ func (c *cmdOperationShow) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdOperationShow) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdOperationShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	d := parsed[0].RemoteServer
+	operationName := parsed[0].RemoteObject.String
 
 	// Get the operation
-	op, _, err := resource.server.GetOperation(resource.name)
+	op, _, err := d.GetOperation(operationName)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -50,10 +49,12 @@ type cmdConfigMetadataEdit struct {
 	configMetadata *cmdConfigMetadata
 }
 
+var cmdConfigMetadataEditUsage = u.Usage{u.Instance.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadataEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("edit", u.Instance.Remote())
+	cmd.Use = cli.U("edit", cmdConfigMetadataEditUsage...)
 	cmd.Short = i18n.G("Edit instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit instance metadata files`))
@@ -97,23 +98,13 @@ func (c *cmdConfigMetadataEdit) helpTemplate() string {
 
 // Run runs the actual command logic.
 func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigMetadataEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
 
 	// Edit the metadata
 	if !termios.IsTerminal(getStdinFd()) {
@@ -128,10 +119,10 @@ func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		return resource.server.UpdateInstanceMetadata(resource.name, metadata, "")
+		return d.UpdateInstanceMetadata(instanceName, metadata, "")
 	}
 
-	metadata, etag, err := resource.server.GetInstanceMetadata(resource.name)
+	metadata, etag, err := d.GetInstanceMetadata(instanceName)
 	if err != nil {
 		return err
 	}
@@ -151,7 +142,7 @@ func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
 		metadata := api.ImageMetadata{}
 		err = yaml.Unmarshal(content, &metadata)
 		if err == nil {
-			err = resource.server.UpdateInstanceMetadata(resource.name, metadata, etag)
+			err = d.UpdateInstanceMetadata(instanceName, metadata, etag)
 		}
 
 		// Respawn the editor
@@ -185,10 +176,12 @@ type cmdConfigMetadataShow struct {
 	configMetadata *cmdConfigMetadata
 }
 
+var cmdConfigMetadataShowUsage = u.Usage{u.Instance.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigMetadataShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("show", u.Instance.Remote())
+	cmd.Use = cli.U("show", cmdConfigMetadataShowUsage...)
 	cmd.Short = i18n.G("Show instance metadata files")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance metadata files`))
@@ -208,26 +201,16 @@ func (c *cmdConfigMetadataShow) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigMetadataShow) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigMetadataShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
 
 	// Show the instance metadata
-	metadata, _, err := resource.server.GetInstanceMetadata(resource.name)
+	metadata, _, err := d.GetInstanceMetadata(instanceName)
 	if err != nil {
 		return err
 	}

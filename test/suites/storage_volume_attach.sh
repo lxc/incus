@@ -46,7 +46,7 @@ test_storage_volume_attach() {
     incus launch testimage c2
 
     # Attach to a single privileged container
-    incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c1 testvolume
+    incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c1 testvolume testvolume
     PATH_TO_CHECK="${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")/custom/default_testvolume"
     [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "0:0" ]
 
@@ -77,7 +77,7 @@ test_storage_volume_attach() {
     ISOLATED_GID_BASE="$(incus exec c1 -- cat /proc/self/gid_map | awk '{print $2}')"
     [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "${ISOLATED_UID_BASE}:${ISOLATED_GID_BASE}" ]
 
-    ! incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume || false
+    ! incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume testvolume || false
 
     # give container standard mapping
     incus config set c1 security.idmap.isolated false
@@ -88,7 +88,7 @@ test_storage_volume_attach() {
     [ "$(stat -c %u:%g "${PATH_TO_CHECK}")" = "${UID_BASE}:${GID_BASE}" ]
 
     # attach second container
-    incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume
+    incus storage volume attach "incustest-$(basename "${INCUS_DIR}")" testvolume c2 testvolume testvolume
 
     # check that setting perms on the root of the custom volume persists after a reboot.
     incus exec c2 -- stat -c '%a' /testvolume | grep 711

@@ -141,11 +141,11 @@ test_config_profiles() {
     incus profile create two
     incus profile assign foo one,two
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "one two" ]
-    incus profile assign foo ""
+    incus profile assign foo --no-profiles
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "" ]
     incus profile apply foo one # backwards compat check with `incus profile apply`
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "one" ]
-    incus profile assign foo ""
+    incus profile assign foo --no-profiles
     incus profile add foo one
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "one" ]
     incus profile remove foo one
@@ -346,9 +346,9 @@ test_property() {
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
 
     incus storage volume set "${storage_pool}" "${storage_volume}"/snap0 expires_at="2024-03-23T17:38:37.753398689-04:00" --property
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 2024-03-23T17:38:37.753398689-04:00'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep 'expires_at: 2024-03-23T17:38:37.753398689-04:00'
     incus storage volume unset "${storage_pool}" "${storage_volume}"/snap0 expires_at --property
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}/snap0" | grep 'expires_at: 0001-01-01T00:00:00Z'
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep 'expires_at: 0001-01-01T00:00:00Z'
 
     incus delete -f c1
     incus storage volume delete "${storage_pool}" "${storage_volume}"
@@ -369,10 +369,10 @@ test_config_edit_container_snapshot_pool_config() {
         incus storage volume edit "$storage_pool" container/c1
     incus storage volume show "$storage_pool" container/c1 | grep -q 'description: bar'
     # edit the container snapshot volume name
-    incus storage volume snapshot show "$storage_pool" container/c1/s1 |
+    incus storage volume snapshot show "$storage_pool" container/c1 s1 |
         sed 's/^description:.*/description: baz/' |
         incus storage volume edit "$storage_pool" container/c1/s1
-    incus storage volume snapshot show "$storage_pool" container/c1/s1 | grep -q 'description: baz'
+    incus storage volume snapshot show "$storage_pool" container/c1 s1 | grep -q 'description: baz'
     incus delete c1
 }
 

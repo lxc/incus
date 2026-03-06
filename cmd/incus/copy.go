@@ -13,7 +13,6 @@ import (
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
-	config "github.com/lxc/incus/v6/shared/cliconfig"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
@@ -36,10 +35,12 @@ type cmdCopy struct {
 	flagAllowInconsistent   bool
 }
 
+var cmdCopyUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Remote(), u.NewName(u.Instance).Optional().Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdCopy) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("copy", u.MakePath(u.Instance, u.Snapshot.Optional()).Remote(), u.NewName(u.Instance).Optional().Remote())
+	cmd.Use = cli.U("copy", cmdCopyUsage...)
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy instances within or in between servers")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -84,23 +85,24 @@ The pull transfer mode is the default as it is compatible with all server versio
 	return cmd
 }
 
-func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destResource string, keepVolatile bool, ephemeral int, stateful bool, instanceOnly bool, mode string, pool string, move bool) error {
-	// Parse the source
-	sourceRemote, sourceName, err := conf.ParseRemote(sourceResource)
-	if err != nil {
-		return err
+// copyOrMove runs the post-parsing command logic.
+func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, keepVolatile bool, ephemeral int, stateful bool, instanceOnly bool, mode string, pool string, move bool) error {
+	srcServer := src.RemoteServer
+	srcInstanceName := src.RemoteObject.String
+
+	// This function can be called from both the `copy` and `move` commands. As their first arguments
+	// have a different grammar, additional care is taken here to normalize them.
+	srcIsSnapshot := false
+	srcSnapName := ""
+	if cmd.Name() == "copy" {
+		srcInstanceName = src.RemoteObject.List[0].String
+		srcIsSnapshot = !src.RemoteObject.List[1].Skipped
+		srcSnapName = src.RemoteObject.List[1].String
 	}
 
-	// Parse the destination
-	destRemote, destName, err := conf.ParseRemote(destResource)
-	if err != nil {
-		return err
-	}
-
-	// Make sure we have an instance or snapshot name
-	if sourceName == "" {
-		return errors.New(i18n.G("You must specify a source instance name"))
-	}
+	dstServer := dst.RemoteServer
+	hasDstInstance := !dst.RemoteObject.Skipped
+	dstInstanceName := dst.RemoteObject.String
 
 	// Don't allow refreshing without profiles.
 	if c.flagRefresh && c.flagNoProfiles {
@@ -108,43 +110,22 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 	}
 
 	// If the instance is being copied to a different remote and no destination name is
-	// specified, use the source name with snapshot suffix trimmed (in case a new instance
-	// is being created from a snapshot).
-	if destName == "" && destResource != "" && c.flagTarget == "" {
-		destName = strings.SplitN(sourceName, instance.SnapshotDelimiter, 2)[0]
-	}
-
-	// Ensure that a destination name is provided.
-	if destName == "" {
-		return errors.New(i18n.G("You must specify a destination instance name"))
-	}
-
-	// Connect to the source host
-	source, err := conf.GetInstanceServer(sourceRemote)
-	if err != nil {
-		return err
-	}
-
-	// Connect to the destination host
-	var dest incus.InstanceServer
-	if sourceRemote == destRemote {
-		// Source and destination are the same
-		dest = source
-	} else {
-		// Destination is different, connect to it
-		dest, err = conf.GetInstanceServer(destRemote)
-		if err != nil {
-			return err
+	// specified, use the source name.
+	if !hasDstInstance {
+		if srcServer == dstServer && c.flagTarget == "" {
+			return errors.New(i18n.G("You must specify a destination instance name"))
 		}
+
+		dstInstanceName = srcInstanceName
 	}
 
 	// Project copies
 	if c.flagTargetProject != "" {
-		dest = dest.UseProject(c.flagTargetProject)
+		dstServer = dstServer.UseProject(c.flagTargetProject)
 	}
 
 	// Confirm that --target is only used with a cluster
-	if c.flagTarget != "" && !dest.IsClustered() {
+	if c.flagTarget != "" && !dstServer.IsClustered() {
 		return errors.New(i18n.G("To use --target, the destination remote must be a cluster"))
 	}
 
@@ -168,14 +149,14 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 	var writable api.InstancePut
 	var start bool
 
-	if instance.IsSnapshot(sourceName) {
+	if srcIsSnapshot {
 		if instanceOnly {
 			return errors.New(i18n.G("--instance-only can't be passed when the source is a snapshot"))
 		}
 
 		// Prepare the instance creation request
 		args := incus.InstanceSnapshotCopyArgs{
-			Name: destName,
+			Name: dstInstanceName,
 			Mode: mode,
 			Live: stateful,
 		}
@@ -185,8 +166,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		// Copy of a snapshot into a new instance
-		srcFields := strings.SplitN(sourceName, instance.SnapshotDelimiter, 2)
-		entry, _, err := source.GetInstanceSnapshot(srcFields[0], srcFields[1])
+		entry, _, err := srcServer.GetInstanceSnapshot(srcInstanceName, srcSnapName)
 		if err != nil {
 			return err
 		}
@@ -252,17 +232,17 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 
 		// Do the actual copy
 		if c.flagTarget != "" {
-			dest = dest.UseTarget(c.flagTarget)
+			dstServer = dstServer.UseTarget(c.flagTarget)
 		}
 
-		op, err = dest.CopyInstanceSnapshot(source, srcFields[0], *entry, &args)
+		op, err = dstServer.CopyInstanceSnapshot(srcServer, srcInstanceName, *entry, &args)
 		if err != nil {
 			return err
 		}
 	} else {
 		// Prepare the instance creation request
 		args := incus.InstanceCopyArgs{
-			Name:                destName,
+			Name:                dstInstanceName,
 			Live:                stateful,
 			InstanceOnly:        instanceOnly,
 			Mode:                mode,
@@ -272,7 +252,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 		}
 
 		// Copy of an instance into a new instance
-		entry, _, err := source.GetInstance(sourceName)
+		entry, _, err := srcServer.GetInstance(srcInstanceName)
 		if err != nil {
 			return err
 		}
@@ -344,10 +324,10 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 
 		// Do the actual copy
 		if c.flagTarget != "" {
-			dest = dest.UseTarget(c.flagTarget)
+			dstServer = dstServer.UseTarget(c.flagTarget)
 		}
 
-		op, err = dest.CopyInstance(source, *entry, &args)
+		op, err = dstServer.CopyInstance(srcServer, *entry, &args)
 		if err != nil {
 			return err
 		}
@@ -377,9 +357,9 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 	progress.Done("")
 
 	if c.flagRefresh {
-		inst, etag, err := dest.GetInstance(destName)
+		inst, etag, err := dstServer.GetInstance(dstInstanceName)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Failed to refresh target instance '%s': %v"), destName, err)
+			return fmt.Errorf(i18n.G("Failed to refresh target instance '%s': %v"), dstInstanceName, err)
 		}
 
 		// Ensure we don't change the target's volatile.idmap.next value.
@@ -394,7 +374,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 			writable.Devices[destRootDiskDeviceKey]["pool"] = destRootDiskDevice["pool"]
 		}
 
-		op, err := dest.UpdateInstance(destName, writable, etag)
+		op, err := dstServer.UpdateInstance(dstInstanceName, writable, etag)
 		if err != nil {
 			return err
 		}
@@ -427,7 +407,7 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 			Action: string(instance.Start),
 		}
 
-		op, err := dest.UpdateInstanceState(destName, req, "")
+		op, err := dstServer.UpdateInstanceState(dstInstanceName, req, "")
 		if err != nil {
 			return err
 		}
@@ -443,11 +423,8 @@ func (c *cmdCopy) copyInstance(conf *config.Config, sourceResource string, destR
 
 // Run runs the actual command logic.
 func (c *cmdCopy) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 2)
-	if exit {
+	parsed, err := cmdCopyUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
 
@@ -467,11 +444,5 @@ func (c *cmdCopy) Run(cmd *cobra.Command, args []string) error {
 	keepVolatile := c.flagRefresh
 	instanceOnly := c.flagInstanceOnly
 
-	// If target name is not specified, one will be chosen by the server
-	if len(args) < 2 {
-		return c.copyInstance(conf, args[0], "", keepVolatile, ephem, stateful, instanceOnly, mode, c.flagStorage, false)
-	}
-
-	// Normal copy with a pre-determined name
-	return c.copyInstance(conf, args[0], args[1], keepVolatile, ephem, stateful, instanceOnly, mode, c.flagStorage, false)
+	return c.copyOrMove(cmd, parsed[0], parsed[1], keepVolatile, ephem, stateful, instanceOnly, mode, c.flagStorage, false)
 }

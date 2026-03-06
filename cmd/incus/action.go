@@ -6,9 +6,11 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 
+	incus "github.com/lxc/incus/v6/client"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -22,13 +24,15 @@ type cmdStart struct {
 	action *cmdAction
 }
 
+var cmdActionUsage = u.Usage{u.Either(u.Instance.Remote().List(1), u.Sequence(u.Flag("all"), u.RemoteColon.List(0)))}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdStart) Command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
 
 	cmd := c.action.Command("start")
-	cmd.Use = cli.U("start", u.Instance.Remote().List(1))
+	cmd.Use = cli.U("start", cmdActionUsage...)
 	cmd.Short = i18n.G("Start instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Start instances`))
@@ -52,7 +56,7 @@ func (c *cmdPause) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("pause")
-	cmd.Use = cli.U("pause", u.Instance.Remote().List(1))
+	cmd.Use = cli.U("pause", cmdActionUsage...)
 	cmd.Short = i18n.G("Pause instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Pause instances`))
@@ -77,7 +81,7 @@ func (c *cmdResume) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("resume")
-	cmd.Use = cli.U("resume", u.Instance.Remote().List(1))
+	cmd.Use = cli.U("resume", cmdActionUsage...)
 	cmd.Short = i18n.G("Resume instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Resume instances`))
@@ -102,7 +106,7 @@ func (c *cmdRestart) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("restart")
-	cmd.Use = cli.U("restart", u.Instance.Remote().List(1))
+	cmd.Use = cli.U("restart", cmdActionUsage...)
 	cmd.Short = i18n.G("Restart instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Restart instances`))
@@ -126,7 +130,7 @@ func (c *cmdStop) Command() *cobra.Command {
 	c.action = &cmdAction
 
 	cmd := c.action.Command("stop")
-	cmd.Use = cli.U("stop", u.Instance.Remote().List(1))
+	cmd.Use = cli.U("stop", cmdActionUsage...)
 	cmd.Short = i18n.G("Stop instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Stop instances`))
@@ -178,18 +182,7 @@ func (c *cmdAction) Command(action string) *cobra.Command {
 
 // doActionAll is a method of the cmdAction structure. It performs a specified action on all instances of a remote resource.
 // It ensures that flags and parameters are appropriately set, and handles any errors that may occur during the process.
-func (c *cmdAction) doActionAll(action string, resource remoteResource) error {
-	if resource.name != "" {
-		// both --all and instance name given.
-		return errors.New(i18n.G("Both --all and instance name given"))
-	}
-
-	remote := resource.remote
-	d, err := c.global.conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
-
+func (c *cmdAction) doActionAll(action string, d incus.InstanceServer) error {
 	// Pause is called freeze, resume is called unfreeze.
 	switch action {
 	case "pause":
@@ -239,7 +232,10 @@ func (c *cmdAction) doActionAll(action string, resource remoteResource) error {
 
 // doAction is a method of the cmdAction structure. It carries out a specified action on an instance,
 // using a given config and instance name. It manages state changes, flag checks, error handling and console attachment.
-func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string) error {
+func (c *cmdAction) doAction(action string, conf *config.Config, p *u.Parsed) error {
+	d := p.RemoteServer
+	instanceName := p.RemoteObject.String
+
 	state := false
 
 	// Pause is called freeze
@@ -261,22 +257,8 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		return errors.New(i18n.G("--console can't be used while forcing instance shutdown"))
 	}
 
-	remote, name, err := conf.ParseRemote(nameArg)
-	if err != nil {
-		return err
-	}
-
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
-
-	if name == "" {
-		return fmt.Errorf(i18n.G("Must supply instance name for: ")+"\"%s\"", nameArg)
-	}
-
 	if action == "start" {
-		current, _, err := d.GetInstance(name)
+		current, _, err := d.GetInstance(instanceName)
 		if err != nil {
 			return err
 		}
@@ -299,7 +281,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		Stateful: state,
 	}
 
-	op, err := d.UpdateInstanceState(name, req, "")
+	op, err := d.UpdateInstanceState(instanceName, req, "")
 	if err != nil {
 		return err
 	}
@@ -309,7 +291,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		console := cmdConsole{}
 		console.global = c.global
 		console.flagType = c.flagConsole
-		return console.console(d, name)
+		return console.console(d, instanceName)
 	}
 
 	progress := cli.ProgressRenderer{
@@ -331,7 +313,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 			projectArg = " --project " + conf.ProjectOverride
 		}
 
-		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s%s` for more info"), err, nameArg, projectArg)
+		return fmt.Errorf("%s\n"+i18n.G("Try `incus info --show-log %s%s` for more info"), err, formatRemote(conf, p), projectArg)
 	}
 
 	progress.Done("")
@@ -342,10 +324,10 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 		console.global = c.global
 		console.flagType = c.flagConsole
 
-		consoleErr := console.console(d, name)
+		consoleErr := console.console(d, instanceName)
 		if consoleErr != nil {
 			// Check if still running.
-			state, _, err := d.GetInstanceState(name)
+			state, _, err := d.GetInstanceState(instanceName)
 			if err != nil {
 				return err
 			}
@@ -355,7 +337,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 			}
 
 			console.flagShowLog = true
-			return console.console(d, name)
+			return console.console(d, instanceName)
 		}
 	}
 
@@ -365,63 +347,75 @@ func (c *cmdAction) doAction(action string, conf *config.Config, nameArg string)
 // Run is a method of the cmdAction structure that implements the execution logic for the given Cobra command.
 // It handles actions on instances (single or all) and manages error handling, console flag restrictions, and batch operations.
 func (c *cmdAction) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
+	parsed, err := cmdActionUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
+		return err
+	}
 
-	var names []string
+	action := cmd.Name()
+
+	type batchEntry struct {
+		parsed *u.Parsed
+		err    error
+	}
+
+	var batch []batchEntry
 	if c.flagAll {
-		// If no server passed, use current default.
-		if len(args) == 0 {
-			args = []string{fmt.Sprintf("%s:", conf.DefaultRemote)}
+		if parsed[0].BranchID != 1 {
+			return errors.New(i18n.G("Both --all and instance name given"))
 		}
 
-		// Get all the servers.
-		resources, err := c.global.parseServers(args...)
-		if err != nil {
-			return err
-		}
+		parsedRemotes := parsed[0].List[1].List
 
-		for _, resource := range resources {
-			// We don't allow instance names with --all.
-			if resource.name != "" {
-				return errors.New(i18n.G("Both --all and instance name given"))
+		// If no remote passed, use current default.
+		if len(parsedRemotes) == 0 {
+			p, err := u.ParseDefault(u.RemoteColonOpt, c.global.conf)
+			if err != nil {
+				return err
 			}
 
+			parsedRemotes = append(parsedRemotes, p)
+		}
+
+		for _, p := range parsedRemotes {
+			d := p.RemoteServer
+
 			// See if we can use the bulk API.
-			if resource.server.HasExtension("instance_bulk_state_change") {
-				err = c.doActionAll(cmd.Name(), resource)
+			if d.HasExtension("instance_bulk_state_change") {
+				err = c.doActionAll(action, d)
 				if err != nil {
-					return fmt.Errorf("%s: %w", resource.remote, err)
+					return fmt.Errorf("%s: %w", p.RemoteName, err)
 				}
 
 				continue
 			}
 
-			ctslist, err := resource.server.GetInstances(api.InstanceTypeAny)
+			instances, err := d.GetInstances(api.InstanceTypeAny)
 			if err != nil {
 				return err
 			}
 
-			for _, ct := range ctslist {
-				switch cmd.Name() {
+			for _, instance := range instances {
+				switch action {
 				case "start":
-					if ct.StatusCode == api.Running {
+					if instance.StatusCode == api.Running {
 						continue
 					}
 
 				case "stop":
-					if ct.StatusCode == api.Stopped {
+					if instance.StatusCode == api.Stopped {
 						continue
 					}
 				}
-				names = append(names, fmt.Sprintf("%s:%s", resource.remote, ct.Name))
+
+				reparsed := *p
+				reparsed.RemoteObject = u.ParseString(instance.Name)
+				batch = append(batch, batchEntry{&reparsed, nil})
 			}
 		}
 	} else {
-		names = args
-
-		if len(args) == 0 {
-			_ = cmd.Usage()
-			return nil
+		for _, p := range parsed[0].List {
+			batch = append(batch, batchEntry{p, nil})
 		}
 	}
 
@@ -430,37 +424,46 @@ func (c *cmdAction) Run(cmd *cobra.Command, args []string) error {
 			return errors.New(i18n.G("--console can't be used with --all"))
 		}
 
-		if len(names) != 1 {
+		if len(batch) > 1 {
 			return errors.New(i18n.G("--console only works with a single instance"))
 		}
 	}
 
 	// Run the action for every listed instance
-	results := runBatch(names, func(name string) error { return c.doAction(cmd.Name(), conf, name) })
+	var wg sync.WaitGroup
+	wg.Add(len(batch))
+	for i := range batch {
+		go func(entry *batchEntry) {
+			defer wg.Done()
+			entry.err = c.doAction(action, c.global.conf, entry.parsed)
+		}(&batch[i])
+	}
+
+	wg.Wait()
 
 	// Single instance is easy
-	if len(results) == 1 {
-		return results[0].err
+	if len(batch) == 1 {
+		return batch[0].err
 	}
 
 	// Do fancier rendering for batches
 	success := true
 
-	for _, result := range results {
-		if result.err == nil {
+	for _, entry := range batch {
+		if entry.err == nil {
 			continue
 		}
 
 		success = false
-		msg := fmt.Sprintf(i18n.G("error: %v"), result.err)
+		msg := fmt.Sprintf(i18n.G("error: %v"), entry.err)
 		for _, line := range strings.Split(msg, "\n") {
-			fmt.Fprintf(os.Stderr, "%s: %s\n", result.name, line)
+			fmt.Fprintf(os.Stderr, "%s: %s\n", formatRemote(c.global.conf, entry.parsed), line)
 		}
 	}
 
 	if !success {
 		fmt.Fprintln(os.Stderr, "")
-		return fmt.Errorf(i18n.G("Some instances failed to %s"), cmd.Name())
+		return fmt.Errorf(i18n.G("Some instances failed to %s"), action)
 	}
 
 	return nil

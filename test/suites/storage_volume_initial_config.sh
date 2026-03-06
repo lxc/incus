@@ -140,8 +140,8 @@ test_storage_volume_initial_config() {
 
     incus launch testimage c
 
-    incus storage volume attach "${pool}" testvolume1 c /testvolume1
-    incus storage volume attach "${pool}" testvolume2 c /testvolume2
+    incus storage volume attach "${pool}" testvolume1 c testvolume1 /testvolume1
+    incus storage volume attach "${pool}" testvolume2 c testvolume2 /testvolume2
 
     [ "$(incus exec c -- stat -c %u:%g /testvolume1)" = "0:0" ]
     [ "$(incus exec c -- stat -c %a /testvolume1)" = "711" ]

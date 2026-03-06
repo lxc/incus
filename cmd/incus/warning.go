@@ -68,10 +68,12 @@ type cmdWarningList struct {
 
 const defaultWarningColumns = "utSscpLl"
 
+var cmdWarningListUsage = u.Usage{u.RemoteColonOpt}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list", u.RemoteColonOpt)
+	cmd.Use = cli.U("list", cmdWarningListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List warnings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -109,24 +111,15 @@ Column shorthand chars:
 }
 
 // Run runs the actual command logic.
-func (c *cmdWarningList) Run(_ *cobra.Command, args []string) error {
-	// Parse remote
-	remote := ""
-	if len(args) > 0 {
-		remote = args[0]
-	}
-
-	remoteName, _, err := c.global.conf.ParseRemote(remote)
+func (c *cmdWarningList) Run(cmd *cobra.Command, args []string) error {
+	parsed, err := cmdWarningListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	remoteServer, err := c.global.conf.GetInstanceServer(remoteName)
-	if err != nil {
-		return err
-	}
+	d := parsed[0].RemoteServer
 
-	allWarnings, err := remoteServer.GetWarnings()
+	allWarnings, err := d.GetWarnings()
 	if err != nil {
 		return err
 	}
@@ -148,7 +141,7 @@ func (c *cmdWarningList) Run(_ *cobra.Command, args []string) error {
 	}
 
 	// Process the columns
-	columns, err := c.parseColumns(remoteServer.IsClustered())
+	columns, err := c.parseColumns(d.IsClustered())
 	if err != nil {
 		return err
 	}
@@ -265,10 +258,12 @@ type cmdWarningAcknowledge struct {
 	warning *cmdWarning
 }
 
+var cmdWarningAcknowledgeUsage = u.Usage{u.WarningUUID.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningAcknowledge) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("acknowledge", u.WarningUUID.Remote())
+	cmd.Use = cli.U("acknowledge", cmdWarningAcknowledgeUsage...)
 	cmd.Aliases = []string{"ack"}
 	cmd.Short = i18n.G("Acknowledge warning")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -281,26 +276,16 @@ func (c *cmdWarningAcknowledge) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdWarningAcknowledge) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	remoteName, UUID, err := c.global.conf.ParseRemote(args[0])
+	parsed, err := cmdWarningAcknowledgeUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	remoteServer, err := c.global.conf.GetInstanceServer(remoteName)
-	if err != nil {
-		return err
-	}
+	d := parsed[0].RemoteServer
+	warningUUID := parsed[0].RemoteObject.String
 
 	warning := api.WarningPut{Status: "acknowledged"}
-
-	return remoteServer.UpdateWarning(UUID, warning, "")
+	return d.UpdateWarning(warningUUID, warning, "")
 }
 
 // Show.
@@ -309,10 +294,12 @@ type cmdWarningShow struct {
 	warning *cmdWarning
 }
 
+var cmdWarningShowUsage = u.Usage{u.WarningUUID.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("show", u.WarningUUID.Remote())
+	cmd.Use = cli.U("show", cmdWarningShowUsage...)
 	cmd.Short = i18n.G("Show warning")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show warning`))
@@ -324,24 +311,15 @@ func (c *cmdWarningShow) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdWarningShow) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	remoteName, UUID, err := c.global.conf.ParseRemote(args[0])
+	parsed, err := cmdWarningShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	remoteServer, err := c.global.conf.GetInstanceServer(remoteName)
-	if err != nil {
-		return err
-	}
+	d := parsed[0].RemoteServer
+	warningUUID := parsed[0].RemoteObject.String
 
-	warning, _, err := remoteServer.GetWarning(UUID)
+	warning, _, err := d.GetWarning(warningUUID)
 	if err != nil {
 		return err
 	}
@@ -364,10 +342,12 @@ type cmdWarningDelete struct {
 	flagAll bool
 }
 
+var cmdWarningDeleteUsage = u.Usage{u.Either(u.WarningUUID.Remote().List(1), u.Sequence(u.Flag("all"), u.RemoteColonOpt))}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdWarningDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("delete", u.WarningUUID.Remote().List(1))
+	cmd.Use = cli.U("delete", cmdWarningDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete warnings")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -382,34 +362,45 @@ func (c *cmdWarningDelete) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdWarningDelete) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, -1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args...)
+	parsed, err := cmdWarningDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	for i := range resources {
-		remoteName, UUID, err := c.global.conf.ParseRemote(args[i])
+	var errs []error
+
+	if c.flagAll {
+		if parsed[0].BranchID != 1 {
+			return errors.New(i18n.G("--all cannot be used together with other arguments"))
+		}
+
+		d := parsed[0].List[1].RemoteServer
+		allWarnings, err := d.GetWarnings()
 		if err != nil {
 			return err
 		}
 
-		remoteServer, err := c.global.conf.GetInstanceServer(remoteName)
-		if err != nil {
-			return err
+		for _, warning := range allWarnings {
+			err = d.DeleteWarning(warning.UUID)
+			if err != nil {
+				errs = append(errs, err)
+			}
 		}
+	} else {
+		for _, p := range parsed[0].List {
+			d := p.RemoteServer
+			warningUUID := p.RemoteObject.String
 
-		// Delete warnings
-		err = remoteServer.DeleteWarning(UUID)
-		if err != nil {
-			return nil
+			// Delete warnings
+			err = d.DeleteWarning(warningUUID)
+			if err != nil {
+				errs = append(errs, err)
+			}
 		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	return nil

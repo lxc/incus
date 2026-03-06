@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 
@@ -10,7 +9,6 @@ import (
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
-	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdClusterRole struct {
@@ -45,10 +43,12 @@ type cmdClusterRoleAdd struct {
 	clusterRole *cmdClusterRole
 }
 
+var cmdClusterRoleAddUsage = u.Usage{u.Member.Remote(), u.Role.List(1, ",")}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("add", u.Member.Remote(), u.Role.List(1, ","))
+	cmd.Use = cli.U("add", cmdClusterRoleAddUsage...)
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add roles to a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -69,39 +69,31 @@ func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdClusterRoleAdd) Run(cmd *cobra.Command, args []string) error {
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdClusterRoleAddUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing cluster member name"))
-	}
+	d := parsed[0].RemoteServer
+	memberName := parsed[0].RemoteObject.String
+	newRoles := parsed[1].StringList
 
 	// Extract the current value
-	member, etag, err := resource.server.GetClusterMember(resource.name)
+	member, etag, err := d.GetClusterMember(memberName)
 	if err != nil {
 		return err
 	}
 
 	memberWritable := member.Writable()
-	newRoles := util.SplitNTrimSpace(args[1], ",", -1, false)
 	for _, newRole := range newRoles {
 		if slices.Contains(memberWritable.Roles, newRole) {
-			return fmt.Errorf(i18n.G("Member %q already has role %q"), resource.name, newRole)
+			return fmt.Errorf(i18n.G("Member %q already has role %q"), formatRemote(c.global.conf, parsed[0]), newRole)
 		}
 	}
 
 	memberWritable.Roles = append(memberWritable.Roles, newRoles...)
 
-	return resource.server.UpdateClusterMember(resource.name, memberWritable, etag)
+	return d.UpdateClusterMember(memberName, memberWritable, etag)
 }
 
 type cmdClusterRoleRemove struct {
@@ -110,10 +102,12 @@ type cmdClusterRoleRemove struct {
 	clusterRole *cmdClusterRole
 }
 
+var cmdClusterRoleRemoteUsage = u.Usage{u.Member.Remote(), u.Role.List(1, ",")}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("remove", u.Member.Remote(), u.Role.List(1, ","))
+	cmd.Use = cli.U("remove", cmdClusterRoleRemoteUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove roles from a cluster member")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -138,37 +132,29 @@ func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdClusterRoleRemove) Run(cmd *cobra.Command, args []string) error {
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdClusterRoleRemoteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing cluster member name"))
-	}
+	d := parsed[0].RemoteServer
+	memberName := parsed[0].RemoteObject.String
+	rolesToRemove := parsed[1].StringList
 
 	// Extract the current value
-	member, etag, err := resource.server.GetClusterMember(resource.name)
+	member, etag, err := d.GetClusterMember(memberName)
 	if err != nil {
 		return err
 	}
 
 	memberWritable := member.Writable()
-	rolesToRemove := util.SplitNTrimSpace(args[1], ",", -1, false)
 	for _, roleToRemove := range rolesToRemove {
 		if !slices.Contains(memberWritable.Roles, roleToRemove) {
-			return fmt.Errorf(i18n.G("Member %q does not have role %q"), resource.name, roleToRemove)
+			return fmt.Errorf(i18n.G("Member %q does not have role %q"), formatRemote(c.global.conf, parsed[0]), roleToRemove)
 		}
 	}
 
 	memberWritable.Roles = removeElementsFromSlice(memberWritable.Roles, rolesToRemove...)
 
-	return resource.server.UpdateClusterMember(resource.name, memberWritable, etag)
+	return d.UpdateClusterMember(memberName, memberWritable, etag)
 }

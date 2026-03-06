@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
@@ -130,6 +131,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogVerbose, "verbose", "v", false, i18n.G("Show all information messages"))
 	app.PersistentFlags().BoolVarP(&globalCmd.flagQuiet, "quiet", "q", false, i18n.G("Don't show progress information"))
 	app.PersistentFlags().BoolVar(&globalCmd.flagSubCmds, "sub-commands", false, i18n.G("Use with help or --help to view sub-commands"))
+	app.PersistentFlags().BoolVar(&u.ExplainOnly, "explain", false, i18n.G("If the command is valid, explain its parsed arguments instead of running it"))
 
 	// Wrappers
 	app.PersistentPreRunE = globalCmd.PreRun
@@ -356,6 +358,12 @@ func main() {
 	// Run the main command and handle errors
 	err = app.Execute()
 	if err != nil {
+		// Handle --explain.
+		if errors.Is(err, u.ErrExplainOnly) {
+			fmt.Println(err.Error())
+			os.Exit(0)
+		}
+
 		// Handle non-Linux systems
 		if errors.Is(err, config.ErrNotLinux) {
 			fmt.Fprintf(os.Stderr, "%s", i18n.G(`This client hasn't been configured to use a remote server yet.

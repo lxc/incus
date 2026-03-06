@@ -40,10 +40,12 @@ type cmdCreate struct {
 	flagDescription     string
 }
 
+var cmdCreateUsage = u.Usage{u.Either(u.Flag("empty"), u.RemoteImage), u.NewName(u.Instance).Optional().Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("create", u.Image.Remote(), u.NewName(u.Instance).Optional().Remote())
+	cmd.Use = cli.U("create", cmdCreateUsage...)
 	cmd.Short = i18n.G("Create instances from images")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:debian/12 u1
@@ -83,89 +85,38 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
 
 // Run runs the actual command logic.
 func (c *cmdCreate) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 2)
-	if exit {
+	parsed, err := cmdCreateUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
 
-	if len(args) == 0 && !c.flagEmpty {
-		_ = cmd.Usage()
-		return nil
-	}
-
-	_, _, err = c.create(c.global.conf, args, false)
+	_, err = c.create(c.global.conf, parsed, false)
 	return err
 }
 
-func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (incus.InstanceServer, string, error) {
-	var name string
-	var image string
-	var remote string
-	var iremote string
-	var err error
-	var stdinData api.InstancePut
-	var devicesMap map[string]map[string]string
-	var configMap map[string]string
-	var profiles []string
+func (c *cmdCreate) create(conf *config.Config, parsed []*u.Parsed, launch bool) (*u.Parsed, error) {
+	p := parsed[1]
+	d := p.RemoteServer
+	remoteName := p.RemoteName
+	hasInstance := !p.RemoteObject.Skipped
+	instanceName := p.RemoteObject.String
 
 	// If stdin isn't a terminal, read text from it
+	var stdinData api.InstancePut
 	if !termios.IsTerminal(getStdinFd()) {
 		contents, err := io.ReadAll(os.Stdin)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		err = yaml.Unmarshal(contents, &stdinData)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
-	}
-
-	if len(args) > 0 {
-		iremote, image, err = conf.ParseRemote(args[0])
-		if err != nil {
-			return nil, "", err
-		}
-
-		if len(args) == 1 {
-			remote, name, err = conf.ParseRemote("")
-			if err != nil {
-				return nil, "", err
-			}
-		} else if len(args) == 2 {
-			remote, name, err = conf.ParseRemote(args[1])
-			if err != nil {
-				return nil, "", err
-			}
-		}
-	}
-
-	if c.flagEmpty {
-		if len(args) > 1 {
-			return nil, "", errors.New(i18n.G("--empty cannot be combined with an image name"))
-		}
-
-		if len(args) == 0 {
-			remote, name, err = conf.ParseRemote("")
-			if err != nil {
-				return nil, "", err
-			}
-		} else if len(args) == 1 {
-			// Switch image / instance names
-			name = image
-			remote = iremote
-			image = ""
-			iremote = ""
-		}
-	}
-
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return nil, "", err
 	}
 
 	// Overwrite profiles.
+	var profiles []string
 	if c.flagProfile != nil {
 		profiles = c.flagProfile
 	} else if c.flagNoProfiles {
@@ -174,20 +125,21 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 
 	if !c.global.flagQuiet {
 		if d.HasExtension("instance_create_start") && launch {
-			if name == "" {
-				fmt.Print(i18n.G("Launching the instance") + "\n")
+			if hasInstance {
+				fmt.Printf(i18n.G("Launching %s")+"\n", formatRemote(conf, p))
 			} else {
-				fmt.Printf(i18n.G("Launching %s")+"\n", name)
+				fmt.Print(i18n.G("Launching the instance") + "\n")
 			}
 		} else {
-			if name == "" {
-				fmt.Print(i18n.G("Creating the instance") + "\n")
+			if hasInstance {
+				fmt.Printf(i18n.G("Creating %s")+"\n", formatRemote(conf, p))
 			} else {
-				fmt.Printf(i18n.G("Creating %s")+"\n", name)
+				fmt.Print(i18n.G("Creating the instance") + "\n")
 			}
 		}
 	}
 
+	var devicesMap map[string]map[string]string
 	if len(stdinData.Devices) > 0 {
 		devicesMap = stdinData.Devices
 	} else {
@@ -197,7 +149,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	if c.flagNetwork != "" {
 		network, _, err := d.GetNetwork(c.flagNetwork)
 		if err != nil {
-			return nil, "", fmt.Errorf(i18n.G("Failed loading network %q: %w"), c.flagNetwork, err)
+			return nil, fmt.Errorf(i18n.G("Failed loading network %q: %w"), c.flagNetwork, err)
 		}
 
 		// Prepare the instance's NIC device entry.
@@ -229,6 +181,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 		devicesMap["eth0"] = device
 	}
 
+	var configMap map[string]string
 	if len(stdinData.Config) > 0 {
 		configMap = stdinData.Config
 	} else {
@@ -238,7 +191,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	if c.flagEnvironmentFile != "" {
 		envMap, err := readEnvironmentFile(c.flagEnvironmentFile)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		for k, v := range envMap {
@@ -249,7 +202,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	for _, entry := range c.flagConfig {
 		key, value, found := strings.Cut(entry, "=")
 		if !found {
-			return nil, "", fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
+			return nil, fmt.Errorf(i18n.G("Bad key=value pair: %q"), entry)
 		}
 
 		configMap[key] = value
@@ -259,7 +212,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	if c.flagStorage != "" {
 		_, _, err := d.GetStoragePool(c.flagStorage)
 		if err != nil {
-			return nil, "", fmt.Errorf(i18n.G("Failed loading storage pool %q: %w"), c.flagStorage, err)
+			return nil, fmt.Errorf(i18n.G("Failed loading storage pool %q: %w"), c.flagStorage, err)
 		}
 
 		devicesMap["root"] = map[string]string{
@@ -282,7 +235,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 
 	// Setup instance creation request
 	req := api.InstancesPost{
-		Name:         name,
+		Name:         instanceName,
 		InstanceType: c.flagType,
 		Type:         instanceDBType,
 		Start:        launch,
@@ -313,7 +266,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	// Handle device overrides.
 	deviceOverrides, err := parseDeviceOverrides(c.flagDevice)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	// Check to see if any of the overridden devices are for devices that are not yet defined in the
@@ -341,7 +294,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 		for _, profileName := range serverSideProfiles {
 			profile, _, err := d.GetProfile(profileName)
 			if err != nil {
-				return nil, "", fmt.Errorf(i18n.G("Failed loading profile %q for device override: %w"), profileName, err)
+				return nil, fmt.Errorf(i18n.G("Failed loading profile %q for device override: %w"), profileName, err)
 			}
 
 			maps.Copy(profileDevices, profile.Devices)
@@ -358,7 +311,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 			// Check device exists in expanded profile devices.
 			profileDeviceConfig, found := profileDevices[deviceName]
 			if !found {
-				return nil, "", fmt.Errorf(i18n.G("Cannot override config for device %q: Device not found in profile devices"), deviceName)
+				return nil, fmt.Errorf(i18n.G("Cannot override config for device %q: Device not found in profile devices"), deviceName)
 			}
 
 			maps.Copy(profileDeviceConfig, deviceOverrides[deviceName])
@@ -371,32 +324,28 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 	req.Devices = devicesMap
 
 	var opInfo api.Operation
-	if !c.flagEmpty {
-		// Get the image server and image info
-		iremote, image = guessImage(conf, d, remote, iremote, image)
 
-		// Deal with the default image
-		if image == "" {
-			image = "default"
-		}
+	// If an image is provided, use it.
+	if parsed[0].BranchID == 1 {
+		imgRemoteName := parsed[0].List[0].Get(conf.DefaultRemote)
 
-		imgRemote, imgInfo, err := getImgInfo(d, conf, iremote, remote, image, &req.Source)
+		imgServer, imgInfo, err := getImgInfo(d, conf, imgRemoteName, remoteName, parsed[0].List[1].String, &req.Source)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
-		if conf.Remotes[iremote].Protocol == "incus" {
+		if conf.Remotes[imgRemoteName].Protocol == "incus" {
 			if imgInfo.Type != "virtual-machine" && c.flagVM {
-				return nil, "", errors.New(i18n.G("Asked for a VM but image is of type container"))
+				return nil, errors.New(i18n.G("Asked for a VM but image is of type container"))
 			}
 
 			req.Type = api.InstanceType(imgInfo.Type)
 		}
 
 		// Create the instance
-		op, err := d.CreateInstanceFromImage(imgRemote, *imgInfo, req)
+		op, err := d.CreateInstanceFromImage(imgServer, *imgInfo, req)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		// Watch the background operation
@@ -408,13 +357,13 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 		_, err = op.AddHandler(progress.UpdateOp)
 		if err != nil {
 			progress.Done("")
-			return nil, "", err
+			return nil, err
 		}
 
 		err = cli.CancelableWait(op, &progress)
 		if err != nil {
 			progress.Done("")
-			return nil, "", err
+			return nil, err
 		}
 
 		progress.Done("")
@@ -422,7 +371,7 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 		// Extract the instance name
 		info, err := op.GetTarget()
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		opInfo = *info
@@ -431,12 +380,12 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 
 		op, err := d.CreateInstance(req)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		err = op.Wait()
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		opInfo = op.Get()
@@ -444,23 +393,24 @@ func (c *cmdCreate) create(conf *config.Config, args []string, launch bool) (inc
 
 	instances, ok := opInfo.Resources["instances"]
 	if !ok || len(instances) == 0 {
-		return nil, "", errors.New(i18n.G("Didn't get name of new instance from the server"))
+		return nil, errors.New(i18n.G("Didn't get name of new instance from the server"))
 	}
 
-	if len(instances) == 1 && name == "" {
+	if len(instances) == 1 && !hasInstance {
 		uri, err := url.Parse(instances[0])
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
-		name = path.Base(uri.Path)
-		fmt.Printf(i18n.G("Instance name is: %s")+"\n", name)
+		instanceName = path.Base(uri.Path)
+		fmt.Printf(i18n.G("Instance name is: %s")+"\n", instanceName)
 	}
 
 	// Validate the network setup
-	c.checkNetwork(d, name)
+	c.checkNetwork(d, instanceName)
 
-	return d, name, nil
+	p.RemoteObject = u.ParseString(instanceName)
+	return p, nil
 }
 
 func (c *cmdCreate) checkNetwork(d incus.InstanceServer, name string) {

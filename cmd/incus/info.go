@@ -30,10 +30,12 @@ type cmdInfo struct {
 	flagTarget     string
 }
 
+var cmdInfoUsage = u.Usage{u.Instance.Optional().Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("info", u.Instance.Optional().Remote())
+	cmd.Use = cli.U("info", cmdInfoUsage...)
 	cmd.Short = i18n.G("Show instance or server information")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show instance or server information`))
@@ -63,39 +65,21 @@ incus info [<remote>:] [--resources]
 
 // Run runs the actual command logic.
 func (c *cmdInfo) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 1)
-	if exit {
-		return err
-	}
-
-	var remote string
-	var cName string
-	if len(args) == 1 {
-		remote, cName, err = conf.ParseRemote(args[0])
-		if err != nil {
-			return err
-		}
-	} else {
-		remote, cName, err = conf.ParseRemote("")
-		if err != nil {
-			return err
-		}
-	}
-
-	d, err := conf.GetInstanceServer(remote)
+	parsed, err := cmdInfoUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	if cName == "" {
+	d := parsed[0].RemoteServer
+	hasInstance := !parsed[0].RemoteObject.Skipped
+	instanceName := parsed[0].RemoteObject.String
+
+	if !hasInstance {
 		return c.remoteInfo(d)
 	}
 
 	if c.flagShowAccess {
-		access, err := d.GetInstanceAccess(cName)
+		access, err := d.GetInstanceAccess(instanceName)
 		if err != nil {
 			return err
 		}
@@ -110,7 +94,7 @@ func (c *cmdInfo) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return c.instanceInfo(d, cName, c.flagShowLog)
+	return c.instanceInfo(d, instanceName, c.flagShowLog)
 }
 
 func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial bool) {

@@ -2,16 +2,12 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
-	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/shared/api"
-	config "github.com/lxc/incus/v6/shared/cliconfig"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 )
 
@@ -22,10 +18,12 @@ type cmdRebuild struct {
 	flagForce bool
 }
 
+var cmdRebuildUsage = u.Usage{u.Either(u.Flag("empty"), u.RemoteImage), u.Instance.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdRebuild) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("rebuild", u.Image.Remote(), u.Instance.Remote())
+	cmd.Use = cli.U("rebuild", cmdRebuildUsage...)
 	cmd.Short = i18n.G("Rebuild instances")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Wipe the instance root disk and re-initialize with a new image (or empty volume).`))
@@ -37,48 +35,19 @@ func (c *cmdRebuild) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
-	var name, image, remote, iremote string
-	var err error
-
-	if len(args) <= 0 {
-		return errors.New(i18n.G("Missing instance name"))
-	}
-
-	if len(args) == 1 {
-		remote, name, err = conf.ParseRemote(args[0])
-		if err != nil {
-			return err
-		}
-	} else if len(args) == 2 {
-		iremote, image, err = conf.ParseRemote(args[0])
-		if err != nil {
-			return err
-		}
-
-		remote, name, err = conf.ParseRemote(args[1])
-		if err != nil {
-			return err
-		}
-	}
-
-	if c.flagEmpty {
-		if len(args) > 1 {
-			return errors.New(i18n.G("--empty cannot be combined with an image name"))
-		}
-	}
-
-	d, err := conf.GetInstanceServer(remote)
+// Run runs the actual command logic.
+func (c *cmdRebuild) Run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+	parsed, err := cmdRebuildUsage.Parse(conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	// We are not rebuilding just a snapshot but an instance
-	if strings.Contains(name, instance.SnapshotDelimiter) {
-		return fmt.Errorf(i18n.G("Instance snapshots cannot be rebuilt: %s"), name)
-	}
+	d := parsed[1].RemoteServer
+	remoteName := parsed[1].RemoteName
+	instanceName := parsed[1].RemoteObject.String
 
-	current, _, err := d.GetInstance(name)
+	current, _, err := d.GetInstance(instanceName)
 	if err != nil {
 		return err
 	}
@@ -91,7 +60,7 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 		}
 
 		// Update the instance.
-		op, err := d.UpdateInstanceState(name, req, "")
+		op, err := d.UpdateInstanceState(instanceName, req, "")
 		if err != nil {
 			return err
 		}
@@ -118,24 +87,21 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 		Source: api.InstanceSource{},
 	}
 
-	if !c.flagEmpty {
-		if image == "" && iremote == "" {
-			return errors.New(i18n.G("You need to specify an image name or use --empty"))
-		}
+	if parsed[0].BranchID == 1 {
+		imgRemoteName := parsed[0].List[0].Get(conf.DefaultRemote)
 
-		iremote, image := guessImage(conf, d, remote, iremote, image)
-		imgRemote, imgInfo, err := getImgInfo(d, conf, iremote, remote, image, &req.Source)
+		imgServer, imgInfo, err := getImgInfo(d, conf, imgRemoteName, remoteName, parsed[0].List[1].String, &req.Source)
 		if err != nil {
 			return err
 		}
 
-		if conf.Remotes[iremote].Protocol == "incus" {
+		if conf.Remotes[imgRemoteName].Protocol == "incus" {
 			if imgInfo.Type != "virtual-machine" && current.Type == "virtual-machine" {
 				return errors.New(i18n.G("Asked for a VM but image is of type container"))
 			}
 		}
 
-		op, err := d.RebuildInstanceFromImage(imgRemote, *imgInfo, name, req)
+		op, err := d.RebuildInstanceFromImage(imgServer, *imgInfo, instanceName, req)
 		if err != nil {
 			return err
 		}
@@ -159,13 +125,8 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 
 		progress.Done("")
 	} else {
-		// This is a rebuild as an empty instance
-		if image != "" || iremote != "" {
-			return errors.New(i18n.G("Can't use an image with --empty"))
-		}
-
 		req.Source.Type = "none"
-		op, err := d.RebuildInstance(name, req)
+		op, err := d.RebuildInstance(instanceName, req)
 		if err != nil {
 			return err
 		}
@@ -183,7 +144,7 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 		}
 
 		// Update the instance.
-		op, err := d.UpdateInstanceState(name, req, "")
+		op, err := d.UpdateInstanceState(instanceName, req, "")
 		if err != nil {
 			return err
 		}
@@ -203,22 +164,6 @@ func (c *cmdRebuild) rebuild(conf *config.Config, args []string) error {
 			progress.Done("")
 			return err
 		}
-	}
-
-	return nil
-}
-
-// Run runs the actual command logic.
-func (c *cmdRebuild) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-	if len(args) == 0 {
-		_ = cmd.Usage()
-		return nil
-	}
-
-	err := c.rebuild(conf, args)
-	if err != nil {
-		return err
 	}
 
 	return nil

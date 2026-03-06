@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -62,10 +61,12 @@ type cmdConfigTemplateCreate struct {
 	configTemplate *cmdConfigTemplate
 }
 
+var cmdConfigTemplateCreateUsage = u.Usage{u.Instance.Remote(), u.NewName(u.Template)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("create", u.Instance.Remote(), u.NewName(u.Template))
+	cmd.Use = cli.U("create", cmdConfigTemplateCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -90,13 +91,15 @@ incus config template create u1 t1 < config.tpl
 
 // Run runs the actual command logic.
 func (c *cmdConfigTemplateCreate) Run(cmd *cobra.Command, args []string) error {
-	var stdinData io.ReadSeeker
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
+	parsed, err := cmdConfigTemplateCreateUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	var stdinData io.ReadSeeker
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	templateName := parsed[1].String
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
@@ -109,20 +112,8 @@ func (c *cmdConfigTemplateCreate) Run(cmd *cobra.Command, args []string) error {
 		stdinData = bytes.NewReader(contents)
 	}
 
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
-	if err != nil {
-		return err
-	}
-
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
-
 	// Create instance file template
-	return resource.server.CreateInstanceTemplateFile(resource.name, args[1], stdinData)
+	return d.CreateInstanceTemplateFile(instanceName, templateName, stdinData)
 }
 
 // Delete.
@@ -132,10 +123,12 @@ type cmdConfigTemplateDelete struct {
 	configTemplate *cmdConfigTemplate
 }
 
+var cmdConfigTemplateDeleteUsage = u.Usage{u.Instance.Remote(), u.Template}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateDelete) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("delete", u.Instance.Remote(), u.Template)
+	cmd.Use = cli.U("delete", cmdConfigTemplateDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -160,26 +153,17 @@ func (c *cmdConfigTemplateDelete) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTemplateDelete) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTemplateDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	templateName := parsed[1].String
 
 	// Delete instance file template
-	return resource.server.DeleteInstanceTemplateFile(resource.name, args[1])
+	return d.DeleteInstanceTemplateFile(instanceName, templateName)
 }
 
 // Edit.
@@ -189,10 +173,12 @@ type cmdConfigTemplateEdit struct {
 	configTemplate *cmdConfigTemplate
 }
 
+var cmdConfigTemplateEditUsage = u.Usage{u.Instance.Remote(), u.Template}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("edit", u.Instance.Remote(), u.Template)
+	cmd.Use = cli.U("edit", cmdConfigTemplateEditUsage...)
 	cmd.Short = i18n.G("Edit instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit instance file templates`))
@@ -216,30 +202,21 @@ func (c *cmdConfigTemplateEdit) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTemplateEdit) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTemplateEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	templateName := parsed[1].String
 
 	// Edit instance file template
 	if !termios.IsTerminal(getStdinFd()) {
-		return resource.server.CreateInstanceTemplateFile(resource.name, args[1], os.Stdin)
+		return d.CreateInstanceTemplateFile(instanceName, templateName, os.Stdin)
 	}
 
-	reader, err := resource.server.GetInstanceTemplateFile(resource.name, args[1])
+	reader, err := d.GetInstanceTemplateFile(instanceName, templateName)
 	if err != nil {
 		return err
 	}
@@ -257,7 +234,7 @@ func (c *cmdConfigTemplateEdit) Run(cmd *cobra.Command, args []string) error {
 
 	for {
 		reader := bytes.NewReader(content)
-		err := resource.server.CreateInstanceTemplateFile(resource.name, args[1], reader)
+		err := d.CreateInstanceTemplateFile(instanceName, templateName, reader)
 		// Respawn the editor
 		if err != nil {
 			fmt.Fprintf(os.Stderr, i18n.G("Error updating template file: %s")+"\n", err)
@@ -291,10 +268,12 @@ type cmdConfigTemplateList struct {
 	flagFormat string
 }
 
+var cmdConfigTemplateListUsage = u.Usage{u.Instance.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list", u.Instance.Remote())
+	cmd.Use = cli.U("list", cmdConfigTemplateListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -320,26 +299,16 @@ func (c *cmdConfigTemplateList) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTemplateList) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTemplateListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
 
 	// List the templates
-	templates, err := resource.server.GetInstanceTemplateFiles(resource.name)
+	templates, err := d.GetInstanceTemplateFiles(instanceName)
 	if err != nil {
 		return err
 	}
@@ -366,10 +335,12 @@ type cmdConfigTemplateShow struct {
 	configTemplate *cmdConfigTemplate
 }
 
+var cmdConfigTemplateShowUsage = u.Usage{u.Instance.Remote(), u.Template}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTemplateShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("show", u.Instance.Remote(), u.Template)
+	cmd.Use = cli.U("show", cmdConfigTemplateShowUsage...)
 	cmd.Short = i18n.G("Show content of instance file templates")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show content of instance file templates`))
@@ -393,26 +364,17 @@ func (c *cmdConfigTemplateShow) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTemplateShow) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 2, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTemplateShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing instance name"))
-	}
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	templateName := parsed[1].String
 
 	// Show the template
-	template, err := resource.server.GetInstanceTemplateFile(resource.name, args[1])
+	template, err := d.GetInstanceTemplateFile(instanceName, templateName)
 	if err != nil {
 		return err
 	}

@@ -2,9 +2,14 @@ package usage
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/spf13/cobra"
+
+	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
+	"github.com/lxc/incus/v6/shared/cliconfig"
 )
 
 // makeList is a helper function building list atoms.
@@ -16,7 +21,7 @@ func makeList(atom Atom, minOccurrences int, separator ...string) Atom {
 	return list{atom, minOccurrences, separator[0]}
 }
 
-// makeList is a helper function building optional atoms.
+// makeOptional is a helper function building optional atoms.
 func makeOptional(atom Atom, chain []Atom) Atom {
 	if len(chain) == 0 {
 		return optional{atom}
@@ -29,6 +34,7 @@ func makeOptional(atom Atom, chain []Atom) Atom {
 type Atom interface {
 	List(minOccurrences int, separator ...string) Atom
 	Optional(chain ...Atom) Atom
+	Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error)
 	Render() string
 	Remote() Atom
 }
@@ -48,6 +54,56 @@ func (a alternative) Optional(chain ...Atom) Atom {
 	return makeOptional(a, chain)
 }
 
+// Parse parses the atom.
+func (a alternative) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	// Parsing alternatives is not implemented cleverly at all: the first matching atom is the one
+	// that will be used. This means that matching against something optional will always succeed,
+	// which may not be intended.
+	verbatimOnly := true
+	verbatimElements := make([]string, len(a.atoms))
+	for i, atom := range a.atoms {
+		// For diagnosis purposes, we record verbatim atoms.
+		v, ok := atom.(verbatim)
+		if ok {
+			verbatimElements[i] = v.Render()
+		} else {
+			verbatimOnly = false
+		}
+
+		// We need to perform a deep copy of the arguments here, to easily rollback to a clean state if
+		// something bad happened.
+		argsCopy := make([]string, len(*args))
+		copy(argsCopy, *args)
+		p, err := atom.Parse(conf, cmd, servers, &argsCopy, parseRTL)
+		if err != nil {
+			if isParsingError(err) {
+				continue
+			}
+
+			return nil, err
+		}
+
+		*args = argsCopy
+		p.BranchID = i
+		return p, nil
+	}
+
+	// We defer this check to the very end, in case we have some exotic parsing rules. If we get out
+	// of the loop, this probably means that the argument count is a problem.
+	if len(*args) == 0 {
+		return nil, &notEnoughArgumentsError{a}
+	}
+
+	arg := (*args)[0]
+
+	// If nothing is found, try to emit a nice diagnosis if possible.
+	if verbatimOnly {
+		return nil, &argumentMismatchError{arg, verbatimElements}
+	}
+
+	return nil, &argumentMismatchError{arg, []string{}}
+}
+
 // Render renders the atom's usage string.
 func (a alternative) Render() string {
 	elements := make([]string, len(a.atoms))
@@ -60,7 +116,7 @@ func (a alternative) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (a alternative) Remote() Atom {
-	return remote{a}
+	return remote{Remote, a, true}
 }
 
 // compound represents a sequence of atoms separated with a separator.
@@ -77,6 +133,141 @@ func (c compound) List(minOccurrences int, separator ...string) Atom {
 // Optional makes the atom optional.
 func (c compound) Optional(chain ...Atom) Atom {
 	return makeOptional(c, chain)
+}
+
+// Parse parses the atom.
+func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	var consumed []string
+	n := len(c.atoms)
+	ps := make([]*Parsed, n)
+	atoms := c.atoms
+
+	// RTL parsing requires us to reverse our atoms when the sequence is separated by spaces.
+	if c.separator == " " && parseRTL {
+		// We don’t want to modify the original slice, as this may be reused.
+		atoms = make([]Atom, n)
+		for i, atom := range c.atoms {
+			atoms[n-1-i] = atom
+		}
+	}
+
+	// If the compound atom starts with optional atom(s), our dumb greedy parsing fails if those
+	// optional atoms are not set. Instead of coming up with something more clever, we just shift them
+	// as needed. We first have to count the optional atoms at the end of our compound.
+	nOpt := 0
+	for i := range n {
+		_, ok := atoms[n-i-1].(optional)
+		if !ok {
+			break
+		}
+
+		nOpt++
+	}
+
+	// The parsing method differs a bit depending on the separator in use.
+	if c.separator == " " {
+		nSub := len(*args)
+		i := 0
+
+		// Ignore optional atoms that cannot be set.
+		for i < n-nOpt-nSub {
+			o, ok := atoms[i].(optional)
+			if !ok {
+				break
+			}
+
+			p, err := o.Parse(conf, cmd, servers, &[]string{}, false)
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+			i++
+		}
+
+		for i < n {
+			p, err := atoms[i].Parse(conf, cmd, servers, args, false)
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+
+			// Prevent displaying useless spaces
+			if !p.Skipped {
+				consumed = append(consumed, p.String)
+			}
+
+			i++
+		}
+
+		if parseRTL {
+			slices.Reverse(consumed)
+			slices.Reverse(ps)
+		}
+	} else {
+		if len(*args) == 0 {
+			return nil, &notEnoughArgumentsError{c}
+		}
+
+		arg := (*args)[0]
+		consumed = []string{arg}
+		subArgs := strings.Split(arg, c.separator)
+		nSub := len(subArgs)
+		i := 0
+
+		// Ignore optional atoms that cannot be set.
+		for i < n-nOpt-nSub {
+			o, ok := atoms[i].(optional)
+			if !ok {
+				break
+			}
+
+			p, err := o.Parse(conf, cmd, servers, &[]string{}, false)
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+			i++
+		}
+
+		// Parsing up to the penultimate atom behaves normally.
+		for i < n-1 {
+			p, err := atoms[i].Parse(conf, cmd, servers, &subArgs, false)
+			if err != nil {
+				return nil, err
+			}
+
+			ps[i] = p
+			i++
+		}
+
+		// For the last atom, we join all the remaining sub-arguments. There are multiple reasons for
+		// this: when parsing K/V pairs, we want to allow the user to enter `=` characters in the values
+		// and have them processed normally, but in some very specific cases where the number of atoms
+		// not being ignored cannot easily be known in advance, we may end up messing with the arguments
+		// if we use `SplitN` naïvely.
+		lastArgs := []string{}
+		if len(subArgs) > 0 {
+			lastArgs = append(lastArgs, strings.Join(subArgs, c.separator))
+		}
+
+		p, err := atoms[n-1].Parse(conf, cmd, servers, &lastArgs, false)
+		if err != nil {
+			return nil, err
+		}
+
+		ps[n-1] = p
+		*args = (*args)[1:]
+	}
+
+	stringList := make([]string, len(ps))
+	for i, p := range ps {
+		stringList[i] = p.String
+	}
+
+	return &Parsed{source: c, String: strings.Join(consumed, " "), List: ps, StringList: stringList}, nil
 }
 
 // Render renders the atom's usage string.
@@ -118,7 +309,77 @@ func (c compound) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (c compound) Remote() Atom {
-	return remote{c}
+	return remote{Remote, c, true}
+}
+
+// flag represents a command-line flag.
+type flag struct {
+	name string
+}
+
+// List makes the atom accept a list. This is probably a very bad idea.
+func (f flag) List(minOccurrences int, separator ...string) Atom {
+	return makeList(f, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (f flag) Optional(chain ...Atom) Atom {
+	return makeOptional(f, chain)
+}
+
+// Parse parses the atom.
+func (f flag) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	cmdFlag := cmd.Flag(f.name)
+	if cmdFlag == nil {
+		return nil, fmt.Errorf(i18n.G("Unknown flag --%s"), f.name)
+	}
+
+	if cmdFlag.Changed {
+		return &Parsed{source: f, String: "--" + f.name}, nil
+	}
+
+	return nil, &argumentMismatchError{"", []string{"--" + f.name}}
+}
+
+// Render renders the atom's usage string.
+func (f flag) Render() string {
+	return verbatim{"--" + f.name}.Render()
+}
+
+// Remote is a no-op.
+func (f flag) Remote() Atom {
+	return f
+}
+
+// hide represents an atom whose internal value is hidden.
+type hide struct {
+	atom        Atom
+	replacement Atom
+}
+
+// List makes the atom accept a list.
+func (h hide) List(minOccurrences int, separator ...string) Atom {
+	return makeList(h, minOccurrences, separator...)
+}
+
+// Optional makes the atom optional.
+func (h hide) Optional(chain ...Atom) Atom {
+	return makeOptional(h, chain)
+}
+
+// Parse parses the atom.
+func (h hide) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	return h.atom.Parse(conf, cmd, servers, args, parseRTL)
+}
+
+// Render renders the atom's usage string.
+func (h hide) Render() string {
+	return h.replacement.Render()
+}
+
+// Remote prefixes the atom with a remote.
+func (h hide) Remote() Atom {
+	return remote{Remote, h, true}
 }
 
 // list represents a list of atoms of arbitrary length.
@@ -136,6 +397,94 @@ func (l list) List(minOccurrences int, separator ...string) Atom {
 // Optional makes the atom optional.
 func (l list) Optional(chain ...Atom) Atom {
 	return makeOptional(list{l.atom, max(l.minOccurrences, 1), l.separator}, chain)
+}
+
+// Parse parses the atom.
+func (l list) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	var ps []*Parsed
+	var consumed []string
+
+	// The parsing method differs a bit depending on the separator in use.
+	if l.separator == " " {
+		// The required occurrences of the list can have direct access to the args.
+		for range l.minOccurrences {
+			p, err := l.atom.Parse(conf, cmd, servers, args, parseRTL)
+			if err != nil {
+				return nil, err
+			}
+
+			ps = append(ps, p)
+			consumed = append(consumed, p.String)
+		}
+
+		// For the rest, because we stop processing the list as soon as a problem is encountered, only a
+		// copy of the args should be manipulated. We do a full copy every time which is a bit costly,
+		// but it’s better to be safe here.
+		for {
+			argsCopy := make([]string, len(*args))
+			copy(argsCopy, *args)
+			p, err := l.atom.Parse(conf, cmd, servers, &argsCopy, parseRTL)
+			if err != nil {
+				// If there is a parsing error, simply throw it away.
+				if isParsingError(err) {
+					break
+				}
+
+				return nil, err
+			}
+
+			*args = argsCopy
+			ps = append(ps, p)
+			consumed = append(consumed, p.String)
+		}
+
+		if parseRTL {
+			slices.Reverse(consumed)
+			slices.Reverse(ps)
+		}
+	} else {
+		// In this case, the whole argument needs to be consumed, but parsing failures when the list is
+		// optional are perfectly fine.
+		var subArgs []string
+		if len(*args) == 0 {
+			subArgs = []string{}
+			consumed = []string{}
+		} else {
+			arg := (*args)[0]
+			subArgs = strings.Split(arg, l.separator)
+			consumed = []string{arg}
+		}
+
+		i := 0
+		for i < l.minOccurrences || len(subArgs) > 0 {
+			p, err := l.atom.Parse(conf, cmd, servers, &subArgs, false)
+			if err != nil {
+				// If there is a parsing error and the list is optional, simply throw it away and rollback
+				// the whole thing.
+				if l.minOccurrences == 0 && isParsingError(err) {
+					return &Parsed{source: l, err: err, Skipped: true}, nil
+				}
+
+				return nil, err
+			}
+
+			ps = append(ps, p)
+			i++
+		}
+
+		// If everything went right, we can safely consume the argument.
+		if len(*args) > 0 {
+			*args = (*args)[1:]
+		}
+	}
+
+	stringList := make([]string, len(ps))
+	for i, p := range ps {
+		stringList[i] = p.String
+	}
+
+	skipped := len(ps) == 0
+	return &Parsed{source: l, String: strings.Join(consumed, " "), List: ps, StringList: stringList, Skipped: skipped}, nil
 }
 
 // Render renders the atom's usage string.
@@ -163,7 +512,7 @@ func (l list) Render() string {
 // Remote prefixes the atom with a remote.
 func (l list) Remote() Atom {
 	// It doesn't really make sense to prefix a list with a remote, so we distribute the operation.
-	return remote{l.atom}.List(l.minOccurrences, l.separator)
+	return remote{Remote, l.atom, true}.List(l.minOccurrences, l.separator)
 }
 
 // optional represents an optional atom.
@@ -182,6 +531,27 @@ func (o optional) Optional(chain ...Atom) Atom {
 	return makeOptional(o.atom, chain)
 }
 
+// Parse parses the atom.
+func (o optional) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	// We need to perform a deep copy of the arguments here, to easily rollback to a clean state if
+	// something bad happened.
+	argsCopy := make([]string, len(*args))
+	copy(argsCopy, *args)
+
+	p, err := o.atom.Parse(conf, cmd, servers, &argsCopy, parseRTL)
+	if err != nil {
+		// If there is a parsing error, simply throw it away.
+		if isParsingError(err) {
+			return &Parsed{source: o, err: err, Skipped: true}, nil
+		}
+
+		return nil, err
+	}
+
+	*args = argsCopy
+	return p, nil
+}
+
 // Render renders the atom's usage string.
 func (o optional) Render() string {
 	return "[" + o.atom.Render() + "]"
@@ -189,7 +559,7 @@ func (o optional) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (o optional) Remote() Atom {
-	return remote{o}
+	return remote{Remote, o, true}
 }
 
 // placeholder represents a placeholder atom.
@@ -207,6 +577,17 @@ func (p placeholder) Optional(chain ...Atom) Atom {
 	return makeOptional(p, chain)
 }
 
+// Parse parses the atom.
+func (p placeholder) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	if len(*args) == 0 {
+		return nil, &notEnoughArgumentsError{p}
+	}
+
+	arg := (*args)[0]
+	*args = (*args)[1:]
+	return &Parsed{source: p, String: arg}, nil
+}
+
 // Render renders the atom's usage string.
 func (p placeholder) Render() string {
 	return "<" + p.element + ">"
@@ -214,12 +595,14 @@ func (p placeholder) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (p placeholder) Remote() Atom {
-	return remote{p}
+	return remote{Remote, p, true}
 }
 
 // remote represents an atom prefixed with a remote.
 type remote struct {
-	suffix Atom
+	atom     Atom
+	suffix   Atom
+	optional bool
 }
 
 // List makes the atom accept a list.
@@ -232,9 +615,96 @@ func (r remote) Optional(chain ...Atom) Atom {
 	return makeOptional(r, chain)
 }
 
+// Parse parses the atom.
+func (r remote) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	skipped := false
+	arg := ""
+	if len(*args) == 0 {
+		skipped = true
+	} else {
+		arg = (*args)[0]
+	}
+
+	if skipped && !r.optional {
+		return nil, &notEnoughArgumentsError{r}
+	}
+
+	remoteName, rest, err := conf.ParseRemote(arg)
+	if err != nil {
+		return nil, err
+	}
+
+	remoteServer, err := getInstanceServer(conf, servers, remoteName)
+	if err != nil {
+		return nil, err
+	}
+
+	restArgs := []string{}
+	if rest != "" {
+		restArgs = append(restArgs, rest)
+	}
+
+	var p *Parsed
+
+	// From here, we soft-fail if the remote is of the form `[<remote>:]` and hard-fail otherwise.
+	if r.suffix == nil {
+		if rest != "" {
+			// Because this atom is skipped, we fallback to the default remote.
+			remoteServer, serverErr := getInstanceServer(conf, servers, conf.DefaultRemote)
+			if serverErr != nil {
+				return nil, serverErr
+			}
+
+			if strings.Contains(arg, ":") {
+				// If `:` is in the original argument, it means there is superfluous data after the `:`.
+				err = &argumentNotFullyConsumedError{rest, arg}
+			} else {
+				// Otherwise, it is the same thing, but it may suggest that the user forgot to type `:`. The
+				// error type is semantically not the most appropriate, but it nicely mirrors what is done
+				// in compound atoms.
+				err = &notEnoughArgumentsError{verbatim{}}
+			}
+
+			if r.optional {
+				return &Parsed{source: r, err: err, RemoteName: conf.DefaultRemote, RemoteServer: remoteServer, Skipped: true}, nil
+			}
+
+			return nil, err
+		}
+	} else {
+		p, err = r.suffix.Parse(conf, cmd, servers, &restArgs, false)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(restArgs) != 0 {
+		return nil, &argumentNotFullyConsumedError{restArgs[0], arg}
+	}
+
+	// We defer the argument shifting so that code paths ignoring this atom can consume its arguments
+	// again.
+	if len(*args) > 0 {
+		*args = (*args)[1:]
+	}
+
+	return &Parsed{source: r, String: arg, RemoteName: remoteName, RemoteServer: remoteServer, RemoteObject: p, Skipped: skipped}, nil
+}
+
 // Render renders the atom's usage string.
 func (r remote) Render() string {
-	return RemoteColonOpt.Render() + r.suffix.Render()
+	suffix := r.suffix
+	if suffix == nil {
+		suffix = verbatim{}
+	}
+
+	var prefix Atom
+	prefix = compound{":", []Atom{r.atom, verbatim{""}}}
+	if r.optional {
+		prefix = prefix.Optional()
+	}
+
+	return prefix.Render() + suffix.Render()
 }
 
 // Remote prefixes the atom with a remote.
@@ -258,6 +728,27 @@ func (v verbatim) Optional(chain ...Atom) Atom {
 	return makeOptional(v, chain)
 }
 
+// Parse parses the atom.
+func (v verbatim) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+	if len(*args) == 0 {
+		return nil, &notEnoughArgumentsError{v}
+	}
+
+	arg := (*args)[0]
+	*args = (*args)[1:]
+
+	if arg != v.element {
+		expected := []string{}
+		if v.element != "" {
+			expected = append(expected, v.element)
+		}
+
+		return nil, &argumentMismatchError{arg, expected}
+	}
+
+	return &Parsed{source: v, String: arg}, nil
+}
+
 // Render renders the atom's usage string.
 func (v verbatim) Render() string {
 	return v.element
@@ -265,7 +756,7 @@ func (v verbatim) Render() string {
 
 // Remote prefixes the atom with a remote.
 func (v verbatim) Remote() Atom {
-	return remote{v}
+	return remote{Remote, v, true}
 }
 
 // A few strings used throughout the Incus client.
@@ -278,10 +769,12 @@ var (
 	BackupFile         = placeholder{i18n.G("backup file")}
 	Bucket             = placeholder{i18n.G("bucket")}
 	Client             = placeholder{i18n.G("client")}
+	CommandLine        = list{placeholder{i18n.G("command-line argument")}, 1, " "}
 	Device             = placeholder{i18n.G("device")}
-	Direction          = placeholder{i18n.G("direction")}
+	Direction          = alternative{[]Atom{verbatim{"ingress"}, verbatim{"egress"}}}
 	Directory          = placeholder{i18n.G("directory")}
 	Driver             = placeholder{i18n.G("driver")}
+	EndOfFlags         = hide{optional{verbatim{"--"}}, verbatim{"[flags] [--]"}}
 	Expiry             = placeholder{i18n.G("expiry")}
 	File               = placeholder{i18n.G("file")}
 	Filter             = placeholder{i18n.G("filter")}
@@ -308,9 +801,12 @@ var (
 	Query              = placeholder{i18n.G("query")}
 	Record             = placeholder{i18n.G("record")}
 	Remote             = placeholder{i18n.G("remote")}
-	RemoteColonOpt     = Colon(Remote).Optional()
+	RemoteColon        = remote{Remote, nil, false}
+	RemoteColonOpt     = remote{Remote, nil, true}
+	RemoteImage        = compound{":", []Atom{optional{Remote}, Image}}
 	Role               = placeholder{i18n.G("role")}
 	Snapshot           = placeholder{i18n.G("snapshot")}
+	StorageVolumeType  = hide{alternative{[]Atom{verbatim{"custom"}, verbatim{"image"}, verbatim{"container"}, verbatim{"virtual-machine"}}}, placeholder{i18n.G("type")}}
 	SymlinkTargetPath  = placeholder{i18n.G("symlink target path")}
 	Tarball            = placeholder{i18n.G("tarball")}
 	Template           = placeholder{i18n.G("template")}
@@ -365,11 +861,6 @@ func Colon(a Atom) Atom {
 	return compound{":", []Atom{a, verbatim{""}}}
 }
 
-// Dash builds an optional flag from a string.
-func Dash(flag string) Atom {
-	return verbatim{"--" + flag}.Optional()
-}
-
 // MakePath builds an atom compound separated by `/`.
 func MakePath(atoms ...Atom) Atom {
 	return compound{"/", atoms}
@@ -380,6 +871,25 @@ func Placeholder(element string) placeholder {
 	return placeholder{element}
 }
 
-// Flags is an atom to be deleted in the future indicating to cobra that command-line flags should
-// be where this atom is put. It will be replaced with something more correct semantically.
-var Flags = verbatim{"flags"}.Optional()
+// Verbatim builds a verbatim atom from a string.
+func Verbatim(element string) verbatim {
+	return verbatim{element}
+}
+
+// Sequence builds a space-separated sequence of atoms.
+func Sequence(atoms ...Atom) Atom {
+	return compound{" ", atoms}
+}
+
+// Flag builds a flag atom from a string.
+func Flag(name string) Atom {
+	return flag{name}
+}
+
+// MakeRemote transforms an atom into a remote.
+func MakeRemote(atom Atom, optional bool) remote {
+	return remote{atom, nil, optional}
+}
+
+// Usage is the type of CLI usages.
+type Usage []Atom

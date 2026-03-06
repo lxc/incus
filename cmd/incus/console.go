@@ -35,10 +35,12 @@ type cmdConsole struct {
 	flagType    string
 }
 
+var cmdConsoleUsage = u.Usage{u.Instance.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConsole) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("console", u.Instance.Remote())
+	cmd.Use = cli.U("console", cmdConsoleUsage...)
 	cmd.Short = i18n.G("Attach to instance consoles")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Attach to instance consoles
@@ -108,31 +110,20 @@ func (er stdinMirror) Read(p []byte) (int, error) {
 
 // Run runs the actual command logic.
 func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
+	parsed, err := cmdConsoleUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
 
 	// Validate flags.
 	if !slices.Contains([]string{"console", "vga"}, c.flagType) {
 		return fmt.Errorf(i18n.G("Unknown output type %q"), c.flagType)
 	}
 
-	// Connect to the daemon.
-	remote, name, err := conf.ParseRemote(args[0])
-	if err != nil {
-		return err
-	}
-
-	d, err := conf.GetInstanceServer(remote)
-	if err != nil {
-		return err
-	}
-
-	return c.console(d, name)
+	return c.console(d, instanceName)
 }
 
 func (c *cmdConsole) console(d incus.InstanceServer, name string) error {

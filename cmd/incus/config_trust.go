@@ -86,10 +86,12 @@ type cmdConfigTrustAdd struct {
 	flagRestricted bool
 }
 
+var cmdConfigTrustAddUsage = u.Usage{u.NewName(u.Client).Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("add", u.NewName(u.Client).Remote())
+	cmd.Use = cli.U("add", cmdConfigTrustAddUsage...)
 	cmd.Short = i18n.G("Add new trusted client")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add new trusted client
@@ -107,27 +109,18 @@ This will issue a trust token to be used by the client to add itself to the trus
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustAdd) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote.
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTrustAddUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-	if resource.name == "" {
-		return errors.New(i18n.G("A client name must be provided"))
-	}
+	d := parsed[0].RemoteServer
+	clientName := parsed[0].RemoteObject.String
 
 	// Prepare the request.
 	cert := api.CertificatesPost{}
 	cert.Token = true
-	cert.Name = resource.name
+	cert.Name = clientName
 	cert.Type = api.CertificateTypeClient
 	cert.Restricted = c.flagRestricted
 
@@ -136,7 +129,7 @@ func (c *cmdConfigTrustAdd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the token.
-	op, err := resource.server.CreateCertificateToken(cert)
+	op, err := d.CreateCertificateToken(cert)
 	if err != nil {
 		return err
 	}
@@ -169,10 +162,12 @@ type cmdConfigTrustAddCertificate struct {
 	flagDescription string
 }
 
+var cmdConfigTrustAddCertificateUsage = u.Usage{u.RemoteColonOpt, u.Placeholder(i18n.G("cert.crt"))}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustAddCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("add-certificate", u.RemoteColonOpt, u.Placeholder(i18n.G("cert.crt")))
+	cmd.Use = cli.U("add-certificate", cmdConfigTrustAddCertificateUsage...)
 	cmd.Short = i18n.G("Add new trusted client certificate")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Add new trusted client certificate
@@ -195,50 +190,35 @@ The following certificate types are supported:
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustAddCertificate) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 2)
-	if exit {
+	parsed, err := cmdConfigTrustAddCertificateUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	certPath := parsed[1].String
 
 	// Validate flags.
 	if !slices.Contains([]string{"client", "metrics"}, c.flagType) {
 		return fmt.Errorf(i18n.G("Unknown certificate type %q"), c.flagType)
 	}
 
-	// Parse remote
-	remote := ""
-	path := ""
-	if len(args) > 1 {
-		remote = args[0]
-		path = args[1]
-	} else {
-		path = args[0]
+	if certPath == "-" {
+		certPath = "/dev/stdin"
 	}
-
-	if path == "-" {
-		path = "/dev/stdin"
-	}
-
-	resources, err := c.global.parseServers(remote)
-	if err != nil {
-		return err
-	}
-
-	resource := resources[0]
 
 	// Check that the path exists.
-	if !util.PathExists(path) {
-		return fmt.Errorf(i18n.G("Provided certificate path doesn't exist: %s"), path)
+	if !util.PathExists(certPath) {
+		return fmt.Errorf(i18n.G("Provided certificate path doesn't exist: %s"), certPath)
 	}
 
 	// Validate server support for metrics.
-	if c.flagType == "metrics" && !resource.server.HasExtension("metrics") {
+	if c.flagType == "metrics" && !d.HasExtension("metrics") {
 		return errors.New("The server doesn't implement metrics")
 	}
 
 	// Load the certificate.
-	x509Cert, err := localtls.ReadCert(path)
+	x509Cert, err := localtls.ReadCert(certPath)
 	if err != nil {
 		return err
 	}
@@ -247,7 +227,7 @@ func (c *cmdConfigTrustAddCertificate) Run(cmd *cobra.Command, args []string) er
 	if c.flagName != "" {
 		name = c.flagName
 	} else {
-		name = filepath.Base(path)
+		name = filepath.Base(certPath)
 	}
 
 	// Add trust relationship.
@@ -268,7 +248,7 @@ func (c *cmdConfigTrustAddCertificate) Run(cmd *cobra.Command, args []string) er
 		cert.Projects = strings.Split(c.flagProjects, ",")
 	}
 
-	return resource.server.CreateCertificate(cert)
+	return d.CreateCertificate(cert)
 }
 
 // Edit.
@@ -278,10 +258,12 @@ type cmdConfigTrustEdit struct {
 	configTrust *cmdConfigTrust
 }
 
+var cmdConfigTrustEditUsage = u.Usage{u.Fingerprint.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("edit", u.Fingerprint.Remote())
+	cmd.Use = cli.U("edit", cmdConfigTrustEditUsage...)
 	cmd.Short = i18n.G("Edit trust configurations as YAML")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Edit trust configurations as YAML`))
@@ -301,23 +283,13 @@ func (c *cmdConfigTrustEdit) helpTemplate() string {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustEdit) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTrustEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing certificate fingerprint"))
-	}
+	d := parsed[0].RemoteServer
+	fingerprint := parsed[0].RemoteObject.String
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
@@ -332,11 +304,11 @@ func (c *cmdConfigTrustEdit) Run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		return resource.server.UpdateCertificate(resource.name, newdata, "")
+		return d.UpdateCertificate(fingerprint, newdata, "")
 	}
 
 	// Extract the current value
-	cert, etag, err := resource.server.GetCertificate(resource.name)
+	cert, etag, err := d.GetCertificate(fingerprint)
 	if err != nil {
 		return err
 	}
@@ -357,7 +329,7 @@ func (c *cmdConfigTrustEdit) Run(cmd *cobra.Command, args []string) error {
 		newdata := api.CertificatePut{}
 		err = yaml.Unmarshal(content, &newdata)
 		if err == nil {
-			err = resource.server.UpdateCertificate(resource.name, newdata, etag)
+			err = d.UpdateCertificate(fingerprint, newdata, etag)
 		}
 
 		// Respawn the editor
@@ -404,10 +376,12 @@ type rowData struct {
 	TLSCert *x509.Certificate
 }
 
+var cmdConfigTrustListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list", u.RemoteColonOpt)
+	cmd.Use = cli.U("list", cmdConfigTrustListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List trusted clients")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -523,11 +497,13 @@ func (c *cmdConfigTrustList) projectColumnData(rowData rowData) string {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustList) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 1)
-	if exit {
+	parsed, err := cmdConfigTrustListUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
 		return err
 	}
+
+	d := parsed[0].RemoteServer
+	filters := parsed[1].StringList
 
 	// Process the columns
 	columns, err := c.parseColumns()
@@ -535,29 +511,10 @@ func (c *cmdConfigTrustList) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Parse remote
-	remote := ""
-	if len(args) > 0 {
-		remote = args[0]
-	}
-
-	resources, err := c.global.parseServers(remote)
-	if err != nil {
-		return err
-	}
-
-	resource := resources[0]
-
-	// Process the filters
-	filters := []string{}
-	if len(args) > 1 {
-		filters = append(filters, args[1:]...)
-	}
-
 	filters = prepareCertificatesFilters(filters)
 
 	// List trust relationships
-	trust, err := resource.server.GetCertificatesWithFilter(filters)
+	trust, err := d.GetCertificatesWithFilter(filters)
 	if err != nil {
 		return err
 	}
@@ -609,10 +566,12 @@ type configTrustListTokenColumn struct {
 	Data func(*api.CertificateAddToken) string
 }
 
+var cmdConfigTrustListTokensUsage = u.Usage{u.RemoteColonOpt}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustListTokens) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("list-tokens", u.RemoteColonOpt)
+	cmd.Use = cli.U("list-tokens", cmdConfigTrustListTokensUsage...)
 	cmd.Short = i18n.G("List all active certificate add tokens")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List all active certificate add tokens
@@ -693,27 +652,15 @@ func (c *cmdConfigTrustListTokens) expiresAtColumnData(token *api.CertificateAdd
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustListTokens) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 0, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote.
-	remote := ""
-	if len(args) == 1 {
-		remote = args[0]
-	}
-
-	resources, err := c.global.parseServers(remote)
+	parsed, err := cmdConfigTrustListTokensUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	d := parsed[0].RemoteServer
 
 	// Get the certificate add tokens. Use default project as join tokens are created in default project.
-	ops, err := resource.server.UseProject(api.ProjectDefaultName).GetOperations()
+	ops, err := d.UseProject(api.ProjectDefaultName).GetOperations()
 	if err != nil {
 		return err
 	}
@@ -767,10 +714,12 @@ type cmdConfigTrustRemove struct {
 	configTrust *cmdConfigTrust
 }
 
+var cmdConfigTrustRemoveUsage = u.Usage{u.LegacyRemote(u.Fingerprint)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("remove", u.Fingerprint.Remote())
+	cmd.Use = cli.U("remove", cmdConfigTrustRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove trusted client")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
@@ -783,30 +732,17 @@ func (c *cmdConfigTrustRemove) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustRemove) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 2)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTrustRemoveUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-
-	// Support both legacy "<remote>: <fingerprint>" and current "<remote>:<fingerprint>".
-	var fingerprint string
-	if len(args) == 2 {
-		fingerprint = args[1]
-	} else {
-		fingerprint = resource.name
-	}
+	u.LegacyRemoteSynthesize(parsed[0])
+	d := parsed[0].RemoteServer
+	fingerprint := parsed[0].RemoteObject.String
 
 	// Remove trust relationship
-	return resource.server.DeleteCertificate(fingerprint)
+	return d.DeleteCertificate(fingerprint)
 }
 
 // List tokens.
@@ -816,10 +752,12 @@ type cmdConfigTrustRevokeToken struct {
 	configTrust *cmdConfigTrust
 }
 
+var cmdConfigTrustRevokeTokenUsage = u.Usage{u.LegacyRemote(u.Token)}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustRevokeToken) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("revoke-token", u.RemoteColonOpt, u.Token)
+	cmd.Use = cli.U("revoke-token", cmdConfigTrustRevokeTokenUsage...)
 	cmd.Short = i18n.G("Revoke certificate add token")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Revoke certificate add token`))
@@ -831,21 +769,18 @@ func (c *cmdConfigTrustRevokeToken) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustRevokeToken) Run(cmd *cobra.Command, args []string) error {
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTrustRevokeTokenUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
+	u.LegacyRemoteSynthesize(parsed[0])
+	d := parsed[0].RemoteServer
+	remoteName := parsed[0].RemoteName
+	token := parsed[0].RemoteObject.String
 
 	// Get the certificate add tokens. Use default project as certificate add tokens are created in default project.
-	ops, err := resource.server.UseProject(api.ProjectDefaultName).GetOperations()
+	ops, err := d.UseProject(api.ProjectDefaultName).GetOperations()
 	if err != nil {
 		return err
 	}
@@ -864,22 +799,22 @@ func (c *cmdConfigTrustRevokeToken) Run(cmd *cobra.Command, args []string) error
 			continue // Operation is not a valid certificate add token operation.
 		}
 
-		if joinToken.ClientName == resource.name {
+		if joinToken.ClientName == token {
 			// Delete the operation
-			err = resource.server.DeleteOperation(op.ID)
+			err = d.DeleteOperation(op.ID)
 			if err != nil {
 				return err
 			}
 
 			if !c.global.flagQuiet {
-				fmt.Printf(i18n.G("Certificate add token for %s deleted")+"\n", resource.name)
+				fmt.Printf(i18n.G("Certificate add token for %s deleted")+"\n", token)
 			}
 
 			return nil
 		}
 	}
 
-	return fmt.Errorf(i18n.G("No certificate add token for member %s on remote: %s"), resource.name, resource.remote)
+	return fmt.Errorf(i18n.G("No certificate add token for member %s on remote: %s"), token, remoteName)
 }
 
 // Show.
@@ -889,10 +824,12 @@ type cmdConfigTrustShow struct {
 	configTrust *cmdConfigTrust
 }
 
+var cmdConfigTrustShowUsage = u.Usage{u.Fingerprint.Remote()}
+
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdConfigTrustShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("show", u.Fingerprint.Remote())
+	cmd.Use = cli.U("show", cmdConfigTrustShowUsage...)
 	cmd.Short = i18n.G("Show trust configurations")
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`Show trust configurations`))
@@ -904,27 +841,16 @@ func (c *cmdConfigTrustShow) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdConfigTrustShow) Run(cmd *cobra.Command, args []string) error {
-	// Quick checks.
-	exit, err := c.global.checkArgs(cmd, args, 1, 1)
-	if exit {
-		return err
-	}
-
-	// Parse remote
-	resources, err := c.global.parseServers(args[0])
+	parsed, err := cmdConfigTrustShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	resource := resources[0]
-	client := resource.server
-
-	if resource.name == "" {
-		return errors.New(i18n.G("Missing certificate fingerprint"))
-	}
+	d := parsed[0].RemoteServer
+	fingerprint := parsed[0].RemoteObject.String
 
 	// Show the certificate configuration
-	cert, _, err := client.GetCertificate(resource.name)
+	cert, _, err := d.GetCertificate(fingerprint)
 	if err != nil {
 		return err
 	}
