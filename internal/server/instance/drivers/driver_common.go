@@ -660,7 +660,6 @@ func (d *common) restartCommon(inst instance.Instance, timeout time.Duration) er
 			Profiles:     inst.Profiles(),
 			Project:      inst.Project().Name,
 			Type:         inst.Type(),
-			IsSnapshot:   inst.IsSnapshot(),
 		}
 
 		err := inst.Update(args, false)
@@ -819,8 +818,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		Name:         inst.Name() + internalInstance.SnapshotDelimiter + name,
 		Profiles:     inst.Profiles(),
 		Stateful:     stateful,
-		IsSnapshot:   true,
-		Snapshot: db.SnapshotArgs{
+		Snapshot: &db.SnapshotArgs{
 			ExpiryDate:  expiry,
 			Description: description,
 		},

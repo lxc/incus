@@ -42,8 +42,7 @@ type InstanceArgs struct {
 	Name         string
 	Profiles     []api.Profile
 	Stateful     bool
-	IsSnapshot   bool
-	Snapshot     SnapshotArgs
+	Snapshot     *SnapshotArgs
 }
 
 // GetInstanceNames returns the names of all containers the given project.
@@ -332,7 +331,7 @@ func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[
 		}
 
 		inst := instances[ID]
-		inst.Snapshot = SnapshotArgs{
+		inst.Snapshot = &SnapshotArgs{
 			Description: description,
 			ExpiryDate:  expiryDate,
 		}
@@ -655,7 +654,6 @@ func (c *ClusterTx) InstancesToInstanceArgs(ctx context.Context, fillProfiles bo
 			Stateful:     instance.Stateful,
 			LastUsedDate: instance.LastUseDate.Time,
 			Description:  instance.Description,
-			IsSnapshot:   instance.Snapshot,
 		}
 
 		instanceArgs[instance.ID] = args

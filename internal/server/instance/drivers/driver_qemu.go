@@ -175,12 +175,12 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 			node:         args.Node,
 			profiles:     args.Profiles,
 			project:      p,
-			isSnapshot:   args.IsSnapshot,
+			isSnapshot:   args.Snapshot != nil,
 			stateful:     args.Stateful,
 		},
 	}
 
-	if args.IsSnapshot {
+	if args.Snapshot != nil {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
@@ -233,12 +233,12 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDevi
 			node:         args.Node,
 			profiles:     args.Profiles,
 			project:      p,
-			isSnapshot:   args.IsSnapshot,
+			isSnapshot:   args.Snapshot != nil,
 			stateful:     args.Stateful,
 		},
 	}
 
-	if args.IsSnapshot {
+	if args.Snapshot != nil {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
@@ -5957,11 +5957,6 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 				Profiles:     d.Profiles(),
 				Project:      d.Project().Name,
 				Type:         d.Type(),
-				IsSnapshot:   d.IsSnapshot(),
-				Snapshot: db.SnapshotArgs{
-					Description: d.SnapshotDescription(),
-					ExpiryDate:  d.SnapshotExpiryDate(),
-				},
 			}
 
 			err := d.Update(args, false)
@@ -6028,11 +6023,6 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 			Profiles:     source.Profiles(),
 			Project:      source.Project().Name,
 			Type:         source.Type(),
-			IsSnapshot:   source.IsSnapshot(),
-			Snapshot: db.SnapshotArgs{
-				Description: source.SnapshotDescription(),
-				ExpiryDate:  source.SnapshotExpiryDate(),
-			},
 		}
 	} else {
 		args = db.InstanceArgs{
@@ -6044,11 +6034,6 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 			Profiles:     d.Profiles(),
 			Project:      d.Project().Name,
 			Type:         d.Type(),
-			IsSnapshot:   d.IsSnapshot(),
-			Snapshot: db.SnapshotArgs{
-				Description: d.SnapshotDescription(),
-				ExpiryDate:  d.SnapshotExpiryDate(),
-			},
 		}
 
 		args.Config["volatile.uuid.generation"] = source.LocalConfig()["volatile.uuid.generation"]

@@ -194,12 +194,12 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDevic
 			node:         args.Node,
 			profiles:     args.Profiles,
 			project:      p,
-			isSnapshot:   args.IsSnapshot,
+			isSnapshot:   args.Snapshot != nil,
 			stateful:     args.Stateful,
 		},
 	}
 
-	if args.IsSnapshot {
+	if args.Snapshot != nil {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
@@ -392,12 +392,12 @@ func lxcInstantiate(s *state.State, args db.InstanceArgs, expandedDevices device
 			node:         args.Node,
 			profiles:     args.Profiles,
 			project:      p,
-			isSnapshot:   args.IsSnapshot,
+			isSnapshot:   args.Snapshot != nil,
 			stateful:     args.Stateful,
 		},
 	}
 
-	if args.IsSnapshot {
+	if args.Snapshot != nil {
 		d.snapshotDescription = args.Snapshot.Description
 		d.snapshotExpiryDate = args.Snapshot.ExpiryDate
 	}
@@ -4093,8 +4093,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 				Profiles:     d.Profiles(),
 				Project:      d.Project().Name,
 				Type:         d.Type(),
-				IsSnapshot:   d.IsSnapshot(),
-				Snapshot: db.SnapshotArgs{
+				Snapshot: &db.SnapshotArgs{
 					Description: d.SnapshotDescription(),
 					ExpiryDate:  d.SnapshotExpiryDate(),
 				},
@@ -4201,11 +4200,6 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 			Profiles:     sourceContainer.Profiles(),
 			Project:      sourceContainer.Project().Name,
 			Type:         sourceContainer.Type(),
-			IsSnapshot:   sourceContainer.IsSnapshot(),
-			Snapshot: db.SnapshotArgs{
-				Description: sourceContainer.SnapshotDescription(),
-				ExpiryDate:  sourceContainer.SnapshotExpiryDate(),
-			},
 		}
 	} else {
 		args = db.InstanceArgs{
@@ -4217,11 +4211,6 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 			Profiles:     d.Profiles(),
 			Project:      d.Project().Name,
 			Type:         d.Type(),
-			IsSnapshot:   d.IsSnapshot(),
-			Snapshot: db.SnapshotArgs{
-				Description: d.SnapshotDescription(),
-				ExpiryDate:  d.SnapshotExpiryDate(),
-			},
 		}
 
 		args.Config["volatile.uuid.generation"] = sourceContainer.LocalConfig()["volatile.uuid.generation"]
