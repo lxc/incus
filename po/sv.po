@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-05 12:55+0000\n"
 "PO-Revision-Date: 2026-03-06 07:19+0000\n"
-"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -9680,8 +9680,7 @@ msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
 #: cmd/incus/snapshot.go:524
 #, fuzzy
 msgid "Whether or not to restore the instance's disk only"
-msgstr ""
-"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/snapshot.go:523
 msgid ""
