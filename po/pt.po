@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-05 12:55+0000\n"
-"PO-Revision-Date: 2026-03-06 07:08+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-03-07 09:09+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -688,9 +688,8 @@ msgid "- Port %d (%s)"
 msgstr "- Porto %d (%s)"
 
 #: cmd/incus/warning.go:374
-#, fuzzy
 msgid "--all cannot be used together with other arguments"
-msgstr "--target não pode ser usado com instâncias"
+msgstr "--all não pode ser usado juntamente com outros argumentos"
 
 #: cmd/incus/action.go:257
 msgid "--console can't be used while forcing instance shutdown"
@@ -718,9 +717,8 @@ msgid "--network-port can't be used without --network-address"
 msgstr "--network-port não pode ser usado sem --network-address"
 
 #: cmd/incus/profile.go:233
-#, fuzzy
 msgid "--no-profiles cannot be used together with other arguments"
-msgstr "--no-profiles não pode ser usado com --refresh"
+msgstr "--no-profiles não pode ser usado juntamente com outros argumentos"
 
 #: cmd/incus/copy.go:109
 msgid "--no-profiles cannot be used with --refresh"
@@ -770,7 +768,7 @@ msgstr "NOMES ALTERNATIVOS"
 
 #: cmd/incus/query.go:31
 msgid "API path"
-msgstr ""
+msgstr "Caminho do API"
 
 #: cmd/incus/list.go:800
 msgid "APP"
@@ -995,9 +993,9 @@ msgstr ""
 "continuar?"
 
 #: cmd/incus/profile.go:255
-#, fuzzy, c-format
+#, c-format
 msgid "All profiles removed from %s"
-msgstr "Perfil %s removido de %s"
+msgstr "Todos os perfis removidos de %s"
 
 #: cmd/incus/storage_volume.go:1457 cmd/incus/storage_volume.go:3352
 msgid "All projects"
@@ -1012,9 +1010,9 @@ msgid "Alternative certificate name"
 msgstr "Nome de certificado alternativo"
 
 #: cmd/incus/file.go:1026
-#, fuzzy, c-format
+#, c-format
 msgid "An instance path is required for %s"
-msgstr "Algumas instâncias falharam a %s"
+msgstr "E necessário um caminho de instância para %s"
 
 #: cmd/incus/image.go:957 cmd/incus/info.go:502 cmd/incus/info.go:506
 #: cmd/incus/info.go:664
@@ -1280,7 +1278,7 @@ msgstr "Incapaz de unir endereço %q: %w"
 
 #: cmd/incus/file.go:759
 msgid "Can't override UID/GID in recursive mode without -p"
-msgstr ""
+msgstr "Não pode sobrepor UID/GID em modo recursivo sem -p"
 
 #: cmd/incus/move.go:116
 msgid "Can't override configuration or profiles in local rename"
@@ -1289,10 +1287,11 @@ msgstr "Incapaz de sobrepor configuração ou perfis em renomeação local"
 #: cmd/incus/file.go:746
 msgid "Can't override the target mode when performing a recursive transfer"
 msgstr ""
+"Não pode sobrepor o modo de alvo quando executa uma transferência recursiva"
 
 #: cmd/incus/move.go:112
 msgid "Can't perform local rename without a new instance name"
-msgstr ""
+msgstr "Não pode executar renomear local sem um nome de nova instância"
 
 #: cmd/incus/file.go:567 cmd/incus/storage_volume.go:2725
 msgid "Can't pull a directory without --recursive"
@@ -1363,9 +1362,8 @@ msgstr ""
 "encontrado em dispositivos de perfil"
 
 #: cmd/incus/utils.go:299
-#, fuzzy
 msgid "Cannot read the stdin twice"
-msgstr "Incapaz de ler de stdin: %w"
+msgstr "Não pode de ler o stdin duas vezes"
 
 #: cmd/incus/storage_volume.go:425
 msgid ""
@@ -1481,14 +1479,14 @@ msgid "Cluster group description"
 msgstr "Descrição do grupo de agrupamento"
 
 #: cmd/incus/cluster.go:1354
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster join token for %s deleted"
-msgstr "Testemunho de junção a agrupamento para %s:%s apagado"
+msgstr "Testemunho de junção a agrupamento para %s apagado"
 
 #: cmd/incus/cluster_group.go:155
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster member %s added to cluster groups %v"
-msgstr "Membro de agrupamento %s adicionado a grupos de agrupamento %s"
+msgstr "Membro de agrupamento %s adicionado a grupos de agrupamento %v"
 
 #: cmd/incus/cluster_group.go:811
 #, c-format
@@ -2400,13 +2398,13 @@ msgstr ""
 "individual. Sobreponha dispositivo ou modifique perfil em vez disto"
 
 #: cmd/incus/config_device.go:540
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Device from profile(s) cannot be removed from individual instance. Override "
 "device “%s” or modify profile instead"
 msgstr ""
 "O dispositivo do perfil(s) não pode ser removido da instância individual. "
-"Sobreponha o dispositivo ou modifique perfil em vez disto"
+"Sobreponha o dispositivo “%s” ou modifique perfil em vez disto"
 
 #: cmd/incus/config_device.go:281
 msgid "Device from profile(s) cannot be retrieved for individual instance"
@@ -2414,9 +2412,9 @@ msgstr ""
 "O dispositivo do perfil(s) não pode ser recuperado para instância individual"
 
 #: cmd/incus/config_device.go:510 cmd/incus/config_device.go:537
-#, fuzzy, c-format
+#, c-format
 msgid "Device “%s” doesn't exist"
-msgstr "Dispositivo não existe"
+msgstr "Dispositivo “%s” não existe"
 
 #: cmd/incus/info.go:281 cmd/incus/info.go:305
 #, c-format
@@ -3127,9 +3125,9 @@ msgid "Failed accepting channel client %q: %v"
 msgstr "Falha ao aceitar cliente de canal %q: %v"
 
 #: cmd/incus/delete.go:93
-#, fuzzy, c-format
+#, c-format
 msgid "Failed checking instance %s exists: %w"
-msgstr "Falha ao verificar se instância existe \"%s:%s\": %w"
+msgstr "Falha ao verificar se instância %s existe: %w"
 
 #: cmd/incus/utils.go:376
 #, c-format
@@ -3147,9 +3145,9 @@ msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Falha ao ligar a instância SFTP para cliente %q: %v"
 
 #: cmd/incus/storage_volume.go:2943
-#, fuzzy, c-format
+#, c-format
 msgid "Failed connecting to instance SFTP: %s %w"
-msgstr "Falhada ligação a instância SFTP: %w"
+msgstr "Falhada ligação a instância SFTP: %s %w"
 
 #: cmd/incus/file.go:1044 cmd/incus/storage_volume.go:2503
 #: cmd/incus/storage_volume.go:2688 cmd/incus/storage_volume.go:2873
@@ -3176,9 +3174,9 @@ msgstr ""
 "Falhou ao converter testemunho de operação para testemunho de junção: %w"
 
 #: cmd/incus/delete.go:143
-#, fuzzy, c-format
+#, c-format
 msgid "Failed deleting instance %s in project %q: %w"
-msgstr "Falhou ao apagar instância %q no projeto %q: %w"
+msgstr "Falhou ao apagar instância %s no projeto %q: %w"
 
 #: cmd/incus/storage_volume.go:513
 #, c-format
@@ -3706,7 +3704,7 @@ msgstr ""
 
 #: cmd/incus/image.go:1737
 msgid "Generate a metadata tarball"
-msgstr ""
+msgstr "Gerar um tarball de metadados"
 
 #: cmd/incus/image.go:1739
 msgid ""
@@ -3722,6 +3720,17 @@ msgid ""
 " - Architecture\n"
 " - Description\n"
 msgstr ""
+"Gerar um tarball de metadados\n"
+"\n"
+"Este comando produz um tarball incus.tar.xz para suar durante a importação "
+"com uma imagem de disco QCOW2 ou squashfs existente.\n"
+"\n"
+"Este comando vai perguntar por todos os campos do tarball de metadados:\n"
+" - Nome do sistema operativo\n"
+" - Lançamento \n"
+" - Variante\n"
+" - Arquitectura\n"
+" - Descrição\n"
 
 #: cmd/incus/manpage.go:27 cmd/incus/manpage.go:28
 msgid "Generate manpages for all commands"
@@ -3983,9 +3992,8 @@ msgid "IOMMU group: %v"
 msgstr "Grupo IOMMU: %v"
 
 #: cmd/incus/remote.go:121
-#, fuzzy
 msgid "IP"
-msgstr "IPV4"
+msgstr "IP"
 
 #: cmd/incus/network.go:1284
 msgid "IP ADDRESS"
@@ -4032,6 +4040,8 @@ msgstr "Se uma instância estiver a correr, pára-a e depois recompila-a"
 msgid ""
 "If the command is valid, explain its parsed arguments instead of running it"
 msgstr ""
+"Se o comando for válido, explica os seus argumentos analisados em vez de os "
+"executar"
 
 #: cmd/incus/image.go:683 cmd/incus/publish.go:47
 msgid "If the image alias already exists, delete and create a new one"
@@ -6432,6 +6442,9 @@ msgid ""
 "Mount files from custom storage volumes.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
 msgstr ""
+"Monta ficheiros a partir de volumes de armazenamento personalizados.\n"
+"Se nenhum caminho alvo for fornecido, arranca uma escuta SSH SFTP em vez "
+"disso."
 
 #: cmd/incus/file.go:961
 msgid "Mount files from instances"
@@ -6442,6 +6455,9 @@ msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
 msgstr ""
+"Monta ficheiros a partir de instâncias.\n"
+"Se nenhum caminho alvo for fornecido, arranca uma escuta SSH SFTP em vez "
+"disso."
 
 #: cmd/incus/storage_volume.go:1691 cmd/incus/storage_volume.go:1692
 msgid "Move custom storage volumes between pools"
@@ -6782,9 +6798,9 @@ msgid "Network usage:"
 msgstr "Utilização de rede:"
 
 #: cmd/incus/network_zone.go:451
-#, fuzzy, c-format
+#, c-format
 msgid "Network zone %s created"
-msgstr "Zona de Rede %s criada"
+msgstr "Zona de rede %s criada"
 
 #: cmd/incus/network_zone.go:1122
 #, c-format
@@ -7493,9 +7509,8 @@ msgid "Remove all ports that match"
 msgstr "Remove todos os portos que correspondem"
 
 #: cmd/incus/profile.go:202
-#, fuzzy
 msgid "Remove all profiles from the instance"
-msgstr "Remove perfis de instâncias"
+msgstr "Remove todos os perfis da instância"
 
 #: cmd/incus/network_acl.go:983
 msgid "Remove all rules that match"
@@ -8209,6 +8224,8 @@ msgid ""
 "Set the file's perms on push (in recursive mode, sets the target directory's "
 "permissions if it doesn't exist)"
 msgstr ""
+"Define as permissões do ficheiro ao empurrar (em modo recursivo, define as "
+"permissões do directório alvo se este não existir)"
 
 #: cmd/incus/file.go:114 cmd/incus/storage_volume.go:2201
 msgid "Set the file's uid on create"
@@ -8223,12 +8240,16 @@ msgid ""
 "Set the files' GIDs on push (in recursive mode, only sets the target "
 "directory's GID if it doesn't exist and -p is used)"
 msgstr ""
+"Define as GIDs dos ficheiros ao empurrar (em modo recursivo, apenas define a "
+"GID do directório alvo se este não existir e se -p for usado)"
 
 #: cmd/incus/file.go:705
 msgid ""
 "Set the files' UIDs on push (in recursive mode, only sets the target "
 "directory's UID if it doesn't exist and -p is used)"
 msgstr ""
+"Define as UIDs dos ficheiros ao empurrar (em modo recursivo, apenas define a "
+"UID do directório alvo se este não existir e se -p for usado)"
 
 #: cmd/incus/cluster_group.go:906
 msgid "Set the key as a cluster group property"
@@ -8642,9 +8663,9 @@ msgid "Stopping instance failed!"
 msgstr "Falhou a paragem da instância!"
 
 #: cmd/incus/delete.go:114
-#, fuzzy, c-format
+#, c-format
 msgid "Stopping the instance %s failed: %s"
-msgstr "Falhou a paragem da instância: %s"
+msgstr "Falhou a paragem da instância %s: %s"
 
 #: cmd/incus/admin_init.go:58
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
@@ -8805,9 +8826,8 @@ msgid "Taken at"
 msgstr "Tomado em"
 
 #: cmd/incus/file.go:779
-#, fuzzy
 msgid "Target is not a directory"
-msgstr "%s não é um diretório"
+msgstr "Alvo não é um diretório"
 
 #: cmd/incus/cluster.go:1021
 msgid "Target isn't a cluster"
@@ -8929,10 +8949,10 @@ msgid "The following unknown volumes have been found:"
 msgstr "Os seguintes volumes desconhecidos foram encontrados:"
 
 #: cmd/incus/delete.go:98
-#, fuzzy, c-format
+#, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
-"A instância está atualmente em execução, pare-a primeiro ou passe --force"
+"A instância %s está atualmente em execução, pare-a primeiro ou passe --force"
 
 #: cmd/incus/publish.go:92
 msgid ""
@@ -8996,9 +9016,9 @@ msgid "The property %q does not exist on the instance %q: %v"
 msgstr "A propriedade %q não existe na instância %q: %v"
 
 #: cmd/incus/config.go:437
-#, fuzzy, c-format
+#, c-format
 msgid "The property %q does not exist on the instance snapshot %s: %v"
-msgstr "A propriedade %q não existe no instantâneo da instância %s/%s: %v"
+msgstr "A propriedade %q não existe no instantâneo da instância %s: %v"
 
 #: cmd/incus/network_load_balancer.go:440
 #, c-format
@@ -9125,30 +9145,32 @@ msgid "The server doesn't implement the newer v2 resources API"
 msgstr "O servidor não implementa a nova API de recursos v2"
 
 #: cmd/incus/network.go:543
-#, fuzzy, c-format
+#, c-format
 msgid "The specified NIC does not point to the given network (found %s)"
-msgstr "O dispositivo especificado não corresponde à rede"
+msgstr "O NIC especificado não aponta para a rede dada (encontrado %s)"
 
 #: cmd/incus/network.go:539
-#, fuzzy, c-format
+#, c-format
 msgid "The specified device is not a NIC (%s device)"
-msgstr "O dispositivo especificado não existe"
+msgstr "O dispositivo especificado não é um NIC (dispositivo %s)"
 
 #: cmd/incus/storage_volume.go:749
-#, fuzzy, c-format
+#, c-format
 msgid "The specified device is not a disk (%s device)"
-msgstr "O dispositivo especificado não existe"
+msgstr "O dispositivo especificado não é um disco (dispositivo %s)"
 
 #: cmd/incus/storage_volume.go:757
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
-msgstr "A propriedade %q não existe no volume do pool de armazenamento %q: %v"
+msgstr ""
+"O disco especificado não aponta ao volume de armazenamento dado (encontrado "
+"%s)"
 
 #: cmd/incus/storage_volume.go:753
 #, c-format
 msgid "The specified disk is not in the given pool (found %s)"
-msgstr ""
+msgstr "O disco especificado não está no pool dado (encontrado %s)"
 
 #: cmd/incus/file.go:116 cmd/incus/storage_volume.go:2203
 msgid "The type to create (file, symlink, or directory)"
@@ -9976,25 +9998,23 @@ msgstr "aplicação"
 
 #: cmd/incus/cluster.go:1370 cmd/incus/config_trust.go:165
 msgid "cert.crt"
-msgstr ""
+msgstr "cert.crt"
 
 #: cmd/incus/cluster.go:1370
 msgid "cert.key"
-msgstr ""
+msgstr "cert.key"
 
 #: cmd/incus/cluster.go:986
 msgid "cluster"
-msgstr ""
+msgstr "agrupamento"
 
 #: cmd/incus/alias.go:57
-#, fuzzy
 msgid "command"
-msgstr "Comandos de depuração"
+msgstr "comando"
 
 #: cmd/incus/wait.go:24
-#, fuzzy
 msgid "condition"
-msgstr "Descrição da zona"
+msgstr "condição"
 
 #: cmd/incus/project.go:686 cmd/incus/remote.go:1036
 msgid "current"
@@ -10233,7 +10253,6 @@ msgstr ""
 "\t   Para criar um link simbólico /bar na instância foo cujo alvo é baz."
 
 #: cmd/incus/file.go:965
-#, fuzzy
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -10242,7 +10261,11 @@ msgid ""
 "   To start an SSH SFTP listener for the root filesystem of instance foo."
 msgstr ""
 "incus file mount foo/root fooroot\n"
-"   Para montar /root da instância foo no directório fooroot local."
+"   Para montar /root da instância foo no directório fooroot local.\n"
+"\n"
+"incus file mount foo\n"
+"   Para arrancar uma escuta SSH SFTP para o sistema de ficheiros raiz da "
+"instância foo."
 
 #: cmd/incus/file.go:450
 msgid ""
@@ -10393,7 +10416,6 @@ msgstr ""
 "    Apenas mostra eventos de ciclo de vida."
 
 #: cmd/incus/move.go:51
-#, fuzzy
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -10409,11 +10431,7 @@ msgstr ""
 "destino for diferente.\n"
 "\n"
 "incus move <nome antigo> <nome novo> [--instance-only]\n"
-"    Renomeia uma instância local.\n"
-"\n"
-"incus move <instância>/<nome antigo instantâneo> <instância>/<nome novo "
-"instantâneo>\n"
-"    Renomeia um instantâneo."
+"    Renomeia uma instância local."
 
 #: cmd/incus/network_acl.go:366
 msgid ""
@@ -10571,7 +10589,6 @@ msgstr ""
 "    Mostra detalhes desse UUID de operação"
 
 #: cmd/incus/profile.go:191
-#, fuzzy
 msgid ""
 "incus profile assign foo default,bar\n"
 "    Set the profiles for \"foo\" to \"default\" and \"bar\".\n"
@@ -10588,7 +10605,7 @@ msgstr ""
 "incus profile assign foo default\n"
 "    Redefine \"foo\" para apenas usar o perfil \"default\".\n"
 "\n"
-"incus profile assign foo ''\n"
+"incus profile assign foo --no-profiles\n"
 "    Remove todos os perfis de \"foo\""
 
 #: cmd/incus/profile.go:356
@@ -10853,6 +10870,13 @@ msgid ""
 "   To start an SSH SFTP listener for the storage volume myvolume from pool "
 "mypool."
 msgstr ""
+"incus storage volume file mount mypool myvolume localdir\n"
+"   Para montar o volume de armazenamento myvolume da pool mypool no "
+"directório local localdir.\n"
+"\n"
+"incus storage volume file mount mypool myvolume\n"
+"   Para arrancar uma escuta SSH SFTP par ao volume de armazenamento myvolume "
+"da pool mypool."
 
 #: cmd/incus/storage_volume.go:2837
 msgid ""
@@ -11015,9 +11039,8 @@ msgid "name"
 msgstr "nome"
 
 #: cmd/incus/network_peer.go:303
-#, fuzzy
 msgid "network or integration"
-msgstr "Lista integrações de rede"
+msgstr "rede ou integração"
 
 #: cmd/incus/config_trust.go:487 cmd/incus/image.go:935 cmd/incus/image.go:940
 #: cmd/incus/image.go:1155
@@ -11034,15 +11057,15 @@ msgstr "por favor use `incus profile`"
 
 #: cmd/incus/admin_init.go:35
 msgid "preseed.yaml"
-msgstr ""
+msgstr "preseed.yaml"
 
 #: cmd/incus/image.go:670
 msgid "rootfs tarball"
-msgstr ""
+msgstr "tarball de rootfs"
 
 #: cmd/incus/remote_unix.go:35
 msgid "socket file"
-msgstr ""
+msgstr "ficheiro socket"
 
 #: cmd/incus/storage.go:535
 msgid "space used"
@@ -11059,7 +11082,7 @@ msgstr "sshfs a montar %q em %q"
 
 #: cmd/incus/remote.go:121
 msgid "token"
-msgstr ""
+msgstr "testemunho"
 
 #: cmd/incus/storage.go:534
 msgid "total space"
