@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-05 12:55+0000\n"
 "PO-Revision-Date: 2026-03-06 07:15+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Last-Translator: Jan Mittelstädter <jan@mittelstaedter.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -1184,8 +1184,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
-"<Schlüssel>=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,<Schlüssel>"
+"=<Wert>: %s"
 
 #: cmd/incus/copy.go:137 cmd/incus/create.go:205 cmd/incus/move.go:251
 #: cmd/incus/network_integration.go:142 cmd/incus/project.go:172
@@ -1357,8 +1357,7 @@ msgstr "Kann uid/gid/mode im rekursiven Modus nicht bereitstellen"
 #: cmd/incus/config.go:625
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
-"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:75
 msgid "Can't use --auto and --preseed together"
@@ -1376,8 +1375,7 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:79
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
-"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/snapshot.go:128 cmd/incus/storage_volume.go:3172
 msgid "Can't use both --no-expiry and --expiry"
@@ -1405,8 +1403,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:391
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
-"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:405
 msgid "Cannot set --volume-only when copying a snapshot"
