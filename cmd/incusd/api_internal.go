@@ -630,7 +630,7 @@ func internalSQLSelect(tx *sql.Tx, query string, result *internalSQL.SQLResult) 
 
 	result.Columns, err = rows.Columns()
 	if err != nil {
-		return fmt.Errorf("Failed to fetch colume names: %w", err)
+		return fmt.Errorf("Failed to fetch column names: %w", err)
 	}
 
 	for rows.Next() {
