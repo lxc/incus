@@ -762,12 +762,12 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		args.Architecture = s.OS.Architectures[0]
 	}
 
-	err = ValidName(args.Name, args.IsSnapshot)
+	err = ValidName(args.Name, args.Snapshot != nil)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	if !args.IsSnapshot {
+	if args.Snapshot == nil {
 		// Generate a cloud-init instance-id if not provided.
 		//
 		// This is generated here rather than in startCommon as only new
@@ -857,7 +857,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 			return err
 		}
 
-		if args.IsSnapshot {
+		if args.Snapshot != nil {
 			parts := strings.SplitN(args.Name, instance.SnapshotDelimiter, 2)
 			instanceName := parts[0]
 			snapshotName := parts[1]
@@ -932,7 +932,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 			Name:         args.Name,
 			Node:         s.ServerName,
 			Type:         args.Type,
-			Snapshot:     args.IsSnapshot,
+			Snapshot:     args.Snapshot != nil,
 			Architecture: args.Architecture,
 			Ephemeral:    args.Ephemeral,
 			CreationDate: args.CreationDate,
@@ -1252,8 +1252,7 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 		Profiles:     profiles,
 		Stateful:     snap.GetStateful(),
 		Project:      inst.Project().Name,
-		IsSnapshot:   true,
-		Snapshot: db.SnapshotArgs{
+		Snapshot: &db.SnapshotArgs{
 			Description: snap.GetDescription(),
 			ExpiryDate:  time.Time{},
 		},

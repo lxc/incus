@@ -509,7 +509,6 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 		Ephemeral:    inst.IsEphemeral(),
 		Profiles:     inst.Profiles(),
 		Project:      inst.Project().Name,
-		IsSnapshot:   false,
 	}
 
 	err = inst.Update(args, false)

@@ -474,8 +474,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				Profiles:     srcSnap.Profiles(),
 				Project:      opts.targetInstance.Project,
 				CreationDate: srcSnap.CreationDate(),
-				IsSnapshot:   true,
-				Snapshot: db.SnapshotArgs{
+				Snapshot: &db.SnapshotArgs{
 					Description: srcSnap.SnapshotDescription(),
 					ExpiryDate:  srcSnap.SnapshotExpiryDate(),
 				},
