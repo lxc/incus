@@ -310,7 +310,7 @@ func (c *ClusterTx) instanceSnapshotFill(ctx context.Context, instanceArgs *map[
 
 		first = false
 
-		q.WriteString(fmt.Sprintf("%d", snapshotID))
+		fmt.Fprintf(&q, "%d", snapshotID)
 	}
 
 	q.WriteString(`)`)
