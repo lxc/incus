@@ -69,10 +69,11 @@ type cmdSnapshotCreate struct {
 	global   *cmdGlobal
 	snapshot *cmdSnapshot
 
-	flagStateful bool
-	flagNoExpiry bool
-	flagExpiry   string
-	flagReuse    bool
+	flagStateful    bool
+	flagNoExpiry    bool
+	flagExpiry      string
+	flagReuse       bool
+	flagDescription string
 }
 
 var cmdSnapshotCreateUsage = u.Usage{u.Instance.Remote(), u.NewName(u.Snapshot).Optional()}
@@ -98,7 +99,7 @@ incus snapshot create u1 snap0 < config.yaml
 	cmd.Flags().StringVar(&c.flagExpiry, "expiry", "", i18n.G("Expiry date or time span for the new snapshot"))
 	cmd.Flags().BoolVar(&c.flagNoExpiry, "no-expiry", false, i18n.G("Ignore any configured auto-expiry for the instance"))
 	cmd.Flags().BoolVar(&c.flagReuse, "reuse", false, i18n.G("If the snapshot name already exists, delete and create a new one"))
-
+	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Description for the new snapshot"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -161,6 +162,8 @@ func (c *cmdSnapshotCreate) Run(cmd *cobra.Command, args []string) error {
 		Name:     snapName,
 		Stateful: c.flagStateful,
 	}
+
+	req.Description = c.flagDescription
 
 	if c.flagNoExpiry {
 		req.ExpiresAt = &time.Time{}
@@ -320,7 +323,8 @@ Pre-defined column shorthand chars:
   n - Name
   T - Taken At
   E - Expires At
-  s - Stateful`))
+  s - Stateful
+  d - Description`))
 
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultSnapshotColumns, i18n.G("Columns")+"``")
@@ -342,7 +346,7 @@ Pre-defined column shorthand chars:
 	return cmd
 }
 
-const defaultSnapshotColumns = "nTEs"
+const defaultSnapshotColumns = "nTEsd"
 
 func (c *cmdSnapshotList) parseColumns() ([]snapshotColumn, error) {
 	columnsShorthandMap := map[rune]snapshotColumn{
@@ -350,6 +354,7 @@ func (c *cmdSnapshotList) parseColumns() ([]snapshotColumn, error) {
 		'T': {i18n.G("TAKEN AT"), c.takenAtColumnData},
 		'E': {i18n.G("EXPIRES AT"), c.expiresAtColumnData},
 		's': {i18n.G("STATEFUL"), c.statefulColumnData},
+		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
 	}
 
 	columnList := strings.Split(c.flagColumns, ",")
@@ -400,6 +405,10 @@ func (c *cmdSnapshotList) statefulColumnData(snapshot api.InstanceSnapshot) stri
 	}
 
 	return strStateful
+}
+
+func (c *cmdSnapshotList) descriptionColumnData(snapshot api.InstanceSnapshot) string {
+	return snapshot.SnapshotDescription
 }
 
 // Run runs the actual command logic.

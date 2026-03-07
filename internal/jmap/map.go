@@ -7,6 +7,11 @@ import (
 // Map represents a simple JSON map.
 type Map map[string]any
 
+// IsEmpty validate if has data on map.
+func (m Map) IsEmpty() bool {
+	return len(m) == 0
+}
+
 // GetString retrieves a value from the map as a string.
 func (m Map) GetString(key string) (string, error) {
 	val, ok := m[key]

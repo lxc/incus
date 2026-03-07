@@ -3033,3 +3033,7 @@ This adds `storage.logs_volume` alongside the existing `storage.backups_volume` 
 ## `instances_debug_repair`
 
 This adds a new API at `POST /1.0/instances/NAME/debug/repair` to trigger low-level repair actions.
+
+## `snapshot_description`
+
+This adds a `description` field to instance snapshot.

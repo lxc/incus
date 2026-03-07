@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-03-05 12:55+0000\n"
+"POT-Creation-Date: 2026-03-06 16:09-0500\n"
 "PO-Revision-Date: 2026-03-06 07:08+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1164,8 +1164,8 @@ msgstr "Salvaguardas:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,<chave>"
-"=<valor>: %s"
+"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,"
+"<chave>=<valor>: %s"
 
 #: cmd/incus/copy.go:137 cmd/incus/create.go:205 cmd/incus/move.go:251
 #: cmd/incus/network_integration.go:142 cmd/incus/project.go:172
@@ -1350,7 +1350,7 @@ msgstr "Não pode usar --minimal e --auto juntos"
 msgid "Can't use --minimal and --preseed together"
 msgstr "Não pode usar --minimal e --preseed juntos"
 
-#: cmd/incus/snapshot.go:128 cmd/incus/storage_volume.go:3172
+#: cmd/incus/snapshot.go:129 cmd/incus/storage_volume.go:3172
 msgid "Can't use both --no-expiry and --expiry"
 msgstr "Não pode usar ambos --no-expiry e --expiry"
 
@@ -1557,7 +1557,7 @@ msgstr "Ativado o agrupamento"
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
 #: cmd/incus/network_zone.go:123 cmd/incus/operation.go:152
 #: cmd/incus/profile.go:717 cmd/incus/project.go:529 cmd/incus/remote.go:988
-#: cmd/incus/snapshot.go:326 cmd/incus/storage.go:673
+#: cmd/incus/snapshot.go:330 cmd/incus/storage.go:673
 #: cmd/incus/storage_bucket.go:470 cmd/incus/storage_bucket.go:872
 #: cmd/incus/storage_volume.go:1456 cmd/incus/storage_volume.go:3351
 #: cmd/incus/top.go:67 cmd/incus/warning.go:100
@@ -1872,11 +1872,11 @@ msgstr "Cria ficheiros e directórios em instâncias"
 msgid "Create instance backup: %w"
 msgstr "Cria salvaguarda da instância: %w"
 
-#: cmd/incus/snapshot.go:85
+#: cmd/incus/snapshot.go:86
 msgid "Create instance snapshot"
 msgstr "Cria instantâneo de instância"
 
-#: cmd/incus/snapshot.go:86
+#: cmd/incus/snapshot.go:87
 msgid ""
 "Create instance snapshots\n"
 "\n"
@@ -1999,8 +1999,9 @@ msgstr "ENDEREÇOS DE ALVO PREDEFINIDOS"
 #: cmd/incus/network_load_balancer.go:151 cmd/incus/network_peer.go:140
 #: cmd/incus/network_zone.go:146 cmd/incus/network_zone.go:890
 #: cmd/incus/operation.go:169 cmd/incus/profile.go:745 cmd/incus/project.go:561
-#: cmd/incus/storage.go:700 cmd/incus/storage_bucket.go:487
-#: cmd/incus/storage_bucket.go:888 cmd/incus/storage_volume.go:1587
+#: cmd/incus/snapshot.go:357 cmd/incus/storage.go:700
+#: cmd/incus/storage_bucket.go:487 cmd/incus/storage_bucket.go:888
+#: cmd/incus/storage_volume.go:1587
 msgid "DESCRIPTION"
 msgstr "DESCRIÇÃO"
 
@@ -2091,7 +2092,7 @@ msgstr "Apaga imagens"
 msgid "Delete instance file templates"
 msgstr "Apaga modelos de ficheiro de instância"
 
-#: cmd/incus/snapshot.go:210 cmd/incus/snapshot.go:211
+#: cmd/incus/snapshot.go:213 cmd/incus/snapshot.go:214
 msgid "Delete instance snapshots"
 msgstr "Apaga instantâneos de instância"
 
@@ -2293,9 +2294,9 @@ msgstr "Apaga avisos"
 #: cmd/incus/remote.go:874 cmd/incus/remote.go:962 cmd/incus/remote.go:1139
 #: cmd/incus/remote.go:1223 cmd/incus/remote.go:1290 cmd/incus/remote.go:1340
 #: cmd/incus/remote_unix.go:42 cmd/incus/rename.go:23 cmd/incus/snapshot.go:34
-#: cmd/incus/snapshot.go:86 cmd/incus/snapshot.go:211 cmd/incus/snapshot.go:304
-#: cmd/incus/snapshot.go:457 cmd/incus/snapshot.go:514
-#: cmd/incus/snapshot.go:582 cmd/incus/storage.go:42 cmd/incus/storage.go:111
+#: cmd/incus/snapshot.go:87 cmd/incus/snapshot.go:214 cmd/incus/snapshot.go:307
+#: cmd/incus/snapshot.go:466 cmd/incus/snapshot.go:523
+#: cmd/incus/snapshot.go:591 cmd/incus/storage.go:42 cmd/incus/storage.go:111
 #: cmd/incus/storage.go:216 cmd/incus/storage.go:273 cmd/incus/storage.go:399
 #: cmd/incus/storage.go:476 cmd/incus/storage.go:651 cmd/incus/storage.go:809
 #: cmd/incus/storage.go:906 cmd/incus/storage.go:988
@@ -2330,6 +2331,11 @@ msgstr "Apaga avisos"
 #: cmd/incus/warning.go:304 cmd/incus/warning.go:353 cmd/incus/webui.go:22
 msgid "Description"
 msgstr "Descrição"
+
+#: cmd/incus/snapshot.go:102
+#, fuzzy
+msgid "Description for the new snapshot"
+msgstr "Data de validade ou tempo de envergadura para o novo instantâneo"
 
 #: cmd/incus/info.go:646 cmd/incus/storage_volume.go:1312
 #, c-format
@@ -2538,8 +2544,8 @@ msgstr ""
 "quais atributos da instância a exibir quando mostra em tabela ou em formato\n"
 "compactado.\n"
 "\n"
-"Os argumentos de coluna são pré-definidos de caracteres curtos (veja abaixo)"
-".\n"
+"Os argumentos de coluna são pré-definidos de caracteres curtos (veja "
+"abaixo).\n"
 "As vírgulas entre os caracteres curtos consecutivos são opcionais.\n"
 "\n"
 "Coluna de caracteres curtos:\n"
@@ -2620,7 +2626,7 @@ msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr "EXISTENTE: %q (backend=%q, source=%q)"
 
 #: cmd/incus/cluster.go:1174 cmd/incus/config_trust.go:613
-#: cmd/incus/snapshot.go:351 cmd/incus/storage_volume.go:3447
+#: cmd/incus/snapshot.go:355 cmd/incus/storage_volume.go:3447
 msgid "EXPIRES AT"
 msgstr "EXPIRA EM"
 
@@ -2748,7 +2754,7 @@ msgstr "Edita configurações de confiança como YAML"
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
 #: cmd/incus/network_zone.go:159 cmd/incus/operation.go:184
 #: cmd/incus/profile.go:761 cmd/incus/project.go:571 cmd/incus/remote.go:1015
-#: cmd/incus/snapshot.go:360 cmd/incus/storage.go:712
+#: cmd/incus/snapshot.go:365 cmd/incus/storage.go:712
 #: cmd/incus/storage_bucket.go:504 cmd/incus/storage_bucket.go:897
 #: cmd/incus/storage_volume.go:1615 cmd/incus/storage_volume.go:3455
 #: cmd/incus/top.go:95 cmd/incus/warning.go:239
@@ -2869,12 +2875,12 @@ msgstr "Erro ao remover definição: %v"
 msgid "Error updating template file: %s"
 msgstr "Erro ao atualizar ficheiro modelo: %s"
 
-#: cmd/incus/main.go:372
+#: cmd/incus/main.go:378
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr "Erro ao executar a expansão de alias: %s\n"
 
-#: cmd/incus/main.go:375
+#: cmd/incus/main.go:381
 #, c-format
 msgid "Error: %v\n"
 msgstr "Erro: %v\n"
@@ -3017,7 +3023,7 @@ msgstr "Expira: %s"
 msgid "Expires: never"
 msgstr "Expira: nunca"
 
-#: cmd/incus/snapshot.go:98 cmd/incus/storage_volume.go:3135
+#: cmd/incus/snapshot.go:99 cmd/incus/storage_volume.go:3135
 msgid "Expiry date or time span for the new snapshot"
 msgstr "Data de validade ou tempo de envergadura para o novo instantâneo"
 
@@ -3614,7 +3620,7 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117
 #: cmd/incus/network_zone.go:121 cmd/incus/network_zone.go:836
 #: cmd/incus/operation.go:150 cmd/incus/profile.go:718 cmd/incus/project.go:531
-#: cmd/incus/project.go:1022 cmd/incus/remote.go:987 cmd/incus/snapshot.go:325
+#: cmd/incus/project.go:1022 cmd/incus/remote.go:987 cmd/incus/snapshot.go:329
 #: cmd/incus/storage.go:675 cmd/incus/storage_bucket.go:468
 #: cmd/incus/storage_bucket.go:870 cmd/incus/storage_volume.go:1483
 #: cmd/incus/storage_volume.go:3364 cmd/incus/warning.go:101
@@ -3646,8 +3652,8 @@ msgstr "Formato (table|compact)"
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
-"...)"
+"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-"
+"zlib, ...)"
 
 #: cmd/incus/network.go:976
 msgid "Forward delay"
@@ -4037,11 +4043,11 @@ msgstr ""
 msgid "If the image alias already exists, delete and create a new one"
 msgstr "Se o alias da imagem já existir, apaga e cria um novo"
 
-#: cmd/incus/snapshot.go:100 cmd/incus/storage_volume.go:3137
+#: cmd/incus/snapshot.go:101 cmd/incus/storage_volume.go:3137
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr "Se o nome do instantâneo já existir, apaga e cria um novo"
 
-#: cmd/incus/main.go:479
+#: cmd/incus/main.go:485
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4049,7 +4055,7 @@ msgstr ""
 "Se esta é sua primeira vez a correr o Incus nesta máquina, você também deve "
 "correr: incus admin init"
 
-#: cmd/incus/snapshot.go:99
+#: cmd/incus/snapshot.go:100
 msgid "Ignore any configured auto-expiry for the instance"
 msgstr "Ignorar qualquer auto-expiração configurada para a instância"
 
@@ -4324,7 +4330,7 @@ msgid ""
 msgstr ""
 "Nome inválido em '%s', string vazia só é permitida ao definir Largura máxima"
 
-#: cmd/incus/main.go:575
+#: cmd/incus/main.go:581
 msgid "Invalid number of arguments"
 msgstr "Número inválido de argumentos"
 
@@ -5042,8 +5048,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5096,8 +5102,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5176,11 +5182,12 @@ msgstr "Lista dispositivos de instância"
 msgid "List instance file templates"
 msgstr "Lista modelos de ficheiro de instância"
 
-#: cmd/incus/snapshot.go:303
+#: cmd/incus/snapshot.go:306
 msgid "List instance snapshots"
 msgstr "Lista instantâneos de instância"
 
-#: cmd/incus/snapshot.go:304
+#: cmd/incus/snapshot.go:307
+#, fuzzy
 msgid ""
 "List instance snapshots\n"
 "\n"
@@ -5200,7 +5207,8 @@ msgid ""
 "  n - Name\n"
 "  T - Taken At\n"
 "  E - Expires At\n"
-"  s - Stateful"
+"  s - Stateful\n"
+"  d - Description"
 msgstr ""
 "Lista instantâneos de instância\n"
 "\n"
@@ -5213,8 +5221,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5356,8 +5364,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5387,8 +5395,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com "
-"\"[config:|devices:]key[:name][:maxWidth]\":\n"
+"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
+"[:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -5439,8 +5447,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5489,8 +5497,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5646,8 +5654,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5694,8 +5702,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5841,8 +5849,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5972,7 +5980,8 @@ msgstr "Localização: %s"
 
 #: cmd/incus/monitor.go:82
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
+msgstr ""
+"Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/info.go:925
 msgid "Log:"
@@ -6512,7 +6521,7 @@ msgstr "Tem de correr como root para importar do diretório"
 #: cmd/incus/network_peer.go:139 cmd/incus/network_zone.go:145
 #: cmd/incus/network_zone.go:889 cmd/incus/profile.go:743
 #: cmd/incus/project.go:554 cmd/incus/project.go:684 cmd/incus/remote.go:1001
-#: cmd/incus/snapshot.go:349 cmd/incus/storage.go:698
+#: cmd/incus/snapshot.go:353 cmd/incus/storage.go:698
 #: cmd/incus/storage_bucket.go:486 cmd/incus/storage_bucket.go:887
 #: cmd/incus/storage_volume.go:1586 cmd/incus/storage_volume.go:3445
 msgid "NAME"
@@ -6817,7 +6826,8 @@ msgstr "Nenhum %s backend de armazenamento disponível"
 #: cmd/incus/config_trust.go:817
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
+msgstr ""
+"Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1361
 #, c-format
@@ -7005,7 +7015,7 @@ msgstr "Pacotes enviados"
 msgid "Partitions:"
 msgstr "Partições:"
 
-#: cmd/incus/main.go:440 cmd/incus/remote.go:831
+#: cmd/incus/main.go:446 cmd/incus/remote.go:831
 #, c-format
 msgid "Password for %s: "
 msgstr "Palavra passe para %s : "
@@ -7546,7 +7556,7 @@ msgstr "Remove funções de um membro do agrupamento"
 msgid "Remove rules from an ACL"
 msgstr "Remove regras de um ACL"
 
-#: cmd/incus/snapshot.go:258
+#: cmd/incus/snapshot.go:261
 #, c-format
 msgid "Remove snapshot %s from %s (yes/no): "
 msgstr "Remover instantâneo %s de %s (sim/não): "
@@ -7572,7 +7582,7 @@ msgstr "Renomeia aliases"
 msgid "Rename custom storage volumes"
 msgstr "Renomeia volumes de armazenamento personalizados"
 
-#: cmd/incus/snapshot.go:456 cmd/incus/snapshot.go:457
+#: cmd/incus/snapshot.go:465 cmd/incus/snapshot.go:466
 msgid "Rename instance snapshots"
 msgstr "Renomeia instantâneos de instância"
 
@@ -7632,7 +7642,7 @@ msgid "Request a join token for adding a cluster member"
 msgstr ""
 "Requisita um testemunho de adesão para adicionar um membro ao agrupamento"
 
-#: cmd/incus/delete.go:42 cmd/incus/snapshot.go:214
+#: cmd/incus/delete.go:42 cmd/incus/snapshot.go:217
 msgid "Require user confirmation"
 msgstr "Requer confirmação do utilizador"
 
@@ -7648,7 +7658,7 @@ msgstr "Reinicia instâncias"
 msgid "Restore cluster member"
 msgstr "Restaura membro do agrupamento"
 
-#: cmd/incus/snapshot.go:514
+#: cmd/incus/snapshot.go:523
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
@@ -7661,7 +7671,7 @@ msgstr ""
 "restaurado.\n"
 "Se --diskonly for passado, então apenas o disco será restaurado."
 
-#: cmd/incus/snapshot.go:513
+#: cmd/incus/snapshot.go:522
 msgid "Restore instance snapshots"
 msgstr "Restaura instantâneos de instância"
 
@@ -7782,7 +7792,7 @@ msgstr "COMEÇADO EM"
 msgid "STATE"
 msgstr "ESTADO"
 
-#: cmd/incus/snapshot.go:352
+#: cmd/incus/snapshot.go:356
 msgid "STATEFUL"
 msgstr "STATEFUL"
 
@@ -8358,7 +8368,7 @@ msgstr "Mostra configurações de instância ou servidor"
 msgid "Show instance or server information"
 msgstr "Mostra informações de instância ou servidor"
 
-#: cmd/incus/snapshot.go:581 cmd/incus/snapshot.go:582
+#: cmd/incus/snapshot.go:590 cmd/incus/snapshot.go:591
 msgid "Show instance snapshot configuration"
 msgstr "Mostra configuração de instantâneo de instância"
 
@@ -8561,7 +8571,8 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:1907
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr ""
+"Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:809 cmd/incus/storage_volume.go:1349
 msgid "Snapshots:"
@@ -8779,7 +8790,7 @@ msgstr ""
 msgid "System:"
 msgstr "Sistema:"
 
-#: cmd/incus/snapshot.go:350 cmd/incus/storage_volume.go:3446
+#: cmd/incus/snapshot.go:354 cmd/incus/storage_volume.go:3446
 msgid "TAKEN AT"
 msgstr "TOMADO EM"
 
@@ -8943,7 +8954,8 @@ msgstr ""
 
 #: cmd/incus/create.go:428
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr ""
+"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/config.go:597
 msgid "The is no config key to set on an instance snapshot."
@@ -9154,7 +9166,7 @@ msgstr ""
 msgid "The type to create (file, symlink, or directory)"
 msgstr "O tipo a criar (ficheiro, link simbólico, ou diretório)"
 
-#: cmd/incus/main.go:363
+#: cmd/incus/main.go:369
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -9210,7 +9222,7 @@ msgstr "Para criar uma nova rede, use: incus network create"
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "Para separar da consola, pressione: <ctrl>+a q"
 
-#: cmd/incus/main.go:487
+#: cmd/incus/main.go:493
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -9387,7 +9399,7 @@ msgstr "Tipo de canal desconhecido para cliente %q: %s"
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
 #: cmd/incus/network_zone.go:165 cmd/incus/operation.go:190
 #: cmd/incus/profile.go:767 cmd/incus/project.go:577 cmd/incus/remote.go:1021
-#: cmd/incus/snapshot.go:366 cmd/incus/storage.go:718
+#: cmd/incus/snapshot.go:371 cmd/incus/storage.go:718
 #: cmd/incus/storage_bucket.go:510 cmd/incus/storage_bucket.go:903
 #: cmd/incus/storage_volume.go:1621 cmd/incus/storage_volume.go:3461
 #: cmd/incus/top.go:101 cmd/incus/warning.go:245
@@ -9417,7 +9429,8 @@ msgstr "Tipo de saída desconhecido %q"
 
 #: cmd/incus/cluster_group.go:984
 msgid "Unset a cluster group's configuration keys"
-msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr ""
+"Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:602
 msgid "Unset a cluster member's configuration keys"
@@ -9673,7 +9686,7 @@ msgid "User aborted configuration"
 msgstr "Configuração abortada pelo utilizador"
 
 #: cmd/incus/cluster.go:744 cmd/incus/delete.go:58 cmd/incus/project.go:232
-#: cmd/incus/snapshot.go:263
+#: cmd/incus/snapshot.go:266
 msgid "User aborted delete operation"
 msgstr "Operação de apagar abortada pelo utilizador"
 
@@ -9824,7 +9837,8 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/cluster.go:1707
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr ""
+"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:172
 msgid "What IPv4 address should be used?"
@@ -9853,11 +9867,11 @@ msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 "Se é ou não para apenas fazer salvaguarda da instância (sem os instantâneos)"
 
-#: cmd/incus/snapshot.go:524
+#: cmd/incus/snapshot.go:533
 msgid "Whether or not to restore the instance's disk only"
 msgstr "Se deve-se ou não restaurar apenas o disco do instantâneo"
 
-#: cmd/incus/snapshot.go:523
+#: cmd/incus/snapshot.go:532
 msgid ""
 "Whether or not to restore the instance's running state from snapshot (if "
 "available)"
@@ -9865,7 +9879,7 @@ msgstr ""
 "Se é ou não para restaurar o estado de execução da instância a partir do "
 "instantâneo (se disponível)"
 
-#: cmd/incus/snapshot.go:97
+#: cmd/incus/snapshot.go:98
 msgid "Whether or not to snapshot the instance's running state"
 msgstr "Se deve-se ou não tirar instantâneo ao estado de execução da instância"
 
@@ -10661,7 +10675,7 @@ msgstr ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Apaga instância local \"c1\"."
 
-#: cmd/incus/snapshot.go:91
+#: cmd/incus/snapshot.go:92
 msgid ""
 "incus snapshot create u1 snap0\n"
 "\tCreate a snapshot of \"u1\" called \"snap0\".\n"
@@ -10677,7 +10691,7 @@ msgstr ""
 "\tCria um instantâneo de \"u1\" chamado \"snap0\" com a configuração de "
 "\"config.yaml\"."
 
-#: cmd/incus/snapshot.go:519
+#: cmd/incus/snapshot.go:528
 msgid ""
 "incus snapshot restore u1 snap0\n"
 "    Restore instance u1 to snapshot snap0"
@@ -11079,7 +11093,7 @@ msgstr "s"
 
 #: cmd/incus/cluster.go:743 cmd/incus/config_trust.go:484
 #: cmd/incus/delete.go:57 cmd/incus/image.go:937 cmd/incus/image.go:942
-#: cmd/incus/image.go:1152 cmd/incus/project.go:231 cmd/incus/snapshot.go:262
+#: cmd/incus/image.go:1152 cmd/incus/project.go:231 cmd/incus/snapshot.go:265
 msgid "yes"
 msgstr "sim"
 
