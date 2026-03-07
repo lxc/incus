@@ -40,7 +40,7 @@ Make sure that `restricted` is set to `true` and specify the projects that the c
 
 ```{note}
 You can specify the `--project` flag when adding a remote.
-This configuration pre-selects the specified project.
+This configuration preselects the specified project.
 However, it does not confine the client to this project.
 ```
 

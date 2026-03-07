@@ -596,6 +596,7 @@ func (op *Operation) UpdateMetadata(opMetadata any) error {
 	// Validate and make a copy of the metadata to avoid concurrent reads/writes.
 	newMetadata, err := parseMetadata(opMetadata)
 	if err != nil {
+		op.lock.Unlock()
 		return err
 	}
 
@@ -632,6 +633,7 @@ func (op *Operation) ExtendMetadata(metadata any) error {
 	// Parse the new metadata.
 	extraMetadata, err := parseMetadata(metadata)
 	if err != nil {
+		op.lock.Unlock()
 		return err
 	}
 
