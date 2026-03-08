@@ -383,8 +383,8 @@ func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *met
 				return net.DialTimeout("tcp", "127.0.0.1:9100", 50*time.Millisecond)
 			},
 			DisableKeepAlives:     true,
-			ExpectContinueTimeout: time.Second * 3,
-			ResponseHeaderTimeout: time.Second * 3,
+			ExpectContinueTimeout: time.Second * 5,
+			ResponseHeaderTimeout: time.Second * 5,
 		}
 
 		resp, err := client.Get("http://incus-os/metrics")
