@@ -506,7 +506,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 
 	// If dealing with an ISO volume, we want to return it unaltered.
 	if contentType == drivers.ContentTypeISO {
-		err = pool.BackupCustomVolume(projectName, volumeName, instancewriter.NewInstanceRawWriter(fileWriter), backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
+		err = pool.BackupCustomVolume(projectName, volumeName, instancewriter.NewInstanceRawWriter(fileWriter), backup.DefaultBackupPrefix, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
 		if err != nil {
 			return fmt.Errorf("Backup create: %w", err)
 		}
@@ -552,7 +552,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 			return fmt.Errorf("Error writing backup index file: %w", err)
 		}
 
-		err = pool.BackupCustomVolume(projectName, volumeName, tarWriter, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
+		err = pool.BackupCustomVolume(projectName, volumeName, tarWriter, backup.DefaultBackupPrefix, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
 		if err != nil {
 			return fmt.Errorf("Backup create: %w", err)
 		}
