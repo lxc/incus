@@ -29,6 +29,9 @@ const TypeCustom = Type("custom")
 // TypeBucket defines the backup type value for a storage bucket.
 const TypeBucket = Type("bucket")
 
+// DefaultBackupPrefix is the default path prefix used for volume export/import.
+const DefaultBackupPrefix = "backup"
+
 const backupIndexPath = "backup/index.yaml"
 
 // InstanceTypeToBackupType converts instance type to backup type.
