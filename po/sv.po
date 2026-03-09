@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-05 12:55+0000\n"
-"PO-Revision-Date: 2026-03-06 07:19+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-03-09 21:09+0000\n"
+"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -666,9 +666,8 @@ msgid "- Port %d (%s)"
 msgstr "- Port %d (%s)"
 
 #: cmd/incus/warning.go:374
-#, fuzzy
 msgid "--all cannot be used together with other arguments"
-msgstr "--target kan inte användas med instanser"
+msgstr "--all kan inte användas tillsammans med andra argument"
 
 #: cmd/incus/action.go:257
 msgid "--console can't be used while forcing instance shutdown"
@@ -695,9 +694,8 @@ msgid "--network-port can't be used without --network-address"
 msgstr "--network-port kan inte användas utan --network-address"
 
 #: cmd/incus/profile.go:233
-#, fuzzy
 msgid "--no-profiles cannot be used together with other arguments"
-msgstr "--no-profiles kan inte användas tillsammans med --refresh"
+msgstr "--no-profiles kan inte användas tillsammans med andra argument"
 
 #: cmd/incus/copy.go:109
 msgid "--no-profiles cannot be used with --refresh"
@@ -747,7 +745,7 @@ msgstr "ALIASER"
 
 #: cmd/incus/query.go:31
 msgid "API path"
-msgstr ""
+msgstr "API-sökväg"
 
 #: cmd/incus/list.go:800
 msgid "APP"
@@ -972,9 +970,9 @@ msgstr ""
 "fortsätta?"
 
 #: cmd/incus/profile.go:255
-#, fuzzy, c-format
+#, c-format
 msgid "All profiles removed from %s"
-msgstr "Profil %s borttagen från %s"
+msgstr "Alla profiler borttagna från %s"
 
 #: cmd/incus/storage_volume.go:1457 cmd/incus/storage_volume.go:3352
 msgid "All projects"
@@ -989,9 +987,9 @@ msgid "Alternative certificate name"
 msgstr "Alternativt certifikatnamn"
 
 #: cmd/incus/file.go:1026
-#, fuzzy, c-format
+#, c-format
 msgid "An instance path is required for %s"
-msgstr "Vissa fall misslyckades med %s"
+msgstr "En instanssökväg krävs för %s"
 
 #: cmd/incus/image.go:957 cmd/incus/info.go:502 cmd/incus/info.go:506
 #: cmd/incus/info.go:664
@@ -1252,7 +1250,7 @@ msgstr "Kan inte binda adress %q: %w"
 
 #: cmd/incus/file.go:759
 msgid "Can't override UID/GID in recursive mode without -p"
-msgstr ""
+msgstr "Kan inte åsidosätta UID/GID i rekursivt läge utan -p"
 
 #: cmd/incus/move.go:116
 msgid "Can't override configuration or profiles in local rename"
@@ -1260,11 +1258,11 @@ msgstr "Kan inte åsidosätta konfiguration eller profiler vid lokal namnändrin
 
 #: cmd/incus/file.go:746
 msgid "Can't override the target mode when performing a recursive transfer"
-msgstr ""
+msgstr "Kan inte åsidosätta målläge vid rekursiv överföring"
 
 #: cmd/incus/move.go:112
 msgid "Can't perform local rename without a new instance name"
-msgstr ""
+msgstr "Kan inte utföra lokal namnändring utan nytt instansnamn"
 
 #: cmd/incus/file.go:567 cmd/incus/storage_volume.go:2725
 msgid "Can't pull a directory without --recursive"
@@ -1335,9 +1333,8 @@ msgstr ""
 "profilens enheter"
 
 #: cmd/incus/utils.go:299
-#, fuzzy
 msgid "Cannot read the stdin twice"
-msgstr "Kan inte läsa från stdin: %w"
+msgstr "Kan inte läsa stdin två gånger"
 
 #: cmd/incus/storage_volume.go:425
 msgid ""
@@ -1452,14 +1449,14 @@ msgid "Cluster group description"
 msgstr "Beskrivning av klustergruppen"
 
 #: cmd/incus/cluster.go:1354
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster join token for %s deleted"
-msgstr "Klusteranslutningstoken för %s:%s raderad"
+msgstr "Klusteranslutningstoken för %s raderad"
 
 #: cmd/incus/cluster_group.go:155
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster member %s added to cluster groups %v"
-msgstr "Klustermedlem %s tillagd till klustergrupper %s"
+msgstr "Klustermedlem %s tillagd till klustergrupper %v"
 
 #: cmd/incus/cluster_group.go:811
 #, c-format
@@ -2368,7 +2365,7 @@ msgstr ""
 "Åsidosätt enheten eller modifiera profilen istället"
 
 #: cmd/incus/config_device.go:540
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Device from profile(s) cannot be removed from individual instance. Override "
 "device “%s” or modify profile instead"
@@ -2381,9 +2378,9 @@ msgid "Device from profile(s) cannot be retrieved for individual instance"
 msgstr "Enhet från profil(er) kan inte hämtas för enskild instans"
 
 #: cmd/incus/config_device.go:510 cmd/incus/config_device.go:537
-#, fuzzy, c-format
+#, c-format
 msgid "Device “%s” doesn't exist"
-msgstr "Enheten finns inte"
+msgstr "Enheten \"%s\" finns inte"
 
 #: cmd/incus/info.go:281 cmd/incus/info.go:305
 #, c-format
@@ -2994,7 +2991,7 @@ msgid ""
 msgstr ""
 "Exportera och hämta ner avbilder \n"
 "\n"
-"Utdatamålet är valfritt och är som standard inställt på arbetsmappen."
+"Utdatamålet är valfritt och är som standard inställt på arbetskatalogen."
 
 #: cmd/incus/storage_volume.go:3719
 msgid "Export custom storage volumes"
@@ -3084,9 +3081,9 @@ msgid "Failed accepting channel client %q: %v"
 msgstr "Misslyckades med att acceptera kanalklient %q: %v"
 
 #: cmd/incus/delete.go:93
-#, fuzzy, c-format
+#, c-format
 msgid "Failed checking instance %s exists: %w"
-msgstr "Kontrollen misslyckades, instans finns \"%s:%s\": %w"
+msgstr "Misslyckades att kontrollera om instans %s finns: %w\"%s:%s\": %w"
 
 #: cmd/incus/utils.go:376
 #, c-format
@@ -3104,9 +3101,9 @@ msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Misslyckades med att ansluta till instans SFTP för klient %q: %v"
 
 #: cmd/incus/storage_volume.go:2943
-#, fuzzy, c-format
+#, c-format
 msgid "Failed connecting to instance SFTP: %s %w"
-msgstr "Det gick inte att ansluta till instansen SFTP: %w"
+msgstr "Misslyckades att ansluta till instans-SFTP: %s %w"
 
 #: cmd/incus/file.go:1044 cmd/incus/storage_volume.go:2503
 #: cmd/incus/storage_volume.go:2688 cmd/incus/storage_volume.go:2873
@@ -3130,9 +3127,9 @@ msgid "Failed converting token operation to join token: %w"
 msgstr "Konvertering av token-operation till join-token misslyckades: %w"
 
 #: cmd/incus/delete.go:143
-#, fuzzy, c-format
+#, c-format
 msgid "Failed deleting instance %s in project %q: %w"
-msgstr "Misslyckades med att ta bort instans %q i projekt %q: %w"
+msgstr "Misslyckades att ta bort instans %s i projekt %q: %w"
 
 #: cmd/incus/storage_volume.go:513
 #, c-format
@@ -3320,9 +3317,9 @@ msgid "Failed to open source file %q: %v"
 msgstr "Misslyckades med att öppna källfilen %q: %v"
 
 #: cmd/incus/utils_sftp.go:73
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open target file %q: %w"
-msgstr "Det gick inte att stänga servercertifikatfilen %q: %w"
+msgstr "Misslyckades att öppna målfil %q: %w"
 
 #: cmd/incus/admin_sql.go:107
 #, c-format
@@ -3458,9 +3455,8 @@ msgid "Force a particular evacuation action"
 msgstr "Tvinga fram en viss evakueringsåtgärd"
 
 #: cmd/incus/cluster.go:1524
-#, fuzzy
 msgid "Force a particular restoration action"
-msgstr "Tvinga fram en viss evakueringsåtgärd"
+msgstr "Tvinga en viss återställningsåtgärd"
 
 #: cmd/incus/file.go:112 cmd/incus/storage_volume.go:2199
 msgid "Force creating files or directories"
@@ -3480,7 +3476,7 @@ msgstr "Tvinga evakuering utan användarens bekräftelse"
 
 #: cmd/incus/exec.go:65
 msgid "Force pseudo-terminal allocation"
-msgstr "Tvinga pseudo-terminalallokering"
+msgstr "Tvinga pseudo-terminaltilldelning"
 
 #: cmd/incus/cluster.go:709
 msgid "Force removing a member, even if degraded"
@@ -3655,7 +3651,7 @@ msgstr ""
 
 #: cmd/incus/image.go:1737
 msgid "Generate a metadata tarball"
-msgstr ""
+msgstr "Generera en metadata-tarball"
 
 #: cmd/incus/image.go:1739
 msgid ""
@@ -3694,9 +3690,8 @@ msgid "Get current load balancer status"
 msgstr "Hämta aktuell status för lastbalanseraren"
 
 #: cmd/incus/network_load_balancer.go:1157
-#, fuzzy
 msgid "Get current load-balancer status"
-msgstr "Hämta aktuell status för lastbalanseraren"
+msgstr "Hämta aktuell lastbalanserarstatus"
 
 #: cmd/incus/image.go:1523 cmd/incus/image.go:1524
 msgid "Get image properties"
@@ -3929,9 +3924,8 @@ msgid "IOMMU group: %v"
 msgstr "IOMMU-grupp: %v"
 
 #: cmd/incus/remote.go:121
-#, fuzzy
 msgid "IP"
-msgstr "IPV4"
+msgstr "IP"
 
 #: cmd/incus/network.go:1284
 msgid "IP ADDRESS"
@@ -4304,9 +4298,8 @@ msgid "IsSM: %s (%s)"
 msgstr "IsSM: %s (%s)"
 
 #: cmd/incus/cluster.go:992 cmd/incus/cluster.go:993
-#, fuzzy
 msgid "Join an existing server to a cluster"
-msgstr "Ska du gå med i ett befintligt kluster?"
+msgstr "Anslut en befintlig server till ett kluster"
 
 #: cmd/incus/cluster.go:1732
 msgid "Joining an existing cluster requires root privileges"
@@ -5298,7 +5291,7 @@ msgstr "Lista nätverks-ACL:er för alla projekt"
 
 #: cmd/incus/network_allocations.go:38
 msgid "List network allocations in use"
-msgstr "Lista nätverksallokeringar som används"
+msgstr "Lista nätverkstilldelningar som används"
 
 #: cmd/incus/network_allocations.go:39
 msgid ""
@@ -5322,7 +5315,7 @@ msgid ""
 "  n - NAT\n"
 "  m - Mac Address"
 msgstr ""
-"Lista nätverksallokeringar som används\n"
+"Lista nätverkstilldelningar som används\n"
 "Standardkolumnlayout: uatnm\n"
 "\n"
 "== Kolumner ==\n"
@@ -6167,7 +6160,7 @@ msgstr "Maximalt antal VF:er: %d"
 
 #: cmd/incus/wait.go:46
 msgid "Maximum wait time"
-msgstr ""
+msgstr "Maximal väntetid"
 
 #: cmd/incus/info.go:164
 msgid "Mdev profiles:"
@@ -6637,7 +6630,7 @@ msgid "Network usage:"
 msgstr "Nätverksanvändning:"
 
 #: cmd/incus/network_zone.go:451
-#, fuzzy, c-format
+#, c-format
 msgid "Network zone %s created"
 msgstr "Nätverkszon %s skapad"
 
@@ -6907,9 +6900,8 @@ msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr "Skriv 'y', 'n' eller fingeravtrycket:"
 
 #: cmd/incus/wait.go:45
-#, fuzzy
 msgid "Polling interval (in seconds)"
-msgstr "CPU-användning (i sekunder)"
+msgstr "Avsökningsintervall (i sekunder)"
 
 #: cmd/incus/admin_recover.go:102
 msgid "Pool name cannot be empty"
@@ -7347,9 +7339,8 @@ msgid "Remove all ports that match"
 msgstr "Ta bort alla portar som matchar"
 
 #: cmd/incus/profile.go:202
-#, fuzzy
 msgid "Remove all profiles from the instance"
-msgstr "Ta bort profiler från instanser"
+msgstr "Ta bort alla profiler från instansen"
 
 #: cmd/incus/network_acl.go:983
 msgid "Remove all rules that match"
@@ -7502,7 +7493,6 @@ msgid "Restore cluster member"
 msgstr "Återställ klustermedlem"
 
 #: cmd/incus/snapshot.go:514
-#, fuzzy
 msgid ""
 "Restore instance from snapshots\n"
 "\n"
@@ -8489,9 +8479,9 @@ msgid "Stopping instance failed!"
 msgstr "Instansstopp misslyckades!"
 
 #: cmd/incus/delete.go:114
-#, fuzzy, c-format
+#, c-format
 msgid "Stopping the instance %s failed: %s"
-msgstr "Det gick inte att stoppa instansen: %s"
+msgstr "Stopp av instans %s misslyckades: %s"
 
 #: cmd/incus/admin_init.go:58
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
@@ -8651,14 +8641,12 @@ msgid "Taken at"
 msgstr "Taget vid"
 
 #: cmd/incus/file.go:779
-#, fuzzy
 msgid "Target is not a directory"
 msgstr "%s är inte en katalog"
 
 #: cmd/incus/cluster.go:1021
-#, fuzzy
 msgid "Target isn't a cluster"
-msgstr "Servern ingår inte i ett kluster"
+msgstr "Målet är inte ett kluster"
 
 #: cmd/incus/export.go:70
 #, c-format
@@ -8674,9 +8662,8 @@ msgid "Target path must be a directory"
 msgstr "Målvägen måste vara en katalog"
 
 #: cmd/incus/cluster.go:1025
-#, fuzzy
 msgid "Target server is already clustered"
-msgstr "Denna server är redan klustrad"
+msgstr "Målservern är redan klustrad"
 
 #: cmd/incus/admin_shutdown.go:34
 msgid "Tell the daemon to shutdown all instances and exit"
@@ -8774,7 +8761,7 @@ msgid "The following unknown volumes have been found:"
 msgstr "Följande okända volymer har hittats:"
 
 #: cmd/incus/delete.go:98
-#, fuzzy, c-format
+#, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr "Instansen körs för närvarande, stoppa den först eller ange --force"
 
@@ -8842,7 +8829,7 @@ msgid "The property %q does not exist on the instance %q: %v"
 msgstr "Egenskapen %q finns inte på instansen %q: %v"
 
 #: cmd/incus/config.go:437
-#, fuzzy, c-format
+#, c-format
 msgid "The property %q does not exist on the instance snapshot %s: %v"
 msgstr "Egenskaperna %q finns inte på instansens ögonblicksbild %s/%s: %v"
 
@@ -8965,22 +8952,22 @@ msgid "The server doesn't implement the newer v2 resources API"
 msgstr "Servern implementerar inte den nyare v2-resurs-API:n"
 
 #: cmd/incus/network.go:543
-#, fuzzy, c-format
+#, c-format
 msgid "The specified NIC does not point to the given network (found %s)"
 msgstr "Den angivna enheten matchar inte nätverket"
 
 #: cmd/incus/network.go:539
-#, fuzzy, c-format
+#, c-format
 msgid "The specified device is not a NIC (%s device)"
-msgstr "Den angivna enheten finns inte"
+msgstr "Den angivna enheten är inte ett nätverkskort (%s-enhet)"
 
 #: cmd/incus/storage_volume.go:749
-#, fuzzy, c-format
+#, c-format
 msgid "The specified device is not a disk (%s device)"
-msgstr "Den angivna enheten finns inte"
+msgstr "Den angivna enheten är inte en disk (%s-enhet)"
 
 #: cmd/incus/storage_volume.go:757
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
 msgstr "Egenskapen %q finns inte på lagringspoolvolymen %q: %v"
@@ -8988,7 +8975,7 @@ msgstr "Egenskapen %q finns inte på lagringspoolvolymen %q: %v"
 #: cmd/incus/storage_volume.go:753
 #, c-format
 msgid "The specified disk is not in the given pool (found %s)"
-msgstr ""
+msgstr "Den angivna disken finns inte i den givna poolen (hittade %s)"
 
 #: cmd/incus/file.go:116 cmd/incus/storage_volume.go:2203
 msgid "The type to create (file, symlink, or directory)"
@@ -9581,7 +9568,7 @@ msgstr "WWN: %s"
 
 #: cmd/incus/wait.go:29
 msgid "Wait for an instance to satisfy a condition"
-msgstr ""
+msgstr "Vänta på att en instans ska uppfylla ett villkor"
 
 #: cmd/incus/wait.go:30
 msgid ""
@@ -9678,9 +9665,10 @@ msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr "Om endast instansen ska säkerhetskopieras (utan snapshots)"
 
 #: cmd/incus/snapshot.go:524
-#, fuzzy
 msgid "Whether or not to restore the instance's disk only"
-msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr ""
+"Huruvida endast instansens disk ska återställasOm man ska ta en "
+"ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/snapshot.go:523
 msgid ""
@@ -9744,7 +9732,7 @@ msgstr "Vill du skapa en ny zfs-datauppsättning under rpool/incus?"
 
 #: cmd/incus/admin_init_interactive.go:551
 msgid "Would you like to have your containers share their parent's allocation?"
-msgstr "Vill du att dina containrar ska dela sina föräldrars allokering?"
+msgstr "Vill du att dina containrar ska dela sina föräldrars tilldelning?"
 
 #: cmd/incus/admin_recover.go:78
 msgid "Would you like to recover another storage pool?"
@@ -9798,25 +9786,23 @@ msgstr "applikation"
 
 #: cmd/incus/cluster.go:1370 cmd/incus/config_trust.go:165
 msgid "cert.crt"
-msgstr ""
+msgstr "cert.crt"
 
 #: cmd/incus/cluster.go:1370
 msgid "cert.key"
-msgstr ""
+msgstr "cert.key"
 
 #: cmd/incus/cluster.go:986
 msgid "cluster"
-msgstr ""
+msgstr "kluster"
 
 #: cmd/incus/alias.go:57
-#, fuzzy
 msgid "command"
-msgstr "Felsökningskommandon"
+msgstr "kommando"
 
 #: cmd/incus/wait.go:24
-#, fuzzy
 msgid "condition"
-msgstr "Zonbeskrivning"
+msgstr "villkor"
 
 #: cmd/incus/project.go:686 cmd/incus/remote.go:1036
 msgid "current"
@@ -10055,7 +10041,6 @@ msgstr ""
 "   Skapar en symlänk /bar i instansen foo med målet baz."
 
 #: cmd/incus/file.go:965
-#, fuzzy
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -10202,7 +10187,6 @@ msgstr ""
 "livscykelhändelser."
 
 #: cmd/incus/move.go:51
-#, fuzzy
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -10361,7 +10345,6 @@ msgstr ""
 "den operationen UUID"
 
 #: cmd/incus/profile.go:191
-#, fuzzy
 msgid ""
 "incus profile assign foo default,bar\n"
 "    Set the profiles for \"foo\" to \"default\" and \"bar\".\n"
@@ -10375,7 +10358,7 @@ msgstr ""
 "incus profile assign foo default,bar Ställ in profilerna för \"foo\" till "
 "\"default\" och \"bar\". incus profile assign foo default Återställ \"foo\" "
 "till att endast använda profilen \"default\". incus profile assign foo '' Ta "
-"bort alla profiler från \"foo\""
+"bort alla profiler från \"foo\\"
 
 #: cmd/incus/profile.go:356
 msgid ""
@@ -10758,9 +10741,8 @@ msgid "name"
 msgstr "namn"
 
 #: cmd/incus/network_peer.go:303
-#, fuzzy
 msgid "network or integration"
-msgstr "Lista nätverksintegrationer"
+msgstr "nätverk eller integration"
 
 #: cmd/incus/config_trust.go:487 cmd/incus/image.go:935 cmd/incus/image.go:940
 #: cmd/incus/image.go:1155
@@ -10777,15 +10759,15 @@ msgstr "använd `incus profile`"
 
 #: cmd/incus/admin_init.go:35
 msgid "preseed.yaml"
-msgstr ""
+msgstr "preseed.yaml"
 
 #: cmd/incus/image.go:670
 msgid "rootfs tarball"
-msgstr ""
+msgstr "rootfs-tarball"
 
 #: cmd/incus/remote_unix.go:35
 msgid "socket file"
-msgstr ""
+msgstr "socket-fil"
 
 #: cmd/incus/storage.go:535
 msgid "space used"
@@ -10802,7 +10784,7 @@ msgstr "sshfs monterar %q på %q"
 
 #: cmd/incus/remote.go:121
 msgid "token"
-msgstr ""
+msgstr "token"
 
 #: cmd/incus/storage.go:534
 msgid "total space"
