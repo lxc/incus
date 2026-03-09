@@ -159,8 +159,8 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 }
 
 // CreateVolumeFromBackup restores a backup tarball onto the storage device.
-func (d *lvm) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
-	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, op)
+func (d *lvm) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, basePrefix, op)
 }
 
 // CreateVolumeFromCopy provides same-pool volume copying functionality.
@@ -1260,8 +1260,8 @@ func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 
 // BackupVolume copies a volume (and optionally its snapshots) to a specified target path.
 // This driver does not support optimized backups.
-func (d *lvm) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, _ bool, snapshots []string, op *operations.Operation) error {
-	return genericVFSBackupVolume(d, vol, writer, snapshots, op)
+func (d *lvm) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, _ bool, snapshots []string, op *operations.Operation) error {
+	return genericVFSBackupVolume(d, vol, writer, basePrefix, snapshots, op)
 }
 
 // CreateVolumeSnapshot creates a snapshot of a volume.

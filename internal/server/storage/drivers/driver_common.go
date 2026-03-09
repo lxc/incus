@@ -331,7 +331,7 @@ func (d *common) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.O
 }
 
 // CreateVolumeFromBackup re-creates a volume from its exported state.
-func (d *common) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+func (d *common) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
 	return nil, nil, ErrNotSupported
 }
 
@@ -422,7 +422,7 @@ func (d *common) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *
 }
 
 // BackupVolume creates an exported version of a volume.
-func (d *common) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
+func (d *common) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots []string, op *operations.Operation) error {
 	return ErrNotSupported
 }
 
