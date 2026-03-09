@@ -233,6 +233,7 @@ Pongo
 POSIX
 PPA
 pre
+preselects
 preseed
 proxied
 proxying
