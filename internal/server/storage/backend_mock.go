@@ -348,11 +348,12 @@ func (b *mockBackend) RestoreCustomVolume(projectName string, volName string, sn
 }
 
 // BackupCustomVolume creates a custom volume backup.
-func (b *mockBackend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, optimized bool, snapshots bool, op *operations.Operation) error {
+func (b *mockBackend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots bool, op *operations.Operation) error {
 	return nil
 }
 
-func (b *mockBackend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+// CreateCustomVolumeFromBackup creates a custom volume from a backup.
+func (b *mockBackend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) error {
 	return nil
 }
 

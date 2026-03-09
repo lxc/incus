@@ -144,8 +144,8 @@ type Pool interface {
 	MigrateCustomVolume(projectName string, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error
 
 	// Custom volume backups.
-	BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, optimized bool, snapshots bool, op *operations.Operation) error
-	CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error
+	BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots bool, op *operations.Operation) error
+	CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) error
 
 	// Storage volume recovery.
 	ListUnknownVolumes(op *operations.Operation) (map[string][]*backupConfig.Config, error)

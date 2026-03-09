@@ -776,13 +776,19 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 		}
 	}
 
+	// Import dependent disks
+	err = b.createDependentVolumes(srcBackup, srcData, op)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	vol := b.GetVolume(volType, contentType, volStorageName, volumeConfig)
 
 	importRevert := revert.New()
 	defer importRevert.Fail()
 
 	// Unpack the backup into the new storage volume(s).
-	volPostHook, revertHook, err := b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, op)
+	volPostHook, revertHook, err := b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, backup.DefaultBackupPrefix, op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -2746,7 +2752,25 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 		}
 	}
 
-	err = b.driver.BackupVolume(vol, tarWriter, optimized, snapNames, op)
+	err = b.driver.BackupVolume(vol, tarWriter, backup.DefaultBackupPrefix, optimized, snapNames, op)
+	if err != nil {
+		return err
+	}
+
+	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+		// Load the pool for the disk.
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		err = diskPool.BackupCustomVolume(inst.Project().Name, dev.Config["source"], tarWriter, filepath.Join(backup.DefaultBackupPrefix, dev.Name), optimized, snapshots, op)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, op)
 	if err != nil {
 		return err
 	}
@@ -6729,6 +6753,30 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 		config.Profiles[i] = &instProfiles[i]
 	}
 
+	config.DependentVolumes = []*backupConfig.Config{}
+	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+		// Load the pool for the disk.
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		diskConfig, err := diskPool.GenerateCustomVolumeBackupConfig(inst.Project().Name, dev.Config["source"], snapshots, op)
+		if err != nil {
+			return err
+		}
+
+		poolDB := diskPool.ToAPI()
+		diskConfig.Pool = &poolDB
+
+		config.DependentVolumes = append(config.DependentVolumes, diskConfig)
+
+		return nil
+	}, op)
+	if err != nil {
+		return nil, err
+	}
+
 	// Only populate Container field for non-snapshot instances.
 	if !inst.IsSnapshot() {
 		config.Container = ci.(*api.Instance)
@@ -7488,7 +7536,7 @@ func (b *backend) ImportInstance(inst instance.Instance, poolVol *backupConfig.C
 }
 
 // BackupCustomVolume creates a custom volume backup.
-func (b *backend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, optimized bool, snapshots bool, op *operations.Operation) error {
+func (b *backend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots bool, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volume": volName, "optimized": optimized, "snapshots": snapshots})
 	l.Debug("BackupCustomVolume started")
 	defer l.Debug("BackupCustomVolume finished")
@@ -7532,7 +7580,7 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, writer 
 
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 
-	err = b.driver.BackupVolume(vol, writer, optimized, snapNames, op)
+	err = b.driver.BackupVolume(vol, writer, basePrefix, optimized, snapNames, op)
 	if err != nil {
 		return err
 	}
@@ -7624,7 +7672,7 @@ func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, 
 	return nil
 }
 
-func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": srcBackup.Project, "volume": srcBackup.Name, "snapshots": srcBackup.Snapshots, "optimizedStorage": *srcBackup.OptimizedStorage})
 	l.Debug("CreateCustomVolumeFromBackup started")
 	defer l.Debug("CreateCustomVolumeFromBackup finished")
@@ -7705,7 +7753,7 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	}
 
 	// Unpack the backup into the new storage volume(s).
-	volPostHook, revertHook, err := b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, op)
+	volPostHook, revertHook, err := b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, basePrefix, op)
 	if err != nil {
 		return err
 	}
@@ -8941,6 +8989,50 @@ func (b *backend) forEachDependentDiskType(inst instance.Instance, diskAction fu
 		err := diskAction(dev)
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+	for _, disk := range srcBackup.Config.DependentVolumes {
+		optimizedStorage := false
+		optimizedHeader := false
+
+		snapshots := []string{}
+		for _, snap := range disk.VolumeSnapshots {
+			snapshots = append(snapshots, snap.Name)
+		}
+
+		bInfo := backup.Info{
+			Project:          disk.Volume.Project,
+			Name:             disk.Volume.Name,
+			Backend:          disk.Pool.Driver,
+			Pool:             disk.Pool.Name,
+			OptimizedStorage: &optimizedStorage,
+			OptimizedHeader:  &optimizedHeader,
+			Snapshots:        snapshots,
+			Type:             backup.TypeCustom,
+			Config:           disk,
+		}
+
+		b.logger.Error("Disk Info", logger.Ctx{"info": bInfo.Config.Volume.Config})
+
+		pool, err := LoadByName(b.state, bInfo.Pool)
+		if err != nil {
+			return err
+		}
+
+		// Check if the backup is optimized that the source pool driver matches the target pool driver.
+		if *bInfo.OptimizedStorage && pool.Driver().Info().Name != bInfo.Backend {
+			return fmt.Errorf("Optimized backup storage driver %q differs from the target storage pool driver %q", bInfo.Backend, pool.Driver().Info().Name)
+		}
+
+		// Dump tarball to storage.
+		err = pool.CreateCustomVolumeFromBackup(bInfo, srcData, filepath.Join(backup.DefaultBackupPrefix, disk.Volume.Name), op)
+		if err != nil {
+			return fmt.Errorf("Create custom volume from backup: %w", err)
 		}
 	}
 
