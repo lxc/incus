@@ -295,6 +295,13 @@ func (m *OVAMigration) unpackOVA(outPath string) error {
 
 	tarReader := tar.NewReader(file)
 
+	outPathRoot, err := os.OpenRoot(outPath)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = outPathRoot.Close() }()
+
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -305,7 +312,7 @@ func (m *OVAMigration) unpackOVA(outPath string) error {
 			return err
 		}
 
-		outFile, err := os.Create(filepath.Join(outPath, header.Name))
+		outFile, err := outPathRoot.Create(filepath.Join(outPath, header.Name))
 		if err != nil {
 			return fmt.Errorf("Error creating file: %v", err)
 		}
