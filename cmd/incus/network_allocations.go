@@ -137,7 +137,7 @@ func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	d := parsed[0].RemoteServer.UseProject(c.flagProject)
+	d := parsed[0].RemoteServer
 
 	var addresses []api.NetworkAllocations
 	if c.flagAllProjects {
