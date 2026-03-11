@@ -3047,3 +3047,7 @@ Creating an instance snapshot creates a corresponding snapshot on the dependent 
 and deleting the instance snapshot removes it as well.
 Direct snapshot creation or deletion on a dependent volume is not allowed.
 Exporting and importing an instance also includes dependent volumes.
+
+## `metrics_project_resources`
+
+This adds project-level metrics to the `/1.0/metrics` endpoint including resource counts, configured limits, and current usage per project.
