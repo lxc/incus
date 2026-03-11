@@ -7661,7 +7661,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Set migration offer volume size", logger.Ctx{"blockSize": blockSize})
 	offerHeader.VolumeSize = &blockSize
 
-	srcConfig, err := pool.GenerateInstanceBackupConfig(d, args.Snapshots, d.op)
+	srcConfig, err := pool.GenerateInstanceBackupConfig(d, args.Snapshots, true, d.op)
 	if err != nil {
 		err := fmt.Errorf("Failed generating instance migration config: %w", err)
 		op.Done(err)

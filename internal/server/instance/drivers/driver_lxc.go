@@ -5937,7 +5937,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		}
 	}
 
-	srcConfig, err := pool.GenerateInstanceBackupConfig(d, args.Snapshots, d.op)
+	srcConfig, err := pool.GenerateInstanceBackupConfig(d, args.Snapshots, true, d.op)
 	if err != nil {
 		err := fmt.Errorf("Failed generating instance migration config: %w", err)
 		op.Done(err)

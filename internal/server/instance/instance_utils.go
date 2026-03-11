@@ -475,7 +475,7 @@ func BackupLoadByName(s *state.State, project, name string) (*backup.InstanceBac
 		return nil, err
 	}
 
-	return backup.NewInstanceBackup(s, instance, args.ID, name, args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.OptimizedStorage), nil
+	return backup.NewInstanceBackup(s, instance, args.ID, name, args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.RootOnly, args.OptimizedStorage), nil
 }
 
 // ResolveImage takes an instance source and returns a hash suitable for instance creation or download.
