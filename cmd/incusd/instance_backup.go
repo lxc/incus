@@ -350,6 +350,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 			InstanceID:           inst.ID(),
 			CreationDate:         time.Now(),
 			InstanceOnly:         req.InstanceOnly,
+			RootOnly:             req.RootOnly,
 			OptimizedStorage:     req.OptimizedStorage,
 			CompressionAlgorithm: req.CompressionAlgorithm,
 		}
