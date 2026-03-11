@@ -948,6 +948,15 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 			return nil, nil, err
 		}
 
+		if vol.IsVMBlock() && vol.Config()["block.type"] == BlockVolumeTypeQcow2 {
+			fsParentVol := vol.NewVMBlockFilesystemVolume()
+			fsVol := snapVol.NewVMBlockFilesystemVolume()
+			err := Qcow2CreateConfigSnapshot(fsParentVol, fsVol, op)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+
 		reverter.Add(func() { _ = d.DeleteVolumeSnapshot(snapVol, op) })
 	}
 
