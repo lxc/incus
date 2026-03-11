@@ -23,6 +23,7 @@ type cmdExport struct {
 	global *cmdGlobal
 
 	flagInstanceOnly         bool
+	flagRootOnly             bool
 	flagOptimizedStorage     bool
 	flagCompressionAlgorithm string
 }
@@ -46,6 +47,8 @@ incus export u1 -
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagInstanceOnly, "instance-only", false,
 		i18n.G("Whether or not to only backup the instance (without snapshots)"))
+	cmd.Flags().BoolVar(&c.flagRootOnly, "root-only", false,
+		i18n.G("Whether or not to only backup the instance (without dependent volumes)"))
 	cmd.Flags().BoolVar(&c.flagOptimizedStorage, "optimized-storage", false,
 		i18n.G("Use storage driver optimized format (can only be restored on a similar pool)"))
 	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Compression algorithm to use (none for uncompressed)")+"``")
@@ -81,6 +84,7 @@ func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
 		Name:                 "",
 		ExpiresAt:            time.Now().Add(24 * time.Hour),
 		InstanceOnly:         instanceOnly,
+		RootOnly:             c.flagRootOnly,
 		OptimizedStorage:     c.flagOptimizedStorage,
 		CompressionAlgorithm: c.flagCompressionAlgorithm,
 	}
