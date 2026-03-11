@@ -103,6 +103,12 @@ const (
 	WarningsTotal
 	// UptimeSeconds represents the daemon uptime in seconds.
 	UptimeSeconds
+	// ProjectResourcesTotal represents the current resource count in a project.
+	ProjectResourcesTotal
+	// ProjectLimit represents the current project resource limit.
+	ProjectLimit
+	// ProjectUsage represents the current project resource usage.
+	ProjectUsage
 	// GoGoroutines represents the number of goroutines that currently exist..
 	GoGoroutines
 	// GoAllocBytes represents the number of bytes allocated and still in use.
@@ -216,6 +222,9 @@ var MetricNames = map[MetricType]string{
 	NetworkTransmitPacketsTotal: "incus_network_transmit_packets_total",
 	OperationsTotal:             "incus_operations_total",
 	ProcsTotal:                  "incus_procs_total",
+	ProjectLimit:                "incus_project_limit",
+	ProjectResourcesTotal:       "incus_project_resources_total",
+	ProjectUsage:                "incus_project_usage",
 	TimeSeconds:                 "incus_time_seconds",
 	UptimeSeconds:               "incus_uptime_seconds",
 	WarningsTotal:               "incus_warnings_total",
@@ -286,6 +295,9 @@ var MetricHeaders = map[MetricType]string{
 	NetworkTransmitPacketsTotal: "# HELP incus_network_transmit_packets_total The amount of transmitted packets on a given interface.",
 	OperationsTotal:             "# HELP incus_operations_total The number of running operations",
 	ProcsTotal:                  "# HELP incus_procs_total The number of running processes.",
+	ProjectLimit:                "# HELP incus_project_limit Current project resource limit.",
+	ProjectResourcesTotal:       "# HELP incus_project_resources_total Current resource count in a project.",
+	ProjectUsage:                "# HELP incus_project_usage Current project resource usage.",
 	TimeSeconds:                 "# HELP incus_time_seconds The current unix epoch.",
 	UptimeSeconds:               "# HELP incus_uptime_seconds The daemon uptime in seconds.",
 	WarningsTotal:               "# HELP incus_warnings_total The number of active warnings.",
