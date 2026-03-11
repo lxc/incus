@@ -23,6 +23,7 @@ type InstanceBackup struct {
 	CreationDate         time.Time
 	ExpiryDate           time.Time
 	InstanceOnly         bool
+	RootOnly             bool
 	OptimizedStorage     bool
 	CompressionAlgorithm string
 }
@@ -70,11 +71,13 @@ func (c *ClusterTx) GetInstanceBackup(ctx context.Context, projectName string, n
 	args.Name = name
 
 	instanceOnlyInt := -1
+	rootOnlyInt := -1
 	optimizedStorageInt := -1
 	q := `
 SELECT instances_backups.id, instances_backups.instance_id,
        instances_backups.creation_date, instances_backups.expiry_date,
-       instances_backups.container_only, instances_backups.optimized_storage
+       instances_backups.container_only, instances_backups.root_only,
+       instances_backups.optimized_storage
     FROM instances_backups
     JOIN instances ON instances.id=instances_backups.instance_id
     JOIN projects ON projects.id=instances.project_id
@@ -83,7 +86,8 @@ SELECT instances_backups.id, instances_backups.instance_id,
 	arg1 := []any{projectName, name}
 	arg2 := []any{
 		&args.ID, &args.InstanceID, &args.CreationDate,
-		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt,
+		&args.ExpiryDate, &instanceOnlyInt, &rootOnlyInt,
+		&optimizedStorageInt,
 	}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
@@ -97,6 +101,10 @@ SELECT instances_backups.id, instances_backups.instance_id,
 
 	if instanceOnlyInt == 1 {
 		args.InstanceOnly = true
+	}
+
+	if rootOnlyInt == 1 {
+		args.RootOnly = true
 	}
 
 	if optimizedStorageInt == 1 {
@@ -112,11 +120,13 @@ func (c *ClusterTx) GetInstanceBackupWithID(ctx context.Context, backupID int) (
 	args.ID = backupID
 
 	instanceOnlyInt := -1
+	rootOnlyInt := -1
 	optimizedStorageInt := -1
 	q := `
 SELECT instances_backups.name, instances_backups.instance_id,
        instances_backups.creation_date, instances_backups.expiry_date,
-       instances_backups.container_only, instances_backups.optimized_storage
+       instances_backups.container_only, instances_backups.root_only,
+       instances_backups.optimized_storage
     FROM instances_backups
     JOIN instances ON instances.id=instances_backups.instance_id
     JOIN projects ON projects.id=instances.project_id
@@ -125,7 +135,8 @@ SELECT instances_backups.name, instances_backups.instance_id,
 	arg1 := []any{backupID}
 	arg2 := []any{
 		&args.Name, &args.InstanceID, &args.CreationDate,
-		&args.ExpiryDate, &instanceOnlyInt, &optimizedStorageInt,
+		&args.ExpiryDate, &instanceOnlyInt, &rootOnlyInt,
+		&optimizedStorageInt,
 	}
 
 	err := dbQueryRowScan(ctx, c, q, arg1, arg2)
@@ -139,6 +150,10 @@ SELECT instances_backups.name, instances_backups.instance_id,
 
 	if instanceOnlyInt == 1 {
 		args.InstanceOnly = true
+	}
+
+	if rootOnlyInt == 1 {
+		args.RootOnly = true
 	}
 
 	if optimizedStorageInt == 1 {
@@ -184,12 +199,17 @@ func (c *ClusterTx) CreateInstanceBackup(ctx context.Context, args InstanceBacku
 		instanceOnlyInt = 1
 	}
 
+	rootOnlyInt := 0
+	if args.RootOnly {
+		rootOnlyInt = 1
+	}
+
 	optimizedStorageInt := 0
 	if args.OptimizedStorage {
 		optimizedStorageInt = 1
 	}
 
-	str := "INSERT INTO instances_backups (instance_id, name, creation_date, expiry_date, container_only, optimized_storage) VALUES (?, ?, ?, ?, ?, ?)"
+	str := "INSERT INTO instances_backups (instance_id, name, creation_date, expiry_date, container_only, root_only, optimized_storage) VALUES (?, ?, ?, ?, ?, ?, ?)"
 	stmt, err := c.tx.Prepare(str)
 	if err != nil {
 		return err
@@ -198,7 +218,7 @@ func (c *ClusterTx) CreateInstanceBackup(ctx context.Context, args InstanceBacku
 	defer func() { _ = stmt.Close() }()
 	result, err := stmt.Exec(args.InstanceID, args.Name,
 		args.CreationDate.Unix(), args.ExpiryDate.Unix(), instanceOnlyInt,
-		optimizedStorageInt)
+		rootOnlyInt, optimizedStorageInt)
 	if err != nil {
 		return err
 	}
