@@ -3452,6 +3452,15 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 		return errors.New("Instance must not be running to restore")
 	}
 
+	snaps, err := inst.Snapshots()
+	if err != nil {
+		return err
+	}
+
+	if len(snaps) > 0 && snaps[len(snaps)-1].Name() != src.Name() && b.hasDependentDisk(inst) {
+		return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s).", src.Name())
+	}
+
 	// Check we can convert the instance to the volume type needed.
 	volType, err := InstanceTypeToVolumeType(inst.Type())
 	if err != nil {
@@ -3504,6 +3513,24 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 				return tx.UpdateStoragePoolVolume(ctx, inst.Project().Name, inst.Name(), volDBType, b.ID(), dbVol.Description, dbVol.Config)
 			})
 		})
+	}
+
+	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+		// Load the pool for the disk.
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		err = diskPool.RestoreCustomVolume(inst.Project().Name, dev.Config["source"], snapshotName, op)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, op)
+	if err != nil {
+		return err
 	}
 
 	deleteSnapshots := func(snapshots []string, inst instance.Instance) error {
@@ -8891,6 +8918,18 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 	}
 
 	return inst, devName, nil
+}
+
+func (b *backend) hasDependentDisk(inst instance.Instance) bool {
+	for _, dev := range inst.ExpandedDevices().Sorted() {
+		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+			continue
+		}
+
+		return true
+	}
+
+	return false
 }
 
 func (b *backend) forEachDependentDiskType(inst instance.Instance, diskAction func(dev deviceConfig.DeviceNamed) error, op *operations.Operation) error {
