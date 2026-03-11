@@ -130,6 +130,7 @@ CREATE TABLE "instances_backups" (
     expiry_date DATETIME,
     container_only INTEGER NOT NULL default 0,
     optimized_storage INTEGER NOT NULL default 0,
+    root_only INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (instance_id) REFERENCES "instances" (id) ON DELETE CASCADE,
     UNIQUE (instance_id, name)
 );
@@ -674,5 +675,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (76, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (77, strftime("%s"))
 `
