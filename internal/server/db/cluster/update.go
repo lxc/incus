@@ -113,6 +113,15 @@ var updates = map[int]schema.Update{
 	74: updateFromV73,
 	75: updateFromV74,
 	76: updateFromV75,
+	77: updateFromV76,
+}
+
+func updateFromV76(ctx context.Context, tx *sql.Tx) error {
+	stmts := `
+ALTER TABLE instances_backups ADD COLUMN root_only INTEGER NOT NULL DEFAULT 0;
+`
+	_, err := tx.Exec(stmts)
+	return err
 }
 
 func updateFromV75(ctx context.Context, tx *sql.Tx) error {
