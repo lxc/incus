@@ -10090,7 +10090,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		parts := strings.Split(string(cmdline), " ")
 
 		// Check if SME is enabled in the kernel command line.  // codespell:ignore sme
-		if slices.Contains(parts, "mem_encrypt=on") {
+		if slices.Contains(parts, "mem_encrypt=on") || util.PathExists("/dev/sev") {
 			features["sme"] = struct{}{} // codespell:ignore sme
 		}
 
