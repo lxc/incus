@@ -1045,7 +1045,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 	}
 
 	// Check source volume exists, and get its config.
-	srcConfig, err := srcPool.GenerateInstanceBackupConfig(src, snapshots, op)
+	srcConfig, err := srcPool.GenerateInstanceBackupConfig(src, snapshots, true, op)
 	if err != nil {
 		return fmt.Errorf("Failed generating instance copy config: %w", err)
 	}
@@ -1553,7 +1553,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 	}
 
 	// Check source volume exists, and get its config.
-	srcConfig, err := srcPool.GenerateInstanceBackupConfig(src, snapshots, op)
+	srcConfig, err := srcPool.GenerateInstanceBackupConfig(src, snapshots, true, op)
 	if err != nil {
 		return fmt.Errorf("Failed generating instance refresh config: %w", err)
 	}
@@ -2701,7 +2701,7 @@ func (b *backend) CleanupInstancePaths(inst instance.Instance, op *operations.Op
 }
 
 // BackupInstance creates an instance backup.
-func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, op *operations.Operation) error {
+func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, dependentVolumes bool, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "optimized": optimized, "snapshots": snapshots})
 	l.Debug("BackupInstance started")
 	defer l.Debug("BackupInstance finished")
@@ -2757,22 +2757,24 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 		return err
 	}
 
-	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
-		// Load the pool for the disk.
-		diskPool, err := LoadByName(b.state, dev.Config["pool"])
-		if err != nil {
-			return fmt.Errorf("Failed loading storage pool: %w", err)
-		}
+	if dependentVolumes {
+		err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+			// Load the pool for the disk.
+			diskPool, err := LoadByName(b.state, dev.Config["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
 
-		err = diskPool.BackupCustomVolume(inst.Project().Name, dev.Config["source"], tarWriter, filepath.Join(backup.DefaultBackupPrefix, dev.Name), optimized, snapshots, op)
+			err = diskPool.BackupCustomVolume(inst.Project().Name, dev.Config["source"], tarWriter, filepath.Join(backup.DefaultBackupPrefix, dev.Name), optimized, snapshots, op)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}, op)
 		if err != nil {
 			return err
 		}
-
-		return nil
-	}, op)
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -6724,7 +6726,7 @@ func (b *backend) GenerateCustomVolumeBackupConfig(projectName string, volName s
 
 // GenerateInstanceBackupConfig returns the backup config entry for this instance.
 // The Container field is only populated for non-snapshot instances.
-func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots bool, op *operations.Operation) (*backupConfig.Config, error) {
+func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots bool, dependentVolumes bool, op *operations.Operation) (*backupConfig.Config, error) {
 	// Generate the YAML.
 	ci, _, err := inst.Render()
 	if err != nil {
@@ -6753,28 +6755,30 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 		config.Profiles[i] = &instProfiles[i]
 	}
 
-	config.DependentVolumes = []*backupConfig.Config{}
-	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
-		// Load the pool for the disk.
-		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+	if dependentVolumes {
+		config.DependentVolumes = []*backupConfig.Config{}
+		err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+			// Load the pool for the disk.
+			diskPool, err := LoadByName(b.state, dev.Config["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+
+			diskConfig, err := diskPool.GenerateCustomVolumeBackupConfig(inst.Project().Name, dev.Config["source"], snapshots, op)
+			if err != nil {
+				return err
+			}
+
+			poolDB := diskPool.ToAPI()
+			diskConfig.Pool = &poolDB
+
+			config.DependentVolumes = append(config.DependentVolumes, diskConfig)
+
+			return nil
+		}, op)
 		if err != nil {
-			return fmt.Errorf("Failed loading storage pool: %w", err)
+			return nil, err
 		}
-
-		diskConfig, err := diskPool.GenerateCustomVolumeBackupConfig(inst.Project().Name, dev.Config["source"], snapshots, op)
-		if err != nil {
-			return err
-		}
-
-		poolDB := diskPool.ToAPI()
-		diskConfig.Pool = &poolDB
-
-		config.DependentVolumes = append(config.DependentVolumes, diskConfig)
-
-		return nil
-	}, op)
-	if err != nil {
-		return nil, err
 	}
 
 	// Only populate Container field for non-snapshot instances.
@@ -6850,7 +6854,7 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 		return nil
 	}
 
-	config, err := b.GenerateInstanceBackupConfig(inst, snapshots, op)
+	config, err := b.GenerateInstanceBackupConfig(inst, snapshots, true, op)
 	if err != nil {
 		return err
 	}
