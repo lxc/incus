@@ -53,6 +53,10 @@ type InstanceBackupsPost struct {
 	// Example: false
 	InstanceOnly bool `json:"instance_only" yaml:"instance_only"`
 
+	// Whether to ignore dependent volumes
+	// Example: false
+	RootOnly bool `json:"root_only" yaml:"root_only"`
+
 	// Whether to use a pool-optimized binary format (instead of plain tarball)
 	// Example: true
 	OptimizedStorage bool `json:"optimized_storage" yaml:"optimized_storage"`
