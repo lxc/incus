@@ -7672,6 +7672,7 @@ func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, 
 	return nil
 }
 
+// CreateCustomVolumeFromBackup creates a custom volume from a backup.
 func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": srcBackup.Project, "volume": srcBackup.Name, "snapshots": srcBackup.Snapshots, "optimizedStorage": *srcBackup.OptimizedStorage})
 	l.Debug("CreateCustomVolumeFromBackup started")
