@@ -483,7 +483,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	state := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventRTCChange}, event) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -517,6 +517,12 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 				d.logger.Warn("Failed to advertise vsock address to instance agent", logger.Ctx{"err": err})
 				return
 			}
+
+			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
+
+		case qmp.EventAgentStopped:
+			d.logger.Debug("Instance agent stopped")
+			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
 
 		case qmp.EventVMReset:
 			monitor, err := d.qmpConnect()
@@ -792,6 +798,8 @@ func (d *qemu) onStop(target string) error {
 		} else {
 			d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStopped.Event(d, nil))
 		}
+		// agent stopped when shutdown
+		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
 	}
 
 	// Reboot the instance.

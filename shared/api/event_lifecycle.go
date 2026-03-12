@@ -53,6 +53,8 @@ const (
 	EventLifecycleInstanceMetadataUpdated           = "instance-metadata-updated"
 	EventLifecycleInstanceMigrated                  = "instance-migrated"
 	EventLifecycleInstancePaused                    = "instance-paused"
+	EventLifecycleInstanceAgentStarted              = "instance-agent-started"
+	EventLifecycleInstanceAgentStopped              = "instance-agent-stopped"
 	EventLifecycleInstanceReady                     = "instance-ready"
 	EventLifecycleInstanceRenamed                   = "instance-renamed"
 	EventLifecycleInstanceRestarted                 = "instance-restarted"
