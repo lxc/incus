@@ -3037,3 +3037,13 @@ This adds a new API at `POST /1.0/instances/NAME/debug/repair` to trigger low-le
 ## `network_io_bus_ovn`
 
 This ports the `io.bus` property available on most NIC devices to non-accelerated OVN NICs.
+
+## `dependent`
+
+This introduces a new `dependent` configuration key for disk devices and custom volumes.
+Volumes marked as `dependent` are tied to the `lifecycle` of the instance they are attached to.
+Snapshot operations on the instance are automatically propagated to the dependent volume.
+Creating an instance snapshot creates a corresponding snapshot on the dependent volume,
+and deleting the instance snapshot removes it as well.
+Direct snapshot creation or deletion on a dependent volume is not allowed.
+Exporting and importing an instance also includes dependent volumes.
