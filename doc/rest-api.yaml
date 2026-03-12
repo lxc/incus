@@ -362,8 +362,6 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                additionalProperties:
-                    type: string
                 description: Additional configuration information
                 example:
                     scheduler.instance: all
@@ -508,8 +506,6 @@ definitions:
         description: ClusterMemberPut represents the modifiable fields of a cluster member
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Additional configuration information
                 example:
                     scheduler.instance: all
@@ -664,6 +660,26 @@ definitions:
                 type: string
                 x-go-name: ServerName
         title: ClusterPut represents the fields required to bootstrap or join a cluster.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    ConfigMap:
+        additionalProperties:
+            type: string
+        description: |-
+            ConfigMap type is used to hold incus config. In contrast to plain
+            map[string]string it provides unmarshal methods for JSON and YAML, which
+            gracefully handle numbers and bools.
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    DevicesMap:
+        additionalProperties:
+            additionalProperties:
+                type: string
+            type: object
+        description: |-
+            DevicesMap type is used to hold incus devices configurations. In contrast to
+            plain map[string]map[string]string it provides unmarshal methods for JSON and
+            YAML, which gracefully handle numbers and bools.
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     Event:
@@ -1278,8 +1294,6 @@ definitions:
                 type: array
                 x-go-name: ClusterGroups
             config:
-                additionalProperties:
-                    type: string
                 description: Server configuration map (refer to doc/server.md)
                 example:
                     core.https_address: :8443
@@ -1330,8 +1344,6 @@ definitions:
                 example: '"default"'
                 type: string
             config:
-                additionalProperties:
-                    type: string
                 description: Network configuration map (refer to doc/networks.md)
                 example:
                     ipv4.address: 10.0.0.1/24
@@ -1373,8 +1385,6 @@ definitions:
                 example: '"default"'
                 type: string
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration map (refer to doc/instances.md)
                 example:
                     limits.cpu: "4"
@@ -1387,10 +1397,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
@@ -1422,8 +1428,6 @@ definitions:
                 example: '"default"'
                 type: string
             config:
-                additionalProperties:
-                    type: string
                 description: Storage volume configuration map (refer to doc/storage.md)
                 example:
                     size: 50GiB
@@ -1468,8 +1472,6 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration (see doc/instances.md)
                 example:
                     security.nesting: "true"
@@ -1487,10 +1489,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -1505,18 +1503,12 @@ definitions:
                 type: boolean
                 x-go-name: Ephemeral
             expanded_config:
-                additionalProperties:
-                    type: string
                 description: Expanded configuration (all profiles and local config merged)
                 example:
                     security.nesting: "true"
                 type: object
                 x-go-name: ExpandedConfig
             expanded_devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Expanded devices (all profiles and local devices merged)
                 example:
                     root:
@@ -1759,8 +1751,6 @@ definitions:
                 type: array
                 x-go-name: Backups
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration (see doc/instances.md)
                 example:
                     security.nesting: "true"
@@ -1778,10 +1768,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -1796,18 +1782,12 @@ definitions:
                 type: boolean
                 x-go-name: Ephemeral
             expanded_config:
-                additionalProperties:
-                    type: string
                 description: Expanded configuration (all profiles and local config merged)
                 example:
                     security.nesting: "true"
                 type: object
                 x-go-name: ExpandedConfig
             expanded_devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Expanded devices (all profiles and local devices merged)
                 example:
                     root:
@@ -1881,17 +1861,11 @@ definitions:
     InstancePost:
         properties:
             Config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration file.
                 example:
                     security.nesting: "true"
                 type: object
             Devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices.
                 example:
                     root:
@@ -1978,8 +1952,6 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration (see doc/instances.md)
                 example:
                     security.nesting: "true"
@@ -1991,10 +1963,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -2044,8 +2012,6 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration (see doc/instances.md)
                 example:
                     security.nesting: "true"
@@ -2063,10 +2029,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -2081,18 +2043,12 @@ definitions:
                 type: boolean
                 x-go-name: Ephemeral
             expanded_config:
-                additionalProperties:
-                    type: string
                 description: Expanded configuration (all profiles and local config merged)
                 example:
                     security.nesting: "true"
                 type: object
                 x-go-name: ExpandedConfig
             expanded_devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Expanded devices (all profiles and local devices merged)
                 example:
                     root:
@@ -2611,8 +2567,6 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration (see doc/instances.md)
                 example:
                     security.nesting: "true"
@@ -2624,10 +2578,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: Instance devices (see doc/instances.md)
                 example:
                     root:
@@ -2769,8 +2719,6 @@ definitions:
         description: Network represents a network
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Network configuration map (refer to doc/networks.md)
                 example:
                     ipv4.address: 10.0.0.1/24
@@ -2838,8 +2786,6 @@ definitions:
     NetworkACL:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: ACL configuration map (refer to doc/network-acls.md)
                 example:
                     user.mykey: foo
@@ -2899,8 +2845,6 @@ definitions:
     NetworkACLPut:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: ACL configuration map (refer to doc/network-acls.md)
                 example:
                     user.mykey: foo
@@ -2985,8 +2929,6 @@ definitions:
     NetworkACLsPost:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: ACL configuration map (refer to doc/network-acls.md)
                 example:
                     user.mykey: foo
@@ -3030,8 +2972,6 @@ definitions:
                 type: array
                 x-go-name: Addresses
             config:
-                additionalProperties:
-                    type: string
                 description: Address set configuration map (refer to doc/network-address-sets.md)
                 example:
                     user.mykey: foo
@@ -3088,8 +3028,6 @@ definitions:
                 type: array
                 x-go-name: Addresses
             config:
-                additionalProperties:
-                    type: string
                 description: Address set configuration map (refer to doc/network-address-sets.md)
                 example:
                     user.mykey: foo
@@ -3115,8 +3053,6 @@ definitions:
                 type: array
                 x-go-name: Addresses
             config:
-                additionalProperties:
-                    type: string
                 description: Address set configuration map (refer to doc/network-address-sets.md)
                 example:
                     user.mykey: foo
@@ -3166,8 +3102,6 @@ definitions:
     NetworkForward:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Forward configuration map (refer to doc/network-forwards.md)
                 example:
                     user.mykey: foo
@@ -3236,8 +3170,6 @@ definitions:
         description: NetworkForwardPut represents the modifiable fields of a network address forward
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Forward configuration map (refer to doc/network-forwards.md)
                 example:
                     user.mykey: foo
@@ -3260,8 +3192,6 @@ definitions:
         description: NetworkForwardsPost represents the fields of a new network address forward
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Forward configuration map (refer to doc/network-forwards.md)
                 example:
                     user.mykey: foo
@@ -3288,8 +3218,6 @@ definitions:
     NetworkIntegration:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Integration configuration map (refer to doc/network-integrations.md)
                 example:
                     user.mykey: foo
@@ -3337,8 +3265,6 @@ definitions:
         description: NetworkIntegrationPut represents the modifiable fields of a network integration
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Integration configuration map (refer to doc/network-integrations.md)
                 example:
                     user.mykey: foo
@@ -3355,8 +3281,6 @@ definitions:
         description: NetworkIntegrationsPost represents the fields of a new network integration
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Integration configuration map (refer to doc/network-integrations.md)
                 example:
                     user.mykey: foo
@@ -3419,8 +3343,6 @@ definitions:
                 type: array
                 x-go-name: Backends
             config:
-                additionalProperties:
-                    type: string
                 description: Load balancer configuration map (refer to doc/network-load-balancers.md)
                 example:
                     user.mykey: foo
@@ -3513,8 +3435,6 @@ definitions:
                 type: array
                 x-go-name: Backends
             config:
-                additionalProperties:
-                    type: string
                 description: Load balancer configuration map (refer to doc/network-load-balancers.md)
                 example:
                     user.mykey: foo
@@ -3581,8 +3501,6 @@ definitions:
                 type: array
                 x-go-name: Backends
             config:
-                additionalProperties:
-                    type: string
                 description: Load balancer configuration map (refer to doc/network-load-balancers.md)
                 example:
                     user.mykey: foo
@@ -3609,8 +3527,6 @@ definitions:
     NetworkPeer:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Peer configuration map (refer to doc/network-peers.md)
                 example:
                     user.mykey: foo
@@ -3672,8 +3588,6 @@ definitions:
         description: NetworkPeerPut represents the modifiable fields of a network peering
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Peer configuration map (refer to doc/network-peers.md)
                 example:
                     user.mykey: foo
@@ -3690,8 +3604,6 @@ definitions:
         description: NetworkPeersPost represents the fields of a new network peering
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Peer configuration map (refer to doc/network-peers.md)
                 example:
                     user.mykey: foo
@@ -3743,8 +3655,6 @@ definitions:
         description: NetworkPut represents the modifiable fields of a network
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Network configuration map (refer to doc/networks.md)
                 example:
                     ipv4.address: 10.0.0.1/24
@@ -3992,8 +3902,6 @@ definitions:
     NetworkZone:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Zone configuration map (refer to doc/network-zones.md)
                 example:
                     user.mykey: foo
@@ -4031,8 +3939,6 @@ definitions:
         description: NetworkZonePut represents the modifiable fields of a network zone
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Zone configuration map (refer to doc/network-zones.md)
                 example:
                     user.mykey: foo
@@ -4048,8 +3954,6 @@ definitions:
     NetworkZoneRecord:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Advanced configuration for the record
                 example:
                     user.mykey: foo
@@ -4099,8 +4003,6 @@ definitions:
         description: NetworkZoneRecordPut represents the modifiable fields of a network zone record
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Advanced configuration for the record
                 example:
                     user.mykey: foo
@@ -4123,8 +4025,6 @@ definitions:
         description: NetworkZoneRecordsPost represents the fields of a new network zone record
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Advanced configuration for the record
                 example:
                     user.mykey: foo
@@ -4152,8 +4052,6 @@ definitions:
         description: NetworkZonesPost represents the fields of a new network zone
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Zone configuration map (refer to doc/network-zones.md)
                 example:
                     user.mykey: foo
@@ -4175,8 +4073,6 @@ definitions:
         description: NetworksPost represents the fields of a new network
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Network configuration map (refer to doc/networks.md)
                 example:
                     ipv4.address: 10.0.0.1/24
@@ -4288,8 +4184,6 @@ definitions:
         description: Profile represents a profile
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration map (refer to doc/instances.md)
                 example:
                     limits.cpu: "4"
@@ -4302,10 +4196,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
@@ -4355,8 +4245,6 @@ definitions:
         description: ProfilePut represents the modifiable fields of a profile
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration map (refer to doc/instances.md)
                 example:
                     limits.cpu: "4"
@@ -4369,10 +4257,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
@@ -4391,8 +4275,6 @@ definitions:
         description: ProfilesPost represents the fields of a new profile
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Instance configuration map (refer to doc/instances.md)
                 example:
                     limits.cpu: "4"
@@ -4405,10 +4287,6 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                additionalProperties:
-                    additionalProperties:
-                        type: string
-                    type: object
                 description: List of devices
                 example:
                     eth0:
@@ -4432,8 +4310,6 @@ definitions:
         description: Project represents a project
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Project configuration map (refer to doc/projects.md)
                 example:
                     features.networks: "false"
@@ -4480,8 +4356,6 @@ definitions:
         description: ProjectPut represents the modifiable fields of a project
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Project configuration map (refer to doc/projects.md)
                 example:
                     features.networks: "false"
@@ -4533,8 +4407,6 @@ definitions:
         description: ProjectsPost represents the fields of a new project
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Project configuration map (refer to doc/projects.md)
                 example:
                     features.networks: "false"
@@ -5957,8 +5829,6 @@ definitions:
                 type: string
                 x-go-name: AuthUserName
             config:
-                additionalProperties:
-                    type: string
                 description: Server configuration map (refer to doc/server.md)
                 example:
                     core.https_address: :8443
@@ -6123,8 +5993,6 @@ definitions:
         description: ServerPut represents the modifiable fields of a server configuration
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Server configuration map (refer to doc/server.md)
                 example:
                     core.https_address: :8443
@@ -6192,8 +6060,6 @@ definitions:
                 type: array
                 x-go-name: AuthMethods
             config:
-                additionalProperties:
-                    type: string
                 description: Server configuration map (refer to doc/server.md)
                 example:
                     core.https_address: :8443
@@ -6216,8 +6082,6 @@ definitions:
         description: StorageBucket represents the fields of a storage pool bucket
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage bucket configuration map
                 example:
                     size: 50GiB
@@ -6440,8 +6304,6 @@ definitions:
         description: StorageBucketPut represents the modifiable fields of a storage pool bucket
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage bucket configuration map
                 example:
                     size: 50GiB
@@ -6458,8 +6320,6 @@ definitions:
         description: StorageBucketsPost represents the fields of a new storage pool bucket
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage bucket configuration map
                 example:
                     size: 50GiB
@@ -6480,8 +6340,6 @@ definitions:
     StoragePool:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage pool configuration map (refer to doc/storage.md)
                 example:
                     volume.block.filesystem: ext4
@@ -6535,8 +6393,6 @@ definitions:
     StoragePoolPut:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage pool configuration map (refer to doc/storage.md)
                 example:
                     volume.block.filesystem: ext4
@@ -6564,8 +6420,6 @@ definitions:
         description: StoragePoolsPost represents the fields of a new storage pool
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage pool configuration map (refer to doc/storage.md)
                 example:
                     volume.block.filesystem: ext4
@@ -6592,8 +6446,6 @@ definitions:
     StorageVolume:
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage volume configuration map (refer to doc/storage.md)
                 example:
                     size: 50GiB
@@ -6863,8 +6715,6 @@ definitions:
         description: StorageVolumePut represents the modifiable fields of a storage volume
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage volume configuration map (refer to doc/storage.md)
                 example:
                     size: 50GiB
@@ -6887,8 +6737,6 @@ definitions:
         description: StorageVolumeSnapshot represents a storage volume snapshot
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage volume configuration map (refer to doc/storage.md)
                 example:
                     size: 50GiB
@@ -7069,8 +6917,6 @@ definitions:
         description: StorageVolumesPost represents the fields of a new storage pool volume
         properties:
             config:
-                additionalProperties:
-                    type: string
                 description: Storage volume configuration map (refer to doc/storage.md)
                 example:
                     size: 50GiB
