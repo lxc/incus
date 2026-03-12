@@ -1714,9 +1714,9 @@ func (n *common) randomHwaddr(r *rand.Rand) string {
 	ret := bytes.Buffer{}
 	for _, c := range pattern {
 		if c == 'x' || c == 'X' {
-			ret.WriteString(fmt.Sprintf("%x", r.Int31n(16)))
+			fmt.Fprintf(&ret, "%x", r.Int31n(16))
 		} else {
-			ret.WriteString(string(c))
+			fmt.Fprint(&ret, string(c))
 		}
 	}
 
