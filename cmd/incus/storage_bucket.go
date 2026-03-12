@@ -1390,14 +1390,14 @@ func (c *cmdStorageBucketExport) Run(cmd *cobra.Command, args []string) error {
 
 		// Get name of backup
 		utStr := op.Get().Resources["backups"][0]
-		u, err := url.Parse(utStr)
+		uri, err := url.Parse(utStr)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Invalid URL %q: %w"), utStr, err)
 		}
 
-		backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
+		backupName, err := url.PathUnescape(path.Base(uri.EscapedPath()))
 		if err != nil {
-			return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
+			return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), uri.EscapedPath(), err)
 		}
 
 		defer func() {
