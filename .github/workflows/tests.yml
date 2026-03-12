@@ -345,7 +345,7 @@ jobs:
           make
 
       - name: Setup scratch space
-        if: "matrix.backend == 'ceph' || matrix.backend == 'linstor'"
+        if: "matrix.backend == 'ceph'"
         run: |
           set -eux
 
