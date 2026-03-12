@@ -1719,6 +1719,11 @@ definitions:
                 example: true
                 type: boolean
                 x-go-name: OptimizedStorage
+            root_only:
+                description: Whether to ignore dependent volumes
+                example: false
+                type: boolean
+                x-go-name: RootOnly
             target:
                 $ref: '#/definitions/BackupTarget'
         title: InstanceBackupsPost represents the fields available for a new instance backup.
