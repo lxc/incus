@@ -6782,6 +6782,11 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 			return err
 		}
 
+		err = f.Sync()
+		if err != nil {
+			return err
+		}
+
 		return f.Close()
 	}, op)
 
