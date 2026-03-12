@@ -3,9 +3,9 @@ module github.com/lxc/incus/v6
 go 1.25.0
 
 require (
+	github.com/FuturFusion/vsock v0.0.0-20260219213046-d78a7104f821
 	github.com/adhocore/gronx v1.19.6
 	github.com/apex/log v1.9.0
-	github.com/armon/go-proxyproto v0.1.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/checkpoint-restore/go-criu/v6 v6.3.0
 	github.com/cowsql/go-cowsql v1.22.0
@@ -42,6 +42,7 @@ require (
 	github.com/osrg/gobgp/v3 v3.37.0
 	github.com/ovn-kubernetes/libovsdb v0.8.1
 	github.com/pierrec/lz4/v4 v4.1.26
+	github.com/pires/go-proxyproto v0.11.0
 	github.com/pkg/sftp v1.13.10
 	github.com/pkg/xattr v0.4.12
 	github.com/shirou/gopsutil/v4 v4.26.2
@@ -59,9 +60,10 @@ require (
 	golang.org/x/sys v0.42.0
 	golang.org/x/term v0.41.0
 	golang.org/x/text v0.35.0
-	golang.org/x/tools v0.42.0
+	golang.org/x/tools v0.43.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	software.sslmate.com/src/go-pkcs12 v0.7.0
 )
@@ -168,5 +170,4 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
 	google.golang.org/grpc v1.79.2 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
