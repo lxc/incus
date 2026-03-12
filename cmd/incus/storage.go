@@ -575,16 +575,16 @@ func (c *cmdStorageInfo) Run(cmd *cobra.Command, args []string) error {
 
 	// Build up the usedby map
 	for _, v := range pool.UsedBy {
-		u, err := url.Parse(v)
+		uri, err := url.Parse(v)
 		if err != nil {
 			continue
 		}
 
-		fields := strings.Split(strings.TrimPrefix(u.Path, "/1.0/"), "/")
+		fields := strings.Split(strings.TrimPrefix(uri.Path, "/1.0/"), "/")
 		fieldsLen := len(fields)
 
 		entityType := "unrecognized"
-		entityName := u.Path
+		entityName := uri.Path
 
 		if fieldsLen > 1 {
 			entityType = fields[0]
@@ -609,7 +609,7 @@ func (c *cmdStorageInfo) Run(cmd *cobra.Command, args []string) error {
 		sb.WriteString(entityName)
 
 		// Show info regarding the project and location if present.
-		values := u.Query()
+		values := uri.Query()
 		projectName := values.Get("project")
 		if projectName != "" {
 			attribs = append(attribs, fmt.Sprintf("project %q", projectName))
