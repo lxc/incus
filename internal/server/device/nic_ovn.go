@@ -335,6 +335,15 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		//  required: no
 		//  shortdesc: Whether the NIC is connected to the host network (requires `acceleration` set to `none`)
 		"connected",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=io.bus)
+		//
+		// ---
+		//  type: string
+		//  default: `virtio`
+		//  managed: no
+		//  shortdesc: Override the bus for the device (can be `virtio` or `usb`, requires `acceleration` set to `none`) (VM only)
+		"io.bus",
 	}
 
 	// The NIC's network may be a non-default project, so lookup project and get network's project name.
@@ -593,9 +602,16 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader) error {
 		}
 	}
 
-	// The connected option can only be handled properly if acceleration is set to none.
-	if d.config["connected"] != "" && !d.canSetLink() {
-		return errors.New("The \"connected\" option requires setting acceleration=none for OVN NICs")
+	if !d.isVirtualNIC() {
+		// The connected option can only be handled properly if acceleration is set to none.
+		if d.config["connected"] != "" {
+			return errors.New("The \"connected\" option requires setting acceleration=none for OVN NICs")
+		}
+
+		// The bus can only be set if we actually have control over the guest device.
+		if d.config["io.bus"] != "" {
+			return errors.New("The \"io.bus\" option requires setting acceleration=none for OVN NICs")
+		}
 	}
 
 	return nil
@@ -1015,7 +1031,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			{Key: "link", Value: peerName},
 		}
 
-		if d.canSetLink() {
+		if d.isVirtualNIC() {
 			runConf.NetworkInterface = append(runConf.NetworkInterface, deviceConfig.RunConfigItem{Key: "connected", Value: d.config["connected"]})
 		}
 
@@ -1055,6 +1071,10 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			runConf.NetworkInterface = append(runConf.NetworkInterface,
 				deviceConfig.RunConfigItem{Key: "hwaddr", Value: d.config["hwaddr"]},
 			)
+		}
+
+		if d.config["io.bus"] == "usb" {
+			runConf.UseUSBBus = true
 		}
 	}
 
@@ -1173,7 +1193,7 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		return err
 	}
 
-	if isRunning && d.canSetLink() {
+	if isRunning && d.isVirtualNIC() {
 		return d.setNICLink()
 	}
 
@@ -1575,7 +1595,7 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 	return cleanup, err
 }
 
-// canSetLink determines whether the device supports setting a link state.
-func (d *nicOVN) canSetLink() bool {
+// isVirtualNIC determines whether the device is non-accelerated.
+func (d *nicOVN) isVirtualNIC() bool {
 	return slices.Contains([]string{"", "none"}, d.config["acceleration"])
 }
