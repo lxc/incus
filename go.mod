@@ -63,6 +63,7 @@ require (
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
+	software.sslmate.com/src/go-pkcs12 v0.7.0
 )
 
 require (
