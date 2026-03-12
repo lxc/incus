@@ -1032,6 +1032,15 @@
 						}
 					},
 					{
+						"io.bus": {
+							"default": "`virtio`",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Override the bus for the device (can be `virtio` or `usb`, requires `acceleration` set to `none`) (VM only)",
+							"type": "string"
+						}
+					},
+					{
 						"ipv4.address": {
 							"longdesc": "",
 							"managed": "no",
@@ -1360,15 +1369,6 @@
 							"managed": "no",
 							"shortdesc": "Boot priority for VMs (higher value boots first)",
 							"type": "integer"
-						}
-					},
-					{
-						"connected": {
-							"default": "`true`",
-							"longdesc": "",
-							"required": "no",
-							"shortdesc": "Whether the NIC is connected to the host network (VM only)",
-							"type": "bool"
 						}
 					},
 					{
