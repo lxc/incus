@@ -261,6 +261,7 @@ simplestreams
 SLAAC
 SMTP
 Snapcraft
+snapshotted
 SNAT
 Solaris
 SPAs
