@@ -87,6 +87,15 @@
 						}
 					},
 					{
+						"dependent": {
+							"default": "`false`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Specifies if the disk is instance dependent",
+							"type": "bool"
+						}
+					},
+					{
 						"initial.*": {
 							"longdesc": "",
 							"required": "no",

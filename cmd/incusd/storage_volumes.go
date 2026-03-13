@@ -2716,7 +2716,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		}
 
 		// Dump tarball to storage.
-		err = pool.CreateCustomVolumeFromBackup(*bInfo, backupFile, nil)
+		err = pool.CreateCustomVolumeFromBackup(*bInfo, backupFile, backup.DefaultBackupPrefix, nil)
 		if err != nil {
 			return fmt.Errorf("Create custom volume from backup: %w", err)
 		}

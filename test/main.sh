@@ -275,6 +275,7 @@ run_standalone_storage() {
     run_test test_container_devices_disk "container devices - disk"
     run_test test_container_local_cross_pool_handling "container local cross pool handling"
     run_test test_container_move "container server-side move"
+    run_test test_dependent_volumes "dependent volumes"
     run_test test_incremental_copy "incremental container copy"
     run_test test_migration "migration"
     run_test test_projects_storage "projects and storage pools"

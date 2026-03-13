@@ -67,8 +67,8 @@ func (d *cephfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.O
 }
 
 // CreateVolumeFromBackup re-creates a volume from its exported state.
-func (d *cephfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
-	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, op)
+func (d *cephfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, basePrefix, op)
 }
 
 // CreateVolumeFromCopy copies an existing storage volume (with or without snapshots) into a new volume.
@@ -387,7 +387,7 @@ func (d *cephfs) UpdateVolume(vol Volume, changedConfig map[string]string) error
 		}
 	}
 
-	return nil
+	return d.updateVolume(vol, changedConfig)
 }
 
 // GetVolumeUsage returns the disk space usage of a volume.
@@ -570,8 +570,8 @@ func (d *cephfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *
 }
 
 // BackupVolume creates an exported version of a volume.
-func (d *cephfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
-	return genericVFSBackupVolume(d, vol, writer, snapshots, op)
+func (d *cephfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots []string, op *operations.Operation) error {
+	return genericVFSBackupVolume(d, vol, writer, basePrefix, snapshots, op)
 }
 
 // CreateVolumeSnapshot creates a new snapshot.

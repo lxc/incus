@@ -30,13 +30,14 @@ type InstanceBackup struct {
 
 	instance     Instance
 	instanceOnly bool
+	rootOnly     bool
 }
 
 // NewInstanceBackup instantiates a new InstanceBackup struct.
-func NewInstanceBackup(state *state.State, inst Instance, ID int, name string, creationDate time.Time, expiryDate time.Time, instanceOnly bool, optimizedStorage bool) *InstanceBackup {
+func NewInstanceBackup(s *state.State, inst Instance, ID int, name string, creationDate time.Time, expiryDate time.Time, instanceOnly bool, rootOnly bool, optimizedStorage bool) *InstanceBackup {
 	return &InstanceBackup{
 		CommonBackup: CommonBackup{
-			state:            state,
+			state:            s,
 			id:               ID,
 			name:             name,
 			creationDate:     creationDate,
@@ -45,12 +46,18 @@ func NewInstanceBackup(state *state.State, inst Instance, ID int, name string, c
 		},
 		instance:     inst,
 		instanceOnly: instanceOnly,
+		rootOnly:     rootOnly,
 	}
 }
 
-// InstanceOnly returns whether only the instance itself is to be backed up.
+// InstanceOnly returns whether only the instance itself is to be backed up (without snapshots).
 func (b *InstanceBackup) InstanceOnly() bool {
 	return b.instanceOnly
+}
+
+// RootOnly returns whether only the instance itself is to be backed up (without dependent volumes).
+func (b *InstanceBackup) RootOnly() bool {
+	return b.rootOnly
 }
 
 // Instance returns the instance to be backed up.

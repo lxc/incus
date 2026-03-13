@@ -99,9 +99,9 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 }
 
 // CreateVolumeFromBackup restores a backup tarball onto the storage device.
-func (d *dir) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+func (d *dir) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
 	// Run the generic backup unpacker
-	postHook, revertHook, err := genericVFSBackupUnpack(d.withoutGetVolID(), d.state.OS, vol, srcBackup.Snapshots, srcData, op)
+	postHook, revertHook, err := genericVFSBackupUnpack(d.withoutGetVolID(), d.state.OS, vol, srcBackup.Snapshots, srcData, basePrefix, op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -348,7 +348,7 @@ func (d *dir) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 		}
 	}
 
-	return nil
+	return d.updateVolume(vol, changedConfig)
 }
 
 // GetVolumeUsage returns the disk space used by the volume.
@@ -508,8 +508,8 @@ func (d *dir) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 
 // BackupVolume copies a volume (and optionally its snapshots) to a specified target path.
 // This driver does not support optimized backups.
-func (d *dir) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
-	return genericVFSBackupVolume(d, vol, writer, snapshots, op)
+func (d *dir) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots []string, op *operations.Operation) error {
+	return genericVFSBackupVolume(d, vol, writer, basePrefix, snapshots, op)
 }
 
 // CreateVolumeSnapshot creates a snapshot of a volume.

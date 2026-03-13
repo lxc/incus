@@ -1116,7 +1116,12 @@ func (d *linstor) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 		return nil
 	}
 
-	return d.updateResourceDefinition(vol, changedConfig)
+	err := d.updateResourceDefinition(vol, changedConfig)
+	if err != nil {
+		return err
+	}
+
+	return d.updateVolume(vol, changedConfig)
 }
 
 // GetVolumeUsage returns the disk space used by the volume.
@@ -1345,11 +1350,11 @@ func (d *linstor) VolumeSnapshots(vol Volume, op *operations.Operation) ([]strin
 
 // BackupVolume copies a volume (and optionally its snapshots) to a specified target path.
 // This driver does not support optimized backups.
-func (d *linstor) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
-	return genericVFSBackupVolume(d, vol, writer, snapshots, op)
+func (d *linstor) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots []string, op *operations.Operation) error {
+	return genericVFSBackupVolume(d, vol, writer, basePrefix, snapshots, op)
 }
 
 // CreateVolumeFromBackup restores a backup tarball onto the storage device.
-func (d *linstor) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
-	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, op)
+func (d *linstor) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, basePrefix, op)
 }
