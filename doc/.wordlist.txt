@@ -93,6 +93,7 @@ ETag
 failover
 formatters
 FQDNs
+FreeBSD
 frontend
 Furo
 gapped
