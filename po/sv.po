@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-05 12:55+0000\n"
-"PO-Revision-Date: 2026-03-13 13:54+0000\n"
+"PO-Revision-Date: 2026-03-13 20:00+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
@@ -2371,7 +2371,7 @@ msgid ""
 "device “%s” or modify profile instead"
 msgstr ""
 "Enheten från profilen/profilerna kan inte tas bort från enskilda instanser. "
-"Åsidosätt enheten eller ändra profilen istället"
+"Åsidosätt enheten \"%s\" eller ändra profilen istället"
 
 #: cmd/incus/config_device.go:281
 msgid "Device from profile(s) cannot be retrieved for individual instance"
@@ -8786,7 +8786,7 @@ msgstr "Följande okända volymer har hittats:"
 #: cmd/incus/delete.go:98
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
-msgstr "Instansen körs för närvarande, stoppa den först eller ange --force"
+msgstr "Instansen %s körs för närvarande, stoppa den först eller ange --force"
 
 #: cmd/incus/publish.go:92
 msgid ""
@@ -8977,7 +8977,8 @@ msgstr "Servern implementerar inte den nyare v2-resurs-API:n"
 #: cmd/incus/network.go:543
 #, c-format
 msgid "The specified NIC does not point to the given network (found %s)"
-msgstr "Den angivna enheten matchar inte nätverket"
+msgstr ""
+"Den angivna nätverksenheten pekar inte på det angivna nätverket (hittade %s)"
 
 #: cmd/incus/network.go:539
 #, c-format
@@ -8993,7 +8994,8 @@ msgstr "Den angivna enheten är inte en disk (%s-enhet)"
 #, c-format
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
-msgstr "Egenskapen %q finns inte på lagringspoolvolymen %q: %v"
+msgstr ""
+"Den angivna disken pekar inte på den angivna lagringsvolymen (hittade %s)"
 
 #: cmd/incus/storage_volume.go:753
 #, c-format
@@ -9269,15 +9271,15 @@ msgstr "Okänd utdatatyp %q"
 
 #: cmd/incus/cluster_group.go:984
 msgid "Unset a cluster group's configuration keys"
-msgstr "Avaktivera konfigurationsnycklarna för en klustergrupp"
+msgstr "Inaktivera konfigurationsnycklarna för en klustergrupp"
 
 #: cmd/incus/cluster.go:602
 msgid "Unset a cluster member's configuration keys"
-msgstr "Avaktivera konfigurationsnycklar för en klustermedlem"
+msgstr "Inaktivera konfigurationsnycklar för en klustermedlem"
 
 #: cmd/incus/move.go:62
 msgid "Unset all profiles on the target instance"
-msgstr "Avaktivera alla profiler på målinstansen"
+msgstr "Inaktivera alla profiler på målinstansen"
 
 #: cmd/incus/config_device.go:779 cmd/incus/config_device.go:780
 msgid "Unset device configuration keys"
@@ -9297,7 +9299,7 @@ msgstr "Oinställda nätverks-ACL-konfigurationsnycklar"
 
 #: cmd/incus/network_address_set.go:409 cmd/incus/network_address_set.go:410
 msgid "Unset network address set configuration keys"
-msgstr "Avaktivera konfigurationsnycklar för nätverksadress"
+msgstr "Inaktivera konfigurationsnycklar för nätverksadress"
 
 #: cmd/incus/network.go:1598 cmd/incus/network.go:1599
 msgid "Unset network configuration keys"
@@ -9305,7 +9307,7 @@ msgstr "Avmarkera nätverkskonfigurationsnycklar"
 
 #: cmd/incus/network_forward.go:584
 msgid "Unset network forward configuration keys"
-msgstr "Avaktivera konfigurationsnycklar för nätverksvidarebefordran"
+msgstr "Inaktivera konfigurationsnycklar för nätverksvidarebefordran"
 
 #: cmd/incus/network_forward.go:585
 msgid "Unset network forward keys"
@@ -9379,11 +9381,11 @@ msgstr "Avmarkera nyckeln som en klustergruppsegenskap"
 
 #: cmd/incus/cluster.go:605
 msgid "Unset the key as a cluster property"
-msgstr "Avaktivera nyckeln som en klusteregenskap"
+msgstr "Inaktivera nyckeln som en klusteregenskap"
 
 #: cmd/incus/network_acl.go:545
 msgid "Unset the key as a network ACL property"
-msgstr "Avaktivera nyckeln som en nätverks-ACL-egenskap"
+msgstr "Inaktivera nyckeln som en nätverks-ACL-egenskap"
 
 #: cmd/incus/network_address_set.go:413
 msgid "Unset the key as a network address set property"
@@ -9399,7 +9401,7 @@ msgstr "Avmarkera nyckeln som en nätverksintegrationsegenskap"
 
 #: cmd/incus/network_load_balancer.go:573
 msgid "Unset the key as a network load balancer property"
-msgstr "Avaktivera nyckeln som en egenskap för nätverkslastbalanserare"
+msgstr "Inaktivera nyckeln som en egenskap för nätverkslastbalanserare"
 
 #: cmd/incus/network_peer.go:608
 msgid "Unset the key as a network peer property"
@@ -9407,7 +9409,7 @@ msgstr "Avmarkera nyckeln som en nätverkspeer-egenskap"
 
 #: cmd/incus/network.go:1603
 msgid "Unset the key as a network property"
-msgstr "Avaktivera nyckeln som nätverksegenskap"
+msgstr "Inaktivera nyckeln som nätverksegenskap"
 
 #: cmd/incus/network_zone.go:558
 msgid "Unset the key as a network zone property"
@@ -9419,7 +9421,7 @@ msgstr "Avmarkera nyckeln som en egenskap för nätverkszonens post"
 
 #: cmd/incus/profile.go:1154
 msgid "Unset the key as a profile property"
-msgstr "Avaktivera nyckeln som profilegenskap"
+msgstr "Inaktivera nyckeln som profilegenskap"
 
 #: cmd/incus/project.go:867
 msgid "Unset the key as a project property"
@@ -9431,7 +9433,7 @@ msgstr "Avmarkera nyckeln som en lagringsbucketegenskap"
 
 #: cmd/incus/storage.go:992
 msgid "Unset the key as a storage property"
-msgstr "Avaktivera nyckeln som lagringsegenskap"
+msgstr "Inaktivera nyckeln som lagringsegenskap"
 
 #: cmd/incus/storage_volume.go:2086
 msgid "Unset the key as a storage volume property"
