@@ -920,6 +920,14 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} io.bus devices-nic_ovn
+:default: "`virtio`"
+:managed: "no"
+:shortdesc: "Override the bus for the device (can be `virtio` or `usb`, requires `acceleration` set to `none`) (VM only)"
+:type: "string"
+
+```
+
 ```{config:option} ipv4.address devices-nic_ovn
 :managed: "no"
 :shortdesc: "An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation"
@@ -1204,14 +1212,6 @@ With VMs, this option supports mounting file system disk devices and paths withi
 :managed: "no"
 :shortdesc: "Boot priority for VMs (higher value boots first)"
 :type: "integer"
-
-```
-
-```{config:option} connected devices-nic_physical
-:default: "`true`"
-:required: "no"
-:shortdesc: "Whether the NIC is connected to the host network (VM only)"
-:type: "bool"
 
 ```
 

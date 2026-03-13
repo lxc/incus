@@ -86,6 +86,8 @@ type: lifecycle
 | `image-alias-deleted`                  | An alias has been deleted for an existing image.                      | `target`: the original instance.                                                                     |
 | `image-alias-renamed`                  | The alias for an existing image has been renamed.                     | `old_name`: the previous name.                                                                       |
 | `image-alias-updated`                  | The configuration for an image alias has changed.                     | `target`: the original instance.                                                                     |
+| `instance-agent-started`               | The instance agent has connected to the host.                        |                                                                                                      |
+| `instance-agent-stopped`               | The instance agent has disconnected from the host.                   |                                                                                                      |
 | `image-created`                        | A new image has been added to the image store.                        | `type`: `container` or `vm`.                                                                         |
 | `image-deleted`                        | The image has been deleted from the image store.                      |                                                                                                      |
 | `image-refreshed`                      | The local image copy has updated to the current source image version. |                                                                                                      |

@@ -3820,14 +3820,14 @@ func (c *cmdStorageVolumeExport) Run(cmd *cobra.Command, args []string) error {
 
 		// Get name of backup
 		uStr := op.Get().Resources["backups"][0]
-		u, err := url.Parse(uStr)
+		uri, err := url.Parse(uStr)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Invalid URL %q: %w"), uStr, err)
 		}
 
-		backupName, err := url.PathUnescape(path.Base(u.EscapedPath()))
+		backupName, err := url.PathUnescape(path.Base(uri.EscapedPath()))
 		if err != nil {
-			return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), u.EscapedPath(), err)
+			return fmt.Errorf(i18n.G("Invalid backup name segment in path %q: %w"), uri.EscapedPath(), err)
 		}
 
 		defer func() {

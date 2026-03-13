@@ -27,6 +27,9 @@ var RingbufSize = 16
 // EventAgentStarted is the event sent once the agent has started.
 var EventAgentStarted = "AGENT-STARTED"
 
+// EventAgentStopped is the event sent once the agent has stopped.
+var EventAgentStopped = "AGENT-STOPPED"
+
 // EventVMReset is the event sent when VM guest reboots.
 var EventVMReset = "RESET"
 
@@ -84,21 +87,7 @@ func (m *Monitor) start() error {
 		// Extract the last entry.
 		entries := strings.Split(resp.Return, "\n")
 		if len(entries) > 1 {
-			status := entries[len(entries)-2]
-
-			m.agentStartedMu.Lock()
-			switch status {
-			case "STARTED":
-				if !m.agentStarted && m.eventHandler != nil {
-					go m.eventHandler(EventAgentStarted, nil)
-				}
-
-				m.agentStarted = true
-			case "STOPPED":
-				m.agentStarted = false
-			}
-
-			m.agentStartedMu.Unlock()
+			m.processAgentStatus(entries[len(entries)-2])
 		}
 	}
 
@@ -179,6 +168,27 @@ func (m *Monitor) start() error {
 	}()
 
 	return nil
+}
+
+// processAgentStatus handles a status string read from the agent vserial ringbuffer.
+func (m *Monitor) processAgentStatus(status string) {
+	m.agentStartedMu.Lock()
+	defer m.agentStartedMu.Unlock()
+
+	switch status {
+	case "STARTED":
+		if !m.agentStarted && m.eventHandler != nil {
+			go m.eventHandler(EventAgentStarted, nil)
+		}
+
+		m.agentStarted = true
+	case "STOPPED":
+		if m.agentStarted && m.eventHandler != nil {
+			go m.eventHandler(EventAgentStopped, nil)
+		}
+
+		m.agentStarted = false
+	}
 }
 
 // ping is used to validate if the QMP socket is still active.

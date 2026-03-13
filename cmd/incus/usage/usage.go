@@ -634,11 +634,6 @@ func (r remote) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[st
 		return nil, err
 	}
 
-	remoteServer, err := getInstanceServer(conf, servers, remoteName)
-	if err != nil {
-		return nil, err
-	}
-
 	restArgs := []string{}
 	if rest != "" {
 		restArgs = append(restArgs, rest)
@@ -680,6 +675,11 @@ func (r remote) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[st
 
 	if len(restArgs) != 0 {
 		return nil, &argumentNotFullyConsumedError{restArgs[0], arg}
+	}
+
+	remoteServer, err := getInstanceServer(conf, servers, remoteName)
+	if err != nil {
+		return nil, err
 	}
 
 	// We defer the argument shifting so that code paths ignoring this atom can consume its arguments

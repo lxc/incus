@@ -618,6 +618,11 @@ func validLogFileName(fname string) bool {
 }
 
 func validExecOutputFileName(fName string) bool {
+	// Make sure that there's nothing fishy about the provided file name.
+	if filepath.Base(fName) != fName {
+		return false
+	}
+
 	return (strings.HasSuffix(fName, ".stdout") || strings.HasSuffix(fName, ".stderr")) &&
 		strings.HasPrefix(fName, "exec_")
 }
