@@ -2010,12 +2010,14 @@ func getVolumeFull(ctx context.Context, s *state.State, poolName string, vol api
 	// Add the state.
 	var usage *storagePools.VolumeUsage
 
-	if volType == db.StoragePoolVolumeTypeCustom {
+	switch volType {
+	case db.StoragePoolVolumeTypeCustom:
 		usage, err = pool.GetCustomVolumeUsage(vol.Project, vol.Name)
 		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
 			return nil, err
 		}
-	} else if volType == db.StoragePoolVolumeTypeContainer || volType == db.StoragePoolVolumeTypeVM {
+
+	case db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM:
 		inst, err := instance.LoadByProjectAndName(s, vol.Project, vol.Name)
 		if err != nil {
 			return nil, err
@@ -2025,6 +2027,8 @@ func getVolumeFull(ctx context.Context, s *state.State, poolName string, vol api
 		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
 			return nil, err
 		}
+
+	default:
 	}
 
 	volState := api.StorageVolumeState{}
