@@ -404,7 +404,7 @@ func sftpRecursiveMkdir(sftpConn *sftp.Client, p string, mode *os.FileMode, uid 
 			Type: "directory",
 		}
 
-		logger.Errorf("Creating %s (%s)", cur, args.Type)
+		logger.Infof("Creating %s (%s)", cur, args.Type)
 		err := sftpCreateFile(sftpConn, cur, args, false)
 		if err != nil {
 			return err
