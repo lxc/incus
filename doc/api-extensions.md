@@ -3034,6 +3034,12 @@ This adds `storage.logs_volume` alongside the existing `storage.backups_volume` 
 
 This adds a new API at `POST /1.0/instances/NAME/debug/repair` to trigger low-level repair actions.
 
+<<<<<<< metrics-project-resources
+## `metrics_project_resources`
+
+This adds project-level metrics to the `/1.0/metrics` endpoint including resource counts, configured limits, and current usage per project.
+=======
 ## `network_io_bus_ovn`
 
 This ports the `io.bus` property available on most NIC devices to non-accelerated OVN NICs.
+>>>>>>> main

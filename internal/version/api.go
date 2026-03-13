@@ -528,7 +528,11 @@ var APIExtensions = []string{
 	"lvmcluster_remove_snapshots",
 	"daemon_storage_logs",
 	"instances_debug_repair",
+<<<<<<< metrics-project-resources
+	"metrics_project_resources",
+=======
 	"network_io_bus_ovn",
+>>>>>>> main
 }
 
 // APIExtensionsCount returns the number of available API extensions.

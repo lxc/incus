@@ -18,8 +18,10 @@ import (
 	dbCluster "github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	instanceDrivers "github.com/lxc/incus/v6/internal/server/instance/drivers"
+	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/metrics"
+	projecthelpers "github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	"github.com/lxc/incus/v6/internal/server/state"
@@ -339,6 +341,110 @@ func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *met
 	} else {
 		// Total number of operations
 		out.AddSamples(metrics.OperationsTotal, metrics.Sample{Value: float64(len(operations))})
+	}
+
+	// Project metrics.
+	projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+	if err != nil {
+		logger.Warn("Failed to get projects", logger.Ctx{"err": err})
+	} else {
+		for _, p := range projects {
+			project, err := p.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				logger.Warn("Failed to convert project", logger.Ctx{"project": p.Name, "err": err})
+				continue
+			}
+
+			containerType := instancetype.Container
+			containers, err := dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Project: &p.Name, Type: &containerType})
+			if err != nil {
+				logger.Warn("Failed to get container count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "containers"},
+					Value:  float64(len(containers)),
+				})
+			}
+
+			vmType := instancetype.VM
+			vms, err := dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Project: &p.Name, Type: &vmType})
+			if err != nil {
+				logger.Warn("Failed to get VM count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "virtual-machines"},
+					Value:  float64(len(vms)),
+				})
+			}
+
+			images, err := dbCluster.GetImages(ctx, tx.Tx(), dbCluster.ImageFilter{Project: &p.Name})
+			if err != nil {
+				logger.Warn("Failed to get image count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "images"},
+					Value:  float64(len(images)),
+				})
+			}
+
+			profiles, err := dbCluster.GetProfiles(ctx, tx.Tx(), dbCluster.ProfileFilter{Project: &p.Name})
+			if err != nil {
+				logger.Warn("Failed to get profile count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "profiles"},
+					Value:  float64(len(profiles)),
+				})
+			}
+
+			networks, err := tx.GetNetworks(ctx, p.Name)
+			if err != nil {
+				logger.Warn("Failed to get network count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "networks"},
+					Value:  float64(len(networks)),
+				})
+			}
+
+			volumes, err := tx.GetCustomVolumesInProject(ctx, p.Name)
+			if err != nil {
+				logger.Warn("Failed to get storage volume count", logger.Ctx{"project": p.Name, "err": err})
+			} else {
+				out.AddSamples(metrics.ProjectResourcesTotal, metrics.Sample{
+					Labels: map[string]string{"project": p.Name, "resource": "storage-volumes"},
+					Value:  float64(len(volumes)),
+				})
+			}
+
+			hasLimits := false
+			for limitKey := range project.Config {
+				if strings.HasPrefix(limitKey, "limits.") {
+					hasLimits = true
+					break
+				}
+			}
+
+			if hasLimits {
+				allocations, err := projecthelpers.GetCurrentAllocations(ctx, tx, p.Name)
+				if err != nil {
+					logger.Warn("Failed to get project allocations", logger.Ctx{"project": p.Name, "err": err})
+					continue
+				}
+
+				for resource, alloc := range allocations {
+					out.AddSamples(metrics.ProjectLimit, metrics.Sample{
+						Labels: map[string]string{"project": p.Name, "resource": resource},
+						Value:  float64(alloc.Limit),
+					})
+
+					out.AddSamples(metrics.ProjectUsage, metrics.Sample{
+						Labels: map[string]string{"project": p.Name, "resource": resource},
+						Value:  float64(alloc.Usage),
+					})
+				}
+			}
+		}
 	}
 
 	// Daemon uptime
