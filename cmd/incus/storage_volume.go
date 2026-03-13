@@ -641,7 +641,7 @@ type cmdStorageVolumeDelete struct {
 	storageVolume *cmdStorageVolume
 }
 
-var cmdStorageVolumeDeleteUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.Verbatim("custom").Optional(), u.Volume)}
+var cmdStorageVolumeDeleteUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.StorageVolumeType.Optional(), u.Volume)}
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdStorageVolumeDelete) Command() *cobra.Command {
@@ -679,6 +679,7 @@ func (c *cmdStorageVolumeDelete) Run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 	poolName := parsed[0].RemoteObject.String
+	volType := parsed[1].List[0].Get("custom")
 	volName := parsed[1].List[1].String
 
 	// If a target was specified, delete the volume on the given member.
@@ -687,7 +688,7 @@ func (c *cmdStorageVolumeDelete) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Delete the volume
-	err = d.DeleteStoragePoolVolume(poolName, "custom", volName)
+	err = d.DeleteStoragePoolVolume(poolName, volType, volName)
 	if err != nil {
 		return err
 	}

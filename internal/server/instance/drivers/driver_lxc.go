@@ -5847,6 +5847,11 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	// If not running, stop any forkfile instance.
+	if !d.IsRunning() {
+		d.stopForkfile(false)
+	}
+
 	// Wait for essential migration connections before negotiation.
 	connectionsCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

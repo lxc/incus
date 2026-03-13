@@ -2728,7 +2728,7 @@ func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *loc
 	if volSrcArgs.MigrationType.FSType == migration.MigrationFSType_RSYNC || volSrcArgs.MigrationType.FSType == migration.MigrationFSType_BLOCK_AND_RSYNC {
 		// If volume is filesystem type, create a fast snapshot to ensure migration is consistent.
 		// TODO add support for temporary snapshots of block volumes here.
-		if vol.contentType == ContentTypeFS && !vol.IsSnapshot() {
+		if vol.contentType == ContentTypeFS && !vol.IsSnapshot() && linux.IsMountPoint(vol.MountPath()) {
 			snapshotPath, cleanup, err := d.readonlySnapshot(vol)
 			if err != nil {
 				return err
@@ -3368,9 +3368,7 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 					return nil, err
 				}
 
-				defer func() {
-					_ = d.setDatasetProperties(dataset, "volmode=none")
-				}()
+				reverter.Add(func() { _ = d.setDatasetProperties(dataset, "volmode=none") })
 
 				// Wait half a second to give udev a chance to kick in.
 				time.Sleep(500 * time.Millisecond)

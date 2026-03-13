@@ -152,6 +152,11 @@ func (d *btrfs) Create() error {
 
 	loopPath := loopFilePath(d.name)
 	if d.config["source"] == "" || d.config["source"] == loopPath {
+		// Check for IncusOS.
+		if d.state.OS.IncusOS != nil {
+			return errors.New("Loop backed pools aren't supported on IncusOS")
+		}
+
 		// Create a loop based pool.
 		d.config["source"] = loopPath
 

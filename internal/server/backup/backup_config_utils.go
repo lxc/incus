@@ -192,5 +192,10 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 		return err
 	}
 
+	err = file.Sync()
+	if err != nil {
+		return err
+	}
+
 	return file.Close()
 }
