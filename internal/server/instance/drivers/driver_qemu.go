@@ -388,7 +388,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 	}
 
 	// Only Linux and Windows support VirtIO vsock.
-	if d.GuestOS() == "darwin" {
+	if slices.Contains([]string{"darwin", "freebsd"}, d.GuestOS()) {
 		// Get known network details.
 		networks, err := d.getNetworkState()
 		if err != nil {
@@ -3268,6 +3268,48 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 
 	// OS-specific configuration.
 	switch guestOS {
+	case "freebsd":
+		// rc.d service.
+		err = os.MkdirAll(filepath.Join(configDrivePath, "rc.d"), 0o500)
+		if err != nil {
+			return err
+		}
+
+		// rc.d service for incus-agent.
+		agentFile, err := incusAgentLoader.ReadFile("agent-loader/rc.d/incus-agent")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "rc.d", "incus-agent"), agentFile, 0o500)
+		if err != nil {
+			return err
+		}
+
+		// Setup script for incus-agent that is executed by the incus-agent service before starting.
+		// The script sets up a temporary mount point, copies data from the mount (including incus-agent binary),
+		// and then unmounts it. It also ensures appropriate permissions for the Incus agent's runtime directory.
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup-freebsd")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent-setup"), agentFile, 0o500)
+		if err != nil {
+			return err
+		}
+
+		// Install script for manual installs.
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/install-freebsd.sh")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0o500)
+		if err != nil {
+			return err
+		}
+
 	case "linux":
 		// Systemd units.
 		err = os.MkdirAll(filepath.Join(configDrivePath, "systemd"), 0o500)
@@ -4328,6 +4370,15 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *
 
 	limitsMemoryHotplug := d.expandedConfig["limits.memory.hotplug"]
 	memoryHotplugEnabled := !util.IsFalse(limitsMemoryHotplug)
+
+	if d.GuestOS() == "freebsd" {
+		memoryHotplugEnabled = false
+
+		// We handle the empty value a bit differently here, as FreeBSD doesn’t have memory hotplug.
+		if !util.IsFalseOrEmpty(limitsMemoryHotplug) {
+			return errors.New("FreeBSD doesn't support setting 'limits.memory.hotplug'")
+		}
+	}
 
 	if (cpuType == "host" || cpuType == "kvm64") && memoryHotplugEnabled {
 		if !util.IsTrueOrEmpty(limitsMemoryHotplug) {
@@ -6855,7 +6906,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 	if curSizeMB == newSizeMB {
 		return nil
 	} else if baseSizeMB < newSizeMB {
-		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) {
+		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) || d.GuestOS() == "freebsd" {
 			return fmt.Errorf("Memory hotplug feature is disabled")
 		}
 
@@ -10729,6 +10780,8 @@ func (d *qemu) GuestOS() string {
 		return "windows"
 	} else if strings.Contains(imageOS, "darwin") || strings.Contains(imageOS, "macos") || strings.Contains(imageOS, "mac os") {
 		return "macos"
+	} else if strings.Contains(imageOS, "freebsd") {
+		return "freebsd"
 	}
 
 	return "unknown"
