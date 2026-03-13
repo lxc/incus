@@ -377,6 +377,11 @@ func (d *zfs) Create() error {
 			return fmt.Errorf(`Provided ZFS pool (or dataset) isn't empty, run "sudo zfs list -r %s" to see existing entries`, d.config["zfs.pool_name"])
 		}
 	} else if len(devices) == 1 && devices[0] == loopPath {
+		// Check for IncusOS.
+		if d.state.OS.IncusOS != nil {
+			return errors.New("Loop backed pools aren't supported on IncusOS")
+		}
+
 		// Validate pool_name.
 		if strings.Contains(d.config["zfs.pool_name"], "/") {
 			return errors.New("zfs.pool_name can't point to a dataset when source isn't set")

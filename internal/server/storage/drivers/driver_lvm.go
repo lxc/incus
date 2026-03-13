@@ -222,6 +222,11 @@ func (d *lvm) Create() error {
 			return errors.New("lvmcluster requires a shared physical device or a pre-existing shared VG to be used as source")
 		}
 
+		// Check for IncusOS.
+		if d.state.OS.IncusOS != nil {
+			return errors.New("Loop backed pools aren't supported on IncusOS")
+		}
+
 		usingLoopFile = true
 		defaultSource := loopFilePath(d.name)
 
