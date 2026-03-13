@@ -149,7 +149,7 @@ func (d *zfs) Info() Info {
 		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
 		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 util.IsTrue(d.config["volume.zfs.block_mode"]),
-		RunningCopyFreeze:            false,
+		RunningCopyFreeze:            util.IsTrue(d.config["volume.zfs.block_mode"]),
 		DirectIO:                     zfsDirectIO,
 		MountedRoot:                  false,
 		Buckets:                      true,
