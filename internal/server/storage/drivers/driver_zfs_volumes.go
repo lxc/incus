@@ -3368,9 +3368,7 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 					return nil, err
 				}
 
-				defer func() {
-					_ = d.setDatasetProperties(dataset, "volmode=none")
-				}()
+				reverter.Add(func() { _ = d.setDatasetProperties(dataset, "volmode=none") })
 
 				// Wait half a second to give udev a chance to kick in.
 				time.Sleep(500 * time.Millisecond)
