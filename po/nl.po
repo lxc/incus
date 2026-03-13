@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-03-16 13:27-0400\n"
+"POT-Creation-Date: 2026-03-16 15:36-0400\n"
 "PO-Revision-Date: 2026-03-06 07:09+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -1144,7 +1144,7 @@ msgstr ""
 msgid "Backend health:"
 msgstr ""
 
-#: cmd/incus/export.go:103
+#: cmd/incus/export.go:107
 #, c-format
 msgid "Backing up instance: %s"
 msgstr "Backup aan het maken van instantiatie (instance): %s"
@@ -1159,7 +1159,7 @@ msgstr "Back-uppen van opslag emmer (storage bucket): %s"
 msgid "Backing up storage volume: %s"
 msgstr "Backup aan het maken van opslagvolume (storage volume): %s"
 
-#: cmd/incus/export.go:207 cmd/incus/storage_bucket.go:1443
+#: cmd/incus/export.go:211 cmd/incus/storage_bucket.go:1443
 #: cmd/incus/storage_volume.go:3874
 msgid "Backup exported successfully!"
 msgstr "Backup is geëxporteerd met succes!"
@@ -1590,7 +1590,7 @@ msgstr ""
 msgid "Compression algorithm to use (`none` for uncompressed)"
 msgstr "Compressie algoritme om te gebruiken (`none` is geen compressie)"
 
-#: cmd/incus/export.go:51
+#: cmd/incus/export.go:54
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Compressie algoritme om te gebruiken (none is zonder compressie)"
 
@@ -1848,7 +1848,7 @@ msgstr "Verwijder aangepaste opslag volumes (storage volume)"
 msgid "Create files and directories in instances"
 msgstr ""
 
-#: cmd/incus/export.go:98
+#: cmd/incus/export.go:102
 #, c-format
 msgid "Create instance backup: %w"
 msgstr ""
@@ -2185,7 +2185,7 @@ msgstr "Bevestig de waarschuwing"
 #: cmd/incus/config_trust.go:762 cmd/incus/config_trust.go:834
 #: cmd/incus/console.go:45 cmd/incus/copy.go:46 cmd/incus/create.go:50
 #: cmd/incus/debug.go:25 cmd/incus/debug.go:48 cmd/incus/delete.go:37
-#: cmd/incus/exec.go:45 cmd/incus/export.go:37 cmd/incus/file.go:53
+#: cmd/incus/exec.go:45 cmd/incus/export.go:38 cmd/incus/file.go:53
 #: cmd/incus/file.go:102 cmd/incus/file.go:279 cmd/incus/file.go:366
 #: cmd/incus/file.go:448 cmd/incus/file.go:694 cmd/incus/file.go:962
 #: cmd/incus/image.go:52 cmd/incus/image.go:167 cmd/incus/image.go:316
@@ -2931,11 +2931,11 @@ msgstr "Importeer aangepaste opslag volumes (storage volume)."
 msgid "Export custom storage volumes."
 msgstr "Importeer aangepaste opslag volumes (storage volume)."
 
-#: cmd/incus/export.go:36
+#: cmd/incus/export.go:37
 msgid "Export instance backups"
 msgstr ""
 
-#: cmd/incus/export.go:37
+#: cmd/incus/export.go:38
 msgid "Export instances as backup tarballs."
 msgstr ""
 
@@ -2964,7 +2964,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Exporteren van de backup van opslag (storage) emmer (bucket): %s"
 
-#: cmd/incus/export.go:167 cmd/incus/storage_volume.go:3857
+#: cmd/incus/export.go:171 cmd/incus/storage_volume.go:3857
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr ""
@@ -3140,7 +3140,7 @@ msgstr ""
 msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr ""
 
-#: cmd/incus/export.go:204
+#: cmd/incus/export.go:208
 #, c-format
 msgid "Failed to close export file: %w"
 msgstr ""
@@ -3275,7 +3275,7 @@ msgstr ""
 msgid "Failed to remove alias %s: %w"
 msgstr ""
 
-#: cmd/incus/export.go:198
+#: cmd/incus/export.go:202
 #, c-format
 msgid "Failed to rename export file: %w"
 msgstr ""
@@ -3362,7 +3362,7 @@ msgstr ""
 msgid "Fast mode (same as --columns=nsacPt)"
 msgstr ""
 
-#: cmd/incus/export.go:181
+#: cmd/incus/export.go:185
 #, c-format
 msgid "Fetch instance backup file: %w"
 msgstr ""
@@ -4050,7 +4050,7 @@ msgstr ""
 msgid "Invalid IP address or DNS name"
 msgstr ""
 
-#: cmd/incus/export.go:131 cmd/incus/storage_bucket.go:1395
+#: cmd/incus/export.go:135 cmd/incus/storage_bucket.go:1395
 #: cmd/incus/storage_volume.go:3826
 #, c-format
 msgid "Invalid URL %q: %w"
@@ -4066,7 +4066,7 @@ msgstr ""
 msgid "Invalid argument %q"
 msgstr ""
 
-#: cmd/incus/export.go:136 cmd/incus/storage_bucket.go:1400
+#: cmd/incus/export.go:140 cmd/incus/storage_bucket.go:1400
 #: cmd/incus/storage_volume.go:3831
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
@@ -7820,7 +7820,7 @@ msgstr "%s is geen directory"
 msgid "Target isn't a cluster"
 msgstr ""
 
-#: cmd/incus/export.go:70
+#: cmd/incus/export.go:73
 #, fuzzy, c-format
 msgid "Target path %q already exists"
 msgstr "Alias %s bestaat al"
@@ -8583,7 +8583,7 @@ msgstr ""
 msgid "Usage: %s"
 msgstr ""
 
-#: cmd/incus/export.go:50
+#: cmd/incus/export.go:53
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
@@ -8759,7 +8759,11 @@ msgstr ""
 msgid "Where should this storage pool store its data?"
 msgstr ""
 
-#: cmd/incus/export.go:48
+#: cmd/incus/export.go:51
+msgid "Whether or not to only backup the instance (without dependent volumes)"
+msgstr ""
+
+#: cmd/incus/export.go:49
 msgid "Whether or not to only backup the instance (without snapshots)"
 msgstr ""
 
@@ -9043,7 +9047,7 @@ msgid ""
 "\tRun the \"ls -lh /\" command in instance \"c1\""
 msgstr ""
 
-#: cmd/incus/export.go:39
+#: cmd/incus/export.go:40
 msgid ""
 "incus export u1 backup0.tar.gz\n"
 "\tDownload a backup tarball of the u1 instance.\n"
