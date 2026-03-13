@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-05 12:55+0000\n"
-"PO-Revision-Date: 2026-03-13 13:54+0000\n"
+"PO-Revision-Date: 2026-03-13 19:54+0000\n"
 "Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
@@ -2371,7 +2371,7 @@ msgid ""
 "device “%s” or modify profile instead"
 msgstr ""
 "Enheten från profilen/profilerna kan inte tas bort från enskilda instanser. "
-"Åsidosätt enheten eller ändra profilen istället"
+"Åsidosätt enheten \"%s\" eller ändra profilen istället"
 
 #: cmd/incus/config_device.go:281
 msgid "Device from profile(s) cannot be retrieved for individual instance"
@@ -8786,7 +8786,7 @@ msgstr "Följande okända volymer har hittats:"
 #: cmd/incus/delete.go:98
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
-msgstr "Instansen körs för närvarande, stoppa den först eller ange --force"
+msgstr "Instansen %s körs för närvarande, stoppa den först eller ange --force"
 
 #: cmd/incus/publish.go:92
 msgid ""
@@ -8977,7 +8977,8 @@ msgstr "Servern implementerar inte den nyare v2-resurs-API:n"
 #: cmd/incus/network.go:543
 #, c-format
 msgid "The specified NIC does not point to the given network (found %s)"
-msgstr "Den angivna enheten matchar inte nätverket"
+msgstr ""
+"Den angivna nätverksenheten pekar inte på det angivna nätverket (hittade %s)"
 
 #: cmd/incus/network.go:539
 #, c-format
@@ -8993,7 +8994,8 @@ msgstr "Den angivna enheten är inte en disk (%s-enhet)"
 #, c-format
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
-msgstr "Egenskapen %q finns inte på lagringspoolvolymen %q: %v"
+msgstr ""
+"Den angivna disken pekar inte på den angivna lagringsvolymen (hittade %s)"
 
 #: cmd/incus/storage_volume.go:753
 #, c-format
