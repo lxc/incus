@@ -1,4 +1,4 @@
-ARG GO_VERSION=1.24
+ARG GO_VERSION=1.25
 ARG DEBIAN_VERSION=trixie
 
 # Go development container
@@ -70,8 +70,8 @@ RUN sed -r -i 's/^Components: main$/Components: main contrib/g' /etc/apt/sources
       # zfsutils-linux
       xz-utils
 
-# With pipx >= 1.5.0, we could use pipx --global instead.
-RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install codespell
+# Globally install codespell
+RUN pipx install --global codespell
 
 # Add vscode user and add it to sudoers.
 RUN groupadd -g 1000 $USERNAME && \
