@@ -26,7 +26,7 @@ require (
 	github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lxc/go-lxc v0.0.0-20240606200241-27b3d116511f
-	github.com/lxc/incus-os/incus-osd v0.0.0-20260312011444-9d0d3cb3e555
+	github.com/lxc/incus-os/incus-osd v0.0.0-20260313160614-ee09d062a9f0
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-sqlite3 v1.14.34
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
@@ -36,7 +36,7 @@ require (
 	github.com/miekg/dns v1.1.72
 	github.com/minio/minio-go/v7 v7.0.99
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/olekukonko/tablewriter v1.1.4-0.20260212195134-54408fee90b7
+	github.com/olekukonko/tablewriter v1.1.4
 	github.com/opencontainers/umoci v0.6.1-0.20251213054154-70fc5ee1f4df
 	github.com/openfga/go-sdk v0.7.5
 	github.com/osrg/gobgp/v3 v3.37.0
@@ -54,7 +54,7 @@ require (
 	github.com/zitadel/oidc/v3 v3.45.5
 	go.starlark.net v0.0.0-20260210143700-b62fd896b91b
 	golang.org/x/crypto v0.49.0
-	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
+	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/sys v0.42.0
@@ -100,7 +100,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.30.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
-	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/google/renameio v1.0.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
