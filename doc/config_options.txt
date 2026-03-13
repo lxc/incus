@@ -1182,14 +1182,6 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
-```{config:option} connected devices-nic_physical
-:default: "`true`"
-:required: "no"
-:shortdesc: "Whether the NIC is connected to the host network (VM only)"
-:type: "bool"
-
-```
-
 ```{config:option} gvrp devices-nic_physical
 :default: "false"
 :managed: "no"

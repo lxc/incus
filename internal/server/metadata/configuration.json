@@ -1336,15 +1336,6 @@
 						}
 					},
 					{
-						"connected": {
-							"default": "`true`",
-							"longdesc": "",
-							"required": "no",
-							"shortdesc": "Whether the NIC is connected to the host network (VM only)",
-							"type": "bool"
-						}
-					},
-					{
 						"gvrp": {
 							"default": "false",
 							"longdesc": "",
