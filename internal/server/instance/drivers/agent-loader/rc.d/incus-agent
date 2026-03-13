@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# PROVIDE: incus_agent
+# REQUIRE: FILESYSTEMS
+#
+
+. /etc/rc.subr
+
+name=incus_agent
+rcvar=incus_agent_enable
+pidfile="/var/run/${name}.pid"
+
+start_precmd="${name}_prestart"
+start_cmd="${name}_start"
+
+load_rc_config "$name"
+: ${incus_agent_enable:="NO"}
+
+incus_agent_prestart()
+{
+	/usr/local/libexec/incus-agent-setup
+}
+
+incus_agent_start()
+{
+	cd /var/run/incus_agent || return 1
+	/usr/sbin/daemon -p "${pidfile}" -r -f /var/run/incus_agent/incus-agent
+}
+
+run_rc_command "$1"
