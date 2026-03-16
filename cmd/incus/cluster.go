@@ -1133,7 +1133,7 @@ func (c *cmdClusterListTokens) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
 		`List all active cluster member join tokens
 
-Default column layout: nte
+Default column layout: ntE
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
