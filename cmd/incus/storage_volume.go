@@ -3244,7 +3244,28 @@ func (c *cmdStorageVolumeSnapshotCreate) Run(cmd *cobra.Command, args []string) 
 		return err
 	}
 
-	return op.Wait()
+	err = op.Wait()
+	if err != nil {
+		return err
+	}
+
+	opInfo := op.Get()
+
+	snapshots, ok := opInfo.Resources["storage_volume_snapshots"]
+	if !ok || len(snapshots) == 0 {
+		return errors.New(i18n.G("Didn't get name of new volume snapshot from the server"))
+	}
+
+	if len(snapshots) == 1 && !hasSnapName {
+		uri, err := url.Parse(snapshots[0])
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf(i18n.G("Volume snapshot name is: %s")+"\n", path.Base(uri.Path))
+	}
+
+	return nil
 }
 
 // Snapshot delete.
