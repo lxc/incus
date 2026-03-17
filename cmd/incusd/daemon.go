@@ -632,9 +632,8 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 	route := restAPI.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		if !(r.RemoteAddr == "@" && version == "internal") {
-			// Block public API requests until we're done with basic
-			// initialization tasks, such setting up the cluster database.
+		// Block on daemon startup except for the "internal" and "os" APIs.
+		if !slices.Contains([]string{"internal", "os"}, version) {
 			select {
 			case <-d.setupChan:
 			default:
