@@ -189,6 +189,21 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 		return errors.New("security.unmapped and security.shifted are mutually exclusive")
 	}
 
+	// Check that dependent and security.shared are not set together.
+	if util.IsTrue(vol.config["dependent"]) && util.IsTrue(vol.config["security.shared"]) {
+		return errors.New("dependent and security.shared are mutually exclusive")
+	}
+
+	return nil
+}
+
+// updateVolume applies the common changes for all drivers of a volume configuration change.
+func (d *common) updateVolume(vol Volume, changedConfig map[string]string) error {
+	_, changed := changedConfig["dependent"]
+	if changed {
+		return errors.New("dependent cannot be changed")
+	}
+
 	return nil
 }
 
@@ -316,7 +331,7 @@ func (d *common) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.O
 }
 
 // CreateVolumeFromBackup re-creates a volume from its exported state.
-func (d *common) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+func (d *common) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
 	return nil, nil, ErrNotSupported
 }
 
@@ -407,7 +422,7 @@ func (d *common) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *
 }
 
 // BackupVolume creates an exported version of a volume.
-func (d *common) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
+func (d *common) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots []string, op *operations.Operation) error {
 	return ErrNotSupported
 }
 

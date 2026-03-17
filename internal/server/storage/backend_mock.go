@@ -141,7 +141,8 @@ func (b *mockBackend) GenerateCustomVolumeBackupConfig(projectName string, volNa
 	return nil, nil
 }
 
-func (b *mockBackend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots bool, op *operations.Operation) (*backupConfig.Config, error) {
+// GenerateInstanceBackupConfig returns the backup config entry for this instance.
+func (b *mockBackend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots bool, dependentVolumes bool, op *operations.Operation) (*backupConfig.Config, error) {
 	return nil, nil
 }
 
@@ -178,7 +179,8 @@ func (b *mockBackend) RefreshInstance(inst instance.Instance, src instance.Insta
 	return nil
 }
 
-func (b *mockBackend) BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, op *operations.Operation) error {
+// BackupInstance creates an instance backup.
+func (b *mockBackend) BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, dependentVolumes bool, op *operations.Operation) error {
 	return nil
 }
 
@@ -348,11 +350,12 @@ func (b *mockBackend) RestoreCustomVolume(projectName string, volName string, sn
 }
 
 // BackupCustomVolume creates a custom volume backup.
-func (b *mockBackend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, optimized bool, snapshots bool, op *operations.Operation) error {
+func (b *mockBackend) BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots bool, op *operations.Operation) error {
 	return nil
 }
 
-func (b *mockBackend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+// CreateCustomVolumeFromBackup creates a custom volume from a backup.
+func (b *mockBackend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) error {
 	return nil
 }
 

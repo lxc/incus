@@ -528,7 +528,7 @@ func genericVFSGetVolumeDiskPath(vol Volume) (string, error) {
 }
 
 // genericVFSBackupVolume is a generic BackupVolume implementation for VFS-only drivers.
-func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.InstanceWriter, snapshots []string, op *operations.Operation) error {
+func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.InstanceWriter, basePrefix string, snapshots []string, op *operations.Operation) error {
 	if len(snapshots) > 0 {
 		// Check requested snapshot match those in storage.
 		err := vol.SnapshotsMatch(snapshots, op)
@@ -680,15 +680,15 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 
 	// Handle snapshots.
 	if len(snapshots) > 0 {
-		snapshotsPrefix := "backup/snapshots"
+		snapshotsPrefix := "snapshots"
 		if vol.IsVMBlock() {
-			snapshotsPrefix = "backup/virtual-machine-snapshots"
+			snapshotsPrefix = "virtual-machine-snapshots"
 		} else if vol.volType == VolumeTypeCustom {
-			snapshotsPrefix = "backup/volume-snapshots"
+			snapshotsPrefix = "volume-snapshots"
 		}
 
 		for _, snapName := range snapshots {
-			prefix := filepath.Join(snapshotsPrefix, snapName)
+			prefix := filepath.Join(basePrefix, snapshotsPrefix, snapName)
 			snapVol, err := vol.NewSnapshot(snapName)
 			if err != nil {
 				return err
@@ -702,14 +702,14 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 	}
 
 	// Copy the main volume itself.
-	prefix := "backup/container"
+	prefix := "container"
 	if vol.IsVMBlock() {
-		prefix = "backup/virtual-machine"
+		prefix = "virtual-machine"
 	} else if vol.volType == VolumeTypeCustom {
-		prefix = "backup/volume"
+		prefix = "volume"
 	}
 
-	err := backupVolume(vol, prefix)
+	err := backupVolume(vol, filepath.Join(basePrefix, prefix))
 	if err != nil {
 		return err
 	}
@@ -722,7 +722,7 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 // created and a revert function that can be used to undo the actions this function performs should something
 // subsequently fail. For VolumeTypeCustom volumes, a nil post hook is returned as it is expected that the DB
 // record be created before the volume is unpacked due to differences in the archive format that allows this.
-func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []string, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []string, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
 	// Define function to unpack a volume from a backup tarball file.
 	unpackVolume := func(r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string) error {
 		volTypeName := "container"
@@ -921,16 +921,16 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 		}
 	}
 
-	backupSnapshotsPrefix := "backup/snapshots"
+	backupSnapshotsPrefix := "snapshots"
 	if vol.IsVMBlock() {
-		backupSnapshotsPrefix = "backup/virtual-machine-snapshots"
+		backupSnapshotsPrefix = "virtual-machine-snapshots"
 	} else if vol.volType == VolumeTypeCustom {
-		backupSnapshotsPrefix = "backup/volume-snapshots"
+		backupSnapshotsPrefix = "volume-snapshots"
 	}
 
 	for _, snapName := range snapshots {
 		err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
-			backupSnapshotPrefix := fmt.Sprintf("%s/%s", backupSnapshotsPrefix, snapName)
+			backupSnapshotPrefix := filepath.Join(basePrefix, backupSnapshotsPrefix, snapName)
 			return unpackVolume(srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath)
 		}, op)
 		if err != nil {
@@ -948,6 +948,15 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 			return nil, nil, err
 		}
 
+		if vol.IsVMBlock() && vol.Config()["block.type"] == BlockVolumeTypeQcow2 {
+			fsParentVol := vol.NewVMBlockFilesystemVolume()
+			fsVol := snapVol.NewVMBlockFilesystemVolume()
+			err := Qcow2CreateConfigSnapshot(fsParentVol, fsVol, op)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+
 		reverter.Add(func() { _ = d.DeleteVolumeSnapshot(snapVol, op) })
 	}
 
@@ -958,15 +967,15 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 	reverter.Add(func() { _, _ = d.UnmountVolume(vol, false, op) })
 
-	backupPrefix := "backup/container"
+	backupPrefix := "container"
 	if vol.IsVMBlock() {
-		backupPrefix = "backup/virtual-machine"
+		backupPrefix = "virtual-machine"
 	} else if vol.volType == VolumeTypeCustom {
-		backupPrefix = "backup/volume"
+		backupPrefix = "volume"
 	}
 
 	mountPath := vol.MountPath()
-	err = unpackVolume(srcData, tarArgs, unpacker, backupPrefix, mountPath)
+	err = unpackVolume(srcData, tarArgs, unpacker, filepath.Join(basePrefix, backupPrefix), mountPath)
 	if err != nil {
 		return nil, nil, err
 	}

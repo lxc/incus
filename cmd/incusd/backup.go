@@ -58,7 +58,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	var b *backup.InstanceBackup
 
 	if args.Name == "" {
-		b = backup.NewInstanceBackup(s, sourceInst, 0, "", args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.OptimizedStorage)
+		b = backup.NewInstanceBackup(s, sourceInst, 0, "", args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.RootOnly, args.OptimizedStorage)
 	} else {
 		// Create the database entry.
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -191,7 +191,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 
 	// Write index file.
 	l.Debug("Adding backup index file")
-	err = backupWriteIndex(sourceInst, pool, b.OptimizedStorage(), !b.InstanceOnly(), tarWriter)
+	err = backupWriteIndex(sourceInst, pool, b.OptimizedStorage(), !b.InstanceOnly(), !b.RootOnly(), tarWriter)
 
 	// Check compression errors.
 	if compressErr != nil {
@@ -203,7 +203,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 		return fmt.Errorf("Error writing backup index file: %w", err)
 	}
 
-	err = pool.BackupInstance(sourceInst, tarWriter, b.OptimizedStorage(), !b.InstanceOnly(), nil)
+	err = pool.BackupInstance(sourceInst, tarWriter, b.OptimizedStorage(), !b.InstanceOnly(), !b.RootOnly(), nil)
 	if err != nil {
 		return fmt.Errorf("Backup create: %w", err)
 	}
@@ -237,7 +237,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 }
 
 // backupWriteIndex generates an index.yaml file and then writes it to the root of the backup tarball.
-func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, optimized bool, snapshots bool, tarWriter *instancewriter.InstanceTarWriter) error {
+func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, optimized bool, snapshots bool, dependentVolumes bool, tarWriter *instancewriter.InstanceTarWriter) error {
 	// Indicate whether the driver will include a driver-specific optimized header.
 	poolDriverOptimizedHeader := false
 	if optimized {
@@ -259,7 +259,7 @@ func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, opti
 		return os.ErrNotExist
 	}
 
-	config, err := pool.GenerateInstanceBackupConfig(sourceInst, snapshots, nil)
+	config, err := pool.GenerateInstanceBackupConfig(sourceInst, snapshots, dependentVolumes, nil)
 	if err != nil {
 		return fmt.Errorf("Failed generating instance backup config: %w", err)
 	}
@@ -386,7 +386,7 @@ func pruneExpiredInstanceBackups(ctx context.Context, s *state.State) error {
 			return fmt.Errorf("Error loading instance for deleting backup %q: %w", b.Name, err)
 		}
 
-		instBackup := backup.NewInstanceBackup(s, inst, b.ID, b.Name, b.CreationDate, b.ExpiryDate, b.InstanceOnly, b.OptimizedStorage)
+		instBackup := backup.NewInstanceBackup(s, inst, b.ID, b.Name, b.CreationDate, b.ExpiryDate, b.InstanceOnly, b.RootOnly, b.OptimizedStorage)
 		err = instBackup.Delete()
 		if err != nil {
 			return fmt.Errorf("Error deleting instance backup %q: %w", b.Name, err)
@@ -506,7 +506,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 
 	// If dealing with an ISO volume, we want to return it unaltered.
 	if contentType == drivers.ContentTypeISO {
-		err = pool.BackupCustomVolume(projectName, volumeName, instancewriter.NewInstanceRawWriter(fileWriter), backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
+		err = pool.BackupCustomVolume(projectName, volumeName, instancewriter.NewInstanceRawWriter(fileWriter), backup.DefaultBackupPrefix, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
 		if err != nil {
 			return fmt.Errorf("Backup create: %w", err)
 		}
@@ -552,7 +552,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 			return fmt.Errorf("Error writing backup index file: %w", err)
 		}
 
-		err = pool.BackupCustomVolume(projectName, volumeName, tarWriter, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
+		err = pool.BackupCustomVolume(projectName, volumeName, tarWriter, backup.DefaultBackupPrefix, backupRow.OptimizedStorage, !backupRow.VolumeOnly, nil)
 		if err != nil {
 			return fmt.Errorf("Backup create: %w", err)
 		}

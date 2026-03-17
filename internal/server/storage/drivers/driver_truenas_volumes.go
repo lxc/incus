@@ -315,10 +315,10 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 }
 
 // CreateVolumeFromBackup re-creates a volume from its exported state.
-func (d *truenas) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
+func (d *truenas) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
 	// TODO: optimized version
 
-	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, op)
+	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, basePrefix, op)
 }
 
 // same as CreateVolumeFromCopy, but will refresh if refresh is true.
@@ -955,7 +955,7 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 		}
 	}
 
-	return nil
+	return d.updateVolume(vol, changedConfig)
 }
 
 // CacheVolumeSnapshots fetches snapshot usage properties for all snapshots on the volume.
@@ -1646,9 +1646,9 @@ func (d *truenas) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs 
 }
 
 // BackupVolume creates an exported version of a volume.
-func (d *truenas) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, optimized bool, snapshots []string, op *operations.Operation) error {
+func (d *truenas) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots []string, op *operations.Operation) error {
 	// TODO: we should take a snapshot, and backup from the snapshot for consistency.
-	return genericVFSBackupVolume(d, vol, writer, snapshots, op)
+	return genericVFSBackupVolume(d, vol, writer, basePrefix, snapshots, op)
 }
 
 // CreateVolumeSnapshot creates a snapshot of a volume.
