@@ -20,7 +20,6 @@ import (
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/locking"
 	"github.com/lxc/incus/v6/internal/server/operations"
-	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/refcount"
 	"github.com/lxc/incus/v6/internal/server/state"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -610,11 +609,10 @@ func (v Volume) ConfigBlockFilesystem() string {
 // "block.mount_options" if defined in volume or pool's volume config, otherwise defaultFilesystemMountOptions.
 func (v Volume) ConfigBlockMountOptions() string {
 	if v.ExpandedConfig("block.type") == BlockVolumeTypeQcow2 && !v.mountFullFilesystem {
-		fullParent, snapName, isSnap := api.GetParentAndSnapshotName(v.name)
-		_, parent := project.StorageVolumeParts(fullParent)
-		subvol := parent
+		_, snapName, isSnap := api.GetParentAndSnapshotName(v.name)
+		subvol := Qcow2ConfigVolumeBase
 		if isSnap {
-			subvol = fmt.Sprintf("%s-%s", parent, snapName)
+			subvol = fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName)
 		}
 
 		return fmt.Sprintf("subvol=%s", subvol)

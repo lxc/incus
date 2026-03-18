@@ -13,7 +13,6 @@ import (
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/operations"
-	"github.com/lxc/incus/v6/internal/server/project"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/subprocess"
@@ -24,6 +23,9 @@ const (
 	BlockVolumeTypeRaw   = "raw"
 	BlockVolumeTypeQcow2 = "qcow2"
 )
+
+// Qcow2ConfigVolumeBase represents the base component of a Btrfs subvolume name.
+const Qcow2ConfigVolumeBase = "instance"
 
 // ImageInfo contains information about a qcow2 image.
 type ImageInfo struct {
@@ -192,8 +194,7 @@ func Qcow2MountConfigTask(vol Volume, op *operations.Operation, task func(mountP
 // Qcow2CreateConfig creates the btrfs config filesystem associated with the QCOW2 block volume.
 func Qcow2CreateConfig(vol Volume, op *operations.Operation) error {
 	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
-		_, volName := project.StorageVolumeParts(vol.Name())
-		volPath := filepath.Join(mountPath, volName)
+		volPath := filepath.Join(mountPath, Qcow2ConfigVolumeBase)
 		// Create the volume itself.
 		_, err := subprocess.RunCommand("btrfs", "subvolume", "create", volPath)
 		if err != nil {
@@ -209,52 +210,12 @@ func Qcow2CreateConfig(vol Volume, op *operations.Operation) error {
 	return nil
 }
 
-// Qcow2RenameConfig renames the btrfs config filesystem associated with the QCOW2 block volume.
-func Qcow2RenameConfig(vol Volume, newName string, op *operations.Operation) error {
-	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
-		_, volName := project.StorageVolumeParts(vol.Name())
-		entries, err := os.ReadDir(mountPath)
-		if err != nil {
-			return err
-		}
-
-		// Iterate through all entries (directories) and rename them.
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				continue
-			}
-
-			oldName := entry.Name()
-
-			if oldName == volName || strings.HasPrefix(oldName, volName) {
-				newName := newName + strings.TrimPrefix(oldName, volName)
-
-				oldPath := filepath.Join(mountPath, oldName)
-				newPath := filepath.Join(mountPath, newName)
-
-				err := os.Rename(oldPath, newPath)
-				if err != nil {
-					return fmt.Errorf("Failed to rename %q to %q: %w", oldPath, newPath, err)
-				}
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Qcow2CreateConfigSnapshot creates the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
 func Qcow2CreateConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operation) error {
 	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
-		fullParent, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
-		_, parent := project.StorageVolumeParts(fullParent)
-		dstPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", parent, snapName))
-		srcPath := filepath.Join(mountPath, parent)
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		dstPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName))
+		srcPath := filepath.Join(mountPath, Qcow2ConfigVolumeBase)
 
 		_, err := subprocess.RunCommand("btrfs", "subvolume", "snapshot", srcPath, dstPath)
 		if err != nil {
@@ -273,17 +234,16 @@ func Qcow2CreateConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operat
 // Qcow2RestoreConfigSnapshot restores the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
 func Qcow2RestoreConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operation) error {
 	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
-		fullParent, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
-		_, parent := project.StorageVolumeParts(fullParent)
-		snapPath := fmt.Sprintf("%s-%s", parent, snapName)
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		snapPath := fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName)
 
 		// Delete the subvolume itself.
-		_, err := subprocess.RunCommand("btrfs", "subvolume", "delete", filepath.Join(mountPath, parent))
+		_, err := subprocess.RunCommand("btrfs", "subvolume", "delete", filepath.Join(mountPath, Qcow2ConfigVolumeBase))
 		if err != nil {
 			return err
 		}
 
-		_, err = subprocess.RunCommand("btrfs", "subvolume", "snapshot", filepath.Join(mountPath, snapPath), filepath.Join(mountPath, parent))
+		_, err = subprocess.RunCommand("btrfs", "subvolume", "snapshot", filepath.Join(mountPath, snapPath), filepath.Join(mountPath, Qcow2ConfigVolumeBase))
 		if err != nil {
 			return err
 		}
@@ -300,10 +260,9 @@ func Qcow2RestoreConfigSnapshot(vol Volume, snapVol Volume, op *operations.Opera
 // Qcow2RenameConfigSnapshot renames the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
 func Qcow2RenameConfigSnapshot(vol Volume, snapVol Volume, newName string, op *operations.Operation) error {
 	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
-		fullParent, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
-		_, parent := project.StorageVolumeParts(fullParent)
-		oldPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", parent, snapName))
-		newPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", parent, newName))
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		oldPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName))
+		newPath := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, newName))
 
 		err := os.Rename(oldPath, newPath)
 		if err != nil {
@@ -322,9 +281,8 @@ func Qcow2RenameConfigSnapshot(vol Volume, snapVol Volume, newName string, op *o
 // Qcow2DeleteConfigSnapshot deletes the btrfs snapshot of the config filesystem associated with the QCOW2 block volume.
 func Qcow2DeleteConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operation) error {
 	err := Qcow2MountConfigTask(vol, op, func(mountPath string) error {
-		fullParent, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
-		_, parent := project.StorageVolumeParts(fullParent)
-		path := filepath.Join(mountPath, fmt.Sprintf("%s-%s", parent, snapName))
+		_, snapName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		path := filepath.Join(mountPath, fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName))
 
 		// Delete the subvolume itself.
 		_, err := subprocess.RunCommand("btrfs", "subvolume", "delete", path)
