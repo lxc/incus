@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/state"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/resources"
 )
 
 type metricsCacheEntry struct {
@@ -374,6 +375,49 @@ func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *met
 	out.AddSamples(metrics.GoStackInuseBytes, metrics.Sample{Value: float64(ms.StackInuse)})
 	out.AddSamples(metrics.GoStackSysBytes, metrics.Sample{Value: float64(ms.StackSys)})
 	out.AddSamples(metrics.GoSysBytes, metrics.Sample{Value: float64(ms.Sys)})
+
+	// Network bridge metrics.
+	projectNetworks, err := tx.GetCreatedNetworks(ctx)
+	if err != nil {
+		logger.Warn("Failed to get networks", logger.Ctx{"err": err})
+	} else {
+		for projectName, networks := range projectNetworks {
+			for _, n := range networks {
+				if n.Type != "bridge" {
+					continue
+				}
+
+				labels := map[string]string{
+					"network": n.Name,
+					"project": projectName,
+					"type":    n.Type,
+				}
+
+				netIf, err := net.InterfaceByName(n.Name)
+				if err != nil {
+					continue
+				}
+
+				up := float64(0)
+				if netIf.Flags&net.FlagUp > 0 {
+					up = 1
+				}
+
+				out.AddSamples(metrics.NetworkBridgeUp, metrics.Sample{Value: up, Labels: labels})
+
+				counters, err := resources.GetNetworkCounters(n.Name)
+				if err != nil {
+					logger.Warn("Failed to get network counters", logger.Ctx{"network": n.Name, "err": err})
+					continue
+				}
+
+				out.AddSamples(metrics.NetworkBridgeReceiveBytesTotal, metrics.Sample{Value: float64(counters.BytesReceived), Labels: labels})
+				out.AddSamples(metrics.NetworkBridgeTransmitBytesTotal, metrics.Sample{Value: float64(counters.BytesSent), Labels: labels})
+				out.AddSamples(metrics.NetworkBridgeReceivePacketsTotal, metrics.Sample{Value: float64(counters.PacketsReceived), Labels: labels})
+				out.AddSamples(metrics.NetworkBridgeTransmitPacketsTotal, metrics.Sample{Value: float64(counters.PacketsSent), Labels: labels})
+			}
+		}
+	}
 
 	// If on IncusOS, include OS metrics.
 	if s.OS.IncusOS != nil {
