@@ -90,6 +90,12 @@ func (c *cmdAgent) Run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+	} else if util.PathExists("/etc/rc.conf.d/hostname") && slices.Contains(files, "/etc/rc.conf.d/hostname") {
+		// Set the hostname.
+		_, err := subprocess.RunCommand("service", "hostname", "restart")
+		if err != nil {
+			return err
+		}
 	}
 
 	// Run cloud-init.
