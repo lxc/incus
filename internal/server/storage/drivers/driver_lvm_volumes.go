@@ -543,6 +543,10 @@ func (d *lvm) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 		return errors.New("lvm.stripes.size cannot be used with thin pool volumes")
 	}
 
+	if vol.config["block.type"] == BlockVolumeTypeQcow2 && util.IsTrue(vol.config["security.shared"]) {
+		return errors.New("QCOW2 volume type is incompatible with the 'security.shared' option.")
+	}
+
 	return nil
 }
 

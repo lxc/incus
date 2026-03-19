@@ -60,7 +60,7 @@ To use this with Incus, you must:
 
    - Snapshots for shared custom storage volumes are not supported.
    - Snapshots of raw block volumes are not supported.
-   - Only VM block volumes support the `QCOW2` format.
+   - Only `raw` custom volumes support the `security.shared` option.
 ```
 
 ## Configuration options
