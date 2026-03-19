@@ -25,7 +25,7 @@ type cmdInfo struct {
 	global *cmdGlobal
 
 	flagShowAccess bool
-	flagShowLog    bool
+	flagShowLog    string
 	flagResources  bool
 	flagTarget     string
 }
@@ -48,7 +48,8 @@ incus info [<remote>:] [--resources]
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVar(&c.flagShowAccess, "show-access", false, i18n.G("Show the instance's access list"))
-	cmd.Flags().BoolVar(&c.flagShowLog, "show-log", false, i18n.G("Show the instance's recent log entries"))
+	cmd.Flags().StringVar(&c.flagShowLog, "show-log", "", i18n.G("Show the instance's recent log entries")+"``")
+	cmd.Flags().Lookup("show-log").NoOptDefVal = "default"
 	cmd.Flags().BoolVar(&c.flagResources, "resources", false, i18n.G("Show the resources available to the server"))
 	cmd.Flags().StringVar(&c.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 
@@ -630,7 +631,7 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 	return nil
 }
 
-func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool) error {
+func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog string) error {
 	// Quick checks.
 	if c.flagTarget != "" {
 		return errors.New(i18n.G("--target cannot be used with instances"))
@@ -898,23 +899,25 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 		_ = cli.RenderTable(os.Stdout, cli.TableFormatTable, backupHeader, backupData, inst.Backups)
 	}
 
-	if showLog {
+	if showLog != "" {
 		var log io.Reader
-		switch inst.Type {
-		case "container":
-			log, err = d.GetInstanceLogfile(name, "lxc.log")
-			if err != nil {
-				return err
-			}
 
-		case "virtual-machine":
-			log, err = d.GetInstanceLogfile(name, "qemu.log")
-			if err != nil {
-				return err
-			}
+		if showLog == "default" {
+			switch inst.Type {
+			case "container":
+				showLog = "lxc.log"
 
-		default:
-			return fmt.Errorf(i18n.G("Unsupported instance type: %s"), inst.Type)
+			case "virtual-machine":
+				showLog = "qemu.log"
+
+			default:
+				return fmt.Errorf(i18n.G("Unsupported instance type: %s"), inst.Type)
+			}
+		}
+
+		log, err = d.GetInstanceLogfile(name, showLog)
+		if err != nil {
+			return err
 		}
 
 		stuff, err := io.ReadAll(log)
@@ -922,7 +925,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog bool
 			return err
 		}
 
-		fmt.Printf("\n"+i18n.G("Log:")+"\n\n%s\n", string(stuff))
+		fmt.Printf("\n"+i18n.G("Log (%s):")+"\n\n%s\n", showLog, strings.TrimSpace(string(stuff)))
 	}
 
 	return nil
