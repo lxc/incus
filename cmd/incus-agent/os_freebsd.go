@@ -69,11 +69,7 @@ func osMountShared(src string, dst string, fstype string, opts []string) error {
 	}
 
 	_, err := subprocess.RunCommand("mount", args...)
-	if err == nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // osUmount is currently not used, but it is implemented just in case.
