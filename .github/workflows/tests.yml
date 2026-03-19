@@ -42,6 +42,7 @@ jobs:
           SHELLCHECK_OPTS: --shell sh
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          exclude-path: internal/server/instance/drivers/agent-loader/rc.d/incus-agent
         if: github.event_name == 'pull_request' && matrix.go == 'stable'
 
       - name: Upload artifact with ShellCheck defects in SARIF format
