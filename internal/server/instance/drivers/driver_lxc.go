@@ -5944,6 +5944,15 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	dependentVolumesOffer, err := storagePools.GenerateDependentVolumesOffer(d.state, srcConfig, d.Project().Name, args.Snapshots)
+	if err != nil {
+		err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
+		op.Done(err)
+		return err
+	}
+
+	offerHeader.DependentVolumes = dependentVolumesOffer
+
 	// If we are copying snapshots, retrieve a list of snapshots from source volume.
 	if args.Snapshots {
 		offerHeader.SnapshotNames = make([]string, 0, len(srcConfig.Snapshots))
@@ -5984,6 +5993,19 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	volumesWithTypes, err := storagePools.DependentVolumesMatchMigrationType(d.state, respHeader.DependentVolumes, args.Snapshots)
+	if err != nil {
+		err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
+		op.Done(err)
+		return err
+	}
+
+	d.logger.Debug("Generate dependent volumes args")
+	dependentVolumes := []localMigration.DependentVolumeArgs{}
+	for _, volWithType := range volumesWithTypes {
+		dependentVolumes = append(dependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0]))
+	}
+
 	volSourceArgs := &localMigration.VolumeSourceArgs{
 		IndexHeaderVersion: respHeader.GetIndexHeaderVersion(), // Enable index header frame if supported.
 		Name:               d.Name(),
@@ -5996,6 +6018,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		Info:               &localMigration.Info{Config: srcConfig},
 		ClusterMove:        clusterMove,
 		StorageMove:        storageMove,
+		DependentVolumes:   dependentVolumes,
 	}
 
 	// Only send the snapshots that the target requests when refreshing.
@@ -6559,6 +6582,17 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// Add CRIU info to response.
 	respHeader.Criu = criuType
 
+	volumesWithTypes, err := storagePools.DependentVolumesMatchMigrationType(d.state, offerHeader.DependentVolumes, args.Snapshots)
+	if err != nil {
+		return fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
+	}
+
+	dependentVolumes := []localMigration.DependentVolumeArgs{}
+	for _, volWithType := range volumesWithTypes {
+		respHeader.DependentVolumes = append(respHeader.DependentVolumes, volWithType.Volume)
+		dependentVolumes = append(dependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0]))
+	}
+
 	if args.Refresh {
 		// Get the remote snapshots on the source.
 		sourceSnapshots := offerHeader.GetSnapshots()
@@ -6761,6 +6795,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
 			StoragePool:           args.StoragePool,
+			DependentVolumes:      dependentVolumes,
 		}
 
 		// At this point we have already figured out the parent container's root
