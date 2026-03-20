@@ -29,7 +29,7 @@ func (c *cmdPrune) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "prune"
 	cmd.Short = "Clean up obsolete files and data"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`Cleans up obsolete tarball files and removes outdated versions of a product
 
 The prune command scans the project directory for tarball files that do not have corresponding references

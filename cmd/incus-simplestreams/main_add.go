@@ -37,7 +37,7 @@ func (c *cmdAdd) Command() *cobra.Command {
 	cmd.Use = "add <metadata tarball> [<data file>]"
 	cmd.Aliases = []string{"import"}
 	cmd.Short = "Add an image"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`Add an image to the server
 
 This command parses the metadata tarball to retrieve the following fields from its metadata.yaml:
