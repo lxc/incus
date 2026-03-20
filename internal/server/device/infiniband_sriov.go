@@ -26,7 +26,7 @@ type infinibandSRIOV struct {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *infinibandSRIOV) validateConfig(instConf instance.ConfigReader) error {
+func (d *infinibandSRIOV) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	requiredFields := []string{"parent"}
 	optionalFields := []string{
 		"name",

@@ -822,7 +822,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 	}
 
 	// Create the snapshot.
-	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, d.op, true, true)
+	snap, snapInstOp, cleanup, err := instance.CreateInternal(d.state, args, d.op, true, true, false)
 	if err != nil {
 		return fmt.Errorf("Failed creating instance snapshot record %q: %w", name, err)
 	}
@@ -1046,7 +1046,7 @@ func (d *common) canMigrate(inst instance.Instance) string {
 
 	// Look at attached devices.
 	for _, entry := range d.ExpandedDevices().Sorted() {
-		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
 		if err != nil {
 			logger.Warn("Instance will not be migrated due to a device error", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": dev.Name(), "err": err})
 			return "stop"
@@ -1241,7 +1241,7 @@ func (d *common) getStoragePool() (storagePools.Pool, error) {
 }
 
 // deviceLoad instantiates and validates a new device and returns it along with enriched config.
-func (d *common) deviceLoad(inst instance.Instance, deviceName string, rawConfig deviceConfig.Device) (device.Device, error) {
+func (d *common) deviceLoad(inst instance.Instance, deviceName string, rawConfig deviceConfig.Device, partialValidation bool) (device.Device, error) {
 	var configCopy deviceConfig.Device
 	var err error
 
@@ -1256,7 +1256,7 @@ func (d *common) deviceLoad(inst instance.Instance, deviceName string, rawConfig
 		configCopy = rawConfig.Clone()
 	}
 
-	dev, err := device.New(inst, d.state, deviceName, configCopy, d.deviceVolatileGetFunc(deviceName), d.deviceVolatileSetFunc(deviceName))
+	dev, err := device.New(inst, d.state, deviceName, configCopy, partialValidation, d.deviceVolatileGetFunc(deviceName), d.deviceVolatileSetFunc(deviceName))
 
 	// If validation fails with unsupported device type then don't return the device for use.
 	if errors.Is(err, device.ErrUnsupportedDevType) {
@@ -1292,12 +1292,12 @@ func (d *common) deviceRemove(dev device.Device, instanceRunning bool) error {
 }
 
 // devicesAdd adds devices to instance.
-func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool) (revert.Hook, error) {
+func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool, partialValidation bool) (revert.Hook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
 	for _, entry := range d.expandedDevices.Sorted() {
-		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, partialValidation)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -1363,7 +1363,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 	// Remove devices in reverse order to how they were added.
 	for _, entry := range removeDevices.Reversed() {
 		l := d.logger.AddContext(logger.Ctx{"device": entry.Name, "userRequested": userRequested})
-		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -1400,7 +1400,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 	// Add devices in sorted order, this ensures that device mounts are added in path order.
 	for _, entry := range addDevices.Sorted() {
 		l := d.logger.AddContext(logger.Ctx{"device": entry.Name, "userRequested": userRequested})
-		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -1459,7 +1459,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 
 	for _, entry := range updateDevices.Sorted() {
 		l := d.logger.AddContext(logger.Ctx{"device": entry.Name, "userRequested": userRequested})
-		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -1511,7 +1511,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 // devicesRemove runs device removal function for each device.
 func (d *common) devicesRemove(inst instance.Instance) {
 	for _, entry := range d.expandedDevices.Reversed() {
-		dev, err := d.deviceLoad(inst, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, true)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).

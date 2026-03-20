@@ -32,7 +32,7 @@ func (suite *containerTestSuite) TestContainer_ProfilesDefault() {
 		Name:      "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c.Delete(true) }()
@@ -94,7 +94,7 @@ func (suite *containerTestSuite) TestContainer_ProfilesMulti() {
 		Name:      "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c.Delete(true) }()
@@ -132,7 +132,7 @@ func (suite *containerTestSuite) TestContainer_ProfilesOverwriteDefaultNic() {
 	})
 	suite.Req.Nil(err)
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	suite.True(c.IsPrivileged(), "This container should be privileged.")
@@ -174,7 +174,7 @@ func (suite *containerTestSuite) TestContainer_LoadFromDB() {
 	suite.Req.Nil(err)
 
 	// Create the container
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c.Delete(true) }()
@@ -221,7 +221,7 @@ func (suite *containerTestSuite) TestContainer_Path_Regular() {
 		Name:      "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c.Delete(true) }()
@@ -238,7 +238,7 @@ func (suite *containerTestSuite) TestContainer_LogPath() {
 		Name:      "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c.Delete(true) }()
@@ -254,7 +254,7 @@ func (suite *containerTestSuite) TestContainer_IsPrivileged_Privileged() {
 		Name:      "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	suite.Req.True(c.IsPrivileged(), "This container should be privileged.")
@@ -294,7 +294,7 @@ func (suite *containerTestSuite) TestContainer_AddRoutedNicValidation() {
 		Name: "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.NoError(err)
 	op.Done(nil)
 	err = c.Update(db.InstanceArgs{
@@ -346,7 +346,7 @@ func (suite *containerTestSuite) TestContainer_IsPrivileged_Unprivileged() {
 		Name:      "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	suite.Req.False(c.IsPrivileged(), "This container should be unprivileged.")
@@ -360,7 +360,7 @@ func (suite *containerTestSuite) TestContainer_Rename() {
 		Name:      "testFoo",
 	}
 
-	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true)
+	c, op, _, err := instance.CreateInternal(suite.d.State(), args, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c.Delete(true) }()
@@ -376,7 +376,7 @@ func (suite *containerTestSuite) TestContainer_findIdmap_isolated() {
 		Config: map[string]string{
 			"security.idmap.isolated": "true",
 		},
-	}, nil, true, true)
+	}, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c1.Delete(true) }()
@@ -387,7 +387,7 @@ func (suite *containerTestSuite) TestContainer_findIdmap_isolated() {
 		Config: map[string]string{
 			"security.idmap.isolated": "true",
 		},
-	}, nil, true, true)
+	}, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c2.Delete(true) }()
@@ -419,7 +419,7 @@ func (suite *containerTestSuite) TestContainer_findIdmap_mixed() {
 		Config: map[string]string{
 			"security.idmap.isolated": "false",
 		},
-	}, nil, true, true)
+	}, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c1.Delete(true) }()
@@ -430,7 +430,7 @@ func (suite *containerTestSuite) TestContainer_findIdmap_mixed() {
 		Config: map[string]string{
 			"security.idmap.isolated": "true",
 		},
-	}, nil, true, true)
+	}, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c2.Delete(true) }()
@@ -463,7 +463,7 @@ func (suite *containerTestSuite) TestContainer_findIdmap_raw() {
 			"security.idmap.isolated": "false",
 			"raw.idmap":               "both 1000 1000",
 		},
-	}, nil, true, true)
+	}, nil, true, true, false)
 	suite.Req.Nil(err)
 	op.Done(nil)
 	defer func() { _ = c1.Delete(true) }()
@@ -500,7 +500,7 @@ func (suite *containerTestSuite) TestContainer_findIdmap_maxed() {
 			Config: map[string]string{
 				"security.idmap.isolated": "true",
 			},
-		}, nil, true, true)
+		}, nil, true, true, false)
 
 		/* we should fail if there are no ids left */
 		if i != 6 {

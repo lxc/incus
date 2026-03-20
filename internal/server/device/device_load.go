@@ -120,8 +120,8 @@ func load(inst instance.Instance, state *state.State, projectName string, name s
 // is still returned with the validation error. If an unknown device is requested or the device is
 // not compatible with the instance type then an ErrUnsupportedDevType error is returned.
 // Note: The supplied config may be modified during validation to enrich. If this is not desired, supply a copy.
-func New(inst instance.Instance, state *state.State, name string, conf deviceConfig.Device, volatileGet VolatileGetter, volatileSet VolatileSetter) (Device, error) {
-	dev, err := load(inst, state, inst.Project().Name, name, conf, volatileGet, volatileSet)
+func New(inst instance.Instance, s *state.State, name string, conf deviceConfig.Device, partialValidation bool, volatileGet VolatileGetter, volatileSet VolatileSetter) (Device, error) {
+	dev, err := load(inst, s, inst.Project().Name, name, conf, volatileGet, volatileSet)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func New(inst instance.Instance, state *state.State, name string, conf deviceCon
 		return dev, err
 	}
 
-	err = dev.validateConfig(inst)
+	err = dev.validateConfig(inst, partialValidation)
 	if err != nil {
 		return dev, err
 	}
@@ -146,18 +146,18 @@ func New(inst instance.Instance, state *state.State, name string, conf deviceCon
 // Validate checks a device's config is valid. This only requires an instance.ConfigReader rather than an full
 // blown instance to allow profile devices to be validated too.
 // Note: The supplied config may be modified during validation to enrich. If this is not desired, supply a copy.
-func Validate(instConfig instance.ConfigReader, state *state.State, name string, conf deviceConfig.Device) error {
+func Validate(instConfig instance.ConfigReader, s *state.State, name string, conf deviceConfig.Device, partialValidation bool) error {
 	err := validate.IsDeviceName(name)
 	if err != nil {
 		return err
 	}
 
-	dev, err := load(nil, state, instConfig.Project().Name, name, conf, nil, nil)
+	dev, err := load(nil, s, instConfig.Project().Name, name, conf, nil, nil)
 	if err != nil {
 		return err
 	}
 
-	return dev.validateConfig(instConfig)
+	return dev.validateConfig(instConfig, partialValidation)
 }
 
 // Register performs a lightweight load of the device, bypassing most

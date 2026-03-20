@@ -70,6 +70,18 @@ message btrfsFeatures {
 	optional bool       	header_subvolume_uuids = 3;
 }
 
+message DependentVolume {
+	required string			name		= 1;
+	required string			pool		= 2;
+	required string			contentType	= 3;
+	required MigrationFSType	fs		= 4;
+	optional rsyncFeatures		rsyncFeatures	= 5;
+	optional zfsFeatures		zfsFeatures	= 6;
+	optional btrfsFeatures		btrfsFeatures	= 7;
+	optional int64			volumeSize	= 8;
+	repeated Snapshot               snapshots	= 9;
+}
+
 message MigrationHeader {
 	required MigrationFSType		fs			= 1;
 	optional CRIUType			criu			= 2;
@@ -83,6 +95,7 @@ message MigrationHeader {
 	optional int64				volumeSize		= 11;
 	optional btrfsFeatures			btrfsFeatures 		= 12;
 	optional uint32				indexHeaderVersion	= 13;
+	repeated DependentVolume		dependentVolumes        = 14;
 }
 
 message MigrationControl {

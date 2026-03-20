@@ -19,7 +19,7 @@ type pci struct {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *pci) validateConfig(instConf instance.ConfigReader) error {
+func (d *pci) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.VM) {
 		return ErrUnsupportedDevType
 	}

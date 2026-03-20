@@ -20,10 +20,12 @@ import (
 	"github.com/lxc/incus/v6/internal/migration"
 	"github.com/lxc/incus/v6/internal/rsync"
 	"github.com/lxc/incus/v6/internal/server/apparmor"
+	backupConfig "github.com/lxc/incus/v6/internal/server/backup/config"
 	"github.com/lxc/incus/v6/internal/server/db"
 	"github.com/lxc/incus/v6/internal/server/db/cluster"
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
+	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/node"
 	"github.com/lxc/incus/v6/internal/server/operations"
 	"github.com/lxc/incus/v6/internal/server/project"
@@ -1305,4 +1307,105 @@ func ClusterWideStorageConfig(driverName string) []string {
 	}
 
 	return []string{}
+}
+
+// GenerateDependentVolumesOffer creates an offer header containing
+// all information required for dependent volume migration.
+func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, projectName string, snapshots bool) ([]*migration.DependentVolume, error) {
+	result := make([]*migration.DependentVolume, 0, len(config.DependentVolumes))
+	if len(config.DependentVolumes) == 0 {
+		return result, nil
+	}
+
+	for _, volConfig := range config.DependentVolumes {
+		poolName := volConfig.Pool.Name
+		contentType := volConfig.Volume.ContentType
+		volName := volConfig.Volume.Name
+
+		pool, err := LoadByName(s, poolName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading pool: %w", err)
+		}
+
+		volStorageName := project.StorageVolume(projectName, volName)
+		vol := pool.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(contentType), volStorageName, volConfig.Volume.Config)
+
+		poolMigrationTypes := pool.MigrationTypes(drivers.ContentType(contentType), false, snapshots, true, false)
+		if len(poolMigrationTypes) == 0 {
+			return nil, fmt.Errorf("No migration types available")
+		}
+
+		header := localMigration.TypesToHeader(poolMigrationTypes...)
+
+		var volSize int64
+
+		if drivers.ContentType(contentType) == drivers.ContentTypeBlock {
+			err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
+				volDiskPath, err := pool.Driver().GetVolumeDiskPath(vol)
+				if err != nil {
+					return err
+				}
+
+				volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}, nil)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		dependentVolume := localMigration.DependentVolumeFromHeader(header, volName, poolName, contentType, volSize)
+		dependentVolume.Snapshots = make([]*migration.Snapshot, 0, len(volConfig.VolumeSnapshots))
+
+		for _, volSnap := range volConfig.VolumeSnapshots {
+			// Set size for snapshot volume
+			snapSize, err := CalculateVolumeSnapshotSize(projectName, pool, drivers.ContentType(contentType), drivers.VolumeTypeCustom, volName, volSnap.Name)
+			if err != nil {
+				return nil, err
+			}
+
+			volSnap.Config["size"] = fmt.Sprintf("%d", snapSize)
+			dependentVolume.Snapshots = append(dependentVolume.Snapshots, localMigration.VolumeSnapshotToProtobuf(volSnap))
+		}
+
+		result = append(result, dependentVolume)
+	}
+
+	return result, nil
+}
+
+// DependentVolumeWithType represents a volume and its supported migration types.
+type DependentVolumeWithType struct {
+	Volume      *migration.DependentVolume
+	VolumeTypes []localMigration.Type
+}
+
+// DependentVolumesMatchMigrationType returns the transport type matching the dependent volumes.
+func DependentVolumesMatchMigrationType(s *state.State, migrationDependentVolumes []*migration.DependentVolume, snapshots bool) ([]DependentVolumeWithType, error) {
+	dependentVolumes := []DependentVolumeWithType{}
+	for _, vol := range migrationDependentVolumes {
+		contentType := drivers.ContentType(*vol.ContentType)
+		pool, err := LoadByName(s, *vol.Pool)
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		poolMigrationTypes := pool.MigrationTypes(drivers.ContentType(contentType), false, snapshots, true, false)
+		if len(poolMigrationTypes) == 0 {
+			return nil, errors.New("No migration types available")
+		}
+
+		migrationTypes, err := localMigration.MatchTypes(localMigration.HeaderFromDependentVolume(vol), FallbackMigrationType(contentType), poolMigrationTypes)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to negotiate migration type: %w", err)
+		}
+
+		dependentVolumes = append(dependentVolumes, DependentVolumeWithType{Volume: vol, VolumeTypes: migrationTypes})
+	}
+
+	return dependentVolumes, nil
 }

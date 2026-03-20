@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-
 	"github.com/lxc/incus/v6/internal/migration"
 	localMigration "github.com/lxc/incus/v6/internal/server/migration"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -168,7 +166,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 			}
 
 			srcConfig.VolumeSnapshots[i].Config["size"] = fmt.Sprintf("%d", snapSize)
-			offerHeader.Snapshots = append(offerHeader.Snapshots, volumeSnapshotToProtobuf(srcConfig.VolumeSnapshots[i]))
+			offerHeader.Snapshots = append(offerHeader.Snapshots, localMigration.VolumeSnapshotToProtobuf(srcConfig.VolumeSnapshots[i]))
 		}
 	}
 
@@ -530,26 +528,5 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 			// whether or not the restore was successful.
 			logger.Warn("Unknown message from migration source", logger.Ctx{"message": msg.GetMessage()})
 		}
-	}
-}
-
-func volumeSnapshotToProtobuf(vol *api.StorageVolumeSnapshot) *migration.Snapshot {
-	config := []*migration.Config{}
-	for k, v := range vol.Config {
-		kCopy := string(k)
-		vCopy := string(v)
-		config = append(config, &migration.Config{Key: &kCopy, Value: &vCopy})
-	}
-
-	return &migration.Snapshot{
-		Name:         &vol.Name,
-		LocalConfig:  config,
-		Profiles:     []string{},
-		Ephemeral:    proto.Bool(false),
-		LocalDevices: []*migration.Device{},
-		Architecture: proto.Int32(0),
-		Stateful:     proto.Bool(false),
-		CreationDate: proto.Int64(vol.CreatedAt.UnixNano()),
-		ExpiryDate:   proto.Int64(vol.CreatedAt.UnixNano()),
 	}
 }

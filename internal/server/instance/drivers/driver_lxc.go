@@ -171,7 +171,7 @@ func lxcStatusCode(state liblxc.State) api.StatusCode {
 
 // lxcCreate creates the DB storage records and sets up instance devices.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
+func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDeviceValidation bool, op *operations.Operation) (instance.Instance, revert.Hook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -307,7 +307,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 
 	if !d.IsSnapshot() {
 		// Add devices to container.
-		cleanup, err := d.devicesAdd(d, false)
+		cleanup, err := d.devicesAdd(d, false, partialDeviceValidation)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -2170,7 +2170,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	// Load devices in sorted order, this ensures that device mounts are added in path order.
 	// Loading all devices first means that validation of all devices occurs before starting any of them.
 	for _, entry := range sortedDevices {
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -3632,7 +3632,7 @@ func (d *lxc) cleanupDevices(instanceRunning bool, stopHookNetnsPath string) {
 			continue
 		}
 
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -5944,6 +5944,15 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	dependentVolumesOffer, err := storagePools.GenerateDependentVolumesOffer(d.state, srcConfig, d.Project().Name, args.Snapshots)
+	if err != nil {
+		err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
+		op.Done(err)
+		return err
+	}
+
+	offerHeader.DependentVolumes = dependentVolumesOffer
+
 	// If we are copying snapshots, retrieve a list of snapshots from source volume.
 	if args.Snapshots {
 		offerHeader.SnapshotNames = make([]string, 0, len(srcConfig.Snapshots))
@@ -5984,6 +5993,19 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	volumesWithTypes, err := storagePools.DependentVolumesMatchMigrationType(d.state, respHeader.DependentVolumes, args.Snapshots)
+	if err != nil {
+		err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
+		op.Done(err)
+		return err
+	}
+
+	d.logger.Debug("Generate dependent volumes args")
+	dependentVolumes := []localMigration.DependentVolumeArgs{}
+	for _, volWithType := range volumesWithTypes {
+		dependentVolumes = append(dependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0]))
+	}
+
 	volSourceArgs := &localMigration.VolumeSourceArgs{
 		IndexHeaderVersion: respHeader.GetIndexHeaderVersion(), // Enable index header frame if supported.
 		Name:               d.Name(),
@@ -5996,6 +6018,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		Info:               &localMigration.Info{Config: srcConfig},
 		ClusterMove:        clusterMove,
 		StorageMove:        storageMove,
+		DependentVolumes:   dependentVolumes,
 	}
 
 	// Only send the snapshots that the target requests when refreshing.
@@ -6559,6 +6582,17 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// Add CRIU info to response.
 	respHeader.Criu = criuType
 
+	volumesWithTypes, err := storagePools.DependentVolumesMatchMigrationType(d.state, offerHeader.DependentVolumes, args.Snapshots)
+	if err != nil {
+		return fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
+	}
+
+	dependentVolumes := []localMigration.DependentVolumeArgs{}
+	for _, volWithType := range volumesWithTypes {
+		respHeader.DependentVolumes = append(respHeader.DependentVolumes, volWithType.Volume)
+		dependentVolumes = append(dependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0]))
+	}
+
 	if args.Refresh {
 		// Get the remote snapshots on the source.
 		sourceSnapshots := offerHeader.GetSnapshots()
@@ -6761,6 +6795,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			VolumeOnly:            !args.Snapshots,
 			ClusterMoveSourceName: args.ClusterMoveSourceName,
 			StoragePool:           args.StoragePool,
+			DependentVolumes:      dependentVolumes,
 		}
 
 		// At this point we have already figured out the parent container's root
@@ -6803,7 +6838,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					}
 
 					// Create the snapshot instance.
-					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false)
+					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false, false)
 					if err != nil {
 						return fmt.Errorf("Failed creating instance snapshot record %q: %w", snapArgs.Name, err)
 					}
@@ -9424,7 +9459,7 @@ func (d *common) forkfileRunningLockName() string {
 
 // ReloadDevice triggers an empty Update call to the underlying device.
 func (d *lxc) ReloadDevice(devName string) error {
-	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName])
+	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName], false)
 	if err != nil {
 		return err
 	}

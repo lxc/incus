@@ -211,7 +211,7 @@ func (d *gpuMdev) postStop() error {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *gpuMdev) validateConfig(instConf instance.ConfigReader) error {
+func (d *gpuMdev) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.VM) {
 		return ErrUnsupportedDevType
 	}
