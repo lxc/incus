@@ -171,7 +171,7 @@ func lxcStatusCode(state liblxc.State) api.StatusCode {
 
 // lxcCreate creates the DB storage records and sets up instance devices.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
+func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDeviceValidation bool, op *operations.Operation) (instance.Instance, revert.Hook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -307,7 +307,7 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operatio
 
 	if !d.IsSnapshot() {
 		// Add devices to container.
-		cleanup, err := d.devicesAdd(d, false)
+		cleanup, err := d.devicesAdd(d, false, partialDeviceValidation)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -2170,7 +2170,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	// Load devices in sorted order, this ensures that device mounts are added in path order.
 	// Loading all devices first means that validation of all devices occurs before starting any of them.
 	for _, entry := range sortedDevices {
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -3632,7 +3632,7 @@ func (d *lxc) cleanupDevices(instanceRunning bool, stopHookNetnsPath string) {
 			continue
 		}
 
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -6803,7 +6803,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					}
 
 					// Create the snapshot instance.
-					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false)
+					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false, false)
 					if err != nil {
 						return fmt.Errorf("Failed creating instance snapshot record %q: %w", snapArgs.Name, err)
 					}
@@ -9424,7 +9424,7 @@ func (d *common) forkfileRunningLockName() string {
 
 // ReloadDevice triggers an empty Update call to the underlying device.
 func (d *lxc) ReloadDevice(devName string) error {
-	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName])
+	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName], false)
 	if err != nil {
 		return err
 	}

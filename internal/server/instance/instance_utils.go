@@ -56,7 +56,7 @@ var Load func(s *state.State, args db.InstanceArgs, p api.Project) (Instance, er
 
 // Create is linked from instance/drivers.create to allow difference instance types to be created.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-var Create func(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (Instance, revert.Hook, error)
+var Create func(s *state.State, args db.InstanceArgs, p api.Project, partialDeviceValidation bool, op *operations.Operation) (Instance, revert.Hook, error)
 
 func exclusiveConfigKeys(key1 string, key2 string, config map[string]string) (val string, ok bool, err error) {
 	if config[key1] != "" && config[key2] != "" {
@@ -710,7 +710,7 @@ func ValidName(instanceName string, isSnapshot bool) error {
 // Returns the created instance, along with a "create" operation lock that needs to be marked as Done once the
 // instance is fully completed, and a revert fail function that can be used to undo this function if a subsequent
 // step fails.
-func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operation, clearLogDir bool, checkArchitecture bool) (Instance, *operationlock.InstanceOperation, revert.Hook, error) {
+func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operation, clearLogDir bool, checkArchitecture bool, partialDeviceValidation bool) (Instance, *operationlock.InstanceOperation, revert.Hook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -994,7 +994,7 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 			return tx.DeleteInstance(ctx, dbInst.Project, dbInst.Name)
 		})
 	})
-	inst, cleanup, err := Create(s, args, *p, op)
+	inst, cleanup, err := Create(s, args, *p, partialDeviceValidation, op)
 	if err != nil {
 		logger.Error("Failed initializing instance", logger.Ctx{"project": args.Project, "instance": args.Name, "type": args.Type, "err": err})
 		return nil, nil, nil, fmt.Errorf("Failed initializing instance: %w", err)

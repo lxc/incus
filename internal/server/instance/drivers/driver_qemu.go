@@ -210,7 +210,7 @@ func qemuInstantiate(s *state.State, args db.InstanceArgs, expandedDevices devic
 
 // qemuCreate creates a new storage volume record and returns an initialized Instance.
 // Returns a revert fail function that can be used to undo this function if a subsequent step fails.
-func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operations.Operation) (instance.Instance, revert.Hook, error) {
+func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDeviceValidation bool, op *operations.Operation) (instance.Instance, revert.Hook, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -314,7 +314,7 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, op *operati
 
 	if !d.IsSnapshot() {
 		// Add devices to instance.
-		cleanup, err := d.devicesAdd(d, false)
+		cleanup, err := d.devicesAdd(d, false, partialDeviceValidation)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1527,7 +1527,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Load devices in sorted order, this ensures that device mounts are added in path order.
 	// Loading all devices first means that validation of all devices occurs before starting any of them.
 	for _, entry := range sortedDevices {
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -6280,7 +6280,7 @@ func (d *qemu) detachDisk(name string) error {
 		return fmt.Errorf("Couldn't find device %s", diskName)
 	}
 
-	dev, err := d.deviceLoad(d, diskName, config)
+	dev, err := d.deviceLoad(d, diskName, config, false)
 	if err != nil {
 		return err
 	}
@@ -7170,7 +7170,7 @@ func (d *qemu) cleanupDevices() {
 	}
 
 	for _, entry := range d.expandedDevices.Reversed() {
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config)
+		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -8607,7 +8607,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					}
 
 					// Create the snapshot instance.
-					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false)
+					_, snapInstOp, cleanup, err := instance.CreateInternal(d.state, *snapArgs, d.op, true, false, false)
 					if err != nil {
 						return fmt.Errorf("Failed creating instance snapshot record %q: %w", snapArgs.Name, err)
 					}
@@ -10303,7 +10303,7 @@ func (d *qemu) getNetworkState() (map[string]api.InstanceStateNetwork, error) {
 			continue
 		}
 
-		dev, err := d.deviceLoad(d, k, m)
+		dev, err := d.deviceLoad(d, k, m, false)
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -10734,7 +10734,7 @@ func (d *qemu) ConsoleScreenshot(screenshotFile *os.File) error {
 
 // ReloadDevice triggers an empty Update call to the underlying device.
 func (d *qemu) ReloadDevice(devName string) error {
-	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName])
+	dev, err := d.deviceLoad(d, devName, d.expandedDevices[devName], false)
 	if err != nil {
 		return err
 	}
