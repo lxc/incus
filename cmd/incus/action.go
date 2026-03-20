@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -34,8 +35,7 @@ func (c *cmdStart) Command() *cobra.Command {
 	cmd := c.action.Command("start")
 	cmd.Use = cli.U("start", cmdActionUsage...)
 	cmd.Short = i18n.G("Start instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Start instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Start instances`))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
@@ -58,8 +58,7 @@ func (c *cmdPause) Command() *cobra.Command {
 	cmd := c.action.Command("pause")
 	cmd.Use = cli.U("pause", cmdActionUsage...)
 	cmd.Short = i18n.G("Pause instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Pause instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Pause instances`))
 	cmd.Aliases = []string{"freeze"}
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -83,8 +82,7 @@ func (c *cmdResume) Command() *cobra.Command {
 	cmd := c.action.Command("resume")
 	cmd.Use = cli.U("resume", cmdActionUsage...)
 	cmd.Short = i18n.G("Resume instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Resume instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Resume instances`))
 	cmd.Aliases = []string{"unfreeze"}
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -108,8 +106,7 @@ func (c *cmdRestart) Command() *cobra.Command {
 	cmd := c.action.Command("restart")
 	cmd.Use = cli.U("restart", cmdActionUsage...)
 	cmd.Short = i18n.G("Restart instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Restart instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Restart instances`))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)
@@ -132,8 +129,7 @@ func (c *cmdStop) Command() *cobra.Command {
 	cmd := c.action.Command("stop")
 	cmd.Use = cli.U("stop", cmdActionUsage...)
 	cmd.Short = i18n.G("Stop instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Stop instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Stop instances`))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpInstances(toComplete)

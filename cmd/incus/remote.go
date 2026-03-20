@@ -23,6 +23,7 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
@@ -48,8 +49,7 @@ func (c *cmdRemote) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remote")
 	cmd.Short = i18n.G("Manage the list of remote servers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage the list of remote servers`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage the list of remote servers`))
 
 	// Add
 	remoteAddCmd := cmdRemoteAdd{global: c.global, remote: c}
@@ -125,7 +125,7 @@ func (c *cmdRemoteAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdRemoteAddUsage...)
 	cmd.Short = i18n.G("Add new remote servers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Add new remote servers
 
 URL for remote resources must be HTTPS (https://).
@@ -677,7 +677,7 @@ func (c *cmdRemoteGenerateCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("generate-certificate", cmdRemoteGenerateCertificateUsage...)
 	cmd.Short = i18n.G("Generate the client certificate")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Manually trigger the generation of a client certificate`))
 
 	cmd.RunE = c.Run
@@ -724,8 +724,7 @@ func (c *cmdRemoteGetDefault) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get-default", cmdRemoteGetDefaultUsage...)
 	cmd.Short = i18n.G("Show the default remote")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show the default remote`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show the default remote`))
 
 	cmd.RunE = c.Run
 
@@ -871,7 +870,7 @@ func (c *cmdRemoteGetClientToken) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get-client-token", cmdRemoteGetClientTokenUsage...)
 	cmd.Short = i18n.G("Generate a client token derived from the client certificate")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Generate a client trust token derived from the existing client certificate and private key.
 
 This is useful for remote authentication workflows where a token is passed to another Incus server.`))
@@ -959,7 +958,7 @@ func (c *cmdRemoteList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdRemoteListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List the available remotes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List the available remotes
 
 Default column layout: nupaPsg
@@ -1136,8 +1135,7 @@ func (c *cmdRemoteRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdRemoteRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename remotes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename remotes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename remotes`))
 
 	cmd.RunE = c.Run
 
@@ -1220,8 +1218,7 @@ func (c *cmdRemoteRemove) Command() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdRemoteRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove remotes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Remove remotes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove remotes`))
 
 	cmd.RunE = c.Run
 
@@ -1287,8 +1284,7 @@ func (c *cmdRemoteSwitch) Command() *cobra.Command {
 	cmd.Aliases = []string{"set-default"}
 	cmd.Use = cli.U("switch", cmdRemoteSwitchUsage...)
 	cmd.Short = i18n.G("Switch the default remote")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Switch the default remote`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Switch the default remote`))
 
 	cmd.RunE = c.Run
 
@@ -1337,8 +1333,7 @@ func (c *cmdRemoteSetURL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set-url", cmdRemoteSetURLUsage...)
 	cmd.Short = i18n.G("Set the URL for the remote")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Set the URL for the remote`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set the URL for the remote`))
 
 	cmd.RunE = c.Run
 

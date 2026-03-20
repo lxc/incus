@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	internalSQL "github.com/lxc/incus/v6/internal/sql"
@@ -29,7 +30,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("sql", cmdAdminSQLUsage...)
 	cmd.Short = i18n.G("Execute a SQL query against the local or global database")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Execute a SQL query against the local or global database
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Execute a SQL query against the local or global database
 
   The local database is specific to the cluster member you target the
   command to, and contains member-specific data (such as the member network

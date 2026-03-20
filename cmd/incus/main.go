@@ -126,7 +126,7 @@ func createApp() (*cobra.Command, *cmdGlobal, error) {
 	app := &cobra.Command{}
 	app.Use = "incus"
 	app.Short = i18n.G("Command line client for Incus")
-	app.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	app.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Command line client for Incus
 
 All of Incus's features can be driven through the various commands below.

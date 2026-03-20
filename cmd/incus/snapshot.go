@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
@@ -33,8 +34,7 @@ func (c *cmdSnapshot) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("snapshot")
 	cmd.Short = i18n.G("Manage instance snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage instance snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage instance snapshots`))
 
 	// Create.
 	snapshotCreateCmd := cmdSnapshotCreate{global: c.global, snapshot: c}
@@ -85,7 +85,7 @@ func (c *cmdSnapshotCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdSnapshotCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create instance snapshot")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Create instance snapshots
 
 When --stateful is used, attempt to checkpoint the instance's
@@ -231,8 +231,7 @@ func (c *cmdSnapshotDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdSnapshotDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instance snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete instance snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete instance snapshots`))
 
 	cmd.Flags().BoolVarP(&c.flagInteractive, "interactive", "i", false, i18n.G("Require user confirmation"))
 
@@ -324,7 +323,7 @@ func (c *cmdSnapshotList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdSnapshotListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List instance snapshots
 
 Default column layout: nTEs
@@ -477,8 +476,7 @@ func (c *cmdSnapshotRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdSnapshotRenameUsage...)
 	cmd.Short = i18n.G("Rename instance snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename instance snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename instance snapshots`))
 
 	cmd.RunE = c.Run
 
@@ -534,7 +532,7 @@ func (c *cmdSnapshotRestore) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("restore", cmdSnapshotRestoreUsage...)
 	cmd.Short = i18n.G("Restore instance snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Restore instance from snapshots
 
 If --stateful is passed, then the running state will be restored too.
@@ -602,7 +600,7 @@ func (c *cmdSnapshotShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdSnapshotShowUsage...)
 	cmd.Short = i18n.G("Show instance snapshot configuration")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show instance snapshot configuration`))
 
 	cmd.RunE = c.Run

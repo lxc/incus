@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -28,8 +29,7 @@ func (c *cmdNetworkIntegration) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("integration")
 	cmd.Short = i18n.G("Manage network integrations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage network integrations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage network integrations`))
 
 	// Create
 	networkIntegrationCreateCmd := cmdNetworkIntegrationCreate{global: c.global, networkIntegration: c}
@@ -88,8 +88,7 @@ func (c *cmdNetworkIntegrationCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdNetworkIntegrationCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create network integrations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Create network integrations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create network integrations`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network integration create o1 ovn
 
 incus network integration create o1 ovn < config.yaml
@@ -174,8 +173,7 @@ func (c *cmdNetworkIntegrationDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdNetworkIntegrationDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network integrations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete network integrations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete network integrations`))
 
 	cmd.RunE = c.Run
 
@@ -227,7 +225,7 @@ func (c *cmdNetworkIntegrationEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkIntegrationEditUsage...)
 	cmd.Short = i18n.G("Edit network integration configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit network integration configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus network integration edit <network integration> < network-integration.yaml
@@ -341,7 +339,7 @@ func (c *cmdNetworkIntegrationGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdNetworkIntegrationGetUsage...)
 	cmd.Short = i18n.G("Get values for network integration configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for network integration configuration keys`))
 
 	cmd.RunE = c.Run
@@ -398,7 +396,7 @@ func (c *cmdNetworkIntegrationList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkIntegrationListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List network integrations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List network integrations
 
 Default column layout: ndtu
@@ -533,8 +531,7 @@ func (c *cmdNetworkIntegrationRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdNetworkIntegrationRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename network integrations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename network integrations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename network integrations`))
 
 	cmd.RunE = c.Run
 
@@ -580,7 +577,7 @@ func (c *cmdNetworkIntegrationSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkIntegrationSetUsage...)
 	cmd.Short = i18n.G("Set network integration configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set network integration configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -654,7 +651,7 @@ func (c *cmdNetworkIntegrationUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkIntegrationUnsetUsage...)
 	cmd.Short = i18n.G("Unset network integration configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Unset network integration configuration keys`))
 
 	cmd.RunE = c.Run
@@ -686,8 +683,7 @@ func (c *cmdNetworkIntegrationShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkIntegrationShowUsage...)
 	cmd.Short = i18n.G("Show network integration options")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show network integration options`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show network integration options`))
 
 	cmd.RunE = c.Run
 

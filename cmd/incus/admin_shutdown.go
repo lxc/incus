@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -32,7 +33,7 @@ func (c *cmdAdminShutdown) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("shutdown", cmdAdminShutdownUsage...)
 	cmd.Short = i18n.G("Tell the daemon to shutdown all instances and exit")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Tell the daemon to shutdown all instances and exit
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Tell the daemon to shutdown all instances and exit
 
   This will tell the daemon to start a clean shutdown of all instances,
   followed by having itself shutdown and exit.

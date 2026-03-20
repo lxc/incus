@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -39,8 +40,7 @@ func (c *cmdStorage) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("storage")
 	cmd.Short = i18n.G("Manage storage pools and volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage storage pools and volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage storage pools and volumes`))
 
 	// Create
 	storageCreateCmd := cmdStorageCreate{global: c.global, storage: c}
@@ -108,8 +108,7 @@ func (c *cmdStorageCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdStorageCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create storage pools")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Create storage pools`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create storage pools`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage create s1 dir
 
 incus storage create s1 dir < config.yaml
@@ -213,8 +212,7 @@ func (c *cmdStorageDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdStorageDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete storage pools")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete storage pools`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete storage pools`))
 
 	cmd.RunE = c.Run
 
@@ -270,7 +268,7 @@ func (c *cmdStorageEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdStorageEditUsage...)
 	cmd.Short = i18n.G("Edit storage pool configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit storage pool configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage edit [<remote>:]<pool> < pool.yaml
@@ -396,7 +394,7 @@ func (c *cmdStorageGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdStorageGetUsage...)
 	cmd.Short = i18n.G("Get values for storage pool configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for storage pool configuration keys`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -473,7 +471,7 @@ func (c *cmdStorageInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdStorageInfoUsage...)
 	cmd.Short = i18n.G("Show useful information about storage pools")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show useful information about storage pools`))
 
 	cmd.Flags().BoolVar(&c.flagBytes, "bytes", false, i18n.G("Show the used and free space in bytes"))
@@ -648,7 +646,7 @@ func (c *cmdStorageList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdStorageListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available storage pools")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List available storage pools
 
 Default column layout: nDdus
@@ -806,7 +804,7 @@ func (c *cmdStorageSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdStorageSetUsage...)
 	cmd.Short = i18n.G("Set storage pool configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set storage pool configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -903,7 +901,7 @@ func (c *cmdStorageShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdStorageShowUsage...)
 	cmd.Short = i18n.G("Show storage pool configurations and resources")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show storage pool configurations and resources`))
 
 	cmd.Flags().BoolVar(&c.flagResources, "resources", false, i18n.G("Show the resources available to the storage pool"))
@@ -985,7 +983,7 @@ func (c *cmdStorageUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdStorageUnsetUsage...)
 	cmd.Short = i18n.G("Unset storage pool configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Unset storage pool configuration keys`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")

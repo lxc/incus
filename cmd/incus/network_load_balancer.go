@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -29,7 +30,7 @@ func (c *cmdNetworkLoadBalancer) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("load-balancer")
 	cmd.Short = i18n.G("Manage network load balancers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network load balancers"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network load balancers"))
 
 	// List.
 	networkLoadBalancerListCmd := cmdNetworkLoadBalancerList{global: c.global, networkLoadBalancer: c}
@@ -103,7 +104,7 @@ func (c *cmdNetworkLoadBalancerList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkLoadBalancerListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network load balancers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List available network load balancers
 
 Default column layout: ldp
@@ -248,7 +249,7 @@ func (c *cmdNetworkLoadBalancerShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkLoadBalancerShowUsage...)
 	cmd.Short = i18n.G("Show network load balancer configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network load balancer configurations"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Show network load balancer configurations"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -315,7 +316,7 @@ func (c *cmdNetworkLoadBalancerCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdNetworkLoadBalancerCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network load balancers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network load balancers"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network load balancers"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network load-balancer create n1 127.0.0.1
 
 incus network load-balancer create n1 127.0.0.1 < config.yaml
@@ -408,7 +409,7 @@ func (c *cmdNetworkLoadBalancerGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdNetworkLoadBalancerGetUsage...)
 	cmd.Short = i18n.G("Get values for network load balancer configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get values for network load balancer configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Get values for network load balancer configuration keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a network load balancer property"))
@@ -467,7 +468,7 @@ func (c *cmdNetworkLoadBalancerSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkLoadBalancerSetUsage...)
 	cmd.Short = i18n.G("Set network load balancer keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set network load balancer keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -567,7 +568,7 @@ func (c *cmdNetworkLoadBalancerUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkLoadBalancerUnsetUsage...)
 	cmd.Short = i18n.G("Unset network load balancer configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network load balancer keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset network load balancer keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a network load balancer property"))
@@ -598,7 +599,7 @@ func (c *cmdNetworkLoadBalancerEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkLoadBalancerEditUsage...)
 	cmd.Short = i18n.G("Edit network load balancer configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network load balancer configurations as YAML"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Edit network load balancer configurations as YAML"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -752,7 +753,7 @@ func (c *cmdNetworkLoadBalancerDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdNetworkLoadBalancerDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network load balancers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network load balancers"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Delete network load balancers"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -813,7 +814,7 @@ func (c *cmdNetworkLoadBalancerBackend) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("backend")
 	cmd.Short = i18n.G("Manage network load balancer backends")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network load balancer backends"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network load balancer backends"))
 
 	// Backend Add.
 	cmd.AddCommand(c.CommandAdd())
@@ -832,7 +833,7 @@ func (c *cmdNetworkLoadBalancerBackend) CommandAdd() *cobra.Command {
 	cmd.Use = cli.U("add", cmdNetworkLoadBalancerBackendAddUsage...)
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add backends to a load balancer")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add backend to a load balancer"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Add backend to a load balancer"))
 	cmd.RunE = c.RunAdd
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -899,7 +900,7 @@ func (c *cmdNetworkLoadBalancerBackend) CommandRemove() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdNetworkLoadBalancerBackendRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove backends from a load balancer")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove backend from a load balancer"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Remove backend from a load balancer"))
 	cmd.RunE = c.RunRemove
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -977,7 +978,7 @@ func (c *cmdNetworkLoadBalancerPort) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("port")
 	cmd.Short = i18n.G("Manage network load balancer ports")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network load balancer ports"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network load balancer ports"))
 
 	// Port Add.
 	cmd.AddCommand(c.CommandAdd())
@@ -996,7 +997,7 @@ func (c *cmdNetworkLoadBalancerPort) CommandAdd() *cobra.Command {
 	cmd.Use = cli.U("add", cmdNetworkLoadBalancerPortAddUsage...)
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add ports to a load balancer")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add ports to a load balancer"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Add ports to a load balancer"))
 	cmd.RunE = c.RunAdd
 
 	cmd.Flags().StringVar(&c.networkLoadBalancer.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -1063,7 +1064,7 @@ func (c *cmdNetworkLoadBalancerPort) CommandRemove() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdNetworkLoadBalancerPortRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove ports from a load balancer")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove ports from a load balancer"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Remove ports from a load balancer"))
 	cmd.Flags().BoolVar(&c.flagRemoveForce, "force", false, i18n.G("Remove all ports that match"))
 	cmd.RunE = c.RunRemove
 
@@ -1154,7 +1155,7 @@ func (c *cmdNetworkLoadBalancerInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdNetworkLoadBalancerInfoUsage...)
 	cmd.Short = i18n.G("Get current load balancer status")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get current load-balancer status"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Get current load-balancer status"))
 	cmd.RunE = c.Run
 
 	return cmd

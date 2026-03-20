@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -42,7 +43,7 @@ func (c *cmdConsole) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("console", cmdConsoleUsage...)
 	cmd.Short = i18n.G("Attach to instance consoles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Attach to instance consoles
 
 This command allows you to interact with the boot console of an instance

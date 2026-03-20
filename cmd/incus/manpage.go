@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -25,7 +26,7 @@ func (c *cmdManpage) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("manpage", cmdManpageUsage...)
 	cmd.Short = i18n.G("Generate manpages for all commands")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Generate manpages for all commands`))
 	cmd.Hidden = true
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "man", i18n.G("Format (man|md|rest|yaml)")+"``")

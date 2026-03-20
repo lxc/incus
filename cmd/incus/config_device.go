@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -33,8 +34,7 @@ func (c *cmdConfigDevice) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("device")
 	cmd.Short = i18n.G("Manage devices")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage devices`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage devices`))
 
 	// Add
 	configDeviceAddCmd := cmdConfigDeviceAdd{global: c.global, config: c.config, profile: c.profile, configDevice: c}
@@ -92,8 +92,7 @@ func (c *cmdConfigDeviceAdd) Command() *cobra.Command {
 	cmd.Aliases = []string{"create"}
 	cmd.Use = cli.U("add", c.configDevice.formatUsage(cmdConfigDeviceAddUsage)...)
 	cmd.Short = i18n.G("Add instance devices")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Add instance devices`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add instance devices`))
 	if c.config != nil {
 		cmd.Example = cli.FormatSection("", i18n.G(
 			`incus config device add [<remote>:]instance1 <device-name> disk source=/share/c1 path=/opt
@@ -213,7 +212,7 @@ func (c *cmdConfigDeviceGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", c.configDevice.formatUsage(cmdConfigDeviceGetUsage)...)
 	cmd.Short = i18n.G("Get values for device configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for device configuration keys`))
 
 	cmd.RunE = c.Run
@@ -303,8 +302,7 @@ func (c *cmdConfigDeviceList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", c.configDevice.formatUsage(cmdConfigDeviceListUsage)...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance devices")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List instance devices`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List instance devices`))
 
 	cmd.RunE = c.Run
 
@@ -373,7 +371,7 @@ func (c *cmdConfigDeviceOverride) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("override", cmdConfigDeviceOverrideUsage...)
 	cmd.Short = i18n.G("Copy profile inherited devices and override configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Copy profile inherited devices and override configuration keys`))
 
 	cmd.RunE = c.Run
@@ -457,8 +455,7 @@ func (c *cmdConfigDeviceRemove) Command() *cobra.Command {
 	cmd.Use = cli.U("remove", c.configDevice.formatUsage(cmdConfigDeviceRemoveUsage)...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove instance devices")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Remove instance devices`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove instance devices`))
 
 	cmd.RunE = c.Run
 
@@ -579,13 +576,13 @@ func (c *cmdConfigDeviceSet) Command() *cobra.Command {
 	cmd.Use = cli.U("set", c.configDevice.formatUsage(cmdConfigDeviceSetUsage)...)
 	cmd.Short = i18n.G("Set device configuration keys")
 	if c.config != nil {
-		cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 			`Set device configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
     incus config device set [<remote>:]<instance> <device> <key> <value>`))
 	} else if c.profile != nil {
-		cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 			`Set device configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -703,8 +700,7 @@ func (c *cmdConfigDeviceShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", c.configDevice.formatUsage(cmdConfigDeviceShowUsage)...)
 	cmd.Short = i18n.G("Show full device configuration")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show full device configuration`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show full device configuration`))
 
 	cmd.RunE = c.Run
 
@@ -777,8 +773,7 @@ func (c *cmdConfigDeviceUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", c.configDevice.formatUsage(cmdConfigDeviceUnsetUsage)...)
 	cmd.Short = i18n.G("Unset device configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Unset device configuration keys`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset device configuration keys`))
 
 	cmd.RunE = c.Run
 

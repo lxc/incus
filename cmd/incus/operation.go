@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,7 +31,7 @@ func (c *cmdOperation) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("operation")
 	cmd.Short = i18n.G("List, show and delete background operations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List, show and delete background operations`))
 	cmd.Hidden = true
 
@@ -66,7 +67,7 @@ func (c *cmdOperationDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdOperationDeleteUsage...)
 	cmd.Aliases = []string{"cancel", "rm", "remove"}
 	cmd.Short = i18n.G("Delete background operations (will attempt to cancel)")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Delete background operations (will attempt to cancel)`))
 
 	cmd.RunE = c.Run
@@ -124,7 +125,7 @@ func (c *cmdOperationList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdOperationListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List background operations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List background operations
 
 Default column layout: itdscCl
@@ -292,7 +293,7 @@ func (c *cmdOperationShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdOperationShowUsage...)
 	cmd.Short = i18n.G("Show details on a background operation")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show details on a background operation`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a
