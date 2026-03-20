@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/backup"
 	"github.com/lxc/incus/v6/internal/server/certificate"
 	"github.com/lxc/incus/v6/internal/server/cluster"
@@ -95,6 +96,7 @@ var patches = []patch{
 	{name: "network_ovn_directional_port_groups", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNPortGroups)},
 	{name: "pool_fix_default_permissions", stage: patchPostDaemonStorage, run: patchDefaultStoragePermissions},
 	{name: "auth_openfga_volume_files", stage: patchPostNetworks, run: patchGenericAuthorization},
+	{name: "btrfs_config_volume_subvolume_names", stage: patchPostNetworks, run: patchBtrfsSubvolumeNames},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1644,6 +1646,107 @@ func patchDefaultStoragePermissions(_ string, d *Daemon) error {
 					return fmt.Errorf("Failed to set directory mode %q: %w", path, err)
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+// patchBtrfsSubvolumeNames updates Btrfs subvolume names for instance config volumes,
+// replacing the pattern '<instance-name>-' with 'instance-'.
+func patchBtrfsSubvolumeNames(_ string, d *Daemon) error {
+	s := d.State()
+
+	// Get the list of local instances.
+	instances, err := instance.LoadNodeAll(s, instancetype.Any)
+	if err != nil {
+		return fmt.Errorf("Failed loading local instances: %w", err)
+	}
+
+	for _, inst := range instances {
+		volType, err := storagePools.InstanceTypeToVolumeType(inst.Type())
+		if err != nil {
+			return err
+		}
+
+		// Get the volume name on storage.
+		volStorageName := project.Instance(inst.Project().Name, inst.Name())
+		contentType := storagePools.InstanceContentType(inst)
+
+		_, currentPool, _ := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+
+		// Load storage pool.
+		p, err := storagePools.LoadByName(s, currentPool["pool"])
+		if err != nil {
+			logger.Error("Failed loading pool", logger.Ctx{"pool": currentPool["pool"], "err": err})
+			continue
+		}
+
+		// Check if driver is 'lvmcluster'.
+		if p.Driver().Info().Name != "lvmcluster" {
+			continue
+		}
+
+		// Load storage volume from database.
+		dbVol, err := storagePools.VolumeDBGet(p, inst.Project().Name, inst.Name(), volType)
+		if err != nil {
+			logger.Error("Failed loading volume", logger.Ctx{"vol": inst.Name(), "err": err})
+			continue
+		}
+
+		// Process only qcow2 instances.
+		if dbVol.Config["block.type"] != "qcow2" {
+			continue
+		}
+
+		vol := p.GetVolume(volType, contentType, volStorageName, dbVol.Config)
+
+		newName := storageDrivers.Qcow2ConfigVolumeBase
+		fsVol := vol.NewVMBlockFilesystemVolume()
+
+		// Increment the ref count for running instances,
+		// since it is equal zero at this stage and may cause an unintended volume deactivation.
+		if inst.IsRunning() {
+			fsVol.MountRefCountIncrement()
+		}
+
+		err = storageDrivers.Qcow2MountConfigTask(fsVol, nil, func(mountPath string) error {
+			_, volName := project.StorageVolumeParts(fsVol.Name())
+			entries, err := os.ReadDir(mountPath)
+			if err != nil {
+				return err
+			}
+
+			// Iterate through all entries (directories) and rename them.
+			for _, entry := range entries {
+				if !entry.IsDir() {
+					continue
+				}
+
+				oldName := entry.Name()
+
+				if oldName == volName || strings.HasPrefix(oldName, volName) {
+					newName := newName + strings.TrimPrefix(oldName, volName)
+
+					oldPath := filepath.Join(mountPath, oldName)
+					newPath := filepath.Join(mountPath, newName)
+
+					err := os.Rename(oldPath, newPath)
+					if err != nil {
+						return fmt.Errorf("Failed to rename %q to %q: %w", oldPath, newPath, err)
+					}
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			logger.Error("Failed to rename btrfs subvolumes", logger.Ctx{"err": err})
+			continue
+		}
+
+		if inst.IsRunning() {
+			fsVol.MountRefCountDecrement()
 		}
 	}
 

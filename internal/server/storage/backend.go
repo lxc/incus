@@ -8029,14 +8029,6 @@ func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, projectName
 		return err
 	}
 
-	if vol.IsVMBlock() {
-		fsVol := vol.NewVMBlockFilesystemVolume()
-		err := drivers.Qcow2RenameConfig(fsVol, newVolName, op)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
