@@ -95,6 +95,27 @@ The following instance metrics are provided:
   - Current time from guest in seconds since epoch
 ```
 
+## Network metrics
+
+The following network metrics are provided:
+
+```{list-table}
+   :header-rows: 1
+
+* - Metric
+  - Description
+* - `incus_network_bridge_up{network="<network>",project="<project>",type="<type>"}`
+  - Whether the network interface is up (1) or down (0)
+* - `incus_network_bridge_receive_bytes_total{network="<network>",project="<project>",type="<type>"}`
+  - Total bytes received on the network bridge
+* - `incus_network_bridge_transmit_bytes_total{network="<network>",project="<project>",type="<type>"}`
+  - Total bytes transmitted on the network bridge
+* - `incus_network_bridge_receive_packets_total{network="<network>",project="<project>",type="<type>"}`
+  - Total packets received on the network bridge
+* - `incus_network_bridge_transmit_packets_total{network="<network>",project="<project>",type="<type>"}`
+  - Total packets transmitted on the network bridge
+```
+
 ## Internal metrics
 
 The following internal metrics are provided:

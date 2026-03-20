@@ -530,6 +530,7 @@ var APIExtensions = []string{
 	"instances_debug_repair",
 	"network_io_bus_ovn",
 	"dependent",
+	"metrics_network_bridge",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
