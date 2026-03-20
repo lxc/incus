@@ -16,6 +16,8 @@ linters:
         - (*github.com/mdlayher/vsock.Listener).Close
         - os.Remove
         - (*compress/gzip.Writer).Close
+        - (*github.com/fatih/color.Color).Printf
+        - (*github.com/fatih/color.Color).Println
     revive:
       rules:
         - name: exported
