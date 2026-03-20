@@ -27,7 +27,7 @@ func (c *cmdGenerateMetadata) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "generate-metadata <path>"
 	cmd.Short = "Generate a metadata tarball"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`Generate a metadata tarball
 
 This command produces an incus.tar.xz tarball for use with an existing QCOW2 or squashfs disk image.

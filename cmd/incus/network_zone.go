@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -34,7 +35,7 @@ func (c *cmdNetworkZone) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("zone")
 	cmd.Short = i18n.G("Manage network zones")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network zones"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network zones"))
 
 	// List.
 	networkZoneListCmd := cmdNetworkZoneList{global: c.global, networkZone: c}
@@ -96,7 +97,7 @@ func (c *cmdNetworkZoneList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkZoneListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network zones")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List available network zone
 
 Default column layout: nDSdus
@@ -249,7 +250,7 @@ func (c *cmdNetworkZoneShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkZoneShowUsage...)
 	cmd.Short = i18n.G("Show network zone configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network zone configurations"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Show network zone configurations"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -306,7 +307,7 @@ func (c *cmdNetworkZoneGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdNetworkZoneGetUsage...)
 	cmd.Short = i18n.G("Get values for network zone configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get values for network zone configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Get values for network zone configuration keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a network zone property"))
@@ -377,7 +378,7 @@ func (c *cmdNetworkZoneCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdNetworkZoneCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network zones")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network zones"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network zones"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network zone create z1
 
 incus network zone create z1 < config.yaml
@@ -469,7 +470,7 @@ func (c *cmdNetworkZoneSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkZoneSetUsage...)
 	cmd.Short = i18n.G("Set network zone configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set network zone configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -552,7 +553,7 @@ func (c *cmdNetworkZoneUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkZoneUnsetUsage...)
 	cmd.Short = i18n.G("Unset network zone configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network zone configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset network zone configuration keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a network zone property"))
@@ -596,7 +597,7 @@ func (c *cmdNetworkZoneEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkZoneEditUsage...)
 	cmd.Short = i18n.G("Edit network zone configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network zone configurations as YAML"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Edit network zone configurations as YAML"))
 
 	cmd.RunE = c.Run
 
@@ -717,7 +718,7 @@ func (c *cmdNetworkZoneDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdNetworkZoneDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network zones")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network zones"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Delete network zones"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -770,7 +771,7 @@ func (c *cmdNetworkZoneRecord) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("record")
 	cmd.Short = i18n.G("Manage network zone records")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network zone records"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network zone records"))
 
 	// List.
 	networkZoneRecordListCmd := cmdNetworkZoneRecordList{global: c.global, networkZoneRecord: c}
@@ -830,7 +831,7 @@ func (c *cmdNetworkZoneRecordList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkZoneRecordListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network zone records")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("List available network zone records"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List available network zone records"))
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
@@ -907,7 +908,7 @@ func (c *cmdNetworkZoneRecordShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkZoneRecordShowUsage...)
 	cmd.Short = i18n.G("Show network zone record configuration")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network zone record configurations"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Show network zone record configurations"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -967,7 +968,7 @@ func (c *cmdNetworkZoneRecordGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdNetworkZoneRecordGetUsage...)
 	cmd.Short = i18n.G("Get values for network zone record configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get values for network zone record configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Get values for network zone record configuration keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a network zone record property"))
@@ -1043,7 +1044,7 @@ func (c *cmdNetworkZoneRecordCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdNetworkZoneRecordCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network zone record")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network zone record"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network zone record"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network zone record create z1 r1
 
 incus network zone record create z1 r1 < config.yaml
@@ -1140,7 +1141,7 @@ func (c *cmdNetworkZoneRecordSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkZoneRecordSetUsage...)
 	cmd.Short = i18n.G("Set network zone record configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set network zone record configuration keys`))
 
 	cmd.RunE = c.Run
@@ -1226,7 +1227,7 @@ func (c *cmdNetworkZoneRecordUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkZoneRecordUnsetUsage...)
 	cmd.Short = i18n.G("Unset network zone record configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network zone record configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset network zone record configuration keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a network zone record property"))
@@ -1274,7 +1275,7 @@ func (c *cmdNetworkZoneRecordEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkZoneRecordEditUsage...)
 	cmd.Short = i18n.G("Edit network zone record configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network zone record configurations as YAML"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Edit network zone record configurations as YAML"))
 
 	cmd.RunE = c.Run
 
@@ -1400,7 +1401,7 @@ func (c *cmdNetworkZoneRecordDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdNetworkZoneRecordDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network zone record")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network zone record"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Delete network zone record"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -1455,7 +1456,7 @@ func (c *cmdNetworkZoneRecordEntry) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("entry")
 	cmd.Short = i18n.G("Manage network zone record entries")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network zone record entries"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network zone record entries"))
 
 	// Rule Add.
 	cmd.AddCommand(c.CommandAdd())
@@ -1474,7 +1475,7 @@ func (c *cmdNetworkZoneRecordEntry) CommandAdd() *cobra.Command {
 	cmd.Use = cli.U("add", cmdNetworkZoneRecordEntryAddUsage...)
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add a network zone record entry")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add entries to a network zone record"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Add entries to a network zone record"))
 	cmd.RunE = c.RunAdd
 	cmd.Flags().Uint64Var(&c.flagTTL, "ttl", 0, i18n.G("Entry TTL")+"``")
 
@@ -1529,7 +1530,7 @@ func (c *cmdNetworkZoneRecordEntry) CommandRemove() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdNetworkZoneRecordEntryRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove a network zone record entry")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove entries from a network zone record"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Remove entries from a network zone record"))
 	cmd.RunE = c.RunRemove
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

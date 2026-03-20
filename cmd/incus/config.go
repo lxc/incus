@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,7 +31,7 @@ func (c *cmdConfig) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("config")
 	cmd.Short = i18n.G("Manage instance and server configuration options")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Manage instance and server configuration options`))
 
 	// Device
@@ -95,7 +96,7 @@ func (c *cmdConfigEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdConfigEditUsage...)
 	cmd.Short = i18n.G("Edit instance or server configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit instance or server configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus config edit <instance> < instance.yaml
@@ -379,7 +380,7 @@ func (c *cmdConfigGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdConfigGetUsage...)
 	cmd.Short = i18n.G("Get values for instance or server configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for instance or server configuration keys`))
 
 	cmd.Flags().BoolVarP(&c.flagExpanded, "expanded", "e", false, i18n.G("Access the expanded configuration"))
@@ -511,7 +512,7 @@ func (c *cmdConfigSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdConfigSetUsage...)
 	cmd.Short = i18n.G("Set instance or server configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set instance or server configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -691,7 +692,7 @@ func (c *cmdConfigShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdConfigShowUsage...)
 	cmd.Short = i18n.G("Show instance or server configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show instance or server configurations`))
 
 	cmd.Flags().BoolVarP(&c.flagExpanded, "expanded", "e", false, i18n.G("Show the expanded configuration"))
@@ -814,7 +815,7 @@ func (c *cmdConfigUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdConfigUnsetUsage...)
 	cmd.Short = i18n.G("Unset instance or server configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Unset instance or server configuration keys`))
 
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")

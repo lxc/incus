@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -27,7 +28,7 @@ func (c *cmdWait) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("wait", cmdWaitUsage...)
 	cmd.Short = i18n.G("Wait for an instance to satisfy a condition")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Wait for an instance to satisfy a condition
 
 Supported Conditions:

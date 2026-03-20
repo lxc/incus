@@ -10,7 +10,7 @@ func FormatSection(header string, content string) string {
 
 	// Add section header
 	if header != "" {
-		out += header + ":\n"
+		out += header + "\n"
 	}
 
 	// Indent the content

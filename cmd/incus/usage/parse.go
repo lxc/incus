@@ -7,10 +7,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	cliColor "github.com/lxc/incus/v6/cmd/incus/color"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/cliconfig"
 )
@@ -145,26 +147,24 @@ func (p Parsed) Get(def string) string {
 	return p.String
 }
 
-func underline(element string, cursor *int) (string, int) {
-	n := runewidth.StringWidth(element)
+func underline(width int, cursor *int) (string, int) {
 	var str string
-	switch n {
+	switch width {
 	case 1:
 		str = "┬"
 	case 2:
 		str = "├┘"
 	default:
-		dashCount := n - 3
+		dashCount := width - 3
 		str = "└" + strings.Repeat("─", dashCount/2) + "┬" + strings.Repeat("─", dashCount-(dashCount/2)) + "┘"
 	}
 
-	middle := *cursor + (n-1)/2
-	*cursor = *cursor + n + 1
+	middle := *cursor + (width-1)/2
+	*cursor = *cursor + width + 1
 	return str, middle
 }
 
 func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL bool) {
-	usagePrefix := i18n.G("Usage:") + " " + cmd.CommandPath()
 	nAtoms := len(u)
 	renderedAtoms := make([]string, nAtoms)
 
@@ -172,14 +172,14 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 	wcWidths := make([]int, nAtoms)
 
 	for i, atom := range u {
-		renderedAtom := atom.Render()
-		renderedAtoms[i] = renderedAtom
-		wcWidths[i] = runewidth.StringWidth(renderedAtom)
+		renderedAtoms[i] = atom.Render()
+		wcWidths[i] = atomWidth(atom)
 	}
 
-	fmt.Println(usagePrefix + " " + strings.Join(renderedAtoms, " "))
+	commandPath := cmd.CommandPath()
+	fmt.Println(cliColor.UsagePrefix + " " + commandPath + " " + strings.Join(renderedAtoms, " "))
 	parsedCount := len(parsedValues)
-	usagePrefixLen := runewidth.StringWidth(usagePrefix)
+	usagePrefixLen := runewidth.StringWidth(cliColor.RawUsagePrefix) + runewidth.StringWidth(commandPath) + 1
 	cursor := 0
 	// We shrink renderedAtoms to the atoms we actually parsed.
 	if parseRTL {
@@ -198,7 +198,7 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 		underlinedAtomMids := make([]int, parsedCount)
 		i := 0
 		for i < parsedCount {
-			str, middle := underline(renderedAtoms[i], &cursor)
+			str, middle := underline(wcWidths[i], &cursor)
 			underlinedAtoms[i] = str
 			underlinedAtomMids[i] = middle
 			i++
@@ -206,7 +206,7 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 
 		if parseRTL {
 			if i < nAtoms {
-				underlinedAtoms = append([]string{strings.Repeat("┅", wcWidths[nAtoms-i-1])}, underlinedAtoms...)
+				underlinedAtoms = append([]string{color.RedString(strings.Repeat("┅", wcWidths[nAtoms-i-1]))}, underlinedAtoms...)
 			}
 
 			// In RTL mode, we need to properly pad the strings so that the diagnosis is right-aligned.
@@ -215,7 +215,7 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 			}
 		} else {
 			if i < nAtoms {
-				underlinedAtoms = append(underlinedAtoms, strings.Repeat("┅", wcWidths[i]))
+				underlinedAtoms = append(underlinedAtoms, color.RedString(strings.Repeat("┅", wcWidths[i])))
 			}
 		}
 
@@ -236,9 +236,9 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 		for i, parsedValue := range parsedValues {
 			fmt.Print("  ", strings.Repeat("│", parsedCount-i-1)+"└"+strings.Repeat("─", i+1)+" ")
 			if parsedValue.err != nil {
-				fmt.Printf(i18n.G("(skipped: %s)\n"), parsedValue.err)
+				color.New(color.Faint).Printf(i18n.G("(skipped: %s)\n"), parsedValue.err)
 			} else if parsedValue.Skipped {
-				fmt.Println(i18n.G("(skipped: no value given)"))
+				color.New(color.Faint).Println(i18n.G("(skipped: no value given)"))
 			} else {
 				fmt.Println(quote(parsedValue.String))
 			}
@@ -253,7 +253,7 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 			}
 		}
 
-		fmt.Println(strings.Repeat(" ", padding) + strings.Repeat("┅", wcWidths[i]))
+		fmt.Println(strings.Repeat(" ", padding) + color.RedString(strings.Repeat("┅", wcWidths[i])))
 	}
 }
 

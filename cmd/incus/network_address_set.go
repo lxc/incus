@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,7 +31,7 @@ func (c *cmdNetworkAddressSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("address-set")
 	cmd.Short = i18n.G("Manage network address sets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network address sets"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network address sets"))
 
 	// List
 	networkAddressSetListCmd := cmdNetworkAddressSetList{global: c.global, networkAddressSet: c}
@@ -95,7 +96,7 @@ func (c *cmdNetworkAddressSetList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkAddressSetListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network address sets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("List available network address sets"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("List available network address sets"))
 
 	cmd.RunE = c.Run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G("Format (csv|json|table|yaml|compact|markdown)")+"``")
@@ -179,7 +180,7 @@ func (c *cmdNetworkAddressSetShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkAddressSetShowUsage...)
 	cmd.Short = i18n.G("Show network address set configuration")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network address set configuration"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Show network address set configuration"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -234,7 +235,7 @@ func (c *cmdNetworkAddressSetCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdNetworkAddressSetCreateUsage...)
 	cmd.Short = i18n.G("Create new network address sets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network address sets"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network address sets"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network address-set create as1
 
 incus network address-set create as1 < config.yaml
@@ -332,7 +333,7 @@ func (c *cmdNetworkAddressSetSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkAddressSetSetUsage...)
 	cmd.Short = i18n.G("Set network address set configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Set network address set configuration keys`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set network address set configuration keys`))
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network address set property"))
 	cmd.RunE = c.Run
@@ -407,7 +408,7 @@ func (c *cmdNetworkAddressSetUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkAddressSetUnsetUsage...)
 	cmd.Short = i18n.G("Unset network address set configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network address set configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset network address set configuration keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a network address set property"))
@@ -451,7 +452,7 @@ func (c *cmdNetworkAddressSetEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkAddressSetEditUsage...)
 	cmd.Short = i18n.G("Edit network address set configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network address set configurations as YAML"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Edit network address set configurations as YAML"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -568,7 +569,7 @@ func (c *cmdNetworkAddressSetRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdNetworkAddressSetRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename network address sets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Rename network address sets"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Rename network address sets"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -619,7 +620,7 @@ func (c *cmdNetworkAddressSetDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdNetworkAddressSetDeleteUsage...)
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete network address sets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network address sets"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Delete network address sets"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -667,7 +668,7 @@ func (c *cmdNetworkAddressSetAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdNetworkAddressSetAddUsage...)
 	cmd.Short = i18n.G("Add addresses to a network address set")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add addresses to a network address set"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Add addresses to a network address set"))
 
 	cmd.RunE = c.Run
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -716,7 +717,7 @@ func (c *cmdNetworkAddressSetRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remove", cmdNetworkAddressSetRemoveUsage...)
 	cmd.Short = i18n.G("Remove addresses from a network address set")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove addresses from a network address set"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Remove addresses from a network address set"))
 
 	cmd.RunE = c.Run
 	cmd.ValidArgsFunction = func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

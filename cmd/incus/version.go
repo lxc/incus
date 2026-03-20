@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/version"
@@ -22,8 +23,7 @@ func (c *cmdVersion) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("version", cmdVersionUsage...)
 	cmd.Short = i18n.G("Show local and remote versions")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show local and remote versions`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show local and remote versions`))
 
 	cmd.RunE = c.Run
 

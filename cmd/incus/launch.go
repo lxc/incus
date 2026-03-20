@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -22,7 +23,7 @@ func (c *cmdLaunch) Command() *cobra.Command {
 	cmd := c.init.Command()
 	cmd.Use = cli.U("launch", cmdCreateUsage...)
 	cmd.Short = i18n.G("Create and start instances from images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Create and start instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus launch images:debian/12 u1

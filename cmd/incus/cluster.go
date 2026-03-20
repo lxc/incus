@@ -19,6 +19,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
@@ -47,8 +48,7 @@ func (c *cmdCluster) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("cluster")
 	cmd.Short = i18n.G("Manage cluster members")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage cluster members`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage cluster members`))
 
 	// List
 	clusterListCmd := cmdClusterList{global: c.global, cluster: c}
@@ -149,7 +149,7 @@ func (c *cmdClusterList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdClusterListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List all the cluster members")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List all the cluster members
 
 	The -c option takes a (optionally comma-separated) list of arguments
@@ -335,8 +335,7 @@ func (c *cmdClusterShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdClusterShowUsage...)
 	cmd.Short = i18n.G("Show details of a cluster member")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show details of a cluster member`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show details of a cluster member`))
 
 	cmd.RunE = c.Run
 
@@ -390,7 +389,7 @@ func (c *cmdClusterInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdClusterInfoUsage...)
 	cmd.Short = i18n.G("Show useful information about a cluster member")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show useful information about a cluster member`))
 
 	cmd.RunE = c.Run
@@ -447,7 +446,7 @@ func (c *cmdClusterGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdClusterGetUsage...)
 	cmd.Short = i18n.G("Get values for cluster member configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a cluster property"))
 	cmd.RunE = c.Run
@@ -519,7 +518,7 @@ func (c *cmdClusterSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdClusterSetUsage...)
 	cmd.Short = i18n.G("Set a cluster member's configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a cluster property"))
 	cmd.RunE = c.Run
@@ -600,7 +599,7 @@ func (c *cmdClusterUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdClusterUnsetUsage...)
 	cmd.Short = i18n.G("Unset a cluster member's configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a cluster property"))
 	cmd.RunE = c.Run
@@ -645,8 +644,7 @@ func (c *cmdClusterRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdClusterRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename a cluster member")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename a cluster member`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename a cluster member`))
 
 	cmd.RunE = c.Run
 
@@ -702,8 +700,7 @@ func (c *cmdClusterRemove) Command() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdClusterRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove a member from the cluster")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Remove a member from the cluster`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove a member from the cluster`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force removing a member, even if degraded"))
@@ -791,7 +788,7 @@ func (c *cmdClusterEnable) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("enable", cmdClusterEnableUsage...)
 	cmd.Short = i18n.G("Enable clustering on a single non-clustered server")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Enable clustering on a single non-clustered server
 
   This command turns a non-clustered server into the first member of a new
@@ -875,7 +872,7 @@ func (c *cmdClusterEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdClusterEditUsage...)
 	cmd.Short = i18n.G("Edit cluster member configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit cluster member configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus cluster edit <cluster member> < member.yaml
@@ -990,7 +987,7 @@ func (c *cmdClusterJoin) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("join", cmdClusterJoinUsage...)
 	cmd.Short = i18n.G("Join an existing server to a cluster")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Join an existing server to a cluster`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Join an existing server to a cluster`))
 
 	cmd.RunE = c.Run
 
@@ -1059,7 +1056,7 @@ func (c *cmdClusterAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdClusterAddUsage...)
 	cmd.Short = i18n.G("Request a join token for adding a cluster member")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Request a join token for adding a cluster member`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Request a join token for adding a cluster member`))
 
 	cmd.RunE = c.Run
 
@@ -1130,7 +1127,7 @@ func (c *cmdClusterListTokens) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list-tokens", cmdClusterListTokensUsage...)
 	cmd.Short = i18n.G("List all active cluster member join tokens")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List all active cluster member join tokens
 
 Default column layout: ntE
@@ -1287,7 +1284,7 @@ func (c *cmdClusterRevokeToken) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("revoke-token", cmdClusterRevokeTokenUsage...)
 	cmd.Short = i18n.G("Revoke cluster member join token")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
 	cmd.RunE = c.Run
 
@@ -1375,7 +1372,7 @@ func (c *cmdClusterUpdateCertificate) Command() *cobra.Command {
 	cmd.Use = cli.U("update-certificate", cmdClusterUpdateCertificateUsage...)
 	cmd.Aliases = []string{"update-cert"}
 	cmd.Short = i18n.G("Update cluster certificate")
-	cmd.Long = cli.FormatSection(i18n.G("Description"),
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix,
 		i18n.G("Update cluster certificate with PEM certificate and key read from input files."))
 
 	cmd.RunE = c.Run
@@ -1489,7 +1486,7 @@ func (c *cmdClusterEvacuate) Command() *cobra.Command {
 	cmd.Aliases = []string{"evac"}
 	cmd.Use = cli.U("evacuate", cmdClusterEvacuateRestoreUsage...)
 	cmd.Short = i18n.G("Evacuate cluster member")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Evacuate cluster member`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Evacuate cluster member`))
 
 	cmd.Flags().StringVar(&c.action.flagAction, "action", "", i18n.G(`Force a particular evacuation action`)+"``")
 
@@ -1519,7 +1516,7 @@ func (c *cmdClusterRestore) Command() *cobra.Command {
 	cmd := c.action.Command()
 	cmd.Use = cli.U("restore", cmdClusterEvacuateRestoreUsage...)
 	cmd.Short = i18n.G("Restore cluster member")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Restore cluster member`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Restore cluster member`))
 
 	cmd.Flags().StringVar(&c.action.flagAction, "action", "", i18n.G(`Force a particular restoration action`)+"``")
 

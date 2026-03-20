@@ -21,7 +21,7 @@ func (c *cmdList) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "list"
 	cmd.Short = "List all images on the server"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`List all image on the server
 
 This renders a table with all images currently published on the server.

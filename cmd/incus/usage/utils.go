@@ -1,6 +1,9 @@
 package usage
 
 import (
+	"github.com/fatih/color"
+	"github.com/mattn/go-runewidth"
+
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/shared/cliconfig"
 )
@@ -32,4 +35,14 @@ func ParseString(s string) *Parsed {
 // argument.
 func ParseDefault(atom Atom, conf *cliconfig.Config) (*Parsed, error) {
 	return atom.Parse(conf, nil, map[string]incus.InstanceServer{}, &[]string{}, false)
+}
+
+// atomWidth returns the rune width of an atom computed with runewidth.StringWidth, after disabling
+// terminal coloring.
+func atomWidth(atom Atom) int {
+	noColor := color.NoColor
+	color.NoColor = true
+	n := runewidth.StringWidth(atom.Render())
+	color.NoColor = noColor
+	return n
 }

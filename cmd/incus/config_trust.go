@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -35,8 +36,7 @@ func (c *cmdConfigTrust) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("trust")
 	cmd.Short = i18n.G("Manage trusted clients")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage trusted clients`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage trusted clients`))
 
 	// Add
 	configTrustAddCmd := cmdConfigTrustAdd{global: c.global, config: c.config, configTrust: c}
@@ -93,7 +93,7 @@ func (c *cmdConfigTrustAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdConfigTrustAddUsage...)
 	cmd.Short = i18n.G("Add new trusted client")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Add new trusted client
 
 This will issue a trust token to be used by the client to add itself to the trust store.
@@ -169,7 +169,7 @@ func (c *cmdConfigTrustAddCertificate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add-certificate", cmdConfigTrustAddCertificateUsage...)
 	cmd.Short = i18n.G("Add new trusted client certificate")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Add new trusted client certificate
 
 The following certificate types are supported:
@@ -265,8 +265,7 @@ func (c *cmdConfigTrustEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdConfigTrustEditUsage...)
 	cmd.Short = i18n.G("Edit trust configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Edit trust configurations as YAML`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit trust configurations as YAML`))
 
 	cmd.RunE = c.Run
 
@@ -384,7 +383,7 @@ func (c *cmdConfigTrustList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdConfigTrustListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List trusted clients")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List trusted clients
 
 The -c option takes a (optionally comma-separated) list of arguments
@@ -573,7 +572,7 @@ func (c *cmdConfigTrustListTokens) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list-tokens", cmdConfigTrustListTokensUsage...)
 	cmd.Short = i18n.G("List all active certificate add tokens")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List all active certificate add tokens
 
 Default column layout: ntE
@@ -722,8 +721,7 @@ func (c *cmdConfigTrustRemove) Command() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdConfigTrustRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove trusted client")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Remove trusted client`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove trusted client`))
 
 	cmd.RunE = c.Run
 
@@ -759,8 +757,7 @@ func (c *cmdConfigTrustRevokeToken) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("revoke-token", cmdConfigTrustRevokeTokenUsage...)
 	cmd.Short = i18n.G("Revoke certificate add token")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Revoke certificate add token`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Revoke certificate add token`))
 
 	cmd.RunE = c.Run
 
@@ -831,8 +828,7 @@ func (c *cmdConfigTrustShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdConfigTrustShowUsage...)
 	cmd.Short = i18n.G("Show trust configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show trust configurations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show trust configurations`))
 
 	cmd.RunE = c.Run
 

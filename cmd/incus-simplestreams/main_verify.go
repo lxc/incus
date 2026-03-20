@@ -24,7 +24,7 @@ func (c *cmdVerify) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "verify"
 	cmd.Short = "Verify the integrity of the server"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`Verify the integrity of the server
 
 This command will analyze the image index and for every image and file

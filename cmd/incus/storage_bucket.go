@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -34,7 +35,7 @@ func (c *cmdStorageBucket) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("bucket")
 	cmd.Short = i18n.G("Manage storage buckets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Manage storage buckets.`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage storage buckets.`))
 
 	// Create.
 	storageBucketCreateCmd := cmdStorageBucketCreate{global: c.global, storageBucket: c}
@@ -102,7 +103,7 @@ func (c *cmdStorageBucketCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdStorageBucketCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new custom storage buckets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create new custom storage buckets`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create new custom storage buckets`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket create p1 b01
 	Create a new storage bucket named b01 in storage pool p1
 
@@ -198,7 +199,7 @@ func (c *cmdStorageBucketDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdStorageBucketDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete storage buckets")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Delete storage buckets`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete storage buckets`))
 
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -248,7 +249,7 @@ func (c *cmdStorageBucketEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdStorageBucketEditUsage...)
 	cmd.Short = i18n.G("Edit storage bucket configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Edit storage bucket configurations as YAML`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit storage bucket configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml
     Update a storage bucket using the content of bucket.yaml.`))
 
@@ -370,7 +371,7 @@ func (c *cmdStorageBucketGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdStorageBucketGetUsage...)
 	cmd.Short = i18n.G("Get values for storage bucket configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Get values for storage bucket configuration keys`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Get values for storage bucket configuration keys`))
 
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a storage bucket property"))
@@ -444,7 +445,7 @@ func (c *cmdStorageBucketList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage buckets")
 
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List storage buckets
 
 Default column layout: ndL
@@ -599,7 +600,7 @@ func (c *cmdStorageBucketSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdStorageBucketSetUsage...)
 	cmd.Short = i18n.G("Set storage bucket configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set storage bucket configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -707,7 +708,7 @@ func (c *cmdStorageBucketShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdStorageBucketShowUsage...)
 	cmd.Short = i18n.G("Show storage bucket configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Show storage bucket configurations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show storage bucket configurations`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage bucket show default data
     Will show the properties of a bucket called "data" in the "default" pool.`))
@@ -765,7 +766,7 @@ func (c *cmdStorageBucketUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdStorageBucketUnsetUsage...)
 	cmd.Short = i18n.G("Unset storage bucket configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Unset storage bucket configuration keys`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset storage bucket configuration keys`))
 
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a storage bucket property"))
@@ -798,7 +799,7 @@ func (c *cmdStorageBucketKey) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("key")
 	cmd.Short = i18n.G("Manage storage bucket keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Manage storage bucket keys.`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage storage bucket keys.`))
 
 	// Create.
 	storageBucketKeyCreateCmd := cmdStorageBucketKeyCreate{global: c.global, storageBucketKey: c}
@@ -848,7 +849,7 @@ func (c *cmdStorageBucketKeyList) Command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage bucket keys")
 
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List storage bucket keys
 
 Default column layout: ndr
@@ -987,7 +988,7 @@ func (c *cmdStorageBucketKeyCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdStorageBucketKeyCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create key for a storage bucket")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create key for a storage bucket"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create key for a storage bucket"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket key create p1 b01 k1
 	Create a key called k1 for the bucket b01 in the pool p1.
 
@@ -1085,7 +1086,7 @@ func (c *cmdStorageBucketKeyDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdStorageBucketKeyDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete key from a storage bucket")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete key from a storage bucket"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Delete key from a storage bucket"))
 	cmd.RunE = c.RunRemove
 
 	cmd.Flags().StringVar(&c.storageBucketKey.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -1135,7 +1136,7 @@ func (c *cmdStorageBucketKeyEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdStorageBucketKeyEditUsage...)
 	cmd.Short = i18n.G("Edit storage bucket key as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Edit storage bucket key as YAML`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit storage bucket key as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml
     Update a storage bucket key using the content of key.yaml.`))
 
@@ -1256,7 +1257,7 @@ func (c *cmdStorageBucketKeyShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdStorageBucketKeyShowUsage...)
 	cmd.Short = i18n.G("Show storage bucket key configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Show storage bucket key configurations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show storage bucket key configurations`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage bucket key show default data foo
     Will show the properties of a bucket key called "foo" for a bucket called "data" in the "default" pool.`))
@@ -1313,7 +1314,7 @@ func (c *cmdStorageBucketExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("export", cmdStorageBucketExportUsage...)
 	cmd.Short = i18n.G("Export storage bucket")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Export storage buckets as tarball.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage bucket export default b1
@@ -1458,7 +1459,7 @@ func (c *cmdStorageBucketImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("import", cmdStorageBucketImportUsage...)
 	cmd.Short = i18n.G("Import storage bucket")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Import backups of storage buckets.`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage bucket import default backup0.tar.gz

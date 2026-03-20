@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,8 +31,7 @@ func (c *cmdWarning) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("warning")
 	cmd.Short = i18n.G("Manage warnings")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage warnings`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage warnings`))
 	cmd.Hidden = true
 
 	// List
@@ -76,7 +76,7 @@ func (c *cmdWarningList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdWarningListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List warnings")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List warnings
 
 The -c option takes a (optionally comma-separated) list of arguments
@@ -266,8 +266,7 @@ func (c *cmdWarningAcknowledge) Command() *cobra.Command {
 	cmd.Use = cli.U("acknowledge", cmdWarningAcknowledgeUsage...)
 	cmd.Aliases = []string{"ack"}
 	cmd.Short = i18n.G("Acknowledge warning")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Acknowledge warning`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Acknowledge warning`))
 
 	cmd.RunE = c.Run
 
@@ -301,8 +300,7 @@ func (c *cmdWarningShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdWarningShowUsage...)
 	cmd.Short = i18n.G("Show warning")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show warning`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show warning`))
 
 	cmd.RunE = c.Run
 
@@ -350,8 +348,7 @@ func (c *cmdWarningDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdWarningDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete warnings")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete warnings`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete warnings`))
 
 	cmd.Flags().BoolVarP(&c.flagAll, "all", "a", false, i18n.G("Delete all warnings")+"``")
 

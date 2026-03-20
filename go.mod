@@ -12,6 +12,7 @@ require (
 	github.com/cowsql/go-cowsql v1.22.0
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/dustinkirkland/golang-petname v0.0.0-20260215035315-f0c533e9ce9b
+	github.com/fatih/color v1.18.0
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/fvbommel/sortorder v1.1.0
 	github.com/go-chi/chi/v5 v5.2.5
@@ -95,7 +96,6 @@ require (
 	github.com/eapache/channels v1.1.0 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
-	github.com/fatih/color v1.18.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect

@@ -25,7 +25,7 @@ func (c *cmdRemove) Command() *cobra.Command {
 	cmd.Use = "remove <fingerprint>"
 	cmd.Aliases = []string{"rm", "delete"}
 	cmd.Short = "Remove an image"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`Remove an image from the server
 
 This command locates the image from its fingerprint and removes it from the index.

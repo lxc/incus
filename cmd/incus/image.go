@@ -21,6 +21,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	internalFilter "github.com/lxc/incus/v6/internal/filter"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -49,7 +50,7 @@ func (c *cmdImage) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("image")
 	cmd.Short = i18n.G("Manage images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Manage images
 
 Instances are created from images. Those images were themselves
@@ -164,7 +165,7 @@ func (c *cmdImageCopy) Command() *cobra.Command {
 	cmd.Use = cli.U("copy", cmdImageCopyUsage...)
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy images between servers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Copy images between servers
 
 The auto-update flag instructs the server to keep this image up to date.
@@ -313,8 +314,7 @@ func (c *cmdImageDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdImageDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete images`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete images`))
 
 	cmd.RunE = c.Run
 
@@ -371,8 +371,7 @@ func (c *cmdImageEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdImageEditUsage...)
 	cmd.Short = i18n.G("Edit image properties")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Edit image properties`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit image properties`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus image edit <image>
     Launch a text editor to edit the properties
@@ -500,7 +499,7 @@ func (c *cmdImageExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("export", cmdImageExportUsage...)
 	cmd.Short = i18n.G("Export and download images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Export and download images
 
 The output target is optional and defaults to the working directory.`))
@@ -674,7 +673,7 @@ func (c *cmdImageImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("import", cmdImageImportUsage...)
 	cmd.Short = i18n.G("Import images into the image store")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Import image into the image store
 
 Directory import is only available on Linux and must be performed as root.`))
@@ -888,7 +887,7 @@ func (c *cmdImageInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdImageInfoUsage...)
 	cmd.Short = i18n.G("Show useful information about images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show useful information about images`))
 
 	cmd.Flags().BoolVar(&c.flagVM, "vm", false, i18n.G("Query virtual machine images"))
@@ -1031,7 +1030,7 @@ func (c *cmdImageList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdImageListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List images
 
 Filters may be of the <key>=<value> form for property based filtering,
@@ -1374,8 +1373,7 @@ func (c *cmdImageRefresh) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("refresh", cmdImageRefreshUsage...)
 	cmd.Short = i18n.G("Refresh images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Refresh images`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Refresh images`))
 
 	cmd.RunE = c.Run
 
@@ -1454,8 +1452,7 @@ func (c *cmdImageShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdImageShowUsage...)
 	cmd.Short = i18n.G("Show image properties")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show image properties`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show image properties`))
 
 	cmd.Flags().BoolVar(&c.flagVM, "vm", false, i18n.G("Query virtual machine images"))
 	cmd.RunE = c.Run
@@ -1521,8 +1518,7 @@ func (c *cmdImageGetProp) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get-property", cmdImageGetPropUsage...)
 	cmd.Short = i18n.G("Get image properties")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Get image properties`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Get image properties`))
 
 	cmd.RunE = c.Run
 
@@ -1587,8 +1583,7 @@ func (c *cmdImageSetProp) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set-property", cmdImageSetPropUsage...)
 	cmd.Short = i18n.G("Set image properties")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Set image properties`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set image properties`))
 
 	cmd.RunE = c.Run
 
@@ -1654,8 +1649,7 @@ func (c *cmdImageUnsetProp) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset-property", cmdImageUnsetPropUsage...)
 	cmd.Short = i18n.G("Unset image properties")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Unset image properties`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset image properties`))
 
 	cmd.RunE = c.Run
 
@@ -1735,7 +1729,7 @@ func (c *cmdImageGenerateMetadata) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("generate-metadata", cmdImageGenerateMetadataUsage...)
 	cmd.Short = i18n.G("Generate a metadata tarball")
-	cmd.Long = cli.FormatSection(i18n.G("Description"),
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix,
 		i18n.G(`Generate a metadata tarball
 
 This command produces an incus.tar.xz tarball for use during import with an existing QCOW2 or squashfs disk image.

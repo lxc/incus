@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/ports"
@@ -39,7 +40,7 @@ func (c *cmdAdminInit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("init", cmdAdminInitUsage...)
 	cmd.Short = i18n.G("Configure the daemon")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Configure the daemon`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Configure the daemon`))
 	cmd.Example = `  init --minimal
   init --auto [--network-address=IP] [--network-port=8443] [--storage-backend=dir]
               [--storage-create-device=DEVICE] [--storage-create-loop=SIZE]

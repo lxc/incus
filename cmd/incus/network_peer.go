@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -29,7 +30,7 @@ func (c *cmdNetworkPeer) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("peer")
 	cmd.Short = i18n.G("Manage network peerings")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network peerings"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network peerings"))
 
 	// List.
 	networkPeerListCmd := cmdNetworkPeerList{global: c.global, networkPeer: c}
@@ -91,7 +92,7 @@ func (c *cmdNetworkPeerList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkPeerListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network peers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List available network peers
 
 Default column layout: ndpts
@@ -246,7 +247,7 @@ func (c *cmdNetworkPeerShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkPeerShowUsage...)
 	cmd.Short = i18n.G("Show network peer configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network peer configurations"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Show network peer configurations"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -308,7 +309,7 @@ func (c *cmdNetworkPeerCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdNetworkPeerCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network peering")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network peering"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network peering"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network peer create default peer1 web/default
     Create a new peering between network "default" in the current project and network "default" in the "web" project
 
@@ -434,7 +435,7 @@ func (c *cmdNetworkPeerGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdNetworkPeerGetUsage...)
 	cmd.Short = i18n.G("Get values for network peer configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get values for network peer configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Get values for network peer configuration keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a network peer property"))
@@ -510,7 +511,7 @@ func (c *cmdNetworkPeerSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkPeerSetUsage...)
 	cmd.Short = i18n.G("Set network peer keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set network peer keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -602,7 +603,7 @@ func (c *cmdNetworkPeerUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkPeerUnsetUsage...)
 	cmd.Short = i18n.G("Unset network peer configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network peer keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset network peer keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a network peer property"))
@@ -650,7 +651,7 @@ func (c *cmdNetworkPeerEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkPeerEditUsage...)
 	cmd.Short = i18n.G("Edit network peer configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network peer configurations as YAML"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Edit network peer configurations as YAML"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -776,7 +777,7 @@ func (c *cmdNetworkPeerDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdNetworkPeerDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network peerings")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network peerings"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Delete network peerings"))
 	cmd.RunE = c.Run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

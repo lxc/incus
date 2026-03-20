@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -35,7 +36,7 @@ func (c *cmdMonitor) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("monitor", cmdMonitorUsage...)
 	cmd.Short = i18n.G("Monitor a local or remote server")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Monitor a local or remote server
 
 By default the monitor will listen to all message types.`))

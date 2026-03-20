@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -38,8 +39,7 @@ func (c *cmdProject) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("project")
 	cmd.Short = i18n.G("Manage projects")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage projects`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage projects`))
 
 	// Create
 	projectCreateCmd := cmdProjectCreate{global: c.global, project: c}
@@ -111,8 +111,7 @@ func (c *cmdProjectCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdProjectCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create projects")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Create projects`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create projects`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus project create p1
     Create a project named p1
 
@@ -208,8 +207,7 @@ func (c *cmdProjectDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdProjectDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete projects")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete projects`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete projects`))
 
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force delete the project and everything it contains."))
 	cmd.RunE = c.Run
@@ -307,7 +305,7 @@ func (c *cmdProjectEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdProjectEditUsage...)
 	cmd.Short = i18n.G("Edit project configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit project configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus project edit <project> < project.yaml
@@ -437,7 +435,7 @@ func (c *cmdProjectGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdProjectGetUsage...)
 	cmd.Short = i18n.G("Get values for project configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for project configuration keys`))
 
 	cmd.RunE = c.Run
@@ -507,7 +505,7 @@ func (c *cmdProjectList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdProjectListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List projects")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List projects
 
 The -c option takes a (optionally comma-separated) list of arguments
@@ -717,8 +715,7 @@ func (c *cmdProjectRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdProjectRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename projects")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename projects`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename projects`))
 
 	cmd.RunE = c.Run
 
@@ -777,7 +774,7 @@ func (c *cmdProjectSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdProjectSetUsage...)
 	cmd.Short = i18n.G("Set project configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set project configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -860,8 +857,7 @@ func (c *cmdProjectUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdProjectUnsetUsage...)
 	cmd.Short = i18n.G("Unset project configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Unset project configuration keys`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset project configuration keys`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a project property"))
@@ -905,8 +901,7 @@ func (c *cmdProjectShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdProjectShowUsage...)
 	cmd.Short = i18n.G("Show project options")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show project options`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show project options`))
 
 	cmd.RunE = c.Run
 
@@ -960,8 +955,7 @@ func (c *cmdProjectSwitch) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("switch", cmdProjectSwitchUsage...)
 	cmd.Short = i18n.G("Switch the current project")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Switch the current project`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Switch the current project`))
 
 	cmd.RunE = c.Run
 
@@ -1016,7 +1010,7 @@ func (c *cmdProjectInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdProjectInfoUsage...)
 	cmd.Short = i18n.G("Get a summary of resource allocations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get a summary of resource allocations`))
 	cmd.Flags().BoolVar(&c.flagShowAccess, "show-access", false, i18n.G("Show the instance's access list"))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
@@ -1124,8 +1118,7 @@ func (c *cmdProjectGetCurrent) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get-current", cmdProjectGetCurrentUsage...)
 	cmd.Short = i18n.G("Show the current project")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show the current project`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show the current project`))
 
 	cmd.RunE = c.Run
 

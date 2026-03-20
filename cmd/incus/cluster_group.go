@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -35,8 +36,7 @@ func (c *cmdClusterGroup) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("group")
 	cmd.Short = i18n.G("Manage cluster groups")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage cluster groups`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage cluster groups`))
 
 	// Assign
 	clusterGroupAssignCmd := cmdClusterGroupAssign{global: c.global, cluster: c.cluster}
@@ -103,7 +103,7 @@ func (c *cmdClusterGroupAssign) Command() *cobra.Command {
 	cmd.Use = cli.U("assign", cmdClusterGroupAssignUsage...)
 	cmd.Aliases = []string{"apply"}
 	cmd.Short = i18n.G("Assign sets of groups to cluster members")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Assign sets of groups to cluster members`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus cluster group assign foo default,bar
@@ -173,8 +173,7 @@ func (c *cmdClusterGroupCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdClusterGroupCreateUsage...)
 	cmd.Short = i18n.G("Create a cluster group")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Create a cluster group`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create a cluster group`))
 
 	cmd.Example = cli.FormatSection("", i18n.G(`incus cluster group create g1
 
@@ -256,8 +255,7 @@ func (c *cmdClusterGroupDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdClusterGroupDeleteUsage...)
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete cluster groups")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete cluster groups`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete cluster groups`))
 
 	cmd.RunE = c.Run
 
@@ -311,8 +309,7 @@ func (c *cmdClusterGroupEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdClusterGroupEditUsage...)
 	cmd.Short = i18n.G("Edit a cluster group")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Edit a cluster group`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit a cluster group`))
 
 	cmd.RunE = c.Run
 
@@ -428,7 +425,7 @@ func (c *cmdClusterGroupList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdClusterGroupListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List all the cluster groups")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List all the cluster groups
 
 Default column layout: ndm
@@ -574,7 +571,7 @@ func (c *cmdClusterGroupRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remove", cmdClusterGroupRemoveUsage...)
 	cmd.Short = i18n.G("Remove member from group")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Remove a cluster member from a cluster group`))
 
 	cmd.RunE = c.Run
@@ -652,8 +649,7 @@ func (c *cmdClusterGroupRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdClusterGroupRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename a cluster group")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename a cluster group`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename a cluster group`))
 
 	cmd.RunE = c.Run
 
@@ -705,8 +701,7 @@ func (c *cmdClusterGroupShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdClusterGroupShowUsage...)
 	cmd.Short = i18n.G("Show cluster group configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show cluster group configurations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show cluster group configurations`))
 
 	cmd.RunE = c.Run
 
@@ -759,7 +754,7 @@ func (c *cmdClusterGroupAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdClusterGroupAddUsage...)
 	cmd.Short = i18n.G("Add member to group")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Add a cluster member to a cluster group`))
 
 	cmd.RunE = c.Run
@@ -829,7 +824,7 @@ func (c *cmdClusterGroupGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdClusterGroupGetUsage...)
 	cmd.Short = i18n.G("Get values for cluster group configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a cluster group property"))
 	cmd.RunE = c.Run
@@ -901,7 +896,7 @@ func (c *cmdClusterGroupSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdClusterGroupSetUsage...)
 	cmd.Short = i18n.G("Set a cluster group's configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a cluster group property"))
 	cmd.RunE = c.Run
@@ -982,7 +977,7 @@ func (c *cmdClusterGroupUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdClusterGroupUnsetUsage...)
 	cmd.Short = i18n.G("Unset a cluster group's configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), cmd.Short)
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a cluster group property"))
 	cmd.RunE = c.Run

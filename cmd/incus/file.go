@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	internalIO "github.com/lxc/incus/v6/internal/io"
@@ -50,8 +51,7 @@ func (c *cmdFile) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("file")
 	cmd.Short = i18n.G("Manage files in instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage files in instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage files in instances`))
 
 	// Create
 	fileCreateCmd := cmdFileCreate{global: c.global, file: c}
@@ -99,7 +99,7 @@ func (c *cmdFileCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdFileCreateUsage...)
 	cmd.Short = i18n.G("Create files and directories in instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Create files and directories in instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file create foo/bar
@@ -276,8 +276,7 @@ func (c *cmdFileDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdFileDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete files in instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete files in instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete files in instances`))
 
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force deleting files, directories, and subdirectories")+"``")
 
@@ -363,8 +362,7 @@ func (c *cmdFileEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdFileEditUsage...)
 	cmd.Short = i18n.G("Edit files in instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Edit files in instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit files in instances`))
 
 	cmd.RunE = c.Run
 
@@ -445,8 +443,7 @@ func (c *cmdFilePull) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("pull", cmdFilePullUsage...)
 	cmd.Short = i18n.G("Pull files from instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Pull files from instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Pull files from instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file pull foo/etc/hosts .
    To pull /etc/hosts from the instance and write it to the current directory.
@@ -691,8 +688,7 @@ func (c *cmdFilePush) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("push", cmdFilePushUsage...)
 	cmd.Short = i18n.G("Push files into instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Push files into instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Push files into instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file push /etc/hosts foo/etc/hosts
    To push /etc/hosts into the instance "foo".
@@ -959,7 +955,7 @@ func (c *cmdFileMount) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("mount", cmdFileMountUsage...)
 	cmd.Short = i18n.G("Mount files from instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Mount files from instances.
 If no target path is provided, start an SSH SFTP listener instead.`))
 	cmd.Example = cli.FormatSection("", i18n.G(

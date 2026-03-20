@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -30,8 +31,7 @@ func (c *cmdImageAlias) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("alias")
 	cmd.Short = i18n.G("Manage image aliases")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage image aliases`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage image aliases`))
 
 	// Create
 	imageAliasCreateCmd := cmdImageAliasCreate{global: c.global, image: c.image, imageAlias: c}
@@ -72,7 +72,7 @@ func (c *cmdImageAliasCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdImageAliasCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create aliases for existing images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Create aliases for existing images`))
 
 	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Image alias description")+"``")
@@ -134,8 +134,7 @@ func (c *cmdImageAliasDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdImageAliasDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete image aliases")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete image aliases`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete image aliases`))
 
 	cmd.RunE = c.Run
 
@@ -191,7 +190,7 @@ func (c *cmdImageAliasList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdImageAliasListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List image aliases")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List image aliases
 
 Filters may be part of the image hash or part of the image alias name.
@@ -368,8 +367,7 @@ func (c *cmdImageAliasRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdImageAliasRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename aliases")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename aliases`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename aliases`))
 
 	cmd.RunE = c.Run
 

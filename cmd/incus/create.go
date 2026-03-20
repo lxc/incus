@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -47,7 +48,7 @@ func (c *cmdCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdCreateUsage...)
 	cmd.Short = i18n.G("Create instances from images")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(`Create instances from images`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:debian/12 u1
 
 incus create images:debian/12 u1 < config.yaml

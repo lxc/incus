@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -29,7 +30,7 @@ func (c *cmdNetworkForward) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("forward")
 	cmd.Short = i18n.G("Manage network forwards")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network forwards"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network forwards"))
 
 	// List.
 	networkForwardListCmd := cmdNetworkForwardList{global: c.global, networkForward: c}
@@ -95,7 +96,7 @@ func (c *cmdNetworkForwardList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdNetworkForwardListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network forwards")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List available network forwards
 
 Default column layout: ldDp
@@ -245,7 +246,7 @@ func (c *cmdNetworkForwardShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkForwardShowUsage...)
 	cmd.Short = i18n.G("Show network forward configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Show network forward configurations"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Show network forward configurations"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkForward.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -313,7 +314,7 @@ func (c *cmdNetworkForwardCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdNetworkForwardCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new network forwards")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Create new network forwards"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network forwards"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network forward create n1 127.0.0.1
 
 incus network forward create n1 127.0.0.1 < config.yaml
@@ -406,7 +407,7 @@ func (c *cmdNetworkForwardGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdNetworkForwardGetUsage...)
 	cmd.Short = i18n.G("Get values for network forward configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Get values for network forward configuration keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Get values for network forward configuration keys"))
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a network forward property"))
 	cmd.RunE = c.Run
@@ -482,7 +483,7 @@ func (c *cmdNetworkForwardSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkForwardSetUsage...)
 	cmd.Short = i18n.G("Set network forward keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set network forward keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -582,7 +583,7 @@ func (c *cmdNetworkForwardUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkForwardUnsetUsage...)
 	cmd.Short = i18n.G("Unset network forward configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Unset network forward keys"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset network forward keys"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a network forward property"))
@@ -630,7 +631,7 @@ func (c *cmdNetworkForwardEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkForwardEditUsage...)
 	cmd.Short = i18n.G("Edit network forward configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Edit network forward configurations as YAML"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Edit network forward configurations as YAML"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkForward.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -773,7 +774,7 @@ func (c *cmdNetworkForwardDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdNetworkForwardDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete network forwards")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Delete network forwards"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Delete network forwards"))
 	cmd.RunE = c.Run
 
 	cmd.Flags().StringVar(&c.networkForward.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -835,7 +836,7 @@ func (c *cmdNetworkForwardPort) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("port")
 	cmd.Short = i18n.G("Manage network forward ports")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Manage network forward ports"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Manage network forward ports"))
 
 	// Port Add.
 	cmd.AddCommand(c.CommandAdd())
@@ -854,7 +855,7 @@ func (c *cmdNetworkForwardPort) CommandAdd() *cobra.Command {
 	cmd.Use = cli.U("add", cmdNetworkForwardPortAddUsage...)
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add ports to a forward")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Add ports to a forward"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Add ports to a forward"))
 	cmd.RunE = c.RunAdd
 
 	cmd.Flags().StringVar(&c.networkForward.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -928,7 +929,7 @@ func (c *cmdNetworkForwardPort) CommandRemove() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdNetworkForwardPortRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove ports from a forward")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G("Remove ports from a forward"))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Remove ports from a forward"))
 	cmd.Flags().BoolVar(&c.flagRemoveForce, "force", false, i18n.G("Remove all ports that match"))
 	cmd.RunE = c.RunRemove
 

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
@@ -43,7 +44,7 @@ func (c *cmdCopy) Command() *cobra.Command {
 	cmd.Use = cli.U("copy", cmdCopyUsage...)
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy instances within or in between servers")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Copy instances within or in between servers
 
 Transfer modes (--mode):

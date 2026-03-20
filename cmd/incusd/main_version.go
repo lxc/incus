@@ -17,7 +17,7 @@ func (c *cmdVersion) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "version"
 	cmd.Short = "Show the server version"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`Show the server version`)
 
 	cmd.RunE = c.run

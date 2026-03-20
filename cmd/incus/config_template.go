@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
@@ -25,8 +26,7 @@ func (c *cmdConfigTemplate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("template")
 	cmd.Short = i18n.G("Manage instance file templates")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage instance file templates`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage instance file templates`))
 
 	// Create
 	configTemplateCreateCmd := cmdConfigTemplateCreate{global: c.global, config: c.config, configTemplate: c}
@@ -69,7 +69,7 @@ func (c *cmdConfigTemplateCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdConfigTemplateCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new instance file templates")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Create new instance file templates`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus config template create u1 t1
 
@@ -131,8 +131,7 @@ func (c *cmdConfigTemplateDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdConfigTemplateDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instance file templates")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete instance file templates`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete instance file templates`))
 
 	cmd.RunE = c.Run
 
@@ -180,8 +179,7 @@ func (c *cmdConfigTemplateEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdConfigTemplateEditUsage...)
 	cmd.Short = i18n.G("Edit instance file templates")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Edit instance file templates`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit instance file templates`))
 
 	cmd.RunE = c.Run
 
@@ -276,8 +274,7 @@ func (c *cmdConfigTemplateList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdConfigTemplateListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance file templates")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List instance file templates`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List instance file templates`))
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
@@ -342,7 +339,7 @@ func (c *cmdConfigTemplateShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdConfigTemplateShowUsage...)
 	cmd.Short = i18n.G("Show content of instance file templates")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show content of instance file templates`))
 
 	cmd.RunE = c.Run

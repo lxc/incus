@@ -22,6 +22,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/internal/instance"
@@ -63,7 +64,7 @@ func (c *cmdStorageVolume) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("volume")
 	cmd.Short = i18n.G("Manage storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Manage storage volumes
 
 Unless specified through a prefix, all volume operations affect "custom" (user created) volumes.`))
@@ -177,7 +178,7 @@ func (c *cmdStorageVolumeAttach) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("attach", cmdStorageVolumeAttachUsage...)
 	cmd.Short = i18n.G("Attach new custom storage volumes to instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Attach new custom storage volumes to instances`))
 
 	cmd.RunE = c.Run
@@ -250,7 +251,7 @@ func (c *cmdStorageVolumeAttachProfile) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("attach-profile", cmdStorageVolumeAttachProfileUsage...)
 	cmd.Short = i18n.G("Attach new custom storage volumes to profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Attach new custom storage volumes to profiles`))
 
 	cmd.RunE = c.Run
@@ -340,8 +341,7 @@ func (c *cmdStorageVolumeCopy) Command() *cobra.Command {
 	cmd.Use = cli.U("copy", cmdStorageVolumeCopyUsage...)
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy custom storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Copy custom storage volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Copy custom storage volumes`))
 
 	cmd.Flags().StringVar(&c.flagMode, "mode", "pull", i18n.G("Transfer mode. One of pull (default), push or relay.")+"``")
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
@@ -546,8 +546,7 @@ func (c *cmdStorageVolumeCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdStorageVolumeCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new custom storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Create new custom storage volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create new custom storage volumes`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume create default foo
     Create custom storage volume "foo" in pool "default"
 
@@ -649,8 +648,7 @@ func (c *cmdStorageVolumeDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdStorageVolumeDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete custom storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete custom storage volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete custom storage volumes`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -714,7 +712,7 @@ func (c *cmdStorageVolumeDetach) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("detach", cmdStorageVolumeDetachUsage...)
 	cmd.Short = i18n.G("Detach custom storage volumes from instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Detach custom storage volumes from instances`))
 
 	cmd.RunE = c.Run
@@ -830,7 +828,7 @@ func (c *cmdStorageVolumeDetachProfile) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("detach-profile", cmdStorageVolumeDetachProfileUsage...)
 	cmd.Short = i18n.G("Detach custom storage volumes from profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Detach custom storage volumes from profiles`))
 
 	cmd.RunE = c.Run
@@ -902,7 +900,7 @@ func (c *cmdStorageVolumeEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdStorageVolumeEditUsage...)
 	cmd.Short = i18n.G("Edit storage volume configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit storage volume configurations as YAML
 
 If the type is not specified, incus assumes the type is "custom".
@@ -1111,7 +1109,7 @@ func (c *cmdStorageVolumeGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdStorageVolumeGetUsage...)
 	cmd.Short = i18n.G("Get values for storage volume configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for storage volume configuration keys
 
 If the type is not specified, incus assumes the type is "custom".
@@ -1233,7 +1231,7 @@ func (c *cmdStorageVolumeInfo) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdStorageVolumeInfoUsage...)
 	cmd.Short = i18n.G("Show storage volume state information")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show storage volume state information
 
 If the type is not specified, Incus assumes the type is "custom".
@@ -1456,7 +1454,7 @@ func (c *cmdStorageVolumeList) Command() *cobra.Command {
 	c.defaultColumns = "etndcuL"
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", c.defaultColumns, i18n.G("Columns")+"``")
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("All projects")+"``")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List storage volumes
 
 A single keyword like "vol" which will list any storage volume with a name starting by "vol".
@@ -1690,7 +1688,7 @@ func (c *cmdStorageVolumeMove) Command() *cobra.Command {
 	cmd.Use = cli.U("move", cmdStorageVolumeMoveUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Move custom storage volumes between pools")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Move custom storage volumes between pools`))
 
 	cmd.Flags().StringVar(&c.storageVolumeCopy.flagMode, "mode", "pull", i18n.G("Transfer mode, one of pull (default), push or relay")+"``")
@@ -1754,8 +1752,7 @@ func (c *cmdStorageVolumeRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdStorageVolumeRenameUsage...)
 	cmd.Short = i18n.G("Rename custom storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename custom storage volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename custom storage volumes`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -1826,7 +1823,7 @@ func (c *cmdStorageVolumeSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdStorageVolumeSetUsage...)
 	cmd.Short = i18n.G("Set storage volume configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set storage volume configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -1976,7 +1973,7 @@ func (c *cmdStorageVolumeShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdStorageVolumeShowUsage...)
 	cmd.Short = i18n.G("Show storage volume configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show storage volume configurations
 
 If the type is not specified, Incus assumes the type is "custom".
@@ -2072,7 +2069,7 @@ func (c *cmdStorageVolumeUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdStorageVolumeUnsetUsage...)
 	cmd.Short = i18n.G("Unset storage volume configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Unset storage volume configuration keys
 
 If the type is not specified, Incus assumes the type is "custom".
@@ -2136,8 +2133,7 @@ func (c *cmdStorageVolumeFile) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("file")
 	cmd.Short = i18n.G("Manage files in custom volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage files in custom volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage files in custom volumes`))
 
 	// Create
 	storageVolumeFileCreateCmd := cmdStorageVolumeFileCreate{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
@@ -2187,7 +2183,7 @@ func (c *cmdStorageVolumeFileCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdStorageVolumeFileCreateUsage...)
 	cmd.Short = i18n.G("Create files and directories in custom vollume")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Create files and directories in custom volume`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage volume file create foo bar/baz
@@ -2363,8 +2359,7 @@ func (c *cmdStorageVolumeFileDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdStorageVolumeFileDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete files in custom volume")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete files in custom volume`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete files in custom volume`))
 
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force deleting files, directories, and subdirectories")+"``")
 
@@ -2433,7 +2428,7 @@ func (c *cmdStorageVolumeFileMount) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("mount", cmdStorageVolumeFileMountUsage...)
 	cmd.Short = i18n.G("Mount files from custom storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Mount files from custom storage volumes.
 If no target path is provided, start an SSH SFTP listener instead.`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume file mount mypool myvolume localdir
@@ -2534,8 +2529,7 @@ func (c *cmdStorageVolumeFileEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdStorageVolumeFileEditUsage...)
 	cmd.Short = i18n.G("Edit files in storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Edit files in storage volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit files in storage volumes`))
 
 	cmd.RunE = c.Run
 
@@ -2619,8 +2613,7 @@ func (c *cmdStorageVolumeFilePull) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("pull", cmdStorageVolumeFilePullUsage...)
 	cmd.Short = i18n.G("Pull files from custom volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Pull files from custom volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Pull files from custom volumes`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus custom volume file pull local v1/foo/etc/hosts .
    To pull /etc/hosts from the custom volume and write it to the current directory.
@@ -2833,8 +2826,7 @@ func (c *cmdStorageVolumeFilePush) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("push", cmdStorageVolumeFilePushUsage...)
 	cmd.Short = i18n.G("Push files into custom volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Push files into custom volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Push files into custom volumes`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage volume file push /etc/hosts local v1/etc/hosts
    To push /etc/hosts into the custom volume "v1".
@@ -3070,8 +3062,7 @@ func (c *cmdStorageVolumeSnapshot) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("snapshot")
 	cmd.Short = i18n.G("Manage storage volume snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage storage volume snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage storage volume snapshots`))
 
 	// Create
 	storageVolumeSnapshotCreateCmd := cmdStorageVolumeSnapshotCreate{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeSnapshot: c}
@@ -3125,8 +3116,7 @@ func (c *cmdStorageVolumeSnapshotCreate) Command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdStorageVolumeSnapshotCreateUsage...)
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Snapshot storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Snapshot storage volumes`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Snapshot storage volumes`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume snapshot create default foo snap0
     Create a snapshot of "foo" in pool "default" called "snap0"
 
@@ -3284,8 +3274,7 @@ func (c *cmdStorageVolumeSnapshotDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdStorageVolumeSnapshotDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete storage volume snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete storage volume snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete storage volume snapshots`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -3366,13 +3355,12 @@ func (c *cmdStorageVolumeSnapshotList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdStorageVolumeSnapshotListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List storage volume snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`List storage volume snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List storage volume snapshots`))
 
 	c.defaultColumns = "nTE"
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", c.defaultColumns, i18n.G("Columns")+"``")
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("All projects")+"``")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List storage volume snapshots
 
 	The -c option takes a (optionally comma-separated) list of arguments
@@ -3526,8 +3514,7 @@ func (c *cmdStorageVolumeSnapshotRename) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdStorageVolumeSnapshotRenameUsage...)
 	cmd.Short = i18n.G("Rename storage volume snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename storage volume snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename storage volume snapshots`))
 
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.RunE = c.Run
@@ -3599,8 +3586,7 @@ func (c *cmdStorageVolumeSnapshotRestore) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("restore", cmdStorageVolumeSnapshotRestoreUsage...)
 	cmd.Short = i18n.G("Restore storage volume snapshots")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Restore storage volume snapshots`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Restore storage volume snapshots`))
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 
 	cmd.RunE = c.Run
@@ -3665,7 +3651,7 @@ func (c *cmdStorageVolumeSnapshotShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdStorageVolumeSnapshotShowUsage...)
 	cmd.Short = i18n.G("Show storage volume snapshot configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show storage volume snapshhot configurations`))
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 
@@ -3739,8 +3725,7 @@ func (c *cmdStorageVolumeExport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("export", cmdStorageVolumeExportUsage...)
 	cmd.Short = i18n.G("Export custom storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Export custom storage volumes.`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Export custom storage volumes.`))
 
 	cmd.Flags().BoolVar(&c.flagVolumeOnly, "volume-only", false, i18n.G("Export the volume without its snapshots (ignored for ISO storage volumes)"))
 	cmd.Flags().BoolVar(&c.flagOptimizedStorage, "optimized-storage", false,
@@ -3912,8 +3897,7 @@ func (c *cmdStorageVolumeImport) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("import", cmdStorageVolumeImportUsage...)
 	cmd.Short = i18n.G("Import custom storage volumes")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Import custom storage volumes.`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Import custom storage volumes.`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume import default backup0.tar.gz
     Create a new custom volume using backup0.tar.gz as the source
 

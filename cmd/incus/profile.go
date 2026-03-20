@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
+	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
@@ -36,8 +37,7 @@ func (c *cmdProfile) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("profile")
 	cmd.Short = i18n.G("Manage profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Manage profiles`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage profiles`))
 
 	// Add
 	profileAddCmd := cmdProfileAdd{global: c.global, profile: c}
@@ -114,8 +114,7 @@ func (c *cmdProfileAdd) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdProfileAddUsage...)
 	cmd.Short = i18n.G("Add profiles to instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Add profiles to instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add profiles to instances`))
 
 	cmd.RunE = c.Run
 
@@ -186,7 +185,7 @@ func (c *cmdProfileAssign) Command() *cobra.Command {
 	cmd.Use = cli.U("assign", cmdProfileAssignUsage...)
 	cmd.Aliases = []string{"apply"}
 	cmd.Short = i18n.G("Assign sets of profiles to instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Assign sets of profiles to instances`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus profile assign foo default,bar
@@ -276,8 +275,7 @@ func (c *cmdProfileCopy) Command() *cobra.Command {
 	cmd.Use = cli.U("copy", cmdProfileCopyUsage...)
 	cmd.Aliases = []string{"cp"}
 	cmd.Short = i18n.G("Copy profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Copy profiles`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Copy profiles`))
 	cmd.Flags().StringVar(&c.flagTargetProject, "target-project", "", i18n.G("Copy to a project different from the source")+"``")
 	cmd.Flags().BoolVar(&c.flagRefresh, "refresh", false, i18n.G("Update the target profile from the source if it already exists"))
 
@@ -351,8 +349,7 @@ func (c *cmdProfileCreate) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdProfileCreateUsage...)
 	cmd.Short = i18n.G("Create profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Create profiles`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create profiles`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus profile create p1
     Create a profile named p1
 
@@ -433,8 +430,7 @@ func (c *cmdProfileDelete) Command() *cobra.Command {
 	cmd.Use = cli.U("delete", cmdProfileDeleteUsage...)
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Delete profiles`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete profiles`))
 
 	cmd.RunE = c.Run
 
@@ -490,7 +486,7 @@ func (c *cmdProfileEdit) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdProfileEditUsage...)
 	cmd.Short = i18n.G("Edit profile configurations as YAML")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit profile configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus profile edit <profile> < profile.yaml
@@ -620,7 +616,7 @@ func (c *cmdProfileGet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdProfileGetUsage...)
 	cmd.Short = i18n.G("Get values for profile configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for profile configuration keys`))
 
 	cmd.RunE = c.Run
@@ -691,7 +687,7 @@ func (c *cmdProfileList) Command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdProfileListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List profiles
 
 Filters may be of the <key>=<value> form for property based filtering,
@@ -867,8 +863,7 @@ func (c *cmdProfileRemove) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remove", cmdProfileRemoveUsage...)
 	cmd.Short = i18n.G("Remove profiles from instances")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Remove profiles from instances`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove profiles from instances`))
 
 	cmd.RunE = c.Run
 
@@ -950,8 +945,7 @@ func (c *cmdProfileRename) Command() *cobra.Command {
 	cmd.Use = cli.U("rename", cmdProfileRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename profiles")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Rename profiles`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename profiles`))
 
 	cmd.RunE = c.Run
 
@@ -1005,7 +999,7 @@ func (c *cmdProfileSet) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdProfileSetUsage...)
 	cmd.Short = i18n.G("Set profile configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Set profile configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
@@ -1089,8 +1083,7 @@ func (c *cmdProfileShow) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdProfileShowUsage...)
 	cmd.Short = i18n.G("Show profile configurations")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Show profile configurations`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show profile configurations`))
 
 	cmd.RunE = c.Run
 
@@ -1147,8 +1140,7 @@ func (c *cmdProfileUnset) Command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdProfileUnsetUsage...)
 	cmd.Short = i18n.G("Unset profile configuration keys")
-	cmd.Long = cli.FormatSection(i18n.G("Description"), i18n.G(
-		`Unset profile configuration keys`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset profile configuration keys`))
 
 	cmd.RunE = c.Run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a profile property"))
