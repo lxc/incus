@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v6/client"
@@ -111,7 +112,8 @@ func (a alternative) Render() string {
 		elements[i] = atom.Render()
 	}
 
-	return "(" + strings.Join(elements, "|") + ")"
+	faint := color.New(color.Faint)
+	return faint.Sprint("(") + strings.Join(elements, faint.Sprint("|")) + faint.Sprint(")")
 }
 
 // Remote prefixes the atom with a remote.
@@ -489,6 +491,7 @@ func (l list) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[stri
 
 // Render renders the atom's usage string.
 func (l list) Render() string {
+	faint := color.New(color.Faint)
 	switch l.minOccurrences {
 	case 0:
 		// Lists with 0 minimum elements behave like optional lists with at least 1 element.
@@ -498,11 +501,11 @@ func (l list) Render() string {
 		if l.separator == " " {
 			// If the separator is a space, `...` is widely understood as a valid repetition token
 			// (`<foo>...`).
-			return fmt.Sprintf(i18n.G("%s..."), element)
+			return element + faint.Sprint("...")
 		}
 
 		// Else, we are a bit more explicit (e.g., with `,` as the separator, `<foo>[,<foo>...]`).
-		return element + optional{verbatim{fmt.Sprintf(i18n.G("%s..."), l.separator+element)}}.Render()
+		return element + optional{verbatim{l.separator + element + faint.Sprint("...")}}.Render()
 	default:
 		// We recurse when the list has more that 1 minimum elements.
 		return l.atom.Render() + l.separator + list{l.atom, l.minOccurrences - 1, l.separator}.Render()
@@ -554,7 +557,8 @@ func (o optional) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 
 // Render renders the atom's usage string.
 func (o optional) Render() string {
-	return "[" + o.atom.Render() + "]"
+	faint := color.New(color.Faint)
+	return faint.Sprint("[") + o.atom.Render() + faint.Sprint("]")
 }
 
 // Remote prefixes the atom with a remote.
@@ -590,7 +594,7 @@ func (p placeholder) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers m
 
 // Render renders the atom's usage string.
 func (p placeholder) Render() string {
-	return "<" + p.element + ">"
+	return color.GreenString("<" + p.element + ">")
 }
 
 // Remote prefixes the atom with a remote.
