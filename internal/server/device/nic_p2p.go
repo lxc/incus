@@ -24,7 +24,7 @@ func (d *nicP2P) CanHotPlug() bool {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *nicP2P) validateConfig(instConf instance.ConfigReader) error {
+func (d *nicP2P) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
 		return ErrUnsupportedDevType
 	}

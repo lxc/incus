@@ -46,7 +46,7 @@ func (d *usb) isRequired() bool {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *usb) validateConfig(instConf instance.ConfigReader) error {
+func (d *usb) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
 		return ErrUnsupportedDevType
 	}

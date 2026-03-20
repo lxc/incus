@@ -240,7 +240,7 @@ func (d *disk) sourceIsLocalPath(source string) bool {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *disk) validateConfig(instConf instance.ConfigReader) error {
+func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
 		return ErrUnsupportedDevType
 	}
@@ -581,7 +581,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 		var dbVolume *db.StorageVolume
 		var storageProjectName string
 
-		if d.inst != nil && !d.inst.IsSnapshot() && d.config["source"] != "" && d.config["path"] != "/" && (d.isRequired(d.config) || d.isAvailable()) {
+		if !partialValidation && d.inst != nil && !d.inst.IsSnapshot() && d.config["source"] != "" && d.config["path"] != "/" && (d.isRequired(d.config) || d.isAvailable()) {
 			d.pool, err = storagePools.LoadByName(d.state, d.config["pool"])
 			if err != nil {
 				return fmt.Errorf("Failed to get storage pool %q: %w", d.config["pool"], err)
@@ -655,7 +655,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader) error {
 			}
 
 			// Custom volume validation.
-			if d.config["source"] != "" && d.config["path"] != "/" && (d.isRequired(d.config) || d.isAvailable()) {
+			if !partialValidation && d.config["source"] != "" && d.config["path"] != "/" && (d.isRequired(d.config) || d.isAvailable()) {
 				if storageProjectName == "" {
 					// Derive the effective storage project name from the instance config's project.
 					storageProjectName, err = project.StorageVolumeProject(d.state.DB.Cluster, instConf.Project().Name, db.StoragePoolVolumeTypeCustom)
