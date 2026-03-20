@@ -17,7 +17,7 @@ func (c *cmdManpage) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "manpage <target>"
 	cmd.Short = "Generate manpages for all commands"
-	cmd.Long = cli.FormatSection("Description",
+	cmd.Long = cli.FormatSection("Description:",
 		`Generate manpages for all commands`)
 	cmd.Hidden = true
 
