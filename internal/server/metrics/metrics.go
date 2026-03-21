@@ -2,12 +2,24 @@ package metrics
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v6/internal/server/auth"
 )
+
+// ProcsTotal is a gauge according to the OpenMetrics spec as its value can decrease.
+var metricTypeGauges = []MetricType{
+	CPUs,
+	GoGoroutines,
+	GoHeapObjects,
+	ProcsTotal,
+	ProjectLimit,
+	ProjectResourcesTotal,
+	ProjectUsage,
+}
 
 // NewMetricSet returns a new MetricSet.
 func NewMetricSet(labels map[string]string) *MetricSet {
@@ -117,8 +129,7 @@ func (m *MetricSet) String() string {
 
 		metricTypeName := ""
 
-		// ProcsTotal is a gauge according to the OpenMetrics spec as its value can decrease.
-		if metricType == ProcsTotal || metricType == CPUs || metricType == GoGoroutines || metricType == GoHeapObjects {
+		if slices.Contains(metricTypeGauges, metricType) {
 			metricTypeName = "gauge"
 		} else if strings.HasSuffix(MetricNames[metricType], "_total") || strings.HasSuffix(MetricNames[metricType], "_seconds") {
 			metricTypeName = "counter"

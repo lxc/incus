@@ -95,6 +95,23 @@ The following instance metrics are provided:
   - Current time from guest in seconds since epoch
 ```
 
+## Project metrics
+
+The following project metrics are provided:
+
+```{list-table}
+   :header-rows: 1
+
+* - Metric
+  - Description
+* - `incus_project_resources_total{project="<project>",resource="<resource>"}`
+  - Current count of resources in a project
+* - `incus_project_limit{project="<project>",resource="<resource>"}`
+  - Configured limit for a resource in a project (-1 if unlimited)
+* - `incus_project_usage{project="<project>",resource="<resource>"}`
+  - Current usage of a limited resource in a project
+```
+
 ## Internal metrics
 
 The following internal metrics are provided:
