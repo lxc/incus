@@ -3,6 +3,8 @@ package util
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // CachePath returns the directory that Incus should its cache under. If INCUS_DIR is
@@ -20,12 +22,14 @@ func CachePath(path ...string) string {
 }
 
 // LogPath returns the directory that Incus should put logs under. If INCUS_DIR is
-// set, this path is $INCUS_DIR/logs, otherwise it is /var/log/incus.
+// set, this path is $INCUS_DIR/logs, otherwise it is either /var/lib/incus/logs (if it exists) or /var/log/incus.
 func LogPath(path ...string) string {
-	varDir := os.Getenv("INCUS_DIR")
+	// Default log path is /var/log/incus/.
 	logDir := "/var/log/incus"
-	if varDir != "" {
-		logDir = filepath.Join(varDir, "logs")
+
+	// If a folder exists under VarPath or if INCUS_DIR was explicitly set, use that.
+	if util.PathExists(VarPath("logs")) || os.Getenv("INCUS_DIR") != "" {
+		logDir = VarPath("logs")
 	}
 
 	items := []string{logDir}
