@@ -2,7 +2,6 @@ package s3
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"github.com/lxc/incus/v6/internal/instancewriter"
 	"github.com/lxc/incus/v6/internal/server/backup"
 	"github.com/lxc/incus/v6/shared/logger"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
@@ -181,13 +181,16 @@ func (t TransferManager) isSecureEndpoint() bool {
 }
 
 func getTransport() *http.Transport {
+	// Get a basic TLS configuration.
+	tlsConfig := localtls.InitTLSConfig()
+
+	// Skip verification as we're connecting to ourselves on a self-signed certificate.
+	tlsConfig.InsecureSkipVerify = true
+
 	return &http.Transport{
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS12,
-		},
+		TLSClientConfig:    tlsConfig,
 	}
 }
