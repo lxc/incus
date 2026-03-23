@@ -97,6 +97,14 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 	httpTransport.ResponseHeaderTimeout = 30 * time.Second
 	httpClient.Transport = httpTransport
 
+	// Get the image and expand the fingerprint.
+	image, err := r.ssClient.GetImage(fingerprint)
+	if err != nil {
+		return nil, err
+	}
+
+	fingerprint = image.Fingerprint
+
 	// Get the file list
 	files, err := r.ssClient.GetFiles(fingerprint)
 	if err != nil {
@@ -238,6 +246,44 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 			resp.RootfsName = parts[len(parts)-1]
 			resp.RootfsSize = size
 		}
+	}
+
+	// Validate the full image hash.
+	//
+	// Normally we'd do that as we download the image to avoid having to
+	// re-read the data, but because the simplestreams allows retries (HTTP to HTTPS),
+	// we don't have a clean reader that can be used for that.
+	//
+	// Another situation where we couldn't do a streaming hash anyway is when processing delta images.
+	hash256 := sha256.New()
+
+	if resp.MetaSize > 0 && req.MetaFile != nil {
+		_, err = req.MetaFile.Seek(0, io.SeekStart)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err := io.Copy(hash256, req.MetaFile)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if resp.RootfsSize > 0 && req.RootfsFile != nil {
+		_, err = req.RootfsFile.Seek(0, io.SeekStart)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err := io.Copy(hash256, req.RootfsFile)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	hash := fmt.Sprintf("%x", hash256.Sum(nil))
+	if hash != fingerprint {
+		return nil, fmt.Errorf("Image fingerprint doesn't match. Got %s expected %s", hash, fingerprint)
 	}
 
 	return &resp, nil
