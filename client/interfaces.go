@@ -502,10 +502,10 @@ type ImageCreateArgs struct {
 // The ImageFileRequest struct is used for an image download request.
 type ImageFileRequest struct {
 	// Writer for the metadata file
-	MetaFile io.WriteSeeker
+	MetaFile io.ReadWriteSeeker
 
 	// Writer for the rootfs file
-	RootfsFile io.WriteSeeker
+	RootfsFile io.ReadWriteSeeker
 
 	// Progress handler (called whenever some progress is made)
 	ProgressHandler func(progress ioprogress.ProgressData)
