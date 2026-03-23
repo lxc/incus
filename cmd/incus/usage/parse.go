@@ -255,6 +255,9 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 
 		fmt.Println(strings.Repeat(" ", padding) + color.RedString(strings.Repeat("┅", wcWidths[i])))
 	}
+
+	// This makes the output error/status a bit easier to read.
+	fmt.Println()
 }
 
 // Parse parses a usage.
@@ -287,6 +290,8 @@ func (u Usage) Parse(conf *cliconfig.Config, cmd *cobra.Command, args []string, 
 			_, ok := err.(*notEnoughArgumentsError)
 			if ok && nArgs == 0 {
 				_ = cmd.Help()
+				// This makes the output error a bit easier to read.
+				fmt.Println()
 				return nil, err
 			}
 
