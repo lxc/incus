@@ -118,7 +118,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 				Value:    tokens.AccessToken,
 				Path:     "/",
 				Secure:   true,
-				HttpOnly: false,
+				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,
 			}
 
@@ -131,7 +131,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 					Value:    tokens.RefreshToken,
 					Path:     "/",
 					Secure:   true,
-					HttpOnly: false,
+					HttpOnly: true,
 					SameSite: http.SameSiteStrictMode,
 				}
 
@@ -192,7 +192,7 @@ func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "oidc_access",
 		Path:     "/",
 		Secure:   true,
-		HttpOnly: false,
+		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 		Expires:  time.Unix(0, 0),
 	}
@@ -204,7 +204,7 @@ func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "oidc_id",
 		Path:     "/",
 		Secure:   true,
-		HttpOnly: false,
+		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 		Expires:  time.Unix(0, 0),
 	}
@@ -216,7 +216,7 @@ func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "oidc_refresh",
 		Path:     "/",
 		Secure:   true,
-		HttpOnly: false,
+		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 		Expires:  time.Unix(0, 0),
 	}
@@ -240,7 +240,7 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 			Value:    tokens.AccessToken,
 			Path:     "/",
 			Secure:   true,
-			HttpOnly: false,
+			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
 		}
 
@@ -253,7 +253,7 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 				Value:    tokens.RefreshToken,
 				Path:     "/",
 				Secure:   true,
-				HttpOnly: false,
+				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,
 			}
 
@@ -267,7 +267,7 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 				Value:    tokens.IDToken,
 				Path:     "/",
 				Secure:   true,
-				HttpOnly: false,
+				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,
 			}
 
