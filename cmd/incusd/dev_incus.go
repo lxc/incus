@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	"golang.org/x/sys/unix"
@@ -39,9 +40,12 @@ type hoistFunc func(f func(*Daemon, instance.Instance, http.ResponseWriter, *htt
 // /dev/incus Unix socket endpoint created inside containers.
 func devIncusServer(d *Daemon) *http.Server {
 	return &http.Server{
-		Handler:     devIncusAPI(d, hoistReq),
-		ConnState:   pidMapper.ConnStateHandler,
-		ConnContext: request.SaveConnectionInContext,
+		Handler:           devIncusAPI(d, hoistReq),
+		ConnState:         pidMapper.ConnStateHandler,
+		ConnContext:       request.SaveConnectionInContext,
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       3 * time.Second,
 	}
 }
 

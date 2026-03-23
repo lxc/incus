@@ -3,7 +3,6 @@ package backup
 import (
 	"archive/tar"
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -17,6 +16,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/sys"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/archive"
+	localtls "github.com/lxc/incus/v6/shared/tls"
 )
 
 // TarReader rewinds backup file handle r and returns new tar reader and process cleanup function.
@@ -61,14 +61,15 @@ func Upload(reader *io.PipeReader, req *api.BackupTarget) error {
 
 	creds := credentials.NewStaticV4(req.AccessKey, req.SecretKey, "")
 
+	// Get a basic TLS client.
+	tlsConfig := localtls.InitTLSConfig()
+
+	// Setup the transport.
 	ts := &http.Transport{
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS12,
-		},
+		TLSClientConfig:    tlsConfig,
 	}
 
 	client, err := minio.New(uri.Host, &minio.Options{

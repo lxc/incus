@@ -175,9 +175,10 @@ func restServer(d *Daemon) *http.Server {
 	})
 
 	return &http.Server{
-		Handler:     &httpServer{r: router, d: d},
-		ConnContext: request.SaveConnectionInContext,
-		IdleTimeout: 30 * time.Second,
+		Handler:           &httpServer{r: router, d: d},
+		ConnContext:       request.SaveConnectionInContext,
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
 	}
 }
 
@@ -200,7 +201,12 @@ func hoistReqVM(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Re
 }
 
 func vSockServer(d *Daemon) *http.Server {
-	return &http.Server{Handler: devIncusAPI(d, hoistReqVM)}
+	return &http.Server{
+		Handler:           devIncusAPI(d, hoistReqVM),
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       3 * time.Second,
+	}
 }
 
 func metricsServer(d *Daemon) *http.Server {
@@ -227,7 +233,13 @@ func metricsServer(d *Daemon) *http.Server {
 		_ = response.NotFound(nil).Render(w)
 	})
 
-	return &http.Server{Handler: &httpServer{r: router, d: d}}
+	return &http.Server{
+		Handler:           &httpServer{r: router, d: d},
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       3 * time.Second,
+		WriteTimeout:      30 * time.Second,
+	}
 }
 
 func storageBucketsServer(d *Daemon) *http.Server {
@@ -380,7 +392,11 @@ func storageBucketsServer(d *Daemon) *http.Server {
 		rproxy.ServeHTTP(w, r)
 	})
 
-	return &http.Server{Handler: &httpServer{r: router, d: d}}
+	return &http.Server{
+		Handler:           &httpServer{r: router, d: d},
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
 }
 
 type httpServer struct {
