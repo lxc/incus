@@ -842,6 +842,11 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return err
 		}
 
+		err = cleanupDependentDisks(s, inst, op)
+		if err != nil {
+			return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
+		}
+
 		// Clear the pool and project part of the request.
 		req.Pool = ""
 		req.Project = ""
@@ -1062,6 +1067,37 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			if err != nil {
 				return fmt.Errorf("Failed deleting instance on source member: %w", err)
 			}
+		}
+
+		err = cleanupDependentDisks(s, inst, op)
+		if err != nil {
+			return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// cleanupDependentDisks removes dependent volumes from the source after migration if needed.
+func cleanupDependentDisks(s *state.State, inst instance.Instance, op *operations.Operation) error {
+	for _, dev := range inst.ExpandedDevices() {
+		if dev["type"] != "disk" || util.IsFalseOrEmpty(dev["dependent"]) || dev["path"] == "/" || dev["pool"] == "" {
+			continue
+		}
+
+		diskPool, err := storagePools.LoadByName(s, dev["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		// Volumes on remote pools cannot be removed.
+		if diskPool.Driver().Info().Remote {
+			continue
+		}
+
+		err = diskPool.DeleteCustomVolume(inst.Project().Name, dev["source"], op)
+		if err != nil {
+			return err
 		}
 	}
 

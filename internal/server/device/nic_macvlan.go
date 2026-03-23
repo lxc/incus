@@ -36,7 +36,7 @@ func (d *nicMACVLAN) CanMigrate() bool {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader) error {
+func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
 		return ErrUnsupportedDevType
 	}

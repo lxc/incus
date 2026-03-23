@@ -537,7 +537,7 @@ func internalRecoverImportInstance(s *state.State, pool storagePools.Pool, proje
 		return nil, nil, errors.New("Invalid instance type")
 	}
 
-	inst, instOp, cleanup, err := instance.CreateInternal(s, *dbInst, nil, false, true)
+	inst, instOp, cleanup, err := instance.CreateInternal(s, *dbInst, nil, false, true, false)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed creating instance record: %w", err)
 	}
@@ -589,7 +589,7 @@ func internalRecoverImportInstanceSnapshot(s *state.State, pool storagePools.Poo
 		Name:         poolVol.Container.Name + internalInstance.SnapshotDelimiter + snap.Name,
 		Profiles:     profiles,
 		Stateful:     snap.Stateful,
-	}, nil, false, true)
+	}, nil, false, true, false)
 	if err != nil {
 		return nil, fmt.Errorf("Failed creating instance snapshot record %q: %w", snap.Name, err)
 	}

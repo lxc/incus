@@ -22,7 +22,7 @@ type gpuMIG struct {
 const GPUNvidiaDeviceKey = "nvidia.device"
 
 // validateConfig checks the supplied config for correctness.
-func (d *gpuMIG) validateConfig(instConf instance.ConfigReader) error {
+func (d *gpuMIG) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.Container) {
 		return ErrUnsupportedDevType
 	}

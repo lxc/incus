@@ -65,7 +65,7 @@ func (d *nicBridged) CanMigrate() bool {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *nicBridged) validateConfig(instConf instance.ConfigReader) error {
+func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	if !instanceSupported(instConf.Type(), instancetype.Container, instancetype.VM) {
 		return ErrUnsupportedDevType
 	}
@@ -1000,7 +1000,7 @@ func (d *nicBridged) Update(oldDevices deviceConfig.Devices, isRunning bool) err
 		}
 
 		// Validate old config so that it is enriched with network parent config needed for route removal.
-		err = Validate(d.inst, d.state, d.name, oldConfig)
+		err = Validate(d.inst, d.state, d.name, oldConfig, false)
 		if err != nil {
 			return err
 		}

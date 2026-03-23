@@ -896,7 +896,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return err
 	}
 
-	_, instOp, cleanup, err := instance.CreateInternal(s, *instDBArgs, nil, true, true)
+	_, instOp, cleanup, err := instance.CreateInternal(s, *instDBArgs, nil, true, true, false)
 	if err != nil {
 		return fmt.Errorf("Failed creating instance record: %w", err)
 	}
@@ -993,7 +993,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 			Name:         snapInstName,
 			Profiles:     profiles,
 			Stateful:     snap.Stateful,
-		}, nil, true, true)
+		}, nil, true, true, false)
 		if err != nil {
 			return fmt.Errorf("Failed creating instance snapshot record %q: %w", snap.Name, err)
 		}

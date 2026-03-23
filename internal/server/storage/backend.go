@@ -1931,6 +1931,17 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		return err
 	}
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Create dependent volumes if they exist.
+	cleanupDependentVols, err := b.createDependentVolumesFromMigration(inst, conn, args, srcInfo, op)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() { cleanupDependentVols() })
+
 	// Now that we got the source details, validate against the instance limits.
 	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 	if err != nil {
@@ -2007,9 +2018,6 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	if args.Refresh && !volExists {
 		return errors.New("Cannot refresh volume, doesn't exist on migration target storage")
 	}
-
-	reverter := revert.New()
-	defer reverter.Fail()
 
 	isRemoteClusterMove := args.ClusterMoveSourceName != "" && b.driver.Info().Remote
 
@@ -2586,6 +2594,12 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		if resp.Refresh != nil {
 			args.Refresh = *resp.Refresh
 		}
+	}
+
+	// Migrate dependent volumes if they exist.
+	err = b.migrateDependentVolumes(inst, conn, args, op)
+	if err != nil {
+		return err
 	}
 
 	// Detect if source pool driver doesn't support cheap temporary snapshots that allow consistent copy when
@@ -9034,4 +9048,102 @@ func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadS
 	}
 
 	return nil
+}
+
+// migrateDependentVolumes migrates dependent volumes.
+func (b *backend) migrateDependentVolumes(inst instance.Instance, conn io.ReadWriteCloser, args *localMigration.VolumeSourceArgs, op *operations.Operation) error {
+	for _, dependentVol := range args.DependentVolumes {
+		diskPool, err := LoadByName(b.state, dependentVol.Pool)
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if diskPool.Driver().Info().Remote {
+			continue
+		}
+
+		diskConfig, err := diskPool.GenerateCustomVolumeBackupConfig(inst.Project().Name, dependentVol.Name, !args.VolumeOnly, op)
+		if err != nil {
+			return err
+		}
+
+		snapshotNames := []string{}
+		if !args.VolumeOnly {
+			for _, snap := range dependentVol.Snapshots {
+				snapshotNames = append(snapshotNames, *snap.Name)
+			}
+		}
+
+		volumeArgs := &localMigration.VolumeSourceArgs{
+			IndexHeaderVersion: localMigration.IndexHeaderVersion,
+			Name:               dependentVol.Name,
+			MigrationType:      dependentVol.MigrationType,
+			TrackProgress:      true,
+			ContentType:        dependentVol.ContentType,
+			Info:               &localMigration.Info{Config: diskConfig},
+			VolumeOnly:         args.VolumeOnly,
+			Snapshots:          snapshotNames,
+		}
+
+		err = diskPool.MigrateCustomVolume(inst.Project().Name, conn, volumeArgs, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// createDependentVolumesFromMigration creates dependent volumes from a migration.
+func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, conn io.ReadWriteCloser, args localMigration.VolumeTargetArgs, info *localMigration.Info, op *operations.Operation) (func(), error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	createdVolumes := []localMigration.DependentVolumeArgs{}
+	cleanup := func() {
+		for _, vol := range createdVolumes {
+			diskPool, err := LoadByName(b.state, vol.Pool)
+			if err != nil {
+				continue
+			}
+
+			_ = diskPool.DeleteCustomVolume(inst.Project().Name, vol.Name, nil)
+		}
+	}
+
+	reverter.Add(func() { cleanup() })
+
+	for idx, dependentVol := range args.DependentVolumes {
+		diskPool, err := LoadByName(b.state, dependentVol.Pool)
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if diskPool.Driver().Info().Remote {
+			continue
+		}
+
+		b.logger.Debug("createDependentVolumesFromMigration", logger.Ctx{"name": dependentVol.Name, "type": dependentVol.MigrationType, "size": dependentVol.VolumeSize})
+		volumeArgs := localMigration.VolumeTargetArgs{
+			IndexHeaderVersion: localMigration.IndexHeaderVersion,
+			Name:               dependentVol.Name,
+			MigrationType:      dependentVol.MigrationType,
+			TrackProgress:      true,
+			ContentType:        dependentVol.ContentType,
+			VolumeOnly:         args.VolumeOnly,
+			Config:             info.Config.DependentVolumes[idx].Volume.Config,
+			Snapshots:          dependentVol.Snapshots,
+			VolumeSize:         dependentVol.VolumeSize,
+		}
+
+		err = diskPool.CreateCustomVolumeFromMigration(inst.Project().Name, conn, volumeArgs, op)
+		if err != nil {
+			return nil, err
+		}
+
+		createdVolumes = append(createdVolumes, dependentVol)
+	}
+
+	reverter.Success()
+	return cleanup, nil
 }

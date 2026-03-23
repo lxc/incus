@@ -79,7 +79,7 @@ type device interface {
 	init(instance.Instance, *state.State, string, deviceConfig.Device, VolatileGetter, VolatileSetter) error
 
 	// validateConfig checks Config stored by init() is valid for the instance type.
-	validateConfig(instance.ConfigReader) error
+	validateConfig(instance.ConfigReader, bool) error
 }
 
 // NICState provides the ability to access NIC state.

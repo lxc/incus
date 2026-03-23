@@ -20,7 +20,7 @@ type infinibandPhysical struct {
 }
 
 // validateConfig checks the supplied config for correctness.
-func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader) error {
+func (d *infinibandPhysical) validateConfig(instConf instance.ConfigReader, partialValidation bool) error {
 	requiredFields := []string{
 		// gendoc:generate(entity=devices, group=infiniband, key=parent)
 		//
