@@ -4555,8 +4555,8 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 	defer func() { _ = rootfsFile.Close() }()
 
 	getReq := incus.ImageFileRequest{
-		MetaFile:   io.WriteSeeker(metaFile),
-		RootfsFile: io.WriteSeeker(rootfsFile),
+		MetaFile:   io.ReadWriteSeeker(metaFile),
+		RootfsFile: io.ReadWriteSeeker(rootfsFile),
 	}
 
 	getResp, err := client.GetImageFile(fingerprint, getReq)

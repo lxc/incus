@@ -406,8 +406,8 @@ func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Download the image
 		var resp *incus.ImageFileResponse
 		request := incus.ImageFileRequest{
-			MetaFile:        io.WriteSeeker(dest),
-			RootfsFile:      io.WriteSeeker(destRootfs),
+			MetaFile:        io.ReadWriteSeeker(dest),
+			RootfsFile:      io.ReadWriteSeeker(destRootfs),
 			ProgressHandler: progress,
 			Canceler:        canceler,
 			DeltaSourceRetriever: func(fingerprint string, file string) string {
