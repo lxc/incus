@@ -39,6 +39,9 @@ test_tls_restrictions() {
 
     ! incus_remote project create localhost:blah1 || false
 
+    # Confirm inability to change certificate type
+    ! incus query "/1.0/certificates/${FINGERPRINT}" -X PATCH -d '{"type": "server"}' || false
+
     # Cleanup
     incus config trust show "${FINGERPRINT}" | sed -e "s/restricted: true/restricted: false/" | incus config trust edit "${FINGERPRINT}"
     incus project delete blah
