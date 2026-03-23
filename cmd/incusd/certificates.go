@@ -984,6 +984,11 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 	s := d.State()
 
 	if clientType == clusterRequest.ClientTypeNormal {
+		// Prevent any type change.
+		if dbInfo.Type != req.Type {
+			return response.BadRequest(errors.New("The certificate type cannot be changed"))
+		}
+
 		reqDBType, err := certificate.FromAPIType(req.Type)
 		if err != nil {
 			return response.BadRequest(err)
