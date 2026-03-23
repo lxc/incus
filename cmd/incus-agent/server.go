@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/server/response"
@@ -27,7 +28,12 @@ func restServer(tlsConfig *tls.Config, cert *x509.Certificate, debug bool, d *Da
 		createCmd(router, "1.0", c, cert, debug, d)
 	}
 
-	return &http.Server{Handler: router, TLSConfig: tlsConfig}
+	return &http.Server{
+		Handler:           router,
+		TLSConfig:         tlsConfig,
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+	}
 }
 
 func createCmd(restAPI *http.ServeMux, version string, c APIEndpoint, cert *x509.Certificate, debug bool, d *Daemon) {

@@ -22,7 +22,10 @@ import (
 // /dev/incus Unix socket endpoint created inside VMs.
 func devIncusServer(d *Daemon) *http.Server {
 	return &http.Server{
-		Handler: devIncusAPI(d),
+		Handler:           devIncusAPI(d),
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       3 * time.Second,
 	}
 }
 
