@@ -51,7 +51,7 @@ func (a *notEnoughArgumentsError) Error() string {
 		return i18n.G("unexpected end of argument; did you forget a suffix?")
 	}
 
-	return fmt.Sprintf(i18n.G("not enough arguments; expected a value for %s"), quote(a.atom.Render()))
+	return fmt.Sprintf(i18n.G("not enough arguments; expected a value for %s"), quote(renderRaw(a.atom)))
 }
 
 type tooManyArgumentsError struct {
@@ -173,7 +173,7 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 
 	for i, atom := range u {
 		renderedAtoms[i] = atom.Render()
-		wcWidths[i] = atomWidth(atom)
+		wcWidths[i] = runewidth.StringWidth(renderRaw(atom))
 	}
 
 	commandPath := cmd.CommandPath()
@@ -255,6 +255,9 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 
 		fmt.Println(strings.Repeat(" ", padding) + color.RedString(strings.Repeat("┅", wcWidths[i])))
 	}
+
+	// This makes the output error/status a bit easier to read.
+	fmt.Println()
 }
 
 // Parse parses a usage.
@@ -287,6 +290,8 @@ func (u Usage) Parse(conf *cliconfig.Config, cmd *cobra.Command, args []string, 
 			_, ok := err.(*notEnoughArgumentsError)
 			if ok && nArgs == 0 {
 				_ = cmd.Help()
+				// This makes the output error a bit easier to read.
+				fmt.Println()
 				return nil, err
 			}
 
