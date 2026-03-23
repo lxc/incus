@@ -40,6 +40,9 @@ type DefaultSettings struct {
 
 	// Alternative SPICE command (SOCKET will be replaced by the socket path).
 	ConsoleSpiceCommand string `yaml:"console_spice_command"`
+
+	// NoColor disables colors in the client.
+	NoColor bool `yaml:"no_color"`
 }
 
 // DefaultConfig returns the default configuration.
