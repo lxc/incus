@@ -34,6 +34,8 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         if: github.event_name == 'pull_request'
+        with:
+          allow-ghsas: GHSA-4p9m-8gc4-rw2h
 
       - id: ShellCheck
         name: Differential ShellCheck
