@@ -644,6 +644,7 @@ func IsCompressionAlgorithm(value string) error {
 	if !slices.Contains([]string{
 		"bzip2",
 		"gzip",
+		"lz4",
 		"lzma",
 		"pigz",
 		"pzstd",
