@@ -3,10 +3,13 @@ package util
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/flosch/pongo2/v6"
 )
+
+var bannedTemplateTags = []string{"extends", "import", "include", "ssi"}
 
 // RenderTemplate renders a pongo2 template with nesting support.
 // This supports up to 3 levels of nesting (to avoid loops).
@@ -15,7 +18,7 @@ func RenderTemplate(template string, ctx pongo2.Context) (string, error) {
 	custom := pongo2.NewSet("render-template", pongo2.DefaultLoader)
 
 	// Block the use of some tags.
-	for _, tag := range []string{"extends", "import", "include", "ssi"} {
+	for _, tag := range bannedTemplateTags {
 		err := custom.BanTag(tag)
 		if err != nil {
 			return "", fmt.Errorf("Failed to configure custom pongo2 parser: Failed to block tag tag %q: %w", tag, err)
@@ -46,4 +49,33 @@ func RenderTemplate(template string, ctx pongo2.Context) (string, error) {
 	}
 
 	return "", errors.New("Maximum template recursion limit reached")
+}
+
+// RenderTemplateFile renders a pongo2 template to a file.
+// No nesting is supported in this scenario.
+func RenderTemplateFile(w io.Writer, template string, ctx pongo2.Context) error {
+	// Prepare a custom set.
+	custom := pongo2.NewSet("render-template", pongo2.DefaultLoader)
+
+	// Block the use of some tags.
+	for _, tag := range bannedTemplateTags {
+		err := custom.BanTag(tag)
+		if err != nil {
+			return fmt.Errorf("Failed to configure custom pongo2 parser: Failed to block tag tag %q: %w", tag, err)
+		}
+	}
+
+	// Load template from string
+	tpl, err := custom.FromString("{% autoescape off %}" + template + "{% endautoescape %}")
+	if err != nil {
+		return err
+	}
+
+	// Get rendered template
+	err = tpl.ExecuteWriter(ctx, w)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
