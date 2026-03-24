@@ -312,7 +312,7 @@ func (m *OVAMigration) unpackOVA(outPath string) error {
 			return err
 		}
 
-		outFile, err := outPathRoot.Create(filepath.Join(outPath, header.Name))
+		outFile, err := outPathRoot.Create(header.Name)
 		if err != nil {
 			return fmt.Errorf("Error creating file: %v", err)
 		}
