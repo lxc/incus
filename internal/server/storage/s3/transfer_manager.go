@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -130,13 +131,12 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 			break // End of archive.
 		}
 
-		// Skip index.yaml file
-		if hdr.Name == "backup/index.yaml" {
+		// Skip anything that's not in the bucket itself.
+		if !strings.HasPrefix(hdr.Name, "backup/bucket/") {
 			continue
 		}
 
-		// Skip directories because they are part of the key of an actual file
-		fileName := hdr.Name[len("backup/bucket/"):]
+		fileName := strings.TrimPrefix(hdr.Name, "backup/bucket/")
 
 		_, err = minioClient.PutObject(ctx, bucketName, fileName, tr, -1, minio.PutObjectOptions{})
 		if err != nil {
