@@ -27,7 +27,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/checkpoint-restore/go-criu/v6/crit"
+	"github.com/checkpoint-restore/go-criu/v8/crit"
 	"github.com/flosch/pongo2/v6"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
