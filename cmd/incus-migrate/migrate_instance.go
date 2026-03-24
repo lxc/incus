@@ -124,7 +124,7 @@ func (m *InstanceMigration) gatherInfo() error {
 	}
 
 	// Provide source path
-	err = m.askSourcePath(question)
+	m.sourcePath, err = m.askPath(question)
 	if err != nil {
 		return err
 	}

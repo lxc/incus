@@ -128,7 +128,7 @@ func (m *VolumeMigration) gatherInfo() error {
 		break
 	}
 
-	err = m.askSourcePath("Please provide the path to a disk or filesystem: ")
+	m.sourcePath, err = m.askPath("Please provide the path to a disk or filesystem: ")
 	if err != nil {
 		return err
 	}

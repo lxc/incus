@@ -214,18 +214,13 @@ func (m *Migration) askTarget() error {
 	return nil
 }
 
-func (m *Migration) askSourcePath(question string) error {
-	var err error
-
-	var isURL bool
-	m.sourcePath, err = m.asker.AskString(question, "", func(s string) error {
+func (m *Migration) askPath(question string) (string, error) {
+	isURL := false
+	path, err := m.asker.AskString(question, "", func(s string) error {
 		// Allow URLs.
-		isURL = false
-
 		u, err := url.Parse(s)
 		if err == nil && u.Scheme != "" && u.Host != "" {
 			isURL = true
-
 			return nil
 		}
 
@@ -242,7 +237,7 @@ func (m *Migration) askSourcePath(question string) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// If a URL, download it.
@@ -250,20 +245,20 @@ func (m *Migration) askSourcePath(question string) error {
 		// Create a temporary file.
 		f, err := os.CreateTemp("", "")
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		defer func() { _ = f.Close() }()
 
 		// Download the target.
-		resp, err := http.Get(m.sourcePath)
+		resp, err := http.Get(path)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		defer resp.Body.Close()
 
-		fmt.Printf("Downloading %q\n", m.sourcePath)
+		fmt.Printf("Downloading %q\n", path)
 
 		for {
 			// Read 4MB at a time.
@@ -275,14 +270,14 @@ func (m *Migration) askSourcePath(question string) error {
 
 				_ = os.Remove(f.Name())
 
-				return err
+				return "", err
 			}
 		}
 
-		m.sourcePath = f.Name()
+		path = f.Name()
 	}
 
-	return nil
+	return path, nil
 }
 
 func (m *Migration) askProject(question string) error {
