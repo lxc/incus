@@ -196,32 +196,35 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 	if parsedCount > 0 {
 		underlinedAtoms := make([]string, parsedCount)
 		underlinedAtomMids := make([]int, parsedCount)
-		i := 0
-		for i < parsedCount {
-			str, middle := underline(wcWidths[i], &cursor)
+		offset := 0
+		if parseRTL {
+			offset = nAtoms - parsedCount
+		}
+
+		for i := range parsedCount {
+			str, middle := underline(wcWidths[offset+i], &cursor)
 			underlinedAtoms[i] = str
 			underlinedAtomMids[i] = middle
-			i++
 		}
 
 		if parseRTL {
-			if i < nAtoms {
-				underlinedAtoms = append([]string{color.RedString(strings.Repeat("┅", wcWidths[nAtoms-i-1]))}, underlinedAtoms...)
+			if parsedCount < nAtoms {
+				underlinedAtoms = append([]string{color.RedString(strings.Repeat("┅", wcWidths[offset-1]))}, underlinedAtoms...)
 			}
 
 			// In RTL mode, we need to properly pad the strings so that the diagnosis is right-aligned.
-			for i := range nAtoms - i - 1 {
+			for i := range offset - 1 {
 				padding = padding + wcWidths[i] + 1
 			}
 		} else {
-			if i < nAtoms {
-				underlinedAtoms = append(underlinedAtoms, color.RedString(strings.Repeat("┅", wcWidths[i])))
+			if parsedCount < nAtoms {
+				underlinedAtoms = append(underlinedAtoms, color.RedString(strings.Repeat("┅", wcWidths[parsedCount])))
 			}
 		}
 
 		fmt.Println(strings.Repeat(" ", padding) + strings.Join(underlinedAtoms, " "))
 
-		for i = range parsedCount {
+		for i := range parsedCount {
 			fmt.Print(strings.Repeat(" ", parsedCount+1-i) + "┌" + strings.Repeat("│", i) + strings.Repeat("─", usagePrefixLen+underlinedAtomMids[i]-parsedCount-1) + "┘")
 
 			j := i + 1
