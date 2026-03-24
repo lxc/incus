@@ -14,7 +14,7 @@ func NewSlogHandler(prefix string, target func(msg string, ctx ...Ctx)) slog.Han
 type slogHandler struct {
 	prefix string
 	target func(msg string, ctx ...Ctx)
-	attrs []slog.Attr
+	attrs  []slog.Attr
 }
 
 // Enabled checks whether a given log level is supported.
@@ -34,7 +34,7 @@ func (s *slogHandler) Handle(ctx context.Context, rec slog.Record) error {
 		logCtx[attr.Key] = attr.Value
 	}
 
-	s.target(s.prefix + " " + rec.Message, logCtx)
+	s.target(s.prefix+" "+rec.Message, logCtx)
 
 	return nil
 }
