@@ -98,6 +98,7 @@ func (c *cmdWebui) Run(cmd *cobra.Command, args []string) error {
 		transactions: &transactions,
 
 		token: token,
+		url:   "http://" + server.Addr().String(),
 	}
 
 	// Print address.
