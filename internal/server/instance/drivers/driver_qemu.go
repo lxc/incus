@@ -75,7 +75,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
-	pongoTemplate "github.com/lxc/incus/v6/internal/server/template"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	localvsock "github.com/lxc/incus/v6/internal/server/vsock"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
@@ -3500,13 +3499,6 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 				return fmt.Errorf("Failed to read template file: %w", err)
 			}
 
-			// Restrict filesystem access to within the instance's rootfs.
-			tplSet := pongo2.NewSet(fmt.Sprintf("%s-%s", d.name, tpl.Template), pongoTemplate.ChrootLoader{Path: d.TemplatesPath()})
-			tplRender, err := tplSet.FromString("{% autoescape off %}" + string(tplString) + "{% endautoescape %}")
-			if err != nil {
-				return fmt.Errorf("Failed to render template: %w", err)
-			}
-
 			configGet := func(confKey, confDefault *pongo2.Value) *pongo2.Value {
 				val, ok := d.expandedConfig[confKey.String()]
 				if !ok {
@@ -3517,18 +3509,18 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 			}
 
 			// Render the template.
-			err = tplRender.ExecuteWriter(pongo2.Context{
+			err = internalUtil.RenderTemplateFile(w, string(tplString), pongo2.Context{
 				"trigger":    trigger,
 				"path":       tplPath,
-				"instance":   instanceMeta,
 				"container":  instanceMeta, // FIXME: remove once most images have moved away.
+				"instance":   instanceMeta,
 				"config":     d.expandedConfig,
 				"devices":    d.expandedDevices,
 				"properties": tpl.Properties,
 				"config_get": configGet,
-			}, w)
+			})
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed to render template: %w", err)
 			}
 
 			return w.Close()
