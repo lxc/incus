@@ -999,3 +999,20 @@ func RoundAbove(above, val int64) int64 {
 
 	return rounded
 }
+
+// ValidateDependentConfigKey validates an enabled dependent configuration key.
+func ValidateDependentConfigKey(cfg map[string]string) error {
+	if util.IsTrue(cfg["security.shared"]) {
+		return fmt.Errorf("dependent and security.shared are mutually exclusive")
+	}
+
+	for k := range cfg {
+		if !strings.HasPrefix(k, "snapshots.") {
+			continue
+		}
+
+		return fmt.Errorf("Dependent disk may not have a %q config", k)
+	}
+
+	return nil
+}
