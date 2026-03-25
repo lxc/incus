@@ -378,3 +378,13 @@ func hashValue(value string, maxLength int) string {
 
 	return value
 }
+
+// migrationSnapshotName returns a snapshot name derived from the disk name.
+func migrationSnapshotName(diskName string) string {
+	return fmt.Sprintf("%s_snap", diskName)
+}
+
+// migrationNBDTarget returns a name for a disk exposed via the NBD server.
+func migrationNBDTarget(diskName string) string {
+	return fmt.Sprintf("%s_nbd", diskName)
+}
