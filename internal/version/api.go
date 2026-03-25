@@ -531,6 +531,7 @@ var APIExtensions = []string{
 	"network_io_bus_ovn",
 	"dependent",
 	"metrics_project_resources",
+	"snapshot_description",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
