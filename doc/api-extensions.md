@@ -3050,3 +3050,18 @@ Exporting and importing an instance also includes dependent volumes.
 ## `metrics_project_resources`
 
 This adds project-level metrics to the `/1.0/metrics` endpoint including resource counts, configured limits, and current usage per project.
+
+## `storage_volume_nbd`
+
+This adds a few new APIs for storage volumes and instances:
+
+* `POST /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/nbd`
+* `GET /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps`
+* `POST /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps`
+* `GET /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps/NAME`
+* `DELETE /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps/NAME`
+* `POST /1.0/instances/NAME/bitmaps`
+
+This introduces the ability to get a raw `NBD` connection to an Incus block storage volume.
+It also allows interacting with dirty bitmaps on those volumes which can then be used as the basis for incremental backups.
+The instance level endpoint allows for consistent bitmap creation across the VM and its dependent volumes.
