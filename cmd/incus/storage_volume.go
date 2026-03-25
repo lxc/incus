@@ -2708,7 +2708,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 				}
 			}
 
-			err := sftpRecursivePullFile(sftpConn, fPath, target, c.global.flagQuiet)
+			err := sftpRecursivePullFile(sftpConn, srcInfo, fPath, target, c.global.flagQuiet, true, true)
 			if err != nil {
 				return err
 			}

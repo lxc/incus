@@ -129,12 +129,7 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 	return nil
 }
 
-func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, quiet bool) error {
-	fInfo, err := sftpConn.Lstat(p)
-	if err != nil {
-		return err
-	}
-
+func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, p string, targetDir string, quiet bool, dereference bool, createRoot bool) error {
 	var fileType string
 	if fInfo.IsDir() {
 		fileType = "directory"
@@ -144,7 +139,11 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, qu
 		fileType = "file"
 	}
 
-	target := filepath.Join(targetDir, filepath.Base(p))
+	target := targetDir
+	if createRoot || fileType != "directory" {
+		target = filepath.Join(targetDir, filepath.Base(p))
+	}
+
 	logger.Infof("Pulling %s from %s (%s)", target, p, fileType)
 
 	if fileType == "directory" {
@@ -160,8 +159,17 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, qu
 
 		for _, ent := range entries {
 			nextP := filepath.Join(p, ent.Name())
+			stat := sftpConn.Lstat
+			if dereference {
+				stat = sftpConn.Stat
+			}
 
-			err := sftpRecursivePullFile(sftpConn, nextP, target, quiet)
+			nextInfo, err := stat(nextP)
+			if err != nil {
+				return err
+			}
+
+			err = sftpRecursivePullFile(sftpConn, nextInfo, nextP, target, quiet, dereference, true)
 			if err != nil {
 				return err
 			}

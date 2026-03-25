@@ -42,8 +42,7 @@ type cmdFile struct {
 	flagGID  int
 	flagMode string
 
-	flagMkdir     bool
-	flagRecursive bool
+	flagMkdir bool
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -66,7 +65,7 @@ func (c *cmdFile) Command() *cobra.Command {
 	cmd.AddCommand(fileMountCmd.Command())
 
 	// Pull
-	filePullCmd := cmdFilePull{global: c.global, file: c}
+	filePullCmd := cmdFilePull{global: c.global, file: c, puller: &pullable{}}
 	cmd.AddCommand(filePullCmd.Command())
 
 	// Push
@@ -432,6 +431,7 @@ func (c *cmdFileEdit) Run(cmd *cobra.Command, args []string) error {
 type cmdFilePull struct {
 	global *cmdGlobal
 	file   *cmdFile
+	puller *pullable
 
 	edit bool
 }
@@ -452,7 +452,10 @@ incus file pull foo/etc/hosts -
    To pull /etc/hosts from the instance and write its output to standard output.`))
 
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
-	cmd.Flags().BoolVarP(&c.file.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.puller.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.puller.flagNoDereference, "no-dereference", "P", false, i18n.G("Never follow symbolic links in source path")+"``")
+	cmd.Flags().BoolVarP(&c.puller.flagFollow, "follow", "H", false, i18n.G("Follow command-line symbolic links in source path")+"``")
+	cmd.Flags().BoolVarP(&c.puller.flagDereference, "dereference", "L", false, i18n.G("Always follow symbolic links in source path")+"``")
 
 	cmd.RunE = c.Run
 
@@ -470,7 +473,6 @@ incus file pull foo/etc/hosts -
 // pull runs the post-parsing command logic.
 func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
 	target, targetIsDir := normalizePath(targetFile)
-	targetIsLink := false
 	targetExists := true
 
 	targetInfo, err := os.Stat(target)
@@ -480,6 +482,11 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
 		}
 
 		targetExists = false
+	}
+
+	err = c.puller.preCheck(target)
+	if err != nil {
+		return err
 	}
 
 	/*
@@ -523,7 +530,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
 		err := func() error {
 			d := p.RemoteServer
 			instanceName := p.RemoteObject.List[0].String
-			path, _ := normalizePath(p.RemoteObject.List[1].String)
+			path := p.RemoteObject.List[1].String
 			instanceID := p.RemoteName + ":" + instanceName
 
 			sftpConn, ok := sftpClients[instanceID]
@@ -536,32 +543,14 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
 				sftpClients[instanceID] = sftpConn
 			}
 
-			src, err := sftpConn.Open(path)
+			srcInfo, path, err := c.puller.statFile(sftpConn, path)
 			if err != nil {
 				return err
 			}
 
-			srcInfo, err := sftpConn.Lstat(path)
-			if err != nil {
-				return err
-			}
-
-			// Deal with recursion.
+			// Recursively copy directories.
 			if srcInfo.IsDir() {
-				if c.file.flagRecursive {
-					if !util.PathExists(target) {
-						err := os.MkdirAll(target, DirMode)
-						if err != nil {
-							return err
-						}
-
-						targetIsDir = true
-					}
-
-					return sftpRecursivePullFile(sftpConn, path, target, c.global.flagQuiet)
-				}
-
-				return errors.New(i18n.G("Can't pull a directory without --recursive"))
+				return sftpRecursivePullFile(sftpConn, srcInfo, path, target, c.global.flagQuiet, c.puller.flagDereference, len(parsedFiles) > 1 || util.PathExists(target))
 			}
 
 			// Determine the target path.
@@ -572,12 +561,8 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
 				targetPath = target
 			}
 
-			// Unless we're writing to stdout, symlinks get re-created as symlinks.
-			if srcInfo.Mode()&os.ModeSymlink == os.ModeSymlink && targetPath != "-" {
-				targetIsLink = true
-			}
-
 			// Prepare target.
+			targetIsLink := srcInfo.Mode()&os.ModeSymlink != 0
 			var f *os.File
 			var linkName string
 
@@ -631,6 +616,13 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
 					return err
 				}
 			} else {
+				src, err := sftpConn.Open(path)
+				if err != nil {
+					return err
+				}
+
+				defer func() { _ = src.Close() }()
+
 				for {
 					// Read 1MB at a time.
 					_, err = io.CopyN(writer, src, 1024*1024)
@@ -679,6 +671,8 @@ type cmdFilePush struct {
 
 	edit         bool
 	noModeChange bool
+
+	flagRecursive bool
 }
 
 var cmdFilePushUsage = u.Usage{u.Path.List(1), u.MakePath(u.Instance, u.Target(u.Path)).Remote()}
@@ -696,7 +690,7 @@ func (c *cmdFilePush) Command() *cobra.Command {
 echo "Hello world" | incus file push - foo/root/test
    To read "Hello world" from standard input and write it into /root/test in instance "foo".`))
 
-	cmd.Flags().BoolVarP(&c.file.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
 	cmd.Flags().IntVar(&c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push (in recursive mode, only sets the target directory's UID if it doesn't exist and -p is used)")+"``")
 	cmd.Flags().IntVar(&c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push (in recursive mode, only sets the target directory's GID if it doesn't exist and -p is used)")+"``")
@@ -736,7 +730,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 	gid := max(c.file.flagGID, 0)
 
 	// Recursive calls
-	if c.file.flagRecursive {
+	if c.flagRecursive {
 		// Recursive mode doesn’t support override the directory mode bits.
 		if c.file.flagMode != "" {
 			return errors.New(i18n.G("Can't override the target mode when performing a recursive transfer"))
