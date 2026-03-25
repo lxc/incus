@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"maps"
 	"net"
 	"strconv"
 	"sync"
 
 	"github.com/google/uuid"
-	bgpAPI "github.com/osrg/gobgp/v3/api"
-	bgpPacket "github.com/osrg/gobgp/v3/pkg/packet/bgp"
-	bgpServer "github.com/osrg/gobgp/v3/pkg/server"
-	"google.golang.org/protobuf/types/known/anypb"
+	bgpAPI "github.com/osrg/gobgp/v4/api"
+	bgpAPIutil "github.com/osrg/gobgp/v4/pkg/apiutil"
+	bgpPacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
+	bgpServer "github.com/osrg/gobgp/v4/pkg/server"
 
 	"github.com/lxc/incus/v6/internal/ports"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -74,8 +75,13 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 		return errors.New("BGP listener is already running")
 	}
 
+	// Setup the logger.
+	logHandler := logger.NewSlogHandler("bgp:", logger.Warn)
+	logLevel := &slog.LevelVar{}
+	logLevel.Set(slog.LevelWarn)
+
 	// Spawn the BGP goroutines.
-	s.bgp = bgpServer.NewBgpServer(bgpServer.LoggerOption(&logWrapper{logger.Log}))
+	s.bgp = bgpServer.NewBgpServer(bgpServer.LoggerOption(slog.New(logHandler), logLevel))
 	go s.bgp.Serve()
 
 	// Get the address and port.
@@ -249,36 +255,70 @@ func (s *Server) addPrefix(subnet net.IPNet, nexthop net.IP, owner string) error
 	prefixLen, _ := subnet.Mask.Size()
 	prefix := subnet.IP.String()
 
-	nlri, _ := anypb.New(&bgpAPI.IPAddressPrefix{
+	nlri := &bgpAPI.NLRI{Nlri: &bgpAPI.NLRI_Prefix{Prefix: &bgpAPI.IPAddressPrefix{
 		Prefix:    prefix,
 		PrefixLen: uint32(prefixLen),
-	})
+	}}}
 
-	aOrigin, _ := anypb.New(&bgpAPI.OriginAttribute{
+	aOrigin := &bgpAPI.Attribute_Origin{Origin: &bgpAPI.OriginAttribute{
 		Origin: 0,
-	})
+	}}
 
 	// Add the prefix to the server.
 	var pathUUID string
 	if s.bgp != nil {
 		if subnet.IP.To4() != nil {
 			// IPv4 prefix.
-			aNextHop, _ := anypb.New(&bgpAPI.NextHopAttribute{
-				NextHop: nexthop.String(),
-			})
+			family := &bgpAPI.Family{
+				Afi:  bgpAPI.Family_AFI_IP,
+				Safi: bgpAPI.Family_SAFI_UNICAST,
+			}
 
-			resp, err := s.bgp.AddPath(context.Background(), &bgpAPI.AddPathRequest{
-				Path: &bgpAPI.Path{
-					Family: &bgpAPI.Family{Afi: bgpAPI.Family_AFI_IP, Safi: bgpAPI.Family_SAFI_UNICAST},
-					Nlri:   nlri,
-					Pattrs: []*anypb.Any{aOrigin, aNextHop},
+			aNextHop := &bgpAPI.Attribute_NextHop{NextHop: &bgpAPI.NextHopAttribute{
+				NextHop: nexthop.String(),
+			}}
+
+			path := &bgpAPI.Path{
+				Family: family,
+				Nlri:   nlri,
+				Pattrs: []*bgpAPI.Attribute{
+					{
+						Attr: aOrigin,
+					},
+					{
+						Attr: aNextHop,
+					},
 				},
+			}
+
+			utilNlri, err := bgpAPIutil.GetNativeNlri(path)
+			if err != nil {
+				return err
+			}
+
+			utilAttrs, err := bgpAPIutil.GetNativePathAttributes(path)
+			if err != nil {
+				return err
+			}
+
+			utilPath := &bgpAPIutil.Path{
+				Family: bgpPacket.NewFamily(bgpPacket.AFI_IP, bgpPacket.SAFI_UNICAST),
+				Nlri:   utilNlri,
+				Attrs:  utilAttrs,
+			}
+
+			resp, err := s.bgp.AddPath(bgpAPIutil.AddPathRequest{
+				Paths: []*bgpAPIutil.Path{utilPath},
 			})
 			if err != nil {
 				return err
 			}
 
-			pathUUID = string(resp.Uuid)
+			if len(resp) != 1 {
+				return errors.New("Expected single response from AddPath")
+			}
+
+			pathUUID = string(resp[0].UUID.String())
 		} else {
 			// IPv6 prefix.
 			family := &bgpAPI.Family{
@@ -286,24 +326,53 @@ func (s *Server) addPrefix(subnet net.IPNet, nexthop net.IP, owner string) error
 				Safi: bgpAPI.Family_SAFI_UNICAST,
 			}
 
-			v6Attrs, _ := anypb.New(&bgpAPI.MpReachNLRIAttribute{
+			v6Attrs := &bgpAPI.Attribute_MpReach{MpReach: &bgpAPI.MpReachNLRIAttribute{
 				Family:   family,
 				NextHops: []string{nexthop.String()},
-				Nlris:    []*anypb.Any{nlri},
-			})
+				Nlris:    []*bgpAPI.NLRI{nlri},
+			}}
 
-			resp, err := s.bgp.AddPath(context.Background(), &bgpAPI.AddPathRequest{
-				Path: &bgpAPI.Path{
-					Family: family,
-					Nlri:   nlri,
-					Pattrs: []*anypb.Any{aOrigin, v6Attrs},
+			path := &bgpAPI.Path{
+				Family: family,
+				Nlri:   nlri,
+				Pattrs: []*bgpAPI.Attribute{
+					{
+						Attr: aOrigin,
+					},
+					{
+						Attr: v6Attrs,
+					},
 				},
+			}
+
+			utilNlri, err := bgpAPIutil.GetNativeNlri(path)
+			if err != nil {
+				return err
+			}
+
+			utilAttrs, err := bgpAPIutil.GetNativePathAttributes(path)
+			if err != nil {
+				return err
+			}
+
+			utilPath := &bgpAPIutil.Path{
+				Family: bgpPacket.NewFamily(bgpPacket.AFI_IP6, bgpPacket.SAFI_UNICAST),
+				Nlri:   utilNlri,
+				Attrs:  utilAttrs,
+			}
+
+			resp, err := s.bgp.AddPath(bgpAPIutil.AddPathRequest{
+				Paths: []*bgpAPIutil.Path{utilPath},
 			})
 			if err != nil {
 				return err
 			}
 
-			pathUUID = string(resp.Uuid)
+			if len(resp) != 1 {
+				return errors.New("Expected single response from AddPath")
+			}
+
+			pathUUID = string(resp[0].UUID.String())
 		}
 	} else {
 		// Generate a dummy UUID.
@@ -378,7 +447,12 @@ func (s *Server) removePrefix(subnet net.IPNet, nexthop net.IP) error {
 func (s *Server) removePrefixByUUID(pathUUID string) error {
 	// Remove it from the BGP server.
 	if s.bgp != nil {
-		err := s.bgp.DeletePath(context.Background(), &bgpAPI.DeletePathRequest{Uuid: []byte(pathUUID)})
+		nativeUUID, err := uuid.Parse(pathUUID)
+		if err != nil {
+			return err
+		}
+
+		err = s.bgp.DeletePath(bgpAPIutil.DeletePathRequest{UUIDs: []uuid.UUID{nativeUUID}})
 		if err != nil && err.Error() != "can't find a specified path" {
 			return err
 		}
@@ -451,12 +525,13 @@ func (s *Server) addPeer(address net.IP, asn uint32, password string, holdTime u
 	// Setup peer for dual-stack.
 	n.AfiSafis = make([]*bgpAPI.AfiSafi, 0)
 	for _, f := range []string{"ipv4-unicast", "ipv6-unicast"} {
-		rf, err := bgpPacket.GetRouteFamily(f)
+		rf, err := bgpPacket.GetFamily(f)
 		if err != nil {
 			return err
 		}
 
-		afi, safi := bgpPacket.RouteFamilyToAfiSafi(rf)
+		afi := rf.Afi()
+		safi := rf.Safi()
 		family := &bgpAPI.Family{
 			Afi:  bgpAPI.Family_Afi(afi),
 			Safi: bgpAPI.Family_Safi(safi),
