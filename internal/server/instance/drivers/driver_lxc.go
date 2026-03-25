@@ -9520,16 +9520,22 @@ func (d *lxc) setupCredentials(update bool) error {
 		}
 	}
 
+	credsRoot, err := os.OpenRoot(credentialsDir)
+	if err != nil {
+		return fmt.Errorf("Failed to open the credentials directory: %w", err)
+	}
+
+	defer func() { _ = credsRoot.Close() }()
+
 	for k, v := range credentials {
-		credentialPath := filepath.Join(credentialsDir, k)
-		err := os.WriteFile(credentialPath, v, 0o400)
+		err := credsRoot.WriteFile(k, v, 0o400)
 		if err != nil {
 			return fmt.Errorf("Failed to write credential %q: %w", k, err)
 		}
 
-		err = os.Chown(credentialPath, int(rootUID), int(rootGID))
+		err = credsRoot.Chown(k, int(rootUID), int(rootGID))
 		if err != nil {
-			return fmt.Errorf("Failed setting permissions for file %q: %w", credentialPath, err)
+			return fmt.Errorf("Failed setting permissions for file %q: %w", k, err)
 		}
 
 		delete(oldCredentials, k)
