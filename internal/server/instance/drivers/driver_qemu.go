@@ -11434,3 +11434,43 @@ func (d *qemu) needsFullRestart() bool {
 	// Full restart isn't required.
 	return false
 }
+
+// ConnectNBD exports a disk over NBD. Not supported by containers.
+func (d *qemu) ConnectNBD(diskName string, writable bool) (net.Conn, func(), error) {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nbdConn, err := monitor.NBDServerStart()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
+	}
+
+	d.logger.Debug("User requested NBD server started")
+
+	disconnect := func() {
+		d.logger.Debug("User requested NBD server stopped")
+		_ = nbdConn.Close()
+		_ = monitor.NBDServerStop()
+	}
+
+	escapedDeviceName := linux.PathNameEncode(diskName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+	if err != nil {
+		disconnect()
+		return nil, nil, fmt.Errorf("Failed fetching disk chain: %w", err)
+	}
+
+	blockExport := blockDevs[len(blockDevs)-1]
+
+	err = monitor.NBDBlockExportAdd(blockExport, writable)
+	if err != nil {
+		disconnect()
+		return nil, nil, fmt.Errorf("Failed adding disk to NBD server: %w", err)
+	}
+
+	return nbdConn, disconnect, nil
+}
