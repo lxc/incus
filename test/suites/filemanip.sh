@@ -1,3 +1,31 @@
+file_check_noderef() {
+    incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpfile" --project=test
+    [ -h "${TEST_DIR}/tmpfile" ]
+    [ "$(readlink "${TEST_DIR}/tmpfile")" = "$3" ]
+    rm "${TEST_DIR}/tmpfile"
+}
+
+file_check_deref() {
+    incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpfile" --project=test
+    [ ! -h "${TEST_DIR}/tmpfile" ]
+    [ "$(cat "${TEST_DIR}/tmpfile")" = "$3" ]
+    rm "${TEST_DIR}/tmpfile"
+}
+
+file_check_noderef_dir() {
+    incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpdir" --project=test
+    [ -h "${TEST_DIR}/tmpdir/$3" ]
+    [ "$(readlink "${TEST_DIR}/tmpdir/$3")" = "$4" ]
+    rm -rf "${TEST_DIR}/tmpdir"
+}
+
+file_check_deref_dir() {
+    incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpdir" --project=test
+    [ ! -h "${TEST_DIR}/tmpdir/$3" ]
+    [ "$(cat "${TEST_DIR}/tmpdir/$3")" = "$4" ]
+    rm -rf "${TEST_DIR}/tmpdir"
+}
+
 test_filemanip() {
     # Workaround for shellcheck getting confused by "cd"
     set -e
@@ -117,6 +145,7 @@ test_filemanip() {
         incus delete idmap --force
     fi
 
+
     # Test incus file create.
 
     # Create a new empty file.
@@ -141,6 +170,65 @@ test_filemanip() {
     # Create symlink.
     incus file create --type=symlink filemanip/tmp/create-symlink foo
     [ "$(incus exec filemanip --project=test -- readlink /tmp/create-symlink)" = "foo" ]
+
+
+    # Test all sorts of option combinations for `incus file pull`.
+
+    echo barqux | incus file push - filemanip/tmp/foo --project=test
+    [ "$(incus file pull filemanip/tmp/foo - --project=test)" = "barqux" ]
+
+    # Create a directory and play with our options.
+    incus file create --type=directory filemanip/tmp/bar --project=test
+    incus file create --type=symlink filemanip/tmp/bar/baz /tmp/foo --project=test
+    # -r doesn’t dereference.
+    file_check_noderef_dir -r /tmp/bar baz /tmp/foo
+    # -rP doesn’t dereference.
+    file_check_noderef_dir -rP /tmp/bar baz /tmp/foo
+    # -rH doesn’t dereference.
+    file_check_noderef_dir -rH /tmp/bar baz /tmp/foo
+    # -rL does dereference.
+    file_check_deref_dir -rL /tmp/bar baz barqux
+    incus file delete -f filemanip/tmp/bar --project=test
+
+    # Create a symlink and play with our options.
+    incus file create --type=symlink filemanip/tmp/bar /tmp/foo --project=test
+    # Pulling to stdout must dereference the symlink...
+    [ "$(incus file pull filemanip/tmp/bar - --project=test)" = "barqux" ]
+    # ... even if we passed -r.
+    [ "$(incus file pull -r filemanip/tmp/bar - --project=test)" = "barqux" ]
+    # -r doesn’t dereference.
+    file_check_noderef -r /tmp/bar /tmp/foo
+    # -P doesn’t dereference.
+    file_check_noderef -P /tmp/bar /tmp/foo
+    # -H does dereference.
+    file_check_deref -H /tmp/bar barqux
+    # -L does dereference.
+    file_check_deref -L /tmp/bar barqux
+    incus file delete filemanip/tmp/bar --project=test
+
+    # Create a symlink to a directory and play with our options.
+    incus file create --type=directory filemanip/tmp/bar --project=test
+    incus file create --type=symlink filemanip/tmp/bar/baz /tmp/foo --project=test
+    incus file create --type=symlink filemanip/tmp/qux /tmp/bar --project=test
+    # -r doesn’t dereference...
+    file_check_noderef -r /tmp/qux /tmp/bar
+    # ... except if we add a trailing `/`, in which case the first level is followed.
+    file_check_noderef_dir -r /tmp/qux/ baz /tmp/foo
+    # -P doesn’t dereference.
+    file_check_noderef -P /tmp/qux /tmp/bar
+    # -rP doesn’t dereference...
+    file_check_noderef -rP /tmp/qux /tmp/bar
+    # ... except if we add a trailing `/`, in which case the first level is followed.
+    file_check_noderef_dir -rP /tmp/qux/ baz /tmp/foo
+    # -rH does dereference the first level...
+    file_check_noderef_dir -rH /tmp/qux baz /tmp/foo
+    # ... and so does adding a trailing `/`.
+    file_check_noderef_dir -rH /tmp/qux/ baz /tmp/foo
+    # -rL does dereference all levels...
+    file_check_deref_dir -rL /tmp/qux baz barqux
+    # ... and so does adding a trailing `/`.
+    file_check_deref_dir -rL /tmp/qux/ baz barqux
+
 
     # Test SFTP functionality.
     cmd=$(

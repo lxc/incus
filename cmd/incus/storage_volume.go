@@ -2124,8 +2124,7 @@ type cmdStorageVolumeFile struct {
 	flagGID  int
 	flagMode string
 
-	flagMkdir     bool
-	flagRecursive bool
+	flagMkdir bool
 }
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
@@ -2148,7 +2147,7 @@ func (c *cmdStorageVolumeFile) Command() *cobra.Command {
 	cmd.AddCommand(storageVolumeFileMountCmd.Command())
 
 	// Pull
-	storageVolumeFilePullCmd := cmdStorageVolumeFilePull{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
+	storageVolumeFilePullCmd := cmdStorageVolumeFilePull{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c, puller: &pullable{}}
 	cmd.AddCommand(storageVolumeFilePullCmd.Command())
 
 	// Push
@@ -2602,6 +2601,7 @@ type cmdStorageVolumeFilePull struct {
 	storage           *cmdStorage
 	storageVolume     *cmdStorageVolume
 	storageVolumeFile *cmdStorageVolumeFile
+	puller            *pullable
 
 	edit bool
 }
@@ -2622,7 +2622,10 @@ incus file pull local v1 foo/etc/hosts -
    To pull /etc/hosts from the custom volume and write its output to standard output.`))
 
 	cmd.Flags().BoolVarP(&c.storageVolumeFile.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
-	cmd.Flags().BoolVarP(&c.storageVolumeFile.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.puller.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.puller.flagNoDereference, "no-dereference", "P", false, i18n.G("Never follow symbolic links in source path")+"``")
+	cmd.Flags().BoolVarP(&c.puller.flagFollow, "follow", "H", false, i18n.G("Follow command-line symbolic links in source path")+"``")
+	cmd.Flags().BoolVarP(&c.puller.flagDereference, "dereference", "L", false, i18n.G("Always follow symbolic links in source path")+"``")
 
 	cmd.RunE = c.Run
 
@@ -2644,7 +2647,6 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 	volName := parsedPath.List[0].String
 	fPath := "/" + parsedPath.List[1].String
 	target, targetIsDir := normalizePath(targetFile)
-	targetIsLink := false
 	targetExists := true
 
 	targetInfo, err := os.Stat(target)
@@ -2654,6 +2656,11 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 		}
 
 		targetExists = false
+	}
+
+	err = c.puller.preCheck(target)
+	if err != nil {
+		return err
 	}
 
 	/*
@@ -2684,39 +2691,14 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 
 	defer func() { _ = sftpConn.Close() }()
 
-	src, err := sftpConn.Open(fPath)
+	srcInfo, fPath, err := c.puller.statFile(sftpConn, fPath)
 	if err != nil {
 		return err
 	}
 
-	srcInfo, err := sftpConn.Lstat(fPath)
-	if err != nil {
-		return err
-	}
-
-	if srcInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-		targetIsLink = true
-	}
-
-	// Deal with recursion
+	// Recursively copy directories.
 	if srcInfo.IsDir() {
-		if c.storageVolumeFile.flagRecursive {
-			if !util.PathExists(target) {
-				err := os.MkdirAll(target, DirMode)
-				if err != nil {
-					return err
-				}
-			}
-
-			err := sftpRecursivePullFile(sftpConn, fPath, target, c.global.flagQuiet)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}
-
-		return errors.New(i18n.G("Can't pull a directory without --recursive"))
+		return sftpRecursivePullFile(sftpConn, srcInfo, fPath, target, c.global.flagQuiet, c.puller.flagDereference, util.PathExists(target))
 	}
 
 	var targetPath string
@@ -2726,6 +2708,8 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 		targetPath = target
 	}
 
+	// Prepare target.
+	targetIsLink := srcInfo.Mode()&os.ModeSymlink != 0
 	var f *os.File
 	var linkName string
 
@@ -2773,12 +2757,19 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 	}
 
 	if targetIsLink {
-		err = os.Symlink(linkName, srcInfo.Name())
+		err = os.Symlink(linkName, targetPath)
 		if err != nil {
 			progress.Done("")
 			return err
 		}
 	} else {
+		src, err := sftpConn.Open(fPath)
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = src.Close() }()
+
 		for {
 			// Read 1MB at a time.
 			_, err = io.CopyN(writer, src, 1024*1024)
@@ -2794,7 +2785,6 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 	}
 
 	progress.Done("")
-
 	return nil
 }
 
@@ -2817,6 +2807,8 @@ type cmdStorageVolumeFilePush struct {
 
 	edit         bool
 	noModeChange bool
+
+	flagRecursive bool
 }
 
 var cmdStorageVolumeFilePushUsage = u.Usage{u.Path, u.Pool.Remote(), u.MakePath(u.Volume, u.Target(u.Path))}
@@ -2834,7 +2826,7 @@ func (c *cmdStorageVolumeFilePush) Command() *cobra.Command {
 echo "Hello world" | incus storage volume file push - local v1 test
    To read "Hello world" from standard input and write it into test in volume "v1".`))
 
-	cmd.Flags().BoolVarP(&c.storageVolumeFile.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
 	cmd.Flags().BoolVarP(&c.storageVolumeFile.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
 	cmd.Flags().IntVar(&c.storageVolumeFile.flagUID, "uid", -1, i18n.G("Set the file's uid on push")+"``")
 	cmd.Flags().IntVar(&c.storageVolumeFile.flagGID, "gid", -1, i18n.G("Set the file's gid on push")+"``")
@@ -2884,7 +2876,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	}
 
 	// Recursive calls
-	if c.storageVolumeFile.flagRecursive {
+	if c.flagRecursive {
 		// Quick checks.
 		if c.storageVolumeFile.flagUID != -1 || c.storageVolumeFile.flagGID != -1 || c.storageVolumeFile.flagMode != "" {
 			return errors.New(i18n.G("Can't supply uid/gid/mode in recursive mode"))

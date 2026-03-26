@@ -1,3 +1,31 @@
+volfile_check_noderef() {
+    incus storage volume file pull "$1" "$2" "vol1$3" "${TEST_DIR}/tmpfile" --project=test
+    [ -h "${TEST_DIR}/tmpfile" ]
+    [ "$(readlink "${TEST_DIR}/tmpfile")" = "$4" ]
+    rm "${TEST_DIR}/tmpfile"
+}
+
+volfile_check_deref() {
+    incus storage volume file pull "$1" "$2" "vol1$3" "${TEST_DIR}/tmpfile" --project=test
+    [ ! -h "${TEST_DIR}/tmpfile" ]
+    [ "$(cat "${TEST_DIR}/tmpfile")" = "$4" ]
+    rm "${TEST_DIR}/tmpfile"
+}
+
+volfile_check_noderef_dir() {
+    incus storage volume file pull "$1" "$2" "vol1$3" "${TEST_DIR}/tmpdir" --project=test
+    [ -h "${TEST_DIR}/tmpdir/$4" ]
+    [ "$(readlink "${TEST_DIR}/tmpdir/$4")" = "$5" ]
+    rm -rf "${TEST_DIR}/tmpdir"
+}
+
+volfile_check_deref_dir() {
+    incus storage volume file pull "$1" "$2" "vol1$3" "${TEST_DIR}/tmpdir" --project=test
+    [ ! -h "${TEST_DIR}/tmpdir/$4" ]
+    [ "$(cat "${TEST_DIR}/tmpdir/$4")" = "$5" ]
+    rm -rf "${TEST_DIR}/tmpdir"
+}
+
 test_storage_volume_filemanip() {
     # Workaround for shellcheck getting confused by "cd"
     set -e
@@ -44,6 +72,7 @@ test_storage_volume_filemanip() {
     # # This fails because the last command should have removed that directory.
     ! incus exec filemanip --project=test -- test -d /v1/tmp/ptest/source || false
 
+
     # Test storage volume file create.
 
     # Create a new empty file.
@@ -68,6 +97,67 @@ test_storage_volume_filemanip() {
     # Create symlink.
     incus storage volume file create --type=symlink "${pool}" vol1/tmp/create-symlink foo
     [ "$(incus exec filemanip --project=test -- readlink /v1/tmp/create-symlink)" = "foo" ]
+
+
+    # Test all sorts of option combinations for `incus file pull`.
+
+    echo barqux | incus storage volume file push - "${pool}" vol1/tmp/foo --project=test
+    [ "$(incus storage volume file pull "${pool}" vol1/tmp/foo - --project=test)" = "barqux" ]
+
+    # Create a directory and play with our options.
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/bar --project=test
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/bar/baz /tmp/foo --project=test
+    # -r doesn’t dereference.
+    volfile_check_noderef_dir -r "${pool}" /tmp/bar baz /tmp/foo
+    # -rP doesn’t dereference.
+    volfile_check_noderef_dir -rP "${pool}" /tmp/bar baz /tmp/foo
+    # -rH doesn’t dereference.
+    volfile_check_noderef_dir -rH "${pool}" /tmp/bar baz /tmp/foo
+    # -rL does dereference.
+    volfile_check_deref_dir -rL "${pool}" /tmp/bar baz barqux
+    incus storage volume file delete -f "${pool}" vol1/tmp/bar --project=test
+
+    # Create a symlink and play with our options.
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/bar /tmp/foo --project=test
+    # Pulling to stdout must dereference the symlink...
+    [ "$(incus storage volume file pull "${pool}" vol1/tmp/bar - --project=test)" = "barqux" ]
+    # ... even if we passed -r.
+    [ "$(incus storage volume file pull -r "${pool}" vol1/tmp/bar - --project=test)" = "barqux" ]
+    # -r doesn’t dereference.
+    volfile_check_noderef -r "${pool}" /tmp/bar /tmp/foo
+    # -P doesn’t dereference.
+    volfile_check_noderef -P "${pool}" /tmp/bar /tmp/foo
+    # -H does dereference.
+    volfile_check_deref -H "${pool}" /tmp/bar barqux
+    # -L does dereference.
+    volfile_check_deref -L "${pool}" /tmp/bar barqux
+    incus storage volume file delete "${pool}" vol1/tmp/bar --project=test
+
+    # Create a symlink to a directory and play with our options.
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/bar --project=test
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/bar/baz /tmp/foo --project=test
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/qux /tmp/bar --project=test
+    # -r doesn’t dereference...
+    volfile_check_noderef -r "${pool}" /tmp/qux /tmp/bar
+    # ... except if we add a trailing `/`, in which case the first level is followed.
+    volfile_check_noderef_dir -r "${pool}" /tmp/qux/ baz /tmp/foo
+    # -P doesn’t dereference.
+    volfile_check_noderef -P "${pool}" /tmp/qux /tmp/bar
+    # -rP doesn’t dereference...
+    volfile_check_noderef -rP "${pool}" /tmp/qux /tmp/bar
+    # ... except if we add a trailing `/`, in which case the first level is followed.
+    volfile_check_noderef_dir -rP "${pool}" /tmp/qux/ baz /tmp/foo
+    # -rH does dereference the first level...
+    volfile_check_noderef_dir -rH "${pool}" /tmp/qux baz /tmp/foo
+    # ... and so does adding a trailing `/`.
+    volfile_check_noderef_dir -rH "${pool}" /tmp/qux/ baz /tmp/foo
+    # -rL does dereference all levels...
+    volfile_check_deref_dir -rL "${pool}" /tmp/qux baz barqux
+    # ... and so does adding a trailing `/`.
+    volfile_check_deref_dir -rL "${pool}" /tmp/qux/ baz barqux
+
+
+    # Test SFTP functionality.
 
     ! incus storage volume file mount "${pool}" doesnotexist || false
     ! incus storage volume file mount doesnotexist vol1 || false
