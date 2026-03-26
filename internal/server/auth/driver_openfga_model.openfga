@@ -33,6 +33,7 @@ type instance
     define viewer: [user, group#member] or user or viewer from project
     define can_access_console: [user, group#member] or user
     define can_access_files: [user, group#member] or user
+    define can_connect_nbd: [user, group#member] or user
     define can_connect_sftp: [user, group#member] or user
     define can_edit: operator
     define can_exec: [user, group#member] or user
@@ -138,4 +139,5 @@ type storage_volume
     define can_manage_snapshots: [user, group#member] or can_edit
     define can_view: [user, group#member] or can_edit or viewer from project
     define can_access_files: [user, group#member] or can_edit
+    define can_connect_nbd: [user, group#member] or can_edit
     define can_connect_sftp: [user, group#member] or can_edit
