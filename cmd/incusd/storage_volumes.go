@@ -74,6 +74,12 @@ var storagePoolVolumeTypeCmd = APIEndpoint{
 	Put:    APIEndpointAction{Handler: storagePoolVolumePut, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanEdit, "poolName", "type", "volumeName", "location")},
 }
 
+var storagePoolVolumeTypeNBDCmd = APIEndpoint{
+	Path: "storage-pools/{poolName}/volumes/{type}/{volumeName}/nbd",
+
+	Get: APIEndpointAction{Handler: storagePoolVolumeTypeNBDHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanConnectNBD, "poolName", "type", "volumeName", "location")},
+}
+
 var storagePoolVolumeTypeSFTPCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/volumes/{type}/{volumeName}/sftp",
 
