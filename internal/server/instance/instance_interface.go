@@ -101,6 +101,7 @@ type Instance interface {
 	CreateQcow2Snapshot(diskPath string, devName string, snapshotName string, backingFilename string) error
 	DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
 	ExportQcow2Block(blockIndex int) (func(), string, error)
+	ConnectNBD(diskName string, writable bool) (net.Conn, func(), error)
 
 	// Config handling.
 	Rename(newName string, applyTemplateTrigger bool) error

@@ -9571,6 +9571,11 @@ func (d *lxc) ExportQcow2Block(diskIndex int) (func(), string, error) {
 	return nil, "", nil
 }
 
+// ConnectNBD exports a disk over NBD. Not supported by containers.
+func (d *lxc) ConnectNBD(diskName string, writable bool) (net.Conn, func(), error) {
+	return nil, nil, nil
+}
+
 // setNICLink sets the link status of the given device.
 func (d *lxc) setNICLink(devName string, connected bool, assumeUp bool) error {
 	// This check is added so that devices that cannot handle link states do not fail to initialize.
