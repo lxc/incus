@@ -113,9 +113,6 @@ const qemuNetDevIDPrefix = "incus_"
 // qemuBlockDevIDPrefix used as part of the name given QEMU blockdevs generated from user added devices.
 const qemuBlockDevIDPrefix = "incus_"
 
-// qemuMigrationNBDExportName is the name of the disk device export by the migration NBD server.
-const qemuMigrationNBDExportName = "incus_root"
-
 // qemuMountTagMaxLength defines the maximum number of characters allowed for the mount tag added to the QEMU configuration.
 const qemuMountTagMaxLength = 30
 
@@ -362,6 +359,9 @@ type qemu struct {
 
 	// Stateful migration streams.
 	migrationReceiveStateful map[string]io.ReadWriteCloser
+
+	// Indicate whether the root disk will be live-migrated.
+	migrationRootDisk bool
 
 	// Keep a reference to the console socket when switching backends, so we can properly cleanup when switching back to a ring buffer.
 	consoleSocket     *net.UnixListener
@@ -1040,16 +1040,56 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 		filesystemConn := d.migrationReceiveStateful[api.SecretNameFilesystem]
 		if filesystemConn != nil {
 			go func() {
-				blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
-				if err != nil {
-					d.logger.Error("Failed fetching block device chain", logger.Ctx{"err": err})
+				if d.migrationRootDisk {
+					blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
+					if err != nil {
+						d.logger.Error("Failed fetching block device chain", logger.Ctx{"err": err})
+					}
+
+					rootDiskName := blockDevs[len(blockDevs)-1]
+					err = d.receiveMigrationSnapshot(monitor, rootDiskName, filesystemConn)
+					if err != nil {
+						d.logger.Error("Failed receiving migration snapshot", logger.Ctx{"err": err})
+						return
+					}
 				}
 
-				rootDiskName := blockDevs[len(blockDevs)-1]
-				err = d.receiveMigrationSnapshot(monitor, rootDiskName, filesystemConn)
+				pool, err := d.getStoragePool()
 				if err != nil {
-					d.logger.Error("Failed receiving migration snapshot", logger.Ctx{"err": err})
+					d.logger.Error("Failed fetching instance storage pool", logger.Ctx{"err": err})
 					return
+				}
+
+				config, err := pool.GenerateInstanceBackupConfig(d, false, true, nil)
+				if err != nil {
+					d.logger.Error("Failed generating instance backup config", logger.Ctx{"err": err})
+					return
+				}
+
+				for _, vol := range config.DependentVolumes {
+					diskPool, err := storagePools.LoadByName(d.state, vol.Pool.Name)
+					if err != nil {
+						d.logger.Error("Failed loading storage pool", logger.Ctx{"err": err})
+					}
+
+					if diskPool.Driver().Info().Remote {
+						continue
+					}
+
+					d.logger.Debug("Receiving dependent volume", logger.Ctx{"name": vol.Volume.Name})
+
+					// Selects all block devices related to this instance (backing, root disk, overlays).
+					devName := d.blockNodeName(linux.PathNameEncode(vol.Volume.Name))
+					blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
+					if err != nil {
+						d.logger.Error("Failed fetching block device chain", logger.Ctx{"err": err})
+					}
+
+					diskName := blockDevs[len(blockDevs)-1]
+					err = d.receiveMigrationSnapshot(monitor, diskName, filesystemConn)
+					if err != nil {
+						d.logger.Error("Failed receiving migration snapshot", logger.Ctx{"err": err})
+					}
 				}
 			}()
 		}
@@ -8039,7 +8079,7 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 	})
 
 	// Connect to NBD migration target and add it the source instance as a disk device.
-	d.logger.Debug("Connecting to migration NBD storage target")
+	d.logger.Debug("Connecting to migration NBD storage target", logger.Ctx{"targetDiskName": targetDiskName, "diskName": diskName})
 	err = monitor.AddBlockDevice(map[string]any{
 		"node-name": targetDiskName,
 		"driver":    "raw",
@@ -8146,11 +8186,28 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	// If we are performing an intra-cluster member move on a Ceph storage pool without storage change
 	// then we can treat this as shared storage and avoid needing to sync the root disk.
 	sameSharedStorage := clusterMoveSourceName != "" && pool.Driver().Info().Remote && storagePool == ""
+	disksToMigrate := false
+
+	for _, vol := range volSourceArgs.DependentVolumes {
+		diskPool, err := storagePools.LoadByName(d.state, vol.Pool)
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if diskPool.Driver().Info().Remote {
+			continue
+		}
+
+		disksToMigrate = true
+		break
+	}
+
+	dependentVolumeMove := clusterMoveSourceName != "" && disksToMigrate
 
 	reverter := revert.New()
 
 	// Non-shared storage snapshot setup.
-	if !sameSharedStorage {
+	if !sameSharedStorage || dependentVolumeMove {
 		// Setup migration capabilities.
 		capabilities := map[string]bool{
 			// Automatically throttle down the guest to speed up convergence of RAM migration.
@@ -8181,12 +8238,42 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			return fmt.Errorf("Failed setting migration parameters: %w", err)
 		}
 
-		cleanup, err := d.createMigrationSnapshot(rootDiskName, rootDiskSize)
-		if err != nil {
-			return fmt.Errorf("Failed creating migration snapshot: %w", err)
+		if !sameSharedStorage {
+			cleanup, err := d.createMigrationSnapshot(rootDiskName, rootDiskSize)
+			if err != nil {
+				return fmt.Errorf("Failed creating migration snapshot: %w", err)
+			}
+
+			reverter.Add(cleanup)
 		}
 
-		reverter.Add(cleanup)
+		for _, vol := range volSourceArgs.DependentVolumes {
+			diskPool, err := storagePools.LoadByName(d.state, vol.Pool)
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+
+			if diskPool.Driver().Info().Remote {
+				continue
+			}
+
+			// Selects all block devices related to this instance (backing, root disk, overlays).
+			devName := d.blockNodeName(linux.PathNameEncode(vol.Name))
+			blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
+			if err != nil {
+				return err
+			}
+
+			diskName := blockDevs[len(blockDevs)-1]
+			d.logger.Debug("Create snapshot for dependent volume", logger.Ctx{"name": vol.Name, "size": vol.VolumeSize, "diskName": diskName})
+
+			cleanup, err := d.createMigrationSnapshot(diskName, vol.VolumeSize)
+			if err != nil {
+				return fmt.Errorf("Failed creating migration snapshot: %w", err)
+			}
+
+			reverter.Add(cleanup)
+		}
 
 		d.logger.Debug("Setup temporary migration storage snapshot")
 	} else {
@@ -8331,7 +8418,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	}
 
 	// Non-shared storage snapshot transfer finalization.
-	if !sameSharedStorage {
+	if !sameSharedStorage || dependentVolumeMove {
 		// Wait until state transfer has reached pre-switchover state (the guest OS will remain paused).
 		err = monitor.MigrateWait(ctx, "pre-switchover")
 		if err != nil {
@@ -8344,6 +8431,31 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			err = finalizeRootTransfer()
 			if err != nil {
 				return fmt.Errorf("Failed transferring root snapshot disk: %w", err)
+			}
+		}
+
+		for _, vol := range volSourceArgs.DependentVolumes {
+			diskPool, err := storagePools.LoadByName(d.state, vol.Pool)
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+
+			if diskPool.Driver().Info().Remote {
+				continue
+			}
+
+			// Selects all block devices related to this instance (backing, root disk, overlays).
+			devName := d.blockNodeName(linux.PathNameEncode(vol.Name))
+			blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
+			if err != nil {
+				return err
+			}
+
+			diskName := blockDevs[len(blockDevs)-1]
+
+			_, err = d.sendMigrationSnapshot(diskName, filesystemConn, true)
+			if err != nil {
+				return fmt.Errorf("Failed transferring snapshot disk: %w", err)
 			}
 		}
 
@@ -8809,11 +8921,30 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					api.SecretNameState: stateConn,
 				}
 
+				disksToMigrate := false
+				for _, vol := range dependentVolumes {
+					diskPool, err := storagePools.LoadByName(d.state, vol.Pool)
+					if err != nil {
+						return fmt.Errorf("Failed loading storage pool: %w", err)
+					}
+
+					if diskPool.Driver().Info().Remote {
+						continue
+					}
+
+					disksToMigrate = true
+					break
+				}
+
+				dependentVolumeMove := args.ClusterMoveSourceName != "" && disksToMigrate
+
 				// Populate the filesystem connection handle if doing non-shared storage migration.
 				sameSharedStorage := args.ClusterMoveSourceName != "" && poolInfo.Remote && args.StoragePool == ""
-				if !sameSharedStorage {
+				if !sameSharedStorage || dependentVolumeMove {
 					d.migrationReceiveStateful[api.SecretNameFilesystem] = filesystemConn
 				}
+
+				d.migrationRootDisk = !sameSharedStorage
 			}
 
 			// Although the instance technically isn't considered stateful, we set this to allow

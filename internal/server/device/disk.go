@@ -794,7 +794,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 			return errors.New("Virtiofs mounts aren't supported with migration.stateful=true")
 		}
 
-		if d.config["path"] != "/" && d.pool != nil && !d.pool.Driver().Info().Remote {
+		if d.config["path"] != "/" && d.pool != nil && !d.pool.Driver().Info().Remote && util.IsFalseOrEmpty(d.config["dependent"]) {
 			return errors.New("Only additional disks coming from a shared storage pool are supported with migration.stateful=true")
 		}
 	}
