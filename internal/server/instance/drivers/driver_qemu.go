@@ -1235,6 +1235,27 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 		}
 	}
 
+	// gendoc:generate(entity=image, group=requirements, key=requirements.cdrom_cloud_init)
+	//
+	// ---
+	//  type: bool
+	//  shortdesc: If set to `true`, indicates that the VM requires a `cloud-init:config` disk be present every time `cloud-init` should be run.
+	//
+	// Ensure a `cloud-init` drive is present if the image and the VM state require it.
+	if util.IsTrue(d.localConfig["image.requirements.cdrom_cloud_init"]) && d.localConfig["volatile.apply_template"] != "" {
+		found := false
+		for _, dev := range d.expandedDevices {
+			if dev["type"] == "disk" && dev["source"] == "cloud-init:config" {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return errors.New("This virtual machine image requires a cloud-init:config disk be added")
+		}
+	}
+
 	return nil
 }
 
