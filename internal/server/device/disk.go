@@ -729,9 +729,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 					return errors.New("Custom filesystem volumes require a path to be defined")
 				}
 
-				if d.config["dependent"] != "" {
-					if util.IsTrue(dbVolume.Config["security.shared"]) {
-						return errors.New("Shared disk cannot be marked as dependent")
+				if util.IsTrue(d.config["dependent"]) {
+					err = storageDrivers.ValidateDependentConfigKey(dbVolume.Config)
+					if err != nil {
+						return err
 					}
 				}
 			}
