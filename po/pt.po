@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-26 00:20+0000\n"
-"PO-Revision-Date: 2026-03-25 09:20+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"PO-Revision-Date: 2026-03-26 10:50+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -675,15 +675,15 @@ msgstr "'%s' não é um tipo de ficheiro suportado"
 #: cmd/incus/usage/parse.go:242
 #, c-format
 msgid "(skipped: %s)\n"
-msgstr ""
+msgstr "(saltado: %s)\n"
 
 #: cmd/incus/usage/parse.go:244
 msgid "(skipped: no value given)"
-msgstr ""
+msgstr "(saltado: nenhum valor dado)"
 
 #: cmd/incus/usage/parse.go:39
 msgid ", "
-msgstr ""
+msgstr ", "
 
 #: cmd/incus/info.go:326
 #, c-format
@@ -779,7 +779,7 @@ msgstr "Um certificado de cliente já está presente"
 
 #: cmd/incus/usage/usage.go:768
 msgid "ACL"
-msgstr ""
+msgstr "ACL"
 
 #: cmd/incus/network_allocations.go:82
 msgid "ADDRESS"
@@ -960,7 +960,7 @@ msgstr "Adiciona regras a um ACL"
 
 #: cmd/incus/color/color.go:42
 msgid "Additional Help Topics:"
-msgstr ""
+msgstr "Tópicos de Ajuda Adicionais:"
 
 #: cmd/incus/admin_recover.go:130
 msgid ""
@@ -1153,9 +1153,8 @@ msgid "Automatic (non-interactive) mode"
 msgstr "Modo automático (não interativo)"
 
 #: cmd/incus/color/color.go:39
-#, fuzzy
 msgid "Available Commands:"
-msgstr "Projetos disponíveis:"
+msgstr "Comandos Disponíveis:"
 
 #: cmd/incus/remote.go:175
 msgid "Available projects:"
@@ -1206,8 +1205,8 @@ msgstr "Salvaguardas:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,"
-"<chave>=<valor>: %s"
+"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,<chave>"
+"=<valor>: %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:206 cmd/incus/move.go:252
 #: cmd/incus/network_integration.go:141 cmd/incus/project.go:171
@@ -2207,9 +2206,8 @@ msgid "Description"
 msgstr "Descrição"
 
 #: cmd/incus/color/color.go:34
-#, fuzzy
 msgid "Description:"
-msgstr "Descrição"
+msgstr "Descrição:"
 
 #: cmd/incus/info.go:648 cmd/incus/storage_volume.go:1311
 #, c-format
@@ -2323,14 +2321,12 @@ msgid "Didn't get name of new instance from the server"
 msgstr "Não recebi o nome da nova instância do servidor"
 
 #: cmd/incus/snapshot.go:203
-#, fuzzy
 msgid "Didn't get name of new instance snapshot from the server"
-msgstr "Não recebi o nome da nova instância do servidor"
+msgstr "Não recebi o nome do novo instantâneo de instância a partir do servidor"
 
 #: cmd/incus/storage_volume.go:3238
-#, fuzzy
 msgid "Didn't get name of new volume snapshot from the server"
-msgstr "Não recebi o nome da nova instância do servidor"
+msgstr "Não recebi o nome do novo instantâneo de volume a partir do servidor"
 
 #: cmd/incus/image.go:704
 msgid "Directory import is not available on this platform"
@@ -2428,8 +2424,8 @@ msgstr ""
 "quais atributos da instância a exibir quando mostra em tabela ou em formato\n"
 "compactado.\n"
 "\n"
-"Os argumentos de coluna são pré-definidos de caracteres curtos (veja "
-"abaixo).\n"
+"Os argumentos de coluna são pré-definidos de caracteres curtos (veja abaixo)"
+".\n"
 "As vírgulas entre os caracteres curtos consecutivos são opcionais.\n"
 "\n"
 "Coluna de caracteres curtos:\n"
@@ -2765,9 +2761,8 @@ msgid "Error while executing alias expansion: %s\n"
 msgstr "Erro ao executar a expansão de alias: %s\n"
 
 #: cmd/incus/color/color.go:33
-#, fuzzy
 msgid "Error:"
-msgstr "Erro: %v\n"
+msgstr "Erro:"
 
 #: cmd/incus/cluster.go:1488 cmd/incus/cluster.go:1489
 msgid "Evacuate cluster member"
@@ -2784,7 +2779,7 @@ msgstr "Tipo de evento para escutar"
 
 #: cmd/incus/color/color.go:38
 msgid "Examples:"
-msgstr ""
+msgstr "Exemplos:"
 
 #: cmd/incus/admin_sql.go:32
 msgid "Execute a SQL query against the local or global database"
@@ -3394,7 +3389,7 @@ msgstr "Impressão digital: %s"
 
 #: cmd/incus/color/color.go:40
 msgid "Flags:"
-msgstr ""
+msgstr "Bandeiras:"
 
 #: cmd/incus/file.go:457 cmd/incus/storage_volume.go:2627
 msgid "Follow command-line symbolic links in source path"
@@ -3548,8 +3543,8 @@ msgstr "Formato (table|compact)"
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-"
-"zlib, ...)"
+"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
+"...)"
 
 #: cmd/incus/network.go:976
 msgid "Forward delay"
@@ -3830,7 +3825,7 @@ msgstr "Alvo fornecido %q não corresponde à localização do volume fonte %q"
 
 #: cmd/incus/color/color.go:41
 msgid "Global Flags:"
-msgstr ""
+msgstr "Bandeiras Globais:"
 
 #: cmd/incus/exec.go:70
 msgid "Group ID to run the command as (default 0)"
@@ -4135,9 +4130,9 @@ msgid "Instance published with fingerprint: %s"
 msgstr "Instância publicada com impressão digital: %s"
 
 #: cmd/incus/snapshot.go:212
-#, fuzzy, c-format
+#, c-format
 msgid "Instance snapshot name is: %s"
-msgstr "Nome da instância é: %s"
+msgstr "Nome de instantâneo de instância é: %s"
 
 #: cmd/incus/create.go:69
 msgid "Instance type"
@@ -4965,8 +4960,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5019,8 +5014,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5136,8 +5131,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5279,8 +5274,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5310,8 +5305,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
-"[:maxWidth]\":\n"
+"Colunas personalizadas são definidas com "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -5362,8 +5357,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5412,8 +5407,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5569,8 +5564,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5617,8 +5612,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5764,8 +5759,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5896,12 +5891,11 @@ msgstr "Localização: %s"
 #: cmd/incus/info.go:929
 #, c-format
 msgid "Log (%s):"
-msgstr ""
+msgstr "Registo (%s):"
 
 #: cmd/incus/monitor.go:83
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr ""
-"Filtragem de nível de relatório só pode ser usada com formatação bonita"
+msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/network.go:1000
 msgid "Logical router"
@@ -6752,8 +6746,7 @@ msgstr "Nenhum %s backend de armazenamento disponível"
 #: cmd/incus/config_trust.go:814
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr ""
-"Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
+msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1358
 #, c-format
@@ -8502,8 +8495,7 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:1905
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
-"Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:811 cmd/incus/storage_volume.go:1348
 msgid "Snapshots:"
@@ -8884,8 +8876,7 @@ msgstr ""
 
 #: cmd/incus/create.go:429
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
-"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/config.go:598
 msgid "The is no config key to set on an instance snapshot."
@@ -9123,6 +9114,8 @@ msgid ""
 "This command was called with --explain; its arguments are valid, but no "
 "further processing is done"
 msgstr ""
+"Este comando foi chamado com --explain; os seus argumentos são válidos, mas "
+"não é feito mais processamento"
 
 #: cmd/incus/admin_recover.go:65
 msgid "This server currently has the following storage pools:"
@@ -9357,9 +9350,9 @@ msgid "Unknown file type '%s'"
 msgstr "Tipo de ficheiro desconhecido '%s'"
 
 #: cmd/incus/usage/usage.go:336
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown flag --%s"
-msgstr "Chave desconhecida: %s"
+msgstr "Bandeira desconhecida -- %s"
 
 #: cmd/incus/network_acl.go:913 cmd/incus/network_acl.go:1035
 #, c-format
@@ -9373,8 +9366,7 @@ msgstr "Tipo de saída desconhecido %q"
 
 #: cmd/incus/cluster_group.go:979
 msgid "Unset a cluster group's configuration keys"
-msgstr ""
-"Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:601
 msgid "Unset a cluster member's configuration keys"
@@ -9592,9 +9584,8 @@ msgid "Upper devices"
 msgstr "Dispositivos de cima"
 
 #: cmd/incus/color/color.go:35
-#, fuzzy
 msgid "Usage:"
-msgstr "Utilização: %s"
+msgstr "Utilização:"
 
 #: cmd/incus/storage_volume.go:1331
 #, c-format
@@ -9606,6 +9597,8 @@ msgid ""
 "Use \"{{.CommandPath}} [<command>] --help\" for more information about a "
 "command."
 msgstr ""
+"Use \"{{.CaminhoDeComando}} [<comando>] --help\" para mais informação sobre "
+"um comando."
 
 #: cmd/incus/export.go:54
 msgid ""
@@ -9707,9 +9700,9 @@ msgid "Volume description"
 msgstr "Descrição do volume"
 
 #: cmd/incus/storage_volume.go:3247
-#, fuzzy, c-format
+#, c-format
 msgid "Volume snapshot name is: %s"
-msgstr "Nome da instância é: %s"
+msgstr "Nome de instantâneo de volume é: %s"
 
 #: cmd/incus/info.go:296
 #, c-format
@@ -9797,8 +9790,7 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/cluster.go:1704
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
-"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:172
 msgid "What IPv4 address should be used?"
@@ -9823,10 +9815,10 @@ msgid "Where should this storage pool store its data?"
 msgstr "Onde deve este pool de armazenamento guardar os seus dados?"
 
 #: cmd/incus/export.go:52
-#, fuzzy
 msgid "Whether or not to only backup the instance (without dependent volumes)"
 msgstr ""
-"Se é ou não para apenas fazer salvaguarda da instância (sem os instantâneos)"
+"Se é ou não para apenas fazer salvaguarda da instância (sem os volumes "
+"dependentes)"
 
 #: cmd/incus/export.go:50
 msgid "Whether or not to only backup the instance (without snapshots)"
@@ -9951,19 +9943,16 @@ msgid "Zone description"
 msgstr "Descrição da zona"
 
 #: cmd/incus/usage/usage.go:769
-#, fuzzy
 msgid "address"
-msgstr "Endereço MAC"
+msgstr "endereço"
 
 #: cmd/incus/usage/usage.go:770
-#, fuzzy
 msgid "address set"
-msgstr "Endereço: %s"
+msgstr "conjunto de endereço"
 
 #: cmd/incus/usage/usage.go:771
-#, fuzzy
 msgid "alias"
-msgstr "<alias>"
+msgstr "nome alternativo"
 
 #: cmd/incus/info.go:657
 msgid "application"
@@ -9971,26 +9960,25 @@ msgstr "aplicação"
 
 #: cmd/incus/usage/usage.go:772
 msgid "backend"
-msgstr ""
+msgstr "backend"
 
 #: cmd/incus/usage/usage.go:773
-#, fuzzy
 msgid "backup file"
-msgstr "ficheiro socket"
+msgstr "ficheiro de salvaguarda"
 
 #: cmd/incus/usage/usage.go:774
 msgid "bucket"
-msgstr ""
+msgstr "balde"
 
 #: cmd/incus/usage/parse.go:81
 #, c-format
 msgid "cannot parse this argument; unexpected %s"
-msgstr ""
+msgstr "não posso analisar este argumento; %s inesperado"
 
 #: cmd/incus/usage/parse.go:84
 #, c-format
 msgid "cannot parse this argument; unexpected %s in %s"
-msgstr ""
+msgstr "não posso analisar este argumento; %s em %s inesperado"
 
 #: cmd/incus/cluster.go:1367 cmd/incus/config_trust.go:165
 msgid "cert.crt"
@@ -10002,7 +9990,7 @@ msgstr "cert.key"
 
 #: cmd/incus/usage/usage.go:775
 msgid "client"
-msgstr ""
+msgstr "cliente"
 
 #: cmd/incus/cluster.go:983
 msgid "cluster"
@@ -10013,9 +10001,8 @@ msgid "command"
 msgstr "comando"
 
 #: cmd/incus/usage/usage.go:776
-#, fuzzy
 msgid "command-line argument"
-msgstr "Gerir aliases de comando"
+msgstr "argumento de linha de comando"
 
 #: cmd/incus/wait.go:25
 msgid "condition"
@@ -10030,14 +10017,12 @@ msgid "description"
 msgstr "descrição"
 
 #: cmd/incus/usage/usage.go:777
-#, fuzzy
 msgid "device"
-msgstr "Dispositivo PCI:"
+msgstr "dispositivo"
 
 #: cmd/incus/usage/usage.go:779
-#, fuzzy
 msgid "directory"
-msgstr "%s não é um diretório"
+msgstr "diretório"
 
 #: cmd/incus/image.go:944
 msgid "disabled"
@@ -10063,35 +10048,31 @@ msgstr "erro: %v"
 #: cmd/incus/usage/parse.go:99
 #, c-format
 msgid "expected %s"
-msgstr ""
+msgstr "esperado %s"
 
 #: cmd/incus/usage/usage.go:782
 msgid "expiry"
-msgstr ""
+msgstr "prazo de validade"
 
 #: cmd/incus/usage/usage.go:783
-#, fuzzy
 msgid "file"
-msgstr "Perfis:"
+msgstr "ficheiro"
 
 #: cmd/incus/usage/usage.go:784
-#, fuzzy
 msgid "filter"
-msgstr "Filtragem VLAN"
+msgstr "filtro"
 
 #: cmd/incus/usage/usage.go:785
-#, fuzzy
 msgid "fingerprint"
-msgstr "Impressão digital: %s"
+msgstr "impressão digital"
 
 #: cmd/incus/usage/usage.go:786
 msgid "group"
-msgstr ""
+msgstr "grupo"
 
 #: cmd/incus/usage/usage.go:787
-#, fuzzy
 msgid "image"
-msgstr "Lista imagens"
+msgstr "imagem"
 
 #: cmd/incus/alias.go:67
 msgid ""
@@ -11079,31 +11060,28 @@ msgid "info"
 msgstr "informação"
 
 #: cmd/incus/usage/usage.go:788
-#, fuzzy
 msgid "instance"
-msgstr "Lista instâncias"
+msgstr "instância"
 
 #: cmd/incus/usage/usage.go:789
-#, fuzzy
 msgid "interface"
-msgstr "Interface de máquina"
+msgstr "Interface"
 
 #: cmd/incus/usage/usage.go:792
 msgid "key"
-msgstr ""
+msgstr "chave"
 
 #: cmd/incus/usage/usage.go:790
-#, fuzzy
 msgid "listen address"
-msgstr "Endereço de escuta em falta"
+msgstr "endereço de escuta"
 
 #: cmd/incus/usage/usage.go:791
 msgid "listen port"
-msgstr ""
+msgstr "porto de escuta"
 
 #: cmd/incus/usage/usage.go:794
 msgid "member"
-msgstr ""
+msgstr "membro"
 
 #: cmd/incus/remote.go:510
 msgid "n"
@@ -11114,23 +11092,21 @@ msgid "name"
 msgstr "nome"
 
 #: cmd/incus/usage/usage.go:795
-#, fuzzy
 msgid "network"
-msgstr "Apaga redes"
+msgstr "rede"
 
 #: cmd/incus/usage/usage.go:796
-#, fuzzy
 msgid "network integration"
-msgstr "rede ou integração"
+msgstr "integração de rede"
 
 #: cmd/incus/network_peer.go:304
 msgid "network or integration"
 msgstr "rede ou integração"
 
 #: cmd/incus/usage/usage.go:854
-#, fuzzy, c-format
+#, c-format
 msgid "new %s name"
-msgstr "Nome da rede"
+msgstr "novo %s nome"
 
 #: cmd/incus/config_trust.go:486 cmd/incus/image.go:934 cmd/incus/image.go:939
 #: cmd/incus/image.go:1154
@@ -11140,7 +11116,7 @@ msgstr "não"
 #: cmd/incus/usage/parse.go:54
 #, c-format
 msgid "not enough arguments; expected a value for %s"
-msgstr ""
+msgstr "argumentos insuficientes; esperado um valor para %s"
 
 #: cmd/incus/remote.go:502
 msgid "ok (y/n/[fingerprint])?"
@@ -11149,21 +11125,19 @@ msgstr "ok (s/n/[impressão digital])?"
 #: cmd/incus/usage/parse.go:39
 #, c-format
 msgid "one of %s or %s"
-msgstr ""
+msgstr "um de %s ou %s"
 
 #: cmd/incus/usage/usage.go:797
-#, fuzzy
 msgid "operation"
-msgstr "aplicação"
+msgstr "operação"
 
 #: cmd/incus/usage/usage.go:798
-#, fuzzy
 msgid "path"
-msgstr "Caminho do API"
+msgstr "caminho"
 
 #: cmd/incus/usage/usage.go:799
 msgid "peer"
-msgstr ""
+msgstr "peer"
 
 #: cmd/incus/config.go:57
 msgid "please use `incus profile`"
@@ -11171,56 +11145,51 @@ msgstr "por favor use `incus profile`"
 
 #: cmd/incus/usage/usage.go:800
 msgid "pool"
-msgstr ""
+msgstr "pool"
 
 #: cmd/incus/usage/usage.go:801
 msgid "port"
-msgstr ""
+msgstr "porto"
 
 #: cmd/incus/admin_init.go:36
 msgid "preseed.yaml"
 msgstr "preseed.yaml"
 
 #: cmd/incus/usage/usage.go:802
-#, fuzzy
 msgid "profile"
-msgstr "Perfis:"
+msgstr "perfil"
 
 #: cmd/incus/usage/usage.go:803
-#, fuzzy
 msgid "project"
-msgstr "Todos os projetos"
+msgstr "projeto"
 
 #: cmd/incus/usage/usage.go:804
-#, fuzzy
 msgid "protocol"
-msgstr "Protocolo: %s"
+msgstr "protocolo"
 
 #: cmd/incus/usage/usage.go:805
 msgid "query"
-msgstr ""
+msgstr "consulta"
 
 #: cmd/incus/usage/usage.go:806
 msgid "record"
-msgstr ""
+msgstr "registo"
 
 #: cmd/incus/usage/usage.go:807
-#, fuzzy
 msgid "remote"
-msgstr "<remoto>"
+msgstr "remoto"
 
 #: cmd/incus/usage/usage.go:811
 msgid "role"
-msgstr ""
+msgstr "função"
 
 #: cmd/incus/image.go:669
 msgid "rootfs tarball"
 msgstr "tarball de rootfs"
 
 #: cmd/incus/usage/usage.go:812
-#, fuzzy
 msgid "snapshot"
-msgstr "Instantâneos:"
+msgstr "instantâneo"
 
 #: cmd/incus/remote_unix.go:36
 msgid "socket file"
@@ -11241,21 +11210,20 @@ msgstr "sshfs a montar %q em %q"
 
 #: cmd/incus/usage/usage.go:814
 msgid "symlink target path"
-msgstr ""
+msgstr "caminho alvo do link simbólico"
 
 #: cmd/incus/usage/usage.go:815
-#, fuzzy
 msgid "tarball"
-msgstr "tarball de rootfs"
+msgstr "tarball"
 
 #: cmd/incus/usage/usage.go:860
-#, fuzzy, c-format
+#, c-format
 msgid "target %s"
-msgstr "<alvo>"
+msgstr "alvo %s"
 
 #: cmd/incus/usage/usage.go:816
 msgid "template"
-msgstr ""
+msgstr "modelo"
 
 #: cmd/incus/remote.go:121 cmd/incus/usage/usage.go:817
 msgid "token"
@@ -11264,7 +11232,7 @@ msgstr "testemunho"
 #: cmd/incus/usage/parse.go:71
 #, c-format
 msgid "too many arguments; unexpected %s"
-msgstr ""
+msgstr "demasiados argumentos; %s inesperado"
 
 #: cmd/incus/storage.go:532
 msgid "total space"
@@ -11272,21 +11240,21 @@ msgstr "espaço total"
 
 #: cmd/incus/usage/usage.go:813 cmd/incus/usage/usage.go:818
 msgid "type"
-msgstr ""
+msgstr "tipo"
 
 #: cmd/incus/usage/parse.go:95
-#, fuzzy, c-format
+#, c-format
 msgid "unexpected %s"
-msgstr "Link detectado: %v"
+msgstr "%s inesperado"
 
 #: cmd/incus/usage/parse.go:102
 #, c-format
 msgid "unexpected %s; expected %s"
-msgstr ""
+msgstr "%s inesperado; esperado %s"
 
 #: cmd/incus/usage/parse.go:51
 msgid "unexpected end of argument; did you forget a suffix?"
-msgstr ""
+msgstr "fim de argumento inesperado; você esqueceu um sufixo?"
 
 #: cmd/incus/version.go:43
 msgid "unreachable"
@@ -11298,16 +11266,15 @@ msgstr "usado por"
 
 #: cmd/incus/usage/usage.go:820
 msgid "value"
-msgstr ""
+msgstr "valor"
 
 #: cmd/incus/usage/usage.go:821
-#, fuzzy
 msgid "volume"
-msgstr "Colunas"
+msgstr "volume"
 
 #: cmd/incus/usage/usage.go:822
 msgid "warning UUID"
-msgstr ""
+msgstr "UUID de aviso"
 
 #: cmd/incus/remote.go:512
 msgid "y"
@@ -11321,12 +11288,12 @@ msgstr "sim"
 
 #: cmd/incus/usage/usage.go:823
 msgid "zone"
-msgstr ""
+msgstr "zona"
 
 #: cmd/incus/usage/parse.go:25
 #, c-format
 msgid "“%s”"
-msgstr ""
+msgstr "“%s”"
 
 #~ msgid "Can't pull a directory without --recursive"
 #~ msgstr "Não pode puxar um diretório sem --recursive"
