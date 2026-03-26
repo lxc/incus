@@ -96,6 +96,7 @@ func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
 
 	op, err := d.CreateInstanceFromBackup(createArgs)
 	if err != nil {
+		progress.Done("")
 		return err
 	}
 
