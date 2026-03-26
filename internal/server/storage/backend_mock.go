@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io"
+	"net"
 	"net/url"
 	"time"
 
@@ -376,4 +377,14 @@ func (b *mockBackend) BackupBucket(projectName string, bucketName string, tarWri
 // CreateBucketFromBackup creates a bucket from a tarball.
 func (b *mockBackend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
 	return nil
+}
+
+// GetInstanceNBD returns an NBD connection to the VM's root disk.
+func (b *mockBackend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Conn, func(), error) {
+	return nil, nil, nil
+}
+
+// GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
+func (b *mockBackend) GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error) {
+	return nil, nil, nil
 }
