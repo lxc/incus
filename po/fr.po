@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-26 00:20+0000\n"
-"PO-Revision-Date: 2026-03-26 10:41+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-03-26 10:42+0000\n"
+"Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -975,8 +975,8 @@ msgstr ""
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Propriété de configuration du pool de stockage supplémentaire "
-"(<clef>=<valuer>, rien lorsque terminé) :"
+"Propriété de configuration du pool de stockage supplémentaire (<clef>"
+"=<valuer>, rien lorsque terminé) :"
 
 #: cmd/incus/admin_init.go:57
 msgid "Address to bind to (default: none)"
@@ -1213,8 +1213,8 @@ msgstr "Sauvegardes :"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Impossible de traiter ce remplacement, la syntaxe attendue est <appareil>,"
-"<clef>=<valeur> : %s"
+"Impossible de traiter ce remplacement, la syntaxe attendue est <appareil>"
+",<clef>=<valeur> : %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:206 cmd/incus/move.go:252
 #: cmd/incus/network_integration.go:141 cmd/incus/project.go:171
@@ -2692,8 +2692,8 @@ msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
-"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, "
-"« m » pour mémoire, ou « d » pour disque) :"
+"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, « m "
+"» pour mémoire, ou « d » pour disque) :"
 
 #: cmd/incus/top.go:264
 msgid "Enter new delay in seconds:"
@@ -3762,8 +3762,7 @@ msgstr "Obtenir la clé en tant que propriété d'instance"
 
 #: cmd/incus/cluster_group.go:826
 msgid "Get values for cluster group configuration keys"
-msgstr ""
-"Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
+msgstr "Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
 
 #: cmd/incus/cluster.go:448
 msgid "Get values for cluster member configuration keys"
@@ -3831,8 +3830,7 @@ msgstr "Clé de configuration invalide"
 
 #: cmd/incus/storage_bucket.go:373 cmd/incus/storage_bucket.go:374
 msgid "Get values for storage bucket configuration keys"
-msgstr ""
-"Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
+msgstr "Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
 
 #: cmd/incus/storage.go:396 cmd/incus/storage.go:397
 msgid "Get values for storage pool configuration keys"
@@ -3859,8 +3857,8 @@ msgstr ""
 "Si le type n’est pas spécifié, Incus considère le type « custom ».\n"
 "Les types reconnus sont « custom », « container » et « virtual-machine ».\n"
 "\n"
-"Pour un instantané, préciser son nom (le type doit être explicitement "
-"défini)."
+"Pour un instantané, préciser son nom (le type doit être explicitement défini)"
+"."
 
 #: cmd/incus/storage_volume.go:413
 #, c-format
@@ -5238,8 +5236,8 @@ msgstr ""
 "configuration (par exemple, « volatile.eth0.hwaddr=10:66:6a:.* »).\n"
 "\n"
 "Exemples :\n"
-" – « user.blah=abc » listera toutes les instances dont la propriété libre "
-"« blah » est égale à « abc »,\n"
+" – « user.blah=abc » listera toutes les instances dont la propriété libre «"
+" blah » est égale à « abc »,\n"
 " – « u.blah=abc » aura le même effet,\n"
 " – « security.privileged=true » listera toutes les instances privilégiées,\n"
 " – « s.privileged=true » aura le même effet,\n"
@@ -5284,8 +5282,8 @@ msgstr ""
 "À ces colonnes s’ajoutent des colonnes personnalisées qui peuvent être "
 "définies avec « [config:|devices:]<clef>[:<nom>][:<largeur maximale>] » :\n"
 " – <clef> représente le nom de la clef de configuration de l’instance "
-"(config) ou des périphériques (devices) à afficher (si « config: » et "
-"« devices: » sont omis, « config: » est choisi par défaut),\n"
+"(config) ou des périphériques (devices) à afficher (si « config: » et «"
+" devices: » sont omis, « config: » est choisi par défaut),\n"
 " – <nom> représente le nom de la colonne à afficher (par défaut, le nom de "
 "la clef),\n"
 " – <largeur maximale> est la largeur maximale de la colonne (les résultats "
@@ -6144,8 +6142,8 @@ msgstr "Configuration minimale (non-interactif)"
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
-"Verbosité minimale des journaux (uniquement disponible avec le format "
-"« pretty »)"
+"Verbosité minimale des journaux (uniquement disponible avec le format «"
+" pretty »)"
 
 #: cmd/incus/admin_init_interactive.go:471
 msgid "Minimum size is 1GiB"
@@ -7184,8 +7182,7 @@ msgstr "Pousser ou récupérer des fichiers récursivement"
 
 #: cmd/incus/storage_volume.go:351
 msgid "Refresh and update the existing storage volume copies"
-msgstr ""
-"Rafraîchir et mettre à jour les copies du volume de stockage existantes"
+msgstr "Rafraîchir et mettre à jour les copies du volume de stockage existantes"
 
 #: cmd/incus/image.go:1375 cmd/incus/image.go:1376
 #, fuzzy
@@ -7253,8 +7250,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
-"Supprimer %s et tout ce qu’il contient (instances, images, volumes, "
-"réseaux…) (oui/non) : "
+"Supprimer %s et tout ce qu’il contient (instances, images, volumes, réseaux"
+"…) (oui/non) : "
 
 #: cmd/incus/cluster_group.go:574
 msgid "Remove a cluster member from a cluster group"
@@ -7839,8 +7836,7 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:1143 cmd/incus/network_zone.go:1144
 msgid "Set network zone record configuration keys"
-msgstr ""
-"Définir des clefs de configuration sur un enregistrement de zone réseau"
+msgstr "Définir des clefs de configuration sur un enregistrement de zone réseau"
 
 #: cmd/incus/profile.go:1001
 #, fuzzy
