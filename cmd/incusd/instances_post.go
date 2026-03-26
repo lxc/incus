@@ -718,7 +718,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.BadRequest(errors.New("Backup file is missing required information"))
 	}
 
-	// Check project permissions.
+	// Early project permissions check (pre-override and pre-backup.yaml).
 	var req api.InstancesPost
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		req = api.InstancesPost{
@@ -861,6 +861,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 			return fmt.Errorf("Failed importing backup: %w", err)
 		}
 
+		// Load the newly imported instance.
 		inst, err := instance.LoadByProjectAndName(s, bInfo.Project, bInfo.Name)
 		if err != nil {
 			return fmt.Errorf("Failed loading instance: %w", err)
@@ -869,12 +870,75 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		// Clean up created instance if the post hook fails below.
 		runReverter.Add(func() { _ = inst.Delete(true) })
 
-		// Run the storage post hook to perform any final actions now that the instance has been created
-		// in the database (this normally includes unmounting volumes that were mounted).
+		// Run a late project restriction check on the instance.
+		instState, _, err := inst.Render()
+		if err != nil {
+			return fmt.Errorf("Failed loading instance state: %w", err)
+		}
+
+		instStateAPI, ok := instState.(*api.Instance)
+		if !ok {
+			return fmt.Errorf("Unexpected instance state type %T", instStateAPI)
+		}
+
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			req = api.InstancesPost{
+				InstancePut: instStateAPI.Writable(),
+				Name:        inst.Name(),
+				Source:      api.InstanceSource{},
+				Type:        inst.Type().ToAPI(),
+			}
+
+			return project.AllowInstanceCreation(tx, projectName, req)
+		})
+		if err != nil {
+			return err
+		}
+
+		// Run any post hook for the instance.
 		if postHook != nil {
 			err = postHook(inst)
 			if err != nil {
 				return fmt.Errorf("Post hook failed: %w", err)
+			}
+		}
+
+		// And wrap up validation by running a check on all snapshots too.
+		snaps, err := inst.Snapshots()
+		if err != nil {
+			return fmt.Errorf("Failed loading instance snapshots: %w", err)
+		}
+
+		for _, snap := range snaps {
+			snapState, _, err := snap.Render()
+			if err != nil {
+				return fmt.Errorf("Failed loading instance snapshot state: %w", err)
+			}
+
+			snapStateAPI, ok := snapState.(*api.InstanceSnapshot)
+			if !ok {
+				return fmt.Errorf("Unexpected snapshot type %T", snapStateAPI)
+			}
+
+			err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				req = api.InstancesPost{
+					InstancePut: api.InstancePut{
+						Architecture: snapStateAPI.Architecture,
+						Config:       snapStateAPI.Config,
+						Description:  snapStateAPI.Description,
+						Devices:      snapStateAPI.Devices,
+						Ephemeral:    snapStateAPI.Ephemeral,
+						Profiles:     snapStateAPI.Profiles,
+					},
+					Name:   inst.Name(),
+					Source: api.InstanceSource{},
+					Type:   inst.Type().ToAPI(),
+				}
+
+				return project.AllowInstanceCreation(tx, projectName, req)
+			})
+			if err != nil {
+				return err
 			}
 		}
 
