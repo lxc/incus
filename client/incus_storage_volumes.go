@@ -1301,7 +1301,7 @@ func (r *ProtocolIncus) GetStoragePoolVolumeFileSFTPConn(pool string, volType st
 	u.Path("1.0", "storage-pools", pool, "volumes", volType, volName, "sftp")
 	r.setURLQueryAttributes(&u.URL)
 
-	return r.rawSFTPConn(&u.URL)
+	return r.rawConn(&u.URL, "sftp")
 }
 
 // GetStoragePoolVolumeFileSFTP returns an SFTP connection to the volume.
