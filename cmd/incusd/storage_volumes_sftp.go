@@ -114,5 +114,5 @@ func storagePoolVolumeTypeSFTPHandler(d *Daemon, r *http.Request) response.Respo
 		}
 	}
 
-	return response.SFTPResponse(r, conn)
+	return response.UpgradeResponse(r, conn, "sftp", nil)
 }
