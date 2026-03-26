@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-26 00:20+0000\n"
-"PO-Revision-Date: 2026-03-26 10:42+0000\n"
-"Last-Translator: Varlorg <varlorg@gmail.com>\n"
+"PO-Revision-Date: 2026-03-26 15:14+0000\n"
+"Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -852,7 +852,7 @@ msgstr "Action (GET par défaut)"
 
 #: cmd/incus/cluster_group.go:757
 msgid "Add a cluster member to a cluster group"
-msgstr "Ajoutez un membre d'un cluster à un groupe de cluster"
+msgstr "Ajouter un membre d’un cluster à un groupe de serveurs"
 
 #: cmd/incus/network_zone.go:1477
 msgid "Add a network zone record entry"
@@ -1212,7 +1212,7 @@ msgstr "Sauvegardes :"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Impossible de traiter ce remplacement, la syntaxe attendue est <appareil>"
+"Impossible de traiter ce remplacement, la syntaxe attendue est <périphérique>"
 ",<clef>=<valeur> : %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:206 cmd/incus/move.go:252
