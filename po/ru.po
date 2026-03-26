@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-26 00:20+0000\n"
-"PO-Revision-Date: 2026-03-26 10:46+0000\n"
+"PO-Revision-Date: 2026-03-26 15:14+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
 "Language: ru\n"
@@ -43,10 +43,10 @@ msgid ""
 "### config:\n"
 "###   size: \"61203283968\""
 msgstr ""
-"### Это представление корзины хранения в формате YAML.\n"
+"### Это представление сегмента хранения в формате YAML.\n"
 "### Любая строка начинающаяся с '#' будет игнорироваться.\n"
 "###\n"
-"### корзина хранения состоит из набора элементов конфигурации.\n"
+"### сегмент хранения состоит из набора элементов конфигурации.\n"
 "###\n"
 "### name: bucket1\n"
 "### used_by: []\n"
@@ -1186,7 +1186,7 @@ msgstr "Резервное копирование экземпляра: %s"
 #: cmd/incus/storage_bucket.go:1368
 #, c-format
 msgid "Backing up storage bucket: %s"
-msgstr "Резервное копирование корзины хранения: %s"
+msgstr "Резервное копирование сегмента хранения: %s"
 
 #: cmd/incus/storage_volume.go:3796
 #, c-format
@@ -1236,7 +1236,7 @@ msgstr ""
 
 #: cmd/incus/storage_bucket.go:114
 msgid "Bucket description"
-msgstr ""
+msgstr "Описание сегмента хранения"
 
 #: cmd/incus/info.go:354
 #, c-format
@@ -1900,9 +1900,8 @@ msgid "Create instances from images"
 msgstr "Невозможно добавить имя контейнера в список"
 
 #: cmd/incus/storage_bucket.go:990 cmd/incus/storage_bucket.go:991
-#, fuzzy
 msgid "Create key for a storage bucket"
-msgstr "Копирование образа: %s"
+msgstr "Создать ключ для сегмента хранения"
 
 #: cmd/incus/network_integration.go:90 cmd/incus/network_integration.go:91
 #, fuzzy
@@ -1910,9 +1909,8 @@ msgid "Create network integrations"
 msgstr "Копирование образа: %s"
 
 #: cmd/incus/storage_bucket.go:105 cmd/incus/storage_bucket.go:106
-#, fuzzy
 msgid "Create new custom storage buckets"
-msgstr "Копирование образа: %s"
+msgstr "Создать новые пользовательские сегменты хранения"
 
 #: cmd/incus/storage_volume.go:548 cmd/incus/storage_volume.go:549
 msgid "Create new custom storage volumes"
@@ -2124,9 +2122,8 @@ msgid "Delete instances"
 msgstr "Невозможно добавить имя контейнера в список"
 
 #: cmd/incus/storage_bucket.go:1088 cmd/incus/storage_bucket.go:1089
-#, fuzzy
 msgid "Delete key from a storage bucket"
-msgstr "Копирование образа: %s"
+msgstr "Удалить ключ из сегмента хранения"
 
 #: cmd/incus/network_acl.go:771 cmd/incus/network_acl.go:772
 msgid "Delete network ACLs"
@@ -5919,24 +5916,24 @@ msgid "Network ACL description"
 msgstr "Описание сетевого списка доступа"
 
 #: cmd/incus/network_zone.go:752
-#, fuzzy, c-format
+#, c-format
 msgid "Network Zone %s deleted"
-msgstr " Использование сети:"
+msgstr "Сетевая DNS зона %s удалена"
 
 #: cmd/incus/network_address_set.go:315
-#, fuzzy, c-format
+#, c-format
 msgid "Network address set %s created"
-msgstr " Использование сети:"
+msgstr "Создан набор сетевых адресов %s"
 
 #: cmd/incus/network_address_set.go:651
-#, fuzzy, c-format
+#, c-format
 msgid "Network address set %s deleted"
-msgstr " Использование сети:"
+msgstr "Набор сетевых адресов %s удален"
 
 #: cmd/incus/network_address_set.go:603
-#, fuzzy, c-format
+#, c-format
 msgid "Network address set %s renamed to %s"
-msgstr " Использование сети:"
+msgstr "Набор сетевых адресов %s переименован в %s"
 
 #: cmd/incus/network_address_set.go:244
 #, fuzzy
@@ -5949,14 +5946,14 @@ msgid "Network description"
 msgstr " Использование сети:"
 
 #: cmd/incus/network_forward.go:389
-#, fuzzy, c-format
+#, c-format
 msgid "Network forward %s created"
-msgstr " Использование сети:"
+msgstr "Создана переадресация сети %"
 
 #: cmd/incus/network_forward.go:820
-#, fuzzy, c-format
+#, c-format
 msgid "Network forward %s deleted"
-msgstr " Использование сети:"
+msgstr "Переадресация сети %s удалена"
 
 #: cmd/incus/network_forward.go:326
 #, fuzzy
@@ -5964,43 +5961,43 @@ msgid "Network forward description"
 msgstr " Использование сети:"
 
 #: cmd/incus/network_integration.go:156
-#, fuzzy, c-format
+#, c-format
 msgid "Network integration %s created"
-msgstr " Использование сети:"
+msgstr "Интеграция сети %s создана"
 
 #: cmd/incus/network_integration.go:204
-#, fuzzy, c-format
+#, c-format
 msgid "Network integration %s deleted"
-msgstr " Использование сети:"
+msgstr "Интеграция сети %s удалена"
 
 #: cmd/incus/network_integration.go:559
-#, fuzzy, c-format
+#, c-format
 msgid "Network integration %s renamed to %s"
-msgstr " Использование сети:"
+msgstr "Интеграция сети %s переименована в %s"
 
 #: cmd/incus/network_load_balancer.go:391
-#, fuzzy, c-format
+#, c-format
 msgid "Network load balancer %s created"
-msgstr " Использование сети:"
+msgstr "Создан балансировщик сетевой нагрузки %s"
 
 #: cmd/incus/network_load_balancer.go:799
-#, fuzzy, c-format
+#, c-format
 msgid "Network load balancer %s deleted"
-msgstr " Использование сети:"
+msgstr "Балансировщик сетевой нагрузки %s удален"
 
 #: cmd/incus/create.go:67
 msgid "Network name"
 msgstr ""
 
 #: cmd/incus/network_peer.go:412
-#, fuzzy, c-format
+#, c-format
 msgid "Network peer %s created"
-msgstr " Использование сети:"
+msgstr "Создана сетевая точка обмена трафиком %s"
 
 #: cmd/incus/network_peer.go:816
-#, fuzzy, c-format
+#, c-format
 msgid "Network peer %s deleted"
-msgstr " Использование сети:"
+msgstr "Удалена сетевая точка обмена трафиком %s"
 
 #: cmd/incus/network_peer.go:416
 #, c-format
@@ -6024,19 +6021,19 @@ msgid "Network usage:"
 msgstr " Использование сети:"
 
 #: cmd/incus/network_zone.go:452
-#, fuzzy, c-format
+#, c-format
 msgid "Network zone %s created"
-msgstr " Использование сети:"
+msgstr "Создана сетевая DNS зона %s"
 
 #: cmd/incus/network_zone.go:1123
-#, fuzzy, c-format
+#, c-format
 msgid "Network zone record %s created"
-msgstr " Использование сети:"
+msgstr "Создана запись %s сетевой DNS зоны"
 
 #: cmd/incus/network_zone.go:1440
-#, fuzzy, c-format
+#, c-format
 msgid "Network zone record %s deleted"
-msgstr " Использование сети:"
+msgstr "Удалена запись %s сетевой DNS зоны"
 
 #: cmd/incus/file.go:456 cmd/incus/storage_volume.go:2626
 msgid "Never follow symbolic links in source path"
@@ -6391,14 +6388,14 @@ msgid "Processes: %d"
 msgstr ""
 
 #: cmd/incus/main_aliases.go:239 cmd/incus/main_aliases.go:246
-#, fuzzy, c-format
+#, c-format
 msgid "Processing aliases failed: %s"
-msgstr "Невозможно добавить имя контейнера в список"
+msgstr "Обработка псевдонимов завершилась с ошибкой: %s"
 
 #: cmd/incus/info.go:353 cmd/incus/info.go:366 cmd/incus/info.go:380
-#, fuzzy, c-format
+#, c-format
 msgid "Product ID: %v"
-msgstr "Авто-обновление: %s"
+msgstr "Идентификатор продукта: %v"
 
 #: cmd/incus/info.go:466
 #, fuzzy, c-format
@@ -6534,9 +6531,9 @@ msgid "Publish instances as images"
 msgstr ""
 
 #: cmd/incus/publish.go:225
-#, fuzzy, c-format
+#, c-format
 msgid "Publishing instance: %s"
-msgstr "Невозможно добавить имя контейнера в список"
+msgstr "Публикация экземпляра: %s"
 
 #: cmd/incus/storage_volume.go:2615 cmd/incus/storage_volume.go:2616
 msgid "Pull files from custom volumes"
@@ -6654,9 +6651,9 @@ msgid "Refresh images"
 msgstr "Копирование образа: %s"
 
 #: cmd/incus/copy.go:385
-#, fuzzy, c-format
+#, c-format
 msgid "Refreshing instance: %s"
-msgstr "Невозможно добавить имя контейнера в список"
+msgstr "Обновление экземпляра: %s"
 
 #: cmd/incus/image.go:1400
 #, fuzzy, c-format
@@ -7089,9 +7086,9 @@ msgid "Send a raw query to the server"
 msgstr ""
 
 #: cmd/incus/info.go:357
-#, fuzzy, c-format
+#, c-format
 msgid "Serial Number: %v"
-msgstr "Авто-обновление: %s"
+msgstr "Серийный номер: %v"
 
 #: cmd/incus/info.go:607
 #, fuzzy
@@ -7774,9 +7771,9 @@ msgid "Size in GiB of the new loop device"
 msgstr ""
 
 #: cmd/incus/image.go:955
-#, fuzzy, c-format
+#, c-format
 msgid "Size: %.2fMiB"
-msgstr "Авто-обновление: %s"
+msgstr "Размер: %.2fМиБ"
 
 #: cmd/incus/info.go:293 cmd/incus/info.go:309
 #, fuzzy, c-format
@@ -7805,9 +7802,9 @@ msgid "Socket %d:"
 msgstr ""
 
 #: cmd/incus/action.go:462
-#, fuzzy, c-format
+#, c-format
 msgid "Some instances failed to %s"
-msgstr "Невозможно добавить имя контейнера в список"
+msgstr "Некоторые экземпляры не удалось %s"
 
 #: cmd/incus/top.go:441
 msgid "Sorting Method:"
@@ -7876,18 +7873,18 @@ msgid "Stopping instance failed!"
 msgstr "Не удалось остановить экземпляр!"
 
 #: cmd/incus/delete.go:114
-#, fuzzy, c-format
+#, c-format
 msgid "Stopping the instance %s failed: %s"
-msgstr "Невозможно добавить имя контейнера в список"
+msgstr "Остановка экземпляра %s не удалась: %s"
 
 #: cmd/incus/admin_init.go:59
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
 msgstr ""
 
 #: cmd/incus/storage_bucket.go:177
-#, fuzzy, c-format
+#, c-format
 msgid "Storage bucket %q created"
-msgstr " Использование сети:"
+msgstr "Корзина хранения %q создана"
 
 #: cmd/incus/storage_bucket.go:233
 #, fuzzy, c-format
