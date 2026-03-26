@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-26 00:20+0000\n"
-"PO-Revision-Date: 2026-03-26 15:14+0000\n"
+"PO-Revision-Date: 2026-03-26 23:56+0000\n"
 "Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
@@ -679,15 +679,15 @@ msgstr "'%s' n'est pas un format de fichier pris en charge"
 #: cmd/incus/usage/parse.go:242
 #, c-format
 msgid "(skipped: %s)\n"
-msgstr ""
+msgstr "(ignoré : %s)\n"
 
 #: cmd/incus/usage/parse.go:244
 msgid "(skipped: no value given)"
-msgstr ""
+msgstr "(ignoré : pas de valeur fournie)"
 
 #: cmd/incus/usage/parse.go:39
 msgid ", "
-msgstr ""
+msgstr ", "
 
 #: cmd/incus/info.go:326
 #, c-format
@@ -705,9 +705,8 @@ msgid "- Port %d (%s)"
 msgstr "- Port %d (%s)"
 
 #: cmd/incus/warning.go:371
-#, fuzzy
 msgid "--all cannot be used together with other arguments"
-msgstr "--target ne peut pas être utilisé avec des instances"
+msgstr "--all ne peut pas être utilisé avec d’autres arguments"
 
 #: cmd/incus/action.go:253
 msgid "--console can't be used while forcing instance shutdown"
@@ -736,19 +735,21 @@ msgid "--network-port can't be used without --network-address"
 msgstr "--network-port ne peut pas être utilisé sans --network-address"
 
 #: cmd/incus/utils_copy.go:48
-#, fuzzy
 msgid "--no-dereference/-P cannot be used together with stdout as a target"
-msgstr "--no-profiles ne peut pas être utilisé avec --refresh"
+msgstr ""
+"--no-dereference/-P ne peut pas être utilisé lorsque la cible est la sortie "
+"standard"
 
 #: cmd/incus/utils_copy.go:38
 msgid ""
 "--no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive"
 msgstr ""
+"--no-dereference/-P, --follow/-H, et --dereference/-L sont mutuellement "
+"exclusifs"
 
 #: cmd/incus/profile.go:232
-#, fuzzy
 msgid "--no-profiles cannot be used together with other arguments"
-msgstr "--no-profiles ne peut pas être utilisé avec --refresh"
+msgstr "--no-profiles ne peut pas être utilisé avec d’autres arguments"
 
 #: cmd/incus/copy.go:110
 msgid "--no-profiles cannot be used with --refresh"
@@ -760,7 +761,7 @@ msgstr "--project ne peut pas être utilisé avec la commande query"
 
 #: cmd/incus/utils_copy.go:76
 msgid "--recursive/-r is required when pulling directories"
-msgstr ""
+msgstr "Il est nécessaire de passer --recursive/-r pour tirer des répertoires"
 
 #: cmd/incus/copy.go:166
 msgid "--refresh can only be used with instances"
@@ -786,7 +787,7 @@ msgstr "Un certificat client est déjà présent"
 
 #: cmd/incus/usage/usage.go:768
 msgid "ACL"
-msgstr ""
+msgstr "ACL"
 
 #: cmd/incus/network_allocations.go:82
 msgid "ADDRESS"
@@ -806,7 +807,7 @@ msgstr "ALIAS"
 
 #: cmd/incus/query.go:32
 msgid "API path"
-msgstr ""
+msgstr "chemin d’API"
 
 #: cmd/incus/list.go:801
 msgid "APP"
@@ -969,7 +970,7 @@ msgstr "Ajoutez des règles à une liste de contrôle d'accès (ACL)"
 
 #: cmd/incus/color/color.go:42
 msgid "Additional Help Topics:"
-msgstr ""
+msgstr "Rubriques d’aide additionnelles :"
 
 #: cmd/incus/admin_recover.go:130
 msgid ""
@@ -1037,9 +1038,9 @@ msgstr ""
 "vous continuer ?"
 
 #: cmd/incus/profile.go:254
-#, fuzzy, c-format
+#, c-format
 msgid "All profiles removed from %s"
-msgstr "Le profil « %s » a été supprimé de « %s »"
+msgstr "Tous les profils ont été retirés de %s"
 
 #: cmd/incus/storage_volume.go:1456 cmd/incus/storage_volume.go:3354
 msgid "All projects"
@@ -1055,7 +1056,7 @@ msgstr "Nom alternatif du certificat"
 
 #: cmd/incus/file.go:458 cmd/incus/storage_volume.go:2628
 msgid "Always follow symbolic links in source path"
-msgstr ""
+msgstr "Toujours suivre les liens symboliques source"
 
 #: cmd/incus/file.go:1016
 #, fuzzy, c-format
@@ -1159,9 +1160,8 @@ msgid "Automatic (non-interactive) mode"
 msgstr "Mode automatique (non-interactif)"
 
 #: cmd/incus/color/color.go:39
-#, fuzzy
 msgid "Available Commands:"
-msgstr "Commandes disponibles :"
+msgstr "Commandes disponibles :"
 
 #: cmd/incus/remote.go:175
 msgid "Available projects:"
@@ -1413,9 +1413,8 @@ msgstr ""
 "profils"
 
 #: cmd/incus/utils.go:299
-#, fuzzy
 msgid "Cannot read the stdin twice"
-msgstr "Impossible de lire depuis stdin : %w"
+msgstr "Impossible de lire plusieurs fois depuis l’entrée standard"
 
 #: cmd/incus/storage_volume.go:425
 msgid ""
@@ -1531,14 +1530,14 @@ msgid "Cluster group description"
 msgstr "Description du groupe de serveurs"
 
 #: cmd/incus/cluster.go:1351
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster join token for %s deleted"
-msgstr "Jeton d’association au cluster pour %s:%s supprimé"
+msgstr "Jeton d’association au cluster pour %s supprimé"
 
 #: cmd/incus/cluster_group.go:155
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster member %s added to cluster groups %v"
-msgstr "Membre de cluster %s ajouté aux groupes %s"
+msgstr "Membre %s du cluster ajouté aux groupes de serveurs %v"
 
 #: cmd/incus/cluster_group.go:806
 #, c-format
@@ -2221,9 +2220,8 @@ msgid "Description"
 msgstr "Description"
 
 #: cmd/incus/color/color.go:34
-#, fuzzy
 msgid "Description:"
-msgstr "Description"
+msgstr "Description :"
 
 #: cmd/incus/info.go:648 cmd/incus/storage_volume.go:1311
 #, c-format
@@ -2308,9 +2306,9 @@ msgstr ""
 "Le périphérique du ou des profils ne peut pas être récupérés pour l'instance"
 
 #: cmd/incus/config_device.go:507 cmd/incus/config_device.go:534
-#, fuzzy, c-format
+#, c-format
 msgid "Device “%s” doesn't exist"
-msgstr "Ce périphérique n’existe pas"
+msgstr "Le périphérique « %s » n’existe pas"
 
 #: cmd/incus/info.go:283 cmd/incus/info.go:307
 #, c-format
@@ -2610,7 +2608,7 @@ msgstr "Éditer la configuration d’un bucket de stockage en YAML"
 
 #: cmd/incus/storage_bucket.go:1138 cmd/incus/storage_bucket.go:1139
 msgid "Edit storage bucket key as YAML"
-msgstr "Éditer en YAML une entrée d’un bucket de stockage"
+msgstr "Éditer en YAML une clef d’accès à un bucket de stockage"
 
 #: cmd/incus/storage.go:270 cmd/incus/storage.go:271
 msgid "Edit storage pool configurations as YAML"
@@ -2776,9 +2774,8 @@ msgid "Error while executing alias expansion: %s\n"
 msgstr "Erreur lors de l’expansion de l'alias : %s\n"
 
 #: cmd/incus/color/color.go:33
-#, fuzzy
 msgid "Error:"
-msgstr "Erreur : %v\n"
+msgstr "Erreur :"
 
 #: cmd/incus/cluster.go:1488 cmd/incus/cluster.go:1489
 msgid "Evacuate cluster member"
@@ -2795,7 +2792,7 @@ msgstr "Type d'événements à surveiller"
 
 #: cmd/incus/color/color.go:38
 msgid "Examples:"
-msgstr ""
+msgstr "Exemples :"
 
 #: cmd/incus/admin_sql.go:32
 msgid "Execute a SQL query against the local or global database"
@@ -3286,9 +3283,9 @@ msgid "Failed to parse dump response: %w"
 msgstr "Échec de l'analyse de la réponse du dump : %w"
 
 #: cmd/incus/admin_init_preseed.go:40
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse the preseed: %w"
-msgstr "Échec de l'analyse du preseed : %w"
+msgstr "Échec de l’analyse du preseed : %w"
 
 #: cmd/incus/admin_init_preseed.go:31
 #, fuzzy, c-format
@@ -3397,9 +3394,8 @@ msgid "Family: %v"
 msgstr "Famille : %v"
 
 #: cmd/incus/list.go:143
-#, fuzzy
 msgid "Fast mode (same as --columns=nsacPt)"
-msgstr "Mode rapide (identique à --columns=nsacPt"
+msgstr "Mode rapide (identique à --columns=nsacPt)"
 
 #: cmd/incus/export.go:186
 #, fuzzy, c-format
@@ -3413,21 +3409,19 @@ msgstr "Empreinte : %s"
 
 #: cmd/incus/color/color.go:40
 msgid "Flags:"
-msgstr ""
+msgstr "Options :"
 
 #: cmd/incus/file.go:457 cmd/incus/storage_volume.go:2627
 msgid "Follow command-line symbolic links in source path"
-msgstr ""
+msgstr "Suivre les liens symboliques source"
 
 #: cmd/incus/cluster.go:1491
-#, fuzzy
 msgid "Force a particular evacuation action"
-msgstr "Forcer une action d'évacuation particulière"
+msgstr "Forcer une action d’évacuation particulière"
 
 #: cmd/incus/cluster.go:1521
-#, fuzzy
 msgid "Force a particular restoration action"
-msgstr "Forcer une action d'évacuation particulière"
+msgstr "Forcer une action de restauration particulière"
 
 #: cmd/incus/file.go:111 cmd/incus/storage_volume.go:2195
 msgid "Force creating files or directories"
@@ -3653,9 +3647,8 @@ msgid "Generate manpages for all commands"
 msgstr "Générer les pages de manuel pour toutes les commandes"
 
 #: cmd/incus/remote.go:679
-#, fuzzy
 msgid "Generate the client certificate"
-msgstr "Ajouter de nouveaux certificat pour des clients de confiance"
+msgstr "Générer le certificat client"
 
 #: cmd/incus/remote.go:198 cmd/incus/remote.go:442 cmd/incus/remote.go:703
 #: cmd/incus/remote.go:791 cmd/incus/remote.go:898
@@ -3867,7 +3860,7 @@ msgstr ""
 
 #: cmd/incus/color/color.go:41
 msgid "Global Flags:"
-msgstr ""
+msgstr "Options globales :"
 
 #: cmd/incus/exec.go:70
 msgid "Group ID to run the command as (default 0)"
@@ -3990,6 +3983,8 @@ msgstr ""
 msgid ""
 "If the command is valid, explain its parsed arguments instead of running it"
 msgstr ""
+"Si la commande est valide, expliquer comment ses arguments sont interprétés "
+"sans la lancer"
 
 #: cmd/incus/image.go:682 cmd/incus/publish.go:47
 msgid "If the image alias already exists, delete and create a new one"
@@ -4261,14 +4256,13 @@ msgid "Invalid format %q"
 msgstr "Format invalide : %q"
 
 #: cmd/incus/monitor.go:74
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid format: %s"
-msgstr "Cible invalide %s"
+msgstr "Format invalide : %s"
 
 #: cmd/incus/top.go:275
-#, fuzzy
 msgid "Invalid input, please enter a positive number"
-msgstr "Entrée invalide, veuillez entrer un entier positif"
+msgstr "Entrée invalide, veuillez entrer un nombre positif"
 
 #: cmd/incus/cluster.go:1738
 #, c-format
@@ -4310,9 +4304,9 @@ msgid "Invalid peer type"
 msgstr "Type de pair invalide"
 
 #: cmd/incus/remote.go:383
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid protocol: %s"
-msgstr "Cible invalide %s"
+msgstr "Protocole invalide : %s"
 
 #: cmd/incus/top.go:353
 #, fuzzy
@@ -5488,7 +5482,7 @@ msgstr ""
 
 #: cmd/incus/storage_bucket.go:850
 msgid "List storage bucket keys"
-msgstr "Lister les entrées d’un bucket de stockage"
+msgstr "Lister les clefs d’accès à un bucket de stockage"
 
 #: cmd/incus/storage_bucket.go:852
 msgid ""
@@ -5511,7 +5505,7 @@ msgid ""
 "  d - Description\n"
 "  r - Role"
 msgstr ""
-"Lister les entrées d’un bucket de stockage\n"
+"Lister les clefs d’accès à un bucket de stockage\n"
 "\n"
 "Disposition des colonnes par défaut : ndr\n"
 "\n"
@@ -5726,7 +5720,7 @@ msgstr "Description de l’équilibreur de charge"
 
 #: cmd/incus/info.go:495
 msgid "Load:"
-msgstr ""
+msgstr "Charge :"
 
 #: cmd/incus/info.go:669 cmd/incus/storage_volume.go:1327
 #, c-format
@@ -6015,11 +6009,11 @@ msgstr "Gérer les projets"
 
 #: cmd/incus/storage_bucket.go:801
 msgid "Manage storage bucket keys"
-msgstr "Gérer les entrées d’un bucket de stockage"
+msgstr "Gérer les clefs d’accès à un bucket de stockage"
 
 #: cmd/incus/storage_bucket.go:802
 msgid "Manage storage bucket keys."
-msgstr "Gérer les entrées d’un bucket de stockage."
+msgstr "Gérer les clefs d’accès à un bucket de stockage."
 
 #: cmd/incus/storage_bucket.go:37
 msgid "Manage storage buckets"
@@ -6573,7 +6567,7 @@ msgstr "L’enregistrement de zone réseau « %s » a été supprimé"
 
 #: cmd/incus/file.go:456 cmd/incus/storage_volume.go:2626
 msgid "Never follow symbolic links in source path"
-msgstr ""
+msgstr "Ne jamais suivre les liens symboliques source"
 
 #: cmd/incus/publish.go:43
 msgid "New alias to define at target"
@@ -8084,7 +8078,7 @@ msgstr "Afficher la configuration étendue"
 
 #: cmd/incus/image.go:1454 cmd/incus/image.go:1455
 msgid "Show image properties"
-msgstr ""
+msgstr "Afficher les propriétés d’une image"
 
 #: cmd/incus/config_metadata.go:184 cmd/incus/config_metadata.go:185
 msgid "Show instance metadata files"
@@ -8177,7 +8171,7 @@ msgstr "Afficher la configuration d’un bucket de stockage"
 
 #: cmd/incus/storage_bucket.go:1259 cmd/incus/storage_bucket.go:1260
 msgid "Show storage bucket key configurations"
-msgstr "Afficher la configuration d’une entrée d’un bucket de stockage"
+msgstr "Afficher la configuration d’une clef d’accès à un bucket de stockage"
 
 #: cmd/incus/storage.go:903 cmd/incus/storage.go:904
 msgid "Show storage pool configurations and resources"
@@ -8244,11 +8238,11 @@ msgstr "Afficher les dernières entrées du journal de l’instance"
 
 #: cmd/incus/info.go:54
 msgid "Show the resources available to the server"
-msgstr ""
+msgstr "Afficher les ressources disponibles pour le serveur"
 
 #: cmd/incus/storage.go:907
 msgid "Show the resources available to the storage pool"
-msgstr ""
+msgstr "Afficher les ressources disponibles pour le pool de stockage"
 
 #: cmd/incus/storage.go:477
 msgid "Show the used and free space in bytes"
@@ -8318,7 +8312,7 @@ msgstr "Certaines instances n'ont pas réussi à %s"
 
 #: cmd/incus/top.go:441
 msgid "Sorting Method:"
-msgstr ""
+msgstr "Tri :"
 
 #: cmd/incus/admin_recover.go:123
 msgid ""
@@ -8404,12 +8398,12 @@ msgstr "Le bucket de stockage %q a été supprimé"
 #: cmd/incus/storage_bucket.go:1067
 #, c-format
 msgid "Storage bucket key %q added"
-msgstr "Entrée %q ajoutée au bucket de stockage"
+msgstr "Clef d’accès %q ajoutée au bucket de stockage"
 
 #: cmd/incus/storage_bucket.go:1120
 #, c-format
 msgid "Storage bucket key %q removed"
-msgstr "L’entrée %q du bucket de stockage a été supprimée"
+msgstr "Clef d’accès %q supprimée du bucket de stockage"
 
 #: cmd/incus/admin_init_auto.go:52
 msgid "Storage has already been configured"
@@ -8887,6 +8881,8 @@ msgid ""
 "This command was called with --explain; its arguments are valid, but no "
 "further processing is done"
 msgstr ""
+"Cette commande a été lancée avec --explain ; ses arguments sont valides, "
+"mais celle-ci n’est pas exécutée"
 
 #: cmd/incus/admin_recover.go:65
 msgid "This server currently has the following storage pools:"
@@ -9131,9 +9127,9 @@ msgid "Unknown file type '%s'"
 msgstr "Type de fichier inconnu : %s"
 
 #: cmd/incus/usage/usage.go:336
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown flag --%s"
-msgstr "Clef inconnue : %s"
+msgstr "Option inconnue : --%s"
 
 #: cmd/incus/network_acl.go:913 cmd/incus/network_acl.go:1035
 #, c-format
@@ -9335,7 +9331,7 @@ msgstr ""
 #: cmd/incus/info.go:915
 #, c-format
 msgid "Unsupported instance type: %s"
-msgstr ""
+msgstr "Type d’instance non supporté : %s"
 
 #: cmd/incus/network.go:963
 msgid "Up delay"
@@ -9385,6 +9381,8 @@ msgid ""
 "Use \"{{.CommandPath}} [<command>] --help\" for more information about a "
 "command."
 msgstr ""
+"Veuillez utiliser « {{.CommandPath}} [<commande>] --help » pour plus "
+"d’informations au sujet d’une commande."
 
 #: cmd/incus/export.go:54
 msgid ""
@@ -9399,7 +9397,7 @@ msgstr ""
 
 #: cmd/incus/main.go:165
 msgid "Use with help or --help to view sub-commands"
-msgstr ""
+msgstr "Utiliser avec help ou --help pour voir les sous-commandes"
 
 #: cmd/incus/info.go:520 cmd/incus/info.go:531 cmd/incus/info.go:536
 #: cmd/incus/info.go:542
@@ -9707,19 +9705,16 @@ msgid "Zone description"
 msgstr "Description"
 
 #: cmd/incus/usage/usage.go:769
-#, fuzzy
 msgid "address"
-msgstr "Expire : %s"
+msgstr "adresse"
 
 #: cmd/incus/usage/usage.go:770
-#, fuzzy
 msgid "address set"
-msgstr "Addresse : %s"
+msgstr "ensemble d’adresses"
 
 #: cmd/incus/usage/usage.go:771
-#, fuzzy
 msgid "alias"
-msgstr "<alias>"
+msgstr "alias"
 
 #: cmd/incus/info.go:657
 msgid "application"
@@ -9727,41 +9722,41 @@ msgstr "application"
 
 #: cmd/incus/usage/usage.go:772
 msgid "backend"
-msgstr ""
+msgstr "backend"
 
 #: cmd/incus/usage/usage.go:773
 msgid "backup file"
-msgstr ""
+msgstr "fichier de sauvegarde"
 
 #: cmd/incus/usage/usage.go:774
 msgid "bucket"
-msgstr ""
+msgstr "bucket"
 
 #: cmd/incus/usage/parse.go:81
 #, c-format
 msgid "cannot parse this argument; unexpected %s"
-msgstr ""
+msgstr "impossible de traiter cet argument ; %s inattendu"
 
 #: cmd/incus/usage/parse.go:84
 #, c-format
 msgid "cannot parse this argument; unexpected %s in %s"
-msgstr ""
+msgstr "impossible de traiter cet argument ; %s inattendu dans %s"
 
 #: cmd/incus/cluster.go:1367 cmd/incus/config_trust.go:165
 msgid "cert.crt"
-msgstr ""
+msgstr "cert.crt"
 
 #: cmd/incus/cluster.go:1367
 msgid "cert.key"
-msgstr ""
+msgstr "cert.key"
 
 #: cmd/incus/usage/usage.go:775
 msgid "client"
-msgstr ""
+msgstr "client"
 
 #: cmd/incus/cluster.go:983
 msgid "cluster"
-msgstr ""
+msgstr "cluster"
 
 #: cmd/incus/alias.go:57
 #, fuzzy
@@ -9769,9 +9764,8 @@ msgid "command"
 msgstr "Commandes de débogage"
 
 #: cmd/incus/usage/usage.go:776
-#, fuzzy
 msgid "command-line argument"
-msgstr "Gérer les alias des commandes"
+msgstr "argument de ligne de commande"
 
 #: cmd/incus/wait.go:25
 #, fuzzy
@@ -9787,14 +9781,12 @@ msgid "description"
 msgstr "description"
 
 #: cmd/incus/usage/usage.go:777
-#, fuzzy
 msgid "device"
-msgstr "Périphérique PCI :"
+msgstr "périphérique"
 
 #: cmd/incus/usage/usage.go:779
-#, fuzzy
 msgid "directory"
-msgstr "%s n'est pas un répertoire"
+msgstr "répertoire"
 
 #: cmd/incus/image.go:944
 msgid "disabled"
@@ -9820,35 +9812,31 @@ msgstr "erreur : %v"
 #: cmd/incus/usage/parse.go:99
 #, c-format
 msgid "expected %s"
-msgstr ""
+msgstr "attendu : %s"
 
 #: cmd/incus/usage/usage.go:782
 msgid "expiry"
-msgstr ""
+msgstr "expiration"
 
 #: cmd/incus/usage/usage.go:783
-#, fuzzy
 msgid "file"
-msgstr "Profils : %s"
+msgstr "fichier"
 
 #: cmd/incus/usage/usage.go:784
-#, fuzzy
 msgid "filter"
-msgstr "Filtrage VLAN"
+msgstr "filtre"
 
 #: cmd/incus/usage/usage.go:785
-#, fuzzy
 msgid "fingerprint"
-msgstr "Empreinte : %s"
+msgstr "empreinte"
 
 #: cmd/incus/usage/usage.go:786
 msgid "group"
-msgstr ""
+msgstr "groupe"
 
 #: cmd/incus/usage/usage.go:787
-#, fuzzy
 msgid "image"
-msgstr "Liste les images"
+msgstr "image"
 
 #: cmd/incus/alias.go:67
 msgid ""
@@ -10512,31 +10500,28 @@ msgid "info"
 msgstr "information"
 
 #: cmd/incus/usage/usage.go:788
-#, fuzzy
 msgid "instance"
-msgstr "Lister les instances"
+msgstr "instance"
 
 #: cmd/incus/usage/usage.go:789
-#, fuzzy
 msgid "interface"
-msgstr "Interface hôte"
+msgstr "interface"
 
 #: cmd/incus/usage/usage.go:792
 msgid "key"
-msgstr ""
+msgstr "clef"
 
 #: cmd/incus/usage/usage.go:790
-#, fuzzy
 msgid "listen address"
-msgstr "Adresse d’écoute manquante"
+msgstr "adresse d’écoute"
 
 #: cmd/incus/usage/usage.go:791
 msgid "listen port"
-msgstr ""
+msgstr "port d’écoute"
 
 #: cmd/incus/usage/usage.go:794
 msgid "member"
-msgstr ""
+msgstr "membre"
 
 #: cmd/incus/remote.go:510
 #, fuzzy
@@ -10548,14 +10533,12 @@ msgid "name"
 msgstr "nom"
 
 #: cmd/incus/usage/usage.go:795
-#, fuzzy
 msgid "network"
-msgstr "Nom du réseau"
+msgstr "réseau"
 
 #: cmd/incus/usage/usage.go:796
-#, fuzzy
 msgid "network integration"
-msgstr "Lister les intégrations réseau"
+msgstr "intégration réseau"
 
 #: cmd/incus/network_peer.go:304
 #, fuzzy
@@ -10563,9 +10546,9 @@ msgid "network or integration"
 msgstr "Lister les intégrations réseau"
 
 #: cmd/incus/usage/usage.go:854
-#, fuzzy, c-format
+#, c-format
 msgid "new %s name"
-msgstr "Nom du réseau"
+msgstr "%s (nouveau nom)"
 
 #: cmd/incus/config_trust.go:486 cmd/incus/image.go:934 cmd/incus/image.go:939
 #: cmd/incus/image.go:1154
@@ -10575,7 +10558,7 @@ msgstr "non"
 #: cmd/incus/usage/parse.go:54
 #, c-format
 msgid "not enough arguments; expected a value for %s"
-msgstr ""
+msgstr "pas assez d’arguments ; valeur attendue pour %s"
 
 #: cmd/incus/remote.go:502
 msgid "ok (y/n/[fingerprint])?"
@@ -10584,20 +10567,19 @@ msgstr "ok (o/n/[empreinte]) ?"
 #: cmd/incus/usage/parse.go:39
 #, c-format
 msgid "one of %s or %s"
-msgstr ""
+msgstr "une valeur parmi %s ou %s"
 
 #: cmd/incus/usage/usage.go:797
-#, fuzzy
 msgid "operation"
-msgstr "application"
+msgstr "opération"
 
 #: cmd/incus/usage/usage.go:798
 msgid "path"
-msgstr ""
+msgstr "chemin"
 
 #: cmd/incus/usage/usage.go:799
 msgid "peer"
-msgstr ""
+msgstr "pair"
 
 #: cmd/incus/config.go:57
 msgid "please use `incus profile`"
@@ -10605,60 +10587,55 @@ msgstr "veuillez utiliser `incus profile`"
 
 #: cmd/incus/usage/usage.go:800
 msgid "pool"
-msgstr ""
+msgstr "pool"
 
 #: cmd/incus/usage/usage.go:801
 msgid "port"
-msgstr ""
+msgstr "port"
 
 #: cmd/incus/admin_init.go:36
 msgid "preseed.yaml"
-msgstr ""
+msgstr "preseed.yaml"
 
 #: cmd/incus/usage/usage.go:802
-#, fuzzy
 msgid "profile"
-msgstr "Profils : %s"
+msgstr "profil"
 
 #: cmd/incus/usage/usage.go:803
-#, fuzzy
 msgid "project"
-msgstr "Tous les projets"
+msgstr "projet"
 
 #: cmd/incus/usage/usage.go:804
-#, fuzzy
 msgid "protocol"
-msgstr "Cible invalide %s"
+msgstr "protocole"
 
 #: cmd/incus/usage/usage.go:805
 msgid "query"
-msgstr ""
+msgstr "requête"
 
 #: cmd/incus/usage/usage.go:806
 msgid "record"
-msgstr ""
+msgstr "enregistrement"
 
 #: cmd/incus/usage/usage.go:807
-#, fuzzy
 msgid "remote"
-msgstr "<serveur_distant>"
+msgstr "serveur distant"
 
 #: cmd/incus/usage/usage.go:811
 msgid "role"
-msgstr ""
+msgstr "rôle"
 
 #: cmd/incus/image.go:669
 msgid "rootfs tarball"
-msgstr ""
+msgstr "tarball du rootfs"
 
 #: cmd/incus/usage/usage.go:812
-#, fuzzy
 msgid "snapshot"
-msgstr "Instantanés :"
+msgstr "instantané"
 
 #: cmd/incus/remote_unix.go:36
 msgid "socket file"
-msgstr ""
+msgstr "socket"
 
 #: cmd/incus/storage.go:533
 msgid "space used"
@@ -10675,29 +10652,29 @@ msgstr "sshfs monté %q sur %q"
 
 #: cmd/incus/usage/usage.go:814
 msgid "symlink target path"
-msgstr ""
+msgstr "cible du lien symbolique"
 
 #: cmd/incus/usage/usage.go:815
 msgid "tarball"
-msgstr ""
+msgstr "tarball"
 
 #: cmd/incus/usage/usage.go:860
-#, fuzzy, c-format
+#, c-format
 msgid "target %s"
-msgstr "<cible>"
+msgstr "%s cible"
 
 #: cmd/incus/usage/usage.go:816
 msgid "template"
-msgstr ""
+msgstr "modèle"
 
 #: cmd/incus/remote.go:121 cmd/incus/usage/usage.go:817
 msgid "token"
-msgstr ""
+msgstr "jeton"
 
 #: cmd/incus/usage/parse.go:71
 #, c-format
 msgid "too many arguments; unexpected %s"
-msgstr ""
+msgstr "trop d’arguments ; %s inattendu"
 
 #: cmd/incus/storage.go:532
 msgid "total space"
@@ -10705,21 +10682,21 @@ msgstr "espace total"
 
 #: cmd/incus/usage/usage.go:813 cmd/incus/usage/usage.go:818
 msgid "type"
-msgstr ""
+msgstr "type"
 
 #: cmd/incus/usage/parse.go:95
-#, fuzzy, c-format
+#, c-format
 msgid "unexpected %s"
-msgstr "Lien détecté : %v"
+msgstr "inattendu : %s"
 
 #: cmd/incus/usage/parse.go:102
 #, c-format
 msgid "unexpected %s; expected %s"
-msgstr ""
+msgstr "%s inattendu ; attendu : %s"
 
 #: cmd/incus/usage/parse.go:51
 msgid "unexpected end of argument; did you forget a suffix?"
-msgstr ""
+msgstr "fin d’argument inattendue ; avez-vous oublié un suffixe ?"
 
 #: cmd/incus/version.go:43
 msgid "unreachable"
@@ -10731,16 +10708,15 @@ msgstr "utilisé par"
 
 #: cmd/incus/usage/usage.go:820
 msgid "value"
-msgstr ""
+msgstr "valeur"
 
 #: cmd/incus/usage/usage.go:821
-#, fuzzy
 msgid "volume"
-msgstr "Colonnes"
+msgstr "volume"
 
 #: cmd/incus/usage/usage.go:822
 msgid "warning UUID"
-msgstr ""
+msgstr "UUID d’alerte"
 
 #: cmd/incus/remote.go:512
 msgid "y"
@@ -10754,12 +10730,12 @@ msgstr "oui"
 
 #: cmd/incus/usage/usage.go:823
 msgid "zone"
-msgstr ""
+msgstr "zone"
 
 #: cmd/incus/usage/parse.go:25
 #, c-format
 msgid "“%s”"
-msgstr ""
+msgstr "« %s »"
 
 #~ msgid "Can't pull a directory without --recursive"
 #~ msgstr "Impossible de récupérer un répertoire sans --recursive"
