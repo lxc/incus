@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -9138,4 +9139,73 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 
 	reverter.Success()
 	return cleanup, nil
+}
+
+// GetInstanceNBD returns an NBD connection to the VM's root disk.
+func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Conn, func(), error) {
+	if !inst.IsRunning() {
+		return nil, nil, errors.New("NBD is only supported on running instances at this time")
+	}
+
+	if writable && inst.IsRunning() {
+		return nil, nil, errors.New("Writable NBD requires the instance be stopped")
+	}
+
+	instanceDeviceName, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return inst.ConnectNBD(instanceDeviceName, writable)
+}
+
+// GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
+func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error) {
+	var instanceArgs *db.InstanceArgs
+	var instanceDeviceName string
+
+	// Get the volume.
+	vol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Track down the instance.
+	err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &vol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+		if dbInst.Type != instancetype.VM {
+			return errors.New("Volume is attached to a container")
+		}
+
+		if instanceArgs != nil && instanceArgs.Name != dbInst.Name {
+			return errors.New("Volume is attached to multiple instances")
+		}
+
+		instanceArgs = &dbInst
+		instanceDeviceName = usedByDevices[0]
+
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if instanceArgs == nil {
+		return nil, nil, errors.New("NBD is only supported on volumes attached to a VM at this time")
+	}
+
+	// Load the instance.
+	inst, err := instance.LoadByProjectAndName(b.state, instanceArgs.Project, instanceArgs.Name)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !inst.IsRunning() {
+		return nil, nil, errors.New("NBD is only supported on running instances at this time")
+	}
+
+	if writable && inst.IsRunning() {
+		return nil, nil, errors.New("Writable NBD requires the instance be stopped")
+	}
+
+	return inst.ConnectNBD(instanceDeviceName, writable)
 }
