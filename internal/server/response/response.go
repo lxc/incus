@@ -612,28 +612,34 @@ func Unauthorized(err error) Response {
 	return &errorResponse{http.StatusUnauthorized, message}
 }
 
-// SFTPResponse upgrades the connection for sftp and connects to the backend server.
-func SFTPResponse(r *http.Request, conn net.Conn) Response {
-	return &sftpResponse{req: r, conn: conn}
+// UpgradeResponse upgrades the connection and connects to the backend server.
+func UpgradeResponse(r *http.Request, conn net.Conn, protocol string, cleanup func()) Response {
+	return &upgradeResponse{req: r, conn: conn, protocol: protocol, cleanup: cleanup}
 }
 
-type sftpResponse struct {
-	req  *http.Request
-	conn net.Conn
+type upgradeResponse struct {
+	req      *http.Request
+	conn     net.Conn
+	protocol string
+	cleanup  func()
 }
 
 // String returns the response type name.
-func (r *sftpResponse) String() string {
-	return "sftp handler"
+func (r *upgradeResponse) String() string {
+	return r.protocol + " handler"
 }
 
 // Code returns the HTTP code.
-func (r *sftpResponse) Code() int {
+func (r *upgradeResponse) Code() int {
 	return http.StatusOK
 }
 
 // Render handles the HTTP connection.
-func (r *sftpResponse) Render(w http.ResponseWriter) error {
+func (r *upgradeResponse) Render(w http.ResponseWriter) error {
+	if r.cleanup != nil {
+		defer r.cleanup()
+	}
+
 	defer func() { _ = r.conn.Close() }()
 
 	hijacker, ok := w.(http.Hijacker)
@@ -657,7 +663,7 @@ func (r *sftpResponse) Render(w http.ResponseWriter) error {
 		}
 	}
 
-	err = Upgrade(remoteConn, "sftp")
+	err = Upgrade(remoteConn, r.protocol)
 	if err != nil {
 		return api.StatusErrorf(http.StatusInternalServerError, "%s", err.Error())
 	}
@@ -675,7 +681,7 @@ func (r *sftpResponse) Render(w http.ResponseWriter) error {
 		_, err := io.Copy(remoteConn, r.conn)
 		if err != nil {
 			if ctx.Err() == nil {
-				l.Warn("Failed copying SFTP instance connection to remote connection", logger.Ctx{"err": err})
+				l.Warn("Failed copying data from local to remote connection", logger.Ctx{"err": err})
 			}
 		}
 		cancel()               // Cancel context first so when remoteConn is closed it doesn't cause a warning.
@@ -685,7 +691,7 @@ func (r *sftpResponse) Render(w http.ResponseWriter) error {
 	_, err = io.Copy(r.conn, remoteConn)
 	if err != nil {
 		if ctx.Err() == nil {
-			l.Warn("Failed copying SFTP remote connection to instance connection", logger.Ctx{"err": err})
+			l.Warn("Failed copying data from remote to local connection", logger.Ctx{"err": err})
 		}
 	}
 	cancel() // Cancel context first so when conn is closed it doesn't cause a warning.

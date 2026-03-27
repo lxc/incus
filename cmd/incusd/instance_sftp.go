@@ -79,5 +79,5 @@ func instanceSFTPHandler(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	return response.SFTPResponse(r, conn)
+	return response.UpgradeResponse(r, conn, "sftp", nil)
 }

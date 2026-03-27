@@ -3323,6 +3323,9 @@ func (d *lxc) Shutdown(timeout time.Duration) error {
 		if err != nil {
 			return err
 		}
+
+		// Wait 3s for init to be running enough to get the next signal handle.
+		time.Sleep(3 * time.Second)
 	}
 
 	ctxMap := logger.Ctx{

@@ -26,7 +26,6 @@ import (
 func daemonStorageVolumesUnmount(s *state.State) error {
 	var storageBackups string
 	var storageImages string
-	var storageLogs string
 
 	err := s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodeConfig, err := node.ConfigLoad(ctx, tx)
@@ -36,7 +35,6 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 
 		storageBackups = nodeConfig.StorageBackupsVolume()
 		storageImages = nodeConfig.StorageImagesVolume()
-		storageLogs = nodeConfig.StorageLogsVolume()
 
 		return nil
 	})
@@ -76,14 +74,6 @@ func daemonStorageVolumesUnmount(s *state.State) error {
 		err := unmount("images", storageImages)
 		if err != nil {
 			return fmt.Errorf("Failed to unmount images storage: %w", err)
-		}
-	}
-
-	if storageLogs != "" {
-		err := unmount("logs", storageLogs)
-		if err != nil {
-			// With the logs volume, we may be dealing with log files that are in use by Incus or dnsmasq, those will need a daemon restart.
-			logger.Warn("Unable to unmount logs storage, daemon restart required")
 		}
 	}
 

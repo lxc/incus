@@ -1650,8 +1650,8 @@ func (r *ProtocolIncus) DeleteInstanceFile(instanceName string, filePath string)
 	return nil
 }
 
-// rawSFTPConn connects to the apiURL, upgrades to an SFTP raw connection and returns it.
-func (r *ProtocolIncus) rawSFTPConn(apiURL *url.URL) (net.Conn, error) {
+// rawConn connects to the apiURL, upgrades to the requested protocol and returns it.
+func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, error) {
 	// Get the HTTP transport.
 	httpTransport, err := r.getUnderlyingHTTPTransport()
 	if err != nil {
@@ -1668,7 +1668,7 @@ func (r *ProtocolIncus) rawSFTPConn(apiURL *url.URL) (net.Conn, error) {
 		Host:       apiURL.Host,
 	}
 
-	req.Header["Upgrade"] = []string{"sftp"}
+	req.Header["Upgrade"] = []string{protocol}
 	req.Header["Connection"] = []string{"Upgrade"}
 
 	r.addClientHeaders(req)
@@ -1711,7 +1711,7 @@ func (r *ProtocolIncus) rawSFTPConn(apiURL *url.URL) (net.Conn, error) {
 		}
 	}
 
-	if resp.Header.Get("Upgrade") != "sftp" {
+	if resp.Header.Get("Upgrade") != protocol {
 		return nil, errors.New("Missing or unexpected Upgrade header in response")
 	}
 
@@ -1725,7 +1725,7 @@ func (r *ProtocolIncus) GetInstanceFileSFTPConn(instanceName string) (net.Conn, 
 	apiURL.Path("1.0", "instances", instanceName, "sftp")
 	r.setURLQueryAttributes(&apiURL.URL)
 
-	return r.rawSFTPConn(&apiURL.URL)
+	return r.rawConn(&apiURL.URL, "sftp")
 }
 
 // GetInstanceFileSFTP returns an SFTP connection to the instance.
