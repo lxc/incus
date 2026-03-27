@@ -24,6 +24,7 @@ import (
 	config "github.com/lxc/incus/v6/shared/cliconfig"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/util"
 )
 
@@ -476,8 +477,10 @@ func (c *cmdGlobal) PreRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Setup password helper
-	c.conf.PromptPassword = func(filename string) (string, error) {
-		return c.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename)), nil
+	if termios.IsTerminal(getStdinFd()) {
+		c.conf.PromptPassword = func(filename string) (string, error) {
+			return c.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename)), nil
+		}
 	}
 
 	// If the user is running a command that may attempt to connect to the local daemon
