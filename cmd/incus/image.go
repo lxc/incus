@@ -576,8 +576,8 @@ func (c *cmdImageExport) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	req := incus.ImageFileRequest{
-		MetaFile:        io.WriteSeeker(dest),
-		RootfsFile:      io.WriteSeeker(destRootfs),
+		MetaFile:        io.ReadWriteSeeker(dest),
+		RootfsFile:      io.ReadWriteSeeker(destRootfs),
 		ProgressHandler: progress.UpdateProgress,
 	}
 

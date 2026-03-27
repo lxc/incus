@@ -726,14 +726,14 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 
 		var headers map[string]string
 		if consoleLogType == "vga" {
-			screenshotFile, err := os.Create(fmt.Sprintf("/tmp/incus_screenshot_%d", inst.ID()))
+			screenShotPath := fmt.Sprintf("/tmp/incus_screenshot_%d", inst.ID())
+
+			// Delete then create the path with O_EXCL to ensure that we are the creator of the path.
+			// Any attempt at racing with us will cause in a (already exists) failure.
+			_ = os.Remove(screenShotPath)
+			screenshotFile, err := os.OpenFile(screenShotPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0o600)
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Couldn't create screenshot file: %w", err))
-			}
-
-			err = screenshotFile.Chmod(0o600)
-			if err != nil {
-				return response.SmartError(err)
 			}
 
 			ent.Cleanup = func() {

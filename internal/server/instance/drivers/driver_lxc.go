@@ -73,7 +73,6 @@ import (
 	"github.com/lxc/incus/v6/internal/server/state"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
-	"github.com/lxc/incus/v6/internal/server/template"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/internal/version"
@@ -7454,14 +7453,6 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				return fmt.Errorf("Failed to read template file: %w", err)
 			}
 
-			// Restrict filesystem access to within the container's rootfs
-			tplSet := pongo2.NewSet(fmt.Sprintf("%s-%s", d.name, tpl.Template), template.ChrootLoader{Path: d.RootfsPath()})
-
-			tplRender, err := tplSet.FromString("{% autoescape off %}" + string(tplString) + "{% endautoescape %}")
-			if err != nil {
-				return fmt.Errorf("Failed to render template: %w", err)
-			}
-
 			configGet := func(confKey, confDefault *pongo2.Value) *pongo2.Value {
 				val, ok := d.expandedConfig[confKey.String()]
 				if !ok {
@@ -7471,8 +7462,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				return pongo2.AsValue(strings.TrimRight(val, "\r\n"))
 			}
 
-			// Render the template
-			err = tplRender.ExecuteWriter(pongo2.Context{
+			err = internalUtil.RenderTemplateFile(w, string(tplString), pongo2.Context{
 				"trigger":    trigger,
 				"path":       tplPath,
 				"container":  containerMeta,
@@ -7481,9 +7471,9 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				"devices":    d.expandedDevices,
 				"properties": tpl.Properties,
 				"config_get": configGet,
-			}, w)
+			})
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed to render template: %w", err)
 			}
 
 			return w.Close()
@@ -9530,16 +9520,22 @@ func (d *lxc) setupCredentials(update bool) error {
 		}
 	}
 
+	credsRoot, err := os.OpenRoot(credentialsDir)
+	if err != nil {
+		return fmt.Errorf("Failed to open the credentials directory: %w", err)
+	}
+
+	defer func() { _ = credsRoot.Close() }()
+
 	for k, v := range credentials {
-		credentialPath := filepath.Join(credentialsDir, k)
-		err := os.WriteFile(credentialPath, v, 0o400)
+		err := credsRoot.WriteFile(k, v, 0o400)
 		if err != nil {
 			return fmt.Errorf("Failed to write credential %q: %w", k, err)
 		}
 
-		err = os.Chown(credentialPath, int(rootUID), int(rootGID))
+		err = credsRoot.Chown(k, int(rootUID), int(rootGID))
 		if err != nil {
-			return fmt.Errorf("Failed setting permissions for file %q: %w", credentialPath, err)
+			return fmt.Errorf("Failed setting permissions for file %q: %w", k, err)
 		}
 
 		delete(oldCredentials, k)
