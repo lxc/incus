@@ -1549,7 +1549,7 @@ func (c *cmdStorageVolumeList) Run(cmd *cobra.Command, args []string) error {
 		row := []string{}
 		for _, column := range columns {
 			if column.NeedsState && !instance.IsSnapshot(vol.Name) && vol.Type != "image" {
-				state, err := d.GetStoragePoolVolumeState(poolName, vol.Type, vol.Name)
+				state, err := d.UseProject(vol.Project).GetStoragePoolVolumeState(poolName, vol.Type, vol.Name)
 				if err != nil {
 					return err
 				}
