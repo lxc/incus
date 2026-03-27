@@ -1842,9 +1842,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-no-user-config",
 		"-sandbox", "on,obsolete=deny,elevateprivileges=allow,spawn=allow,resourcecontrol=deny",
 		"-readconfig", confFile,
-		"-spice", d.spiceCmdlineConfig(),
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
+	}
+
+	if util.IsTrueOrEmpty(d.expandedConfig["security.spice"]) {
+		qemuArgs = append(qemuArgs, "-spice", d.spiceCmdlineConfig())
 	}
 
 	// If stateful, restore now.
@@ -3976,6 +3979,8 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 
 	conf = append(conf, qemuVsock(&vsockOpts)...)
 
+	spice := util.IsTrueOrEmpty(d.expandedConfig["security.spice"])
+
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
 		dev: qemuDevOpts{
@@ -3986,6 +3991,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 		},
 		charDevName:      qemuSerialChardevName,
 		ringbufSizeBytes: qmp.RingbufSize,
+		spice:            spice,
 	}
 
 	conf = append(conf, qemuSerial(&serialOpts)...)
@@ -3998,13 +4004,14 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 			devAddr:       devAddr,
 			multifunction: multi,
 			ports:         qemuSparseUSBPorts,
+			spice:         spice,
 		}
 
 		conf = append(conf, qemuUSB(&usbOpts)...)
 	}
 
 	// virtio-sound-pci devices can't be migrated and don't have a CCW equivalent.
-	if !isWindows && !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
+	if spice && !isWindows && !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
 		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 		audioOpts := qemuDevOpts{
 			busName:       bus.name,
@@ -9125,6 +9132,10 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	case instance.ConsoleTypeConsole:
 		path = d.consolePath()
 	case instance.ConsoleTypeVGA:
+		if !util.IsTrueOrEmpty(d.expandedConfig["security.spice"]) {
+			return nil, nil, fmt.Errorf("SPICE is disabled")
+		}
+
 		path = d.spicePath()
 	default:
 		return nil, nil, fmt.Errorf("Unknown protocol %q", protocol)

@@ -1137,6 +1137,16 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Whether to use a firmware that supports UEFI-incompatible operating systems
 	"security.csm": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(entity=instance, group=security, key=security.spice)
+	//
+	// ---
+	//  type: bool
+	//  defaultdesc: `true`
+	//  liveupdate: no
+	//  condition: virtual machine
+	//  shortdesc: Whether SPICE support is enabled
+	"security.spice": validate.Optional(validate.IsBool),
+
 	// gendoc:generate(entity=instance, group=security, key=security.iommu)
 	//
 	// ---
