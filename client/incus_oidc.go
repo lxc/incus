@@ -28,12 +28,13 @@ var ErrOIDCExpired = errors.New("OIDC token expired, please re-try the request")
 
 // setupOIDCClient initializes the OIDC (OpenID Connect) client with given tokens if it hasn't been set up already.
 // It also assigns the protocol's http client to the oidcClient's httpClient.
-func (r *ProtocolIncus) setupOIDCClient(token *oidc.Tokens[*oidc.IDTokenClaims]) {
+func (r *ProtocolIncus) setupOIDCClient(token *oidc.Tokens[*oidc.IDTokenClaims], skipAuthenticate bool) {
 	if r.oidcClient != nil {
 		return
 	}
 
 	r.oidcClient = newOIDCClient(token)
+	r.oidcClient.skipAuthenticate = skipAuthenticate
 	r.oidcClient.httpClient = r.http
 }
 
@@ -82,9 +83,10 @@ func (o *oidcTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 var errRefreshAccessToken = errors.New("Failed refreshing access token")
 
 type oidcClient struct {
-	httpClient    *http.Client
-	oidcTransport *oidcTransport
-	tokens        *oidc.Tokens[*oidc.IDTokenClaims]
+	httpClient       *http.Client
+	oidcTransport    *oidcTransport
+	tokens           *oidc.Tokens[*oidc.IDTokenClaims]
+	skipAuthenticate bool
 }
 
 // oidcClient is a structure encapsulating an HTTP client, OIDC transport, and a token for OpenID Connect (OIDC) operations.
@@ -141,6 +143,10 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 	// Refresh the token.
 	err = o.refresh(issuer, clientID, scopes)
 	if err != nil {
+		if o.skipAuthenticate {
+			return nil, fmt.Errorf("Authentication not found or expired: %w", err)
+		}
+
 		err = o.authenticate(issuer, clientID, audience, scopes)
 		if err != nil {
 			return nil, err
@@ -199,6 +205,10 @@ func (o *oidcClient) dial(dialer websocket.Dialer, uri string, req *http.Request
 
 	err = o.refresh(issuer, clientID, scopes)
 	if err != nil {
+		if o.skipAuthenticate {
+			return nil, resp, fmt.Errorf("Authentication not found or expired: %w", err)
+		}
+
 		err = o.authenticate(issuer, clientID, audience, scopes)
 		if err != nil {
 			return nil, resp, err
