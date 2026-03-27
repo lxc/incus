@@ -24,6 +24,12 @@ See [`incus publish --help`](incus_publish.md) for a full list of available flag
 The publishing process can take quite a while because it generates a tarball from the instance or snapshot and then compresses it.
 As this can be particularly I/O and CPU intensive, publish operations are serialized by Incus.
 
+```{note}
+For OCI containers, it's typically best to update the source image
+definition and build a new OCI image to publish on a registry than to
+publish an altered version of the OCI container.
+```
+
 ### Prepare the instance for publishing
 
 Before you publish an image from an instance, clean up all data that should not be included in the image.

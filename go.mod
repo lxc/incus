@@ -24,12 +24,12 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/gosexy/gettext v0.0.0-20160830220431-74466a0a0c4a
-	github.com/insomniacslk/dhcp v0.0.0-20260220084031-5adc3eb26f91
+	github.com/insomniacslk/dhcp v0.0.0-20260326115832-991c7910cf36
 	github.com/jaypipes/pcidb v1.1.1
 	github.com/jochenvg/go-udev v0.0.0-20240801134859-b65ed646224b
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/lxc/go-lxc v0.0.0-20260316180011-3af4ce000ed7
-	github.com/lxc/incus-os/incus-osd v0.0.0-20260324022732-9d0394ba1535
+	github.com/lxc/incus-os/incus-osd v0.0.0-20260325232431-2a8372570b35
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-runewidth v0.0.21
 	github.com/mattn/go-sqlite3 v1.14.37
@@ -57,7 +57,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/vishvananda/netlink v1.3.1
 	github.com/zitadel/oidc/v3 v3.45.5
-	go.starlark.net v0.0.0-20260324133313-ffb3f39dd27a
+	go.starlark.net v0.0.0-20260326113308-fadfc96def35
 	golang.org/x/crypto v0.49.0
 	golang.org/x/exp v0.0.0-20260312153236-7ab1446f8b90
 	golang.org/x/oauth2 v0.36.0

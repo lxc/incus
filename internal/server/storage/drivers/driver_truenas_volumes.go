@@ -1611,6 +1611,20 @@ func (d *truenas) RenameVolume(vol Volume, newVolName string, op *operations.Ope
 		_ = d.renameDataset(d.dataset(newVol, false), d.dataset(vol, false), true)
 	})
 
+	// For VM images, create a filesystem volume too.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+		err := d.RenameVolume(fsVol, newVolName, op)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() {
+			newFsVol := NewVolume(d, d.name, newVol.volType, ContentTypeFS, newVol.name, newVol.config, newVol.poolConfig)
+			_ = d.RenameVolume(newFsVol, vol.name, op)
+		})
+	}
+
 	// All done.
 	reverter.Success()
 

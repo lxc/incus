@@ -219,7 +219,7 @@ var DevIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, w http.
 }}
 
 var handlers = []devIncusHandler{
-	{"/", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
+	{"/{$}", func(d *Daemon, w http.ResponseWriter, r *http.Request) *devIncusResponse {
 		return okResponse([]string{"/1.0"}, "json")
 	}},
 	DevIncusAPIGet,

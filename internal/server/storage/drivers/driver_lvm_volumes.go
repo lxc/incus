@@ -1224,7 +1224,7 @@ func (d *lvm) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *mig
 			}
 
 			if volDevPath != "" {
-				if vol.Type() == VolumeTypeVM || vol.ContentType() == ContentTypeBlock {
+				if vol.Type() == VolumeTypeVM || vol.ContentType() == ContentTypeBlock || vol.ContentType() == ContentTypeISO {
 					_, err := subprocess.RunCommand("lvchange", "--activate", "sy", "--ignoreactivationskip", volPath)
 					if err != nil {
 						return err

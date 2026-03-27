@@ -4881,6 +4881,10 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					continue
 				}
 
+				if strings.HasPrefix(newDev["source"], "tmpfs:") || strings.HasPrefix(newDev["source"], "tmpfs-overlay:") {
+					continue
+				}
+
 				oldDev, ok := removeDevices[devName]
 				if !ok {
 					return errors.New("New device with initial configuration cannot be added once the instance is created")
@@ -5688,6 +5692,34 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 		d.logger.Debug("Error writing to tarfile", logger.Ctx{"err": err})
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
+	}
+
+	// If present, add config.json (OCI) to the tarball.
+	fnam = filepath.Join(d.Path(), "config.json")
+	if util.PathExists(fnam) {
+		fi, err := os.Lstat(fnam)
+		if err != nil {
+			_ = metaTarWriter.Close()
+			if rootfsTarWriter != nil {
+				_ = rootfsTarWriter.Close()
+			}
+
+			d.logger.Error("Failed exporting instance", ctxMap)
+			return nil, err
+		}
+
+		tmpOffset := len(filepath.Dir(fnam)) + 1
+		err = metaTarWriter.WriteFile(fnam[tmpOffset:], fnam, fi, false)
+		if err != nil {
+			_ = metaTarWriter.Close()
+			if rootfsTarWriter != nil {
+				_ = rootfsTarWriter.Close()
+			}
+
+			d.logger.Debug("Error writing to tarfile", logger.Ctx{"err": err})
+			d.logger.Error("Failed exporting instance", ctxMap)
+			return nil, err
+		}
 	}
 
 	// Include all the rootfs files.
