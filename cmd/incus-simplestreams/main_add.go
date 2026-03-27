@@ -27,8 +27,9 @@ import (
 type cmdAdd struct {
 	global *cmdGlobal
 
-	flagAliases        []string
-	flagNoDefaultAlias bool
+	flagAliases             []string
+	flagNoDefaultAlias      bool
+	flagUseNameFromMetadata bool
 }
 
 // Command generates the command definition.
@@ -48,6 +49,7 @@ This command parses the metadata tarball to retrieve the following fields from i
  - properties["release"]
  - properties["variant"]
  - properties["architecture"]
+ - properties["name"] (if --use-metadata-name is specified)
 
 It then check computes the hash for the new image, confirm it's not
 already on the image server and finally adds it to the index.
@@ -63,6 +65,7 @@ Otherwise, it is a split image (separate files for metadata and rootfs/disk).
 
 	cmd.Flags().StringArrayVar(&c.flagAliases, "alias", nil, "Add alias")
 	cmd.Flags().BoolVar(&c.flagNoDefaultAlias, "no-default-alias", false, "Do not add the default alias")
+	cmd.Flags().BoolVar(&c.flagUseNameFromMetadata, "use-metadata-name", false, "Use name from metadata as the product name")
 
 	return cmd
 }
@@ -314,8 +317,18 @@ func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	var productName string
+	if c.flagUseNameFromMetadata {
+		productName = metadata.Properties["name"]
+
+		if productName == "" {
+			return errors.New("Missing property name in metadata.yaml")
+		}
+	} else {
+		productName = fmt.Sprintf("%s:%s:%s:%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"], metadata.Properties["architecture"])
+	}
+
 	// Check if the product already exists.
-	productName := fmt.Sprintf("%s:%s:%s:%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"], metadata.Properties["architecture"])
 	product, ok := products.Products[productName]
 	if !ok {
 		var aliases []string
