@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-03-26 00:20+0000\n"
-"PO-Revision-Date: 2026-03-26 10:50+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-03-26 23:56+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -730,14 +730,16 @@ msgid "--network-port can't be used without --network-address"
 msgstr "--network-port não pode ser usado sem --network-address"
 
 #: cmd/incus/utils_copy.go:48
-#, fuzzy
 msgid "--no-dereference/-P cannot be used together with stdout as a target"
-msgstr "--no-profiles não pode ser usado juntamente com outros argumentos"
+msgstr ""
+"--no-dereference/-P não pode ser usado juntamente com stdout como um alvo"
 
 #: cmd/incus/utils_copy.go:38
 msgid ""
 "--no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive"
 msgstr ""
+"--no-dereference/-P, --follow/-H, e --dereference/-L são mutuamente "
+"exclusivos"
 
 #: cmd/incus/profile.go:232
 msgid "--no-profiles cannot be used together with other arguments"
@@ -753,7 +755,7 @@ msgstr "--project não pode ser usado com o comando query"
 
 #: cmd/incus/utils_copy.go:76
 msgid "--recursive/-r is required when pulling directories"
-msgstr ""
+msgstr "--recursive/-r é requerido quando se puxam directórios"
 
 #: cmd/incus/copy.go:166
 msgid "--refresh can only be used with instances"
@@ -1046,7 +1048,7 @@ msgstr "Nome de certificado alternativo"
 
 #: cmd/incus/file.go:458 cmd/incus/storage_volume.go:2628
 msgid "Always follow symbolic links in source path"
-msgstr ""
+msgstr "Seguir sempre os links simbólicos no caminho da fonte"
 
 #: cmd/incus/file.go:1016
 #, c-format
@@ -3393,7 +3395,7 @@ msgstr "Bandeiras:"
 
 #: cmd/incus/file.go:457 cmd/incus/storage_volume.go:2627
 msgid "Follow command-line symbolic links in source path"
-msgstr ""
+msgstr "Seguir os links simbólicos de linha de comandos no caminho da fonte"
 
 #: cmd/incus/cluster.go:1491
 msgid "Force a particular evacuation action"
@@ -6723,7 +6725,7 @@ msgstr "Registro de zona de rede %s apagado"
 
 #: cmd/incus/file.go:456 cmd/incus/storage_volume.go:2626
 msgid "Never follow symbolic links in source path"
-msgstr ""
+msgstr "Nunca seguir os links simbólicos no caminho da fonte"
 
 #: cmd/incus/publish.go:43
 msgid "New alias to define at target"
