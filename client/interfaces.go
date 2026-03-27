@@ -409,6 +409,9 @@ type InstanceServer interface {
 	CreateStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string, args InstanceFileArgs) (err error)
 	DeleteStorageVolumeFile(pool string, volumeType string, volumeName string, filePath string) (err error)
 
+	// Storage volume NBD functions ("storage_volume_nbd" API extension)
+	GetStoragePoolVolumeBlockNBDConn(pool string, volType string, volName string, args StorageVolumeNBDPost) (net.Conn, error)
+
 	// Storage volume SFTP functions ("custom_volume_sftp" API extension)
 	GetStoragePoolVolumeFileSFTPConn(pool string, volType string, volName string) (net.Conn, error)
 	GetStoragePoolVolumeFileSFTP(pool string, volType string, volName string) (*sftp.Client, error)
@@ -733,4 +736,11 @@ type StoragePoolBucketBackupArgs struct {
 
 	// Name to import backup as
 	Name string
+}
+
+// The StorageVolumeNBDPost struct is used when connecting to a storage volume over NBD.
+// API extension: storage_volume_nbd.
+type StorageVolumeNBDPost struct {
+	// Writable
+	Writable bool
 }

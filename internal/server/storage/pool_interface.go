@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io"
+	"net"
 	"net/url"
 	"time"
 
@@ -64,7 +65,6 @@ type Pool interface {
 
 	// Instances.
 	CreateInstance(inst instance.Instance, op *operations.Operation) error
-	CreateInstanceFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (func(instance.Instance) error, revert.Hook, error)
 	CreateInstanceFromCopy(inst instance.Instance, src instance.Instance, snapshots bool, allowInconsistent bool, op *operations.Operation) error
 	CreateInstanceFromImage(inst instance.Instance, fingerprint string, op *operations.Operation) error
 	CreateInstanceFromMigration(inst instance.Instance, conn io.ReadWriteCloser, args migration.VolumeTargetArgs, op *operations.Operation) error
@@ -79,7 +79,6 @@ type Pool interface {
 
 	MigrateInstance(inst instance.Instance, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error
 	RefreshInstance(inst instance.Instance, src instance.Instance, srcSnapshots []instance.Instance, allowInconsistent bool, op *operations.Operation) error
-	BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, dependentVolumes bool, op *operations.Operation) error
 
 	GetInstanceUsage(inst instance.Instance) (*VolumeUsage, error)
 	SetInstanceQuota(inst instance.Instance, size string, vmStateSize string, op *operations.Operation) error
@@ -96,6 +95,11 @@ type Pool interface {
 	MountInstanceSnapshot(inst instance.Instance, op *operations.Operation) (*MountInfo, error)
 	UnmountInstanceSnapshot(inst instance.Instance, op *operations.Operation) error
 	UpdateInstanceSnapshot(inst instance.Instance, newDesc string, newConfig map[string]string, op *operations.Operation) error
+
+	// Instance backups.
+	BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, dependentVolumes bool, op *operations.Operation) error
+	CreateInstanceFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (func(instance.Instance) error, revert.Hook, error)
+	GetInstanceNBD(inst instance.Instance, writable bool) (net.Conn, func(), error)
 
 	// Images.
 	EnsureImage(fingerprint string, op *operations.Operation) error
@@ -146,6 +150,7 @@ type Pool interface {
 	// Custom volume backups.
 	BackupCustomVolume(projectName string, volName string, writer instancewriter.InstanceWriter, basePrefix string, optimized bool, snapshots bool, op *operations.Operation) error
 	CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) error
+	GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error)
 
 	// Storage volume recovery.
 	ListUnknownVolumes(op *operations.Operation) (map[string][]*backupConfig.Config, error)

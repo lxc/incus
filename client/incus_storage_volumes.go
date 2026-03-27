@@ -1290,6 +1290,28 @@ func (r *ProtocolIncus) CreateStoragePoolVolumeFromBackup(pool string, args Stor
 	return &op, nil
 }
 
+// GetStoragePoolVolumeBlockNBDConn returns a connection to the volume's NBD endpoint.
+func (r *ProtocolIncus) GetStoragePoolVolumeBlockNBDConn(pool string, volType string, volName string, args StorageVolumeNBDPost) (net.Conn, error) {
+	if !r.HasExtension("storage_volume_nbd") {
+		return nil, errors.New(`The server is missing the required "storage_volume_nbd" API extension`)
+	}
+
+	u := api.NewURL()
+	u.URL = r.httpBaseURL // Preload the URL with the client base URL.
+	u.Path("1.0", "storage-pools", pool, "volumes", volType, volName, "nbd")
+
+	values := u.Query()
+	if args.Writable {
+		values.Set("writable", "1")
+	}
+
+	u.RawQuery = values.Encode()
+
+	r.setURLQueryAttributes(&u.URL)
+
+	return r.rawConn(&u.URL, "nbd")
+}
+
 // GetStoragePoolVolumeFileSFTPConn returns a connection to the volume's SFTP endpoint.
 func (r *ProtocolIncus) GetStoragePoolVolumeFileSFTPConn(pool string, volType string, volName string) (net.Conn, error) {
 	if !r.HasExtension("custom_volume_sftp") {
