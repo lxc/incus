@@ -16,7 +16,7 @@ type cmdVersion struct {
 	global *cmdGlobal
 }
 
-var cmdVersionUsage = u.Usage{u.RemoteColonOpt}
+var cmdVersionUsage = u.Usage{u.Colon(u.Remote).Optional()}
 
 // Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
 func (c *cmdVersion) Command() *cobra.Command {
@@ -37,13 +37,15 @@ func (c *cmdVersion) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	d := parsed[0].RemoteServer
-
 	fmt.Printf(i18n.G("Client version: %s\n"), version.Version)
 	ver := i18n.G("unreachable")
-	info, _, err := d.GetServer()
+	resources, err := c.global.parseServers(parsed[0].String)
 	if err == nil {
-		ver = info.Environment.ServerVersion
+		resource := resources[0]
+		info, _, err := resource.server.GetServer()
+		if err == nil {
+			ver = info.Environment.ServerVersion
+		}
 	}
 
 	fmt.Printf(i18n.G("Server version: %s\n"), ver)
