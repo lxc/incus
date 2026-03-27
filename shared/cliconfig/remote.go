@@ -22,17 +22,26 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+// RemoteTLS holds the content of the TLS certificate, key and CA.
+// This is primarily meant for use by the keepalive proxy.
+type RemoteTLS struct {
+	Certificate string `json:"certificate"`
+	Key         string `json:"key"`
+	CA          string `json:"ca"`
+}
+
 // Remote holds details for communication with a remote daemon.
 type Remote struct {
-	Addr       string `yaml:"addr"`
-	AuthType   string `yaml:"auth_type,omitempty"`
-	KeepAlive  int    `yaml:"keepalive,omitempty"`
-	Project    string `yaml:"project,omitempty"`
-	Protocol   string `yaml:"protocol,omitempty"`
-	CredHelper string `yaml:"credentials_helper,omitempty"`
-	Public     bool   `yaml:"public"`
-	Global     bool   `yaml:"-"`
-	Static     bool   `yaml:"-"`
+	Addr       string     `yaml:"addr"`
+	AuthType   string     `yaml:"auth_type,omitempty"`
+	KeepAlive  int        `yaml:"keepalive,omitempty"`
+	Project    string     `yaml:"project,omitempty"`
+	Protocol   string     `yaml:"protocol,omitempty"`
+	CredHelper string     `yaml:"credentials_helper,omitempty"`
+	Public     bool       `yaml:"public"`
+	Global     bool       `yaml:"-"`
+	Static     bool       `yaml:"-"`
+	TLS        *RemoteTLS `yaml:"-"`
 }
 
 // ParseRemote splits remote and object.

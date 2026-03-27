@@ -40,6 +40,11 @@ func (c *Config) HasRemoteClientCertificate(name string) bool {
 
 // GetClientCertificate returns the client certificate, key and CA (with optional remote name).
 func (c *Config) GetClientCertificate(name string) (string, string, string, error) {
+	// Use the provided value if present.
+	if c.Remotes[name].TLS != nil {
+		return c.Remotes[name].TLS.Certificate, c.Remotes[name].TLS.Key, c.Remotes[name].TLS.CA, nil
+	}
+
 	// Values.
 	var tlsClientCert string
 	var tlsClientKey string
@@ -136,6 +141,17 @@ func (c *Config) GetClientCertificate(name string) (string, string, string, erro
 
 		tlsClientKey = string(content)
 	}
+
+	// Cache for future use.
+	remote := c.Remotes[name]
+
+	remote.TLS = &RemoteTLS{
+		Certificate: tlsClientCert,
+		Key:         tlsClientKey,
+		CA:          tlsClientCA,
+	}
+
+	c.Remotes[name] = remote
 
 	return tlsClientCert, tlsClientKey, tlsClientCA, nil
 }
