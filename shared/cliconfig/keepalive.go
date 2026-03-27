@@ -14,7 +14,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-func (c *Config) handleKeepAlive(remote Remote, name string, args *incus.ConnectionArgs) (incus.InstanceServer, error) {
+func (c *Config) handleKeepAlive(remote Remote, name string) (incus.InstanceServer, error) {
 	// Create the socker directory if missing.
 	socketDir := filepath.Join(c.ConfigDir, "keepalive")
 	err := os.Mkdir(socketDir, 0o700)
@@ -24,7 +24,7 @@ func (c *Config) handleKeepAlive(remote Remote, name string, args *incus.Connect
 
 	// Attempt to use the existing socket.
 	socketPath := filepath.Join(socketDir, fmt.Sprintf("%s.socket", name))
-	d, err := incus.ConnectIncusUnix(socketPath, args)
+	d, err := incus.ConnectIncusUnix(socketPath, nil)
 	if err != nil {
 		// Delete any existing sockets.
 		_ = os.Remove(socketPath)
@@ -50,7 +50,7 @@ func (c *Config) handleKeepAlive(remote Remote, name string, args *incus.Connect
 		}
 
 		// Connect to the proxy.
-		d, err = incus.ConnectIncusUnix(socketPath, args)
+		d, err = incus.ConnectIncusUnix(socketPath, nil)
 		if err != nil {
 			return nil, err
 		}

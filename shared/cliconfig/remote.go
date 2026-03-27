@@ -73,6 +73,24 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 		return nil, errors.New("The remote isn't a private server")
 	}
 
+	// See if we can shortcut things through the keepalive daemon.
+	if remote.KeepAlive > 0 {
+		d, err := c.handleKeepAlive(remote, name)
+		if err == nil {
+			// Apply the project config
+			if remote.Project != "" && remote.Project != "default" {
+				d = d.UseProject(remote.Project)
+			}
+
+			if c.ProjectOverride != "" {
+				d = d.UseProject(c.ProjectOverride)
+			}
+
+			// Return the connection to the keepalive proxy.
+			return d, nil
+		}
+	}
+
 	// Get connection arguments
 	args, err := c.getConnectionArgs(name)
 	if err != nil {
@@ -118,21 +136,10 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 		return nil, errors.New("Missing TLS client certificate and key")
 	}
 
-	var d incus.InstanceServer
-	if remote.KeepAlive > 0 {
-		d, err = c.handleKeepAlive(remote, name, args)
-		if err != nil {
-			// On proxy failure, just fallback to regular client.
-			d, err = incus.ConnectIncus(remote.Addr, args)
-			if err != nil {
-				return nil, err
-			}
-		}
-	} else {
-		d, err = incus.ConnectIncus(remote.Addr, args)
-		if err != nil {
-			return nil, err
-		}
+	// Connect to Incus.
+	d, err := incus.ConnectIncus(remote.Addr, args)
+	if err != nil {
+		return nil, err
 	}
 
 	if remote.Project != "" && remote.Project != "default" {
