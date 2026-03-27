@@ -62,6 +62,9 @@ type ConnectionArgs struct {
 	// OpenID Connect tokens
 	OIDCTokens *oidc.Tokens[*oidc.IDTokenClaims]
 
+	// Do not block for OIDC authentication
+	OIDCNonInteractive bool
+
 	// Skip the event listener endpoint
 	SkipGetEvents bool
 
@@ -410,7 +413,7 @@ func httpsIncus(ctx context.Context, requestURL string, args *ConnectionArgs) (I
 
 	server.http = httpClient
 	if args.AuthType == api.AuthenticationMethodOIDC {
-		server.setupOIDCClient(args.OIDCTokens)
+		server.setupOIDCClient(args.OIDCTokens, args.OIDCNonInteractive)
 	}
 
 	// Test the connection and seed the server information
