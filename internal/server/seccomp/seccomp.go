@@ -1302,9 +1302,15 @@ func (srv *Server) doDeviceSyscall(c Instance, args *MknodArgs, siov *Iovec) int
 	dev["mode_t"] = fmt.Sprintf("%d", args.cMode)
 	dev["dev_t"] = fmt.Sprintf("%d", args.cDev)
 
-	errno := CallForkmknod(c, dev, int(args.cPid), srv.s)
-	if errno != int(-C.ENOMEDIUM) {
-		return errno
+	// /dev is typically mounted by real root, so even though we can
+	// mknod stuff in it, access will ultimately be denied.
+	//
+	// Instead go straight to the fallback mechanism of using a bind-mount.
+	if !strings.HasPrefix(dev["path"], "/dev") {
+		errno := CallForkmknod(c, dev, int(args.cPid), srv.s)
+		if errno != int(-C.ENOMEDIUM) {
+			return errno
+		}
 	}
 
 	err := c.InsertSeccompUnixDevice(fmt.Sprintf("forkmknod.unix.%d", int(args.cPid)), dev, int(args.cPid))
