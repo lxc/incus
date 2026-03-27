@@ -5690,6 +5690,34 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 		return nil, err
 	}
 
+	// If present, add config.json (OCI) to the tarball.
+	fnam = filepath.Join(d.Path(), "config.json")
+	if util.PathExists(fnam) {
+		fi, err := os.Lstat(fnam)
+		if err != nil {
+			_ = metaTarWriter.Close()
+			if rootfsTarWriter != nil {
+				_ = rootfsTarWriter.Close()
+			}
+
+			d.logger.Error("Failed exporting instance", ctxMap)
+			return nil, err
+		}
+
+		tmpOffset := len(filepath.Dir(fnam)) + 1
+		err = metaTarWriter.WriteFile(fnam[tmpOffset:], fnam, fi, false)
+		if err != nil {
+			_ = metaTarWriter.Close()
+			if rootfsTarWriter != nil {
+				_ = rootfsTarWriter.Close()
+			}
+
+			d.logger.Debug("Error writing to tarfile", logger.Ctx{"err": err})
+			d.logger.Error("Failed exporting instance", ctxMap)
+			return nil, err
+		}
+	}
+
 	// Include all the rootfs files.
 	fnam = d.RootfsPath()
 	if rootfsWriter == nil {
