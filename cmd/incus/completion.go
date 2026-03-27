@@ -265,7 +265,16 @@ func (g *cmdGlobal) cmpImageFingerprintsFromRemote(toComplete string, remote str
 
 func (g *cmdGlobal) cmpInstanceAllKeys() ([]string, cobra.ShellCompDirective) {
 	keys := []string{}
+
 	for k := range instance.InstanceConfigKeysAny {
+		keys = append(keys, k)
+	}
+
+	for k := range instance.InstanceConfigKeysContainer {
+		keys = append(keys, k)
+	}
+
+	for k := range instance.InstanceConfigKeysVM {
 		keys = append(keys, k)
 	}
 
