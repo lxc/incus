@@ -67,6 +67,10 @@ func (c *cmdRemoteProxy) Run(cmd *cobra.Command, args []string) error {
 
 	remote := c.global.conf.Remotes[strings.TrimSuffix(remoteName, ":")]
 	remote.KeepAlive = 0
+
+	// Attempt to read stdin for TLS connection details.
+	_ = json.NewDecoder(os.Stdin).Decode(&remote.TLS)
+
 	c.global.conf.Remotes[strings.TrimSuffix(remoteName, ":")] = remote
 
 	resources, err := c.global.parseServers(remoteName)
