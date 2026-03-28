@@ -24,8 +24,7 @@ type cmdPrune struct {
 	flagVerbose   bool
 }
 
-// Command generates the command definition.
-func (c *cmdPrune) Command() *cobra.Command {
+func (c *cmdPrune) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "prune"
 	cmd.Short = "Clean up obsolete files and data"
@@ -37,7 +36,7 @@ in the 'images.json' file. Any tarball file that is not listed in images.json is
 and will be deleted.
 Additionally this command will delete older images, keeping a configurable number of older images per product.`)
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagDryRun, "dry-run", "d", false, "Preview changes without executing actual operations")
 	cmd.Flags().IntVarP(&c.flagRetention, "retention", "r", 2, "Number of older versions of the product to preserve"+"``")
 	cmd.Flags().BoolVarP(&c.flagVerbose, "verbose", "v", false, "Show all information messages")
@@ -45,8 +44,7 @@ Additionally this command will delete older images, keeping a configurable numbe
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdPrune) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdPrune) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := cli.CheckArgs(cmd, args, 0, 0)
 	if exit {
