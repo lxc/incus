@@ -530,13 +530,13 @@ Please enter the number of your choice: `, 1, 4, "", nil)
 	var migrator Migrator
 	switch creationType {
 	case 1:
-		migrator = NewInstanceMigration(ctx, server, c.global.asker, c.flagRsyncArgs, MigrationTypeContainer)
+		migrator = newInstanceMigration(ctx, server, c.global.asker, c.flagRsyncArgs, MigrationTypeContainer)
 	case 2:
-		migrator = NewInstanceMigration(ctx, server, c.global.asker, c.flagRsyncArgs, MigrationTypeVM)
+		migrator = newInstanceMigration(ctx, server, c.global.asker, c.flagRsyncArgs, MigrationTypeVM)
 	case 3:
-		migrator = NewOVAMigration(ctx, server, c.global.asker, c.flagRsyncArgs)
+		migrator = newOVAMigration(ctx, server, c.global.asker, c.flagRsyncArgs)
 	case 4:
-		migrator = NewVolumeMigration(ctx, server, c.global.asker, c.flagRsyncArgs)
+		migrator = newVolumeMigration(ctx, server, c.global.asker, c.flagRsyncArgs)
 	}
 
 	err = migrator.gatherInfo()

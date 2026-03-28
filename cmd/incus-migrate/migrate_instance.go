@@ -31,8 +31,8 @@ type InstanceMigration struct {
 	volumes       []*VolumeMigration
 }
 
-// NewInstanceMigration returns a new InstanceMigration.
-func NewInstanceMigration(ctx context.Context, server incus.InstanceServer, asker ask.Asker, flafRsyncArgs string, migraionType MigrationType) Migrator {
+// newInstanceMigration returns a new InstanceMigration.
+func newInstanceMigration(ctx context.Context, server incus.InstanceServer, asker ask.Asker, flafRsyncArgs string, migraionType MigrationType) Migrator {
 	return &InstanceMigration{
 		Migration: &Migration{
 			asker:         asker,
@@ -506,7 +506,7 @@ func (m *InstanceMigration) askNetwork() error {
 }
 
 func (m *InstanceMigration) askDisk() error {
-	volMigrator, ok := NewVolumeMigration(m.ctx, m.server, m.asker, m.flagRsyncArgs).(*VolumeMigration)
+	volMigrator, ok := newVolumeMigration(m.ctx, m.server, m.asker, m.flagRsyncArgs).(*VolumeMigration)
 	if !ok {
 		return errors.New("Migrator should be of type VolumeMigration")
 	}

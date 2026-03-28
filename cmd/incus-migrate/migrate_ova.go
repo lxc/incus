@@ -94,8 +94,8 @@ type OVAMigration struct {
 	references    map[string]string
 }
 
-// NewOVAMigration returns a new OVAMigration.
-func NewOVAMigration(ctx context.Context, server incus.InstanceServer, asker ask.Asker, flagRsyncArgs string) Migrator {
+// newOVAMigration returns a new OVAMigration.
+func newOVAMigration(ctx context.Context, server incus.InstanceServer, asker ask.Asker, flagRsyncArgs string) Migrator {
 	return &OVAMigration{
 		Migration: &Migration{
 			asker:         asker,
@@ -103,7 +103,7 @@ func NewOVAMigration(ctx context.Context, server incus.InstanceServer, asker ask
 			server:        server,
 			migrationType: MigrationTypeVM,
 		},
-		instance:      NewInstanceMigration(ctx, server, asker, flagRsyncArgs, MigrationTypeVM).(*InstanceMigration),
+		instance:      newInstanceMigration(ctx, server, asker, flagRsyncArgs, MigrationTypeVM).(*InstanceMigration),
 		flagRsyncArgs: flagRsyncArgs,
 		references:    map[string]string{},
 	}
@@ -383,7 +383,7 @@ func (m *OVAMigration) readOVFData(env Envelope) error {
 
 // addDisk adds an additional disk to the VM instance.
 func (m *OVAMigration) addDisk(diskFileName string, index int) error {
-	volMigrator, ok := NewVolumeMigration(m.ctx, m.server, m.asker, m.flagRsyncArgs).(*VolumeMigration)
+	volMigrator, ok := newVolumeMigration(m.ctx, m.server, m.asker, m.flagRsyncArgs).(*VolumeMigration)
 	if !ok {
 		return errors.New("Migrator should be of type VolumeMigration")
 	}
