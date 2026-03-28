@@ -2574,37 +2574,36 @@ func (d *qemu) setupNvram() error {
 }
 
 func (d *qemu) qemuArchConfig(arch int) (string, string, error) {
-	if arch == osarch.ARCH_64BIT_INTEL_X86 {
-		path, err := exec.LookPath("qemu-system-x86_64")
-		if err != nil {
-			return "", "", err
-		}
+	var bus string
+	var qemuCmd string
 
-		return path, "pcie", nil
-	} else if arch == osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN {
-		path, err := exec.LookPath("qemu-system-aarch64")
-		if err != nil {
-			return "", "", err
-		}
-
-		return path, "pcie", nil
-	} else if arch == osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN {
-		path, err := exec.LookPath("qemu-system-ppc64")
-		if err != nil {
-			return "", "", err
-		}
-
-		return path, "pci", nil
-	} else if arch == osarch.ARCH_64BIT_S390_BIG_ENDIAN {
-		path, err := exec.LookPath("qemu-system-s390x")
-		if err != nil {
-			return "", "", err
-		}
-
-		return path, "ccw", nil
+	switch arch {
+	case osarch.ARCH_64BIT_INTEL_X86:
+		qemuCmd = "qemu-system-x86_64"
+		bus = "pcie"
+	case osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN:
+		qemuCmd = "qemu-system-aarch64"
+		bus = "pcie"
+	case osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN:
+		qemuCmd = "qemu-system-ppc64"
+		bus = "pci"
+	case osarch.ARCH_64BIT_S390_BIG_ENDIAN:
+		qemuCmd = "qemu-system-s390x"
+		bus = "ccw"
+	default:
+		return "", "", errors.New("Architecture isn't supported for virtual machines")
 	}
 
-	return "", "", errors.New("Architecture isn't supported for virtual machines")
+	qemuPath, err := exec.LookPath(qemuCmd)
+	if err != nil {
+		if d.state != nil && d.state.OS != nil && len(d.state.OS.Architectures) > 0 && arch == d.state.OS.Architectures[0] && util.PathExists("/usr/libexec/qemu-kvm") {
+			return "/usr/libexec/qemu-kvm", bus, nil
+		}
+
+		return "", "", err
+	}
+
+	return qemuPath, bus, nil
 }
 
 // RegisterDevices calls the Register() function on all of the instance's devices.
