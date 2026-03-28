@@ -10456,6 +10456,14 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		features["spice"] = struct{}{}
 	}
 
+	// Check if virtio-9p-pci is compiled into QEMU.
+	err = monitor.Query9pDevice()
+	if err != nil {
+		logger.Debug("Failed querying virtio-9p-pci during VM feature check", logger.Ctx{"err": err})
+	} else {
+		features["plan9"] = struct{}{}
+	}
+
 	// Check if running nested.
 	cpus, err := resources.GetCPU()
 	if err != nil {
