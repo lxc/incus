@@ -19,13 +19,13 @@ func (c *cmdDelete) command() *cobra.Command {
 
 func (c *cmdDelete) run(cmd *cobra.Command, args []string) error {
 	// Get the containers
-	containers, err := GetContainers(c.global.srv)
+	containers, err := getContainers(c.global.srv)
 	if err != nil {
 		return err
 	}
 
 	// Run the test
-	duration, err := DeleteContainers(c.global.srv, containers, c.global.flagParallel)
+	duration, err := deleteContainers(c.global.srv, containers, c.global.flagParallel)
 	if err != nil {
 		return err
 	}

@@ -35,7 +35,7 @@ func (c *cmdGlobal) run(cmd *cobra.Command, args []string) error {
 	c.srv = srv.UseProject(c.flagProject)
 
 	// Print the initial header
-	err = PrintServerInfo(srv)
+	err = printServerInfo(srv)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (c *cmdGlobal) run(cmd *cobra.Command, args []string) error {
 	if c.flagReportFile != "" {
 		c.report = &CSVReport{Filename: c.flagReportFile}
 		if util.PathExists(c.flagReportFile) {
-			err := c.report.Load()
+			err := c.report.load()
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,7 @@ func (c *cmdGlobal) run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *cmdGlobal) Teardown(cmd *cobra.Command, args []string) error {
+func (c *cmdGlobal) teardown(cmd *cobra.Command, args []string) error {
 	// Nothing to do with not reporting
 	if c.report == nil {
 		return nil
@@ -65,12 +65,12 @@ func (c *cmdGlobal) Teardown(cmd *cobra.Command, args []string) error {
 		label = c.flagReportLabel
 	}
 
-	err := c.report.AddRecord(label, c.reportDuration)
+	err := c.report.addRecord(label, c.reportDuration)
 	if err != nil {
 		return err
 	}
 
-	err = c.report.Write()
+	err = c.report.write()
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func main() {
 	// Global flags
 	globalCmd := cmdGlobal{}
 	app.PersistentPreRunE = globalCmd.run
-	app.PersistentPostRunE = globalCmd.Teardown
+	app.PersistentPostRunE = globalCmd.teardown
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, "Print version number")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
 	app.PersistentFlags().IntVarP(&globalCmd.flagParallel, "parallel", "P", -1, "Number of threads to use"+"``")

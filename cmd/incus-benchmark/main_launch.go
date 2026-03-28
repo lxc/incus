@@ -30,7 +30,7 @@ func (c *cmdLaunch) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Run the test
-	duration, err := LaunchContainers(c.global.srv, c.init.flagCount, c.global.flagParallel, image, c.init.flagPrivileged, true, c.flagFreeze)
+	duration, err := launchContainers(c.global.srv, c.init.flagCount, c.global.flagParallel, image, c.init.flagPrivileged, true, c.flagFreeze)
 	if err != nil {
 		return err
 	}

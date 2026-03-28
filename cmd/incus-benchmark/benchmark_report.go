@@ -27,7 +27,7 @@ type CSVReport struct {
 }
 
 // Load reads current content of the filename and loads records.
-func (r *CSVReport) Load() error {
+func (r *CSVReport) load() error {
 	file, err := os.Open(r.Filename)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func (r *CSVReport) Load() error {
 			return err
 		}
 
-		err = r.addRecord(record)
+		err = r.appendRecord(record)
 		if err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func (r *CSVReport) Load() error {
 }
 
 // Write writes current records to file.
-func (r *CSVReport) Write() error {
+func (r *CSVReport) write() error {
 	file, err := os.OpenFile(r.Filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o640)
 	if err != nil {
 		return err
@@ -73,9 +73,9 @@ func (r *CSVReport) Write() error {
 }
 
 // AddRecord adds a record to the report.
-func (r *CSVReport) AddRecord(label string, elapsed time.Duration) error {
+func (r *CSVReport) addRecord(label string, elapsed time.Duration) error {
 	if len(r.records) == 0 {
-		err := r.addRecord(csvFields)
+		err := r.appendRecord(csvFields)
 		if err != nil {
 			return err
 		}
@@ -89,10 +89,10 @@ func (r *CSVReport) AddRecord(label string, elapsed time.Duration) error {
 		"true", // success"
 	}
 
-	return r.addRecord(record)
+	return r.appendRecord(record)
 }
 
-func (r *CSVReport) addRecord(record []string) error {
+func (r *CSVReport) appendRecord(record []string) error {
 	if len(record) != len(csvFields) {
 		return fmt.Errorf("Invalid number of fields : %q", record)
 	}
