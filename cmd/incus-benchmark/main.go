@@ -25,7 +25,7 @@ type cmdGlobal struct {
 	reportDuration time.Duration
 }
 
-func (c *cmdGlobal) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdGlobal) run(cmd *cobra.Command, args []string) error {
 	// Connect to the daemon
 	srv, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
@@ -106,7 +106,7 @@ func main() {
 
 	// Global flags
 	globalCmd := cmdGlobal{}
-	app.PersistentPreRunE = globalCmd.Run
+	app.PersistentPreRunE = globalCmd.run
 	app.PersistentPostRunE = globalCmd.Teardown
 	app.PersistentFlags().BoolVar(&globalCmd.flagVersion, "version", false, "Print version number")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
@@ -121,23 +121,23 @@ func main() {
 
 	// init sub-command
 	initCmd := cmdInit{global: &globalCmd}
-	app.AddCommand(initCmd.Command())
+	app.AddCommand(initCmd.command())
 
 	// launch sub-command
 	launchCmd := cmdLaunch{global: &globalCmd, init: &initCmd}
-	app.AddCommand(launchCmd.Command())
+	app.AddCommand(launchCmd.command())
 
 	// start sub-command
 	startCmd := cmdStart{global: &globalCmd}
-	app.AddCommand(startCmd.Command())
+	app.AddCommand(startCmd.command())
 
 	// stop sub-command
 	stopCmd := cmdStop{global: &globalCmd}
-	app.AddCommand(stopCmd.Command())
+	app.AddCommand(stopCmd.command())
 
 	// delete sub-command
 	deleteCmd := cmdDelete{global: &globalCmd}
-	app.AddCommand(deleteCmd.Command())
+	app.AddCommand(deleteCmd.command())
 
 	// Run the main command and handle errors
 	err := app.Execute()

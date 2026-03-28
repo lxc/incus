@@ -8,16 +8,16 @@ type cmdDelete struct {
 	global *cmdGlobal
 }
 
-func (c *cmdDelete) Command() *cobra.Command {
+func (c *cmdDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "delete"
 	cmd.Short = "Delete containers"
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdDelete) run(cmd *cobra.Command, args []string) error {
 	// Get the containers
 	containers, err := GetContainers(c.global.srv)
 	if err != nil {

@@ -8,16 +8,16 @@ type cmdStart struct {
 	global *cmdGlobal
 }
 
-func (c *cmdStart) Command() *cobra.Command {
+func (c *cmdStart) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "start"
 	cmd.Short = "Start containers"
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-func (c *cmdStart) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdStart) run(cmd *cobra.Command, args []string) error {
 	// Get the containers
 	containers, err := GetContainers(c.global.srv)
 	if err != nil {

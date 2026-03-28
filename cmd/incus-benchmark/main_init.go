@@ -11,18 +11,18 @@ type cmdInit struct {
 	flagPrivileged bool
 }
 
-func (c *cmdInit) Command() *cobra.Command {
+func (c *cmdInit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "init [[<remote>:]<image>]"
 	cmd.Short = "Create containers"
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().IntVarP(&c.flagCount, "count", "C", 1, "Number of containers to create"+"``")
 	cmd.Flags().BoolVar(&c.flagPrivileged, "privileged", false, "Use privileged containers")
 
 	return cmd
 }
 
-func (c *cmdInit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdInit) run(cmd *cobra.Command, args []string) error {
 	// Choose the image
 	image := "images:debian/12"
 	if len(args) > 0 {

@@ -11,18 +11,18 @@ type cmdLaunch struct {
 	flagFreeze bool
 }
 
-func (c *cmdLaunch) Command() *cobra.Command {
+func (c *cmdLaunch) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "launch [[<remote>:]<image>]"
 	cmd.Short = "Create and start containers"
-	cmd.RunE = c.Run
-	cmd.Flags().AddFlagSet(c.init.Command().Flags())
+	cmd.RunE = c.run
+	cmd.Flags().AddFlagSet(c.init.command().Flags())
 	cmd.Flags().BoolVarP(&c.flagFreeze, "freeze", "F", false, "Freeze the container right after start")
 
 	return cmd
 }
 
-func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdLaunch) run(cmd *cobra.Command, args []string) error {
 	// Choose the image
 	image := "images:debian/12"
 	if len(args) > 0 {
