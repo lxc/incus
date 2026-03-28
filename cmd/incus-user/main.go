@@ -17,15 +17,14 @@ type cmdGlobal struct {
 	flagLogDebug   bool
 }
 
-// PreRun runs immediately prior to the main Run function.
-func (c *cmdGlobal) PreRun(cmd *cobra.Command, args []string) error {
+func (c *cmdGlobal) preRun(cmd *cobra.Command, args []string) error {
 	return logger.InitLogger("", "", c.flagLogVerbose, c.flagLogDebug, nil)
 }
 
 func run() error {
 	// daemon command (main)
 	daemonCmd := cmdDaemon{}
-	app := daemonCmd.Command()
+	app := daemonCmd.command()
 	app.Use = "incus-user"
 	app.Short = "Incus user project daemon"
 	app.Long = `Description:
@@ -43,7 +42,7 @@ func run() error {
 	app.PersistentFlags().BoolVarP(&globalCmd.flagHelp, "help", "h", false, "Print help")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogVerbose, "verbose", "v", false, "Show all information messages")
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogDebug, "debug", "d", false, "Show debug messages")
-	app.PersistentPreRunE = globalCmd.PreRun
+	app.PersistentPreRunE = globalCmd.preRun
 
 	// Version handling
 	app.SetVersionTemplate("{{.Version}}\n")
