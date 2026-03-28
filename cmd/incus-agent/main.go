@@ -23,7 +23,7 @@ type cmdGlobal struct {
 func main() {
 	// agent command (main)
 	agentCmd := cmdAgent{}
-	app := agentCmd.Command()
+	app := agentCmd.command()
 	app.SilenceUsage = true
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 
