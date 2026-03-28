@@ -1655,3 +1655,8 @@ func (m *Monitor) QuerySpice() error {
 func (m *Monitor) Query9pDevice() error {
 	return m.Run("device-list-properties", map[string]string{"typename": "virtio-9p-pci"}, nil)
 }
+
+// QueryVirtioSoundDevice checks whether virtio-sound-pci support is available in QEMU.
+func (m *Monitor) QueryVirtioSoundDevice() error {
+	return m.Run("device-list-properties", map[string]string{"typename": "virtio-sound-pci"}, nil)
+}

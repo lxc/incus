@@ -3983,6 +3983,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 	info := DriverStatuses()[instancetype.VM].Info
 	_, spice := info.Features["spice"]
 	_, plan9 := info.Features["plan9"]
+	_, virtioSound := info.Features["virtio-sound"]
 
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
@@ -4014,7 +4015,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 	}
 
 	// virtio-sound-pci devices can't be migrated and don't have a CCW equivalent.
-	if !isWindows && !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
+	if virtioSound && !isWindows && !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
 		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 		audioOpts := qemuAudioOpts{
 			dev: qemuDevOpts{
@@ -10464,6 +10465,14 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		logger.Debug("Failed querying virtio-9p-pci during VM feature check", logger.Ctx{"err": err})
 	} else {
 		features["plan9"] = struct{}{}
+	}
+
+	// Check if virtio-sound-pci is compiled into QEMU.
+	err = monitor.QueryVirtioSoundDevice()
+	if err != nil {
+		logger.Debug("Failed querying virtio-sound-pci during VM feature check", logger.Ctx{"err": err})
+	} else {
+		features["virtio-sound"] = struct{}{}
 	}
 
 	// Check if running nested.
