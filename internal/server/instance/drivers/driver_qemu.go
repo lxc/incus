@@ -9750,7 +9750,7 @@ func (d *qemu) getVsockID() (uint32, error) {
 	}
 
 	if d.reservedVsockID(uint32(vsockID)) {
-		return 0, fmt.Errorf("Failed to use reserved vsock Context ID: %q", vsockID)
+		return 0, fmt.Errorf("Failed to use reserved vsock Context ID: %d", vsockID)
 	}
 
 	return uint32(vsockID), nil

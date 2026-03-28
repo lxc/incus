@@ -1651,7 +1651,7 @@ func (d *common) balanceNUMANodes() error {
 // Gets the process starting time.
 func (d *common) processStartedAt(pid int) (time.Time, error) {
 	if pid < 1 {
-		return time.Time{}, fmt.Errorf("Invalid PID %q", pid)
+		return time.Time{}, fmt.Errorf("Invalid PID %d", pid)
 	}
 
 	file, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
