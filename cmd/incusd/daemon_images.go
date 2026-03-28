@@ -31,8 +31,8 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-// ImageDownloadArgs used with ImageDownload.
-type ImageDownloadArgs struct {
+// imageDownloadArgs used with imageDownload.
+type imageDownloadArgs struct {
 	ProjectName       string
 	Server            string
 	Protocol          string
@@ -58,8 +58,8 @@ func imageOperationLock(ctx context.Context, fingerprint string) (locking.Unlock
 	return locking.Lock(ctx, fmt.Sprintf("ImageOperation_%s", fingerprint))
 }
 
-// ImageDownload resolves the image fingerprint and if not in the database, downloads it.
-func ImageDownload(ctx context.Context, r *http.Request, s *state.State, op *operations.Operation, args *ImageDownloadArgs) (*api.Image, bool, error) {
+// imageDownload resolves the image fingerprint and if not in the database, downloads it.
+func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *operations.Operation, args *imageDownloadArgs) (*api.Image, bool, error) {
 	var err error
 	var ctxMap logger.Ctx
 
