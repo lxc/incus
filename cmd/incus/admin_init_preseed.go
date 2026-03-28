@@ -14,8 +14,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-// RunPreseed runs the actual command logic.
-func (c *cmdAdminInit) RunPreseed(p *u.Parsed) (*api.InitPreseed, error) {
+func (c *cmdAdminInit) runPreseed(p *u.Parsed) (*api.InitPreseed, error) {
 	// Read the YAML
 	var bytes []byte
 	var err error

@@ -26,8 +26,7 @@ type cmdImageAlias struct {
 	image  *cmdImage
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdImageAlias) Command() *cobra.Command {
+func (c *cmdImageAlias) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("alias")
 	cmd.Short = i18n.G("Manage image aliases")
@@ -35,19 +34,19 @@ func (c *cmdImageAlias) Command() *cobra.Command {
 
 	// Create
 	imageAliasCreateCmd := cmdImageAliasCreate{global: c.global, image: c.image, imageAlias: c}
-	cmd.AddCommand(imageAliasCreateCmd.Command())
+	cmd.AddCommand(imageAliasCreateCmd.command())
 
 	// Delete
 	imageAliasDeleteCmd := cmdImageAliasDelete{global: c.global, image: c.image, imageAlias: c}
-	cmd.AddCommand(imageAliasDeleteCmd.Command())
+	cmd.AddCommand(imageAliasDeleteCmd.command())
 
 	// List
 	imageAliasListCmd := cmdImageAliasList{global: c.global, image: c.image, imageAlias: c}
-	cmd.AddCommand(imageAliasListCmd.Command())
+	cmd.AddCommand(imageAliasListCmd.command())
 
 	// Rename
 	imageAliasRenameCmd := cmdImageAliasRename{global: c.global, image: c.image, imageAlias: c}
-	cmd.AddCommand(imageAliasRenameCmd.Command())
+	cmd.AddCommand(imageAliasRenameCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -66,8 +65,7 @@ type cmdImageAliasCreate struct {
 
 var cmdImageAliasCreateUsage = u.Usage{u.NewName(u.Alias).Remote(), u.Fingerprint}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdImageAliasCreate) Command() *cobra.Command {
+func (c *cmdImageAliasCreate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdImageAliasCreateUsage...)
 	cmd.Aliases = []string{"add"}
@@ -77,7 +75,7 @@ func (c *cmdImageAliasCreate) Command() *cobra.Command {
 
 	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Image alias description")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) > 1 {
@@ -99,8 +97,7 @@ func (c *cmdImageAliasCreate) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdImageAliasCreate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdImageAliasCreate) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdImageAliasCreateUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -128,15 +125,14 @@ type cmdImageAliasDelete struct {
 
 var cmdImageAliasDeleteUsage = u.Usage{u.Alias.Remote().List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdImageAliasDelete) Command() *cobra.Command {
+func (c *cmdImageAliasDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdImageAliasDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete image aliases")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete image aliases`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpImages(toComplete)
@@ -145,8 +141,7 @@ func (c *cmdImageAliasDelete) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdImageAliasDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdImageAliasDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdImageAliasDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -184,8 +179,7 @@ type cmdImageAliasList struct {
 
 var cmdImageAliasListUsage = u.Usage{u.Colon(u.Remote).Optional(), u.Filter.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdImageAliasList) Command() *cobra.Command {
+func (c *cmdImageAliasList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdImageAliasListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -218,7 +212,7 @@ Pre-defined column shorthand chars:
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) > 0 {
@@ -293,8 +287,7 @@ func (c *cmdImageAliasList) descriptionColumntData(imageAlias api.ImageAliasesEn
 	return imageAlias.Description
 }
 
-// Run runs the actual command logic.
-func (c *cmdImageAliasList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdImageAliasList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdImageAliasListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -361,15 +354,14 @@ type cmdImageAliasRename struct {
 
 var cmdImageAliasRenameUsage = u.Usage{u.Alias.Remote(), u.NewName(u.Alias)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdImageAliasRename) Command() *cobra.Command {
+func (c *cmdImageAliasRename) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdImageAliasRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename aliases")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename aliases`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) > 0 {
@@ -382,8 +374,7 @@ func (c *cmdImageAliasRename) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdImageAliasRename) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdImageAliasRename) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdImageAliasRenameUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

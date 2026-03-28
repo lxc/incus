@@ -43,8 +43,7 @@ type cmdCreate struct {
 
 var cmdCreateUsage = u.Usage{u.Either(u.Flag("empty"), u.RemoteImage), u.NewName(u.Instance).Optional().Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdCreate) Command() *cobra.Command {
+func (c *cmdCreate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdCreateUsage...)
 	cmd.Short = i18n.G("Create instances from images")
@@ -58,7 +57,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
     Create and start a virtual machine, overriding the disk size and bus`))
 
 	cmd.Aliases = []string{"init"}
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new instance")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagProfile, "profile", "p", nil, i18n.G("Profile to apply to the new instance")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagDevice, "device", "d", nil, i18n.G("New key/value to apply to a specific device")+"``")
@@ -84,8 +83,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdCreate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdCreate) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdCreateUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

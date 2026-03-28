@@ -31,8 +31,7 @@ type cmdQuery struct {
 
 var cmdQueryUsage = u.Usage{u.Placeholder(i18n.G("API path")).Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdQuery) Command() *cobra.Command {
+func (c *cmdQuery) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("query", cmdQueryUsage...)
 	cmd.Short = i18n.G("Send a raw query to the server")
@@ -43,7 +42,7 @@ func (c *cmdQuery) Command() *cobra.Command {
     Delete local instance "c1".`))
 	cmd.Hidden = true
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagRespWait, "wait", false, i18n.G("Wait for the operation to complete"))
 	cmd.Flags().BoolVar(&c.flagRespRaw, "raw", false, i18n.G("Print the raw response"))
 	cmd.Flags().StringVarP(&c.flagAction, "request", "X", "GET", i18n.G("Action (defaults to GET)")+"``")
@@ -65,8 +64,7 @@ func (c *cmdQuery) pretty(input any) string {
 	return pretty.String()
 }
 
-// Run runs the actual command logic.
-func (c *cmdQuery) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdQuery) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdQueryUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

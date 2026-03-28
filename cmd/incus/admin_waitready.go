@@ -24,8 +24,7 @@ type cmdAdminWaitready struct {
 
 var cmdAdminWaitreadyUsage = u.Usage{}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminWaitready) Command() *cobra.Command {
+func (c *cmdAdminWaitready) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("waitready", cmdAdminWaitreadyUsage...)
 	cmd.Short = i18n.G("Wait for the daemon to be ready to process requests")
@@ -34,14 +33,13 @@ func (c *cmdAdminWaitready) Command() *cobra.Command {
   This command will block until the daemon is reachable over its REST API and
   is done with early start tasks like re-starting previously started
   containers.`))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().IntVarP(&c.flagTimeout, "timeout", "t", 0, "Number of seconds to wait before giving up"+"``")
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdAdminWaitready) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminWaitready) run(cmd *cobra.Command, args []string) error {
 	_, err := cmdAdminWaitreadyUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

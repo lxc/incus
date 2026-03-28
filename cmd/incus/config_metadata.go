@@ -21,8 +21,7 @@ type cmdConfigMetadata struct {
 	config *cmdConfig
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigMetadata) Command() *cobra.Command {
+func (c *cmdConfigMetadata) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("metadata")
 	cmd.Short = i18n.G("Manage instance metadata files")
@@ -30,11 +29,11 @@ func (c *cmdConfigMetadata) Command() *cobra.Command {
 
 	// Edit
 	configMetadataEditCmd := cmdConfigMetadataEdit{global: c.global, config: c.config, configMetadata: c}
-	cmd.AddCommand(configMetadataEditCmd.Command())
+	cmd.AddCommand(configMetadataEditCmd.command())
 
 	// Show
 	configMetadataShowCmd := cmdConfigMetadataShow{global: c.global, config: c.config, configMetadata: c}
-	cmd.AddCommand(configMetadataShowCmd.Command())
+	cmd.AddCommand(configMetadataShowCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -51,14 +50,13 @@ type cmdConfigMetadataEdit struct {
 
 var cmdConfigMetadataEditUsage = u.Usage{u.Instance.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigMetadataEdit) Command() *cobra.Command {
+func (c *cmdConfigMetadataEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdConfigMetadataEditUsage...)
 	cmd.Short = i18n.G("Edit instance metadata files")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit instance metadata files`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -95,8 +93,7 @@ func (c *cmdConfigMetadataEdit) helpTemplate() string {
 ###     properties: {}`)
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigMetadataEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigMetadataEdit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigMetadataEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -177,14 +174,13 @@ type cmdConfigMetadataShow struct {
 
 var cmdConfigMetadataShowUsage = u.Usage{u.Instance.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigMetadataShow) Command() *cobra.Command {
+func (c *cmdConfigMetadataShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdConfigMetadataShowUsage...)
 	cmd.Short = i18n.G("Show instance metadata files")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show instance metadata files`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -197,8 +193,7 @@ func (c *cmdConfigMetadataShow) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigMetadataShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigMetadataShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigMetadataShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

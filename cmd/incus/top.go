@@ -39,8 +39,7 @@ type cmdTop struct {
 
 var cmdTopUsage = u.Usage{u.RemoteColonOpt}
 
-// Command is a method of the cmdTop structure that returns a new cobra Command for displaying resource usage per instance.
-func (c *cmdTop) Command() *cobra.Command {
+func (c *cmdTop) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("top", cmdTopUsage...)
 	cmd.Short = i18n.G("Display resource usage info per instance")
@@ -69,7 +68,7 @@ Column shorthand chars:
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G("Format (table|compact)")+"``")
 	cmd.Flags().IntVar(&c.flagRefresh, "refresh", 10, i18n.G("Configure the refresh delay in seconds")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	return cmd
 }
 
@@ -137,10 +136,9 @@ func (c *cmdTop) diskUsageColumnData(dd displayData) string {
 	return ""
 }
 
-// Run is a method of the cmdTop structure. It implements the logic to call `incus top`.
 // This function implements the `top` command. It queries the metrics API at (/1.0/metrics) and renders a list of
 // instances with their CPU, memory and disk usage columns.
-func (c *cmdTop) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdTop) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdTopUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

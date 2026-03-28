@@ -33,8 +33,7 @@ type cmdInfo struct {
 
 var cmdInfoUsage = u.Usage{u.Instance.Optional().Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdInfo) Command() *cobra.Command {
+func (c *cmdInfo) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdInfoUsage...)
 	cmd.Short = i18n.G("Show instance or server information")
@@ -47,7 +46,7 @@ func (c *cmdInfo) Command() *cobra.Command {
 incus info [<remote>:] [--resources]
     For server information.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagShowAccess, "show-access", false, i18n.G("Show the instance's access list"))
 	cmd.Flags().StringVar(&c.flagShowLog, "show-log", "", i18n.G("Show the instance's recent log entries")+"``")
 	cmd.Flags().Lookup("show-log").NoOptDefVal = "default"
@@ -65,8 +64,7 @@ incus info [<remote>:] [--resources]
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdInfo) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdInfo) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdInfoUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

@@ -29,8 +29,7 @@ func (c *cmdConfigDevice) formatUsage(usage u.Usage) u.Usage {
 	return append(u.Usage{u.Instance.Remote()}, usage...)
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDevice) Command() *cobra.Command {
+func (c *cmdConfigDevice) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("device")
 	cmd.Short = i18n.G("Manage devices")
@@ -38,37 +37,37 @@ func (c *cmdConfigDevice) Command() *cobra.Command {
 
 	// Add
 	configDeviceAddCmd := cmdConfigDeviceAdd{global: c.global, config: c.config, profile: c.profile, configDevice: c}
-	cmd.AddCommand(configDeviceAddCmd.Command())
+	cmd.AddCommand(configDeviceAddCmd.command())
 
 	// Get
 	configDeviceGetCmd := cmdConfigDeviceGet{global: c.global, config: c.config, profile: c.profile, configDevice: c}
-	cmd.AddCommand(configDeviceGetCmd.Command())
+	cmd.AddCommand(configDeviceGetCmd.command())
 
 	// List
 	configDeviceListCmd := cmdConfigDeviceList{global: c.global, config: c.config, profile: c.profile, configDevice: c}
-	cmd.AddCommand(configDeviceListCmd.Command())
+	cmd.AddCommand(configDeviceListCmd.command())
 
 	// Override
 	if c.config != nil {
 		configDeviceOverrideCmd := cmdConfigDeviceOverride{global: c.global, config: c.config}
-		cmd.AddCommand(configDeviceOverrideCmd.Command())
+		cmd.AddCommand(configDeviceOverrideCmd.command())
 	}
 
 	// Remove
 	configDeviceRemoveCmd := cmdConfigDeviceRemove{global: c.global, config: c.config, profile: c.profile, configDevice: c}
-	cmd.AddCommand(configDeviceRemoveCmd.Command())
+	cmd.AddCommand(configDeviceRemoveCmd.command())
 
 	// Set
 	configDeviceSetCmd := cmdConfigDeviceSet{global: c.global, config: c.config, profile: c.profile, configDevice: c}
-	cmd.AddCommand(configDeviceSetCmd.Command())
+	cmd.AddCommand(configDeviceSetCmd.command())
 
 	// Show
 	configDeviceShowCmd := cmdConfigDeviceShow{global: c.global, config: c.config, profile: c.profile, configDevice: c}
-	cmd.AddCommand(configDeviceShowCmd.Command())
+	cmd.AddCommand(configDeviceShowCmd.command())
 
 	// Unset
 	configDeviceUnsetCmd := cmdConfigDeviceUnset{global: c.global, config: c.config, profile: c.profile, configDevice: c, configDeviceSet: &configDeviceSetCmd}
-	cmd.AddCommand(configDeviceUnsetCmd.Command())
+	cmd.AddCommand(configDeviceUnsetCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -86,8 +85,7 @@ type cmdConfigDeviceAdd struct {
 
 var cmdConfigDeviceAddUsage = u.Usage{u.NewName(u.Device), u.Type, u.LegacyKV.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceAdd) Command() *cobra.Command {
+func (c *cmdConfigDeviceAdd) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Aliases = []string{"create"}
 	cmd.Use = cli.U("add", c.configDevice.formatUsage(cmdConfigDeviceAddUsage)...)
@@ -109,7 +107,7 @@ incus profile device add [<remote>:]profile1 <device-name> disk pool=some-pool s
     Will mount the some-volume volume on some-pool onto /opt in the instance.`))
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -126,8 +124,7 @@ incus profile device add [<remote>:]profile1 <device-name> disk pool=some-pool s
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceAdd) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceAdd) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceAddUsage).Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -207,15 +204,14 @@ type cmdConfigDeviceGet struct {
 
 var cmdConfigDeviceGetUsage = u.Usage{u.Device, u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceGet) Command() *cobra.Command {
+func (c *cmdConfigDeviceGet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", c.configDevice.formatUsage(cmdConfigDeviceGetUsage)...)
 	cmd.Short = i18n.G("Get values for device configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for device configuration keys`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -240,8 +236,7 @@ func (c *cmdConfigDeviceGet) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceGet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceGet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceGetUsage).Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -296,15 +291,14 @@ type cmdConfigDeviceList struct {
 
 var cmdConfigDeviceListUsage = u.Usage{}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceList) Command() *cobra.Command {
+func (c *cmdConfigDeviceList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", c.configDevice.formatUsage(cmdConfigDeviceListUsage)...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List instance devices")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List instance devices`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -321,8 +315,7 @@ func (c *cmdConfigDeviceList) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceListUsage).Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -366,15 +359,14 @@ type cmdConfigDeviceOverride struct {
 
 var cmdConfigDeviceOverrideUsage = u.Usage{u.Instance.Remote(), u.Device, u.LegacyKV.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceOverride) Command() *cobra.Command {
+func (c *cmdConfigDeviceOverride) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("override", cmdConfigDeviceOverrideUsage...)
 	cmd.Short = i18n.G("Copy profile inherited devices and override configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Copy profile inherited devices and override configuration keys`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -387,8 +379,7 @@ func (c *cmdConfigDeviceOverride) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceOverride) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceOverride) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigDeviceOverrideUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -449,15 +440,14 @@ type cmdConfigDeviceRemove struct {
 
 var cmdConfigDeviceRemoveUsage = u.Usage{u.Device.List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceRemove) Command() *cobra.Command {
+func (c *cmdConfigDeviceRemove) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remove", c.configDevice.formatUsage(cmdConfigDeviceRemoveUsage)...)
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove instance devices")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove instance devices`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -480,8 +470,7 @@ func (c *cmdConfigDeviceRemove) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceRemove) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceRemove) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceRemoveUsage).Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -570,8 +559,7 @@ type cmdConfigDeviceSet struct {
 
 var cmdConfigDeviceSetUsage = u.Usage{u.Device, u.LegacyKV.List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceSet) Command() *cobra.Command {
+func (c *cmdConfigDeviceSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", c.configDevice.formatUsage(cmdConfigDeviceSetUsage)...)
 	cmd.Short = i18n.G("Set device configuration keys")
@@ -589,7 +577,7 @@ For backward compatibility, a single configuration key may still be set with:
     incus profile device set [<remote>:]<profile> <device> <key> <value>`))
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -675,8 +663,7 @@ func (c *cmdConfigDeviceSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 	return nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceSet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceSet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceSetUsage).Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -695,14 +682,13 @@ type cmdConfigDeviceShow struct {
 
 var cmdConfigDeviceShowUsage = u.Usage{}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceShow) Command() *cobra.Command {
+func (c *cmdConfigDeviceShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", c.configDevice.formatUsage(cmdConfigDeviceShowUsage)...)
 	cmd.Short = i18n.G("Show full device configuration")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show full device configuration`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -719,8 +705,7 @@ func (c *cmdConfigDeviceShow) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceShowUsage).Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -768,14 +753,13 @@ type cmdConfigDeviceUnset struct {
 
 var cmdConfigDeviceUnsetUsage = u.Usage{u.Device, u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigDeviceUnset) Command() *cobra.Command {
+func (c *cmdConfigDeviceUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", c.configDevice.formatUsage(cmdConfigDeviceUnsetUsage)...)
 	cmd.Short = i18n.G("Unset device configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset device configuration keys`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -800,8 +784,7 @@ func (c *cmdConfigDeviceUnset) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigDeviceUnset) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigDeviceUnset) run(cmd *cobra.Command, args []string) error {
 	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceUnsetUsage).Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

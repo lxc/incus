@@ -28,8 +28,7 @@ type cmdAdminShutdown struct {
 
 var cmdAdminShutdownUsage = u.Usage{}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminShutdown) Command() *cobra.Command {
+func (c *cmdAdminShutdown) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("shutdown", cmdAdminShutdownUsage...)
 	cmd.Short = i18n.G("Tell the daemon to shutdown all instances and exit")
@@ -40,15 +39,14 @@ func (c *cmdAdminShutdown) Command() *cobra.Command {
 
   This can take quite a while as instances can take a long time to
   shutdown, especially if a non-standard timeout was configured for them.`))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().IntVarP(&c.flagTimeout, "timeout", "t", 0, "Number of seconds to wait before giving up"+"``")
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, "Force shutdown instead of waiting for running operations to finish"+"``")
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdAdminShutdown) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminShutdown) run(cmd *cobra.Command, args []string) error {
 	_, err := cmdAdminShutdownUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

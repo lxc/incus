@@ -21,8 +21,7 @@ type cmdManpage struct {
 
 var cmdManpageUsage = u.Usage{u.Target(u.Directory)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdManpage) Command() *cobra.Command {
+func (c *cmdManpage) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("manpage", cmdManpageUsage...)
 	cmd.Short = i18n.G("Generate manpages for all commands")
@@ -42,13 +41,12 @@ func (c *cmdManpage) Command() *cobra.Command {
 		}
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdManpage) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdManpage) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdManpageUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

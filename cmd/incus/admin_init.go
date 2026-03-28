@@ -35,8 +35,7 @@ type cmdAdminInit struct {
 
 var cmdAdminInitUsage = u.Usage{u.Sequence(u.Flag("preseed"), u.Placeholder(i18n.G("preseed.yaml")).Optional()).Optional()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminInit) Command() *cobra.Command {
+func (c *cmdAdminInit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("init", cmdAdminInitUsage...)
 	cmd.Short = i18n.G("Configure the daemon")
@@ -48,7 +47,7 @@ func (c *cmdAdminInit) Command() *cobra.Command {
   init --preseed [preseed.yaml]
   init --dump
 `
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagAuto, "auto", false, i18n.G("Automatic (non-interactive) mode"))
 	cmd.Flags().BoolVar(&c.flagMinimal, "minimal", false, i18n.G("Minimal configuration (non-interactive)"))
 	cmd.Flags().BoolVar(&c.flagPreseed, "preseed", false, i18n.G("Pre-seed mode, expects YAML config from stdin"))
@@ -64,8 +63,7 @@ func (c *cmdAdminInit) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminInit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdAdminInitUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -111,7 +109,7 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 
 	// Dump mode
 	if c.flagDump {
-		err := c.RunDump(d)
+		err := c.runDump(d)
 		if err != nil {
 			return err
 		}
@@ -124,19 +122,19 @@ func (c *cmdAdminInit) Run(cmd *cobra.Command, args []string) error {
 
 	switch {
 	case c.flagPreseed:
-		config, err = c.RunPreseed(parsed[0].List[1])
+		config, err = c.runPreseed(parsed[0].List[1])
 		if err != nil {
 			return err
 		}
 
 	case c.flagAuto || c.flagMinimal:
-		config, err = c.RunAuto(d, server)
+		config, err = c.runAuto(d, server)
 		if err != nil {
 			return err
 		}
 
 	default:
-		config, err = c.RunInteractive(cmd, d, server)
+		config, err = c.runInteractive(cmd, d, server)
 		if err != nil {
 			return err
 		}

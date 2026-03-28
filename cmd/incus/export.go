@@ -31,8 +31,7 @@ type cmdExport struct {
 
 var cmdExportUsage = u.Usage{u.Instance.Remote(), u.Target(u.File).Optional()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdExport) Command() *cobra.Command {
+func (c *cmdExport) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("export", cmdExportUsage...)
 	cmd.Short = i18n.G("Export instance backups")
@@ -45,7 +44,7 @@ func (c *cmdExport) Command() *cobra.Command {
 incus export u1 -
 	Download a backup tarball with it written to the standard output.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagInstanceOnly, "instance-only", false,
 		i18n.G("Whether or not to only backup the instance (without snapshots)"))
 	cmd.Flags().BoolVar(&c.flagRootOnly, "root-only", false,
@@ -57,8 +56,7 @@ incus export u1 -
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdExport) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdExport) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdExportUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

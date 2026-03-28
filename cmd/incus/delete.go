@@ -29,15 +29,14 @@ type cmdDelete struct {
 
 var cmdDeleteUsage = u.Usage{u.Instance.Remote().List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdDelete) Command() *cobra.Command {
+func (c *cmdDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete instances`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force the removal of running instances"))
 	cmd.Flags().BoolVarP(&c.flagInteractive, "interactive", "i", false, i18n.G("Require user confirmation"))
 
@@ -146,8 +145,7 @@ func (c *cmdDelete) deleteOne(p *u.Parsed) error {
 	return nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

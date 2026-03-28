@@ -17,8 +17,7 @@ type cmdClusterRole struct {
 	cluster *cmdCluster
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdClusterRole) Command() *cobra.Command {
+func (c *cmdClusterRole) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("role")
 	cmd.Short = i18n.G("Manage cluster roles")
@@ -26,11 +25,11 @@ func (c *cmdClusterRole) Command() *cobra.Command {
 
 	// Add
 	clusterRoleAddCmd := cmdClusterRoleAdd{global: c.global, cluster: c.cluster, clusterRole: c}
-	cmd.AddCommand(clusterRoleAddCmd.Command())
+	cmd.AddCommand(clusterRoleAddCmd.command())
 
 	// Remove
 	clusterRoleRemoveCmd := cmdClusterRoleRemove{global: c.global, cluster: c.cluster, clusterRole: c}
-	cmd.AddCommand(clusterRoleRemoveCmd.Command())
+	cmd.AddCommand(clusterRoleRemoveCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -46,15 +45,14 @@ type cmdClusterRoleAdd struct {
 
 var cmdClusterRoleAddUsage = u.Usage{u.Member.Remote(), u.Role.List(1, ",")}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdClusterRoleAdd) Command() *cobra.Command {
+func (c *cmdClusterRoleAdd) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdClusterRoleAddUsage...)
 	cmd.Aliases = []string{"create"}
 	cmd.Short = i18n.G("Add roles to a cluster member")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add roles to a cluster member`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -67,8 +65,7 @@ func (c *cmdClusterRoleAdd) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdClusterRoleAdd) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdClusterRoleAdd) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdClusterRoleAddUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -104,8 +101,7 @@ type cmdClusterRoleRemove struct {
 
 var cmdClusterRoleRemoteUsage = u.Usage{u.Member.Remote(), u.Role.List(1, ",")}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdClusterRoleRemove) Command() *cobra.Command {
+func (c *cmdClusterRoleRemove) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remove", cmdClusterRoleRemoteUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
@@ -113,7 +109,7 @@ func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Remove roles from a cluster member`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -130,8 +126,7 @@ func (c *cmdClusterRoleRemove) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdClusterRoleRemove) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdClusterRoleRemove) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdClusterRoleRemoteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

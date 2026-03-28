@@ -17,8 +17,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-// Run runs the actual command logic.
-func (c *cmdWebui) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdWebuiUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

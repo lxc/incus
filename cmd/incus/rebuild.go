@@ -21,23 +21,21 @@ type cmdRebuild struct {
 
 var cmdRebuildUsage = u.Usage{u.Either(u.Flag("empty"), u.RemoteImage), u.Instance.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdRebuild) Command() *cobra.Command {
+func (c *cmdRebuild) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rebuild", cmdRebuildUsage...)
 	cmd.Short = i18n.G("Rebuild instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Wipe the instance root disk and re-initialize with a new image (or empty volume).`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagEmpty, "empty", false, i18n.G("Rebuild as an empty instance"))
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("If an instance is running, stop it and then rebuild it"))
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdRebuild) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdRebuild) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 	parsed, err := cmdRebuildUsage.Parse(conf, cmd, args)
 	if err != nil {

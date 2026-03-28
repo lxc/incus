@@ -27,12 +27,11 @@ type cmdStart struct {
 
 var cmdActionUsage = u.Usage{u.Either(u.Instance.Remote().List(1), u.Sequence(u.Flag("all"), u.RemoteColon.List(0)))}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdStart) Command() *cobra.Command {
+func (c *cmdStart) command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
 
-	cmd := c.action.Command("start")
+	cmd := c.action.command("start")
 	cmd.Use = cli.U("start", cmdActionUsage...)
 	cmd.Short = i18n.G("Start instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Start instances`))
@@ -50,12 +49,11 @@ type cmdPause struct {
 	action *cmdAction
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdPause) Command() *cobra.Command {
+func (c *cmdPause) command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
 
-	cmd := c.action.Command("pause")
+	cmd := c.action.command("pause")
 	cmd.Use = cli.U("pause", cmdActionUsage...)
 	cmd.Short = i18n.G("Pause instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Pause instances`))
@@ -74,12 +72,11 @@ type cmdResume struct {
 	action *cmdAction
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdResume) Command() *cobra.Command {
+func (c *cmdResume) command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
 
-	cmd := c.action.Command("resume")
+	cmd := c.action.command("resume")
 	cmd.Use = cli.U("resume", cmdActionUsage...)
 	cmd.Short = i18n.G("Resume instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Resume instances`))
@@ -98,12 +95,11 @@ type cmdRestart struct {
 	action *cmdAction
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdRestart) Command() *cobra.Command {
+func (c *cmdRestart) command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
 
-	cmd := c.action.Command("restart")
+	cmd := c.action.command("restart")
 	cmd.Use = cli.U("restart", cmdActionUsage...)
 	cmd.Short = i18n.G("Restart instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Restart instances`))
@@ -121,12 +117,11 @@ type cmdStop struct {
 	action *cmdAction
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdStop) Command() *cobra.Command {
+func (c *cmdStop) command() *cobra.Command {
 	cmdAction := cmdAction{global: c.global}
 	c.action = &cmdAction
 
-	cmd := c.action.Command("stop")
+	cmd := c.action.command("stop")
 	cmd.Use = cli.U("stop", cmdActionUsage...)
 	cmd.Short = i18n.G("Stop instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Stop instances`))
@@ -149,10 +144,9 @@ type cmdAction struct {
 	flagTimeout   int
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAction) Command(action string) *cobra.Command {
+func (c *cmdAction) command(action string) *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().BoolVar(&c.flagAll, "all", false, i18n.G("Run against all instances"))
 
@@ -340,9 +334,8 @@ func (c *cmdAction) doAction(action string, conf *config.Config, p *u.Parsed) er
 	return nil
 }
 
-// Run is a method of the cmdAction structure that implements the execution logic for the given Cobra command.
 // It handles actions on instances (single or all) and manages error handling, console flag restrictions, and batch operations.
-func (c *cmdAction) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAction) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdActionUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

@@ -35,8 +35,7 @@ type networkColumn struct {
 	Data func(api.Network) string
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetwork) Command() *cobra.Command {
+func (c *cmdNetwork) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("network")
 	cmd.Short = i18n.G("Manage and attach instances to networks")
@@ -45,95 +44,95 @@ func (c *cmdNetwork) Command() *cobra.Command {
 
 	// Attach
 	networkAttachCmd := cmdNetworkAttach{global: c.global, network: c}
-	cmd.AddCommand(networkAttachCmd.Command())
+	cmd.AddCommand(networkAttachCmd.command())
 
 	// Attach profile
 	networkAttachProfileCmd := cmdNetworkAttachProfile{global: c.global, network: c}
-	cmd.AddCommand(networkAttachProfileCmd.Command())
+	cmd.AddCommand(networkAttachProfileCmd.command())
 
 	// Create
 	networkCreateCmd := cmdNetworkCreate{global: c.global, network: c}
-	cmd.AddCommand(networkCreateCmd.Command())
+	cmd.AddCommand(networkCreateCmd.command())
 
 	// Delete
 	networkDeleteCmd := cmdNetworkDelete{global: c.global, network: c}
-	cmd.AddCommand(networkDeleteCmd.Command())
+	cmd.AddCommand(networkDeleteCmd.command())
 
 	// Detach
 	networkDetachCmd := cmdNetworkDetach{global: c.global, network: c}
-	cmd.AddCommand(networkDetachCmd.Command())
+	cmd.AddCommand(networkDetachCmd.command())
 
 	// Detach profile
 	networkDetachProfileCmd := cmdNetworkDetachProfile{global: c.global, network: c, networkDetach: &networkDetachCmd}
-	cmd.AddCommand(networkDetachProfileCmd.Command())
+	cmd.AddCommand(networkDetachProfileCmd.command())
 
 	// Edit
 	networkEditCmd := cmdNetworkEdit{global: c.global, network: c}
-	cmd.AddCommand(networkEditCmd.Command())
+	cmd.AddCommand(networkEditCmd.command())
 
 	// Get
 	networkGetCmd := cmdNetworkGet{global: c.global, network: c}
-	cmd.AddCommand(networkGetCmd.Command())
+	cmd.AddCommand(networkGetCmd.command())
 
 	// Info
 	networkInfoCmd := cmdNetworkInfo{global: c.global, network: c}
-	cmd.AddCommand(networkInfoCmd.Command())
+	cmd.AddCommand(networkInfoCmd.command())
 
 	// List
 	networkListCmd := cmdNetworkList{global: c.global, network: c}
-	cmd.AddCommand(networkListCmd.Command())
+	cmd.AddCommand(networkListCmd.command())
 
 	// List allocations
 	networkListAllocationsCmd := cmdNetworkListAllocations{global: c.global, network: c}
-	cmd.AddCommand(networkListAllocationsCmd.Command())
+	cmd.AddCommand(networkListAllocationsCmd.command())
 
 	// List leases
 	networkListLeasesCmd := cmdNetworkListLeases{global: c.global, network: c}
-	cmd.AddCommand(networkListLeasesCmd.Command())
+	cmd.AddCommand(networkListLeasesCmd.command())
 
 	// Rename
 	networkRenameCmd := cmdNetworkRename{global: c.global, network: c}
-	cmd.AddCommand(networkRenameCmd.Command())
+	cmd.AddCommand(networkRenameCmd.command())
 
 	// Set
 	networkSetCmd := cmdNetworkSet{global: c.global, network: c}
-	cmd.AddCommand(networkSetCmd.Command())
+	cmd.AddCommand(networkSetCmd.command())
 
 	// Show
 	networkShowCmd := cmdNetworkShow{global: c.global, network: c}
-	cmd.AddCommand(networkShowCmd.Command())
+	cmd.AddCommand(networkShowCmd.command())
 
 	// Unset
 	networkUnsetCmd := cmdNetworkUnset{global: c.global, network: c, networkSet: &networkSetCmd}
-	cmd.AddCommand(networkUnsetCmd.Command())
+	cmd.AddCommand(networkUnsetCmd.command())
 
 	// ACL
 	networkACLCmd := cmdNetworkACL{global: c.global}
-	cmd.AddCommand(networkACLCmd.Command())
+	cmd.AddCommand(networkACLCmd.command())
 
 	// Address set
 	networkAddressSetCmd := cmdNetworkAddressSet{global: c.global}
-	cmd.AddCommand(networkAddressSetCmd.Command())
+	cmd.AddCommand(networkAddressSetCmd.command())
 
 	// Forward
 	networkForwardCmd := cmdNetworkForward{global: c.global}
-	cmd.AddCommand(networkForwardCmd.Command())
+	cmd.AddCommand(networkForwardCmd.command())
 
 	// Integration
 	networkIntegrationCmd := cmdNetworkIntegration{global: c.global}
-	cmd.AddCommand(networkIntegrationCmd.Command())
+	cmd.AddCommand(networkIntegrationCmd.command())
 
 	// Load Balancer
 	networkLoadBalancerCmd := cmdNetworkLoadBalancer{global: c.global}
-	cmd.AddCommand(networkLoadBalancerCmd.Command())
+	cmd.AddCommand(networkLoadBalancerCmd.command())
 
 	// Peer
 	networkPeerCmd := cmdNetworkPeer{global: c.global}
-	cmd.AddCommand(networkPeerCmd.Command())
+	cmd.AddCommand(networkPeerCmd.command())
 
 	// Zone
 	networkZoneCmd := cmdNetworkZone{global: c.global}
-	cmd.AddCommand(networkZoneCmd.Command())
+	cmd.AddCommand(networkZoneCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -149,15 +148,14 @@ type cmdNetworkAttach struct {
 
 var cmdNetworkAttachUsage = u.Usage{u.Network.Remote(), u.Instance, u.NewName(u.Device).Optional(u.NewName(u.Interface).Optional())}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkAttach) Command() *cobra.Command {
+func (c *cmdNetworkAttach) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("attach", cmdNetworkAttachUsage...)
 	cmd.Short = i18n.G("Attach network interfaces to instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Attach new network interfaces to instances`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -174,8 +172,7 @@ func (c *cmdNetworkAttach) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkAttach) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkAttach) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkAttachUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -241,15 +238,14 @@ type cmdNetworkAttachProfile struct {
 
 var cmdNetworkAttachProfileUsage = u.Usage{u.Network.Remote(), u.Profile, u.NewName(u.Device).Optional(u.NewName(u.Interface).Optional())}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkAttachProfile) Command() *cobra.Command {
+func (c *cmdNetworkAttachProfile) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("attach-profile", cmdNetworkAttachProfileUsage...)
 	cmd.Short = i18n.G("Attach network interfaces to profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Attach network interfaces to profiles`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -266,8 +262,7 @@ func (c *cmdNetworkAttachProfile) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkAttachProfile) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkAttachProfile) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkAttachProfileUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -335,8 +330,7 @@ type cmdNetworkCreate struct {
 
 var cmdNetworkCreateUsage = u.Usage{u.NewName(u.Network).Remote(), u.KV.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkCreate) Command() *cobra.Command {
+func (c *cmdNetworkCreate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdNetworkCreateUsage...)
 	cmd.Aliases = []string{"add"}
@@ -355,7 +349,7 @@ incus network create bar network=baz --type ovn
 	cmd.Flags().StringVarP(&c.network.flagType, "type", "t", "", i18n.G("Network type")+"``")
 	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Network description")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -368,8 +362,7 @@ incus network create bar network=baz --type ovn
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkCreate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkCreate) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkCreateUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -445,15 +438,14 @@ type cmdNetworkDelete struct {
 
 var cmdNetworkDeleteUsage = u.Usage{u.Network.Remote().List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkDelete) Command() *cobra.Command {
+func (c *cmdNetworkDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdNetworkDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete networks")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete networks`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpNetworks(toComplete)
@@ -462,8 +454,7 @@ func (c *cmdNetworkDelete) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -502,15 +493,14 @@ type cmdNetworkDetach struct {
 
 var cmdNetworkDetachUsage = u.Usage{u.Network.Remote(), u.Instance, u.Device.Optional()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkDetach) Command() *cobra.Command {
+func (c *cmdNetworkDetach) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("detach", cmdNetworkDetachUsage...)
 	cmd.Short = i18n.G("Detach network interfaces from instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Detach network interfaces from instances`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -567,8 +557,7 @@ func (c *cmdNetworkDetach) findDevice(devices map[string]map[string]string, netw
 	return devName, nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkDetach) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkDetach) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkDetachUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -608,15 +597,14 @@ type cmdNetworkDetachProfile struct {
 
 var cmdNetworkDetachProfileUsage = u.Usage{u.Network.Remote(), u.Profile, u.Device.Optional()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkDetachProfile) Command() *cobra.Command {
+func (c *cmdNetworkDetachProfile) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("detach-profile", cmdNetworkDetachProfileUsage...)
 	cmd.Short = i18n.G("Detach network interfaces from profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Detach network interfaces from profiles`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -633,8 +621,7 @@ func (c *cmdNetworkDetachProfile) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkDetachProfile) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkDetachProfile) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkDetachProfileUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -673,15 +660,14 @@ type cmdNetworkEdit struct {
 
 var cmdNetworkEditUsage = u.Usage{u.Network.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkEdit) Command() *cobra.Command {
+func (c *cmdNetworkEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdNetworkEditUsage...)
 	cmd.Short = i18n.G("Edit network configurations as YAML")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Edit network configurations as YAML`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -714,8 +700,7 @@ func (c *cmdNetworkEdit) helpTemplate() string {
 ### Note that only the configuration can be changed.`)
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -803,8 +788,7 @@ type cmdNetworkGet struct {
 
 var cmdNetworkGetUsage = u.Usage{u.Network.Remote(), u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkGet) Command() *cobra.Command {
+func (c *cmdNetworkGet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdNetworkGetUsage...)
 	cmd.Short = i18n.G("Get values for network configuration keys")
@@ -813,7 +797,7 @@ func (c *cmdNetworkGet) Command() *cobra.Command {
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a network property"))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -830,8 +814,7 @@ func (c *cmdNetworkGet) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkGet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkGet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkGetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -878,8 +861,7 @@ type cmdNetworkInfo struct {
 
 var cmdNetworkInfoUsage = u.Usage{u.Network.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkInfo) Command() *cobra.Command {
+func (c *cmdNetworkInfo) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdNetworkInfoUsage...)
 	cmd.Short = i18n.G("Get runtime information on networks")
@@ -887,7 +869,7 @@ func (c *cmdNetworkInfo) Command() *cobra.Command {
 		`Get runtime information on networks`))
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -900,8 +882,7 @@ func (c *cmdNetworkInfo) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkInfo) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkInfo) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkInfoUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1028,8 +1009,7 @@ type cmdNetworkList struct {
 
 var cmdNetworkListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkList) Command() *cobra.Command {
+func (c *cmdNetworkList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdNetworkListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -1069,7 +1049,7 @@ u - Used by (count)`))
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -1163,8 +1143,7 @@ func (c *cmdNetworkList) stateColumnData(network api.Network) string {
 	return strings.ToUpper(network.Status)
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1229,8 +1208,7 @@ type networkLeasesColumn struct {
 
 var cmdNetworkListLeasesUsage = u.Usage{u.Network.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkListLeases) Command() *cobra.Command {
+func (c *cmdNetworkListLeases) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list-leases", cmdNetworkListLeasesUsage...)
 	cmd.Short = i18n.G("List DHCP leases")
@@ -1262,7 +1240,7 @@ Pre-defined column shorthand chars:
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -1330,8 +1308,7 @@ func (c *cmdNetworkListLeases) locationColumnData(lease api.NetworkLease) string
 	return lease.Location
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkListLeases) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkListLeases) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkListLeasesUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1380,15 +1357,14 @@ type cmdNetworkRename struct {
 
 var cmdNetworkRenameUsage = u.Usage{u.Network.Remote(), u.NewName(u.Network)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkRename) Command() *cobra.Command {
+func (c *cmdNetworkRename) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdNetworkRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename networks")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename networks`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -1401,8 +1377,7 @@ func (c *cmdNetworkRename) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkRename) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkRename) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkRenameUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1435,8 +1410,7 @@ type cmdNetworkSet struct {
 
 var cmdNetworkSetUsage = u.Usage{u.Network.Remote(), u.LegacyKV.List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkSet) Command() *cobra.Command {
+func (c *cmdNetworkSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdNetworkSetUsage...)
 	cmd.Short = i18n.G("Set network configuration keys")
@@ -1448,7 +1422,7 @@ For backward compatibility, a single configuration key may still be set with:
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a network property"))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -1507,8 +1481,7 @@ func (c *cmdNetworkSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 	return d.UpdateNetwork(networkName, writable, etag)
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkSet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkSet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkSetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1525,15 +1498,14 @@ type cmdNetworkShow struct {
 
 var cmdNetworkShowUsage = u.Usage{u.Network.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkShow) Command() *cobra.Command {
+func (c *cmdNetworkShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdNetworkShowUsage...)
 	cmd.Short = i18n.G("Show network configurations")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show network configurations`))
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -1546,8 +1518,7 @@ func (c *cmdNetworkShow) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1589,8 +1560,7 @@ type cmdNetworkUnset struct {
 
 var cmdNetworkUnsetUsage = u.Usage{u.Network.Remote(), u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkUnset) Command() *cobra.Command {
+func (c *cmdNetworkUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdNetworkUnsetUsage...)
 	cmd.Short = i18n.G("Unset network configuration keys")
@@ -1598,7 +1568,7 @@ func (c *cmdNetworkUnset) Command() *cobra.Command {
 
 	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a network property"))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1615,8 +1585,7 @@ func (c *cmdNetworkUnset) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkUnset) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkUnset) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkUnsetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

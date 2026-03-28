@@ -16,13 +16,12 @@ type cmdRename struct {
 
 var cmdRenameUsage = u.Usage{u.Instance.Remote(), u.NewName(u.Instance)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdRename) Command() *cobra.Command {
+func (c *cmdRename) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdRenameUsage...)
 	cmd.Short = i18n.G("Rename instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename instances`))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -35,8 +34,7 @@ func (c *cmdRename) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdRename) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdRename) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 	parsed, err := cmdRenameUsage.Parse(conf, cmd, args)
 	if err != nil {

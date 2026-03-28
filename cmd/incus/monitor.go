@@ -31,8 +31,7 @@ type cmdMonitor struct {
 
 var cmdMonitorUsage = u.Usage{u.RemoteColonOpt}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdMonitor) Command() *cobra.Command {
+func (c *cmdMonitor) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("monitor", cmdMonitorUsage...)
 	cmd.Short = i18n.G("Monitor a local or remote server")
@@ -51,7 +50,7 @@ incus monitor --type=lifecycle
     Only show lifecycle events.`))
 	cmd.Hidden = true
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagPretty, "pretty", false, i18n.G("Pretty rendering (short for --format=pretty)"))
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Show events from all projects"))
 	cmd.Flags().StringArrayVar(&c.flagType, "type", nil, i18n.G("Event type to listen for")+"``")
@@ -61,8 +60,7 @@ incus monitor --type=lifecycle
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdMonitor) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdMonitor) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdMonitorUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
