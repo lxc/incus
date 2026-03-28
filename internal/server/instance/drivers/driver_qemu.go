@@ -3982,6 +3982,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 
 	info := DriverStatuses()[instancetype.VM].Info
 	_, spice := info.Features["spice"]
+	_, plan9 := info.Features["plan9"]
 
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
@@ -4044,10 +4045,8 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 
 	conf = append(conf, qemuSCSI(&scsiOpts)...)
 
-	// Windows doesn't support virtio-9p.
-	if !isWindows {
-		// Always export the config directory as a 9p config drive, in case the host or VM guest doesn't support
-		// virtio-fs.
+	// Export the config directory and agent as 9p drives when supported.
+	if !isWindows && plan9 {
 		devBus, devAddr, multi = bus.allocate(busFunctionGroup9p)
 		driveConfig9pOpts := qemuDriveConfigOpts{
 			dev: qemuDevOpts{
@@ -10454,6 +10453,14 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		logger.Debug("Failed querying SPICE during VM feature check", logger.Ctx{"err": err})
 	} else {
 		features["spice"] = struct{}{}
+	}
+
+	// Check if virtio-9p-pci is compiled into QEMU.
+	err = monitor.Query9pDevice()
+	if err != nil {
+		logger.Debug("Failed querying virtio-9p-pci during VM feature check", logger.Ctx{"err": err})
+	} else {
+		features["plan9"] = struct{}{}
 	}
 
 	// Check if running nested.

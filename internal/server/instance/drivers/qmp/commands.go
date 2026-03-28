@@ -1650,3 +1650,8 @@ func (m *Monitor) SetNICLink(id string, connected bool) error {
 func (m *Monitor) QuerySpice() error {
 	return m.Run("query-spice", nil, nil)
 }
+
+// Query9pDevice checks whether virtio-9p-pci support is available in QEMU.
+func (m *Monitor) Query9pDevice() error {
+	return m.Run("device-list-properties", map[string]string{"typename": "virtio-9p-pci"}, nil)
+}
