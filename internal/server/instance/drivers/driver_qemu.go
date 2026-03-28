@@ -10433,6 +10433,14 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		features["vhost_net"] = struct{}{}
 	}
 
+	// Check if SPICE is compiled into QEMU.
+	err = monitor.QuerySpice()
+	if err != nil {
+		logger.Debug("Failed querying SPICE during VM feature check", logger.Ctx{"err": err})
+	} else {
+		features["spice"] = struct{}{}
+	}
+
 	// Check if running nested.
 	cpus, err := resources.GetCPU()
 	if err != nil {
