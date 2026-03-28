@@ -1842,9 +1842,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-no-user-config",
 		"-sandbox", "on,obsolete=deny,elevateprivileges=allow,spawn=allow,resourcecontrol=deny",
 		"-readconfig", confFile,
-		"-spice", d.spiceCmdlineConfig(),
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
+	}
+
+	_, spiceSupported := info.Features["spice"]
+	if spiceSupported {
+		qemuArgs = append(qemuArgs, "-spice", d.spiceCmdlineConfig())
 	}
 
 	// If stateful, restore now.
@@ -3976,6 +3980,9 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 
 	conf = append(conf, qemuVsock(&vsockOpts)...)
 
+	info := DriverStatuses()[instancetype.VM].Info
+	_, spice := info.Features["spice"]
+
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
 		dev: qemuDevOpts{
@@ -3986,6 +3993,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 		},
 		charDevName:      qemuSerialChardevName,
 		ringbufSizeBytes: qmp.RingbufSize,
+		spice:            spice,
 	}
 
 	conf = append(conf, qemuSerial(&serialOpts)...)
@@ -3998,6 +4006,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 			devAddr:       devAddr,
 			multifunction: multi,
 			ports:         qemuSparseUSBPorts,
+			spice:         spice,
 		}
 
 		conf = append(conf, qemuUSB(&usbOpts)...)
@@ -9125,6 +9134,12 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	case instance.ConsoleTypeConsole:
 		path = d.consolePath()
 	case instance.ConsoleTypeVGA:
+		info := DriverStatuses()[instancetype.VM].Info
+		_, spiceSupported := info.Features["spice"]
+		if !spiceSupported {
+			return nil, nil, fmt.Errorf("SPICE is not supported by the host")
+		}
+
 		path = d.spicePath()
 	default:
 		return nil, nil, fmt.Errorf("Unknown protocol %q", protocol)
@@ -10431,6 +10446,14 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 	// Check if vhost-net accelerator (for NIC CPU offloading) is available.
 	if util.PathExists("/dev/vhost-net") {
 		features["vhost_net"] = struct{}{}
+	}
+
+	// Check if SPICE is compiled into QEMU.
+	err = monitor.QuerySpice()
+	if err != nil {
+		logger.Debug("Failed querying SPICE during VM feature check", logger.Ctx{"err": err})
+	} else {
+		features["spice"] = struct{}{}
 	}
 
 	// Check if running nested.
