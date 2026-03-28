@@ -32,8 +32,7 @@ type cmdProfile struct {
 	global *cmdGlobal
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfile) Command() *cobra.Command {
+func (c *cmdProfile) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("profile")
 	cmd.Short = i18n.G("Manage profiles")
@@ -41,59 +40,59 @@ func (c *cmdProfile) Command() *cobra.Command {
 
 	// Add
 	profileAddCmd := cmdProfileAdd{global: c.global, profile: c}
-	cmd.AddCommand(profileAddCmd.Command())
+	cmd.AddCommand(profileAddCmd.command())
 
 	// Assign
 	profileAssignCmd := cmdProfileAssign{global: c.global, profile: c}
-	cmd.AddCommand(profileAssignCmd.Command())
+	cmd.AddCommand(profileAssignCmd.command())
 
 	// Copy
 	profileCopyCmd := cmdProfileCopy{global: c.global, profile: c}
-	cmd.AddCommand(profileCopyCmd.Command())
+	cmd.AddCommand(profileCopyCmd.command())
 
 	// Create
 	profileCreateCmd := cmdProfileCreate{global: c.global, profile: c}
-	cmd.AddCommand(profileCreateCmd.Command())
+	cmd.AddCommand(profileCreateCmd.command())
 
 	// Delete
 	profileDeleteCmd := cmdProfileDelete{global: c.global, profile: c}
-	cmd.AddCommand(profileDeleteCmd.Command())
+	cmd.AddCommand(profileDeleteCmd.command())
 
 	// Device
 	profileDeviceCmd := cmdConfigDevice{global: c.global, profile: c}
-	cmd.AddCommand(profileDeviceCmd.Command())
+	cmd.AddCommand(profileDeviceCmd.command())
 
 	// Edit
 	profileEditCmd := cmdProfileEdit{global: c.global, profile: c}
-	cmd.AddCommand(profileEditCmd.Command())
+	cmd.AddCommand(profileEditCmd.command())
 
 	// Get
 	profileGetCmd := cmdProfileGet{global: c.global, profile: c}
-	cmd.AddCommand(profileGetCmd.Command())
+	cmd.AddCommand(profileGetCmd.command())
 
 	// List
 	profileListCmd := cmdProfileList{global: c.global, profile: c}
-	cmd.AddCommand(profileListCmd.Command())
+	cmd.AddCommand(profileListCmd.command())
 
 	// Remove
 	profileRemoveCmd := cmdProfileRemove{global: c.global, profile: c}
-	cmd.AddCommand(profileRemoveCmd.Command())
+	cmd.AddCommand(profileRemoveCmd.command())
 
 	// Rename
 	profileRenameCmd := cmdProfileRename{global: c.global, profile: c}
-	cmd.AddCommand(profileRenameCmd.Command())
+	cmd.AddCommand(profileRenameCmd.command())
 
 	// Set
 	profileSetCmd := cmdProfileSet{global: c.global, profile: c}
-	cmd.AddCommand(profileSetCmd.Command())
+	cmd.AddCommand(profileSetCmd.command())
 
 	// Show
 	profileShowCmd := cmdProfileShow{global: c.global, profile: c}
-	cmd.AddCommand(profileShowCmd.Command())
+	cmd.AddCommand(profileShowCmd.command())
 
 	// Unset
 	profileUnsetCmd := cmdProfileUnset{global: c.global, profile: c, profileSet: &profileSetCmd}
-	cmd.AddCommand(profileUnsetCmd.Command())
+	cmd.AddCommand(profileUnsetCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -109,14 +108,13 @@ type cmdProfileAdd struct {
 
 var cmdProfileAddUsage = u.Usage{u.Instance.Remote(), u.Profile}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileAdd) Command() *cobra.Command {
+func (c *cmdProfileAdd) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdProfileAddUsage...)
 	cmd.Short = i18n.G("Add profiles to instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add profiles to instances`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -133,8 +131,7 @@ func (c *cmdProfileAdd) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileAdd) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileAdd) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileAddUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -179,8 +176,7 @@ type cmdProfileAssign struct {
 
 var cmdProfileAssignUsage = u.Usage{u.Instance.Remote(), u.Either(u.Profile.List(1, ","), u.Flag("no-profiles"))}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileAssign) Command() *cobra.Command {
+func (c *cmdProfileAssign) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("assign", cmdProfileAssignUsage...)
 	cmd.Aliases = []string{"apply"}
@@ -197,7 +193,7 @@ incus profile assign foo default
 incus profile assign foo --no-profiles
     Remove all profile from "foo"`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagNoProfiles, "no-profiles", false, i18n.G("Remove all profiles from the instance"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -211,8 +207,7 @@ incus profile assign foo --no-profiles
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileAssign) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileAssign) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileAssignUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -269,8 +264,7 @@ type cmdProfileCopy struct {
 
 var cmdProfileCopyUsage = u.Usage{u.Profile.Remote(), u.NewName(u.Profile).Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileCopy) Command() *cobra.Command {
+func (c *cmdProfileCopy) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("copy", cmdProfileCopyUsage...)
 	cmd.Aliases = []string{"cp"}
@@ -279,7 +273,7 @@ func (c *cmdProfileCopy) Command() *cobra.Command {
 	cmd.Flags().StringVar(&c.flagTargetProject, "target-project", "", i18n.G("Copy to a project different from the source")+"``")
 	cmd.Flags().BoolVar(&c.flagRefresh, "refresh", false, i18n.G("Update the target profile from the source if it already exists"))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -296,8 +290,7 @@ func (c *cmdProfileCopy) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileCopy) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileCopy) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileCopyUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -344,8 +337,7 @@ type cmdProfileCreate struct {
 
 var cmdProfileCreateUsage = u.Usage{u.NewName(u.Profile).Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileCreate) Command() *cobra.Command {
+func (c *cmdProfileCreate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdProfileCreateUsage...)
 	cmd.Short = i18n.G("Create profiles")
@@ -356,7 +348,7 @@ func (c *cmdProfileCreate) Command() *cobra.Command {
 incus profile create p1 < config.yaml
     Create a profile named p1 with configuration from config.yaml`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Profile description")+"``")
 
@@ -371,8 +363,7 @@ incus profile create p1 < config.yaml
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileCreate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileCreate) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileCreateUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -424,15 +415,14 @@ type cmdProfileDelete struct {
 
 var cmdProfileDeleteUsage = u.Usage{u.Profile.Remote().List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileDelete) Command() *cobra.Command {
+func (c *cmdProfileDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdProfileDeleteUsage...)
 	cmd.Aliases = []string{"rm"}
 	cmd.Short = i18n.G("Delete profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete profiles`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpProfiles(toComplete, true)
@@ -441,8 +431,7 @@ func (c *cmdProfileDelete) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -481,8 +470,7 @@ type cmdProfileEdit struct {
 
 var cmdProfileEditUsage = u.Usage{u.Profile.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileEdit) Command() *cobra.Command {
+func (c *cmdProfileEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdProfileEditUsage...)
 	cmd.Short = i18n.G("Edit profile configurations as YAML")
@@ -492,7 +480,7 @@ func (c *cmdProfileEdit) Command() *cobra.Command {
 		`incus profile edit <profile> < profile.yaml
     Update a profile using the content of profile.yaml`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -526,8 +514,7 @@ func (c *cmdProfileEdit) helpTemplate() string {
 ### Note that the name is shown but cannot be changed`)
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileEdit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -611,15 +598,14 @@ type cmdProfileGet struct {
 
 var cmdProfileGetUsage = u.Usage{u.Profile.Remote(), u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileGet) Command() *cobra.Command {
+func (c *cmdProfileGet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdProfileGetUsage...)
 	cmd.Short = i18n.G("Get values for profile configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for profile configuration keys`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a profile property"))
 
@@ -638,8 +624,7 @@ func (c *cmdProfileGet) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileGet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileGet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileGetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -681,8 +666,7 @@ type cmdProfileList struct {
 
 var cmdProfileListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileList) Command() *cobra.Command {
+func (c *cmdProfileList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdProfileListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -709,7 +693,7 @@ n - Profile Name
 d - Description
 u - Used By`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultProfileColumns, i18n.G("Columns")+"``")
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("Display profiles from all projects"))
@@ -786,8 +770,7 @@ func (c *cmdProfileList) usedByColumnData(profile api.Profile) string {
 	return fmt.Sprintf("%d", len(profile.UsedBy))
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -858,14 +841,13 @@ type cmdProfileRemove struct {
 
 var cmdProfileRemoveUsage = u.Usage{u.Instance.Remote(), u.Profile}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileRemove) Command() *cobra.Command {
+func (c *cmdProfileRemove) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remove", cmdProfileRemoveUsage...)
 	cmd.Short = i18n.G("Remove profiles from instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove profiles from instances`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -882,8 +864,7 @@ func (c *cmdProfileRemove) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileRemove) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileRemove) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileRemoveUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -939,15 +920,14 @@ type cmdProfileRename struct {
 
 var cmdProfileRenameUsage = u.Usage{u.Profile.Remote(), u.NewName(u.Profile)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileRename) Command() *cobra.Command {
+func (c *cmdProfileRename) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdProfileRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename profiles`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -960,8 +940,7 @@ func (c *cmdProfileRename) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileRename) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileRename) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileRenameUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -994,8 +973,7 @@ type cmdProfileSet struct {
 
 var cmdProfileSetUsage = u.Usage{u.Profile.Remote(), u.LegacyKV.List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileSet) Command() *cobra.Command {
+func (c *cmdProfileSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdProfileSetUsage...)
 	cmd.Short = i18n.G("Set profile configuration keys")
@@ -1005,7 +983,7 @@ func (c *cmdProfileSet) Command() *cobra.Command {
 For backward compatibility, a single configuration key may still be set with:
     incus profile set [<remote>:]<profile> <key> <value>`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a profile property"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -1060,8 +1038,7 @@ func (c *cmdProfileSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 	return d.UpdateProfile(profileName, writable, etag)
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileSet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileSet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileSetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1078,14 +1055,13 @@ type cmdProfileShow struct {
 
 var cmdProfileShowUsage = u.Usage{u.Profile.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileShow) Command() *cobra.Command {
+func (c *cmdProfileShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdProfileShowUsage...)
 	cmd.Short = i18n.G("Show profile configurations")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show profile configurations`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1098,8 +1074,7 @@ func (c *cmdProfileShow) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1135,14 +1110,13 @@ type cmdProfileUnset struct {
 
 var cmdProfileUnsetUsage = u.Usage{u.Profile.Remote(), u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProfileUnset) Command() *cobra.Command {
+func (c *cmdProfileUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdProfileUnsetUsage...)
 	cmd.Short = i18n.G("Unset profile configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset profile configuration keys`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a profile property"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -1160,8 +1134,7 @@ func (c *cmdProfileUnset) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProfileUnset) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProfileUnset) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProfileUnsetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

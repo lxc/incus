@@ -18,9 +18,8 @@ type cmdLaunch struct {
 	flagConsole string
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdLaunch) Command() *cobra.Command {
-	cmd := c.init.Command()
+func (c *cmdLaunch) command() *cobra.Command {
+	cmd := c.init.command()
 	cmd.Use = cli.U("launch", cmdCreateUsage...)
 	cmd.Short = i18n.G("Create and start instances from images")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
@@ -41,7 +40,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
     Create and start a virtual machine, overriding the disk size and bus`))
 	cmd.Hidden = false
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().StringVar(&c.flagConsole, "console", "", i18n.G("Immediately attach to the console")+"``")
 	cmd.Flags().Lookup("console").NoOptDefVal = "console"
@@ -57,8 +56,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdLaunch) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdLaunch) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 	parsed, err := cmdCreateUsage.Parse(conf, cmd, args)
 	if err != nil {

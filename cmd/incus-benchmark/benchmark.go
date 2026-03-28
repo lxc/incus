@@ -14,8 +14,8 @@ import (
 
 const userConfigKey = "user.incus-benchmark"
 
-// PrintServerInfo prints out information about the server.
-func PrintServerInfo(c incus.InstanceServer) error {
+// printServerInfo prints out information about the server.
+func printServerInfo(c incus.InstanceServer) error {
 	server, _, err := c.GetServer()
 	if err != nil {
 		return err
@@ -36,8 +36,8 @@ func PrintServerInfo(c incus.InstanceServer) error {
 	return nil
 }
 
-// LaunchContainers launches a set of containers.
-func LaunchContainers(c incus.InstanceServer, count int, parallel int, image string, privileged bool, start bool, freeze bool) (time.Duration, error) {
+// launchContainers launches a set of containers.
+func launchContainers(c incus.InstanceServer, count int, parallel int, image string, privileged bool, start bool, freeze bool) (time.Duration, error) {
 	var duration time.Duration
 
 	batchSize, err := getBatchSize(parallel)
@@ -84,34 +84,8 @@ func LaunchContainers(c incus.InstanceServer, count int, parallel int, image str
 	return duration, nil
 }
 
-// CreateContainers create the specified number of containers.
-func CreateContainers(c incus.InstanceServer, count int, parallel int, fingerprint string, privileged bool) (time.Duration, error) {
-	var duration time.Duration
-
-	batchSize, err := getBatchSize(parallel)
-	if err != nil {
-		return duration, err
-	}
-
-	batchCreate := func(index int, wg *sync.WaitGroup) {
-		defer wg.Done()
-
-		name := getContainerName(count, index)
-
-		err := createContainer(c, fingerprint, name, privileged)
-		if err != nil {
-			logf("Failed to launch container '%s': %s", name, err)
-			return
-		}
-	}
-
-	duration = processBatch(count, batchSize, batchCreate)
-
-	return duration, nil
-}
-
-// GetContainers returns containers created by the benchmark.
-func GetContainers(c incus.InstanceServer) ([]api.Instance, error) {
+// getContainers returns containers created by the benchmark.
+func getContainers(c incus.InstanceServer) ([]api.Instance, error) {
 	containers := []api.Instance{}
 
 	allContainers, err := c.GetInstances(api.InstanceTypeContainer)
@@ -128,8 +102,8 @@ func GetContainers(c incus.InstanceServer) ([]api.Instance, error) {
 	return containers, nil
 }
 
-// StartContainers starts containers created by the benchmark.
-func StartContainers(c incus.InstanceServer, containers []api.Instance, parallel int) (time.Duration, error) {
+// startContainers starts containers created by the benchmark.
+func startContainers(c incus.InstanceServer, containers []api.Instance, parallel int) (time.Duration, error) {
 	var duration time.Duration
 
 	batchSize, err := getBatchSize(parallel)
@@ -157,8 +131,8 @@ func StartContainers(c incus.InstanceServer, containers []api.Instance, parallel
 	return duration, nil
 }
 
-// StopContainers stops containers created by the benchmark.
-func StopContainers(c incus.InstanceServer, containers []api.Instance, parallel int) (time.Duration, error) {
+// stopContainers stops containers created by the benchmark.
+func stopContainers(c incus.InstanceServer, containers []api.Instance, parallel int) (time.Duration, error) {
 	var duration time.Duration
 
 	batchSize, err := getBatchSize(parallel)
@@ -186,8 +160,8 @@ func StopContainers(c incus.InstanceServer, containers []api.Instance, parallel 
 	return duration, nil
 }
 
-// DeleteContainers removes containers created by the benchmark.
-func DeleteContainers(c incus.InstanceServer, containers []api.Instance, parallel int) (time.Duration, error) {
+// deleteContainers removes containers created by the benchmark.
+func deleteContainers(c incus.InstanceServer, containers []api.Instance, parallel int) (time.Duration, error) {
 	var duration time.Duration
 
 	batchSize, err := getBatchSize(parallel)

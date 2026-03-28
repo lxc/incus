@@ -14,8 +14,7 @@ type cmdAdmin struct {
 	global *cmdGlobal
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdmin) Command() *cobra.Command {
+func (c *cmdAdmin) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("admin")
 	cmd.Short = i18n.G("Manage incus daemon")
@@ -24,7 +23,7 @@ func (c *cmdAdmin) Command() *cobra.Command {
 
 	// os
 	adminOSCmd := cmdAdminOS{global: c.global}
-	cmd.AddCommand(adminOSCmd.Command())
+	cmd.AddCommand(adminOSCmd.command())
 
 	return cmd
 }

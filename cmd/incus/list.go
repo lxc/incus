@@ -48,8 +48,7 @@ type cmdList struct {
 
 var cmdListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdList) Command() *cobra.Command {
+func (c *cmdList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -137,7 +136,7 @@ Custom columns are defined with "[config:|devices:]key[:name][:maxWidth]":
 incus list -c ns,user.comment:comment
   List instances with their running state and user comment.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultColumns, i18n.G("Columns")+"``")
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 	cmd.Flags().BoolVar(&c.flagFast, "fast", false, i18n.G("Fast mode (same as --columns=nsacPt)"))
@@ -400,8 +399,7 @@ func (c *cmdList) showInstances(instances []api.InstanceFull, filters []string, 
 	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, instancesFiltered)
 }
 
-// Run runs the actual command logic.
-func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

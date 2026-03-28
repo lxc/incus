@@ -15,13 +15,12 @@ type cmdWebui struct {
 
 var cmdWebuiUsage = u.Usage{u.RemoteColonOpt}
 
-// Command is a method of the cmdWebui structure that returns a new cobra Command for displaying resource usage per instance.
-func (c *cmdWebui) Command() *cobra.Command {
+func (c *cmdWebui) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("webui", cmdWebuiUsage...)
 	cmd.Short = i18n.G("Open the web interface")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Open the web interface`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	return cmd
 }

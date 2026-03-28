@@ -33,8 +33,7 @@ type cmdMove struct {
 
 var cmdMoveUsage = u.Usage{u.Instance.Remote(), u.NewName(u.Instance).Optional().Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdMove) Command() *cobra.Command {
+func (c *cmdMove) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("move", cmdMoveUsage...)
 	cmd.Aliases = []string{"mv"}
@@ -56,7 +55,7 @@ The pull transfer mode is the default as it is compatible with all server versio
 incus move <old name> <new name> [--instance-only]
     Rename a local instance.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the target instance")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagDevice, "device", "d", nil, i18n.G("New key/value to apply to a specific device")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagProfile, "profile", "p", nil, i18n.G("Profile to apply to the target instance")+"``")
@@ -84,8 +83,7 @@ incus move <old name> <new name> [--instance-only]
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdMove) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdMove) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdMoveUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return nil

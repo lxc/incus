@@ -34,8 +34,7 @@ type cmdProject struct {
 	global *cmdGlobal
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProject) Command() *cobra.Command {
+func (c *cmdProject) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("project")
 	cmd.Short = i18n.G("Manage projects")
@@ -43,51 +42,51 @@ func (c *cmdProject) Command() *cobra.Command {
 
 	// Create
 	projectCreateCmd := cmdProjectCreate{global: c.global, project: c}
-	cmd.AddCommand(projectCreateCmd.Command())
+	cmd.AddCommand(projectCreateCmd.command())
 
 	// Delete
 	projectDeleteCmd := cmdProjectDelete{global: c.global, project: c}
-	cmd.AddCommand(projectDeleteCmd.Command())
+	cmd.AddCommand(projectDeleteCmd.command())
 
 	// Edit
 	projectEditCmd := cmdProjectEdit{global: c.global, project: c}
-	cmd.AddCommand(projectEditCmd.Command())
+	cmd.AddCommand(projectEditCmd.command())
 
 	// Get
 	projectGetCmd := cmdProjectGet{global: c.global, project: c}
-	cmd.AddCommand(projectGetCmd.Command())
+	cmd.AddCommand(projectGetCmd.command())
 
 	// List
 	projectListCmd := cmdProjectList{global: c.global, project: c}
-	cmd.AddCommand(projectListCmd.Command())
+	cmd.AddCommand(projectListCmd.command())
 
 	// Rename
 	projectRenameCmd := cmdProjectRename{global: c.global, project: c}
-	cmd.AddCommand(projectRenameCmd.Command())
+	cmd.AddCommand(projectRenameCmd.command())
 
 	// Set
 	projectSetCmd := cmdProjectSet{global: c.global, project: c}
-	cmd.AddCommand(projectSetCmd.Command())
+	cmd.AddCommand(projectSetCmd.command())
 
 	// Unset
 	projectUnsetCmd := cmdProjectUnset{global: c.global, project: c, projectSet: &projectSetCmd}
-	cmd.AddCommand(projectUnsetCmd.Command())
+	cmd.AddCommand(projectUnsetCmd.command())
 
 	// Show
 	projectShowCmd := cmdProjectShow{global: c.global, project: c}
-	cmd.AddCommand(projectShowCmd.Command())
+	cmd.AddCommand(projectShowCmd.command())
 
 	// Info
 	projectGetInfo := cmdProjectInfo{global: c.global, project: c}
-	cmd.AddCommand(projectGetInfo.Command())
+	cmd.AddCommand(projectGetInfo.command())
 
 	// Set default
 	projectSwitchCmd := cmdProjectSwitch{global: c.global, project: c}
-	cmd.AddCommand(projectSwitchCmd.Command())
+	cmd.AddCommand(projectSwitchCmd.command())
 
 	// Get current project
 	projectGetCurrentCmd := cmdProjectGetCurrent{global: c.global, project: c}
-	cmd.AddCommand(projectGetCurrentCmd.Command())
+	cmd.AddCommand(projectGetCurrentCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -105,8 +104,7 @@ type cmdProjectCreate struct {
 
 var cmdProjectCreateUsage = u.Usage{u.NewName(u.Project).Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectCreate) Command() *cobra.Command {
+func (c *cmdProjectCreate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdProjectCreateUsage...)
 	cmd.Aliases = []string{"add"}
@@ -121,7 +119,7 @@ incus project create p1 < config.yaml
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new project")+"``")
 	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Project description")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -134,8 +132,7 @@ incus project create p1 < config.yaml
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectCreate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectCreate) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectCreateUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -201,8 +198,7 @@ type cmdProjectDelete struct {
 
 var cmdProjectDeleteUsage = u.Usage{u.Project.Remote().List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectDelete) Command() *cobra.Command {
+func (c *cmdProjectDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdProjectDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
@@ -210,7 +206,7 @@ func (c *cmdProjectDelete) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete projects`))
 
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force delete the project and everything it contains."))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpProjects(toComplete)
@@ -233,8 +229,7 @@ func (c *cmdProjectDelete) promptConfirmation(p *u.Parsed) error {
 	return nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -300,8 +295,7 @@ type cmdProjectEdit struct {
 
 var cmdProjectEditUsage = u.Usage{u.Project.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectEdit) Command() *cobra.Command {
+func (c *cmdProjectEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdProjectEditUsage...)
 	cmd.Short = i18n.G("Edit project configurations as YAML")
@@ -311,7 +305,7 @@ func (c *cmdProjectEdit) Command() *cobra.Command {
 		`incus project edit <project> < project.yaml
     Update a project using the content of project.yaml`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -345,8 +339,7 @@ func (c *cmdProjectEdit) helpTemplate() string {
 ### Note that the name is shown but cannot be changed`)
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectEdit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -430,15 +423,14 @@ type cmdProjectGet struct {
 
 var cmdProjectGetUsage = u.Usage{u.Project.Remote(), u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectGet) Command() *cobra.Command {
+func (c *cmdProjectGet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdProjectGetUsage...)
 	cmd.Short = i18n.G("Get values for project configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Get values for project configuration keys`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as a project property"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -456,8 +448,7 @@ func (c *cmdProjectGet) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectGet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectGet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectGetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -499,8 +490,7 @@ type cmdProjectList struct {
 
 var cmdProjectListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectList) Command() *cobra.Command {
+func (c *cmdProjectList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdProjectListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -532,7 +522,7 @@ u - Used By`))
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -648,8 +638,7 @@ func (c *cmdProjectList) usedByColumnData(project api.Project) string {
 	return fmt.Sprintf("%d", len(project.UsedBy))
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -709,15 +698,14 @@ type cmdProjectRename struct {
 
 var cmdProjectRenameUsage = u.Usage{u.Project.Remote(), u.NewName(u.Project)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectRename) Command() *cobra.Command {
+func (c *cmdProjectRename) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdProjectRenameUsage...)
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Rename projects")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Rename projects`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -730,8 +718,7 @@ func (c *cmdProjectRename) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectRename) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectRename) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectRenameUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -769,8 +756,7 @@ type cmdProjectSet struct {
 
 var cmdProjectSetUsage = u.Usage{u.Project.Remote(), u.LegacyKV.List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectSet) Command() *cobra.Command {
+func (c *cmdProjectSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdProjectSetUsage...)
 	cmd.Short = i18n.G("Set project configuration keys")
@@ -780,7 +766,7 @@ func (c *cmdProjectSet) Command() *cobra.Command {
 For backward compatibility, a single configuration key may still be set with:
     incus project set [<remote>:]<project> <key> <value>`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as a project property"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -831,8 +817,7 @@ func (c *cmdProjectSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 	return d.UpdateProject(projectName, writable, etag)
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectSet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectSet) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectSetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -852,14 +837,13 @@ type cmdProjectUnset struct {
 
 var cmdProjectUnsetUsage = u.Usage{u.Project.Remote(), u.Key}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectUnset) Command() *cobra.Command {
+func (c *cmdProjectUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdProjectUnsetUsage...)
 	cmd.Short = i18n.G("Unset project configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset project configuration keys`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as a project property"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -877,8 +861,7 @@ func (c *cmdProjectUnset) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectUnset) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectUnset) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectUnsetUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -896,14 +879,13 @@ type cmdProjectShow struct {
 
 var cmdProjectShowUsage = u.Usage{u.Project.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectShow) Command() *cobra.Command {
+func (c *cmdProjectShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdProjectShowUsage...)
 	cmd.Short = i18n.G("Show project options")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show project options`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -916,8 +898,7 @@ func (c *cmdProjectShow) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -950,14 +931,13 @@ type cmdProjectSwitch struct {
 
 var cmdProjectSwitchUsage = u.Usage{u.Project.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectSwitch) Command() *cobra.Command {
+func (c *cmdProjectSwitch) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("switch", cmdProjectSwitchUsage...)
 	cmd.Short = i18n.G("Switch the current project")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Switch the current project`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -970,8 +950,7 @@ func (c *cmdProjectSwitch) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectSwitch) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectSwitch) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 	parsed, err := cmdProjectSwitchUsage.Parse(conf, cmd, args)
 	if err != nil {
@@ -1005,8 +984,7 @@ type cmdProjectInfo struct {
 
 var cmdProjectInfoUsage = u.Usage{u.Project.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdProjectInfo) Command() *cobra.Command {
+func (c *cmdProjectInfo) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("info", cmdProjectInfoUsage...)
 	cmd.Short = i18n.G("Get a summary of resource allocations")
@@ -1019,7 +997,7 @@ func (c *cmdProjectInfo) Command() *cobra.Command {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1032,8 +1010,7 @@ func (c *cmdProjectInfo) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectInfo) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectInfo) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectInfoUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -1113,20 +1090,18 @@ type cmdProjectGetCurrent struct {
 
 var cmdProjectGetCurrentUsage = u.Usage{u.RemoteColonOpt}
 
-// Command generates the command definition.
-func (c *cmdProjectGetCurrent) Command() *cobra.Command {
+func (c *cmdProjectGetCurrent) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get-current", cmdProjectGetCurrentUsage...)
 	cmd.Short = i18n.G("Show the current project")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show the current project`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdProjectGetCurrent) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdProjectGetCurrent) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdProjectGetCurrentUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

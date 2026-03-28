@@ -18,20 +18,18 @@ type cmdVersion struct {
 
 var cmdVersionUsage = u.Usage{u.Colon(u.Remote).Optional()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdVersion) Command() *cobra.Command {
+func (c *cmdVersion) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("version", cmdVersionUsage...)
 	cmd.Short = i18n.G("Show local and remote versions")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show local and remote versions`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdVersion) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdVersion) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdVersionUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

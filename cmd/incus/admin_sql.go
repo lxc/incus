@@ -25,8 +25,7 @@ type cmdAdminSQL struct {
 
 var cmdAdminSQLUsage = u.Usage{u.EitherVerbatim("local", "global").Remote(), u.Query}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminSQL) Command() *cobra.Command {
+func (c *cmdAdminSQL) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("sql", cmdAdminSQLUsage...)
 	cmd.Short = i18n.G("Execute a SQL query against the local or global database")
@@ -57,7 +56,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
   This internal command is mostly useful for debugging and disaster
   recovery. The development team will occasionally provide hotfixes to users as a
   set of database queries to fix some data inconsistency.`))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
@@ -67,8 +66,7 @@ func (c *cmdAdminSQL) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdAdminSQL) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminSQL) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdAdminSQLUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

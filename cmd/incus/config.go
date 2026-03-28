@@ -25,9 +25,7 @@ type cmdConfig struct {
 	flagTarget string
 }
 
-// Command creates a Cobra command for managing instance and server configurations,
-// including options for device, edit, get, metadata, profile, set, show, template, trust, and unset.
-func (c *cmdConfig) Command() *cobra.Command {
+func (c *cmdConfig) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("config")
 	cmd.Short = i18n.G("Manage instance and server configuration options")
@@ -36,46 +34,46 @@ func (c *cmdConfig) Command() *cobra.Command {
 
 	// Device
 	configDeviceCmd := cmdConfigDevice{global: c.global, config: c}
-	cmd.AddCommand(configDeviceCmd.Command())
+	cmd.AddCommand(configDeviceCmd.command())
 
 	// Edit
 	configEditCmd := cmdConfigEdit{global: c.global, config: c}
-	cmd.AddCommand(configEditCmd.Command())
+	cmd.AddCommand(configEditCmd.command())
 
 	// Get
 	configGetCmd := cmdConfigGet{global: c.global, config: c}
-	cmd.AddCommand(configGetCmd.Command())
+	cmd.AddCommand(configGetCmd.command())
 
 	// Metadata
 	configMetadataCmd := cmdConfigMetadata{global: c.global, config: c}
-	cmd.AddCommand(configMetadataCmd.Command())
+	cmd.AddCommand(configMetadataCmd.command())
 
 	// Profile
 	configProfileCmd := cmdProfile{global: c.global}
-	profileCmd := configProfileCmd.Command()
+	profileCmd := configProfileCmd.command()
 	profileCmd.Hidden = true
 	profileCmd.Deprecated = i18n.G("please use `incus profile`")
 	cmd.AddCommand(profileCmd)
 
 	// Set
 	configSetCmd := cmdConfigSet{global: c.global, config: c}
-	cmd.AddCommand(configSetCmd.Command())
+	cmd.AddCommand(configSetCmd.command())
 
 	// Show
 	configShowCmd := cmdConfigShow{global: c.global, config: c}
-	cmd.AddCommand(configShowCmd.Command())
+	cmd.AddCommand(configShowCmd.command())
 
 	// Template
 	configTemplateCmd := cmdConfigTemplate{global: c.global, config: c}
-	cmd.AddCommand(configTemplateCmd.Command())
+	cmd.AddCommand(configTemplateCmd.command())
 
 	// Trust
 	configTrustCmd := cmdConfigTrust{global: c.global, config: c}
-	cmd.AddCommand(configTrustCmd.Command())
+	cmd.AddCommand(configTrustCmd.command())
 
 	// Unset
 	configUnsetCmd := cmdConfigUnset{global: c.global, config: c, configSet: &configSetCmd}
-	cmd.AddCommand(configUnsetCmd.Command())
+	cmd.AddCommand(configUnsetCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -91,8 +89,7 @@ type cmdConfigEdit struct {
 
 var cmdConfigEditUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote()}
 
-// Command creates a Cobra command to edit instance or server configurations using YAML, with optional flags for targeting cluster members.
-func (c *cmdConfigEdit) Command() *cobra.Command {
+func (c *cmdConfigEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdConfigEditUsage...)
 	cmd.Short = i18n.G("Edit instance or server configurations as YAML")
@@ -103,7 +100,7 @@ func (c *cmdConfigEdit) Command() *cobra.Command {
     Update the instance configuration from config.yaml.`))
 
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -138,8 +135,7 @@ func (c *cmdConfigEdit) helpTemplate() string {
 ### Note that the name is shown but cannot be changed`)
 }
 
-// Run executes the config edit command, allowing users to edit instance or server configurations via an interactive YAML editor.
-func (c *cmdConfigEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -374,9 +370,7 @@ type cmdConfigGet struct {
 
 var cmdConfigGetUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote(), u.Key}
 
-// Command creates a Cobra command to fetch values for given instance or server configuration keys,
-// with optional flags for expanded configuration and cluster targeting.
-func (c *cmdConfigGet) Command() *cobra.Command {
+func (c *cmdConfigGet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("get", cmdConfigGetUsage...)
 	cmd.Short = i18n.G("Get values for instance or server configuration keys")
@@ -386,7 +380,7 @@ func (c *cmdConfigGet) Command() *cobra.Command {
 	cmd.Flags().BoolVarP(&c.flagExpanded, "expanded", "e", false, i18n.G("Access the expanded configuration"))
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Get the key as an instance property"))
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -403,8 +397,7 @@ func (c *cmdConfigGet) Command() *cobra.Command {
 	return cmd
 }
 
-// Run fetches and prints the specified configuration key's value for an instance or server, also handling target and expansion flags.
-func (c *cmdConfigGet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigGet) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
 	parsed, err := cmdConfigGetUsage.Parse(c.global.conf, cmd, args, true)
@@ -507,8 +500,7 @@ type cmdConfigSet struct {
 
 var cmdConfigSetUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote(), u.LegacyKV.List(1)}
 
-// Command creates a new Cobra command to set instance or server configuration keys and returns it.
-func (c *cmdConfigSet) Command() *cobra.Command {
+func (c *cmdConfigSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set", cmdConfigSetUsage...)
 	cmd.Short = i18n.G("Set instance or server configuration keys")
@@ -529,7 +521,7 @@ incus config set core.https_address=[::]:8443
 
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Set the key as an instance property"))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -665,8 +657,7 @@ func (c *cmdConfigSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 	return d.UpdateServer(server.Writable(), etag)
 }
 
-// Run executes the "set" command, updating instance or server configuration keys based on provided arguments.
-func (c *cmdConfigSet) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigSet) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
 	parsed, err := cmdConfigSetUsage.Parse(c.global.conf, cmd, args, true)
@@ -687,8 +678,7 @@ type cmdConfigShow struct {
 
 var cmdConfigShowUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote()}
 
-// Command sets up the "show" command, which displays instance or server configurations based on the provided arguments.
-func (c *cmdConfigShow) Command() *cobra.Command {
+func (c *cmdConfigShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdConfigShowUsage...)
 	cmd.Short = i18n.G("Show instance or server configurations")
@@ -697,7 +687,7 @@ func (c *cmdConfigShow) Command() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&c.flagExpanded, "expanded", "e", false, i18n.G("Show the expanded configuration"))
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -710,8 +700,7 @@ func (c *cmdConfigShow) Command() *cobra.Command {
 	return cmd
 }
 
-// Run executes the "show" command, displaying the YAML-formatted configuration of a specified server or instance.
-func (c *cmdConfigShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -810,8 +799,7 @@ type cmdConfigUnset struct {
 
 var cmdConfigUnsetUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote(), u.Key}
 
-// Command generates a new "unset" command to remove specific configuration keys for an instance or server.
-func (c *cmdConfigUnset) Command() *cobra.Command {
+func (c *cmdConfigUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdConfigUnsetUsage...)
 	cmd.Short = i18n.G("Unset instance or server configuration keys")
@@ -820,7 +808,7 @@ func (c *cmdConfigUnset) Command() *cobra.Command {
 
 	cmd.Flags().StringVar(&c.config.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 	cmd.Flags().BoolVarP(&c.flagIsProperty, "property", "p", false, i18n.G("Unset the key as an instance property"))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -837,8 +825,7 @@ func (c *cmdConfigUnset) Command() *cobra.Command {
 	return cmd
 }
 
-// Run executes the "unset" command, delegating to the "set" command to remove specific configuration keys.
-func (c *cmdConfigUnset) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigUnset) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
 	parsed, err := cmdConfigUnsetUsage.Parse(c.global.conf, cmd, args, true)

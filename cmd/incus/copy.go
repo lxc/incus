@@ -38,8 +38,7 @@ type cmdCopy struct {
 
 var cmdCopyUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Remote(), u.NewName(u.Instance).Optional().Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdCopy) Command() *cobra.Command {
+func (c *cmdCopy) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("copy", cmdCopyUsage...)
 	cmd.Aliases = []string{"cp"}
@@ -55,7 +54,7 @@ Transfer modes (--mode):
 The pull transfer mode is the default as it is compatible with all server versions.
 `))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new instance")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagDevice, "device", "d", nil, i18n.G("New key/value to apply to a specific device")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagProfile, "profile", "p", nil, i18n.G("Profile to apply to the new instance")+"``")
@@ -422,8 +421,7 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 	return nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdCopy) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdCopy) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdCopyUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

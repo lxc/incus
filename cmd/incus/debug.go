@@ -17,8 +17,7 @@ type cmdDebug struct {
 	global *cmdGlobal
 }
 
-// Command returns command definition for the debug command.
-func (c *cmdDebug) Command() *cobra.Command {
+func (c *cmdDebug) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Hidden = true
 	cmd.Use = cli.U("debug")
@@ -26,7 +25,7 @@ func (c *cmdDebug) Command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Debug commands for instances`))
 
 	debugAttachCmd := cmdDebugMemory{global: c.global, debug: c}
-	cmd.AddCommand(debugAttachCmd.Command())
+	cmd.AddCommand(debugAttachCmd.command())
 
 	return cmd
 }
@@ -40,8 +39,7 @@ type cmdDebugMemory struct {
 
 var cmdDebugMemoryUsage = u.Usage{u.Instance.Remote(), u.Target(u.File)}
 
-// Command returns command definition for the memory debug command.
-func (c *cmdDebugMemory) Command() *cobra.Command {
+func (c *cmdDebugMemory) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("dump-memory", cmdDebugMemoryUsage...)
 	cmd.Short = i18n.G("Export a virtual machine's memory state")
@@ -52,14 +50,13 @@ func (c *cmdDebugMemory) Command() *cobra.Command {
 		`incus debug dump-memory vm1 memory-dump.elf --format=elf
     Creates an ELF format memory dump of the vm1 instance.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVar(&c.flagFormat, "format", "elf", i18n.G("Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"))
 
 	return cmd
 }
 
-// Run executes the memory debug command.
-func (c *cmdDebugMemory) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdDebugMemory) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdDebugMemoryUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

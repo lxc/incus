@@ -26,8 +26,7 @@ type cmdWarning struct {
 	global *cmdGlobal
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdWarning) Command() *cobra.Command {
+func (c *cmdWarning) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("warning")
 	cmd.Short = i18n.G("Manage warnings")
@@ -36,19 +35,19 @@ func (c *cmdWarning) Command() *cobra.Command {
 
 	// List
 	warningListCmd := cmdWarningList{global: c.global, warning: c}
-	cmd.AddCommand(warningListCmd.Command())
+	cmd.AddCommand(warningListCmd.command())
 
 	// Acknowledge
 	warningAcknowledgeCmd := cmdWarningAcknowledge{global: c.global, warning: c}
-	cmd.AddCommand(warningAcknowledgeCmd.Command())
+	cmd.AddCommand(warningAcknowledgeCmd.command())
 
 	// Show
 	warningShowCmd := cmdWarningShow{global: c.global, warning: c}
-	cmd.AddCommand(warningShowCmd.Command())
+	cmd.AddCommand(warningShowCmd.command())
 
 	// Delete
 	warningDeleteCmd := cmdWarningDelete{global: c.global, warning: c}
-	cmd.AddCommand(warningDeleteCmd.Command())
+	cmd.AddCommand(warningDeleteCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -70,8 +69,7 @@ const defaultWarningColumns = "utSscpLl"
 
 var cmdWarningListUsage = u.Usage{u.RemoteColonOpt}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdWarningList) Command() *cobra.Command {
+func (c *cmdWarningList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdWarningListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -105,13 +103,12 @@ Column shorthand chars:
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdWarningList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdWarningList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdWarningListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -260,21 +257,19 @@ type cmdWarningAcknowledge struct {
 
 var cmdWarningAcknowledgeUsage = u.Usage{u.WarningUUID.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdWarningAcknowledge) Command() *cobra.Command {
+func (c *cmdWarningAcknowledge) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("acknowledge", cmdWarningAcknowledgeUsage...)
 	cmd.Aliases = []string{"ack"}
 	cmd.Short = i18n.G("Acknowledge warning")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Acknowledge warning`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdWarningAcknowledge) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdWarningAcknowledge) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdWarningAcknowledgeUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -295,20 +290,18 @@ type cmdWarningShow struct {
 
 var cmdWarningShowUsage = u.Usage{u.WarningUUID.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdWarningShow) Command() *cobra.Command {
+func (c *cmdWarningShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdWarningShowUsage...)
 	cmd.Short = i18n.G("Show warning")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Show warning`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdWarningShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdWarningShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdWarningShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -342,8 +335,7 @@ type cmdWarningDelete struct {
 
 var cmdWarningDeleteUsage = u.Usage{u.Either(u.WarningUUID.Remote().List(1), u.Sequence(u.Flag("all"), u.RemoteColonOpt))}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdWarningDelete) Command() *cobra.Command {
+func (c *cmdWarningDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdWarningDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
@@ -352,13 +344,12 @@ func (c *cmdWarningDelete) Command() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&c.flagAll, "all", "a", false, i18n.G("Delete all warnings")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdWarningDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdWarningDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdWarningDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

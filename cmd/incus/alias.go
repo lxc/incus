@@ -17,9 +17,7 @@ type cmdAlias struct {
 	global *cmdGlobal
 }
 
-// Command is a method of the cmdAlias structure that returns a new cobra Command for managing command aliases.
-// This includes commands for adding, listing, renaming, and removing aliases, along with their usage and descriptions.
-func (c *cmdAlias) Command() *cobra.Command {
+func (c *cmdAlias) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("alias")
 	cmd.Short = i18n.G("Manage command aliases")
@@ -28,19 +26,19 @@ func (c *cmdAlias) Command() *cobra.Command {
 
 	// Add
 	aliasAddCmd := cmdAliasAdd{global: c.global, alias: c}
-	cmd.AddCommand(aliasAddCmd.Command())
+	cmd.AddCommand(aliasAddCmd.command())
 
 	// List
 	aliasListCmd := cmdAliasList{global: c.global, alias: c}
-	cmd.AddCommand(aliasListCmd.Command())
+	cmd.AddCommand(aliasListCmd.command())
 
 	// Rename
 	aliasRenameCmd := cmdAliasRename{global: c.global, alias: c}
-	cmd.AddCommand(aliasRenameCmd.Command())
+	cmd.AddCommand(aliasRenameCmd.command())
 
 	// Remove
 	aliasRemoveCmd := cmdAliasRemove{global: c.global, alias: c}
-	cmd.AddCommand(aliasRemoveCmd.Command())
+	cmd.AddCommand(aliasRemoveCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -56,9 +54,7 @@ type cmdAliasAdd struct {
 
 var cmdAliasAddUsage = u.Usage{u.NewName(u.Alias), u.Target(u.Placeholder(i18n.G("command")))}
 
-// Command is a method of the cmdAliasAdd structure that returns a new cobra Command for adding new command aliases.
-// It specifies the command usage, description, and examples, and links it to the RunE method for execution logic.
-func (c *cmdAliasAdd) Command() *cobra.Command {
+func (c *cmdAliasAdd) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("add", cmdAliasAddUsage...)
 	cmd.Aliases = []string{"create"}
@@ -68,14 +64,12 @@ func (c *cmdAliasAdd) Command() *cobra.Command {
 		`incus alias add list "list -c ns46S"
     Overwrite the "list" command to pass -c ns46S.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run is a method of the cmdAliasAdd structure. It implements the logic to add a new alias command.
-// The function checks for valid arguments, verifies if the alias already exists, and if not, adds the new alias to the configuration.
-func (c *cmdAliasAdd) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAliasAdd) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	parsed, err := cmdAliasAddUsage.Parse(conf, cmd, args)
@@ -108,9 +102,7 @@ type cmdAliasList struct {
 
 var cmdAliasListUsage = u.Usage{}
 
-// Command is a method of the cmdAliasList structure that returns a new cobra Command for listing command aliases.
-// It specifies the command usage, description, aliases, and output formatting options, and links it to the RunE method for execution logic.
-func (c *cmdAliasList) Command() *cobra.Command {
+func (c *cmdAliasList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdAliasListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -122,14 +114,12 @@ func (c *cmdAliasList) Command() *cobra.Command {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run is a method of the cmdAliasList structure. It implements the logic to list existing command aliases.
-// The function checks for valid arguments, collects all the aliases, sorts them, and renders them in the specified format.
-func (c *cmdAliasList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAliasList) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
@@ -170,9 +160,7 @@ type cmdAliasRename struct {
 
 var cmdAliasRenameUsage = u.Usage{u.Alias, u.NewName(u.Alias)}
 
-// Command is a method of the cmdAliasRename structure. It returns a new cobra.Command object.
-// This command allows a user to rename existing aliases in the CLI application.
-func (c *cmdAliasRename) Command() *cobra.Command {
+func (c *cmdAliasRename) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("rename", cmdAliasRenameUsage...)
 	cmd.Aliases = []string{"mv"}
@@ -182,14 +170,12 @@ func (c *cmdAliasRename) Command() *cobra.Command {
 		`incus alias rename list my-list
     Rename existing alias "list" to "my-list".`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run is a method of the cmdAliasRename structure. It takes a cobra command and a slice of strings as arguments.
-// This method checks the validity of arguments, ensures the existence of the old alias, verifies the non-existence of the new alias, and then proceeds to rename the alias in the configuration.
-func (c *cmdAliasRename) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAliasRename) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	parsed, err := cmdAliasRenameUsage.Parse(c.global.conf, cmd, args)
@@ -228,9 +214,7 @@ type cmdAliasRemove struct {
 
 var cmdAliasRemoveUsage = u.Usage{u.Alias}
 
-// Command is a method of the cmdAliasRemove structure. It configures and returns a cobra.Command object.
-// This command enables the removal of a given alias from the command line interface.
-func (c *cmdAliasRemove) Command() *cobra.Command {
+func (c *cmdAliasRemove) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("remove", cmdAliasRemoveUsage...)
 	cmd.Aliases = []string{"delete", "rm"}
@@ -240,14 +224,12 @@ func (c *cmdAliasRemove) Command() *cobra.Command {
 		`incus alias remove my-list
     Remove the "my-list" alias.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run is a method of the cmdAliasRemove structure that executes the actual operation of the alias removal command.
-// It takes as input the name of the alias to be removed and updates the global configuration file to reflect this change.
-func (c *cmdAliasRemove) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAliasRemove) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.

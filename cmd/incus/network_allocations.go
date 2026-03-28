@@ -32,8 +32,7 @@ type networkAllocationColumn struct {
 
 var cmdNetworkListAllocationsUsage = u.Usage{u.RemoteColonOpt}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdNetworkListAllocations) Command() *cobra.Command {
+func (c *cmdNetworkListAllocations) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list-allocations", cmdNetworkListAllocationsUsage...)
 	cmd.Short = i18n.G("List network allocations in use")
@@ -60,7 +59,7 @@ Pre-defined column shorthand chars:
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.MaximumNArgs(1)
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 	cmd.Flags().StringVarP(&c.flagProject, "project", "p", api.ProjectDefaultName, i18n.G("Run again a specific project"))
@@ -131,8 +130,7 @@ func (c *cmdNetworkListAllocations) macAddressColumnData(alloc api.NetworkAlloca
 	return alloc.Hwaddr
 }
 
-// Run runs the actual command logic.
-func (c *cmdNetworkListAllocations) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdNetworkListAllocationsUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

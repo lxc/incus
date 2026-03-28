@@ -28,8 +28,8 @@ type VolumeMigration struct {
 	flagRsyncArgs    string
 }
 
-// NewVolumeMigration returns a new VolumeMigration.
-func NewVolumeMigration(ctx context.Context, server incus.InstanceServer, asker ask.Asker, flagRsyncArgs string) Migrator {
+// newVolumeMigration returns a new VolumeMigration.
+func newVolumeMigration(ctx context.Context, server incus.InstanceServer, asker ask.Asker, flagRsyncArgs string) Migrator {
 	return &VolumeMigration{
 		Migration: &Migration{
 			asker:  asker,

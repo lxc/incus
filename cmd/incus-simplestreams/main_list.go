@@ -16,8 +16,7 @@ type cmdList struct {
 	flagFormat string
 }
 
-// Command generates the command definition.
-func (c *cmdList) Command() *cobra.Command {
+func (c *cmdList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "list"
 	cmd.Short = "List all images on the server"
@@ -26,7 +25,7 @@ func (c *cmdList) Command() *cobra.Command {
 
 This renders a table with all images currently published on the server.
 `)
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", "table", `Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`+"``")
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
@@ -36,8 +35,7 @@ This renders a table with all images currently published on the server.
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdList) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := cli.CheckArgs(cmd, args, 0, 0)
 	if exit {

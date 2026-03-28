@@ -26,8 +26,7 @@ type cmdAdminRecover struct {
 
 var cmdAdminRecoverUsage = u.Usage{u.RemoteColonOpt}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminRecover) Command() *cobra.Command {
+func (c *cmdAdminRecover) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("recover", cmdAdminRecoverUsage...)
 	cmd.Short = i18n.G("Recover missing instances and volumes from existing and unknown storage pools")
@@ -36,13 +35,12 @@ func (c *cmdAdminRecover) Command() *cobra.Command {
   This command is mostly used for disaster recovery. It will ask you about unknown storage pools and attempt to
   access them, along with existing storage pools, and identify any missing instances and volumes that exist on the
   pools but are not in the database. It will then offer to recreate these database records.`))
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdAdminRecover) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdminRecover) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdAdminRecoverUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

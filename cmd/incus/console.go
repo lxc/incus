@@ -38,8 +38,7 @@ type cmdConsole struct {
 
 var cmdConsoleUsage = u.Usage{u.Instance.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConsole) Command() *cobra.Command {
+func (c *cmdConsole) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("console", cmdConsoleUsage...)
 	cmd.Short = i18n.G("Attach to instance consoles")
@@ -49,7 +48,7 @@ func (c *cmdConsole) Command() *cobra.Command {
 This command allows you to interact with the boot console of an instance
 as well as retrieve past log entries from it.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Forces a connection to the console, even if there is already an active session"))
 	cmd.Flags().BoolVar(&c.flagShowLog, "show-log", false, i18n.G("Retrieve the instance's console log"))
 	cmd.Flags().StringVarP(&c.flagType, "type", "t", c.global.defaultConsoleType(), i18n.G("Type of connection to establish: 'console' for serial console, 'vga' for SPICE graphical output")+"``")
@@ -109,8 +108,7 @@ func (er stdinMirror) Read(p []byte) (int, error) {
 	return n, err
 }
 
-// Run runs the actual command logic.
-func (c *cmdConsole) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConsole) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConsoleUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

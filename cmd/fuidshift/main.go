@@ -16,7 +16,7 @@ type cmdGlobal struct {
 func main() {
 	// shift command (main)
 	shiftCmd := cmdShift{}
-	app := shiftCmd.Command()
+	app := shiftCmd.command()
 	app.SilenceUsage = true
 	app.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 

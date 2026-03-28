@@ -45,8 +45,7 @@ type cmdFile struct {
 	flagMkdir bool
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdFile) Command() *cobra.Command {
+func (c *cmdFile) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("file")
 	cmd.Short = i18n.G("Manage files in instances")
@@ -54,27 +53,27 @@ func (c *cmdFile) Command() *cobra.Command {
 
 	// Create
 	fileCreateCmd := cmdFileCreate{global: c.global, file: c}
-	cmd.AddCommand(fileCreateCmd.Command())
+	cmd.AddCommand(fileCreateCmd.command())
 
 	// Delete
 	fileDeleteCmd := cmdFileDelete{global: c.global, file: c}
-	cmd.AddCommand(fileDeleteCmd.Command())
+	cmd.AddCommand(fileDeleteCmd.command())
 
 	// Mount
 	fileMountCmd := cmdFileMount{global: c.global, file: c}
-	cmd.AddCommand(fileMountCmd.Command())
+	cmd.AddCommand(fileMountCmd.command())
 
 	// Pull
 	filePullCmd := cmdFilePull{global: c.global, file: c, puller: &pullable{}}
-	cmd.AddCommand(filePullCmd.Command())
+	cmd.AddCommand(filePullCmd.command())
 
 	// Push
 	filePushCmd := cmdFilePush{global: c.global, file: c}
-	cmd.AddCommand(filePushCmd.Command())
+	cmd.AddCommand(filePushCmd.command())
 
 	// Edit
 	fileEditCmd := cmdFileEdit{global: c.global, file: c, filePull: &filePullCmd, filePush: &filePushCmd}
-	cmd.AddCommand(fileEditCmd.Command())
+	cmd.AddCommand(fileEditCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -93,8 +92,7 @@ type cmdFileCreate struct {
 
 var cmdFileCreateUsage = u.Usage{u.MakePath(u.Instance, u.Path).Remote(), u.SymlinkTargetPath.Optional()}
 
-// Command returns the cobra command for `file create`.
-func (c *cmdFileCreate) Command() *cobra.Command {
+func (c *cmdFileCreate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdFileCreateUsage...)
 	cmd.Short = i18n.G("Create files and directories in instances")
@@ -114,7 +112,7 @@ incus file create --type=symlink foo/bar baz
 	cmd.Flags().StringVar(&c.file.flagMode, "mode", "", i18n.G("Set the file's perms on create")+"``")
 	cmd.Flags().StringVar(&c.flagType, "type", "file", i18n.G("The type to create (file, symlink, or directory)")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -127,8 +125,7 @@ incus file create --type=symlink foo/bar baz
 	return cmd
 }
 
-// Run runs the `file create` command.
-func (c *cmdFileCreate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdFileCreate) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdFileCreateUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -269,8 +266,7 @@ type cmdFileDelete struct {
 
 var cmdFileDeleteUsage = u.Usage{u.MakePath(u.Instance, u.Path).Remote().List(1)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdFileDelete) Command() *cobra.Command {
+func (c *cmdFileDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdFileDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
@@ -279,7 +275,7 @@ func (c *cmdFileDelete) Command() *cobra.Command {
 
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Force deleting files, directories, and subdirectories")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return c.global.cmpFiles(toComplete, false)
@@ -288,8 +284,7 @@ func (c *cmdFileDelete) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdFileDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdFileDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdFileDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -356,14 +351,13 @@ type cmdFileEdit struct {
 
 var cmdFileEditUsage = u.Usage{u.MakePath(u.Instance, u.Path).Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdFileEdit) Command() *cobra.Command {
+func (c *cmdFileEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdFileEditUsage...)
 	cmd.Short = i18n.G("Edit files in instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit files in instances`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -376,8 +370,7 @@ func (c *cmdFileEdit) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdFileEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdFileEdit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdFileEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -438,8 +431,7 @@ type cmdFilePull struct {
 
 var cmdFilePullUsage = u.Usage{u.MakePath(u.Instance, u.Path).Remote().List(1), u.Target(u.Path)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdFilePull) Command() *cobra.Command {
+func (c *cmdFilePull) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("pull", cmdFilePullUsage...)
 	cmd.Short = i18n.G("Pull files from instances")
@@ -457,7 +449,7 @@ incus file pull foo/etc/hosts -
 	cmd.Flags().BoolVarP(&c.puller.flagFollow, "follow", "H", false, i18n.G("Follow command-line symbolic links in source path")+"``")
 	cmd.Flags().BoolVarP(&c.puller.flagDereference, "dereference", "L", false, i18n.G("Always follow symbolic links in source path")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -652,8 +644,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
 	return nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdFilePull) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdFilePull) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
 	parsed, err := cmdFilePullUsage.Parse(c.global.conf, cmd, args, true)
@@ -677,8 +668,7 @@ type cmdFilePush struct {
 
 var cmdFilePushUsage = u.Usage{u.Path.List(1), u.MakePath(u.Instance, u.Target(u.Path)).Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdFilePush) Command() *cobra.Command {
+func (c *cmdFilePush) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("push", cmdFilePushUsage...)
 	cmd.Short = i18n.G("Push files into instances")
@@ -696,7 +686,7 @@ echo "Hello world" | incus file push - foo/root/test
 	cmd.Flags().IntVar(&c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push (in recursive mode, only sets the target directory's GID if it doesn't exist and -p is used)")+"``")
 	cmd.Flags().StringVar(&c.file.flagMode, "mode", "", i18n.G("Set the file's perms on push (in recursive mode, sets the target directory's permissions if it doesn't exist)")+"``")
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -920,8 +910,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 	return nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdFilePush) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdFilePush) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
 	parsed, err := cmdFilePushUsage.Parse(c.global.conf, cmd, args, true)
@@ -944,8 +933,7 @@ type cmdFileMount struct {
 
 var cmdFileMountUsage = u.Usage{u.MakePath(u.Instance, u.Path.Optional()).Remote(), u.Target(u.Path).Optional()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdFileMount) Command() *cobra.Command {
+func (c *cmdFileMount) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("mount", cmdFileMountUsage...)
 	cmd.Short = i18n.G("Mount files from instances")
@@ -963,7 +951,7 @@ incus file mount foo
 	cmd.Flags().BoolVar(&c.flagAuthNone, "no-auth", false, i18n.G("Disable authentication when using SSH SFTP listener"))
 	cmd.Flags().StringVar(&c.flagAuthUser, "auth-user", "", i18n.G("Set authentication user when using SSH SFTP listener"))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -980,8 +968,7 @@ incus file mount foo
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdFileMount) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdFileMount) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdFileMountUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

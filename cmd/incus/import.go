@@ -25,8 +25,7 @@ type cmdImport struct {
 
 var cmdImportUsage = u.Usage{u.RemoteColonOpt, u.BackupFile, u.NewName(u.Instance).Optional()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdImport) Command() *cobra.Command {
+func (c *cmdImport) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("import", cmdImportUsage...)
 	cmd.Short = i18n.G("Import instance backups")
@@ -36,7 +35,7 @@ func (c *cmdImport) Command() *cobra.Command {
 		`incus import backup0.tar.gz
     Create a new instance using backup0.tar.gz as the source.`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringVarP(&c.flagStorage, "storage", "s", "", i18n.G("Storage pool name")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagConfig, "config", "c", nil, i18n.G("Config key/value to apply to the new instance")+"``")
 	cmd.Flags().StringArrayVarP(&c.flagDevice, "device", "d", nil, i18n.G("New key/value to apply to a specific device")+"``")
@@ -44,8 +43,7 @@ func (c *cmdImport) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdImport) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdImport) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdImportUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

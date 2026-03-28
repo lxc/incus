@@ -84,7 +84,7 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 
 	if migrationType == MigrationTypeVM || migrationType == MigrationTypeVolumeBlock {
 		sourcePath := filepath.Join(rootfs, "root.img")
-		size, err := BlockDiskSizeBytes(sourcePath)
+		size, err := blockDiskSizeBytes(sourcePath)
 		if err != nil {
 			return abort(err)
 		}
@@ -350,8 +350,8 @@ func parseURL(URL string) (string, error) {
 	return uri.String(), nil
 }
 
-// BlockDiskSizeBytes returns the size of a block disk (path can be either block device or raw file).
-func BlockDiskSizeBytes(blockDiskPath string) (int64, error) {
+// blockDiskSizeBytes returns the size of a block disk (path can be either block device or raw file).
+func blockDiskSizeBytes(blockDiskPath string) (int64, error) {
 	if linux.IsBlockdevPath(blockDiskPath) {
 		// Attempt to open the device path.
 		f, err := os.Open(blockDiskPath)

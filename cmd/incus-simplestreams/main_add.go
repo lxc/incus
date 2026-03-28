@@ -31,8 +31,7 @@ type cmdAdd struct {
 	flagNoDefaultAlias bool
 }
 
-// Command generates the command definition.
-func (c *cmdAdd) Command() *cobra.Command {
+func (c *cmdAdd) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "add <metadata tarball> [<data file>]"
 	cmd.Aliases = []string{"import"}
@@ -59,7 +58,7 @@ with both the metadata and rootfs in a single tarball.
 
 Otherwise, it is a split image (separate files for metadata and rootfs/disk).
 `)
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.Flags().StringArrayVar(&c.flagAliases, "alias", nil, "Add alias")
 	cmd.Flags().BoolVar(&c.flagNoDefaultAlias, "no-default-alias", false, "Do not add the default alias")
@@ -150,8 +149,7 @@ func (c *cmdAdd) parseImage(metaFile *os.File, dataFile *os.File) (*dataItem, er
 	return &item, nil
 }
 
-// Run runs the actual command logic.
-func (c *cmdAdd) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := cli.CheckArgs(cmd, args, 1, 2)
 	if exit {

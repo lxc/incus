@@ -16,8 +16,7 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
-// RunAuto runs the actual command logic.
-func (c *cmdAdminInit) RunAuto(d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
+func (c *cmdAdminInit) runAuto(d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Quick checks.
 	if c.flagStorageBackend != "" && !slices.Contains([]string{"dir", "btrfs", "lvm", "zfs"}, c.flagStorageBackend) {
 		return nil, fmt.Errorf(i18n.G("The requested backend '%s' isn't supported by init"), c.flagStorageBackend)

@@ -15,8 +15,7 @@ type cmdAdminOS struct {
 	global *cmdGlobal
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdAdminOS) Command() *cobra.Command {
+func (c *cmdAdminOS) command() *cobra.Command {
 	args := &cli.Args{
 		SupportsTarget:    true,
 		SupportsRemote:    true,

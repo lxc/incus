@@ -167,8 +167,8 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.PersistentFlags().BoolVar(&u.ExplainOnly, "explain", false, i18n.G("If the command is valid, explain its parsed arguments instead of running it"))
 
 	// Wrappers
-	app.PersistentPreRunE = globalCmd.PreRun
-	app.PersistentPostRunE = globalCmd.PostRun
+	app.PersistentPreRunE = globalCmd.preRun
+	app.PersistentPostRunE = globalCmd.postRun
 
 	// Version handling
 	app.SetVersionTemplate("{{.Version}}\n")
@@ -176,167 +176,167 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 
 	// alias sub-command
 	aliasCmd := cmdAlias{global: &globalCmd}
-	app.AddCommand(aliasCmd.Command())
+	app.AddCommand(aliasCmd.command())
 
 	// admin sub-command
 	adminCmd := cmdAdmin{global: &globalCmd}
-	app.AddCommand(adminCmd.Command())
+	app.AddCommand(adminCmd.command())
 
 	// cluster sub-command
 	clusterCmd := cmdCluster{global: &globalCmd}
-	app.AddCommand(clusterCmd.Command())
+	app.AddCommand(clusterCmd.command())
 
 	// config sub-command
 	configCmd := cmdConfig{global: &globalCmd}
-	app.AddCommand(configCmd.Command())
+	app.AddCommand(configCmd.command())
 
 	// console sub-command
 	consoleCmd := cmdConsole{global: &globalCmd}
-	app.AddCommand(consoleCmd.Command())
+	app.AddCommand(consoleCmd.command())
 
 	// create sub-command
 	createCmd := cmdCreate{global: &globalCmd}
-	app.AddCommand(createCmd.Command())
+	app.AddCommand(createCmd.command())
 
 	// copy sub-command
 	copyCmd := cmdCopy{global: &globalCmd}
-	app.AddCommand(copyCmd.Command())
+	app.AddCommand(copyCmd.command())
 
 	// delete sub-command
 	deleteCmd := cmdDelete{global: &globalCmd}
-	app.AddCommand(deleteCmd.Command())
+	app.AddCommand(deleteCmd.command())
 
 	// exec sub-command
 	execCmd := cmdExec{global: &globalCmd}
-	app.AddCommand(execCmd.Command())
+	app.AddCommand(execCmd.command())
 
 	// export sub-command
 	exportCmd := cmdExport{global: &globalCmd}
-	app.AddCommand(exportCmd.Command())
+	app.AddCommand(exportCmd.command())
 
 	// file sub-command
 	fileCmd := cmdFile{global: &globalCmd}
-	app.AddCommand(fileCmd.Command())
+	app.AddCommand(fileCmd.command())
 
 	// import sub-command
 	importCmd := cmdImport{global: &globalCmd}
-	app.AddCommand(importCmd.Command())
+	app.AddCommand(importCmd.command())
 
 	// info sub-command
 	infoCmd := cmdInfo{global: &globalCmd}
-	app.AddCommand(infoCmd.Command())
+	app.AddCommand(infoCmd.command())
 
 	// image sub-command
 	imageCmd := cmdImage{global: &globalCmd}
-	app.AddCommand(imageCmd.Command())
+	app.AddCommand(imageCmd.command())
 
 	// launch sub-command
 	launchCmd := cmdLaunch{global: &globalCmd, init: &createCmd}
-	app.AddCommand(launchCmd.Command())
+	app.AddCommand(launchCmd.command())
 
 	// list sub-command
 	listCmd := cmdList{global: &globalCmd}
-	app.AddCommand(listCmd.Command())
+	app.AddCommand(listCmd.command())
 
 	// manpage sub-command
 	manpageCmd := cmdManpage{global: &globalCmd}
-	app.AddCommand(manpageCmd.Command())
+	app.AddCommand(manpageCmd.command())
 
 	// monitor sub-command
 	monitorCmd := cmdMonitor{global: &globalCmd}
-	app.AddCommand(monitorCmd.Command())
+	app.AddCommand(monitorCmd.command())
 
 	// move sub-command
 	moveCmd := cmdMove{global: &globalCmd}
-	app.AddCommand(moveCmd.Command())
+	app.AddCommand(moveCmd.command())
 
 	// network sub-command
 	networkCmd := cmdNetwork{global: &globalCmd}
-	app.AddCommand(networkCmd.Command())
+	app.AddCommand(networkCmd.command())
 
 	// operation sub-command
 	operationCmd := cmdOperation{global: &globalCmd}
-	app.AddCommand(operationCmd.Command())
+	app.AddCommand(operationCmd.command())
 
 	// pause sub-command
 	pauseCmd := cmdPause{global: &globalCmd}
-	app.AddCommand(pauseCmd.Command())
+	app.AddCommand(pauseCmd.command())
 
 	// publish sub-command
 	publishCmd := cmdPublish{global: &globalCmd}
-	app.AddCommand(publishCmd.Command())
+	app.AddCommand(publishCmd.command())
 
 	// profile sub-command
 	profileCmd := cmdProfile{global: &globalCmd}
-	app.AddCommand(profileCmd.Command())
+	app.AddCommand(profileCmd.command())
 
 	// project sub-command
 	projectCmd := cmdProject{global: &globalCmd}
-	app.AddCommand(projectCmd.Command())
+	app.AddCommand(projectCmd.command())
 
 	// query sub-command
 	queryCmd := cmdQuery{global: &globalCmd}
-	app.AddCommand(queryCmd.Command())
+	app.AddCommand(queryCmd.command())
 
 	// rebuild sub-command
 	rebuildCmd := cmdRebuild{global: &globalCmd}
-	app.AddCommand(rebuildCmd.Command())
+	app.AddCommand(rebuildCmd.command())
 
 	// rename sub-command
 	renameCmd := cmdRename{global: &globalCmd}
-	app.AddCommand(renameCmd.Command())
+	app.AddCommand(renameCmd.command())
 
 	// restart sub-command
 	restartCmd := cmdRestart{global: &globalCmd}
-	app.AddCommand(restartCmd.Command())
+	app.AddCommand(restartCmd.command())
 
 	// remote sub-command
 	remoteCmd := cmdRemote{global: &globalCmd}
-	app.AddCommand(remoteCmd.Command())
+	app.AddCommand(remoteCmd.command())
 
 	// resume sub-command
 	resumeCmd := cmdResume{global: &globalCmd}
-	app.AddCommand(resumeCmd.Command())
+	app.AddCommand(resumeCmd.command())
 
 	// snapshot sub-command
 	snapshotCmd := cmdSnapshot{global: &globalCmd}
-	app.AddCommand(snapshotCmd.Command())
+	app.AddCommand(snapshotCmd.command())
 
 	// storage sub-command
 	storageCmd := cmdStorage{global: &globalCmd}
-	app.AddCommand(storageCmd.Command())
+	app.AddCommand(storageCmd.command())
 
 	// start sub-command
 	startCmd := cmdStart{global: &globalCmd}
-	app.AddCommand(startCmd.Command())
+	app.AddCommand(startCmd.command())
 
 	// stop sub-command
 	stopCmd := cmdStop{global: &globalCmd}
-	app.AddCommand(stopCmd.Command())
+	app.AddCommand(stopCmd.command())
 
 	// version sub-command
 	versionCmd := cmdVersion{global: &globalCmd}
-	app.AddCommand(versionCmd.Command())
+	app.AddCommand(versionCmd.command())
 
 	// top sub-command
 	topCmd := cmdTop{global: &globalCmd}
-	app.AddCommand(topCmd.Command())
+	app.AddCommand(topCmd.command())
 
 	// warning sub-command
 	warningCmd := cmdWarning{global: &globalCmd}
-	app.AddCommand(warningCmd.Command())
+	app.AddCommand(warningCmd.command())
 
 	// webui sub-command
 	webuiCmd := cmdWebui{global: &globalCmd}
-	app.AddCommand(webuiCmd.Command())
+	app.AddCommand(webuiCmd.command())
 
 	// debug sub-command
 	debugCmd := cmdDebug{global: &globalCmd}
-	app.AddCommand(debugCmd.Command())
+	app.AddCommand(debugCmd.command())
 
 	// wait sub-command
 	waitCmd := cmdWait{global: &globalCmd}
-	app.AddCommand(waitCmd.Command())
+	app.AddCommand(waitCmd.command())
 
 	// Get help command
 	app.InitDefaultHelpCmd()
@@ -426,8 +426,7 @@ If you already added a remote server, make it the default with "incus remote swi
 	}
 }
 
-// PreRun runs for every command and pre-configures the CLI.
-func (c *cmdGlobal) PreRun(cmd *cobra.Command, _ []string) error {
+func (c *cmdGlobal) preRun(cmd *cobra.Command, _ []string) error {
 	var err error
 
 	// If calling the help, skip pre-run
@@ -556,8 +555,7 @@ Or for a virtual machine: incus launch images:%s --vm`)+"\n", image, image)
 	return nil
 }
 
-// PostRun runs after a successful command.
-func (c *cmdGlobal) PostRun(_ *cobra.Command, _ []string) error {
+func (c *cmdGlobal) postRun(_ *cobra.Command, _ []string) error {
 	if c.conf != nil && util.PathExists(c.confPath) {
 		// Save OIDC tokens on exit
 		c.conf.SaveOIDCTokens()

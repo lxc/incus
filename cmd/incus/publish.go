@@ -31,14 +31,13 @@ type cmdPublish struct {
 
 var cmdPublishUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Remote(), u.RemoteColonOpt, u.LegacyKV.List(0)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdPublish) Command() *cobra.Command {
+func (c *cmdPublish) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("publish", cmdPublishUsage...)
 	cmd.Short = i18n.G("Publish instances as images")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Publish instances as images`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagMakePublic, "public", false, i18n.G("Make the image public"))
 	cmd.Flags().StringArrayVar(&c.flagAliases, "alias", nil, i18n.G("New alias to define at target")+"``")
 	cmd.Flags().BoolVarP(&c.flagForce, "force", "f", false, i18n.G("Stop the instance if currently running"))
@@ -62,8 +61,7 @@ func (c *cmdPublish) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdPublish) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdPublishUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -199,7 +197,7 @@ func (c *cmdPublish) Run(cmd *cobra.Command, args []string) error {
 		req.ExpiresAt = expiresAt
 	}
 
-	existingAliases, err := GetCommonAliases(dstServer, aliases...)
+	existingAliases, err := getCommonAliases(dstServer, aliases...)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Error retrieving aliases: %w"), err)
 	}

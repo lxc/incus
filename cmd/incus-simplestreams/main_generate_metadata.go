@@ -22,8 +22,7 @@ type cmdGenerateMetadata struct {
 	global *cmdGlobal
 }
 
-// Command generates the command definition.
-func (c *cmdGenerateMetadata) Command() *cobra.Command {
+func (c *cmdGenerateMetadata) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "generate-metadata <path>"
 	cmd.Short = "Generate a metadata tarball"
@@ -39,13 +38,12 @@ This command will prompt for all of the metadata tarball fields:
  - Architecture
  - Description
 `)
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdGenerateMetadata) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	exit, err := cli.CheckArgs(cmd, args, 1, 1)
 	if exit {

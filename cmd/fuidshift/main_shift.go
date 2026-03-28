@@ -17,7 +17,7 @@ type cmdShift struct {
 	flagTestMode bool
 }
 
-func (c *cmdShift) Command() *cobra.Command {
+func (c *cmdShift) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "fuidshift <directory> <range> [<range>...]"
 	cmd.Short = "UID/GID shifter"
@@ -37,14 +37,14 @@ func (c *cmdShift) Command() *cobra.Command {
   Where "u" means shift uid, "g" means shift gid and "b" means shift uid and gid.
 `
 	cmd.Example = `  fuidshift my-dir/ b:0:100000:65536 u:10000:1000:1`
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().BoolVarP(&c.flagTestMode, "test", "t", false, "Test mode (no change to files)")
 	cmd.Flags().BoolVarP(&c.flagReverse, "reverse", "r", false, "Perform a reverse mapping")
 
 	return cmd
 }
 
-func (c *cmdShift) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdShift) run(cmd *cobra.Command, args []string) error {
 	// Help and usage
 	if len(args) == 0 {
 		return cmd.Help()

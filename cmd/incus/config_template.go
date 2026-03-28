@@ -21,8 +21,7 @@ type cmdConfigTemplate struct {
 	config *cmdConfig
 }
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigTemplate) Command() *cobra.Command {
+func (c *cmdConfigTemplate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("template")
 	cmd.Short = i18n.G("Manage instance file templates")
@@ -30,23 +29,23 @@ func (c *cmdConfigTemplate) Command() *cobra.Command {
 
 	// Create
 	configTemplateCreateCmd := cmdConfigTemplateCreate{global: c.global, config: c.config, configTemplate: c}
-	cmd.AddCommand(configTemplateCreateCmd.Command())
+	cmd.AddCommand(configTemplateCreateCmd.command())
 
 	// Delete
 	configTemplateDeleteCmd := cmdConfigTemplateDelete{global: c.global, config: c.config, configTemplate: c}
-	cmd.AddCommand(configTemplateDeleteCmd.Command())
+	cmd.AddCommand(configTemplateDeleteCmd.command())
 
 	// Edit
 	configTemplateEditCmd := cmdConfigTemplateEdit{global: c.global, config: c.config, configTemplate: c}
-	cmd.AddCommand(configTemplateEditCmd.Command())
+	cmd.AddCommand(configTemplateEditCmd.command())
 
 	// List
 	configTemplateListCmd := cmdConfigTemplateList{global: c.global, config: c.config, configTemplate: c}
-	cmd.AddCommand(configTemplateListCmd.Command())
+	cmd.AddCommand(configTemplateListCmd.command())
 
 	// Show
 	configTemplateShowCmd := cmdConfigTemplateShow{global: c.global, config: c.config, configTemplate: c}
-	cmd.AddCommand(configTemplateShowCmd.Command())
+	cmd.AddCommand(configTemplateShowCmd.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -63,8 +62,7 @@ type cmdConfigTemplateCreate struct {
 
 var cmdConfigTemplateCreateUsage = u.Usage{u.Instance.Remote(), u.NewName(u.Template)}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigTemplateCreate) Command() *cobra.Command {
+func (c *cmdConfigTemplateCreate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("create", cmdConfigTemplateCreateUsage...)
 	cmd.Aliases = []string{"add"}
@@ -76,7 +74,7 @@ func (c *cmdConfigTemplateCreate) Command() *cobra.Command {
 incus config template create u1 t1 < config.tpl
     Create template t1 for instance u1 from config.tpl`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -89,8 +87,7 @@ incus config template create u1 t1 < config.tpl
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigTemplateCreate) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigTemplateCreate) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigTemplateCreateUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -125,15 +122,14 @@ type cmdConfigTemplateDelete struct {
 
 var cmdConfigTemplateDeleteUsage = u.Usage{u.Instance.Remote(), u.Template}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigTemplateDelete) Command() *cobra.Command {
+func (c *cmdConfigTemplateDelete) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("delete", cmdConfigTemplateDeleteUsage...)
 	cmd.Aliases = []string{"rm", "remove"}
 	cmd.Short = i18n.G("Delete instance file templates")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Delete instance file templates`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -150,8 +146,7 @@ func (c *cmdConfigTemplateDelete) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigTemplateDelete) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigTemplateDelete) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigTemplateDeleteUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -174,14 +169,13 @@ type cmdConfigTemplateEdit struct {
 
 var cmdConfigTemplateEditUsage = u.Usage{u.Instance.Remote(), u.Template}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigTemplateEdit) Command() *cobra.Command {
+func (c *cmdConfigTemplateEdit) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("edit", cmdConfigTemplateEditUsage...)
 	cmd.Short = i18n.G("Edit instance file templates")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Edit instance file templates`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -198,8 +192,7 @@ func (c *cmdConfigTemplateEdit) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigTemplateEdit) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigTemplateEdit) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigTemplateEditUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -268,8 +261,7 @@ type cmdConfigTemplateList struct {
 
 var cmdConfigTemplateListUsage = u.Usage{u.Instance.Remote()}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigTemplateList) Command() *cobra.Command {
+func (c *cmdConfigTemplateList) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("list", cmdConfigTemplateListUsage...)
 	cmd.Aliases = []string{"ls"}
@@ -281,7 +273,7 @@ func (c *cmdConfigTemplateList) Command() *cobra.Command {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
 	}
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -294,8 +286,7 @@ func (c *cmdConfigTemplateList) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigTemplateList) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigTemplateList) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigTemplateListUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err
@@ -334,15 +325,14 @@ type cmdConfigTemplateShow struct {
 
 var cmdConfigTemplateShowUsage = u.Usage{u.Instance.Remote(), u.Template}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdConfigTemplateShow) Command() *cobra.Command {
+func (c *cmdConfigTemplateShow) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("show", cmdConfigTemplateShowUsage...)
 	cmd.Short = i18n.G("Show content of instance file templates")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Show content of instance file templates`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -359,8 +349,7 @@ func (c *cmdConfigTemplateShow) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdConfigTemplateShow) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdConfigTemplateShow) run(cmd *cobra.Command, args []string) error {
 	parsed, err := cmdConfigTemplateShowUsage.Parse(c.global.conf, cmd, args)
 	if err != nil {
 		return err

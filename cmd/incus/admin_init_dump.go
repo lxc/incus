@@ -12,8 +12,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 )
 
-// RunDump runs the actual command logic.
-func (c *cmdAdminInit) RunDump(d incus.InstanceServer) error {
+func (c *cmdAdminInit) runDump(d incus.InstanceServer) error {
 	currentServer, _, err := d.GetServer()
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)

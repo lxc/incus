@@ -38,8 +38,7 @@ type cmdExec struct {
 
 var cmdExecUsage = u.Usage{u.Instance.Remote(), u.EndOfFlags, u.CommandLine}
 
-// Command returns a cobra.Command for use with (*cobra.Command).AddCommand.
-func (c *cmdExec) Command() *cobra.Command {
+func (c *cmdExec) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("exec", cmdExecUsage...)
 	cmd.Short = i18n.G("Execute commands in instances")
@@ -60,7 +59,7 @@ Mode defaults to non-interactive, interactive mode is selected if both stdin AND
 incus exec c1 -- ls -lh /
 	Run the "ls -lh /" command in instance "c1"`))
 
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.Flags().StringArrayVar(&c.flagEnvironment, "env", nil, i18n.G("Environment variable to set (e.g. HOME=/home/foo)")+"``")
 	cmd.Flags().StringVar(&c.flagMode, "mode", "auto", i18n.G("Override the terminal mode (auto, interactive or non-interactive)")+"``")
 	cmd.Flags().BoolVarP(&c.flagForceInteractive, "force-interactive", "t", false, i18n.G("Force pseudo-terminal allocation"))
@@ -98,8 +97,7 @@ func (c *cmdExec) sendTermSize(control *websocket.Conn) error {
 	return control.WriteJSON(msg)
 }
 
-// Run runs the actual command logic.
-func (c *cmdExec) Run(cmd *cobra.Command, args []string) error {
+func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 	parsed, err := cmdExecUsage.Parse(conf, cmd, args)
 	if err != nil {
