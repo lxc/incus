@@ -10466,6 +10466,14 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		features["plan9"] = struct{}{}
 	}
 
+	// Check if virtio-sound-pci is compiled into QEMU.
+	err = monitor.QueryVirtioSoundDevice()
+	if err != nil {
+		logger.Debug("Failed querying virtio-sound-pci during VM feature check", logger.Ctx{"err": err})
+	} else {
+		features["virtio-sound"] = struct{}{}
+	}
+
 	// Check if running nested.
 	cpus, err := resources.GetCPU()
 	if err != nil {
