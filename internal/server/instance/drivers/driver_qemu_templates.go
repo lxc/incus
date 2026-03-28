@@ -207,6 +207,7 @@ type qemuSerialOpts struct {
 	dev              qemuDevOpts
 	charDevName      string
 	ringbufSizeBytes int
+	spice            bool
 }
 
 func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
@@ -216,7 +217,7 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 		ccwName: "virtio-serial-ccw",
 	}
 
-	return []cfg.Section{{
+	sections := []cfg.Section{{
 		Name:    `device "dev-qemu_serial"`,
 		Comment: "Virtual serial bus",
 		Entries: qemuDeviceEntries(&entriesOpts),
@@ -249,37 +250,43 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 			"name":   "org.linuxcontainers.lxd",
 			"bus":    "dev-qemu_serial.0",
 		},
-	}, {
-		Name:    `chardev "qemu_spice-chardev"`,
-		Comment: "Spice agent",
-		Entries: map[string]string{
-			"backend": "spicevmc",
-			"name":    "vdagent",
-		},
-	}, {
-		Name: `device "qemu_spice"`,
-		Entries: map[string]string{
-			"driver":  "virtserialport",
-			"name":    "com.redhat.spice.0",
-			"chardev": "qemu_spice-chardev",
-			"bus":     "dev-qemu_serial.0",
-		},
-	}, {
-		Name:    `chardev "qemu_spicedir-chardev"`,
-		Comment: "Spice folder",
-		Entries: map[string]string{
-			"backend": "spiceport",
-			"name":    "org.spice-space.webdav.0",
-		},
-	}, {
-		Name: `device "qemu_spicedir"`,
-		Entries: map[string]string{
-			"driver":  "virtserialport",
-			"name":    "org.spice-space.webdav.0",
-			"chardev": "qemu_spicedir-chardev",
-			"bus":     "dev-qemu_serial.0",
-		},
 	}}
+
+	if opts.spice {
+		sections = append(sections, []cfg.Section{{
+			Name:    `chardev "qemu_spice-chardev"`,
+			Comment: "Spice agent",
+			Entries: map[string]string{
+				"backend": "spicevmc",
+				"name":    "vdagent",
+			},
+		}, {
+			Name: `device "qemu_spice"`,
+			Entries: map[string]string{
+				"driver":  "virtserialport",
+				"name":    "com.redhat.spice.0",
+				"chardev": "qemu_spice-chardev",
+				"bus":     "dev-qemu_serial.0",
+			},
+		}, {
+			Name:    `chardev "qemu_spicedir-chardev"`,
+			Comment: "Spice folder",
+			Entries: map[string]string{
+				"backend": "spiceport",
+				"name":    "org.spice-space.webdav.0",
+			},
+		}, {
+			Name: `device "qemu_spicedir"`,
+			Entries: map[string]string{
+				"driver":  "virtserialport",
+				"name":    "org.spice-space.webdav.0",
+				"chardev": "qemu_spicedir-chardev",
+				"bus":     "dev-qemu_serial.0",
+			},
+		}}...)
+	}
+
+	return sections
 }
 
 type qemuPCIeOpts struct {
@@ -891,6 +898,7 @@ type qemuUSBOpts struct {
 	devAddr       string
 	multifunction bool
 	ports         int
+	spice         bool
 }
 
 func qemuUSB(opts *qemuUSBOpts) []cfg.Section {
@@ -913,21 +921,23 @@ func qemuUSB(opts *qemuUSBOpts) []cfg.Section {
 		Entries: entries,
 	}}
 
-	for i := 1; i <= 3; i++ {
-		chardev := fmt.Sprintf("qemu_spice-usb-chardev%d", i)
-		sections = append(sections, []cfg.Section{{
-			Name: fmt.Sprintf(`chardev "%s"`, chardev),
-			Entries: map[string]string{
-				"backend": "spicevmc",
-				"name":    "usbredir",
-			},
-		}, {
-			Name: fmt.Sprintf(`device "qemu_spice-usb%d"`, i),
-			Entries: map[string]string{
-				"driver":  "usb-redir",
-				"chardev": chardev,
-			},
-		}}...)
+	if opts.spice {
+		for i := 1; i <= 3; i++ {
+			chardev := fmt.Sprintf("qemu_spice-usb-chardev%d", i)
+			sections = append(sections, []cfg.Section{{
+				Name: fmt.Sprintf(`chardev "%s"`, chardev),
+				Entries: map[string]string{
+					"backend": "spicevmc",
+					"name":    "usbredir",
+				},
+			}, {
+				Name: fmt.Sprintf(`device "qemu_spice-usb%d"`, i),
+				Entries: map[string]string{
+					"driver":  "usb-redir",
+					"chardev": chardev,
+				},
+			}}...)
+		}
 	}
 
 	return sections
