@@ -988,7 +988,7 @@ func (c *cmdClusterJoin) run(cmd *cobra.Command, args []string) error {
 
 	cluster := parsed[0].RemoteServer
 	member := parsed[1].RemoteServer
-	config := NewInitPressed()
+	config := newInitPressed()
 
 	// Validate servers.
 	if !cluster.IsClustered() {
@@ -1598,8 +1598,7 @@ func prepareClusterMemberServerFilters(filters []string, i any) []string {
 	return formattedFilters
 }
 
-// NewInitPreseed creates and initializes a new InitPreseed struct with default values.
-func NewInitPressed() *api.InitPreseed {
+func newInitPressed() *api.InitPreseed {
 	// Initialize config
 	config := api.InitPreseed{}
 	config.Config = map[string]string{}

@@ -197,7 +197,7 @@ func (c *cmdPublish) run(cmd *cobra.Command, args []string) error {
 		req.ExpiresAt = expiresAt
 	}
 
-	existingAliases, err := GetCommonAliases(dstServer, aliases...)
+	existingAliases, err := getCommonAliases(dstServer, aliases...)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Error retrieving aliases: %w"), err)
 	}

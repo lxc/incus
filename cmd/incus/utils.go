@@ -103,8 +103,8 @@ func parseDeviceOverrides(deviceOverrideArgs []string) (map[string]map[string]st
 	return deviceMap, nil
 }
 
-// IsAliasesSubset returns true if the first array is completely contained in the second array.
-func IsAliasesSubset(a1 []api.ImageAlias, a2 []api.ImageAlias) bool {
+// isAliasesSubset returns true if the first array is completely contained in the second array.
+func isAliasesSubset(a1 []api.ImageAlias, a2 []api.ImageAlias) bool {
 	set := make(map[string]any)
 	for _, alias := range a2 {
 		set[alias.Name] = nil
@@ -120,8 +120,8 @@ func IsAliasesSubset(a1 []api.ImageAlias, a2 []api.ImageAlias) bool {
 	return true
 }
 
-// GetCommonAliases returns the common aliases between a list of aliases and all the existing ones.
-func GetCommonAliases(client incus.InstanceServer, aliases ...api.ImageAlias) ([]api.ImageAliasesEntry, error) {
+// getCommonAliases returns the common aliases between a list of aliases and all the existing ones.
+func getCommonAliases(client incus.InstanceServer, aliases ...api.ImageAlias) ([]api.ImageAliasesEntry, error) {
 	if len(aliases) == 0 {
 		return nil, nil
 	}
@@ -131,7 +131,7 @@ func GetCommonAliases(client incus.InstanceServer, aliases ...api.ImageAlias) ([
 		names[i] = alias.Name
 	}
 
-	// 'GetExistingAliases' which is using 'sort.SearchStrings' requires sorted slice
+	// 'getExistingAliases' which is using 'sort.SearchStrings' requires sorted slice
 	sort.Strings(names)
 
 	resp, err := client.GetImageAliases()
@@ -139,7 +139,7 @@ func GetCommonAliases(client incus.InstanceServer, aliases ...api.ImageAlias) ([
 		return nil, err
 	}
 
-	return GetExistingAliases(names, resp), nil
+	return getExistingAliases(names, resp), nil
 }
 
 // Create the specified image aliases, updating those that already exist.
@@ -161,7 +161,7 @@ func ensureImageAliases(client incus.InstanceServer, aliases []api.ImageAlias, f
 	}
 
 	// Delete existing aliases that match provided ones
-	for _, alias := range GetExistingAliases(names, resp) {
+	for _, alias := range getExistingAliases(names, resp) {
 		err := client.DeleteImageAlias(alias.Name)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Failed to remove alias %s: %w"), alias.Name, err)
@@ -182,8 +182,8 @@ func ensureImageAliases(client incus.InstanceServer, aliases []api.ImageAlias, f
 	return nil
 }
 
-// GetExistingAliases returns the intersection between a list of aliases and all the existing ones.
-func GetExistingAliases(aliases []string, allAliases []api.ImageAliasesEntry) []api.ImageAliasesEntry {
+// getExistingAliases returns the intersection between a list of aliases and all the existing ones.
+func getExistingAliases(aliases []string, allAliases []api.ImageAliasesEntry) []api.ImageAliasesEntry {
 	existing := []api.ImageAliasesEntry{}
 	for _, alias := range allAliases {
 		name := alias.Name
@@ -200,7 +200,7 @@ func GetExistingAliases(aliases []string, allAliases []api.ImageAliasesEntry) []
 // aliases=[a1, a2], image aliases=[a1] - image will be deleted
 // aliases=[a1], image aliases=[a1, a2] - image will be preserved.
 func deleteImagesByAliases(client incus.InstanceServer, aliases []api.ImageAlias) error {
-	existingAliases, err := GetCommonAliases(client, aliases...)
+	existingAliases, err := getCommonAliases(client, aliases...)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Error retrieving aliases: %w"), err)
 	}
@@ -233,7 +233,7 @@ func deleteImagesByAliases(client incus.InstanceServer, aliases []api.ImageAlias
 		// 2. If image with 'foo' and 'bar' aliases already exists and new image is published
 		//    with alias 'foo'. Old image should be kept with alias 'bar'
 		//    and new image will have 'foo' alias.
-		if image != nil && IsAliasesSubset(image.Aliases, aliases) {
+		if image != nil && isAliasesSubset(image.Aliases, aliases) {
 			op, err := client.DeleteImage(alias.Target)
 			if err != nil {
 				return err

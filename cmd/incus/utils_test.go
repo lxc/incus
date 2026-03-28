@@ -17,7 +17,7 @@ func TestUtilsTestSuite(t *testing.T) {
 	suite.Run(t, &utilsTestSuite{})
 }
 
-func (s *utilsTestSuite) TestIsAliasesSubsetTrue() {
+func (s *utilsTestSuite) TestisAliasesSubsetTrue() {
 	a1 := []api.ImageAlias{
 		{Name: "foo"},
 	}
@@ -28,10 +28,10 @@ func (s *utilsTestSuite) TestIsAliasesSubsetTrue() {
 		{Name: "baz"},
 	}
 
-	s.Exactly(IsAliasesSubset(a1, a2), true)
+	s.Exactly(isAliasesSubset(a1, a2), true)
 }
 
-func (s *utilsTestSuite) TestIsAliasesSubsetFalse() {
+func (s *utilsTestSuite) TestisAliasesSubsetFalse() {
 	a1 := []api.ImageAlias{
 		{Name: "foo"},
 		{Name: "bar"},
@@ -42,28 +42,28 @@ func (s *utilsTestSuite) TestIsAliasesSubsetFalse() {
 		{Name: "baz"},
 	}
 
-	s.Exactly(IsAliasesSubset(a1, a2), false)
+	s.Exactly(isAliasesSubset(a1, a2), false)
 }
 
-func (s *utilsTestSuite) TestGetExistingAliases() {
+func (s *utilsTestSuite) TestgetExistingAliases() {
 	images := []api.ImageAliasesEntry{
 		{Name: "foo"},
 		{Name: "bar"},
 		{Name: "baz"},
 	}
 
-	aliases := GetExistingAliases([]string{"bar", "foo", "other"}, images)
+	aliases := getExistingAliases([]string{"bar", "foo", "other"}, images)
 	s.Exactly([]api.ImageAliasesEntry{images[0], images[1]}, aliases)
 }
 
-func (s *utilsTestSuite) TestGetExistingAliasesEmpty() {
+func (s *utilsTestSuite) TestgetExistingAliasesEmpty() {
 	images := []api.ImageAliasesEntry{
 		{Name: "foo"},
 		{Name: "bar"},
 		{Name: "baz"},
 	}
 
-	aliases := GetExistingAliases([]string{"other1", "other2"}, images)
+	aliases := getExistingAliases([]string{"other1", "other2"}, images)
 	s.Exactly([]api.ImageAliasesEntry{}, aliases)
 }
 

@@ -28,7 +28,7 @@ import (
 
 func (c *cmdAdminInit) runInteractive(_ *cobra.Command, d incus.InstanceServer, server *api.Server) (*api.InitPreseed, error) {
 	// Initialize config
-	config := NewInitPressed()
+	config := newInitPressed()
 
 	// Clustering
 	clustering, err := c.global.asker.AskBool(i18n.G("Would you like to use clustering?")+" (yes/no) [default=no]: ", "no")
