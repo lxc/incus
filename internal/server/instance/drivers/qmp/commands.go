@@ -1645,3 +1645,8 @@ func (m *Monitor) SetNICLink(id string, connected bool) error {
 	args.Up = connected
 	return m.Run("set_link", args, nil)
 }
+
+// QuerySpice checks whether SPICE support is available in QEMU.
+func (m *Monitor) QuerySpice() error {
+	return m.Run("query-spice", nil, nil)
+}
