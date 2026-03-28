@@ -35,7 +35,7 @@ func main() {
 	// Setup command line parser.
 	migrateCmd := cmdMigrate{}
 
-	app := migrateCmd.Command()
+	app := migrateCmd.command()
 	app.Use = "lxd-to-incus"
 	app.Short = "LXD to Incus migration tool"
 	app.Long = `Description:
@@ -71,11 +71,10 @@ type cmdMigrate struct {
 	flagIgnoreVersionCheck bool
 }
 
-// Command generates the command definition.
-func (c *cmdMigrate) Command() *cobra.Command {
+func (c *cmdMigrate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = "lxd-to-incus"
-	cmd.RunE = c.Run
+	cmd.RunE = c.run
 	cmd.PersistentFlags().BoolVar(&c.flagYes, "yes", false, "Migrate without prompting")
 	cmd.PersistentFlags().BoolVar(&c.flagClusterMember, "cluster-member", false, "Used internally for cluster migrations")
 	cmd.PersistentFlags().BoolVar(&c.flagIgnoreVersionCheck, "ignore-version-check", false, "Bypass source version check")
@@ -83,8 +82,7 @@ func (c *cmdMigrate) Command() *cobra.Command {
 	return cmd
 }
 
-// Run runs the actual command logic.
-func (c *cmdMigrate) Run(app *cobra.Command, args []string) error {
+func (c *cmdMigrate) run(app *cobra.Command, args []string) error {
 	var err error
 	var srcClient incus.InstanceServer
 	var targetClient incus.InstanceServer
