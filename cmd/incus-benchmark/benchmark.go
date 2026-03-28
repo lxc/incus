@@ -84,32 +84,6 @@ func launchContainers(c incus.InstanceServer, count int, parallel int, image str
 	return duration, nil
 }
 
-// createContainers create the specified number of containers.
-func createContainers(c incus.InstanceServer, count int, parallel int, fingerprint string, privileged bool) (time.Duration, error) {
-	var duration time.Duration
-
-	batchSize, err := getBatchSize(parallel)
-	if err != nil {
-		return duration, err
-	}
-
-	batchCreate := func(index int, wg *sync.WaitGroup) {
-		defer wg.Done()
-
-		name := getContainerName(count, index)
-
-		err := createContainer(c, fingerprint, name, privileged)
-		if err != nil {
-			logf("Failed to launch container '%s': %s", name, err)
-			return
-		}
-	}
-
-	duration = processBatch(count, batchSize, batchCreate)
-
-	return duration, nil
-}
-
 // getContainers returns containers created by the benchmark.
 func getContainers(c incus.InstanceServer) ([]api.Instance, error) {
 	containers := []api.Instance{}
