@@ -924,6 +924,19 @@ func (d *disk) Register() error {
 	return nil
 }
 
+// Add performs any setup when a device is added to an instance.
+// It is called irrespective of whether the instance is running or not.
+func (d *disk) Add() error {
+	if d.config["pool"] != "" && d.config["source"] != "" {
+		_, err := d.updateDependentConfig()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // PreStartCheck checks the storage pool is available (if relevant).
 func (d *disk) PreStartCheck() error {
 	// volatile.<disk>.io.bus needs to be reset so that we aren't reading the previous one.
@@ -1738,6 +1751,9 @@ func (d *disk) postStart() error {
 func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 	expandedDevices := d.inst.ExpandedDevices()
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
 	if internalInstance.IsRootDiskDevice(d.config) {
 		// Make sure we have a valid root disk device (and only one).
 		newRootDiskDeviceKey, _, err := internalInstance.GetRootDiskDevice(expandedDevices.CloneNative())
@@ -1812,10 +1828,12 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 			}
 		}
 	} else if d.config["pool"] != "" && d.config["source"] != "" {
-		err := d.updateDependentConfig()
+		cleanup, err := d.updateDependentConfig()
 		if err != nil {
 			return err
 		}
+
+		reverter.Add(func() { _ = cleanup() })
 	}
 
 	// Only apply IO limits and attach/detach logic if instance is running.
@@ -1860,6 +1878,7 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 	}
 
+	reverter.Success()
 	return nil
 }
 
@@ -3143,6 +3162,14 @@ func (d *disk) Remove() error {
 		}
 	}
 
+	if d.config["pool"] != "" && d.config["source"] != "" && util.IsTrue(d.config["dependent"]) {
+		d.config["dependent"] = ""
+		_, err := d.updateDependentConfig()
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -3169,13 +3196,13 @@ func (d *disk) getAttachedInstanceCount(projectName string, volume *db.StorageVo
 }
 
 // updateDependentConfig applies changes to dependent configuration settings.
-func (d *disk) updateDependentConfig() error {
+func (d *disk) updateDependentConfig() (func() error, error) {
 	// Parse the volume name and path.
 	volName, _ := internalInstance.SplitVolumeSource(d.config["source"])
 
 	storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.inst.Project().Name, db.StoragePoolVolumeTypeCustom)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var dbVolume *db.StorageVolume
@@ -3184,7 +3211,7 @@ func (d *disk) updateDependentConfig() error {
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to fetch local storage volume record: %w", err)
+		return nil, fmt.Errorf("Failed to fetch local storage volume record: %w", err)
 	}
 
 	if dbVolume.Type == db.StoragePoolVolumeTypeNameCustom {
@@ -3195,11 +3222,11 @@ func (d *disk) updateDependentConfig() error {
 				return err
 			})
 			if err != nil {
-				return fmt.Errorf("Failed loading custom volume: %w", err)
+				return nil, fmt.Errorf("Failed loading custom volume: %w", err)
 			}
 
 			if len(volSnapshots) > 0 {
-				return fmt.Errorf("Cannot attach volume with snapshots as dependent")
+				return nil, fmt.Errorf("Cannot attach volume with snapshots as dependent")
 			}
 
 			var snapshots []cluster.Instance
@@ -3208,14 +3235,14 @@ func (d *disk) updateDependentConfig() error {
 				return err
 			})
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			for _, snap := range snapshots {
 				_, snapName, _ := api.GetParentAndSnapshotName(snap.Name)
 				err = d.pool.CreateCustomVolumeSnapshot(storageProjectName, volName, snapName, snap.ExpiryDate.Time, nil)
 				if err != nil {
-					return err
+					return nil, err
 				}
 			}
 		}
@@ -3227,9 +3254,27 @@ func (d *disk) updateDependentConfig() error {
 			return tx.UpdateStoragePoolVolume(ctx, storageProjectName, volName, db.StoragePoolVolumeTypeCustom, d.pool.ID(), poolVolumePut.Description, poolVolumePut.Config)
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	cleanup := func() error {
+		poolVolumePut := dbVolume.Writable()
+		if util.IsTrue(d.config["dependent"]) {
+			poolVolumePut.Config["dependent"] = ""
+		} else {
+			poolVolumePut.Config["dependent"] = "true"
+		}
+
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.UpdateStoragePoolVolume(ctx, storageProjectName, volName, db.StoragePoolVolumeTypeCustom, d.pool.ID(), poolVolumePut.Description, poolVolumePut.Config)
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return cleanup, nil
 }
