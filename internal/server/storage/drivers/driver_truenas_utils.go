@@ -456,9 +456,20 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	statusPath, err := d.runIscsiCmd("locate", "--create", "--parsable", dataset) // --create implies activate
-	if err != nil {
-		return false, "", err
+	var statusPath string
+	for range 5 {
+		var err error
+
+		statusPath, err = d.runIscsiCmd("locate", "--create", "--parsable", dataset) // --create implies activate
+		if err != nil {
+			return false, "", err
+		}
+
+		if statusPath != "" {
+			break
+		}
+
+		time.Sleep(time.Second)
 	}
 
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
