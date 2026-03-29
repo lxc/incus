@@ -363,6 +363,11 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 		return nil, err
 	}
 
+	// Stop if no snapshots.
+	if len(snapshotArgs) == 0 {
+		return []instance.Instance{}, nil
+	}
+
 	// Allow storage to pre-fetch snapshot details using bulk queries.
 	pool, err := d.getStoragePool()
 	if err != nil {
