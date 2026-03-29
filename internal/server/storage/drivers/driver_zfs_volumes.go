@@ -1810,58 +1810,6 @@ func (d *zfs) UpdateVolume(vol Volume, changedConfig map[string]string) error {
 	return d.updateVolume(vol, changedConfig)
 }
 
-// CacheVolumeSnapshots fetches snapshot usage properties for all snapshots on the volume.
-func (d *zfs) CacheVolumeSnapshots(vol Volume) error {
-	// Lock the cache.
-	d.cacheMu.Lock()
-	defer d.cacheMu.Unlock()
-
-	// Check if we've already cached the data.
-	if d.cache != nil {
-		return nil
-	}
-
-	// Get the usage data.
-	out, err := subprocess.RunCommand("zfs", "list", "-H", "-p", "-o", "name,used,referenced", "-r", "-t", "all", d.dataset(vol, false))
-	if err != nil {
-		d.logger.Warn("Coulnd't list volume snapshots", logger.Ctx{"err": err})
-
-		// The cache is an optional performance improvement, don't block on failure.
-		return nil
-	}
-
-	// Parse and update the cache.
-	d.cache = map[string]map[string]int64{}
-	for _, line := range strings.Split(out, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) != 3 {
-			continue
-		}
-
-		usedInt, err := strconv.ParseInt(fields[1], 10, 64)
-		if err != nil {
-			continue
-		}
-
-		referencedInt, err := strconv.ParseInt(fields[2], 10, 64)
-		if err != nil {
-			continue
-		}
-
-		d.cache[fields[0]] = map[string]int64{
-			"used":       usedInt,
-			"referenced": referencedInt,
-		}
-	}
-
-	return nil
-}
-
 // GetVolumeUsage returns the disk space used by the volume.
 func (d *zfs) GetVolumeUsage(vol Volume) (int64, error) {
 	// Determine what key to use.

@@ -3879,17 +3879,6 @@ func (d *lxc) RenderFull(hostInterfaces []net.Interface) (*api.InstanceFull, any
 		return nil, nil, errors.New("RenderFull only works with containers")
 	}
 
-	// Pre-fetch the data.
-	pool, err := d.getStoragePool()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = pool.CacheInstanceSnapshots(d)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// Get the Container struct
 	base, etag, err := d.Render()
 	if err != nil {
