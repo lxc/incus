@@ -191,7 +191,7 @@ func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts f
 			if version > dqliteVersion {
 				g.lock.Lock()
 				if !g.upgradeTriggered {
-					err = triggerUpdate()
+					err = triggerUpdate(g.state())
 					if err == nil {
 						g.upgradeTriggered = true
 					}
@@ -1082,7 +1082,7 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 		g.lock.Lock()
 		defer g.lock.Unlock()
 		if !g.upgradeTriggered {
-			err = triggerUpdate()
+			err = triggerUpdate(g.state())
 			if err == nil {
 				g.upgradeTriggered = true
 			}
