@@ -30,9 +30,15 @@ func NewClient() (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) query(path string) (*api.Response, error) {
+func (c *Client) query(method string, path string) (*api.Response, error) {
+	// Prepare the request.
+	req, err := http.NewRequest(method, "http://incus-os/1.0"+path, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	// Query the OS network state.
-	resp, err := c.http.Get("http://incus-os/1.0" + path)
+	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +55,7 @@ func (c *Client) query(path string) (*api.Response, error) {
 
 	// Quick validation.
 	if apiResp.Type != "sync" || apiResp.StatusCode != http.StatusOK {
-		return nil, errors.New("Bad network state from IncusOS")
+		return nil, errors.New("Bad response from IncusOS")
 	}
 
 	return apiResp, nil
