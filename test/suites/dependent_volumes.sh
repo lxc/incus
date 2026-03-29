@@ -55,8 +55,10 @@ test_dependent_volumes() {
     incus init testimage c2
     ! incus storage volume attach "${storage_pool}" "${storage_volume}" c2 vol1 path=/mnt/disk || false
 
+    # Deleting an instance deletes the volume
+    incus delete --force c1
+    [ "$(incus storage volume ls "${storage_pool}" "${storage_volume}" --format json | jq 'length == 0')" = "true" ]
+
     # Cleanup
-    incus storage volume detach "${storage_pool}" "${storage_volume}" c1
-    incus storage volume delete "${storage_pool}" "${storage_volume}"
-    incus delete --force c2 c1
+    incus delete --force c2
 }
