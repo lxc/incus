@@ -25,3 +25,18 @@ func (c *Client) GetSystemNetwork() (*osapi.SystemNetwork, error) {
 
 	return ns, nil
 }
+
+// TriggerSystemUpdateCheck asks IncusOS to check for and apply any pending update.
+func (c *Client) TriggerSystemUpdateCheck() error {
+	// Get the data.
+	resp, err := c.query(http.MethodPost, "/system/update/:check")
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("Failed to check for updates")
+	}
+
+	return nil
+}
