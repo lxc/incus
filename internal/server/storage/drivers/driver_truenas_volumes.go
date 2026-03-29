@@ -983,23 +983,8 @@ func (d *truenas) GetVolumeUsage(vol Volume) (int64, error) {
 		}
 	}
 
-	// Try to use the cached data.
-	d.cacheMu.Lock()
-	defer d.cacheMu.Unlock()
-
-	dataset := d.dataset(vol, false)
-	if d.cache != nil {
-		cache, ok := d.cache[dataset]
-		if ok {
-			value, ok := cache[key]
-			if ok {
-				return value, nil
-			}
-		}
-	}
-
 	// Get the current value.
-	value, err := d.getDatasetProperty(dataset, key)
+	value, err := d.getDatasetProperty(d.dataset(vol, false), key)
 	if err != nil {
 		return -1, err
 	}
