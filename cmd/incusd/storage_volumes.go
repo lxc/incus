@@ -868,6 +868,11 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 
 	switch req.Source.Type {
 	case "":
+		err = validateCreateConfig(req.Config)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		return doVolumeCreateOrCopy(s, r, request.ProjectParam(r), projectName, poolName, &req)
 	case "copy":
 		if dbVolume != nil {
@@ -880,6 +885,16 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	default:
 		return response.BadRequest(fmt.Errorf("Unknown source type %q", req.Source.Type))
 	}
+}
+
+// validateCreateConfig validates the configuration at creation time
+// and rejects keys that are not allowed when creating the storage volume.
+func validateCreateConfig(config map[string]string) error {
+	if util.IsTrue(config["dependent"]) {
+		return errors.New("Config key 'dependent' cannot be set on creation")
+	}
+
+	return nil
 }
 
 func clusterCopyCustomVolumeInternal(s *state.State, r *http.Request, sourceAddress string, projectName string, poolName string, req *api.StorageVolumesPost) response.Response {
