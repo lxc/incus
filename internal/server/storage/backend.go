@@ -2388,6 +2388,25 @@ func (b *backend) DeleteInstance(inst instance.Instance, op *operations.Operatio
 	// Must come before DB VolumeDBDelete so that the volume ID is still available.
 	l.Debug("Deleting instance volume", logger.Ctx{"volName": volStorageName})
 
+	// Delete all dependent volumes associated with this instance.
+	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+		// Load the pool for the disk.
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		err = diskPool.DeleteCustomVolume(inst.Project().Name, dev.Config["source"], op)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, op)
+	if err != nil {
+		return err
+	}
+
 	volExists, err := b.driver.HasVolume(vol)
 	if err != nil {
 		return err
