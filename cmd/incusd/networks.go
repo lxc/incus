@@ -73,7 +73,7 @@ var networkLeasesCmd = APIEndpoint{
 var networkStateCmd = APIEndpoint{
 	Path: "networks/{networkName}/state",
 
-	Get: APIEndpointAction{Handler: networkStateGet, AccessHandler: allowPermission(auth.ObjectTypeNetwork, auth.EntitlementCanView, "networkName")},
+	Get: APIEndpointAction{Handler: networkStateGet, AccessHandler: allowAuthenticated},
 }
 
 // API endpoints
@@ -2040,8 +2040,13 @@ func networkStateGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check if project allows access to network.
-	if !project.NetworkAllowed(reqProject.Config, networkName, n != nil && n.IsManaged()) {
-		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "Network not found"))
+	ok, err := canAccessNetwork(s, r, projectName, reqProject.Config, networkName, n != nil)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if !ok {
+		return response.NotFound(errors.New("Network not found"))
 	}
 
 	var state *api.NetworkState
