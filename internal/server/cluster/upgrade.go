@@ -63,10 +63,10 @@ func NotifyUpgradeCompleted(state *state.State, networkCert *localtls.CertInfo, 
 }
 
 // MaybeUpdate Check this node's version and possibly run INCUS_CLUSTER_UPDATE.
-func MaybeUpdate(state *state.State) error {
+func MaybeUpdate(s *state.State) error {
 	shouldUpdate := false
 
-	enabled, err := Enabled(state.DB.Node)
+	enabled, err := Enabled(s.DB.Node)
 	if err != nil {
 		return fmt.Errorf("Failed to check clustering is enabled: %w", err)
 	}
@@ -75,11 +75,11 @@ func MaybeUpdate(state *state.State) error {
 		return nil
 	}
 
-	if state.DB.Cluster == nil {
+	if s.DB.Cluster == nil {
 		return errors.New("Failed checking cluster update, state not initialized yet")
 	}
 
-	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		outdated, err := tx.NodeIsOutdated(ctx)
 		if err != nil {
 			return err
@@ -98,11 +98,19 @@ func MaybeUpdate(state *state.State) error {
 		return nil
 	}
 
-	return triggerUpdate()
+	return triggerUpdate(s)
 }
 
-func triggerUpdate() error {
+func triggerUpdate(s *state.State) error {
 	logger.Warn("Member is out-of-date with respect to other cluster members")
+
+	// If on IncusOS, start by trying an automatic update.
+	if s.OS.IncusOS != nil {
+		err := s.OS.IncusOS.TriggerSystemUpdateCheck()
+		if err != nil {
+			return err
+		}
+	}
 
 	updateExecutable := os.Getenv("INCUS_CLUSTER_UPDATE")
 	if updateExecutable == "" {

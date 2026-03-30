@@ -1,9 +1,13 @@
 package incusos
 
+import (
+	"net/http"
+)
+
 // IsServiceEnabled checks if the provided service is currently enabled.
 func (c *Client) IsServiceEnabled(name string) (bool, error) {
 	// Get the data.
-	resp, err := c.query("/services/" + name)
+	resp, err := c.query(http.MethodGet, "/services/"+name)
 	if err != nil {
 		return false, err
 	}
