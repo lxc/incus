@@ -725,6 +725,15 @@ func (r *pipeResponse) Code() int {
 func (r *pipeResponse) Render(w http.ResponseWriter) error {
 	defer func() { _ = r.reader.Close() }()
 	w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(r.Code())
+
+	// We really want to flush the headers now, so that we do not hit a timeout on the receiver side
+	// in the case of slow optimized storage export.
+	flusher, ok := w.(http.Flusher)
+	if ok {
+		flusher.Flush()
+	}
+
 	_, err := io.Copy(w, r.reader)
 	return err
 }
