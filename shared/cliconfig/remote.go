@@ -47,7 +47,8 @@ type Remote struct {
 // ParseRemote splits remote and object.
 func (c *Config) ParseRemote(raw string) (string, string, error) {
 	result := strings.SplitN(raw, ":", 2)
-	if len(result) == 1 {
+	// If the remote contains `=`, it this definitely is NOT a remote.
+	if len(result) == 1 || strings.Contains(result[0], "=") {
 		return c.DefaultRemote, raw, nil
 	}
 
