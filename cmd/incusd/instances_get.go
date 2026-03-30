@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"runtime"
 	"sort"
 	"strconv"
 	"sync"
@@ -370,7 +371,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 				}})
 			}
 		} else {
-			threads := min(len(instances), 4)
+			threads := min(len(instances), max(runtime.NumCPU()/2, 1))
 
 			hostInterfaces, _ := net.Interfaces()
 

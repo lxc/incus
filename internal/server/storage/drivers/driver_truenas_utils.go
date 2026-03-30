@@ -456,9 +456,20 @@ func (d *truenas) locateOrActivateIscsiDataset(dataset string) (bool, string, er
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	statusPath, err := d.runIscsiCmd("locate", "--create", "--parsable", dataset) // --create implies activate
-	if err != nil {
-		return false, "", err
+	var statusPath string
+	for range 5 {
+		var err error
+
+		statusPath, err = d.runIscsiCmd("locate", "--create", "--parsable", dataset) // --create implies activate
+		if err != nil {
+			return false, "", err
+		}
+
+		if statusPath != "" {
+			break
+		}
+
+		time.Sleep(time.Second)
 	}
 
 	reverter.Add(func() { _ = d.deactivateIscsiDataset(dataset) })
@@ -614,9 +625,14 @@ func (d *truenas) deleteDataset(dataset string, recursive bool, options ...strin
 }
 
 func (d *truenas) getDatasetProperty(dataset string, key string) (string, error) {
-	output, err := d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "--parsable", "-o", key, dataset)
-	if err != nil {
-		return "", err
+	output, ok := d.getCachedProperty(dataset, key)
+	if !ok {
+		var err error
+
+		output, err = d.runTool(d.getDatasetOrSnapshot(dataset), "list", "--no-headers", "--parsable", "-o", key, dataset)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return strings.TrimSpace(output), nil

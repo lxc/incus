@@ -238,9 +238,14 @@ func (d *zfs) setBlocksize(vol Volume, size int64) error {
 }
 
 func (d *zfs) getDatasetProperty(dataset string, key string) (string, error) {
-	output, err := subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
-	if err != nil {
-		return "", err
+	output, ok := d.getCachedProperty(dataset, key)
+	if !ok {
+		var err error
+
+		output, err = subprocess.RunCommand("zfs", "get", "-H", "-p", "-o", "value", key, dataset)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return strings.TrimSpace(output), nil

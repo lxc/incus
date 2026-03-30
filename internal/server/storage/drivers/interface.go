@@ -98,9 +98,6 @@ type Driver interface {
 	// not mounted.
 	UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error)
 
-	// CacheVolumeSnapshots is used to temporarily pre-fetch and cache snapshot information.
-	CacheVolumeSnapshots(vol Volume) error
-
 	CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) error
 	GetQcow2BackingFilePath(vol Volume) (string, error)
 	DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) error

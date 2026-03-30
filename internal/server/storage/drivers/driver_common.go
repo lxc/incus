@@ -570,11 +570,6 @@ func (d *common) filesystemFreeze(path string) (func() error, error) {
 	return unfreezeFS, nil
 }
 
-// CacheVolumeSnapshots causes snapshot data to be cached for later use (for bulk queries).
-func (d *common) CacheVolumeSnapshots(vol Volume) error {
-	return nil
-}
-
 // GetQcow2BackingFilePath generates the backing file path for the specified volume.
 func (d *common) GetQcow2BackingFilePath(vol Volume) (string, error) {
 	return "", ErrNotSupported

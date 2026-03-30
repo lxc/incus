@@ -363,15 +363,9 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 		return nil, err
 	}
 
-	// Allow storage to pre-fetch snapshot details using bulk queries.
-	pool, err := d.getStoragePool()
-	if err != nil {
-		return nil, err
-	}
-
-	err = pool.CacheInstanceSnapshots(d)
-	if err != nil {
-		return nil, err
+	// Stop if no snapshots.
+	if len(snapshotArgs) == 0 {
+		return []instance.Instance{}, nil
 	}
 
 	snapshots := make([]instance.Instance, 0, len(snapshotArgs))
@@ -382,17 +376,6 @@ func (d *common) Snapshots() ([]instance.Instance, error) {
 		snapInst, err := instance.Load(d.state, snapshotArg, d.project)
 		if err != nil {
 			return nil, err
-		}
-
-		// Set the storage pool to the pre-loaded one (for caching).
-		snapLXC, ok := snapInst.(*lxc)
-		if ok {
-			snapLXC.storagePool = pool
-		}
-
-		snapQEMU, ok := snapInst.(*qemu)
-		if ok {
-			snapQEMU.storagePool = pool
 		}
 
 		// Pass through the current operation.
