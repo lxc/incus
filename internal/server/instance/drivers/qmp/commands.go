@@ -137,6 +137,12 @@ type MigrationStatus struct {
 	DirtyLimitRingFullTime         int64   `json:"dirty-limit-ring-full-time"`
 }
 
+// BlockExport contains information about the exported block.
+type BlockExport struct {
+	NodeName string `json:"node-name"`
+	Type     string `json:"type"`
+}
+
 // QueryCPUs returns a list of CPUs.
 func (m *Monitor) QueryCPUs() ([]CPU, error) {
 	// Prepare the response.
@@ -1197,6 +1203,44 @@ func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, writable bool) error 
 	}
 
 	return nil
+}
+
+// QueryBlockExports returns exported blocks.
+func (m *Monitor) QueryBlockExports() ([]BlockExport, error) {
+	var resp struct {
+		Return []BlockExport `json:"return"`
+	}
+
+	err := m.Run("query-block-exports", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []BlockExport{}
+	for _, r := range resp.Return {
+		result = append(result, r)
+	}
+
+	return result, nil
+}
+
+// QueryNBDBlockExports returns exported blocks of type 'nbd'.
+func (m *Monitor) QueryNBDBlockExports() ([]BlockExport, error) {
+	blocks, err := m.QueryBlockExports()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []BlockExport{}
+	for _, b := range blocks {
+		if b.Type != "nbd" {
+			continue
+		}
+
+		result = append(result, b)
+	}
+
+	return result, nil
 }
 
 // QueryNamedBlockNodes returns block nodes names.
