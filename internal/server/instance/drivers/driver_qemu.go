@@ -11442,6 +11442,12 @@ func (d *qemu) ConnectNBD(diskName string, writable bool) (net.Conn, func(), err
 		return nil, nil, err
 	}
 
+	// Check for existing NBD block exports to detect if another operation is in progress.
+	blocks, err := monitor.QueryNBDBlockExports()
+	if err == nil && len(blocks) > 0 {
+		return nil, nil, fmt.Errorf("Another NBD operation is already in progress for: %s", blocks[0].NodeName)
+	}
+
 	nbdConn, err := monitor.NBDServerStart()
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
