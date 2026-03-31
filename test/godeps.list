@@ -24,4 +24,4 @@ github.com/zitadel/oidc/v3/pkg/http
 github.com/zitadel/oidc/v3/pkg/oidc
 golang.org/x/crypto/ssh
 golang.org/x/oauth2
-gopkg.in/yaml.v2
+go.yaml.in/yaml/v4
