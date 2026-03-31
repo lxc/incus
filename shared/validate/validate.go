@@ -19,7 +19,7 @@ import (
 	"github.com/adhocore/gronx"
 	"github.com/google/uuid"
 	"github.com/kballard/go-shellquote"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/units"
@@ -881,7 +881,7 @@ func IsCloudInitUserData(value string) error {
 func IsYAML(value string) error {
 	out := struct{}{}
 
-	err := yaml.Unmarshal([]byte(value), &out)
+	err := yaml.Load([]byte(value), &out)
 	if err != nil {
 		return err
 	}
