@@ -177,9 +177,9 @@ func (d *truenas) objectsExist(objects []string, optType string) (map[string]boo
 	// unlike zfs, `list` will return nfs and other objects for all.
 	switch optType {
 	case "":
-		t = "fs,vol,snap"
+		t = "filesystem,volume,snapshot"
 	case "dataset":
-		t = "fs,vol"
+		t = "filesystem,volume"
 	default:
 		t = optType
 	}
