@@ -339,13 +339,13 @@ func (c *cmdNetworkForwardCreate) run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var forwardPut api.NetworkForwardPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Load(contents, &forwardPut, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&forwardPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -677,7 +677,7 @@ func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -685,8 +685,8 @@ func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network forward show` command to be passed in here, but only take the
 		// contents of the NetworkForwardPut fields when updating. The other fields are silently discarded.
 		newData := api.NetworkForward{}
-		err = yaml.Load(contents, &newData, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&newData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 

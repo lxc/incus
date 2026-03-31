@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -133,13 +134,13 @@ func (c *cmdStorageBucketCreate) run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var bucketPut api.StorageBucketPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Load(contents, &bucketPut, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&bucketPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -278,7 +279,7 @@ func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -287,8 +288,8 @@ func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
 		// contents of the StorageBucketPut fields when updating.
 		// The other fields are silently discarded.
 		newdata := api.StorageBucketPut{}
-		err = yaml.Load(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -1004,13 +1005,13 @@ func (c *cmdStorageBucketKeyCreate) runAdd(cmd *cobra.Command, args []string) er
 	// If stdin isn't a terminal, read yaml from it.
 	var bucketKeyPut api.StorageBucketKeyPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Load(contents, &bucketKeyPut, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&bucketKeyPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -1147,7 +1148,7 @@ func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -1156,8 +1157,8 @@ func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
 		// contents of the StorageBucketPut fields when updating.
 		// The other fields are silently discarded.
 		newdata := api.StorageBucketKeyPut{}
-		err = yaml.Load(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 

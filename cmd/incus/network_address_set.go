@@ -263,13 +263,13 @@ func (c *cmdNetworkAddressSetCreate) run(cmd *cobra.Command, args []string) erro
 
 	var asPut api.NetworkAddressSetPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Load(contents, &asPut, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&asPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -482,14 +482,14 @@ func (c *cmdNetworkAddressSetEdit) run(cmd *cobra.Command, args []string) error 
 
 	// If stdin isn't terminal, read yaml from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
 		newdata := api.NetworkAddressSet{}
-		err = yaml.Load(contents, &newdata, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 

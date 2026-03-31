@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -105,13 +106,13 @@ func (c *cmdConfigMetadataEdit) run(cmd *cobra.Command, args []string) error {
 	// Edit the metadata
 	if !termios.IsTerminal(getStdinFd()) {
 		metadata := api.ImageMetadata{}
-		content, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Load(content, &metadata)
-		if err != nil {
+		err = loader.Load(&metadata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 

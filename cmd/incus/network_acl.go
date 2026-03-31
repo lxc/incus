@@ -390,13 +390,13 @@ func (c *cmdNetworkACLCreate) run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var aclPut api.NetworkACLPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Load(contents, &aclPut, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&aclPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -621,7 +621,7 @@ func (c *cmdNetworkACLEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -629,8 +629,8 @@ func (c *cmdNetworkACLEdit) run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network acl show` command to be passed in here, but only take the contents
 		// of the NetworkACLPut fields when updating the ACL. The other fields are silently discarded.
 		newdata := api.NetworkACL{}
-		err = yaml.Load(contents, &newdata, yaml.WithKnownFields())
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 

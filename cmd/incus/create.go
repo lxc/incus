@@ -103,13 +103,13 @@ func (c *cmdCreate) create(conf *config.Config, parsed []*u.Parsed, launch bool)
 	// If stdin isn't a terminal, read text from it
 	var stdinData api.InstancePut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return nil, err
 		}
 
-		err = yaml.Load(contents, &stdinData)
-		if err != nil {
+		err = loader.Load(&stdinData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
 	}
