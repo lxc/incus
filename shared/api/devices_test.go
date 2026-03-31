@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
@@ -475,10 +475,10 @@ func TestDevicesMap_UnmarshalYAML(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			in, err := yaml.Marshal(tc.input)
+			in, err := yaml.Dump(tc.input, yaml.V2)
 			require.NoError(t, err)
 
-			err = yaml.Unmarshal(in, &tc.target)
+			err = yaml.Load(in, &tc.target)
 			tc.assertErr(t, err)
 
 			require.Equal(t, tc.want, tc.target)
