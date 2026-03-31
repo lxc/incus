@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/internal/instancewriter"
 	"github.com/lxc/incus/v6/internal/linux"
@@ -1662,7 +1662,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 	}
 
 	// Convert to YAML.
-	optimizedHeaderYAML, err := yaml.Marshal(&optimizedHeader)
+	optimizedHeaderYAML, err := yaml.Dump(&optimizedHeader, yaml.V2)
 	if err != nil {
 		return err
 	}

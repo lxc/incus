@@ -17,8 +17,8 @@ import (
 	"unsafe"
 
 	"github.com/google/uuid"
+	"go.yaml.in/yaml/v4"
 	"golang.org/x/sys/unix"
-	"gopkg.in/yaml.v2"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/backup"
@@ -592,7 +592,12 @@ func (d *btrfs) loadOptimizedBackupHeader(r io.ReadSeeker, mountPath string) (*B
 		}
 
 		if hdr.Name == "backup/optimized_header.yaml" {
-			err = yaml.NewDecoder(tr).Decode(&header)
+			loader, err := yaml.NewLoader(tr)
+			if err != nil {
+				return nil, fmt.Errorf("Error parsing optimized backup header file: %w", err)
+			}
+
+			err = loader.Load(&header)
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing optimized backup header file: %w", err)
 			}
