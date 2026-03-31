@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/shared/api"
@@ -336,7 +336,7 @@ func (m *InstanceMigration) render() string {
 		data.Disks[k] = v
 	}
 
-	out, err := yaml.Marshal(&data)
+	out, err := yaml.Dump(&data, yaml.V2)
 	if err != nil {
 		return ""
 	}
