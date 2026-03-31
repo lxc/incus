@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
+	"go.yaml.in/yaml/v4"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
@@ -6858,7 +6858,7 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 		return err
 	}
 
-	data, err := yaml.Marshal(config)
+	data, err := yaml.Dump(config, yaml.V2)
 	if err != nil {
 		return err
 	}
