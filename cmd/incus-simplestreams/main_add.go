@@ -29,6 +29,7 @@ type cmdAdd struct {
 
 	flagAliases        []string
 	flagNoDefaultAlias bool
+	flagProductName    string
 }
 
 func (c *cmdAdd) command() *cobra.Command {
@@ -53,6 +54,8 @@ already on the image server and finally adds it to the index.
 
 Unless "--no-default-alias" is specified, it generates a default "{os}/{release}/{variant}" alias.
 
+Unless "--product-name" is specified, the product name is generated as "{os}:{release}:{variant}:{architecture}".
+
 If one argument is specified, it is assumed to be a unified image,
 with both the metadata and rootfs in a single tarball.
 
@@ -62,6 +65,7 @@ Otherwise, it is a split image (separate files for metadata and rootfs/disk).
 
 	cmd.Flags().StringArrayVar(&c.flagAliases, "alias", nil, "Add alias")
 	cmd.Flags().BoolVar(&c.flagNoDefaultAlias, "no-default-alias", false, "Do not add the default alias")
+	cmd.Flags().StringVar(&c.flagProductName, "product-name", "", "Set the product name")
 
 	return cmd
 }
@@ -312,8 +316,14 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	var productName string
+	if c.flagProductName != "" {
+		productName = c.flagProductName
+	} else {
+		productName = fmt.Sprintf("%s:%s:%s:%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"], metadata.Properties["architecture"])
+	}
+
 	// Check if the product already exists.
-	productName := fmt.Sprintf("%s:%s:%s:%s", metadata.Properties["os"], metadata.Properties["release"], metadata.Properties["variant"], metadata.Properties["architecture"])
 	product, ok := products.Products[productName]
 	if !ok {
 		var aliases []string
