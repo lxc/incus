@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/internal/instancewriter"
 	"github.com/lxc/incus/v6/internal/server/backup"
@@ -282,7 +282,7 @@ func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, opti
 	}
 
 	// Convert to YAML.
-	indexData, err := yaml.Marshal(&indexInfo)
+	indexData, err := yaml.Dump(&indexInfo, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -615,7 +615,7 @@ func volumeBackupWriteIndex(projectName string, volumeName string, pool storageP
 	}
 
 	// Convert to YAML.
-	indexData, err := yaml.Marshal(indexInfo)
+	indexData, err := yaml.Dump(indexInfo, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -858,7 +858,7 @@ func bucketBackupWriteIndex(projectName string, bucketName string, pool storageP
 	}
 
 	// Convert to YAML.
-	indexData, err := yaml.Marshal(indexInfo)
+	indexData, err := yaml.Dump(indexInfo, yaml.V2)
 	if err != nil {
 		return err
 	}
