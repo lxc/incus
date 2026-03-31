@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -419,7 +419,7 @@ func (c *cmdImageEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.ImagePut{}
-		err = yaml.Unmarshal(contents, &newdata)
+		err = yaml.Load(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -434,7 +434,7 @@ func (c *cmdImageEdit) run(cmd *cobra.Command, args []string) error {
 	}
 
 	brief := imgInfo.Writable()
-	data, err := yaml.Marshal(&brief)
+	data, err := yaml.Dump(&brief, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -448,7 +448,7 @@ func (c *cmdImageEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.ImagePut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateImage(image, newdata, etag)
 		}
@@ -1477,7 +1477,7 @@ func (c *cmdImageShow) run(cmd *cobra.Command, args []string) error {
 	}
 
 	properties := info.Writable()
-	data, err := yaml.Marshal(&properties)
+	data, err := yaml.Dump(&properties, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -1802,7 +1802,7 @@ func (c *cmdImageGenerateMetadata) run(cmd *cobra.Command, args []string) error 
 	metadata.Properties["description"] = metaDescription
 
 	// Generate YAML.
-	body, err := yaml.Marshal(&metadata)
+	body, err := yaml.Dump(&metadata, yaml.V2)
 	if err != nil {
 		return err
 	}

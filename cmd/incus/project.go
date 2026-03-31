@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -149,7 +149,7 @@ func (c *cmdProjectCreate) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
+		err = yaml.Load(contents, &stdinData)
 		if err != nil {
 			return err
 		}
@@ -356,7 +356,7 @@ func (c *cmdProjectEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.ProjectPut{}
-		err = yaml.Unmarshal(contents, &newdata)
+		err = yaml.Load(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -370,7 +370,7 @@ func (c *cmdProjectEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&project)
+	data, err := yaml.Dump(&project, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -384,7 +384,7 @@ func (c *cmdProjectEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.ProjectPut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateProject(projectName, newdata, etag)
 		}
@@ -913,7 +913,7 @@ func (c *cmdProjectShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&project)
+	data, err := yaml.Dump(&project, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -1025,7 +1025,7 @@ func (c *cmdProjectInfo) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err := yaml.Marshal(access)
+		data, err := yaml.Dump(access, yaml.V2)
 		if err != nil {
 			return err
 		}

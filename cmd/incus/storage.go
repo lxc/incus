@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -151,7 +151,7 @@ func (c *cmdStorageCreate) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
+		err = yaml.Load(contents, &stdinData)
 		if err != nil {
 			return err
 		}
@@ -315,7 +315,7 @@ func (c *cmdStorageEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.StoragePoolPut{}
-		err = yaml.Unmarshal(contents, &newdata)
+		err = yaml.Load(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -329,7 +329,7 @@ func (c *cmdStorageEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&pool)
+	data, err := yaml.Dump(&pool, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -343,7 +343,7 @@ func (c *cmdStorageEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.StoragePoolPut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateStoragePool(poolName, newdata, etag)
 		}
@@ -602,12 +602,12 @@ func (c *cmdStorageInfo) run(cmd *cobra.Command, args []string) error {
 		poolinfo[infostring][spaceusedstring] = units.GetByteSizeStringIEC(int64(res.Space.Used), 2)
 	}
 
-	poolinfodata, err := yaml.Marshal(poolinfo)
+	poolinfodata, err := yaml.Dump(poolinfo, yaml.V2)
 	if err != nil {
 		return err
 	}
 
-	poolusedbydata, err := yaml.Marshal(poolusedby)
+	poolusedbydata, err := yaml.Dump(poolusedby, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -923,7 +923,7 @@ func (c *cmdStorageShow) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err := yaml.Marshal(&res)
+		data, err := yaml.Dump(&res, yaml.V2)
 		if err != nil {
 			return err
 		}
@@ -940,7 +940,7 @@ func (c *cmdStorageShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(pool.UsedBy)
 
-	data, err := yaml.Marshal(&pool)
+	data, err := yaml.Dump(&pool, yaml.V2)
 	if err != nil {
 		return err
 	}

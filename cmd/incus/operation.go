@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -314,7 +314,7 @@ func (c *cmdOperationShow) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render as YAML
-	data, err := yaml.Marshal(&op)
+	data, err := yaml.Dump(&op, yaml.V2)
 	if err != nil {
 		return err
 	}

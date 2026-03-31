@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -84,7 +84,7 @@ func (c *cmdInfo) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err := yaml.Marshal(access)
+		data, err := yaml.Dump(access, yaml.V2)
 		if err != nil {
 			return err
 		}
@@ -620,7 +620,7 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&serverStatus)
+	data, err := yaml.Dump(&serverStatus, yaml.V2)
 	if err != nil {
 		return err
 	}

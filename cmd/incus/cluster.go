@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
+	yaml "go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -362,7 +362,7 @@ func (c *cmdClusterShow) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render as YAML
-	data, err := yaml.Marshal(&member)
+	data, err := yaml.Dump(&member, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -415,7 +415,7 @@ func (c *cmdClusterInfo) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render as YAML.
-	data, err := yaml.Marshal(&member)
+	data, err := yaml.Dump(&member, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -894,7 +894,7 @@ func (c *cmdClusterEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.ClusterMemberPut{}
-		err = yaml.Unmarshal(contents, &newdata)
+		err = yaml.Load(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -910,7 +910,7 @@ func (c *cmdClusterEdit) run(cmd *cobra.Command, args []string) error {
 
 	memberWritable := member.Writable()
 
-	data, err := yaml.Marshal(&memberWritable)
+	data, err := yaml.Dump(&memberWritable, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -924,7 +924,7 @@ func (c *cmdClusterEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.ClusterMemberPut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateClusterMember(memberName, newdata, etag)
 		}

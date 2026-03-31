@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -213,7 +213,7 @@ func (c *cmdNetworkACLShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(netACL.UsedBy)
 
-	data, err := yaml.Marshal(&netACL)
+	data, err := yaml.Dump(&netACL, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -395,7 +395,7 @@ func (c *cmdNetworkACLCreate) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &aclPut)
+		err = yaml.Load(contents, &aclPut, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -629,7 +629,7 @@ func (c *cmdNetworkACLEdit) run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network acl show` command to be passed in here, but only take the contents
 		// of the NetworkACLPut fields when updating the ACL. The other fields are silently discarded.
 		newdata := api.NetworkACL{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
+		err = yaml.Load(contents, &newdata, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -643,7 +643,7 @@ func (c *cmdNetworkACLEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&netACL)
+	data, err := yaml.Dump(&netACL, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -657,7 +657,7 @@ func (c *cmdNetworkACLEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newdata := api.NetworkACL{} // We show the full ACL info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.Load(content, &newdata, yaml.WithKnownFields())
 		if err == nil {
 			err = d.UpdateNetworkACL(aclName, newdata.Writable(), etag)
 		}

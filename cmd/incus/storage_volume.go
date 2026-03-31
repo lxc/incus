@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -583,7 +583,7 @@ func (c *cmdStorageVolumeCreate) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &volumePut)
+		err = yaml.Load(contents, &volumePut, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -950,7 +950,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 
 		if isSnapshot {
 			newdata := api.StorageVolumeSnapshotPut{}
-			err = yaml.Unmarshal(contents, &newdata)
+			err = yaml.Load(contents, &newdata)
 			if err != nil {
 				return err
 			}
@@ -964,7 +964,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.StorageVolumePut{}
-		err = yaml.Unmarshal(contents, &newdata)
+		err = yaml.Load(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -988,7 +988,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err = yaml.Marshal(&snapVol)
+		data, err = yaml.Dump(&snapVol, yaml.V2)
 		if err != nil {
 			return err
 		}
@@ -999,7 +999,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err = yaml.Marshal(&vol)
+		data, err = yaml.Dump(&vol, yaml.V2)
 		if err != nil {
 			return err
 		}
@@ -1015,7 +1015,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 		for {
 			// Parse the text received from the editor
 			newdata := api.StorageVolumeSnapshotPut{}
-			err = yaml.Unmarshal(content, &newdata)
+			err = yaml.Load(content, &newdata)
 			if err == nil {
 				err = d.UpdateStoragePoolVolumeSnapshot(poolName, volType, volName, snapName, newdata, etag)
 			}
@@ -1047,7 +1047,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.StorageVolume{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateStoragePoolVolume(poolName, volType, volName, newdata.Writable(), etag)
 		}
@@ -2011,7 +2011,7 @@ func (c *cmdStorageVolumeShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(vol.UsedBy)
 
-	data, err := yaml.Marshal(&vol)
+	data, err := yaml.Dump(&vol, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -3114,7 +3114,7 @@ func (c *cmdStorageVolumeSnapshotCreate) run(cmd *cobra.Command, args []string) 
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
+		err = yaml.Load(contents, &stdinData)
 		if err != nil {
 			return err
 		}
@@ -3630,7 +3630,7 @@ func (c *cmdStorageVolumeSnapshotShow) run(cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	data, err := yaml.Marshal(&vol)
+	data, err := yaml.Dump(&vol, yaml.V2)
 	if err != nil {
 		return err
 	}

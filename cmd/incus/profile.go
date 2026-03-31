@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -380,7 +380,7 @@ func (c *cmdProfileCreate) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
+		err = yaml.Load(contents, &stdinData)
 		if err != nil {
 			return err
 		}
@@ -531,7 +531,7 @@ func (c *cmdProfileEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.ProfilePut{}
-		err = yaml.Unmarshal(contents, &newdata)
+		err = yaml.Load(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -545,7 +545,7 @@ func (c *cmdProfileEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&profile)
+	data, err := yaml.Dump(&profile, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -559,7 +559,7 @@ func (c *cmdProfileEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.ProfilePut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateProfile(profileName, newdata, etag)
 		}
@@ -1089,7 +1089,7 @@ func (c *cmdProfileShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&profile)
+	data, err := yaml.Dump(&profile, yaml.V2)
 	if err != nil {
 		return err
 	}

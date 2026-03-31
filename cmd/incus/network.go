@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -384,7 +384,7 @@ func (c *cmdNetworkCreate) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
+		err = yaml.Load(contents, &stdinData)
 		if err != nil {
 			return err
 		}
@@ -717,7 +717,7 @@ func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.NetworkPut{}
-		err = yaml.Unmarshal(contents, &newdata)
+		err = yaml.Load(contents, &newdata)
 		if err != nil {
 			return err
 		}
@@ -735,7 +735,7 @@ func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Only managed networks can be modified"))
 	}
 
-	data, err := yaml.Marshal(&network)
+	data, err := yaml.Dump(&network, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -749,7 +749,7 @@ func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.NetworkPut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateNetwork(networkName, newdata, etag)
 		}
@@ -1539,7 +1539,7 @@ func (c *cmdNetworkShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(network.UsedBy)
 
-	data, err := yaml.Marshal(&network)
+	data, err := yaml.Dump(&network, yaml.V2)
 	if err != nil {
 		return err
 	}

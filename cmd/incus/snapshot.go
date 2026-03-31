@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -135,7 +135,7 @@ func (c *cmdSnapshotCreate) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
+		err = yaml.Load(contents, &stdinData)
 		if err != nil {
 			return err
 		}
@@ -624,7 +624,7 @@ func (c *cmdSnapshotShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&snap)
+	data, err := yaml.Dump(&snap, yaml.V2)
 	if err != nil {
 		return err
 	}
