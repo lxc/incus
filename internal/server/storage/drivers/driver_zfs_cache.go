@@ -126,7 +126,7 @@ func (d *zfs) prefillCachedProperties(dataset string) {
 
 	// Run the filler.
 	properties := strings.Join(append([]string{"name"}, zfsCacheProperties...), ",")
-	args := []string{"list", "-H", "-p", "-o", properties, "-r", "-t", "fs,vol,snap"}
+	args := []string{"list", "-H", "-p", "-o", properties, "-r", "-t", "filesystem,volume,snapshot"}
 	args = append(args, queue...)
 
 	out, err := subprocess.RunCommand("zfs", args...)
