@@ -11,7 +11,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/internal/i18n"
 )
@@ -128,7 +128,7 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 		}
 
 	case TableFormatYAML:
-		out, err := yaml.Marshal(raw)
+		out, err := yaml.Dump(raw, yaml.V2)
 		if err != nil {
 			return err
 		}
