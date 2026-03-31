@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
+	yaml "go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/ask"
@@ -124,7 +124,7 @@ func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 	metadata.Properties["description"] = metaDescription
 
 	// Generate YAML.
-	body, err := yaml.Marshal(&metadata)
+	body, err := yaml.Dump(&metadata, yaml.V2)
 	if err != nil {
 		return err
 	}
