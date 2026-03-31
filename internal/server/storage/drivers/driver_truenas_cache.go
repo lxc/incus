@@ -149,7 +149,7 @@ func (d *truenas) prefillCachedProperties(dataset string) {
 			batch = batch[:2]
 		}
 
-		args := []string{"list", "--no-headers", "--parsable", "-o", properties, "-r", "-t", "fs,vol,snap"}
+		args := []string{"list", "--no-headers", "--parsable", "-o", properties, "-r", "-t", "filesystem,volume,snapshot"}
 		args = append(args, batch...)
 
 		out, err := d.runTool(args...)
