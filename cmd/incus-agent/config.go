@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 )
 
 type agentConfig struct {
@@ -23,7 +23,7 @@ func loadAgentConfig(d *Daemon) error {
 	}
 
 	cfg := agentConfig{}
-	err = yaml.Unmarshal(data, &cfg)
+	err = yaml.Load(data, &cfg)
 	if err != nil {
 		return err
 	}
