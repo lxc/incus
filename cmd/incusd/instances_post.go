@@ -868,7 +868,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		}
 
 		// Clean up created instance if the post hook fails below.
-		runReverter.Add(func() { _ = inst.Delete(true) })
+		runReverter.Add(func() { _ = inst.Delete(true, true) })
 
 		// Run a late project restriction check on the instance.
 		instState, _, err := inst.Render()

@@ -771,7 +771,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 func snapshotDelete(s *state.State, r *http.Request, snapInst instance.Instance) response.Response {
 	remove := func(op *operations.Operation) error {
 		snapInst.SetOperation(op)
-		return snapInst.Delete(false)
+		return snapInst.Delete(false, true)
 	}
 
 	parentName, snapName, _ := api.GetParentAndSnapshotName(snapInst.Name())

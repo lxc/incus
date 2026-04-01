@@ -7286,7 +7286,7 @@ func (d *qemu) init() error {
 }
 
 // Delete the instance.
-func (d *qemu) Delete(force bool) error {
+func (d *qemu) Delete(force bool, deleteDependentVolumes bool) error {
 	// Setup a new operation.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionDelete, nil, false, false)
 	if err != nil {
@@ -8651,7 +8651,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// Delete the extra local snapshots first.
 		for _, deleteTargetSnapshotIndex := range deleteTargetSnapshotIndexes {
-			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true)
+			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true, true)
 			if err != nil {
 				return err
 			}

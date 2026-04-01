@@ -61,7 +61,7 @@ func instanceCreateAsEmpty(s *state.State, args db.InstanceArgs, op *operations.
 		return nil, fmt.Errorf("Failed creating instance: %w", err)
 	}
 
-	reverter.Add(func() { _ = inst.Delete(true) })
+	reverter.Add(func() { _ = inst.Delete(true, true) })
 
 	err = inst.UpdateBackupFile()
 	if err != nil {
@@ -198,7 +198,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 		return fmt.Errorf("Failed creating instance from image: %w", err)
 	}
 
-	reverter.Add(func() { _ = inst.Delete(true) })
+	reverter.Add(func() { _ = inst.Delete(true, true) })
 
 	// If dealing with an OCI image, parse the configuration.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
@@ -405,7 +405,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 
 			// Delete extra snapshots first.
 			for _, deleteTargetSnapIndex := range deleteTargetSnapshotIndexes {
-				err := targetSnaps[deleteTargetSnapIndex].Delete(true)
+				err := targetSnaps[deleteTargetSnapIndex].Delete(true, true)
 				if err != nil {
 					return nil, err
 				}
@@ -506,7 +506,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			return nil, fmt.Errorf("Create instance from copy: %w", err)
 		}
 
-		reverter.Add(func() { _ = inst.Delete(true) })
+		reverter.Add(func() { _ = inst.Delete(true, true) })
 
 		if opts.applyTemplateTrigger {
 			// Trigger the templates on next start.
@@ -602,7 +602,7 @@ func pruneExpiredInstanceSnapshots(ctx context.Context, snapshots []instance.Ins
 			continue // Deletion of this snapshot is already running, skip.
 		}
 
-		err = snapshot.Delete(true)
+		err = snapshot.Delete(true, true)
 		instSnapshotsPruneRunning.Delete(snapshot.ID())
 		if err != nil {
 			return fmt.Errorf("Failed to delete expired instance snapshot %q in project %q: %w", snapshot.Name(), snapshot.Project().Name, err)

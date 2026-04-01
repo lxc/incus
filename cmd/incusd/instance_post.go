@@ -818,7 +818,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		// Delete the source instance.
-		err = inst.Delete(true)
+		err = inst.Delete(true, false)
 		if err != nil {
 			return err
 		}
@@ -842,9 +842,11 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return err
 		}
 
-		err = cleanupDependentDisks(s, inst, op)
-		if err != nil {
-			return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
+		if targetMemberInfo != nil {
+			err = cleanupDependentDisks(s, inst, op)
+			if err != nil {
+				return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
+			}
 		}
 
 		// Clear the pool and project part of the request.

@@ -819,7 +819,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		return fmt.Errorf("Create instance snapshot: %w", err)
 	}
 
-	reverter.Add(func() { _ = snap.Delete(true) })
+	reverter.Add(func() { _ = snap.Delete(true, true) })
 
 	// Mount volume for backup.yaml writing.
 	_, err = pool.MountInstance(inst, d.op)

@@ -4294,7 +4294,7 @@ func (d *lxc) cleanup() {
 }
 
 // Delete deletes the instance.
-func (d *lxc) Delete(force bool) error {
+func (d *lxc) Delete(force bool, deleteDependentVolumes bool) error {
 	// Setup a new operation.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionDelete, nil, false, false)
 	if err != nil {
@@ -6648,7 +6648,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// Delete the extra local snapshots first.
 		for _, deleteTargetSnapshotIndex := range deleteTargetSnapshotIndexes {
-			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true)
+			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true, true)
 			if err != nil {
 				return err
 			}
