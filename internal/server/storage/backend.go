@@ -8549,11 +8549,47 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 
 	var inst instance.Instance
 	var err error
+	var diskName string
+
 	if vol.IsVMBlock() {
 		_, volName := project.StorageVolumeParts(vol.Name())
 		inst, err = instance.LoadByProjectAndName(b.state, projectName, volName)
 		if err != nil {
 			return err
+		}
+
+		diskName, _, err = internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+		if err != nil {
+			return err
+		}
+	} else if vol.IsCustomBlock() {
+		var instanceArgs *db.InstanceArgs
+
+		_, volName := project.StorageVolumeParts(vol.Name())
+		dbVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &dbVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+			if instanceArgs != nil && instanceArgs.Name != dbInst.Name {
+				return errors.New("Volume is attached to multiple instances")
+			}
+
+			instanceArgs = &dbInst
+			diskName = usedByDevices[0]
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		if instanceArgs != nil {
+			inst, err = instance.LoadByProjectAndName(b.state, projectName, instanceArgs.Name)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -8589,7 +8625,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 
 		var nbdPath string
 		if inst != nil && inst.IsRunning() {
-			cleanupExport, path, err := inst.ExportQcow2Block(blockIndex)
+			cleanupExport, path, err := inst.ExportQcow2Block(diskName, blockIndex)
 			if err != nil {
 				return err
 			}
@@ -9043,7 +9079,7 @@ func (b *backend) migrateDependentVolumes(inst instance.Instance, conn io.ReadWr
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
-		if diskPool.Driver().Info().Remote {
+		if !ShouldMigrateDependentVolume(diskPool, args.ClusterMove) {
 			continue
 		}
 
@@ -9104,7 +9140,7 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 			return nil, fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
-		if diskPool.Driver().Info().Remote {
+		if !ShouldMigrateDependentVolume(diskPool, args.ClusterMoveSourceName != "") {
 			continue
 		}
 
