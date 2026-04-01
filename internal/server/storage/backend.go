@@ -3573,7 +3573,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 			}
 
 			// Delete snapshot instance if listed in the error as one that needs removing.
-			err := snap.Delete(true)
+			err := snap.Delete(true, true)
 			if err != nil {
 				return err
 			}
