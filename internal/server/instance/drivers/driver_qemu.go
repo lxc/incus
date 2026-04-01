@@ -815,7 +815,7 @@ func (d *qemu) onStop(target string) error {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRestarted.Event(d, nil))
 	} else if d.ephemeral {
 		// Destroy ephemeral virtual machines.
-		err = d.delete(true)
+		err = d.delete(true, true)
 		if err != nil {
 			op.Done(err)
 			return err
@@ -7299,7 +7299,7 @@ func (d *qemu) Delete(force bool, deleteDependentVolumes bool) error {
 		return api.StatusErrorf(http.StatusBadRequest, "Instance is running")
 	}
 
-	err = d.delete(force)
+	err = d.delete(force, deleteDependentVolumes)
 	if err != nil {
 		return err
 	}
@@ -7325,7 +7325,7 @@ func (d *qemu) Delete(force bool, deleteDependentVolumes bool) error {
 }
 
 // Delete the instance without creating an operation lock.
-func (d *qemu) delete(force bool) error {
+func (d *qemu) delete(force bool, deleteDependentVolumes bool) error {
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -7363,7 +7363,7 @@ func (d *qemu) delete(force bool) error {
 		} else {
 			// Remove all snapshots.
 			err := d.deleteSnapshots(func(snapInst instance.Instance) error {
-				return snapInst.(*qemu).delete(true) // Internal delete function that doesn't lock.
+				return snapInst.(*qemu).delete(true, deleteDependentVolumes) // Internal delete function that doesn't lock.
 			})
 			if err != nil {
 				return fmt.Errorf("Failed deleting instance snapshots: %w", err)
@@ -7373,6 +7373,27 @@ func (d *qemu) delete(force bool) error {
 			err = pool.DeleteInstance(d, nil)
 			if err != nil {
 				return err
+			}
+
+			if deleteDependentVolumes {
+				// Delete all dependent volumes associated with this instance.
+				err = d.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+					// Load the pool for the disk.
+					diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
+					if err != nil {
+						return fmt.Errorf("Failed loading storage pool: %w", err)
+					}
+
+					err = diskPool.DeleteCustomVolume(d.Project().Name, dev.Config["source"], nil)
+					if err != nil {
+						return err
+					}
+
+					return nil
+				})
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
