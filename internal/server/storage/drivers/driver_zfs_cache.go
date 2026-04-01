@@ -86,7 +86,7 @@ func (d *zfs) prefillCachedProperties(dataset string) {
 	if !runPrefill {
 		// Wait for current run.
 		zfsCachePrefillMu.RLock()
-		defer zfsCachePrefillMu.RUnlock()
+		zfsCachePrefillMu.RUnlock() //nolint:staticcheck
 
 		// Check that we made it.
 		zfsCacheMu.Lock()

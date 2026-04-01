@@ -98,7 +98,7 @@ func (d *truenas) prefillCachedProperties(dataset string) {
 	if !runPrefill {
 		// Wait for current run.
 		truenasCachePrefillMu[d.name].RLock()
-		defer truenasCachePrefillMu[d.name].RUnlock()
+		truenasCachePrefillMu[d.name].RUnlock() //nolint:staticcheck
 
 		// Check that we made it.
 		truenasCacheMu.Lock()
