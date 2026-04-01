@@ -9591,7 +9591,7 @@ func (d *lxc) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFile
 }
 
 // ExportQcow2Block exports a qcow2 block device. Not supported by containers.
-func (d *lxc) ExportQcow2Block(diskIndex int) (func(), string, error) {
+func (d *lxc) ExportQcow2Block(diskName string, diskIndex int) (func(), string, error) {
 	return nil, "", nil
 }
 

@@ -11227,7 +11227,7 @@ func (d *qemu) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFil
 }
 
 // ExportQcow2Block exports a qcow2 block device by exposing it through a QEMU NBD server.
-func (d *qemu) ExportQcow2Block(blockIndex int) (func(), string, error) {
+func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string, error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, "", err
@@ -11260,8 +11260,11 @@ func (d *qemu) ExportQcow2Block(blockIndex int) (func(), string, error) {
 		return nil, "", fmt.Errorf("Failed starting NBD server: %w", err)
 	}
 
+	escapedDeviceName := linux.PathNameEncode(diskName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
 	// Selects all block devices related to this instance (backing, root disk, overlays).
-	blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
 	if err != nil {
 		return nil, "", err
 	}
