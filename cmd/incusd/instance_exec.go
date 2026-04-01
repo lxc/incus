@@ -79,6 +79,20 @@ func (s *execWs) metadata() any {
 	}
 }
 
+func (s *execWs) cancel(op *operations.Operation) error {
+	s.connsLock.Lock()
+	conn := s.conns[-1]
+	s.connsLock.Unlock()
+
+	if conn == nil {
+		return nil
+	}
+
+	_ = conn.Close()
+
+	return nil
+}
+
 func (s *execWs) connect(op *operations.Operation, r *http.Request, w http.ResponseWriter) error {
 	// Check that the user connecting is the same who started the session.
 	if !op.IsSameRequestor(r) {
@@ -708,7 +722,7 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		resources := map[string][]api.URL{}
 		resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", ws.instance.Name())}
 
-		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.metadata(), ws.do, nil, ws.connect, r)
+		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.metadata(), ws.do, ws.cancel, ws.connect, r)
 		if err != nil {
 			return response.InternalError(err)
 		}
