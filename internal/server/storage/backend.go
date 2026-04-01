@@ -2389,7 +2389,7 @@ func (b *backend) DeleteInstance(inst instance.Instance, op *operations.Operatio
 	l.Debug("Deleting instance volume", logger.Ctx{"volName": volStorageName})
 
 	// Delete all dependent volumes associated with this instance.
-	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 		// Load the pool for the disk.
 		diskPool, err := LoadByName(b.state, dev.Config["pool"])
 		if err != nil {
@@ -2402,7 +2402,7 @@ func (b *backend) DeleteInstance(inst instance.Instance, op *operations.Operatio
 		}
 
 		return nil
-	}, op)
+	})
 	if err != nil {
 		return err
 	}
@@ -2791,7 +2791,7 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 	}
 
 	if dependentVolumes {
-		err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+		err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 			// Load the pool for the disk.
 			diskPool, err := LoadByName(b.state, dev.Config["pool"])
 			if err != nil {
@@ -2804,7 +2804,7 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 			}
 
 			return nil
-		}, op)
+		})
 		if err != nil {
 			return err
 		}
@@ -3217,7 +3217,7 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		return err
 	}
 
-	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 		// Load the pool for the disk.
 		diskPool, err := LoadByName(b.state, dev.Config["pool"])
 		if err != nil {
@@ -3231,7 +3231,7 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		}
 
 		return nil
-	}, op)
+	})
 	if err != nil {
 		return err
 	}
@@ -3430,7 +3430,7 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 		return err
 	}
 
-	err = b.forEachDependentDiskType(src, func(dev deviceConfig.DeviceNamed) error {
+	err = src.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 		// Load the pool for the disk.
 		diskPool, err := LoadByName(b.state, dev.Config["pool"])
 		if err != nil {
@@ -3443,7 +3443,7 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 		}
 
 		return nil
-	}, op)
+	})
 	if err != nil {
 		return err
 	}
@@ -3482,7 +3482,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 		return err
 	}
 
-	if len(snaps) > 0 && snaps[len(snaps)-1].Name() != src.Name() && b.hasDependentDisk(inst) {
+	if len(snaps) > 0 && snaps[len(snaps)-1].Name() != src.Name() && inst.HasDependentDisk() {
 		return fmt.Errorf("Snapshot %q cannot be restored due to subsequent snapshot(s).", src.Name())
 	}
 
@@ -3540,7 +3540,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 		})
 	}
 
-	err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 		// Load the pool for the disk.
 		diskPool, err := LoadByName(b.state, dev.Config["pool"])
 		if err != nil {
@@ -3553,7 +3553,7 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 		}
 
 		return nil
-	}, op)
+	})
 	if err != nil {
 		return err
 	}
@@ -6756,7 +6756,7 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 
 	if dependentVolumes {
 		config.DependentVolumes = []*backupConfig.Config{}
-		err = b.forEachDependentDiskType(inst, func(dev deviceConfig.DeviceNamed) error {
+		err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 			// Load the pool for the disk.
 			diskPool, err := LoadByName(b.state, dev.Config["pool"])
 			if err != nil {
@@ -6774,7 +6774,7 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 			config.DependentVolumes = append(config.DependentVolumes, diskConfig)
 
 			return nil
-		}, op)
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -8998,33 +8998,6 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 	}
 
 	return inst, devName, nil
-}
-
-func (b *backend) hasDependentDisk(inst instance.Instance) bool {
-	for _, dev := range inst.ExpandedDevices().Sorted() {
-		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
-			continue
-		}
-
-		return true
-	}
-
-	return false
-}
-
-func (b *backend) forEachDependentDiskType(inst instance.Instance, diskAction func(dev deviceConfig.DeviceNamed) error, op *operations.Operation) error {
-	for _, dev := range inst.ExpandedDevices().Sorted() {
-		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
-			continue
-		}
-
-		err := diskAction(dev)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
