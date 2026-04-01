@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -12,7 +13,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -133,13 +134,13 @@ func (c *cmdStorageBucketCreate) run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var bucketPut api.StorageBucketPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &bucketPut)
-		if err != nil {
+		err = loader.Load(&bucketPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -278,7 +279,7 @@ func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -287,8 +288,8 @@ func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
 		// contents of the StorageBucketPut fields when updating.
 		// The other fields are silently discarded.
 		newdata := api.StorageBucketPut{}
-		err = yaml.Unmarshal(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -306,7 +307,7 @@ func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&bucket)
+	data, err := yaml.Dump(&bucket, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -320,7 +321,7 @@ func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.StorageBucket{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateStoragePoolBucket(poolName, bucketName, newdata.Writable(), etag)
 		}
@@ -725,7 +726,7 @@ func (c *cmdStorageBucketShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&bucket)
+	data, err := yaml.Dump(&bucket, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -1004,13 +1005,13 @@ func (c *cmdStorageBucketKeyCreate) runAdd(cmd *cobra.Command, args []string) er
 	// If stdin isn't a terminal, read yaml from it.
 	var bucketKeyPut api.StorageBucketKeyPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &bucketKeyPut)
-		if err != nil {
+		err = loader.Load(&bucketKeyPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -1147,7 +1148,7 @@ func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -1156,8 +1157,8 @@ func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
 		// contents of the StorageBucketPut fields when updating.
 		// The other fields are silently discarded.
 		newdata := api.StorageBucketKeyPut{}
-		err = yaml.Unmarshal(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -1175,7 +1176,7 @@ func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&bucket)
+	data, err := yaml.Dump(&bucket, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -1189,7 +1190,7 @@ func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.StorageBucketKey{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateStoragePoolBucketKey(poolName, bucketName, keyName, newdata.Writable(), etag)
 		}
@@ -1262,7 +1263,7 @@ func (c *cmdStorageBucketKeyShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&bucket)
+	data, err := yaml.Dump(&bucket, yaml.V2)
 	if err != nil {
 		return err
 	}

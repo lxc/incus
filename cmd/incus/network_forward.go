@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -283,7 +283,7 @@ func (c *cmdNetworkForwardShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&forward)
+	data, err := yaml.Dump(&forward, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -339,13 +339,13 @@ func (c *cmdNetworkForwardCreate) run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var forwardPut api.NetworkForwardPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &forwardPut)
-		if err != nil {
+		err = loader.Load(&forwardPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -677,7 +677,7 @@ func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -685,8 +685,8 @@ func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network forward show` command to be passed in here, but only take the
 		// contents of the NetworkForwardPut fields when updating. The other fields are silently discarded.
 		newData := api.NetworkForward{}
-		err = yaml.UnmarshalStrict(contents, &newData)
-		if err != nil {
+		err = loader.Load(&newData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -701,7 +701,7 @@ func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&forward)
+	data, err := yaml.Dump(&forward, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -715,7 +715,7 @@ func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newData := api.NetworkForward{} // We show the full info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newData)
+		err = yaml.Load(content, &newData, yaml.WithKnownFields())
 		if err == nil {
 			newData.Normalise()
 			err = d.UpdateNetworkForward(networkName, listenAddress, newData.Writable(), etag)

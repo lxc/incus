@@ -15,8 +15,8 @@ github.com/lxc/incus/v6/shared/units
 github.com/lxc/incus/v6/shared/util
 github.com/lxc/incus/v6/shared/ws
 github.com/opencontainers/umoci
-github.com/opencontainers/umoci/oci/cas/dir
 github.com/opencontainers/umoci/oci/casext
+github.com/opencontainers/umoci/oci/cas/dir
 github.com/opencontainers/umoci/oci/layer
 github.com/pkg/sftp
 github.com/zitadel/oidc/v3/pkg/client/rp
@@ -24,4 +24,4 @@ github.com/zitadel/oidc/v3/pkg/http
 github.com/zitadel/oidc/v3/pkg/oidc
 golang.org/x/crypto/ssh
 golang.org/x/oauth2
-gopkg.in/yaml.v2
+go.yaml.in/yaml/v4

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -277,7 +277,7 @@ func (c *cmdNetworkZoneShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(netZone.UsedBy)
 
-	data, err := yaml.Marshal(&netZone)
+	data, err := yaml.Dump(&netZone, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -407,13 +407,13 @@ func (c *cmdNetworkZoneCreate) run(cmd *cobra.Command, args []string) error {
 	// If stdin isn't a terminal, read yaml from it.
 	var zonePut api.NetworkZonePut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &zonePut)
-		if err != nil {
+		err = loader.Load(&zonePut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -624,7 +624,7 @@ func (c *cmdNetworkZoneEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -632,8 +632,8 @@ func (c *cmdNetworkZoneEdit) run(cmd *cobra.Command, args []string) error {
 		// Allow output of `incus network zone show` command to be passed in here, but only take the contents
 		// of the NetworkZonePut fields when updating the Zone. The other fields are silently discarded.
 		newdata := api.NetworkZone{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -646,7 +646,7 @@ func (c *cmdNetworkZoneEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&netZone)
+	data, err := yaml.Dump(&netZone, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -660,7 +660,7 @@ func (c *cmdNetworkZoneEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor.
 		newdata := api.NetworkZone{} // We show the full Zone info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.Load(content, &newdata, yaml.WithKnownFields())
 		if err == nil {
 			err = d.UpdateNetworkZone(zoneName, newdata.Writable(), etag)
 		}
@@ -921,7 +921,7 @@ func (c *cmdNetworkZoneRecordShow) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	data, err := yaml.Marshal(&netRecord)
+	data, err := yaml.Dump(&netRecord, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -1061,13 +1061,13 @@ func (c *cmdNetworkZoneRecordCreate) run(cmd *cobra.Command, args []string) erro
 	// If stdin isn't a terminal, read yaml from it.
 	var recordPut api.NetworkZoneRecordPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &recordPut)
-		if err != nil {
+		err = loader.Load(&recordPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -1290,7 +1290,7 @@ func (c *cmdNetworkZoneRecordEdit) run(cmd *cobra.Command, args []string) error 
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -1298,8 +1298,8 @@ func (c *cmdNetworkZoneRecordEdit) run(cmd *cobra.Command, args []string) error 
 		// Allow output of `incus network zone show` command to be passed in here, but only take the contents
 		// of the NetworkZonePut fields when updating the Zone. The other fields are silently discarded.
 		newdata := api.NetworkZoneRecord{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -1312,7 +1312,7 @@ func (c *cmdNetworkZoneRecordEdit) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	data, err := yaml.Marshal(netRecord.Writable())
+	data, err := yaml.Dump(netRecord.Writable, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -1326,7 +1326,7 @@ func (c *cmdNetworkZoneRecordEdit) run(cmd *cobra.Command, args []string) error 
 	for {
 		// Parse the text received from the editor.
 		newdata := api.NetworkZoneRecord{} // We show the full Zone info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.Load(content, &newdata, yaml.WithKnownFields())
 		if err == nil {
 			err = d.UpdateNetworkZoneRecord(zoneName, recordName, newdata.Writable(), etag)
 		}

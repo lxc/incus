@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/internal/server/cluster"
@@ -254,7 +254,7 @@ func getNodeResources(s *state.State, name string, address string) (*api.Resourc
 		data, err := os.ReadFile(resourcesPath)
 		if err == nil {
 			var res api.Resources
-			if yaml.Unmarshal(data, &res) == nil {
+			if yaml.Load(data, &res) == nil {
 				return &res, nil
 			}
 		}
@@ -284,7 +284,7 @@ func getNodeResources(s *state.State, name string, address string) (*api.Resourc
 	}
 
 	// Cache the data.
-	data, err := yaml.Marshal(res)
+	data, err := yaml.Dump(res, yaml.V2)
 	if err == nil {
 		_ = os.WriteFile(resourcesPath, data, 0o600)
 	}

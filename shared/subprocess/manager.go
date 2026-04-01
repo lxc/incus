@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 )
 
 // NewProcess is a constructor for a process object. Represents a process with argument config.
@@ -58,7 +58,7 @@ func ImportProcess(path string) (*Process, error) {
 	}
 
 	proc := Process{}
-	err = yaml.Unmarshal(dat, &proc)
+	err = yaml.Load(dat, &proc)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse YAML in PID file %q: %w", path, err)
 	}

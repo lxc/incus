@@ -1,12 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -105,13 +106,13 @@ func (c *cmdConfigMetadataEdit) run(cmd *cobra.Command, args []string) error {
 	// Edit the metadata
 	if !termios.IsTerminal(getStdinFd()) {
 		metadata := api.ImageMetadata{}
-		content, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Unmarshal(content, &metadata)
-		if err != nil {
+		err = loader.Load(&metadata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -123,7 +124,7 @@ func (c *cmdConfigMetadataEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	origContent, err := yaml.Marshal(metadata)
+	origContent, err := yaml.Dump(metadata, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -136,7 +137,7 @@ func (c *cmdConfigMetadataEdit) run(cmd *cobra.Command, args []string) error {
 
 	for {
 		metadata := api.ImageMetadata{}
-		err = yaml.Unmarshal(content, &metadata)
+		err = yaml.Load(content, &metadata)
 		if err == nil {
 			err = d.UpdateInstanceMetadata(instanceName, metadata, etag)
 		}
@@ -208,7 +209,7 @@ func (c *cmdConfigMetadataShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	content, err := yaml.Marshal(metadata)
+	content, err := yaml.Dump(metadata, yaml.V2)
 	if err != nil {
 		return err
 	}

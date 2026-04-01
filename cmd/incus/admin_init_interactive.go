@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"go.yaml.in/yaml/v4"
 	"golang.org/x/sys/unix"
-	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/i18n"
@@ -83,7 +83,7 @@ func (c *cmdAdminInit) runInteractive(_ *cobra.Command, d incus.InstanceServer, 
 			object = *config
 		}
 
-		out, err := yaml.Marshal(object)
+		out, err := yaml.Dump(object, yaml.V2)
 		if err != nil {
 			return nil, fmt.Errorf(i18n.G("Failed to render the config: %w"), err)
 		}

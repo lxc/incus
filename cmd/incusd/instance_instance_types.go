@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/internal/server/db/operationtype"
 	"github.com/lxc/incus/v6/internal/server/operations"
@@ -38,7 +38,7 @@ func instanceSaveCache() error {
 		return nil
 	}
 
-	data, err := yaml.Marshal(&instanceTypes)
+	data, err := yaml.Dump(&instanceTypes, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func instanceLoadCache() error {
 		return err
 	}
 
-	err = yaml.Unmarshal(content, &instanceTypes)
+	err = yaml.Load(content, &instanceTypes)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 			return err
 		}
 
-		err = yaml.Unmarshal(content, target)
+		err = yaml.Load(content, target)
 		if err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -379,13 +379,13 @@ func (c *cmdNetworkCreate) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
-		if err != nil {
+		err = loader.Load(&stdinData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -711,14 +711,14 @@ func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
 		newdata := api.NetworkPut{}
-		err = yaml.Unmarshal(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -735,7 +735,7 @@ func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Only managed networks can be modified"))
 	}
 
-	data, err := yaml.Marshal(&network)
+	data, err := yaml.Dump(&network, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -749,7 +749,7 @@ func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.NetworkPut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateNetwork(networkName, newdata, etag)
 		}
@@ -1539,7 +1539,7 @@ func (c *cmdNetworkShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(network.UsedBy)
 
-	data, err := yaml.Marshal(&network)
+	data, err := yaml.Dump(&network, yaml.V2)
 	if err != nil {
 		return err
 	}

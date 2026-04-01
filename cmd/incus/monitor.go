@@ -9,7 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -174,7 +174,7 @@ func (c *cmdMonitor) run(cmd *cobra.Command, args []string) error {
 		var render []byte
 		switch c.flagFormat {
 		case "yaml":
-			render, err = yaml.Marshal(&rawEvent)
+			render, err = yaml.Dump(&rawEvent, yaml.V2)
 			if err != nil {
 				chError <- err
 				return

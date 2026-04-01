@@ -13,8 +13,8 @@ import (
 
 	"github.com/cowsql/go-cowsql/client"
 	"github.com/spf13/cobra"
+	"go.yaml.in/yaml/v4"
 	"golang.org/x/sys/unix"
-	"gopkg.in/yaml.v2"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/ports"
@@ -184,7 +184,7 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 		config.Members = append(config.Members, member)
 	}
 
-	data, err := yaml.Marshal(config)
+	data, err := yaml.Dump(config, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 
 	for {
 		newConfig := ClusterConfig{}
-		err = yaml.Unmarshal(content, &newConfig)
+		err = yaml.Load(content, &newConfig)
 		if err == nil {
 			// Convert ClusterConfig back to RaftNodes.
 			newNodes := []db.RaftNode{}
@@ -337,7 +337,7 @@ func (c *cmdClusterShow) run(_ *cobra.Command, _ []string) error {
 		config.Members = append(config.Members, member)
 	}
 
-	data, err := yaml.Marshal(config)
+	data, err := yaml.Dump(config, yaml.V2)
 	if err != nil {
 		return err
 	}

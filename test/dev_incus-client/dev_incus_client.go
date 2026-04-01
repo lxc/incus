@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/shared/api"
 )
@@ -71,7 +71,7 @@ func devIncusMonitorStream() {
 
 		message["timestamp"] = nil
 
-		msg, err := yaml.Marshal(&message)
+		msg, err := yaml.Dump(&message, yaml.V2)
 		if err != nil {
 			return
 		}
@@ -105,7 +105,7 @@ func devIncusMonitorWebsocket(c http.Client) {
 
 		message["timestamp"] = nil
 
-		msg, err := yaml.Marshal(&message)
+		msg, err := yaml.Dump(&message, yaml.V2)
 		if err != nil {
 			return
 		}

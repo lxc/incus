@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/util"
@@ -27,7 +27,7 @@ func templatesApply(path string) ([]string, error) {
 	}
 
 	metadata := &api.ImageMetadata{}
-	err = yaml.Unmarshal(content, metadata)
+	err = yaml.Load(content, metadata)
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse metadata.yaml: %w", err)
 	}

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -732,7 +732,7 @@ func (c *cmdConfigDeviceShow) run(cmd *cobra.Command, args []string) error {
 		devices = inst.Devices
 	}
 
-	data, err := yaml.Marshal(&devices)
+	data, err := yaml.Dump(&devices, yaml.V2)
 	if err != nil {
 		return err
 	}

@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/shared/util"
 )
@@ -269,7 +269,7 @@ func (p *Process) Reload() error {
 
 // Save will save the given process object to a YAML file. Can be imported at a later point.
 func (p *Process) Save(path string) error {
-	dat, err := yaml.Marshal(p)
+	dat, err := yaml.Dump(p, yaml.V2)
 	if err != nil {
 		return fmt.Errorf("Unable to serialize process struct to YAML: %w", err)
 	}

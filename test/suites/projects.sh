@@ -365,8 +365,8 @@ test_projects_profiles_default() {
 
     # If we look at the global profile we see that it's being used by both the
     # container in the above project and the one we just created.
-    incus profile show default | grep -E -q '^- /1.0/instances/c1$'
-    incus profile show default | grep -E -q '^- /1.0/instances/c1\?project=foo$'
+    incus profile show default | grep -E -q '^  - /1.0/instances/c1$'
+    incus profile show default | grep -E -q '^  - /1.0/instances/c1\?project=foo$'
 
     incus delete c1
 

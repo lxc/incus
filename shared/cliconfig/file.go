@@ -6,7 +6,7 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/util"
@@ -64,7 +64,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	// Decode the YAML document
 	c := NewConfig(configDir, false)
-	err = yaml.Unmarshal(content, c)
+	err = yaml.Load(content, c)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode the configuration: %w", err)
 	}
@@ -80,7 +80,7 @@ func LoadConfig(path string) (*Config, error) {
 	globalConf := NewConfig("", false)
 	content, err = os.ReadFile(globalConf.GlobalConfigPath("config.yml"))
 	if err == nil {
-		err = yaml.Unmarshal(content, globalConf)
+		err = yaml.Load(content, globalConf)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to decode the configuration: %w", err)
 		}
@@ -164,7 +164,7 @@ func (c *Config) SaveConfig(path string) error {
 	defer func() { _ = f.Close() }()
 
 	// Write the new config
-	data, err := yaml.Marshal(conf)
+	data, err := yaml.Dump(&conf, yaml.V2)
 	if err != nil {
 		return fmt.Errorf("Unable to marshal the configuration: %w", err)
 	}

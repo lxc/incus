@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/instance"
@@ -130,7 +130,7 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 
 	// Parse into the API struct
 	metadata := api.ImageMetadata{}
-	err = yaml.Unmarshal(data, &metadata)
+	err = yaml.Load(data, &metadata)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -233,7 +233,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Parse into the API struct
-		err = yaml.Unmarshal(data, &metadata)
+		err = yaml.Load(data, &metadata)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -343,7 +343,7 @@ func instanceMetadataPut(d *Daemon, r *http.Request) response.Response {
 
 func doInstanceMetadataUpdate(s *state.State, inst instance.Instance, metadata api.ImageMetadata, r *http.Request) response.Response {
 	// Convert YAML.
-	data, err := yaml.Marshal(metadata)
+	data, err := yaml.Dump(metadata, yaml.V2)
 	if err != nil {
 		return response.BadRequest(err)
 	}

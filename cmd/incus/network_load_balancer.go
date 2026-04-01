@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -286,7 +286,7 @@ func (c *cmdNetworkLoadBalancerShow) run(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	data, err := yaml.Marshal(&loadBalancer)
+	data, err := yaml.Dump(&loadBalancer, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -341,13 +341,13 @@ func (c *cmdNetworkLoadBalancerCreate) run(cmd *cobra.Command, args []string) er
 	// If stdin isn't a terminal, read yaml from it.
 	var loadBalancerPut api.NetworkLoadBalancerPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &loadBalancerPut)
-		if err != nil {
+		err = loader.Load(&loadBalancerPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -655,7 +655,7 @@ func (c *cmdNetworkLoadBalancerEdit) run(cmd *cobra.Command, args []string) erro
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
@@ -664,8 +664,8 @@ func (c *cmdNetworkLoadBalancerEdit) run(cmd *cobra.Command, args []string) erro
 		// contents of the NetworkLoadBalancerPut fields when updating.
 		// The other fields are silently discarded.
 		newData := api.NetworkLoadBalancer{}
-		err = yaml.UnmarshalStrict(contents, &newData)
-		if err != nil {
+		err = loader.Load(&newData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -680,7 +680,7 @@ func (c *cmdNetworkLoadBalancerEdit) run(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	data, err := yaml.Marshal(&loadBalancer)
+	data, err := yaml.Dump(&loadBalancer, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -694,7 +694,7 @@ func (c *cmdNetworkLoadBalancerEdit) run(cmd *cobra.Command, args []string) erro
 	for {
 		// Parse the text received from the editor.
 		newData := api.NetworkLoadBalancer{} // We show the full info, but only send the writable fields.
-		err = yaml.UnmarshalStrict(content, &newData)
+		err = yaml.Load(content, &newData, yaml.WithKnownFields())
 		if err == nil {
 			newData.Normalise()
 			err = d.UpdateNetworkLoadBalancer(networkName, listenAddress, newData.Writable(), etag)

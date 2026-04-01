@@ -28,7 +28,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kballard/go-shellquote"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/internal/filter"
@@ -1459,7 +1459,12 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 		}
 
 		if hdr.Name == "metadata.yaml" || hdr.Name == "./metadata.yaml" {
-			err = yaml.NewDecoder(tr).Decode(&result)
+			loader, err := yaml.NewLoader(tr)
+			if err != nil {
+				return nil, "unknown", err
+			}
+
+			err = loader.Load(&result)
 			if err != nil {
 				return nil, "unknown", err
 			}

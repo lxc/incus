@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/server/backup/config"
@@ -90,7 +90,7 @@ func ParseConfigYamlFile(path string) (*config.Config, error) {
 	}
 
 	backupConf := config.Config{}
-	err = yaml.Unmarshal(data, &backupConf)
+	err = yaml.Load(data, &backupConf)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 
 	defer func() { _ = file.Close() }()
 
-	data, err := yaml.Marshal(&backup)
+	data, err := yaml.Dump(&backup, yaml.V2)
 	if err != nil {
 		return err
 	}

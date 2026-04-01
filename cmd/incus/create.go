@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -103,13 +103,13 @@ func (c *cmdCreate) create(conf *config.Config, parsed []*u.Parsed, launch bool)
 	// If stdin isn't a terminal, read text from it
 	var stdinData api.InstancePut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return nil, err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
-		if err != nil {
+		err = loader.Load(&stdinData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return nil, err
 		}
 	}

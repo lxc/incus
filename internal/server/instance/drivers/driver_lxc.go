@@ -35,10 +35,10 @@ import (
 	liblxc "github.com/lxc/go-lxc"
 	ociSpecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/sftp"
+	yaml "go.yaml.in/yaml/v4"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 	"google.golang.org/protobuf/proto"
-	yaml "gopkg.in/yaml.v2"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
 	"github.com/lxc/incus/v6/internal/instancewriter"
@@ -5616,7 +5616,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 			return nil, err
 		}
 
-		err = yaml.Unmarshal(content, &meta)
+		err = yaml.Load(content, &meta)
 		if err != nil {
 			_ = metaTarWriter.Close()
 			if rootfsTarWriter != nil {
@@ -5656,7 +5656,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	data, err := yaml.Marshal(&meta)
+	data, err := yaml.Dump(&meta, yaml.V2)
 	if err != nil {
 		_ = metaTarWriter.Close()
 		if rootfsTarWriter != nil {
@@ -7299,7 +7299,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 	}
 
 	metadata := &api.ImageMetadata{}
-	err = yaml.Unmarshal(content, &metadata)
+	err = yaml.Load(content, &metadata)
 	if err != nil {
 		return fmt.Errorf("Could not parse %s: %w", fname, err)
 	}

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -206,7 +206,7 @@ func (c *cmdNetworkAddressSetShow) run(cmd *cobra.Command, args []string) error 
 
 	sort.Strings(addrSet.UsedBy)
 
-	data, err := yaml.Marshal(&addrSet)
+	data, err := yaml.Dump(&addrSet, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -263,13 +263,13 @@ func (c *cmdNetworkAddressSetCreate) run(cmd *cobra.Command, args []string) erro
 
 	var asPut api.NetworkAddressSetPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &asPut)
-		if err != nil {
+		err = loader.Load(&asPut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -482,14 +482,14 @@ func (c *cmdNetworkAddressSetEdit) run(cmd *cobra.Command, args []string) error 
 
 	// If stdin isn't terminal, read yaml from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
 		newdata := api.NetworkAddressSet{}
-		err = yaml.UnmarshalStrict(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -502,7 +502,7 @@ func (c *cmdNetworkAddressSetEdit) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	data, err := yaml.Marshal(&addrSet)
+	data, err := yaml.Dump(&addrSet, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -514,7 +514,7 @@ func (c *cmdNetworkAddressSetEdit) run(cmd *cobra.Command, args []string) error 
 
 	for {
 		newdata := api.NetworkAddressSet{}
-		err = yaml.UnmarshalStrict(content, &newdata)
+		err = yaml.Load(content, &newdata, yaml.WithKnownFields())
 		if err == nil {
 			err = d.UpdateNetworkAddressSet(addressSetName, newdata.Writable(), etag)
 		}

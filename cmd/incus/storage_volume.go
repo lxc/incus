@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -578,13 +578,13 @@ func (c *cmdStorageVolumeCreate) run(cmd *cobra.Command, args []string) error {
 
 	var volumePut api.StorageVolumePut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin, yaml.WithKnownFields())
 		if err != nil {
 			return err
 		}
 
-		err = yaml.UnmarshalStrict(contents, &volumePut)
-		if err != nil {
+		err = loader.Load(&volumePut)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -943,15 +943,15 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
 		if isSnapshot {
 			newdata := api.StorageVolumeSnapshotPut{}
-			err = yaml.Unmarshal(contents, &newdata)
-			if err != nil {
+			err = loader.Load(&newdata)
+			if err != nil && !errors.Is(err, io.EOF) {
 				return err
 			}
 
@@ -964,8 +964,8 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 		}
 
 		newdata := api.StorageVolumePut{}
-		err = yaml.Unmarshal(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -988,7 +988,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err = yaml.Marshal(&snapVol)
+		data, err = yaml.Dump(&snapVol, yaml.V2)
 		if err != nil {
 			return err
 		}
@@ -999,7 +999,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err = yaml.Marshal(&vol)
+		data, err = yaml.Dump(&vol, yaml.V2)
 		if err != nil {
 			return err
 		}
@@ -1015,7 +1015,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 		for {
 			// Parse the text received from the editor
 			newdata := api.StorageVolumeSnapshotPut{}
-			err = yaml.Unmarshal(content, &newdata)
+			err = yaml.Load(content, &newdata)
 			if err == nil {
 				err = d.UpdateStoragePoolVolumeSnapshot(poolName, volType, volName, snapName, newdata, etag)
 			}
@@ -1047,7 +1047,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.StorageVolume{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateStoragePoolVolume(poolName, volType, volName, newdata.Writable(), etag)
 		}
@@ -2011,7 +2011,7 @@ func (c *cmdStorageVolumeShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(vol.UsedBy)
 
-	data, err := yaml.Marshal(&vol)
+	data, err := yaml.Dump(&vol, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -3109,13 +3109,13 @@ func (c *cmdStorageVolumeSnapshotCreate) run(cmd *cobra.Command, args []string) 
 	// If stdin isn't a terminal, read text from it
 	var stdinData api.StorageVolumeSnapshotPut
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
-		if err != nil {
+		err = loader.Load(&stdinData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -3630,7 +3630,7 @@ func (c *cmdStorageVolumeSnapshotShow) run(cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	data, err := yaml.Marshal(&vol)
+	data, err := yaml.Dump(&vol, yaml.V2)
 	if err != nil {
 		return err
 	}

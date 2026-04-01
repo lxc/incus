@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
+	yaml "go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v6/cmd/incus/color"
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
@@ -203,13 +203,13 @@ func (c *cmdClusterGroupCreate) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
-		err = yaml.Unmarshal(contents, &stdinData)
-		if err != nil {
+		err = loader.Load(&stdinData)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
@@ -327,15 +327,15 @@ func (c *cmdClusterGroupEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
 		newdata := api.ClusterGroupPut{}
 
-		err = yaml.Unmarshal(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -348,7 +348,7 @@ func (c *cmdClusterGroupEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(group)
+	data, err := yaml.Dump(group, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,7 @@ func (c *cmdClusterGroupEdit) run(cmd *cobra.Command, args []string) error {
 		// Parse the text received from the editor
 		newdata := api.ClusterGroupPut{}
 
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateClusterGroup(groupName, newdata, etag)
 		}
@@ -715,7 +715,7 @@ func (c *cmdClusterGroupShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Marshal(&group)
+	data, err := yaml.Dump(&group, yaml.V2)
 	if err != nil {
 		return err
 	}

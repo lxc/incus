@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	incus "github.com/lxc/incus/v6/client"
 	"github.com/lxc/incus/v6/cmd/incus/color"
@@ -156,7 +156,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 
 		// If stdin isn't a terminal, read text from it
 		if !termios.IsTerminal(getStdinFd()) {
-			contents, err := io.ReadAll(os.Stdin)
+			loader, err := yaml.NewLoader(os.Stdin)
 			if err != nil {
 				return err
 			}
@@ -166,8 +166,8 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 			if isSnapshot {
 				newdata := api.InstanceSnapshotPut{}
 
-				err = yaml.Unmarshal(contents, &newdata)
-				if err != nil {
+				err = loader.Load(&newdata)
+				if err != nil && !errors.Is(err, io.EOF) {
 					return err
 				}
 
@@ -177,8 +177,8 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 				}
 			} else {
 				newdata := api.InstancePut{}
-				err = yaml.Unmarshal(contents, &newdata)
-				if err != nil {
+				err = loader.Load(&newdata)
+				if err != nil && !errors.Is(err, io.EOF) {
 					return err
 				}
 
@@ -207,7 +207,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 			inst.ExpandedConfig = nil
 			inst.ExpandedDevices = nil
 
-			data, err = yaml.Marshal(&inst)
+			data, err = yaml.Dump(&inst, yaml.V2)
 			if err != nil {
 				return err
 			}
@@ -223,7 +223,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 			inst.ExpandedConfig = nil
 			inst.ExpandedDevices = nil
 
-			data, err = yaml.Marshal(&inst)
+			data, err = yaml.Dump(&inst, yaml.V2)
 			if err != nil {
 				return err
 			}
@@ -239,7 +239,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 			// Parse the text received from the editor
 			if isSnapshot {
 				newdata := api.InstanceSnapshotPut{}
-				err = yaml.Unmarshal(content, &newdata)
+				err = yaml.Load(content, &newdata)
 				if err == nil {
 					var op incus.Operation
 					op, err = d.UpdateInstanceSnapshot(fields[0], fields[1],
@@ -250,7 +250,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 				}
 			} else {
 				newdata := api.InstancePut{}
-				err = yaml.Unmarshal(content, &newdata)
+				err = yaml.Load(content, &newdata)
 				if err == nil {
 					var op incus.Operation
 					op, err = d.UpdateInstance(parsedPath.String, newdata, etag)
@@ -295,14 +295,14 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
-		contents, err := io.ReadAll(os.Stdin)
+		loader, err := yaml.NewLoader(os.Stdin)
 		if err != nil {
 			return err
 		}
 
 		newdata := api.ServerPut{}
-		err = yaml.Unmarshal(contents, &newdata)
-		if err != nil {
+		err = loader.Load(&newdata)
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
@@ -316,7 +316,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 	}
 
 	brief := server.Writable()
-	data, err := yaml.Marshal(&brief)
+	data, err := yaml.Dump(&brief, yaml.V2)
 	if err != nil {
 		return err
 	}
@@ -330,7 +330,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 	for {
 		// Parse the text received from the editor
 		newdata := api.ServerPut{}
-		err = yaml.Unmarshal(content, &newdata)
+		err = yaml.Load(content, &newdata)
 		if err == nil {
 			err = d.UpdateServer(newdata, etag)
 		}
@@ -734,7 +734,7 @@ func (c *cmdConfigShow) run(cmd *cobra.Command, args []string) error {
 		}
 
 		brief := server.Writable()
-		data, err = yaml.Marshal(&brief)
+		data, err = yaml.Dump(&brief, yaml.V2)
 		if err != nil {
 			return err
 		}
@@ -777,7 +777,7 @@ func (c *cmdConfigShow) run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		data, err = yaml.Marshal(&brief)
+		data, err = yaml.Dump(&brief, yaml.V2)
 		if err != nil {
 			return err
 		}

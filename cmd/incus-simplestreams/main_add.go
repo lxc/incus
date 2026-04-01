@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v4"
 
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
@@ -242,7 +242,7 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = yaml.Unmarshal(body, &metadata)
+	err = yaml.Load(body, &metadata)
 	if err != nil {
 		return err
 	}
