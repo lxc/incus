@@ -362,6 +362,9 @@ type qemu struct {
 	// Indicate whether the root disk will be live-migrated.
 	migrationRootDisk bool
 
+	// Indicates whether this is an inner-cluster or cross-cluster move.
+	migrationClusterMove bool
+
 	// Keep a reference to the console socket when switching backends, so we can properly cleanup when switching back to a ring buffer.
 	consoleSocket     *net.UnixListener
 	consoleSocketFile *os.File
@@ -812,7 +815,7 @@ func (d *qemu) onStop(target string) error {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceRestarted.Event(d, nil))
 	} else if d.ephemeral {
 		// Destroy ephemeral virtual machines.
-		err = d.delete(true)
+		err = d.delete(true, true)
 		if err != nil {
 			op.Done(err)
 			return err
@@ -1071,7 +1074,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 						d.logger.Error("Failed loading storage pool", logger.Ctx{"err": err})
 					}
 
-					if diskPool.Driver().Info().Remote {
+					if !storagePools.ShouldMigrateDependentVolume(diskPool, d.migrationClusterMove) {
 						continue
 					}
 
@@ -7283,7 +7286,7 @@ func (d *qemu) init() error {
 }
 
 // Delete the instance.
-func (d *qemu) Delete(force bool) error {
+func (d *qemu) Delete(force bool, deleteDependentVolumes bool) error {
 	// Setup a new operation.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionDelete, nil, false, false)
 	if err != nil {
@@ -7296,7 +7299,7 @@ func (d *qemu) Delete(force bool) error {
 		return api.StatusErrorf(http.StatusBadRequest, "Instance is running")
 	}
 
-	err = d.delete(force)
+	err = d.delete(force, deleteDependentVolumes)
 	if err != nil {
 		return err
 	}
@@ -7322,7 +7325,7 @@ func (d *qemu) Delete(force bool) error {
 }
 
 // Delete the instance without creating an operation lock.
-func (d *qemu) delete(force bool) error {
+func (d *qemu) delete(force bool, deleteDependentVolumes bool) error {
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -7360,7 +7363,7 @@ func (d *qemu) delete(force bool) error {
 		} else {
 			// Remove all snapshots.
 			err := d.deleteSnapshots(func(snapInst instance.Instance) error {
-				return snapInst.(*qemu).delete(true) // Internal delete function that doesn't lock.
+				return snapInst.(*qemu).delete(true, deleteDependentVolumes) // Internal delete function that doesn't lock.
 			})
 			if err != nil {
 				return fmt.Errorf("Failed deleting instance snapshots: %w", err)
@@ -7370,6 +7373,27 @@ func (d *qemu) delete(force bool) error {
 			err = pool.DeleteInstance(d, nil)
 			if err != nil {
 				return err
+			}
+
+			if deleteDependentVolumes {
+				// Delete all dependent volumes associated with this instance.
+				err = d.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+					// Load the pool for the disk.
+					diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
+					if err != nil {
+						return fmt.Errorf("Failed loading storage pool: %w", err)
+					}
+
+					err = diskPool.DeleteCustomVolume(d.Project().Name, dev.Config["source"], nil)
+					if err != nil {
+						return err
+					}
+
+					return nil
+				})
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -8218,7 +8242,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
-		if diskPool.Driver().Info().Remote {
+		if !storagePools.ShouldMigrateDependentVolume(diskPool, clusterMoveSourceName != "") {
 			continue
 		}
 
@@ -8277,7 +8301,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			if diskPool.Driver().Info().Remote {
+			if !storagePools.ShouldMigrateDependentVolume(diskPool, clusterMoveSourceName != "") {
 				continue
 			}
 
@@ -8464,7 +8488,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			if diskPool.Driver().Info().Remote {
+			if !storagePools.ShouldMigrateDependentVolume(diskPool, clusterMoveSourceName != "") {
 				continue
 			}
 
@@ -8648,7 +8672,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// Delete the extra local snapshots first.
 		for _, deleteTargetSnapshotIndex := range deleteTargetSnapshotIndexes {
-			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true)
+			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true, true)
 			if err != nil {
 				return err
 			}
@@ -8952,7 +8976,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 						return fmt.Errorf("Failed loading storage pool: %w", err)
 					}
 
-					if diskPool.Driver().Info().Remote {
+					if !storagePools.ShouldMigrateDependentVolume(diskPool, args.ClusterMoveSourceName != "") {
 						continue
 					}
 
@@ -8969,6 +8993,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				}
 
 				d.migrationRootDisk = !sameSharedStorage
+				d.migrationClusterMove = args.ClusterMoveSourceName != ""
 			}
 
 			// Although the instance technically isn't considered stateful, we set this to allow
@@ -11227,7 +11252,7 @@ func (d *qemu) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFil
 }
 
 // ExportQcow2Block exports a qcow2 block device by exposing it through a QEMU NBD server.
-func (d *qemu) ExportQcow2Block(blockIndex int) (func(), string, error) {
+func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string, error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, "", err
@@ -11260,8 +11285,11 @@ func (d *qemu) ExportQcow2Block(blockIndex int) (func(), string, error) {
 		return nil, "", fmt.Errorf("Failed starting NBD server: %w", err)
 	}
 
+	escapedDeviceName := linux.PathNameEncode(diskName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
 	// Selects all block devices related to this instance (backing, root disk, overlays).
-	blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
 	if err != nil {
 		return nil, "", err
 	}

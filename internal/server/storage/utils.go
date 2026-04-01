@@ -1409,3 +1409,14 @@ func DependentVolumesMatchMigrationType(s *state.State, migrationDependentVolume
 
 	return dependentVolumes, nil
 }
+
+// ShouldMigrateDependentVolume returns true if the dependent volume
+// needs to be migrated for this instance. Returns false if migration
+// can be skipped (e.g., on shared storage within the same cluster).
+func ShouldMigrateDependentVolume(diskPool Pool, clusterMove bool) bool {
+	if diskPool.Driver().Info().Remote && clusterMove {
+		return false
+	}
+
+	return true
+}

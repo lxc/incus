@@ -819,7 +819,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		return fmt.Errorf("Create instance snapshot: %w", err)
 	}
 
-	reverter.Add(func() { _ = snap.Delete(true) })
+	reverter.Add(func() { _ = snap.Delete(true, true) })
 
 	// Mount volume for backup.yaml writing.
 	_, err = pool.MountInstance(inst, d.op)
@@ -1755,4 +1755,33 @@ func (d *common) selinuxContext(baseContext string) (string, error) {
 
 		return seContext, nil
 	}
+}
+
+// HasDependentDisk checks whether the instance has any dependent volumes.
+func (d *common) HasDependentDisk() bool {
+	for _, dev := range d.ExpandedDevices().Sorted() {
+		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+			continue
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// ForEachDependentDiskType executes the given function for each dependent disk on the instance.
+func (d *common) ForEachDependentDiskType(diskAction func(dev deviceConfig.DeviceNamed) error) error {
+	for _, dev := range d.ExpandedDevices().Sorted() {
+		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+			continue
+		}
+
+		err := diskAction(dev)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

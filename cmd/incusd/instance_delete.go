@@ -80,7 +80,7 @@ func instanceDelete(d *Daemon, r *http.Request) response.Response {
 
 	run := func(op *operations.Operation) error {
 		inst.SetOperation(op)
-		return inst.Delete(false)
+		return inst.Delete(false, true)
 	}
 
 	resources := map[string][]api.URL{}

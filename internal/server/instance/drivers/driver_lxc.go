@@ -3612,7 +3612,7 @@ func (d *lxc) onStop(args map[string]string) error {
 
 		// Destroy ephemeral containers
 		if d.ephemeral {
-			err = d.delete(true)
+			err = d.delete(true, true)
 			if err != nil {
 				op.Done(fmt.Errorf("Failed deleting ephemeral instance: %w", err))
 				return
@@ -4294,7 +4294,7 @@ func (d *lxc) cleanup() {
 }
 
 // Delete deletes the instance.
-func (d *lxc) Delete(force bool) error {
+func (d *lxc) Delete(force bool, deleteDependentVolumes bool) error {
 	// Setup a new operation.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionDelete, nil, false, false)
 	if err != nil {
@@ -4307,7 +4307,7 @@ func (d *lxc) Delete(force bool) error {
 		return api.StatusErrorf(http.StatusBadRequest, "Instance is running")
 	}
 
-	err = d.delete(force)
+	err = d.delete(force, deleteDependentVolumes)
 	if err != nil {
 		return err
 	}
@@ -4333,7 +4333,7 @@ func (d *lxc) Delete(force bool) error {
 }
 
 // Delete deletes the instance without creating an operation lock.
-func (d *lxc) delete(force bool) error {
+func (d *lxc) delete(force bool, deleteDependentVolumes bool) error {
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -4377,7 +4377,7 @@ func (d *lxc) delete(force bool) error {
 		} else {
 			// Remove all snapshots.
 			err := d.deleteSnapshots(func(snapInst instance.Instance) error {
-				return snapInst.(*lxc).delete(true) // Internal delete function that doesn't lock.
+				return snapInst.(*lxc).delete(true, deleteDependentVolumes) // Internal delete function that doesn't lock.
 			})
 			if err != nil {
 				return fmt.Errorf("Failed deleting instance snapshots: %w", err)
@@ -4387,6 +4387,27 @@ func (d *lxc) delete(force bool) error {
 			err = pool.DeleteInstance(d, nil)
 			if err != nil {
 				return err
+			}
+
+			if deleteDependentVolumes {
+				// Delete all dependent volumes associated with this instance.
+				err = d.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+					// Load the pool for the disk.
+					diskPool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
+					if err != nil {
+						return fmt.Errorf("Failed loading storage pool: %w", err)
+					}
+
+					err = diskPool.DeleteCustomVolume(d.Project().Name, dev.Config["source"], nil)
+					if err != nil {
+						return err
+					}
+
+					return nil
+				})
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -6648,7 +6669,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// Delete the extra local snapshots first.
 		for _, deleteTargetSnapshotIndex := range deleteTargetSnapshotIndexes {
-			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true)
+			err := targetSnapshots[deleteTargetSnapshotIndex].Delete(true, true)
 			if err != nil {
 				return err
 			}
@@ -9591,7 +9612,7 @@ func (d *lxc) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFile
 }
 
 // ExportQcow2Block exports a qcow2 block device. Not supported by containers.
-func (d *lxc) ExportQcow2Block(diskIndex int) (func(), string, error) {
+func (d *lxc) ExportQcow2Block(diskName string, diskIndex int) (func(), string, error) {
 	return nil, "", nil
 }
 
