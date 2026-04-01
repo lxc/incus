@@ -1756,3 +1756,32 @@ func (d *common) selinuxContext(baseContext string) (string, error) {
 		return seContext, nil
 	}
 }
+
+// HasDependentDisk checks whether the instance has any dependent volumes.
+func (d *common) HasDependentDisk() bool {
+	for _, dev := range d.ExpandedDevices().Sorted() {
+		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+			continue
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// ForEachDependentDiskType executes the given function for each dependent disk on the instance.
+func (d *common) ForEachDependentDiskType(diskAction func(dev deviceConfig.DeviceNamed) error) error {
+	for _, dev := range d.ExpandedDevices().Sorted() {
+		if dev.Config["type"] != "disk" || util.IsFalseOrEmpty(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
+			continue
+		}
+
+		err := diskAction(dev)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

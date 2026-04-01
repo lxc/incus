@@ -91,6 +91,10 @@ type Instance interface {
 	Info() Info
 	IsPrivileged() bool
 
+	// Dependent volumes
+	HasDependentDisk() bool
+	ForEachDependentDiskType(diskAction func(dev deviceConfig.DeviceNamed) error) error
+
 	// Snapshots & migration & backups.
 	Restore(source Instance, stateful bool, diskOnly bool) error
 	Snapshot(name string, expiry time.Time, stateful bool) error
