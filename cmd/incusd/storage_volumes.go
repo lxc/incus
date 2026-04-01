@@ -1109,7 +1109,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 
 	var op *operations.Operation
 	if push {
-		op, err = operations.OperationCreate(s, requestProjectName, operations.OperationClassWebsocket, operationtype.VolumeCreate, resources, sink.Metadata(), run, nil, sink.Connect, r)
+		op, err = operations.OperationCreate(s, requestProjectName, operations.OperationClassWebsocket, operationtype.VolumeCreate, resources, sink.Metadata(), run, sink.Cancel, sink.Connect, r)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -1683,7 +1683,7 @@ func storagePoolVolumeTypePostMigration(state *state.State, r *http.Request, req
 	}
 
 	// Pull mode.
-	op, err := operations.OperationCreate(state, requestProjectName, operations.OperationClassWebsocket, operationtype.VolumeMigrate, resources, ws.Metadata(), run, nil, ws.Connect, r)
+	op, err := operations.OperationCreate(state, requestProjectName, operations.OperationClassWebsocket, operationtype.VolumeMigrate, resources, ws.Metadata(), run, ws.Cancel, ws.Connect, r)
 	if err != nil {
 		return response.InternalError(err)
 	}

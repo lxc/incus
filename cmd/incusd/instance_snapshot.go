@@ -687,7 +687,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 		}
 
 		// Pull mode.
-		op, err := operations.OperationCreate(s, snapInst.Project().Name, operations.OperationClassWebsocket, operationtype.SnapshotTransfer, resources, ws.Metadata(), run, nil, ws.Connect, r)
+		op, err := operations.OperationCreate(s, snapInst.Project().Name, operations.OperationClassWebsocket, operationtype.SnapshotTransfer, resources, ws.Metadata(), run, ws.Cancel, ws.Connect, r)
 		if err != nil {
 			return response.InternalError(err)
 		}

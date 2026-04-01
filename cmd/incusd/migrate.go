@@ -78,6 +78,17 @@ func (c *migrationFields) recv(m proto.Message) error {
 	return migration.ProtoRecv(conn, m)
 }
 
+func (c *migrationFields) Cancel(op *operations.Operation) error {
+	c.controlLock.Lock()
+	defer c.controlLock.Unlock()
+
+	for _, conn := range c.conns {
+		conn.Close()
+	}
+
+	return nil
+}
+
 func (c *migrationFields) disconnect() {
 	c.controlLock.Lock()
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second)
