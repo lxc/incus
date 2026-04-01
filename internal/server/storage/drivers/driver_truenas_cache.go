@@ -22,7 +22,7 @@ var (
 	truenasCacheMu             sync.Mutex
 	truenasCachePrefillQueue   map[string][]string
 	truenasCachePrefillRunning map[string]bool
-	truenasCachePrefillWait    map[string]*sync.WaitGroup
+	truenasCachePrefillMu      map[string]*sync.RWMutex
 	truenasCacheProperties     = []string{"used", "referenced"}
 )
 
@@ -32,7 +32,7 @@ func truenasCacheEnsurePool(pool string) {
 	if !ok {
 		truenasCache[pool] = map[string]map[string]truenasCacheEntry{}
 		truenasCachePrefillQueue[pool] = []string{}
-		truenasCachePrefillWait[pool] = &sync.WaitGroup{}
+		truenasCachePrefillMu[pool] = &sync.RWMutex{}
 	}
 }
 
@@ -78,12 +78,11 @@ func (d *truenas) prefillCachedProperties(dataset string) {
 
 	if !truenasCachePrefillRunning[d.name] {
 		truenasCachePrefillRunning[d.name] = true
-		truenasCachePrefillWait[d.name] = &sync.WaitGroup{}
-		truenasCachePrefillWait[d.name].Add(1)
+		truenasCachePrefillMu[d.name].Lock()
 		defer func() {
 			truenasCacheMu.Lock()
 
-			truenasCachePrefillWait[d.name].Done()
+			truenasCachePrefillMu[d.name].Unlock()
 			truenasCachePrefillRunning[d.name] = false
 
 			truenasCacheMu.Unlock()
@@ -98,11 +97,8 @@ func (d *truenas) prefillCachedProperties(dataset string) {
 	// Check if we're done.
 	if !runPrefill {
 		// Wait for current run.
-		truenasCacheMu.Lock()
-		wg := truenasCachePrefillWait[d.name]
-		truenasCacheMu.Unlock()
-
-		wg.Wait()
+		truenasCachePrefillMu[d.name].RLock()
+		defer truenasCachePrefillMu[d.name].RUnlock()
 
 		// Check that we made it.
 		truenasCacheMu.Lock()

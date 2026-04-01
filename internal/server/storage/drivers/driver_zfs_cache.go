@@ -23,7 +23,7 @@ var (
 	zfsCacheMu             sync.Mutex
 	zfsCachePrefillQueue   []string
 	zfsCachePrefillRunning bool
-	zfsCachePrefillWait    sync.WaitGroup
+	zfsCachePrefillMu      sync.RWMutex
 	zfsCacheProperties     = []string{"used", "referenced"}
 )
 
@@ -66,12 +66,11 @@ func (d *zfs) prefillCachedProperties(dataset string) {
 
 	if !zfsCachePrefillRunning {
 		zfsCachePrefillRunning = true
-		zfsCachePrefillWait = sync.WaitGroup{}
-		zfsCachePrefillWait.Add(1)
+		zfsCachePrefillMu.Lock()
 		defer func() {
 			zfsCacheMu.Lock()
 
-			zfsCachePrefillWait.Done()
+			zfsCachePrefillMu.Unlock()
 			zfsCachePrefillRunning = false
 
 			zfsCacheMu.Unlock()
@@ -86,7 +85,8 @@ func (d *zfs) prefillCachedProperties(dataset string) {
 	// Check if we're done.
 	if !runPrefill {
 		// Wait for current run.
-		zfsCachePrefillWait.Wait()
+		zfsCachePrefillMu.RLock()
+		defer zfsCachePrefillMu.RUnlock()
 
 		// Check that we made it.
 		zfsCacheMu.Lock()

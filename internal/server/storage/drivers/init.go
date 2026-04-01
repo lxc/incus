@@ -11,5 +11,5 @@ func init() {
 	truenasCache = map[string]map[string]map[string]truenasCacheEntry{}
 	truenasCachePrefillQueue = map[string][]string{}
 	truenasCachePrefillRunning = map[string]bool{}
-	truenasCachePrefillWait = map[string]*sync.WaitGroup{}
+	truenasCachePrefillMu = map[string]*sync.RWMutex{}
 }
