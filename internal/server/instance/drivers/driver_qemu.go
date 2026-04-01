@@ -362,6 +362,9 @@ type qemu struct {
 	// Indicate whether the root disk will be live-migrated.
 	migrationRootDisk bool
 
+	// Indicates whether this is an inner-cluster or cross-cluster move.
+	migrationClusterMove bool
+
 	// Keep a reference to the console socket when switching backends, so we can properly cleanup when switching back to a ring buffer.
 	consoleSocket     *net.UnixListener
 	consoleSocketFile *os.File
@@ -1071,7 +1074,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 						d.logger.Error("Failed loading storage pool", logger.Ctx{"err": err})
 					}
 
-					if diskPool.Driver().Info().Remote {
+					if !storagePools.ShouldMigrateDependentVolume(diskPool, d.migrationClusterMove) {
 						continue
 					}
 
@@ -8218,7 +8221,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
-		if diskPool.Driver().Info().Remote {
+		if !storagePools.ShouldMigrateDependentVolume(diskPool, clusterMoveSourceName != "") {
 			continue
 		}
 
@@ -8277,7 +8280,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			if diskPool.Driver().Info().Remote {
+			if !storagePools.ShouldMigrateDependentVolume(diskPool, clusterMoveSourceName != "") {
 				continue
 			}
 
@@ -8464,7 +8467,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			if diskPool.Driver().Info().Remote {
+			if !storagePools.ShouldMigrateDependentVolume(diskPool, clusterMoveSourceName != "") {
 				continue
 			}
 
@@ -8952,7 +8955,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 						return fmt.Errorf("Failed loading storage pool: %w", err)
 					}
 
-					if diskPool.Driver().Info().Remote {
+					if !storagePools.ShouldMigrateDependentVolume(diskPool, args.ClusterMoveSourceName != "") {
 						continue
 					}
 
@@ -8969,6 +8972,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				}
 
 				d.migrationRootDisk = !sameSharedStorage
+				d.migrationClusterMove = args.ClusterMoveSourceName != ""
 			}
 
 			// Although the instance technically isn't considered stateful, we set this to allow
