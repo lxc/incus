@@ -467,7 +467,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 	var op *operations.Operation
 	if push {
-		op, err = operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.InstanceCreate, resources, sink.Metadata(), run, nil, sink.Connect, r)
+		op, err = operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.InstanceCreate, resources, sink.Metadata(), run, sink.Cancel, sink.Connect, r)
 		if err != nil {
 			return response.InternalError(err)
 		}
