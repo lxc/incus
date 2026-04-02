@@ -2852,6 +2852,25 @@ func (o *NB) GetPortGroupsByProject(ctx context.Context, projectID int64) ([]OVN
 	return pgNames, nil
 }
 
+// GetPortGroupsByPort returns the names of all port groups that contain the given port UUID as a member.
+func (o *NB) GetPortGroupsByPort(ctx context.Context, portUUID OVNSwitchPortUUID) ([]OVNPortGroup, error) {
+	portGroups := []ovnNB.PortGroup{}
+
+	err := o.client.WhereCache(func(pg *ovnNB.PortGroup) bool {
+		return slices.Contains(pg.Ports, string(portUUID))
+	}).List(ctx, &portGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	pgNames := make([]OVNPortGroup, 0, len(portGroups))
+	for _, portGroup := range portGroups {
+		pgNames = append(pgNames, OVNPortGroup(portGroup.Name))
+	}
+
+	return pgNames, nil
+}
+
 // UpdatePortGroupMembers adds/removes logical switch ports (by UUID) to/from existing port groups.
 func (o *NB) UpdatePortGroupMembers(ctx context.Context, addMembers map[OVNPortGroup][]OVNSwitchPortUUID, removeMembers map[OVNPortGroup][]OVNSwitchPortUUID) error {
 	operations := []ovsdb.Operation{}
