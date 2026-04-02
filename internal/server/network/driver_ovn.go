@@ -5324,6 +5324,30 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		return err
 	}
 
+	portUUID, err := n.ovnnb.GetLogicalSwitchPortUUID(context.TODO(), instancePortName)
+	if err != nil {
+		return fmt.Errorf("Failed getting logical port UUID for port group removal: %w", err)
+	}
+
+	if portUUID != "" {
+		portGroups, err := n.ovnnb.GetPortGroupsByPort(context.TODO(), portUUID)
+		if err != nil {
+			return fmt.Errorf("Failed getting port groups for instance NIC port: %w", err)
+		}
+
+		if len(portGroups) > 0 {
+			removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
+			for _, pg := range portGroups {
+				acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, pg)
+			}
+
+			err = n.ovnnb.UpdatePortGroupMembers(context.TODO(), map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}, removeChangeSet)
+			if err != nil {
+				return fmt.Errorf("Failed removing instance NIC port from port groups: %w", err)
+			}
+		}
+	}
+
 	// Cleanup logical switch port and associated config.
 	err = n.ovnnb.CleanupLogicalSwitchPort(context.TODO(), instancePortName, n.getIntSwitchName(), acl.OVNIntSwitchPortGroupName(n.ID()), dnsUUID)
 	if err != nil {
