@@ -777,7 +777,7 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 	}
 
 	// Import dependent disks
-	err = b.createDependentVolumes(srcBackup, srcData, op)
+	err = b.createDependentVolumesFromBackup(srcBackup, srcData, op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -8981,10 +8981,11 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 	return inst, devName, nil
 }
 
-func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+// createDependentVolumesFromBackup creates dependent volumes from a backup.
+func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
 	for _, disk := range srcBackup.Config.DependentVolumes {
-		optimizedStorage := false
-		optimizedHeader := false
+		optimizedStorage := srcBackup.OptimizedStorage
+		optimizedHeader := srcBackup.OptimizedHeader
 
 		snapshots := []string{}
 		for _, snap := range disk.VolumeSnapshots {
@@ -8996,14 +8997,14 @@ func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadS
 			Name:             disk.Volume.Name,
 			Backend:          disk.Pool.Driver,
 			Pool:             disk.Pool.Name,
-			OptimizedStorage: &optimizedStorage,
-			OptimizedHeader:  &optimizedHeader,
+			OptimizedStorage: optimizedStorage,
+			OptimizedHeader:  optimizedHeader,
 			Snapshots:        snapshots,
 			Type:             backup.TypeCustom,
 			Config:           disk,
 		}
 
-		b.logger.Error("Disk Info", logger.Ctx{"info": bInfo.Config.Volume.Config})
+		b.logger.Debug("Create dependent volume from backup", logger.Ctx{"name": bInfo.Name, "pool": bInfo.Pool})
 
 		pool, err := LoadByName(b.state, bInfo.Pool)
 		if err != nil {
