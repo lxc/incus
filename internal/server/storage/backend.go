@@ -777,7 +777,7 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 	}
 
 	// Import dependent disks
-	err = b.createDependentVolumes(srcBackup, srcData, op)
+	err = b.createDependentVolumesFromBackup(srcBackup, srcData, op)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -8981,7 +8981,8 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 	return inst, devName, nil
 }
 
-func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+// createDependentVolumesFromBackup creates dependent volumes from a backup.
+func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
 	for _, disk := range srcBackup.Config.DependentVolumes {
 		optimizedStorage := srcBackup.OptimizedStorage
 		optimizedHeader := srcBackup.OptimizedHeader
