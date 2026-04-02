@@ -251,6 +251,7 @@ type APIEndpointAction struct {
 	Handler        func(d *Daemon, r *http.Request) response.Response
 	AccessHandler  func(d *Daemon, r *http.Request) response.Response
 	AllowUntrusted bool
+	LargeRequest   bool // Whether the endpoint may be getting requests larger than 1MiB.
 }
 
 // allowAuthenticated is an AccessHandler which allows only authenticated requests. This should be used in conjunction
@@ -765,7 +766,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		if errors.Is(d.shutdownCtx.Err(), context.Canceled) && !allowedDuringShutdown() {
-			_ = response.Unavailable(errors.New("Shutting down")).Render(w)
+			_ = response.Unavailable(errors.New("Incus is shutting down")).Render(w)
 			return
 		}
 
@@ -796,6 +797,11 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 				if resp != response.EmptySyncResponse {
 					return resp
 				}
+			}
+
+			// Limit request body size unless the endpoint requires a large body.
+			if !action.LargeRequest {
+				r.Body = http.MaxBytesReader(w, r.Body, 1024*1024)
 			}
 
 			return action.Handler(d, r)

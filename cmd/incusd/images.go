@@ -67,7 +67,7 @@ var imagesCmd = APIEndpoint{
 	Path: "images",
 
 	Get:  APIEndpointAction{Handler: imagesGet, AllowUntrusted: true},
-	Post: APIEndpointAction{Handler: imagesPost, AllowUntrusted: true},
+	Post: APIEndpointAction{Handler: imagesPost, AllowUntrusted: true, LargeRequest: true},
 }
 
 var imageCmd = APIEndpoint{
