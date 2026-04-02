@@ -64,29 +64,29 @@ test_database_no_disk_space() {
         # shellcheck disable=SC2034,SC2030
         INCUS_DIR="${INCUS_NOSPACE_DIR}"
 
-        ensure_import_testimage
-        incus init testimage c
-
-        # Set a custom user property with a big value, so we eventually eat up all
-        # available disk space in the database directory.
+        # Create profiles with large amount of data to eat all the space
         DATA="${INCUS_NOSPACE_DIR}/data"
         head -c 262144 < /dev/zero | tr '\0' '\141' > "${DATA}"
         for i in $(seq 20); do
-            if ! incus config set c "user.prop${i}" - < "${DATA}"; then
+            if ! incus profile create "test$i";then
+                break
+            fi
+
+            if ! incus profile set "test$i" "user.prop" - < "${DATA}"; then
                 break
             fi
         done
 
         # Commands that involve writing to the database keep failing.
-        ! incus config set c "user.propX" - < "${DATA}" || false
-        ! incus config set c "user.propY" - < "${DATA}" || false
+        ! incus profile set test1 "user.propX" - < "${DATA}" || false
+        ! incus profile set test1 "user.propY" - < "${DATA}" || false
 
         # Removing the big file eventually makes the database happy again.
         rm "${BIG_FILE}"
 
         succeeded=no
         for i in $(seq 10); do
-            if incus config set c "user.propZ" - < "${DATA}"; then
+            if incus profile set test1 "user.propZ" - < "${DATA}"; then
                 succeeded=yes
                 break
             fi
@@ -94,11 +94,10 @@ test_database_no_disk_space() {
         done
         [ "${succeeded}" = "yes" ] || false
 
-        incus delete -f c
-
-        # The cleanup routine does not take care of image deletion in this test,
-        # because the socket is closed and the DB is deleted before cleanup
-        incus image delete testimage
+        # Cleanup
+        for i in $(seq 20); do
+            incus profile delete "test$i" || break
+        done
     )
 
     shutdown_incus "${INCUS_NOSPACE_DIR}"
