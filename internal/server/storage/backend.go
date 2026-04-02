@@ -9003,7 +9003,7 @@ func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadS
 			Config:           disk,
 		}
 
-		b.logger.Error("Disk Info", logger.Ctx{"info": bInfo.Config.Volume.Config})
+		b.logger.Debug("Create dependent volume from backup", logger.Ctx{"name": bInfo.Name, "pool": bInfo.Pool})
 
 		pool, err := LoadByName(b.state, bInfo.Pool)
 		if err != nil {
