@@ -765,7 +765,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		if errors.Is(d.shutdownCtx.Err(), context.Canceled) && !allowedDuringShutdown() {
-			_ = response.Unavailable(errors.New("Shutting down")).Render(w)
+			_ = response.Unavailable(errors.New("Incus is shutting down")).Render(w)
 			return
 		}
 
