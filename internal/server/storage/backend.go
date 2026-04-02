@@ -8983,8 +8983,8 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 
 func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
 	for _, disk := range srcBackup.Config.DependentVolumes {
-		optimizedStorage := false
-		optimizedHeader := false
+		optimizedStorage := srcBackup.OptimizedStorage
+		optimizedHeader := srcBackup.OptimizedHeader
 
 		snapshots := []string{}
 		for _, snap := range disk.VolumeSnapshots {
@@ -8996,8 +8996,8 @@ func (b *backend) createDependentVolumes(srcBackup backup.Info, srcData io.ReadS
 			Name:             disk.Volume.Name,
 			Backend:          disk.Pool.Driver,
 			Pool:             disk.Pool.Name,
-			OptimizedStorage: &optimizedStorage,
-			OptimizedHeader:  &optimizedHeader,
+			OptimizedStorage: optimizedStorage,
+			OptimizedHeader:  optimizedHeader,
 			Snapshots:        snapshots,
 			Type:             backup.TypeCustom,
 			Config:           disk,

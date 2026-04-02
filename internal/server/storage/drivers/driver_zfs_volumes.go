@@ -12,6 +12,7 @@ import (
 	"maps"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -481,7 +482,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 				prefix = "volume-snapshots"
 			}
 
-			srcFile := fmt.Sprintf("backup/%s/%s", prefix, fileName)
+			srcFile := filepath.Join(basePrefix, prefix, fileName)
 			dstSnapshot := fmt.Sprintf("%s@snapshot-%s", d.dataset(v, false), snapName)
 			err = unpackVolume(v, srcData, unpacker, srcFile, dstSnapshot)
 			if err != nil {
@@ -501,7 +502,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 			fileName = "volume.bin"
 		}
 
-		err = unpackVolume(v, srcData, unpacker, fmt.Sprintf("backup/%s", fileName), d.dataset(v, false))
+		err = unpackVolume(v, srcData, unpacker, filepath.Join(basePrefix, fileName), d.dataset(v, false))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -3040,7 +3041,7 @@ func (d *zfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, bas
 				prefix = "volume-snapshots"
 			}
 
-			target := fmt.Sprintf("backup/%s/%s", prefix, fileName)
+			target := filepath.Join(basePrefix, prefix, fileName)
 			err := sendToFile(d.dataset(snapshot, false), parent, target)
 			if err != nil {
 				return err
@@ -3077,7 +3078,7 @@ func (d *zfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, bas
 		fileName = "volume.bin"
 	}
 
-	err = sendToFile(srcSnapshot, finalParent, fmt.Sprintf("backup/%s", fileName))
+	err = sendToFile(srcSnapshot, finalParent, filepath.Join(basePrefix, fileName))
 	if err != nil {
 		return err
 	}

@@ -200,7 +200,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 	// Load optimized backup header file if specified.
 	var optimizedHeader *BTRFSMetaDataHeader
 	if *srcBackup.OptimizedHeader {
-		optimizedHeader, err = d.loadOptimizedBackupHeader(srcData, GetVolumeMountPath(d.name, vol.volType, ""))
+		optimizedHeader, err = d.loadOptimizedBackupHeader(srcData, GetVolumeMountPath(d.name, vol.volType, ""), basePrefix)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -288,11 +288,11 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 			}
 
 			// Figure out what file we are looking for in the backup file.
-			srcFilePath := filepath.Join("backup", fmt.Sprintf("%s.bin", srcFilePrefix))
+			srcFilePath := filepath.Join(basePrefix, fmt.Sprintf("%s.bin", srcFilePrefix))
 			if subVol.Path != string(filepath.Separator) {
 				// If subvolume is non-root, then we expect the file to be encoded as its original
 				// path with the leading / removed.
-				srcFilePath = filepath.Join("backup", fmt.Sprintf("%s_%s.bin", srcFilePrefix, linux.PathNameEncode(strings.TrimPrefix(subVol.Path, string(filepath.Separator)))))
+				srcFilePath = filepath.Join(basePrefix, fmt.Sprintf("%s_%s.bin", srcFilePrefix, linux.PathNameEncode(strings.TrimPrefix(subVol.Path, string(filepath.Separator)))))
 			}
 
 			// Define where we will move the subvolume after it is unpacked.
@@ -1670,7 +1670,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 	r := bytes.NewReader(optimizedHeaderYAML)
 
 	indexFileInfo := instancewriter.FileInfo{
-		FileName:    "backup/optimized_header.yaml",
+		FileName:    filepath.Join(basePrefix, "optimized_header.yaml"),
 		FileSize:    int64(len(optimizedHeaderYAML)),
 		FileMode:    0o644,
 		FileModTime: time.Now(),
@@ -1779,7 +1779,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 			}
 
 			fileName := fmt.Sprintf("%s%s.bin", fileNamePrefix, subVolName)
-			err = sendToFile(sourcePath, parentPath, filepath.Join("backup", fileName))
+			err = sendToFile(sourcePath, parentPath, filepath.Join(basePrefix, fileName))
 			if err != nil {
 				return fmt.Errorf("Failed adding volume %v:%s: %w", v.name, subVolume.Path, err)
 			}
