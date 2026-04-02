@@ -1378,7 +1378,7 @@ func (d *nicOVN) postStop() error {
 }
 
 // Remove is run when the device is removed from the instance or the instance is deleted.
-func (d *nicOVN) Remove() error {
+func (d *nicOVN) Remove(cleanupDependencies bool) error {
 	// Check for port groups that will become unused (and need deleting) as this NIC is deleted.
 	securityACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
 	if len(securityACLs) > 0 {

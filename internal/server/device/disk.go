@@ -3143,7 +3143,7 @@ func (d *disk) cephCreds() (string, string) {
 }
 
 // Remove cleans up the device when it is removed from an instance.
-func (d *disk) Remove() error {
+func (d *disk) Remove(cleanupDependencies bool) error {
 	// Remove the config.iso file for cloud-init config drives.
 	if d.config["source"] == diskSourceCloudInit {
 		pool, err := storagePools.LoadByInstance(d.state, d.inst)
@@ -3165,7 +3165,7 @@ func (d *disk) Remove() error {
 		}
 	}
 
-	if d.config["pool"] != "" && d.config["source"] != "" && util.IsTrue(d.config["dependent"]) {
+	if d.config["pool"] != "" && d.config["source"] != "" && util.IsTrue(d.config["dependent"]) && cleanupDependencies {
 		d.config["dependent"] = ""
 		// If the volume doesn't exist, ignore this as we remove the device anyway.
 		_, err := d.updateDependentConfig()

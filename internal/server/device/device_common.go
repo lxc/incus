@@ -93,7 +93,7 @@ func (d *deviceCommon) Update(oldDevices deviceConfig.Devices, isRunning bool) e
 }
 
 // Remove returns nil error as majority of devices don't need to do any host-side cleanup on delete.
-func (d *deviceCommon) Remove() error {
+func (d *deviceCommon) Remove(cleanupDependencies bool) error {
 	return nil
 }
 

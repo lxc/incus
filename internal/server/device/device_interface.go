@@ -64,7 +64,7 @@ type Device interface {
 	Stop() (*deviceConfig.RunConfig, error)
 
 	// Remove performs any host-side cleanup when a device is removed from an instance.
-	Remove() error
+	Remove(cleanupDependencies bool) error
 }
 
 // device represents a sealed interface that implements Device, but also contains some internal
