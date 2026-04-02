@@ -103,6 +103,10 @@
 #define MOVE_MOUNT__MASK 0x00000077
 #endif
 
+#ifndef FSCONFIG_SET_FLAG
+#define FSCONFIG_SET_FLAG 0 /* Set parameter, supplying no value */
+#endif
+
 #ifndef FSCONFIG_SET_STRING
 #define FSCONFIG_SET_STRING 1 /* Set parameter, supplying a string value */
 #endif
