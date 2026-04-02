@@ -54,14 +54,14 @@ var storagePoolVolumesCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/volumes",
 
 	Get:  APIEndpointAction{Handler: storagePoolVolumesGet, AccessHandler: allowAuthenticated},
-	Post: APIEndpointAction{Handler: storagePoolVolumesPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateStorageVolumes)},
+	Post: APIEndpointAction{Handler: storagePoolVolumesPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateStorageVolumes), LargeRequest: true},
 }
 
 var storagePoolVolumesTypeCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/volumes/{type}",
 
 	Get:  APIEndpointAction{Handler: storagePoolVolumesGet, AccessHandler: allowAuthenticated},
-	Post: APIEndpointAction{Handler: storagePoolVolumesPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateStorageVolumes)},
+	Post: APIEndpointAction{Handler: storagePoolVolumesPost, AccessHandler: allowPermission(auth.ObjectTypeProject, auth.EntitlementCanCreateStorageVolumes), LargeRequest: true},
 }
 
 var storagePoolVolumeTypeCmd = APIEndpoint{
@@ -86,7 +86,7 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 	Delete: APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
 	Get:    APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
 	Head:   APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
-	Post:   APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location")},
+	Post:   APIEndpointAction{Handler: storagePoolVolumeTypeFileHandler, AccessHandler: allowPermission(auth.ObjectTypeStorageVolume, auth.EntitlementCanAccessFiles, "poolName", "type", "volumeName", "location"), LargeRequest: true},
 }
 
 // swagger:operation GET /1.0/storage-pools/{poolName}/volumes storage storage_pool_volumes_get
