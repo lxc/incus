@@ -96,7 +96,11 @@ func (d *truenas) prefillCachedProperties(dataset string) {
 
 	// Check if we're done.
 	if !runPrefill {
-		// Wait for current run.
+		// If we got here, the dataset we care about wasn't already in the cache AND there was an existing prefill run ongoing.
+		// Attempt to get a read lock for the prefiller, this will block until the current prefill is done running.
+		//
+		// Depending on timing, the current prefill may or may not have picked us up from the queue.
+		// So we check if we're still in the queue and if we are, we trigger another run which will hopefully pick us up then.
 		truenasCachePrefillMu[d.name].RLock()
 		truenasCachePrefillMu[d.name].RUnlock() //nolint:staticcheck
 
