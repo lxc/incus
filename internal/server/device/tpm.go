@@ -303,7 +303,7 @@ func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
 }
 
 // Remove removes the TPM state file.
-func (d *tpm) Remove() error {
+func (d *tpm) Remove(cleanupDependencies bool) error {
 	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
 
 	return os.RemoveAll(tpmDevPath)

@@ -694,7 +694,8 @@ func (d *proxy) killProxyProc(pidPath string) error {
 	return nil
 }
 
-func (d *proxy) Remove() error {
+// Remove cleans up the device when it is removed from an instance.
+func (d *proxy) Remove(cleanupDependencies bool) error {
 	err := warnings.DeleteWarningsByLocalNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
 	if err != nil {
 		logger.Warn("Failed to delete warning", logger.Ctx{"err": err})

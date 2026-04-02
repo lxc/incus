@@ -7286,7 +7286,10 @@ func (d *qemu) init() error {
 }
 
 // Delete the instance.
-func (d *qemu) Delete(force bool, deleteDependentVolumes bool) error {
+// cleanupDependencies controls whether dependent resources (e.g. volumes,
+// and related state) are removed along with the instance.
+// When false, dependencies are preserved (e.g. storage-only moves).
+func (d *qemu) Delete(force bool, cleanupDependencies bool) error {
 	// Setup a new operation.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionDelete, nil, false, false)
 	if err != nil {
@@ -7299,7 +7302,7 @@ func (d *qemu) Delete(force bool, deleteDependentVolumes bool) error {
 		return api.StatusErrorf(http.StatusBadRequest, "Instance is running")
 	}
 
-	err = d.delete(force, deleteDependentVolumes)
+	err = d.delete(force, cleanupDependencies)
 	if err != nil {
 		return err
 	}
@@ -7325,7 +7328,7 @@ func (d *qemu) Delete(force bool, deleteDependentVolumes bool) error {
 }
 
 // Delete the instance without creating an operation lock.
-func (d *qemu) delete(force bool, deleteDependentVolumes bool) error {
+func (d *qemu) delete(force bool, cleanupDependencies bool) error {
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -7363,7 +7366,7 @@ func (d *qemu) delete(force bool, deleteDependentVolumes bool) error {
 		} else {
 			// Remove all snapshots.
 			err := d.deleteSnapshots(func(snapInst instance.Instance) error {
-				return snapInst.(*qemu).delete(true, deleteDependentVolumes) // Internal delete function that doesn't lock.
+				return snapInst.(*qemu).delete(true, cleanupDependencies) // Internal delete function that doesn't lock.
 			})
 			if err != nil {
 				return fmt.Errorf("Failed deleting instance snapshots: %w", err)
@@ -7375,7 +7378,7 @@ func (d *qemu) delete(force bool, deleteDependentVolumes bool) error {
 				return err
 			}
 
-			if deleteDependentVolumes {
+			if cleanupDependencies {
 				// Delete all dependent volumes associated with this instance.
 				err = d.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 					// Load the pool for the disk.
@@ -7414,7 +7417,7 @@ func (d *qemu) delete(force bool, deleteDependentVolumes bool) error {
 		}
 
 		// Run device removal function for each device.
-		d.devicesRemove(d)
+		d.devicesRemove(d, cleanupDependencies)
 
 		// Clean things up.
 		d.cleanup()
