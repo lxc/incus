@@ -4431,7 +4431,7 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 		}
 
 		// Run device removal function for each device.
-		d.devicesRemove(d)
+		d.devicesRemove(d, cleanupDependencies)
 
 		// Clean things up.
 		d.cleanup()

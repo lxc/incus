@@ -66,7 +66,7 @@ var muNUMA sync.Mutex
 // deviceManager is an interface that allows managing device lifecycle.
 type deviceManager interface {
 	deviceAdd(dev device.Device, instanceRunning bool) error
-	deviceRemove(dev device.Device, instanceRunning bool) error
+	deviceRemove(dev device.Device, instanceRunning bool, cleanupDependencies bool) error
 	deviceStart(dev device.Device, instanceRunning bool) (*deviceConfig.RunConfig, error)
 	deviceStop(dev device.Device, instanceRunning bool, stopHookNetnsPath string) error
 }
@@ -1259,7 +1259,7 @@ func (d *common) deviceAdd(dev device.Device, instanceRunning bool) error {
 }
 
 // deviceRemove loads a new device and calls its Remove() function.
-func (d *common) deviceRemove(dev device.Device, instanceRunning bool) error {
+func (d *common) deviceRemove(dev device.Device, instanceRunning bool, cleanupDependencies bool) error {
 	l := d.logger.AddContext(logger.Ctx{"device": dev.Name(), "type": dev.Config()["type"]})
 	l.Debug("Removing device")
 
@@ -1267,7 +1267,7 @@ func (d *common) deviceRemove(dev device.Device, instanceRunning bool) error {
 		return errors.New("Device cannot be removed when instance is running")
 	}
 
-	return dev.Remove()
+	return dev.Remove(cleanupDependencies)
 }
 
 // devicesAdd adds devices to instance.
@@ -1305,7 +1305,7 @@ func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool, partia
 			return nil, fmt.Errorf("Failed to add device %q: %w", dev.Name(), err)
 		}
 
-		reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning) })
+		reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning, true) })
 	}
 
 	cleanup := reverter.Clone().Fail
@@ -1361,7 +1361,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 				}
 			}
 
-			err = d.deviceRemove(dev, instanceRunning)
+			err = d.deviceRemove(dev, instanceRunning, true)
 			if err != nil && !errors.Is(err, device.ErrUnsupportedDevType) {
 				return fmt.Errorf("Failed to remove device %q: %w", dev.Name(), err)
 			}
@@ -1410,7 +1410,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			l.Error("Failed to add device, skipping as non-user requested", logger.Ctx{"err": err})
 		}
 
-		reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning) })
+		reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning, true) })
 
 		if instanceRunning {
 			err = dev.PreStartCheck()
@@ -1467,7 +1467,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 					}
 				}
 
-				err = d.deviceRemove(dev, instanceRunning)
+				err = d.deviceRemove(dev, instanceRunning, true)
 				if err != nil && !errors.Is(err, device.ErrUnsupportedDevType) {
 					l.Error("Failed to remove device after update validation failed", logger.Ctx{"err": err})
 				}
@@ -1488,7 +1488,7 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 }
 
 // devicesRemove runs device removal function for each device.
-func (d *common) devicesRemove(inst instance.Instance) {
+func (d *common) devicesRemove(inst instance.Instance, cleanupDependencies bool) {
 	for _, entry := range d.expandedDevices.Reversed() {
 		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, true)
 		if err != nil {
@@ -1505,7 +1505,7 @@ func (d *common) devicesRemove(inst instance.Instance) {
 		// than older versions and we still need to allow previously valid devices to be stopped even if
 		// they are no longer considered valid.
 		if dev != nil {
-			err = d.deviceRemove(dev, false)
+			err = d.deviceRemove(dev, false, cleanupDependencies)
 			if err != nil {
 				d.logger.Error("Failed to remove device", logger.Ctx{"device": dev.Name(), "err": err})
 			}
