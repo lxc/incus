@@ -424,6 +424,38 @@ static void mount_emulate(void)
 		if (ret < 0)
 			die("error: failed to create detached idmapped mount: fsconfig");
 
+		if (data && strcmp((const char *)data, "") != 0) {
+			char *buf, *cur, *tok;
+
+			buf = strdup((const char *)data);
+			if (!buf)
+				die("error: failed to allocate memory for mount data");
+
+			for (cur = buf; (tok = strsep(&cur, ",")); ) {
+				char *val;
+
+				if (*tok == '\0')
+					continue;
+
+				val = strchr(tok, '=');
+				if (val) {
+					*val = '\0';
+					val++;
+				}
+
+				if (val && *val != '\0') {
+					ret = incus_fsconfig(fs_fd, FSCONFIG_SET_STRING, tok, val, 0);
+				} else {
+					ret = incus_fsconfig(fs_fd, FSCONFIG_SET_FLAG, tok, NULL, 0);
+				}
+
+				if (ret < 0)
+					die("error: failed to create detached idmapped mount: fsconfig");
+			}
+
+			free(buf);
+		}
+
 		ret = incus_fsconfig(fs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
 		if (ret < 0)
 			die("error: failed to create detached idmapped mount: fsconfig");
