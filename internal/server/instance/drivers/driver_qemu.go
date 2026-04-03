@@ -11105,7 +11105,7 @@ func (d *qemu) GuestOS() string {
 }
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.
-func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName string, backingFilename string) error {
+func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName string, backingFilename string, stateful bool) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -11161,9 +11161,18 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 	}
 
 	// Update metadata of the backing file.
-	err = monitor.ChangeBackingFile(nextOverlayName, nextOverlayName, backingFilename)
-	if err != nil {
-		return fmt.Errorf("Failed changing backing file: %w", err)
+	// Use the Qcow2Rebase method when performing stateful snapshots.
+	// Using QMP to modify a volume that was added while the VM is paused can cause QEMU to crash.
+	if stateful {
+		err = storageDrivers.Qcow2Rebase(devPath, backingFilename)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = monitor.ChangeBackingFile(nextOverlayName, nextOverlayName, backingFilename)
+		if err != nil {
+			return fmt.Errorf("Failed changing backing file: %w", err)
+		}
 	}
 
 	return nil

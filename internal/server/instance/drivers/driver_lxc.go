@@ -9605,7 +9605,7 @@ func (d *lxc) GuestOS() string {
 }
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance. Not supported by containers.
-func (d *lxc) CreateQcow2Snapshot(devPath string, devName string, snapName string, backingFilename string) error {
+func (d *lxc) CreateQcow2Snapshot(devPath string, devName string, snapName string, backingFilename string, stateful bool) error {
 	return nil
 }
 
