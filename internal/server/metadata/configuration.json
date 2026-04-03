@@ -1382,6 +1382,7 @@
 					},
 					{
 						"gvrp": {
+							"condition": "container",
 							"default": "false",
 							"longdesc": "",
 							"managed": "no",
@@ -1391,6 +1392,7 @@
 					},
 					{
 						"hwaddr": {
+							"condition": "container",
 							"default": "randomly assigned",
 							"longdesc": "",
 							"managed": "no",
@@ -1400,6 +1402,7 @@
 					},
 					{
 						"mtu": {
+							"condition": "container",
 							"default": "MTU of the parent device",
 							"longdesc": "",
 							"managed": "no",
@@ -1434,6 +1437,7 @@
 					},
 					{
 						"vlan": {
+							"condition": "container",
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "The VLAN ID to attach to",
@@ -1442,6 +1446,7 @@
 					},
 					{
 						"vlan.tagged": {
+							"condition": "container",
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic",

@@ -78,24 +78,6 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		//  shortdesc: Boot priority for VMs (higher value boots first)
 		"boot.priority",
 
-		// gendoc:generate(entity=devices, group=nic_physical, key=gvrp)
-		//
-		// ---
-		//  type: bool
-		//  default: false
-		//  managed: no
-		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
-		"gvrp",
-
-		// gendoc:generate(entity=devices, group=nic_physical, key=mtu)
-		//
-		// ---
-		//  type: integer
-		//  default: MTU of the parent device
-		//  managed: no
-		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
-		"mtu",
-
 		// gendoc:generate(entity=devices, group=nic_physical, key=attached)
 		//
 		// ---
@@ -107,11 +89,39 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 	}
 
 	if instConf.Type() == instancetype.Container || instConf.Type() == instancetype.Any {
+		// gendoc:generate(entity=devices, group=nic_physical, key=gvrp)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  condition: container
+		//  shortdesc: Register VLAN using GARP VLAN Registration Protocol
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=hwaddr)
+		//
+		// ---
+		//  type: string
+		//  default: randomly assigned
+		//  managed: no
+		//  condition: container
+		//  shortdesc: The MAC address of the new interface
+
+		// gendoc:generate(entity=devices, group=nic_physical, key=mtu)
+		//
+		// ---
+		//  type: integer
+		//  default: MTU of the parent device
+		//  managed: no
+		//  condition: container
+		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
+
 		// gendoc:generate(entity=devices, group=nic_physical, key=vlan)
 		//
 		// ---
 		//  type: integer
 		//  managed: no
+		//  condition: container
 		//  shortdesc: The VLAN ID to attach to
 
 		// gendoc:generate(entity=devices, group=nic_physical, key=vlan.tagged)
@@ -119,8 +129,9 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		// ---
 		//  type: integer
 		//  managed: no
+		//  condition: container
 		//  shortdesc: Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic
-		optionalFields = append(optionalFields, "hwaddr", "vlan", "vlan.tagged")
+		optionalFields = append(optionalFields, "gvrp", "hwaddr", "mtu", "vlan", "vlan.tagged")
 	}
 
 	// gendoc:generate(entity=devices, group=nic_physical, key=network)
@@ -160,20 +171,24 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		// Get actual parent device from network's parent setting.
 		d.config["parent"] = netConfig["parent"]
 
-		// If parent is a bridge, ensure it's managed.
+		// Check if the parent is a bridge.
 		isParentBridge := d.config["parent"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
-		if isParentBridge && d.network == nil {
-			return fmt.Errorf("Parent device is a bridge, use nictype=bridged instead")
-		}
+		if isParentBridge {
+			// Validate the NIC as if bridged.
+			bridgedConfig := d.config.Clone()
+			bridgedConfig["type"] = "nic"
+			bridgedConfig["nictype"] = "bridged"
+			bridgedConfig["network"] = ""
 
-		// gendoc:generate(entity=devices, group=nic_physical, key=hwaddr)
-		//
-		// ---
-		//  type: string
-		//  default: randomly assigned
-		//  managed: no
-		//  shortdesc: The MAC address of the new interface
-		optionalFields = append(optionalFields, "hwaddr", "vlan", "vlan.tagged")
+			// Instantiate the new device.
+			bridged, err := load(nil, d.state, instConf.Project().Name, d.name, bridgedConfig, nil, nil)
+			if err != nil {
+				return fmt.Errorf("Failed to initialize bridged device: %w", err)
+			}
+
+			// Forward the start call.
+			return bridged.validateConfig(instConf, partialValidation)
+		}
 
 		// Copy certain keys verbatim from the network's settings.
 		for _, field := range optionalFields {
