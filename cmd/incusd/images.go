@@ -611,16 +611,32 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req api.ImagesPost, op *operations.Operation, project string, budget int64) (*api.Image, error) {
 	var err error
 
+	// Check the request.
 	if req.Source.URL == "" {
 		return nil, errors.New("Missing URL")
 	}
 
+	// Validate that the initial image target is allowed.
+	// The imageDownload function will validate the ultimate file download location later.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		err := projectutils.AllowImageDownload(tx, project, req.Source.URL)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the image download headers from the provided URL.
+	// Provide some information about the current server to the target.
 	myhttp, err := localUtil.HTTPClient("", s.Proxy)
 	if err != nil {
 		return nil, err
 	}
 
-	// Resolve the image URL
 	head, err := http.NewRequest("HEAD", req.Source.URL, nil)
 	if err != nil {
 		return nil, err
@@ -645,6 +661,7 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 		return nil, err
 	}
 
+	// Get the image fingerprint and download URL.
 	hash := raw.Header.Get("Incus-Image-Hash")
 	if hash == "" {
 		return nil, errors.New("Missing Incus-Image-Hash header")
@@ -655,7 +672,7 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 		return nil, errors.New("Missing Incus-Image-URL header")
 	}
 
-	// Import the image
+	// Download the image itself.
 	info, _, err := ImageDownload(ctx, r, s, op, &ImageDownloadArgs{
 		Server:      url,
 		Protocol:    "direct",
@@ -669,6 +686,7 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 		return nil, err
 	}
 
+	// Apply user provided attributes and overrides.
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var id int
 
