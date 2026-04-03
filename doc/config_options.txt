@@ -1224,6 +1224,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} gvrp devices-nic_physical
+:condition: "container"
 :default: "false"
 :managed: "no"
 :shortdesc: "Register VLAN using GARP VLAN Registration Protocol"
@@ -1232,6 +1233,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} hwaddr devices-nic_physical
+:condition: "container"
 :default: "randomly assigned"
 :managed: "no"
 :shortdesc: "The MAC address of the new interface"
@@ -1240,6 +1242,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} mtu devices-nic_physical
+:condition: "container"
 :default: "MTU of the parent device"
 :managed: "no"
 :shortdesc: "The Maximum Transmit Unit (MTU) of the new interface"
@@ -1270,6 +1273,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} vlan devices-nic_physical
+:condition: "container"
 :managed: "no"
 :shortdesc: "The VLAN ID to attach to"
 :type: "integer"
@@ -1277,6 +1281,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} vlan.tagged devices-nic_physical
+:condition: "container"
 :managed: "no"
 :shortdesc: "Comma-delimited list of VLAN IDs or VLAN ranges to join for tagged traffic"
 :type: "integer"
