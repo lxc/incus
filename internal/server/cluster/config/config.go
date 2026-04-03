@@ -977,7 +977,7 @@ var ConfigSchema = config.Schema{
 	"oidc.audience": {},
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.claim)
-	//
+	// Note that the claim must be contained in the access token.
 	// ---
 	//  type: string
 	//  scope: global
