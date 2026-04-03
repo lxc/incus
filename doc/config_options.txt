@@ -5472,7 +5472,7 @@ This value is required by some providers.
 :scope: "global"
 :shortdesc: "OpenID Connect claim to use as the username"
 :type: "string"
-
+Note that the claim must be contained in the access token.
 ```
 
 ```{config:option} oidc.client.id server-oidc
