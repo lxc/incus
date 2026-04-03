@@ -7,6 +7,8 @@ test_storage_driver_zfs() {
     do_zfs_delegate
 
     do_zfs_encryption
+
+    do_zfs_export_with_dependent_volumes
 }
 
 do_zfs_delegate() {
@@ -369,4 +371,29 @@ do_storage_driver_zfs() {
 
     # shellcheck disable=SC2031
     kill_incus "${INCUS_STORAGE_DIR}"
+}
+
+do_zfs_export_with_dependent_volumes() {
+    # shellcheck disable=2039,3043
+    local storage_pool storage_volume
+    storage_pool="incustest-$(basename "${INCUS_DIR}")"
+    storage_volume="${storage_pool}-vol1"
+
+    incus init testimage c1
+    incus storage volume create "${storage_pool}" "${storage_volume}"
+    incus config device add c1 "${storage_volume}" disk pool="${storage_pool}" source="${storage_volume}" dependent=true path=/extra
+
+    # Export the instance and dependent volume.
+    incus export c1 "${INCUS_DIR}/c1.tar.gz" --optimized-storage
+    incus delete -f c1
+
+    # Import the instance from tarball.
+    incus import "${INCUS_DIR}/c1.tar.gz"
+
+    incus storage ls
+
+    # Cleanup
+    incus storage volume detach "${storage_pool}" "${storage_volume}" c1
+    incus storage volume delete "${storage_pool}" "${storage_volume}"
+    incus delete --force c1
 }
