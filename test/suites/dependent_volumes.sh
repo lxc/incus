@@ -64,6 +64,13 @@ test_dependent_volumes() {
     incus config device add c1 vol2 disk pool="${storage_pool}" source="${storage_volume2}" dependent=true path=/extra
     incus storage volume get "${storage_pool}" "${storage_volume2}" dependent | grep -Fx 'true'
 
+    # Export the instance and dependent volume.
+    incus export c1 "${INCUS_DIR}/c1.tar.gz"
+    incus delete -f c1
+
+    # Import the instance from tarball.
+    incus import "${INCUS_DIR}/c1.tar.gz"
+
     # Detaching the volume removes the 'dependent' flag
     incus storage volume detach "${storage_pool}" "${storage_volume2}" c1
     ! incus storage volume get "${storage_pool}" "${storage_volume2}" dependent | grep . || false
@@ -73,6 +80,7 @@ test_dependent_volumes() {
     [ "$(incus storage volume ls "${storage_pool}" "${storage_volume}" --format json | jq 'length == 0')" = "true" ]
 
     # Cleanup
+    rm "${INCUS_DIR}/c1.tar.gz"
     incus storage volume delete "${storage_pool}" "${storage_volume2}"
     incus delete --force c2
 }

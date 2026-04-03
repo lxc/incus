@@ -8983,6 +8983,16 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 
 // createDependentVolumesFromBackup creates dependent volumes from a backup.
 func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+	devicesMap := map[string]string{}
+	for devName, dev := range srcBackup.Config.Container.ExpandedDevices {
+		if dev["type"] != "disk" || util.IsFalseOrEmpty(dev["dependent"]) || dev["path"] == "/" || dev["pool"] == "" {
+			continue
+		}
+
+		devKey := fmt.Sprintf("%s/%s", dev["pool"], dev["source"])
+		devicesMap[devKey] = devName
+	}
+
 	for _, disk := range srcBackup.Config.DependentVolumes {
 		optimizedStorage := srcBackup.OptimizedStorage
 		optimizedHeader := srcBackup.OptimizedHeader
@@ -9017,7 +9027,13 @@ func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcDat
 		}
 
 		// Dump tarball to storage.
-		err = pool.CreateCustomVolumeFromBackup(bInfo, srcData, filepath.Join(backup.DefaultBackupPrefix, disk.Volume.Name), op)
+		devKey := fmt.Sprintf("%s/%s", disk.Pool.Name, disk.Volume.Name)
+		devName, ok := devicesMap[devKey]
+		if !ok {
+			return fmt.Errorf("Requested volume %s on pool %s is not attached to the instance", disk.Volume.Name, disk.Pool.Name)
+		}
+
+		err = pool.CreateCustomVolumeFromBackup(bInfo, srcData, filepath.Join(backup.DefaultBackupPrefix, devName), op)
 		if err != nil {
 			return fmt.Errorf("Create custom volume from backup: %w", err)
 		}
