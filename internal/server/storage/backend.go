@@ -3187,7 +3187,7 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
-		err = b.qcow2CreateSnapshot(parentVol, vol, src.Project().Name, src, rootDiskName, op)
+		err = b.qcow2CreateSnapshot(parentVol, vol, src.Project().Name, src, rootDiskName, inst.IsStateful(), op)
 		if err != nil {
 			return err
 		}
@@ -6356,7 +6356,7 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
-		err = b.qcow2CreateSnapshot(parentVolume, vol, projectName, inst, devName, op)
+		err = b.qcow2CreateSnapshot(parentVolume, vol, projectName, inst, devName, false, op)
 		if err != nil {
 			return err
 		}
@@ -8013,7 +8013,7 @@ func (b *backend) qcow2Rename(vol drivers.Volume, newVolName string, projectName
 }
 
 // qcow2CreateSnapshot creates the QCOW2 volume snapshot.
-func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, inst instance.Instance, devName string, op *operations.Operation) error {
+func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume, projectName string, inst instance.Instance, devName string, stateful bool, op *operations.Operation) error {
 	// Return if this is not a qcow2 image.
 	if vol.Config()["block.type"] != drivers.BlockVolumeTypeQcow2 {
 		return nil
@@ -8078,7 +8078,7 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			return errors.New("Volume name must be a snapshot")
 		}
 
-		err = inst.CreateQcow2Snapshot(parentDiskPath, devName, snapshotName, snapVolDevPath)
+		err = inst.CreateQcow2Snapshot(parentDiskPath, devName, snapshotName, snapVolDevPath, stateful)
 		if err != nil {
 			return err
 		}
@@ -8867,7 +8867,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 				return err
 			}
 
-			err = b.qcow2CreateSnapshot(vol, snapVol, projectName, nil, "", op)
+			err = b.qcow2CreateSnapshot(vol, snapVol, projectName, nil, "", false, op)
 			if err != nil {
 				return err
 			}
