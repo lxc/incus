@@ -239,12 +239,11 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	}
 
 	srv := api.ServerUntrusted{
-		APIExtensions: version.APIExtensions[:d.apiExtensions],
-		APIStatus:     "stable",
-		APIVersion:    version.APIVersion,
-		Public:        false,
-		Auth:          "untrusted",
-		AuthMethods:   authMethods,
+		APIStatus:   "stable",
+		APIVersion:  version.APIVersion,
+		Public:      false,
+		Auth:        "untrusted",
+		AuthMethods: authMethods,
 	}
 
 	// Populate the untrusted config (user.ui.XYZ).
@@ -265,6 +264,9 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	// Add the API extensions to authenticated requests.
+	srv.APIExtensions = version.APIExtensions[:d.apiExtensions]
 
 	// If a target was specified, forward the request to the relevant node.
 	resp := forwardedResponseIfTargetIsRemote(s, r)
