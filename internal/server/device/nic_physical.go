@@ -171,6 +171,14 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		// Get actual parent device from network's parent setting.
 		d.config["parent"] = netConfig["parent"]
 
+		// Copy certain keys verbatim from the network's settings.
+		for _, field := range optionalFields {
+			_, found := netConfig[field]
+			if found {
+				d.config[field] = netConfig[field]
+			}
+		}
+
 		// Check if the parent is a bridge.
 		isParentBridge := d.config["parent"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))
 		if isParentBridge {
@@ -186,16 +194,8 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 				return fmt.Errorf("Failed to initialize bridged device: %w", err)
 			}
 
-			// Forward the start call.
+			// Forward the validateConfig call.
 			return bridged.validateConfig(instConf, partialValidation)
-		}
-
-		// Copy certain keys verbatim from the network's settings.
-		for _, field := range optionalFields {
-			_, found := netConfig[field]
-			if found {
-				d.config[field] = netConfig[field]
-			}
 		}
 	} else {
 		// If no network property supplied, then parent property is required.
