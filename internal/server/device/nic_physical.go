@@ -141,9 +141,12 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 	//  managed: no
 	//  shortdesc: The managed network to link the device to (instead of specifying the `nictype` directly)
 	if d.config["network"] != "" {
+		// List of properties we import from the parent network.
+		networkFields := []string{"gvrp", "mtu", "vlan", "vlan.tagged"}
+
 		requiredFields = append(requiredFields, "network")
 
-		bannedKeys := []string{"nictype", "parent", "mtu", "vlan", "vlan.tagged", "gvrp"}
+		bannedKeys := append([]string{"nictype", "parent"}, networkFields...)
 		for _, bannedKey := range bannedKeys {
 			if d.config[bannedKey] != "" {
 				return fmt.Errorf("Cannot use %q property in conjunction with %q property", bannedKey, "network")
@@ -171,8 +174,8 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		// Get actual parent device from network's parent setting.
 		d.config["parent"] = netConfig["parent"]
 
-		// Copy certain keys verbatim from the network's settings.
-		for _, field := range optionalFields {
+		// Copy certain keys verbatim from the parent network's settings.
+		for _, field := range networkFields {
 			_, found := netConfig[field]
 			if found {
 				d.config[field] = netConfig[field]
