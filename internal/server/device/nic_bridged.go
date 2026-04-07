@@ -342,7 +342,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			return errors.New("Specified network is not fully created")
 		}
 
-		if n.Type() != "bridge" {
+		if n.Type() != "bridge" && (n.Type() != "physical" || !util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", d.config["parent"]))) {
 			return errors.New("Specified network must be of type bridge")
 		}
 
