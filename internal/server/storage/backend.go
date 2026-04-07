@@ -9156,7 +9156,20 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 		return nil, nil, err
 	}
 
-	return inst.ConnectNBD(instanceDeviceName, writable)
+	volStorageName := project.Instance(inst.Project().Name, inst.Name())
+	vol := b.GetVolume(drivers.VolumeTypeVM, drivers.ContentTypeBlock, volStorageName, nil)
+
+	volDiskPath, err := b.Driver().GetVolumeDiskPath(vol)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	volSize, err := drivers.BlockDiskSizeBytes(volDiskPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return inst.ConnectNBD(instanceDeviceName, volSize, writable)
 }
 
 // GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
@@ -9165,13 +9178,13 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 	var instanceDeviceName string
 
 	// Get the volume.
-	vol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	dbVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Track down the instance.
-	err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &vol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+	err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &dbVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
 		if dbInst.Type != instancetype.VM {
 			return errors.New("Volume is attached to a container")
 		}
@@ -9207,5 +9220,18 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 		return nil, nil, errors.New("Writable NBD requires the instance be stopped")
 	}
 
-	return inst.ConnectNBD(instanceDeviceName, writable)
+	volStorageName := project.StorageVolume(projectName, volName)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, nil)
+
+	volDiskPath, err := b.Driver().GetVolumeDiskPath(vol)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	volSize, err := drivers.BlockDiskSizeBytes(volDiskPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return inst.ConnectNBD(instanceDeviceName, volSize, writable)
 }
