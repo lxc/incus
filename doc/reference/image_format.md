@@ -112,7 +112,7 @@ The `uid`, `gid` and `mode` keys can be used to control the file ownership and p
 
 #### Template files
 
-Template files use the [Pongo2](https://www.schlachter.tech/solutions/pongo2-template-engine/) format.
+Template files use the [Pongo2](https://pongo2.dev/) format.
 
 They always receive the following context:
 
