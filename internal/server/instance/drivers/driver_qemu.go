@@ -7996,14 +7996,15 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	}
 }
 
-// createMigrationSnapshot creates a disk snapshot for migration.
-func (d *qemu) createMigrationSnapshot(diskName string, diskSize int64) (func(), error) {
+// createEphemeralSnapshot creates a temporary snapshot of the disk that is
+// intended for short-lived operations.
+func (d *qemu) createEphemeralSnapshot(diskName string, diskSize int64) (func(), error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, err
 	}
 
-	snapshotDiskName := migrationSnapshotName(diskName)
+	snapshotDiskName := ephemeralSnapshotName(diskName)
 
 	// Create snapshot of the disk.
 	// We use the VM's config volume for this so that the maximum size of the snapshot can be limited
@@ -8086,7 +8087,12 @@ func (d *qemu) createMigrationSnapshot(diskName string, diskSize int64) (func(),
 		// Try and merge snapshot back to the source disk on failure so we don't lose writes.
 		err = monitor.BlockCommit(snapshotDiskName, "", "")
 		if err != nil {
-			d.logger.Error("Failed merging migration storage snapshot", logger.Ctx{"err": err})
+			d.logger.Error("Failed merging temporary storage snapshot", logger.Ctx{"err": err})
+		}
+
+		err = monitor.RemoveBlockDevice(snapshotDiskName)
+		if err != nil {
+			d.logger.Error("Failed removing temporary snapshot disk device", logger.Ctx{"err": err})
 		}
 	}
 
@@ -8106,7 +8112,7 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 	defer reverter.Fail()
 
 	targetDiskName := migrationNBDTarget(diskName)
-	snapshotDiskName := migrationSnapshotName(diskName)
+	snapshotDiskName := ephemeralSnapshotName(diskName)
 
 	listener, err := net.Listen("unix", "")
 	if err != nil {
@@ -8296,7 +8302,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		}
 
 		if !sameSharedStorage {
-			cleanup, err := d.createMigrationSnapshot(rootDiskName, rootDiskSize)
+			cleanup, err := d.createEphemeralSnapshot(rootDiskName, rootDiskSize)
 			if err != nil {
 				return fmt.Errorf("Failed creating migration snapshot: %w", err)
 			}
@@ -8318,7 +8324,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 			d.logger.Debug("Create snapshot for dependent volume", logger.Ctx{"name": vol.Name, "size": vol.VolumeSize, "diskName": diskName})
 
-			cleanup, err := d.createMigrationSnapshot(diskName, vol.VolumeSize)
+			cleanup, err := d.createEphemeralSnapshot(diskName, vol.VolumeSize)
 			if err != nil {
 				return fmt.Errorf("Failed creating migration snapshot: %w", err)
 			}
@@ -11436,7 +11442,7 @@ func (d *qemu) needsFullRestart() bool {
 }
 
 // ConnectNBD exports a disk over NBD. Not supported by containers.
-func (d *qemu) ConnectNBD(diskName string, writable bool) (net.Conn, func(), error) {
+func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Conn, func(), error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, nil, err
@@ -11455,28 +11461,42 @@ func (d *qemu) ConnectNBD(diskName string, writable bool) (net.Conn, func(), err
 
 	d.logger.Debug("User requested NBD server started")
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
 	disconnect := func() {
 		d.logger.Debug("User requested NBD server stopped")
 		_ = nbdConn.Close()
 		_ = monitor.NBDServerStop()
 	}
 
+	reverter.Add(disconnect)
+
 	escapedDeviceName := linux.PathNameEncode(diskName)
 	nodeName := d.blockNodeName(escapedDeviceName)
 
 	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
 	if err != nil {
-		disconnect()
 		return nil, nil, fmt.Errorf("Failed fetching disk chain: %w", err)
 	}
 
 	blockExport := blockDevs[len(blockDevs)-1]
 
+	if !writable {
+		cleanupSnapshot, err := d.createEphemeralSnapshot(blockExport, volSize)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Failed creating temporary snapshot: %w", err)
+		}
+
+		reverter.Add(cleanupSnapshot)
+	}
+
 	err = monitor.NBDBlockExportAdd(blockExport, writable)
 	if err != nil {
-		disconnect()
 		return nil, nil, fmt.Errorf("Failed adding disk to NBD server: %w", err)
 	}
 
-	return nbdConn, disconnect, nil
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+	return nbdConn, cleanup, nil
 }

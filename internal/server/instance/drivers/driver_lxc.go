@@ -9620,7 +9620,7 @@ func (d *lxc) ExportQcow2Block(diskName string, diskIndex int) (func(), string, 
 }
 
 // ConnectNBD exports a disk over NBD. Not supported by containers.
-func (d *lxc) ConnectNBD(diskName string, writable bool) (net.Conn, func(), error) {
+func (d *lxc) ConnectNBD(diskName string, volSize int64, writable bool) (net.Conn, func(), error) {
 	return nil, nil, nil
 }
 
