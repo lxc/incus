@@ -3897,7 +3897,9 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 	conf = append(conf, qemuConsole()...)
 
 	// VM core info (memory dump).
-	conf = append(conf, qemuCoreInfo()...)
+	if !slices.Contains([]int{osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN, osarch.ARCH_64BIT_S390_BIG_ENDIAN}, d.architecture) {
+		conf = append(conf, qemuCoreInfo()...)
+	}
 
 	// Setup the bus allocator.
 	bus := qemuNewBus(busName, &conf)
