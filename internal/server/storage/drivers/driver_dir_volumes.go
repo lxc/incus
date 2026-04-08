@@ -718,3 +718,22 @@ func (d *dir) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 func (d *dir) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *operations.Operation) error {
 	return genericVFSRenameVolumeSnapshot(d, snapVol, newSnapshotName, op)
 }
+
+// ActivateTask allows running a function while the volume is active (but not mounted).
+func (d *dir) ActivateTask(vol Volume, task func(devPath string, op *operations.Operation) error, op *operations.Operation) error {
+	// Prevent concurrent mounting actions.
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	volDevPath, err := d.GetVolumeDiskPath(vol)
+	if err != nil {
+		return err
+	}
+
+	// Run the task.
+	return task(volDevPath, op)
+}
