@@ -1043,12 +1043,15 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 		if filesystemConn != nil {
 			go func() {
 				if d.migrationRootDisk {
-					blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
+					rootDiskName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
 					if err != nil {
-						d.logger.Error("Failed fetching block device chain", logger.Ctx{"err": err})
+						d.logger.Error("Failed getting instance root disk", logger.Ctx{"err": err})
+						return
 					}
 
-					rootDiskName := blockDevs[len(blockDevs)-1]
+					escapedDeviceName := linux.PathNameEncode(rootDiskName)
+					rootDiskName = d.blockNodeName(escapedDeviceName)
+
 					err = d.receiveMigrationSnapshot(monitor, rootDiskName, filesystemConn)
 					if err != nil {
 						d.logger.Error("Failed receiving migration snapshot", logger.Ctx{"err": err})
@@ -1080,14 +1083,8 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 
 					d.logger.Debug("Receiving dependent volume", logger.Ctx{"name": vol.Volume.Name})
 
-					// Selects all block devices related to this instance (backing, root disk, overlays).
-					devName := d.blockNodeName(linux.PathNameEncode(vol.Volume.Name))
-					blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
-					if err != nil {
-						d.logger.Error("Failed fetching block device chain", logger.Ctx{"err": err})
-					}
+					diskName := d.blockNodeName(linux.PathNameEncode(vol.Volume.Name))
 
-					diskName := blockDevs[len(blockDevs)-1]
 					err = d.receiveMigrationSnapshot(monitor, diskName, filesystemConn)
 					if err != nil {
 						d.logger.Error("Failed receiving migration snapshot", logger.Ctx{"err": err})
@@ -8066,8 +8063,15 @@ func (d *qemu) createMigrationSnapshot(diskName string, diskSize int64) (func(),
 		return nil, fmt.Errorf("Failed adding migration storage snapshot block device: %w", err)
 	}
 
-	// Take a snapshot of the root disk and redirect writes to the snapshot disk.
-	err = monitor.BlockDevSnapshot(diskName, snapshotDiskName)
+	// Take a snapshot of the disk and redirect writes to the snapshot disk.
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, diskName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed fetching block device chain: %w", err)
+	}
+
+	blockDevName := blockDevs[len(blockDevs)-1]
+
+	err = monitor.BlockDevSnapshot(blockDevName, snapshotDiskName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed taking temporary migration storage snapshot: %w", err)
 	}
@@ -8228,13 +8232,13 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		return err
 	}
 
-	// Selects all block devices related to this instance (backing, root disk, overlays).
-	blockDevs, err := d.fetchRootBlockDeviceChain(monitor)
+	// Get the root disk device config.
+	rootDiskName, _, err := d.getRootDiskDevice()
 	if err != nil {
 		return err
 	}
 
-	rootDiskName := blockDevs[len(blockDevs)-1] // Name of source disk device to sync from. Last block device is the current root disk.
+	rootDiskName = d.blockNodeName(linux.PathNameEncode(rootDiskName))
 
 	// If we are performing an intra-cluster member move on a Ceph storage pool without storage change
 	// then we can treat this as shared storage and avoid needing to sync the root disk.
@@ -8310,14 +8314,8 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				continue
 			}
 
-			// Selects all block devices related to this instance (backing, root disk, overlays).
-			devName := d.blockNodeName(linux.PathNameEncode(vol.Name))
-			blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
-			if err != nil {
-				return err
-			}
+			diskName := d.blockNodeName(linux.PathNameEncode(vol.Name))
 
-			diskName := blockDevs[len(blockDevs)-1]
 			d.logger.Debug("Create snapshot for dependent volume", logger.Ctx{"name": vol.Name, "size": vol.VolumeSize, "diskName": diskName})
 
 			cleanup, err := d.createMigrationSnapshot(diskName, vol.VolumeSize)
@@ -8497,14 +8495,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				continue
 			}
 
-			// Selects all block devices related to this instance (backing, root disk, overlays).
-			devName := d.blockNodeName(linux.PathNameEncode(vol.Name))
-			blockDevs, err := d.fetchBlockDeviceChain(monitor, devName)
-			if err != nil {
-				return err
-			}
-
-			diskName := blockDevs[len(blockDevs)-1]
+			diskName := d.blockNodeName(linux.PathNameEncode(vol.Name))
 
 			_, err = d.sendMigrationSnapshot(diskName, filesystemConn, true)
 			if err != nil {
