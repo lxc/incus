@@ -63,6 +63,12 @@ type Monitor struct {
 	detachDisk     func(name string) error
 }
 
+// TransactionAction represents a single action within a QMP transaction.
+type TransactionAction struct {
+	Type string         `json:"type"`
+	Data map[string]any `json:"data"`
+}
+
 // start handles the background goroutines for event handling and monitoring the ringbuffer.
 func (m *Monitor) start() error {
 	// Ringbuffer monitoring function.
@@ -284,6 +290,22 @@ func (m *Monitor) Run(cmd string, args any, resp any) error {
 
 	logCommand := !slices.Contains(ExcludedCommands, cmd)
 	return m.RunJSON(request, resp, logCommand, id)
+}
+
+// RunTransaction executes a series of commands as a single transaction.
+func (m *Monitor) RunTransaction(actions []TransactionAction) error {
+	var args struct {
+		Actions []TransactionAction `json:"actions"`
+	}
+
+	args.Actions = actions
+
+	err := m.Run("transaction", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Connect creates or retrieves an existing QMP monitor for the path.
