@@ -11500,3 +11500,100 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 	reverter.Success()
 	return nbdConn, cleanup, nil
 }
+
+// CreateBitmap creates a dirty bitmap.
+func (d *qemu) CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	blockNames := []string{}
+	for _, devName := range deviceNames {
+		escapedDeviceName := linux.PathNameEncode(devName)
+		nodeName := d.blockNodeName(escapedDeviceName)
+
+		blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+		if err != nil {
+			return fmt.Errorf("Failed fetching disk chain: %w", err)
+		}
+
+		blockNames = append(blockNames, blockDevs[len(blockDevs)-1])
+	}
+
+	err = monitor.AddDirtyBitmap(blockNames, data.Name, data.Granularity, data.Persistent, data.Disabled)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteBitmap deletes a dirty bitmap.
+func (d *qemu) DeleteBitmap(deviceName string, bitmapName string) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	escapedDeviceName := linux.PathNameEncode(deviceName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+	if err != nil {
+		return fmt.Errorf("Failed fetching disk chain: %w", err)
+	}
+
+	blockName := blockDevs[len(blockDevs)-1]
+
+	err = monitor.RemoveDirtyBitmap(blockName, bitmapName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetBitmaps fetches dirty bitmaps.
+func (d *qemu) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return nil, err
+	}
+
+	escapedDeviceName := linux.PathNameEncode(deviceName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed fetching disk chain: %w", err)
+	}
+
+	blockName := blockDevs[len(blockDevs)-1]
+
+	blocks, err := monitor.QueryBlock()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []api.StorageVolumeBitmap{}
+	for _, block := range blocks {
+		if block.Inserted.NodeName == blockName {
+			for _, bitmap := range block.Inserted.DirtyBitmaps {
+				result = append(result, api.StorageVolumeBitmap{
+					Name:         bitmap.Name,
+					Count:        bitmap.Count,
+					Granularity:  bitmap.Granularity,
+					Recording:    bitmap.Recording,
+					Busy:         bitmap.Busy,
+					Persistent:   bitmap.Persistent,
+					Inconsistent: bitmap.Inconsistent,
+				})
+			}
+
+			return result, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Requested device not found")
+}

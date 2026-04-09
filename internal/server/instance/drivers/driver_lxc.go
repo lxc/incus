@@ -9650,3 +9650,18 @@ func (d *lxc) setNICLink(devName string, connected bool, assumeUp bool) error {
 
 	return nil
 }
+
+// CreateBitmap creates a dirty bitmap. Not supported by containers.
+func (d *lxc) CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error {
+	return nil
+}
+
+// DeleteBitmap deletes a dirty bitmap. Not supported by containers.
+func (d *lxc) DeleteBitmap(deviceName string, bitmapName string) error {
+	return nil
+}
+
+// GetBitmaps fetches dirty bitmaps. Not supported by containers.
+func (d *lxc) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) {
+	return nil, nil
+}

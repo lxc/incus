@@ -186,6 +186,11 @@ type Instance interface {
 	DeferTemplateApply(trigger TemplateTrigger) error
 
 	Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error)
+
+	// Bitmaps.
+	CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error
+	DeleteBitmap(deviceName string, bitmapName string) error
+	GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error)
 }
 
 // Container interface is for container specific functions.
