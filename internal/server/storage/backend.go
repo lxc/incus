@@ -7617,6 +7617,10 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 
 	// Create database entries for new storage volume snapshots.
 	for _, s := range srcBackup.Config.VolumeSnapshots {
+		if s == nil {
+			return errors.New("Bad snapshot definition found in index")
+		}
+
 		snapshot := s // Local var for revert.
 		snapName := snapshot.Name
 
