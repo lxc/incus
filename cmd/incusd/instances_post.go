@@ -714,7 +714,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	}
 
 	// Detect broken legacy backups.
-	if bInfo.Config == nil {
+	if bInfo.Config == nil || bInfo.Config.Container == nil {
 		return response.BadRequest(errors.New("Backup file is missing required information"))
 	}
 

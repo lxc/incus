@@ -7740,6 +7740,10 @@ func (b *backend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadS
 		return errors.New("Storage pool does not support buckets")
 	}
 
+	if srcBackup.Config == nil || srcBackup.Config.Bucket == nil {
+		return errors.New("Valid bucket config not found in index")
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -7758,6 +7762,10 @@ func (b *backend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadS
 
 	// Upload all keys from the backup.
 	for _, bucketKey := range srcBackup.Config.BucketKeys {
+		if bucketKey == nil {
+			return errors.New("Bad bucket key found in index")
+		}
+
 		bucketKeyRequest := api.StorageBucketKeysPost{
 			Name:                bucketKey.Name,
 			StorageBucketKeyPut: bucketKey.StorageBucketKeyPut,
