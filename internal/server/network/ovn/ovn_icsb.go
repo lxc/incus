@@ -93,11 +93,13 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 				}
 
 				// Load the chain.
-				roots := x509.NewCertPool()
-				for _, rawCert := range rawCerts {
-					cert, _ := x509.ParseCertificate(rawCert)
-					if cert != nil {
-						roots.AddCert(cert)
+				intermediates := x509.NewCertPool()
+				if len(rawCerts) > 1 {
+					for _, rawCert := range rawCerts[1:] {
+						cert, _ := x509.ParseCertificate(rawCert)
+						if cert != nil {
+							intermediates.AddCert(cert)
+						}
 					}
 				}
 
@@ -109,7 +111,8 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 
 				// Validate.
 				opts := x509.VerifyOptions{
-					Roots: roots,
+					Roots:         clientCAPool,
+					Intermediates: intermediates,
 				}
 
 				_, err := cert.Verify(opts)
