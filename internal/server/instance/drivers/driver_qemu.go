@@ -4048,7 +4048,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 		multifunction: multi,
 	}
 
-	conf = append(conf, qemuSCSI(&scsiOpts)...)
+	conf = append(conf, qemuSCSI(&scsiOpts, cpuInfo.sockets*cpuInfo.cores)...)
 
 	// Export the config directory and agent as 9p drives when supported.
 	if !isWindows && plan9 {
