@@ -1215,19 +1215,12 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  shortdesc: Whether to regenerate VM NVRAM the next time the instance starts
 	"volatile.apply_nvram": validate.Optional(validate.IsBool),
 
-	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.definition)
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.boot_state)
 	//
 	// ---
 	//  type: string
-	//  shortdesc: QEMU VM definition name (used for migration between versions)
-	"volatile.vm.definition": validate.Optional(validate.IsAny),
-
-	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.hotplug.memory)
-	//
-	// ---
-	//  type: string
-	//  shortdesc: Memory setup of the VM as needed for state restoration
-	"volatile.vm.hotplug.memory": validate.Optional(validate.IsAny),
+	//  shortdesc: JSON encoded VM properties used during live migration and other state restoration.
+	"volatile.vm.boot_state": validate.Optional(validate.IsAny),
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.vm.needs_reset)
 	//
@@ -1256,6 +1249,10 @@ var InstanceConfigKeysVM = map[string]func(value string) error{
 	//  type: string
 	//  shortdesc: Instance `vsock ID` used as of last start
 	"volatile.vsock_id": validate.Optional(validate.IsInt64),
+
+	// Deprecated keys, keep in map to allow transition.
+	"volatile.vm.definition":     validate.Optional(validate.IsAny),
+	"volatile.vm.hotplug.memory": validate.Optional(validate.IsAny),
 }
 
 // ConfigKeyChecker returns a function that will check whether or not
