@@ -235,6 +235,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			addr = "00.0"
 			bus = "qemu_pcie1"
 			driver = "virtio-scsi-pci"
+			num_queues = "4"
 			`,
 		}, {
 			qemuDevOpts{"ccw", "qemu_pcie2", "00.2", true},
@@ -242,10 +243,11 @@ func TestQemuConfigTemplates(t *testing.T) {
 			[device "qemu_scsi"]
 			driver = "virtio-scsi-ccw"
 			multifunction = "on"
+			num_queues = "4"
 			`,
 		}}
 		for _, tc := range testCases {
-			runTest(tc.expected, qemuSCSI(&tc.opts))
+			runTest(tc.expected, qemuSCSI(&tc.opts, 4))
 		}
 	})
 

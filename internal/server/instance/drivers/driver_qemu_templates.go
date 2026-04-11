@@ -314,17 +314,18 @@ func qemuPCIe(opts *qemuPCIeOpts) []cfg.Section {
 	}}
 }
 
-func qemuSCSI(opts *qemuDevOpts) []cfg.Section {
-	entriesOpts := qemuDevEntriesOpts{
+func qemuSCSI(opts *qemuDevOpts, numQueues int) []cfg.Section {
+	entries := qemuDeviceEntries(&qemuDevEntriesOpts{
 		dev:     *opts,
 		pciName: "virtio-scsi-pci",
 		ccwName: "virtio-scsi-ccw",
-	}
+	})
+	entries["num_queues"] = fmt.Sprintf("%d", numQueues)
 
 	return []cfg.Section{{
 		Name:    `device "qemu_scsi"`,
 		Comment: "SCSI controller",
-		Entries: qemuDeviceEntries(&entriesOpts),
+		Entries: entries,
 	}}
 }
 
