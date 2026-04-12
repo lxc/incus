@@ -25,5 +25,13 @@ func (c *cmdAdmin) command() *cobra.Command {
 	adminOSCmd := cmdAdminOS{global: c.global}
 	cmd.AddCommand(adminOSCmd.command())
 
+	// recover sub-command
+	adminRecoverCmd := cmdAdminRecover{global: c.global}
+	cmd.AddCommand(adminRecoverCmd.command())
+
+	// sql sub-command
+	sqlCmd := cmdAdminSQL{global: c.global}
+	cmd.AddCommand(sqlCmd.command())
+
 	return cmd
 }
