@@ -9186,30 +9186,8 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 
 // GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
 func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error) {
-	var instanceArgs *db.InstanceArgs
-	var instanceDeviceName string
-
 	// Get the volume.
 	dbVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Track down the instance.
-	err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &dbVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
-		if dbInst.Type != instancetype.VM {
-			return errors.New("Volume is attached to a container")
-		}
-
-		if instanceArgs != nil && instanceArgs.Name != dbInst.Name {
-			return errors.New("Volume is attached to multiple instances")
-		}
-
-		instanceArgs = &dbInst
-		instanceDeviceName = usedByDevices[0]
-
-		return nil
-	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -9217,14 +9195,19 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 	volStorageName := project.StorageVolume(projectName, volName)
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, nil)
 
-	if instanceArgs == nil {
-		b.logger.Debug("NBD connection (offline mode)")
-		return b.connectOfflineNBD(vol)
+	// Convert the volume type name to our internal integer representation.
+	volumeDbType, err := VolumeTypeNameToDBType(dbVol.Type)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	// Load the instance.
-	inst, err := instance.LoadByProjectAndName(b.state, instanceArgs.Project, instanceArgs.Name)
+	inst, instanceDeviceName, err := InstanceByVolumeName(b.state, b.name, projectName, volName, volumeDbType)
 	if err != nil {
+		if errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
+			b.logger.Debug("NBD connection (offline mode)")
+			return b.connectOfflineNBD(vol)
+		}
+
 		return nil, nil, err
 	}
 

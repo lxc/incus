@@ -1420,3 +1420,70 @@ func ShouldMigrateDependentVolume(diskPool Pool, clusterMove bool) bool {
 
 	return true
 }
+
+// InstanceByVolumeName returns the instance associated with the given volume name.
+func InstanceByVolumeName(s *state.State, poolName string, projectName string, volumeName string, volumeDBType int) (instance.Instance, string, error) {
+	if volumeDBType == db.StoragePoolVolumeTypeVM {
+		inst, err := instance.LoadByProjectAndName(s, projectName, volumeName)
+		if err != nil {
+			return nil, "", err
+		}
+
+		instanceDeviceName, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+		if err != nil {
+			return nil, "", err
+		}
+
+		return inst, instanceDeviceName, nil
+	}
+
+	var instanceArgs *db.InstanceArgs
+	var instanceDeviceName string
+
+	pool, err := LoadByName(s, poolName)
+	if err != nil {
+		return nil, "", err
+	}
+
+	volumeType, err := VolumeDBTypeToType(volumeDBType)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Get the volume.
+	dbVol, err := VolumeDBGet(pool, projectName, volumeName, volumeType)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Track down the instance.
+	err = VolumeUsedByInstanceDevices(s, pool.Name(), projectName, &dbVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+		if dbInst.Type != instancetype.VM {
+			return fmt.Errorf("Volume is attached to a container")
+		}
+
+		if instanceArgs != nil && instanceArgs.Name != dbInst.Name {
+			return fmt.Errorf("Volume is attached to multiple instances")
+		}
+
+		instanceArgs = &dbInst
+		instanceDeviceName = usedByDevices[0]
+
+		return nil
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if instanceArgs == nil {
+		return nil, "", ErrVolumeNotAttachedToRunningInstance
+	}
+
+	// Load the instance.
+	inst, err := instance.LoadByProjectAndName(s, instanceArgs.Project, instanceArgs.Name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return inst, instanceDeviceName, nil
+}
