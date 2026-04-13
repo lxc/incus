@@ -67,6 +67,11 @@ func QemuImg(sysOS *sys.OS, cmd []string, imgPath string, dstPath string, tracke
 			return "", fmt.Errorf("Failed to find executable %q: %w", c, err)
 		}
 
+		cmdFullPath, err := filepath.EvalSymlinks(cmdPath)
+		if err == nil {
+			cmdPath = cmdFullPath
+		}
+
 		allowedCmdPaths = append(allowedCmdPaths, cmdPath)
 	}
 
