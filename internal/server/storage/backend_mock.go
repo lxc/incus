@@ -325,7 +325,8 @@ func (b *mockBackend) ImportCustomVolume(projectName string, poolVol *backupConf
 	return nil, nil
 }
 
-func (b *mockBackend) CreateCustomVolumeSnapshot(projectName string, volName string, newSnapshotName string, expiryDate time.Time, op *operations.Operation) error {
+// CreateCustomVolumeSnapshot creates a snapshot of a custom volume.
+func (b *mockBackend) CreateCustomVolumeSnapshot(projectName string, volName string, newSnapshotName string, expiryDate time.Time, instanceStateful bool, op *operations.Operation) error {
 	return nil
 }
 

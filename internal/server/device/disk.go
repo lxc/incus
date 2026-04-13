@@ -3244,7 +3244,7 @@ func (d *disk) updateDependentConfig() (func() error, error) {
 
 			for _, snap := range snapshots {
 				_, snapName, _ := api.GetParentAndSnapshotName(snap.Name)
-				err = d.pool.CreateCustomVolumeSnapshot(storageProjectName, volName, snapName, snap.ExpiryDate.Time, nil)
+				err = d.pool.CreateCustomVolumeSnapshot(storageProjectName, volName, snapName, snap.ExpiryDate.Time, false, nil)
 				if err != nil {
 					return nil, err
 				}
