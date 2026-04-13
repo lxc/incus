@@ -9606,22 +9606,22 @@ func (d *lxc) GuestOS() string {
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance. Not supported by containers.
 func (d *lxc) CreateQcow2Snapshot(devPath string, devName string, snapName string, backingFilename string, stateful bool) error {
-	return nil
+	return instance.ErrNotImplemented
 }
 
 // DeleteQcow2Snapshot deletes a qcow2 snapshot for a running instance. Not supported by containers.
 func (d *lxc) DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error {
-	return nil
+	return instance.ErrNotImplemented
 }
 
 // ExportQcow2Block exports a qcow2 block device. Not supported by containers.
 func (d *lxc) ExportQcow2Block(diskName string, diskIndex int) (func(), string, error) {
-	return nil, "", nil
+	return nil, "", instance.ErrNotImplemented
 }
 
 // ConnectNBD exports a disk over NBD. Not supported by containers.
 func (d *lxc) ConnectNBD(diskName string, volSize int64, writable bool) (net.Conn, func(), error) {
-	return nil, nil, nil
+	return nil, nil, instance.ErrNotImplemented
 }
 
 // setNICLink sets the link status of the given device.
@@ -9653,15 +9653,15 @@ func (d *lxc) setNICLink(devName string, connected bool, assumeUp bool) error {
 
 // CreateBitmap creates a dirty bitmap. Not supported by containers.
 func (d *lxc) CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error {
-	return nil
+	return instance.ErrNotImplemented
 }
 
 // DeleteBitmap deletes a dirty bitmap. Not supported by containers.
 func (d *lxc) DeleteBitmap(deviceName string, bitmapName string) error {
-	return nil
+	return instance.ErrNotImplemented
 }
 
 // GetBitmaps fetches dirty bitmaps. Not supported by containers.
 func (d *lxc) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) {
-	return nil, nil
+	return nil, instance.ErrNotImplemented
 }
