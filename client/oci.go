@@ -15,6 +15,9 @@ type ProtocolOCI struct {
 	// Cache for images.
 	cache map[string]ociInfo
 
+	// Error tracking for images.
+	errors map[string]error
+
 	tempPath string
 }
 

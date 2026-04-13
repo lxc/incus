@@ -354,6 +354,7 @@ func ConnectOCI(uri string, args *ConnectionArgs) (ImageServer, error) {
 		httpCertificate: args.TLSServerCert,
 
 		cache:    map[string]ociInfo{},
+		errors:   map[string]error{},
 		tempPath: args.TempPath,
 	}
 
