@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -71,13 +72,20 @@ func (p *pullable) statFile(sftpConn *sftp.Client, path string) (os.FileInfo, st
 		}
 	}
 
+	// Let’s be extra careful and check that explicit requests for directories actually point to
+	// directories.
+	directoryRequested := strings.HasSuffix(path, "/")
+	if directoryRequested && !srcStat.IsDir() {
+		return nil, "", fmt.Errorf(i18n.G("%s is not a directory"), normalizedPath)
+	}
+
 	// Here, we perform a special handling if -P is used on a directory symlink.
 	if srcStat.IsDir() && !p.flagRecursive && (!isSymlink || !p.flagNoDereference) {
 		return nil, "", errors.New(i18n.G("--recursive/-r is required when pulling directories"))
 	}
 
 	// Under a few conditions, return the file the link points to and not the link itself.
-	if p.flagDereference || !p.flagRecursive && !p.flagNoDereference || isSymlink && p.flagFollow || strings.HasSuffix(path, "/") {
+	if p.flagDereference || !p.flagRecursive && !p.flagNoDereference || isSymlink && p.flagFollow || directoryRequested {
 		return srcStat, normalizedPath, nil
 	}
 
