@@ -3209,7 +3209,7 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		}
 
 		_, snapshotName, _ := api.GetParentAndSnapshotName(inst.Name())
-		err = diskPool.CreateCustomVolumeSnapshot(inst.Project().Name, dev.Config["source"], snapshotName, time.Time{}, op)
+		err = diskPool.CreateCustomVolumeSnapshot(inst.Project().Name, dev.Config["source"], snapshotName, time.Time{}, inst.IsStateful(), op)
 		if err != nil {
 			return fmt.Errorf("Failed to create device snapshot for volume %q: %w", dev.Config["source"], err)
 		}
@@ -6269,7 +6269,7 @@ func (b *backend) ImportCustomVolume(projectName string, poolVol *backupConfig.C
 }
 
 // CreateCustomVolumeSnapshot creates a snapshot of a custom volume.
-func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSnapshotName string, newExpiryDate time.Time, op *operations.Operation) error {
+func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSnapshotName string, newExpiryDate time.Time, instanceStateful bool, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName, "newSnapshotName": newSnapshotName, "newExpiryDate": newExpiryDate})
 	l.Debug("CreateCustomVolumeSnapshot started")
 	defer l.Debug("CreateCustomVolumeSnapshot finished")
@@ -6359,7 +6359,7 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
-		err = b.qcow2CreateSnapshot(parentVolume, vol, projectName, inst, devName, false, op)
+		err = b.qcow2CreateSnapshot(parentVolume, vol, projectName, inst, devName, instanceStateful, op)
 		if err != nil {
 			return err
 		}
