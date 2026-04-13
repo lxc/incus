@@ -88,6 +88,11 @@ func (r *ProtocolOCI) GetImage(fingerprint string) (*api.Image, string, error) {
 			return nil, "", errors.New("OCI container handling requires \"skopeo\" be present on the system")
 		}
 
+		err, ok := r.errors[fingerprint]
+		if ok {
+			return nil, "", err
+		}
+
 		return nil, "", errors.New("Image not found")
 	}
 
@@ -131,6 +136,11 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		_, err := exec.LookPath("skopeo")
 		if err != nil {
 			return nil, errors.New("OCI container handling requires \"skopeo\" be present on the system")
+		}
+
+		err, ok := r.errors[fingerprint]
+		if ok {
+			return nil, err
 		}
 
 		return nil, errors.New("Image not found")
@@ -408,6 +418,8 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 	stdout, err := r.runSkopeo("inspect", name)
 	if err != nil {
 		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "stdout": stdout, "stderr": err})
+		r.errors[name] = err
+
 		return nil, "", err
 	}
 
@@ -415,6 +427,8 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 	var info ociInfo
 	err = json.Unmarshal([]byte(stdout), &info)
 	if err != nil {
+		r.errors[name] = err
+
 		return nil, "", err
 	}
 
@@ -423,11 +437,15 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 
 	archID, err := osarch.ArchitectureID(info.Architecture)
 	if err != nil {
+		r.errors[name] = err
+
 		return nil, "", err
 	}
 
 	archName, err := osarch.ArchitectureName(archID)
 	if err != nil {
+		r.errors[name] = err
+
 		return nil, "", err
 	}
 
