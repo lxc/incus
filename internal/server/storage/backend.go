@@ -11,13 +11,16 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -9138,4 +9141,169 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 
 	reverter.Success()
 	return cleanup, nil
+}
+
+// GetInstanceNBD returns an NBD connection to the VM's root disk.
+func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Conn, func(), error) {
+	if writable && inst.IsRunning() {
+		return nil, nil, errors.New("Writable NBD requires the instance be stopped")
+	}
+
+	instanceDeviceName, _, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	volStorageName := project.Instance(inst.Project().Name, inst.Name())
+	vol := b.GetVolume(drivers.VolumeTypeVM, drivers.ContentTypeBlock, volStorageName, nil)
+
+	if !inst.IsRunning() {
+		b.logger.Debug("NBD connection (offline mode)")
+		return b.connectOfflineNBD(vol)
+	}
+
+	var volSize int64
+	var volDiskPath string
+	err = vol.MountTask(func(devPath string, op *operations.Operation) error {
+		volDiskPath, err = b.Driver().GetVolumeDiskPath(vol)
+		if err != nil {
+			return err
+		}
+
+		volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return inst.ConnectNBD(instanceDeviceName, volSize, writable)
+}
+
+// GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
+func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error) {
+	// Get the volume.
+	dbVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	volStorageName := project.StorageVolume(projectName, volName)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentTypeBlock, volStorageName, nil)
+
+	// Convert the volume type name to our internal integer representation.
+	volumeDbType, err := VolumeTypeNameToDBType(dbVol.Type)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	inst, instanceDeviceName, err := InstanceByVolumeName(b.state, b.name, projectName, volName, volumeDbType)
+	if err != nil {
+		if errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
+			b.logger.Debug("NBD connection (offline mode)")
+			return b.connectOfflineNBD(vol)
+		}
+
+		return nil, nil, err
+	}
+
+	if !inst.IsRunning() {
+		b.logger.Debug("NBD connection (offline mode)")
+		return b.connectOfflineNBD(vol)
+	}
+
+	if writable && inst.IsRunning() {
+		return nil, nil, errors.New("Writable NBD requires the instance be stopped")
+	}
+
+	var volSize int64
+	var volDiskPath string
+	err = vol.MountTask(func(devPath string, op *operations.Operation) error {
+		volDiskPath, err = b.Driver().GetVolumeDiskPath(vol)
+		if err != nil {
+			return err
+		}
+
+		volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return inst.ConnectNBD(instanceDeviceName, volSize, writable)
+}
+
+// connectOfflineNBD spawns qemu-nbd for the given volume.
+func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error) {
+	socketPath := filepath.Join(internalUtil.RunPath(fmt.Sprintf("%s-nbd.sock", vol.Name())))
+
+	cmd := exec.Command("qemu-nbd", fmt.Sprintf("--socket=%s", socketPath))
+
+	go func() {
+		err := b.Driver().ActivateTask(vol, func(devPath string, op *operations.Operation) error {
+			volDiskPath, err := b.Driver().GetVolumeDiskPath(vol)
+			if err != nil {
+				return err
+			}
+
+			cmd.Args = append(cmd.Args, volDiskPath)
+
+			err = cmd.Run()
+			if err != nil {
+				return fmt.Errorf("Failed to start qemu-nbd: %w", err)
+			}
+
+			return nil
+		}, nil)
+		if err != nil {
+			b.logger.Error("Failed when running qemu-nbd", logger.Ctx{"err": err})
+		}
+	}()
+
+	// Wait for qemu-nbd.
+	timeout := time.After(2 * time.Second)
+	tick := time.Tick(50 * time.Millisecond)
+	isReady := false
+
+	for {
+		select {
+		case <-timeout:
+			_ = cmd.Process.Kill()
+			return nil, nil, fmt.Errorf("Timeout waiting for qemu-nbd socket")
+		case <-tick:
+			_, err := os.Stat(socketPath)
+			if err == nil {
+				isReady = true
+			}
+		}
+
+		if isReady {
+			break
+		}
+	}
+
+	b.logger.Debug("Dial NBD server (offline mode)", logger.Ctx{"socketPath": socketPath})
+	nbdConn, err := net.Dial("unix", socketPath)
+	if err != nil {
+		_ = cmd.Process.Kill()
+		return nil, nil, fmt.Errorf("Failed to connect to NBD socket: %w", err)
+	}
+
+	disconnect := func() {
+		b.logger.Debug("User requested NBD server stopped")
+		_ = nbdConn.Close()
+		_ = cmd.Process.Signal(syscall.SIGTERM)
+		_ = os.Remove(socketPath)
+	}
+
+	return nbdConn, disconnect, nil
 }

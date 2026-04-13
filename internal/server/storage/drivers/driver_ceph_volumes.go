@@ -1980,3 +1980,35 @@ func (d *ceph) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *
 	reverter.Success()
 	return nil
 }
+
+// ActivateTask allows running a function while the volume is active (but not mounted).
+func (d *ceph) ActivateTask(vol Volume, task func(devPath string, op *operations.Operation) error, op *operations.Operation) error {
+	// Prevent concurrent mounting actions.
+	unlock, err := vol.MountLock()
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	// Activate RBD volume if needed.
+	activated, volDevPath, err := d.getRBDMappedDevPath(vol, true)
+	if err != nil {
+		return err
+	}
+
+	if !activated {
+		return errors.New("Volume is already active, can't run exclusive activation task")
+	}
+
+	// Run the task.
+	taskErr := task(volDevPath, op)
+
+	// Deactivate the volume.
+	err = d.rbdUnmapVolume(vol, true)
+	if err != nil {
+		return err
+	}
+
+	return taskErr
+}

@@ -105,6 +105,7 @@ type Instance interface {
 	CreateQcow2Snapshot(diskPath string, devName string, snapshotName string, backingFilename string, stateful bool) error
 	DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
 	ExportQcow2Block(diskName string, blockIndex int) (func(), string, error)
+	ConnectNBD(diskName string, diskSize int64, writable bool) (net.Conn, func(), error)
 
 	// Config handling.
 	Rename(newName string, applyTemplateTrigger bool) error
@@ -185,6 +186,11 @@ type Instance interface {
 	DeferTemplateApply(trigger TemplateTrigger) error
 
 	Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error)
+
+	// Bitmaps.
+	CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error
+	DeleteBitmap(deviceName string, bitmapName string) error
+	GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error)
 }
 
 // Container interface is for container specific functions.

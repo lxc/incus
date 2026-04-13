@@ -137,6 +137,35 @@ type MigrationStatus struct {
 	DirtyLimitRingFullTime         int64   `json:"dirty-limit-ring-full-time"`
 }
 
+// BlockExport contains information about the exported block.
+type BlockExport struct {
+	NodeName string `json:"node-name"`
+	Type     string `json:"type"`
+}
+
+// BlockDirtyInfo contains dirty bitmap information.
+type BlockDirtyInfo struct {
+	Name         string `json:"name"`
+	Count        int    `json:"count"`
+	Granularity  int    `json:"granularity"`
+	Recording    bool   `json:"recording"`
+	Busy         bool   `json:"busy"`
+	Persistent   bool   `json:"persistent"`
+	Inconsistent bool   `json:"inconsistent"`
+}
+
+// BlockDeviceInfo contains information about the backing device for a block device.
+type BlockDeviceInfo struct {
+	NodeName     string           `json:"node-name"`
+	DirtyBitmaps []BlockDirtyInfo `json:"dirty-bitmaps"`
+}
+
+// BlockInfo contains information about a virtual block device.
+type BlockInfo struct {
+	Device   string          `json:"device"`
+	Inserted BlockDeviceInfo `json:"inserted"`
+}
+
 // QueryCPUs returns a list of CPUs.
 func (m *Monitor) QueryCPUs() ([]CPU, error) {
 	// Prepare the response.
@@ -1199,6 +1228,53 @@ func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, writable bool) error 
 	return nil
 }
 
+// QueryBlock returns a list of all virtual block devices.
+func (m *Monitor) QueryBlock() ([]BlockInfo, error) {
+	var resp struct {
+		Return []BlockInfo `json:"return"`
+	}
+
+	err := m.Run("query-block", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Return, nil
+}
+
+// QueryBlockExports returns exported blocks.
+func (m *Monitor) QueryBlockExports() ([]BlockExport, error) {
+	var resp struct {
+		Return []BlockExport `json:"return"`
+	}
+
+	err := m.Run("query-block-exports", nil, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Return, nil
+}
+
+// QueryNBDBlockExports returns exported blocks of type 'nbd'.
+func (m *Monitor) QueryNBDBlockExports() ([]BlockExport, error) {
+	blocks, err := m.QueryBlockExports()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []BlockExport{}
+	for _, b := range blocks {
+		if b.Type != "nbd" {
+			continue
+		}
+
+		result = append(result, b)
+	}
+
+	return result, nil
+}
+
 // QueryNamedBlockNodes returns block nodes names.
 func (m *Monitor) QueryNamedBlockNodes() ([]string, error) {
 	var resp struct {
@@ -1659,4 +1735,48 @@ func (m *Monitor) Query9pDevice() error {
 // QueryVirtioSoundDevice checks whether virtio-sound-pci support is available in QEMU.
 func (m *Monitor) QueryVirtioSoundDevice() error {
 	return m.Run("device-list-properties", map[string]string{"typename": "virtio-sound-pci"}, nil)
+}
+
+// AddDirtyBitmap creates a dirty bitmap for a block device.
+func (m *Monitor) AddDirtyBitmap(deviceNames []string, bitmapName string, granularity int, persistent bool, disabled bool) error {
+	actions := []TransactionAction{}
+	for _, d := range deviceNames {
+		data := map[string]any{
+			"node":       d,
+			"name":       bitmapName,
+			"persistent": persistent,
+			"disabled":   disabled,
+		}
+
+		if granularity > 0 {
+			data["granularity"] = granularity
+		}
+
+		actions = append(actions, TransactionAction{Type: "block-dirty-bitmap-add", Data: data})
+	}
+
+	err := m.RunTransaction(actions)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RemoveDirtyBitmap removes a dirty bitmap for a block device.
+func (m *Monitor) RemoveDirtyBitmap(deviceName string, bitmapName string) error {
+	var args struct {
+		Node string `json:"node"`
+		Name string `json:"name"`
+	}
+
+	args.Node = deviceName
+	args.Name = bitmapName
+
+	err := m.Run("block-dirty-bitmap-remove", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

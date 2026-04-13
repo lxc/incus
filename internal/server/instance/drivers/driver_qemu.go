@@ -7996,14 +7996,15 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	}
 }
 
-// createMigrationSnapshot creates a disk snapshot for migration.
-func (d *qemu) createMigrationSnapshot(diskName string, diskSize int64) (func(), error) {
+// createEphemeralSnapshot creates a temporary snapshot of the disk that is
+// intended for short-lived operations.
+func (d *qemu) createEphemeralSnapshot(diskName string, diskSize int64) (func(), error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, err
 	}
 
-	snapshotDiskName := migrationSnapshotName(diskName)
+	snapshotDiskName := ephemeralSnapshotName(diskName)
 
 	// Create snapshot of the disk.
 	// We use the VM's config volume for this so that the maximum size of the snapshot can be limited
@@ -8086,7 +8087,12 @@ func (d *qemu) createMigrationSnapshot(diskName string, diskSize int64) (func(),
 		// Try and merge snapshot back to the source disk on failure so we don't lose writes.
 		err = monitor.BlockCommit(snapshotDiskName, "", "")
 		if err != nil {
-			d.logger.Error("Failed merging migration storage snapshot", logger.Ctx{"err": err})
+			d.logger.Error("Failed merging temporary storage snapshot", logger.Ctx{"err": err})
+		}
+
+		err = monitor.RemoveBlockDevice(snapshotDiskName)
+		if err != nil {
+			d.logger.Error("Failed removing temporary snapshot disk device", logger.Ctx{"err": err})
 		}
 	}
 
@@ -8106,7 +8112,7 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 	defer reverter.Fail()
 
 	targetDiskName := migrationNBDTarget(diskName)
-	snapshotDiskName := migrationSnapshotName(diskName)
+	snapshotDiskName := ephemeralSnapshotName(diskName)
 
 	listener, err := net.Listen("unix", "")
 	if err != nil {
@@ -8296,7 +8302,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		}
 
 		if !sameSharedStorage {
-			cleanup, err := d.createMigrationSnapshot(rootDiskName, rootDiskSize)
+			cleanup, err := d.createEphemeralSnapshot(rootDiskName, rootDiskSize)
 			if err != nil {
 				return fmt.Errorf("Failed creating migration snapshot: %w", err)
 			}
@@ -8318,7 +8324,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 			d.logger.Debug("Create snapshot for dependent volume", logger.Ctx{"name": vol.Name, "size": vol.VolumeSize, "diskName": diskName})
 
-			cleanup, err := d.createMigrationSnapshot(diskName, vol.VolumeSize)
+			cleanup, err := d.createEphemeralSnapshot(diskName, vol.VolumeSize)
 			if err != nil {
 				return fmt.Errorf("Failed creating migration snapshot: %w", err)
 			}
@@ -11433,4 +11439,161 @@ func (d *qemu) needsFullRestart() bool {
 
 	// Full restart isn't required.
 	return false
+}
+
+// ConnectNBD exports a disk over NBD. Not supported by containers.
+func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Conn, func(), error) {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Check for existing NBD block exports to detect if another operation is in progress.
+	blocks, err := monitor.QueryNBDBlockExports()
+	if err == nil && len(blocks) > 0 {
+		return nil, nil, fmt.Errorf("Another NBD operation is already in progress for: %s", blocks[0].NodeName)
+	}
+
+	nbdConn, err := monitor.NBDServerStart()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
+	}
+
+	d.logger.Debug("User requested NBD server started")
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	disconnect := func() {
+		d.logger.Debug("User requested NBD server stopped")
+		_ = nbdConn.Close()
+		_ = monitor.NBDServerStop()
+	}
+
+	reverter.Add(disconnect)
+
+	escapedDeviceName := linux.PathNameEncode(diskName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed fetching disk chain: %w", err)
+	}
+
+	blockExport := blockDevs[len(blockDevs)-1]
+
+	if !writable {
+		cleanupSnapshot, err := d.createEphemeralSnapshot(blockExport, volSize)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Failed creating temporary snapshot: %w", err)
+		}
+
+		reverter.Add(cleanupSnapshot)
+	}
+
+	err = monitor.NBDBlockExportAdd(blockExport, writable)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed adding disk to NBD server: %w", err)
+	}
+
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+	return nbdConn, cleanup, nil
+}
+
+// CreateBitmap creates a dirty bitmap.
+func (d *qemu) CreateBitmap(deviceNames []string, data api.StorageVolumeBitmapsPost) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	blockNames := []string{}
+	for _, devName := range deviceNames {
+		escapedDeviceName := linux.PathNameEncode(devName)
+		nodeName := d.blockNodeName(escapedDeviceName)
+
+		blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+		if err != nil {
+			return fmt.Errorf("Failed fetching disk chain: %w", err)
+		}
+
+		blockNames = append(blockNames, blockDevs[len(blockDevs)-1])
+	}
+
+	err = monitor.AddDirtyBitmap(blockNames, data.Name, data.Granularity, data.Persistent, data.Disabled)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DeleteBitmap deletes a dirty bitmap.
+func (d *qemu) DeleteBitmap(deviceName string, bitmapName string) error {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return err
+	}
+
+	escapedDeviceName := linux.PathNameEncode(deviceName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+	if err != nil {
+		return fmt.Errorf("Failed fetching disk chain: %w", err)
+	}
+
+	blockName := blockDevs[len(blockDevs)-1]
+
+	err = monitor.RemoveDirtyBitmap(blockName, bitmapName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetBitmaps fetches dirty bitmaps.
+func (d *qemu) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) {
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		return nil, err
+	}
+
+	escapedDeviceName := linux.PathNameEncode(deviceName)
+	nodeName := d.blockNodeName(escapedDeviceName)
+
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, nodeName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed fetching disk chain: %w", err)
+	}
+
+	blockName := blockDevs[len(blockDevs)-1]
+
+	blocks, err := monitor.QueryBlock()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []api.StorageVolumeBitmap{}
+	for _, block := range blocks {
+		if block.Inserted.NodeName == blockName {
+			for _, bitmap := range block.Inserted.DirtyBitmaps {
+				result = append(result, api.StorageVolumeBitmap{
+					Name:         bitmap.Name,
+					Count:        bitmap.Count,
+					Granularity:  bitmap.Granularity,
+					Recording:    bitmap.Recording,
+					Busy:         bitmap.Busy,
+					Persistent:   bitmap.Persistent,
+					Inconsistent: bitmap.Inconsistent,
+				})
+			}
+
+			return result, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Requested device not found")
 }

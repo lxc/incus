@@ -160,6 +160,13 @@ var instanceBackupExportCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: instanceBackupExportGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanManageBackups, "name")},
 }
 
+var instanceBitmapsCmd = APIEndpoint{
+	Name: "instanceBitmaps",
+	Path: "instances/{name}/bitmaps",
+
+	Post: APIEndpointAction{Handler: instanceBitmapsPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+}
+
 var instanceAccessCmd = APIEndpoint{
 	Name: "access",
 	Path: "instances/{name}/access",

@@ -6687,6 +6687,74 @@ definitions:
                 x-go-name: VolumeOnly
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
+    StorageVolumeBitmap:
+        description: StorageVolumeBitmap represents a volume bitmap
+        properties:
+            busy:
+                description: true if the bitmap is in-use by some operation
+                example: true
+                type: boolean
+                x-go-name: Busy
+            count:
+                description: Number of dirty bytes
+                example: 300
+                format: int64
+                type: integer
+                x-go-name: Count
+            granularity:
+                description: Granularity of the dirty bitmap in bytes
+                example: 32768
+                format: int64
+                type: integer
+                x-go-name: Granularity
+            inconsistent:
+                description: true if this is a persistent bitmap that was improperly stored
+                example: true
+                type: boolean
+                x-go-name: Inconsistent
+            name:
+                description: Bitmap name
+                example: bitmap0
+                type: string
+                x-go-name: Name
+            persistent:
+                description: true if the bitmap was stored on disk, is scheduled to be stored on disk, or both
+                example: false
+                type: boolean
+                x-go-name: Persistent
+            recording:
+                description: true if the bitmap is recording new writes from the guest
+                example: false
+                type: boolean
+                x-go-name: Recording
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
+    StorageVolumeBitmapsPost:
+        description: StorageVolumeBitmapsPost represents the fields available for a new volume bitmap
+        properties:
+            disabled:
+                description: The bitmap is created in the disabled state
+                example: false
+                type: boolean
+                x-go-name: Disabled
+            granularity:
+                description: Granularity of the dirty bitmap in bytes
+                example: 32768
+                format: int64
+                type: integer
+                x-go-name: Granularity
+            name:
+                description: Bitmap name
+                example: bitmap0
+                type: string
+                x-go-name: Name
+            persistent:
+                description: true if the bitmap was stored on disk, is scheduled to be stored on disk, or both
+                example: false
+                type: boolean
+                x-go-name: Persistent
+        type: object
+        x-go-package: github.com/lxc/incus/v6/shared/api
     StorageVolumeFull:
         properties:
             backups:
@@ -9765,6 +9833,37 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get the backups
+            tags:
+                - instances
+    /1.0/instances/{name}/bitmaps:
+        post:
+            consumes:
+                - application/json
+            description: Creates a new bitmap.
+            operationId: instance_bitmaps_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Bitmap request
+                  in: body
+                  name: bitmap
+                  schema:
+                    $ref: '#/definitions/StorageVolumeBitmapsPost'
+            produces:
+                - application/json
+            responses:
+                "202":
+                    $ref: '#/responses/Operation'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Create a bitmap
             tags:
                 - instances
     /1.0/instances/{name}/console:
@@ -16670,6 +16769,163 @@ paths:
             summary: Get the storage volume backups
             tags:
                 - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/bitmaps:
+        get:
+            description: Gets a specific storage volume bitmaps
+            operationId: storage_pool_volume_type_bitmaps_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Storage volume bitmaps
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/StorageVolumeBitmap'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage volume dirty bitmaps
+            tags:
+                - storage
+        post:
+            consumes:
+                - application/json
+            description: Creates a new storage volume bitmap.
+            operationId: storage_pool_volumes_type_bitmaps_post
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+                - description: Storage volume bitmap
+                  in: body
+                  name: volume
+                  required: true
+                  schema:
+                    $ref: '#/definitions/StorageVolumeBitmapsPost'
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "202":
+                    $ref: '#/responses/Operation'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Create a storage volume bitmap
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/bitmaps/{bitmapName}:
+        delete:
+            consumes:
+                - application/json
+            description: Deletes a storage volume bitmap.
+            operationId: storage_pool_volumes_type_bitmap_delete
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "202":
+                    $ref: '#/responses/Operation'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Delete a storage volume bitmap
+            tags:
+                - storage
+        get:
+            description: Gets a specific storage volume bitmap
+            operationId: storage_pool_volume_type_bitmap_get
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Storage volume bitmap
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/StorageVolumeBitmap'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage volume dirty bitmap
+            tags:
+                - storage
     /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/files:
         delete:
             description: Removes the file.
@@ -16851,6 +17107,27 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Create or replace a file
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/nbd:
+        get:
+            description: Upgrades the request to an NBD connection of the storage volume's block device.
+            operationId: storage_pool_volume_type_nbd_get
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "101":
+                    description: Switching protocols to NBD
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage volume NBD connection
             tags:
                 - storage
     /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/sftp:
