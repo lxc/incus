@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-10 10:34+0000\n"
+"POT-Creation-Date: 2026-04-13 23:21+0000\n"
 "PO-Revision-Date: 2026-03-31 15:21+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -666,7 +666,7 @@ msgstr "%s (%s) (%d disponible)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, source=%q)"
 
-#: cmd/incus/utils_sftp.go:387
+#: cmd/incus/utils_copy.go:79 cmd/incus/utils_sftp.go:387
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s n'est pas un répertoire"
@@ -734,13 +734,13 @@ msgstr "--instance-only ne peut être utilisé lorsque la source est un snapshot
 msgid "--network-port can't be used without --network-address"
 msgstr "--network-port ne peut pas être utilisé sans --network-address"
 
-#: cmd/incus/utils_copy.go:48
+#: cmd/incus/utils_copy.go:49
 msgid "--no-dereference/-P cannot be used together with stdout as a target"
 msgstr ""
 "--no-dereference/-P ne peut pas être utilisé lorsque la cible est la sortie "
 "standard"
 
-#: cmd/incus/utils_copy.go:38
+#: cmd/incus/utils_copy.go:39
 msgid ""
 "--no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive"
 msgstr ""
@@ -759,7 +759,7 @@ msgstr "--no-profiles ne peut pas être utilisé avec --refresh"
 msgid "--project cannot be used with the query command"
 msgstr "--project ne peut pas être utilisé avec la commande query"
 
-#: cmd/incus/utils_copy.go:76
+#: cmd/incus/utils_copy.go:84
 msgid "--recursive/-r is required when pulling directories"
 msgstr "Il est nécessaire de passer --recursive/-r pour tirer des répertoires"
 
@@ -909,8 +909,9 @@ msgstr ""
 "\n"
 "L'authentification HTTP Basic (RFC 26176) peut être utilisée si elle est "
 "combinée avec le protocole « simplestreams » :\n"
-"  incus remote add ressource_distante_identifiant https://UTILISATEUR:"
-"MOTDEPASSE@exemple.com/complement/de/chemin --protocol=simplestreams\n"
+"  incus remote add ressource_distante_identifiant https://"
+"UTILISATEUR:MOTDEPASSE@exemple.com/complement/de/chemin --"
+"protocol=simplestreams\n"
 
 #: cmd/incus/config_trust.go:93
 msgid "Add new trusted client"
@@ -1057,7 +1058,7 @@ msgstr "Nom alternatif du certificat"
 msgid "Always follow symbolic links in source path"
 msgstr "Toujours suivre les liens symboliques source"
 
-#: cmd/incus/file.go:1003
+#: cmd/incus/file.go:1002
 #, fuzzy, c-format
 msgid "An instance path is required for %s"
 msgstr "Certaines instances n'ont pas réussi à %s"
@@ -1326,7 +1327,7 @@ msgstr "Caches mémoire :"
 msgid "Can't bind address %q: %w"
 msgstr "Impossible de se lier à l’adresse %q: %w"
 
-#: cmd/incus/file.go:739
+#: cmd/incus/file.go:738
 msgid "Can't override UID/GID in recursive mode without -p"
 msgstr ""
 
@@ -1336,7 +1337,7 @@ msgstr ""
 "Impossible de surcharger la configuration ou les profiles lors du renommage "
 "local"
 
-#: cmd/incus/file.go:726
+#: cmd/incus/file.go:725
 msgid "Can't override the target mode when performing a recursive transfer"
 msgstr ""
 
@@ -1901,7 +1902,7 @@ msgstr "Créer une instance vide"
 msgid "Create and start instances from images"
 msgstr "Créer et démarrer des instances à partir d’images"
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:684
+#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:683
 #: cmd/incus/storage_volume.go:2164 cmd/incus/storage_volume.go:2586
 #: cmd/incus/storage_volume.go:2790
 msgid "Create any directories necessary"
@@ -2352,7 +2353,7 @@ msgstr "L'importation de répertoire n'est pas disponible sur cette plateforme"
 msgid "Directory to run the command in (default /root)"
 msgstr "Dossier dans lequel exécuter la commande (/root par défaut)"
 
-#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2406
+#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2406
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 "Désactivez l'authentification lorsque vous utilisez SSH SFTP en mode écoute"
@@ -3056,7 +3057,7 @@ msgstr "Échec de la connexion au SFTP de l'instance pour le client %q : %v"
 msgid "Failed connecting to instance SFTP: %s %w"
 msgstr "Échec de la connexion au SFTP de l'instance : %w"
 
-#: cmd/incus/file.go:1021 cmd/incus/storage_volume.go:2463
+#: cmd/incus/file.go:1020 cmd/incus/storage_volume.go:2463
 #: cmd/incus/storage_volume.go:2651 cmd/incus/storage_volume.go:2818
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
@@ -3268,7 +3269,7 @@ msgstr "Échec de la mise en écoute des demandes de connexion : %w"
 msgid "Failed to load configuration: %s"
 msgstr "Échec du chargement de la configuration : %s"
 
-#: cmd/incus/file.go:774 cmd/incus/utils_sftp.go:307
+#: cmd/incus/file.go:773 cmd/incus/utils_sftp.go:307
 #, c-format
 msgid "Failed to open source file %q: %v"
 msgstr "Impossible d’ouvrir le fichier source %q : %v"
@@ -4176,7 +4177,7 @@ msgstr "Instance déconnectée pour le client %q"
 msgid "Instance name is: %s"
 msgstr "Le nom de l’instance est : %s"
 
-#: cmd/incus/file.go:1008
+#: cmd/incus/file.go:1007
 #, fuzzy
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
@@ -5200,8 +5201,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -6047,8 +6048,8 @@ msgstr "Gérer les volumes de stockage"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 "Gérer les volumes de stockage\n"
 "\n"
@@ -6150,7 +6151,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr "La taille minimum est de 1 GiB"
 
-#: cmd/incus/file.go:762
+#: cmd/incus/file.go:761
 msgid "Missing target directory"
 msgstr "Répertoire cible manquant"
 
@@ -6188,7 +6189,7 @@ msgstr ""
 "Plus d’un périphérique correspond, veuillez préciser le nom du périphérique "
 "concerné"
 
-#: cmd/incus/file.go:495
+#: cmd/incus/file.go:494
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 "Plusieurs fichiers à télécharger, mais la destination n'est pas un dossier"
@@ -6203,11 +6204,11 @@ msgid ""
 "If no target path is provided, start an SSH SFTP listener instead."
 msgstr ""
 
-#: cmd/incus/file.go:939
+#: cmd/incus/file.go:938
 msgid "Mount files from instances"
 msgstr "Monter des fichiers depuis une instance"
 
-#: cmd/incus/file.go:940
+#: cmd/incus/file.go:939
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -7121,7 +7122,7 @@ msgstr "Copie de l'image : %s"
 msgid "Pull files from instances"
 msgstr "Création du conteneur"
 
-#: cmd/incus/file.go:583 cmd/incus/storage_volume.go:2700
+#: cmd/incus/file.go:582 cmd/incus/storage_volume.go:2700
 #: cmd/incus/utils_sftp.go:198
 #, c-format
 msgid "Pulling %s from %s: %%s"
@@ -7132,12 +7133,12 @@ msgstr "Récupération de « %s » depuis « %s » : %%s"
 msgid "Push files into custom volumes"
 msgstr "Transfert de l'image : %s"
 
-#: cmd/incus/file.go:674 cmd/incus/file.go:675
+#: cmd/incus/file.go:673 cmd/incus/file.go:674
 #, fuzzy
 msgid "Push files into instances"
 msgstr "Création du conteneur"
 
-#: cmd/incus/file.go:884 cmd/incus/storage_volume.go:2967
+#: cmd/incus/file.go:883 cmd/incus/storage_volume.go:2967
 #: cmd/incus/utils_sftp.go:318
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -7205,7 +7206,7 @@ msgid ""
 "database records."
 msgstr ""
 
-#: cmd/incus/file.go:447 cmd/incus/file.go:683 cmd/incus/storage_volume.go:2587
+#: cmd/incus/file.go:447 cmd/incus/file.go:682 cmd/incus/storage_volume.go:2587
 #: cmd/incus/storage_volume.go:2789
 #, fuzzy
 msgid "Recursively transfer files"
@@ -7724,7 +7725,7 @@ msgstr "Définir des clefs de configuration sur un groupe de serveurs"
 msgid "Set a cluster member's configuration keys"
 msgstr "Définir des clefs de configuration sur un membre du cluster"
 
-#: cmd/incus/file.go:952 cmd/incus/storage_volume.go:2407
+#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2407
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7965,7 +7966,7 @@ msgstr "Définir les permissions du fichier lors de l'envoi"
 msgid "Set the file's perms on push"
 msgstr "Définir les permissions du fichier lors de l'envoi"
 
-#: cmd/incus/file.go:687
+#: cmd/incus/file.go:686
 msgid ""
 "Set the file's perms on push (in recursive mode, sets the target directory's "
 "permissions if it doesn't exist)"
@@ -7980,13 +7981,13 @@ msgstr "Définir l'uid du fichier lors de l'envoi"
 msgid "Set the file's uid on push"
 msgstr "Définir l'uid du fichier lors de l'envoi"
 
-#: cmd/incus/file.go:686
+#: cmd/incus/file.go:685
 msgid ""
 "Set the files' GIDs on push (in recursive mode, only sets the target "
 "directory's GID if it doesn't exist and -p is used)"
 msgstr ""
 
-#: cmd/incus/file.go:685
+#: cmd/incus/file.go:684
 msgid ""
 "Set the files' UIDs on push (in recursive mode, only sets the target "
 "directory's UID if it doesn't exist and -p is used)"
@@ -8071,7 +8072,7 @@ msgstr "Copie de l'image : %s"
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2405
+#: cmd/incus/file.go:949 cmd/incus/storage_volume.go:2405
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -8582,7 +8583,7 @@ msgstr "TYPE"
 msgid "Taken at"
 msgstr "Pris à"
 
-#: cmd/incus/file.go:759
+#: cmd/incus/file.go:758
 #, fuzzy
 msgid "Target is not a directory"
 msgstr "%s n'est pas un répertoire"
@@ -8596,11 +8597,11 @@ msgstr "La cible n’est pas dans un cluster"
 msgid "Target path %q already exists"
 msgstr "Le chemin cible %q existe déjà"
 
-#: cmd/incus/file.go:998 cmd/incus/storage_volume.go:2457
+#: cmd/incus/file.go:997 cmd/incus/storage_volume.go:2457
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:992 cmd/incus/storage_volume.go:2452
+#: cmd/incus/file.go:991 cmd/incus/storage_volume.go:2452
 msgid "Target path must be a directory"
 msgstr "Le chemin cible doit être un répertoire"
 
@@ -9980,8 +9981,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -10029,7 +10030,7 @@ msgid ""
 "   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:943
+#: cmd/incus/file.go:942
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -10049,7 +10050,7 @@ msgid ""
 "output."
 msgstr ""
 
-#: cmd/incus/file.go:676
+#: cmd/incus/file.go:675
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -10102,15 +10103,15 @@ msgid ""
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:130
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10196,16 +10197,16 @@ msgid ""
 "incus network integration create o1 ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:224
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:314
@@ -10279,8 +10280,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
-"yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis "
+"config.yaml"
 
 #: cmd/incus/config_device.go:102
 msgid ""
@@ -12423,9 +12424,9 @@ msgstr "« %s »"
 #~ "lxc config trust list "
 #~ "[<remote>:]                                           Lister tous les "
 #~ "certificats de confiance.\n"
-#~ "lxc config trust add [<remote>:] <certfile."
-#~ "crt>                             Ajouter certfile.crt aux hôtes de "
-#~ "confiance.\n"
+#~ "lxc config trust add [<remote>:] "
+#~ "<certfile.crt>                             Ajouter certfile.crt aux hôtes "
+#~ "de confiance.\n"
 #~ "lxc config trust remove [<remote>:] [hostname|"
 #~ "fingerprint]                  Supprimer le certificat des hôtes de "
 #~ "confiance.\n"
@@ -12437,8 +12438,8 @@ msgstr "« %s »"
 #~ "share/c1 path=opt\n"
 #~ "\n"
 #~ "Pour positionner une clé de configuration dans la configuration lxc :\n"
-#~ "    lxc config set [<remote>:]<container> raw.lxc 'lxc."
-#~ "aa_allow_incomplete = 1'\n"
+#~ "    lxc config set [<remote>:]<container> raw.lxc "
+#~ "'lxc.aa_allow_incomplete = 1'\n"
 #~ "\n"
 #~ "Pour écouter sur le port 8443 en IPv4 et IPv6 (vous pouvez omettre 8443 "
 #~ "c'est la valeur par défaut) :\n"
@@ -12628,8 +12629,8 @@ msgstr "« %s »"
 #~ "lxc image edit [<remote>:]<image>\n"
 #~ "    Edit image, either by launching external editor or reading STDIN.\n"
 #~ "    Example: lxc image edit <image> # launch editor\n"
-#~ "             cat image.yaml | lxc image edit <image> # read from image."
-#~ "yaml\n"
+#~ "             cat image.yaml | lxc image edit <image> # read from "
+#~ "image.yaml\n"
 #~ "\n"
 #~ "lxc image alias create [<remote>:]<alias> <fingerprint>\n"
 #~ "    Create a new alias for an existing image.\n"
@@ -12719,8 +12720,8 @@ msgstr "« %s »"
 #~ "    Éditer l'image, soit en lançant un éditeur externe ou en lisant "
 #~ "STDIN.\n"
 #~ "    Exemple : lxc image edit <image> # lance l'éditeur\n"
-#~ "              cat image.yaml | lxc image edit <image> # lit depuis image."
-#~ "yaml\n"
+#~ "              cat image.yaml | lxc image edit <image> # lit depuis "
+#~ "image.yaml\n"
 #~ "\n"
 #~ "lxc image alias create [<remote>:]<alias> <fingerprint>\n"
 #~ "    Créer un nouvel alias pour une image existante.\n"
@@ -13311,8 +13312,8 @@ msgstr "« %s »"
 #~ "  f - Base Image Fingerprint (short)\n"
 #~ "  F - Base Image Fingerprint (long)\n"
 #~ "\n"
-#~ "Custom columns are defined with \"[config:|devices:]key[:name][:"
-#~ "maxWidth]\":\n"
+#~ "Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+#~ "\":\n"
 #~ "  KEY: The (extended) config or devices key to display. If [config:|"
 #~ "devices:] is omitted then it defaults to config key.\n"
 #~ "  NAME: Name to display in the column header.\n"
@@ -13378,8 +13379,8 @@ msgstr "« %s »"
 #~ "Colonnes en mode rapide : nsacPt\n"
 #~ "\n"
 #~ "Exemple :\n"
-#~ "    lxc list -c n,volatile.base_image:\\BASE IMAGE\\:0,s46,volatile.eth0."
-#~ "hwaddr:MAC"
+#~ "    lxc list -c n,volatile.base_image:\\BASE "
+#~ "IMAGE\\:0,s46,volatile.eth0.hwaddr:MAC"
 
 #~ msgid "Failed to generate 'lxc.%s.1': %v"
 #~ msgstr "Échec lors de la génération de 'lxc.%s.1': %v"
