@@ -1994,9 +1994,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// This needs to happen close to creating the full qemu cmd or the time might drift in between.
 	adjustment := d.getStartupRTCAdjustment()
 
-	// only apply the rtc adjustment if the adjustment is not zero
-	// this way qemu can take care of using the correct time
-	if adjustment != 0 {
+	if d.GuestOS() == "windows" || adjustment != 0 {
 		base := time.Now().Add(adjustment)
 		if d.GuestOS() == "windows" {
 			// set base to localtime on windows.
