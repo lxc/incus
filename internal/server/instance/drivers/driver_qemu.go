@@ -1422,6 +1422,18 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	defer op.Done(err)
 
+	// Record (or load) boot state.
+	bs := &qemuBootState{
+		Version: qemuBootStateVersion,
+	}
+
+	if stateful {
+		bs, err = d.getBootState()
+		if err != nil {
+			return err
+		}
+	}
+
 	// Assign NUMA node(s) if needed.
 	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
 		err := d.balanceNUMANodes()
@@ -1498,7 +1510,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	volatileSet := make(map[string]string)
 
 	if !stateful {
-		volatileSet["volatile.vm.hotplug.memory"] = ""
 		volatileSet["volatile.vm.needs_reset"] = ""
 	}
 
@@ -1704,118 +1715,39 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	// Get CPU information.
-	cpuInfo, err := d.cpuTopology(d.expandedConfig["limits.cpu"])
-	if err != nil {
-		return err
-	}
-
-	// Determine additional CPU flags.
-	cpuExtensions := []string{}
-
-	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
-		// If using Linux 5.10 or later, use HyperV optimizations.
-		minVer, _ := version.NewDottedVersion("5.10.0")
-		if d.state.OS.KernelVersion.Compare(minVer) >= 0 && !d.CanLiveMigrate() {
-			// x86_64 can use hv_time to improve Windows guest performance.
-			cpuExtensions = append(cpuExtensions, "hv_passthrough")
-		}
-
-		// x86_64 requires the use of topoext when SMT is used.
-		if cpuInfo.Threads > 1 {
-			cpuExtensions = append(cpuExtensions, "topoext")
-		}
-	}
-
-	cpuType := "host"
-
-	// Handle CPU flags.
-	if d.state.ServerClustered && d.CanLiveMigrate() {
-		// Get the cluster group config.
-		var groupConfig map[string]string
-		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			// Get the group name.
-			clusterGroupName := d.localConfig["volatile.cluster.group"]
-			if clusterGroupName == "" {
-				clusterGroupName = "default"
-			}
-
-			// Try to get the cluster group.
-			group, err := dbCluster.GetClusterGroup(ctx, tx.Tx(), clusterGroupName)
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				return err
-			}
-
-			// Fallback to default group.
-			if errors.Is(err, sql.ErrNoRows) && clusterGroupName != "default" {
-				group, err = dbCluster.GetClusterGroup(ctx, tx.Tx(), "default")
-				if err != nil {
-					return err
-				}
-			}
-
-			// Get the config.
-			groupConfig, err = dbCluster.GetClusterGroupConfig(ctx, tx.Tx(), group.ID)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		})
+	// Setup the CPU.
+	if bs.CPUTopology == nil {
+		// Get the CPU topology.
+		cpuTopology, err := d.cpuTopology()
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
-		// Get the local architecture name.
-		archName, err := osarch.ArchitectureName(d.architecture)
+		bs.CPUTopology = cpuTopology
+	}
+
+	if bs.CPUType == "" {
+		cpuType, err := d.cpuType(bs)
 		if err != nil {
-			op.Done(err)
 			return err
 		}
 
-		// Set the cpu type and extensions.
-		groupConfigBaseline := fmt.Sprintf("instances.vm.cpu.%s.baseline", archName)
-		groupConfigFlags := fmt.Sprintf("instances.vm.cpu.%s.flags", archName)
+		bs.CPUType = cpuType
+	}
 
-		if groupConfig[groupConfigBaseline] != "" {
-			// Apply group config if present.
-			cpuType = groupConfig[groupConfigBaseline]
-			cpuExtensions = append(cpuExtensions, util.SplitNTrimSpace(groupConfig[groupConfigFlags], ",", -1, true)...)
-		} else if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
-			// Apply automatic handling if on x86_64.
-			cpuFlags, err := GetClusterCPUFlags(context.TODO(), d.state, nil, archName)
-			if err != nil {
-				op.Done(err)
-				return err
-			}
-
-			cpuType = "kvm64"
-			cpuExtensions = append(cpuExtensions, cpuFlags...)
+	// Setup the memory.
+	if bs.MemoryTopology == nil {
+		// Get the memory topology.
+		memoryTopology, err := d.memoryTopology(bs)
+		if err != nil {
+			return err
 		}
-	}
 
-	// Get the feature flags.
-	info := DriverStatuses()[instancetype.VM].Info
-	_, nested := info.Features["nested"]
-
-	// Add +invtsc for fast TSC on x86 when not expected to be migratable and not nested.
-	if !nested && d.architecture == osarch.ARCH_64BIT_INTEL_X86 && !d.CanLiveMigrate() {
-		cpuExtensions = append(cpuExtensions, "migratable=no", "+invtsc")
-	}
-
-	if len(cpuExtensions) > 0 {
-		cpuType += "," + strings.Join(cpuExtensions, ",")
-	}
-
-	// Provide machine definition when restoring state.
-	var machineDefinition string
-	if stateful {
-		machineDefinition = d.localConfig["volatile.vm.definition"]
+		bs.MemoryTopology = memoryTopology
 	}
 
 	// Generate the QEMU configuration.
-	monHooks, err := d.generateQemuConfig(machineDefinition, strings.Split(cpuType, ",")[0], cpuInfo, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -1828,7 +1760,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-name", d.Name(),
 		"-uuid", instUUID,
 		"-daemonize",
-		"-cpu", cpuType,
+		"-cpu", bs.CPUType,
 		"-nographic",
 		"-serial", "chardev:console",
 		"-nodefaults",
@@ -1839,6 +1771,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-D", d.LogFilePath(),
 	}
 
+	// Get the feature flags.
+	info := DriverStatuses()[instancetype.VM].Info
 	_, spiceSupported := info.Features["spice"]
 	if spiceSupported {
 		qemuArgs = append(qemuArgs, "-spice", d.spiceCmdlineConfig())
@@ -2108,20 +2042,14 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Record the QEMU machine definition.
-	if !stateful {
+	if !stateful && d.CanLiveMigrate() {
 		definition, err := monitor.MachineDefinition()
 		if err != nil {
 			op.Done(err)
 			return err
 		}
 
-		err = d.VolatileSet(map[string]string{
-			"volatile.vm.definition": definition,
-		})
-		if err != nil {
-			op.Done(err)
-			return err
-		}
+		bs.MachineType = definition
 	}
 
 	// Don't allow the monitor to trigger a disconnection shutdown event until cleanly started so that the
@@ -2136,10 +2064,10 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Apply CPU pinning.
-	if cpuInfo.VCPUs == nil {
-		if d.architectureSupportsCPUHotplug() && cpuInfo.Cores > 1 {
+	if bs.CPUTopology.VCPUs == nil {
+		if d.architectureSupportsCPUHotplug() && bs.CPUTopology.Cores > 1 {
 			// Hotplug the CPUs.
-			err := d.setCPUs(monitor, cpuInfo.Cores)
+			err := d.setCPUs(monitor, bs.CPUTopology.Cores)
 			if err != nil {
 				err = fmt.Errorf("Failed to add CPUs: %w", err)
 				op.Done(err)
@@ -2155,7 +2083,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		// Confirm nothing weird is going on.
-		if len(cpuInfo.VCPUs) != len(pids) {
+		if len(bs.CPUTopology.VCPUs) != len(pids) {
 			err = errors.New("QEMU has less vCPUs than configured")
 			op.Done(err)
 			return err
@@ -2164,7 +2092,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		// Apply the CPU pins.
 		for i, pid := range pids {
 			set := unix.CPUSet{}
-			set.Set(int(cpuInfo.VCPUs[uint64(i)]))
+			set.Set(int(bs.CPUTopology.VCPUs[uint64(i)]))
 
 			// Apply the pin.
 			err := unix.SchedSetaffinity(pid, &set)
@@ -2226,15 +2154,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// Restore the state.
 	if stateful {
 		// Add back any memory hotplug slot.
-		if d.localConfig["volatile.vm.hotplug.memory"] != "" {
-			memConf := &qemuMemoryLayout{}
-
-			err = json.Unmarshal([]byte(d.localConfig["volatile.vm.hotplug.memory"]), memConf)
-			if err != nil {
-				return err
-			}
-
-			for _, memSize := range memConf.Extra {
+		if bs.MemoryTopology != nil {
+			for _, memSize := range bs.MemoryTopology.Extra {
 				err := d.hotplugMemory(monitor, memSize)
 				if err != nil {
 					return err
@@ -2320,6 +2241,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// run if QMP unexpectedly disconnects.
 	monitor.SetInitialized(true)
 	op.Done(nil)
+
+	// Record the final boot state data.
+	err = d.saveBootState(*bs)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -3808,13 +3736,13 @@ func (d *qemu) onRTCChange(change int) error {
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuInfo *qemuCPUTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	isWindows := d.GuestOS() == "windows"
-	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), machineDefinition})
+	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), bs.MachineType})
 
-	err := d.addCPUMemoryConfig(&conf, cpuType, cpuInfo)
+	err := d.addCPUMemoryConfig(&conf, bs)
 	if err != nil {
 		return nil, err
 	}
@@ -4039,7 +3967,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 		multifunction: multi,
 	}
 
-	conf = append(conf, qemuSCSI(&scsiOpts, cpuInfo.Sockets*cpuInfo.Cores)...)
+	conf = append(conf, qemuSCSI(&scsiOpts, bs.getSCSIQueues())...)
 
 	// Export the config directory and agent as 9p drives when supported.
 	if !isWindows && plan9 {
@@ -6892,46 +6820,50 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 			return err
 		}
 
-		// Record the VM memory hotplug profile.
-		memConf := qemuMemoryLayout{
-			Base:  baseMem,
-			Max:   maxMem,
-			Extra: []int64{},
-		}
-
-		memDevs, err := monitor.GetMemdev()
-		if err != nil {
-			return err
-		}
-
-		memSlots := map[string]int64{}
-		memSlotsKeys := []string{}
-		for _, memDev := range memDevs {
-			// Skip base memory node.
-			if memDev.ID == "mem0" {
-				continue
+		// If migratable, update state information following hotplug.
+		if d.CanLiveMigrate() {
+			// Prepare an updated memory topology struct.
+			memTopology := qemuMemoryTopology{
+				Base:  baseMem,
+				Max:   maxMem,
+				Extra: []int64{},
 			}
 
-			memSlots[memDev.ID] = int64(memDev.Size)
-			memSlotsKeys = append(memSlotsKeys, memDev.ID)
-		}
+			memDevs, err := monitor.GetMemdev()
+			if err != nil {
+				return err
+			}
 
-		// The list out of QEMU is in random order...
-		sort.Strings(memSlotsKeys)
-		for _, k := range memSlotsKeys {
-			memConf.Extra = append(memConf.Extra, memSlots[k])
-		}
+			memSlots := map[string]int64{}
+			memSlotsKeys := []string{}
+			for _, memDev := range memDevs {
+				// Skip base memory node.
+				if memDev.ID == "mem0" {
+					continue
+				}
 
-		memConfStr, err := json.Marshal(memConf)
-		if err != nil {
-			return err
-		}
+				memSlots[memDev.ID] = int64(memDev.Size)
+				memSlotsKeys = append(memSlotsKeys, memDev.ID)
+			}
 
-		err = d.VolatileSet(map[string]string{
-			"volatile.vm.hotplug.memory": string(memConfStr),
-		})
-		if err != nil {
-			return err
+			// The list out of QEMU is in random order...
+			sort.Strings(memSlotsKeys)
+			for _, k := range memSlotsKeys {
+				memTopology.Extra = append(memTopology.Extra, memSlots[k])
+			}
+
+			// Update the boot state record.
+			bs, err := d.getBootState()
+			if err != nil {
+				return err
+			}
+
+			bs.MemoryTopology = &memTopology
+
+			err = d.saveBootState(*bs)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -6972,7 +6904,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 // respecting NUMA node placement and hugepages.
 func (d *qemu) hotplugMemory(monitor *qmp.Monitor, sizeBytes int64) error {
 	// Get CPU information.
-	cpuInfo, err := d.cpuTopology(d.expandedConfig["limits.cpu"])
+	cpuInfo, err := d.cpuTopology()
 	if err != nil {
 		return err
 	}
