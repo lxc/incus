@@ -20,10 +20,12 @@ import (
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/archive"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/termios"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdStorageBucket struct {
@@ -1278,6 +1280,7 @@ type cmdStorageBucketExport struct {
 	storageBucket *cmdStorageBucket
 
 	flagCompressionAlgorithm string
+	flagForce                bool
 }
 
 var cmdStorageBucketExportUsage = u.Usage{u.Pool.Remote(), u.Bucket, u.Target(u.File).Optional()}
@@ -1294,6 +1297,7 @@ func (c *cmdStorageBucketExport) command() *cobra.Command {
 
 	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Define a compression algorithm: for backup or none")+"``")
 	cmd.Flags().StringVar(&c.storageBucket.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().BoolVar(&c.flagForce, "force", false, i18n.G("Force overwriting existing backup file"))
 
 	cmd.RunE = c.run
 
@@ -1309,11 +1313,20 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 	d := parsed[0].RemoteServer
 	poolName := parsed[0].RemoteObject.String
 	bucketName := parsed[1].String
-	targetName := parsed[2].Get("backup.tar.gz")
+	hasTarget := !parsed[2].Skipped
+	targetName := parsed[2].Get("." + bucketName + ".backup")
 
 	// If a target was specified, use the bucket on the given member.
 	if c.storageBucket.flagTarget != "" {
 		d = d.UseTarget(c.storageBucket.flagTarget)
+	}
+
+	if isStdout(targetName) {
+		// If outputting to stdout, quiesce the output.
+		c.global.flagQuiet = true
+	} else if hasTarget && !c.flagForce && util.PathExists(targetName) {
+		// Check if the target path already exists.
+		return fmt.Errorf(i18n.G("Target path %q already exists"), targetName)
 	}
 
 	req := api.StorageBucketBackupsPost{
@@ -1334,7 +1347,7 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("Failed to create backup: %v"), err)
 		}
 
-		// Watch the background operation
+		// Watch the background operation.
 		progress := cli.ProgressRenderer{
 			Format: i18n.G("Backing up storage bucket: %s"),
 			Quiet:  c.global.flagQuiet,
@@ -1346,7 +1359,7 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Wait until backup is done
+		// Wait until backup is done.
 		err = cli.CancelableWait(op, &progress)
 		if err != nil {
 			progress.Done("")
@@ -1360,7 +1373,7 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Get name of backup
+		// Get name of backup.
 		utStr := op.Get().Resources["backups"][0]
 		uri, err := url.Parse(utStr)
 		if err != nil {
@@ -1373,7 +1386,7 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 		}
 
 		defer func() {
-			// Delete backup after we're done
+			// Delete backup after we're done.
 			op, err := d.DeleteStoragePoolBucketBackup(poolName, bucketName, backupName)
 			if err == nil {
 				_ = op.Wait()
@@ -1386,14 +1399,19 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	target, err := os.Create(targetName)
-	if err != nil {
-		return err
+	var target *os.File
+	if isStdout(targetName) {
+		target = os.Stdout
+	} else {
+		target, err = os.Create(targetName)
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = target.Close() }()
 	}
 
-	defer func() { _ = target.Close() }()
-
-	// Prepare the download request
+	// Prepare the download request.
 	progress := cli.ProgressRenderer{
 		Format: i18n.G("Exporting backup of storage bucket: %s"),
 		Quiet:  c.global.flagForceLocal,
@@ -1404,12 +1422,35 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 		ProgressHandler: progress.UpdateProgress,
 	}
 
-	// Export tarball
+	// Export tarball.
 	err = getter(&backupFileRequest)
 	if err != nil {
 		_ = os.Remove(targetName)
 		progress.Done("")
 		return fmt.Errorf(i18n.G("Failed to fetch storage bucket backup: %w"), err)
+	}
+
+	// Detect backup file type and rename file accordingly.
+	if !hasTarget {
+		_, err := target.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
+		}
+
+		_, ext, _, err := archive.DetectCompressionFile(target)
+		if err != nil {
+			return err
+		}
+
+		err = os.Rename(targetName, bucketName+ext)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to rename export file: %w"), err)
+		}
+	}
+
+	err = target.Close()
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to close export file: %w"), err)
 	}
 
 	progress.Done(i18n.G("Backup exported successfully!"))
@@ -1456,12 +1497,17 @@ func (c *cmdStorageBucketImport) run(cmd *cobra.Command, args []string) error {
 		d = d.UseTarget(c.storageBucket.flagTarget)
 	}
 
-	file, err := os.Open(backupFile)
-	if err != nil {
-		return err
-	}
+	var file *os.File
+	if isStdin(backupFile) {
+		file = os.Stdin
+	} else {
+		file, err = os.Open(backupFile)
+		if err != nil {
+			return err
+		}
 
-	defer func() { _ = file.Close() }()
+		defer func() { _ = file.Close() }()
+	}
 
 	fstat, err := file.Stat()
 	if err != nil {
