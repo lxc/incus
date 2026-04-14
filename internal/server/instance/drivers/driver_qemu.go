@@ -92,6 +92,21 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 )
 
+// Internal structs.
+type qemuCPUTopology struct {
+	Sockets int `json:"sockets"`
+	Cores   int `json:"cores"`
+	Threads int `json:"threads"`
+	VCPUs   map[uint64]uint64
+	Nodes   map[uint64][]uint64
+}
+
+type qemuMemoryLayout struct {
+	Base  int64   `json:"base"`
+	Max   int64   `json:"max"`
+	Extra []int64 `json:"extra"`
+}
+
 // incus-agent files
 //
 //go:embed agent-loader/*
@@ -128,12 +143,6 @@ const qemuSparseUSBPorts = 8
 var errQemuAgentOffline = errors.New("VM agent isn't currently running")
 
 type monitorHook func(m *qmp.Monitor) error
-
-type qemuHotplugMemory struct {
-	Base  int64   `json:"base"`
-	Max   int64   `json:"max"`
-	Extra []int64 `json:"extra"`
-}
 
 // qemuLoad creates a Qemu instance from the supplied InstanceArgs.
 func qemuLoad(s *state.State, args db.InstanceArgs, p api.Project) (instance.Instance, error) {
@@ -1729,7 +1738,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		// x86_64 requires the use of topoext when SMT is used.
-		if cpuInfo.threads > 1 {
+		if cpuInfo.Threads > 1 {
 			cpuExtensions = append(cpuExtensions, "topoext")
 		}
 	}
@@ -2143,10 +2152,10 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Apply CPU pinning.
-	if cpuInfo.vcpus == nil {
-		if d.architectureSupportsCPUHotplug() && cpuInfo.cores > 1 {
+	if cpuInfo.VCPUs == nil {
+		if d.architectureSupportsCPUHotplug() && cpuInfo.Cores > 1 {
 			// Hotplug the CPUs.
-			err := d.setCPUs(monitor, cpuInfo.cores)
+			err := d.setCPUs(monitor, cpuInfo.Cores)
 			if err != nil {
 				err = fmt.Errorf("Failed to add CPUs: %w", err)
 				op.Done(err)
@@ -2162,7 +2171,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		// Confirm nothing weird is going on.
-		if len(cpuInfo.vcpus) != len(pids) {
+		if len(cpuInfo.VCPUs) != len(pids) {
 			err = errors.New("QEMU has less vCPUs than configured")
 			op.Done(err)
 			return err
@@ -2171,7 +2180,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		// Apply the CPU pins.
 		for i, pid := range pids {
 			set := unix.CPUSet{}
-			set.Set(int(cpuInfo.vcpus[uint64(i)]))
+			set.Set(int(cpuInfo.VCPUs[uint64(i)]))
 
 			// Apply the pin.
 			err := unix.SchedSetaffinity(pid, &set)
@@ -2234,7 +2243,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if stateful {
 		// Add back any memory hotplug slot.
 		if d.localConfig["volatile.vm.hotplug.memory"] != "" {
-			memConf := &qemuHotplugMemory{}
+			memConf := &qemuMemoryLayout{}
 
 			err = json.Unmarshal([]byte(d.localConfig["volatile.vm.hotplug.memory"]), memConf)
 			if err != nil {
@@ -3815,7 +3824,7 @@ func (d *qemu) onRTCChange(change int) error {
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuInfo *cpuTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuInfo *qemuCPUTopology, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	isWindows := d.GuestOS() == "windows"
@@ -4046,7 +4055,7 @@ func (d *qemu) generateQemuConfig(machineDefinition string, cpuType string, cpuI
 		multifunction: multi,
 	}
 
-	conf = append(conf, qemuSCSI(&scsiOpts, cpuInfo.sockets*cpuInfo.cores)...)
+	conf = append(conf, qemuSCSI(&scsiOpts, cpuInfo.Sockets*cpuInfo.Cores)...)
 
 	// Export the config directory and agent as 9p drives when supported.
 	if !isWindows && plan9 {
@@ -4313,7 +4322,7 @@ func (d *qemu) writeQemuConfigFile(configPath string) error {
 }
 
 // getCPUOpts retrieves configuration options for virtualized CPUs and memory.
-func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpts, error) {
+func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCPUOpts, error) {
 	// Figure out what memory object layout we're going to use.
 	// Before v6.0 or if version unknown, we use the "repeated" format, otherwise we use "indexed" format.
 	qemuMemObjectFormat := "repeated"
@@ -4329,7 +4338,7 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 	}
 
 	hostNodes := []uint64{}
-	if cpuInfo.vcpus == nil {
+	if cpuInfo.VCPUs == nil {
 		// If not pinning, default to exposing cores.
 		// Only one CPU will be added here, as the others will be hotplugged during start.
 		if d.architectureSupportsCPUHotplug() {
@@ -4337,10 +4346,10 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 			cpuOpts.cpuCores = 1
 
 			// Expose the total requested by the user already so the hotplug limit can be set higher if needed.
-			cpuOpts.cpuRequested = cpuInfo.cores
+			cpuOpts.cpuRequested = cpuInfo.Cores
 		} else {
-			cpuOpts.cpuCount = cpuInfo.cores
-			cpuOpts.cpuCores = cpuInfo.cores
+			cpuOpts.cpuCount = cpuInfo.Cores
+			cpuOpts.cpuCores = cpuInfo.Cores
 		}
 
 		cpuOpts.cpuSockets = 1
@@ -4368,9 +4377,9 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 		vcpuCore := map[uint64]uint64{}
 		vcpuThread := map[uint64]uint64{}
 		vcpu := uint64(0)
-		for i := range cpuInfo.sockets {
-			for j := range cpuInfo.cores {
-				for k := range cpuInfo.threads {
+		for i := range cpuInfo.Sockets {
+			for j := range cpuInfo.Cores {
+				for k := range cpuInfo.Threads {
 					vcpuSocket[vcpu] = uint64(i)
 					vcpuCore[vcpu] = uint64(j)
 					vcpuThread[vcpu] = uint64(k)
@@ -4383,7 +4392,7 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 		numa := []qemuNumaEntry{}
 		numaIDs := []uint64{}
 		numaNode := uint64(0)
-		for hostNode, entry := range cpuInfo.nodes {
+		for hostNode, entry := range cpuInfo.Nodes {
 			hostNodes = append(hostNodes, hostNode)
 
 			numaIDs = append(numaIDs, numaNode)
@@ -4400,10 +4409,10 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 		}
 
 		// Prepare context.
-		cpuOpts.cpuCount = len(cpuInfo.vcpus)
-		cpuOpts.cpuSockets = cpuInfo.sockets
-		cpuOpts.cpuCores = cpuInfo.cores
-		cpuOpts.cpuThreads = cpuInfo.threads
+		cpuOpts.cpuCount = len(cpuInfo.VCPUs)
+		cpuOpts.cpuSockets = cpuInfo.Sockets
+		cpuOpts.cpuCores = cpuInfo.Cores
+		cpuOpts.cpuThreads = cpuInfo.Threads
 		cpuOpts.cpuNumaNodes = numaIDs
 		cpuOpts.cpuNumaMapping = numa
 		cpuOpts.cpuNumaHostNodes = hostNodes
@@ -4429,7 +4438,7 @@ func (d *qemu) getCPUOpts(cpuInfo *cpuTopology, memSizeBytes int64) (*qemuCPUOpt
 
 // addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
 // If sb is nil then no config is written.
-func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *cpuTopology) error {
+func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *qemuCPUTopology) error {
 	// Configure memory limit.
 	memSize := d.expandedConfig["limits.memory"]
 	if memSize == "" {
@@ -4446,7 +4455,7 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *
 		return err
 	}
 
-	cpuPinning := cpuInfo.vcpus != nil
+	cpuPinning := cpuInfo.VCPUs != nil
 
 	// Set hotplug limits.
 	// kvm64 has a limit of 39 bits for aarch64 and 40 bits on x86_64, so just limit everyone to 39 bits (512GB).
@@ -4533,7 +4542,7 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *
 	if conf != nil {
 		// Check if we're dealing with a live migration / stateful start.
 		if d.localConfig["volatile.vm.hotplug.memory"] != "" {
-			memConf := &qemuHotplugMemory{}
+			memConf := &qemuMemoryLayout{}
 
 			// Read back the recorded memory config.
 			err = json.Unmarshal([]byte(d.localConfig["volatile.vm.hotplug.memory"]), memConf)
@@ -7015,7 +7024,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 		}
 
 		// Record the VM memory hotplug profile.
-		memConf := qemuHotplugMemory{
+		memConf := qemuMemoryLayout{
 			Base:  baseMem,
 			Max:   maxMem,
 			Extra: []int64{},
@@ -7105,7 +7114,7 @@ func (d *qemu) hotplugMemory(monitor *qmp.Monitor, sizeBytes int64) error {
 		return err
 	}
 
-	cpuPinning := cpuInfo.vcpus != nil
+	cpuPinning := cpuInfo.VCPUs != nil
 
 	// Get CPUs and memory configuration
 	conf := qemuCPU(cpuOpts, cpuPinning)
@@ -10021,17 +10030,9 @@ func (d *qemu) UpdateBackupFile() error {
 	return pool.UpdateInstanceBackupFile(d, true, nil)
 }
 
-type cpuTopology struct {
-	sockets int
-	cores   int
-	threads int
-	vcpus   map[uint64]uint64
-	nodes   map[uint64][]uint64
-}
-
-// cpuTopology takes the CPU limit and computes the QEMU CPU topology.
-func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
-	topology := &cpuTopology{}
+// qemuCPUTopology takes the CPU limit and computes the QEMU CPU topology.
+func (d *qemu) cpuTopology(limit string) (*qemuCPUTopology, error) {
+	topology := &qemuCPUTopology{}
 
 	// Set default to 1 vCPU.
 	if limit == "" {
@@ -10042,9 +10043,9 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 	nrLimit, err := strconv.Atoi(limit)
 	if err == nil {
 		// We're not dealing with a pinned setup.
-		topology.sockets = 1
-		topology.cores = nrLimit
-		topology.threads = 1
+		topology.Sockets = 1
+		topology.Cores = nrLimit
+		topology.Threads = 1
 
 		return topology, nil
 	}
@@ -10165,11 +10166,11 @@ func (d *qemu) cpuTopology(limit string) (*cpuTopology, error) {
 	}
 
 	// Prepare struct.
-	topology.sockets = nrSockets
-	topology.cores = nrCores
-	topology.threads = nrThreads
-	topology.vcpus = vcpus
-	topology.nodes = numaNodes
+	topology.Sockets = nrSockets
+	topology.Cores = nrCores
+	topology.Threads = nrThreads
+	topology.VCPUs = vcpus
+	topology.Nodes = numaNodes
 
 	return topology, nil
 }
