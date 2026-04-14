@@ -1013,7 +1013,7 @@ func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string
 		_ = monitor.NBDServerStop()
 	}()
 
-	err = monitor.NBDBlockExportAdd(blockExport, true)
+	err = monitor.NBDBlockExportAdd(blockExport, true, nil)
 	if err != nil {
 		return fmt.Errorf("Failed adding root disk to NBD server: %w", err)
 	}
@@ -11315,7 +11315,7 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 
 	exportDiskPath := fmt.Sprintf("nbd+unix:///%s?socket=%s", exportBlockName, socketPath)
 
-	err = monitor.NBDBlockExportAdd(exportBlockName, false)
+	err = monitor.NBDBlockExportAdd(exportBlockName, false, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed adding disk to NBD server: %w", err)
 	}
@@ -11472,6 +11472,20 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 
 	reverter.Add(disconnect)
 
+	bitmaps, err := d.GetBitmaps(diskName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed fetching bitmaps for %q: %w", diskName, err)
+	}
+
+	bitmapNames := []string{}
+	for _, b := range bitmaps {
+		if b.Inconsistent {
+			continue
+		}
+
+		bitmapNames = append(bitmapNames, b.Name)
+	}
+
 	escapedDeviceName := linux.PathNameEncode(diskName)
 	nodeName := d.blockNodeName(escapedDeviceName)
 
@@ -11491,7 +11505,7 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 		reverter.Add(cleanupSnapshot)
 	}
 
-	err = monitor.NBDBlockExportAdd(blockExport, writable)
+	err = monitor.NBDBlockExportAdd(blockExport, writable, bitmapNames)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed adding disk to NBD server: %w", err)
 	}

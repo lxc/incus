@@ -1207,18 +1207,32 @@ func (m *Monitor) NBDServerStop() error {
 }
 
 // NBDBlockExportAdd exports a writable device via the NBD server.
-func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, writable bool) error {
+func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, writable bool, bitmapNames []string) error {
 	var args struct {
 		ID       string `json:"id"`
 		Type     string `json:"type"`
 		NodeName string `json:"node-name"`
 		Writable bool   `json:"writable"`
+		Bitmaps  []struct {
+			Node string `json:"node"`
+			Name string `json:"name"`
+		} `json:"bitmaps,omitempty"`
 	}
 
 	args.ID = deviceNodeName
 	args.Type = "nbd"
 	args.NodeName = deviceNodeName
 	args.Writable = writable
+
+	for _, b := range bitmapNames {
+		args.Bitmaps = append(args.Bitmaps, struct {
+			Node string `json:"node"`
+			Name string `json:"name"`
+		}{
+			Node: deviceNodeName,
+			Name: b,
+		})
+	}
 
 	err := m.Run("block-export-add", args, nil)
 	if err != nil {
