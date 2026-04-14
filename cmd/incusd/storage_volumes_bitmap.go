@@ -14,6 +14,8 @@ import (
 	"github.com/lxc/incus/v6/internal/server/request"
 	"github.com/lxc/incus/v6/internal/server/response"
 	storagePools "github.com/lxc/incus/v6/internal/server/storage"
+	localUtil "github.com/lxc/incus/v6/internal/server/util"
+	"github.com/lxc/incus/v6/internal/version"
 	"github.com/lxc/incus/v6/shared/api"
 )
 
@@ -71,7 +73,64 @@ var storagePoolVolumeTypeBitmapCmd = APIEndpoint{
 //	          description: Status code
 //	          example: 200
 //	        metadata:
-//	          $ref: "#/definitions/StorageVolumeBitmap"
+//	          type: array
+//	          description: List of endpoints
+//	          items:
+//	            type: string
+//	          example: |-
+//	            [
+//	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0",
+//	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1"
+//	            ]
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+
+// swagger:operation GET /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/bitmaps?recursion=1 storage storage_pool_volume_type_bitmaps_get_recursion1
+//
+//	Get the storage volume dirty bitmaps
+//
+//	Gets a specific storage volume bitmaps
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	  - in: query
+//	    name: target
+//	    description: Cluster member name
+//	    type: string
+//	    example: server01
+//	responses:
+//	  "200":
+//	    description: Storage volume bitmaps
+//	    schema:
+//	      type: object
+//	      description: Sync response
+//	      properties:
+//	        type:
+//	          type: string
+//	          description: Response type
+//	          example: sync
+//	        status:
+//	          type: string
+//	          description: Status description
+//	          example: Success
+//	        status_code:
+//	          type: integer
+//	          description: Status code
+//	          example: 200
+//	        metadata:
+//	          type: array
+//	          description: List of storage volume bitmaps
+//	          items:
+//	            $ref: "#/definitions/StorageVolumeBitmap"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
@@ -152,7 +211,19 @@ func storagePoolVolumeTypeBitmapsGet(d *Daemon, r *http.Request) response.Respon
 		return response.SmartError(err)
 	}
 
-	return response.SyncResponse(true, bitmaps)
+	recursion := localUtil.IsRecursionRequest(r)
+	if recursion {
+		return response.SyncResponse(true, bitmaps)
+	}
+
+	resultString := []string{}
+
+	for _, bitmap := range bitmaps {
+		bitmapURL := api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", volumeTypeName, volumeName, "bitmaps", bitmap.Name).String()
+		resultString = append(resultString, bitmapURL)
+	}
+
+	return response.SyncResponse(true, resultString)
 }
 
 // swagger:operation POST /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/bitmaps storage storage_pool_volumes_type_bitmaps_post

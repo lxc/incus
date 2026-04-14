@@ -16793,7 +16793,15 @@ paths:
                         description: Sync response
                         properties:
                             metadata:
-                                $ref: '#/definitions/StorageVolumeBitmap'
+                                description: List of endpoints
+                                example: |-
+                                    [
+                                      "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0",
+                                      "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1"
+                                    ]
+                                items:
+                                    type: string
+                                type: array
                             status:
                                 description: Status description
                                 example: Success
@@ -16924,6 +16932,54 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get the storage volume dirty bitmap
+            tags:
+                - storage
+    /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/bitmaps?recursion=1:
+        get:
+            description: Gets a specific storage volume bitmaps
+            operationId: storage_pool_volume_type_bitmaps_get_recursion1
+            parameters:
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Cluster member name
+                  example: server01
+                  in: query
+                  name: target
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Storage volume bitmaps
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of storage volume bitmaps
+                                items:
+                                    $ref: '#/definitions/StorageVolumeBitmap'
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the storage volume dirty bitmaps
             tags:
                 - storage
     /1.0/storage-pools/{poolName}/volumes/{type}/{volumeName}/files:
