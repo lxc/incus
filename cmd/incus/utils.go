@@ -783,3 +783,8 @@ func normalizePath(path string) (string, bool) {
 	path = "/" + path
 	return filepath.Clean(path), strings.HasSuffix(path, "/")
 }
+
+// isStdout returns whether the provided path looks like stdout.
+func isStdout(path string) bool {
+	return slices.Contains([]string{"-", "/dev/stdout", "/dev/fd/1"}, path)
+}
