@@ -27,11 +27,28 @@ const (
 // Qcow2ConfigVolumeBase represents the base component of a Btrfs subvolume name.
 const Qcow2ConfigVolumeBase = "instance"
 
+// Bitmap represents a dirty bitmap.
+type Bitmap struct {
+	Name string `json:"name"`
+}
+
+// FormatData contains format specific data.
+type FormatData struct {
+	Bitmaps []Bitmap `json:"bitmaps"`
+}
+
+// FormatSpecific contains format dependent metadata.
+type FormatSpecific struct {
+	Type string     `json:"type"`
+	Data FormatData `json:"data"`
+}
+
 // ImageInfo contains information about a qcow2 image.
 type ImageInfo struct {
-	BackingFilename string `json:"backing-filename"`
-	Format          string `json:"format"`
-	VirtualSize     int    `json:"virtual-size"`
+	BackingFilename string         `json:"backing-filename"`
+	Format          string         `json:"format"`
+	VirtualSize     int            `json:"virtual-size"`
+	FormatSpecific  FormatSpecific `json:"format-specific"`
 }
 
 // Qcow2Create creates a qcow2-formatted image.
