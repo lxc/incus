@@ -9248,11 +9248,24 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 
 	cmd := exec.Command("qemu-nbd", fmt.Sprintf("--socket=%s", socketPath))
 
+	errCh := make(chan string)
+
 	go func() {
 		err := b.Driver().ActivateTask(vol, func(devPath string, op *operations.Operation) error {
 			volDiskPath, err := b.Driver().GetVolumeDiskPath(vol)
 			if err != nil {
 				return err
+			}
+
+			imgInfo, err := drivers.Qcow2Info(volDiskPath)
+			if err != nil {
+				return err
+			}
+
+			if imgInfo.Format == "qcow2" && len(imgInfo.FormatSpecific.Data.Bitmaps) > 0 {
+				for _, b := range imgInfo.FormatSpecific.Data.Bitmaps {
+					cmd.Args = append(cmd.Args, fmt.Sprintf("--bitmap=%s", b.Name))
+				}
 			}
 
 			cmd.Args = append(cmd.Args, volDiskPath)
@@ -9266,6 +9279,7 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 		}, nil)
 		if err != nil {
 			b.logger.Error("Failed when running qemu-nbd", logger.Ctx{"err": err})
+			errCh <- fmt.Sprintf("Failed when running qemu-nbd: %v", err)
 		}
 	}()
 
@@ -9284,6 +9298,9 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 			if err == nil {
 				isReady = true
 			}
+
+		case res := <-errCh:
+			return nil, nil, fmt.Errorf("qemu-nbd failed: %s", res)
 		}
 
 		if isReady {
