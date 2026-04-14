@@ -463,10 +463,9 @@ incus file pull foo/etc/hosts -
 }
 
 // pull runs the post-parsing command logic.
-func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, targetFile string) error {
-	target, targetIsDir := normalizePath(targetFile)
+func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
+	targetIsDir := strings.HasSuffix(target, "/")
 	targetExists := true
-
 	targetInfo, err := os.Stat(target)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {

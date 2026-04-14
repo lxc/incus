@@ -2603,14 +2603,14 @@ incus file pull local v1 foo/etc/hosts -
 }
 
 // pull runs the post-parsing command logic.
-func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Parsed, targetFile string) error {
+func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Parsed, target string) error {
 	d := parsedPool.RemoteServer
 	poolName := parsedPool.RemoteObject.String
 	volName := parsedPath.List[0].String
 	fPath := "/" + parsedPath.List[1].String
-	target, targetIsDir := normalizePath(targetFile)
-	targetExists := true
 
+	targetIsDir := strings.HasSuffix(target, "/")
+	targetExists := true
 	targetInfo, err := os.Stat(target)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {

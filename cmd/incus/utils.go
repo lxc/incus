@@ -778,5 +778,7 @@ func formatRemote(conf *config.Config, p *u.Parsed) string {
 
 // normalizePath normalizes a path and return whether it looks like a directory.
 func normalizePath(path string) (string, bool) {
-	return filepath.Clean(path), path == "" || strings.HasSuffix(path, "/")
+	// On Windows, the SFTP server expects the file path to start with `/`.
+	path = "/" + path
+	return filepath.Clean(path), strings.HasSuffix(path, "/")
 }

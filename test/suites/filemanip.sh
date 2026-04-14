@@ -229,6 +229,8 @@ test_filemanip() {
     # ... and so does adding a trailing `/`.
     file_check_deref_dir -rL /tmp/qux/ baz barqux
 
+    # Asking to pull something ending with `/` which it not a directory leads to an error.
+    ! incus file pull filemanip/tmp/foo/ - --project=test || false
 
     # Test SFTP functionality.
     cmd=$(

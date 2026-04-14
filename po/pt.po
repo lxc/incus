@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-10 10:34+0000\n"
+"POT-Creation-Date: 2026-04-13 23:21+0000\n"
 "PO-Revision-Date: 2026-03-31 15:20+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
@@ -662,7 +662,7 @@ msgstr "%s (%s) (%d disponível)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, fonte=%q)"
 
-#: cmd/incus/utils_sftp.go:387
+#: cmd/incus/utils_copy.go:79 cmd/incus/utils_sftp.go:387
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s não é um diretório"
@@ -729,12 +729,12 @@ msgstr "--instance-only não pode ser passado quando a fonte é um instantâneo"
 msgid "--network-port can't be used without --network-address"
 msgstr "--network-port não pode ser usado sem --network-address"
 
-#: cmd/incus/utils_copy.go:48
+#: cmd/incus/utils_copy.go:49
 msgid "--no-dereference/-P cannot be used together with stdout as a target"
 msgstr ""
 "--no-dereference/-P não pode ser usado juntamente com stdout como um alvo"
 
-#: cmd/incus/utils_copy.go:38
+#: cmd/incus/utils_copy.go:39
 msgid ""
 "--no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive"
 msgstr ""
@@ -753,7 +753,7 @@ msgstr "--no-profiles não pode ser usado com --refresh"
 msgid "--project cannot be used with the query command"
 msgstr "--project não pode ser usado com o comando query"
 
-#: cmd/incus/utils_copy.go:76
+#: cmd/incus/utils_copy.go:84
 msgid "--recursive/-r is required when pulling directories"
 msgstr "--recursive/-r é requerido quando se puxam directórios"
 
@@ -1050,7 +1050,7 @@ msgstr "Nome de certificado alternativo"
 msgid "Always follow symbolic links in source path"
 msgstr "Seguir sempre os links simbólicos no caminho da fonte"
 
-#: cmd/incus/file.go:1003
+#: cmd/incus/file.go:1002
 #, c-format
 msgid "An instance path is required for %s"
 msgstr "E necessário um caminho de instância para %s"
@@ -1321,7 +1321,7 @@ msgstr "Caches:"
 msgid "Can't bind address %q: %w"
 msgstr "Incapaz de unir endereço %q: %w"
 
-#: cmd/incus/file.go:739
+#: cmd/incus/file.go:738
 msgid "Can't override UID/GID in recursive mode without -p"
 msgstr "Não pode sobrepor UID/GID em modo recursivo sem -p"
 
@@ -1329,7 +1329,7 @@ msgstr "Não pode sobrepor UID/GID em modo recursivo sem -p"
 msgid "Can't override configuration or profiles in local rename"
 msgstr "Incapaz de sobrepor configuração ou perfis em renomeação local"
 
-#: cmd/incus/file.go:726
+#: cmd/incus/file.go:725
 msgid "Can't override the target mode when performing a recursive transfer"
 msgstr ""
 "Não pode sobrepor o modo de alvo quando executa uma transferência recursiva"
@@ -1888,7 +1888,7 @@ msgstr "Cria uma instância vazia"
 msgid "Create and start instances from images"
 msgstr "Cria e inicia instâncias a partir de imagens"
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:684
+#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:683
 #: cmd/incus/storage_volume.go:2164 cmd/incus/storage_volume.go:2586
 #: cmd/incus/storage_volume.go:2790
 msgid "Create any directories necessary"
@@ -2339,7 +2339,7 @@ msgstr "Importação de diretório não está disponível nesta plataforma"
 msgid "Directory to run the command in (default /root)"
 msgstr "Diretório para correr o comando em (predefinição /root)"
 
-#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2406
+#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2406
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Desativa a autenticação quando se usa escuta SSH SFTP"
 
@@ -3043,7 +3043,7 @@ msgstr "Falha ao ligar a instância SFTP para cliente %q: %v"
 msgid "Failed connecting to instance SFTP: %s %w"
 msgstr "Falhada ligação a instância SFTP: %s %w"
 
-#: cmd/incus/file.go:1021 cmd/incus/storage_volume.go:2463
+#: cmd/incus/file.go:1020 cmd/incus/storage_volume.go:2463
 #: cmd/incus/storage_volume.go:2651 cmd/incus/storage_volume.go:2818
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
@@ -3252,7 +3252,7 @@ msgstr "Falhou ao escutar por ligação: %w"
 msgid "Failed to load configuration: %s"
 msgstr "Falhou ao carregar configuração: %s"
 
-#: cmd/incus/file.go:774 cmd/incus/utils_sftp.go:307
+#: cmd/incus/file.go:773 cmd/incus/utils_sftp.go:307
 #, c-format
 msgid "Failed to open source file %q: %v"
 msgstr "Falhou ao abrir ficheiro fonte %q: %v"
@@ -3501,8 +3501,8 @@ msgid ""
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. csv,"
-"header"
+"para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. "
+"csv,header"
 
 #: cmd/incus/admin_sql.go:60 cmd/incus/alias.go:111 cmd/incus/cluster.go:171
 #: cmd/incus/cluster_group.go:439 cmd/incus/config_template.go:270
@@ -3523,8 +3523,8 @@ msgid ""
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. csv,"
-"header"
+"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. "
+"csv,header"
 
 #: cmd/incus/monitor.go:58
 msgid "Format (json|pretty|yaml)"
@@ -4127,7 +4127,7 @@ msgstr "Instância desligada para cliente %q"
 msgid "Instance name is: %s"
 msgstr "Nome da instância é: %s"
 
-#: cmd/incus/file.go:1008
+#: cmd/incus/file.go:1007
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr "O caminho da instância não pode ser usado no modo de escuta SSH SFTP"
 
@@ -5227,8 +5227,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5312,8 +5312,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
+"[:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -6206,8 +6206,8 @@ msgstr "Gerir volumes de armazenamento"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 "Gerir volumes de armazenamento\n"
 "\n"
@@ -6309,7 +6309,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr "Tamanho mínimo é 1GiB"
 
-#: cmd/incus/file.go:762
+#: cmd/incus/file.go:761
 msgid "Missing target directory"
 msgstr "Directório alvo em falta"
 
@@ -6346,7 +6346,7 @@ msgid "More than one device matches, specify the device name"
 msgstr ""
 "Mais do que um dispositivo corresponde, especifique o nome do dispositivo"
 
-#: cmd/incus/file.go:495
+#: cmd/incus/file.go:494
 msgid "More than one file to download, but target is not a directory"
 msgstr "Mais de um ficheiro para descarregar, mas o alvo não é um diretório"
 
@@ -6363,11 +6363,11 @@ msgstr ""
 "Se nenhum caminho alvo for fornecido, arranca uma escuta SSH SFTP em vez "
 "disso."
 
-#: cmd/incus/file.go:939
+#: cmd/incus/file.go:938
 msgid "Mount files from instances"
 msgstr "Monta ficheiros de instâncias"
 
-#: cmd/incus/file.go:940
+#: cmd/incus/file.go:939
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -7270,7 +7270,7 @@ msgstr "Puxa ficheiros a partir de volumes personalizados"
 msgid "Pull files from instances"
 msgstr "Puxa ficheiros de instâncias"
 
-#: cmd/incus/file.go:583 cmd/incus/storage_volume.go:2700
+#: cmd/incus/file.go:582 cmd/incus/storage_volume.go:2700
 #: cmd/incus/utils_sftp.go:198
 #, c-format
 msgid "Pulling %s from %s: %%s"
@@ -7280,11 +7280,11 @@ msgstr "A puxar %s de %s: %%s"
 msgid "Push files into custom volumes"
 msgstr "Empurra ficheiros para volumes personalizados"
 
-#: cmd/incus/file.go:674 cmd/incus/file.go:675
+#: cmd/incus/file.go:673 cmd/incus/file.go:674
 msgid "Push files into instances"
 msgstr "Envia ficheiros para instâncias"
 
-#: cmd/incus/file.go:884 cmd/incus/storage_volume.go:2967
+#: cmd/incus/file.go:883 cmd/incus/storage_volume.go:2967
 #: cmd/incus/utils_sftp.go:318
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -7360,7 +7360,7 @@ msgstr ""
 "  pools mas não na base de dados. Depois irá oferecer o recriar destes "
 "registos da base de dados."
 
-#: cmd/incus/file.go:447 cmd/incus/file.go:683 cmd/incus/storage_volume.go:2587
+#: cmd/incus/file.go:447 cmd/incus/file.go:682 cmd/incus/storage_volume.go:2587
 #: cmd/incus/storage_volume.go:2789
 msgid "Recursively transfer files"
 msgstr "Transfere ficheiros recursivamente"
@@ -7856,7 +7856,7 @@ msgstr "Define as chaves de configuração de um grupo dum agrupamento"
 msgid "Set a cluster member's configuration keys"
 msgstr "Define as chaves de configuração de um membro do agrupamento"
 
-#: cmd/incus/file.go:952 cmd/incus/storage_volume.go:2407
+#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2407
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr "Define a autenticação do utilizador quando se usa escuta SSH SFTP"
 
@@ -8171,7 +8171,7 @@ msgstr "Define as permissões do ficheiro ao ser criado"
 msgid "Set the file's perms on push"
 msgstr "Define as permissões do ficheiro ao ser enviado"
 
-#: cmd/incus/file.go:687
+#: cmd/incus/file.go:686
 msgid ""
 "Set the file's perms on push (in recursive mode, sets the target directory's "
 "permissions if it doesn't exist)"
@@ -8187,7 +8187,7 @@ msgstr "Define o uid do ficheiro ao ser criado"
 msgid "Set the file's uid on push"
 msgstr "Define o uid do ficheiro ao ser enviado"
 
-#: cmd/incus/file.go:686
+#: cmd/incus/file.go:685
 msgid ""
 "Set the files' GIDs on push (in recursive mode, only sets the target "
 "directory's GID if it doesn't exist and -p is used)"
@@ -8195,7 +8195,7 @@ msgstr ""
 "Define as GIDs dos ficheiros ao empurrar (em modo recursivo, apenas define a "
 "GID do directório alvo se este não existir e se -p for usado)"
 
-#: cmd/incus/file.go:685
+#: cmd/incus/file.go:684
 msgid ""
 "Set the files' UIDs on push (in recursive mode, only sets the target "
 "directory's UID if it doesn't exist and -p is used)"
@@ -8271,7 +8271,7 @@ msgstr "Define a chave como uma propriedade de volume de armazenamento"
 msgid "Set the key as an instance property"
 msgstr "Define a chave como uma propriedade de instância"
 
-#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2405
+#: cmd/incus/file.go:949 cmd/incus/storage_volume.go:2405
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr "Configura escuta SSH SFTP no endereço:porto em vez de montar"
 
@@ -8782,7 +8782,7 @@ msgstr "TIPO"
 msgid "Taken at"
 msgstr "Tomado em"
 
-#: cmd/incus/file.go:759
+#: cmd/incus/file.go:758
 msgid "Target is not a directory"
 msgstr "Alvo não é um diretório"
 
@@ -8795,11 +8795,11 @@ msgstr "Alvo não é um agrupamento"
 msgid "Target path %q already exists"
 msgstr "Caminho alvo %q já existe"
 
-#: cmd/incus/file.go:998 cmd/incus/storage_volume.go:2457
+#: cmd/incus/file.go:997 cmd/incus/storage_volume.go:2457
 msgid "Target path and --listen flag cannot be used together"
 msgstr "O caminho do alvo e bandeira --listen não podem ser usados juntamente"
 
-#: cmd/incus/file.go:992 cmd/incus/storage_volume.go:2452
+#: cmd/incus/file.go:991 cmd/incus/storage_volume.go:2452
 msgid "Target path must be a directory"
 msgstr "O caminho alvo tem de ser um diretório"
 
@@ -10246,8 +10246,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 "incus create images:debian/12 u1\n"
@@ -10255,8 +10255,8 @@ msgstr ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Cria a instância com configuração a partir de config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
 "barramento"
 
@@ -10328,7 +10328,7 @@ msgstr ""
 "incus file create --type=symlink foo/bar baz\n"
 "\t   Para criar um link simbólico /bar na instância foo cujo alvo é baz."
 
-#: cmd/incus/file.go:943
+#: cmd/incus/file.go:942
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -10359,7 +10359,7 @@ msgstr ""
 "incus file pull foo/etc/hosts -\n"
 "   Para puxar /etc/hosts da instância e escrevê-lo na saída standard."
 
-#: cmd/incus/file.go:676
+#: cmd/incus/file.go:675
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -10425,8 +10425,8 @@ msgid ""
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 "incus launch images:debian/12 u1\n"
@@ -10441,15 +10441,15 @@ msgstr ""
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Cria e arranca uma máquina virtual com 4 vCPUs e 4GiB de RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
 "barramento"
 
 #: cmd/incus/list.go:130
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10459,8 +10459,8 @@ msgid ""
 "incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Mostra instâncias usando as colunas \"NAME\", \"BASE IMAGE\", \"STATE\", "
 "\"IPV4\", \"IPV6\" e \"MAC\".\n"
 "  \"BASE IMAGE\", \"MAC\" e \"IMAGE OS\" são coluna personalizadas geradas "
@@ -10570,8 +10570,8 @@ msgid ""
 "incus network integration create o1 ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 "incus network integration create o1 ovn\n"
 "\n"
@@ -10580,15 +10580,15 @@ msgstr ""
 
 #: cmd/incus/network_integration.go:224
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
-"incus network integration edit <integração de rede> < network-integration."
-"yaml\n"
-"    Atualiza uma integração de rede usando o conteúdo de network-integration."
-"yaml"
+"incus network integration edit <integração de rede> < network-"
+"integration.yaml\n"
+"    Atualiza uma integração de rede usando o conteúdo de network-"
+"integration.yaml"
 
 #: cmd/incus/network_load_balancer.go:314
 msgid ""
@@ -10809,8 +10809,8 @@ msgid ""
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
-"    Atualiza uma chave de bucket de armazenamento usando o conteúdo de key."
-"yaml."
+"    Atualiza uma chave de bucket de armazenamento usando o conteúdo de "
+"key.yaml."
 
 #: cmd/incus/storage_bucket.go:1291
 msgid ""
@@ -12230,8 +12230,8 @@ msgstr "“%s”"
 
 #~ msgid ""
 #~ "incus admin os service edit [<remote>:]<service> < service.yaml\n"
-#~ "    Update an IncusOS service configuration using the content of service."
-#~ "yaml."
+#~ "    Update an IncusOS service configuration using the content of "
+#~ "service.yaml."
 #~ msgstr ""
 #~ "incus admin os service edit [<remoto>:]<serviço> < service.yaml\n"
 #~ "    Atualiza uma configuração de serviço IncusOS usando o conteúdo de "

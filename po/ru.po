@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-10 10:34+0000\n"
+"POT-Creation-Date: 2026-04-13 23:21+0000\n"
 "PO-Revision-Date: 2026-03-31 15:23+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -660,7 +660,7 @@ msgstr "%s (%s) (%d доступно)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (бэкенд=%q, источник=%q)"
 
-#: cmd/incus/utils_sftp.go:387
+#: cmd/incus/utils_copy.go:79 cmd/incus/utils_sftp.go:387
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s это не директория"
@@ -730,13 +730,13 @@ msgstr ""
 msgid "--network-port can't be used without --network-address"
 msgstr "--network-port не может быть использован без --network-address"
 
-#: cmd/incus/utils_copy.go:48
+#: cmd/incus/utils_copy.go:49
 msgid "--no-dereference/-P cannot be used together with stdout as a target"
 msgstr ""
 "--no-dereference/-P нельзя использовать вместе со стандартным выводом в "
 "качестве целевого параметра"
 
-#: cmd/incus/utils_copy.go:38
+#: cmd/incus/utils_copy.go:39
 msgid ""
 "--no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive"
 msgstr ""
@@ -755,7 +755,7 @@ msgstr "--no-profiles не может использоваться с --refresh"
 msgid "--project cannot be used with the query command"
 msgstr "--project не может быть использован с командой query"
 
-#: cmd/incus/utils_copy.go:76
+#: cmd/incus/utils_copy.go:84
 msgid "--recursive/-r is required when pulling directories"
 msgstr "Параметр --recursive/-r необходим при извлечении каталогов"
 
@@ -1051,7 +1051,7 @@ msgstr "Альтернативное имя сертификата"
 msgid "Always follow symbolic links in source path"
 msgstr "Всегда переходить по символическим ссылкам в пути к источнику"
 
-#: cmd/incus/file.go:1003
+#: cmd/incus/file.go:1002
 #, c-format
 msgid "An instance path is required for %s"
 msgstr "Для %s требуется путь к экземпляру"
@@ -1322,7 +1322,7 @@ msgstr "Кеши:"
 msgid "Can't bind address %q: %w"
 msgstr "Не удается привязать адрес %q: %w"
 
-#: cmd/incus/file.go:739
+#: cmd/incus/file.go:738
 msgid "Can't override UID/GID in recursive mode without -p"
 msgstr "Невозможно переопределить UID/GID в рекурсивном режиме без -p"
 
@@ -1332,7 +1332,7 @@ msgstr ""
 "Не удается переопределить конфигурацию или профили при локальном "
 "переименовании"
 
-#: cmd/incus/file.go:726
+#: cmd/incus/file.go:725
 msgid "Can't override the target mode when performing a recursive transfer"
 msgstr "Невозможно изменить целевой режим при выполнении рекурсивной передачи"
 
@@ -1898,7 +1898,7 @@ msgstr "Создать пустой экземпляр"
 msgid "Create and start instances from images"
 msgstr "Создание и запуск экземпляров из образов"
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:684
+#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:683
 #: cmd/incus/storage_volume.go:2164 cmd/incus/storage_volume.go:2586
 #: cmd/incus/storage_volume.go:2790
 msgid "Create any directories necessary"
@@ -2369,7 +2369,7 @@ msgstr "На этой платформе недоступен импорт ди�
 msgid "Directory to run the command in (default /root)"
 msgstr "Директория в которой выполняется команда (по умолчанию /root)"
 
-#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2406
+#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2406
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Отключить аутентификацию при использовании SSH SFTP сервера"
 
@@ -3037,7 +3037,7 @@ msgstr ""
 msgid "Failed connecting to instance SFTP: %s %w"
 msgstr "Не удалось подключиться к экземпляру SFTP: %s %w"
 
-#: cmd/incus/file.go:1021 cmd/incus/storage_volume.go:2463
+#: cmd/incus/file.go:1020 cmd/incus/storage_volume.go:2463
 #: cmd/incus/storage_volume.go:2651 cmd/incus/storage_volume.go:2818
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
@@ -3242,7 +3242,7 @@ msgstr "Не удалось запустить принятие соединен
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/file.go:774 cmd/incus/utils_sftp.go:307
+#: cmd/incus/file.go:773 cmd/incus/utils_sftp.go:307
 #, c-format
 msgid "Failed to open source file %q: %v"
 msgstr "Не удалось открыть исходный файл %q: %v"
@@ -4119,7 +4119,7 @@ msgstr ""
 msgid "Instance name is: %s"
 msgstr "Имя контейнера: %s"
 
-#: cmd/incus/file.go:1008
+#: cmd/incus/file.go:1007
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 
@@ -4916,8 +4916,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5710,13 +5710,13 @@ msgstr "Управление томами хранения"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 "Управление томами хранения\n"
 "\n"
-"Если не указан префикс, все операции с томами затрагивают "
-"\"custom\" (созданные пользователем) тома."
+"Если не указан префикс, все операции с томами затрагивают \"custom\" "
+"(созданные пользователем) тома."
 
 #: cmd/incus/remote.go:50 cmd/incus/remote.go:51
 msgid "Manage the list of remote servers"
@@ -5813,7 +5813,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr ""
 
-#: cmd/incus/file.go:762
+#: cmd/incus/file.go:761
 msgid "Missing target directory"
 msgstr ""
 
@@ -5849,7 +5849,7 @@ msgstr ""
 msgid "More than one device matches, specify the device name"
 msgstr ""
 
-#: cmd/incus/file.go:495
+#: cmd/incus/file.go:494
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 
@@ -5865,12 +5865,12 @@ msgstr ""
 "Монтируйте файлы тз пользовательских томов хранения.\n"
 "Если целевой путь не указан, запустить вместо этого SSH SFTP сервер."
 
-#: cmd/incus/file.go:939
+#: cmd/incus/file.go:938
 #, fuzzy
 msgid "Mount files from instances"
 msgstr "Невозможно добавить имя контейнера в список"
 
-#: cmd/incus/file.go:940
+#: cmd/incus/file.go:939
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -6759,7 +6759,7 @@ msgstr "Извлечь файлы из пользовательских томо
 msgid "Pull files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:583 cmd/incus/storage_volume.go:2700
+#: cmd/incus/file.go:582 cmd/incus/storage_volume.go:2700
 #: cmd/incus/utils_sftp.go:198
 #, c-format
 msgid "Pulling %s from %s: %%s"
@@ -6769,11 +6769,11 @@ msgstr ""
 msgid "Push files into custom volumes"
 msgstr "Поместить файлы в пользовательские тома"
 
-#: cmd/incus/file.go:674 cmd/incus/file.go:675
+#: cmd/incus/file.go:673 cmd/incus/file.go:674
 msgid "Push files into instances"
 msgstr ""
 
-#: cmd/incus/file.go:884 cmd/incus/storage_volume.go:2967
+#: cmd/incus/file.go:883 cmd/incus/storage_volume.go:2967
 #: cmd/incus/utils_sftp.go:318
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -6851,7 +6851,7 @@ msgstr ""
 "  пулах, но отсутствуют в базе данных. Затем программа предложит воссоздать "
 "эти записи в базе данных."
 
-#: cmd/incus/file.go:447 cmd/incus/file.go:683 cmd/incus/storage_volume.go:2587
+#: cmd/incus/file.go:447 cmd/incus/file.go:682 cmd/incus/storage_volume.go:2587
 #: cmd/incus/storage_volume.go:2789
 msgid "Recursively transfer files"
 msgstr ""
@@ -7360,7 +7360,7 @@ msgstr "Копирование образа: %s"
 msgid "Set a cluster member's configuration keys"
 msgstr "Копирование образа: %s"
 
-#: cmd/incus/file.go:952 cmd/incus/storage_volume.go:2407
+#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2407
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7681,7 +7681,7 @@ msgstr ""
 msgid "Set the file's perms on push"
 msgstr ""
 
-#: cmd/incus/file.go:687
+#: cmd/incus/file.go:686
 msgid ""
 "Set the file's perms on push (in recursive mode, sets the target directory's "
 "permissions if it doesn't exist)"
@@ -7695,13 +7695,13 @@ msgstr ""
 msgid "Set the file's uid on push"
 msgstr ""
 
-#: cmd/incus/file.go:686
+#: cmd/incus/file.go:685
 msgid ""
 "Set the files' GIDs on push (in recursive mode, only sets the target "
 "directory's GID if it doesn't exist and -p is used)"
 msgstr ""
 
-#: cmd/incus/file.go:685
+#: cmd/incus/file.go:684
 msgid ""
 "Set the files' UIDs on push (in recursive mode, only sets the target "
 "directory's UID if it doesn't exist and -p is used)"
@@ -7783,7 +7783,7 @@ msgstr "Установите ключ в качестве свойства то�
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2405
+#: cmd/incus/file.go:949 cmd/incus/storage_volume.go:2405
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -8312,7 +8312,7 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
-#: cmd/incus/file.go:759
+#: cmd/incus/file.go:758
 msgid "Target is not a directory"
 msgstr ""
 
@@ -8325,11 +8325,11 @@ msgstr ""
 msgid "Target path %q already exists"
 msgstr "Целевой путь %q уже существует"
 
-#: cmd/incus/file.go:998 cmd/incus/storage_volume.go:2457
+#: cmd/incus/file.go:997 cmd/incus/storage_volume.go:2457
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:992 cmd/incus/storage_volume.go:2452
+#: cmd/incus/file.go:991 cmd/incus/storage_volume.go:2452
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -9684,8 +9684,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -9740,7 +9740,7 @@ msgid ""
 "   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:943
+#: cmd/incus/file.go:942
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -9760,7 +9760,7 @@ msgid ""
 "output."
 msgstr ""
 
-#: cmd/incus/file.go:676
+#: cmd/incus/file.go:675
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -9813,15 +9813,15 @@ msgid ""
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:130
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -9907,16 +9907,16 @@ msgid ""
 "incus network integration create o1 ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:224
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:314
