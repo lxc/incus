@@ -1917,12 +1917,19 @@ func (d *lvm) Qcow2DeletionCleanup(snapVol Volume, childName string) error {
 		return err
 	}
 
-	_ = d.removeLogicalVolume(childVolPath)
+	defer func() {
+		// Deactivate volume if was not active before operation.
+		if activated {
+			_, _ = d.deactivateVolume(childVol)
+		}
+	}()
 
 	_, err = d.acquireExclusive(snapVol)
 	if err != nil {
 		return err
 	}
+
+	_ = d.removeLogicalVolume(childVolPath)
 
 	err = d.renameLogicalVolume(snapVolPath, childVolPath)
 	if err != nil {
@@ -1935,11 +1942,6 @@ func (d *lvm) Qcow2DeletionCleanup(snapVol Volume, childName string) error {
 	}
 
 	releaseParent()
-
-	// Deactivate volume if was not active before operation.
-	if activated {
-		_, _ = d.deactivateVolume(childVol)
-	}
 
 	return nil
 }
