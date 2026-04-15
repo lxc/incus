@@ -3183,6 +3183,10 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		volStorageParentName := project.Instance(inst.Project().Name, src.Name())
 		parentVol := b.GetVolume(volType, contentType, volStorageParentName, srcDBVol.Config)
 
+		reverter.Add(func() {
+			_ = b.driver.Qcow2DeletionCleanup(vol, volStorageParentName)
+		})
+
 		rootDiskName, _, err := internalInstance.GetRootDiskDevice(src.ExpandedDevices().CloneNative())
 		if err != nil {
 			return err
@@ -3194,6 +3198,10 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		if err != nil {
 			return err
 		}
+
+		reverter.Add(func() {
+			_ = b.qcow2DeleteSnapshot(parentVol, vol, src.Project().Name, src, rootDiskName, nil)
+		})
 	}
 
 	err = b.ensureInstanceSnapshotSymlink(inst.Type(), inst.Project().Name, inst.Name())
@@ -3213,6 +3221,10 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 		if err != nil {
 			return fmt.Errorf("Failed to create device snapshot for volume %q: %w", dev.Config["source"], err)
 		}
+
+		reverter.Add(func() {
+			_ = diskPool.DeleteCustomVolumeSnapshot(inst.Project().Name, fmt.Sprintf("%s/%s", dev.Config["source"], snapshotName), nil)
+		})
 
 		return nil
 	})
@@ -6348,14 +6360,16 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 	}
 
 	if parentVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		// Get the parent volume.
+		volStorageParentName := project.StorageVolume(projectName, volName)
+		parentVolume := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageParentName, parentVol.Config)
+
+		reverter.Add(func() { _ = b.driver.Qcow2DeletionCleanup(vol, volStorageParentName) })
+
 		inst, devName, err := b.volumeUsedByRunningInstance(parentVol, projectName)
 		if err != nil {
 			return err
 		}
-
-		// Get the parent volume.
-		volStorageParentName := project.StorageVolume(projectName, volName)
-		parentVolume := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageParentName, parentVol.Config)
 
 		// parentVol should already be prepared as an overlay by CreateVolumeSnapshot.
 		// vol will be used as the base.
@@ -6363,6 +6377,8 @@ func (b *backend) CreateCustomVolumeSnapshot(projectName, volName string, newSna
 		if err != nil {
 			return err
 		}
+
+		reverter.Add(func() { _ = b.qcow2DeleteSnapshot(parentVolume, vol, projectName, inst, devName, nil) })
 	}
 
 	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeSnapshotCreated.Event(vol, string(vol.Type()), projectName, op, logger.Ctx{"type": vol.Type()}))
@@ -8022,6 +8038,9 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		return nil
 	}
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
 	if vol.IsVMBlock() {
 		fsParentVol := vol.NewVMBlockFilesystemVolume()
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
@@ -8029,6 +8048,8 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		if err != nil {
 			return err
 		}
+
+		reverter.Add(func() { _ = drivers.Qcow2DeleteConfigSnapshot(fsParentVol, fsVol, nil) })
 	}
 
 	// For a running instance, mount the snapshot to increase the volume's refCount.
@@ -8039,6 +8060,8 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		if err != nil {
 			return err
 		}
+
+		reverter.Add(func() { _, _ = b.driver.UnmountVolumeSnapshot(snapVol, nil) })
 	}
 
 	snapVolDevPath, err := b.driver.GetQcow2BackingFilePath(snapVol)
@@ -8087,6 +8110,7 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 		}
 	}
 
+	reverter.Success()
 	return nil
 }
 
