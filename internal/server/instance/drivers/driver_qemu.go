@@ -11103,6 +11103,9 @@ func (d *qemu) GuestOS() string {
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.
 func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName string, backingFilename string, stateful bool) error {
+	reverter := revert.New()
+	defer reverter.Fail()
+
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -11134,6 +11137,8 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 		return fmt.Errorf("Failed sending file descriptor of %q for disk device: %w", f.Name(), err)
 	}
 
+	reverter.Add(func() { _ = monitor.RemoveFDFromFDSet(nextOverlayName) })
+
 	blockDev := map[string]any{
 		"driver":    "qcow2",
 		"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
@@ -11151,11 +11156,15 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 		return fmt.Errorf("Fail to add block device: %w", err)
 	}
 
+	reverter.Add(func() { _ = monitor.RemoveBlockDevice(nextOverlayName) })
+
 	// Take a snapshot of the root disk and redirect writes to the snapshot disk.
 	err = monitor.BlockDevSnapshot(currentRootNode, nextOverlayName)
 	if err != nil {
 		return fmt.Errorf("Failed taking storage snapshot: %w", err)
 	}
+
+	reverter.Add(func() { _ = monitor.BlockCommit(nextOverlayName, "", "") })
 
 	// Update metadata of the backing file.
 	// Use the Qcow2Rebase method when performing stateful snapshots.
@@ -11172,6 +11181,7 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 		}
 	}
 
+	reverter.Success()
 	return nil
 }
 
