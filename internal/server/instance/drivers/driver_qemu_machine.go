@@ -26,8 +26,8 @@ type qemuCPUTopology struct {
 	Sockets int `json:"sockets"`
 	Cores   int `json:"cores"`
 	Threads int `json:"threads"`
-	VCPUs   map[uint64]uint64
-	Nodes   map[uint64][]uint64
+	vCPUs   map[uint64]uint64
+	nodes   map[uint64][]uint64
 }
 
 // cpuTopology sets up the qemuCPUTopology struct based on configured CPU limits, host system and guest OS.
@@ -171,8 +171,8 @@ func (d *qemu) cpuTopology() (*qemuCPUTopology, error) {
 	topology.Sockets = nrSockets
 	topology.Cores = nrCores
 	topology.Threads = nrThreads
-	topology.VCPUs = vcpus
-	topology.Nodes = numaNodes
+	topology.vCPUs = vcpus
+	topology.nodes = numaNodes
 
 	return topology, nil
 }

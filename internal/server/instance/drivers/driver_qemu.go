@@ -2064,7 +2064,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Apply CPU pinning.
-	if bs.CPUTopology.VCPUs == nil {
+	if bs.CPUTopology.vCPUs == nil {
 		if d.architectureSupportsCPUHotplug() && bs.CPUTopology.Cores > 1 {
 			// Hotplug the CPUs.
 			err := d.setCPUs(monitor, bs.CPUTopology.Cores)
@@ -2083,7 +2083,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		// Confirm nothing weird is going on.
-		if len(bs.CPUTopology.VCPUs) != len(pids) {
+		if len(bs.CPUTopology.vCPUs) != len(pids) {
 			err = errors.New("QEMU has less vCPUs than configured")
 			op.Done(err)
 			return err
@@ -2092,7 +2092,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		// Apply the CPU pins.
 		for i, pid := range pids {
 			set := unix.CPUSet{}
-			set.Set(int(bs.CPUTopology.VCPUs[uint64(i)]))
+			set.Set(int(bs.CPUTopology.vCPUs[uint64(i)]))
 
 			// Apply the pin.
 			err := unix.SchedSetaffinity(pid, &set)
@@ -4250,7 +4250,7 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 	}
 
 	hostNodes := []uint64{}
-	if cpuInfo.VCPUs == nil {
+	if cpuInfo.vCPUs == nil {
 		// If not pinning, default to exposing cores.
 		// Only one CPU will be added here, as the others will be hotplugged during start.
 		if d.architectureSupportsCPUHotplug() {
@@ -4304,7 +4304,7 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 		numa := []qemuNumaEntry{}
 		numaIDs := []uint64{}
 		numaNode := uint64(0)
-		for hostNode, entry := range cpuInfo.Nodes {
+		for hostNode, entry := range cpuInfo.nodes {
 			hostNodes = append(hostNodes, hostNode)
 
 			numaIDs = append(numaIDs, numaNode)
@@ -4321,7 +4321,7 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 		}
 
 		// Prepare context.
-		cpuOpts.cpuCount = len(cpuInfo.VCPUs)
+		cpuOpts.cpuCount = len(cpuInfo.vCPUs)
 		cpuOpts.cpuSockets = cpuInfo.Sockets
 		cpuOpts.cpuCores = cpuInfo.Cores
 		cpuOpts.cpuThreads = cpuInfo.Threads
@@ -4356,7 +4356,7 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, bs *qemuBootState) error 
 		return err
 	}
 
-	cpuPinning := bs.CPUTopology.VCPUs != nil
+	cpuPinning := bs.CPUTopology.vCPUs != nil
 
 	*conf = append(*conf, qemuMemory(&qemuMemoryOpts{bs.MemoryTopology.Base / 1024 / 1024, bs.MemoryTopology.Max / 1024 / 1024})...)
 	*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
@@ -6915,7 +6915,7 @@ func (d *qemu) hotplugMemory(monitor *qmp.Monitor, sizeBytes int64) error {
 		return err
 	}
 
-	cpuPinning := cpuInfo.VCPUs != nil
+	cpuPinning := cpuInfo.vCPUs != nil
 
 	// Get CPUs and memory configuration
 	conf := qemuCPU(cpuOpts, cpuPinning)
