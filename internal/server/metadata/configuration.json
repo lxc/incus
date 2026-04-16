@@ -3470,16 +3470,9 @@
 						}
 					},
 					{
-						"volatile.vm.definition": {
+						"volatile.vm.boot_state": {
 							"longdesc": "",
-							"shortdesc": "QEMU VM definition name (used for migration between versions)",
-							"type": "string"
-						}
-					},
-					{
-						"volatile.vm.hotplug.memory": {
-							"longdesc": "",
-							"shortdesc": "Memory setup of the VM as needed for state restoration",
+							"shortdesc": "JSON encoded VM properties used during live migration and other state restoration.",
 							"type": "string"
 						}
 					},
