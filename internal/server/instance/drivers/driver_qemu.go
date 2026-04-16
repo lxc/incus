@@ -16,7 +16,6 @@ import (
 	"io"
 	"io/fs"
 	"maps"
-	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -91,21 +90,6 @@ import (
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
 )
-
-// Internal structs.
-type qemuCPUTopology struct {
-	Sockets int `json:"sockets"`
-	Cores   int `json:"cores"`
-	Threads int `json:"threads"`
-	VCPUs   map[uint64]uint64
-	Nodes   map[uint64][]uint64
-}
-
-type qemuMemoryLayout struct {
-	Base  int64   `json:"base"`
-	Max   int64   `json:"max"`
-	Extra []int64 `json:"extra"`
-}
 
 // incus-agent files
 //
@@ -4438,131 +4422,16 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 
 // addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
 // If sb is nil then no config is written.
-func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, cpuType string, cpuInfo *qemuCPUTopology) error {
-	// Configure memory limit.
-	memSize := d.expandedConfig["limits.memory"]
-	if memSize == "" {
-		memSize = qemudefault.MemSize // Default if no memory limit specified.
-	}
-
-	memSizeBytes, err := ParseMemoryStr(memSize)
-	if err != nil {
-		return fmt.Errorf("limits.memory invalid: %w", err)
-	}
-
-	cpuOpts, err := d.getCPUOpts(cpuInfo, memSizeBytes)
+func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, bs *qemuBootState) error {
+	cpuOpts, err := d.getCPUOpts(bs.CPUTopology, bs.MemoryTopology.Base)
 	if err != nil {
 		return err
 	}
 
-	cpuPinning := cpuInfo.VCPUs != nil
+	cpuPinning := bs.CPUTopology.VCPUs != nil
 
-	// Set hotplug limits.
-	// kvm64 has a limit of 39 bits for aarch64 and 40 bits on x86_64, so just limit everyone to 39 bits (512GB).
-	// Other types we don't know so just don't allow hotplug.
-
-	var maxMemoryBytes int64
-	cpuPhysBits := uint64(39)
-
-	limitsMemoryHotplug := d.expandedConfig["limits.memory.hotplug"]
-	memoryHotplugEnabled := !util.IsFalse(limitsMemoryHotplug)
-
-	if d.GuestOS() == "freebsd" {
-		memoryHotplugEnabled = false
-
-		// We handle the empty value a bit differently here, as FreeBSD doesn’t have memory hotplug.
-		if !util.IsFalseOrEmpty(limitsMemoryHotplug) {
-			return errors.New("FreeBSD doesn't support setting 'limits.memory.hotplug'")
-		}
-	}
-
-	if (cpuType == "host" || cpuType == "kvm64") && memoryHotplugEnabled {
-		if !util.IsTrueOrEmpty(limitsMemoryHotplug) {
-			maxMemoryBytes, err = units.ParseByteSizeString(limitsMemoryHotplug)
-			if err != nil {
-				return err
-			}
-
-			if maxMemoryBytes < memSizeBytes {
-				return fmt.Errorf("'limits.memory.hotplug' value should be greater than or equal to 'limits.memory'")
-			}
-		}
-
-		if maxMemoryBytes == 0 {
-			// Attempt to get the CPU physical address space limits.
-			cpu, err := resources.GetCPU()
-			if err != nil {
-				return err
-			}
-
-			var lowestPhysBits uint64
-
-			for _, socket := range cpu.Sockets {
-				if socket.AddressSizes != nil && (socket.AddressSizes.PhysicalBits < lowestPhysBits || lowestPhysBits == 0) {
-					lowestPhysBits = socket.AddressSizes.PhysicalBits
-				}
-			}
-
-			// If a physical address size was detected, either align it with the VM (CPU passthrough) or use it as an upper bound.
-			if lowestPhysBits > 0 && (cpuType == "host" || lowestPhysBits < cpuPhysBits) {
-				cpuPhysBits = lowestPhysBits
-			}
-
-			// Reduce the maximum by one bit to allow QEMU some headroom.
-			cpuPhysBits--
-
-			// Calculate the max memory limit.
-			maxMemoryBytes = int64(math.Pow(2, float64(cpuPhysBits)))
-
-			// Cap to 1TB.
-			if maxMemoryBytes > 1024*1024*1024*1024 {
-				maxMemoryBytes = 1024 * 1024 * 1024 * 1024
-			}
-
-			// On standalone systems, further cap to the system's total memory.
-			if !d.state.ServerClustered {
-				totalMemory, err := linux.DeviceTotalMemory()
-				if err != nil {
-					return err
-				}
-
-				maxMemoryBytes = totalMemory
-			}
-		}
-
-		// Allow the user to go past any expected limit.
-		if maxMemoryBytes < memSizeBytes {
-			maxMemoryBytes = memSizeBytes
-		}
-	} else {
-		// Prevent memory hotplug.
-		maxMemoryBytes = memSizeBytes
-	}
-
-	if conf != nil {
-		// Check if we're dealing with a live migration / stateful start.
-		if d.localConfig["volatile.vm.hotplug.memory"] != "" {
-			memConf := &qemuMemoryLayout{}
-
-			// Read back the recorded memory config.
-			err = json.Unmarshal([]byte(d.localConfig["volatile.vm.hotplug.memory"]), memConf)
-			if err != nil {
-				return err
-			}
-
-			// Override the CPU memory config too.
-			cpuOpts, err = d.getCPUOpts(cpuInfo, memConf.Base)
-			if err != nil {
-				return err
-			}
-
-			memSizeBytes = memConf.Base
-			maxMemoryBytes = memConf.Max
-		}
-
-		*conf = append(*conf, qemuMemory(&qemuMemoryOpts{memSizeBytes / 1024 / 1024, maxMemoryBytes / 1024 / 1024})...)
-		*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
-	}
+	*conf = append(*conf, qemuMemory(&qemuMemoryOpts{bs.MemoryTopology.Base / 1024 / 1024, bs.MemoryTopology.Max / 1024 / 1024})...)
+	*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
 
 	return nil
 }
@@ -10028,151 +9897,6 @@ func (d *qemu) UpdateBackupFile() error {
 	}
 
 	return pool.UpdateInstanceBackupFile(d, true, nil)
-}
-
-// qemuCPUTopology takes the CPU limit and computes the QEMU CPU topology.
-func (d *qemu) cpuTopology(limit string) (*qemuCPUTopology, error) {
-	topology := &qemuCPUTopology{}
-
-	// Set default to 1 vCPU.
-	if limit == "" {
-		limit = "1"
-	}
-
-	// Check if pinned or floating.
-	nrLimit, err := strconv.Atoi(limit)
-	if err == nil {
-		// We're not dealing with a pinned setup.
-		topology.Sockets = 1
-		topology.Cores = nrLimit
-		topology.Threads = 1
-
-		return topology, nil
-	}
-
-	// Get CPU topology.
-	cpus, err := resources.GetCPU()
-	if err != nil {
-		return nil, err
-	}
-
-	// Expand the pins.
-	pins, err := resources.ParseCpuset(limit)
-	if err != nil {
-		return nil, err
-	}
-
-	// Match tracking.
-	vcpus := map[uint64]uint64{}
-	sockets := map[uint64][]uint64{}
-	cores := map[uint64][]uint64{}
-	numaNodes := map[uint64][]uint64{}
-
-	// Go through the physical CPUs looking for matches.
-	i := uint64(0)
-	for _, cpu := range cpus.Sockets {
-		for _, core := range cpu.Cores {
-			for _, thread := range core.Threads {
-				for _, pin := range pins {
-					if thread.ID == int64(pin) {
-						// Found a matching CPU.
-						vcpus[i] = uint64(pin)
-
-						// Track cores per socket.
-						_, ok := sockets[cpu.Socket]
-						if !ok {
-							sockets[cpu.Socket] = []uint64{}
-						}
-
-						if !slices.Contains(sockets[cpu.Socket], core.Core) {
-							sockets[cpu.Socket] = append(sockets[cpu.Socket], core.Core)
-						}
-
-						// Track threads per core.
-						_, ok = cores[core.Core]
-						if !ok {
-							cores[core.Core] = []uint64{}
-						}
-
-						if !slices.Contains(cores[core.Core], thread.Thread) {
-							cores[core.Core] = append(cores[core.Core], thread.Thread)
-						}
-
-						// Record NUMA node for thread.
-						_, ok = cores[core.Core]
-						if !ok {
-							numaNodes[thread.NUMANode] = []uint64{}
-						}
-
-						numaNodes[thread.NUMANode] = append(numaNodes[thread.NUMANode], i)
-
-						i++
-					}
-				}
-			}
-		}
-	}
-
-	// Confirm we're getting the expected number of CPUs.
-	if len(pins) != len(vcpus) {
-		return nil, fmt.Errorf("Unavailable CPUs requested: %s", limit)
-	}
-
-	// Validate the topology.
-	valid := true
-	nrSockets := 0
-	nrCores := 0
-	nrThreads := 0
-
-	// Confirm that there is no balancing inconsistencies.
-	countCores := -1
-	for _, cores := range sockets {
-		if countCores != -1 && len(cores) != countCores {
-			valid = false
-			break
-		}
-
-		countCores = len(cores)
-	}
-
-	countThreads := -1
-	for _, threads := range cores {
-		if countThreads != -1 && len(threads) != countThreads {
-			valid = false
-			break
-		}
-
-		countThreads = len(threads)
-	}
-
-	// Check against double listing of CPU.
-	if len(sockets)*countCores*countThreads != len(vcpus) {
-		valid = false
-	}
-
-	// Build up the topology.
-	if valid {
-		// Valid topology.
-		nrSockets = len(sockets)
-		nrCores = countCores
-		nrThreads = countThreads
-	} else {
-		d.logger.Warn("Instance uses a CPU pinning profile which doesn't match hardware layout")
-
-		// Fallback on pretending everything are cores.
-		nrSockets = 1
-		nrCores = len(vcpus)
-		nrThreads = 1
-	}
-
-	// Prepare struct.
-	topology.Sockets = nrSockets
-	topology.Cores = nrCores
-	topology.Threads = nrThreads
-	topology.VCPUs = vcpus
-	topology.Nodes = numaNodes
-
-	return topology, nil
 }
 
 func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) error {
