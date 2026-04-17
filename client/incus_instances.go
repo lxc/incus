@@ -1715,7 +1715,7 @@ func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, err
 		return nil, errors.New("Missing or unexpected Upgrade header in response")
 	}
 
-	return conn, err
+	return conn, nil
 }
 
 // GetInstanceFileSFTPConn returns a connection to the instance's SFTP endpoint.
