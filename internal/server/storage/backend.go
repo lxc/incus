@@ -2982,6 +2982,13 @@ func (b *backend) MountInstance(inst instance.Instance, op *operations.Operation
 			}
 		}
 
+		reverter.Add(func() {
+			for _, snap := range volSnaps {
+				currentSnapVol := b.GetVolume(vol.Type(), vol.ContentType(), project.Instance(inst.Project().Name, snap.Name), vol.Config())
+				_, _ = b.driver.UnmountVolumeSnapshot(currentSnapVol, op)
+			}
+		})
+
 		// Fetch backing chain for a qcow2 formatted volume.
 		backingPaths, err = b.qcow2BackingPaths(vol, diskPath, inst.Project().Name)
 		if err != nil {
@@ -8343,6 +8350,11 @@ func (b *backend) qcow2DeleteSnapshot(vol drivers.Volume, snapVol drivers.Volume
 			return err
 		}
 
+		// Use MountRefCountDecrement() instead of UnmountVolume() to avoid deactivating
+		// the entire block device. The device will be reused under a different name
+		// (renamed by Qcow2DeletionCleanup), so we only need to decrement the reference
+		// count for this specific snapshot volume.
+		snapVol.MountRefCountDecrement()
 		fsVol := snapVol.NewVMBlockFilesystemVolume()
 		_, err = b.driver.UnmountVolumeSnapshot(fsVol, op)
 		if err != nil {
@@ -8509,7 +8521,7 @@ func (b *backend) qcow2BackingPaths(vol drivers.Volume, diskPath string, project
 	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, op *operations.Operation) error {
 		chainPaths, err = drivers.Qcow2BackingChain(diskPath)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		for _, p := range chainPaths {

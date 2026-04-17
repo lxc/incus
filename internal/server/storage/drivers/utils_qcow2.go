@@ -134,7 +134,7 @@ func Qcow2Info(path string) (*ImageInfo, error) {
 // Qcow2BackingChain returns information about the backing chain of a qcow2 image.
 func Qcow2BackingChain(path string) ([]string, error) {
 	result := []string{}
-	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "--backing-chain", "--output=json", path)
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--backing-chain", "--output=json", path)
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +218,11 @@ func Qcow2CreateConfig(vol Volume, op *operations.Operation) error {
 			return err
 		}
 
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -235,6 +240,11 @@ func Qcow2CreateConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operat
 		srcPath := filepath.Join(mountPath, Qcow2ConfigVolumeBase)
 
 		_, err := subprocess.RunCommand("btrfs", "subvolume", "snapshot", srcPath, dstPath)
+		if err != nil {
+			return err
+		}
+
+		err = syncBtrfs(mountPath)
 		if err != nil {
 			return err
 		}
@@ -265,6 +275,11 @@ func Qcow2RestoreConfigSnapshot(vol Volume, snapVol Volume, op *operations.Opera
 			return err
 		}
 
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -284,6 +299,11 @@ func Qcow2RenameConfigSnapshot(vol Volume, snapVol Volume, newName string, op *o
 		err := os.Rename(oldPath, newPath)
 		if err != nil {
 			return fmt.Errorf("Failed to rename %q to %q: %w", oldPath, newPath, err)
+		}
+
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
 		}
 
 		return nil
@@ -307,6 +327,11 @@ func Qcow2DeleteConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operat
 			return err
 		}
 
+		err = syncBtrfs(mountPath)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -323,6 +348,15 @@ func Qcow2DeleteConfigSnapshot(vol Volume, snapVol Volume, op *operations.Operat
 	// Remove the parent snapshot directory if this is the last snapshot being removed.
 	parentName, _, _ := api.GetParentAndSnapshotName(snapVol.name)
 	err = deleteParentSnapshotDirIfEmpty(snapVol.pool, snapVol.volType, parentName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func syncBtrfs(mountPath string) error {
+	_, err := subprocess.RunCommand("btrfs", "filesystem", "sync", mountPath)
 	if err != nil {
 		return err
 	}
