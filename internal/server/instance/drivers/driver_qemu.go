@@ -10741,7 +10741,29 @@ func (d *qemu) DumpGuestMemory(w *os.File, format string) error {
 
 // CanLiveMigrate returns whether the VM is live-migratable.
 func (d *qemu) CanLiveMigrate() bool {
-	return util.IsTrue(d.expandedConfig["migration.stateful"])
+	// Refuse migration if not enabled.
+	if !util.IsTrue(d.expandedConfig["migration.stateful"]) {
+		return false
+	}
+
+	// Additional checks when the VM is running.
+	if d.IsRunning() {
+		// Check if it may have been enabled through a later profile (and so still not supported).
+		bs, err := d.getBootState()
+		if err != nil {
+			return false
+		}
+
+		// Ideally we'd just check for Version > 0 but that would prevent
+		// all migrations from older Incus versions that predate the introduction
+		// of the boot state recording. So instead rely on the machine type
+		// recording which is going to be present on those older versions too.
+		if bs.MachineType == "" {
+			return false
+		}
+	}
+
+	return true
 }
 
 // GuestOS returns the guest OS. In this driver, we consider anything unknown to be Linux.

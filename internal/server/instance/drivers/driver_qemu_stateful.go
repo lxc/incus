@@ -36,11 +36,6 @@ func (d *qemu) getBootState() (*qemuBootState, error) {
 		Version: -1,
 	}
 
-	// If not stateful, we're done here.
-	if !d.CanLiveMigrate() {
-		return &bs, nil
-	}
-
 	// Check if modern tracking is available.
 	if d.localConfig["volatile.vm.boot_state"] != "" {
 		err := json.Unmarshal([]byte(d.localConfig["volatile.vm.boot_state"]), &bs)
