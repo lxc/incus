@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/ip"
+	networkOVN "github.com/lxc/incus/v6/internal/server/network/ovn"
 	"github.com/lxc/incus/v6/internal/server/project"
 	"github.com/lxc/incus/v6/internal/server/state"
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
@@ -1590,4 +1591,19 @@ func ipInPointerRanges(ipAddr net.IP, ipRanges []*iprange.Range) bool {
 	}
 
 	return false
+}
+
+// ovnRouteExists checks if the given route already exists in the provided list of current routes.
+func ovnRouteExists(currentRoutes []networkOVN.OVNRouterRoute, route networkOVN.OVNRouterRoute) bool {
+	return slices.ContainsFunc(currentRoutes, func(existing networkOVN.OVNRouterRoute) bool {
+		if existing.Prefix.String() != route.Prefix.String() {
+			return false
+		}
+
+		if route.Discard != existing.Discard {
+			return false
+		}
+
+		return existing.NextHop.Equal(route.NextHop) && existing.Port == route.Port
+	})
 }
