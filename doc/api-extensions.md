@@ -3065,3 +3065,13 @@ This adds a few new APIs for storage volumes and instances:
 This introduces the ability to get a raw `NBD` connection to an Incus block storage volume.
 It also allows interacting with dirty bitmaps on those volumes which can then be used as the basis for incremental backups.
 The instance level endpoint allows for consistent bitmap creation across the VM and its dependent volumes.
+
+## `projects_restricted_storage_pool_access`
+
+Adds the `restricted.storage-pools.access` project configuration key to
+indicate (as a comma-delimited list) which storage pools can be accessed
+inside the project. If not specified, all storage pools are accessible.
+
+Storage pools that are not in the list are treated as equivalent to
+having a pool size limit of 0 (`limits.disk.pool.POOLNAME=0`), making
+them inaccessible and hidden from the project.

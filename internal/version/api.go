@@ -532,6 +532,7 @@ var APIExtensions = []string{
 	"dependent",
 	"metrics_project_resources",
 	"storage_volume_nbd",
+	"projects_restricted_storage_pool_access",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
