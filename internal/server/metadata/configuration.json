@@ -5309,6 +5309,13 @@
 						}
 					},
 					{
+						"restricted.storage-pools.access": {
+							"longdesc": "Specify a comma-delimited list of storage pool names that are allowed for use in this project.\nIf this option is not set, all storage pools are accessible.",
+							"shortdesc": "Which storage pool names are allowed for use in this project",
+							"type": "string"
+						}
+					},
+					{
 						"restricted.virtual-machines.lowlevel": {
 							"defaultdesc": "`block`",
 							"longdesc": "Possible values are `allow` or `block`.\nWhen set to `allow`, low-level VM options like {config:option}`instance-raw:raw.qemu`, `volatile.*`, etc. can be used.",
