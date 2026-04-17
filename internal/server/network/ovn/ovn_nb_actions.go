@@ -4182,6 +4182,9 @@ func (o *NB) GetLogicalRouterRoutes(ctx context.Context, routerName OVNRouter) (
 
 		routerRoute.Prefix = *prefix
 		routerRoute.NextHop = net.ParseIP(route.Nexthop)
+		if route.Nexthop == "discard" {
+			routerRoute.Discard = true
+		}
 
 		if route.OutputPort != nil {
 			routerRoute.Port = OVNRouterPort(*route.OutputPort)
