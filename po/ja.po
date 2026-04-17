@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-04-13 23:21+0000\n"
-"PO-Revision-Date: 2026-04-17 21:49+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-04-17 21:50+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -623,8 +623,7 @@ msgstr "%q は IP アドレスではありません"
 #: cmd/incus/admin_recover.go:209
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
-msgstr ""
-"%s %q（プール %q 上, プロジェクト %q 内, スナップショット %d 個を含む）"
+msgstr "%s %q（プール %q 上, プロジェクト %q 内, スナップショット %d 個を含む）"
 
 #: cmd/incus/image.go:1111
 #, c-format
@@ -1606,8 +1605,8 @@ msgid ""
 "Compression algorithm to use (none for uncompressed, ignored for ISO storage "
 "volumes)"
 msgstr ""
-"使用する圧縮アルゴリズムを指定します (圧縮しない場合は none、ISO ストレージボ"
-"リュームの場合は無視されます)"
+"使用する圧縮アルゴリズムを指定します (圧縮しない場合は none、ISO "
+"ストレージボリュームの場合は無視されます)"
 
 #: cmd/incus/copy.go:58 cmd/incus/create.go:61 cmd/incus/import.go:40
 msgid "Config key/value to apply to the new instance"
@@ -1732,8 +1731,8 @@ msgstr ""
 " - relay: CLI がコピー元と先のサーバーに接続し、データを中継する（コピー元と"
 "先両方がネットワークをリッスンしている必要がある）\n"
 "\n"
-"すべてのサーバーバージョンとの互換性のため、pull 転送モードがデフォルトで"
-"す。\n"
+"すべてのサーバーバージョンとの互換性のため、pull 転送モードがデフォルトです"
+"。\n"
 
 #: cmd/incus/config_device.go:365 cmd/incus/config_device.go:366
 msgid "Copy profile inherited devices and override configuration keys"
@@ -1888,8 +1887,8 @@ msgid ""
 msgstr ""
 "インスタンスのスナップショットを作成します\n"
 "\n"
-"--stateful を指定すると、インスタンスの実行状態（プロセスのメモリ状態、TCPコ"
-"ネクション、など…を含む）を保存しようとします。"
+"--stateful を指定すると、インスタンスの実行状態（プロセスのメモリ状態、TCP"
+"コネクション、など…を含む）を保存しようとします。"
 
 #: cmd/incus/create.go:49 cmd/incus/create.go:50
 msgid "Create instances from images"
@@ -2025,8 +2024,7 @@ msgstr "DRM:"
 #: cmd/incus/admin_waitready.go:101
 #, c-format
 msgid "Daemon still not running after %ds timeout (%v)"
-msgstr ""
-"%d 秒のタイムアウトが経過しましたが、デーモンがまだ実行中ではありません (%v)"
+msgstr "%d 秒のタイムアウトが経過しましたが、デーモンがまだ実行中ではありません (%v)"
 
 #: cmd/incus/admin_shutdown.go:98
 #, c-format
@@ -2447,8 +2445,8 @@ msgid ""
 "During incremental copy, exclude source snapshots earlier than latest target "
 "snapshot"
 msgstr ""
-"インクリメンタルコピーの際、最新のターゲットスナップショットより前のソースス"
-"ナップショットを除外する"
+"インクリメンタルコピーの際、最新のターゲットスナップショットより前の"
+"ソーススナップショットを除外する"
 
 #: cmd/incus/storage_volume.go:351
 msgid ""
@@ -2745,8 +2743,7 @@ msgstr ""
 
 #: cmd/incus/admin_sql.go:31
 msgid "Execute a SQL query against the local or global database"
-msgstr ""
-"ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します"
+msgstr "ローカルまたはグローバルのデータベースに対して SQL クエリーを実行します"
 
 #: cmd/incus/admin_sql.go:32
 msgid ""
@@ -2906,16 +2903,16 @@ msgid ""
 "file.\n"
 "\t\tThis can be useful for debugging or analysis purposes."
 msgstr ""
-"実行中の仮想マシンの現在のメモリー状態をダンプファイルにエクスポートしま"
-"す。\n"
+"実行中の仮想マシンの現在のメモリー状態をダンプファイルにエクスポートします"
+"。\n"
 "\t\tデバッグや解析に役立ちます。"
 
 #: cmd/incus/storage_volume.go:3667
 msgid ""
 "Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
-"ボリュームをスナップショットなしでエクスポートします（ISO ストレージボリュー"
-"ムは無視されます）"
+"ボリュームをスナップショットなしでエクスポートします（ISO "
+"ストレージボリュームは無視されます）"
 
 #: cmd/incus/storage_bucket.go:1398
 #, c-format
@@ -3274,8 +3271,7 @@ msgstr "現在のサーバー設定の取得に失敗しました: %w"
 #, c-format
 msgid ""
 "Failed to retrieve current server network configuration for project %q: %w"
-msgstr ""
-"プロジェクト %q の現在のサーバーのネットワーク設定の取得に失敗しました: %w"
+msgstr "プロジェクト %q の現在のサーバーのネットワーク設定の取得に失敗しました: %w"
 
 #: cmd/incus/admin_init_auto.go:131
 #, c-format
@@ -3407,16 +3403,16 @@ msgid ""
 "\n"
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
-"クラスタからサーバを強制的に削除するのは最後の手段としてのみ実行してくださ"
-"い。\n"
+"クラスタからサーバを強制的に削除するのは最後の手段としてのみ実行してください"
+"。\n"
 "\n"
 "削除されたサーバはこの操作のあとは機能せず、LXD のフルリセットが必要になりま"
-"す。サーバに存在していた可能性のある残りのインスタンス、イメージ、ストレージ"
-"ボリュームは失われます。\n"
+"す。サーバに存在していた可能性のある残りのインスタンス、イメージ、"
+"ストレージボリュームは失われます。\n"
 "\n"
-"可能なら、適切な手順で削除することをおすすめします。適切な手順で行うには、ク"
-"ラスタから完全にサーバを削除する前に、影響を受けるインスタンス、イメージ、ス"
-"トレージボリュームを他のサーバに移動する必要があります。\n"
+"可能なら、適切な手順で削除することをおすすめします。適切な手順で行うには、"
+"クラスタから完全にサーバを削除する前に、影響を受けるインスタンス、イメージ、"
+"ストレージボリュームを他のサーバに移動する必要があります。\n"
 "\n"
 "--force オプションは、サーバが死んだ場合、サーバの再インストール後、他に復旧"
 "の見込みがまったくない場合にのみ使用してください。\n"
@@ -3427,8 +3423,7 @@ msgstr ""
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
-msgstr ""
-"すでにアクティブなセッションがある場合でも、コンソールへの接続を強制します"
+msgstr "すでにアクティブなセッションがある場合でも、コンソールへの接続を強制します"
 
 #: cmd/incus/network_address_set.go:100
 msgid "Format (csv|json|table|yaml|compact|markdown)"
@@ -3462,8 +3457,8 @@ msgid ""
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
 "フォーマット（csv|json|table|yaml|compact|markdown）。ヘッダーを無効にするに"
-"はサフィックス \",noheader\" を、ヘッダーがない場合に有効にするにはサフィック"
-"ス \",header\" を使用します（例: csv,header）。"
+"はサフィックス \",noheader\" を、ヘッダーがない場合に有効にするには"
+"サフィックス \",header\" を使用します（例: csv,header）。"
 
 #: cmd/incus/monitor.go:58
 msgid "Format (json|pretty|yaml)"
@@ -3485,8 +3480,8 @@ msgstr "フォーマット (table|compact)"
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"メモリーダンプのフォーマット（例: elf, win-dmp, kdump-zlib, kdump-raw-"
-"zlib, ...）"
+"メモリーダンプのフォーマット（例: elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
+"...）"
 
 #: cmd/incus/network.go:957
 msgid "Forward delay"
@@ -3537,8 +3532,8 @@ msgid ""
 "This is useful for remote authentication workflows where a token is passed "
 "to another Incus server."
 msgstr ""
-"既存のクライアント証明書と秘密鍵からクライアントトラストトークンを生成しま"
-"す。\n"
+"既存のクライアント証明書と秘密鍵からクライアントトラストトークンを生成します"
+"。\n"
 "\n"
 "これは、他の Incus サーバーに渡されるリモート認証ワークフローに役立ちます。"
 
@@ -3997,8 +3992,7 @@ msgstr "ストレージバケットを一覧表示します"
 
 #: cmd/incus/storage_volume.go:3895
 msgid "Import type needs to be \"backup\" or \"iso\""
-msgstr ""
-"インポートするタイプは \"backup\" もしくは \"iso\" である必要があります"
+msgstr "インポートするタイプは \"backup\" もしくは \"iso\" である必要があります"
 
 #: cmd/incus/storage_volume.go:3843
 msgid "Import type, backup or iso (default \"backup\")"
@@ -6811,8 +6805,8 @@ msgstr "利用可能なストレージバックエンドがありません"
 #: cmd/incus/admin_recover.go:215
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
-"未知のストレージプールやボリュームが見つかりません。実行することがありませ"
-"ん。"
+"未知のストレージプールやボリュームが見つかりません。実行することがありません"
+"。"
 
 #: cmd/incus/info.go:525
 #, c-format
@@ -6824,8 +6818,8 @@ msgid ""
 "None of --storage-pool, --storage-create-device or --storage-create-loop may "
 "be used with the 'dir' backend"
 msgstr ""
-"--storage-pool, --storage-create-device, --storage-create-loop のいずれ"
-"も、'dir' バックエンドでは使えません"
+"--storage-pool, --storage-create-device, --storage-create-loop のいずれも"
+"、'dir' バックエンドでは使えません"
 
 #: cmd/incus/admin_init_interactive.go:406
 msgid "Number of placement groups"
@@ -7355,10 +7349,10 @@ msgstr ""
 "既存または未知のストレージプールから失われたインスタンスを復旧させます\n"
 "\n"
 "  このコマンドは主に障害からの復旧に使われます。未知のストレージについて質問"
-"し、既存のストレージプールを参照しながら、ストレージへのアクセスを試みま"
-"す。\n"
-"  そして、プール上に存在しているがデータベースには存在しないインスタンスやボ"
-"リュームを特定します。\n"
+"し、既存のストレージプールを参照しながら、ストレージへのアクセスを試みます"
+"。\n"
+"  そして、プール上に存在しているがデータベースには存在しないインスタンスや"
+"ボリュームを特定します。\n"
 "  そして、データベースレコードの再作成を提案します。"
 
 #: cmd/incus/file.go:447 cmd/incus/file.go:682 cmd/incus/storage_volume.go:2587
@@ -7435,8 +7429,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
-"%s とそれに含まれるすべて（インスタンス、イメージ、ボリューム、ネットワー"
-"ク、…）を削除します (yes/no): "
+"%s とそれに含まれるすべて（インスタンス、イメージ、ボリューム、ネットワーク、"
+"…）を削除します (yes/no): "
 
 #: cmd/incus/cluster_group.go:562
 msgid "Remove a cluster member from a cluster group"
@@ -8841,8 +8835,7 @@ msgstr "LXD サーバはすでにクラスターに属しています"
 
 #: cmd/incus/admin_shutdown.go:34
 msgid "Tell the daemon to shutdown all instances and exit"
-msgstr ""
-"すべてのインスタンスをシャットダウンして終了するようにデーモンに指示します"
+msgstr "すべてのインスタンスをシャットダウンして終了するようにデーモンに指示します"
 
 #: cmd/incus/admin_shutdown.go:35
 msgid ""
@@ -8890,13 +8883,13 @@ msgid ""
 "before running \"init\" again."
 msgstr ""
 "LVM のシンプロビジョニング用のツールが見つかりません。\n"
-"シンプロビジョニングを使わないで LVM を使うことはできますが、オーバープロビ"
-"ジョニングが無効になります。\n"
-"そして、スペースに対する要件が増加し、イメージ、インスタンス、スナップショッ"
-"トの作成時間が増加します。\n"
+"シンプロビジョニングを使わないで LVM を使うことはできますが、"
+"オーバープロビジョニングが無効になります。\n"
+"そして、スペースに対する要件が増加し、イメージ、インスタンス、"
+"スナップショットの作成時間が増加します。\n"
 "\n"
-"シンプロビジョニングを使いたい場合は、すぐに中止して、Linuxディストリビュー"
-"ションからツールをインストールし、\n"
+"シンプロビジョニングを使いたい場合は、すぐに中止して、Linux"
+"ディストリビューションからツールをインストールし、\n"
 "再度 \"init\" を実行する前に、\"thin_check\" コマンドが実行できることを確認し"
 "てください。"
 
@@ -8908,8 +8901,8 @@ msgid ""
 "\n"
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
-"\"cluster\" サブコマンドは、サーバーの内部データにアクセスする必要がありま"
-"す。\n"
+"\"cluster\" サブコマンドは、サーバーの内部データにアクセスする必要があります"
+"。\n"
 "そのため、\"incus\" コマンドではなく、実際には \"incusd\" バイナリーの一部で"
 "す。\n"
 "\n"
@@ -9094,8 +9087,8 @@ msgstr "リカバリープロセスは次のストレージプールをスキャ
 msgid ""
 "The requested backend '%s' isn't available on your system (missing tools)"
 msgstr ""
-"入力したバックエンド '%s' がシステム上で使えません（必要なツールがありませ"
-"ん）"
+"入力したバックエンド '%s' がシステム上で使えません（必要なツールがありません"
+"）"
 
 #: cmd/incus/admin_init_auto.go:22
 #, c-format
@@ -10004,8 +9997,7 @@ msgstr "既存のブリッジかホストのインターフェースを使用し
 msgid ""
 "Would you like to use an existing empty block device (e.g. a disk or "
 "partition)?"
-msgstr ""
-"既存の空のブロックデバイス（ディスクやパーティションなど）を使用しますか?"
+msgstr "既存の空のブロックデバイス（ディスクやパーティションなど）を使用しますか?"
 
 #: cmd/incus/admin_init_interactive.go:34
 msgid "Would you like to use clustering?"
@@ -10686,8 +10678,9 @@ msgstr ""
 "のネットワーク \"default\" 間に、新たにピアリングを作成します\n"
 "\n"
 "incus network peer create default peer2 ovn-ic --type=remote\n"
-"    現在のプロジェクト内のネットワーク \"default\" と \"ovn-ic\" インテグレー"
-"ションによる他のリモートネットワークの間に、新たにピアリングを作成します\n"
+"    現在のプロジェクト内のネットワーク \"default\" と \"ovn-ic\" "
+"インテグレーションによる他のリモートネットワークの間に、新たにピアリングを作"
+"成します\n"
 "\n"
 "incus network peer create default peer3 web/default < config.yaml\n"
 "\tconfig.yaml ファイル内の設定を使用して、現在のプロジェクト内のネットワーク "
@@ -11050,8 +11043,8 @@ msgstr ""
 "ます\n"
 "\n"
 "incus storage volume import default some-installer.iso installer --type=iso\n"
-"    CD-ROM イメージとして使用するために some-installer.iso を保存する新しいカ"
-"スタムボリュームを作成します"
+"    CD-ROM イメージとして使用するために some-installer.iso を保存する新しい"
+"カスタムボリュームを作成します"
 
 #: cmd/incus/storage_volume.go:1224
 #, fuzzy
