@@ -313,11 +313,6 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 		return errors.New("Restricted projects aren't allowed to use pull mode migration")
 	}
 
-	// If "limits.disk" is not set, there's nothing to do.
-	if info.Project.Config["limits.disk"] == "" {
-		return nil
-	}
-
 	// Add the volume being created.
 	info.Volumes = append(info.Volumes, db.StorageVolumeArgs{
 		Name:     req.Name,
@@ -404,6 +399,39 @@ func checkRestrictionsAndAggregateLimits(tx *db.ClusterTx, info *projectInfo) er
 
 	if len(aggregateKeys) == 0 && !isRestricted {
 		return nil
+	}
+
+	// Check pool usage restrictions.
+	if isRestricted && info.Project.Config["restricted.storage-pools.access"] != "" {
+		// Build a list of all the storage pools in use.
+		pools := map[string]int{}
+
+		for _, profile := range info.Profiles {
+			for _, dev := range profile.Devices {
+				if dev["type"] == "disk" && dev["pool"] != "" {
+					pools[dev["pool"]]++
+				}
+			}
+		}
+
+		for _, inst := range info.Instances {
+			for _, dev := range inst.Devices {
+				if dev["type"] == "disk" && dev["pool"] != "" {
+					pools[dev["pool"]]++
+				}
+			}
+		}
+
+		for _, vol := range info.Volumes {
+			pools[vol.PoolName]++
+		}
+
+		// Check that those pools are allowed.
+		for poolName := range pools {
+			if !StoragePoolAllowed(info.Project.Config, poolName) {
+				return fmt.Errorf("Storage pool %q is not accessible from this project", poolName)
+			}
+		}
 	}
 
 	instances, err := expandInstancesConfigAndDevices(info.Instances, info.Profiles)
