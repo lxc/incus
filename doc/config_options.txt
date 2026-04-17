@@ -4705,6 +4705,13 @@ Specify a comma-delimited list of network zones that can be used (or something u
 
 ```
 
+```{config:option} restricted.storage-pools.access project-restricted
+:shortdesc: "Which storage pool names are allowed for use in this project"
+:type: "string"
+Specify a comma-delimited list of storage pool names that are allowed for use in this project.
+If this option is not set, all storage pools are accessible.
+```
+
 ```{config:option} restricted.virtual-machines.lowlevel project-restricted
 :defaultdesc: "`block`"
 :shortdesc: "Whether to prevent using low-level VM options"

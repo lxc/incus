@@ -166,6 +166,31 @@ func StorageBucketProjectFromRecord(p *api.Project) string {
 	return api.ProjectDefaultName
 }
 
+// StoragePoolAllowed returns whether access is allowed to a particular storage pool based on project limits and restrictions.
+// A pool is inaccessible if it has an explicit size limit of 0 (limits.disk.pool.POOLNAME=0) or if restricted.storage-pools.access
+// is set and the pool is not in the allowlist (treated as equivalent to a size limit of 0).
+func StoragePoolAllowed(reqProjectConfig map[string]string, poolName string) bool {
+	// A pool with an explicit size limit of 0 is never accessible.
+	if reqProjectConfig[projectLimitDiskPool+poolName] == "0" {
+		return false
+	}
+
+	// If the project isn't restricted, then access to the pool is allowed.
+	if util.IsFalseOrEmpty(reqProjectConfig["restricted"]) {
+		return true
+	}
+
+	// If restricted.storage-pools.access is not set then allow access to all pools.
+	if reqProjectConfig["restricted.storage-pools.access"] == "" {
+		return true
+	}
+
+	// Check if requested pool is in list of allowed pools.
+	allowedPools := util.SplitNTrimSpace(reqProjectConfig["restricted.storage-pools.access"], ",", -1, false)
+
+	return slices.Contains(allowedPools, poolName)
+}
+
 // NetworkProject returns the effective project name to use for the network based on the requested project.
 // If the requested project has the "features.networks" flag enabled then the requested project's name is returned,
 // otherwise the default project name is returned.

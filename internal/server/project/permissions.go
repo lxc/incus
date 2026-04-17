@@ -24,7 +24,7 @@ import (
 )
 
 // HiddenStoragePools returns a list of storage pools that should be hidden from users of the project.
-func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName string) ([]string, error) {
+func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName string, allPoolNames []string) ([]string, error) {
 	dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed getting project: %w", err)
@@ -36,14 +36,9 @@ func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName strin
 	}
 
 	hiddenPools := []string{}
-	for k, v := range project.Config {
-		if !strings.HasPrefix(k, projectLimitDiskPool) || v != "0" {
-			continue
-		}
-
-		fields := strings.SplitN(k, projectLimitDiskPool, 2)
-		if len(fields) == 2 {
-			hiddenPools = append(hiddenPools, fields[1])
+	for _, poolName := range allPoolNames {
+		if !StoragePoolAllowed(project.Config, poolName) {
+			hiddenPools = append(hiddenPools, poolName)
 		}
 	}
 
@@ -318,11 +313,6 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 		return errors.New("Restricted projects aren't allowed to use pull mode migration")
 	}
 
-	// If "limits.disk" is not set, there's nothing to do.
-	if info.Project.Config["limits.disk"] == "" {
-		return nil
-	}
-
 	// Add the volume being created.
 	info.Volumes = append(info.Volumes, db.StorageVolumeArgs{
 		Name:     req.Name,
@@ -409,6 +399,39 @@ func checkRestrictionsAndAggregateLimits(tx *db.ClusterTx, info *projectInfo) er
 
 	if len(aggregateKeys) == 0 && !isRestricted {
 		return nil
+	}
+
+	// Check pool usage restrictions.
+	if isRestricted && info.Project.Config["restricted.storage-pools.access"] != "" {
+		// Build a list of all the storage pools in use.
+		pools := map[string]int{}
+
+		for _, profile := range info.Profiles {
+			for _, dev := range profile.Devices {
+				if dev["type"] == "disk" && dev["pool"] != "" {
+					pools[dev["pool"]]++
+				}
+			}
+		}
+
+		for _, inst := range info.Instances {
+			for _, dev := range inst.Devices {
+				if dev["type"] == "disk" && dev["pool"] != "" {
+					pools[dev["pool"]]++
+				}
+			}
+		}
+
+		for _, vol := range info.Volumes {
+			pools[vol.PoolName]++
+		}
+
+		// Check that those pools are allowed.
+		for poolName := range pools {
+			if !StoragePoolAllowed(info.Project.Config, poolName) {
+				return fmt.Errorf("Storage pool %q is not accessible from this project", poolName)
+			}
+		}
 	}
 
 	instances, err := expandInstancesConfigAndDevices(info.Instances, info.Profiles)
@@ -698,8 +721,13 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 		case "restricted.devices.disk":
 			devicesChecks["disk"] = func(device map[string]string) error {
-				// The root device is always allowed.
+				// The root device is always allowed, but the pool it references
+				// must still be accessible (not equivalent to a size limit of 0).
 				if device["path"] == "/" && device["pool"] != "" {
+					if !StoragePoolAllowed(project.Config, device["pool"]) {
+						return fmt.Errorf("Storage pool %q is not accessible from this project", device["pool"])
+					}
+
 					return nil
 				}
 
@@ -728,6 +756,10 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 							return fmt.Errorf("Disk source path %q not allowed", device["source"])
 						}
 					}
+				}
+
+				if device["pool"] != "" && !StoragePoolAllowed(project.Config, device["pool"]) {
+					return fmt.Errorf("Storage pool %q is not accessible from this project", device["pool"])
 				}
 
 				return nil
@@ -913,6 +945,7 @@ var allRestrictions = map[string]string{
 	"restricted.images.servers":            "",
 	"restricted.networks.access":           "",
 	"restricted.snapshots":                 "block",
+	"restricted.storage-pools.access":      "",
 }
 
 // allowableIntercept lists all syscall interception keys which may be allowed.
