@@ -668,6 +668,15 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 		return api.StatusErrorf(http.StatusInternalServerError, "%s", err.Error())
 	}
 
+	if r.protocol == "nbd" {
+		// A bit of a hack to handle the fact that NBD is a protocol where
+		// the server speaks first, immediately sending a connection header when
+		// processing a new connection. This immediate bit of raw data can hit the
+		// client prior to it having completed the HTTP part of the upgrade,
+		// causing that header message to get dropped.
+		time.Sleep(250 * time.Millisecond)
+	}
+
 	ctx, cancel := context.WithCancel(r.req.Context())
 	l := logger.AddContext(logger.Ctx{
 		"local":  remoteConn.LocalAddr(),
@@ -678,12 +687,14 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
 		_, err := io.Copy(remoteConn, r.conn)
 		if err != nil {
 			if ctx.Err() == nil {
 				l.Warn("Failed copying data from local to remote connection", logger.Ctx{"err": err})
 			}
 		}
+
 		cancel()               // Cancel context first so when remoteConn is closed it doesn't cause a warning.
 		_ = remoteConn.Close() // Trigger the cancellation of the io.Copy reading from remoteConn.
 	}()
@@ -694,6 +705,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 			l.Warn("Failed copying data from remote to local connection", logger.Ctx{"err": err})
 		}
 	}
+
 	cancel() // Cancel context first so when conn is closed it doesn't cause a warning.
 
 	err = r.conn.Close() // Trigger the cancellation of the io.Copy reading from conn.
