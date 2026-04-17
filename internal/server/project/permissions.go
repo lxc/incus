@@ -24,7 +24,7 @@ import (
 )
 
 // HiddenStoragePools returns a list of storage pools that should be hidden from users of the project.
-func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName string) ([]string, error) {
+func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName string, allPoolNames []string) ([]string, error) {
 	dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed getting project: %w", err)
@@ -36,14 +36,9 @@ func HiddenStoragePools(ctx context.Context, tx *db.ClusterTx, projectName strin
 	}
 
 	hiddenPools := []string{}
-	for k, v := range project.Config {
-		if !strings.HasPrefix(k, projectLimitDiskPool) || v != "0" {
-			continue
-		}
-
-		fields := strings.SplitN(k, projectLimitDiskPool, 2)
-		if len(fields) == 2 {
-			hiddenPools = append(hiddenPools, fields[1])
+	for _, poolName := range allPoolNames {
+		if !StoragePoolAllowed(project.Config, poolName) {
+			hiddenPools = append(hiddenPools, poolName)
 		}
 	}
 
@@ -698,8 +693,13 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 		case "restricted.devices.disk":
 			devicesChecks["disk"] = func(device map[string]string) error {
-				// The root device is always allowed.
+				// The root device is always allowed, but the pool it references
+				// must still be accessible (not equivalent to a size limit of 0).
 				if device["path"] == "/" && device["pool"] != "" {
+					if !StoragePoolAllowed(project.Config, device["pool"]) {
+						return fmt.Errorf("Storage pool %q is not accessible from this project", device["pool"])
+					}
+
 					return nil
 				}
 
@@ -728,6 +728,10 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 							return fmt.Errorf("Disk source path %q not allowed", device["source"])
 						}
 					}
+				}
+
+				if device["pool"] != "" && !StoragePoolAllowed(project.Config, device["pool"]) {
+					return fmt.Errorf("Storage pool %q is not accessible from this project", device["pool"])
 				}
 
 				return nil
@@ -913,6 +917,7 @@ var allRestrictions = map[string]string{
 	"restricted.images.servers":            "",
 	"restricted.networks.access":           "",
 	"restricted.snapshots":                 "block",
+	"restricted.storage-pools.access":      "",
 }
 
 // allowableIntercept lists all syscall interception keys which may be allowed.

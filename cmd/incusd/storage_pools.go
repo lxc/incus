@@ -182,7 +182,7 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		// Load the project limits.
-		hiddenPoolNames, err = project.HiddenStoragePools(ctx, tx, request.ProjectParam(r))
+		hiddenPoolNames, err = project.HiddenStoragePools(ctx, tx, request.ProjectParam(r), poolNames)
 		if err != nil {
 			return err
 		}
@@ -736,7 +736,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 		var err error
 
 		// Load the project limits.
-		hiddenPoolNames, err = project.HiddenStoragePools(ctx, tx, request.ProjectParam(r))
+		hiddenPoolNames, err = project.HiddenStoragePools(ctx, tx, request.ProjectParam(r), []string{poolName})
 		if err != nil {
 			return err
 		}

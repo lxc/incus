@@ -1815,6 +1815,14 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  defaultdesc: `block`
 		//  shortdesc: Whether to prevent creating instance or volume snapshots
 		"restricted.snapshots": isEitherAllowOrBlock,
+
+		// gendoc:generate(entity=project, group=restricted, key=restricted.storage-pools.access)
+		// Specify a comma-delimited list of storage pool names that are allowed for use in this project.
+		// If this option is not set, all storage pools are accessible.
+		// ---
+		//  type: string
+		//  shortdesc: Which storage pool names are allowed for use in this project
+		"restricted.storage-pools.access": validate.Optional(validate.IsListOf(validate.IsAny)),
 	}
 
 	// Add the storage pool keys.
