@@ -2799,16 +2799,25 @@ func (n *ovn) setup(update bool) error {
 		deleteRoutes := []net.IPNet{defaultIPv4Route, defaultIPv6Route}
 		defaultRoutes := make([]networkOVN.OVNRouterRoute, 0, 2)
 
+		currentRoutes, err := n.ovnnb.GetLogicalRouterRoutes(context.TODO(), n.getRouterName())
+		if err != nil {
+			return fmt.Errorf("Failed to retrieve currently set routes on network %s", n.name)
+		}
+
 		if routerIntPortIPv4Net != nil {
 			// If l3only mode is enabled then each instance IPv4 will get its own /32 route added when
 			// the instance NIC starts. However to stop packets toward unknown IPs within the internal
 			// subnet escaping onto the uplink network we add a less specific discard route for the
 			// whole internal subnet.
 			if util.IsTrue(n.config["ipv4.l3only"]) {
-				defaultRoutes = append(defaultRoutes, networkOVN.OVNRouterRoute{
+				route := networkOVN.OVNRouterRoute{
 					Prefix:  *routerIntPortIPv4Net,
 					Discard: true,
-				})
+				}
+
+				if !ovnRouteExists(currentRoutes, route) {
+					defaultRoutes = append(defaultRoutes, route)
+				}
 			} else {
 				deleteRoutes = append(deleteRoutes, *routerIntPortIPv4Net)
 			}
@@ -2820,10 +2829,14 @@ func (n *ovn) setup(update bool) error {
 			// subnet escaping onto the uplink network we add a less specific discard route for the
 			// whole internal subnet.
 			if util.IsTrue(n.config["ipv6.l3only"]) {
-				defaultRoutes = append(defaultRoutes, networkOVN.OVNRouterRoute{
+				route := networkOVN.OVNRouterRoute{
 					Prefix:  *routerIntPortIPv6Net,
 					Discard: true,
-				})
+				}
+
+				if !ovnRouteExists(currentRoutes, route) {
+					defaultRoutes = append(defaultRoutes, route)
+				}
 			} else {
 				deleteRoutes = append(deleteRoutes, *routerIntPortIPv6Net)
 			}
