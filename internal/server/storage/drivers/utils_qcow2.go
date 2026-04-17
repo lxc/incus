@@ -134,7 +134,7 @@ func Qcow2Info(path string) (*ImageInfo, error) {
 // Qcow2BackingChain returns information about the backing chain of a qcow2 image.
 func Qcow2BackingChain(path string) ([]string, error) {
 	result := []string{}
-	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "--backing-chain", "--output=json", path)
+	imgJSON, err := subprocess.RunCommand("qemu-img", "info", "-U", "--backing-chain", "--output=json", path)
 	if err != nil {
 		return nil, err
 	}
