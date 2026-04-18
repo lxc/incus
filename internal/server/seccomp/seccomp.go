@@ -964,7 +964,7 @@ func (siov *Iovec) PutSeccompIovec() {
 // ReceiveSeccompIovec receives a seccomp iovec.
 func (siov *Iovec) ReceiveSeccompIovec(fd int) (uint64, error) {
 	bytes, fds, err := netutils.AbstractUnixReceiveFdData(fd, 3, netutils.UnixFdsAcceptLess, unsafe.Pointer(siov.iov), 4)
-	if err != nil || err == io.EOF {
+	if err != nil {
 		return 0, err
 	}
 
