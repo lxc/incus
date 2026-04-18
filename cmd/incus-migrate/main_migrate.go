@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -260,18 +259,11 @@ func (m *Migration) askPath(question string) (string, error) {
 
 		fmt.Printf("Downloading %q\n", path)
 
-		for {
-			// Read 4MB at a time.
-			_, err = io.CopyN(f, resp.Body, 4*1024*1024)
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
+		_, err = util.SafeCopy(f, resp.Body)
+		if err != nil {
+			_ = os.Remove(f.Name())
 
-				_ = os.Remove(f.Name())
-
-				return "", err
-			}
+			return "", err
 		}
 
 		path = f.Name()
