@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/archive"
 	"github.com/lxc/incus/v6/shared/ask"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // VHResourceType defines what kind of resource this is (e.g., CPU, memory).
@@ -294,16 +295,10 @@ func (m *OVAMigration) unpackOVA(outPath string) error {
 			return fmt.Errorf("Error creating file: %v", err)
 		}
 
-		for {
-			_, err = io.CopyN(outFile, tarReader, 4*1024*1024)
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break
-				}
-
-				outFile.Close()
-				return fmt.Errorf("Error unpacking file: %v", err)
-			}
+		_, err = util.SafeCopy(outFile, tarReader)
+		if err != nil {
+			outFile.Close()
+			return fmt.Errorf("Error unpacking file: %v", err)
 		}
 
 		outFile.Close()

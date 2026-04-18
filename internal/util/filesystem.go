@@ -83,7 +83,7 @@ func FileCopy(source string, dest string) error {
 		}
 	}
 
-	_, err = io.Copy(d, s)
+	_, err = util.SafeCopy(d, s)
 	if err != nil {
 		return err
 	}

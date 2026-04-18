@@ -614,17 +614,10 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 
 				defer func() { _ = src.Close() }()
 
-				for {
-					// Read 1MB at a time.
-					_, err = io.CopyN(writer, src, 1024*1024)
-					if err != nil {
-						if err == io.EOF {
-							break
-						}
-
-						progress.Done("")
-						return err
-					}
+				_, err = util.SafeCopy(writer, src)
+				if err != nil {
+					progress.Done("")
+					return err
 				}
 			}
 

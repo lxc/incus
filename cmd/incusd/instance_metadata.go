@@ -498,7 +498,7 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 		return response.SmartError(err)
 	}
 
-	_, err = io.Copy(tempfile, template)
+	_, err = util.SafeCopy(tempfile, template)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -622,7 +622,7 @@ func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response
 		return response.SmartError(err)
 	}
 
-	_, err = io.Copy(template, r.Body)
+	_, err = util.SafeCopy(template, r.Body)
 	if err != nil {
 		return response.InternalError(err)
 	}

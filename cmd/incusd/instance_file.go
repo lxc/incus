@@ -549,7 +549,7 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 		}
 
 		// Transfer the file into the instance.
-		_, err = io.Copy(file, r.Body)
+		_, err = util.SafeCopy(file, r.Body)
 		if err != nil {
 			return response.InternalError(err)
 		}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"io"
 	"net"
 	"os"
 	"sync"
@@ -10,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v6/internal/eagain"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdNetcat struct {
@@ -59,11 +59,11 @@ func (c *cmdNetcat) run(cmd *cobra.Command, args []string) error {
 		defer func() { _ = conn.Close() }()
 		defer wg.Done()
 
-		_, _ = io.Copy(eagain.Writer{Writer: os.Stdout}, eagain.Reader{Reader: conn})
+		_, _ = util.SafeCopy(eagain.Writer{Writer: os.Stdout}, eagain.Reader{Reader: conn})
 	}()
 
 	go func() {
-		_, _ = io.Copy(eagain.Writer{Writer: conn}, eagain.Reader{Reader: os.Stdin})
+		_, _ = util.SafeCopy(eagain.Writer{Writer: conn}, eagain.Reader{Reader: os.Stdin})
 	}()
 
 	// Wait

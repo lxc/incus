@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	localtls "github.com/lxc/incus/v6/shared/tls"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Storage volumes handling function
@@ -1085,7 +1086,7 @@ func (r *ProtocolIncus) GetStorageVolumeBackupFile(pool string, volName string, 
 		}
 	}
 
-	size, err := io.Copy(req.BackupFile, body)
+	size, err := util.SafeCopy(req.BackupFile, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1156,7 +1157,7 @@ func (r *ProtocolIncus) CreateStorageVolumeBackupStream(pool string, volName str
 		}
 	}
 
-	_, err = io.Copy(req.BackupFile, body)
+	_, err = util.SafeCopy(req.BackupFile, body)
 	return err
 }
 

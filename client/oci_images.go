@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/subprocess"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type ociInfo struct {
@@ -259,7 +260,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		pipeWrite.Close()
 	}()
 
-	size, err := io.Copy(req.MetaFile, pipeRead)
+	size, err := util.SafeCopy(req.MetaFile, pipeRead)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +296,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		pipeWrite.Close()
 	}()
 
-	size, err = io.Copy(req.RootfsFile, pipeRead)
+	size, err = util.SafeCopy(req.RootfsFile, pipeRead)
 	if err != nil {
 		return nil, err
 	}

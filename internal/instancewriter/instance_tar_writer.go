@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/v6/internal/linux"
 	"github.com/lxc/incus/v6/shared/idmap"
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // InstanceTarWriter provides an InstanceWriter implementation that handles ID shifting and hardlink tracking.
@@ -172,7 +173,7 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 			r = io.LimitReader(r, fi.Size())
 		}
 
-		_, err = io.Copy(ctw.tarWriter, r)
+		_, err = util.SafeCopy(ctw.tarWriter, r)
 		if err != nil {
 			return fmt.Errorf("Failed to copy file content %q: %w", srcPath, err)
 		}
@@ -199,7 +200,7 @@ func (ctw *InstanceTarWriter) WriteFileFromReader(src io.Reader, fi os.FileInfo)
 		return fmt.Errorf("Failed to write tar header: %w", err)
 	}
 
-	_, err = io.Copy(ctw.tarWriter, src)
+	_, err = util.SafeCopy(ctw.tarWriter, src)
 	return err
 }
 

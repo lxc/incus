@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -125,7 +124,7 @@ func templatesApply(path string) ([]string, error) {
 
 			defer func() { _ = src.Close() }()
 
-			_, err = io.Copy(w, src)
+			_, err = util.SafeCopy(w, src)
 			if err != nil {
 				return err
 			}

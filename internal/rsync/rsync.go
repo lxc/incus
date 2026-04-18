@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Debug controls additional debugging in rsync output.
@@ -260,7 +261,7 @@ func Send(name string, path string, conn io.ReadWriteCloser, tracker *ioprogress
 	// Forward from netcat to target.
 	chCopyNetcat := make(chan error, 1)
 	go func() {
-		_, err := io.Copy(conn, readNetcatPipe)
+		_, err := util.SafeCopy(conn, readNetcatPipe)
 		chCopyNetcat <- err
 		_ = readNetcatPipe.Close()
 		_ = netcatConn.Close()
@@ -271,7 +272,7 @@ func Send(name string, path string, conn io.ReadWriteCloser, tracker *ioprogress
 	writeNetcatPipe := io.WriteCloser(netcatConn)
 	chCopyTarget := make(chan error, 1)
 	go func() {
-		_, err := io.Copy(writeNetcatPipe, conn)
+		_, err := util.SafeCopy(writeNetcatPipe, conn)
 		chCopyTarget <- err
 		_ = writeNetcatPipe.Close()
 	}()
@@ -350,7 +351,7 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 	chCopyRsync := make(chan error, 1)
 	go func() {
-		_, err := io.Copy(conn, stdout)
+		_, err := util.SafeCopy(conn, stdout)
 		_ = stdout.Close()
 		_ = conn.Close() // sends barrier message.
 		chCopyRsync <- err
@@ -372,7 +373,7 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 	chCopySource := make(chan error, 1)
 	go func() {
-		_, err := io.Copy(stdin, readSourcePipe)
+		_, err := util.SafeCopy(stdin, readSourcePipe)
 		_ = stdin.Close()
 		chCopySource <- err
 	}()

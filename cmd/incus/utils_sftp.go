@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/units"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 func sftpSetOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.InstanceFileArgs) error {
@@ -76,16 +77,9 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 		defer func() { _ = file.Close() }()
 
 		if push {
-			for {
-				// Read 1MB at a time.
-				_, err = io.CopyN(file, args.Content, 1024*1024)
-				if err != nil {
-					if err == io.EOF {
-						break
-					}
-
-					return err
-				}
+			_, err = util.SafeCopy(file, args.Content)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -212,17 +206,10 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, p string, t
 			},
 		}
 
-		for {
-			// Read 1MB at a time.
-			_, err = io.CopyN(writer, src, 1024*1024)
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-
-				progress.Done("")
-				return err
-			}
+		_, err = util.SafeCopy(writer, src)
+		if err != nil {
+			progress.Done("")
+			return err
 		}
 
 		err = src.Close()

@@ -203,7 +203,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 				}
 
 				// Copy to the target
-				size, err := io.Copy(req.RootfsFile, patchedFile)
+				size, err := util.SafeCopy(req.RootfsFile, patchedFile)
 				if err != nil {
 					return -1, err
 				}
@@ -263,7 +263,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 			return nil, err
 		}
 
-		_, err := io.Copy(hash256, req.MetaFile)
+		_, err := util.SafeCopy(hash256, req.MetaFile)
 		if err != nil {
 			return nil, err
 		}
@@ -275,7 +275,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 			return nil, err
 		}
 
-		_, err := io.Copy(hash256, req.RootfsFile)
+		_, err := util.SafeCopy(hash256, req.RootfsFile)
 		if err != nil {
 			return nil, err
 		}

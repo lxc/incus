@@ -660,7 +660,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	reverter.Add(func() { _ = backupFile.Close() })
 
 	// Stream uploaded backup data into temporary file.
-	_, err = io.Copy(backupFile, data)
+	_, err = util.SafeCopy(backupFile, data)
 	if err != nil {
 		return response.InternalError(err)
 	}

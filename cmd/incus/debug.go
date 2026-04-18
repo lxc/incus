@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,6 +10,7 @@ import (
 	u "github.com/lxc/incus/v6/cmd/incus/usage"
 	"github.com/lxc/incus/v6/internal/i18n"
 	cli "github.com/lxc/incus/v6/shared/cmd"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdDebug struct {
@@ -76,7 +76,7 @@ func (c *cmdDebugMemory) run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Failed to dump instance memory: %w"), err)
 	}
 
-	_, err = io.Copy(target, rc)
+	_, err = util.SafeCopy(target, rc)
 	if err != nil {
 		return err
 	}

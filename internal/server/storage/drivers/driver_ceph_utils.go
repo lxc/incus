@@ -1278,7 +1278,7 @@ func (d *ceph) receiveVolume(volumeName string, conn io.ReadWriteCloser, writeWr
 	// Forward input through stdin.
 	chCopyConn := make(chan error, 1)
 	go func() {
-		_, err = io.Copy(stdin, conn)
+		_, err = util.SafeCopy(stdin, conn)
 		_ = stdin.Close()
 		chCopyConn <- err
 	}()
