@@ -183,7 +183,7 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 			}
 		} else {
 			backupProgressWriter.WriteCloser = tarFileWriter
-			_, err = io.Copy(backupProgressWriter, tarPipeReader)
+			_, err = util.SafeCopy(backupProgressWriter, tarPipeReader)
 		}
 
 		resCh <- err
@@ -532,7 +532,7 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 					_ = tarPipeWriter.Close()
 				}
 			} else {
-				_, err = io.Copy(fileWriter, tarPipeReader)
+				_, err = util.SafeCopy(fileWriter, tarPipeReader)
 			}
 
 			resCh <- err
@@ -791,7 +791,7 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 				_ = tarPipeWriter.Close()
 			}
 		} else {
-			_, err = io.Copy(tarFileWriter, tarPipeReader)
+			_, err = util.SafeCopy(tarFileWriter, tarPipeReader)
 		}
 
 		resCh <- err

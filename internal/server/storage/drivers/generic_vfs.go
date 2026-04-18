@@ -229,7 +229,7 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 		}
 
 		d.Logger().Debug("Sending block volume", logger.Ctx{"volName": vol.name, "path": path})
-		_, err = io.Copy(conn, fromPipe)
+		_, err = util.SafeCopy(conn, fromPipe)
 		if err != nil {
 			return fmt.Errorf("Error copying %q to migration connection: %w", path, err)
 		}

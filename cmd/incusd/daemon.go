@@ -729,7 +729,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 			newBody := &bytes.Buffer{}
 			captured := &bytes.Buffer{}
 			multiW := io.MultiWriter(newBody, captured)
-			_, err := io.Copy(multiW, r.Body)
+			_, err := util.SafeCopy(multiW, r.Body)
 			if err != nil {
 				_ = response.InternalError(err).Render(w)
 				return

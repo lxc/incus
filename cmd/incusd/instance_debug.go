@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,6 +23,7 @@ import (
 	storageDrivers "github.com/lxc/incus/v6/internal/server/storage/drivers"
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/subprocess"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // swagger:operation GET /1.0/instances/{name}/debug/memory instances instance_debug_memory_get
@@ -123,7 +123,7 @@ func instanceDebugMemoryGet(d *Daemon, r *http.Request) response.Response {
 		chCopy := make(chan error)
 
 		go func() {
-			_, err := io.Copy(w, reader)
+			_, err := util.SafeCopy(w, reader)
 			chCopy <- err
 		}()
 

@@ -1756,7 +1756,7 @@ func (b *backend) isoFiller(data io.Reader) func(vol drivers.Volume, rootBlockPa
 
 		defer func() { _ = f.Close() }()
 
-		return io.Copy(f, data)
+		return util.SafeCopy(f, data)
 	}
 }
 
@@ -8692,7 +8692,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		}
 
 		b.logger.Debug("Sending block volume", logger.Ctx{"volName": vol.Name(), "path": nbdPath})
-		_, err = io.Copy(conn, fromPipe)
+		_, err = util.SafeCopy(conn, fromPipe)
 		if err != nil {
 			return fmt.Errorf("Error copying %q to migration connection: %w", nbdPath, err)
 		}

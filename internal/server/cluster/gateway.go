@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -1165,12 +1164,12 @@ func dqliteProxy(name string, stopCh chan struct{}, remote net.Conn, local net.C
 	// Start copying data back and forth until either the client or the
 	// server get closed or hit an error.
 	go func() {
-		_, err := io.Copy(local, remote)
+		_, err := util.SafeCopy(local, remote)
 		remoteToLocal <- err
 	}()
 
 	go func() {
-		_, err := io.Copy(remote, local)
+		_, err := util.SafeCopy(remote, local)
 		localToRemote <- err
 	}()
 

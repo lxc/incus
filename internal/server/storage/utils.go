@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -734,7 +733,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 
 			defer to.Close()
 
-			_, err = io.Copy(to, from)
+			_, err = util.SafeCopy(to, from)
 			if err != nil {
 				return -1, err
 			}

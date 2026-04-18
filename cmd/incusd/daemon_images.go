@@ -520,7 +520,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 		// Download the image
 		writer := internalIO.NewQuotaWriter(io.MultiWriter(f, hash256), args.Budget)
-		size, err := io.Copy(writer, body)
+		size, err := util.SafeCopy(writer, body)
 		if err != nil {
 			return nil, false, err
 		}

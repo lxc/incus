@@ -1013,9 +1013,9 @@ func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string
 
 	d.logger.Debug("Migration storage NBD export starting")
 
-	go func() { _, _ = io.Copy(filesystemConn, nbdConn) }()
+	go func() { _, _ = util.SafeCopy(filesystemConn, nbdConn) }()
 
-	_, _ = io.Copy(nbdConn, filesystemConn)
+	_, _ = util.SafeCopy(nbdConn, filesystemConn)
 
 	filesystemConn.Close()
 	d.logger.Debug("Migration storage NBD export finished")
@@ -1094,7 +1094,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 		}
 
 		go func() {
-			_, _ = io.Copy(pipeWrite, stateConn)
+			_, _ = util.SafeCopy(pipeWrite, stateConn)
 
 			_ = pipeRead.Close()
 			_ = pipeWrite.Close()
@@ -1131,7 +1131,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 		}
 
 		go func() {
-			_, err := io.Copy(pipeWrite, uncompressedState)
+			_, err := util.SafeCopy(pipeWrite, uncompressedState)
 			if err != nil {
 				d.logger.Warn("Failed reading from state file", logger.Ctx{"path": statePath, "err": err})
 			}
@@ -1203,7 +1203,7 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 		_ = pipeWrite.Close()
 	}()
 
-	go func() { _, _ = io.Copy(compressedState, pipeRead) }()
+	go func() { _, _ = util.SafeCopy(compressedState, pipeRead) }()
 
 	err = d.saveStateHandle(monitor, pipeWrite)
 	if err != nil {
@@ -7474,7 +7474,7 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 		}
 
 		r := io.Reader(f)
-		_, err = io.Copy(rootfsWriter, r)
+		_, err = util.SafeCopy(rootfsWriter, r)
 		if err != nil {
 			return nil, err
 		}
@@ -7941,9 +7941,9 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 		defer func() { _ = nbdConn.Close() }()
 
 		d.logger.Debug("NBD connection on source started")
-		go func() { _, _ = io.Copy(filesystemConn, nbdConn) }()
+		go func() { _, _ = util.SafeCopy(filesystemConn, nbdConn) }()
 
-		_, _ = io.Copy(nbdConn, filesystemConn)
+		_, _ = util.SafeCopy(nbdConn, filesystemConn)
 		d.logger.Debug("NBD connection on source finished")
 
 		return nil
@@ -8236,7 +8236,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		_ = pipeWrite.Close()
 	}()
 
-	go func() { _, _ = io.Copy(stateConn, pipeRead) }()
+	go func() { _, _ = util.SafeCopy(stateConn, pipeRead) }()
 
 	err = d.saveStateHandle(monitor, pipeWrite)
 	if err != nil {

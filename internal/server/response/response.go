@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/tcp"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var debug bool
@@ -495,7 +496,7 @@ func (r *fileResponse) Render(w http.ResponseWriter) error {
 			return err
 		}
 
-		_, err = io.Copy(fw, rd)
+		_, err = util.SafeCopy(fw, rd)
 		if err != nil {
 			return err
 		}
@@ -567,7 +568,7 @@ func (r *forwardedResponse) Render(w http.ResponseWriter) error {
 		w.WriteHeader(response.StatusCode)
 	}
 
-	_, err = io.Copy(w, response.Body)
+	_, err = util.SafeCopy(w, response.Body)
 	return err
 }
 
@@ -688,7 +689,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 	go func() {
 		defer wg.Done()
 
-		_, err := io.Copy(remoteConn, r.conn)
+		_, err := util.SafeCopy(remoteConn, r.conn)
 		if err != nil {
 			if ctx.Err() == nil {
 				l.Warn("Failed copying data from local to remote connection", logger.Ctx{"err": err})
@@ -696,10 +697,10 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 		}
 
 		cancel()               // Cancel context first so when remoteConn is closed it doesn't cause a warning.
-		_ = remoteConn.Close() // Trigger the cancellation of the io.Copy reading from remoteConn.
+		_ = remoteConn.Close() // Trigger the cancellation of the util.SafeCopy reading from remoteConn.
 	}()
 
-	_, err = io.Copy(r.conn, remoteConn)
+	_, err = util.SafeCopy(r.conn, remoteConn)
 	if err != nil {
 		if ctx.Err() == nil {
 			l.Warn("Failed copying data from remote to local connection", logger.Ctx{"err": err})
@@ -708,7 +709,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 
 	cancel() // Cancel context first so when conn is closed it doesn't cause a warning.
 
-	err = r.conn.Close() // Trigger the cancellation of the io.Copy reading from conn.
+	err = r.conn.Close() // Trigger the cancellation of the util.SafeCopy reading from conn.
 	if err != nil {
 		return fmt.Errorf("Failed closing connection to remote server: %w", err)
 	}
@@ -746,7 +747,7 @@ func (r *pipeResponse) Render(w http.ResponseWriter) error {
 		flusher.Flush()
 	}
 
-	_, err := io.Copy(w, r.reader)
+	_, err := util.SafeCopy(w, r.reader)
 	return err
 }
 

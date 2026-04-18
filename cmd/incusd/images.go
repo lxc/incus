@@ -172,7 +172,7 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 			return err
 		}
 
-		_, err = io.Copy(outfile, tempfile)
+		_, err = util.SafeCopy(outfile, tempfile)
 		if err != nil {
 			return err
 		}
@@ -740,7 +740,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, errors.New("Invalid multipart image")
 		}
 
-		size, err = io.Copy(io.MultiWriter(imageTarf, hash256), part)
+		size, err = util.SafeCopy(io.MultiWriter(imageTarf, hash256), part)
 		info.Size += size
 
 		_ = imageTarf.Close()
@@ -773,7 +773,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 
 		defer func() { _ = os.Remove(rootfsTarf.Name()) }()
 
-		size, err = io.Copy(io.MultiWriter(rootfsTarf, hash256), part)
+		size, err = util.SafeCopy(io.MultiWriter(rootfsTarf, hash256), part)
 		info.Size += size
 
 		_ = rootfsTarf.Close()
@@ -824,7 +824,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, err
 		}
 
-		size, err = io.Copy(hash256, post)
+		size, err = util.SafeCopy(hash256, post)
 		if err != nil {
 			l.Error("Failed to copy the tarfile", logger.Ctx{"err": err})
 			return nil, err
@@ -1179,7 +1179,7 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	_, err = io.Copy(internalIO.NewQuotaWriter(post, budget), r.Body)
+	_, err = util.SafeCopy(internalIO.NewQuotaWriter(post, budget), r.Body)
 	if err != nil {
 		logger.Errorf("Store image POST data to disk: %v", err)
 		cleanup(builddir, post)
