@@ -1,11 +1,10 @@
 package ws
 
 import (
-	"io"
-
 	"github.com/gorilla/websocket"
 
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Proxy mirrors the traffic between two websockets.
@@ -25,7 +24,7 @@ func Proxy(source *websocket.Conn, target *websocket.Conn) chan struct{} {
 				break
 			}
 
-			_, err = io.Copy(w, r)
+			_, err = util.SafeCopy(w, r)
 			w.Close()
 			if err != nil {
 				break

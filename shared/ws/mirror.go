@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 // Mirror takes a websocket and replicates all read/write to a ReadWriteCloser.
@@ -30,7 +31,7 @@ func MirrorRead(conn *websocket.Conn, rc io.Reader) chan error {
 	connRWC := NewWrapper(conn)
 
 	go func() {
-		_, err := io.Copy(connRWC, rc)
+		_, err := util.SafeCopy(connRWC, rc)
 
 		logger.Debug("Websocket: Stopped read mirror", logger.Ctx{"address": conn.RemoteAddr().String(), "err": err})
 
@@ -57,7 +58,7 @@ func MirrorWrite(conn *websocket.Conn, wc io.Writer) chan error {
 	connRWC := NewWrapper(conn)
 
 	go func() {
-		_, err := io.Copy(wc, connRWC)
+		_, err := util.SafeCopy(wc, connRWC)
 
 		logger.Debug("Websocket: Stopped write mirror", logger.Ctx{"address": conn.RemoteAddr().String(), "err": err})
 		chDone <- err
