@@ -31,34 +31,39 @@ func DetectCompressionFile(f io.Reader) ([]string, string, []string, error) {
 	// tar - 263 bytes, trying to get ustar from 257 - 262
 	// lz4 - 4 bytes 0x04 0x22 0x4d 0x18, magic number
 	header := make([]byte, 263)
-	_, err := f.Read(header)
+	n, err := f.Read(header)
 	if err != nil {
 		return nil, "", nil, err
 	}
 
 	switch {
-	case bytes.Equal(header[0:2], []byte{'B', 'Z'}):
+	// Compressed tar handling.
+	case n >= 2 && bytes.Equal(header[0:2], []byte{'B', 'Z'}):
 		return []string{"-jxf"}, ".tar.bz2", []string{"bzip2", "-d"}, nil
-	case bytes.Equal(header[0:2], []byte{0x1f, 0x8b}):
+	case n >= 2 && bytes.Equal(header[0:2], []byte{0x1f, 0x8b}):
 		return []string{"-zxf"}, ".tar.gz", []string{"gzip", "-d"}, nil
-	case (bytes.Equal(header[1:5], []byte{'7', 'z', 'X', 'Z'}) && header[0] == 0xFD):
+	case n >= 5 && (bytes.Equal(header[1:5], []byte{'7', 'z', 'X', 'Z'}) && header[0] == 0xFD):
 		return []string{"-Jxf"}, ".tar.xz", []string{"xz", "-d"}, nil
-	case (bytes.Equal(header[1:5], []byte{'7', 'z', 'X', 'Z'}) && header[0] != 0xFD):
+	case n >= 5 && (bytes.Equal(header[1:5], []byte{'7', 'z', 'X', 'Z'}) && header[0] != 0xFD):
 		return []string{"--lzma", "-xf"}, ".tar.lzma", []string{"lzma", "-d"}, nil
-	case bytes.Equal(header[0:3], []byte{0x5d, 0x00, 0x00}):
+	case n >= 3 && bytes.Equal(header[0:3], []byte{0x5d, 0x00, 0x00}):
 		return []string{"--lzma", "-xf"}, ".tar.lzma", []string{"lzma", "-d"}, nil
-	case bytes.Equal(header[257:262], []byte{'u', 's', 't', 'a', 'r'}):
-		return []string{"-xf"}, ".tar", []string{}, nil
-	case bytes.Equal(header[0:4], []byte{'h', 's', 'q', 's'}):
-		return []string{"-xf"}, ".squashfs", []string{"sqfs2tar", "--no-skip"}, nil
-	case bytes.Equal(header[0:3], []byte{'Q', 'F', 'I'}):
-		return []string{""}, ".qcow2", []string{"qemu-img", "convert", "-O", "raw"}, nil
-	case bytes.Equal(header[0:4], []byte{'K', 'D', 'M', 'V'}):
-		return []string{""}, ".vmdk", []string{"qemu-img", "convert", "-O", "raw"}, nil
-	case bytes.Equal(header[0:4], []byte{0x28, 0xb5, 0x2f, 0xfd}):
+	case n >= 4 && bytes.Equal(header[0:4], []byte{0x28, 0xb5, 0x2f, 0xfd}):
 		return []string{"--zstd", "-xf"}, ".tar.zst", []string{"zstd", "-d"}, nil
-	case bytes.Equal(header[0:4], []byte{0x04, 0x22, 0x4d, 0x18}):
+	case n >= 4 && bytes.Equal(header[0:4], []byte{0x04, 0x22, 0x4d, 0x18}):
 		return []string{"-Ilz4", "-xf"}, ".tar.lz4", []string{"lz4", "-d"}, nil
+
+	// Uncompressed tar handling.
+	case n >= 262 && bytes.Equal(header[257:262], []byte{'u', 's', 't', 'a', 'r'}):
+		return []string{"-xf"}, ".tar", []string{}, nil
+
+	// Other formats.
+	case n >= 4 && bytes.Equal(header[0:4], []byte{'h', 's', 'q', 's'}):
+		return []string{"-xf"}, ".squashfs", []string{"sqfs2tar", "--no-skip"}, nil
+	case n >= 3 && bytes.Equal(header[0:3], []byte{'Q', 'F', 'I'}):
+		return []string{""}, ".qcow2", []string{"qemu-img", "convert", "-O", "raw"}, nil
+	case n >= 4 && bytes.Equal(header[0:4], []byte{'K', 'D', 'M', 'V'}):
+		return []string{""}, ".vmdk", []string{"qemu-img", "convert", "-O", "raw"}, nil
 	default:
 		return nil, "", nil, errors.New("Unsupported compression")
 	}
