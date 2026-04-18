@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -127,8 +128,13 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 
 	for {
 		hdr, err := tr.Next()
-		if err == io.EOF {
-			break // End of archive.
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				// End of archive.
+				break
+			}
+
+			return err
 		}
 
 		// Skip anything that's not in the bucket itself.
