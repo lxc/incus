@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -79,7 +78,7 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Copy the data.
-		_, err = io.Copy(dst, src)
+		_, err = util.SafeCopy(dst, src)
 		if err != nil {
 			return err
 		}
