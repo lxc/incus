@@ -1477,7 +1477,7 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 		}
 
 		if hdr.Name == "metadata.yaml" || hdr.Name == "./metadata.yaml" {
-			err = yaml.NewDecoder(tr).Decode(&result)
+			err = yaml.NewDecoder(localUtil.MaxBytesReader(tr, 1024*1024)).Decode(&result)
 			if err != nil {
 				return nil, "unknown", err
 			}
