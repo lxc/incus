@@ -60,7 +60,7 @@ func (c *migrationFields) send(m proto.Message) error {
 		return fmt.Errorf("Control connection not initialized: %w", err)
 	}
 
-	_ = conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
+	_ = conn.SetWriteDeadline(time.Now().Add(time.Second * 10))
 	err = migration.ProtoSend(conn, m)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (c *migrationFields) recv(m proto.Message) error {
 		return fmt.Errorf("Control connection not initialized: %w", err)
 	}
 
-	_ = conn.SetReadDeadline(time.Now().Add(time.Second * 5))
+	_ = conn.SetReadDeadline(time.Now().Add(time.Second * 10))
 	return migration.ProtoRecv(conn, m)
 }
 
