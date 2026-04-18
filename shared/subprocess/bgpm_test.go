@@ -60,7 +60,7 @@ func TestSignalHandling(t *testing.T) {
 		}
 
 		// Break if error occurred
-		if err != nil && err != io.EOF {
+		if err != nil {
 			t.Error("Error in reading file ", err)
 		}
 	}
@@ -172,7 +172,7 @@ func TestProcessStartWaitExit(t *testing.T) {
 			break
 		}
 		// Break if error occurred
-		if err != nil && err != io.EOF {
+		if err != nil {
 			t.Error("Error reading file: ", err)
 		}
 	}
