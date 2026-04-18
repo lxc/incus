@@ -8848,15 +8848,9 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 			toPipe = drivers.NewSparseFileWrapper(to)
 		}
 
-		for {
-			_, err = io.CopyN(toPipe, fromPipe, 4*1024*1024)
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break
-				}
-
-				return fmt.Errorf("Error copying from migration connection to %q: %w", path, err)
-			}
+		_, err = util.SafeCopy(toPipe, fromPipe)
+		if err != nil {
+			return fmt.Errorf("Error copying from migration connection to %q: %w", path, err)
 		}
 
 		return to.Close()
