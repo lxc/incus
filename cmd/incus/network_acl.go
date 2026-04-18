@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/termios"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdNetworkACL struct {
@@ -264,7 +265,7 @@ func (c *cmdNetworkACLShowLog) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	_, err = io.Copy(os.Stdout, log)
+	_, err = util.SafeCopy(os.Stdout, log)
 	_ = log.Close()
 
 	return err

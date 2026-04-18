@@ -4034,7 +4034,7 @@ func (c *cmdStorageVolumeNBD) Run(cmd *cobra.Command, args []string) error {
 	go func() {
 		defer wg.Done()
 
-		_, _ = io.Copy(conn, nConn)
+		_, _ = util.SafeCopy(conn, nConn)
 		_ = conn.Close()
 		_ = nConn.Close()
 	}()
@@ -4042,7 +4042,7 @@ func (c *cmdStorageVolumeNBD) Run(cmd *cobra.Command, args []string) error {
 	go func() {
 		defer wg.Done()
 
-		_, _ = io.Copy(nConn, conn)
+		_, _ = util.SafeCopy(nConn, conn)
 		_ = conn.Close()
 		_ = nConn.Close()
 	}()
