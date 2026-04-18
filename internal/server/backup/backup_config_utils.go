@@ -156,11 +156,11 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 	// Change the pool in the backup.yaml.
 	backup.Pool = pool
 
-	if updateRootDevicePool(backup.Container.Devices, pool.Name) {
+	if backup.Container != nil && updateRootDevicePool(backup.Container.Devices, pool.Name) {
 		rootDiskDeviceFound = true
 	}
 
-	if updateRootDevicePool(backup.Container.ExpandedDevices, pool.Name) {
+	if backup.Container != nil && updateRootDevicePool(backup.Container.ExpandedDevices, pool.Name) {
 		rootDiskDeviceFound = true
 	}
 

@@ -755,6 +755,10 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return err
 	}
 
+	if backupConf.Container == nil {
+		return errors.New("No instance configuration found in backup file.")
+	}
+
 	if allowNameOverride {
 		backupConf.Container.Name = instName
 	}
