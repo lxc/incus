@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 
@@ -13,6 +12,7 @@ import (
 
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/simplestreams"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdVerify struct {
@@ -91,7 +91,7 @@ func (c *cmdVerify) run(cmd *cobra.Command, args []string) error {
 				}
 
 				hash256 := sha256.New()
-				_, err = io.Copy(hash256, dataFile)
+				_, err = util.SafeCopy(hash256, dataFile)
 				if err != nil {
 					return err
 				}

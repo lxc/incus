@@ -22,6 +22,7 @@ import (
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/osarch"
 	"github.com/lxc/incus/v6/shared/simplestreams"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type cmdAdd struct {
@@ -119,7 +120,7 @@ func (c *cmdAdd) parseImage(metaFile *os.File, dataFile *os.File) (*dataItem, er
 	}
 
 	hash256 := sha256.New()
-	_, err = io.Copy(hash256, dataFile)
+	_, err = util.SafeCopy(hash256, dataFile)
 	if err != nil {
 		return nil, err
 	}
@@ -138,12 +139,12 @@ func (c *cmdAdd) parseImage(metaFile *os.File, dataFile *os.File) (*dataItem, er
 	}
 
 	hash256 = sha256.New()
-	_, err = io.Copy(hash256, metaFile)
+	_, err = util.SafeCopy(hash256, metaFile)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = io.Copy(hash256, dataFile)
+	_, err = util.SafeCopy(hash256, dataFile)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +192,7 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	hash256 := sha256.New()
-	_, err = io.Copy(hash256, metaFile)
+	_, err = util.SafeCopy(hash256, metaFile)
 	if err != nil {
 		return err
 	}
