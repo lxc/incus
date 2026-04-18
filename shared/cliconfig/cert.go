@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	"golang.org/x/crypto/ssh"
@@ -203,7 +202,7 @@ func (c *Config) CopyGlobalCert(src string, dst string) error {
 		}
 
 		// Copy the content.
-		_, err = io.Copy(newFile, sourceFile)
+		_, err = util.SafeCopy(newFile, sourceFile)
 		if err != nil {
 			return err
 		}
