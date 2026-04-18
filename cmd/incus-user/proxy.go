@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"slices"
@@ -131,6 +130,6 @@ func proxyConnection(conn *net.UnixConn, serverUnixPath string) {
 	}
 
 	// Start proxying.
-	go func() { _, _ = io.Copy(conn, tlsClient) }()
-	_, _ = io.Copy(tlsClient, conn)
+	go func() { _, _ = util.SafeCopy(conn, tlsClient) }()
+	_, _ = util.SafeCopy(tlsClient, conn)
 }
