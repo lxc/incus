@@ -109,6 +109,12 @@ func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string
 			return nil, cancelFunc, subprocess.NewRunError(unpacker[0], unpacker[1:], err, nil, &buffer)
 		}
 
+		// Close the pipe upon completion.
+		go func() {
+			err := cmd.Wait()
+			_ = pipeWriter.CloseWithError(err)
+		}()
+
 		ctxCancelFunc := cancelFunc
 
 		// Now that unpacker process has started, wrap context cancel function with one that waits for
