@@ -478,7 +478,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	state := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange}, event) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange, qmp.EventBlockJobCompleted, qmp.EventBlockJobError}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -566,6 +566,11 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 			if err != nil {
 				d.logger.Error("Failed to apply rtc change", logger.Ctx{"offset": val, "err": err})
 			}
+
+		case qmp.EventBlockJobCompleted, qmp.EventBlockJobError:
+			monitor, _ := d.qmpConnect()
+			monitor.PushEvent(event, data)
+			monitor.CleanupEventChannel(data["device"].(string))
 		}
 	}
 }
