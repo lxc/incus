@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-13 23:21+0000\n"
+"POT-Creation-Date: 2026-04-20 12:02-0400\n"
 "PO-Revision-Date: 2026-04-17 21:50+0000\n"
 "Last-Translator: Jorge Teixeira <hey@teixe.es>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/incus/cli/es/>\n"
@@ -240,7 +240,7 @@ msgstr ""
 "###     template: template.tpl\n"
 "###     properties: {}"
 
-#: cmd/incus/network_acl.go:587
+#: cmd/incus/network_acl.go:588
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the network ACL.\n"
@@ -632,7 +632,7 @@ msgstr "%s no es un directorio"
 msgid "%q is not an IP address"
 msgstr "%s no es un directorio"
 
-#: cmd/incus/admin_recover.go:209
+#: cmd/incus/admin_recover.go:207
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr ""
@@ -647,17 +647,17 @@ msgstr "%s (%d más)"
 msgid "%s (%s) (%d available)"
 msgstr "%s (%d más)"
 
-#: cmd/incus/admin_recover.go:65
+#: cmd/incus/admin_recover.go:63
 #, c-format
 msgid "%s (backend=%q, source=%q)"
 msgstr ""
 
-#: cmd/incus/utils_copy.go:79 cmd/incus/utils_sftp.go:387
+#: cmd/incus/utils_copy.go:79 cmd/incus/utils_sftp.go:374
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s no es un directorio"
 
-#: cmd/incus/utils_sftp.go:276
+#: cmd/incus/utils_sftp.go:263
 #, fuzzy, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "%s no es un tipo de archivo soportado."
@@ -765,7 +765,7 @@ msgstr "--container-only no se puede pasar cuando la fuente es una instantánea"
 msgid "--target cannot be used with instances"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:131
+#: cmd/incus/admin_sql.go:129
 #, c-format
 msgid "=> Query %d:"
 msgstr ""
@@ -940,7 +940,7 @@ msgstr ""
 msgid "Add roles to a cluster member"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_acl.go:822 cmd/incus/network_acl.go:823
+#: cmd/incus/network_acl.go:823 cmd/incus/network_acl.go:824
 msgid "Add rules to an ACL"
 msgstr ""
 
@@ -948,7 +948,7 @@ msgstr ""
 msgid "Additional Help Topics:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:128
+#: cmd/incus/admin_recover.go:126
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
@@ -1014,7 +1014,7 @@ msgstr ""
 msgid "All profiles removed from %s"
 msgstr "Perfil %s eliminado de %s"
 
-#: cmd/incus/storage_volume.go:1439 cmd/incus/storage_volume.go:3307
+#: cmd/incus/storage_volume.go:1439 cmd/incus/storage_volume.go:3300
 msgid "All projects"
 msgstr ""
 
@@ -1031,7 +1031,7 @@ msgstr "Acepta certificado"
 msgid "Always follow symbolic links in source path"
 msgstr ""
 
-#: cmd/incus/file.go:1002
+#: cmd/incus/file.go:995
 #, fuzzy, c-format
 msgid "An instance path is required for %s"
 msgstr "Dispositivo %s añadido a %s"
@@ -1166,13 +1166,13 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Backing up storage bucket: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/storage_volume.go:3740
+#: cmd/incus/storage_volume.go:3733
 #, fuzzy, c-format
 msgid "Backing up storage volume: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
 
 #: cmd/incus/export.go:210 cmd/incus/storage_bucket.go:1415
-#: cmd/incus/storage_volume.go:3816
+#: cmd/incus/storage_volume.go:3809
 msgid "Backup exported successfully!"
 msgstr ""
 
@@ -1180,7 +1180,7 @@ msgstr ""
 msgid "Backups:"
 msgstr ""
 
-#: cmd/incus/utils.go:90
+#: cmd/incus/utils.go:91
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
@@ -1300,7 +1300,7 @@ msgstr "Cacheado: %s"
 msgid "Can't bind address %q: %w"
 msgstr ""
 
-#: cmd/incus/file.go:738
+#: cmd/incus/file.go:731
 msgid "Can't override UID/GID in recursive mode without -p"
 msgstr ""
 
@@ -1310,7 +1310,7 @@ msgstr ""
 "No se puede anular la configuración o los perfiles en el cambio de nombre "
 "local"
 
-#: cmd/incus/file.go:725
+#: cmd/incus/file.go:718
 msgid "Can't override the target mode when performing a recursive transfer"
 msgstr ""
 
@@ -1318,12 +1318,12 @@ msgstr ""
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
-#: cmd/incus/utils.go:332
+#: cmd/incus/utils.go:333
 #, fuzzy, c-format
 msgid "Can't read from environment file: %w"
 msgstr "No se peude leer desde stdin: %s"
 
-#: cmd/incus/utils.go:257 cmd/incus/utils.go:277 cmd/incus/utils.go:304
+#: cmd/incus/utils.go:258 cmd/incus/utils.go:278 cmd/incus/utils.go:305
 #, fuzzy, c-format
 msgid "Can't read from stdin: %w"
 msgstr "No se peude leer desde stdin: %s"
@@ -1345,7 +1345,7 @@ msgstr ""
 msgid "Can't specify column L when not clustered"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2842
+#: cmd/incus/storage_volume.go:2835
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr ""
 
@@ -1370,7 +1370,7 @@ msgstr ""
 msgid "Can't use --minimal and --preseed together"
 msgstr ""
 
-#: cmd/incus/snapshot.go:127 cmd/incus/storage_volume.go:3111
+#: cmd/incus/snapshot.go:127 cmd/incus/storage_volume.go:3104
 msgid "Can't use both --no-expiry and --expiry"
 msgstr ""
 
@@ -1380,7 +1380,7 @@ msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
 msgstr ""
 
-#: cmd/incus/utils.go:299
+#: cmd/incus/utils.go:300
 #, fuzzy
 msgid "Cannot read the stdin twice"
 msgstr "No se peude leer desde stdin: %s"
@@ -1398,7 +1398,7 @@ msgstr ""
 msgid "Cannot set --volume-only when copying a snapshot"
 msgstr ""
 
-#: cmd/incus/network_acl.go:895
+#: cmd/incus/network_acl.go:896
 #, c-format
 msgid "Cannot set key: %s"
 msgstr ""
@@ -1551,10 +1551,10 @@ msgstr "Perfil %s eliminado de %s"
 #: cmd/incus/storage_volume.go:1113 cmd/incus/storage_volume.go:1230
 #: cmd/incus/storage_volume.go:1676 cmd/incus/storage_volume.go:1736
 #: cmd/incus/storage_volume.go:1818 cmd/incus/storage_volume.go:1967
-#: cmd/incus/storage_volume.go:2056 cmd/incus/storage_volume.go:3078
-#: cmd/incus/storage_volume.go:3226 cmd/incus/storage_volume.go:3462
-#: cmd/incus/storage_volume.go:3531 cmd/incus/storage_volume.go:3595
-#: cmd/incus/storage_volume.go:3671 cmd/incus/storage_volume.go:3841
+#: cmd/incus/storage_volume.go:2056 cmd/incus/storage_volume.go:3071
+#: cmd/incus/storage_volume.go:3219 cmd/incus/storage_volume.go:3455
+#: cmd/incus/storage_volume.go:3524 cmd/incus/storage_volume.go:3588
+#: cmd/incus/storage_volume.go:3664 cmd/incus/storage_volume.go:3834
 msgid "Cluster member name"
 msgstr "Nombre del Miembro del Cluster"
 
@@ -1573,7 +1573,7 @@ msgstr ""
 #: cmd/incus/profile.go:697 cmd/incus/project.go:517 cmd/incus/remote.go:975
 #: cmd/incus/snapshot.go:342 cmd/incus/storage.go:659
 #: cmd/incus/storage_bucket.go:462 cmd/incus/storage_bucket.go:855
-#: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:3306
+#: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:3299
 #: cmd/incus/top.go:67 cmd/incus/warning.go:98
 msgid "Columns"
 msgstr "Columnas"
@@ -1602,7 +1602,7 @@ msgstr ""
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3670
+#: cmd/incus/storage_volume.go:3663
 msgid ""
 "Compression algorithm to use (none for uncompressed, ignored for ISO storage "
 "volumes)"
@@ -1627,14 +1627,14 @@ msgstr ""
 msgid "Config key/value to apply to the target instance"
 msgstr "Perfil para aplicar al nuevo contenedor"
 
-#: cmd/incus/admin_recover.go:131
+#: cmd/incus/admin_recover.go:129
 msgid "Config option should be in the format KEY=VALUE"
 msgstr ""
 
 #: cmd/incus/cluster.go:934 cmd/incus/cluster_group.go:373
 #: cmd/incus/config.go:265 cmd/incus/config.go:340
 #: cmd/incus/config_metadata.go:147 cmd/incus/config_trust.go:329
-#: cmd/incus/image.go:458 cmd/incus/network.go:759 cmd/incus/network_acl.go:667
+#: cmd/incus/image.go:458 cmd/incus/network.go:759 cmd/incus/network_acl.go:668
 #: cmd/incus/network_address_set.go:523 cmd/incus/network_forward.go:726
 #: cmd/incus/network_integration.go:293 cmd/incus/network_load_balancer.go:705
 #: cmd/incus/network_peer.go:729 cmd/incus/network_zone.go:670
@@ -1843,9 +1843,9 @@ msgstr "Creando el contenedor"
 msgid "Create and start instances from images"
 msgstr ""
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:683
+#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:676
 #: cmd/incus/storage_volume.go:2164 cmd/incus/storage_volume.go:2586
-#: cmd/incus/storage_volume.go:2790
+#: cmd/incus/storage_volume.go:2783
 msgid "Create any directories necessary"
 msgstr ""
 
@@ -1908,7 +1908,7 @@ msgstr ""
 msgid "Create new instance file templates"
 msgstr ""
 
-#: cmd/incus/network_acl.go:355 cmd/incus/network_acl.go:356
+#: cmd/incus/network_acl.go:356 cmd/incus/network_acl.go:357
 msgid "Create new network ACLs"
 msgstr ""
 
@@ -1993,7 +1993,7 @@ msgstr ""
 #: cmd/incus/cluster.go:200 cmd/incus/cluster_group.go:464
 #: cmd/incus/config_trust.go:417 cmd/incus/image.go:1074
 #: cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1075
-#: cmd/incus/network_acl.go:162 cmd/incus/network_address_set.go:155
+#: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:143 cmd/incus/network_integration.go:427
 #: cmd/incus/network_load_balancer.go:150 cmd/incus/network_peer.go:139
 #: cmd/incus/network_zone.go:145 cmd/incus/network_zone.go:871
@@ -2109,7 +2109,7 @@ msgstr "Eliminar imágenes"
 msgid "Delete key from a storage bucket"
 msgstr ""
 
-#: cmd/incus/network_acl.go:751 cmd/incus/network_acl.go:752
+#: cmd/incus/network_acl.go:752 cmd/incus/network_acl.go:753
 msgid "Delete network ACLs"
 msgstr ""
 
@@ -2168,7 +2168,7 @@ msgstr "Perfil %s creado"
 msgid "Delete storage pools"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3223 cmd/incus/storage_volume.go:3224
+#: cmd/incus/storage_volume.go:3216 cmd/incus/storage_volume.go:3217
 #, fuzzy
 msgid "Delete storage volume snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -2240,7 +2240,7 @@ msgstr ""
 msgid "Device Address: %v"
 msgstr "Expira: %s"
 
-#: cmd/incus/utils.go:46 cmd/incus/utils.go:70
+#: cmd/incus/utils.go:47 cmd/incus/utils.go:71
 #, c-format
 msgid "Device already exists: %s"
 msgstr "El dispostivo ya existe: %s"
@@ -2303,7 +2303,7 @@ msgstr "Perfil para aplicar al nuevo contenedor"
 msgid "Didn't get name of new instance snapshot from the server"
 msgstr "Perfil para aplicar al nuevo contenedor"
 
-#: cmd/incus/storage_volume.go:3194
+#: cmd/incus/storage_volume.go:3187
 #, fuzzy
 msgid "Didn't get name of new volume snapshot from the server"
 msgstr "Perfil para aplicar al nuevo contenedor"
@@ -2316,7 +2316,7 @@ msgstr "El directorio importado no está disponible en esta plataforma"
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
-#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2406
+#: cmd/incus/file.go:943 cmd/incus/storage_volume.go:2406
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
@@ -2462,13 +2462,13 @@ msgstr ""
 msgid "EPHEMERAL"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:153
+#: cmd/incus/admin_recover.go:151
 #, c-format
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1145 cmd/incus/config_trust.go:602
-#: cmd/incus/snapshot.go:367 cmd/incus/storage_volume.go:3401
+#: cmd/incus/snapshot.go:367 cmd/incus/storage_volume.go:3394
 #, fuzzy
 msgid "EXPIRES AT"
 msgstr "FECHA DE EXPIRACIÓN"
@@ -2510,7 +2510,7 @@ msgstr ""
 msgid "Edit instance or server configurations as YAML"
 msgstr ""
 
-#: cmd/incus/network_acl.go:570 cmd/incus/network_acl.go:571
+#: cmd/incus/network_acl.go:571 cmd/incus/network_acl.go:572
 msgid "Edit network ACL configurations as YAML"
 msgstr ""
 
@@ -2602,7 +2602,7 @@ msgstr ""
 #: cmd/incus/profile.go:741 cmd/incus/project.go:559 cmd/incus/remote.go:1002
 #: cmd/incus/snapshot.go:376 cmd/incus/storage.go:698
 #: cmd/incus/storage_bucket.go:496 cmd/incus/storage_bucket.go:880
-#: cmd/incus/storage_volume.go:1596 cmd/incus/storage_volume.go:3409
+#: cmd/incus/storage_volume.go:1596 cmd/incus/storage_volume.go:3402
 #: cmd/incus/top.go:95 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
@@ -2663,14 +2663,14 @@ msgstr ""
 msgid "Error decoding data: %v"
 msgstr ""
 
-#: cmd/incus/publish.go:202 cmd/incus/utils.go:205
+#: cmd/incus/publish.go:202 cmd/incus/utils.go:206
 #, c-format
 msgid "Error retrieving aliases: %w"
 msgstr ""
 
 #: cmd/incus/cluster.go:556 cmd/incus/cluster_group.go:922
 #: cmd/incus/config.go:578 cmd/incus/config.go:610 cmd/incus/network.go:1474
-#: cmd/incus/network_acl.go:495 cmd/incus/network_address_set.go:368
+#: cmd/incus/network_acl.go:496 cmd/incus/network_address_set.go:368
 #: cmd/incus/network_forward.go:538 cmd/incus/network_integration.go:604
 #: cmd/incus/network_load_balancer.go:523 cmd/incus/network_peer.go:560
 #: cmd/incus/network_zone.go:510 cmd/incus/network_zone.go:1167
@@ -2692,7 +2692,7 @@ msgid "Error unsetting properties: %v"
 msgstr "Error actualizando el archivo de plantilla: %s"
 
 #: cmd/incus/cluster.go:550 cmd/incus/cluster_group.go:916
-#: cmd/incus/network.go:1468 cmd/incus/network_acl.go:489
+#: cmd/incus/network.go:1468 cmd/incus/network_acl.go:490
 #: cmd/incus/network_forward.go:532 cmd/incus/network_integration.go:598
 #: cmd/incus/network_load_balancer.go:517 cmd/incus/network_peer.go:554
 #: cmd/incus/network_zone.go:504 cmd/incus/network_zone.go:1161
@@ -2736,11 +2736,11 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:31
+#: cmd/incus/admin_sql.go:29
 msgid "Execute a SQL query against the local or global database"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:32
+#: cmd/incus/admin_sql.go:30
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2811,7 +2811,7 @@ msgstr "Expira: %s"
 msgid "Expires: never"
 msgstr "Expira: nunca"
 
-#: cmd/incus/snapshot.go:98 cmd/incus/storage_volume.go:3075
+#: cmd/incus/snapshot.go:98 cmd/incus/storage_volume.go:3068
 msgid "Expiry date or time span for the new snapshot"
 msgstr ""
 
@@ -2831,12 +2831,12 @@ msgid ""
 "The output target is optional and defaults to the working directory."
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3664
+#: cmd/incus/storage_volume.go:3657
 #, fuzzy
 msgid "Export custom storage volumes"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/storage_volume.go:3665
+#: cmd/incus/storage_volume.go:3658
 #, fuzzy
 msgid "Export custom storage volumes."
 msgstr "Perfil %s creado"
@@ -2868,7 +2868,7 @@ msgid ""
 "\t\tThis can be useful for debugging or analysis purposes."
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3667
+#: cmd/incus/storage_volume.go:3660
 msgid ""
 "Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
@@ -2878,7 +2878,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/export.go:170 cmd/incus/storage_volume.go:3799
+#: cmd/incus/export.go:170 cmd/incus/storage_volume.go:3792
 #, fuzzy, c-format
 msgid "Exporting the backup: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -2909,12 +2909,12 @@ msgstr ""
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/utils.go:686
+#: cmd/incus/utils.go:687
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:709
+#: cmd/incus/utils.go:710
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2924,28 +2924,28 @@ msgstr ""
 msgid "Failed checking instance %s exists: %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/utils.go:376
+#: cmd/incus/utils.go:377
 #, fuzzy, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/utils.go:368
+#: cmd/incus/utils.go:369
 #, fuzzy, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/utils.go:736
+#: cmd/incus/utils.go:737
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2888
+#: cmd/incus/storage_volume.go:2881
 #, fuzzy, c-format
 msgid "Failed connecting to instance SFTP: %s %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/file.go:1020 cmd/incus/storage_volume.go:2463
-#: cmd/incus/storage_volume.go:2651 cmd/incus/storage_volume.go:2818
+#: cmd/incus/file.go:1013 cmd/incus/storage_volume.go:2463
+#: cmd/incus/storage_volume.go:2651 cmd/incus/storage_volume.go:2811
 #, fuzzy, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr "Nombre del Miembro del Cluster"
@@ -2975,7 +2975,7 @@ msgstr "Perfil para aplicar al nuevo contenedor"
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:643
+#: cmd/incus/utils.go:644
 #, fuzzy, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Acepta certificado"
@@ -2985,7 +2985,7 @@ msgstr "Acepta certificado"
 msgid "Failed generating trust certificate: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_recover.go:60
+#: cmd/incus/admin_recover.go:58
 #, fuzzy, c-format
 msgid "Failed getting existing storage pools: %w"
 msgstr "Nombre del Miembro del Cluster"
@@ -2995,7 +2995,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Failed getting peer's status: %w"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:250
+#: cmd/incus/admin_recover.go:248
 #, fuzzy, c-format
 msgid "Failed import request: %w"
 msgstr "Acepta certificado"
@@ -3015,12 +3015,12 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/utils.go:648
+#: cmd/incus/utils.go:649
 #, fuzzy, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_recover.go:196
+#: cmd/incus/admin_recover.go:194
 #, fuzzy, c-format
 msgid "Failed parsing validation response: %w"
 msgstr "Acepta certificado"
@@ -3030,12 +3030,12 @@ msgstr "Acepta certificado"
 msgid "Failed starting command: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/utils.go:556
+#: cmd/incus/utils.go:557
 #, fuzzy, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/storage_volume.go:4021 cmd/incus/utils.go:674
+#: cmd/incus/storage_volume.go:4014 cmd/incus/utils.go:675
 #, fuzzy, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Acepta certificado"
@@ -3089,7 +3089,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Failed to create %q: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:178
+#: cmd/incus/utils.go:179
 #, fuzzy, c-format
 msgid "Failed to create alias %s: %w"
 msgstr "Acepta certificado"
@@ -3104,7 +3104,7 @@ msgstr "Acepta certificado"
 msgid "Failed to create certificate: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/storage_volume.go:3735
+#: cmd/incus/storage_volume.go:3728
 #, fuzzy, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "Acepta certificado"
@@ -3124,7 +3124,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/storage_volume.go:3813
+#: cmd/incus/storage_volume.go:3806
 #, fuzzy, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "Acepta certificado"
@@ -3139,7 +3139,7 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/storage_volume.go:4013 cmd/incus/utils.go:659
+#: cmd/incus/storage_volume.go:4006 cmd/incus/utils.go:660
 #, fuzzy, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Acepta certificado"
@@ -3149,17 +3149,17 @@ msgstr "Acepta certificado"
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/file.go:773 cmd/incus/utils_sftp.go:307
+#: cmd/incus/file.go:766 cmd/incus/utils_sftp.go:294
 #, fuzzy, c-format
 msgid "Failed to open source file %q: %v"
 msgstr "Acepta certificado"
 
-#: cmd/incus/utils_sftp.go:73
+#: cmd/incus/utils_sftp.go:74
 #, fuzzy, c-format
 msgid "Failed to open target file %q: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_sql.go:106
+#: cmd/incus/admin_sql.go:104
 #, fuzzy, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "Acepta certificado"
@@ -3174,7 +3174,7 @@ msgstr "Acepta certificado"
 msgid "Failed to read from file: %w"
 msgstr "No se peude leer desde stdin: %s"
 
-#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:83
+#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:81
 #, fuzzy, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "No se peude leer desde stdin: %s"
@@ -3184,7 +3184,7 @@ msgstr "No se peude leer desde stdin: %s"
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Perfil para aplicar al nuevo contenedor"
 
-#: cmd/incus/utils.go:167
+#: cmd/incus/utils.go:168
 #, fuzzy, c-format
 msgid "Failed to remove alias %s: %w"
 msgstr "Acepta certificado"
@@ -3199,7 +3199,7 @@ msgstr "Acepta certificado"
 msgid "Failed to render the config: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_sql.go:100
+#: cmd/incus/admin_sql.go:98
 #, fuzzy, c-format
 msgid "Failed to request dump: %w"
 msgstr "Acepta certificado"
@@ -3214,14 +3214,9 @@ msgstr "Acepta certificado"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/cluster.go:808
-#, fuzzy, c-format
-msgid "Failed to retrieve current server config: %w"
-msgstr "Acepta certificado"
-
 #: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
 #: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93
+#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:808
 #, fuzzy, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "Acepta certificado"
@@ -3252,7 +3247,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Failed to update cluster member state: %w"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/utils_sftp.go:271
+#: cmd/incus/utils_sftp.go:258
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr ""
@@ -3262,7 +3257,7 @@ msgstr ""
 msgid "Failed to write server cert file %q: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/admin_recover.go:189
+#: cmd/incus/admin_recover.go:187
 #, fuzzy, c-format
 msgid "Failed validation request: %w"
 msgstr "Acepta certificado"
@@ -3379,12 +3374,12 @@ msgid ""
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:60 cmd/incus/alias.go:111 cmd/incus/cluster.go:171
+#: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:111 cmd/incus/cluster.go:171
 #: cmd/incus/cluster_group.go:439 cmd/incus/config_template.go:270
 #: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:584
 #: cmd/incus/image.go:1046 cmd/incus/image_alias.go:208 cmd/incus/list.go:141
 #: cmd/incus/network.go:1045 cmd/incus/network.go:1236
-#: cmd/incus/network_acl.go:103 cmd/incus/network_allocations.go:64
+#: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:64
 #: cmd/incus/network_forward.go:120 cmd/incus/network_integration.go:410
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:116
 #: cmd/incus/network_zone.go:120 cmd/incus/network_zone.go:818
@@ -3392,7 +3387,7 @@ msgstr ""
 #: cmd/incus/project.go:994 cmd/incus/remote.go:974 cmd/incus/snapshot.go:341
 #: cmd/incus/storage.go:661 cmd/incus/storage_bucket.go:460
 #: cmd/incus/storage_bucket.go:853 cmd/incus/storage_volume.go:1465
-#: cmd/incus/storage_volume.go:3319 cmd/incus/warning.go:99
+#: cmd/incus/storage_volume.go:3312 cmd/incus/warning.go:99
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
@@ -3534,7 +3529,7 @@ msgstr "Perfil %s creado"
 msgid "Get the key as a cluster property"
 msgstr ""
 
-#: cmd/incus/network_acl.go:289
+#: cmd/incus/network_acl.go:290
 msgid "Get the key as a network ACL property"
 msgstr ""
 
@@ -3615,7 +3610,7 @@ msgstr ""
 msgid "Get values for instance or server configuration keys"
 msgstr ""
 
-#: cmd/incus/network_acl.go:286 cmd/incus/network_acl.go:287
+#: cmd/incus/network_acl.go:287 cmd/incus/network_acl.go:288
 msgid "Get values for network ACL configuration keys"
 msgstr ""
 
@@ -3687,7 +3682,7 @@ msgid ""
 "container or virtual-machine)."
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3966
+#: cmd/incus/storage_volume.go:3959
 msgid "Get write access to the disk"
 msgstr ""
 
@@ -3722,22 +3717,22 @@ msgstr "Aliases:"
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/utils.go:759
+#: cmd/incus/utils.go:760
 #, fuzzy, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "Copiando la imagen: %s"
 
-#: cmd/incus/utils.go:748
+#: cmd/incus/utils.go:749
 #, fuzzy, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "Copiando la imagen: %s"
 
-#: cmd/incus/utils.go:580
+#: cmd/incus/utils.go:581
 #, fuzzy, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "Dispositivo %s añadido a %s"
 
-#: cmd/incus/utils.go:590
+#: cmd/incus/utils.go:591
 #, fuzzy, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "Copiando la imagen: %s"
@@ -3827,7 +3822,7 @@ msgstr ""
 msgid "If the image alias already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/snapshot.go:100 cmd/incus/storage_volume.go:3077
+#: cmd/incus/snapshot.go:100 cmd/incus/storage_volume.go:3070
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
@@ -3841,7 +3836,7 @@ msgstr ""
 msgid "Ignore any configured auto-expiry for the instance"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3076
+#: cmd/incus/storage_volume.go:3069
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr ""
 
@@ -3900,11 +3895,11 @@ msgstr ""
 msgid "Import backups of storage buckets."
 msgstr "Perfil %s creado"
 
-#: cmd/incus/storage_volume.go:3834
+#: cmd/incus/storage_volume.go:3827
 msgid "Import custom storage volumes"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3835
+#: cmd/incus/storage_volume.go:3828
 #, fuzzy
 msgid "Import custom storage volumes."
 msgstr "Perfil %s creado"
@@ -3930,11 +3925,11 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Import storage bucket"
 msgstr "Aliases:"
 
-#: cmd/incus/storage_volume.go:3895
+#: cmd/incus/storage_volume.go:3888
 msgid "Import type needs to be \"backup\" or \"iso\""
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3843
+#: cmd/incus/storage_volume.go:3836
 msgid "Import type, backup or iso (default \"backup\")"
 msgstr ""
 
@@ -3943,7 +3938,7 @@ msgstr ""
 msgid "Importing bucket: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/storage_volume.go:3904
+#: cmd/incus/storage_volume.go:3897
 #, fuzzy, c-format
 msgid "Importing custom volume: %s"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -3984,11 +3979,11 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Instance description"
 msgstr "Descripción"
 
-#: cmd/incus/utils.go:582
+#: cmd/incus/utils.go:583
 msgid "Instance disconnected"
 msgstr ""
 
-#: cmd/incus/utils.go:750
+#: cmd/incus/utils.go:751
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -3998,7 +3993,7 @@ msgstr ""
 msgid "Instance name is: %s"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/file.go:1007
+#: cmd/incus/file.go:1000
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 
@@ -4022,7 +4017,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "Nombre del contenedor es: %s"
 
 #: cmd/incus/export.go:134 cmd/incus/storage_bucket.go:1367
-#: cmd/incus/storage_volume.go:3768
+#: cmd/incus/storage_volume.go:3761
 #, fuzzy, c-format
 msgid "Invalid URL %q: %w"
 msgstr "Nombre del contenedor es: %s"
@@ -4038,7 +4033,7 @@ msgid "Invalid argument %q"
 msgstr "Nombre del contenedor es: %s"
 
 #: cmd/incus/export.go:139 cmd/incus/storage_bucket.go:1372
-#: cmd/incus/storage_volume.go:3773
+#: cmd/incus/storage_volume.go:3766
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr ""
@@ -4096,7 +4091,7 @@ msgstr ""
 msgid "Invalid join token: %w"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/utils.go:271
+#: cmd/incus/utils.go:272
 #, fuzzy, c-format
 msgid "Invalid key=value configuration: %s"
 msgstr "Nombre del contenedor es: %s"
@@ -4379,11 +4374,11 @@ msgstr ""
 msgid "List all warnings"
 msgstr "Aliases:"
 
-#: cmd/incus/network_acl.go:100
+#: cmd/incus/network_acl.go:101
 msgid "List available network ACL"
 msgstr ""
 
-#: cmd/incus/network_acl.go:99
+#: cmd/incus/network_acl.go:100
 msgid "List available network ACLS"
 msgstr ""
 
@@ -4786,7 +4781,7 @@ msgid ""
 "  Defaults to -1 (unlimited). Use 0 to limit to the column header size."
 msgstr ""
 
-#: cmd/incus/network_acl.go:104
+#: cmd/incus/network_acl.go:105
 #, fuzzy
 msgid "List network ACLs across all projects"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -4968,12 +4963,12 @@ msgid ""
 "  L - Location of the storage bucket (e.g. its cluster member)"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3302 cmd/incus/storage_volume.go:3303
+#: cmd/incus/storage_volume.go:3295 cmd/incus/storage_volume.go:3296
 #, fuzzy
 msgid "List storage volume snapshots"
 msgstr "Aliases:"
 
-#: cmd/incus/storage_volume.go:3308
+#: cmd/incus/storage_volume.go:3301
 msgid ""
 "List storage volume snapshots\n"
 "\n"
@@ -5142,12 +5137,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:665
+#: cmd/incus/utils.go:666
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:667
+#: cmd/incus/utils.go:668
 msgid "Login without username and password"
 msgstr ""
 
@@ -5325,11 +5320,11 @@ msgstr ""
 msgid "Manage instance snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/network_acl.go:804 cmd/incus/network_acl.go:805
+#: cmd/incus/network_acl.go:805 cmd/incus/network_acl.go:806
 msgid "Manage network ACL rules"
 msgstr ""
 
-#: cmd/incus/network_acl.go:31 cmd/incus/network_acl.go:32
+#: cmd/incus/network_acl.go:32 cmd/incus/network_acl.go:33
 msgid "Manage network ACLs"
 msgstr ""
 
@@ -5418,7 +5413,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Manage storage pools and volumes"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3014 cmd/incus/storage_volume.go:3015
+#: cmd/incus/storage_volume.go:3007 cmd/incus/storage_volume.go:3008
 #, fuzzy
 msgid "Manage storage volume snapshots"
 msgstr "Nombre del contenedor es: %s"
@@ -5529,7 +5524,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr ""
 
-#: cmd/incus/file.go:761
+#: cmd/incus/file.go:754
 #, fuzzy
 msgid "Missing target directory"
 msgstr "%s no es un directorio"
@@ -5578,12 +5573,12 @@ msgid ""
 "If no target path is provided, start an SSH SFTP listener instead."
 msgstr ""
 
-#: cmd/incus/file.go:938
+#: cmd/incus/file.go:931
 #, fuzzy
 msgid "Mount files from instances"
 msgstr "Aliases:"
 
-#: cmd/incus/file.go:939
+#: cmd/incus/file.go:932
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -5631,7 +5626,7 @@ msgstr ""
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr ""
 
-#: cmd/incus/network_acl.go:1042
+#: cmd/incus/network_acl.go:1043
 msgid "Multiple rules match. Use --force to remove them all"
 msgstr ""
 
@@ -5642,14 +5637,14 @@ msgstr ""
 #: cmd/incus/cluster.go:195 cmd/incus/cluster.go:1143
 #: cmd/incus/cluster_group.go:462 cmd/incus/config_trust.go:413
 #: cmd/incus/config_trust.go:600 cmd/incus/list.go:484
-#: cmd/incus/network.go:1070 cmd/incus/network_acl.go:161
+#: cmd/incus/network.go:1070 cmd/incus/network_acl.go:162
 #: cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:426
 #: cmd/incus/network_peer.go:138 cmd/incus/network_zone.go:144
 #: cmd/incus/network_zone.go:870 cmd/incus/profile.go:723
 #: cmd/incus/project.go:542 cmd/incus/project.go:671 cmd/incus/remote.go:988
 #: cmd/incus/snapshot.go:365 cmd/incus/storage.go:684
 #: cmd/incus/storage_bucket.go:478 cmd/incus/storage_bucket.go:870
-#: cmd/incus/storage_volume.go:1567 cmd/incus/storage_volume.go:3399
+#: cmd/incus/storage_volume.go:1567 cmd/incus/storage_volume.go:3392
 msgid "NAME"
 msgstr ""
 
@@ -5657,32 +5652,32 @@ msgstr ""
 msgid "NAT"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3961
+#: cmd/incus/storage_volume.go:3954
 #, fuzzy
 msgid "NBD access to a block storage volume"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/storage_volume.go:3962
+#: cmd/incus/storage_volume.go:3955
 #, fuzzy
 msgid "NBD access to a block storage volume."
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/storage_volume.go:4026
+#: cmd/incus/storage_volume.go:4019
 #, c-format
 msgid "NBD client connected %q"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:4027
+#: cmd/incus/storage_volume.go:4020
 #, c-format
 msgid "NBD client disconnected %q"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:4032
+#: cmd/incus/storage_volume.go:4025
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:4016
+#: cmd/incus/storage_volume.go:4009
 #, c-format
 msgid "NBD listening on %v"
 msgstr ""
@@ -5695,7 +5690,7 @@ msgstr ""
 msgid "NETWORKS"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:157
+#: cmd/incus/admin_recover.go:155
 #, c-format
 msgid "NEW: %q (backend=%q, source=%q)"
 msgstr ""
@@ -5781,7 +5776,7 @@ msgstr ""
 msgid "Name of the shared LVM volume group:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:116
+#: cmd/incus/admin_recover.go:114
 #, fuzzy, c-format
 msgid "Name of the storage backend (%s):"
 msgstr "Perfil %s creado"
@@ -5791,7 +5786,7 @@ msgstr "Perfil %s creado"
 msgid "Name of the storage backend to use (%s)"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:99
+#: cmd/incus/admin_recover.go:97
 msgid "Name of the storage pool:"
 msgstr ""
 
@@ -5826,22 +5821,22 @@ msgstr ""
 msgid "Network %s renamed to %s"
 msgstr ""
 
-#: cmd/incus/network_acl.go:428
+#: cmd/incus/network_acl.go:429
 #, fuzzy, c-format
 msgid "Network ACL %s created"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/network_acl.go:782
+#: cmd/incus/network_acl.go:783
 #, fuzzy, c-format
 msgid "Network ACL %s deleted"
 msgstr "Perfil %s eliminado"
 
-#: cmd/incus/network_acl.go:733
+#: cmd/incus/network_acl.go:734
 #, fuzzy, c-format
 msgid "Network ACL %s renamed to %s"
 msgstr "Perfil %s renombrado a %s"
 
-#: cmd/incus/network_acl.go:362
+#: cmd/incus/network_acl.go:363
 #, fuzzy
 msgid "Network ACL description"
 msgstr "Perfil %s creado"
@@ -6016,7 +6011,7 @@ msgstr ""
 msgid "No matching port(s) found"
 msgstr ""
 
-#: cmd/incus/network_acl.go:1053
+#: cmd/incus/network_acl.go:1054
 msgid "No matching rule(s) found"
 msgstr ""
 
@@ -6024,7 +6019,7 @@ msgstr ""
 msgid "No storage backends available"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:215
+#: cmd/incus/admin_recover.go:213
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr ""
 
@@ -6142,7 +6137,7 @@ msgid "PROFILES"
 msgstr ""
 
 #: cmd/incus/image.go:1075 cmd/incus/list.go:478 cmd/incus/network.go:1069
-#: cmd/incus/network_acl.go:167 cmd/incus/network_address_set.go:161
+#: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:143 cmd/incus/profile.go:724
 #: cmd/incus/storage_bucket.go:477 cmd/incus/storage_volume.go:1586
 #: cmd/incus/top.go:82 cmd/incus/warning.go:213
@@ -6178,7 +6173,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr "Contraseña admin para %s:"
 
-#: cmd/incus/utils.go:636
+#: cmd/incus/utils.go:637
 #, fuzzy, c-format
 msgid "Password rejected for %q"
 msgstr "Contraseña admin para %s:"
@@ -6205,7 +6200,7 @@ msgstr "Descripción"
 msgid "Perform an incremental copy"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:227
+#: cmd/incus/admin_recover.go:225
 msgid "Please create those missing entries and then hit ENTER:"
 msgstr ""
 
@@ -6227,7 +6222,7 @@ msgstr ""
 msgid "Polling interval (in seconds)"
 msgstr "Uso de CPU (en segundos)"
 
-#: cmd/incus/admin_recover.go:101
+#: cmd/incus/admin_recover.go:99
 msgid "Pool name cannot be empty"
 msgstr ""
 
@@ -6270,7 +6265,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:561
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6278,7 +6273,7 @@ msgstr ""
 #: cmd/incus/config.go:266 cmd/incus/config.go:341
 #: cmd/incus/config_metadata.go:148 cmd/incus/config_template.go:232
 #: cmd/incus/config_trust.go:330 cmd/incus/image.go:459
-#: cmd/incus/network.go:760 cmd/incus/network_acl.go:668
+#: cmd/incus/network.go:760 cmd/incus/network_acl.go:669
 #: cmd/incus/network_address_set.go:524 cmd/incus/network_forward.go:727
 #: cmd/incus/network_integration.go:294 cmd/incus/network_load_balancer.go:706
 #: cmd/incus/network_peer.go:730 cmd/incus/network_zone.go:671
@@ -6479,22 +6474,22 @@ msgid "Pull files from instances"
 msgstr ""
 
 #: cmd/incus/file.go:582 cmd/incus/storage_volume.go:2700
-#: cmd/incus/utils_sftp.go:198
+#: cmd/incus/utils_sftp.go:192
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2780 cmd/incus/storage_volume.go:2781
+#: cmd/incus/storage_volume.go:2773 cmd/incus/storage_volume.go:2774
 #, fuzzy
 msgid "Push files into custom volumes"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/file.go:673 cmd/incus/file.go:674
+#: cmd/incus/file.go:666 cmd/incus/file.go:667
 msgid "Push files into instances"
 msgstr ""
 
-#: cmd/incus/file.go:883 cmd/incus/storage_volume.go:2967
-#: cmd/incus/utils_sftp.go:318
+#: cmd/incus/file.go:876 cmd/incus/storage_volume.go:2960
+#: cmd/incus/utils_sftp.go:305
 #, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr ""
@@ -6543,12 +6538,12 @@ msgstr "Aliases:"
 msgid "Record description"
 msgstr "Descripción"
 
-#: cmd/incus/admin_recover.go:32
+#: cmd/incus/admin_recover.go:30
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage pools"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:33
+#: cmd/incus/admin_recover.go:31
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage "
 "pools\n"
@@ -6561,8 +6556,8 @@ msgid ""
 "database records."
 msgstr ""
 
-#: cmd/incus/file.go:447 cmd/incus/file.go:682 cmd/incus/storage_volume.go:2587
-#: cmd/incus/storage_volume.go:2789
+#: cmd/incus/file.go:447 cmd/incus/file.go:675 cmd/incus/storage_volume.go:2587
+#: cmd/incus/storage_volume.go:2782
 msgid "Recursively transfer files"
 msgstr ""
 
@@ -6666,7 +6661,7 @@ msgstr ""
 msgid "Remove all profiles from the instance"
 msgstr "Aliases:"
 
-#: cmd/incus/network_acl.go:959
+#: cmd/incus/network_acl.go:960
 msgid "Remove all rules that match"
 msgstr ""
 
@@ -6715,7 +6710,7 @@ msgstr ""
 msgid "Remove roles from a cluster member"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_acl.go:957 cmd/incus/network_acl.go:958
+#: cmd/incus/network_acl.go:958 cmd/incus/network_acl.go:959
 msgid "Remove rules from an ACL"
 msgstr ""
 
@@ -6756,7 +6751,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Rename instances"
 msgstr "Aliases:"
 
-#: cmd/incus/network_acl.go:701 cmd/incus/network_acl.go:702
+#: cmd/incus/network_acl.go:702 cmd/incus/network_acl.go:703
 msgid "Rename network ACLs"
 msgstr ""
 
@@ -6786,7 +6781,7 @@ msgstr ""
 msgid "Rename remotes"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3459 cmd/incus/storage_volume.go:3460
+#: cmd/incus/storage_volume.go:3452 cmd/incus/storage_volume.go:3453
 #, fuzzy
 msgid "Rename storage volume snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
@@ -6796,7 +6791,7 @@ msgstr "No se puede proveer el nombre del container a la lista"
 msgid "Renamed storage volume from \"%s\" to \"%s\""
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3512
+#: cmd/incus/storage_volume.go:3505
 #, c-format
 msgid "Renamed storage volume snapshot from \"%s\" to \"%s\""
 msgstr ""
@@ -6841,7 +6836,7 @@ msgstr ""
 msgid "Restore instance snapshots"
 msgstr "No se puede proveer el nombre del container a la lista"
 
-#: cmd/incus/storage_volume.go:3529 cmd/incus/storage_volume.go:3530
+#: cmd/incus/storage_volume.go:3522 cmd/incus/storage_volume.go:3523
 msgid "Restore storage volume snapshots"
 msgstr ""
 
@@ -6882,12 +6877,12 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:140
+#: cmd/incus/admin_sql.go:138
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
 
-#: cmd/incus/network_acl.go:825
+#: cmd/incus/network_acl.go:826
 #, fuzzy
 msgid "Rule description"
 msgstr "Descripción"
@@ -6938,17 +6933,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:662
+#: cmd/incus/utils.go:663
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:679
+#: cmd/incus/utils.go:680
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:680
+#: cmd/incus/utils.go:681
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -6992,7 +6987,7 @@ msgstr ""
 msgid "STP"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:169
+#: cmd/incus/admin_recover.go:167
 msgid "Scanning for unknown volumes..."
 msgstr ""
 
@@ -7075,7 +7070,7 @@ msgstr "Perfil %s creado"
 msgid "Set a cluster member's configuration keys"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2407
+#: cmd/incus/file.go:944 cmd/incus/storage_volume.go:2407
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7118,11 +7113,11 @@ msgid ""
 "    incus config set [<remote>:][<instance>] <key> <value>"
 msgstr ""
 
-#: cmd/incus/network_acl.go:447
+#: cmd/incus/network_acl.go:448
 msgid "Set network ACL configuration keys"
 msgstr ""
 
-#: cmd/incus/network_acl.go:448
+#: cmd/incus/network_acl.go:449
 msgid ""
 "Set network ACL configuration keys\n"
 "\n"
@@ -7304,7 +7299,7 @@ msgstr ""
 msgid "Set the file's gid on create"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2792
+#: cmd/incus/storage_volume.go:2785
 msgid "Set the file's gid on push"
 msgstr ""
 
@@ -7312,11 +7307,11 @@ msgstr ""
 msgid "Set the file's perms on create"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2793
+#: cmd/incus/storage_volume.go:2786
 msgid "Set the file's perms on push"
 msgstr ""
 
-#: cmd/incus/file.go:686
+#: cmd/incus/file.go:679
 msgid ""
 "Set the file's perms on push (in recursive mode, sets the target directory's "
 "permissions if it doesn't exist)"
@@ -7326,17 +7321,17 @@ msgstr ""
 msgid "Set the file's uid on create"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2791
+#: cmd/incus/storage_volume.go:2784
 msgid "Set the file's uid on push"
 msgstr ""
 
-#: cmd/incus/file.go:685
+#: cmd/incus/file.go:678
 msgid ""
 "Set the files' GIDs on push (in recursive mode, only sets the target "
 "directory's GID if it doesn't exist and -p is used)"
 msgstr ""
 
-#: cmd/incus/file.go:684
+#: cmd/incus/file.go:677
 msgid ""
 "Set the files' UIDs on push (in recursive mode, only sets the target "
 "directory's UID if it doesn't exist and -p is used)"
@@ -7351,7 +7346,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Set the key as a cluster property"
 msgstr ""
 
-#: cmd/incus/network_acl.go:454
+#: cmd/incus/network_acl.go:455
 msgid "Set the key as a network ACL property"
 msgstr ""
 
@@ -7419,7 +7414,7 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/file.go:949 cmd/incus/storage_volume.go:2405
+#: cmd/incus/file.go:942 cmd/incus/storage_volume.go:2405
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -7493,11 +7488,11 @@ msgstr ""
 msgid "Show local and remote versions"
 msgstr ""
 
-#: cmd/incus/network_acl.go:184 cmd/incus/network_acl.go:185
+#: cmd/incus/network_acl.go:185 cmd/incus/network_acl.go:186
 msgid "Show network ACL configurations"
 msgstr ""
 
-#: cmd/incus/network_acl.go:237 cmd/incus/network_acl.go:238
+#: cmd/incus/network_acl.go:238 cmd/incus/network_acl.go:239
 #, fuzzy
 msgid "Show network ACL log"
 msgstr "Perfil %s creado"
@@ -7584,12 +7579,12 @@ msgid ""
 "container or virtual-machine)."
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3593
+#: cmd/incus/storage_volume.go:3586
 #, fuzzy
 msgid "Show storage volume snapshhot configurations"
 msgstr "Perfil %s creado"
 
-#: cmd/incus/storage_volume.go:3592
+#: cmd/incus/storage_volume.go:3585
 #, fuzzy
 msgid "Show storage volume snapshot configurations"
 msgstr "Perfil %s creado"
@@ -7675,12 +7670,12 @@ msgstr "Auto actualización: %s"
 msgid "Size: %s"
 msgstr "Auto actualización: %s"
 
-#: cmd/incus/storage_volume.go:3079
+#: cmd/incus/storage_volume.go:3072
 #, fuzzy
 msgid "Snapshot description"
 msgstr "Descripción"
 
-#: cmd/incus/storage_volume.go:3067 cmd/incus/storage_volume.go:3068
+#: cmd/incus/storage_volume.go:3060 cmd/incus/storage_volume.go:3061
 msgid "Snapshot storage volumes"
 msgstr ""
 
@@ -7706,7 +7701,7 @@ msgstr "Dispositivo %s añadido a %s"
 msgid "Sorting Method:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:121
+#: cmd/incus/admin_recover.go:119
 msgid ""
 "Source of the storage pool (block device, volume group, dataset, path, ... "
 "as applicable):"
@@ -7716,7 +7711,7 @@ msgstr ""
 msgid "Source:"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3965
+#: cmd/incus/storage_volume.go:3958
 msgid "Specific address to listen on"
 msgstr ""
 
@@ -7734,7 +7729,7 @@ msgstr "Auto actualización: %s"
 msgid "Starting %s"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:239
+#: cmd/incus/admin_recover.go:237
 msgid "Starting recovery..."
 msgstr ""
 
@@ -7802,12 +7797,12 @@ msgstr "Perfil %s creado"
 msgid "Storage has already been configured"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:106
+#: cmd/incus/admin_recover.go:104
 #, c-format
 msgid "Storage pool %q is already on recover list"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:202
+#: cmd/incus/admin_recover.go:200
 #, c-format
 msgid "Storage pool %q of type %q"
 msgstr ""
@@ -7860,7 +7855,7 @@ msgstr ""
 msgid "Storage volume moved successfully!"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3276
+#: cmd/incus/storage_volume.go:3269
 #, fuzzy, c-format
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "Perfil %s eliminado"
@@ -7908,7 +7903,7 @@ msgstr ""
 msgid "System:"
 msgstr ""
 
-#: cmd/incus/snapshot.go:366 cmd/incus/storage_volume.go:3400
+#: cmd/incus/snapshot.go:366 cmd/incus/storage_volume.go:3393
 msgid "TAKEN AT"
 msgstr ""
 
@@ -7933,7 +7928,7 @@ msgstr ""
 msgid "Taken at"
 msgstr ""
 
-#: cmd/incus/file.go:758
+#: cmd/incus/file.go:751
 #, fuzzy
 msgid "Target is not a directory"
 msgstr "%s no es un directorio"
@@ -7947,11 +7942,11 @@ msgstr ""
 msgid "Target path %q already exists"
 msgstr "El dispostivo ya existe: %s"
 
-#: cmd/incus/file.go:997 cmd/incus/storage_volume.go:2457
+#: cmd/incus/file.go:990 cmd/incus/storage_volume.go:2457
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:991 cmd/incus/storage_volume.go:2452
+#: cmd/incus/file.go:984 cmd/incus/storage_volume.go:2452
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -8021,11 +8016,11 @@ msgstr ""
 msgid "The device already exists"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:200
+#: cmd/incus/admin_recover.go:198
 msgid "The following unknown storage pools have been found:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:207
+#: cmd/incus/admin_recover.go:205
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
@@ -8058,12 +8053,12 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "The key %q does not exist on cluster member %q"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/utils.go:466
+#: cmd/incus/utils.go:467
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
 
-#: cmd/incus/utils.go:462
+#: cmd/incus/utils.go:463
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -8106,7 +8101,7 @@ msgstr "Nombre del Miembro del Cluster"
 msgid "The property %q does not exist on the network %q: %v"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/network_acl.go:326
+#: cmd/incus/network_acl.go:327
 #, fuzzy, c-format
 msgid "The property %q does not exist on the network ACL %q: %v"
 msgstr "Nombre del Miembro del Cluster"
@@ -8172,7 +8167,7 @@ msgstr ""
 msgid "The property with tag %q does not exist"
 msgstr "Nombre del Miembro del Cluster"
 
-#: cmd/incus/admin_recover.go:151
+#: cmd/incus/admin_recover.go:149
 msgid "The recovery process will be scanning the following storage pools:"
 msgstr ""
 
@@ -8262,7 +8257,7 @@ msgid ""
 "further processing is done"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:63
+#: cmd/incus/admin_recover.go:61
 msgid "This server currently has the following storage pools:"
 msgstr ""
 
@@ -8424,7 +8419,7 @@ msgstr ""
 msgid "USB devices:"
 msgstr ""
 
-#: cmd/incus/network.go:1076 cmd/incus/network_acl.go:163
+#: cmd/incus/network.go:1076 cmd/incus/network_acl.go:164
 #: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:80
 #: cmd/incus/network_integration.go:429 cmd/incus/network_zone.go:146
 #: cmd/incus/profile.go:726 cmd/incus/project.go:550 cmd/incus/storage.go:688
@@ -8460,7 +8455,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/utils.go:702
+#: cmd/incus/utils.go:703
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -8476,7 +8471,7 @@ msgstr ""
 #: cmd/incus/profile.go:747 cmd/incus/project.go:565 cmd/incus/remote.go:1008
 #: cmd/incus/snapshot.go:382 cmd/incus/storage.go:704
 #: cmd/incus/storage_bucket.go:502 cmd/incus/storage_bucket.go:886
-#: cmd/incus/storage_volume.go:1602 cmd/incus/storage_volume.go:3415
+#: cmd/incus/storage_volume.go:1602 cmd/incus/storage_volume.go:3408
 #: cmd/incus/top.go:101 cmd/incus/warning.go:242
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
@@ -8487,7 +8482,7 @@ msgstr ""
 msgid "Unknown console type %q"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:252
+#: cmd/incus/utils_sftp.go:239
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr ""
@@ -8497,7 +8492,7 @@ msgstr ""
 msgid "Unknown flag --%s"
 msgstr ""
 
-#: cmd/incus/network_acl.go:890 cmd/incus/network_acl.go:1009
+#: cmd/incus/network_acl.go:891 cmd/incus/network_acl.go:1010
 #, c-format
 msgid "Unknown key: %s"
 msgstr ""
@@ -8533,7 +8528,7 @@ msgstr ""
 msgid "Unset instance or server configuration keys"
 msgstr ""
 
-#: cmd/incus/network_acl.go:528 cmd/incus/network_acl.go:529
+#: cmd/incus/network_acl.go:529 cmd/incus/network_acl.go:530
 msgid "Unset network ACL configuration keys"
 msgstr ""
 
@@ -8630,7 +8625,7 @@ msgstr "Perfil %s creado"
 msgid "Unset the key as a cluster property"
 msgstr ""
 
-#: cmd/incus/network_acl.go:532
+#: cmd/incus/network_acl.go:533
 msgid "Unset the key as a network ACL property"
 msgstr ""
 
@@ -8758,7 +8753,7 @@ msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool)"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3669
+#: cmd/incus/storage_volume.go:3662
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool, "
 "ignored for ISO storage volumes)"
@@ -8850,7 +8845,7 @@ msgstr ""
 msgid "Volume description"
 msgstr "Descripción"
 
-#: cmd/incus/storage_volume.go:3203
+#: cmd/incus/storage_volume.go:3196
 #, fuzzy, c-format
 msgid "Volume snapshot name is: %s"
 msgstr "Nombre del contenedor es: %s"
@@ -8977,7 +8972,7 @@ msgstr ""
 msgid "Would you like the server to be available over the network?"
 msgstr "El directorio importado no está disponible en esta plataforma"
 
-#: cmd/incus/admin_recover.go:230
+#: cmd/incus/admin_recover.go:228
 msgid "Would you like those to be recovered?"
 msgstr ""
 
@@ -8989,7 +8984,7 @@ msgstr ""
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:160
+#: cmd/incus/admin_recover.go:158
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr ""
 
@@ -9010,7 +9005,7 @@ msgstr ""
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:77
+#: cmd/incus/admin_recover.go:75
 msgid "Would you like to recover another storage pool?"
 msgstr ""
 
@@ -9035,7 +9030,7 @@ msgstr ""
 msgid "YES"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:222
+#: cmd/incus/admin_recover.go:220
 msgid "You are currently missing the following:"
 msgstr ""
 
@@ -9332,7 +9327,7 @@ msgid ""
 "   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:942
+#: cmd/incus/file.go:935
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -9352,7 +9347,7 @@ msgid ""
 "output."
 msgstr ""
 
-#: cmd/incus/file.go:675
+#: cmd/incus/file.go:668
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -9442,7 +9437,7 @@ msgid ""
 "    Rename a local instance."
 msgstr ""
 
-#: cmd/incus/network_acl.go:357
+#: cmd/incus/network_acl.go:358
 msgid ""
 "incus network acl create a1\n"
 "\n"
@@ -9731,7 +9726,7 @@ msgid ""
 "mypool."
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2782
+#: cmd/incus/storage_volume.go:2775
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -9751,7 +9746,7 @@ msgid ""
 "pool \"default\""
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3836
+#: cmd/incus/storage_volume.go:3829
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
 "    Create a new custom volume using backup0.tar.gz as the source\n"
@@ -9795,7 +9790,7 @@ msgid ""
 "\"default\""
 msgstr ""
 
-#: cmd/incus/storage_volume.go:3069
+#: cmd/incus/storage_volume.go:3062
 msgid ""
 "incus storage volume snapshot create default foo snap0\n"
 "    Create a snapshot of \"foo\" in pool \"default\" called \"snap0\"\n"
@@ -9974,11 +9969,11 @@ msgstr ""
 msgid "space used"
 msgstr ""
 
-#: cmd/incus/utils.go:600
+#: cmd/incus/utils.go:601
 msgid "sshfs has stopped"
 msgstr ""
 
-#: cmd/incus/utils.go:559
+#: cmd/incus/utils.go:560
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr ""
@@ -10070,6 +10065,10 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#, fuzzy, c-format
+#~ msgid "Failed to retrieve current server config: %w"
+#~ msgstr "Acepta certificado"
 
 #~ msgid "Can't pull a directory without --recursive"
 #~ msgstr "No se puede jalar un directorio sin - recursivo"

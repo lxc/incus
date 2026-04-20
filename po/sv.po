@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-13 23:21+0000\n"
+"POT-Creation-Date: 2026-04-20 12:02-0400\n"
 "PO-Revision-Date: 2026-04-17 21:50+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -224,7 +224,7 @@ msgstr ""
 "template.tpl ###     properties:\n"
 "{}"
 
-#: cmd/incus/network_acl.go:587
+#: cmd/incus/network_acl.go:588
 msgid ""
 "### This is a YAML representation of the network ACL.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -638,7 +638,7 @@ msgstr "%q är inte en blockenhet"
 msgid "%q is not an IP address"
 msgstr "%q är inte en IP-adress"
 
-#: cmd/incus/admin_recover.go:209
+#: cmd/incus/admin_recover.go:207
 #, c-format
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "%s %q på pool %q i projekt %q (inkluderar %d snapshots)"
@@ -653,17 +653,17 @@ msgstr "%s (%d fler)"
 msgid "%s (%s) (%d available)"
 msgstr "%s (%s) (%d tillgänglig)"
 
-#: cmd/incus/admin_recover.go:65
+#: cmd/incus/admin_recover.go:63
 #, c-format
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, källa=%q)"
 
-#: cmd/incus/utils_copy.go:79 cmd/incus/utils_sftp.go:387
+#: cmd/incus/utils_copy.go:79 cmd/incus/utils_sftp.go:374
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s är inte en katalog"
 
-#: cmd/incus/utils_sftp.go:276
+#: cmd/incus/utils_sftp.go:263
 #, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' är inte en filtyp som stöds"
@@ -763,7 +763,7 @@ msgstr "--target kan endast användas med kluster"
 msgid "--target cannot be used with instances"
 msgstr "--target kan inte användas med instanser"
 
-#: cmd/incus/admin_sql.go:131
+#: cmd/incus/admin_sql.go:129
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> Fråga %d:"
@@ -949,7 +949,7 @@ msgstr "Lägg till profiler till instanser"
 msgid "Add roles to a cluster member"
 msgstr "Lägg till roller till en klustermedlem"
 
-#: cmd/incus/network_acl.go:822 cmd/incus/network_acl.go:823
+#: cmd/incus/network_acl.go:823 cmd/incus/network_acl.go:824
 msgid "Add rules to an ACL"
 msgstr "Lägg till regler i en ACL"
 
@@ -957,12 +957,12 @@ msgstr "Lägg till regler i en ACL"
 msgid "Additional Help Topics:"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:128
+#: cmd/incus/admin_recover.go:126
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
-":"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
+"klar):"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1027,7 +1027,7 @@ msgstr ""
 msgid "All profiles removed from %s"
 msgstr "Alla profiler borttagna från %s"
 
-#: cmd/incus/storage_volume.go:1439 cmd/incus/storage_volume.go:3307
+#: cmd/incus/storage_volume.go:1439 cmd/incus/storage_volume.go:3300
 msgid "All projects"
 msgstr "Alla projekt"
 
@@ -1043,7 +1043,7 @@ msgstr "Alternativt certifikatnamn"
 msgid "Always follow symbolic links in source path"
 msgstr ""
 
-#: cmd/incus/file.go:1002
+#: cmd/incus/file.go:995
 #, c-format
 msgid "An instance path is required for %s"
 msgstr "En instanssökväg krävs för %s"
@@ -1180,13 +1180,13 @@ msgstr "Säkerhetskopiering av instans: %s"
 msgid "Backing up storage bucket: %s"
 msgstr "Säkerhetskopiering av lagringsutrymme: %s"
 
-#: cmd/incus/storage_volume.go:3740
+#: cmd/incus/storage_volume.go:3733
 #, c-format
 msgid "Backing up storage volume: %s"
 msgstr "Säkerhetskopiering av lagringsvolym: %s"
 
 #: cmd/incus/export.go:210 cmd/incus/storage_bucket.go:1415
-#: cmd/incus/storage_volume.go:3816
+#: cmd/incus/storage_volume.go:3809
 msgid "Backup exported successfully!"
 msgstr "Säkerhetskopian exporterades utan problem!"
 
@@ -1194,12 +1194,12 @@ msgstr "Säkerhetskopian exporterades utan problem!"
 msgid "Backups:"
 msgstr "Säkerhetskopior:"
 
-#: cmd/incus/utils.go:90
+#: cmd/incus/utils.go:91
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
-"=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
+"<nyckel>=<värde>: %s"
 
 #: cmd/incus/copy.go:137 cmd/incus/create.go:204 cmd/incus/move.go:250
 #: cmd/incus/network_integration.go:138 cmd/incus/project.go:168
@@ -1312,7 +1312,7 @@ msgstr "Cacher:"
 msgid "Can't bind address %q: %w"
 msgstr "Kan inte binda adress %q: %w"
 
-#: cmd/incus/file.go:738
+#: cmd/incus/file.go:731
 msgid "Can't override UID/GID in recursive mode without -p"
 msgstr "Kan inte åsidosätta UID/GID i rekursivt läge utan -p"
 
@@ -1320,7 +1320,7 @@ msgstr "Kan inte åsidosätta UID/GID i rekursivt läge utan -p"
 msgid "Can't override configuration or profiles in local rename"
 msgstr "Kan inte åsidosätta konfiguration eller profiler vid lokal namnändring"
 
-#: cmd/incus/file.go:725
+#: cmd/incus/file.go:718
 msgid "Can't override the target mode when performing a recursive transfer"
 msgstr "Kan inte åsidosätta målläge vid rekursiv överföring"
 
@@ -1328,12 +1328,12 @@ msgstr "Kan inte åsidosätta målläge vid rekursiv överföring"
 msgid "Can't perform local rename without a new instance name"
 msgstr "Kan inte utföra lokal namnändring utan nytt instansnamn"
 
-#: cmd/incus/utils.go:332
+#: cmd/incus/utils.go:333
 #, c-format
 msgid "Can't read from environment file: %w"
 msgstr "Kan inte läsa från miljöfil: %w"
 
-#: cmd/incus/utils.go:257 cmd/incus/utils.go:277 cmd/incus/utils.go:304
+#: cmd/incus/utils.go:258 cmd/incus/utils.go:278 cmd/incus/utils.go:305
 #, c-format
 msgid "Can't read from stdin: %w"
 msgstr "Kan inte läsa från stdin: %w"
@@ -1355,7 +1355,7 @@ msgstr "Kan inte ange --project med --all-projects"
 msgid "Can't specify column L when not clustered"
 msgstr "Kan inte ange kolumn L när den inte är klustrad"
 
-#: cmd/incus/storage_volume.go:2842
+#: cmd/incus/storage_volume.go:2835
 msgid "Can't supply uid/gid/mode in recursive mode"
 msgstr "Kan inte tillhandahålla uid/gid/mode i rekursivt läge"
 
@@ -1380,7 +1380,7 @@ msgstr "Kan inte använda --minimal och --auto tillsammans"
 msgid "Can't use --minimal and --preseed together"
 msgstr "Kan inte använda --minimal och --preseed tillsammans"
 
-#: cmd/incus/snapshot.go:127 cmd/incus/storage_volume.go:3111
+#: cmd/incus/snapshot.go:127 cmd/incus/storage_volume.go:3104
 msgid "Can't use both --no-expiry and --expiry"
 msgstr "Kan inte använda både --no-expiry och --expiry"
 
@@ -1392,7 +1392,7 @@ msgstr ""
 "Kan inte åsidosätta konfigurationen för enhet %q: Enheten hittades inte i "
 "profilens enheter"
 
-#: cmd/incus/utils.go:299
+#: cmd/incus/utils.go:300
 msgid "Cannot read the stdin twice"
 msgstr "Kan inte läsa stdin två gånger"
 
@@ -1411,7 +1411,7 @@ msgstr "Kan inte ställa in --target när källservern inte är klustrad"
 msgid "Cannot set --volume-only when copying a snapshot"
 msgstr "Kan inte ställa in --volume-only när du kopierar en ögonblicksbild"
 
-#: cmd/incus/network_acl.go:895
+#: cmd/incus/network_acl.go:896
 #, c-format
 msgid "Cannot set key: %s"
 msgstr "Kan inte ställa in nyckel: %s"
@@ -1565,10 +1565,10 @@ msgstr "Klustermedlem %s borttagen från grupp %s"
 #: cmd/incus/storage_volume.go:1113 cmd/incus/storage_volume.go:1230
 #: cmd/incus/storage_volume.go:1676 cmd/incus/storage_volume.go:1736
 #: cmd/incus/storage_volume.go:1818 cmd/incus/storage_volume.go:1967
-#: cmd/incus/storage_volume.go:2056 cmd/incus/storage_volume.go:3078
-#: cmd/incus/storage_volume.go:3226 cmd/incus/storage_volume.go:3462
-#: cmd/incus/storage_volume.go:3531 cmd/incus/storage_volume.go:3595
-#: cmd/incus/storage_volume.go:3671 cmd/incus/storage_volume.go:3841
+#: cmd/incus/storage_volume.go:2056 cmd/incus/storage_volume.go:3071
+#: cmd/incus/storage_volume.go:3219 cmd/incus/storage_volume.go:3455
+#: cmd/incus/storage_volume.go:3524 cmd/incus/storage_volume.go:3588
+#: cmd/incus/storage_volume.go:3664 cmd/incus/storage_volume.go:3834
 msgid "Cluster member name"
 msgstr "Klustermedlemsnamn"
 
@@ -1587,7 +1587,7 @@ msgstr "Klustering aktiverad"
 #: cmd/incus/profile.go:697 cmd/incus/project.go:517 cmd/incus/remote.go:975
 #: cmd/incus/snapshot.go:342 cmd/incus/storage.go:659
 #: cmd/incus/storage_bucket.go:462 cmd/incus/storage_bucket.go:855
-#: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:3306
+#: cmd/incus/storage_volume.go:1438 cmd/incus/storage_volume.go:3299
 #: cmd/incus/top.go:67 cmd/incus/warning.go:98
 msgid "Columns"
 msgstr "Kolumner"
@@ -1622,7 +1622,7 @@ msgstr "Komprimeringsalgoritm som ska användas (`none` för okomprimerad)"
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Komprimeringsalgoritm som ska användas (ingen för okomprimerat)"
 
-#: cmd/incus/storage_volume.go:3670
+#: cmd/incus/storage_volume.go:3663
 msgid ""
 "Compression algorithm to use (none for uncompressed, ignored for ISO storage "
 "volumes)"
@@ -1647,14 +1647,14 @@ msgstr "Konfigurationsnyckel/värde som ska tillämpas på det nya projektet"
 msgid "Config key/value to apply to the target instance"
 msgstr "Konfigurationsnyckel/värde som ska tillämpas på målinstansen"
 
-#: cmd/incus/admin_recover.go:131
+#: cmd/incus/admin_recover.go:129
 msgid "Config option should be in the format KEY=VALUE"
 msgstr "Konfigurationsflaggan ska ha formatet NYCKEL=VÄRDE"
 
 #: cmd/incus/cluster.go:934 cmd/incus/cluster_group.go:373
 #: cmd/incus/config.go:265 cmd/incus/config.go:340
 #: cmd/incus/config_metadata.go:147 cmd/incus/config_trust.go:329
-#: cmd/incus/image.go:458 cmd/incus/network.go:759 cmd/incus/network_acl.go:667
+#: cmd/incus/image.go:458 cmd/incus/network.go:759 cmd/incus/network_acl.go:668
 #: cmd/incus/network_address_set.go:523 cmd/incus/network_forward.go:726
 #: cmd/incus/network_integration.go:293 cmd/incus/network_load_balancer.go:705
 #: cmd/incus/network_peer.go:729 cmd/incus/network_zone.go:670
@@ -1876,9 +1876,9 @@ msgstr "Skapa en tom instans"
 msgid "Create and start instances from images"
 msgstr "Skapa och starta instanser från bilder"
 
-#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:683
+#: cmd/incus/file.go:108 cmd/incus/file.go:446 cmd/incus/file.go:676
 #: cmd/incus/storage_volume.go:2164 cmd/incus/storage_volume.go:2586
-#: cmd/incus/storage_volume.go:2790
+#: cmd/incus/storage_volume.go:2783
 msgid "Create any directories necessary"
 msgstr "Skapa alla nödvändiga kataloger"
 
@@ -1939,7 +1939,7 @@ msgstr "Skapa nya anpassade lagringsvolymer"
 msgid "Create new instance file templates"
 msgstr "Skapa nya instansfilmallar"
 
-#: cmd/incus/network_acl.go:355 cmd/incus/network_acl.go:356
+#: cmd/incus/network_acl.go:356 cmd/incus/network_acl.go:357
 msgid "Create new network ACLs"
 msgstr "Skapa nya nätverks-ACL:er"
 
@@ -2020,7 +2020,7 @@ msgstr "STANDARDMÅLADRESS"
 #: cmd/incus/cluster.go:200 cmd/incus/cluster_group.go:464
 #: cmd/incus/config_trust.go:417 cmd/incus/image.go:1074
 #: cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1075
-#: cmd/incus/network_acl.go:162 cmd/incus/network_address_set.go:155
+#: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:143 cmd/incus/network_integration.go:427
 #: cmd/incus/network_load_balancer.go:150 cmd/incus/network_peer.go:139
 #: cmd/incus/network_zone.go:145 cmd/incus/network_zone.go:871
@@ -2129,7 +2129,7 @@ msgstr "Ta bort instanser"
 msgid "Delete key from a storage bucket"
 msgstr "Ta bort nyckel från en lagringsbucket"
 
-#: cmd/incus/network_acl.go:751 cmd/incus/network_acl.go:752
+#: cmd/incus/network_acl.go:752 cmd/incus/network_acl.go:753
 msgid "Delete network ACLs"
 msgstr "Ta bort nätverks-ACL:er"
 
@@ -2182,7 +2182,7 @@ msgstr "Ta bort lagringsutrymmen"
 msgid "Delete storage pools"
 msgstr "Ta bort lagringspooler"
 
-#: cmd/incus/storage_volume.go:3223 cmd/incus/storage_volume.go:3224
+#: cmd/incus/storage_volume.go:3216 cmd/incus/storage_volume.go:3217
 msgid "Delete storage volume snapshots"
 msgstr "Ta bort ögonblicksbilder av lagringsvolymer"
 
@@ -2249,7 +2249,7 @@ msgstr "Enhet %s borttagen från %s"
 msgid "Device Address: %v"
 msgstr "Enhetsadress: %v"
 
-#: cmd/incus/utils.go:46 cmd/incus/utils.go:70
+#: cmd/incus/utils.go:47 cmd/incus/utils.go:71
 #, c-format
 msgid "Device already exists: %s"
 msgstr "Enheten finns redan: %s"
@@ -2314,7 +2314,7 @@ msgstr "Fick inte namnet på den nya instansen från servern"
 msgid "Didn't get name of new instance snapshot from the server"
 msgstr "Fick inte namnet på den nya instansen från servern"
 
-#: cmd/incus/storage_volume.go:3194
+#: cmd/incus/storage_volume.go:3187
 #, fuzzy
 msgid "Didn't get name of new volume snapshot from the server"
 msgstr "Fick inte namnet på den nya instansen från servern"
@@ -2327,7 +2327,7 @@ msgstr "Katalogimport är inte tillgängligt på denna plattform"
 msgid "Directory to run the command in (default /root)"
 msgstr "Katalog där kommandot ska köras (standard /root)"
 
-#: cmd/incus/file.go:950 cmd/incus/storage_volume.go:2406
+#: cmd/incus/file.go:943 cmd/incus/storage_volume.go:2406
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Inaktivera autentisering vid användning av SSH SFTP-lyssnare"
 
@@ -2489,13 +2489,13 @@ msgstr "POSTER"
 msgid "EPHEMERAL"
 msgstr "EFEMER"
 
-#: cmd/incus/admin_recover.go:153
+#: cmd/incus/admin_recover.go:151
 #, c-format
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr "BEFINTLIG: %q (backend=%q, källa=%q)"
 
 #: cmd/incus/cluster.go:1145 cmd/incus/config_trust.go:602
-#: cmd/incus/snapshot.go:367 cmd/incus/storage_volume.go:3401
+#: cmd/incus/snapshot.go:367 cmd/incus/storage_volume.go:3394
 msgid "EXPIRES AT"
 msgstr "GÅR UT DEN"
 
@@ -2535,7 +2535,7 @@ msgstr "Redigera instansmetadatafiler"
 msgid "Edit instance or server configurations as YAML"
 msgstr "Redigera instans- eller serverkonfigurationer som YAML"
 
-#: cmd/incus/network_acl.go:570 cmd/incus/network_acl.go:571
+#: cmd/incus/network_acl.go:571 cmd/incus/network_acl.go:572
 msgid "Edit network ACL configurations as YAML"
 msgstr "Redigera nätverks-ACL-konfigurationer som YAML"
 
@@ -2625,11 +2625,12 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/profile.go:741 cmd/incus/project.go:559 cmd/incus/remote.go:1002
 #: cmd/incus/snapshot.go:376 cmd/incus/storage.go:698
 #: cmd/incus/storage_bucket.go:496 cmd/incus/storage_bucket.go:880
-#: cmd/incus/storage_volume.go:1596 cmd/incus/storage_volume.go:3409
+#: cmd/incus/storage_volume.go:1596 cmd/incus/storage_volume.go:3402
 #: cmd/incus/top.go:95 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr ""
+"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
 #: cmd/incus/cluster.go:772
 msgid "Enable clustering on a single non-clustered server"
@@ -2699,14 +2700,14 @@ msgstr "Fel vid skapande av avkodare: %v"
 msgid "Error decoding data: %v"
 msgstr "Fel vid avkodning av data: %v"
 
-#: cmd/incus/publish.go:202 cmd/incus/utils.go:205
+#: cmd/incus/publish.go:202 cmd/incus/utils.go:206
 #, c-format
 msgid "Error retrieving aliases: %w"
 msgstr "Fel vid hämtning av alias: %w"
 
 #: cmd/incus/cluster.go:556 cmd/incus/cluster_group.go:922
 #: cmd/incus/config.go:578 cmd/incus/config.go:610 cmd/incus/network.go:1474
-#: cmd/incus/network_acl.go:495 cmd/incus/network_address_set.go:368
+#: cmd/incus/network_acl.go:496 cmd/incus/network_address_set.go:368
 #: cmd/incus/network_forward.go:538 cmd/incus/network_integration.go:604
 #: cmd/incus/network_load_balancer.go:523 cmd/incus/network_peer.go:560
 #: cmd/incus/network_zone.go:510 cmd/incus/network_zone.go:1167
@@ -2728,7 +2729,7 @@ msgid "Error unsetting properties: %v"
 msgstr "Fel vid avaktivering av egenskaper: %v"
 
 #: cmd/incus/cluster.go:550 cmd/incus/cluster_group.go:916
-#: cmd/incus/network.go:1468 cmd/incus/network_acl.go:489
+#: cmd/incus/network.go:1468 cmd/incus/network_acl.go:490
 #: cmd/incus/network_forward.go:532 cmd/incus/network_integration.go:598
 #: cmd/incus/network_load_balancer.go:517 cmd/incus/network_peer.go:554
 #: cmd/incus/network_zone.go:504 cmd/incus/network_zone.go:1161
@@ -2771,11 +2772,11 @@ msgstr "Händelsetyp att lyssna efter"
 msgid "Examples:"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:31
+#: cmd/incus/admin_sql.go:29
 msgid "Execute a SQL query against the local or global database"
 msgstr "Utför en SQL-fråga mot den lokala eller globala databasen"
 
-#: cmd/incus/admin_sql.go:32
+#: cmd/incus/admin_sql.go:30
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2889,7 +2890,7 @@ msgstr "Går ut: %s"
 msgid "Expires: never"
 msgstr "Går ut: aldrig"
 
-#: cmd/incus/snapshot.go:98 cmd/incus/storage_volume.go:3075
+#: cmd/incus/snapshot.go:98 cmd/incus/storage_volume.go:3068
 msgid "Expiry date or time span for the new snapshot"
 msgstr "Utgångsdatum eller tidsperiod för den nya ögonblicksbilden"
 
@@ -2911,11 +2912,11 @@ msgstr ""
 "\n"
 "Utdatamålet är valfritt och är som standard inställt på arbetskatalogen."
 
-#: cmd/incus/storage_volume.go:3664
+#: cmd/incus/storage_volume.go:3657
 msgid "Export custom storage volumes"
 msgstr "Exportera anpassade lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:3665
+#: cmd/incus/storage_volume.go:3658
 msgid "Export custom storage volumes."
 msgstr "Exportera anpassade lagringsvolymer."
 
@@ -2945,7 +2946,7 @@ msgstr ""
 "dumpfil.\n"
 "\t\tDetta kan vara användbart för felsökning eller analys."
 
-#: cmd/incus/storage_volume.go:3667
+#: cmd/incus/storage_volume.go:3660
 msgid ""
 "Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
@@ -2957,7 +2958,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Exportera säkerhetskopia av lagringsfack: %s"
 
-#: cmd/incus/export.go:170 cmd/incus/storage_volume.go:3799
+#: cmd/incus/export.go:170 cmd/incus/storage_volume.go:3792
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr "Exportera säkerhetskopian: %s"
@@ -2988,12 +2989,12 @@ msgstr "FÖRST SEDD"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:686
+#: cmd/incus/utils.go:687
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "Misslyckad SSH-handskakning med klient %q: %v"
 
-#: cmd/incus/utils.go:709
+#: cmd/incus/utils.go:710
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "Misslyckades med att acceptera kanalklient %q: %v"
@@ -3003,28 +3004,28 @@ msgstr "Misslyckades med att acceptera kanalklient %q: %v"
 msgid "Failed checking instance %s exists: %w"
 msgstr "Misslyckades att kontrollera om instans %s finns: %w\"%s:%s\": %w"
 
-#: cmd/incus/utils.go:376
+#: cmd/incus/utils.go:377
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr "Kontrollen misslyckades, instans finns \"%s:%s\": %w"
 
-#: cmd/incus/utils.go:368
+#: cmd/incus/utils.go:369
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "Kontrollen misslyckades, instanssnapshot finns \"%s:%s\": %w"
 
-#: cmd/incus/utils.go:736
+#: cmd/incus/utils.go:737
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Misslyckades med att ansluta till instans SFTP för klient %q: %v"
 
-#: cmd/incus/storage_volume.go:2888
+#: cmd/incus/storage_volume.go:2881
 #, c-format
 msgid "Failed connecting to instance SFTP: %s %w"
 msgstr "Misslyckades att ansluta till instans-SFTP: %s %w"
 
-#: cmd/incus/file.go:1020 cmd/incus/storage_volume.go:2463
-#: cmd/incus/storage_volume.go:2651 cmd/incus/storage_volume.go:2818
+#: cmd/incus/file.go:1013 cmd/incus/storage_volume.go:2463
+#: cmd/incus/storage_volume.go:2651 cmd/incus/storage_volume.go:2811
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr "Det gick inte att ansluta till instansen SFTP: %w"
@@ -3054,7 +3055,7 @@ msgstr "Misslyckades att ta bort instans %s i projekt %q: %w"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Misslyckades med att ta bort källvolymen efter kopiering: %w"
 
-#: cmd/incus/utils.go:643
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Det gick inte att skapa SSH-värdnyckel: %w"
@@ -3064,7 +3065,7 @@ msgstr "Det gick inte att skapa SSH-värdnyckel: %w"
 msgid "Failed generating trust certificate: %w"
 msgstr "Det gick inte att generera betrott certifikat: %w"
 
-#: cmd/incus/admin_recover.go:60
+#: cmd/incus/admin_recover.go:58
 #, c-format
 msgid "Failed getting existing storage pools: %w"
 msgstr "Det gick inte att hämta befintliga lagringspooler: %w"
@@ -3074,7 +3075,7 @@ msgstr "Det gick inte att hämta befintliga lagringspooler: %w"
 msgid "Failed getting peer's status: %w"
 msgstr "Misslyckades med att hämta peer-status: %w"
 
-#: cmd/incus/admin_recover.go:250
+#: cmd/incus/admin_recover.go:248
 #, c-format
 msgid "Failed import request: %w"
 msgstr "Misslyckad importbegäran: %w"
@@ -3094,12 +3095,12 @@ msgstr "Det gick inte att läsa in profilen %q för enhetsöverskrivning: %w"
 msgid "Failed loading storage pool %q: %w"
 msgstr "Misslyckades med att läsa in lagringspool %q: %w"
 
-#: cmd/incus/utils.go:648
+#: cmd/incus/utils.go:649
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Misslyckades med att analysera SSH-värdnyckel: %w"
 
-#: cmd/incus/admin_recover.go:196
+#: cmd/incus/admin_recover.go:194
 #, c-format
 msgid "Failed parsing validation response: %w"
 msgstr "Misslyckad analys av valideringssvar: %w"
@@ -3109,12 +3110,12 @@ msgstr "Misslyckad analys av valideringssvar: %w"
 msgid "Failed starting command: %w"
 msgstr "Startkommandot misslyckades: %w"
 
-#: cmd/incus/utils.go:556
+#: cmd/incus/utils.go:557
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Misslyckades med att starta sshfs: %w"
 
-#: cmd/incus/storage_volume.go:4021 cmd/incus/utils.go:674
+#: cmd/incus/storage_volume.go:4014 cmd/incus/utils.go:675
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Det gick inte att acceptera inkommande anslutning: %w"
@@ -3168,7 +3169,7 @@ msgstr "Det gick inte att ansluta till målklusterknutpunkten %q: %w"
 msgid "Failed to create %q: %w"
 msgstr "Det gick inte att skapa %q: %w"
 
-#: cmd/incus/utils.go:178
+#: cmd/incus/utils.go:179
 #, c-format
 msgid "Failed to create alias %s: %w"
 msgstr "Det gick inte att skapa alias %s: %w"
@@ -3183,7 +3184,7 @@ msgstr "Det gick inte att skapa säkerhetskopia: %v"
 msgid "Failed to create certificate: %w"
 msgstr "Det gick inte att skapa certifikatet: %w"
 
-#: cmd/incus/storage_volume.go:3735
+#: cmd/incus/storage_volume.go:3728
 #, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "Det gick inte att skapa säkerhetskopia av lagringsvolym: %w"
@@ -3204,7 +3205,7 @@ msgstr "Misslyckades med att dumpa instansminnet: %w"
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Det gick inte att hämta säkerhetskopian av lagringsbucket: %w"
 
-#: cmd/incus/storage_volume.go:3813
+#: cmd/incus/storage_volume.go:3806
 #, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
@@ -3219,7 +3220,7 @@ msgstr "Projektet kunde inte hittas: %w"
 msgid "Failed to join cluster: %w"
 msgstr "Det gick inte att ansluta till klustret: %w"
 
-#: cmd/incus/storage_volume.go:4013 cmd/incus/utils.go:659
+#: cmd/incus/storage_volume.go:4006 cmd/incus/utils.go:660
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Misslyckades med att lyssna efter anslutning: %w"
@@ -3229,17 +3230,17 @@ msgstr "Misslyckades med att lyssna efter anslutning: %w"
 msgid "Failed to load configuration: %s"
 msgstr "Konfigurationen kunde inte läsas in: %s"
 
-#: cmd/incus/file.go:773 cmd/incus/utils_sftp.go:307
+#: cmd/incus/file.go:766 cmd/incus/utils_sftp.go:294
 #, c-format
 msgid "Failed to open source file %q: %v"
 msgstr "Misslyckades med att öppna källfilen %q: %v"
 
-#: cmd/incus/utils_sftp.go:73
+#: cmd/incus/utils_sftp.go:74
 #, c-format
 msgid "Failed to open target file %q: %w"
 msgstr "Misslyckades att öppna målfil %q: %w"
 
-#: cmd/incus/admin_sql.go:106
+#: cmd/incus/admin_sql.go:104
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "Det gick inte att analysera dumpningssvaret: %w"
@@ -3254,7 +3255,7 @@ msgstr "Det gick inte att analysera förinställningen: %w"
 msgid "Failed to read from file: %w"
 msgstr "Det gick inte att läsa från filen: %w"
 
-#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:83
+#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:81
 #, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "Läsning från stdin misslyckades: %w"
@@ -3264,7 +3265,7 @@ msgstr "Läsning från stdin misslyckades: %w"
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Det gick inte att uppdatera målinstansen '%s': %v"
 
-#: cmd/incus/utils.go:167
+#: cmd/incus/utils.go:168
 #, c-format
 msgid "Failed to remove alias %s: %w"
 msgstr "Det gick inte att ta bort alias %s: %w"
@@ -3279,7 +3280,7 @@ msgstr "Det gick inte att byta namn på exportfilen: %w"
 msgid "Failed to render the config: %w"
 msgstr "Det gick inte att rendera konfigurationen: %w"
 
-#: cmd/incus/admin_sql.go:100
+#: cmd/incus/admin_sql.go:98
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr "Misslyckades med att begära dump: %w"
@@ -3294,14 +3295,9 @@ msgstr "Det gick inte att hämta klusterinformation: %w"
 msgid "Failed to retrieve current cluster config: %w"
 msgstr "Det gick inte att hämta aktuell klusterkonfiguration: %w"
 
-#: cmd/incus/cluster.go:808
-#, c-format
-msgid "Failed to retrieve current server config: %w"
-msgstr "Det gick inte att hämta aktuell serverkonfiguration: %w"
-
 #: cmd/incus/admin_init_dump.go:18 cmd/incus/admin_init_dump.go:49
 #: cmd/incus/admin_init_dump.go:64 cmd/incus/admin_init_dump.go:79
-#: cmd/incus/admin_init_dump.go:93
+#: cmd/incus/admin_init_dump.go:93 cmd/incus/cluster.go:808
 #, c-format
 msgid "Failed to retrieve current server configuration: %w"
 msgstr "Det gick inte att hämta aktuell serverkonfiguration: %w"
@@ -3334,7 +3330,7 @@ msgstr "Det gick inte att upprätta ett förtroendeförhållande med klustret: %
 msgid "Failed to update cluster member state: %w"
 msgstr "Det gick inte att uppdatera klustermedlemmens status: %w"
 
-#: cmd/incus/utils_sftp.go:271
+#: cmd/incus/utils_sftp.go:258
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr "Kunde inte gå sökvägen för %s: %s"
@@ -3344,7 +3340,7 @@ msgstr "Kunde inte gå sökvägen för %s: %s"
 msgid "Failed to write server cert file %q: %w"
 msgstr "Det gick inte att skriva servercertifikatfilen %q: %w"
 
-#: cmd/incus/admin_recover.go:189
+#: cmd/incus/admin_recover.go:187
 #, c-format
 msgid "Failed validation request: %w"
 msgstr "Misslyckad valideringsbegäran: %w"
@@ -3486,12 +3482,12 @@ msgstr ""
 "för att inaktivera rubriker och \",header\" för att aktivera dem om så "
 "önskas, t.ex. csv,header"
 
-#: cmd/incus/admin_sql.go:60 cmd/incus/alias.go:111 cmd/incus/cluster.go:171
+#: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:111 cmd/incus/cluster.go:171
 #: cmd/incus/cluster_group.go:439 cmd/incus/config_template.go:270
 #: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:584
 #: cmd/incus/image.go:1046 cmd/incus/image_alias.go:208 cmd/incus/list.go:141
 #: cmd/incus/network.go:1045 cmd/incus/network.go:1236
-#: cmd/incus/network_acl.go:103 cmd/incus/network_allocations.go:64
+#: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:64
 #: cmd/incus/network_forward.go:120 cmd/incus/network_integration.go:410
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:116
 #: cmd/incus/network_zone.go:120 cmd/incus/network_zone.go:818
@@ -3499,7 +3495,7 @@ msgstr ""
 #: cmd/incus/project.go:994 cmd/incus/remote.go:974 cmd/incus/snapshot.go:341
 #: cmd/incus/storage.go:661 cmd/incus/storage_bucket.go:460
 #: cmd/incus/storage_bucket.go:853 cmd/incus/storage_volume.go:1465
-#: cmd/incus/storage_volume.go:3319 cmd/incus/warning.go:99
+#: cmd/incus/storage_volume.go:3312 cmd/incus/warning.go:99
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
@@ -3656,7 +3652,7 @@ msgstr "Hämta nyckeln som en klustergruppsegenskap"
 msgid "Get the key as a cluster property"
 msgstr "Hämta nyckeln som en klusteregenskap"
 
-#: cmd/incus/network_acl.go:289
+#: cmd/incus/network_acl.go:290
 msgid "Get the key as a network ACL property"
 msgstr "Hämta nyckeln som en nätverks-ACL-egenskap"
 
@@ -3728,7 +3724,7 @@ msgstr "Hämta värden för enhetskonfigurationsnycklar"
 msgid "Get values for instance or server configuration keys"
 msgstr "Hämta värden för instans- eller serverkonfigurationsnycklar"
 
-#: cmd/incus/network_acl.go:286 cmd/incus/network_acl.go:287
+#: cmd/incus/network_acl.go:287 cmd/incus/network_acl.go:288
 msgid "Get values for network ACL configuration keys"
 msgstr "Hämta värden för nätverks-ACL-konfigurationsnycklar"
 
@@ -3801,7 +3797,7 @@ msgstr ""
 "lägger du till snapshotnamnet (endast om typen är custom, container eller "
 "virtual-machine)."
 
-#: cmd/incus/storage_volume.go:3966
+#: cmd/incus/storage_volume.go:3959
 msgid "Get write access to the disk"
 msgstr ""
 
@@ -3834,22 +3830,22 @@ msgstr "Värdnamn"
 msgid "Hugepages:\n"
 msgstr "Stora sidor:\n"
 
-#: cmd/incus/utils.go:759
+#: cmd/incus/utils.go:760
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "I/O-kopiering från SSH till instans misslyckades: %v"
 
-#: cmd/incus/utils.go:748
+#: cmd/incus/utils.go:749
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "I/O-kopiering från instans till SSH misslyckades: %v"
 
-#: cmd/incus/utils.go:580
+#: cmd/incus/utils.go:581
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "I/O-kopiering från instans till sshfs misslyckades: %v"
 
-#: cmd/incus/utils.go:590
+#: cmd/incus/utils.go:591
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "I/O-kopiering från sshfs till instans misslyckades: %v"
@@ -3937,7 +3933,7 @@ msgstr ""
 msgid "If the image alias already exists, delete and create a new one"
 msgstr "Om bildaliaset redan finns, ta bort det och skapa ett nytt"
 
-#: cmd/incus/snapshot.go:100 cmd/incus/storage_volume.go:3077
+#: cmd/incus/snapshot.go:100 cmd/incus/storage_volume.go:3070
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "Om namnet på ögonblicksbilden redan finns, ta bort det och skapa ett nytt"
@@ -3955,7 +3951,7 @@ msgid "Ignore any configured auto-expiry for the instance"
 msgstr ""
 "Ignorera eventuella konfigurerade automatiska utgångsdatum för instansen"
 
-#: cmd/incus/storage_volume.go:3076
+#: cmd/incus/storage_volume.go:3069
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr ""
 "Ignorera eventuella konfigurerade automatiska utgångsdatum för "
@@ -4015,11 +4011,11 @@ msgstr ""
 msgid "Import backups of storage buckets."
 msgstr "Importera säkerhetskopior av lagringsutrymmen."
 
-#: cmd/incus/storage_volume.go:3834
+#: cmd/incus/storage_volume.go:3827
 msgid "Import custom storage volumes"
 msgstr "Importera anpassade lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:3835
+#: cmd/incus/storage_volume.go:3828
 msgid "Import custom storage volumes."
 msgstr "Importera anpassade lagringsvolymer."
 
@@ -4045,11 +4041,11 @@ msgstr "Importera instansbackuper"
 msgid "Import storage bucket"
 msgstr "Importera lagringsbehållare"
 
-#: cmd/incus/storage_volume.go:3895
+#: cmd/incus/storage_volume.go:3888
 msgid "Import type needs to be \"backup\" or \"iso\""
 msgstr "Importtypen måste vara \"backup\" eller \"iso\""
 
-#: cmd/incus/storage_volume.go:3843
+#: cmd/incus/storage_volume.go:3836
 msgid "Import type, backup or iso (default \"backup\")"
 msgstr "Importtyp, säkerhetskopia eller iso (standard \"säkerhetskopia\")"
 
@@ -4058,7 +4054,7 @@ msgstr "Importtyp, säkerhetskopia eller iso (standard \"säkerhetskopia\")"
 msgid "Importing bucket: %s"
 msgstr "Importerar bucket: %s"
 
-#: cmd/incus/storage_volume.go:3904
+#: cmd/incus/storage_volume.go:3897
 #, c-format
 msgid "Importing custom volume: %s"
 msgstr "Importera anpassad volym: %s"
@@ -4096,11 +4092,11 @@ msgstr "Endast instans"
 msgid "Instance description"
 msgstr "Instansbeskrivning"
 
-#: cmd/incus/utils.go:582
+#: cmd/incus/utils.go:583
 msgid "Instance disconnected"
 msgstr "Instans frånkopplad"
 
-#: cmd/incus/utils.go:750
+#: cmd/incus/utils.go:751
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "Instans frånkopplad för klient %q"
@@ -4110,7 +4106,7 @@ msgstr "Instans frånkopplad för klient %q"
 msgid "Instance name is: %s"
 msgstr "Instansnamn är: %s"
 
-#: cmd/incus/file.go:1007
+#: cmd/incus/file.go:1000
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr "Instansvägen kan inte användas i SSH SFTP-lyssnaräge"
 
@@ -4133,7 +4129,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "Ogiltig IP-adress eller DNS-namn"
 
 #: cmd/incus/export.go:134 cmd/incus/storage_bucket.go:1367
-#: cmd/incus/storage_volume.go:3768
+#: cmd/incus/storage_volume.go:3761
 #, c-format
 msgid "Invalid URL %q: %w"
 msgstr "Ogiltig URL %q: %w"
@@ -4149,7 +4145,7 @@ msgid "Invalid argument %q"
 msgstr "Ogiltigt argument %q"
 
 #: cmd/incus/export.go:139 cmd/incus/storage_bucket.go:1372
-#: cmd/incus/storage_volume.go:3773
+#: cmd/incus/storage_volume.go:3766
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr "Ogiltigt segment för säkerhetskopieringsnamn i sökvägen %q: %w"
@@ -4207,7 +4203,7 @@ msgstr "Ogiltig inmatning, ange ett positivt tal"
 msgid "Invalid join token: %w"
 msgstr "Ogiltigt anslutningstoken: %w"
 
-#: cmd/incus/utils.go:271
+#: cmd/incus/utils.go:272
 #, c-format
 msgid "Invalid key=value configuration: %s"
 msgstr "Ogiltig nyckel=värde-konfiguration: %s"
@@ -4575,11 +4571,11 @@ msgstr ""
 msgid "List all warnings"
 msgstr "Lista alla varningar"
 
-#: cmd/incus/network_acl.go:100
+#: cmd/incus/network_acl.go:101
 msgid "List available network ACL"
 msgstr "Lista tillgängliga nätverks-ACL"
 
-#: cmd/incus/network_acl.go:99
+#: cmd/incus/network_acl.go:100
 msgid "List available network ACLS"
 msgstr "Lista tillgängliga nätverks-ACLS"
 
@@ -5264,7 +5260,7 @@ msgstr ""
 "avkortas). Standardvärdet är -1 (obegränsat). Använd 0 för att begränsa\n"
 "till kolumnrubrikens storlek."
 
-#: cmd/incus/network_acl.go:104
+#: cmd/incus/network_acl.go:105
 msgid "List network ACLs across all projects"
 msgstr "Lista nätverks-ACL:er för alla projekt"
 
@@ -5554,11 +5550,11 @@ msgstr ""
 "n – Namn d – Beskrivning\n"
 "L – Lagringsbehållarens plats (t.ex. dess klustermedlem)"
 
-#: cmd/incus/storage_volume.go:3302 cmd/incus/storage_volume.go:3303
+#: cmd/incus/storage_volume.go:3295 cmd/incus/storage_volume.go:3296
 msgid "List storage volume snapshots"
 msgstr "Lista över lagringsvolymsnapshots"
 
-#: cmd/incus/storage_volume.go:3308
+#: cmd/incus/storage_volume.go:3301
 msgid ""
 "List storage volume snapshots\n"
 "\n"
@@ -5827,12 +5823,12 @@ msgstr "Logisk router"
 msgid "Logical switch"
 msgstr "Logisk omkopplare"
 
-#: cmd/incus/utils.go:665
+#: cmd/incus/utils.go:666
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr "Logga in med användarnamn %q och lösenord %q"
 
-#: cmd/incus/utils.go:667
+#: cmd/incus/utils.go:668
 msgid "Login without username and password"
 msgstr "Logga in utan användarnamn och lösenord"
 
@@ -6025,11 +6021,11 @@ msgstr "Hantera instansmetadatafiler"
 msgid "Manage instance snapshots"
 msgstr "Hantera instanssnapshots"
 
-#: cmd/incus/network_acl.go:804 cmd/incus/network_acl.go:805
+#: cmd/incus/network_acl.go:805 cmd/incus/network_acl.go:806
 msgid "Manage network ACL rules"
 msgstr "Hantera nätverks-ACL-regler"
 
-#: cmd/incus/network_acl.go:31 cmd/incus/network_acl.go:32
+#: cmd/incus/network_acl.go:32 cmd/incus/network_acl.go:33
 msgid "Manage network ACLs"
 msgstr "Hantera nätverks-ACL:er"
 
@@ -6107,7 +6103,7 @@ msgstr "Hantera lagringsbuckets."
 msgid "Manage storage pools and volumes"
 msgstr "Hantera lagringspooler och volymer"
 
-#: cmd/incus/storage_volume.go:3014 cmd/incus/storage_volume.go:3015
+#: cmd/incus/storage_volume.go:3007 cmd/incus/storage_volume.go:3008
 msgid "Manage storage volume snapshots"
 msgstr "Hantera ögonblicksbilder av lagringsvolym"
 
@@ -6222,7 +6218,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr "Minsta storlek är 1GiB"
 
-#: cmd/incus/file.go:761
+#: cmd/incus/file.go:754
 msgid "Missing target directory"
 msgstr "Målkatalogen saknas"
 
@@ -6274,11 +6270,11 @@ msgstr ""
 "Montera filer från anpassade lagringsvolymer.\n"
 "Om ingen målsökväg anges, starta en SSH SFTP-lyssnare istället."
 
-#: cmd/incus/file.go:938
+#: cmd/incus/file.go:931
 msgid "Mount files from instances"
 msgstr "Montera filer från instanser"
 
-#: cmd/incus/file.go:939
+#: cmd/incus/file.go:932
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -6339,7 +6335,7 @@ msgstr "Flytta lagringsvolymen: %s"
 msgid "Multiple ports match. Use --force to remove them all"
 msgstr "Flera portar matchar. Använd --force för att ta bort dem alla"
 
-#: cmd/incus/network_acl.go:1042
+#: cmd/incus/network_acl.go:1043
 msgid "Multiple rules match. Use --force to remove them all"
 msgstr "Flera regler matchar. Använd --force för att ta bort dem alla"
 
@@ -6350,14 +6346,14 @@ msgstr "Måste köras som root för att importera från katalogen"
 #: cmd/incus/cluster.go:195 cmd/incus/cluster.go:1143
 #: cmd/incus/cluster_group.go:462 cmd/incus/config_trust.go:413
 #: cmd/incus/config_trust.go:600 cmd/incus/list.go:484
-#: cmd/incus/network.go:1070 cmd/incus/network_acl.go:161
+#: cmd/incus/network.go:1070 cmd/incus/network_acl.go:162
 #: cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:426
 #: cmd/incus/network_peer.go:138 cmd/incus/network_zone.go:144
 #: cmd/incus/network_zone.go:870 cmd/incus/profile.go:723
 #: cmd/incus/project.go:542 cmd/incus/project.go:671 cmd/incus/remote.go:988
 #: cmd/incus/snapshot.go:365 cmd/incus/storage.go:684
 #: cmd/incus/storage_bucket.go:478 cmd/incus/storage_bucket.go:870
-#: cmd/incus/storage_volume.go:1567 cmd/incus/storage_volume.go:3399
+#: cmd/incus/storage_volume.go:1567 cmd/incus/storage_volume.go:3392
 msgid "NAME"
 msgstr "NAMN"
 
@@ -6365,32 +6361,32 @@ msgstr "NAMN"
 msgid "NAT"
 msgstr "NAT"
 
-#: cmd/incus/storage_volume.go:3961
+#: cmd/incus/storage_volume.go:3954
 #, fuzzy
 msgid "NBD access to a block storage volume"
 msgstr "Ta bort anpassade lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:3962
+#: cmd/incus/storage_volume.go:3955
 #, fuzzy
 msgid "NBD access to a block storage volume."
 msgstr "Ta bort anpassade lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:4026
+#: cmd/incus/storage_volume.go:4019
 #, fuzzy, c-format
 msgid "NBD client connected %q"
 msgstr "SSH-klient ansluten %q"
 
-#: cmd/incus/storage_volume.go:4027
+#: cmd/incus/storage_volume.go:4020
 #, fuzzy, c-format
 msgid "NBD client disconnected %q"
 msgstr "SSH-klienten frånkopplad %q"
 
-#: cmd/incus/storage_volume.go:4032
+#: cmd/incus/storage_volume.go:4025
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:4016
+#: cmd/incus/storage_volume.go:4009
 #, fuzzy, c-format
 msgid "NBD listening on %v"
 msgstr "SSH SFTP lyssnar på %v"
@@ -6403,7 +6399,7 @@ msgstr "NÄTVERKSZONER"
 msgid "NETWORKS"
 msgstr "NÄTVERK"
 
-#: cmd/incus/admin_recover.go:157
+#: cmd/incus/admin_recover.go:155
 #, c-format
 msgid "NEW: %q (backend=%q, source=%q)"
 msgstr "NYTT: %q (backend=%q, källa=%q)"
@@ -6489,7 +6485,7 @@ msgstr "Namn på projektet som ska användas för denna fjärrkontroll:"
 msgid "Name of the shared LVM volume group:"
 msgstr "Namn på den delade LVM-volymgruppen:"
 
-#: cmd/incus/admin_recover.go:116
+#: cmd/incus/admin_recover.go:114
 #, c-format
 msgid "Name of the storage backend (%s):"
 msgstr "Namn på lagringsbackend (%s):"
@@ -6499,7 +6495,7 @@ msgstr "Namn på lagringsbackend (%s):"
 msgid "Name of the storage backend to use (%s)"
 msgstr "Namn på lagringsbackend som ska användas (%s)"
 
-#: cmd/incus/admin_recover.go:99
+#: cmd/incus/admin_recover.go:97
 msgid "Name of the storage pool:"
 msgstr "Namn på lagringspoolen:"
 
@@ -6534,22 +6530,22 @@ msgstr "Nätverk %s väntar på medlem %s"
 msgid "Network %s renamed to %s"
 msgstr "Nätverk %s döpt om till %s"
 
-#: cmd/incus/network_acl.go:428
+#: cmd/incus/network_acl.go:429
 #, c-format
 msgid "Network ACL %s created"
 msgstr "Nätverks-ACL %s skapad"
 
-#: cmd/incus/network_acl.go:782
+#: cmd/incus/network_acl.go:783
 #, c-format
 msgid "Network ACL %s deleted"
 msgstr "Nätverks-ACL %s raderad"
 
-#: cmd/incus/network_acl.go:733
+#: cmd/incus/network_acl.go:734
 #, c-format
 msgid "Network ACL %s renamed to %s"
 msgstr "Nätverks-ACL %s döpt om till %s"
 
-#: cmd/incus/network_acl.go:362
+#: cmd/incus/network_acl.go:363
 msgid "Network ACL description"
 msgstr "Beskrivning av nätverks-ACL"
 
@@ -6720,7 +6716,7 @@ msgstr "Ingen matchande backend hittades"
 msgid "No matching port(s) found"
 msgstr "Inga matchande portar hittades"
 
-#: cmd/incus/network_acl.go:1053
+#: cmd/incus/network_acl.go:1054
 msgid "No matching rule(s) found"
 msgstr "Inga matchande regler hittades"
 
@@ -6728,7 +6724,7 @@ msgstr "Inga matchande regler hittades"
 msgid "No storage backends available"
 msgstr "Inga lagringsbackends tillgängliga"
 
-#: cmd/incus/admin_recover.go:215
+#: cmd/incus/admin_recover.go:213
 msgid "No unknown storage pools or volumes found. Nothing to do."
 msgstr "Inga okända lagringspooler eller volymer hittades. Inget att göra."
 
@@ -6849,7 +6845,7 @@ msgid "PROFILES"
 msgstr "PROFILER"
 
 #: cmd/incus/image.go:1075 cmd/incus/list.go:478 cmd/incus/network.go:1069
-#: cmd/incus/network_acl.go:167 cmd/incus/network_address_set.go:161
+#: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:143 cmd/incus/profile.go:724
 #: cmd/incus/storage_bucket.go:477 cmd/incus/storage_volume.go:1586
 #: cmd/incus/top.go:82 cmd/incus/warning.go:213
@@ -6885,7 +6881,7 @@ msgstr "Partitioner:"
 msgid "Password for %s: "
 msgstr "Lösenord för %s: "
 
-#: cmd/incus/utils.go:636
+#: cmd/incus/utils.go:637
 #, c-format
 msgid "Password rejected for %q"
 msgstr "Lösenordet avvisat för %q"
@@ -6911,7 +6907,7 @@ msgstr "Peer-beskrivning"
 msgid "Perform an incremental copy"
 msgstr "Utför en inkrementell kopiering"
 
-#: cmd/incus/admin_recover.go:227
+#: cmd/incus/admin_recover.go:225
 msgid "Please create those missing entries and then hit ENTER:"
 msgstr "Skapa de saknade posterna och tryck sedan på ENTER:"
 
@@ -6931,7 +6927,7 @@ msgstr "Skriv 'y', 'n' eller fingeravtrycket:"
 msgid "Polling interval (in seconds)"
 msgstr "Avsökningsintervall (i sekunder)"
 
-#: cmd/incus/admin_recover.go:101
+#: cmd/incus/admin_recover.go:99
 msgid "Pool name cannot be empty"
 msgstr "Poolnamnet får inte vara tomt"
 
@@ -6973,7 +6969,7 @@ msgstr "Tryck på 's' + ENTER för att ändra sorteringsmetod"
 msgid "Press CTRL-C to exit"
 msgstr "Tryck på CTRL-C för att avsluta"
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:561
 msgid "Press ctrl+c to finish"
 msgstr "Tryck på Ctrl+C för att avsluta"
 
@@ -6981,7 +6977,7 @@ msgstr "Tryck på Ctrl+C för att avsluta"
 #: cmd/incus/config.go:266 cmd/incus/config.go:341
 #: cmd/incus/config_metadata.go:148 cmd/incus/config_template.go:232
 #: cmd/incus/config_trust.go:330 cmd/incus/image.go:459
-#: cmd/incus/network.go:760 cmd/incus/network_acl.go:668
+#: cmd/incus/network.go:760 cmd/incus/network_acl.go:669
 #: cmd/incus/network_address_set.go:524 cmd/incus/network_forward.go:727
 #: cmd/incus/network_integration.go:294 cmd/incus/network_load_balancer.go:706
 #: cmd/incus/network_peer.go:730 cmd/incus/network_zone.go:671
@@ -7177,21 +7173,21 @@ msgid "Pull files from instances"
 msgstr "Hämta filer från instanser"
 
 #: cmd/incus/file.go:582 cmd/incus/storage_volume.go:2700
-#: cmd/incus/utils_sftp.go:198
+#: cmd/incus/utils_sftp.go:192
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr "Drar ner %s från %s: %%s"
 
-#: cmd/incus/storage_volume.go:2780 cmd/incus/storage_volume.go:2781
+#: cmd/incus/storage_volume.go:2773 cmd/incus/storage_volume.go:2774
 msgid "Push files into custom volumes"
 msgstr "Skicka filer till anpassade volymer"
 
-#: cmd/incus/file.go:673 cmd/incus/file.go:674
+#: cmd/incus/file.go:666 cmd/incus/file.go:667
 msgid "Push files into instances"
 msgstr "Skicka filer till instanser"
 
-#: cmd/incus/file.go:883 cmd/incus/storage_volume.go:2967
-#: cmd/incus/utils_sftp.go:318
+#: cmd/incus/file.go:876 cmd/incus/storage_volume.go:2960
+#: cmd/incus/utils_sftp.go:305
 #, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr "Trycker %s till %s: %%s"
@@ -7237,14 +7233,14 @@ msgstr "Återuppbygga instanser"
 msgid "Record description"
 msgstr "Beskrivning av posten"
 
-#: cmd/incus/admin_recover.go:32
+#: cmd/incus/admin_recover.go:30
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage pools"
 msgstr ""
 "Återställ saknade instanser och volymer från befintliga och okända "
 "lagringspooler"
 
-#: cmd/incus/admin_recover.go:33
+#: cmd/incus/admin_recover.go:31
 msgid ""
 "Recover missing instances and volumes from existing and unknown storage "
 "pools\n"
@@ -7266,8 +7262,8 @@ msgstr ""
 "  som finns i poolerna men inte i databasen. Därefter erbjuder det sig att "
 "återskapa dessa databasposter."
 
-#: cmd/incus/file.go:447 cmd/incus/file.go:682 cmd/incus/storage_volume.go:2587
-#: cmd/incus/storage_volume.go:2789
+#: cmd/incus/file.go:447 cmd/incus/file.go:675 cmd/incus/storage_volume.go:2587
+#: cmd/incus/storage_volume.go:2782
 msgid "Recursively transfer files"
 msgstr "Överför filer rekursivt"
 
@@ -7370,7 +7366,7 @@ msgstr "Ta bort alla portar som matchar"
 msgid "Remove all profiles from the instance"
 msgstr "Ta bort alla profiler från instansen"
 
-#: cmd/incus/network_acl.go:959
+#: cmd/incus/network_acl.go:960
 msgid "Remove all rules that match"
 msgstr "Ta bort alla regler som matchar"
 
@@ -7415,7 +7411,7 @@ msgstr "Ta bort fjärrkontroller"
 msgid "Remove roles from a cluster member"
 msgstr "Ta bort roller från en klustermedlem"
 
-#: cmd/incus/network_acl.go:957 cmd/incus/network_acl.go:958
+#: cmd/incus/network_acl.go:958 cmd/incus/network_acl.go:959
 msgid "Remove rules from an ACL"
 msgstr "Ta bort regler från en ACL"
 
@@ -7453,7 +7449,7 @@ msgstr "Byt namn på instanssnapshots"
 msgid "Rename instances"
 msgstr "Byt namn på instanser"
 
-#: cmd/incus/network_acl.go:701 cmd/incus/network_acl.go:702
+#: cmd/incus/network_acl.go:702 cmd/incus/network_acl.go:703
 msgid "Rename network ACLs"
 msgstr "Byt namn på nätverks-ACL:er"
 
@@ -7481,7 +7477,7 @@ msgstr "Byt namn på projekt"
 msgid "Rename remotes"
 msgstr "Byt namn på fjärrkontroller"
 
-#: cmd/incus/storage_volume.go:3459 cmd/incus/storage_volume.go:3460
+#: cmd/incus/storage_volume.go:3452 cmd/incus/storage_volume.go:3453
 msgid "Rename storage volume snapshots"
 msgstr "Byt namn på snapshots av lagringsvolymer"
 
@@ -7490,7 +7486,7 @@ msgstr "Byt namn på snapshots av lagringsvolymer"
 msgid "Renamed storage volume from \"%s\" to \"%s\""
 msgstr "Bytte namn på lagringsvolym från \"%s\" till \"%s\""
 
-#: cmd/incus/storage_volume.go:3512
+#: cmd/incus/storage_volume.go:3505
 #, c-format
 msgid "Renamed storage volume snapshot from \"%s\" to \"%s\""
 msgstr "Omdöpt lagringsvolymsögonblick från \"%s\" till \"%s\""
@@ -7536,7 +7532,7 @@ msgstr ""
 msgid "Restore instance snapshots"
 msgstr "Återställ instanssnapshots"
 
-#: cmd/incus/storage_volume.go:3529 cmd/incus/storage_volume.go:3530
+#: cmd/incus/storage_volume.go:3522 cmd/incus/storage_volume.go:3523
 msgid "Restore storage volume snapshots"
 msgstr "Återställ snapshots av lagringsvolym"
 
@@ -7574,12 +7570,12 @@ msgstr "Återkalla klustermedlemmens anslutningstoken"
 msgid "Role (admin or read-only)"
 msgstr "Roll (administratör eller skrivskyddad)"
 
-#: cmd/incus/admin_sql.go:140
+#: cmd/incus/admin_sql.go:138
 #, c-format
 msgid "Rows affected: %d"
 msgstr "Berörda rader: %d"
 
-#: cmd/incus/network_acl.go:825
+#: cmd/incus/network_acl.go:826
 msgid "Rule description"
 msgstr "Regelbeskrivning"
 
@@ -7628,17 +7624,17 @@ msgstr "KÄLLA"
 msgid "SR-IOV information:"
 msgstr "SR-IOV-information:"
 
-#: cmd/incus/utils.go:662
+#: cmd/incus/utils.go:663
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr "SSH SFTP lyssnar på %v"
 
-#: cmd/incus/utils.go:679
+#: cmd/incus/utils.go:680
 #, c-format
 msgid "SSH client connected %q"
 msgstr "SSH-klient ansluten %q"
 
-#: cmd/incus/utils.go:680
+#: cmd/incus/utils.go:681
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr "SSH-klienten frånkopplad %q"
@@ -7681,7 +7677,7 @@ msgstr "LAGRINGSVOLYMER"
 msgid "STP"
 msgstr "STP"
 
-#: cmd/incus/admin_recover.go:169
+#: cmd/incus/admin_recover.go:167
 msgid "Scanning for unknown volumes..."
 msgstr "Söker efter okända volymer..."
 
@@ -7760,7 +7756,7 @@ msgstr "Ställ in konfigurationsnycklarna för en klustergrupp"
 msgid "Set a cluster member's configuration keys"
 msgstr "Ställ in konfigurationsnycklarna för en klustermedlem"
 
-#: cmd/incus/file.go:951 cmd/incus/storage_volume.go:2407
+#: cmd/incus/file.go:944 cmd/incus/storage_volume.go:2407
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr "Ställ in autentiseringsanvändare vid användning av SSH SFTP-lyssnare"
 
@@ -7818,11 +7814,11 @@ msgstr ""
 "in med:\n"
 "    incus config set [<fjärr>:][<instans>] <nyckel> <värde>"
 
-#: cmd/incus/network_acl.go:447
+#: cmd/incus/network_acl.go:448
 msgid "Set network ACL configuration keys"
 msgstr "Ställ in konfigurationsnycklar för nätverks-ACL"
 
-#: cmd/incus/network_acl.go:448
+#: cmd/incus/network_acl.go:449
 msgid ""
 "Set network ACL configuration keys\n"
 "\n"
@@ -8061,7 +8057,7 @@ msgstr "Ställ in URL-adressen för fjärrkontrollen"
 msgid "Set the file's gid on create"
 msgstr "Ställ in filens gid vid skapandet"
 
-#: cmd/incus/storage_volume.go:2792
+#: cmd/incus/storage_volume.go:2785
 msgid "Set the file's gid on push"
 msgstr "Ställ in filens gid vid push"
 
@@ -8069,11 +8065,11 @@ msgstr "Ställ in filens gid vid push"
 msgid "Set the file's perms on create"
 msgstr "Ställ in filens behörigheter vid skapandet"
 
-#: cmd/incus/storage_volume.go:2793
+#: cmd/incus/storage_volume.go:2786
 msgid "Set the file's perms on push"
 msgstr "Ställ in filens behörigheter vid push"
 
-#: cmd/incus/file.go:686
+#: cmd/incus/file.go:679
 msgid ""
 "Set the file's perms on push (in recursive mode, sets the target directory's "
 "permissions if it doesn't exist)"
@@ -8085,11 +8081,11 @@ msgstr ""
 msgid "Set the file's uid on create"
 msgstr "Ställ in filens uid vid skapandet"
 
-#: cmd/incus/storage_volume.go:2791
+#: cmd/incus/storage_volume.go:2784
 msgid "Set the file's uid on push"
 msgstr "Ställ in filens uid vid push"
 
-#: cmd/incus/file.go:685
+#: cmd/incus/file.go:678
 msgid ""
 "Set the files' GIDs on push (in recursive mode, only sets the target "
 "directory's GID if it doesn't exist and -p is used)"
@@ -8097,7 +8093,7 @@ msgstr ""
 "Ange filernas GID vid push (i rekursivt läge, anger bara målkatalogens GID "
 "om den inte finns och -p används)"
 
-#: cmd/incus/file.go:684
+#: cmd/incus/file.go:677
 msgid ""
 "Set the files' UIDs on push (in recursive mode, only sets the target "
 "directory's UID if it doesn't exist and -p is used)"
@@ -8113,7 +8109,7 @@ msgstr "Ställ in nyckeln som en klustergruppsegenskap"
 msgid "Set the key as a cluster property"
 msgstr "Ställ in nyckeln som en klusteregenskap"
 
-#: cmd/incus/network_acl.go:454
+#: cmd/incus/network_acl.go:455
 msgid "Set the key as a network ACL property"
 msgstr "Ställ in nyckeln som en nätverks-ACL-egenskap"
 
@@ -8173,7 +8169,7 @@ msgstr "Ställ in nyckeln som en lagringsvolymegenskap"
 msgid "Set the key as an instance property"
 msgstr "Ställ in nyckeln som en instansegenskap"
 
-#: cmd/incus/file.go:949 cmd/incus/storage_volume.go:2405
+#: cmd/incus/file.go:942 cmd/incus/storage_volume.go:2405
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr "Konfigurera SSH SFTP-lyssnare på adress:port istället för att montera"
 
@@ -8245,11 +8241,11 @@ msgstr "Visa mindre vanliga kommandon"
 msgid "Show local and remote versions"
 msgstr "Visa lokala och fjärrversioner"
 
-#: cmd/incus/network_acl.go:184 cmd/incus/network_acl.go:185
+#: cmd/incus/network_acl.go:185 cmd/incus/network_acl.go:186
 msgid "Show network ACL configurations"
 msgstr "Visa nätverks-ACL-konfigurationer"
 
-#: cmd/incus/network_acl.go:237 cmd/incus/network_acl.go:238
+#: cmd/incus/network_acl.go:238 cmd/incus/network_acl.go:239
 msgid "Show network ACL log"
 msgstr "Visa nätverks-ACL-logg"
 
@@ -8334,11 +8330,11 @@ msgstr ""
 "lägger du till ögonblicksbildens namn (endast om typen är anpassad, "
 "container eller virtuell maskin)."
 
-#: cmd/incus/storage_volume.go:3593
+#: cmd/incus/storage_volume.go:3586
 msgid "Show storage volume snapshhot configurations"
 msgstr "Visa konfigurationer för lagringsvolymsöversikt"
 
-#: cmd/incus/storage_volume.go:3592
+#: cmd/incus/storage_volume.go:3585
 msgid "Show storage volume snapshot configurations"
 msgstr "Visa konfigurationer för ögonblicksbilder av lagringsvolym"
 
@@ -8426,11 +8422,11 @@ msgstr "Storlek: %.2fMiB"
 msgid "Size: %s"
 msgstr "Storlek: %s"
 
-#: cmd/incus/storage_volume.go:3079
+#: cmd/incus/storage_volume.go:3072
 msgid "Snapshot description"
 msgstr "Översiktsbeskrivning"
 
-#: cmd/incus/storage_volume.go:3067 cmd/incus/storage_volume.go:3068
+#: cmd/incus/storage_volume.go:3060 cmd/incus/storage_volume.go:3061
 msgid "Snapshot storage volumes"
 msgstr "Lagringsvolymer för ögonblicksbilder"
 
@@ -8456,7 +8452,7 @@ msgstr "Vissa fall misslyckades med %s"
 msgid "Sorting Method:"
 msgstr "Sorteringsmetod:"
 
-#: cmd/incus/admin_recover.go:121
+#: cmd/incus/admin_recover.go:119
 msgid ""
 "Source of the storage pool (block device, volume group, dataset, path, ... "
 "as applicable):"
@@ -8468,7 +8464,7 @@ msgstr ""
 msgid "Source:"
 msgstr "Källa:"
 
-#: cmd/incus/storage_volume.go:3965
+#: cmd/incus/storage_volume.go:3958
 msgid "Specific address to listen on"
 msgstr ""
 
@@ -8486,7 +8482,7 @@ msgstr "Startad: %s"
 msgid "Starting %s"
 msgstr "Startar %s"
 
-#: cmd/incus/admin_recover.go:239
+#: cmd/incus/admin_recover.go:237
 msgid "Starting recovery..."
 msgstr "Startar återställning..."
 
@@ -8554,12 +8550,12 @@ msgstr "Nyckel för lagringsbucket %q borttagen"
 msgid "Storage has already been configured"
 msgstr "Lagring har redan konfigurerats"
 
-#: cmd/incus/admin_recover.go:106
+#: cmd/incus/admin_recover.go:104
 #, c-format
 msgid "Storage pool %q is already on recover list"
 msgstr "Lagringspool %q finns redan på återställningslistan"
 
-#: cmd/incus/admin_recover.go:202
+#: cmd/incus/admin_recover.go:200
 #, c-format
 msgid "Storage pool %q of type %q"
 msgstr "Lagringspool %q av typ %q"
@@ -8610,7 +8606,7 @@ msgstr "Lagringsvolymen har kopierats!"
 msgid "Storage volume moved successfully!"
 msgstr "Lagringsvolymen har flyttats utan problem!"
 
-#: cmd/incus/storage_volume.go:3276
+#: cmd/incus/storage_volume.go:3269
 #, c-format
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "Lagringsvolymsögonblicksbild %s raderad från %s"
@@ -8657,7 +8653,7 @@ msgstr "Symlink-målvägen kan endast användas för typen \"symlink\""
 msgid "System:"
 msgstr "System:"
 
-#: cmd/incus/snapshot.go:366 cmd/incus/storage_volume.go:3400
+#: cmd/incus/snapshot.go:366 cmd/incus/storage_volume.go:3393
 msgid "TAKEN AT"
 msgstr "TAGET VID"
 
@@ -8682,7 +8678,7 @@ msgstr "TYP"
 msgid "Taken at"
 msgstr "Taget vid"
 
-#: cmd/incus/file.go:758
+#: cmd/incus/file.go:751
 msgid "Target is not a directory"
 msgstr "%s är inte en katalog"
 
@@ -8695,11 +8691,11 @@ msgstr "Målet är inte ett kluster"
 msgid "Target path %q already exists"
 msgstr "Målvägen %q finns redan"
 
-#: cmd/incus/file.go:997 cmd/incus/storage_volume.go:2457
+#: cmd/incus/file.go:990 cmd/incus/storage_volume.go:2457
 msgid "Target path and --listen flag cannot be used together"
 msgstr "Målsökvägen och flaggan --listen kan inte användas tillsammans"
 
-#: cmd/incus/file.go:991 cmd/incus/storage_volume.go:2452
+#: cmd/incus/file.go:984 cmd/incus/storage_volume.go:2452
 msgid "Target path must be a directory"
 msgstr "Målvägen måste vara en katalog"
 
@@ -8794,11 +8790,11 @@ msgstr ""
 msgid "The device already exists"
 msgstr "Enheten finns redan"
 
-#: cmd/incus/admin_recover.go:200
+#: cmd/incus/admin_recover.go:198
 msgid "The following unknown storage pools have been found:"
 msgstr "Följande okända lagringspooler har hittats:"
 
-#: cmd/incus/admin_recover.go:207
+#: cmd/incus/admin_recover.go:205
 msgid "The following unknown volumes have been found:"
 msgstr "Följande okända volymer har hittats:"
 
@@ -8834,14 +8830,14 @@ msgstr "Nyckeln %q finns inte i klustergruppen %q"
 msgid "The key %q does not exist on cluster member %q"
 msgstr "Nyckeln %q finns inte på klustermedlemmen %q"
 
-#: cmd/incus/utils.go:466
+#: cmd/incus/utils.go:467
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
-"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med "
-"'%q:%q'."
+"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med '%q:"
+"%q'."
 
-#: cmd/incus/utils.go:462
+#: cmd/incus/utils.go:463
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -8885,7 +8881,7 @@ msgstr "Egenskapen %q finns inte på lastbalanseraren %q: %v"
 msgid "The property %q does not exist on the network %q: %v"
 msgstr "Egenskapen %q finns inte på nätverket %q: %v"
 
-#: cmd/incus/network_acl.go:326
+#: cmd/incus/network_acl.go:327
 #, c-format
 msgid "The property %q does not exist on the network ACL %q: %v"
 msgstr "Egenskapen %q finns inte på nätverks-ACL %q: %v"
@@ -8951,7 +8947,7 @@ msgstr "Egenskapen %q finns inte på lagringspoolens volymsnapshot %s/%s: %v"
 msgid "The property with tag %q does not exist"
 msgstr "Objektet med taggen %q finns inte"
 
-#: cmd/incus/admin_recover.go:151
+#: cmd/incus/admin_recover.go:149
 msgid "The recovery process will be scanning the following storage pools:"
 msgstr "Återställningsprocessen kommer att skanna följande lagringspooler:"
 
@@ -9051,7 +9047,7 @@ msgid ""
 "further processing is done"
 msgstr ""
 
-#: cmd/incus/admin_recover.go:63
+#: cmd/incus/admin_recover.go:61
 msgid "This server currently has the following storage pools:"
 msgstr "Denna server har för närvarande följande lagringspooler:"
 
@@ -9216,7 +9212,7 @@ msgstr "USB-enhet:"
 msgid "USB devices:"
 msgstr "USB-enheter:"
 
-#: cmd/incus/network.go:1076 cmd/incus/network_acl.go:163
+#: cmd/incus/network.go:1076 cmd/incus/network_acl.go:164
 #: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:80
 #: cmd/incus/network_integration.go:429 cmd/incus/network_zone.go:146
 #: cmd/incus/profile.go:726 cmd/incus/project.go:550 cmd/incus/storage.go:688
@@ -9253,7 +9249,7 @@ msgstr "Fjärrserver otillgänglig"
 msgid "Unknown certificate type %q"
 msgstr "Okänd certifikattyp %q"
 
-#: cmd/incus/utils.go:702
+#: cmd/incus/utils.go:703
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr "Okänd kanaltyp för klient %q: %s"
@@ -9269,7 +9265,7 @@ msgstr "Okänd kanaltyp för klient %q: %s"
 #: cmd/incus/profile.go:747 cmd/incus/project.go:565 cmd/incus/remote.go:1008
 #: cmd/incus/snapshot.go:382 cmd/incus/storage.go:704
 #: cmd/incus/storage_bucket.go:502 cmd/incus/storage_bucket.go:886
-#: cmd/incus/storage_volume.go:1602 cmd/incus/storage_volume.go:3415
+#: cmd/incus/storage_volume.go:1602 cmd/incus/storage_volume.go:3408
 #: cmd/incus/top.go:101 cmd/incus/warning.go:242
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
@@ -9280,7 +9276,7 @@ msgstr "Okänd kolumnförkortning char '%c' i '%s'"
 msgid "Unknown console type %q"
 msgstr "Okänd konsoltyp %q"
 
-#: cmd/incus/utils_sftp.go:252
+#: cmd/incus/utils_sftp.go:239
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr "Okänd filtyp '%s'"
@@ -9290,7 +9286,7 @@ msgstr "Okänd filtyp '%s'"
 msgid "Unknown flag --%s"
 msgstr "Okänd nyckel: %s"
 
-#: cmd/incus/network_acl.go:890 cmd/incus/network_acl.go:1009
+#: cmd/incus/network_acl.go:891 cmd/incus/network_acl.go:1010
 #, c-format
 msgid "Unknown key: %s"
 msgstr "Okänd nyckel: %s"
@@ -9324,7 +9320,7 @@ msgstr "Ta bort avbildningsegenskaper"
 msgid "Unset instance or server configuration keys"
 msgstr "Avmarkera instans- eller serverkonfigurationsnycklar"
 
-#: cmd/incus/network_acl.go:528 cmd/incus/network_acl.go:529
+#: cmd/incus/network_acl.go:529 cmd/incus/network_acl.go:530
 msgid "Unset network ACL configuration keys"
 msgstr "Oinställda nätverks-ACL-konfigurationsnycklar"
 
@@ -9414,7 +9410,7 @@ msgstr "Avmarkera nyckeln som en klustergruppsegenskap"
 msgid "Unset the key as a cluster property"
 msgstr "Inaktivera nyckeln som en klusteregenskap"
 
-#: cmd/incus/network_acl.go:532
+#: cmd/incus/network_acl.go:533
 msgid "Unset the key as a network ACL property"
 msgstr "Inaktivera nyckeln som en nätverks-ACL-egenskap"
 
@@ -9536,7 +9532,7 @@ msgstr ""
 "Använd lagringsdrivrutinens optimerade format (kan endast återställas på en "
 "liknande pool)"
 
-#: cmd/incus/storage_volume.go:3669
+#: cmd/incus/storage_volume.go:3662
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool, "
 "ignored for ISO storage volumes)"
@@ -9628,7 +9624,7 @@ msgstr "Endast volym"
 msgid "Volume description"
 msgstr "Volymbeskrivning"
 
-#: cmd/incus/storage_volume.go:3203
+#: cmd/incus/storage_volume.go:3196
 #, fuzzy, c-format
 msgid "Volume snapshot name is: %s"
 msgstr "Instansnamn är: %s"
@@ -9700,8 +9696,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
-"\n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
+"sätt, \n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -9766,7 +9762,8 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:97
 msgid "Whether or not to snapshot the instance's running state"
-msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr ""
+"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/rebuild.go:28
 msgid ""
@@ -9787,7 +9784,7 @@ msgstr "Vill du att gamla cachade avbildningar ska uppdateras automatiskt?"
 msgid "Would you like the server to be available over the network?"
 msgstr "Vill du att servern ska vara tillgänglig via nätverket?"
 
-#: cmd/incus/admin_recover.go:230
+#: cmd/incus/admin_recover.go:228
 msgid "Would you like those to be recovered?"
 msgstr "Vill du att de ska återställas?"
 
@@ -9799,7 +9796,7 @@ msgstr "Vill du NAT IPv4-trafik på din brygga?"
 msgid "Would you like to NAT IPv6 traffic on your bridge?"
 msgstr "Vill du använda NAT för IPv6-trafik på din brygga?"
 
-#: cmd/incus/admin_recover.go:160
+#: cmd/incus/admin_recover.go:158
 msgid "Would you like to continue with scanning for lost volumes?"
 msgstr "Vill du fortsätta söka efter förlorade volymer?"
 
@@ -9820,7 +9817,7 @@ msgstr "Vill du skapa en ny zfs-datauppsättning under rpool/incus?"
 msgid "Would you like to have your containers share their parent's allocation?"
 msgstr "Vill du att dina containrar ska dela sina föräldrars tilldelning?"
 
-#: cmd/incus/admin_recover.go:77
+#: cmd/incus/admin_recover.go:75
 msgid "Would you like to recover another storage pool?"
 msgstr "Vill du återställa en annan lagringspool?"
 
@@ -9846,7 +9843,7 @@ msgstr "Vill du använda klustring?"
 msgid "YES"
 msgstr "JA"
 
-#: cmd/incus/admin_recover.go:222
+#: cmd/incus/admin_recover.go:220
 msgid "You are currently missing the following:"
 msgstr "Du saknar för närvarande följande:"
 
@@ -10216,7 +10213,7 @@ msgstr ""
 "incus file create --type=symlink foo/bar baz\n"
 "   Skapar en symlänk /bar i instansen foo med målet baz."
 
-#: cmd/incus/file.go:942
+#: cmd/incus/file.go:935
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -10248,7 +10245,7 @@ msgstr ""
 "   För att hämta /etc/hosts från instansen och skriva dess utdata till "
 "standard ut."
 
-#: cmd/incus/file.go:675
+#: cmd/incus/file.go:668
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -10399,7 +10396,7 @@ msgstr ""
 "incus move <instans>/<old snapshot name> <instans>/<new snapshot name>\n"
 "    Byt namn på en ögonblicksbild."
 
-#: cmd/incus/network_acl.go:357
+#: cmd/incus/network_acl.go:358
 msgid ""
 "incus network acl create a1\n"
 "\n"
@@ -10840,7 +10837,7 @@ msgstr ""
 "   För att starta en SSH SFTP-lyssnare för lagringsvolymen myvolume från "
 "poolen mypool."
 
-#: cmd/incus/storage_volume.go:2782
+#: cmd/incus/storage_volume.go:2775
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -10872,7 +10869,7 @@ msgstr ""
 "Returnerar utgångsperioden för en snapshot för en virtuell maskin \"data\" i "
 "poolen \"default\""
 
-#: cmd/incus/storage_volume.go:3836
+#: cmd/incus/storage_volume.go:3829
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
 "    Create a new custom volume using backup0.tar.gz as the source\n"
@@ -10946,7 +10943,7 @@ msgstr ""
 "storage volume show default container/c1 Visar\n"
 "egenskaperna för containervolymen \"c1\" i poolen \"default\""
 
-#: cmd/incus/storage_volume.go:3069
+#: cmd/incus/storage_volume.go:3062
 msgid ""
 "incus storage volume snapshot create default foo snap0\n"
 "    Create a snapshot of \"foo\" in pool \"default\" called \"snap0\"\n"
@@ -11143,11 +11140,11 @@ msgstr "socket-fil"
 msgid "space used"
 msgstr "använt utrymme"
 
-#: cmd/incus/utils.go:600
+#: cmd/incus/utils.go:601
 msgid "sshfs has stopped"
 msgstr "sshfs har stoppat"
 
-#: cmd/incus/utils.go:559
+#: cmd/incus/utils.go:560
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs monterar %q på %q"
@@ -11240,6 +11237,10 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#, c-format
+#~ msgid "Failed to retrieve current server config: %w"
+#~ msgstr "Det gick inte att hämta aktuell serverkonfiguration: %w"
 
 #~ msgid "Can't pull a directory without --recursive"
 #~ msgstr "Kan inte hämta en katalog utan --recursive"
