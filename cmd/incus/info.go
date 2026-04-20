@@ -426,7 +426,7 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 		}
 
 		if resources.System.Serial != "" {
-			fmt.Printf("  "+i18n.G("Serial: %v")+"\n", resources.System.Serial)
+			fmt.Printf("  "+i18n.G("Serial number: %v")+"\n", resources.System.Serial)
 		}
 
 		if resources.System.Type != "" {
