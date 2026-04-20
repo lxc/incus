@@ -9,6 +9,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/instance"
 	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v6/internal/server/network/acl"
+	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
 
@@ -57,7 +58,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"security.acls.default.egress.logged":  validate.Optional(validate.IsBool),
 		"security.promiscuous":                 validate.Optional(validate.IsBool),
 		"mode":                                 validate.Optional(validate.IsOneOf("bridge", "vepa", "passthru", "private")),
-		"io.bus":                               validate.Optional(func(_ string) error { return nicCheckIsVM(instConf) }, validate.IsOneOf("virtio", "usb")),
+		"io.bus":                               validate.Optional(func(value string) error { return nicCheckIOBus(instConf, value) }),
 		"vendorid":                             validate.Optional(validate.IsDeviceID),
 		"productid":                            validate.Optional(validate.IsDeviceID),
 		"pci":                                  validate.IsPCIAddress,
@@ -143,10 +144,19 @@ func nicCheckDNSNameConflict(instNameA string, instNameB string) bool {
 	return strings.EqualFold(instNameA, instNameB)
 }
 
-// nicCheckIsVM returns if the given instance is a VM.
-func nicCheckIsVM(instConf instance.ConfigReader) error {
+// nicCheckIOBus validates the io.bus value.
+func nicCheckIOBus(instConf instance.ConfigReader, value string) error {
 	if instConf.Type() != instancetype.VM {
 		return errors.New("This option is only supported on virtual machines")
+	}
+
+	err := validate.IsOneOf("virtio", "usb")(value)
+	if err != nil {
+		return err
+	}
+
+	if value == "usb" && util.IsTrue(instConf.ExpandedConfig()["migration.stateful"]) {
+		return errors.New("USB devices cannot be used when migration.stateful is enabled")
 	}
 
 	return nil
