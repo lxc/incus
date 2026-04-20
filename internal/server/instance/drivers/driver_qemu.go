@@ -1226,7 +1226,8 @@ func (d *qemu) validateStartup(stateful bool, statusCode api.StatusCode) error {
 	}
 
 	// Cannot perform stateful start unless config is appropriately set.
-	if stateful && !d.CanLiveMigrate() {
+	// NOTE: We can't use CanLiveMigrate during instance startup as the boot state hasn't yet been recorded.
+	if stateful && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) {
 		return errors.New("Stateful start requires migration.stateful to be set to true")
 	}
 
@@ -2042,7 +2043,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Record the QEMU machine definition.
-	if !stateful && d.CanLiveMigrate() {
+	// NOTE: We can't use CanLiveMigrate during instance startup as the boot state hasn't yet been recorded.
+	if !stateful && util.IsTrue(d.expandedConfig["migration.stateful"]) {
 		definition, err := monitor.MachineDefinition()
 		if err != nil {
 			op.Done(err)
@@ -3935,7 +3937,8 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	}
 
 	// virtio-sound-pci devices can't be migrated and don't have a CCW equivalent.
-	if virtioSound && !isWindows && !d.CanLiveMigrate() && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
+	// NOTE: We can't use CanLiveMigrate during instance startup as the boot state hasn't yet been recorded.
+	if virtioSound && !isWindows && util.IsFalseOrEmpty(d.expandedConfig["migration.stateful"]) && d.architecture != osarch.ARCH_64BIT_S390_BIG_ENDIAN {
 		devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 		audioOpts := qemuAudioOpts{
 			dev: qemuDevOpts{
