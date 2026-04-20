@@ -110,9 +110,11 @@ func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string
 		}
 
 		// Close the pipe upon completion.
+		chDone := make(chan struct{}, 1)
 		go func() {
 			err := cmd.Wait()
 			_ = pipeWriter.CloseWithError(err)
+			close(chDone)
 		}()
 
 		ctxCancelFunc := cancelFunc
@@ -122,7 +124,7 @@ func CompressedTarReader(ctx context.Context, r io.ReadSeeker, unpacker []string
 		cancelFunc = func() {
 			ctxCancelFunc()
 			_ = pipeWriter.Close()
-			_ = cmd.Wait()
+			<-chDone
 
 			if cleanup != nil {
 				cleanup()
