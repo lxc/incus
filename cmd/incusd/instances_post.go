@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	internalInstance "github.com/lxc/incus/v6/internal/instance"
+	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/internal/server/backup"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	"github.com/lxc/incus/v6/internal/server/db"
@@ -659,8 +660,23 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	defer func() { _ = os.Remove(backupFile.Name()) }()
 	reverter.Add(func() { _ = backupFile.Close() })
 
+	// Get disk budget for the project if any.
+	var budget int64
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		budget, err = project.GetSpaceBudget(tx, projectName)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.InternalError(err)
+	}
+
 	// Stream uploaded backup data into temporary file.
-	_, err = io.Copy(backupFile, data)
+	_, err = io.Copy(internalIO.NewQuotaWriter(backupFile, budget), data)
 	if err != nil {
 		return response.InternalError(err)
 	}

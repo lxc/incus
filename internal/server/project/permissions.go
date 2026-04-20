@@ -357,6 +357,26 @@ func GetImageSpaceBudget(tx *db.ClusterTx, projectName string) (int64, error) {
 		return -1, nil
 	}
 
+	return getSpaceBudget(info)
+}
+
+// GetSpaceBudget returns how much disk space is left in the given project.
+//
+// If no limit is in place, return -1.
+func GetSpaceBudget(tx *db.ClusterTx, projectName string) (int64, error) {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return -1, err
+	}
+
+	if info == nil {
+		return -1, nil
+	}
+
+	return getSpaceBudget(info)
+}
+
+func getSpaceBudget(info *projectInfo) (int64, error) {
 	// If "limits.disk" is not set, the budget is unlimited.
 	if info.Project.Config["limits.disk"] == "" {
 		return -1, nil

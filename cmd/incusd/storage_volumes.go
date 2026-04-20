@@ -2531,8 +2531,23 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	defer func() { _ = os.Remove(isoFile.Name()) }()
 	reverter.Add(func() { _ = isoFile.Close() })
 
+	// Get disk budget for the project if any.
+	var budget int64
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		budget, err = project.GetSpaceBudget(tx, projectName)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.InternalError(err)
+	}
+
 	// Stream uploaded ISO data into temporary file.
-	size, err := io.Copy(isoFile, data)
+	size, err := io.Copy(internalIO.NewQuotaWriter(isoFile, budget), data)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -2584,8 +2599,23 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	defer func() { _ = os.Remove(backupFile.Name()) }()
 	reverter.Add(func() { _ = backupFile.Close() })
 
+	// Get disk budget for the project if any.
+	var budget int64
+
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		budget, err = project.GetSpaceBudget(tx, projectName)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.InternalError(err)
+	}
+
 	// Stream uploaded backup data into temporary file.
-	_, err = io.Copy(backupFile, data)
+	_, err = io.Copy(internalIO.NewQuotaWriter(backupFile, budget), data)
 	if err != nil {
 		return response.InternalError(err)
 	}
