@@ -3,6 +3,8 @@ package drivers
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 type qemuBootState struct {
@@ -75,7 +77,8 @@ func (d *qemu) saveBootState(bs qemuBootState) error {
 	volatileSet["volatile.vm.hotplug.memory"] = ""
 
 	// If stateful isn't enabled, we're done.
-	if !d.CanLiveMigrate() {
+	// NOTE: Can't use CanLiveMigrate here as it itself checks the boot state.
+	if !util.IsTrue(d.expandedConfig["migration.stateful"]) {
 		return d.VolatileSet(volatileSet)
 	}
 
