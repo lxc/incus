@@ -241,7 +241,7 @@ type Info struct {
 // MigrateArgs represent arguments for instance migration send and receive.
 type MigrateArgs struct {
 	ControlSend           func(m proto.Message) error
-	ControlReceive        func(m proto.Message) error
+	ControlReceive        func(m proto.Message, handshake bool) error
 	StateConn             func(ctx context.Context) (io.ReadWriteCloser, error)
 	FilesystemConn        func(ctx context.Context) (io.ReadWriteCloser, error)
 	Snapshots             bool

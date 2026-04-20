@@ -7641,7 +7641,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	// Receive response from target.
 	d.logger.Debug("Waiting for migration offer response from target")
 	respHeader := &migration.MigrationHeader{}
-	err = args.ControlReceive(respHeader)
+	err = args.ControlReceive(respHeader, true)
 	if err != nil {
 		err := fmt.Errorf("Failed receiving migration offer response: %w", err)
 		op.Done(err)
@@ -7722,7 +7722,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		// This will read the result message from the target side and detect disconnections.
 		go func() {
 			resp := migration.MigrationControl{}
-			err := args.ControlReceive(&resp)
+			err := args.ControlReceive(&resp, false)
 			if err != nil {
 				err = fmt.Errorf("Error reading migration control target: %w", err)
 			} else if !resp.GetSuccess() {
@@ -8382,7 +8382,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// Receive offer from source.
 	d.logger.Debug("Waiting for migration offer from source")
 	offerHeader := &migration.MigrationHeader{}
-	err = args.ControlReceive(offerHeader)
+	err = args.ControlReceive(offerHeader, true)
 	if err != nil {
 		return fmt.Errorf("Failed receiving migration offer from source: %w", err)
 	}
@@ -8554,7 +8554,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// This will read the result message from the source side and detect disconnections.
 		go func() {
 			resp := migration.MigrationControl{}
-			err := args.ControlReceive(&resp)
+			err := args.ControlReceive(&resp, false)
 			if err != nil {
 				err = fmt.Errorf("Error reading migration control source: %w", err)
 			} else if !resp.GetSuccess() {
