@@ -805,7 +805,7 @@ func (c *cmdClusterEnable) run(cmd *cobra.Command, args []string) error {
 	// Check if the server is available on the network.
 	server, _, err := d.GetServer()
 	if err != nil {
-		return fmt.Errorf(i18n.G("Failed to retrieve current server config: %w"), err)
+		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}
 
 	if server.Config["core.https_address"] == "" && server.Config["cluster.https_address"] == "" {
