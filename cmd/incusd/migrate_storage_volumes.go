@@ -180,7 +180,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 
 	// Receive response from target.
 	respHeader := &migration.MigrationHeader{}
-	err = s.recv(respHeader)
+	err = s.recv(respHeader, true)
 	if err != nil {
 		logger.Errorf("Failed to receive storage volume migration header")
 		s.sendControl(err)
@@ -232,7 +232,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 	}
 
 	msg := migration.MigrationControl{}
-	err = s.recv(&msg)
+	err = s.recv(&msg, false)
 	if err != nil {
 		logger.Errorf("Failed to receive storage volume migration control message")
 		return err
@@ -309,7 +309,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	}
 
 	offerHeader := &migration.MigrationHeader{}
-	err := c.recv(offerHeader)
+	err := c.recv(offerHeader, true)
 	if err != nil {
 		logger.Errorf("Failed to receive storage volume migration header")
 		c.sendControl(err)

@@ -1488,12 +1488,26 @@ func (m *Monitor) BlockJobComplete(deviceNodeName string) error {
 
 	args.Device = deviceNodeName
 
-	err := m.Run("block-job-complete", args, nil)
+	ch, err := m.CreateEventChannel(args.Device)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	err = m.Run("block-job-complete", args, nil)
+	if err != nil {
+		return err
+	}
+
+	event := <-ch
+
+	switch event.Name {
+	case EventBlockJobCompleted:
+		return nil
+	case EventBlockJobError:
+		return fmt.Errorf("Error during block-job-complete")
+	default:
+		return fmt.Errorf("Not supported event: %q", event.Name)
+	}
 }
 
 // UpdateBlockSize updates the size of a disk.
