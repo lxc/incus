@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-20 12:02-0400\n"
+"POT-Creation-Date: 2026-04-20 12:21-0400\n"
 "PO-Revision-Date: 2026-04-17 21:54+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -6882,15 +6882,15 @@ msgstr "Serienummer: %v"
 msgid "Serial devices:"
 msgstr "Serienummer: %s"
 
+#: cmd/incus/info.go:429
+#, fuzzy, c-format
+msgid "Serial number: %v"
+msgstr "Serie Nummer: %v"
+
 #: cmd/incus/info.go:452 cmd/incus/info.go:468
 #, c-format
 msgid "Serial: %s"
 msgstr "Serienummer: %s"
-
-#: cmd/incus/info.go:429
-#, c-format
-msgid "Serial: %v"
-msgstr "Serienummer: %v"
 
 #: cmd/incus/remote.go:139
 msgid "Server authentication type (tls or oidc)"
@@ -9865,6 +9865,10 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#, c-format
+#~ msgid "Serial: %v"
+#~ msgstr "Serienummer: %v"
 
 #~ msgid "(none)"
 #~ msgstr "(geen)"

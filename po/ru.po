@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-20 12:02-0400\n"
+"POT-Creation-Date: 2026-04-20 12:21-0400\n"
 "PO-Revision-Date: 2026-04-20 03:10+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -7921,15 +7921,15 @@ msgstr "Последовательный порт:"
 msgid "Serial devices:"
 msgstr "Последовательные порты:"
 
+#: cmd/incus/info.go:429
+#, fuzzy, c-format
+msgid "Serial number: %v"
+msgstr "Серийный номер: %v"
+
 #: cmd/incus/info.go:452 cmd/incus/info.go:468
 #, fuzzy, c-format
 msgid "Serial: %s"
 msgstr "Авто-обновление: %s"
-
-#: cmd/incus/info.go:429
-#, c-format
-msgid "Serial: %v"
-msgstr "Серийный номер: %v"
 
 #: cmd/incus/remote.go:139
 msgid "Server authentication type (tls or oidc)"
@@ -11516,6 +11516,10 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#, c-format
+#~ msgid "Serial: %v"
+#~ msgstr "Серийный номер: %v"
 
 #, c-format
 #~ msgid "Failed to retrieve current server config: %w"
