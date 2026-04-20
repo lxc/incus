@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"golang.org/x/sys/unix"
 
@@ -42,6 +43,8 @@ import (
 	"github.com/lxc/incus/v6/shared/util"
 	"github.com/lxc/incus/v6/shared/validate"
 )
+
+var diskISOGenerateMu sync.Mutex
 
 // Special disk "source" value used for generating a VM cloud-init config ISO.
 const diskSourceCloudInit = "cloud-init:config"
@@ -2965,6 +2968,10 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 // generateVMAgent generates an ISO containing the VM agent binary and config.
 // Returns the path to the ISO.
 func (d *disk) generateVMAgentDrive() (string, error) {
+	// Take a lock to avoid concurrent start/migrate filling up the disk.
+	diskISOGenerateMu.Lock()
+	defer diskISOGenerateMu.Unlock()
+
 	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
 	defer func() { _ = os.RemoveAll(scratchDir) }()
 
@@ -3044,6 +3051,10 @@ func (d *disk) generateVMAgentDrive() (string, error) {
 // generateVMConfigDrive generates an ISO containing the cloud init config for a VM.
 // Returns the path to the ISO.
 func (d *disk) generateVMConfigDrive() (string, error) {
+	// Take a lock to avoid concurrent start/migrate filling up the disk.
+	diskISOGenerateMu.Lock()
+	defer diskISOGenerateMu.Unlock()
+
 	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
 	defer func() { _ = os.RemoveAll(scratchDir) }()
 
