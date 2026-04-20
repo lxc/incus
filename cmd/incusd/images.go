@@ -898,7 +898,13 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		info.Aliases = []api.ImageAlias{}
 		aliasNames, _ := url.ParseQuery(aliasesHeaders)
 
-		for _, aliasName := range aliasNames["alias"] {
+		// Check if we're using the URL encoded syntax (multiple entries) or just a simple header (single entry).
+		aliases, ok := aliasNames["alias"]
+		if !ok {
+			aliases = []string{aliasesHeaders}
+		}
+
+		for _, aliasName := range aliases {
 			alias := api.ImageAlias{
 				Name: aliasName,
 			}
@@ -909,11 +915,18 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 
 	var profileIds []int64
 	if len(profilesHeaders) > 0 {
-		p, _ := url.ParseQuery(profilesHeaders)
-		profileIds = make([]int64, len(p["profile"]))
+		profileNames, _ := url.ParseQuery(profilesHeaders)
+
+		// Check if we're using the URL encoded syntax (multiple entries) or just a simple header (single entry).
+		profiles, ok := profileNames["profile"]
+		if !ok {
+			profiles = []string{profilesHeaders}
+		}
+
+		profileIds = make([]int64, len(profiles))
 
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-			for i, val := range p["profile"] {
+			for i, val := range profiles {
 				profileID, _, err := tx.GetProfile(ctx, project, val)
 				if response.IsNotFoundError(err) {
 					return fmt.Errorf("Profile '%s' doesn't exist", val)
