@@ -290,6 +290,11 @@ test_storage_bucket_export() {
     # Test getting admin key from bucket.
     incus storage bucket key list "${poolName}" "${bucketPrefix}.bar" | grep -F "admin"
 
+    # Export to stdout / import from stdin
+    incus storage bucket export "${poolName}" "${bucketPrefix}.bar" - > "${INCUS_DIR}/testbucket.tar.gz"
+    incus storage bucket delete "${poolName}" "${bucketPrefix}.bar"
+    incus storage bucket import "${poolName}" - "${bucketPrefix}.bar" < "${INCUS_DIR}/testbucket.tar.gz"
+
     # Clean up.
     incus storage bucket delete "${poolName}" "${bucketPrefix}.bar"
     ! incus storage bucket list "${poolName}" | grep -F "${bucketPrefix}.bar" || false

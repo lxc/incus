@@ -54,9 +54,8 @@ func (c *cmdImport) run(cmd *cobra.Command, args []string) error {
 	instanceName := parsed[2].String
 
 	var file *os.File
-	if backupFile == "-" {
+	if isStdin(backupFile) {
 		file = os.Stdin
-		c.global.flagQuiet = true
 	} else {
 		file, err = os.Open(backupFile)
 		if err != nil {

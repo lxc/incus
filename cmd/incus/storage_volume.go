@@ -29,6 +29,7 @@ import (
 	"github.com/lxc/incus/v6/internal/instance"
 	internalIO "github.com/lxc/incus/v6/internal/io"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/archive"
 	cli "github.com/lxc/incus/v6/shared/cmd"
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
@@ -3647,6 +3648,7 @@ type cmdStorageVolumeExport struct {
 	flagVolumeOnly           bool
 	flagOptimizedStorage     bool
 	flagCompressionAlgorithm string
+	flagForce                bool
 }
 
 var cmdStorageVolumeExportUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.Verbatim("custom").Optional(), u.Volume), u.Target(u.File).Optional()}
@@ -3662,6 +3664,7 @@ func (c *cmdStorageVolumeExport) command() *cobra.Command {
 		i18n.G("Use storage driver optimized format (can only be restored on a similar pool, ignored for ISO storage volumes)"))
 	cmd.Flags().StringVar(&c.flagCompressionAlgorithm, "compression", "", i18n.G("Compression algorithm to use (none for uncompressed, ignored for ISO storage volumes)")+"``")
 	cmd.Flags().StringVar(&c.storage.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
+	cmd.Flags().BoolVar(&c.flagForce, "force", false, i18n.G("Force overwriting existing backup file"))
 	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -3689,7 +3692,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 	poolName := parsed[0].RemoteObject.String
 	volName := parsed[1].List[1].String
 	hasTarget := !parsed[2].Skipped
-	targetName := parsed[2].Get("backup.tar.gz")
+	targetName := parsed[2].Get("." + volName + ".backup")
 
 	// Use the provided target.
 	if c.storage.flagTarget != "" {
@@ -3698,7 +3701,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 
 	volumeOnly := c.flagVolumeOnly
 
-	// Get the storage volume entry
+	// Get the storage volume entry.
 	vol, _, err := d.GetStoragePoolVolume(poolName, "custom", volName)
 	if err != nil {
 		return fmt.Errorf("Storage pool volume \"custom/%s\" not found", volName)
@@ -3706,6 +3709,15 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 
 	if !hasTarget && vol.ContentType == "iso" {
 		targetName = volName + ".iso"
+		hasTarget = true
+	}
+
+	if isStdout(targetName) {
+		// If outputting to stdout, quiesce the output.
+		c.global.flagQuiet = true
+	} else if hasTarget && !c.flagForce && util.PathExists(targetName) {
+		// Check if the target path already exists.
+		return fmt.Errorf(i18n.G("Target path %q already exists"), targetName)
 	}
 
 	req := api.StorageVolumeBackupsPost{
@@ -3728,7 +3740,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("Failed to create storage volume backup: %w"), err)
 		}
 
-		// Watch the background operation
+		// Watch the background operation.
 		progress := cli.ProgressRenderer{
 			Format: i18n.G("Backing up storage volume: %s"),
 			Quiet:  c.global.flagQuiet,
@@ -3740,7 +3752,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Wait until backup is done
+		// Wait until backup is done.
 		err = cli.CancelableWait(op, &progress)
 		if err != nil {
 			progress.Done("")
@@ -3754,7 +3766,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		// Get name of backup
+		// Get name of backup.
 		uStr := op.Get().Resources["backups"][0]
 		uri, err := url.Parse(uStr)
 		if err != nil {
@@ -3767,7 +3779,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 		}
 
 		defer func() {
-			// Delete backup after we're done
+			// Delete backup after we're done.
 			op, err = d.DeleteStorageVolumeBackup(poolName, volName, backupName)
 			if err == nil {
 				_ = op.Wait()
@@ -3780,14 +3792,19 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	target, err := os.Create(targetName)
-	if err != nil {
-		return err
+	var target *os.File
+	if isStdout(targetName) {
+		target = os.Stdout
+	} else {
+		target, err = os.Create(targetName)
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = target.Close() }()
 	}
 
-	defer func() { _ = target.Close() }()
-
-	// Prepare the download request
+	// Prepare the download request.
 	progress := cli.ProgressRenderer{
 		Format: i18n.G("Exporting the backup: %s"),
 		Quiet:  c.global.flagQuiet,
@@ -3804,6 +3821,29 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 		_ = os.Remove(targetName)
 		progress.Done("")
 		return fmt.Errorf(i18n.G("Failed to fetch storage volume backup file: %w"), err)
+	}
+
+	// Detect backup file type and rename file accordingly.
+	if !hasTarget {
+		_, err := target.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
+		}
+
+		_, ext, _, err := archive.DetectCompressionFile(target)
+		if err != nil {
+			return err
+		}
+
+		err = os.Rename(targetName, volName+ext)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to rename export file: %w"), err)
+		}
+	}
+
+	err = target.Close()
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to close export file: %w"), err)
 	}
 
 	progress.Done(i18n.G("Backup exported successfully!"))
@@ -3863,12 +3903,17 @@ func (c *cmdStorageVolumeImport) run(cmd *cobra.Command, args []string) error {
 		d = d.UseTarget(c.storage.flagTarget)
 	}
 
-	file, err := os.Open(backupFile)
-	if err != nil {
-		return err
-	}
+	var file *os.File
+	if isStdin(backupFile) {
+		file = os.Stdin
+	} else {
+		file, err = os.Open(backupFile)
+		if err != nil {
+			return err
+		}
 
-	defer func() { _ = file.Close() }()
+		defer func() { _ = file.Close() }()
+	}
 
 	fstat, err := file.Stat()
 	if err != nil {
@@ -3876,14 +3921,14 @@ func (c *cmdStorageVolumeImport) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if c.flagType == "" {
-		// Set type to iso if filename suffix is .iso
+		// Set type to iso if filename suffix is .iso.
 		if strings.HasSuffix(strings.ToLower(backupFile), ".iso") {
 			c.flagType = "iso"
 		} else {
 			c.flagType = "backup"
 		}
 	} else {
-		// Validate type flag
+		// Validate type flag.
 		if !slices.Contains([]string{"backup", "iso"}, c.flagType) {
 			return errors.New(i18n.G("Import type needs to be \"backup\" or \"iso\""))
 		}

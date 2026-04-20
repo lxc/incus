@@ -519,6 +519,11 @@ test_backup_import_with_project() {
     incus import "${INCUS_DIR}/c3.tar.gz" -s pool_2
 
     incus rm -f c3
+
+    # Import from stdin
+    incus import - -s pool_2 < "${INCUS_DIR}/c3.tar.gz"
+    incus rm -f c3
+
     rm "${INCUS_DIR}/c3.tar.gz"
 
     # Reset default storage pool
@@ -617,6 +622,9 @@ test_backup_export_with_project() {
     incus snapshot create c1-foo
 
     incus export c1-foo "${INCUS_DIR}/c1-foo.tar.gz"
+
+    # Export to stdout
+    incus export c1-foo - > /dev/null
 
     incus delete --force c1-foo
     rm "${INCUS_DIR}/c1-foo.tar.gz"
@@ -856,10 +864,15 @@ test_backup_volume_export_with_project() {
         rm "${INCUS_DIR}/testvol-optimized.tar.gz"
     fi
 
+    # Export to stdout / import from stdin
+    incus storage volume detach "${custom_vol_pool}" testvol2 c1
+    incus storage volume rm "${custom_vol_pool}" testvol2
+    incus storage volume import "${custom_vol_pool}" - testvol2 < "${INCUS_DIR}/testvol.tar.gz"
+    incus storage volume export "${custom_vol_pool}" testvol2 - > /dev/null
+
     # Clean up.
     rm -rf "${INCUS_DIR}/non-optimized/"* "${INCUS_DIR}/optimized/"*
     incus storage volume detach "${custom_vol_pool}" testvol c1
-    incus storage volume detach "${custom_vol_pool}" testvol2 c1
     incus storage volume rm "${custom_vol_pool}" testvol
     incus storage volume rm "${custom_vol_pool}" testvol2
     incus rm -f c1
