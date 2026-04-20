@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-20 12:02-0400\n"
+"POT-Creation-Date: 2026-04-20 12:21-0400\n"
 "PO-Revision-Date: 2026-04-17 21:50+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -7707,15 +7707,15 @@ msgstr "Seriell enhet:"
 msgid "Serial devices:"
 msgstr "Seriella enheter:"
 
+#: cmd/incus/info.go:429
+#, fuzzy, c-format
+msgid "Serial number: %v"
+msgstr "Serienummer: %v"
+
 #: cmd/incus/info.go:452 cmd/incus/info.go:468
 #, c-format
 msgid "Serial: %s"
 msgstr "Serienummer: %s"
-
-#: cmd/incus/info.go:429
-#, c-format
-msgid "Serial: %v"
-msgstr "Serienummer: %v"
 
 #: cmd/incus/remote.go:139
 msgid "Server authentication type (tls or oidc)"
@@ -11237,6 +11237,10 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#, c-format
+#~ msgid "Serial: %v"
+#~ msgstr "Serienummer: %v"
 
 #, c-format
 #~ msgid "Failed to retrieve current server config: %w"

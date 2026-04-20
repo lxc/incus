@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-20 12:02-0400\n"
+"POT-Creation-Date: 2026-04-20 12:21-0400\n"
 "PO-Revision-Date: 2026-04-17 21:52+0000\n"
 "Last-Translator: Alberto Donato <ack@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -6996,15 +6996,15 @@ msgstr "Creazione del container in corso"
 msgid "Serial devices:"
 msgstr "Creazione del container in corso"
 
+#: cmd/incus/info.go:429
+#, fuzzy, c-format
+msgid "Serial number: %v"
+msgstr "Aggiornamento automatico: %s"
+
 #: cmd/incus/info.go:452 cmd/incus/info.go:468
 #, fuzzy, c-format
 msgid "Serial: %s"
 msgstr "Aggiornamento automatico: %s"
-
-#: cmd/incus/info.go:429
-#, c-format
-msgid "Serial: %v"
-msgstr ""
 
 #: cmd/incus/remote.go:139
 msgid "Server authentication type (tls or oidc)"
