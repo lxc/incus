@@ -1147,7 +1147,7 @@ func (d *Daemon) init() error {
 		// of the tmpfs on systems that have running instances. It can go away
 		// after a little while.
 		if !linux.IsMountPoint(devIncusPath) && !linux.IsMountPoint(devicesPath) {
-			err = unix.Mount("tmpfs", devicesPath, "tmpfs", 0, "size=50M,mode=0711")
+			err = unix.Mount("tmpfs", devicesPath, "tmpfs", 0, "size=250M,mode=0711")
 			if err != nil {
 				logger.Warn("Failed to set up devices tmpfs", logger.Ctx{"err": err})
 			}
