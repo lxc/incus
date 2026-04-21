@@ -528,6 +528,24 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 		}
 	}
 
+	getDiskPath := func(v Volume) (string, error) {
+		if v.contentType != ContentTypeBlock && v.contentType != ContentTypeISO {
+			return "", nil
+		}
+
+		blockPath, err := d.GetVolumeDiskPath(v)
+		if err != nil {
+			errMsg := "Error getting VM block volume disk path"
+			if v.Type() == VolumeTypeCustom {
+				errMsg = "Error getting custom block volume disk path"
+			}
+
+			return "", fmt.Errorf(errMsg+": %w", err)
+		}
+
+		return blockPath, nil
+	}
+
 	// Handle snapshots.
 	if len(snapshots) > 0 {
 		for _, snapName := range snapshots {
@@ -538,7 +556,12 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 			}
 
 			err = snapVol.MountTask(func(mountPath string, op *operations.Operation) error {
-				err := BackupVolume(d, snapVol, writer, mountPath, prefix)
+				diskPath, err := getDiskPath(snapVol)
+				if err != nil {
+					return err
+				}
+
+				err = BackupVolume(d, snapVol, writer, mountPath, diskPath, prefix)
 				if err != nil {
 					return err
 				}
@@ -553,7 +576,12 @@ func genericVFSBackupVolume(d Driver, vol Volume, writer instancewriter.Instance
 
 	// Copy the main volume itself.
 	err := vol.MountTask(func(mountPath string, op *operations.Operation) error {
-		err := BackupVolume(d, vol, writer, mountPath, filepath.Join(basePrefix, BackupPrefix(vol)))
+		diskPath, err := getDiskPath(vol)
+		if err != nil {
+			return err
+		}
+
+		err = BackupVolume(d, vol, writer, mountPath, diskPath, filepath.Join(basePrefix, BackupPrefix(vol)))
 		if err != nil {
 			return err
 		}
@@ -604,6 +632,24 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 	reverter.Add(func() { _ = d.DeleteVolume(vol, op) })
 
+	getDiskPath := func(v Volume) (string, error) {
+		if v.contentType != ContentTypeBlock && v.contentType != ContentTypeISO {
+			return "", nil
+		}
+
+		blockPath, err := d.GetVolumeDiskPath(v)
+		if err != nil {
+			errMsg := "Error getting VM block volume disk path"
+			if v.Type() == VolumeTypeCustom {
+				errMsg = "Error getting custom block volume disk path"
+			}
+
+			return "", fmt.Errorf(errMsg+": %w", err)
+		}
+
+		return blockPath, nil
+	}
+
 	if len(snapshots) > 0 {
 		// Create new snapshots directory.
 		err := CreateParentSnapshotDirIfMissing(d.Name(), vol.volType, vol.name)
@@ -615,7 +661,12 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 	for _, snapName := range snapshots {
 		err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
 			backupSnapshotPrefix := filepath.Join(basePrefix, BackupSnapshotPrefix(vol), snapName)
-			return UnpackVolume(d, vol, srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath)
+			diskPath, err := getDiskPath(vol)
+			if err != nil {
+				return err
+			}
+
+			return UnpackVolume(d, vol, srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath, diskPath)
 		}, op)
 		if err != nil {
 			return nil, nil, err
@@ -652,7 +703,12 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 	reverter.Add(func() { _, _ = d.UnmountVolume(vol, false, op) })
 
 	mountPath := vol.MountPath()
-	err = UnpackVolume(d, vol, srcData, tarArgs, unpacker, filepath.Join(basePrefix, BackupPrefix(vol)), mountPath)
+	diskPath, err := getDiskPath(vol)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = UnpackVolume(d, vol, srcData, tarArgs, unpacker, filepath.Join(basePrefix, BackupPrefix(vol)), mountPath, diskPath)
 	if err != nil {
 		return nil, nil, err
 	}

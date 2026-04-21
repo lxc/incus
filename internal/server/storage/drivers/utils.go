@@ -1047,21 +1047,11 @@ func BackupSnapshotPrefix(vol Volume) string {
 }
 
 // BackupVolume copy a volume into the backup target location.
-func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, mountPath string, prefix string) error {
+func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, mountPath string, blockPath string, prefix string) error {
 	// Reset hard link cache as we are copying a new volume (instance or snapshot).
 	writer.ResetHardLinkMap()
 
 	if v.contentType == ContentTypeBlock || v.contentType == ContentTypeISO {
-		blockPath, err := d.GetVolumeDiskPath(v)
-		if err != nil {
-			errMsg := "Error getting VM block volume disk path"
-			if v.volType == VolumeTypeCustom {
-				errMsg = "Error getting custom block volume disk path"
-			}
-
-			return fmt.Errorf(errMsg+": %w", err)
-		}
-
 		// Get size of disk block device for tarball header.
 		blockDiskSize, err := BlockDiskSizeBytes(blockPath)
 		if err != nil {
@@ -1186,7 +1176,7 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 }
 
 // UnpackVolume unpack a volume from a backup tarball file.
-func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string) error {
+func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpacker []string, srcPrefix string, mountPath string, targetPath string) error {
 	volTypeName := "container"
 	if vol.IsVMBlock() {
 		volTypeName = "virtual machine"
@@ -1257,11 +1247,6 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 
 	// Extract block file to block volume.
 	if vol.contentType == ContentTypeBlock {
-		targetPath, err := d.GetVolumeDiskPath(vol)
-		if err != nil {
-			return err
-		}
-
 		srcFile := fmt.Sprintf("%s.%s", srcPrefix, genericVolumeBlockExtension)
 
 		tr, cancelFunc, err := archive.CompressedTarReader(context.Background(), r, unpacker, mountPath)
