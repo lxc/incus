@@ -1334,7 +1334,7 @@ func (d *lvm) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 	}
 
 	// Create the parent directory.
-	err := createParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
+	err := CreateParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
 	if err != nil {
 		return err
 	}

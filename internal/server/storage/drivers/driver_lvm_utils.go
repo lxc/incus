@@ -701,7 +701,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 	// If copying snapshots is indicated, check the source isn't itself a snapshot.
 	if len(srcSnapshots) > 0 && !srcVol.IsSnapshot() {
 		// Create the parent snapshot directory.
-		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
+		err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
 		if err != nil {
 			return err
 		}

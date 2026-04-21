@@ -239,7 +239,7 @@ func (v Volume) EnsureMountPath(creation bool) error {
 		if v.IsSnapshot() {
 			// Create the parent directory if needed.
 			parentName, _, _ := api.GetParentAndSnapshotName(v.name)
-			err := createParentSnapshotDirIfMissing(v.pool, v.volType, parentName)
+			err := CreateParentSnapshotDirIfMissing(v.pool, v.volType, parentName)
 			if err != nil {
 				return err
 			}

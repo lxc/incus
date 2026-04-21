@@ -463,7 +463,7 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 
 		if len(srcBackup.Snapshots) > 0 {
 			// Create new snapshots directory.
-			err := createParentSnapshotDirIfMissing(d.name, v.volType, v.name)
+			err := CreateParentSnapshotDirIfMissing(d.name, v.volType, v.name)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -1100,7 +1100,7 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 	// Handle zfs send/receive migration.
 	if len(volTargetArgs.Snapshots) > 0 {
 		// Create the parent directory.
-		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
+		err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
 		if err != nil {
 			return err
 		}
@@ -3095,7 +3095,7 @@ func (d *zfs) CreateVolumeSnapshot(vol Volume, op *operations.Operation) error {
 	defer reverter.Fail()
 
 	// Create the parent directory.
-	err := createParentSnapshotDirIfMissing(d.name, vol.volType, parentName)
+	err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, parentName)
 	if err != nil {
 		return err
 	}

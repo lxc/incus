@@ -606,7 +606,7 @@ func genericVFSBackupUnpack(d Driver, sysOS *sys.OS, vol Volume, snapshots []str
 
 	if len(snapshots) > 0 {
 		// Create new snapshots directory.
-		err := createParentSnapshotDirIfMissing(d.Name(), vol.volType, vol.name)
+		err := CreateParentSnapshotDirIfMissing(d.Name(), vol.volType, vol.name)
 		if err != nil {
 			return nil, nil, err
 		}

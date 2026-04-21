@@ -272,8 +272,8 @@ func GetSnapshotVolumeName(parentName, snapshotName string) string {
 	return fmt.Sprintf("%s%s%s", parentName, internalInstance.SnapshotDelimiter, snapshotName)
 }
 
-// createParentSnapshotDirIfMissing creates the parent directory for volume snapshots.
-func createParentSnapshotDirIfMissing(poolName string, volType VolumeType, volName string) error {
+// CreateParentSnapshotDirIfMissing creates the parent directory for volume snapshots.
+func CreateParentSnapshotDirIfMissing(poolName string, volType VolumeType, volName string) error {
 	snapshotsPath := GetVolumeSnapshotDir(poolName, volType, volName)
 
 	// If it's missing, create it.

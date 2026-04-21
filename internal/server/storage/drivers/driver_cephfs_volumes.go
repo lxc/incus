@@ -471,7 +471,7 @@ func (d *cephfs) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Ope
 // RenameVolume renames the volume and all related filesystem entries.
 func (d *cephfs) RenameVolume(vol Volume, newVolName string, op *operations.Operation) error {
 	// Create the parent directory.
-	err := createParentSnapshotDirIfMissing(d.name, vol.volType, newVolName)
+	err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, newVolName)
 	if err != nil {
 		return err
 	}
@@ -588,7 +588,7 @@ func (d *cephfs) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	}
 
 	// Create the parent directory.
-	err = createParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
+	err = CreateParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
 	if err != nil {
 		return err
 	}

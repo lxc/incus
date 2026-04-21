@@ -324,7 +324,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 
 	if len(srcBackup.Snapshots) > 0 {
 		// Create new snapshots directory.
-		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
+		err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -471,7 +471,7 @@ func (d *btrfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bo
 	// Copy any snapshots needed.
 	if len(snapshots) > 0 {
 		// Create the parent directory.
-		err = createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
+		err = CreateParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
 		if err != nil {
 			return err
 		}
@@ -694,7 +694,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 	// Handle btrfs send/receive migration.
 	if !volTargetArgs.VolumeOnly && len(volTargetArgs.Snapshots) > 0 {
 		// Create the parent directory.
-		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
+		err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
 		if err != nil {
 			return err
 		}
@@ -1884,7 +1884,7 @@ func (d *btrfs) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) e
 	snapPath := snapVol.MountPath()
 
 	// Create the parent directory.
-	err := createParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
+	err := CreateParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
 	if err != nil {
 		return err
 	}
