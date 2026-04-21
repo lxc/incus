@@ -39,8 +39,8 @@ func (p *pullable) preCheck(target string) error {
 		return errors.New(i18n.G("--no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive"))
 	}
 
-	// Using `-` as a target implicitly sets -H if -L is not set, but fails if -P is set.
-	if target == "-" {
+	// Using stdout as a target implicitly sets -H if -L is not set, but fails if -P is set.
+	if isStdout(target) {
 		if p.flagDereference {
 			return nil
 		}

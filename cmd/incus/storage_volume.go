@@ -2676,7 +2676,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 	var f *os.File
 	var linkName string
 
-	if targetPath == "-" {
+	if isStdout(targetPath) {
 		f = os.Stdout
 	} else if targetIsLink {
 		linkName, err = sftpConn.ReadLink(fPath)
@@ -2706,7 +2706,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 		WriteCloser: f,
 		Tracker: &ioprogress.ProgressTracker{
 			Handler: func(bytesReceived int64, speed int64) {
-				if targetPath == "-" {
+				if isStdout(targetPath) {
 					return
 				}
 
