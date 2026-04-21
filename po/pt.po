@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-04-20 12:32-0400\n"
-"PO-Revision-Date: 2026-04-21 03:01+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-04-22 08:09+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -3421,7 +3421,7 @@ msgstr "Força evacuação sem confirmação do utilizador"
 #: cmd/incus/export.go:56 cmd/incus/storage_bucket.go:1300
 #: cmd/incus/storage_volume.go:3667
 msgid "Force overwriting existing backup file"
-msgstr ""
+msgstr "Forçar sobrescrever de ficheiro de salvaguarda existente"
 
 #: cmd/incus/exec.go:65
 msgid "Force pseudo-terminal allocation"
@@ -7805,9 +7805,9 @@ msgid "Serial devices:"
 msgstr "Dispositivos série:"
 
 #: cmd/incus/info.go:429
-#, fuzzy, c-format
+#, c-format
 msgid "Serial number: %v"
-msgstr "Número de Série: %v"
+msgstr "Número de série: %v"
 
 #: cmd/incus/info.go:452 cmd/incus/info.go:468
 #, c-format
