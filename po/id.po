@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-04-20 12:32-0400\n"
-"PO-Revision-Date: 2026-04-17 21:51+0000\n"
-"Last-Translator: Andika Triwidada <andika@gmail.com>\n"
-"Language-Team: Indonesian <https://hosted.weblate.org/projects/incus/cli/id/"
-">\n"
+"PO-Revision-Date: 2026-04-21 03:03+0000\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
+"Language-Team: Indonesian <https://hosted.weblate.org/projects/incus/cli/id/>"
+"\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -8615,9 +8615,8 @@ msgid "command-line argument"
 msgstr ""
 
 #: cmd/incus/wait.go:25
-#, fuzzy
 msgid "condition"
-msgstr "deskripsi"
+msgstr "kondisi"
 
 #: cmd/incus/project.go:673 cmd/incus/remote.go:1023
 msgid "current"

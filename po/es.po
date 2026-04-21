@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-04-20 12:32-0400\n"
-"PO-Revision-Date: 2026-04-17 21:50+0000\n"
-"Last-Translator: Jorge Teixeira <hey@teixe.es>\n"
+"PO-Revision-Date: 2026-04-21 02:59+0000\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/incus/cli/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -9127,9 +9127,8 @@ msgid "command-line argument"
 msgstr "Cliente de Linea de Comandos para LXD"
 
 #: cmd/incus/wait.go:25
-#, fuzzy
 msgid "condition"
-msgstr "Descripción"
+msgstr "condición"
 
 #: cmd/incus/project.go:673 cmd/incus/remote.go:1023
 msgid "current"
