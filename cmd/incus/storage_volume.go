@@ -2858,7 +2858,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		}
 
 		// Transfer the file
-		err := sftpRecursivePushFile(sftpConn, srcFile, targetPath, c.global.flagQuiet)
+		err := sftpRecursivePushFile(sftpConn, srcFile, srcFile, targetPath, c.global.flagQuiet, true, true)
 		if err != nil {
 			return err
 		}

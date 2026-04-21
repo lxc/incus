@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
@@ -134,7 +133,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, p string, t
 	}
 
 	target := targetDir
-	if createRoot || fileType != "directory" {
+	if createRoot {
 		target = filepath.Join(targetDir, filepath.Base(p))
 	}
 
@@ -242,15 +241,14 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, p string, t
 	return nil
 }
 
-func sftpRecursivePushFile(sftpConn *sftp.Client, source string, target string, quiet bool) error {
-	source = filepath.Clean(source)
-
-	sourceDir, _ := filepath.Split(source)
-	sourceLen := len(sourceDir)
-
-	// Special handling for relative paths.
-	if source == ".." {
-		sourceLen = 1
+func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source string, target string, quiet bool, dereference bool, createRoot bool) error {
+	root := ""
+	if createRoot {
+		root = filepath.Base(source)
+		// `cp` has a special behavior with the following paths.
+		if root == "." || root == ".." {
+			root = ""
+		}
 	}
 
 	sendFile := func(p string, fInfo os.FileInfo, err error) error {
@@ -264,7 +262,7 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, source string, target string, 
 		}
 
 		// Prepare for file transfer
-		targetPath := filepath.Join(target, filepath.ToSlash(p[sourceLen:]))
+		targetPath := filepath.Join(target, root, p[len(walkableSource):])
 		mode, uid, gid := internalIO.GetOwnerMode(fInfo)
 		args := incus.InstanceFileArgs{
 			UID:  int64(uid),
@@ -277,7 +275,7 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, source string, target string, 
 		if fInfo.IsDir() {
 			// Directory handling
 			args.Type = "directory"
-		} else if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+		} else if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink && !dereference {
 			// Symlink handling
 			symlinkTarget, err := os.Readlink(p)
 			if err != nil {
@@ -285,7 +283,7 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, source string, target string, 
 			}
 
 			args.Type = "symlink"
-			args.Content = bytes.NewReader([]byte(symlinkTarget))
+			args.Content = strings.NewReader(symlinkTarget)
 			readCloser = io.NopCloser(args.Content)
 		} else {
 			// File handling
@@ -348,7 +346,7 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, source string, target string, 
 		return nil
 	}
 
-	return filepath.Walk(source, sendFile)
+	return filepath.Walk(walkableSource, sendFile)
 }
 
 func sftpRecursiveMkdir(sftpConn *sftp.Client, p string, mode *os.FileMode, uid int64, gid int64) error {
