@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-04-20 12:32-0400\n"
-"PO-Revision-Date: 2026-04-21 03:05+0000\n"
-"Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
+"PO-Revision-Date: 2026-04-21 03:06+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -8682,8 +8682,8 @@ msgstr "Les volumes inconnus suivants ont été trouvés :"
 #, fuzzy, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
-"L’instance est en cours d'exécution, veuillez d’abord l’arrêter ou indiquer "
-"--force"
+"L’instance est en cours d'exécution, veuillez d’abord l’arrêter ou "
+"indiquer --force"
 
 #: cmd/incus/publish.go:90
 msgid ""
@@ -8748,8 +8748,7 @@ msgstr "La propriété %q n’existe pas sur l’instance %q : %v"
 #: cmd/incus/config.go:431
 #, fuzzy, c-format
 msgid "The property %q does not exist on the instance snapshot %s: %v"
-msgstr ""
-"La propriété %q n’existe pas sur l’instantané d’instance « %s/%s » : %v"
+msgstr "La propriété %q n’existe pas sur l’instantané d’instance « %s/%s » : %v"
 
 #: cmd/incus/network_load_balancer.go:432
 #, c-format
@@ -10142,8 +10141,8 @@ msgid ""
 "incus move <old name> <new name> [--instance-only]\n"
 "    Rename a local instance."
 msgstr ""
-"incus move [<serveur distant>:]<instance source> [<serveur distant>:]"
-"[<instance cible>] [--instance-only]\n"
+"incus move [<serveur distant>:]<instance source> [<serveur distant>"
+":][<instance cible>] [--instance-only]\n"
 "    Déplacer une instance entre deux hôtes, avec renommage si le nom de "
 "destination est différent.\n"
 "\n"
