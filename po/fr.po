@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-04-20 12:32-0400\n"
 "PO-Revision-Date: 2026-04-21 03:06+0000\n"
-"Last-Translator: smCloudInTheSky <sylvain.maret@hotmail.fr>\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -9809,9 +9809,8 @@ msgid "command-line argument"
 msgstr "argument de ligne de commande"
 
 #: cmd/incus/wait.go:25
-#, fuzzy
 msgid "condition"
-msgstr "Description"
+msgstr "condition"
 
 #: cmd/incus/project.go:673 cmd/incus/remote.go:1023
 msgid "current"
