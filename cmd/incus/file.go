@@ -68,7 +68,7 @@ func (c *cmdFile) command() *cobra.Command {
 	cmd.AddCommand(filePullCmd.command())
 
 	// Push
-	filePushCmd := cmdFilePush{global: c.global, file: c}
+	filePushCmd := cmdFilePush{global: c.global, file: c, pusher: &pushable{}}
 	cmd.AddCommand(filePushCmd.command())
 
 	// Edit
@@ -557,7 +557,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 			var f *os.File
 			var linkName string
 
-			if targetPath == "-" {
+			if isStdout(targetPath) {
 				f = os.Stdout
 			} else if targetIsLink {
 				linkName, err = sftpConn.ReadLink(path)
@@ -587,7 +587,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 				WriteCloser: f,
 				Tracker: &ioprogress.ProgressTracker{
 					Handler: func(bytesReceived int64, speed int64) {
-						if targetPath == "-" {
+						if isStdout(targetPath) {
 							return
 						}
 
@@ -651,11 +651,10 @@ func (c *cmdFilePull) run(cmd *cobra.Command, args []string) error {
 type cmdFilePush struct {
 	global *cmdGlobal
 	file   *cmdFile
+	pusher *pushable
 
 	edit         bool
 	noModeChange bool
-
-	flagRecursive bool
 }
 
 var cmdFilePushUsage = u.Usage{u.Path.List(1), u.MakePath(u.Instance, u.Target(u.Path)).Remote()}
@@ -672,11 +671,14 @@ func (c *cmdFilePush) command() *cobra.Command {
 echo "Hello world" | incus file push - foo/root/test
    To read "Hello world" from standard input and write it into /root/test in instance "foo".`))
 
-	cmd.Flags().BoolVarP(&c.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
 	cmd.Flags().BoolVarP(&c.file.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
 	cmd.Flags().IntVar(&c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push (in recursive mode, only sets the target directory's UID if it doesn't exist and -p is used)")+"``")
 	cmd.Flags().IntVar(&c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push (in recursive mode, only sets the target directory's GID if it doesn't exist and -p is used)")+"``")
 	cmd.Flags().StringVar(&c.file.flagMode, "mode", "", i18n.G("Set the file's perms on push (in recursive mode, sets the target directory's permissions if it doesn't exist)")+"``")
+	cmd.Flags().BoolVarP(&c.pusher.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.pusher.flagNoDereference, "no-dereference", "P", false, i18n.G("Never follow symbolic links in source path"))
+	cmd.Flags().BoolVarP(&c.pusher.flagFollow, "follow", "H", false, i18n.G("Follow command-line symbolic links in source path"))
+	cmd.Flags().BoolVarP(&c.pusher.flagDereference, "dereference", "L", false, i18n.G("Always follow symbolic links in source path"))
 
 	cmd.RunE = c.run
 
@@ -695,7 +697,13 @@ echo "Hello world" | incus file push - foo/root/test
 func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 	d := parsedTarget.RemoteServer
 	instanceName := parsedTarget.RemoteObject.List[0].String
-	targetPath, targetIsDir := normalizePath(parsedTarget.RemoteObject.List[1].String)
+	target, targetIsDir := normalizePath(parsedTarget.RemoteObject.List[1].String)
+	targetExists := false
+
+	err := c.pusher.preCheck()
+	if err != nil {
+		return err
+	}
 
 	// Connect to SFTP.
 	sftpConn, err := d.GetInstanceFileSFTP(instanceName)
@@ -705,70 +713,18 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 
 	defer func() { _ = sftpConn.Close() }()
 
-	// Determine the target uid
-	uid := max(c.file.flagUID, 0)
-
-	// Determine the target gid
-	gid := max(c.file.flagGID, 0)
-
-	// Recursive calls
-	if c.flagRecursive {
-		// Recursive mode doesn’t support override the directory mode bits.
-		if c.file.flagMode != "" {
-			return errors.New(i18n.G("Can't override the target mode when performing a recursive transfer"))
-		}
-
-		// Create needed paths if requested
-		if c.file.flagMkdir {
-			mode := os.FileMode(DirMode)
-			err = sftpRecursiveMkdir(sftpConn, targetPath, &mode, int64(uid), int64(gid))
-			if err != nil {
-				return err
-			}
-		} else {
-			// UID and GID can only be set on intermediate directories when -p is used.
-			if c.file.flagUID != -1 || c.file.flagGID != -1 {
-				return errors.New(i18n.G("Can't override UID/GID in recursive mode without -p"))
-			}
-		}
-
-		// Transfer the files
-		for _, file := range srcFiles {
-			err := sftpRecursivePushFile(sftpConn, file, targetPath, c.global.flagQuiet)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}
-
-	targetInfo, err := sftpConn.Lstat(targetPath)
+	targetInfo, err := sftpConn.Stat(target)
 	if err == nil {
+		targetExists = true
 		if targetInfo.IsDir() {
 			targetIsDir = true
-		} else if len(srcFiles) > 1 {
-			return errors.New(i18n.G("Target is not a directory"))
+		} else if len(srcFiles) > 1 || targetIsDir {
+			// Let’s be extra careful and check that explicit requests for directories actually point to
+			// directories.
+			return fmt.Errorf(i18n.G("%s is not a directory"), target)
 		}
 	} else if len(srcFiles) > 1 && !c.file.flagMkdir {
 		return errors.New(i18n.G("Missing target directory"))
-	}
-
-	// Make sure all of the files are accessible by us before trying to push any of them
-	var files []*os.File
-	for _, f := range srcFiles {
-		var file *os.File
-		if f == "-" {
-			file = os.Stdin
-		} else {
-			file, err = os.Open(f)
-			if err != nil {
-				return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), f, err)
-			}
-		}
-
-		defer func() { _ = file.Close() }() // nolint:revive
-		files = append(files, file)
 	}
 
 	var mode os.FileMode
@@ -785,118 +741,149 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 		mode = os.FileMode(m)
 	}
 
+	var errs []error
+	canProcessStdin := len(srcFiles) == 1
+
 	// Push the files
-	for _, f := range files {
-		fpath := targetPath
-		if targetIsDir {
-			fpath = filepath.Join(fpath, filepath.Base(f.Name()))
-		}
-
-		// Create needed paths if requested
-		if c.file.flagMkdir {
-			finfo, err := f.Stat()
-			if err != nil {
-				return err
-			}
-
-			if c.file.flagUID == -1 || c.file.flagGID == -1 {
-				_, dUID, dGID := internalIO.GetOwnerMode(finfo)
-
-				if c.file.flagUID == -1 {
-					uid = dUID
+	for _, path := range srcFiles {
+		err := func() error {
+			var f *os.File
+			var linkTarget string
+			var size int64
+			m := mode
+			uid := max(c.file.flagUID, 0)
+			gid := max(c.file.flagGID, 0)
+			if isStdin(path) {
+				if !canProcessStdin {
+					return errors.New(i18n.G("stdin can only be used once, with no other source arguments"))
 				}
 
-				if c.file.flagGID == -1 {
-					gid = dGID
+				if targetIsDir {
+					return errors.New(i18n.G("A target file name must be specified when pushing from stdin; the target is a directory"))
 				}
-			}
 
-			mode := os.FileMode(DirMode)
-			err = sftpRecursiveMkdir(sftpConn, filepath.Dir(fpath), &mode, int64(uid), int64(gid))
-			if err != nil {
-				return err
-			}
-		}
-
-		// Transfer the files.
-		args := incus.InstanceFileArgs{
-			UID:  -1,
-			GID:  -1,
-			Mode: -1,
-		}
-
-		// Check if the path already exists.
-		_, err := sftpConn.Stat(fpath)
-		fileExists := err == nil
-		fileMode := mode
-
-		if !c.noModeChange {
-			if !fileExists && (c.file.flagMode == "" || c.file.flagUID == -1 || c.file.flagGID == -1) {
-				finfo, err := f.Stat()
+				canProcessStdin = false
+				f = os.Stdin
+			} else {
+				srcInfo, wPath, err := c.pusher.statFile(path)
 				if err != nil {
 					return err
 				}
 
-				fMode, fUID, fGID := internalIO.GetOwnerMode(finfo)
-
-				if c.file.flagMode == "" {
-					fileMode = fMode
+				// Recursively copy directories.
+				if srcInfo.IsDir() {
+					return sftpRecursivePushFile(sftpConn, wPath, path, target, c.global.flagQuiet, c.pusher.flagDereference, len(srcFiles) > 1 || targetExists)
 				}
 
-				if c.file.flagUID == -1 {
-					uid = fUID
+				if srcInfo.Mode()&os.ModeSymlink != 0 {
+					linkTarget, err = os.Readlink(path)
+					if err != nil {
+						return err
+					}
+				} else {
+					f, err = os.Open(path)
+					if err != nil {
+						return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), f, err)
+					}
+
+					size = srcInfo.Size()
+					defer func() { _ = f.Close() }()
 				}
 
-				if c.file.flagGID == -1 {
-					gid = fGID
+				if c.file.flagUID == -1 || c.file.flagGID == -1 {
+					dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
+
+					if c.file.flagMode == "" {
+						m = dMode
+					}
+
+					if c.file.flagUID == -1 {
+						uid = dUID
+					}
+
+					if c.file.flagGID == -1 {
+						gid = dGID
+					}
 				}
 			}
 
-			if !fileExists || c.file.flagUID != -1 {
-				args.UID = int64(uid)
+			// Determine the target path.
+			var targetPath string
+			if targetIsDir {
+				targetPath = filepath.Join(target, filepath.Base(path))
+			} else {
+				targetPath = target
 			}
 
-			if !fileExists || c.file.flagGID != -1 {
-				args.GID = int64(gid)
+			// Create needed paths if requested
+			if c.file.flagMkdir {
+				mode := os.FileMode(DirMode)
+				err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(uid), int64(gid))
+				if err != nil {
+					return err
+				}
 			}
 
-			if !fileExists || c.file.flagMode != "" {
-				args.Mode = int(fileMode.Perm())
+			// Transfer the files.
+			args := incus.InstanceFileArgs{
+				UID:  -1,
+				GID:  -1,
+				Mode: -1,
 			}
-		}
 
-		args.Type = "file"
+			// Check if the path already exists.
+			_, err := sftpConn.Stat(targetPath)
+			fileExists := err == nil
 
-		fstat, err := f.Stat()
-		if err != nil {
-			return err
-		}
+			if !c.noModeChange {
+				if !fileExists || c.file.flagUID != -1 {
+					args.UID = int64(uid)
+				}
 
-		progress := cli.ProgressRenderer{
-			Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), f.Name(), fpath),
-			Quiet:  c.global.flagQuiet,
-		}
+				if !fileExists || c.file.flagGID != -1 {
+					args.GID = int64(gid)
+				}
 
-		args.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
-			ReadCloser: f,
-			Tracker: &ioprogress.ProgressTracker{
-				Length: fstat.Size(),
-				Handler: func(percent int64, speed int64) {
-					progress.UpdateProgress(ioprogress.ProgressData{
-						Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2)),
-					})
-				},
-			},
-		}, f)
+				if !fileExists || c.file.flagMode != "" {
+					args.Mode = int(m.Perm())
+				}
+			}
 
-		logger.Infof("Pushing %s to %s (%s)", f.Name(), fpath, args.Type)
-		err = sftpCreateFile(sftpConn, fpath, args, true)
-		if err != nil {
+			progress := cli.ProgressRenderer{
+				Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), path, targetPath),
+				Quiet:  c.global.flagQuiet,
+			}
+
+			if f == nil {
+				args.Type = "symlink"
+				args.Content = strings.NewReader(linkTarget)
+			} else {
+				args.Type = "file"
+				args.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
+					ReadCloser: f,
+					Tracker: &ioprogress.ProgressTracker{
+						Length: size,
+						Handler: func(percent int64, speed int64) {
+							progress.UpdateProgress(ioprogress.ProgressData{
+								Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2)),
+							})
+						},
+					},
+				}, f)
+			}
+
+			logger.Infof("Pushing %s to %s (%s)", path, targetPath, args.Type)
+			err = sftpCreateFile(sftpConn, targetPath, args, true)
 			progress.Done("")
 			return err
+		}()
+		if err != nil {
+			errs = append(errs, err)
 		}
+	}
 
-		progress.Done("")
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	return nil

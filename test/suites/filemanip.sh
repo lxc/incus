@@ -1,29 +1,57 @@
-file_check_noderef() {
+file_check_pull_noderef() {
     incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpfile" --project=test
     [ -h "${TEST_DIR}/tmpfile" ]
     [ "$(readlink "${TEST_DIR}/tmpfile")" = "$3" ]
     rm "${TEST_DIR}/tmpfile"
 }
 
-file_check_deref() {
+file_check_push_noderef() {
+    incus file push "$1" "${TEST_DIR}$2" filemanip/tmpfile --project=test
+    incus exec filemanip --project=test -- [ -h /tmpfile ]
+    [ "$(incus exec filemanip readlink /tmpfile --project=test)" = "${TEST_DIR}$3" ]
+    incus file delete filemanip/tmpfile --project=test
+}
+
+file_check_pull_deref() {
     incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpfile" --project=test
     [ ! -h "${TEST_DIR}/tmpfile" ]
     [ "$(cat "${TEST_DIR}/tmpfile")" = "$3" ]
     rm "${TEST_DIR}/tmpfile"
 }
 
-file_check_noderef_dir() {
+file_check_push_deref() {
+    incus file push "$1" "${TEST_DIR}$2" filemanip/tmpfile --project=test
+    incus exec filemanip --project=test -- [ ! -h /tmpfile ]
+    [ "$(incus file pull filemanip/tmpfile - --project=test)" = "$3" ]
+    incus file delete filemanip/tmpfile --project=test
+}
+
+file_check_pull_noderef_dir() {
     incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpdir" --project=test
     [ -h "${TEST_DIR}/tmpdir/$3" ]
     [ "$(readlink "${TEST_DIR}/tmpdir/$3")" = "$4" ]
     rm -rf "${TEST_DIR}/tmpdir"
 }
 
-file_check_deref_dir() {
+file_check_push_noderef_dir() {
+    incus file push "$1" "${TEST_DIR}$2" filemanip/tmpdir --project=test
+    incus exec filemanip --project=test -- [ -h "/tmpdir/$3" ]
+    [ "$(incus exec filemanip readlink "/tmpdir/$3" --project=test)" = "${TEST_DIR}$4" ]
+    incus file delete -f filemanip/tmpdir --project=test
+}
+
+file_check_pull_deref_dir() {
     incus file pull "$1" "filemanip$2" "${TEST_DIR}/tmpdir" --project=test
     [ ! -h "${TEST_DIR}/tmpdir/$3" ]
     [ "$(cat "${TEST_DIR}/tmpdir/$3")" = "$4" ]
     rm -rf "${TEST_DIR}/tmpdir"
+}
+
+file_check_push_deref_dir() {
+    incus file push "$1" "${TEST_DIR}$2" filemanip/tmpdir --project=test
+    incus exec filemanip --project=test -- [ ! -h "/tmpdir/$3" ]
+    [ "$(incus file pull "filemanip/tmpdir/$3" - --project=test)" = "$4" ]
+    incus file delete -f filemanip/tmpdir --project=test
 }
 
 test_filemanip() {
@@ -55,7 +83,7 @@ test_filemanip() {
     echo "bar" > "${TEST_DIR}"/source/bar
     ln -s bar "${TEST_DIR}"/source/baz
 
-    incus file push -p -r "${TEST_DIR}"/source filemanip/tmp/ptest
+    incus file push -p -r "${TEST_DIR}"/source filemanip/tmp/ptest/source
 
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "$(id -u)" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "$(id -g)" ]
@@ -181,13 +209,13 @@ test_filemanip() {
     incus file create --type=directory filemanip/tmp/bar --project=test
     incus file create --type=symlink filemanip/tmp/bar/baz /tmp/foo --project=test
     # -r doesn’t dereference.
-    file_check_noderef_dir -r /tmp/bar baz /tmp/foo
+    file_check_pull_noderef_dir -r /tmp/bar baz /tmp/foo
     # -rP doesn’t dereference.
-    file_check_noderef_dir -rP /tmp/bar baz /tmp/foo
+    file_check_pull_noderef_dir -rP /tmp/bar baz /tmp/foo
     # -rH doesn’t dereference.
-    file_check_noderef_dir -rH /tmp/bar baz /tmp/foo
+    file_check_pull_noderef_dir -rH /tmp/bar baz /tmp/foo
     # -rL does dereference.
-    file_check_deref_dir -rL /tmp/bar baz barqux
+    file_check_pull_deref_dir -rL /tmp/bar baz barqux
     incus file delete -f filemanip/tmp/bar --project=test
 
     # Create a symlink and play with our options.
@@ -197,13 +225,13 @@ test_filemanip() {
     # ... even if we passed -r.
     [ "$(incus file pull -r filemanip/tmp/bar - --project=test)" = "barqux" ]
     # -r doesn’t dereference.
-    file_check_noderef -r /tmp/bar /tmp/foo
+    file_check_pull_noderef -r /tmp/bar /tmp/foo
     # -P doesn’t dereference.
-    file_check_noderef -P /tmp/bar /tmp/foo
+    file_check_pull_noderef -P /tmp/bar /tmp/foo
     # -H does dereference.
-    file_check_deref -H /tmp/bar barqux
+    file_check_pull_deref -H /tmp/bar barqux
     # -L does dereference.
-    file_check_deref -L /tmp/bar barqux
+    file_check_pull_deref -L /tmp/bar barqux
     incus file delete filemanip/tmp/bar --project=test
 
     # Create a symlink to a directory and play with our options.
@@ -211,26 +239,80 @@ test_filemanip() {
     incus file create --type=symlink filemanip/tmp/bar/baz /tmp/foo --project=test
     incus file create --type=symlink filemanip/tmp/qux /tmp/bar --project=test
     # -r doesn’t dereference...
-    file_check_noderef -r /tmp/qux /tmp/bar
+    file_check_pull_noderef -r /tmp/qux /tmp/bar
     # ... except if we add a trailing `/`, in which case the first level is followed.
-    file_check_noderef_dir -r /tmp/qux/ baz /tmp/foo
+    file_check_pull_noderef_dir -r /tmp/qux/ baz /tmp/foo
     # -P doesn’t dereference.
-    file_check_noderef -P /tmp/qux /tmp/bar
+    file_check_pull_noderef -P /tmp/qux /tmp/bar
     # -rP doesn’t dereference...
-    file_check_noderef -rP /tmp/qux /tmp/bar
+    file_check_pull_noderef -rP /tmp/qux /tmp/bar
     # ... except if we add a trailing `/`, in which case the first level is followed.
-    file_check_noderef_dir -rP /tmp/qux/ baz /tmp/foo
+    file_check_pull_noderef_dir -rP /tmp/qux/ baz /tmp/foo
     # -rH does dereference the first level...
-    file_check_noderef_dir -rH /tmp/qux baz /tmp/foo
+    file_check_pull_noderef_dir -rH /tmp/qux baz /tmp/foo
     # ... and so does adding a trailing `/`.
-    file_check_noderef_dir -rH /tmp/qux/ baz /tmp/foo
+    file_check_pull_noderef_dir -rH /tmp/qux/ baz /tmp/foo
     # -rL does dereference all levels...
-    file_check_deref_dir -rL /tmp/qux baz barqux
+    file_check_pull_deref_dir -rL /tmp/qux baz barqux
     # ... and so does adding a trailing `/`.
-    file_check_deref_dir -rL /tmp/qux/ baz barqux
+    file_check_pull_deref_dir -rL /tmp/qux/ baz barqux
 
     # Asking to pull something ending with `/` which it not a directory leads to an error.
     ! incus file pull filemanip/tmp/foo/ - --project=test || false
+
+
+    # Test all sorts of option combinations for `incus file push`.
+
+    mkdir "${TEST_DIR}/tmp"
+    echo barqux > "${TEST_DIR}/tmp/foo"
+
+    # Create a directory and play with our options.
+    mkdir "${TEST_DIR}/tmp/bar"
+    ln -s "${TEST_DIR}/tmp/foo" "${TEST_DIR}/tmp/bar/baz"
+    # -r doesn’t dereference.
+    file_check_push_noderef_dir -r /tmp/bar baz /tmp/foo
+    # -rP doesn’t dereference.
+    file_check_push_noderef_dir -rP /tmp/bar baz /tmp/foo
+    # -rH doesn’t dereference.
+    file_check_push_noderef_dir -rH /tmp/bar baz /tmp/foo
+    # -rL does dereference.
+    file_check_push_deref_dir -rL /tmp/bar baz barqux
+    rm -rf "${TEST_DIR}/tmp/bar"
+
+    # Create a symlink and play with our options.
+    ln -s "${TEST_DIR}/tmp/foo" "${TEST_DIR}/tmp/bar"
+    # -r doesn’t dereference.
+    file_check_push_noderef -r /tmp/bar /tmp/foo
+    # -P doesn’t dereference.
+    file_check_push_noderef -P /tmp/bar /tmp/foo
+    # -H does dereference.
+    file_check_push_deref -H /tmp/bar barqux
+    # -L does dereference.
+    file_check_push_deref -L /tmp/bar barqux
+    rm -rf "${TEST_DIR}/tmp/bar"
+
+    # Create a symlink to a directory and play with our options.
+    mkdir "${TEST_DIR}/tmp/bar"
+    ln -s "${TEST_DIR}/tmp/foo" "${TEST_DIR}/tmp/bar/baz"
+    ln -s "${TEST_DIR}/tmp/bar" "${TEST_DIR}/tmp/qux"
+    # -r doesn’t dereference...
+    file_check_push_noderef -r /tmp/qux /tmp/bar
+    # ... except if we add a trailing `/`, in which case the first level is followed.
+    file_check_push_noderef_dir -r /tmp/qux/ baz /tmp/foo
+    # -P doesn’t dereference.
+    file_check_push_noderef -P /tmp/qux /tmp/bar
+    # -rP doesn’t dereference...
+    file_check_push_noderef -rP /tmp/qux /tmp/bar
+    # ... except if we add a trailing `/`, in which case the first level is followed.
+    file_check_push_noderef_dir -rP /tmp/qux/ baz /tmp/foo
+    # -rH does dereference the first level...
+    file_check_push_noderef_dir -rH /tmp/qux baz /tmp/foo
+    # ... and so does adding a trailing `/`.
+    file_check_push_noderef_dir -rH /tmp/qux/ baz /tmp/foo
+    # -rL does dereference all levels...
+    file_check_push_deref_dir -rL /tmp/qux baz barqux
+    # ... and so does adding a trailing `/`.
+    file_check_push_deref_dir -rL /tmp/qux/ baz barqux
 
     # Test SFTP functionality.
     cmd=$(
@@ -249,8 +331,9 @@ test_filemanip() {
     incus delete filemanip -f
     [ "$output" = "foo" ]
 
-    rm -rf "${TEST_DIR}"/source
+    rm -rf "${TEST_DIR}/source"
     rm -rf "${TEST_DIR}/dest"
+    rm -rf "${TEST_DIR}/tmp"
     incus project switch default
     incus project delete test
 }
