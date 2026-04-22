@@ -2123,7 +2123,7 @@ func (c *cmdStorageVolumeFile) command() *cobra.Command {
 	cmd.AddCommand(storageVolumeFilePullCmd.command())
 
 	// Push
-	storageVolumeFilePushCmd := cmdStorageVolumeFilePush{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
+	storageVolumeFilePushCmd := cmdStorageVolumeFilePush{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c, pusher: &pushable{}}
 	cmd.AddCommand(storageVolumeFilePushCmd.command())
 
 	// Edit
@@ -2759,11 +2759,10 @@ type cmdStorageVolumeFilePush struct {
 	storage           *cmdStorage
 	storageVolume     *cmdStorageVolume
 	storageVolumeFile *cmdStorageVolumeFile
+	pusher            *pushable
 
 	edit         bool
 	noModeChange bool
-
-	flagRecursive bool
 }
 
 var cmdStorageVolumeFilePushUsage = u.Usage{u.Path, u.Pool.Remote(), u.MakePath(u.Volume, u.Target(u.Path))}
@@ -2780,11 +2779,14 @@ func (c *cmdStorageVolumeFilePush) command() *cobra.Command {
 echo "Hello world" | incus storage volume file push - local v1 test
    To read "Hello world" from standard input and write it into test in volume "v1".`))
 
-	cmd.Flags().BoolVarP(&c.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
 	cmd.Flags().BoolVarP(&c.storageVolumeFile.flagMkdir, "create-dirs", "p", false, i18n.G("Create any directories necessary"))
 	cmd.Flags().IntVar(&c.storageVolumeFile.flagUID, "uid", -1, i18n.G("Set the file's uid on push")+"``")
 	cmd.Flags().IntVar(&c.storageVolumeFile.flagGID, "gid", -1, i18n.G("Set the file's gid on push")+"``")
 	cmd.Flags().StringVar(&c.storageVolumeFile.flagMode, "mode", "", i18n.G("Set the file's perms on push")+"``")
+	cmd.Flags().BoolVarP(&c.pusher.flagRecursive, "recursive", "r", false, i18n.G("Recursively transfer files"))
+	cmd.Flags().BoolVarP(&c.pusher.flagNoDereference, "no-dereference", "P", false, i18n.G("Never follow symbolic links in source path"))
+	cmd.Flags().BoolVarP(&c.pusher.flagFollow, "follow", "H", false, i18n.G("Follow command-line symbolic links in source path"))
+	cmd.Flags().BoolVarP(&c.pusher.flagDereference, "dereference", "L", false, i18n.G("Always follow symbolic links in source path"))
 
 	cmd.RunE = c.run
 
@@ -2804,7 +2806,8 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	d := parsedPool.RemoteServer
 	poolName := parsedPool.RemoteObject.String
 	volName := parsedTarget.List[0].String
-	targetPath, targetIsDir := normalizePath(parsedTarget.List[1].String)
+	target, targetIsDir := normalizePath(parsedTarget.List[1].String)
+	targetExists := false
 
 	// Connect to SFTP.
 	sftpConn, err := d.GetStoragePoolVolumeFileSFTP(poolName, "custom", volName)
@@ -2814,8 +2817,19 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 
 	defer func() { _ = sftpConn.Close() }()
 
-	// Determine the target mode
-	mode := os.FileMode(DirMode)
+	targetInfo, err := sftpConn.Stat(target)
+	if err == nil {
+		targetExists = true
+		if targetInfo.IsDir() {
+			targetIsDir = true
+		} else if targetIsDir {
+			// Let’s be extra careful and check that explicit requests for directories actually point to
+			// directories.
+			return fmt.Errorf(i18n.G("%s is not a directory"), target)
+		}
+	}
+
+	var mode os.FileMode
 	if c.storageVolumeFile.flagMode != "" {
 		if len(c.storageVolumeFile.flagMode) == 3 {
 			c.storageVolumeFile.flagMode = "0" + c.storageVolumeFile.flagMode
@@ -2829,77 +2843,51 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		mode = os.FileMode(m)
 	}
 
-	// Recursive calls
-	if c.flagRecursive {
-		// Quick checks.
-		if c.storageVolumeFile.flagUID != -1 || c.storageVolumeFile.flagGID != -1 || c.storageVolumeFile.flagMode != "" {
-			return errors.New(i18n.G("Can't supply uid/gid/mode in recursive mode"))
-		}
-
-		// Create needed paths if requested
-		if c.storageVolumeFile.flagMkdir {
-			f, err := os.Open(srcFile)
-			if err != nil {
-				return err
-			}
-
-			finfo, err := f.Stat()
-			_ = f.Close()
-			if err != nil {
-				return err
-			}
-
-			mode, uid, gid := internalIO.GetOwnerMode(finfo)
-
-			err = sftpRecursiveMkdir(sftpConn, targetPath, &mode, int64(uid), int64(gid))
-			if err != nil {
-				return err
-			}
-		}
-
-		// Transfer the file
-		err := sftpRecursivePushFile(sftpConn, srcFile, srcFile, targetPath, c.global.flagQuiet, true, true)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	// Determine the target uid
-	uid := max(c.storageVolumeFile.flagUID, 0)
-
-	// Determine the target gid
-	gid := max(c.storageVolumeFile.flagGID, 0)
-
-	// Make sure the file is accessible by us before trying to push it
+	// Push the files
 	var f *os.File
-	if srcFile == "-" {
+	var linkTarget string
+	var size int64
+	m := mode
+	uid := max(c.storageVolumeFile.flagUID, 0)
+	gid := max(c.storageVolumeFile.flagGID, 0)
+	if isStdin(srcFile) {
+		if targetIsDir {
+			return errors.New(i18n.G("A target file name must be specified when pushing from stdin; the target is a directory"))
+		}
+
 		f = os.Stdin
 	} else {
-		f, err = os.Open(srcFile)
-		if err != nil {
-			return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %s %w"), srcFile, err)
-		}
-	}
-
-	defer func() { _ = f.Close() }() // nolint:revive
-
-	// Push the file
-	fpath := targetPath
-	if targetIsDir {
-		fpath = filepath.Join(fpath, filepath.Base(f.Name()))
-	}
-
-	// Create needed paths if requested
-	if c.storageVolumeFile.flagMkdir {
-		finfo, err := f.Stat()
+		srcInfo, wPath, err := c.pusher.statFile(srcFile)
 		if err != nil {
 			return err
+		}
+
+		// Recursively copy directories.
+		if srcInfo.IsDir() {
+			return sftpRecursivePushFile(sftpConn, wPath, srcFile, target, c.global.flagQuiet, c.pusher.flagDereference, targetExists)
+		}
+
+		if srcInfo.Mode()&os.ModeSymlink != 0 {
+			linkTarget, err = os.Readlink(srcFile)
+			if err != nil {
+				return err
+			}
+		} else {
+			f, err = os.Open(srcFile)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), f, err)
+			}
+
+			size = srcInfo.Size()
+			defer func() { _ = f.Close() }()
 		}
 
 		if c.storageVolumeFile.flagUID == -1 || c.storageVolumeFile.flagGID == -1 {
-			_, dUID, dGID := internalIO.GetOwnerMode(finfo)
+			dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
+
+			if c.storageVolumeFile.flagMode == "" {
+				m = dMode
+			}
 
 			if c.storageVolumeFile.flagUID == -1 {
 				uid = dUID
@@ -2909,81 +2897,77 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 				gid = dGID
 			}
 		}
+	}
 
-		err = sftpRecursiveMkdir(sftpConn, filepath.Dir(fpath), nil, int64(uid), int64(gid))
+	// Determine the target path.
+	var targetPath string
+	if targetIsDir {
+		targetPath = filepath.Join(target, filepath.Base(srcFile))
+	} else {
+		targetPath = target
+	}
+
+	// Create needed paths if requested
+	if c.storageVolumeFile.flagMkdir {
+		mode := os.FileMode(DirMode)
+		err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(uid), int64(gid))
 		if err != nil {
 			return err
 		}
 	}
 
-	// Transfer the file
-	fileArgs := incus.InstanceFileArgs{
+	// Transfer the files.
+	args := incus.InstanceFileArgs{
 		UID:  -1,
 		GID:  -1,
 		Mode: -1,
 	}
 
+	// Check if the path already exists.
+	_, err = sftpConn.Stat(targetPath)
+	fileExists := err == nil
+
 	if !c.noModeChange {
-		if c.storageVolumeFile.flagMode == "" || c.storageVolumeFile.flagUID == -1 || c.storageVolumeFile.flagGID == -1 {
-			finfo, err := f.Stat()
-			if err != nil {
-				return err
-			}
-
-			fMode, fUID, fGID := internalIO.GetOwnerMode(finfo)
-
-			if c.storageVolumeFile.flagMode == "" {
-				mode = fMode
-			}
-
-			if c.storageVolumeFile.flagUID == -1 {
-				uid = fUID
-			}
-
-			if c.storageVolumeFile.flagGID == -1 {
-				gid = fGID
-			}
+		if !fileExists || c.storageVolumeFile.flagUID != -1 {
+			args.UID = int64(uid)
 		}
 
-		fileArgs.UID = int64(uid)
-		fileArgs.GID = int64(gid)
-		fileArgs.Mode = int(mode.Perm())
-	}
+		if !fileExists || c.storageVolumeFile.flagGID != -1 {
+			args.GID = int64(gid)
+		}
 
-	fileArgs.Type = "file"
-
-	fstat, err := f.Stat()
-	if err != nil {
-		return err
+		if !fileExists || c.storageVolumeFile.flagMode != "" {
+			args.Mode = int(m.Perm())
+		}
 	}
 
 	progress := cli.ProgressRenderer{
-		Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), f.Name(), fpath),
+		Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), srcFile, targetPath),
 		Quiet:  c.global.flagQuiet,
 	}
 
-	fileArgs.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
-		ReadCloser: f,
-		Tracker: &ioprogress.ProgressTracker{
-			Length: fstat.Size(),
-			Handler: func(percent int64, speed int64) {
-				progress.UpdateProgress(ioprogress.ProgressData{
-					Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2)),
-				})
+	if f == nil {
+		args.Type = "symlink"
+		args.Content = strings.NewReader(linkTarget)
+	} else {
+		args.Type = "file"
+		args.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
+			ReadCloser: f,
+			Tracker: &ioprogress.ProgressTracker{
+				Length: size,
+				Handler: func(percent int64, speed int64) {
+					progress.UpdateProgress(ioprogress.ProgressData{
+						Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2)),
+					})
+				},
 			},
-		},
-	}, f)
-
-	logger.Infof("Pushing %s to %s (%s)", f.Name(), fpath, fileArgs.Type)
-	err = sftpCreateFile(sftpConn, fpath, fileArgs, true)
-	if err != nil {
-		progress.Done("")
-		return err
+		}, f)
 	}
 
+	logger.Infof("Pushing %s to %s (%s)", srcFile, targetPath, args.Type)
+	err = sftpCreateFile(sftpConn, targetPath, args, true)
 	progress.Done("")
-
-	return nil
+	return err
 }
 
 func (c *cmdStorageVolumeFilePush) run(cmd *cobra.Command, args []string) error {
