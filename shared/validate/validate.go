@@ -989,3 +989,23 @@ func IsBase64(value string) error {
 
 	return nil
 }
+
+// IsSELinuxType validates whether the string is valid as SELinux type.
+func IsSELinuxType(value string) error {
+	match, _ := regexp.MatchString(`^[a-z]+[0-9a-z_]*_t$`, value)
+	if !match {
+		return errors.New("Invalid value, must be SELinux type string (e.g. container_init_t)")
+	}
+
+	return nil
+}
+
+// IsSELinuxLevel validates whether the string is valid as SELinux MLS/MCS level.
+func IsSELinuxLevel(value string) error {
+	match, _ := regexp.MatchString(`^s\d+(-s\d+)?(:c\d+(\.c\d+)?(,c\d+(\.c\d+)?)*)?$`, value)
+	if !match {
+		return errors.New("Invalid value, must be SELinux level (e.g. s0:c1,c2)")
+	}
+
+	return nil
+}
