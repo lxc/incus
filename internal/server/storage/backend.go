@@ -56,6 +56,7 @@ import (
 	localUtil "github.com/lxc/incus/v6/internal/server/util"
 	internalUtil "github.com/lxc/incus/v6/internal/util"
 	"github.com/lxc/incus/v6/shared/api"
+	"github.com/lxc/incus/v6/shared/archive"
 	"github.com/lxc/incus/v6/shared/ioprogress"
 	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/revert"
@@ -791,9 +792,18 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 	defer importRevert.Fail()
 
 	// Unpack the backup into the new storage volume(s).
-	volPostHook, revertHook, err := b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, backup.DefaultBackupPrefix, op)
-	if err != nil {
-		return nil, nil, err
+	var volPostHook drivers.VolumePostHook
+	var revertHook revert.Hook
+	if srcBackup.Config.Volume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		volPostHook, revertHook, err = b.qcow2UnpackVolume(vol, srcBackup.Snapshots, srcData, backup.DefaultBackupPrefix, op)
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		volPostHook, revertHook, err = b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, backup.DefaultBackupPrefix, op)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	if revertHook != nil {
@@ -2769,9 +2779,16 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 		}
 	}
 
-	err = b.driver.BackupVolume(vol, tarWriter, backup.DefaultBackupPrefix, optimized, snapNames, op)
-	if err != nil {
-		return err
+	if dbVol.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		err = b.qcow2BackupVolume(vol, dbVol, inst.Project().Name, tarWriter, backup.DefaultBackupPrefix, snapNames, op)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = b.driver.BackupVolume(vol, tarWriter, backup.DefaultBackupPrefix, optimized, snapNames, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	if dependentVolumes {
@@ -7590,9 +7607,16 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, writer 
 
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, volume.Config)
 
-	err = b.driver.BackupVolume(vol, writer, basePrefix, optimized, snapNames, op)
-	if err != nil {
-		return err
+	if volume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		err = b.qcow2BackupVolume(vol, volume, projectName, writer, basePrefix, snapNames, op)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = b.driver.BackupVolume(vol, writer, basePrefix, optimized, snapNames, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -7764,9 +7788,18 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 	}
 
 	// Unpack the backup into the new storage volume(s).
-	volPostHook, revertHook, err := b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, basePrefix, op)
-	if err != nil {
-		return err
+	var volPostHook drivers.VolumePostHook
+	var revertHook revert.Hook
+	if srcBackup.Config.Volume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+		volPostHook, revertHook, err = b.qcow2UnpackVolume(vol, srcBackup.Snapshots, srcData, basePrefix, op)
+		if err != nil {
+			return err
+		}
+	} else {
+		volPostHook, revertHook, err = b.driver.CreateVolumeFromBackup(vol, srcBackup, srcData, basePrefix, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	if revertHook != nil {
@@ -8971,6 +9004,313 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 
 	reverter.Success()
 	return nil
+}
+
+func (b *backend) qcow2BackupVolume(vol drivers.Volume, dbVol *db.StorageVolume, projectName string, writer instancewriter.InstanceWriter, basePrefix string, snapshots []string, op *operations.Operation) error {
+	if len(snapshots) > 0 {
+		// Check requested snapshot match those in storage.
+		err := vol.SnapshotsMatch(snapshots, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Convert the volume type name to our internal integer representation.
+	volumeDBType, err := VolumeTypeNameToDBType(dbVol.Type)
+	if err != nil {
+		return err
+	}
+
+	inst, deviceName, err := InstanceByVolumeName(b.state, b.name, projectName, vol.Name(), volumeDBType)
+	if err != nil {
+		return err
+	}
+
+	getDiskPath := func(v drivers.Volume, blockIndex int) (string, func(), error) {
+		blockPath, err := b.driver.GetVolumeDiskPath(v)
+		if err != nil {
+			errMsg := "Error getting VM block volume disk path"
+			if v.Type() == drivers.VolumeTypeCustom {
+				errMsg = "Error getting custom block volume disk path"
+			}
+
+			return "", nil, fmt.Errorf(errMsg+": %w", err)
+		}
+
+		if inst != nil && inst.IsRunning() {
+			cleanupExport, path, err := inst.ExportQcow2Block(deviceName, blockIndex)
+			if err != nil {
+				return "", nil, err
+			}
+
+			nbdPath, err := drivers.ConnectQemuNbd(path, "", "", true)
+			if err != nil {
+				return "", nil, err
+			}
+
+			cleanup := func() {
+				_ = drivers.DisconnectQemuNbd(nbdPath)
+				cleanupExport()
+			}
+
+			return nbdPath, cleanup, nil
+		}
+
+		nbdPath, err := drivers.ConnectQemuNbd(blockPath, "qcow2", "", true)
+		if err != nil {
+			return "", nil, err
+		}
+
+		cleanup := func() {
+			_ = drivers.DisconnectQemuNbd(nbdPath)
+		}
+
+		return nbdPath, cleanup, nil
+	}
+
+	blockIndex := 0
+	// Handle snapshots.
+	if len(snapshots) > 0 {
+		for _, snapName := range snapshots {
+			prefix := filepath.Join(basePrefix, drivers.BackupSnapshotPrefix(vol), snapName)
+			snapVol, err := vol.NewSnapshot(snapName)
+			if err != nil {
+				return err
+			}
+
+			err = vol.MountWithSnapshotsTask(func(parentMountPath string, snapsMountPath map[string]string, op *operations.Operation) error {
+				mountPath := snapsMountPath[snapVol.Name()]
+				diskPath, cleanup, err := getDiskPath(snapVol, blockIndex)
+				if err != nil {
+					return err
+				}
+
+				err = drivers.BackupVolume(b.driver, snapVol, writer, mountPath, diskPath, prefix)
+				if err != nil {
+					cleanup()
+					return err
+				}
+
+				cleanup()
+
+				return nil
+			}, op)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Copy the main volume itself.
+	err = vol.MountWithSnapshotsTask(func(mountPath string, _ map[string]string, op *operations.Operation) error {
+		diskPath, cleanup, err := getDiskPath(vol, blockIndex)
+		if err != nil {
+			return err
+		}
+
+		err = drivers.BackupVolume(b.driver, vol, writer, mountPath, diskPath, filepath.Join(basePrefix, drivers.BackupPrefix(vol)))
+		if err != nil {
+			cleanup()
+			return err
+		}
+
+		cleanup()
+		return nil
+	}, op)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *backend) qcow2UnpackVolume(vol drivers.Volume, snapshots []string, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (drivers.VolumePostHook, revert.Hook, error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Find the compression algorithm used for backup source data.
+	_, err := srcData.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	tarArgs, _, unpacker, err := archive.DetectCompressionFile(srcData)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	volExists, err := b.driver.HasVolume(vol)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if volExists {
+		return nil, nil, errors.New("Cannot restore volume, already exists on target")
+	}
+
+	// Create new empty volume.
+	err = b.driver.CreateVolume(vol, nil, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reverter.Add(func() { _ = b.driver.DeleteVolume(vol, op) })
+
+	getDiskPath := func(v drivers.Volume) (string, func(), error) {
+		blockPath, err := b.driver.GetVolumeDiskPath(v)
+		if err != nil {
+			errMsg := "Error getting VM block volume disk path"
+			if v.Type() == drivers.VolumeTypeCustom {
+				errMsg = "Error getting custom block volume disk path"
+			}
+
+			return "", nil, fmt.Errorf(errMsg+": %w", err)
+		}
+
+		nbdPath, err := drivers.ConnectQemuNbd(blockPath, "qcow2", "unmap", false)
+		if err != nil {
+			return "", nil, err
+		}
+
+		cleanup := func() {
+			_ = drivers.DisconnectQemuNbd(nbdPath)
+		}
+
+		return nbdPath, cleanup, nil
+	}
+
+	if len(snapshots) > 0 {
+		// Create new snapshots directory.
+		err := drivers.CreateParentSnapshotDirIfMissing(b.driver.Name(), vol.Type(), vol.Name())
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	for _, snapName := range snapshots {
+		err = vol.MountWithSnapshotsTask(func(mountPath string, _ map[string]string, op *operations.Operation) error {
+			backupSnapshotPrefix := filepath.Join(basePrefix, drivers.BackupSnapshotPrefix(vol), snapName)
+			diskPath, cleanup, err := getDiskPath(vol)
+			if err != nil {
+				return err
+			}
+
+			err = drivers.UnpackVolume(b.driver, vol, srcData, tarArgs, unpacker, backupSnapshotPrefix, mountPath, diskPath)
+			if err != nil {
+				cleanup()
+				return err
+			}
+
+			cleanup()
+			return nil
+		}, op)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		snapVol, err := vol.NewSnapshot(snapName)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		b.logger.Debug("Creating volume snapshot", logger.Ctx{"snapshotName": snapVol.Name()})
+		err = b.driver.CreateVolumeSnapshot(snapVol, op)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		err = b.qcow2CreateSnapshot(vol, snapVol, "", nil, "", false, op)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		reverter.Add(func() { _ = b.driver.DeleteVolumeSnapshot(snapVol, op) })
+	}
+
+	err = b.driver.MountVolume(vol, op)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reverter.Add(func() { _, _ = b.driver.UnmountVolume(vol, false, op) })
+
+	for _, snapName := range snapshots {
+		snapVol, err := vol.NewSnapshot(snapName)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		err = b.driver.MountVolumeSnapshot(snapVol, op)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	reverter.Add(func() {
+		for _, snapName := range snapshots {
+			snapVol, _ := vol.NewSnapshot(snapName)
+			_, _ = b.driver.UnmountVolumeSnapshot(snapVol, op)
+		}
+	})
+
+	mountPath := vol.MountPath()
+	diskPath, cleanupNBD, err := getDiskPath(vol)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = drivers.UnpackVolume(b.driver, vol, srcData, tarArgs, unpacker, filepath.Join(basePrefix, drivers.BackupPrefix(vol)), mountPath, diskPath)
+	if err != nil {
+		cleanupNBD()
+		return nil, nil, err
+	}
+
+	cleanupNBD()
+
+	// Run EnsureMountPath after mounting and unpacking to ensure the mounted directory has the
+	// correct permissions set.
+	err = vol.EnsureMountPath(false)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cleanup := reverter.Clone().Fail // Clone before calling reverter.Success() so we can return the Fail func.
+	reverter.Success()
+
+	var postHook drivers.VolumePostHook
+	if vol.Type() != drivers.VolumeTypeCustom {
+		// Leave volume mounted (as is needed during backup.yaml generation during latter parts of the
+		// backup restoration process). Create a post hook function that will be called at the end of the
+		// backup restore process to unmount the volume if needed.
+		postHook = func(vol drivers.Volume) error {
+			for _, snapName := range snapshots {
+				snapVol, err := vol.NewSnapshot(snapName)
+				if err != nil {
+					return err
+				}
+
+				_, err = b.driver.UnmountVolumeSnapshot(snapVol, op)
+				if err != nil {
+					return err
+				}
+			}
+
+			_, err = b.driver.UnmountVolume(vol, false, op)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+	} else {
+		// For custom volumes unmount now, there is no post hook as there is no backup.yaml to generate.
+		_, err = b.driver.UnmountVolume(vol, false, op)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return postHook, cleanup, nil
 }
 
 // volumeUsedByRunningInstance returns the name of the running instance and the

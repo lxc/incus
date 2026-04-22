@@ -1641,7 +1641,7 @@ func (d *truenas) CreateVolumeSnapshot(vol Volume, op *operations.Operation) err
 	defer reverter.Fail()
 
 	// Create the parent directory.
-	err := createParentSnapshotDirIfMissing(d.name, vol.volType, parentName)
+	err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, parentName)
 	if err != nil {
 		return err
 	}

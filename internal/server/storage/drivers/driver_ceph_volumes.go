@@ -474,7 +474,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 	lastSnap := ""
 
 	if len(snapshots) > 0 {
-		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
+		err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
 		if err != nil {
 			return err
 		}
@@ -579,7 +579,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 	// Handle rbd migration.
 	if len(volTargetArgs.Snapshots) > 0 {
 		// Create the parent directory.
-		err := createParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
+		err := CreateParentSnapshotDirIfMissing(d.name, vol.volType, vol.name)
 		if err != nil {
 			return err
 		}
@@ -1599,7 +1599,7 @@ func (d *ceph) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 	}
 
 	// Create the parent directory.
-	err := createParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
+	err := CreateParentSnapshotDirIfMissing(d.name, snapVol.volType, parentName)
 	if err != nil {
 		return err
 	}
