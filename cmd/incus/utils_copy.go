@@ -81,27 +81,33 @@ func (p *pullable) statFile(sftpConn *sftp.Client, path string) (os.FileInfo, st
 
 	isSymlink := srcLstat.Mode()&os.ModeSymlink != 0
 	srcStat := srcLstat
+	var errSymlink error
 	if isSymlink {
-		srcStat, err = sftpConn.Stat(normalizedPath)
-		if err != nil {
-			return nil, "", err
-		}
+		// We defer dereferencing error handling, as chances are we aren’t even interested in the
+		// symlink target.
+		srcStat, errSymlink = sftpConn.Stat(normalizedPath)
 	}
 
-	// Let’s be extra careful and check that explicit requests for directories actually point to
-	// directories.
 	directoryRequested := strings.HasSuffix(path, "/")
-	if directoryRequested && !srcStat.IsDir() {
-		return nil, "", fmt.Errorf(i18n.G("%s is not a directory"), normalizedPath)
-	}
+	if errSymlink == nil {
+		// Let’s be extra careful and check that explicit requests for directories actually point to
+		// directories.
+		if directoryRequested && !srcStat.IsDir() {
+			return nil, "", fmt.Errorf(i18n.G("%s is not a directory"), normalizedPath)
+		}
 
-	// Here, we perform a special handling if -P is used on a directory symlink.
-	if srcStat.IsDir() && !p.flagRecursive && (!isSymlink || !p.flagNoDereference) {
-		return nil, "", errors.New(i18n.G("--recursive/-r is required when pulling directories"))
+		// Here, we perform a special handling if -P is used on a directory symlink.
+		if srcStat.IsDir() && !p.flagRecursive && (!isSymlink || !p.flagNoDereference) {
+			return nil, "", errors.New(i18n.G("--recursive/-r is required when pulling directories"))
+		}
 	}
 
 	// Under a few conditions, return the file the link points to and not the link itself.
 	if p.flagDereference || !p.flagRecursive && !p.flagNoDereference || isSymlink && p.flagFollow || directoryRequested {
+		if errSymlink != nil {
+			return nil, "", err
+		}
+
 		return srcStat, normalizedPath, nil
 	}
 
@@ -127,20 +133,26 @@ func (p *pushable) statFile(path string) (os.FileInfo, string, error) {
 
 	isSymlink := srcLstat.Mode()&os.ModeSymlink != 0
 	srcStat := srcLstat
+	var errSymlink error
 	if isSymlink {
-		srcStat, err = os.Stat(absPath)
-		if err != nil {
-			return nil, "", err
-		}
+		// We defer dereferencing error handling, as chances are we aren’t even interested in the
+		// symlink target.
+		srcStat, errSymlink = os.Stat(absPath)
 	}
 
-	// Here, we perform a special handling if -P is used on a directory symlink.
-	if srcStat.IsDir() && !p.flagRecursive && (!isSymlink || !p.flagNoDereference) {
-		return nil, "", errors.New(i18n.G("--recursive/-r is required when pulling directories"))
+	if errSymlink == nil {
+		// Here, we perform a special handling if -P is used on a directory symlink.
+		if srcStat.IsDir() && !p.flagRecursive && (!isSymlink || !p.flagNoDereference) {
+			return nil, "", errors.New(i18n.G("--recursive/-r is required when pulling directories"))
+		}
 	}
 
 	// Under a few conditions, return the file the link points to and not the link itself.
 	if p.flagDereference || !p.flagRecursive && !p.flagNoDereference || isSymlink && p.flagFollow || strings.HasSuffix(path, "/") {
+		if errSymlink != nil {
+			return nil, "", err
+		}
+
 		// This is a bit of a hack, but as we are using `filepath.Walk`, we need to point to an actual
 		// directory to be able to walk it, hence the early dereferencing.
 		if isSymlink && srcStat.IsDir() {
