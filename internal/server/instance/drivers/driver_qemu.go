@@ -10777,11 +10777,25 @@ func (d *qemu) CanLiveMigrate() bool {
 // GuestOS returns the guest OS. In this driver, we consider anything unknown to be Linux.
 func (d *qemu) GuestOS() string {
 	imageOS := strings.ToLower(d.expandedConfig["image.os"])
-	if strings.Contains(imageOS, "windows") {
+	matches := func(names ...string) bool {
+		for _, name := range names {
+			if strings.Contains(imageOS, name) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	if matches("windows") {
 		return "windows"
-	} else if strings.Contains(imageOS, "darwin") || strings.Contains(imageOS, "macos") || strings.Contains(imageOS, "mac os") {
+	}
+
+	if matches("darwin", "macos", "mac os") {
 		return "macos"
-	} else if strings.Contains(imageOS, "freebsd") {
+	}
+
+	if matches("freebsd", "opnsense", "pfsense") {
 		return "freebsd"
 	}
 
