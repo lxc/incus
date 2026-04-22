@@ -78,6 +78,7 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/proxy"
 	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/subprocess"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -945,6 +946,10 @@ func (d *Daemon) init() error {
 	if err != nil {
 		return err
 	}
+
+	// Propagate SELinux state to subprocess so child processes can be
+	// launched with the correct exec context.
+	subprocess.SetSELinuxEnabled(d.os.SELinuxEnabled)
 
 	// Initialize apparmor.
 	if d.os.AppArmorAvailable {
