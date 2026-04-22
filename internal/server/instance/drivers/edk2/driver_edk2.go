@@ -91,6 +91,7 @@ var architectureInstallations = map[int][]Installation{
 		Usage: map[FirmwareUsage][]FirmwarePair{
 			CSM: {
 				{Code: "bios.bin", Vars: "bios.bin"},
+				{Code: "bios-256k.bin", Vars: "bios-256k.bin"},
 			},
 		},
 	}, {
