@@ -255,6 +255,10 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 			return true
 		}
 
+		if key == "volatile.selinux.context" {
+			return true
+		}
+
 		if strings.HasPrefix(key, instance.ConfigVolatilePrefix) {
 			if strings.HasSuffix(key, ".apply_quota") {
 				return true
