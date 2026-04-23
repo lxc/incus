@@ -1069,6 +1069,8 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 					return
 				}
 
+				devicesMap := storagePools.DevicesMapFromBackupConfig(config)
+
 				for _, vol := range config.DependentVolumes {
 					diskPool, err := storagePools.LoadByName(d.state, vol.Pool.Name)
 					if err != nil {
@@ -1079,9 +1081,14 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 						continue
 					}
 
-					d.logger.Debug("Receiving dependent volume", logger.Ctx{"name": vol.Volume.Name})
+					d.logger.Debug("Receiving dependent volume", logger.Ctx{"name": vol.Volume.Name, "pool": vol.Pool.Name})
+					deviceName := storagePools.DeviceByPoolAndVolume(devicesMap, vol.Pool.Name, vol.Volume.Name)
+					if deviceName == "" {
+						d.logger.Error("Failed to find requested device", logger.Ctx{"pool": vol.Pool.Name, "volName": vol.Volume.Name})
+						return
+					}
 
-					diskName := d.blockNodeName(linux.PathNameEncode(vol.Volume.Name))
+					diskName := d.blockNodeName(linux.PathNameEncode(deviceName))
 
 					err = d.receiveMigrationSnapshot(monitor, diskName, filesystemConn)
 					if err != nil {
@@ -8082,6 +8089,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	}
 
 	dependentVolumeMove := clusterMoveSourceName != "" && disksToMigrate
+	devicesMap := storagePools.DevicesMapFromBackupConfig(volSourceArgs.Info.Config)
 
 	reverter := revert.New()
 
@@ -8136,7 +8144,12 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				continue
 			}
 
-			diskName := d.blockNodeName(linux.PathNameEncode(vol.Name))
+			deviceName := storagePools.DeviceByPoolAndVolume(devicesMap, vol.Pool, vol.Name)
+			if deviceName == "" {
+				return fmt.Errorf("%s/%s does not exists in source device", vol.Pool, vol.Name)
+			}
+
+			diskName := d.blockNodeName(linux.PathNameEncode(deviceName))
 
 			d.logger.Debug("Create snapshot for dependent volume", logger.Ctx{"name": vol.Name, "size": vol.VolumeSize, "diskName": diskName})
 
@@ -8317,7 +8330,12 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				continue
 			}
 
-			diskName := d.blockNodeName(linux.PathNameEncode(vol.Name))
+			deviceName := storagePools.DeviceByPoolAndVolume(devicesMap, vol.Pool, vol.Name)
+			if deviceName == "" {
+				return fmt.Errorf("%s/%s does not exists in source device", vol.Pool, vol.Name)
+			}
+
+			diskName := d.blockNodeName(linux.PathNameEncode(deviceName))
 
 			_, err = d.sendMigrationSnapshot(diskName, filesystemConn, true)
 			if err != nil {
