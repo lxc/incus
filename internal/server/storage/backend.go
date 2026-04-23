@@ -9497,6 +9497,8 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 
 	reverter.Add(func() { cleanup() })
 
+	devicesMap := DevicesMapFromBackupConfig(info.Config)
+
 	for idx, dependentVol := range args.DependentVolumes {
 		diskPool, err := LoadByName(b.state, dependentVol.Pool)
 		if err != nil {
@@ -9508,9 +9510,20 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 		}
 
 		b.logger.Debug("createDependentVolumesFromMigration", logger.Ctx{"name": dependentVol.Name, "type": dependentVol.MigrationType, "size": dependentVol.VolumeSize})
+		devices := inst.ExpandedDevices().Clone()
+		deviceName := DeviceByPoolAndVolume(devicesMap, dependentVol.Pool, dependentVol.Name)
+		if deviceName == "" {
+			return nil, fmt.Errorf("%s/%s does not exists in source device", dependentVol.Pool, dependentVol.Name)
+		}
+
+		dev, ok := devices[deviceName]
+		if !ok {
+			return nil, fmt.Errorf("Device %s not found for instance %s", deviceName, inst.Name())
+		}
+
 		volumeArgs := localMigration.VolumeTargetArgs{
 			IndexHeaderVersion: localMigration.IndexHeaderVersion,
-			Name:               dependentVol.Name,
+			Name:               dev["source"],
 			MigrationType:      dependentVol.MigrationType,
 			TrackProgress:      true,
 			ContentType:        dependentVol.ContentType,
