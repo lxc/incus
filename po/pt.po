@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-04-22 19:04+0000\n"
-"PO-Revision-Date: 2026-04-22 08:09+0000\n"
+"PO-Revision-Date: 2026-04-23 23:09+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -785,6 +785,8 @@ msgid ""
 "A target file name must be specified when pushing from stdin; the target is "
 "a directory"
 msgstr ""
+"Tem de ser especificado um nome de ficheiro alvo quando se empurra para o "
+"stdin; o alvo é um directório"
 
 #: cmd/incus/usage/usage.go:768
 msgid "ACL"
@@ -11246,9 +11248,8 @@ msgid "sshfs mounting %q on %q"
 msgstr "sshfs a montar %q em %q"
 
 #: cmd/incus/file.go:758
-#, fuzzy
 msgid "stdin can only be used once, with no other source arguments"
-msgstr "--all não pode ser usado juntamente com outros argumentos"
+msgstr "stdin só pode ser usado uma vez, sem nenhuns outros argumentos fonte"
 
 #: cmd/incus/usage/usage.go:814
 msgid "symlink target path"
