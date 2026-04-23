@@ -2379,7 +2379,10 @@ func (d *qemu) advertiseVsockAddress() error {
 		SkipGetServer: true,
 	}
 
-	agent, err := incus.ConnectIncusHTTP(agentArgs, client)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	agent, err := incus.ConnectIncusHTTPWithContext(ctx, agentArgs, client)
 	if err != nil {
 		return fmt.Errorf("Failed connecting to the agent: %w", err)
 	}
@@ -9413,7 +9416,10 @@ func (d *qemu) agentGetState() (*api.InstanceState, error) {
 		return nil, err
 	}
 
-	agent, err := incus.ConnectIncusHTTP(nil, client)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	agent, err := incus.ConnectIncusHTTPWithContext(ctx, nil, client)
 	if err != nil {
 		return nil, fmt.Errorf("Failed connecting to agent: %w", err)
 	}
@@ -9860,7 +9866,10 @@ func (d *qemu) devIncusEventSend(eventType string, eventMessage map[string]any) 
 		SkipGetServer: true,
 	}
 
-	agent, err := incus.ConnectIncusHTTP(agentArgs, client)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	agent, err := incus.ConnectIncusHTTPWithContext(ctx, agentArgs, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to the agent", logger.Ctx{"err": err})
 		return errors.New("Failed to connect to the agent")
@@ -10239,7 +10248,10 @@ func (d *qemu) getAgentMetrics() (*metrics.MetricSet, error) {
 		SkipGetServer: true,
 	}
 
-	agent, err := incus.ConnectIncusHTTP(agentArgs, client)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	agent, err := incus.ConnectIncusHTTPWithContext(ctx, agentArgs, client)
 	if err != nil {
 		d.logger.Error("Failed to connect to the agent", logger.Ctx{"project": d.Project().Name, "instance": d.Name(), "err": err})
 		return nil, errors.New("Failed to connect to the agent")
