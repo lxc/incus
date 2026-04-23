@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/mdlayher/vsock"
+	"github.com/shirou/gopsutil/v4/process"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v6/internal/linux"
@@ -579,24 +580,9 @@ func osGetNetworkState() map[string]api.InstanceStateNetwork {
 }
 
 func osGetProcessesState() int64 {
-	pids := []int64{1}
-
-	// Go through the pid list, adding new pids at the end so we go through them all.
-	for i := range pids {
-		fname := fmt.Sprintf("/proc/%d/task/%d/children", pids[i], pids[i])
-		fcont, err := os.ReadFile(fname)
-		if err != nil {
-			// The process terminated during execution of this loop.
-			continue
-		}
-
-		content := strings.Split(string(fcont), " ")
-		for j := range content {
-			pid, err := strconv.ParseInt(content[j], 10, 64)
-			if err == nil {
-				pids = append(pids, pid)
-			}
-		}
+	pids, err := process.Pids()
+	if err != nil {
+		return -1
 	}
 
 	return int64(len(pids))
