@@ -1156,6 +1156,25 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		if err != nil {
 			return err
 		}
+
+		newDevices := inst.LocalDevices()
+		err = src.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+			// Load the pool for the disk.
+			diskPool, err := LoadByName(b.state, dev.Config["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+
+			err = diskPool.CreateCustomVolumeFromCopy(inst.Project().Name, src.Project().Name, newDevices[dev.Name]["source"], "", nil, diskPool.Name(), dev.Config["source"], snapshots, op)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
 	} else {
 		// We are copying volumes between storage pools so use migration system as it will
 		// be able to negotiate a common transfer method between pool types.
