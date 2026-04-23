@@ -515,6 +515,34 @@ func validateDependentVolumes(source instance.Instance, req *api.InstancesPost) 
 	return nil
 }
 
+// ErrPoolNotRemote indicates the pool is not remote.
+var ErrPoolNotRemote error = errors.New("Pool is not remote")
+
+// checkVolumesOnRemoteStorage checks whether root and dependent disks are located on remote storage.
+func checkVolumesOnRemoteStorage(s *state.State, pool *api.StoragePool, inst instance.Instance) error {
+	if !slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
+		return ErrPoolNotRemote
+	}
+
+	err := inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		diskPool, err := storagePools.LoadByName(s, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if !slices.Contains(db.StorageRemoteDriverNames(), diskPool.Driver().Name()) {
+			return ErrPoolNotRemote
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
 	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
 		return response.Forbidden(errors.New("Cluster member is evacuated"))
@@ -577,9 +605,14 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 				return response.SmartError(err)
 			}
 
-			if !slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
-				// Redirect to migration
-				return clusterCopyContainerInternal(ctx, s, r, source, projectName, profiles, req)
+			err = checkVolumesOnRemoteStorage(s, pool, source)
+			if err != nil {
+				if errors.Is(err, ErrPoolNotRemote) {
+					// Redirect to migration
+					return clusterCopyContainerInternal(ctx, s, r, source, projectName, profiles, req)
+				}
+
+				return response.SmartError(err)
 			}
 		}
 	}
