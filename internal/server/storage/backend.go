@@ -1206,6 +1206,23 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 			}
 		}
 
+		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, inst.Project().Name, snapshots)
+		if err != nil {
+			err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
+			return err
+		}
+
+		volumesWithTypes, err := DependentVolumesMatchMigrationType(b.state, dependentVolumesOffer, snapshots)
+		if err != nil {
+			err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
+			return err
+		}
+
+		dependentVolumes := []localMigration.DependentVolumeArgs{}
+		for _, volWithType := range volumesWithTypes {
+			dependentVolumes = append(dependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0]))
+		}
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -1228,6 +1245,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				VolumeOnly:         !snapshots,
 				Info:               &localMigration.Info{Config: srcConfig},
 				StorageMove:        true,
+				DependentVolumes:   dependentVolumes,
 			}, op)
 		})
 
@@ -1241,6 +1259,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				TrackProgress:      false,         // Do not use a progress tracker on receiver.
 				VolumeOnly:         !snapshots,
 				StoragePool:        srcPool.Name(),
+				DependentVolumes:   dependentVolumes,
 			}, op)
 		})
 
