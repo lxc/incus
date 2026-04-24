@@ -8036,6 +8036,11 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 			return fmt.Errorf("Failed merging migration storage snapshot: %w", err)
 		}
 
+		err = monitor.RemoveBlockDevice(snapshotDiskName)
+		if err != nil {
+			return fmt.Errorf("Failed removing temporary snapshot disk device: %w", err)
+		}
+
 		return nil
 	}
 
