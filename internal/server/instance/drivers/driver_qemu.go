@@ -8204,7 +8204,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 	// Notify the shared disks that they're going to be accessed from another system,
 	// but only when performing a move within the same storage pool.
-	if storagePool == "" {
+	if storagePool == "" && clusterMoveSourceName != "" {
 		for _, dev := range d.expandedDevices.Sorted() {
 			if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
 				continue
@@ -8742,7 +8742,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// Notify the shared disks that they're going to be accessed from another system,
 		// but only when performing a move within the same storage pool.
-		if !storageMove {
+		if !storageMove && args.ClusterMoveSourceName != "" {
 			for _, dev := range d.expandedDevices.Sorted() {
 				if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" {
 					continue
