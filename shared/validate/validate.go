@@ -586,7 +586,7 @@ func IsAPIName(value string, allowSlashes bool) error {
 	}
 
 	// Check beginning and end.
-	match, err := regexp.MatchString(`^[a-zA-Z0-9]+.*[a-zA-Z0-9]+$`, value)
+	match, err := regexp.MatchString(`^[a-zA-Z0-9]+(.*[a-zA-Z0-9]+)?$`, value)
 	if err != nil {
 		return err
 	}
