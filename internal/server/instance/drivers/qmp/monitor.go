@@ -239,11 +239,15 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 	}
 
 	var err error
-	if logCommand && m.qmp.log != nil {
+	if logCommand && m.qmp != nil && m.qmp.log != nil {
 		_, err = fmt.Fprintf(m.qmp.log, "[%s] QUERY: %s\n", time.Now().Format(time.RFC3339), request)
 		if err != nil {
 			return err
 		}
+	}
+
+	if m.qmp == nil {
+		return ErrMonitorDisconnect
 	}
 
 	out, err := m.qmp.run(request, id)
@@ -257,7 +261,7 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 		return err
 	}
 
-	if logCommand && m.qmp.log != nil {
+	if logCommand && m.qmp != nil && m.qmp.log != nil {
 		_, err = fmt.Fprintf(m.qmp.log, "[%s] REPLY: %s\n\n", time.Now().Format(time.RFC3339), out)
 		if err != nil {
 			return err
