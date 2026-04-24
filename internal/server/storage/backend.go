@@ -1985,13 +1985,15 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	// Create dependent volumes if they exist.
-	cleanupDependentVols, err := b.createDependentVolumesFromMigration(inst, conn, args, srcInfo, op)
-	if err != nil {
-		return err
-	}
+	if !inst.IsSnapshot() && srcInfo.Config != nil && srcInfo.Config.Container != nil {
+		// Create dependent volumes if they exist.
+		cleanupDependentVols, err := b.createDependentVolumesFromMigration(inst, conn, args, srcInfo, op)
+		if err != nil {
+			return err
+		}
 
-	reverter.Add(func() { cleanupDependentVols() })
+		reverter.Add(func() { cleanupDependentVols() })
+	}
 
 	// Now that we got the source details, validate against the instance limits.
 	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
@@ -2647,10 +2649,12 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		}
 	}
 
-	// Migrate dependent volumes if they exist.
-	err = b.migrateDependentVolumes(inst, conn, args, op)
-	if err != nil {
-		return err
+	if !inst.IsSnapshot() && args.Info.Config != nil && args.Info.Config.Container != nil {
+		// Migrate dependent volumes if they exist.
+		err = b.migrateDependentVolumes(inst, conn, args, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Detect if source pool driver doesn't support cheap temporary snapshots that allow consistent copy when
