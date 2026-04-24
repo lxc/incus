@@ -234,7 +234,7 @@ func (m *Monitor) ping() error {
 // RunJSON executes a JSON-formatted command.
 func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) error {
 	// Check if disconnected
-	if m.disconnected {
+	if m.disconnected || m.qmp == nil {
 		return ErrMonitorDisconnect
 	}
 
