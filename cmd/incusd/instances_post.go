@@ -482,6 +482,67 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 	return operations.OperationResponse(op)
 }
 
+// validateDependentVolumes validates dependent volumes during copy.
+func validateDependentVolumes(source instance.Instance, req *api.InstancesPost) error {
+	// Fetch all dependent devices belonging to the instance.
+	dependentVolumes := []string{}
+	err := source.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		dependentVolumes = append(dependentVolumes, dev.Name)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	sourceDevices := source.LocalDevices()
+	for _, key := range dependentVolumes {
+		newDevice, exists := req.Devices[key]
+		if !exists {
+			return fmt.Errorf("Missing device %s in request", key)
+		}
+
+		oldDevice, exists := sourceDevices[key]
+		if !exists {
+			return fmt.Errorf("Missing device %s on source", key)
+		}
+
+		// Check if the source was overridden.
+		if oldDevice["source"] == newDevice["source"] {
+			return fmt.Errorf("Device source name should be different during copy for dependent disk: %s", key)
+		}
+	}
+
+	return nil
+}
+
+// ErrPoolNotRemote indicates the pool is not remote.
+var ErrPoolNotRemote error = errors.New("Pool is not remote")
+
+// checkVolumesOnRemoteStorage checks whether root and dependent disks are located on remote storage.
+func checkVolumesOnRemoteStorage(s *state.State, pool *api.StoragePool, inst instance.Instance) error {
+	if !slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
+		return ErrPoolNotRemote
+	}
+
+	err := inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		diskPool, err := storagePools.LoadByName(s, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if !slices.Contains(db.StorageRemoteDriverNames(), diskPool.Driver().Name()) {
+			return ErrPoolNotRemote
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
 	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
 		return response.Forbidden(errors.New("Cluster member is evacuated"))
@@ -506,6 +567,11 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 	// If "security.secureboot" has changed, force a NVRAM reset.
 	if util.IsTrueOrEmpty(source.ExpandedConfig()["security.secureboot"]) != util.IsTrueOrEmpty(req.Config["security.secureboot"]) {
 		req.Config["volatile.apply_nvram"] = "true"
+	}
+
+	err = validateDependentVolumes(source, req)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// When clustered, use the node name, otherwise use the hostname.
@@ -539,9 +605,14 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 				return response.SmartError(err)
 			}
 
-			if !slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
-				// Redirect to migration
-				return clusterCopyContainerInternal(ctx, s, r, source, projectName, profiles, req)
+			err = checkVolumesOnRemoteStorage(s, pool, source)
+			if err != nil {
+				if errors.Is(err, ErrPoolNotRemote) {
+					// Redirect to migration
+					return clusterCopyContainerInternal(ctx, s, r, source, projectName, profiles, req)
+				}
+
+				return response.SmartError(err)
 			}
 		}
 	}

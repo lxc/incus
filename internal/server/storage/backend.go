@@ -1156,6 +1156,25 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		if err != nil {
 			return err
 		}
+
+		newDevices := inst.LocalDevices()
+		err = src.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+			// Load the pool for the disk.
+			diskPool, err := LoadByName(b.state, dev.Config["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+
+			err = diskPool.CreateCustomVolumeFromCopy(inst.Project().Name, src.Project().Name, newDevices[dev.Name]["source"], "", nil, diskPool.Name(), dev.Config["source"], snapshots, op)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
 	} else {
 		// We are copying volumes between storage pools so use migration system as it will
 		// be able to negotiate a common transfer method between pool types.
@@ -1187,6 +1206,23 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 			}
 		}
 
+		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, inst.Project().Name, snapshots)
+		if err != nil {
+			err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
+			return err
+		}
+
+		volumesWithTypes, err := DependentVolumesMatchMigrationType(b.state, dependentVolumesOffer, snapshots)
+		if err != nil {
+			err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
+			return err
+		}
+
+		dependentVolumes := []localMigration.DependentVolumeArgs{}
+		for _, volWithType := range volumesWithTypes {
+			dependentVolumes = append(dependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0]))
+		}
+
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
@@ -1209,6 +1245,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				VolumeOnly:         !snapshots,
 				Info:               &localMigration.Info{Config: srcConfig},
 				StorageMove:        true,
+				DependentVolumes:   dependentVolumes,
 			}, op)
 		})
 
@@ -1222,6 +1259,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				TrackProgress:      false,         // Do not use a progress tracker on receiver.
 				VolumeOnly:         !snapshots,
 				StoragePool:        srcPool.Name(),
+				DependentVolumes:   dependentVolumes,
 			}, op)
 		})
 
@@ -1947,13 +1985,15 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	// Create dependent volumes if they exist.
-	cleanupDependentVols, err := b.createDependentVolumesFromMigration(inst, conn, args, srcInfo, op)
-	if err != nil {
-		return err
-	}
+	if !inst.IsSnapshot() && srcInfo.Config != nil && srcInfo.Config.Container != nil {
+		// Create dependent volumes if they exist.
+		cleanupDependentVols, err := b.createDependentVolumesFromMigration(inst, conn, args, srcInfo, op)
+		if err != nil {
+			return err
+		}
 
-	reverter.Add(func() { cleanupDependentVols() })
+		reverter.Add(func() { cleanupDependentVols() })
+	}
 
 	// Now that we got the source details, validate against the instance limits.
 	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
@@ -2609,10 +2649,12 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 		}
 	}
 
-	// Migrate dependent volumes if they exist.
-	err = b.migrateDependentVolumes(inst, conn, args, op)
-	if err != nil {
-		return err
+	if !inst.IsSnapshot() && args.Info.Config != nil && args.Info.Config.Container != nil {
+		// Migrate dependent volumes if they exist.
+		err = b.migrateDependentVolumes(inst, conn, args, op)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Detect if source pool driver doesn't support cheap temporary snapshots that allow consistent copy when
@@ -9478,6 +9520,8 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 
 	reverter.Add(func() { cleanup() })
 
+	devicesMap := DevicesMapFromBackupConfig(info.Config)
+
 	for idx, dependentVol := range args.DependentVolumes {
 		diskPool, err := LoadByName(b.state, dependentVol.Pool)
 		if err != nil {
@@ -9489,9 +9533,20 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 		}
 
 		b.logger.Debug("createDependentVolumesFromMigration", logger.Ctx{"name": dependentVol.Name, "type": dependentVol.MigrationType, "size": dependentVol.VolumeSize})
+		devices := inst.ExpandedDevices().Clone()
+		deviceName := DeviceByPoolAndVolume(devicesMap, dependentVol.Pool, dependentVol.Name)
+		if deviceName == "" {
+			return nil, fmt.Errorf("%s/%s does not exists in source device", dependentVol.Pool, dependentVol.Name)
+		}
+
+		dev, ok := devices[deviceName]
+		if !ok {
+			return nil, fmt.Errorf("Device %s not found for instance %s", deviceName, inst.Name())
+		}
+
 		volumeArgs := localMigration.VolumeTargetArgs{
 			IndexHeaderVersion: localMigration.IndexHeaderVersion,
-			Name:               dependentVol.Name,
+			Name:               dev["source"],
 			MigrationType:      dependentVol.MigrationType,
 			TrackProgress:      true,
 			ContentType:        dependentVol.ContentType,

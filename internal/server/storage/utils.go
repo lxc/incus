@@ -1486,3 +1486,33 @@ func InstanceByVolumeName(s *state.State, poolName string, projectName string, v
 
 	return inst, instanceDeviceName, nil
 }
+
+// DeviceByPoolAndVolume returns a device from the devices map for the given pool and volume name.
+func DeviceByPoolAndVolume(deviceMap map[string]map[string]string, poolName string, volumeName string) string {
+	inner, ok := deviceMap[poolName]
+	if !ok {
+		return ""
+	}
+
+	v, ok := inner[volumeName]
+	if !ok {
+		return ""
+	}
+
+	return v
+}
+
+// DevicesMapFromBackupConfig builds a map of instance devices indexed by pool and volume name.
+func DevicesMapFromBackupConfig(config *backupConfig.Config) map[string]map[string]string {
+	devicesMap := map[string]map[string]string{}
+	for devName, dev := range config.Container.ExpandedDevices {
+		_, hasPool := devicesMap[dev["pool"]]
+		if !hasPool {
+			devicesMap[dev["pool"]] = map[string]string{}
+		}
+
+		devicesMap[dev["pool"]][dev["source"]] = devName
+	}
+
+	return devicesMap
+}
