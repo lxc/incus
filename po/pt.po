@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-04-22 19:04+0000\n"
+"POT-Creation-Date: 2026-04-25 19:43+0200\n"
 "PO-Revision-Date: 2026-04-23 23:09+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1545,12 +1545,12 @@ msgstr "Membro do agrupamento %s removido do grupo %s"
 #: cmd/incus/config.go:689 cmd/incus/config.go:809 cmd/incus/copy.go:66
 #: cmd/incus/create.go:69 cmd/incus/info.go:54 cmd/incus/move.go:67
 #: cmd/incus/network.go:348 cmd/incus/network.go:798 cmd/incus/network.go:871
-#: cmd/incus/network.go:1423 cmd/incus/network.go:1507
-#: cmd/incus/network.go:1569 cmd/incus/network_forward.go:248
-#: cmd/incus/network_forward.go:319 cmd/incus/network_forward.go:484
-#: cmd/incus/network_forward.go:623 cmd/incus/network_forward.go:764
-#: cmd/incus/network_forward.go:842 cmd/incus/network_forward.go:915
-#: cmd/incus/network_load_balancer.go:251
+#: cmd/incus/network.go:1047 cmd/incus/network.go:1428
+#: cmd/incus/network.go:1512 cmd/incus/network.go:1574
+#: cmd/incus/network_forward.go:248 cmd/incus/network_forward.go:319
+#: cmd/incus/network_forward.go:484 cmd/incus/network_forward.go:623
+#: cmd/incus/network_forward.go:764 cmd/incus/network_forward.go:842
+#: cmd/incus/network_forward.go:915 cmd/incus/network_load_balancer.go:251
 #: cmd/incus/network_load_balancer.go:321
 #: cmd/incus/network_load_balancer.go:469
 #: cmd/incus/network_load_balancer.go:591
@@ -1588,7 +1588,7 @@ msgstr "Ativado o agrupamento"
 #: cmd/incus/cluster_group.go:438 cmd/incus/config_trust.go:399
 #: cmd/incus/config_trust.go:585 cmd/incus/image.go:1045
 #: cmd/incus/image_alias.go:209 cmd/incus/list.go:140 cmd/incus/network.go:1044
-#: cmd/incus/network.go:1237 cmd/incus/network_allocations.go:67
+#: cmd/incus/network.go:1242 cmd/incus/network_allocations.go:67
 #: cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:411
 #: cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117
 #: cmd/incus/network_zone.go:122 cmd/incus/operation.go:149
@@ -2029,7 +2029,7 @@ msgstr "ENDEREÇOS DE ALVO PREDEFINIDOS"
 
 #: cmd/incus/cluster.go:200 cmd/incus/cluster_group.go:464
 #: cmd/incus/config_trust.go:417 cmd/incus/image.go:1074
-#: cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1075
+#: cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1076
 #: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:143 cmd/incus/network_integration.go:427
 #: cmd/incus/network_load_balancer.go:150 cmd/incus/network_peer.go:139
@@ -2628,8 +2628,8 @@ msgstr "Edita configurações de confiança como YAML"
 #: cmd/incus/cluster.go:211 cmd/incus/cluster.go:1153
 #: cmd/incus/cluster_group.go:472 cmd/incus/config_trust.go:429
 #: cmd/incus/config_trust.go:610 cmd/incus/image.go:1092
-#: cmd/incus/image_alias.go:258 cmd/incus/list.go:528 cmd/incus/network.go:1090
-#: cmd/incus/network.go:1275 cmd/incus/network_allocations.go:92
+#: cmd/incus/image_alias.go:258 cmd/incus/list.go:528 cmd/incus/network.go:1091
+#: cmd/incus/network.go:1280 cmd/incus/network_allocations.go:92
 #: cmd/incus/network_forward.go:157 cmd/incus/network_integration.go:437
 #: cmd/incus/network_load_balancer.go:163 cmd/incus/network_peer.go:150
 #: cmd/incus/network_zone.go:158 cmd/incus/operation.go:181
@@ -2716,7 +2716,7 @@ msgid "Error retrieving aliases: %w"
 msgstr "Erro ao obter aliases: %w"
 
 #: cmd/incus/cluster.go:556 cmd/incus/cluster_group.go:922
-#: cmd/incus/config.go:578 cmd/incus/config.go:610 cmd/incus/network.go:1474
+#: cmd/incus/config.go:578 cmd/incus/config.go:610 cmd/incus/network.go:1479
 #: cmd/incus/network_acl.go:496 cmd/incus/network_address_set.go:368
 #: cmd/incus/network_forward.go:538 cmd/incus/network_integration.go:604
 #: cmd/incus/network_load_balancer.go:523 cmd/incus/network_peer.go:560
@@ -2739,7 +2739,7 @@ msgid "Error unsetting properties: %v"
 msgstr "Erro ao remover definições de propriedades: %v"
 
 #: cmd/incus/cluster.go:550 cmd/incus/cluster_group.go:916
-#: cmd/incus/network.go:1468 cmd/incus/network_acl.go:490
+#: cmd/incus/network.go:1473 cmd/incus/network_acl.go:490
 #: cmd/incus/network_forward.go:532 cmd/incus/network_integration.go:598
 #: cmd/incus/network_load_balancer.go:517 cmd/incus/network_peer.go:554
 #: cmd/incus/network_zone.go:504 cmd/incus/network_zone.go:1161
@@ -3504,7 +3504,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:439 cmd/incus/config_template.go:270
 #: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:584
 #: cmd/incus/image.go:1046 cmd/incus/image_alias.go:208 cmd/incus/list.go:141
-#: cmd/incus/network.go:1045 cmd/incus/network.go:1236
+#: cmd/incus/network.go:1045 cmd/incus/network.go:1241
 #: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:64
 #: cmd/incus/network_forward.go:120 cmd/incus/network_integration.go:410
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:116
@@ -3834,7 +3834,7 @@ msgstr "Bandeiras Globais:"
 msgid "Group ID to run the command as (default 0)"
 msgstr "ID de grupo para correr o comando como (predefinição 0)"
 
-#: cmd/incus/network.go:1260
+#: cmd/incus/network.go:1265
 msgid "HOSTNAME"
 msgstr "NOME DE MÁQUINA"
 
@@ -3901,7 +3901,7 @@ msgstr "Grupo IOMMU: %v"
 msgid "IP"
 msgstr "IP"
 
-#: cmd/incus/network.go:1262
+#: cmd/incus/network.go:1267
 msgid "IP ADDRESS"
 msgstr "ENDEREÇO IP"
 
@@ -3913,11 +3913,11 @@ msgstr "Endereços IP"
 msgid "IP addresses:"
 msgstr "Endereços IP:"
 
-#: cmd/incus/list.go:471 cmd/incus/network.go:1073
+#: cmd/incus/list.go:471 cmd/incus/network.go:1074
 msgid "IPV4"
 msgstr "IPV4"
 
-#: cmd/incus/list.go:472 cmd/incus/network.go:1074
+#: cmd/incus/list.go:472 cmd/incus/network.go:1075
 msgid "IPV6"
 msgstr "IPV6"
 
@@ -4312,7 +4312,7 @@ msgstr "LIMITE"
 msgid "LISTEN ADDRESS"
 msgstr "ENDEREÇO DE ESCUTA"
 
-#: cmd/incus/list.go:518 cmd/incus/network.go:1264
+#: cmd/incus/list.go:518 cmd/incus/network.go:1269
 #: cmd/incus/network_forward.go:146 cmd/incus/network_load_balancer.go:152
 #: cmd/incus/operation.go:170 cmd/incus/storage_bucket.go:482
 #: cmd/incus/storage_volume.go:1576 cmd/incus/warning.go:221
@@ -4352,11 +4352,11 @@ msgstr "Link detectado: %v"
 msgid "Link speed: %dMbit/s (%s duplex)"
 msgstr "Velocidade do Link: %dMbit/s (%s duplex)"
 
-#: cmd/incus/network.go:1214
+#: cmd/incus/network.go:1219
 msgid "List DHCP leases"
 msgstr "Listar leases do DHCP"
 
-#: cmd/incus/network.go:1215
+#: cmd/incus/network.go:1220
 msgid ""
 "List DHCP leases\n"
 "\n"
@@ -5936,7 +5936,7 @@ msgstr "Dispositivo baixo"
 msgid "Lower devices"
 msgstr "Dispositivos baixos"
 
-#: cmd/incus/network.go:1261 cmd/incus/network_allocations.go:84
+#: cmd/incus/network.go:1266 cmd/incus/network_allocations.go:84
 msgid "MAC ADDRESS"
 msgstr "ENDEREÇO MAC"
 
@@ -5954,7 +5954,7 @@ msgstr "Endereço MAC: %s"
 msgid "MAD: %s (%s)"
 msgstr "MAD: %s (%s)"
 
-#: cmd/incus/network.go:1072
+#: cmd/incus/network.go:1073
 msgid "MANAGED"
 msgstr "GERIDO"
 
@@ -6436,7 +6436,7 @@ msgstr "Tem de correr como root para importar do diretório"
 #: cmd/incus/cluster.go:195 cmd/incus/cluster.go:1143
 #: cmd/incus/cluster_group.go:462 cmd/incus/config_trust.go:413
 #: cmd/incus/config_trust.go:600 cmd/incus/list.go:484
-#: cmd/incus/network.go:1070 cmd/incus/network_acl.go:162
+#: cmd/incus/network.go:1071 cmd/incus/network_acl.go:162
 #: cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:426
 #: cmd/incus/network_peer.go:138 cmd/incus/network_zone.go:144
 #: cmd/incus/network_zone.go:870 cmd/incus/profile.go:723
@@ -6500,7 +6500,7 @@ msgstr "NIC:"
 msgid "NICs:"
 msgstr "NICs:"
 
-#: cmd/incus/network.go:1119 cmd/incus/operation.go:214
+#: cmd/incus/network.go:1120 cmd/incus/operation.go:214
 #: cmd/incus/project.go:580 cmd/incus/project.go:589 cmd/incus/project.go:598
 #: cmd/incus/project.go:607 cmd/incus/project.go:616 cmd/incus/project.go:625
 #: cmd/incus/remote.go:1052 cmd/incus/remote.go:1061 cmd/incus/remote.go:1070
@@ -6613,7 +6613,7 @@ msgstr "Rede %s apagada"
 msgid "Network %s pending on member %s"
 msgstr "Rede %s pendente de membro %s"
 
-#: cmd/incus/network.go:1397
+#: cmd/incus/network.go:1402
 #, c-format
 msgid "Network %s renamed to %s"
 msgstr "Rede %s renomeada para %s"
@@ -6862,7 +6862,7 @@ msgstr "Apenas URLs https são suportados para oci e simplestreams"
 msgid "Only https:// is supported for remote image import"
 msgstr "Apenas https:// é suportado para importação de imagem remota"
 
-#: cmd/incus/network.go:735 cmd/incus/network.go:1459
+#: cmd/incus/network.go:735 cmd/incus/network.go:1464
 msgid "Only managed networks can be modified"
 msgstr "Apenas redes geridas podem ser modificadas"
 
@@ -6936,7 +6936,7 @@ msgstr "PROCESSOS"
 msgid "PROFILES"
 msgstr "PERFIS"
 
-#: cmd/incus/image.go:1075 cmd/incus/list.go:478 cmd/incus/network.go:1069
+#: cmd/incus/image.go:1075 cmd/incus/list.go:478 cmd/incus/network.go:1070
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:143 cmd/incus/profile.go:724
 #: cmd/incus/storage_bucket.go:479 cmd/incus/storage_volume.go:1587
@@ -7554,7 +7554,7 @@ msgstr "Renomeia conjuntos de endereços de rede"
 msgid "Rename network integrations"
 msgstr "Renomeia integrações de rede"
 
-#: cmd/incus/network.go:1364 cmd/incus/network.go:1365
+#: cmd/incus/network.go:1369 cmd/incus/network.go:1370
 msgid "Rename networks"
 msgstr "Renomeia redes"
 
@@ -7738,7 +7738,7 @@ msgstr "Cliente SSH desligado %q"
 msgid "STARTED AT"
 msgstr "COMEÇADO EM"
 
-#: cmd/incus/list.go:489 cmd/incus/network.go:1077
+#: cmd/incus/list.go:489 cmd/incus/network.go:1078
 #: cmd/incus/network_peer.go:142 cmd/incus/operation.go:167
 #: cmd/incus/storage.go:689 cmd/incus/warning.go:215
 msgid "STATE"
@@ -7932,11 +7932,11 @@ msgstr ""
 msgid "Set network address set configuration keys"
 msgstr "Define chaves de configuração de conjunto de endereço de rede"
 
-#: cmd/incus/network.go:1416
+#: cmd/incus/network.go:1421
 msgid "Set network configuration keys"
 msgstr "Define chaves de configuração de rede"
 
-#: cmd/incus/network.go:1417
+#: cmd/incus/network.go:1422
 msgid ""
 "Set network configuration keys\n"
 "\n"
@@ -8230,7 +8230,7 @@ msgstr "Define a chave como uma propriedade de balanceador de carga de rede"
 msgid "Set the key as a network peer property"
 msgstr "Define a chave como uma propriedade de peer de rede"
 
-#: cmd/incus/network.go:1424
+#: cmd/incus/network.go:1429
 msgid "Set the key as a network property"
 msgstr "Define a chave como uma propriedade de rede"
 
@@ -8350,7 +8350,7 @@ msgstr "Mostra relatório ACL de rede"
 msgid "Show network address set configuration"
 msgstr "Mostra configuração de conjunto de endereços de rede"
 
-#: cmd/incus/network.go:1504 cmd/incus/network.go:1505
+#: cmd/incus/network.go:1509 cmd/incus/network.go:1510
 msgid "Show network configurations"
 msgstr "Mostra configurações de rede"
 
@@ -8765,8 +8765,8 @@ msgid "TOKEN"
 msgstr "TESTEMUNHO"
 
 #: cmd/incus/config_trust.go:414 cmd/incus/image.go:1082
-#: cmd/incus/image_alias.go:248 cmd/incus/list.go:490 cmd/incus/network.go:1071
-#: cmd/incus/network.go:1263 cmd/incus/network_allocations.go:82
+#: cmd/incus/image_alias.go:248 cmd/incus/list.go:490 cmd/incus/network.go:1072
+#: cmd/incus/network.go:1268 cmd/incus/network_allocations.go:82
 #: cmd/incus/network_integration.go:428 cmd/incus/network_peer.go:141
 #: cmd/incus/operation.go:165 cmd/incus/storage_volume.go:1567
 #: cmd/incus/warning.go:216
@@ -9317,7 +9317,7 @@ msgstr "Dispositivo USB:"
 msgid "USB devices:"
 msgstr "Dispositivos USB:"
 
-#: cmd/incus/network.go:1076 cmd/incus/network_acl.go:164
+#: cmd/incus/network.go:1077 cmd/incus/network_acl.go:164
 #: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:80
 #: cmd/incus/network_integration.go:429 cmd/incus/network_zone.go:146
 #: cmd/incus/profile.go:726 cmd/incus/project.go:550 cmd/incus/storage.go:688
@@ -9362,8 +9362,8 @@ msgstr "Tipo de canal desconhecido para cliente %q: %s"
 #: cmd/incus/cluster.go:217 cmd/incus/cluster.go:1159
 #: cmd/incus/cluster_group.go:478 cmd/incus/config_trust.go:435
 #: cmd/incus/config_trust.go:616 cmd/incus/image.go:1098
-#: cmd/incus/image_alias.go:264 cmd/incus/list.go:546 cmd/incus/network.go:1096
-#: cmd/incus/network.go:1281 cmd/incus/network_allocations.go:98
+#: cmd/incus/image_alias.go:264 cmd/incus/list.go:546 cmd/incus/network.go:1097
+#: cmd/incus/network.go:1286 cmd/incus/network_allocations.go:98
 #: cmd/incus/network_forward.go:163 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:169 cmd/incus/network_peer.go:156
 #: cmd/incus/network_zone.go:164 cmd/incus/operation.go:187
@@ -9437,7 +9437,7 @@ msgstr ""
 "Retira definições das chaves de configuração de conjuntos de endereços de "
 "rede"
 
-#: cmd/incus/network.go:1566 cmd/incus/network.go:1567
+#: cmd/incus/network.go:1571 cmd/incus/network.go:1572
 msgid "Unset network configuration keys"
 msgstr "Retira definições de chaves de configuração de rede"
 
@@ -9546,7 +9546,7 @@ msgstr ""
 msgid "Unset the key as a network peer property"
 msgstr "Retira definições da chave como propriedade de peer de rede"
 
-#: cmd/incus/network.go:1570
+#: cmd/incus/network.go:1575
 msgid "Unset the key as a network property"
 msgstr "Retira definições da chave como propriedade de rede"
 
@@ -9954,7 +9954,7 @@ msgstr ""
 msgid "Would you like to use clustering?"
 msgstr "Deseja usar agrupamento?"
 
-#: cmd/incus/network.go:1116 cmd/incus/operation.go:217
+#: cmd/incus/network.go:1117 cmd/incus/operation.go:217
 #: cmd/incus/project.go:582 cmd/incus/project.go:591 cmd/incus/project.go:600
 #: cmd/incus/project.go:609 cmd/incus/project.go:618 cmd/incus/project.go:627
 #: cmd/incus/remote.go:1054 cmd/incus/remote.go:1063 cmd/incus/remote.go:1072
