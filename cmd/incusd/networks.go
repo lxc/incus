@@ -194,6 +194,13 @@ var networkStateCmd = APIEndpoint{
 func networksGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
+	// If a target was specified, forward the request to the relevant node.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	// Track down the project holding networks based on current project configuration.
 	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
