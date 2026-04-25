@@ -1044,6 +1044,7 @@ u - Used by (count)`))
 	cmd.Flags().StringVarP(&c.flagColumns, "columns", "c", defaultNetworkColumns, i18n.G("Columns")+"``")
 	cmd.Flags().StringVarP(&c.flagFormat, "format", "f", c.global.defaultListFormat(), i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`)+"``")
 	cmd.Flags().BoolVar(&c.flagAllProjects, "all-projects", false, i18n.G("List networks in all projects"))
+	cmd.Flags().StringVar(&c.network.flagTarget, "target", "", i18n.G("Cluster member name")+"``")
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
@@ -1154,6 +1155,10 @@ func (c *cmdNetworkList) run(cmd *cobra.Command, args []string) error {
 
 	filters = prepareNetworkServerFilters(filters)
 	serverFilters, _ := getServerSupportedFilters(filters, []string{}, false)
+
+	if c.network.flagTarget != "" {
+		d = d.UseTarget(c.network.flagTarget)
+	}
 
 	var networks []api.Network
 	if c.flagAllProjects {
