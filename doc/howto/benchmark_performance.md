@@ -16,6 +16,9 @@ Make sure that you have `go` (see {ref}`requirements-go`) installed and install 
 
     go install github.com/lxc/incus/cmd/incus-benchmark@latest
 
+After installation, `incus-benchmark` will be available at your [`GOPATH`](https://go.dev/wiki/SettingGOPATH).
+If no `GOPATH` is set, it is assumed to be `$HOME/go` on Unix systems and `%USERPROFILE%\go` on Windows.
+
 ## Run the tool
 
 Run `incus-benchmark [action]` to measure the performance of your Incus setup.
