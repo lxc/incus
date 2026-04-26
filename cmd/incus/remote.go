@@ -496,7 +496,7 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 			digest := localtls.CertFingerprint(certificate)
 
 			fmt.Printf(i18n.G("Certificate fingerprint: %s")+"\n", digest)
-			fmt.Print(i18n.G("ok (y/n/[fingerprint])?") + " ")
+			fmt.Print(i18n.G("accept (y/n/[fingerprint])?") + " ")
 			buf := bufio.NewReader(os.Stdin)
 			line, _, err := buf.ReadLine()
 			if err != nil {
