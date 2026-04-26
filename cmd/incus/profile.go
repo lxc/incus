@@ -191,7 +191,7 @@ incus profile assign foo default
     Reset "foo" to only using the "default" profile.
 
 incus profile assign foo --no-profiles
-    Remove all profile from "foo"`))
+    Remove all profile assigned to "foo"`))
 
 	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagNoProfiles, "no-profiles", false, i18n.G("Remove all profiles from the instance"))
