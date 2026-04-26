@@ -138,7 +138,7 @@ func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial boo
 	}
 
 	if gpu.Nvidia != nil {
-		fmt.Print(prefix + i18n.G("NVIDIA information:") + "\n")
+		fmt.Print(prefix + i18n.G("GPU information:") + "\n")
 		fmt.Printf(prefix+"  "+i18n.G("Architecture: %v")+"\n", gpu.Nvidia.Architecture)
 		fmt.Printf(prefix+"  "+i18n.G("Brand: %v")+"\n", gpu.Nvidia.Brand)
 		fmt.Printf(prefix+"  "+i18n.G("Model: %v")+"\n", gpu.Nvidia.Model)
