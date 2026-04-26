@@ -1777,7 +1777,7 @@ func (srv *Server) HandleSysinfoSyscall(c Instance, siov *Iovec) int {
 		instMetrics.Unit = 4096
 	}
 
-	cg, err := cgroup.NewFileReadWriter(int(siov.msg.init_pid), liblxc.HasAPIExtension("cgroup2"))
+	cg, err := cgroup.NewFileReadWriter(int(siov.msg.init_pid))
 	if err != nil {
 		l.Warn("Failed loading cgroup", logger.Ctx{"err": err, "pid": siov.msg.init_pid})
 		C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
@@ -1859,7 +1859,7 @@ func (srv *Server) HandleSysinfoSyscall(c Instance, siov *Iovec) int {
 	instMetrics.Freeram = instMetrics.Totalram - uint64(memoryUsage) - instMetrics.Bufferram
 
 	// Get instance swap info.
-	if srv.s.OS.CGInfo.Supports(cgroup.MemorySwapUsage, cg) {
+	if cgroup.Supports(cgroup.Memory) {
 		swapLimit, err := cg.GetMemorySwapLimit()
 		if err != nil {
 			l.Warn("Failed getting swap limit", logger.Ctx{"err": err})
