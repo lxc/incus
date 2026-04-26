@@ -312,7 +312,7 @@ func (c *cmdNetworkLoadBalancerCreate) command() *cobra.Command {
 	cmd.Short = i18n.G("Create new network load balancers")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network load balancers"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network load-balancer create n1 127.0.0.1
-
+    Create network load-balancer for network n1
 incus network load-balancer create n1 127.0.0.1 < config.yaml
     Create network load-balancer for network n1 with configuration from config.yaml`))
 
