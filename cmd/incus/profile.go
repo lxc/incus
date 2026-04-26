@@ -683,7 +683,7 @@ Examples:
   - "description=.*bar.*" lists all profiles with a description that contains "bar"
 
 The -c option takes a (optionally comma-separated) list of arguments
-that control which image attributes to output when displaying in table
+that control which profile attributes to output when displaying in table
 or csv format.
 
 Default column layout is: ndu
