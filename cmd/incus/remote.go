@@ -1020,7 +1020,7 @@ func (c *cmdRemoteList) remoteNameColumnData(name string, _ config.Remote) strin
 
 	strName := name
 	if name == conf.DefaultRemote {
-		strName = fmt.Sprintf("%s (%s)", name, i18n.G("current"))
+		strName = fmt.Sprintf("%s (%s)", name, i18n.G("currently in use"))
 	}
 
 	return strName
