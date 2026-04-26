@@ -34,6 +34,7 @@ import (
 	"github.com/lxc/incus/v6/internal/server/auth/oidc"
 	"github.com/lxc/incus/v6/internal/server/bgp"
 	"github.com/lxc/incus/v6/internal/server/certificate"
+	"github.com/lxc/incus/v6/internal/server/cgroup"
 	"github.com/lxc/incus/v6/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/v6/internal/server/cluster/config"
 	"github.com/lxc/incus/v6/internal/server/daemon"
@@ -1111,13 +1112,8 @@ func (d *Daemon) init() error {
 		logger.Infof(" - unprivileged file capabilities: no")
 	}
 
-	dbWarnings = append(dbWarnings, d.os.CGInfo.Warnings()...)
-
-	logger.Infof(" - cgroup layout: %s", d.os.CGInfo.Mode())
-
-	for _, w := range dbWarnings {
-		logger.Warnf(" - %s, %s", warningtype.TypeNames[warningtype.Type(w.TypeCode)], w.LastMessage)
-	}
+	// Get cgroup warnings.
+	dbWarnings = append(dbWarnings, cgroup.Warnings()...)
 
 	// Detect idmapped mounts support.
 	if util.IsTrue(os.Getenv("INCUS_IDMAPPED_MOUNTS_DISABLE")) {
@@ -1166,6 +1162,11 @@ func (d *Daemon) init() error {
 				logger.Warn("Failed to set up guestapi tmpfs", logger.Ctx{"err": err})
 			}
 		}
+	}
+
+	// Show all persistent warnings.
+	for _, w := range dbWarnings {
+		logger.Warnf(" - %s, %s", warningtype.TypeNames[warningtype.Type(w.TypeCode)], w.LastMessage)
 	}
 
 	/* Initialize the database */
