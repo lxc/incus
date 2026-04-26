@@ -242,7 +242,7 @@ func (c *cmdInfo) renderNIC(nic api.ResourcesNetworkCard, prefix string, initial
 				fmt.Print(prefix + "    " + i18n.G("Infiniband:") + "\n")
 
 				if port.Infiniband.IsSMName != "" {
-					fmt.Printf(prefix+"      "+i18n.G("IsSM: %s (%s)")+"\n", port.Infiniband.IsSMName, port.Infiniband.IsSMDevice)
+					fmt.Printf(prefix+"      "+i18n.G("infiniband IsSM: %s (%s)")+"\n", port.Infiniband.IsSMName, port.Infiniband.IsSMDevice)
 				}
 
 				if port.Infiniband.MADName != "" {
