@@ -129,7 +129,7 @@ func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial boo
 		}
 
 		if gpu.DRM.ControlName != "" {
-			fmt.Printf(prefix+"  "+i18n.G("Control: %s (%s)")+"\n", gpu.DRM.ControlName, gpu.DRM.ControlDevice)
+			fmt.Printf(prefix+"  "+i18n.G("Vision control api: %s (%s)")+"\n", gpu.DRM.ControlName, gpu.DRM.ControlDevice)
 		}
 
 		if gpu.DRM.RenderName != "" {
