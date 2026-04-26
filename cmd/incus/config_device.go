@@ -364,7 +364,7 @@ func (c *cmdConfigDeviceOverride) command() *cobra.Command {
 	cmd.Use = cli.U("override", cmdConfigDeviceOverrideUsage...)
 	cmd.Short = i18n.G("Copy profile inherited devices and override configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Copy profile inherited devices and override configuration keys`))
+		`Copy profile inherited devices overriding configuration keys`))
 
 	cmd.RunE = c.run
 
