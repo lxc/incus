@@ -172,9 +172,9 @@ func (c *cmdClusterGroupCreate) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create a cluster group`))
 
 	cmd.Example = cli.FormatSection("", i18n.G(`incus cluster group create g1
-
+    Create a cluster group g1
 incus cluster group create g1 < config.yaml
-	Create a cluster group with configuration from config.yaml`))
+	Create a cluster group g1 with configuration from config.yaml`))
 
 	cmd.Flags().StringVar(&c.flagDescription, "description", "", i18n.G("Cluster group description")+"``")
 
