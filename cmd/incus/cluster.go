@@ -151,7 +151,7 @@ func (c *cmdClusterList) command() *cobra.Command {
 		`List all the cluster members
 
 	The -c option takes a (optionally comma-separated) list of arguments
-	that control which image attributes to output when displaying in table
+	that control which cluster members attributes to output when displaying in table
 	or csv format.
 
 	Default column layout is: nurafdsm
