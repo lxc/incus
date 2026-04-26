@@ -3939,6 +3939,11 @@ func (d *lxc) renderState(statusCode api.StatusCode, hostInterfaces []net.Interf
 		StatusCode: statusCode,
 	}
 
+	// If container is in error state, we're done here.
+	if d.isErrorStatusCode(statusCode) {
+		return &status, nil
+	}
+
 	pid := d.InitPID()
 	processesState, _ := d.processesState(pid)
 
