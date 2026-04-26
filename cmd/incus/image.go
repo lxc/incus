@@ -662,7 +662,7 @@ var cmdImageImportUsage = u.Usage{u.Sequence(u.Either(u.Tarball, u.Directory, u.
 func (c *cmdImageImport) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("import", cmdImageImportUsage...)
-	cmd.Short = i18n.G("Import images into the image store")
+	cmd.Short = i18n.G("Import images into the image storage")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Import image into the image store
 
