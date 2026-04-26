@@ -79,9 +79,6 @@ type OS struct {
 	SELinuxContextDaemon      string
 	SELinuxContextInstanceLXC string
 
-	// Cgroup features
-	CGInfo cgroup.Info
-
 	// Kernel features
 	CloseRange              bool // CloseRange indicates support for the close_range syscall.
 	ContainerCoreScheduling bool // ContainerCoreScheduling indicates LXC and kernel support for core scheduling.
@@ -190,7 +187,6 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	dbWarnings = append(dbWarnings, s.initAppArmor()...)
 	dbWarnings = append(dbWarnings, s.initSELinux()...)
 	cgroup.Init()
-	s.CGInfo = cgroup.GetInfo()
 
 	// Fill in the OS release info.
 	osInfo, err := osarch.GetOSRelease()
