@@ -496,7 +496,7 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 			digest := localtls.CertFingerprint(certificate)
 
 			fmt.Printf(i18n.G("Certificate fingerprint: %s")+"\n", digest)
-			fmt.Print(i18n.G("ok (y/n/[fingerprint])?") + " ")
+			fmt.Print(i18n.G("accept (y/n/[fingerprint])?") + " ")
 			buf := bufio.NewReader(os.Stdin)
 			line, _, err := buf.ReadLine()
 			if err != nil {
@@ -953,7 +953,7 @@ Default column layout: nupaPsg
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
-which instance attributes to output when displaying in table or csv
+which remote attributes to output when displaying in table or csv
 format.
 
 Column arguments are either pre-defined shorthand chars (see below),
@@ -1020,7 +1020,7 @@ func (c *cmdRemoteList) remoteNameColumnData(name string, _ config.Remote) strin
 
 	strName := name
 	if name == conf.DefaultRemote {
-		strName = fmt.Sprintf("%s (%s)", name, i18n.G("current"))
+		strName = fmt.Sprintf("%s (%s)", name, i18n.G("currently in use"))
 	}
 
 	return strName

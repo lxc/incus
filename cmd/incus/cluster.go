@@ -151,7 +151,7 @@ func (c *cmdClusterList) command() *cobra.Command {
 		`List all the cluster members
 
 	The -c option takes a (optionally comma-separated) list of arguments
-	that control which image attributes to output when displaying in table
+	that control which cluster members attributes to output when displaying in table
 	or csv format.
 
 	Default column layout is: nurafdsm
@@ -1419,7 +1419,7 @@ func (c *cmdClusterUpdateCertificate) run(cmd *cobra.Command, args []string) err
 	if util.PathExists(certf) {
 		err = os.WriteFile(certf, cert, 0o644)
 		if err != nil {
-			return fmt.Errorf(i18n.G("Could not write new remote certificate for remote '%s' with error: %v"), remoteName, err)
+			return fmt.Errorf(i18n.G("Could not write new certificate for remote client '%s' with error: %v"), remoteName, err)
 		}
 	}
 

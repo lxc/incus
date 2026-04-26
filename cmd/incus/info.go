@@ -129,7 +129,7 @@ func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial boo
 		}
 
 		if gpu.DRM.ControlName != "" {
-			fmt.Printf(prefix+"  "+i18n.G("Control: %s (%s)")+"\n", gpu.DRM.ControlName, gpu.DRM.ControlDevice)
+			fmt.Printf(prefix+"  "+i18n.G("Vision control api: %s (%s)")+"\n", gpu.DRM.ControlName, gpu.DRM.ControlDevice)
 		}
 
 		if gpu.DRM.RenderName != "" {
@@ -138,7 +138,7 @@ func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial boo
 	}
 
 	if gpu.Nvidia != nil {
-		fmt.Print(prefix + i18n.G("NVIDIA information:") + "\n")
+		fmt.Print(prefix + i18n.G("GPU information:") + "\n")
 		fmt.Printf(prefix+"  "+i18n.G("Architecture: %v")+"\n", gpu.Nvidia.Architecture)
 		fmt.Printf(prefix+"  "+i18n.G("Brand: %v")+"\n", gpu.Nvidia.Brand)
 		fmt.Printf(prefix+"  "+i18n.G("Model: %v")+"\n", gpu.Nvidia.Model)
@@ -242,7 +242,7 @@ func (c *cmdInfo) renderNIC(nic api.ResourcesNetworkCard, prefix string, initial
 				fmt.Print(prefix + "    " + i18n.G("Infiniband:") + "\n")
 
 				if port.Infiniband.IsSMName != "" {
-					fmt.Printf(prefix+"      "+i18n.G("IsSM: %s (%s)")+"\n", port.Infiniband.IsSMName, port.Infiniband.IsSMDevice)
+					fmt.Printf(prefix+"      "+i18n.G("infiniband IsSM: %s (%s)")+"\n", port.Infiniband.IsSMName, port.Infiniband.IsSMDevice)
 				}
 
 				if port.Infiniband.MADName != "" {

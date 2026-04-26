@@ -37,7 +37,7 @@ func (c *cmdAdminSQL) command() *cobra.Command {
   cluster-specific data (such as profiles, containers, etc).
 
   If you are running a non-clustered server, the same applies, as that
-  instance is effectively a single-member cluster.
+  installation is effectively a single-member cluster.
 
   If <query> is the special value "-", then the query is read from
   standard input.

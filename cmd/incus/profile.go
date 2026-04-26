@@ -191,7 +191,7 @@ incus profile assign foo default
     Reset "foo" to only using the "default" profile.
 
 incus profile assign foo --no-profiles
-    Remove all profile from "foo"`))
+    Remove all profile assigned to "foo"`))
 
 	cmd.RunE = c.run
 	cmd.Flags().BoolVar(&c.flagNoProfiles, "no-profiles", false, i18n.G("Remove all profiles from the instance"))
@@ -683,7 +683,7 @@ Examples:
   - "description=.*bar.*" lists all profiles with a description that contains "bar"
 
 The -c option takes a (optionally comma-separated) list of arguments
-that control which image attributes to output when displaying in table
+that control which profile attributes to output when displaying in table
 or csv format.
 
 Default column layout is: ndu
