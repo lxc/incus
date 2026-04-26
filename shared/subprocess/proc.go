@@ -9,12 +9,19 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
+	"strings"
+	"sync/atomic"
 	"syscall"
 
 	"go.yaml.in/yaml/v4"
 
+	"github.com/lxc/incus/v6/shared/logger"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/opencontainers/selinux/go-selinux"
 )
+
+var selinuxEnabled atomic.Bool
 
 // Process struct. Has ability to set runtime arguments.
 type Process struct {
@@ -28,6 +35,7 @@ type Process struct {
 	Name     string         `yaml:"name"`
 	Args     []string       `yaml:"args,flow"`
 	Apparmor string         `yaml:"apparmor"`
+	SELinux  string         `yaml:"selinux"`
 	Cwd      string         `yaml:"cwd"`
 	PID      int64          `yaml:"pid"`
 	Stdin    io.ReadCloser  `yaml:"-"`
@@ -58,6 +66,37 @@ func (p *Process) hasApparmor() bool {
 	return true
 }
 
+// SetSELinuxEnabled enables or disables SELinux-aware subprocess launching.
+// It should be called once during daemon startup.
+func SetSELinuxEnabled(v bool) {
+	selinuxEnabled.Store(v)
+}
+
+// withSELinuxExecContext runs fn on an OS-locked thread with the given SELinux
+// exec label set. The label is reset and the thread unlocked before returning,
+// regardless of whether fn returned an error.
+func withSELinuxExecContext(label string, fn func() error) error {
+	if label == "" || !selinuxEnabled.Load() {
+		return fn()
+	}
+
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	err := selinux.SetExecLabel(label)
+	if err != nil {
+		return fmt.Errorf("Failed to set SELinux exec label %q: %w", label, err)
+	}
+
+	defer func() {
+		if err := selinux.SetExecLabel(""); err != nil {
+			logger.Warn("Failed to reset SELinux exec context", logger.Ctx{"error": err})
+		}
+	}()
+
+	return fn()
+}
+
 // GetPid returns the pid for the given process object.
 func (p *Process) GetPid() (int64, error) {
 	pr, err := os.FindProcess(int(p.PID))
@@ -84,6 +123,11 @@ func (p *Process) GetPid() (int64, error) {
 // SetApparmor allows setting the AppArmor profile.
 func (p *Process) SetApparmor(profile string) {
 	p.Apparmor = profile
+}
+
+// SetSELinux allows setting the SELinux process context.
+func (p *Process) SetSELinux(context string) {
+	p.SELinux = context
 }
 
 // SetCreds allows setting process credentials.
@@ -145,7 +189,7 @@ func (p *Process) StartWithFiles(ctx context.Context, fds []*os.File) error {
 func (p *Process) start(ctx context.Context, fds []*os.File) error {
 	var cmd *exec.Cmd
 
-	if p.Apparmor != "" && p.hasApparmor() {
+	if p.Apparmor != "" && p.hasApparmor() && p.SELinux == "" {
 		cmd = exec.CommandContext(ctx, "aa-exec", append([]string{"-p", p.Apparmor, p.Name}, p.Args...)...)
 	} else {
 		cmd = exec.CommandContext(ctx, p.Name, p.Args...)
@@ -185,9 +229,11 @@ func (p *Process) start(ctx context.Context, fds []*os.File) error {
 	}
 
 	// Start the process.
-	err := cmd.Start()
-	if err != nil {
-		return fmt.Errorf("Unable to start process: %w", err)
+	startErr := withSELinuxExecContext(p.SELinux, func() error {
+		return cmd.Start()
+	})
+	if startErr != nil {
+		return fmt.Errorf("Unable to start process: %s: %w", strings.Join(cmd.Args, " "), startErr)
 	}
 
 	p.PID = int64(cmd.Process.Pid)

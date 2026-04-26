@@ -255,6 +255,10 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 			return true
 		}
 
+		if key == "volatile.selinux.context" {
+			return true
+		}
+
 		if strings.HasPrefix(key, instance.ConfigVolatilePrefix) {
 			if strings.HasSuffix(key, ".apply_quota") {
 				return true
@@ -982,6 +986,10 @@ func isContainerLowLevelOptionForbidden(key string) bool {
 		"security.guestapi.images",
 		"security.idmap.base",
 		"security.idmap.size",
+		"security.selinux.domain",
+		"security.selinux.label_rootfs",
+		"security.selinux.level",
+		"security.selinux.type",
 	},
 		key) {
 		return true
@@ -1005,6 +1013,10 @@ func isVMLowLevelOptionForbidden(key string) bool {
 		"raw.qemu.qmp.post-start",
 		"raw.qemu.qmp.pre-start",
 		"raw.qemu.scriptlet",
+		"security.selinux.domain",
+		"security.selinux.label_rootfs",
+		"security.selinux.level",
+		"security.selinux.type",
 	},
 		key)
 }
