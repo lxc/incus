@@ -444,14 +444,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   unix peer=(label=@{profile_name}),
 {{- end }}
 
-{{- if .feature_cgns }}
-
   ### Feature: cgroup namespace
   mount fstype=cgroup -> /sys/fs/cgroup/**,
-{{- if .feature_cgroup2 }}
   mount fstype=cgroup2 -> /sys/fs/cgroup/**,
-{{- end }}
-{{- end }}
 
 {{- if .feature_stacking }}
 

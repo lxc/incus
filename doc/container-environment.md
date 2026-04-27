@@ -79,7 +79,6 @@ In privileged containers, they will be blocked by the AppArmor policy.
 If LXCFS is present on the host, it is automatically set up for the container.
 
 This normally results in a number of `/proc` files being overridden through bind-mounts.
-On older kernels, a virtual version of `/sys/fs/cgroup` might also be set up by LXCFS.
 
 ## PID1
 

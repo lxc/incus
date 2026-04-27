@@ -5,18 +5,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/lxc/incus/v6/shared/util"
 )
 
 // NewFileReadWriter returns a CGroup instance using the filesystem as its backend.
-func NewFileReadWriter(pid int, unifiedCapable bool) (*CGroup, error) {
+func NewFileReadWriter(pid int) (*CGroup, error) {
 	// Setup the read/writer struct.
 	rw := fileReadWriter{}
 
-	// Locate the base path for each controller.
-	rw.paths = map[string]string{}
-
+	// Get the cgroup paths.
 	controllers, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", pid))
 	if err != nil {
 		return nil, err
@@ -32,25 +28,19 @@ func NewFileReadWriter(pid int, unifiedCapable bool) (*CGroup, error) {
 		// Extract the fields.
 		fields := strings.Split(line, ":")
 
-		// Determine the mount path.
-		path := filepath.Join("/sys/fs/cgroup", fields[1], fields[2])
-		if fields[0] == "0" {
-			fields[1] = "unified"
-			if util.PathExists("/sys/fs/cgroup/unified") {
-				path = filepath.Join("/sys/fs/cgroup", "unified", fields[2])
-			} else {
-				path = filepath.Join("/sys/fs/cgroup", fields[2])
-			}
-
-			if strings.HasSuffix(fields[2], "/init.scope") {
-				path = filepath.Dir(path)
-			}
+		// Check for the unified cgroup.
+		if fields[0] != "0" {
+			continue
 		}
 
-		// Add the controllers individually.
-		for _, ctrl := range strings.Split(fields[1], ",") {
-			rw.paths[ctrl] = path
+		path := filepath.Join("/sys/fs/cgroup", fields[2])
+
+		if strings.HasSuffix(fields[2], "/init.scope") {
+			path = filepath.Dir(path)
 		}
+
+		rw.path = path
+		break
 	}
 
 	cg, err := New(&rw)
@@ -58,19 +48,16 @@ func NewFileReadWriter(pid int, unifiedCapable bool) (*CGroup, error) {
 		return nil, err
 	}
 
-	cg.UnifiedCapable = unifiedCapable
 	return cg, nil
 }
 
 type fileReadWriter struct {
-	paths map[string]string
+	path string
 }
 
-func (rw *fileReadWriter) Get(version Backend, controller string, key string) (string, error) {
-	path := filepath.Join(rw.paths[controller], key)
-	if cgLayout == CgroupsUnified {
-		path = filepath.Join(rw.paths["unified"], key)
-	}
+// Get reads the value of a cgroup key.
+func (rw *fileReadWriter) Get(controller string, key string) (string, error) {
+	path := filepath.Join(rw.path, key)
 
 	value, err := os.ReadFile(path)
 	if err != nil {
@@ -80,11 +67,9 @@ func (rw *fileReadWriter) Get(version Backend, controller string, key string) (s
 	return strings.TrimSpace(string(value)), nil
 }
 
-func (rw *fileReadWriter) Set(version Backend, controller string, key string, value string) error {
-	path := filepath.Join(rw.paths[controller], key)
-	if cgLayout == CgroupsUnified {
-		path = filepath.Join(rw.paths["unified"], key)
-	}
+// Set writes a value to a cgroup key.
+func (rw *fileReadWriter) Set(controller string, key string, value string) error {
+	path := filepath.Join(rw.path, key)
 
 	return os.WriteFile(path, []byte(value), 0o600)
 }

@@ -393,12 +393,12 @@ func deviceTaskBalance(s *state.State) {
 	}
 
 	// Don't bother running when CGroup support isn't there
-	if !s.OS.CGInfo.Supports(cgroup.CPUSet, nil) {
+	if !cgroup.Supports(cgroup.CPUSet) {
 		return
 	}
 
 	// Get effective cpus list - those are all guaranteed to be online
-	cg, err := cgroup.NewFileReadWriter(1, true)
+	cg, err := cgroup.NewFileReadWriter(1)
 	if err != nil {
 		logger.Errorf("Unable to load cgroup writer: %v", err)
 		return
@@ -635,7 +635,7 @@ func deviceEventListener(stateFunc func() *state.State) {
 
 			s := stateFunc()
 
-			if !s.OS.CGInfo.Supports(cgroup.CPUSet, nil) {
+			if !cgroup.Supports(cgroup.CPUSet) {
 				continue
 			}
 
@@ -654,7 +654,7 @@ func deviceEventListener(stateFunc func() *state.State) {
 
 			s := stateFunc()
 
-			if !s.OS.CGInfo.Supports(cgroup.CPUSet, nil) {
+			if !cgroup.Supports(cgroup.CPUSet) {
 				continue
 			}
 

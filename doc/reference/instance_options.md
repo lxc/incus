@@ -197,7 +197,7 @@ When Incus intercepts a `hugetlbfs` `mount` syscall, it mounts the `hugetlbfs` f
 This makes it possible to use huge pages from unprivileged containers.
 However, it is recommended to limit the number of huge pages available to the container through `limits.hugepages.[size]` to stop the container from being able to exhaust the huge pages available to the host.
 
-Limiting huge pages is done through the `hugetlb` cgroup controller, which means that the host system must expose the `hugetlb` controller in the legacy or unified cgroup hierarchy for these limits to apply.
+Limiting huge pages is done through the `hugetlb` cgroup controller, which means that the host system must expose the `hugetlb` controller for these limits to apply.
 
 (instance-options-limits-kernel)=
 ### Kernel resource limits
