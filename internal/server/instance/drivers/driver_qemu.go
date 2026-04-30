@@ -874,10 +874,6 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 		return err
 	}
 
-	// Indicate to the onStop hook that if the VM stops it was due to a clean shutdown because the VM responded
-	// to the powerdown request.
-	op.SetInstanceInitiated(true)
-
 	// Send the system_powerdown command.
 	err = monitor.Powerdown()
 	if err != nil {
