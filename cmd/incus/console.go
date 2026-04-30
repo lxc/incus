@@ -401,7 +401,7 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 			_ = cmd.Process.Kill()
 		}()
 	} else {
-		fmt.Println(i18n.G("The client automatically uses either spicy or remote-viewer when present."))
+		fmt.Println(i18n.G("The client automatically uses either SPICE or remote-viewer when present."))
 		fmt.Println(i18n.G("As neither could be found, the raw SPICE socket can be found at:"))
 		fmt.Printf("  %s\n", socket)
 
