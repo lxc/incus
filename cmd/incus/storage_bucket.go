@@ -840,7 +840,7 @@ Default column layout: ndr
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
-which network zone attributes to output when displaying in table or csv
+which storage bucket keys attributes to output when displaying in table or csv
 format.
 
 Column arguments are either pre-defined shorthand chars (see below),
