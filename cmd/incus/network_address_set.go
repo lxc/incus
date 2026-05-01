@@ -231,7 +231,7 @@ func (c *cmdNetworkAddressSetCreate) command() *cobra.Command {
 	cmd.Short = i18n.G("Create new network address sets")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network address sets"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network address-set create as1
-
+    Create network address set as1
 incus network address-set create as1 < config.yaml
     Create network address set with configuration from config.yaml`))
 
