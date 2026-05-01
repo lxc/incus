@@ -49,7 +49,7 @@ func (c *cmdCreate) command() *cobra.Command {
 	cmd.Short = i18n.G("Create instances from images")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus create images:debian/12 u1
-
+    Create the instance u1
 incus create images:debian/12 u1 < config.yaml
     Create the instance with configuration from config.yaml
 
