@@ -71,6 +71,7 @@ func (c *cmdConfigTemplateCreate) command() *cobra.Command {
 		`Create new instance file templates`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus config template create u1 t1
     Create template t1 for instance u1
+	
 incus config template create u1 t1 < config.tpl
     Create template t1 for instance u1 from config.tpl`))
 
