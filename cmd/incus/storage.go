@@ -108,9 +108,10 @@ func (c *cmdStorageCreate) command() *cobra.Command {
 	cmd.Short = i18n.G("Create storage pools")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Create storage pools`))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage create s1 dir
-
+    Create a storage pool s1
+	
 incus storage create s1 dir < config.yaml
-    Create a storage pool using the content of config.yaml.
+    Create a storage pool s1 using the content of config.yaml.
 	`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
