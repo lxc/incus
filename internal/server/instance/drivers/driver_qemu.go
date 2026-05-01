@@ -549,6 +549,15 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 				d.logger.Debug("Instance stopped", logger.Ctx{"target": target, "reason": data["reason"]})
 			}
 
+			// If there's an existing op (e.g. from a pending external stop request)
+			// and the VM initiated this stop itself, mark it so autorestart works.
+			if target != "reboot" {
+				existingOp := operationlock.Get(d.Project().Name, d.Name())
+				if existingOp != nil {
+					existingOp.SetInstanceInitiated(true)
+				}
+			}
+
 			err = d.onStop(target)
 			if err != nil {
 				d.logger.Error("Failed to cleanly stop instance", logger.Ctx{"err": err})
