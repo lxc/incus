@@ -357,6 +357,7 @@ func (c *cmdNetworkACLCreate) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Create new network ACLs"))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus network acl create a1
     Create network acl a1
+	
 incus network acl create a1 < config.yaml
     Create network acl with configuration from config.yaml`))
 
