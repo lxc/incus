@@ -33,8 +33,7 @@ Storage volume
   Both commands use the same mechanism to add a storage volume as a disk device.
 
   It's possible to attach a sub-path of a custom volume to an instance using the `source=<volume_name>/<sub_path>` syntax.
-  If the sub-path doesn't exist inside the custom volume, it will be created automatically when the device is started.
-  When new directories are created this way, the {config:option}`device-disk-device-conf:initial.uid`, {config:option}`device-disk-device-conf:initial.gid` and {config:option}`device-disk-device-conf:initial.mode` options are used to set their ownership and permissions (defaulting to `0`, `0` and `0711` respectively).
+  If the sub-path doesn't exist inside the custom volume, it will be created automatically when the device is started using the `initial.XYZ` configuration keys for ownership and permissions.
 
 Path on the host
 : You can share a path on your host (either a file system or a block device) to your instance by adding it as a disk device with the host path as the `source`:
