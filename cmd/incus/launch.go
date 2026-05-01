@@ -26,7 +26,8 @@ func (c *cmdLaunch) command() *cobra.Command {
 		`Create and start instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus launch images:debian/12 u1
-
+    Create and start a container u1
+	
 incus launch images:debian/12 u1 < config.yaml
     Create and start a container with configuration from config.yaml
 
