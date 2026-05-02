@@ -84,7 +84,6 @@ or csv format.
 Default column layout is: utSscpLl
 
 Column shorthand chars:
-
     c - Count
     l - Last seen
     L - Location
