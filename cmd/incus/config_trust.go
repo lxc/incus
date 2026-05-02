@@ -385,7 +385,6 @@ or csv format.
 Default column layout is: ntdfe
 
 Column shorthand chars:
-
 	n - Name
 	t - Type
 	c - Common Name
