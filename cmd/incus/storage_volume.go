@@ -3336,8 +3336,8 @@ func (c *cmdStorageVolumeSnapshotList) command() *cobra.Command {
 		`List storage volume snapshots
 
 	The -c option takes a (optionally comma-separated) list of arguments
-	that control which image attributes to output when displaying in table
-	or csv format.
+	that control which storage volume snapshot attributes to output
+	when displaying in table or csv format.
 
 	Column shorthand chars:
 		n - Name
