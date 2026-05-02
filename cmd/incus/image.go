@@ -1053,7 +1053,6 @@ or csv format.
 Default column layout is: lfpdasu
 
 Column shorthand chars:
-
     l - Shortest image alias (and optionally number of other aliases)
     L - Newline-separated list of all image aliases
     f - Fingerprint (short)
