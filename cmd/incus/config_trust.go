@@ -569,8 +569,8 @@ Default column layout: ntE
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
-which network zone attributes to output when displaying in table or csv
-format.
+which certificate add tokens attributes to output when displaying in
+table or csv format.
 
 Column arguments are either pre-defined shorthand chars (see below),
 or (extended) config keys.
