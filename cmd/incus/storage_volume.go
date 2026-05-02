@@ -3981,7 +3981,7 @@ func (c *cmdStorageVolumeNBD) Command() *cobra.Command {
 	cmd.Use = cli.U("nbd", cmdStorageVolumeNBDUsage...)
 	cmd.Short = i18n.G("NBD access to a block storage volume")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`NBD access to a block storage volume.`))
+		`NBD access to a block storage volume`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagAddress, "address", "", "", i18n.G("Specific address to listen on"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagWritable, "writable", i18n.G("Get write access to the disk"))
