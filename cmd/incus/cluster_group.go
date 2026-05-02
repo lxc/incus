@@ -423,8 +423,8 @@ Default column layout: ndm
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
-which instance attributes to output when displaying in table or csv
-format.
+which cluster groups attributes to output when displaying in table
+or csv format.
 
 Column arguments are either pre-defined shorthand chars (see below),
 or (extended) config keys.
