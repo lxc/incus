@@ -345,7 +345,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			opts     qemuGpuOpts
 			expected string
 		}{{
-			qemuGpuOpts{dev: qemuDevOpts{"pci", "qemu_pcie3", "00.0", true}, architecture: osarch.ARCH_64BIT_INTEL_X86},
+			qemuGpuOpts{dev: qemuDevOpts{"pci", "qemu_pcie3", "00.0", true}, architecture: osarch.ARCH_64BIT_INTEL_X86, virtioVGA: true},
 			`# GPU
 			[device "qemu_gpu"]
 			addr = "00.0"

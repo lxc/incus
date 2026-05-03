@@ -450,12 +450,13 @@ func qemuVsock(opts *qemuVsockOpts) []cfg.Section {
 type qemuGpuOpts struct {
 	dev          qemuDevOpts
 	architecture int
+	virtioVGA    bool
 }
 
 func qemuGPU(opts *qemuGpuOpts) []cfg.Section {
 	var pciName string
 
-	if opts.architecture == osarch.ARCH_64BIT_INTEL_X86 {
+	if opts.architecture == osarch.ARCH_64BIT_INTEL_X86 && opts.virtioVGA {
 		pciName = "virtio-vga"
 	} else {
 		pciName = "virtio-gpu-pci"
