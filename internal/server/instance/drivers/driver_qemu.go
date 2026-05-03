@@ -3959,6 +3959,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	_, spice := info.Features["spice"]
 	_, plan9 := info.Features["plan9"]
 	_, virtioSound := info.Features["virtio-sound"]
+	_, virtioVGA := info.Features["virtio-vga"]
 
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
@@ -4098,6 +4099,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 			multifunction: multi,
 		},
 		architecture: d.Architecture(),
+		virtioVGA:    virtioVGA,
 	}
 
 	conf = append(conf, qemuGPU(&gpuOpts)...)
@@ -10169,6 +10171,14 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		logger.Debug("Failed querying virtio-sound-pci during VM feature check", logger.Ctx{"err": err})
 	} else {
 		features["virtio-sound"] = struct{}{}
+	}
+
+	// Check if virtio-vga is compiled into QEMU.
+	err = monitor.QueryVirtioVGADevice()
+	if err != nil {
+		logger.Debug("Failed querying virtio-vga during VM feature check", logger.Ctx{"err": err})
+	} else {
+		features["virtio-vga"] = struct{}{}
 	}
 
 	// Check if running nested.
