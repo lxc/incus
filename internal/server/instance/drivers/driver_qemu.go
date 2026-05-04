@@ -2541,7 +2541,12 @@ func (d *qemu) qemuArchConfig(arch int) (string, string, error) {
 
 	qemuPath, err := exec.LookPath(qemuCmd)
 	if err != nil {
-		if d.state != nil && d.state.OS != nil && len(d.state.OS.Architectures) > 0 && arch == d.state.OS.Architectures[0] && util.PathExists("/usr/libexec/qemu-kvm") {
+		hostArch, archErr := osarch.ArchitectureGetLocalID()
+		if archErr != nil {
+			return "", "", err
+		}
+
+		if arch == hostArch && util.PathExists("/usr/libexec/qemu-kvm") {
 			return "/usr/libexec/qemu-kvm", bus, nil
 		}
 
