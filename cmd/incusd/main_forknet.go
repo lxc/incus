@@ -462,7 +462,6 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 
 	// Handle DHCP renewal.
 	for {
-
 		// Calculate the renewal time.
 		var t1 time.Duration
 
@@ -629,8 +628,14 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 
 	// Handle DHCP Renewal.
 	for {
-		// Wait until it's renewal time.
+		// Calculate the renewal time.
 		t1 := ia.T1
+		j := time.Duration(int64(t1) / 20) // 5%
+		if j > 0 {
+			t1 += time.Duration(rand.Int63n(int64(2*j))) - j
+		}
+
+		// Wait until it's renewal time.
 		time.Sleep(t1)
 
 		// Build the renewal message from the current lease.
