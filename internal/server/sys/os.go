@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/incusos"
@@ -21,6 +22,7 @@ import (
 	"github.com/lxc/incus/v7/shared/idmap"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -80,6 +82,9 @@ type OS struct {
 
 	// LXC features
 	LXCFeatures map[string]bool
+
+	// Kernel features
+	CoreScheduling bool
 
 	// OS info
 	ReleaseInfo map[string]string
@@ -184,6 +189,13 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 
 	s.Uname = uname
 
+	// Detect kernel core scheduling support.
+	if !testing.Testing() {
+		_, err = subprocess.RunCommand(s.ExecPath, "forkcoresched", "0")
+		s.CoreScheduling = err == nil
+	}
+
+	// Detect IncusOS.
 	if util.PathExists("/var/lib/incus-os/") {
 		c, err := incusos.NewClient()
 		if err != nil {
