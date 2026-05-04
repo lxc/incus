@@ -1175,7 +1175,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		// Configure the swappiness
 		if util.IsFalse(memorySwap) {
 			err = cg.SetMemorySwappiness(0)
-			if err != nil {
+			if err != nil && !errors.Is(err, cgroup.ErrControllerMissing) {
 				return nil, err
 			}
 		} else if memorySwapPriority != "" {
@@ -5177,7 +5177,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					memorySwapPriority := d.expandedConfig["limits.memory.swap.priority"]
 					if util.IsFalse(memorySwap) {
 						err = cg.SetMemorySwappiness(0)
-						if err != nil {
+						if err != nil && !errors.Is(err, cgroup.ErrControllerMissing) {
 							return err
 						}
 					} else {
