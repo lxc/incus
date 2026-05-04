@@ -633,7 +633,7 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 		t1 := ia.T1
 		time.Sleep(t1)
 
-		// Renew the lease.
+		// Build the renewal message from the current lease.
 		var optIAAddrs []dhcpv6.OptIAAddress
 		for _, optIAAddr := range ia.Options.Addresses() {
 			optIAAddrs = append(optIAAddrs, *optIAAddr)
@@ -644,25 +644,51 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 			dhcpv6.WithServerID(reply.Options.ServerID()),
 			dhcpv6.WithIAID(ia.IaId),
 			dhcpv6.WithIANA(optIAAddrs...),
+			dhcpv6.WithFQDN(0, hostname),
 		}
 
 		renew, err := dhcpv6.NewMessage(modifiers...)
 		if err != nil {
-			logger.WithError(err).Error("Giving up on DHCv6, couldn't create renew message")
+			logger.WithError(err).Error("Giving up on DHCPv6, couldn't create renew message")
 			errorChannel <- err
 			return
 		}
 
 		renew.MessageType = dhcpv6.MessageTypeRenew
+		renew.AddOption(dhcpv6.OptElapsedTime(0))
 
-		newReply, err := dhcpv6.NewReplyFromMessage(renew, dhcpv6.WithFQDN(0, hostname))
+		// Send the renewal.
+		newReply, err := client.SendAndRead(context.Background(),
+			nclient6.AllDHCPRelayAgentsAndServers,
+			renew,
+			nclient6.IsMessageType(dhcpv6.MessageTypeReply))
 		if err != nil {
 			logger.WithError(err).Error("Giving up on DHCPv6, couldn't renew the lease")
 			errorChannel <- err
 			return
 		}
 
+		newIA := newReply.Options.OneIANA()
+		if newIA == nil {
+			logger.Error("Giving up on DHCPv6 renewal, reply missing IANA")
+			errorChannel <- errors.New("Giving up on DHCPv6 renewal, reply missing IANA")
+			return
+		}
+
 		reply = newReply
+		ia = newIA
+
+		// Refresh DNS in case the server returned new options.
+		c.applyDNSMu.Lock()
+		c.dhcpv6Leases[iface] = reply
+		c.applyDNSMu.Unlock()
+
+		err = c.dhcpApplyDNS(logger)
+		if err != nil {
+			logger.WithError(err).Error("Giving up on DHCPv6, error applying DNS after renewal")
+			errorChannel <- err
+			return
+		}
 	}
 }
 
