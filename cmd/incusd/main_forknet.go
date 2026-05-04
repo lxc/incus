@@ -309,6 +309,13 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 	c.dhcpv6Leases = map[string]*dhcpv6.Message{}
 	c.applyDNSMu.Unlock()
 
+	// Get the DUID.
+	duid, err := c.loadOrCreateDUID(ifaces)
+	if err != nil {
+		logger.WithError(err).Error("Giving up on DHCPv6, couldn't load or create DUID")
+		return err
+	}
+
 	// Buffer size is 2 goroutines per iface.
 	errorChannel := make(chan error, len(names)*2)
 
@@ -330,7 +337,7 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 		}
 
 		go c.dhcpRunV4(errorChannel, iface, hostname, logger)
-		go c.dhcpRunV6(errorChannel, iface, hostname, logger)
+		go c.dhcpRunV6(errorChannel, iface, hostname, duid, logger)
 	}
 
 	// Wait for all goroutines to return (2 per interface).
@@ -504,7 +511,7 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 	}
 }
 
-func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname string, logger *logrus.Logger) {
+func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname string, duid dhcpv6.DUID, logger *logrus.Logger) {
 	// Wait a couple of seconds for IPv6 link-local.
 	time.Sleep(2 * time.Second)
 
@@ -519,7 +526,9 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 	defer func() { _ = client.Close() }()
 
 	// Try to get a lease.
-	advertisement, err := client.Solicit(context.Background(), dhcpv6.WithFQDN(0, hostname))
+	advertisement, err := client.Solicit(context.Background(),
+		dhcpv6.WithClientID(duid),
+		dhcpv6.WithFQDN(0, hostname))
 	if err != nil {
 		logger.WithError(err).Error("Giving up on DHCPv6, error during DHCPv6 Solicit")
 		errorChannel <- err
@@ -537,7 +546,8 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 		}
 
 		// Try to get some information.
-		infoRequest, err := dhcpv6.NewSolicit(i.HardwareAddr)
+		infoRequest, err := dhcpv6.NewSolicit(i.HardwareAddr,
+			dhcpv6.WithClientID(duid))
 		if err != nil {
 			logger.WithError(err).Error("Giving up on DHCPv6, error preparing DHCPv6 Info Request")
 			errorChannel <- err
@@ -570,7 +580,9 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 		return
 	}
 
-	reply, err := client.Request(context.Background(), advertisement, dhcpv6.WithFQDN(0, hostname))
+	reply, err := client.Request(context.Background(), advertisement,
+		dhcpv6.WithClientID(duid),
+		dhcpv6.WithFQDN(0, hostname))
 	if err != nil {
 		logger.WithError(err).Error("Giving up on DHCPv6, error during DHCPv6 Request")
 		errorChannel <- err
@@ -627,7 +639,7 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 		}
 
 		modifiers := []dhcpv6.Modifier{
-			dhcpv6.WithClientID(reply.Options.ClientID()),
+			dhcpv6.WithClientID(duid),
 			dhcpv6.WithServerID(reply.Options.ServerID()),
 			dhcpv6.WithIAID(ia.IaId),
 			dhcpv6.WithIANA(optIAAddrs...),
@@ -651,6 +663,52 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 
 		reply = newReply
 	}
+}
+
+// Get a stable DUID, recording it on disk.
+func (c *cmdForknet) loadOrCreateDUID(ifaces []net.Interface) (dhcpv6.DUID, error) {
+	duidPath := filepath.Join(c.instNetworkPath, "dhcp6.duid")
+
+	bb, err := os.ReadFile(duidPath)
+	if err == nil {
+		duid, err := dhcpv6.DUIDFromBytes(bb)
+		if err == nil {
+			return duid, nil
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return nil, err
+	}
+
+	var hwAddr net.HardwareAddr
+	for _, ifi := range ifaces {
+		if ifi.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+
+		if len(ifi.HardwareAddr) < 4 {
+			continue
+		}
+
+		hwAddr = ifi.HardwareAddr
+		break
+	}
+
+	if hwAddr == nil {
+		return nil, errors.New("No suitable hardware address available for DUID generation")
+	}
+
+	duid := &dhcpv6.DUIDLLT{
+		HWType:        iana.HWTypeEthernet,
+		Time:          dhcpv6.GetTime(),
+		LinkLayerAddr: hwAddr,
+	}
+
+	err = os.WriteFile(duidPath, duid.ToBytes(), 0o600)
+	if err != nil {
+		return nil, err
+	}
+
+	return duid, nil
 }
 
 func (c *cmdForknet) dhcpApplyDNS(logger *logrus.Logger) error {
