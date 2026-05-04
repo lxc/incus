@@ -547,7 +547,8 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 
 		// Try to get some information.
 		infoRequest, err := dhcpv6.NewSolicit(i.HardwareAddr,
-			dhcpv6.WithClientID(duid))
+			dhcpv6.WithClientID(duid),
+			dhcpv6.WithFQDN(0, hostname))
 		if err != nil {
 			logger.WithError(err).Error("Giving up on DHCPv6, error preparing DHCPv6 Info Request")
 			errorChannel <- err
