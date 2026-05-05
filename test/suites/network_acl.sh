@@ -120,4 +120,22 @@ EOF
     ! incus network acl get testacl2 user.somekey | grep foo || false
 
     incus network acl delete testacl2
+
+    # Verify ACL changes work when the ACL is used by an instance NIC in a different project.
+    brName="inct$$"
+    projName="testacl3306"
+    incus network create "${brName}" ipv4.address=192.0.2.1/24 ipv6.address=none
+    incus network acl create "${brName}A"
+    incus project create "${projName}" -c features.images=false
+    incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")" --project "${projName}"
+    incus init testimage "${projName}c1" --project "${projName}"
+    incus config device add "${projName}c1" eth0 nic network="${brName}" security.acls="${brName}A" --project "${projName}"
+
+    incus network acl rule add "${brName}A" ingress action=allow source=192.0.2.2/32
+
+    incus delete -f "${projName}c1" --project "${projName}"
+    incus profile device remove default root --project "${projName}"
+    incus project delete "${projName}"
+    incus network acl delete "${brName}A"
+    incus network delete "${brName}"
 }
