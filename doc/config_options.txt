@@ -5386,6 +5386,24 @@ When using custom automatic instance placement logic, this option stores the scr
 See {ref}`clustering-instance-placement-scriptlet` for more information.
 ```
 
+```{config:option} instances.tpm.platform_cert server-miscellaneous
+:scope: "global"
+:shortdesc: "Platform CA certificate used to provision TPM Endorsement Keys"
+:type: "string"
+PEM encoded platform CA certificate used to sign the Endorsement
+Key and platform certificate of newly created TPM devices.
+Must be set together with `instances.tpm.platform_key`.
+```
+
+```{config:option} instances.tpm.platform_key server-miscellaneous
+:scope: "global"
+:shortdesc: "Private key for the TPM platform CA certificate"
+:type: "string"
+PEM encoded private key matching `instances.tpm.platform_cert`.
+Used to sign the Endorsement Key and platform certificate of newly
+created TPM devices.
+```
+
 ```{config:option} network.ovn.ca_cert server-miscellaneous
 :defaultdesc: "Content of `/etc/ovn/ovn-central.crt` if present"
 :scope: "global"
