@@ -18760,6 +18760,16 @@ paths:
                   name: volumeName
                   required: true
                   type: string
+                - description: Whether to have the volume be writable
+                  example: 1
+                  in: query
+                  name: writable
+                  type: integer
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
             produces:
                 - application/json
                 - application/octet-stream

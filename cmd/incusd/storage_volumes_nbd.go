@@ -46,6 +46,16 @@ import (
 //	    description: Storage volume name
 //	    type: string
 //	    required: true
+//	  - in: query
+//	    name: writable
+//	    description: Whether to have the volume be writable
+//	    type: integer
+//	    example: 1
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
 //	responses:
 //	  "101":
 //	    description: Switching protocols to NBD
