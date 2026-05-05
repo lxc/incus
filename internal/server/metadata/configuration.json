@@ -6044,6 +6044,22 @@
 						}
 					},
 					{
+						"instances.tpm.platform_cert": {
+							"longdesc": "PEM encoded platform CA certificate used to sign the Endorsement\nKey and platform certificate of newly created TPM devices.\nMust be set together with `instances.tpm.platform_key`.",
+							"scope": "global",
+							"shortdesc": "Platform CA certificate used to provision TPM Endorsement Keys",
+							"type": "string"
+						}
+					},
+					{
+						"instances.tpm.platform_key": {
+							"longdesc": "PEM encoded private key matching `instances.tpm.platform_cert`.\nUsed to sign the Endorsement Key and platform certificate of newly\ncreated TPM devices.",
+							"scope": "global",
+							"shortdesc": "Private key for the TPM platform CA certificate",
+							"type": "string"
+						}
+					},
+					{
 						"network.ovn.ca_cert": {
 							"defaultdesc": "Content of `/etc/ovn/ovn-central.crt` if present",
 							"longdesc": "",
