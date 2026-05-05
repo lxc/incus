@@ -228,6 +228,15 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  shortdesc: Bridge MTU (default varies if tunnel in use)
 		"bridge.mtu": validate.Optional(validate.IsNetworkMTU),
 
+		// gendoc:generate(entity=network_bridge, group=common, key=bridge.multicast_snooping)
+		//
+		// ---
+		//  type: bool
+		//  condition: native bridge
+		//  default: `true`
+		//  shortdesc: Whether to enable multicast snooping on the bridge
+		"bridge.multicast_snooping": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv4.address)
 		//
 		// ---
@@ -1165,12 +1174,22 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 	}
 
-	// Enable VLAN filtering for Linux bridges.
+	// Settings for regular Linux bridges.
 	if n.config["bridge.driver"] != "openvswitch" {
-		// Enable filtering.
+		// Enable VLAN filtering for Linux bridges.
 		err = BridgeVLANFilterSetStatus(n.name, "1")
 		if err != nil {
 			n.logger.Warn(fmt.Sprintf("Failed enabling VLAN filtering: %v", err))
+		}
+
+		// Apply multicast snooping setting.
+		err = BridgeMulticastSnoopingSetStatus(n.name, util.IsTrueOrEmpty(n.config["bridge.multicast_snooping"]))
+		if err != nil {
+			if n.config["bridge.multicast_snooping"] != "" {
+				return err
+			}
+
+			n.logger.Warn(fmt.Sprintf("Failed setting multicast snooping: %v", err))
 		}
 	}
 
