@@ -230,6 +230,13 @@ func (c *Config) InstancesLXCFSPerInstance() bool {
 	return c.m.GetBool("instances.lxcfs.per_instance")
 }
 
+// InstancesTPMPlatformCert returns the platform CA certificate and matching
+// private key (both PEM-encoded) used to provision the EK and platform
+// certificate of newly created TPM devices.
+func (c *Config) InstancesTPMPlatformCert() (string, string) {
+	return c.m.GetString("instances.tpm.platform_cert"), c.m.GetString("instances.tpm.platform_key")
+}
+
 // LokiServer returns all the Loki settings needed to connect to a server.
 func (c *Config) LokiServer() (string, string, string, string, string, string, []string, []string) {
 	var types []string
@@ -855,6 +862,26 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  shortdesc: Instance placement scriptlet for automatic instance placement
 	"instances.placement.scriptlet": {Validator: validate.Optional(scriptletLoad.InstancePlacementValidate)},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=instances.tpm.platform_cert)
+	// PEM encoded platform CA certificate used to sign the Endorsement
+	// Key and platform certificate of newly created TPM devices.
+	// Must be set together with `instances.tpm.platform_key`.
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Platform CA certificate used to provision TPM Endorsement Keys
+	"instances.tpm.platform_cert": {},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=instances.tpm.platform_key)
+	// PEM encoded private key matching `instances.tpm.platform_cert`.
+	// Used to sign the Endorsement Key and platform certificate of newly
+	// created TPM devices.
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Private key for the TPM platform CA certificate
+	"instances.tpm.platform_key": {},
 
 	// gendoc:generate(entity=server, group=loki, key=loki.auth.username)
 	//
