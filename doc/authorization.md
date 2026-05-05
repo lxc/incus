@@ -62,7 +62,7 @@ Users that you do not trust with root access to the host should not be granted t
 - `server -> can_create_certificates`
 - `certificate -> can_edit`
 - `storage_pool -> can_edit`
-- `project -> manager`
+- `project -> admin`
 
 The remaining relations may be granted.
 However, you must apply appropriate {ref}`project-restrictions`.
