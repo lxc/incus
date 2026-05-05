@@ -1644,6 +1644,20 @@ func (d *Daemon) numRunningInstances(instances []instance.Instance) int {
 func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	logger.Info("Starting shutdown sequence", logger.Ctx{"signal": sig})
 
+	s := d.State()
+
+	evacuated := false
+	if sig == unix.SIGPWR && d.serverClustered && s.GlobalConfig.ShutdownAction() == "evacuate" && !s.DB.Cluster.LocalNodeIsEvacuated() {
+		// Handle early evacuation before proceeding with shutdown.
+		logger.Info("Evacuating cluster member")
+		err := evacuateShutdown(ctx, s, d.serverName)
+		if err != nil {
+			logger.Error("Failed to evacuate cluster member, falling back to regular shutdown", logger.Ctx{"err": err})
+		} else {
+			evacuated = true
+		}
+	}
+
 	// Cancelling the context will make everyone aware that we're shutting down.
 	d.shutdownCancel()
 
@@ -1660,8 +1674,6 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 			d.gateway.Kill()
 		}
 	}
-
-	s := d.State()
 
 	var err error
 	var instances []instance.Instance
@@ -1717,18 +1729,6 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 		// Full shutdown requested.
 		if sig == unix.SIGPWR {
-			// Check if we should evacuate the cluster member instead of just shutting down.
-			evacuated := false
-			if d.serverClustered && s.GlobalConfig.ShutdownAction() == "evacuate" && !s.DB.Cluster.LocalNodeIsEvacuated() {
-				logger.Info("Evacuating cluster member")
-				err := evacuateShutdown(ctx, s, d.serverName)
-				if err != nil {
-					logger.Error("Failed to evacuate cluster member, falling back to regular shutdown", logger.Ctx{"err": err})
-				} else {
-					evacuated = true
-				}
-			}
-
 			if !evacuated {
 				instancesShutdown(instances)
 
