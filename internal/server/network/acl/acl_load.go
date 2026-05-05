@@ -334,12 +334,13 @@ func isInUseByDevice(d deviceConfig.Device, matchACLNames ...string) []string {
 
 // NetworkACLUsage info about a network and what ACL it uses.
 type NetworkACLUsage struct {
-	ID           int64
-	Name         string
-	Type         string
-	Config       map[string]string
-	InstanceName string
-	DeviceName   string
+	ID              int64
+	Name            string
+	Type            string
+	Config          map[string]string
+	InstanceProject string
+	InstanceName    string
+	DeviceName      string
 }
 
 // NetworkUsage populates the provided aclNets map with networks that are using any of the specified ACLs.
@@ -376,18 +377,19 @@ func NetworkUsage(s *state.State, aclProjectName string, aclNames []string, aclN
 			if slices.Contains(supportedNetTypes, network.Type) {
 				if network.Type == "bridge" && devName != "" {
 					// Use different key for the usage by bridge NICs to avoid overwriting the usage by the bridge network itself.
-					key := fmt.Sprintf("%s/%s/%s", network.Name, u.Name, devName)
+					key := fmt.Sprintf("%s/%s/%s/%s", network.Name, u.Project, u.Name, devName)
 
 					_, found := aclNets[key]
 
 					if !found {
 						aclNets[key] = NetworkACLUsage{
-							ID:           networkID,
-							Name:         network.Name,
-							Type:         network.Type,
-							Config:       network.Config,
-							InstanceName: u.Name,
-							DeviceName:   devName,
+							ID:              networkID,
+							Name:            network.Name,
+							Type:            network.Type,
+							Config:          network.Config,
+							InstanceProject: u.Project,
+							InstanceName:    u.Name,
+							DeviceName:      devName,
 						}
 					}
 				} else {
