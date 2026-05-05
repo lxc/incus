@@ -959,52 +959,9 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			respSnapshots = append(respSnapshots, ZFSDataset{Name: snapName, GUID: guid})
 		}
 
-		// Generate list of snapshots which need to be synced, i.e. are available on the source but not on the target.
-		for _, srcSnapshot := range migrationHeader.SnapshotDatasets {
-			found := false
-
-			for _, dstSnapshot := range respSnapshots {
-				if srcSnapshot.GUID == dstSnapshot.GUID {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				syncSnapshots = append(syncSnapshots, &migration.Snapshot{Name: &srcSnapshot.Name})
-			}
-		}
-
-		// The following scenario will result in a failure:
-		// - The source has more than one snapshot
-		// - The target has at least one of these snapshot, but not the very first
-		//
-		// It will fail because the source tries sending the first snapshot using `zfs send <first>`.
-		// Since the target does have snapshots, `zfs receive` will fail with:
-		//     cannot receive new filesystem stream: destination has snapshots
-		//
-		// We therefore need to check the snapshots, and delete all target snapshots if the above
-		// scenario is true.
-		if !volumeOnly && len(respSnapshots) > 0 && len(migrationHeader.SnapshotDatasets) > 0 && respSnapshots[0].GUID != migrationHeader.SnapshotDatasets[0].GUID {
-			for _, snapVol := range snapshots {
-				// Delete
-				err = d.DeleteVolume(snapVol, op)
-				if err != nil {
-					return err
-				}
-			}
-
-			// Let the source know that we don't have any snapshots.
-			respSnapshots = []ZFSDataset{}
-
-			// Let the source know that we need all snapshots.
-			syncSnapshots = []*migration.Snapshot{}
-
-			for _, dataset := range migrationHeader.SnapshotDatasets {
-				syncSnapshots = append(syncSnapshots, &migration.Snapshot{Name: &dataset.Name})
-			}
-		} else {
-			// Delete local snapshots which exist on the target but not on the source.
+		if volumeOnly {
+			// No snapshots are being received; just drop any target snapshot
+			// that isn't on the source so the target volume matches.
 			for _, snapVol := range snapshots {
 				targetOnlySnapshot := true
 				_, snapName, _ := api.GetParentAndSnapshotName(snapVol.name)
@@ -1017,11 +974,76 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 				}
 
 				if targetOnlySnapshot {
-					// Delete
 					err = d.DeleteVolume(snapVol, op)
 					if err != nil {
 						return err
 					}
+				}
+			}
+		} else {
+			// Find the latest source snapshot that also exists on the target
+			// by matching GUIDs, scanning from newest to oldest. Anything
+			// strictly newer on the source needs to be sent; anything on the
+			// target that isn't on the source up to that common base
+			// needs to be deleted so the rollback to the common base in
+			// createVolumeFromMigrationOptimized lines up.
+			targetByGUID := make(map[string]struct{}, len(respSnapshots))
+			for _, dst := range respSnapshots {
+				targetByGUID[dst.GUID] = struct{}{}
+			}
+
+			commonSrcIdx := -1
+			for i := len(migrationHeader.SnapshotDatasets) - 1; i >= 0; i-- {
+				_, ok := targetByGUID[migrationHeader.SnapshotDatasets[i].GUID]
+				if ok {
+					commonSrcIdx = i
+					break
+				}
+			}
+
+			if commonSrcIdx >= 0 {
+				// Send only snapshots strictly newer than the common base.
+				for _, dataset := range migrationHeader.SnapshotDatasets[commonSrcIdx+1:] {
+					syncSnapshots = append(syncSnapshots, &migration.Snapshot{Name: &dataset.Name})
+				}
+
+				// Keep target snapshots whose GUID matches a source snapshot
+				// up to the common base; delete the rest.
+				keepGUIDs := make(map[string]struct{}, commonSrcIdx+1)
+				for _, src := range migrationHeader.SnapshotDatasets[:commonSrcIdx+1] {
+					keepGUIDs[src.GUID] = struct{}{}
+				}
+
+				var keptRespSnapshots []ZFSDataset
+				for i, snapVol := range snapshots {
+					_, keep := keepGUIDs[respSnapshots[i].GUID]
+					if keep {
+						keptRespSnapshots = append(keptRespSnapshots, respSnapshots[i])
+						continue
+					}
+
+					err = d.DeleteVolume(snapVol, op)
+					if err != nil {
+						return err
+					}
+				}
+
+				respSnapshots = keptRespSnapshots
+			} else if len(migrationHeader.SnapshotDatasets) > 0 {
+				// No common base. Wipe target snapshots and request a full
+				// transfer of the source's snapshots.
+				for _, snapVol := range snapshots {
+					err = d.DeleteVolume(snapVol, op)
+					if err != nil {
+						return err
+					}
+				}
+
+				respSnapshots = []ZFSDataset{}
+
+				syncSnapshots = nil
+				for _, dataset := range migrationHeader.SnapshotDatasets {
+					syncSnapshots = append(syncSnapshots, &migration.Snapshot{Name: &dataset.Name})
 				}
 			}
 		}
@@ -2743,19 +2765,28 @@ func (d *zfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *loc
 
 		// Override volSrcArgs.Snapshots to only include snapshots which need to be sent.
 		if !volSrcArgs.VolumeOnly {
-			for _, srcDataset := range srcMigrationHeader.SnapshotDatasets {
-				found := false
+			// Find the latest source snapshot whose GUID also appears in
+			// the target's reported snapshot set, scanning newest to oldest.
+			// Anything strictly newer than that common base needs to be
+			// sent; anything older is already covered by the rollback the
+			// target performs to the common base. If there is no common
+			// base, send everything.
+			targetGUIDs := make(map[string]struct{}, len(migrationHeader.SnapshotDatasets))
+			for _, dst := range migrationHeader.SnapshotDatasets {
+				targetGUIDs[dst.GUID] = struct{}{}
+			}
 
-				for _, dstDataset := range migrationHeader.SnapshotDatasets {
-					if srcDataset.GUID == dstDataset.GUID {
-						found = true
-						break
-					}
+			commonSrcIdx := -1
+			for i := len(srcMigrationHeader.SnapshotDatasets) - 1; i >= 0; i-- {
+				_, ok := targetGUIDs[srcMigrationHeader.SnapshotDatasets[i].GUID]
+				if ok {
+					commonSrcIdx = i
+					break
 				}
+			}
 
-				if !found {
-					volSrcArgs.Snapshots = append(volSrcArgs.Snapshots, srcDataset.Name)
-				}
+			for _, srcDataset := range srcMigrationHeader.SnapshotDatasets[commonSrcIdx+1:] {
+				volSrcArgs.Snapshots = append(volSrcArgs.Snapshots, srcDataset.Name)
 			}
 		}
 	}
