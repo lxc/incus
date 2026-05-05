@@ -1477,9 +1477,9 @@ func (d *nicBridged) setFilters() (err error) {
 			}
 
 			if nsIP.To4() == nil {
-				ipv4DNS = append(ipv4DNS, ns)
-			} else {
 				ipv6DNS = append(ipv6DNS, ns)
+			} else {
+				ipv4DNS = append(ipv4DNS, ns)
 			}
 		}
 
