@@ -56,6 +56,21 @@ func IsNativeBridge(bridgeName string) bool {
 	return util.PathExists(fmt.Sprintf("/sys/class/net/%s/bridge", bridgeName))
 }
 
+// BridgeMulticastSnoopingSetStatus sets the status of multicast snooping on a bridge interface.
+func BridgeMulticastSnoopingSetStatus(interfaceName string, status bool) error {
+	value := "0"
+	if status {
+		value = "1"
+	}
+
+	err := os.WriteFile(fmt.Sprintf("/sys/class/net/%s/bridge/multicast_snooping", interfaceName), []byte(value), 0)
+	if err != nil {
+		return fmt.Errorf("Failed setting multicast snooping on bridge %q: %w", interfaceName, err)
+	}
+
+	return nil
+}
+
 // AttachInterface attaches an interface to a bridge.
 func AttachInterface(s *state.State, bridgeName string, devName string) error {
 	if IsNativeBridge(bridgeName) {
