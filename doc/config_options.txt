@@ -3326,6 +3326,14 @@ User keys can be used in search.
 
 ```
 
+```{config:option} bridge.multicast_snooping network_bridge-common
+:condition: "native bridge"
+:default: "`true`"
+:shortdesc: "Whether to enable multicast snooping on the bridge"
+:type: "bool"
+
+```
+
 ```{config:option} dns.domain network_bridge-common
 :condition: "-"
 :default: "`incus`"
