@@ -1826,6 +1826,23 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	if d.architectureSupportsUEFI(d.architecture) {
 		qemuArgs = append(qemuArgs, "-smbios", "type=2,manufacturer=LinuxContainers,product=Incus")
 
+		// We'll pass the values through a file to avoid needlessly long
+		// command line arguments and the values being visible in the process list.
+		smbios11 := filepath.Join(d.RunPath(), "smbios11")
+
+		err = os.RemoveAll(smbios11)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		err = os.Mkdir(smbios11, 0o700)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		smbios11Idx := 0
 		for k, v := range d.expandedConfig {
 			var configPrefix, smbiosPrefix string
 			if strings.HasPrefix(k, "smbios11.") {
@@ -1847,7 +1864,18 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 				continue
 			}
 
-			qemuArgs = append(qemuArgs, "-smbios", fmt.Sprintf("type=11,value=%s%s=%s", smbiosPrefix, strings.TrimPrefix(k, configPrefix), qemuEscapeCmdline(v)))
+			smbios11File := filepath.Join(smbios11, strconv.Itoa(smbios11Idx))
+
+			content := fmt.Sprintf("%s%s=%s", smbiosPrefix, strings.TrimPrefix(k, configPrefix), v)
+			err = os.WriteFile(smbios11File, []byte(content), 0o400)
+			if err != nil {
+				op.Done(err)
+				return err
+			}
+
+			qemuArgs = append(qemuArgs, "-smbios", fmt.Sprintf("type=11,path=%s", qemuEscapeCmdline(smbios11File)))
+
+			smbios11Idx++
 		}
 	}
 
