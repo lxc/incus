@@ -1247,7 +1247,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		for _, volume := range entries["storage-volumes"] {
 			fields := strings.Split(volume, "/")
 			if len(fields) == 3 {
-				target.UseTarget(fields[2])
+				target = target.UseTarget(fields[2])
 			}
 
 			err := target.DeleteStoragePoolVolume(fields[0], "custom", fields[1])
@@ -1263,7 +1263,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		for _, volume := range entries["storage-buckets"] {
 			fields := strings.Split(volume, "/")
 			if len(fields) == 3 {
-				target.UseTarget(fields[2])
+				target = target.UseTarget(fields[2])
 			}
 
 			err := target.DeleteStoragePoolBucket(fields[0], fields[1])
