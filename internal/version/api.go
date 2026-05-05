@@ -535,6 +535,7 @@ var APIExtensions = []string{
 	"projects_restricted_storage_pool_access",
 	"server_shutdown_action",
 	"instances_placement_scriptlet_rebalance",
+	"network_bridge_multicast_snooping",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
