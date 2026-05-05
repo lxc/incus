@@ -3103,3 +3103,17 @@ devices.
 
 `btrfs.create_options` is also introduced to similarly control
 `mkfs.btrfs` options when creating a new storage pool.
+
+## `instances_tpm_platform_cert`
+
+This introduces a couple of new configuration options:
+
+* `instances.tpm.platform_cert`
+* `instances.tpm.platform_key`
+
+Those can be used to provide a TPM platform CA certificate.
+
+When set, new TPM devices will be getting an Endorsement Key that's
+signed by that CA. This can be used to validate that the VM is in fact
+running in the expected Incus environment, providing a root of trust for
+those TPM devices.
