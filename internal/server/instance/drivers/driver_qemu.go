@@ -8106,9 +8106,6 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// migration and blockdev-mirror. This requires that the migration be continued after it
 			// has reached the "pre-switchover" status.
 			"pause-before-switchover": true,
-
-			// During storage migration encode blocks of zeroes efficiently.
-			"zero-blocks": true,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
