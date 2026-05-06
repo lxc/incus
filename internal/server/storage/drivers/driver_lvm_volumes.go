@@ -299,9 +299,9 @@ func (d *lvm) HasVolume(vol Volume) (bool, error) {
 // FillVolumeConfig populate volume with default config.
 func (d *lvm) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
-	// Exclude "block.filesystem" and "block.mount_options" as they depend on volume type (handled below).
+	// Exclude "block.filesystem", "block.mount_options", and "block.create_options" as they depend on volume type (handled below).
 	// Exclude "lvm.stripes", "lvm.stripes.size" as they only work on non-thin storage pools (handled below).
-	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "lvm.stripes", "lvm.stripes.size")
+	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options", "lvm.stripes", "lvm.stripes.size")
 	if err != nil {
 		return err
 	}
@@ -329,6 +329,11 @@ func (d *lvm) FillVolumeConfig(vol Volume) error {
 		if vol.config["block.mount_options"] == "" {
 			// Unchangeable volume property: Set unconditionally.
 			vol.config["block.mount_options"] = "discard"
+		}
+
+		// Inherit filesystem creation options from pool if not set.
+		if vol.config["block.create_options"] == "" {
+			vol.config["block.create_options"] = d.config["volume.block.create_options"]
 		}
 	}
 
@@ -369,6 +374,15 @@ func (d *lvm) commonVolumeRules() map[string]func(value string) error {
 		//  default: same as `volume.block.mount_options`
 		//  shortdesc: Mount options for block-backed file system volumes
 		"block.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_volume_lvm, group=common, key=block.create_options)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem`
+		//  default: same as `volume.block.create_options`
+		//  shortdesc: Additional options to pass to the file system creation tool when formatting the volume
+		"block.create_options": validate.IsAny,
 
 		// gendoc:generate(entity=storage_volume_lvm, group=common, key=block.filesystem)
 		//
