@@ -452,7 +452,9 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 	}
 
 	if vol.contentType == ContentTypeFS {
-		_, err = makeFSType(volDevPath, vol.ConfigBlockFilesystem(), nil)
+		volFilesystem := vol.ConfigBlockFilesystem()
+		volCreateOptions := vol.ExpandedConfig("block.create_options")
+		_, err = makeFSType(volDevPath, volFilesystem, &mkfsOptions{ExtraArgs: volCreateOptions})
 		if err != nil {
 			return fmt.Errorf("Error making filesystem on LVM logical volume: %w", err)
 		}

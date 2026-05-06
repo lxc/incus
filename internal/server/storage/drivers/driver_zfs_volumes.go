@@ -248,8 +248,9 @@ func (d *zfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 			}
 
 			zfsFilesystem := vol.ConfigBlockFilesystem()
+			volCreateOptions := vol.ExpandedConfig("block.create_options")
 
-			_, err = makeFSType(devPath, zfsFilesystem, nil)
+			_, err = makeFSType(devPath, zfsFilesystem, &mkfsOptions{ExtraArgs: volCreateOptions})
 			if err != nil {
 				return err
 			}
@@ -1584,6 +1585,15 @@ func (d *zfs) commonVolumeRules() map[string]func(value string) error {
 		//  default: same as `volume.block.mount_options`
 		//  shortdesc: Mount options for block-backed file system volumes
 		"block.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_volume_zfs, group=common, key=block.create_options)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem` (`zfs.block_mode` enabled)
+		//  default: same as `volume.block.create_options`
+		//  shortdesc: Additional options to pass to the file system creation tool when formatting the volume
+		"block.create_options": validate.IsAny,
 
 		// gendoc:generate(entity=storage_volume_zfs, group=common, key=zfs.blocksize)
 		//
@@ -3653,9 +3663,9 @@ func (d *zfs) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
 	// If vol has a source, ignore the block mode related config keys from the pool.
 	if vol.hasSource || vol.IsVMBlock() || vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeBlock {
-		excludedKeys = []string{"zfs.block_mode", "block.filesystem", "block.mount_options"}
+		excludedKeys = []string{"zfs.block_mode", "block.filesystem", "block.mount_options", "block.create_options"}
 	} else if vol.volType == VolumeTypeCustom && !vol.IsBlockBacked() {
-		excludedKeys = []string{"block.filesystem", "block.mount_options"}
+		excludedKeys = []string{"block.filesystem", "block.mount_options", "block.create_options"}
 	}
 
 	err := d.fillVolumeConfig(&vol, excludedKeys...)
@@ -3690,6 +3700,11 @@ func (d *zfs) FillVolumeConfig(vol Volume) error {
 		if vol.config["block.mount_options"] == "" {
 			// Unchangeable volume property: Set unconditionally.
 			vol.config["block.mount_options"] = "discard"
+		}
+
+		// Inherit filesystem creation options from pool if not set.
+		if vol.config["block.create_options"] == "" {
+			vol.config["block.create_options"] = d.config["volume.block.create_options"]
 		}
 	}
 
