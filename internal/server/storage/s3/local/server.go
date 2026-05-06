@@ -206,6 +206,11 @@ func (s *Server) handleObject(w http.ResponseWriter, r *http.Request, objectKey 
 	case http.MethodHead:
 		s.headObject(w, r, objectKey)
 	case http.MethodPut:
+		if r.Header.Get("X-Amz-Copy-Source") != "" {
+			s.copyObject(w, r, objectKey)
+			return
+		}
+
 		s.putObject(w, r, objectKey)
 	case http.MethodDelete:
 		s.deleteObject(w, objectKey)
