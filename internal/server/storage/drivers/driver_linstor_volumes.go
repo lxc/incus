@@ -31,9 +31,9 @@ import (
 // FillVolumeConfig populate volume with default config.
 func (d *linstor) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
-	// Exclude 'block.filesystem' and 'block.mount_options'
-	// as this ones are handled below in this function and depends from volume type.
-	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options")
+	// Exclude 'block.filesystem', 'block.mount_options', and 'block.create_options'
+	// as these are handled below in this function and depend on the volume type.
+	err := d.fillVolumeConfig(&vol, "block.filesystem", "block.mount_options", "block.create_options")
 	if err != nil {
 		return err
 	}
@@ -62,6 +62,11 @@ func (d *linstor) FillVolumeConfig(vol Volume) error {
 			// Unchangeable volume property: Set unconditionally.
 			vol.config["block.mount_options"] = "discard"
 		}
+
+		// Inherit filesystem creation options from pool if not set.
+		if vol.config["block.create_options"] == "" {
+			vol.config["block.create_options"] = d.config["volume.block.create_options"]
+		}
 	}
 
 	return nil
@@ -87,6 +92,15 @@ func (d *linstor) commonVolumeRules() map[string]func(value string) error {
 		//  default: same as `volume.block.mount_options`
 		//  shortdesc: Mount options for block-backed file system volumes
 		"block.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_volume_linstor, group=common, key=block.create_options)
+		//
+		// ---
+		//  type: string
+		//  condition: block-based volume with content type `filesystem`
+		//  default: same as `volume.block.create_options`
+		//  shortdesc: Additional options to pass to the file system creation tool when formatting the volume
+		"block.create_options": validate.IsAny,
 
 		// gendoc:generate(entity=storage_volume_linstor, group=common, key=drbd.on_no_quorum)
 		//
@@ -303,8 +317,9 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		}
 
 		volFilesystem := vol.ConfigBlockFilesystem()
+		volCreateOptions := vol.ExpandedConfig("block.create_options")
 
-		_, err = makeFSType(devPath, volFilesystem, nil)
+		_, err = makeFSType(devPath, volFilesystem, &mkfsOptions{ExtraArgs: volCreateOptions})
 		if err != nil {
 			return err
 		}
@@ -321,7 +336,8 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		}
 
 		fsVolFilesystem := fsVol.ConfigBlockFilesystem()
-		_, err = makeFSType(fsVolDevPath, fsVolFilesystem, nil)
+		fsVolCreateOptions := fsVol.ExpandedConfig("block.create_options")
+		_, err = makeFSType(fsVolDevPath, fsVolFilesystem, &mkfsOptions{ExtraArgs: fsVolCreateOptions})
 
 		l.Debug("Created filesystem on the associated filesystem volume", logger.Ctx{"fsVolDevPath": fsVolDevPath, "fsVolFilesystem": fsVolFilesystem})
 		if err != nil {
