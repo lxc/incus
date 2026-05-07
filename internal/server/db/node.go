@@ -168,7 +168,7 @@ func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (
 		}
 	} else if n.IsOffline(args.OfflineThreshold) {
 		result.Status = "Offline"
-		result.Message = fmt.Sprintf("No heartbeat for %s (%s)", time.Since(n.Heartbeat), n.Heartbeat)
+		result.Message = fmt.Sprintf("No heartbeat for %s (%s)", time.Since(n.Heartbeat).Round(time.Second), n.Heartbeat.Format("2006-01-02 15:04:05 -0700"))
 	} else {
 		// Check for max DB schema and API extensions.
 		maxVersion, err := tx.GetNodeMaxVersion(ctx)
