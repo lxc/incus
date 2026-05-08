@@ -3087,3 +3087,10 @@ on shutdown with any instance left after it getting shutdown.
 ## `instances_placement_scriptlet_rebalance`
 
 Add a new placement scriptlet trigger for cluster re-balancing.
+
+## `network_bridge_multicast_snooping`
+
+This adds a new `bridge.multicast_snooping` configuration option for
+managed bridge networks. When set to `false`, multicast snooping is
+disabled on the bridge, which can help with IPv6 protocols that rely
+on multicast such as NDP.

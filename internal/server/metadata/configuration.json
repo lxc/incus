@@ -3720,6 +3720,15 @@
 						}
 					},
 					{
+						"bridge.multicast_snooping": {
+							"condition": "native bridge",
+							"default": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to enable multicast snooping on the bridge",
+							"type": "bool"
+						}
+					},
+					{
 						"dns.domain": {
 							"condition": "-",
 							"default": "`incus`",
