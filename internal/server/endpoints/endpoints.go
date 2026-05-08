@@ -504,27 +504,16 @@ var descriptions = map[kind]string{
 // Tomb tracks the lifecycle of one or more goroutines.
 type Tomb struct {
 	wg      sync.WaitGroup
-	count   int
-	mutex   sync.RWMutex
 	errOnce sync.Once
 	err     error
 }
 
-func (g *Tomb) add(delta int) {
-	g.mutex.Lock()
-	defer g.mutex.Unlock()
-	g.count += delta
-	if g.count >= 0 {
-		g.wg.Add(delta)
-	}
-}
-
 // Go runs f in a new goroutine and tracks its termination.
 func (g *Tomb) Go(f func() error) {
-	g.add(1)
+	g.wg.Add(1)
 
 	go func() {
-		defer g.add(-1)
+		defer g.wg.Done()
 
 		err := f()
 		if err != nil {
@@ -541,13 +530,6 @@ func (g *Tomb) Kill(err error) {
 		g.errOnce.Do(func() {
 			g.err = err
 		})
-	}
-
-	g.mutex.RLock()
-	count := g.count
-	g.mutex.RUnlock()
-	if count != 0 {
-		g.add(-count)
 	}
 }
 
