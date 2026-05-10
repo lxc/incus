@@ -1755,3 +1755,25 @@ func (d *common) ForEachDependentDiskType(diskAction func(dev deviceConfig.Devic
 
 	return nil
 }
+
+// selinuxCollectUsedLevels loads expanded configs of all instances on
+// this node and asks the selinux package to extract the in-use levels.
+func (d *common) selinuxCollectUsedLevels() (map[string]struct{}, error) {
+	var configs []map[string]string
+	instances, err := instance.LoadNodeAll(d.state, instancetype.Any)
+	if err != nil {
+		return nil, err
+	}
+
+	configs = make([]map[string]string, 0, len(instances))
+
+	for _, inst := range instances {
+		if inst.ID() == d.id {
+			continue
+		}
+
+		configs = append(configs, inst.ExpandedConfig())
+	}
+
+	return selinux.UsedLevels(configs), nil
+}
