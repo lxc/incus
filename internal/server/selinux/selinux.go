@@ -12,7 +12,7 @@ import (
 	goselinux "github.com/opencontainers/selinux/go-selinux"
 	"golang.org/x/sys/unix"
 
-	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // LabelTree recursively labels all entries under path with the given SELinux label without crossing filesystem boundaries.
