@@ -121,6 +121,15 @@ test_storage_driver_ceph() {
         incus storage volume set "incustest-$(basename "${INCUS_DIR}")-pool1" c1pool1 size 500MiB
         incus storage volume unset "incustest-$(basename "${INCUS_DIR}")-pool1" c1pool1 size
 
+        # Functional test: verify that block.create_options are applied to the volume's filesystem.
+        incus launch testimage c6pool1 -s "incustest-$(basename "${INCUS_DIR}")-pool1"
+        incus list -c b c6pool1 | grep "incustest-$(basename "${INCUS_DIR}")-pool1"
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" ext4 c6pool1 volume
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" ext4 c6pool1 pool
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" xfs c6pool1 volume
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" xfs c6pool1 pool
+        incus delete -f c6pool1
+
         incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c1pool1
         incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c2pool2
         incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool2" c3pool1

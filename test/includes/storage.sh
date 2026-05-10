@@ -139,3 +139,58 @@ umount_loops() {
         done < "${test_dir}/loops"
     fi
 }
+
+# Check if block.create_options are applied.
+storage_check_create_options_applied() {
+    # shellcheck disable=SC2039,3043
+    local pool filesystem instance mode volume_name mount_path dev_path create_options
+
+    pool="$1"
+    filesystem="$2"
+    instance="$3"
+    mode="$4"
+
+    case "${filesystem}" in
+        ext4)
+            create_options="-I 512"
+            ;;
+        xfs)
+            create_options="-i size=512"
+            ;;
+        *)
+            echo "Unsupported filesystem '${filesystem}' for create_options test"
+            return 0
+            ;;
+    esac
+
+    volume_name="vol-createopts-${filesystem}-${mode}"
+
+    if [ "${mode}" = "volume" ]; then
+        incus storage volume create "${pool}" "${volume_name}" block.filesystem="${filesystem}" block.create_options="${create_options}" size=512MiB
+    elif [ "${mode}" = "pool" ]; then
+        incus storage set "${pool}" volume.block.create_options="${create_options}"
+        incus storage volume create "${pool}" "${volume_name}" block.filesystem="${filesystem}" size=512MiB
+    else
+        echo "Unsupported mode '${mode}' for create_options test"
+        return 1
+    fi
+
+    incus storage volume attach "${pool}" "${volume_name}" "${instance}" createOptsDevice /mnt/createopts
+
+    mount_path="${INCUS_DIR}/storage-pools/${pool}/custom/default_${volume_name}"
+    timeout 10 sh -c "until findmnt -n -o SOURCE '${mount_path}' >/dev/null 2>&1; do sleep 0.1; done"
+    dev_path=$(findmnt -n -o SOURCE "${mount_path}")
+
+    if [ "${filesystem}" = "ext4" ]; then
+        tune2fs -l "${dev_path}" | grep -qE "Inode size:[[:space:]]+512"
+    elif [ "${filesystem}" = "xfs" ]; then
+        xfs_info "${dev_path}" | grep -q "isize=512"
+    fi
+
+    incus storage volume detach "${pool}" "${volume_name}" "${instance}" createOptsDevice
+    incus storage volume delete "${pool}" "${volume_name}"
+
+    if [ "${mode}" = "pool" ]; then
+        incus storage unset "${pool}" volume.block.create_options
+    fi
+}

@@ -354,6 +354,10 @@ do_storage_driver_zfs() {
     incus launch testimage c5
     incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.size
 
+    # Functional test: verify that block.create_options are applied to the volume's filesystem.
+    storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")" "${filesystem}" c5 volume
+    storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")" "${filesystem}" c5 pool
+
     # Clean up
     incus rm -f c1 c3 c11 c21 c4 c5 c6 c7
     incus storage volume rm incustest-"$(basename "${INCUS_DIR}")" vol1

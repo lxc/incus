@@ -158,6 +158,11 @@ test_storage_driver_btrfs() {
         incus storage delete "incustest-$(basename "${INCUS_DIR}")-pool1"
         incus storage delete "incustest-$(basename "${INCUS_DIR}")-pool2"
 
+        # Functional test: verify that btrfs.create_options are applied when creating the pool filesystem.
+        incus storage create "incustest-$(basename "${INCUS_DIR}")-btrfs-createopts" btrfs btrfs.create_options="--nodesize 8192"
+        btrfs inspect-internal dump-super "$(findmnt -n -o SOURCE "${INCUS_DIR}/storage-pools/incustest-$(basename "${INCUS_DIR}")-btrfs-createopts")" | grep -qE "^nodesize[[:space:]]+8192"
+        incus storage delete "incustest-$(basename "${INCUS_DIR}")-btrfs-createopts"
+
         # Test creating storage pool from exiting btrfs subvolume
         truncate -s 200M testpool.img
         mkfs.btrfs -f testpool.img
