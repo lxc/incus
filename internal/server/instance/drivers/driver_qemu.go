@@ -71,6 +71,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/scriptlet"
 	scriptletLoad "github.com/lxc/incus/v7/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v7/internal/server/selinux"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
@@ -11363,13 +11364,20 @@ func (d *qemu) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) 
 func (d *qemu) selinuxEnsureContext() (bool, error) {
 	previousCtx := d.localConfig["volatile.selinux.context"]
 
-	d.state.OS.SELinuxAllocLock()
-	defer d.state.OS.SELinuxAllocUnlock()
+	allocLevel := func() (string, func(), error) {
+		used, err := d.selinuxCollectUsedLevels()
+		if err != nil {
+			return "", nil, err
+		}
 
-	ctx, needsPersist, err := d.state.OS.SELinuxInstanceContext(instancetype.VM, d.localConfig, d.expandedConfig, d.selinuxAllocateLevel)
+		return selinux.AllocateLevel(used)
+	}
+
+	ctx, needsPersist, release, err := selinux.InstanceContext(d.state.OS, instancetype.VM, d.localConfig, d.expandedConfig, allocLevel)
 	if err != nil {
 		return false, err
 	}
+	defer release()
 
 	if ctx == "" {
 		return false, nil
@@ -11398,10 +11406,10 @@ func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 		}
 	}
 
-	fileCtx := sys.SELinuxInstanceFileContext(ctx, instancetype.VM, d.expandedConfig)
+	fileCtx := selinux.InstanceFileContext(ctx, instancetype.VM, d.expandedConfig)
 	if fileCtx == "" {
 		return fmt.Errorf("Failed to derive file context from %q", ctx)
 	}
 
-	return sys.SELinuxLabelTree(d.Path(), fileCtx, "")
+	return selinux.LabelTree(d.Path(), fileCtx, "")
 }

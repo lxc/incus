@@ -70,6 +70,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/seccomp"
+	"github.com/lxc/incus/v7/internal/server/selinux"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
@@ -1925,13 +1926,20 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 func (d *lxc) selinuxEnsureContext() (bool, error) {
 	previousCtx := d.localConfig["volatile.selinux.context"]
 
-	d.state.OS.SELinuxAllocLock()
-	defer d.state.OS.SELinuxAllocUnlock()
+	allocLevel := func() (string, func(), error) {
+		used, err := d.selinuxCollectUsedLevels()
+		if err != nil {
+			return "", nil, err
+		}
 
-	ctx, needsPersist, err := d.state.OS.SELinuxInstanceContext(instancetype.Container, d.localConfig, d.expandedConfig, d.selinuxAllocateLevel)
+		return selinux.AllocateLevel(used)
+	}
+
+	ctx, needsPersist, release, err := selinux.InstanceContext(d.state.OS, instancetype.Container, d.localConfig, d.expandedConfig, allocLevel)
 	if err != nil {
 		return false, err
 	}
+	defer release()
 
 	if ctx == "" {
 		return false, nil
@@ -1978,12 +1986,12 @@ func (d *lxc) selinuxLabelFiles(contextIsNew bool) error {
 		return fmt.Errorf("Invalid security.selinux.label_rootfs value: %q", rootfsMode)
 	}
 
-	fileCtx := sys.SELinuxInstanceFileContext(ctx, instancetype.Container, d.expandedConfig)
+	fileCtx := selinux.InstanceFileContext(ctx, instancetype.Container, d.expandedConfig)
 	if fileCtx == "" {
 		return fmt.Errorf("Failed to derive file context from %q", ctx)
 	}
 
-	return sys.SELinuxLabelTree(d.Path(), fileCtx, skipPath)
+	return selinux.LabelTree(d.Path(), fileCtx, skipPath)
 }
 
 // Start functions.
