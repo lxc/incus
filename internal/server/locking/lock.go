@@ -24,42 +24,10 @@ type UnlockFunc func()
 // If the context is canceled then nil will be returned.
 func Lock(ctx context.Context, lockName string) (UnlockFunc, error) {
 	for {
-		// Get exclusive access to the map and see if there is already an operation ongoing.
-		locksMutex.Lock()
-		waitCh, ok := locks[lockName]
-
-		if !ok {
-			// No ongoing operation, create a new channel to indicate our new operation.
-			waitCh = make(chan struct{})
-			locks[lockName] = waitCh
-			locksMutex.Unlock()
-
-			// Return a function that will complete the operation.
-			return func() {
-				// Get exclusive access to the map.
-				locksMutex.Lock()
-				doneCh, ok := locks[lockName]
-
-				// Load our existing operation.
-				if ok {
-					// Close the channel to indicate to other waiting users
-					// they can now try again to create a new operation.
-					close(doneCh)
-
-					// Remove our existing operation entry from the map.
-					delete(locks, lockName)
-				}
-
-				// Release the lock now that the done channel is closed and the
-				// map entry has been deleted, this will allow any waiting users
-				// to try and get access to the map to create a new operation.
-				locksMutex.Unlock()
-			}, nil
+		unlock, waitCh := TryLock(lockName)
+		if unlock != nil {
+			return unlock, nil
 		}
-
-		// An existing operation is ongoing, lets wait for that to finish and then try
-		// to get exclusive access to create a new operation again.
-		locksMutex.Unlock()
 
 		select {
 		case <-waitCh:
@@ -68,4 +36,49 @@ func Lock(ctx context.Context, lockName string) (UnlockFunc, error) {
 			return nil, fmt.Errorf("Failed to obtain lock %q: %w", lockName, ctx.Err())
 		}
 	}
+}
+
+// TryLock creates a named lock for activities that require exclusive access.
+// It does not block if the lock is already held.
+// If the lock is acquired successfully, it returns an unlock function that
+// must be called to release the lock.
+func TryLock(lockName string) (UnlockFunc, chan struct{}) {
+	// Get exclusive access to the map and see if there is already an operation ongoing.
+	locksMutex.Lock()
+	waitCh, ok := locks[lockName]
+
+	if !ok {
+		// No ongoing operation, create a new channel to indicate our new operation.
+		waitCh = make(chan struct{})
+		locks[lockName] = waitCh
+		locksMutex.Unlock()
+
+		// Return a function that will complete the operation.
+		return func() {
+			// Get exclusive access to the map.
+			locksMutex.Lock()
+			doneCh, ok := locks[lockName]
+
+			// Load our existing operation.
+			if ok {
+				// Close the channel to indicate to other waiting users
+				// they can now try again to create a new operation.
+				close(doneCh)
+
+				// Remove our existing operation entry from the map.
+				delete(locks, lockName)
+			}
+
+			// Release the lock now that the done channel is closed and the
+			// map entry has been deleted, this will allow any waiting users
+			// to try and get access to the map to create a new operation.
+			locksMutex.Unlock()
+		}, waitCh
+	}
+
+	// An existing operation is ongoing, lets wait for that to finish and then try
+	// to get exclusive access to create a new operation again.
+	locksMutex.Unlock()
+
+	return nil, waitCh
 }
