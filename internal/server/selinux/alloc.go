@@ -8,7 +8,7 @@ import (
 
 	goselinux "github.com/opencontainers/selinux/go-selinux"
 
-	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // allocMu is used to serialize SELinux MCS level allocation across

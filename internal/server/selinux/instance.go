@@ -7,9 +7,9 @@ import (
 
 	goselinux "github.com/opencontainers/selinux/go-selinux"
 
-	"github.com/lxc/incus/v6/internal/server/instance/instancetype"
-	"github.com/lxc/incus/v6/internal/server/sys"
-	"github.com/lxc/incus/v6/shared/logger"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/sys"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // InstanceContext derives the SELinux process context for an instance.
