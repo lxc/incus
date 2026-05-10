@@ -42,7 +42,6 @@ import (
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
-	"github.com/opencontainers/selinux/go-selinux"
 )
 
 // Track last autorestart of an instance.
@@ -1726,86 +1725,6 @@ func (d *common) setOOMPriority(pid int) error {
 	}
 
 	return nil
-}
-
-const selinuxAllocMaxAttempts = 16
-
-// selinuxAllocateLevel returns an SELinux MCS level that does not collide
-// with any level currently in use by other instances on this host. It
-// delegates generation to the upstream selinux package and retries on
-// collision. Callers must hold d.state.OS.SELinuxAllocLock() for the
-// duration of the allocation and the subsequent persistence of the
-// resulting context (volatile.selinux.context), so that two instances
-// starting concurrently cannot observe the same "free" level.
-func (d *common) selinuxAllocateLevel() (string, error) {
-	used, err := d.selinuxUsedLevels()
-	if err != nil {
-		return "", fmt.Errorf("Failed to collect in-use SELinux levels: %w", err)
-	}
-
-	for i := 0; i < selinuxAllocMaxAttempts; i++ {
-		label, _ := selinux.InitContainerLabels()
-		if label == "" {
-			return "", fmt.Errorf("Failed to allocate SELinux label (empty process label returned)")
-		}
-
-		parsed, err := selinux.NewContext(label)
-		if err != nil {
-			return "", fmt.Errorf("Failed to parse allocated SELinux label %q: %w", label, err)
-		}
-
-		level := parsed["level"]
-		if level == "" {
-			return "", fmt.Errorf("Allocated SELinux label %q has empty level", label)
-		}
-
-		if _, clash := used[level]; !clash {
-			selinux.ReleaseLabel(label)
-			return level, nil
-		}
-
-		logger.Debug("SELinux level collision, retrying", logger.Ctx{"level": level, "attempt": i + 1})
-	}
-
-	return "", fmt.Errorf("Failed to allocate collision-free SELinux level after %d attempts", selinuxAllocMaxAttempts)
-}
-
-// selinuxUsedLevels returns the set of SELinux MCS levels currently
-// reserved by instances on this host (excluding the caller itself).
-// Stopped instances with a cached volatile.selinux.context are included,
-// since they will re-use their level on next start.
-func (d *common) selinuxUsedLevels() (map[string]struct{}, error) {
-	used := map[string]struct{}{}
-
-	instances, err := instance.LoadNodeAll(d.state, instancetype.Any)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, inst := range instances {
-		if inst.ID() == d.id {
-			continue
-		}
-
-		cfg := inst.LocalConfig()
-
-		// Explicit per-instance override (takes precedence).
-		if lvl := cfg["security.selinux.level"]; lvl != "" {
-			used[lvl] = struct{}{}
-			continue
-		}
-
-		// Previously persisted context (running or stopped instance).
-		if vc := cfg["volatile.selinux.context"]; vc != "" {
-			if parsed, err := selinux.NewContext(vc); err == nil {
-				if lvl := parsed["level"]; lvl != "" {
-					used[lvl] = struct{}{}
-				}
-			}
-		}
-	}
-
-	return used, nil
 }
 
 // HasDependentDisk checks whether the instance has any dependent volumes.

@@ -81,11 +81,6 @@ type OS struct {
 	SELinuxContainerType string
 	SELinuxVMType        string
 
-	// selinuxAllocMu serializes SELinux MCS level allocation across
-	// concurrently starting instances, so collision detection against
-	// already-used levels stays race-free.
-	selinuxAllocMu sync.Mutex
-
 	// LXC features
 	LXCFeatures map[string]bool
 
@@ -336,14 +331,4 @@ func getIdmapset() *idmap.Set {
 	}
 
 	return submap
-}
-
-// SELinuxAllocLock acquires the SELinux level allocation mutex.
-func (s *OS) SELinuxAllocLock() {
-	s.selinuxAllocMu.Lock()
-}
-
-// SELinuxAllocUnlock releases the SELinux level allocation mutex.
-func (s *OS) SELinuxAllocUnlock() {
-	s.selinuxAllocMu.Unlock()
 }
