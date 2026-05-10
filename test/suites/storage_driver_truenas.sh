@@ -186,6 +186,10 @@ do_storage_driver_truenas() {
     # restore default back to ext4, otherwise it can affect future tests.
     incus storage unset incustest-"$(basename "${INCUS_DIR}")" volume.block.filesystem
 
+    # Functional test: verify that block.create_options are applied to the volume's filesystem.
+    storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")" "${filesystem}" c5 volume
+    storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")" "${filesystem}" c5 pool
+
     # Clean up. TrueNAS create/delete can be very slow, this can cause the default 120s command timeout to be exceeded when doing mass instance deletes.
     # FIXME: when deletes aren't so slow, just use `incus rm -f c1 c3 c11 c21 c4 c5`
     instances="c1 c3 c11 c21 c4 c5"
