@@ -73,7 +73,6 @@ import (
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
-	"github.com/lxc/incus/v7/internal/server/sys"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
