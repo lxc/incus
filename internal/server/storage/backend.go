@@ -8588,50 +8588,17 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		return drivers.ErrNotSupported
 	}
 
-	var inst instance.Instance
-	var err error
-	var diskName string
+	// Convert the volume type name to our internal integer representation.
+	volumeDbType, err := VolumeTypeToDBType(vol.Type())
+	if err != nil {
+		return err
+	}
 
-	if vol.IsVMBlock() {
-		_, volName := project.StorageVolumeParts(vol.Name())
-		inst, err = instance.LoadByProjectAndName(b.state, projectName, volName)
-		if err != nil {
-			return err
-		}
+	_, volName := project.StorageVolumeParts(vol.Name())
 
-		diskName, _, err = internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
-		if err != nil {
-			return err
-		}
-	} else if vol.IsCustomBlock() {
-		var instanceArgs *db.InstanceArgs
-
-		_, volName := project.StorageVolumeParts(vol.Name())
-		dbVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
-		if err != nil {
-			return err
-		}
-
-		err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &dbVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
-			if instanceArgs != nil && instanceArgs.Name != dbInst.Name {
-				return errors.New("Volume is attached to multiple instances")
-			}
-
-			instanceArgs = &dbInst
-			diskName = usedByDevices[0]
-
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-
-		if instanceArgs != nil {
-			inst, err = instance.LoadByProjectAndName(b.state, projectName, instanceArgs.Name)
-			if err != nil {
-				return err
-			}
-		}
+	inst, diskName, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, volName, volumeDbType)
+	if err != nil {
+		return err
 	}
 
 	// Define function to send a filesystem volume.
