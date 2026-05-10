@@ -32,7 +32,7 @@ func (s *OS) initSELinux() []cluster.Warning {
 		})
 
 		return dbWarnings
-	} else if !selinux.GetEnabled() {
+	} else if !goselinux.GetEnabled() {
 		logger.Warnf("SELinux support has been disabled because of lack of kernel support")
 		dbWarnings = append(dbWarnings, cluster.Warning{
 			TypeCode:    warningtype.SELinuxNotAvailable,
@@ -41,13 +41,13 @@ func (s *OS) initSELinux() []cluster.Warning {
 		return dbWarnings
 	}
 
-	label, err := selinux.CurrentLabel()
+	label, err := goselinux.CurrentLabel()
 	if err != nil {
 		logger.Warn("Failed to get current SELinux label", logger.Ctx{"error": err})
 		return dbWarnings
 	}
 
-	ctx, err := selinux.NewContext(label)
+	ctx, err := goselinux.NewContext(label)
 	if err != nil {
 		logger.Warn("SELinux disabled: failed to parse daemon label", logger.Ctx{"label": label, "error": err})
 		return dbWarnings
