@@ -11390,6 +11390,7 @@ func (d *qemu) selinuxEnsureContext() (bool, error) {
 		}
 	}
 
+	// Return true if this is the first time a context was generated.
 	return previousCtx == "", nil
 }
 
