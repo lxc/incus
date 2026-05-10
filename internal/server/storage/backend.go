@@ -8601,6 +8601,15 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		return err
 	}
 
+	if inst != nil {
+		unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
+		if err != nil {
+			return err
+		}
+
+		defer unlock()
+	}
+
 	// Define function to send a filesystem volume.
 	sendFSVol := func(vol drivers.Volume, conn io.ReadWriteCloser, mountPath string) error {
 		var wrapper *ioprogress.ProgressTracker
@@ -8769,6 +8778,28 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 	reverter := revert.New()
 	defer reverter.Fail()
 
+	// Convert the volume type name to our internal integer representation.
+	volumeDbType, err := VolumeTypeToDBType(vol.Type())
+	if err != nil {
+		return err
+	}
+
+	_, volName := project.StorageVolumeParts(vol.Name())
+
+	inst, _, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, volName, volumeDbType)
+	if err != nil {
+		return err
+	}
+
+	if inst != nil {
+		unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
+		if err != nil {
+			return err
+		}
+
+		defer unlock()
+	}
+
 	// Create the main volume if not refreshing.
 	if !volTargetArgs.Refresh {
 		err := b.driver.CreateVolume(vol, preFiller, op)
@@ -8904,7 +8935,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 		}
 	}
 
-	err := vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
+	err = vol.MountWithSnapshotsTask(func(parentMountPath string, snapshotMountPaths map[string]string, op *operations.Operation) error {
 		var err error
 
 		// Setup paths to the main volume. We will receive each snapshot to these paths and then create
@@ -8979,6 +9010,15 @@ func (b *backend) qcow2BackupVolume(vol drivers.Volume, dbVol *db.StorageVolume,
 	inst, deviceName, err := InstanceByVolumeName(b.state, b.name, projectName, vol.Name(), volumeDBType)
 	if err != nil {
 		return err
+	}
+
+	if inst != nil {
+		unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
+		if err != nil {
+			return err
+		}
+
+		defer unlock()
 	}
 
 	getDiskPath := func(v drivers.Volume, blockIndex int) (string, func(), error) {
@@ -9480,6 +9520,13 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 	volStorageName := project.Instance(inst.Project().Name, inst.Name())
 	vol := b.GetVolume(drivers.VolumeTypeVM, drivers.ContentTypeBlock, volStorageName, nil)
 
+	unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	defer unlock()
+
 	if !inst.IsRunning() {
 		b.logger.Debug("NBD connection (offline mode)")
 		return b.connectOfflineNBD(vol)
@@ -9504,7 +9551,17 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 		return nil, nil, err
 	}
 
-	return inst.ConnectNBD(instanceDeviceName, volSize, writable)
+	conn, disconnect, err := inst.ConnectNBD(instanceDeviceName, volSize, writable)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cleanup := func() {
+		disconnect()
+		unlock()
+	}
+
+	return conn, cleanup, nil
 }
 
 // GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
