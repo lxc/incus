@@ -58,6 +58,12 @@ const PowerStateRunning = "RUNNING"
 // PowerStateStopped represents the power state stored when an instance is stopped.
 const PowerStateStopped = "STOPPED"
 
+// AgentStateStarted represents the agent state stored when an instance agent is running.
+const AgentStateStarted = "STARTED"
+
+// AgentStateStopped represents the agent state stored when an instance agent is stopped.
+const AgentStateStopped = "STOPPED"
+
 // ConfigReader is used to read instance config.
 type ConfigReader interface {
 	Project() api.Project
