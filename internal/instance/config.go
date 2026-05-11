@@ -437,6 +437,13 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Instance marked itself as ready
 	"volatile.last_state.ready": validate.IsBool,
 
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.last_state.agent)
+	//
+	// ---
+	//  type: string
+	//  shortdesc: Instance agent state as of last host shutdown
+	"volatile.last_state.agent": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.rebalance.last_move)
 	//
 	// ---
