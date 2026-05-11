@@ -97,7 +97,7 @@ RUN go install -v github.com/google/go-licenses@latest && \
     go install -v golang.org/x/tools/cmd/goimports@latest && \
     go install -v golang.org/x/vuln/cmd/govulncheck@latest && \
     go install -v mvdan.cc/gofumpt@latest && \
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+    curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin
 
 # Make dependencies
 COPY Makefile /home/vscode
