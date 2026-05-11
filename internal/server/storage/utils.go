@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/locking"
 	localMigration "github.com/lxc/incus/v7/internal/server/migration"
 	"github.com/lxc/incus/v7/internal/server/node"
 	"github.com/lxc/incus/v7/internal/server/operations"
@@ -1554,4 +1555,19 @@ func DevicesMapFromBackupConfig(config *backupConfig.Config) map[string]map[stri
 	}
 
 	return devicesMap
+}
+
+// nbdOperationLock acquires a lock for NBD operations on an instance and
+// returns an unlock function.
+func nbdOperationLock(projectName string, instanceName string) (locking.UnlockFunc, error) {
+	l := logger.AddContext(logger.Ctx{"project": projectName, "instance": instanceName})
+	l.Debug("Acquiring NBD lock for instance")
+	defer l.Debug("NBD lock acquired for instance")
+
+	unlock, _ := locking.TryLock(fmt.Sprintf("NBDInstanceOperation_%s", project.Instance(projectName, instanceName)))
+	if unlock == nil {
+		return nil, fmt.Errorf("NBD operation for instance %s already in progress", instanceName)
+	}
+
+	return unlock, nil
 }
