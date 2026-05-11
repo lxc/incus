@@ -3099,6 +3099,12 @@ The cluster member that the instance lived on before evacuation.
 
 ```
 
+```{config:option} volatile.last_state.agent instance-volatile
+:shortdesc: "Instance agent state as of last host shutdown"
+:type: "string"
+
+```
+
 ```{config:option} volatile.rebalance.last_move instance-volatile
 :shortdesc: "Timestamp of last move by automatic live-migration"
 :type: "integer"
