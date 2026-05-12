@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Dependency Review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         if: github.event_name == 'pull_request'
         with:
           allow-ghsas: GHSA-4p9m-8gc4-rw2h
