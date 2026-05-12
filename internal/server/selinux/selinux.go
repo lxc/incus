@@ -68,7 +68,7 @@ func LabelTree(path string, label string, skipPath string) error {
 
 		labelErr := goselinux.LsetFileLabel(p, label)
 		if labelErr != nil {
-			return fmt.Errorf("Failed to set SELinux label on %q: %w", p, labelErr)
+			return fmt.Errorf("Failed to set SELinux label: %w", labelErr)
 		}
 
 		return nil
