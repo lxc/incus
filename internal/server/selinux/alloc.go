@@ -64,7 +64,6 @@ func UsedLevels(configs []map[string]string) map[string]struct{} {
 	used := make(map[string]struct{}, len(configs))
 
 	for _, cfg := range configs {
-
 		// Explicit per-instance override (takes precedence).
 		if lvl := cfg["security.selinux.level"]; lvl != "" {
 			used[lvl] = struct{}{}
