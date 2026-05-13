@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	goselinux "github.com/opencontainers/selinux/go-selinux"
@@ -73,23 +72,4 @@ func LabelTree(path string, label string, skipPath string) error {
 
 		return nil
 	})
-}
-
-// SetExecContext sets the SELinux transition context for the next exec on the current thread.
-// Returns a cleanup function that must always be called to clear the context and release the thread lock.
-func SetExecContext(ctx string) (func(), error) {
-	runtime.LockOSThread()
-
-	err := goselinux.SetExecLabel(ctx)
-	if err != nil {
-		runtime.UnlockOSThread()
-		return nil, fmt.Errorf("Failed to set SELinux exec context: %w", err)
-	}
-
-	cleanup := func() {
-		_ = goselinux.SetExecLabel("")
-		runtime.UnlockOSThread()
-	}
-
-	return cleanup, nil
 }
