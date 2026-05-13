@@ -68,7 +68,6 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 			return "", false, release, fmt.Errorf("SELinux: failed to allocate level: %w", err)
 		}
 		seLevel = lvl
-
 	} else {
 		return "", false, release, fmt.Errorf("SELinux MLS not enabled on this system or could not access selinuxfs")
 	}

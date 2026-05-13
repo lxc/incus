@@ -126,8 +126,8 @@ func (p *Process) SetApparmor(profile string) {
 }
 
 // SetSELinux allows setting the SELinux process context.
-func (p *Process) SetSELinux(context string) {
-	p.SELinux = context
+func (p *Process) SetSELinux(ctx string) {
+	p.SELinux = ctx
 }
 
 // SetCreds allows setting process credentials.
