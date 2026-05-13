@@ -14,11 +14,11 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	goselinux "github.com/opencontainers/selinux/go-selinux"
 	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
-	goselinux "github.com/opencontainers/selinux/go-selinux"
 )
 
 var selinuxEnabled atomic.Bool
