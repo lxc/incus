@@ -16,7 +16,7 @@ import (
 // already-used levels stays race-free.
 var allocMu sync.Mutex
 
-const AllocMaxAttempts = 16
+const allocMaxAttempts = 16
 
 // AllocateLevel returns a SELinux MCS level that does not collide
 // with any level currently in use by other instances on this host. It
@@ -25,7 +25,7 @@ const AllocMaxAttempts = 16
 func AllocateLevel(used map[string]struct{}) (string, func(), error) {
 	allocMu.Lock()
 
-	for i := 0; i < AllocMaxAttempts; i++ {
+	for i := 0; i < allocMaxAttempts; i++ {
 		label, _ := goselinux.InitContainerLabels()
 		if label == "" {
 			allocMu.Unlock()
@@ -54,7 +54,7 @@ func AllocateLevel(used map[string]struct{}) (string, func(), error) {
 	}
 
 	allocMu.Unlock()
-	return "", nil, fmt.Errorf("Failed to allocate collision-free SELinux level after %d attempts", AllocMaxAttempts)
+	return "", nil, fmt.Errorf("Failed to allocate collision-free SELinux level after %d attempts", allocMaxAttempts)
 }
 
 // UsedLevels extracts the set of MCS levels currently in use, given a
