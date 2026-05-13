@@ -499,11 +499,11 @@ func (c *cmdProjectList) command() *cobra.Command {
 		`List projects
 
 The -c option takes a (optionally comma-separated) list of arguments
-that control which image attributes to output when displaying in table
+that control which project attributes to output when displaying in table
 or csv format.
 Default column layout is: nipvbwzdu
-Column shorthand chars:
 
+Column shorthand chars:
 n - Project Name
 i - Images
 p - Profiles
