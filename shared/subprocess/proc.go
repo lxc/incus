@@ -18,7 +18,7 @@ import (
 
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
-	"github.com/opencontainers/selinux/go-selinux"
+	goselinux "github.com/opencontainers/selinux/go-selinux"
 )
 
 var selinuxEnabled atomic.Bool
@@ -83,13 +83,13 @@ func withSELinuxExecContext(label string, fn func() error) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	err := selinux.SetExecLabel(label)
+	err := goselinux.SetExecLabel(label)
 	if err != nil {
 		return fmt.Errorf("Failed to set SELinux exec label %q: %w", label, err)
 	}
 
 	defer func() {
-		if err := selinux.SetExecLabel(""); err != nil {
+		if err := goselinux.SetExecLabel(""); err != nil {
 			logger.Warn("Failed to reset SELinux exec context", logger.Ctx{"error": err})
 		}
 	}()
