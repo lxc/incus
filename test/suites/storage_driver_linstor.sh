@@ -100,6 +100,15 @@ test_storage_driver_linstor() {
         incus storage volume snapshot list "incustest-$(basename "${INCUS_DIR}")-pool1" c3 | grep snap0
         ! incus storage volume snapshot list "incustest-$(basename "${INCUS_DIR}")-pool1" c3 | grep snap1 || false
 
+        # Functional test: verify that block.create_options are applied to the volume's filesystem.
+        incus launch testimage c4 -s "incustest-$(basename "${INCUS_DIR}")-pool1"
+        incus list -c b c4 | grep "incustest-$(basename "${INCUS_DIR}")-pool1"
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" ext4 c4 volume
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" ext4 c4 pool
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" xfs  c4 volume
+        storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" xfs  c4 pool
+        incus delete -f c4
+
         # Cleanup
         incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c1
         incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c2

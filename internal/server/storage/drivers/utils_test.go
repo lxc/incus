@@ -35,3 +35,20 @@ func TestGetVolumeMountPath(t *testing.T) {
 	expected = GetPoolMountPath(poolName) + "/virtual-machines/testvol"
 	assert.Equal(t, expected, path)
 }
+
+// Test mkfsOptions struct fields and defaults.
+func TestMkfsOptions(t *testing.T) {
+	// Default zero value should have empty ExtraArgs.
+	opts := mkfsOptions{}
+	assert.Empty(t, opts.ExtraArgs)
+	assert.Empty(t, opts.Label)
+
+	// Setting ExtraArgs as a space-separated string should work.
+	opts = mkfsOptions{ExtraArgs: "-b 4096"}
+	assert.Equal(t, "-b 4096", opts.ExtraArgs)
+
+	// Setting Label should work alongside ExtraArgs.
+	opts = mkfsOptions{Label: "myvolume", ExtraArgs: "-E nodiscard"}
+	assert.Equal(t, "myvolume", opts.Label)
+	assert.Equal(t, "-E nodiscard", opts.ExtraArgs)
+}
