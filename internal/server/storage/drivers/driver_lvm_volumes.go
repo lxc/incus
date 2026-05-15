@@ -1770,6 +1770,15 @@ func (d *lvm) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 			return fmt.Errorf("Error removing original LVM logical volume: %w", err)
 		}
 
+		// For VMs, also restore the filesystem volume.
+		if vol.IsVMBlock() {
+			fsVol := vol.NewVMBlockFilesystemVolume()
+			err := d.RestoreVolume(fsVol, snapshotName, op)
+			if err != nil {
+				return err
+			}
+		}
+
 		reverter.Success()
 		return nil
 	}
