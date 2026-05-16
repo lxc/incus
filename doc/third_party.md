@@ -14,7 +14,7 @@ The integration with Incus is done through a [dedicated provider](https://github
 [Ansible](https://www.ansible.com) is an infrastructure as code tool with particular focus on software provisioning and configuration management.
 It does most of its work by first connecting to the system that it's deploying software on.
 
-To do that, it can connect over SSH and a variety of other protocols, one of which is [Incus](https://docs.ansible.com/ansible/latest/collections/community/general/incus_connection.html).
+To do that, it can connect over SSH and a variety of other protocols, one of which is [Incus](https://docs.ansible.com/ansible/latest/collections/community/general/incus_connection.html). When using the Incus Ansible connection type with a remote Incus server, you may benefit from using the `incus-client` package rather than the full Incus package when such a package is available in your distribution.
 
 That allows for easily deploying software inside of Incus instances without needing to first setup SSH.
 
