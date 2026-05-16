@@ -6494,6 +6494,48 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			return api.StatusErrorf(http.StatusConflict, "A load balancer for that listen address already exists")
 		}
 
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			listenIP := net.ParseIP(loadBalancer.ListenAddress)
+
+			if listenIP == nil {
+				return fmt.Errorf("Invalid load balancer listen address %s", loadBalancer.ListenAddress)
+			}
+
+			allAllocatedIPv4, allAllocatedIPv6, err := n.uplinkAllAllocatedIPs(ctx, tx, n.config["network"])
+			if err != nil {
+				return err
+			}
+
+			networkIPv4 := net.ParseIP(n.config[ovnVolatileUplinkIPv4])
+			networkIPv6 := net.ParseIP(n.config[ovnVolatileUplinkIPv6])
+
+			for _, usedIP := range allAllocatedIPv4 {
+				// Skip our own network because its a valid overlap.
+				if usedIP.Equal(networkIPv4) {
+					continue
+				}
+
+				if usedIP.Equal(listenIP) {
+					return fmt.Errorf("Load balancer listen address %q overlaps with another network or NIC", loadBalancer.ListenAddress)
+				}
+			}
+
+			for _, usedIP := range allAllocatedIPv6 {
+				// Skip our own network because its a valid overlap.
+				if usedIP.Equal(networkIPv6) {
+					continue
+				}
+
+				if usedIP.Equal(listenIP) {
+					return fmt.Errorf("Load balancer listen address %q overlaps with another network or NIC", loadBalancer.ListenAddress)
+				}
+			}
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
 		// Convert listen address to subnet so we can check its valid and can be used.
 		listenAddressNet, err := ParseIPToNet(loadBalancer.ListenAddress)
 		if err != nil {
