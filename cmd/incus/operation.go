@@ -124,7 +124,7 @@ func (c *cmdOperationList) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`List background operations
 
-Default column layout: itdscCl
+Default column layout: itdscCL
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
