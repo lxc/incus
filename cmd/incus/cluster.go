@@ -9,6 +9,7 @@ import (
 	"maps"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"slices"
@@ -1769,8 +1770,11 @@ func askClustering(asker ask.Asker, config *api.InitPreseed, cluster incus.Insta
 				return err
 			}
 
-			// Set the token.
-			config.Cluster.ClusterAddress = connectInfo.URL
+			clusterURL, err := url.Parse(connectInfo.URL)
+			if err != nil {
+				return err
+			}
+			config.Cluster.ClusterAddress = clusterURL.Host
 			config.Cluster.ClusterCertificate = connectInfo.Certificate
 			config.Cluster.ClusterToken = joinToken.String()
 		}
