@@ -782,6 +782,14 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		changes := util.CloneMap(currentClusterConfig.Dump())
 
+		// OVN/OVS setup is handled explicitly below with error tolerance, since
+		// the joining node may not have OVS/OVN available locally.
+		delete(changes, "network.ovn.northbound_connection")
+		delete(changes, "network.ovn.ca_cert")
+		delete(changes, "network.ovn.client_cert")
+		delete(changes, "network.ovn.client_key")
+
+		// Apply remaining configuration changes.
 		err = doApi10UpdateTriggers(d, nil, changes, nodeConfig, currentClusterConfig)
 		if err != nil {
 			return err
