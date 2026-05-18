@@ -4,18 +4,19 @@ package sys
 
 import (
 	"os"
-	"strings"
+
+	goselinux "github.com/opencontainers/selinux/go-selinux"
 
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/warningtype"
-	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-// Initialize SELinux-specific attributes.
+// initSELinux detects SELinux state and configures instance type mappings.
 func (s *OS) initSELinux() []cluster.Warning {
 	var dbWarnings []cluster.Warning
+	s.SELinuxEnabled = false
 
 	// SELinux support is currently opt-in.
 	if os.Getenv("INCUS_SECURITY_SELINUX") == "" {
@@ -31,42 +32,51 @@ func (s *OS) initSELinux() []cluster.Warning {
 		})
 
 		return dbWarnings
-	} else if !internalUtil.IsDir("/sys/fs/selinux") {
+	} else if !goselinux.GetEnabled() {
 		logger.Warnf("SELinux support has been disabled because of lack of kernel support")
 		dbWarnings = append(dbWarnings, cluster.Warning{
 			TypeCode:    warningtype.SELinuxNotAvailable,
 			LastMessage: "Disabled because of lack of kernel support",
 		})
-
 		return dbWarnings
 	}
 
-	s.SELinuxAvailable = true
-
-	// Read our own context.
-	content, err := os.ReadFile("/proc/self/attr/current")
+	label, err := goselinux.CurrentLabel()
 	if err != nil {
-		logger.Warnf("SELinux support has been disabled because of unaccessible context data")
-		dbWarnings = append(dbWarnings, cluster.Warning{
-			TypeCode:    warningtype.SELinuxNotAvailable,
-			LastMessage: "Disabled because of unaccessible context data",
-		})
-
+		logger.Warn("Failed to get current SELinux label", logger.Ctx{"error": err})
 		return dbWarnings
 	}
 
-	s.SELinuxContextDaemon = strings.TrimRight(strings.TrimSpace(string(content)), "\x00")
-
-	// Handle the various SELinux policy variants here.
-	switch s.SELinuxContextDaemon {
-	case "system_u:system_r:container_runtime_t:s0":
-		logger.Debugf("Detected Fedora-style SELinux setup")
-		s.SELinuxContextInstanceLXC = "system_u:system_r:spc_t:s0"
-
-	case "system_u:system_r:incusd_t:s0":
-		logger.Debugf("Detected SELinux refpolicy setup")
-		s.SELinuxContextInstanceLXC = "system_u:system_r:container_init_t:s0"
+	ctx, err := goselinux.NewContext(label)
+	if err != nil {
+		logger.Warn("SELinux disabled: failed to parse daemon label", logger.Ctx{"label": label, "error": err})
+		return dbWarnings
 	}
+
+	// Map daemon type to instance types.
+	switch ctx["type"] {
+	case "container_runtime_t":
+		s.SELinuxContainerType = "spc_t"
+		s.SELinuxVMType = "svirt_t"
+		logger.Debug("Setting SELinux instance contexts based on incusd context", logger.Ctx{"incusd": ctx["type"], "lxc": s.SELinuxContainerType, "qemu": s.SELinuxVMType})
+	case "incusd_t":
+		s.SELinuxContainerType = "container_init_t"
+		s.SELinuxVMType = "qemu_t"
+		logger.Debug("Setting SELinux instance contexts based on incusd context", logger.Ctx{"incusd": ctx["type"], "lxc": s.SELinuxContainerType, "qemu": s.SELinuxVMType})
+	default:
+		logger.Warn("SELinux daemon type not supported for instance confinement, disabling SELinux for instances", logger.Ctx{"type": ctx["type"]})
+		return dbWarnings
+	}
+
+	s.SELinuxContextDaemon = label
+	s.SELinuxEnabled = true
+
+	logger.Info("SELinux support enabled", logger.Ctx{
+		"label":         label,
+		"containerType": s.SELinuxContainerType,
+		"vmType":        s.SELinuxVMType,
+		"mlsEnabled":    goselinux.MLSEnabled(),
+	})
 
 	return dbWarnings
 }

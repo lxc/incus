@@ -76,9 +76,10 @@ type OS struct {
 	AppArmorStacking  bool
 
 	// SELinux features
-	SELinuxAvailable          bool
-	SELinuxContextDaemon      string
-	SELinuxContextInstanceLXC string
+	SELinuxEnabled       bool
+	SELinuxContextDaemon string
+	SELinuxContainerType string
+	SELinuxVMType        string
 
 	// LXC features
 	LXCFeatures map[string]bool

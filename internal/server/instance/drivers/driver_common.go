@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"math/rand/v2"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -34,6 +33,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/selinux"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
@@ -1728,51 +1728,6 @@ func (d *common) setOOMPriority(pid int) error {
 	return nil
 }
 
-// selinuxContext returns the SELinux context for the instance.
-func (d *common) selinuxContext(baseContext string) (string, error) {
-	// Get all local instances.
-	instances, err := instance.LoadNodeAll(d.state, instancetype.Any)
-	if err != nil {
-		return "", fmt.Errorf("Failed loading local instances: %w", err)
-	}
-
-	// Get all current values.
-	seContexts := make([]string, 0, len(instances))
-	for _, inst := range instances {
-		if !inst.IsRunning() {
-			continue
-		}
-
-		val, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(inst.InitPID()), "attr", "current"))
-		if err != nil {
-			return "", err
-		}
-
-		seContexts = append(seContexts, strings.TrimSuffix(string(val), "\x00"))
-	}
-
-	// Generate a random set of categories.
-	for {
-		c1 := rand.IntN(1023)
-		c2 := rand.IntN(1023)
-
-		if c1 == c2 {
-			continue
-		}
-
-		if c1 > c2 {
-			c1, c2 = c2, c1
-		}
-
-		seContext := baseContext + ":c" + strconv.Itoa(c1) + ",c" + strconv.Itoa(c2)
-		if slices.Contains(seContexts, seContext) {
-			continue
-		}
-
-		return seContext, nil
-	}
-}
-
 // HasDependentDisk checks whether the instance has any dependent volumes.
 func (d *common) HasDependentDisk() bool {
 	for _, dev := range d.ExpandedDevices().Sorted() {
@@ -1800,4 +1755,26 @@ func (d *common) ForEachDependentDiskType(diskAction func(dev deviceConfig.Devic
 	}
 
 	return nil
+}
+
+// selinuxCollectUsedLevels loads expanded configs of all instances on
+// this node and asks the selinux package to extract the in-use levels.
+func (d *common) selinuxCollectUsedLevels() (map[string]struct{}, error) {
+	var configs []map[string]string
+	instances, err := instance.LoadNodeAll(d.state, instancetype.Any)
+	if err != nil {
+		return nil, err
+	}
+
+	configs = make([]map[string]string, 0, len(instances))
+
+	for _, inst := range instances {
+		if inst.ID() == d.id {
+			continue
+		}
+
+		configs = append(configs, inst.ExpandedConfig())
+	}
+
+	return selinux.UsedLevels(configs), nil
 }
