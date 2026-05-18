@@ -9,13 +9,16 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/filter"
@@ -1749,6 +1752,12 @@ func networkStartup(s *state.State) error {
 
 	loadedNetworks := make(map[network.ProjectNetwork]network.Network)
 
+	// Limit the number of concurrent network starts to one per two runtime threads.
+	numParallel := max(runtime.NumCPU()/2, 1)
+
+	// initNetworksMu protects concurrent access to the initNetworks priority maps.
+	var initNetworksMu sync.Mutex
+
 	initNetwork := func(n network.Network, priority int) error {
 		err = n.Start()
 		if err != nil {
@@ -1769,7 +1778,9 @@ func networkStartup(s *state.State) error {
 			NetworkName: n.Name(),
 		}
 
+		initNetworksMu.Lock()
 		delete(initNetworks[priority], pn)
+		initNetworksMu.Unlock()
 
 		_ = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(s.DB.Cluster, n.Project(), warningtype.NetworkUnvailable, dbCluster.TypeNetwork, int(n.ID()))
 
@@ -1789,7 +1800,9 @@ func networkStartup(s *state.State) error {
 				if api.StatusErrorCheck(err, http.StatusNotFound) {
 					// Network has been deleted since we began trying to start it so delete
 					// entry.
+					initNetworksMu.Lock()
 					delete(initNetworks[priority], pn)
+					initNetworksMu.Unlock()
 
 					return nil
 				}
@@ -1808,15 +1821,19 @@ func networkStartup(s *state.State) error {
 		if netConfig["parent"] != "" && priority != networkPriorityPhysical {
 			// Start networks that depend on physical interfaces existing after
 			// non-dependent networks.
+			initNetworksMu.Lock()
 			delete(initNetworks[priority], pn)
 			initNetworks[networkPriorityPhysical][pn] = struct{}{}
+			initNetworksMu.Unlock()
 
 			return nil
 		} else if netConfig["network"] != "" && priority != networkPriorityLogical {
 			// Start networks that depend on other logical networks after networks after
 			// non-dependent networks and networks that depend on physical interfaces.
+			initNetworksMu.Lock()
 			delete(initNetworks[priority], pn)
 			initNetworks[networkPriorityLogical][pn] = struct{}{}
+			initNetworksMu.Unlock()
 
 			return nil
 		}
@@ -1829,17 +1846,44 @@ func networkStartup(s *state.State) error {
 		return nil
 	}
 
-	// Try initializing networks in priority order.
-	for priority := range initNetworks {
-		for pn := range initNetworks[priority] {
-			err := loadAndInitNetwork(pn, priority, true)
-			if err != nil {
-				logger.Error("Failed initializing network", logger.Ctx{"project": pn.ProjectName, "network": pn.NetworkName, "err": err})
+	// initInPriorityOrder iterates over initNetworks in priority order and starts each
+	// pending network with up to numParallel networks initializing concurrently.
+	// It returns whether at least one network was successfully initialized.
+	initInPriorityOrder := func(firstPass bool) bool {
+		var initialized atomic.Bool
 
-				continue
+		for priority := range initNetworks {
+			// No goroutines from a previous iteration are running here (group.Wait
+			// has returned) so the initNetworks map can be read without holding the
+			// mutex.
+			pns := slices.Collect(maps.Keys(initNetworks[priority]))
+
+			group := new(errgroup.Group)
+			group.SetLimit(numParallel)
+
+			for _, pn := range pns {
+				group.Go(func() error {
+					err := loadAndInitNetwork(pn, priority, firstPass)
+					if err != nil {
+						logger.Error("Failed initializing network", logger.Ctx{"project": pn.ProjectName, "network": pn.NetworkName, "err": err})
+
+						return nil
+					}
+
+					initialized.Store(true)
+
+					return nil
+				})
 			}
+
+			_ = group.Wait()
 		}
+
+		return initialized.Load()
 	}
+
+	// Try initializing networks in priority order.
+	_ = initInPriorityOrder(true)
 
 	loadedNetworks = nil // Don't store loaded networks after first pass.
 
@@ -1862,21 +1906,7 @@ func networkStartup(s *state.State) error {
 				case <-t.C:
 					t.Stop()
 
-					tryInstancesStart := false
-
-					// Try initializing networks in priority order.
-					for priority := range initNetworks {
-						for pn := range initNetworks[priority] {
-							err := loadAndInitNetwork(pn, priority, false)
-							if err != nil {
-								logger.Error("Failed initializing network", logger.Ctx{"project": pn.ProjectName, "network": pn.NetworkName, "err": err})
-
-								continue
-							}
-
-							tryInstancesStart = true // We initialized at least one network.
-						}
-					}
+					tryInstancesStart := initInPriorityOrder(false)
 
 					remainingNetworks := 0
 					for _, networks := range initNetworks {
@@ -1971,7 +2001,15 @@ func networkRestartOVN(s *state.State) error {
 		return fmt.Errorf("Failed to load projects: %w", err)
 	}
 
-	// Go over all the networks in every project.
+	// Collect all OVN networks across all projects.
+	type ovnNetwork struct {
+		n           network.Network
+		projectName string
+		networkName string
+	}
+
+	var ovnNetworks []ovnNetwork
+
 	for _, projectName := range projectNames {
 		var networkNames []string
 
@@ -1996,15 +2034,28 @@ func networkRestartOVN(s *state.State) error {
 				continue
 			}
 
-			// Restart the network.
-			err = n.Start()
-			if err != nil {
-				return fmt.Errorf("Failed to restart network %q in project %q: %w", networkName, projectName, err)
-			}
+			ovnNetworks = append(ovnNetworks, ovnNetwork{n: n, projectName: projectName, networkName: networkName})
 		}
 	}
 
-	return nil
+	// Restart networks concurrently with one concurrent start per two runtime threads.
+	numParallel := max(runtime.NumCPU()/2, 1)
+
+	group := new(errgroup.Group)
+	group.SetLimit(numParallel)
+
+	for _, ovnNet := range ovnNetworks {
+		group.Go(func() error {
+			err := ovnNet.n.Start()
+			if err != nil {
+				return fmt.Errorf("Failed to restart network %q in project %q: %w", ovnNet.networkName, ovnNet.projectName, err)
+			}
+
+			return nil
+		})
+	}
+
+	return group.Wait()
 }
 
 // swagger:operation GET /1.0/networks/{name}/state networks networks_state_get
