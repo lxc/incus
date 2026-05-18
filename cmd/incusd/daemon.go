@@ -2470,6 +2470,15 @@ func (d *Daemon) setupOVN() error {
 	d.ovnnb = nil
 	d.ovnsb = nil
 
+	// Get the OVN northbound address.
+	ovnNBAddr := d.globalConfig.NetworkOVNNorthboundConnection()
+
+	// If OVN isn't configured, leave the clients cleared and return.
+	// This avoids touching OVS on nodes that don't have it installed.
+	if ovnNBAddr == "" {
+		return nil
+	}
+
 	// Connect to OpenVswitch.
 	vswitch, err := d.getOVS()
 	if err != nil {
@@ -2481,9 +2490,6 @@ func (d *Daemon) setupOVN() error {
 	if err != nil {
 		return fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
 	}
-
-	// Get the OVN northbound address.
-	ovnNBAddr := d.globalConfig.NetworkOVNNorthboundConnection()
 
 	// Get the SSL certificates if needed.
 	sslCACert, sslClientCert, sslClientKey := d.globalConfig.NetworkOVNSSL()
