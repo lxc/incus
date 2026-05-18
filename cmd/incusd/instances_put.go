@@ -212,7 +212,13 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 		wgAction := sync.WaitGroup{}
 
 		networkCert := s.Endpoints.NetworkCert()
+		offlineThreshold := s.GlobalConfig.OfflineThreshold()
 		for _, member := range members {
+			// Skip cluster members that are currently offline.
+			if member.IsOffline(offlineThreshold) {
+				continue
+			}
+
 			wgAction.Add(1)
 			go func(member db.NodeInfo) {
 				defer wgAction.Done()
