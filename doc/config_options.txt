@@ -3081,6 +3081,12 @@ The cluster member that the instance lived on before evacuation.
 
 ```
 
+```{config:option} volatile.last_state.agent instance-volatile
+:shortdesc: "Instance agent state as of last host shutdown"
+:type: "string"
+
+```
+
 ```{config:option} volatile.last_state.idmap instance-volatile
 :shortdesc: "Serialized instance UID/GID map"
 :type: "string"

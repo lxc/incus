@@ -514,10 +514,23 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 				return
 			}
 
+			if err = d.VolatileSet(map[string]string{
+				"volatile.last_state.agent": instance.AgentStateStarted,
+			}); err != nil {
+				d.logger.Error("Failed recording last agent state", logger.Ctx{"err": err})
+			}
+
 			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
 
 		case qmp.EventAgentStopped:
 			d.logger.Debug("Instance agent stopped")
+
+			if err = d.VolatileSet(map[string]string{
+				"volatile.last_state.agent": instance.AgentStateStopped,
+			}); err != nil {
+				d.logger.Error("Failed recording last agent state", logger.Ctx{"err": err})
+			}
+
 			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
 
 		case qmp.EventVMReset:
@@ -812,8 +825,17 @@ func (d *qemu) onStop(target string, reason string) error {
 		} else {
 			d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceStopped.Event(d, nil))
 		}
-		// agent stopped when shutdown
-		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
+
+		// only trigger if agent state not stopped and update accordingly
+		if d.LocalConfig()["volatile.last_state.agent"] == instance.AgentStateStarted {
+			if err = d.VolatileSet(map[string]string{
+				"volatile.last_state.agent": instance.AgentStateStopped,
+			}); err != nil {
+				d.logger.Error("Failed recording last ready state", logger.Ctx{"err": err})
+			}
+
+			d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
+		}
 	}
 
 	// Reboot the instance.
