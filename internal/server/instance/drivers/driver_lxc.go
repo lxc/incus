@@ -1053,7 +1053,8 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 		//  shortdesc: Environment variables to export
 		after, ok := strings.CutPrefix(k, "environment.")
 		if ok {
-			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("%s=%s", after, v))
+			// LXC supports quoting the value between " even if the value itself contains ".
+			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("%s=\"%s\"", after, v))
 			if err != nil {
 				return nil, err
 			}
@@ -1099,7 +1100,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 				return nil, err
 			}
 		} else {
-			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_DRIVER_CAPABILITIES=%s", nvidiaDriver))
+			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_DRIVER_CAPABILITIES=\"%s\"", nvidiaDriver))
 			if err != nil {
 				return nil, err
 			}
@@ -1107,7 +1108,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 		nvidiaRequireCuda := d.expandedConfig["nvidia.require.cuda"]
 		if nvidiaRequireCuda == "" {
-			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_REQUIRE_CUDA=%s", nvidiaRequireCuda))
+			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_REQUIRE_CUDA=\"%s\"", nvidiaRequireCuda))
 			if err != nil {
 				return nil, err
 			}
@@ -1115,7 +1116,7 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 
 		nvidiaRequireDriver := d.expandedConfig["nvidia.require.driver"]
 		if nvidiaRequireDriver == "" {
-			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_REQUIRE_DRIVER=%s", nvidiaRequireDriver))
+			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_REQUIRE_DRIVER=\"%s\"", nvidiaRequireDriver))
 			if err != nil {
 				return nil, err
 			}
@@ -2306,7 +2307,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 	// Override NVIDIA_VISIBLE_DEVICES if we have devices that need it.
 	if len(nvidiaDevices) > 0 {
-		err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_VISIBLE_DEVICES=%s", strings.Join(nvidiaDevices, ",")))
+		err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("NVIDIA_VISIBLE_DEVICES=\"%s\"", strings.Join(nvidiaDevices, ",")))
 		if err != nil {
 			return "", nil, fmt.Errorf("Unable to set NVIDIA_VISIBLE_DEVICES in LXC environment: %w", err)
 		}
