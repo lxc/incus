@@ -87,8 +87,9 @@ test_storage_driver_linstor() {
         incus delete -f c1
         incus delete -f c2
 
-        incus storage volume set "incustest-$(basename "${INCUS_DIR}")-pool1" c1 size 500MiB
-        incus storage volume unset "incustest-$(basename "${INCUS_DIR}")-pool1" c1 size
+        # TODO: LINSTOR no longer allows shrinking volumes, uncomment when it gets implemented
+        # incus storage volume set "incustest-$(basename "${INCUS_DIR}")-pool1" c1 size 500MiB
+        # incus storage volume unset "incustest-$(basename "${INCUS_DIR}")-pool1" c1 size
 
         # Validate that we can restore to previous snapshots given that linstor.remove_snapshots is set
         incus storage volume create "incustest-$(basename "${INCUS_DIR}")-pool1" c3
