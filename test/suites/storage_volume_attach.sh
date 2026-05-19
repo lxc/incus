@@ -101,4 +101,11 @@ test_storage_volume_attach() {
     incus delete -f c1
     incus delete -f c2
     incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume
+
+    # Test attaching with --create to an existing container.
+    incus launch testimage c1
+    incus storage volume attach --create "incustest-$(basename "${INCUS_DIR}")" testvolume-create c1 testvolume-create /testvolume-create
+    incus exec c1 -- stat /testvolume-create
+    incus delete -f c1
+    incus storage volume delete "incustest-$(basename "${INCUS_DIR}")" testvolume-create
 }
