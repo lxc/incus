@@ -363,6 +363,12 @@ func (b *mockBackend) DeleteCustomVolume(projectName string, volName string, op 
 	return nil
 }
 
+// RebuildCustomVolume wipes a custom volume and re-creates an empty one with the same configuration.
+// It is only allowed when the volume has no snapshots and is not used by any running instance.
+func (b *mockBackend) RebuildCustomVolume(projectName string, volName string, op *operations.Operation) error {
+	return nil
+}
+
 // MigrateCustomVolume migrates a custom volume to another member.
 func (b *mockBackend) MigrateCustomVolume(projectName string, conn io.ReadWriteCloser, args *migration.VolumeSourceArgs, op *operations.Operation) error {
 	return nil

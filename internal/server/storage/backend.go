@@ -6005,6 +6005,97 @@ func (b *backend) DeleteCustomVolume(projectName string, volName string, op *ope
 	return nil
 }
 
+// RebuildCustomVolume wipes a custom volume and re-creates an empty one with the same configuration.
+// It is only allowed when the volume has no snapshots and is not used by any running instance.
+func (b *backend) RebuildCustomVolume(projectName string, volName string, op *operations.Operation) error {
+	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName})
+	l.Debug("RebuildCustomVolume started")
+	defer l.Debug("RebuildCustomVolume finished")
+
+	err := b.isStatusReady()
+	if err != nil {
+		return err
+	}
+
+	if internalInstance.IsSnapshot(volName) {
+		return errors.New("Volume name cannot be a snapshot")
+	}
+
+	// Get the volume.
+	curVol, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	// Check that the volume has no snapshots.
+	snapshots, err := VolumeDBSnapshotsGet(b, projectName, volName, drivers.VolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	if len(snapshots) > 0 {
+		return errors.New("Cannot rebuild custom volume with snapshots")
+	}
+
+	// Check that the volume isn't in use by running instances.
+	err = VolumeUsedByInstanceDevices(b.state, b.Name(), projectName, &curVol.StorageVolume, true, func(dbInst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+		inst, err := instance.Load(b.state, dbInst, project)
+		if err != nil {
+			return err
+		}
+
+		if inst.IsRunning() {
+			return errors.New("Cannot rebuild custom volume used by running instances")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Get the content type.
+	dbContentType, err := VolumeContentTypeNameToContentType(curVol.ContentType)
+	if err != nil {
+		return err
+	}
+
+	contentType, err := VolumeDBContentTypeToContentType(dbContentType)
+	if err != nil {
+		return err
+	}
+
+	// Get the volume name on storage.
+	volStorageName := project.StorageVolume(projectName, volName)
+	vol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, curVol.Config)
+
+	// Forcefully stop any forkfile process if running.
+	vol.StopForkfile()
+
+	// Delete the underlying storage volume if it exists.
+	volExists, err := b.driver.HasVolume(vol)
+	if err != nil {
+		return err
+	}
+
+	if volExists {
+		err = b.driver.DeleteVolume(vol, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Re-create the empty custom volume on the storage device.
+	err = b.driver.CreateVolume(vol, nil, op)
+	if err != nil {
+		return err
+	}
+
+	b.state.Events.SendLifecycle(projectName, lifecycle.StorageVolumeUpdated.Event(vol, string(vol.Type()), projectName, op, nil))
+
+	return nil
+}
+
 // GetCustomVolumeDisk returns the location of the disk.
 func (b *backend) GetCustomVolumeDisk(projectName, volName string) (string, error) {
 	volume, err := VolumeDBGet(b, projectName, volName, drivers.VolumeTypeCustom)
