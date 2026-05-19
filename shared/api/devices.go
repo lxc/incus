@@ -13,7 +13,7 @@ import (
 // swagger:model
 // swagger:type object
 //
-// Example: {"eth0":{"network":"incusbr0","type":"nic"}
+// Example: {"eth0": {"network": "incusbr0", "type": "nic"}}
 type DevicesMap map[string]map[string]string
 
 // Backwards compatibility tests.
