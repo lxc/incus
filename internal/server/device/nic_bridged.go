@@ -822,8 +822,8 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
-	// Disable IPv6 on host-side veth interface (prevents host-side interface getting link-local address)
-	// which isn't needed because the host-side interface is connected to a bridge.
+	// Disable IPv6 on host-side veth interface (prevents host-side interface getting link-local address or RAs).
+	// IPv6 can be disabled as we are going to be bridging the interface and so only the bridge itself needs it enabled.
 	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", saveData["host_name"]), "1")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
@@ -844,12 +844,6 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	reverter.Add(func() { _ = network.DetachInterface(d.state, d.config["parent"], saveData["host_name"]) })
-
-	// Attempt to disable router advertisement acceptance.
-	err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/accept_ra", saveData["host_name"]), "0")
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
 
 	// Attempt to enable port isolation.
 	if util.IsTrue(d.config["security.port_isolation"]) {
