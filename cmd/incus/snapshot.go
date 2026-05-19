@@ -95,7 +95,7 @@ incus snapshot create u1 snap0 < config.yaml
 	Create a snapshot of "u1" called "snap0" with the configuration from "config.yaml".`))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagStateful, "stateful", i18n.G("Whether or not to snapshot the instance's running state"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagExpiry, "expiry", "", "", i18n.G("Expiry date or time span for the new snapshot"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagExpiry, "expiry", "", "", i18n.G("Expiry for the new snapshot (either a time span like `1d 3H` or a date in `2006/01/02 15:04 MST` format)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagNoExpiry, "no-expiry", i18n.G("Ignore any configured auto-expiry for the instance"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagReuse, "reuse", i18n.G("If the snapshot name already exists, delete and create a new one"))
 
