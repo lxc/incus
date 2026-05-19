@@ -127,6 +127,15 @@ test_storage_buckets() {
     s3cmdrun "${incus_backend}" "${roAccessKey}" "${roSecretKey}" get "s3://${bucketPrefix}.foo/${incusTestFile}" "${incusTestFile}.get"
     rm "${incusTestFile}.get"
 
+    # Test copying a file within a bucket (S3 CopyObject).
+    s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" cp "s3://${bucketPrefix}.foo/${incusTestFile}" "s3://${bucketPrefix}.foo/${incusTestFile}.copy"
+    s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" ls "s3://${bucketPrefix}.foo" | grep -F "${incusTestFile}.copy"
+    s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" get "s3://${bucketPrefix}.foo/${incusTestFile}.copy" "${incusTestFile}.copy.get"
+    cmp "${incusTestFile}" "${incusTestFile}.copy.get"
+    rm "${incusTestFile}.copy.get"
+    ! s3cmdrun "${incus_backend}" "${roAccessKey}" "${roSecretKey}" cp "s3://${bucketPrefix}.foo/${incusTestFile}" "s3://${bucketPrefix}.foo/${incusTestFile}.rocopy" || false
+    s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" del "s3://${bucketPrefix}.foo/${incusTestFile}.copy"
+
     # Test deleting a file from a bucket.
     ! s3cmdrun "${incus_backend}" "${roAccessKey}" "${roSecretKey}" del "s3://${bucketPrefix}.foo/${incusTestFile}" || false
     s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" del "s3://${bucketPrefix}.foo/${incusTestFile}"
