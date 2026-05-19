@@ -50,20 +50,14 @@ The following restrictions apply:
 - Custom storage volumes of {ref}`content type <storage-content-types>` `block` or `iso` cannot be attached to containers, but only to virtual machines.
 - To avoid data corruption, storage volumes of {ref}`content type <storage-content-types>` `block` should never be attached to more than one virtual machine at a time.
 - Storage volumes of {ref}`content type <storage-content-types>` `iso` are always read-only, and can therefore be attached to more than one virtual machine at a time without corrupting data.
-- File system storage volumes can't be attached to virtual machines while they're running.
+- File system storage volumes can't be attached to virtual machines using `9p` while they're running.
 
 For custom storage volumes with the content type `filesystem`, use the following command, where `<location>` is the path for accessing the storage volume inside the instance (for example, `/data`):
 
-    incus storage volume attach <pool_name> <filesystem_volume_name> <instance_name> <location>
-
-Custom storage volumes with the content type `block` do not take a location:
-
-    incus storage volume attach <pool_name> <block_volume_name> <instance_name>
-
-By default, the custom storage volume is added to the instance with the volume name as the {ref}`device <devices>` name.
-If you want to use a different device name, you can add it to the command:
-
     incus storage volume attach <pool_name> <filesystem_volume_name> <instance_name> <device_name> <location>
+
+Custom storage volumes with the content type `block` do not take a location (and their {ref}`device <devices>` name is optional, defaulting to the volume name):
+
     incus storage volume attach <pool_name> <block_volume_name> <instance_name> <device_name>
 
 #### Attach the volume as a device
