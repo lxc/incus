@@ -742,24 +742,20 @@ func (d *zfs) Unmount() (bool, error) {
 }
 
 func (d *zfs) GetResources() (*api.ResourcesStoragePool, error) {
-	// Get the total amount of space.
-	availableStr, err := d.getDatasetProperty(d.config["zfs.pool_name"], "available")
+	// Get both properties in a single call, bypassing the per-dataset cache so
+	// we don't trigger a recursive `zfs list` over every volume and snapshot in
+	// the pool just to read the root dataset's usage.
+	props, err := d.getDatasetProperties(d.config["zfs.pool_name"], "available", "used")
 	if err != nil {
 		return nil, err
 	}
 
-	available, err := strconv.ParseUint(strings.TrimSpace(availableStr), 10, 64)
+	available, err := strconv.ParseUint(strings.TrimSpace(props["available"]), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get the used amount of space.
-	usedStr, err := d.getDatasetProperty(d.config["zfs.pool_name"], "used")
-	if err != nil {
-		return nil, err
-	}
-
-	used, err := strconv.ParseUint(strings.TrimSpace(usedStr), 10, 64)
+	used, err := strconv.ParseUint(strings.TrimSpace(props["used"]), 10, 64)
 	if err != nil {
 		return nil, err
 	}
