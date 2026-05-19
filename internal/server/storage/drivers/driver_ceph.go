@@ -283,7 +283,24 @@ func (d *ceph) Delete(op *operations.Operation) error {
 	if util.IsTrue(d.config["volatile.pool.pristine"]) {
 		// Delete the osd pool.
 		if poolExists {
-			err := d.osdDeletePool()
+			// Confirm that the pool only contains our placeholder marker before destroying it.
+			// This protects against accidentally wiping a pool that is being shared with
+			// (or has since been reused by) another Incus instance.
+			images, err := d.rbdListPoolVolumes()
+			if err != nil {
+				return fmt.Errorf("Failed listing images in ceph %q osd pool while attempting to delete it: %w", d.config["ceph.osd.pool_name"], err)
+			}
+
+			placeholderName := d.getRBDVolumeName(d.getPlaceholderVolume(), "", false)
+			for _, image := range images {
+				if image == placeholderName {
+					continue
+				}
+
+				return fmt.Errorf("Refusing to delete ceph %q osd pool as it contains unexpected image %q", d.config["ceph.osd.pool_name"], image)
+			}
+
+			err = d.osdDeletePool()
 			if err != nil {
 				return err
 			}

@@ -76,6 +76,31 @@ func (d *ceph) osdPoolExists() (bool, error) {
 	return true, nil
 }
 
+// rbdListPoolVolumes returns the list of RBD images present in the OSD pool.
+func (d *ceph) rbdListPoolVolumes() ([]string, error) {
+	out, err := subprocess.RunCommand(
+		"rbd",
+		"--id", d.config["ceph.user.name"],
+		"--cluster", d.config["ceph.cluster_name"],
+		"--pool", d.config["ceph.osd.pool_name"],
+		"ls")
+	if err != nil {
+		return nil, err
+	}
+
+	images := []string{}
+	for _, line := range strings.Split(out, "\n") {
+		name := strings.TrimSpace(line)
+		if name == "" {
+			continue
+		}
+
+		images = append(images, name)
+	}
+
+	return images, nil
+}
+
 // osdDeletePool destroys an OSD pool.
 //   - A call to osdDeletePool will destroy a pool including any storage
 //     volumes that still exist in the pool.
