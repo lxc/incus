@@ -3137,16 +3137,16 @@
 					{
 						"snapshots.expiry": {
 							"liveupdate": "no",
-							"longdesc": "Specify an expression like `1M 2H 3d 4w 5m 6y`.",
-							"shortdesc": "When snapshots are to be deleted",
+							"longdesc": "Specify an expression like `1M 2H 3d 4w 5m 6y`.\n\nThis value is used to compute the expiry date of newly created snapshots.\nIt is added to the current time when a snapshot is taken, and the resulting timestamp is stored as that snapshot's individual expiry date.\nChanging this value only affects snapshots created after the change; the expiry date of existing snapshots is not modified.\n\nThe supported units are `S` (seconds), `M` (minutes), `H` (hours), `d` (days), `w` (weeks), `m` (months) and `y` (years).",
+							"shortdesc": "When newly created snapshots are to be deleted",
 							"type": "string"
 						}
 					},
 					{
 						"snapshots.expiry.manual": {
 							"liveupdate": "no",
-							"longdesc": "Specify an expression like `1M 2H 3d 4w 5m 6y`.",
-							"shortdesc": "When snapshots are to be deleted (for those not created through scheduling)",
+							"longdesc": "Specify an expression like `1M 2H 3d 4w 5m 6y`.\n\nThis value is used to compute the expiry date of newly created snapshots that are not created through scheduling.\nIt is added to the current time when a snapshot is taken, and the resulting timestamp is stored as that snapshot's individual expiry date.\nChanging this value only affects snapshots created after the change; the expiry date of existing snapshots is not modified.\n\nSee {config:option}`instance-snapshots:snapshots.expiry` for the supported units.",
+							"shortdesc": "When newly created snapshots are to be deleted (for those not created through scheduling)",
 							"type": "string"
 						}
 					},
@@ -6992,7 +6992,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7001,7 +7001,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7115,7 +7115,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7124,7 +7124,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7220,7 +7220,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7229,7 +7229,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7325,7 +7325,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7334,7 +7334,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7484,7 +7484,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7493,7 +7493,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7633,7 +7633,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7642,7 +7642,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7756,7 +7756,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7765,7 +7765,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7906,7 +7906,7 @@
 						"snapshots.expiry": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
@@ -7915,7 +7915,7 @@
 						"snapshots.expiry.manual": {
 							"condition": "custom volume",
 							"default": "same as `volume.snapshot.expiry.manual`",
-							"longdesc": "",
+							"longdesc": "{{snapshot_expiry_detail}}",
 							"shortdesc": "{{snapshot_expiry_format}}",
 							"type": "string"
 						}
