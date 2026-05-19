@@ -382,6 +382,9 @@ type InstanceServer interface {
 	MoveStoragePoolVolume(pool string, source InstanceServer, sourcePool string, volume api.StorageVolume, args *StoragePoolVolumeMoveArgs) (op RemoteOperation, err error)
 	MigrateStoragePoolVolume(pool string, volume api.StorageVolumePost) (op Operation, err error)
 
+	// Storage volume rebuild ("storage_volumes_rebuild" API extension)
+	RebuildStoragePoolVolume(pool string, volType string, name string, volume api.StorageVolumeRebuildPost) (op Operation, err error)
+
 	// Storage volume snapshot functions ("storage_api_volume_snapshots" API extension)
 	CreateStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshot api.StorageVolumeSnapshotsPost) (op Operation, err error)
 	DeleteStoragePoolVolumeSnapshot(pool string, volumeType string, volumeName string, snapshotName string) (op Operation, err error)
