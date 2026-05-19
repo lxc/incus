@@ -125,6 +125,7 @@ type Pool interface {
 	UpdateCustomVolume(projectName string, volName string, newDesc string, newConfig map[string]string, op *operations.Operation) error
 	RenameCustomVolume(projectName string, volName string, newVolName string, op *operations.Operation) error
 	DeleteCustomVolume(projectName string, volName string, op *operations.Operation) error
+	RebuildCustomVolume(projectName string, volName string, op *operations.Operation) error
 	GetCustomVolumeDisk(projectName string, volName string) (string, error)
 	GetCustomVolumeUsage(projectName string, volName string) (*VolumeUsage, error)
 	MountCustomVolume(projectName string, volName string, op *operations.Operation) (*MountInfo, error)
