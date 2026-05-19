@@ -272,3 +272,10 @@ type StorageVolumeSource struct {
 func (v *StorageVolume) Writable() StorageVolumePut {
 	return v.StorageVolumePut
 }
+
+// StorageVolumeRebuildPost represents the fields available for a storage volume rebuild request.
+//
+// swagger:model
+//
+// API extension: storage_volumes_rebuild.
+type StorageVolumeRebuildPost struct{}
