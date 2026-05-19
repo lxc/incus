@@ -127,6 +127,10 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	storageVolumeNBDCmd := cmdStorageVolumeNBD{global: c.global, storage: c.storage, storageVolume: c}
 	cmd.AddCommand(storageVolumeNBDCmd.Command())
 
+	// Rebuild
+	storageVolumeRebuildCmd := cmdStorageVolumeRebuild{global: c.global, storage: c.storage, storageVolume: c}
+	cmd.AddCommand(storageVolumeRebuildCmd.command())
+
 	// Rename
 	storageVolumeRenameCmd := cmdStorageVolumeRename{global: c.global, storage: c.storage, storageVolume: c}
 	cmd.AddCommand(storageVolumeRenameCmd.command())
@@ -1757,6 +1761,93 @@ func (c *cmdStorageVolumeMove) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return c.storageVolumeCopy.copyOrMove(cmd, parsed)
+}
+
+// Rebuild.
+type cmdStorageVolumeRebuild struct {
+	global        *cmdGlobal
+	storage       *cmdStorage
+	storageVolume *cmdStorageVolume
+}
+
+var cmdStorageVolumeRebuildUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.StorageVolumeType.Optional(), u.Volume)}
+
+func (c *cmdStorageVolumeRebuild) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("rebuild", cmdStorageVolumeRebuildUsage...)
+	cmd.Short = i18n.G("Rebuild custom storage volumes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Wipe the underlying storage volume and re-create it as empty using the same configuration.
+
+This is only allowed for custom volumes that have no snapshots.`))
+
+	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpStoragePools(toComplete)
+		}
+
+		if len(args) == 1 {
+			return c.global.cmpStoragePoolVolumes(args[0])
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdStorageVolumeRebuild) run(cmd *cobra.Command, args []string) error {
+	parsed, err := cmdStorageVolumeRebuildUsage.Parse(c.global.conf, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	poolName := parsed[0].RemoteObject.String
+	volType := parsed[1].List[0].Get("custom")
+	volName := parsed[1].List[1].String
+
+	if volType != "custom" {
+		return errors.New(i18n.G("Only \"custom\" volumes can be rebuilt"))
+	}
+
+	if c.storage.flagTarget != "" {
+		d = d.UseTarget(c.storage.flagTarget)
+	}
+
+	req := api.StorageVolumeRebuildPost{}
+
+	op, err := d.RebuildStoragePoolVolume(poolName, volType, volName, req)
+	if err != nil {
+		return err
+	}
+
+	progress := cli.ProgressRenderer{
+		Quiet: c.global.flagQuiet,
+	}
+
+	_, err = op.AddHandler(progress.UpdateOp)
+	if err != nil {
+		progress.Done("")
+		return err
+	}
+
+	err = cli.CancelableWait(op, &progress)
+	if err != nil {
+		progress.Done("")
+		return err
+	}
+
+	progress.Done("")
+
+	if !c.global.flagQuiet {
+		fmt.Printf(i18n.G("Storage volume %s rebuilt")+"\n", volName)
+	}
+
+	return nil
 }
 
 // Rename.
