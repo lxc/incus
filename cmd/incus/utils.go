@@ -15,6 +15,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
@@ -32,6 +33,46 @@ import (
 
 // Date layout to be used throughout the client.
 const dateLayout = "2006/01/02 15:04 MST"
+
+// bufferedWriter accumulates writes until Flush is called, then becomes a
+// direct pass-through to the underlying writer.
+type bufferedWriter struct {
+	mu      sync.Mutex
+	buf     []byte
+	out     io.Writer
+	flushed bool
+}
+
+func (b *bufferedWriter) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.flushed {
+		return b.out.Write(p)
+	}
+
+	b.buf = append(b.buf, p...)
+	return len(p), nil
+}
+
+func (b *bufferedWriter) Flush() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.flushed {
+		return nil
+	}
+
+	b.flushed = true
+
+	_, err := b.out.Write(b.buf)
+	b.buf = nil
+	return err
+}
+
+func (b *bufferedWriter) Close() error {
+	return nil
+}
 
 // Add a device to an instance.
 func instanceDeviceAdd(client incus.InstanceServer, name string, devName string, dev map[string]string) error {
