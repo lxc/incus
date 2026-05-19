@@ -1040,7 +1040,8 @@ definitions:
                 x-go-name: UID
             when:
                 description: When to trigger the template (create, copy or start)
-                example: create
+                example:
+                    - create
                 items:
                     type: string
                 type: array
@@ -5377,7 +5378,10 @@ definitions:
                 additionalProperties:
                     type: string
                 description: Vendor provided key/value pairs.
-                example: '{"EC": ""A-5545", "MN": "103C", "V0": "5W PCIeGen2"}'
+                example:
+                    EC: A-5545
+                    MN: 103C
+                    V0: 5W PCIeGen2
                 type: object
                 x-go-name: Entries
             product_name:
