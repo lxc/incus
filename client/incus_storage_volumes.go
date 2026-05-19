@@ -918,6 +918,24 @@ func (r *ProtocolIncus) DeleteStoragePoolVolume(pool string, volType string, nam
 	return nil
 }
 
+// RebuildStoragePoolVolume rebuilds an existing custom storage volume as empty.
+func (r *ProtocolIncus) RebuildStoragePoolVolume(pool string, volType string, name string, volume api.StorageVolumeRebuildPost) (Operation, error) {
+	err := r.CheckExtension("storage_volumes_rebuild")
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/storage-pools/%s/volumes/%s/%s/rebuild", url.PathEscape(pool), url.PathEscape(volType), url.PathEscape(name))
+
+	// Send the request.
+	op, _, err := r.queryOperation("POST", path, volume, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return op, nil
+}
+
 // RenameStoragePoolVolume renames a storage volume.
 func (r *ProtocolIncus) RenameStoragePoolVolume(pool string, volType string, name string, volume api.StorageVolumePost) error {
 	if !r.HasExtension("storage_api_volume_rename") {
