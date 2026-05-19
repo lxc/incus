@@ -318,7 +318,7 @@ type ImageMetadata struct {
 // swagger:model
 type ImageMetadataTemplate struct {
 	// When to trigger the template (create, copy or start)
-	// Example: create
+	// Example: ["create"]
 	When []string `json:"when" yaml:"when"`
 
 	// Whether to trigger only if the file is missing
