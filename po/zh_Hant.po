@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-19 23:56+0000\n"
+"POT-Creation-Date: 2026-05-21 11:34+0200\n"
 "PO-Revision-Date: 2026-05-01 23:54+0000\n"
 "Last-Translator: pesder <j_h_liau@yahoo.com.tw>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
@@ -454,11 +454,11 @@ msgstr "--target 不能與實體一起使用"
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "強制關閉實體時無法使用 --console"
 
-#: cmd/incus/action.go:412
+#: cmd/incus/action.go:414
 msgid "--console can't be used with --all"
 msgstr "--console 不能與 --all 一起使用"
 
-#: cmd/incus/action.go:416
+#: cmd/incus/action.go:418
 msgid "--console only works with a single instance"
 msgstr "--console 僅適用於單個實體"
 
@@ -809,7 +809,7 @@ msgstr ""
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 
-#: cmd/incus/console.go:405
+#: cmd/incus/console.go:443
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
@@ -845,11 +845,11 @@ msgstr ""
 msgid "Attach new network interfaces to instances"
 msgstr ""
 
-#: cmd/incus/console.go:44
+#: cmd/incus/console.go:46
 msgid "Attach to instance consoles"
 msgstr ""
 
-#: cmd/incus/console.go:45
+#: cmd/incus/console.go:47
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -929,7 +929,7 @@ msgstr ""
 msgid "Backups:"
 msgstr ""
 
-#: cmd/incus/utils.go:91
+#: cmd/incus/utils.go:132
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
@@ -948,7 +948,7 @@ msgstr ""
 msgid "Bond:"
 msgstr ""
 
-#: cmd/incus/action.go:353
+#: cmd/incus/action.go:355
 msgid "Both --all and instance name given"
 msgstr ""
 
@@ -1053,12 +1053,12 @@ msgstr ""
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
-#: cmd/incus/utils.go:333
+#: cmd/incus/utils.go:374
 #, c-format
 msgid "Can't read from environment file: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:258 cmd/incus/utils.go:278 cmd/incus/utils.go:305
+#: cmd/incus/utils.go:299 cmd/incus/utils.go:319 cmd/incus/utils.go:346
 #, c-format
 msgid "Can't read from stdin: %w"
 msgstr ""
@@ -1111,7 +1111,7 @@ msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
 msgstr ""
 
-#: cmd/incus/utils.go:300
+#: cmd/incus/utils.go:341
 msgid "Cannot read the stdin twice"
 msgstr ""
 
@@ -1933,7 +1933,7 @@ msgstr ""
 msgid "Device Address: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:47 cmd/incus/utils.go:71
+#: cmd/incus/utils.go:88 cmd/incus/utils.go:112
 #, c-format
 msgid "Device already exists: %s"
 msgstr ""
@@ -2337,7 +2337,7 @@ msgstr ""
 msgid "Error decoding data: %v"
 msgstr ""
 
-#: cmd/incus/publish.go:202 cmd/incus/utils.go:206
+#: cmd/incus/publish.go:202 cmd/incus/utils.go:247
 #, c-format
 msgid "Error retrieving aliases: %w"
 msgstr ""
@@ -2482,7 +2482,9 @@ msgid "Expires: never"
 msgstr ""
 
 #: cmd/incus/snapshot.go:98 cmd/incus/storage_volume.go:3102
-msgid "Expiry date or time span for the new snapshot"
+msgid ""
+"Expiry for the new snapshot (either a time span like `1d 3H` or a date in "
+"`2006/01/02 15:04 MST` format)"
 msgstr ""
 
 #: cmd/incus/debug.go:45
@@ -2572,12 +2574,12 @@ msgstr ""
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/utils.go:687
+#: cmd/incus/utils.go:728
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:710
+#: cmd/incus/utils.go:751
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2587,17 +2589,17 @@ msgstr ""
 msgid "Failed checking instance %s exists: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:377
+#: cmd/incus/utils.go:418
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr ""
 
-#: cmd/incus/utils.go:369
+#: cmd/incus/utils.go:410
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
 
-#: cmd/incus/utils.go:737
+#: cmd/incus/utils.go:778
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
@@ -2633,7 +2635,7 @@ msgstr ""
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:644
+#: cmd/incus/utils.go:685
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr ""
@@ -2673,7 +2675,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:649
+#: cmd/incus/utils.go:690
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr ""
@@ -2683,17 +2685,17 @@ msgstr ""
 msgid "Failed parsing validation response: %w"
 msgstr ""
 
-#: cmd/incus/console.go:383
+#: cmd/incus/console.go:421
 #, c-format
 msgid "Failed starting command: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:557
+#: cmd/incus/utils.go:598
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:675
+#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:716
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr ""
@@ -2753,7 +2755,7 @@ msgstr ""
 msgid "Failed to create %q: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:179
+#: cmd/incus/utils.go:220
 #, c-format
 msgid "Failed to create alias %s: %w"
 msgstr ""
@@ -2803,7 +2805,7 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:660
+#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:701
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr ""
@@ -2849,7 +2851,7 @@ msgstr ""
 msgid "Failed to refresh target instance '%s': %v"
 msgstr ""
 
-#: cmd/incus/image.go:289 cmd/incus/utils.go:168
+#: cmd/incus/image.go:289 cmd/incus/utils.go:209
 #, c-format
 msgid "Failed to remove alias %s: %w"
 msgstr ""
@@ -3029,7 +3031,7 @@ msgid ""
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
 
-#: cmd/incus/console.go:52
+#: cmd/incus/console.go:54
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
@@ -3365,22 +3367,22 @@ msgstr ""
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/utils.go:760
+#: cmd/incus/utils.go:801
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:749
+#: cmd/incus/utils.go:790
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:581
+#: cmd/incus/utils.go:622
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:591
+#: cmd/incus/utils.go:632
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr ""
@@ -3619,11 +3621,11 @@ msgstr ""
 msgid "Instance description"
 msgstr ""
 
-#: cmd/incus/utils.go:583
+#: cmd/incus/utils.go:624
 msgid "Instance disconnected"
 msgstr ""
 
-#: cmd/incus/utils.go:751
+#: cmd/incus/utils.go:792
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -3730,7 +3732,7 @@ msgstr ""
 msgid "Invalid join token: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:272
+#: cmd/incus/utils.go:313
 #, c-format
 msgid "Invalid key=value configuration: %s"
 msgstr ""
@@ -4755,12 +4757,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:666
+#: cmd/incus/utils.go:707
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:668
+#: cmd/incus/utils.go:709
 msgid "Login without username and password"
 msgstr ""
 
@@ -5762,7 +5764,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr ""
 
-#: cmd/incus/utils.go:637
+#: cmd/incus/utils.go:678
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -5850,7 +5852,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:561
+#: cmd/incus/utils.go:602
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6410,7 +6412,7 @@ msgstr ""
 msgid "Resume instances"
 msgstr ""
 
-#: cmd/incus/console.go:53
+#: cmd/incus/console.go:55
 msgid "Retrieve the instance's console log"
 msgstr ""
 
@@ -6485,17 +6487,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:663
+#: cmd/incus/utils.go:704
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:680
+#: cmd/incus/utils.go:721
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:681
+#: cmd/incus/utils.go:722
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -7205,7 +7207,7 @@ msgstr ""
 msgid "Socket %d:"
 msgstr ""
 
-#: cmd/incus/action.go:454
+#: cmd/incus/action.go:456
 #, c-format
 msgid "Some instances failed to %s"
 msgstr ""
@@ -7237,7 +7239,7 @@ msgstr ""
 msgid "Started: %s"
 msgstr ""
 
-#: cmd/incus/launch.go:105
+#: cmd/incus/launch.go:106
 #, c-format
 msgid "Starting %s"
 msgstr ""
@@ -7479,7 +7481,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr ""
 
-#: cmd/incus/console.go:132
+#: cmd/incus/console.go:134
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -7510,7 +7512,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:404
+#: cmd/incus/console.go:442
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -7557,12 +7559,12 @@ msgstr ""
 msgid "The key %q does not exist on cluster member %q"
 msgstr ""
 
-#: cmd/incus/utils.go:467
+#: cmd/incus/utils.go:508
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
 
-#: cmd/incus/utils.go:463
+#: cmd/incus/utils.go:504
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -7793,7 +7795,7 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
-#: cmd/incus/console.go:225
+#: cmd/incus/console.go:236
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
@@ -7865,7 +7867,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr ""
 
-#: cmd/incus/action.go:305 cmd/incus/launch.go:138
+#: cmd/incus/action.go:306 cmd/incus/launch.go:139
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr ""
@@ -7878,7 +7880,7 @@ msgstr ""
 msgid "Type of certificate"
 msgstr ""
 
-#: cmd/incus/console.go:54
+#: cmd/incus/console.go:56
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -7955,7 +7957,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/utils.go:703
+#: cmd/incus/utils.go:744
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -7977,7 +7979,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:162
+#: cmd/incus/console.go:164
 #, c-format
 msgid "Unknown console type %q"
 msgstr ""
@@ -7997,7 +7999,7 @@ msgstr ""
 msgid "Unknown key: %s"
 msgstr ""
 
-#: cmd/incus/console.go:122
+#: cmd/incus/console.go:124
 #, c-format
 msgid "Unknown output type %q"
 msgstr ""
@@ -8626,7 +8628,7 @@ msgstr ""
 msgid "ephemeral"
 msgstr ""
 
-#: cmd/incus/action.go:446
+#: cmd/incus/action.go:448
 #, c-format
 msgid "error: %v"
 msgstr ""
@@ -9445,11 +9447,11 @@ msgstr ""
 msgid "space used"
 msgstr ""
 
-#: cmd/incus/utils.go:601
+#: cmd/incus/utils.go:642
 msgid "sshfs has stopped"
 msgstr ""
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:601
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr ""

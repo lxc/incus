@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-19 23:56+0000\n"
+"POT-Creation-Date: 2026-05-21 11:34+0200\n"
 "PO-Revision-Date: 2026-05-01 23:51+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -708,11 +708,11 @@ msgstr "--target 不能与实例一起使用"
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "强制关闭实例时无法使用 --console"
 
-#: cmd/incus/action.go:412
+#: cmd/incus/action.go:414
 msgid "--console can't be used with --all"
 msgstr "--console 不能与 --all 一起使用"
 
-#: cmd/incus/action.go:416
+#: cmd/incus/action.go:418
 msgid "--console only works with a single instance"
 msgstr "--console 只适用于单个实例"
 
@@ -1080,7 +1080,7 @@ msgstr "您是否正在加入现有集群？"
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr "您确定要 %s 集群成员 %q 吗？（是/否）[默认值=否]： "
 
-#: cmd/incus/console.go:405
+#: cmd/incus/console.go:443
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "由于两者都找不到，原始 SPICE 套接字可在以下位置找到："
 
@@ -1116,11 +1116,11 @@ msgstr "将新的自定义存储卷附加到配置文件"
 msgid "Attach new network interfaces to instances"
 msgstr "将新的网络接口附加到实例"
 
-#: cmd/incus/console.go:44
+#: cmd/incus/console.go:46
 msgid "Attach to instance consoles"
 msgstr "附加到实例控制台"
 
-#: cmd/incus/console.go:45
+#: cmd/incus/console.go:47
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -1204,7 +1204,7 @@ msgstr "备份导出成功！"
 msgid "Backups:"
 msgstr "备份："
 
-#: cmd/incus/utils.go:91
+#: cmd/incus/utils.go:132
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr "设备覆盖语法错误，应为“<设备>,<键>=<值>”：%s"
@@ -1223,7 +1223,7 @@ msgstr "用于获取凭据的二进制辅助工具"
 msgid "Bond:"
 msgstr "网络绑定："
 
-#: cmd/incus/action.go:353
+#: cmd/incus/action.go:355
 msgid "Both --all and instance name given"
 msgstr "给出了--all和实例名称"
 
@@ -1328,12 +1328,12 @@ msgstr "无法在本地重命名中覆盖配置或配置文件"
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
-#: cmd/incus/utils.go:333
+#: cmd/incus/utils.go:374
 #, c-format
 msgid "Can't read from environment file: %w"
 msgstr "无法读取环境文件：%w"
 
-#: cmd/incus/utils.go:258 cmd/incus/utils.go:278 cmd/incus/utils.go:305
+#: cmd/incus/utils.go:299 cmd/incus/utils.go:319 cmd/incus/utils.go:346
 #, c-format
 msgid "Can't read from stdin: %w"
 msgstr "无法从标准输入读取：%w"
@@ -1386,7 +1386,7 @@ msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
 msgstr "无法覆盖设备 %q 的配置：在配置文件设备中找不到设备"
 
-#: cmd/incus/utils.go:300
+#: cmd/incus/utils.go:341
 #, fuzzy
 msgid "Cannot read the stdin twice"
 msgstr "无法从标准输入读取：%w"
@@ -2242,7 +2242,7 @@ msgstr "设备 %s 已从 %s 中移除"
 msgid "Device Address: %v"
 msgstr "设备地址：%v"
 
-#: cmd/incus/utils.go:47 cmd/incus/utils.go:71
+#: cmd/incus/utils.go:88 cmd/incus/utils.go:112
 #, c-format
 msgid "Device already exists: %s"
 msgstr "设备已存在：%s"
@@ -2678,7 +2678,7 @@ msgstr "创建解码器时出错：%v"
 msgid "Error decoding data: %v"
 msgstr "解码数据时出错：%v"
 
-#: cmd/incus/publish.go:202 cmd/incus/utils.go:206
+#: cmd/incus/publish.go:202 cmd/incus/utils.go:247
 #, c-format
 msgid "Error retrieving aliases: %w"
 msgstr "检索别名时出错：%w"
@@ -2853,8 +2853,10 @@ msgid "Expires: never"
 msgstr "过期：永不"
 
 #: cmd/incus/snapshot.go:98 cmd/incus/storage_volume.go:3102
-msgid "Expiry date or time span for the new snapshot"
-msgstr "新快照的到期日期或时间段"
+msgid ""
+"Expiry for the new snapshot (either a time span like `1d 3H` or a date in "
+"`2006/01/02 15:04 MST` format)"
+msgstr ""
 
 #: cmd/incus/debug.go:45
 msgid "Export a virtual machine's memory state"
@@ -2950,12 +2952,12 @@ msgstr "首次发现"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:687
+#: cmd/incus/utils.go:728
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "与客户端 %q 的 SSH 握手失败：%v"
 
-#: cmd/incus/utils.go:710
+#: cmd/incus/utils.go:751
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "接受通道客户端 %q 失败：%v"
@@ -2965,17 +2967,17 @@ msgstr "接受通道客户端 %q 失败：%v"
 msgid "Failed checking instance %s exists: %w"
 msgstr "检查实例是否存在“%s:%s”失败：%w"
 
-#: cmd/incus/utils.go:377
+#: cmd/incus/utils.go:418
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr "检查实例是否存在“%s:%s”失败：%w"
 
-#: cmd/incus/utils.go:369
+#: cmd/incus/utils.go:410
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "检查实例快照是否存在“%s:%s”失败：%w"
 
-#: cmd/incus/utils.go:737
+#: cmd/incus/utils.go:778
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "连接到客户端 %q 的实例 SFTP 失败：%v"
@@ -3011,7 +3013,7 @@ msgstr "在项目 %q 中删除实例 %q 失败：%w"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "复制后删除源卷失败：%w"
 
-#: cmd/incus/utils.go:644
+#: cmd/incus/utils.go:685
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "生成 SSH 主机密钥失败：%w"
@@ -3051,7 +3053,7 @@ msgstr "加载覆盖设备的配置文件 %q 失败：%w"
 msgid "Failed loading storage pool %q: %w"
 msgstr "加载存储池 %q 失败：%w"
 
-#: cmd/incus/utils.go:649
+#: cmd/incus/utils.go:690
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "解析 SSH 主机密钥失败：%w"
@@ -3061,17 +3063,17 @@ msgstr "解析 SSH 主机密钥失败：%w"
 msgid "Failed parsing validation response: %w"
 msgstr "解析验证响应失败：%w"
 
-#: cmd/incus/console.go:383
+#: cmd/incus/console.go:421
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "启动命令失败：%w"
 
-#: cmd/incus/utils.go:557
+#: cmd/incus/utils.go:598
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "启动 sshfs 失败：%w"
 
-#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:675
+#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:716
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "接受传入连接失败：%w"
@@ -3131,7 +3133,7 @@ msgstr "无法连接到目标集群节点 %q：%w"
 msgid "Failed to create %q: %w"
 msgstr "创建 %q 失败：%w"
 
-#: cmd/incus/utils.go:179
+#: cmd/incus/utils.go:220
 #, c-format
 msgid "Failed to create alias %s: %w"
 msgstr "创建别名 %s 失败：%w"
@@ -3181,7 +3183,7 @@ msgstr "找不到项目：%w"
 msgid "Failed to join cluster: %w"
 msgstr "加入集群失败：%w"
 
-#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:660
+#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:701
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "监听连接失败：%w"
@@ -3227,7 +3229,7 @@ msgstr "无法从标准输入读取：%w"
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "刷新目标实例“%s”失败：%v"
 
-#: cmd/incus/image.go:289 cmd/incus/utils.go:168
+#: cmd/incus/image.go:289 cmd/incus/utils.go:209
 #, c-format
 msgid "Failed to remove alias %s: %w"
 msgstr "删除别名 %s 失败：%w"
@@ -3419,7 +3421,7 @@ msgstr ""
 "\n"
 "您确定要强制删除 %s 吗？（yes/no）： "
 
-#: cmd/incus/console.go:52
+#: cmd/incus/console.go:54
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
@@ -3774,22 +3776,22 @@ msgstr "主机名"
 msgid "Hugepages:\n"
 msgstr "大页内存：\n"
 
-#: cmd/incus/utils.go:760
+#: cmd/incus/utils.go:801
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "从 SSH 到实例的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:749
+#: cmd/incus/utils.go:790
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "从实例到 SSH 的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:581
+#: cmd/incus/utils.go:622
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "从实例到 sshfs 的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:591
+#: cmd/incus/utils.go:632
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "从 sshfs 到实例的 I/O 复制操作失败：%v"
@@ -4034,11 +4036,11 @@ msgstr "仅实例"
 msgid "Instance description"
 msgstr "实例描述"
 
-#: cmd/incus/utils.go:583
+#: cmd/incus/utils.go:624
 msgid "Instance disconnected"
 msgstr "实例已断开连接"
 
-#: cmd/incus/utils.go:751
+#: cmd/incus/utils.go:792
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "客户端 %q 的实例已断开连接"
@@ -4145,7 +4147,7 @@ msgstr "无效的输入，请输入正数"
 msgid "Invalid join token: %w"
 msgstr "无效的加入令牌：%w"
 
-#: cmd/incus/utils.go:272
+#: cmd/incus/utils.go:313
 #, c-format
 msgid "Invalid key=value configuration: %s"
 msgstr "无效的 key=value 配置：%s"
@@ -5409,12 +5411,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:666
+#: cmd/incus/utils.go:707
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:668
+#: cmd/incus/utils.go:709
 msgid "Login without username and password"
 msgstr ""
 
@@ -6422,7 +6424,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr ""
 
-#: cmd/incus/utils.go:637
+#: cmd/incus/utils.go:678
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -6511,7 +6513,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:561
+#: cmd/incus/utils.go:602
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -7085,7 +7087,7 @@ msgstr ""
 msgid "Resume instances"
 msgstr ""
 
-#: cmd/incus/console.go:53
+#: cmd/incus/console.go:55
 msgid "Retrieve the instance's console log"
 msgstr ""
 
@@ -7160,17 +7162,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:663
+#: cmd/incus/utils.go:704
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:680
+#: cmd/incus/utils.go:721
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:681
+#: cmd/incus/utils.go:722
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -7883,7 +7885,7 @@ msgstr ""
 msgid "Socket %d:"
 msgstr ""
 
-#: cmd/incus/action.go:454
+#: cmd/incus/action.go:456
 #, c-format
 msgid "Some instances failed to %s"
 msgstr ""
@@ -7915,7 +7917,7 @@ msgstr ""
 msgid "Started: %s"
 msgstr ""
 
-#: cmd/incus/launch.go:105
+#: cmd/incus/launch.go:106
 #, c-format
 msgid "Starting %s"
 msgstr ""
@@ -8159,7 +8161,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr ""
 
-#: cmd/incus/console.go:132
+#: cmd/incus/console.go:134
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -8190,7 +8192,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:404
+#: cmd/incus/console.go:442
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -8237,12 +8239,12 @@ msgstr ""
 msgid "The key %q does not exist on cluster member %q"
 msgstr ""
 
-#: cmd/incus/utils.go:467
+#: cmd/incus/utils.go:508
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
 
-#: cmd/incus/utils.go:463
+#: cmd/incus/utils.go:504
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -8473,7 +8475,7 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
-#: cmd/incus/console.go:225
+#: cmd/incus/console.go:236
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
@@ -8545,7 +8547,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr ""
 
-#: cmd/incus/action.go:305 cmd/incus/launch.go:138
+#: cmd/incus/action.go:306 cmd/incus/launch.go:139
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr ""
@@ -8558,7 +8560,7 @@ msgstr ""
 msgid "Type of certificate"
 msgstr ""
 
-#: cmd/incus/console.go:54
+#: cmd/incus/console.go:56
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -8635,7 +8637,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/utils.go:703
+#: cmd/incus/utils.go:744
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -8657,7 +8659,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:162
+#: cmd/incus/console.go:164
 #, c-format
 msgid "Unknown console type %q"
 msgstr ""
@@ -8677,7 +8679,7 @@ msgstr ""
 msgid "Unknown key: %s"
 msgstr ""
 
-#: cmd/incus/console.go:122
+#: cmd/incus/console.go:124
 #, c-format
 msgid "Unknown output type %q"
 msgstr ""
@@ -9315,7 +9317,7 @@ msgstr ""
 msgid "ephemeral"
 msgstr ""
 
-#: cmd/incus/action.go:446
+#: cmd/incus/action.go:448
 #, c-format
 msgid "error: %v"
 msgstr ""
@@ -10150,11 +10152,11 @@ msgstr ""
 msgid "space used"
 msgstr "使用空间"
 
-#: cmd/incus/utils.go:601
+#: cmd/incus/utils.go:642
 msgid "sshfs has stopped"
 msgstr "sshfs 已停止"
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:601
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs 挂载 %q 在 %q"
@@ -10251,6 +10253,9 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#~ msgid "Expiry date or time span for the new snapshot"
+#~ msgstr "新快照的到期日期或时间段"
 
 #~ msgid "Action (defaults to GET)"
 #~ msgstr "操作（默认为 GET）"
