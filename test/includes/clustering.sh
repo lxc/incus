@@ -196,6 +196,7 @@ EOF
             cat >> "${INCUS_DIR}/preseed.yaml" << EOF
   config:
     source: incustest-$(basename "${TEST_DIR}" | sed 's/\./__/g')
+    volume.size: 25MiB
     linstor.resource_group.place_count: 1
 EOF
         fi

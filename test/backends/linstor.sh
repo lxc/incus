@@ -30,7 +30,7 @@ linstor_configure() {
     echo "==> Configuring LINSTOR backend in ${INCUS_DIR}"
 
     linstor_preconfigure "${INCUS_DIR}"
-    driver_config="linstor.resource_group.place_count=1"
+    driver_config="linstor.resource_group.place_count=1 volume.size=25MiB"
 
     if [ -n "${LINSTOR_PREFIX_OVERRIDE:-}" ]; then
         driver_config="${driver_config} linstor.volume.prefix=${LINSTOR_PREFIX_OVERRIDE}"
