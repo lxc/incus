@@ -33,6 +33,7 @@ import (
 	cli "github.com/lxc/incus/v7/shared/cmd"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/termios"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
@@ -174,6 +175,8 @@ type cmdStorageVolumeAttach struct {
 	global        *cmdGlobal
 	storage       *cmdStorage
 	storageVolume *cmdStorageVolume
+
+	flagCreate bool
 }
 
 var cmdStorageVolumeAttachUsage = u.Usage{u.Pool.Remote(), u.Volume, u.Instance, u.NewName(u.Device).Optional(u.Path.Optional())}
@@ -184,6 +187,8 @@ func (c *cmdStorageVolumeAttach) command() *cobra.Command {
 	cmd.Short = i18n.G("Attach new custom storage volumes to instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Attach new custom storage volumes to instances`))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagCreate, "create", i18n.G("Create the custom storage volume if it doesn't already exist"))
 
 	cmd.RunE = c.run
 
@@ -223,6 +228,48 @@ func (c *cmdStorageVolumeAttach) run(cmd *cobra.Command, args []string) error {
 		devPath = parsed[3].List[1].String
 	}
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// If requested, create the storage volume if it doesn't already exist.
+	if c.flagCreate {
+		_, _, err := d.GetStoragePoolVolume(poolName, "custom", volName)
+		if err != nil {
+			if !api.StatusErrorCheck(err, http.StatusNotFound) {
+				return err
+			}
+
+			// Default to a filesystem volume but use a block volume when attaching to a
+			// virtual machine without a target path.
+			contentType := "filesystem"
+			if devPath == "" {
+				inst, _, err := d.GetInstance(instanceName)
+				if err != nil {
+					return err
+				}
+
+				if inst.Type == "virtual-machine" {
+					contentType = "block"
+				}
+			}
+
+			vol := api.StorageVolumesPost{
+				Name:        volName,
+				Type:        "custom",
+				ContentType: contentType,
+			}
+
+			err = d.CreateStoragePoolVolume(poolName, vol)
+			if err != nil {
+				return err
+			}
+
+			reverter.Add(func() {
+				_ = d.DeleteStoragePoolVolume(poolName, "custom", volName)
+			})
+		}
+	}
+
 	// Prepare the instance's device entry
 	device := map[string]string{
 		"type":   "disk",
@@ -236,6 +283,8 @@ func (c *cmdStorageVolumeAttach) run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	reverter.Success()
 
 	return nil
 }
