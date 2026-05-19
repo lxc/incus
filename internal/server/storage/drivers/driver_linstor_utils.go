@@ -339,35 +339,41 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
 	}
 
-	// Query resource definitions that match the desired volume by its name.
-	resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
-		Props: []string{
-			LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name,
-			LinstorAuxType + "=" + string(vol.volType),
-		},
-		WithVolumeDefinitions: fetchVolumeDefinitions,
-	})
-	if err != nil {
-		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
-	}
+	for i := range 5 {
+		if i != 0 {
+			time.Sleep(1 * time.Second)
+		}
 
-	l.Debug("Queried resource definitions", logger.Ctx{"query": LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name, "result": resourceDefinitions})
+		// Query resource definitions that match the desired volume by its name.
+		resourceDefinitions, err := linstor.Client.ResourceDefinitions.GetAll(context.TODO(), linstorClient.RDGetAllRequest{
+			Props: []string{
+				LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name,
+				LinstorAuxType + "=" + string(vol.volType),
+			},
+			WithVolumeDefinitions: fetchVolumeDefinitions,
+		})
+		if err != nil {
+			return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
+		}
 
-	// Filter resource definitions for the storage pool's resource group.
-	var filteredResourceDefinitions []linstorClient.ResourceDefinitionWithVolumeDefinition
-	for _, rd := range resourceDefinitions {
-		if rd.ResourceGroupName == d.config[LinstorResourceGroupNameConfigKey] {
-			filteredResourceDefinitions = append(filteredResourceDefinitions, rd)
+		l.Debug("Queried resource definitions", logger.Ctx{"query": LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name, "result": resourceDefinitions})
+
+		// Filter resource definitions for the storage pool's resource group.
+		var filteredResourceDefinitions []linstorClient.ResourceDefinitionWithVolumeDefinition
+		for _, rd := range resourceDefinitions {
+			if rd.ResourceGroupName == d.config[LinstorResourceGroupNameConfigKey] {
+				filteredResourceDefinitions = append(filteredResourceDefinitions, rd)
+			}
+		}
+
+		if len(filteredResourceDefinitions) == 0 {
+			return linstorClient.ResourceDefinitionWithVolumeDefinition{}, errResourceDefinitionNotFound
+		} else if len(filteredResourceDefinitions) == 1 {
+			return filteredResourceDefinitions[0], nil
 		}
 	}
 
-	if len(filteredResourceDefinitions) == 0 {
-		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, errResourceDefinitionNotFound
-	} else if len(filteredResourceDefinitions) > 1 {
-		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, fmt.Errorf("Multiple resource definitions found for volume %s", vol.name)
-	}
-
-	return filteredResourceDefinitions[0], nil
+	return linstorClient.ResourceDefinitionWithVolumeDefinition{}, fmt.Errorf("Multiple resource definitions found for volume %s", vol.name)
 }
 
 // getLinstorDevPath return the device path for a given `vol` in the current node.
