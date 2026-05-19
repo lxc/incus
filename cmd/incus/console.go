@@ -34,6 +34,8 @@ type cmdConsole struct {
 	flagForce   bool
 	flagShowLog bool
 	flagType    string
+
+	withLog bool
 }
 
 var cmdConsoleUsage = u.Usage{u.Instance.Remote()}
@@ -195,11 +197,20 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 	sendDisconnect := make(chan struct{})
 	defer close(sendDisconnect)
 
+	// Buffer websocket output so it doesn't interleave with the log
+	// content printed below.
+	var terminalOut io.WriteCloser = os.Stdout
+	var buffered *bufferedWriter
+	if c.withLog {
+		buffered = &bufferedWriter{out: os.Stdout}
+		terminalOut = buffered
+	}
+
 	consoleArgs := incus.InstanceConsoleArgs{
 		Terminal: &readWriteCloser{stdinMirror{
 			os.Stdin,
 			manualDisconnect, new(bool),
-		}, os.Stdout},
+		}, terminalOut},
 		Control:           handler,
 		ConsoleDisconnect: consoleDisconnect,
 	}
@@ -223,6 +234,33 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 	}
 
 	fmt.Print(i18n.G("To detach from the console, press: <ctrl>+a q") + "\n\r")
+
+	// With the websocket attached, fetch the existing console log,
+	// print it, then release any buffered websocket output. A small
+	// overlap is preferable to losing output produced before the attach.
+	if c.withLog {
+		logArgs := &incus.InstanceConsoleLogArgs{}
+		log, err := d.GetInstanceConsoleLog(name, logArgs)
+		if err != nil {
+			return err
+		}
+
+		content, err := io.ReadAll(log)
+		if err != nil {
+			return err
+		}
+
+		// In raw mode the terminal doesn't translate \n to \r\n, so
+		// normalize line endings before printing the log.
+		text := strings.ReplaceAll(string(content), "\r\n", "\n")
+		text = strings.ReplaceAll(text, "\n", "\r\n")
+		fmt.Print(text)
+
+		err = buffered.Flush()
+		if err != nil {
+			return err
+		}
+	}
 
 	// Wait for the operation to complete
 	err = op.Wait()

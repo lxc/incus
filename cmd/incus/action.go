@@ -280,6 +280,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, p *u.Parsed) er
 		console := cmdConsole{}
 		console.global = c.global
 		console.flagType = c.flagConsole
+		console.withLog = c.flagConsole == "console"
 		return console.console(d, instanceName)
 	}
 
@@ -312,6 +313,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, p *u.Parsed) er
 		console := cmdConsole{}
 		console.global = c.global
 		console.flagType = c.flagConsole
+		console.withLog = c.flagConsole == "console"
 
 		consoleErr := console.console(d, instanceName)
 		if consoleErr != nil {
