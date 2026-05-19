@@ -77,12 +77,24 @@ type NodeInfo struct {
 	State         int               // Node state
 	Config        map[string]string // Configuration for the node
 	Groups        []string          // Cluster groups
+
+	// heartbeatRefTime is the time at which the node row was read from the
+	// database. It is used as the reference time for IsOffline so that a
+	// long-running transaction (during which the heartbeat snapshot cannot be
+	// refreshed) doesn't incorrectly classify members as offline just because
+	// the transaction has been open longer than the offline threshold.
+	heartbeatRefTime time.Time
 }
 
 // IsOffline returns true if the last successful heartbeat time of the node is
 // older than the given threshold.
+//
+// The check uses the time at which this NodeInfo was read from the database as
+// the reference point (if known), rather than time.Now(). This avoids false
+// positives when the caller is operating inside a long-running transaction
+// where the heartbeat snapshot can't be refreshed.
 func (n NodeInfo) IsOffline(threshold time.Duration) bool {
-	return nodeIsOffline(threshold, n.Heartbeat)
+	return nodeIsOffline(threshold, n.Heartbeat, n.heartbeatRefTime)
 }
 
 // NodeInfoArgs provides information about the cluster environment for use with NodeInfo.ToAPI().
@@ -535,10 +547,13 @@ JOIN cluster_groups ON cluster_groups.id = nodes_cluster_groups.group_id`
 
 	sql += "ORDER BY id"
 
-	// Process node entries
+	// Process node entries.
+	// refTime anchors the IsOffline check to the time the heartbeat snapshot
+	// was taken (see NodeInfo.heartbeatRefTime).
+	refTime := time.Now()
 	nodes := []NodeInfo{}
 	err = query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
-		node := NodeInfo{}
+		node := NodeInfo{heartbeatRefTime: refTime}
 		err := scan(&node.ID, &node.Name, &node.Address, &node.Description, &node.Schema, &node.APIExtensions, &node.Heartbeat, &node.Architecture, &node.State)
 		if err != nil {
 			return err
@@ -1216,8 +1231,14 @@ func (c *ClusterTx) SetNodeVersion(id int64, version [2]int) error {
 	return nil
 }
 
-func nodeIsOffline(threshold time.Duration, heartbeat time.Time) bool {
-	offlineTime := time.Now().UTC().Add(-threshold)
+// nodeIsOffline reports whether heartbeat is older than threshold relative to
+// refTime. If refTime is the zero value, time.Now() is used as the reference.
+func nodeIsOffline(threshold time.Duration, heartbeat time.Time, refTime time.Time) bool {
+	if refTime.IsZero() {
+		refTime = time.Now()
+	}
+
+	offlineTime := refTime.UTC().Add(-threshold)
 
 	return heartbeat.Before(offlineTime) || heartbeat.Equal(offlineTime)
 }
