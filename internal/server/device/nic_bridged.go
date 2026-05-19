@@ -2128,7 +2128,33 @@ func (d *nicBridged) getHostMTU() (int, error) {
 
 // Register sets up anything needed on startup.
 func (d *nicBridged) Register() error {
-	// Skip when not using a managed network.
+	// Determine the bridge name (parent is set for unmanaged, network for managed).
+	bridgeName := d.config["parent"]
+	if bridgeName == "" && d.config["network"] != "" {
+		bridgeName = d.config["network"]
+	}
+
+	// Re-attach the host-side veth to its bridge if it has become orphaned.
+	networkVethFillFromVolatile(d.config, d.volatileGet())
+	hostName := d.config["host_name"]
+
+	if bridgeName != "" && hostName != "" && network.InterfaceExists(bridgeName) && network.InterfaceExists(hostName) {
+		linkInfo, err := ip.LinkByName(hostName)
+		if err == nil && linkInfo.Master != bridgeName {
+			// Re-apply disable_ipv6 before re-attaching to prevent RA processing on the bridge.
+			err = localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", hostName), "1")
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("Failed disabling IPv6 on host-side veth %q: %w", hostName, err)
+			}
+
+			err = network.AttachInterface(d.state, bridgeName, hostName)
+			if err != nil {
+				return fmt.Errorf("Failed re-attaching host-side veth %q to bridge %q: %w", hostName, bridgeName, err)
+			}
+		}
+	}
+
+	// Skip the rest when not using a managed network.
 	if d.config["network"] == "" {
 		return nil
 	}
