@@ -3131,3 +3131,10 @@ address sets, matching what's already allowed in network ACL rules.
 
 A single range may expand to at most 256 addresses. Larger sets of
 addresses should be expressed using CIDR notation instead.
+
+## `storage_volumes_rebuild`
+
+This extension adds the ability to rebuild a custom storage volume.
+The underlying volume is deleted and a new empty one is created with
+the same configuration. The rebuild is only allowed when the volume
+has no snapshots.
