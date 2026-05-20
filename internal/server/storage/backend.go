@@ -792,7 +792,7 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 	// Unpack the backup into the new storage volume(s).
 	var volPostHook drivers.VolumePostHook
 	var revertHook revert.Hook
-	if srcBackup.Config.Volume.Config["block.type"] == drivers.BlockVolumeTypeQcow2 {
+	if volumeConfig["block.type"] == drivers.BlockVolumeTypeQcow2 {
 		volPostHook, revertHook, err = b.qcow2UnpackVolume(vol, srcBackup.Snapshots, srcData, backup.DefaultBackupPrefix, op)
 		if err != nil {
 			return nil, nil, err
