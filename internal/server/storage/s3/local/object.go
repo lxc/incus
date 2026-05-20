@@ -334,6 +334,44 @@ func parseCopySource(v string) (string, bool) {
 	return key, true
 }
 
+// handleObjectACL stubs the object-level ?acl sub-resource.
+func (s *Server) handleObjectACL(w http.ResponseWriter, r *http.Request, key string) {
+	switch r.Method {
+	case http.MethodGet:
+		dataPath, err := s.objectPath(key)
+		if err != nil {
+			(&s3.Error{Code: s3.ErrorInvalidRequest, Message: err.Error()}).Response(w)
+			return
+		}
+
+		_, err = loadOrInferMeta(dataPath)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Object not found."}).Response(w)
+				return
+			}
+
+			(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+			return
+		}
+
+		const body = `<?xml version="1.0" encoding="UTF-8"?>` +
+			`<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">` +
+			`<Owner><ID></ID><DisplayName></DisplayName></Owner>` +
+			`<AccessControlList></AccessControlList>` +
+			`</AccessControlPolicy>`
+
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(body))
+	case http.MethodPut:
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.WriteHeader(http.StatusOK)
+	default:
+		(&s3.Error{Code: s3.ErrorInvalidRequest, Message: "Unsupported method for ?acl."}).Response(w)
+	}
+}
+
 func (s *Server) deleteObject(w http.ResponseWriter, key string) {
 	dataPath, err := s.objectPath(key)
 	if err != nil {
