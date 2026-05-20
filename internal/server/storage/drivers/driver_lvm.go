@@ -583,6 +583,24 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 		// Remove volume group if needed.
 		if removeVg {
+			if d.clustered {
+				// In lvmlockd version 2.03.31 (2025-02-27), there appears to be a bug causing an inconsistent state
+				// between sanlock and lvmlockd during sahred VG removal, which results in lock-related errors.
+				// Unmount the pool (perform vgchange --lockstop) to release and clear all shared locks.
+				// Next, change the VG lock type to 'none'. Changing the lock type to 'none' avoids this behavior by
+				// converting the VG to a non-shared configuration.
+				// After that, the VG can be removed using the standard non-shared LVM removal procedure.
+				_, err := d.Unmount()
+				if err != nil {
+					return err
+				}
+
+				_, err = subprocess.TryRunCommand("vgchange", "-y", "--locktype", "none", "--lockopt", "force", d.config["lvm.vg_name"])
+				if err != nil {
+					return fmt.Errorf("Failed to change lock type to none for %q", d.config["lvm.vg_name"])
+				}
+			}
+
 			// When deleting a shared VG, it may take more than a minute for the previously released shared locks to clear.
 			_, err := subprocess.TryRunCommandAttemptsDuration(240, 500*time.Millisecond, "vgremove", "-f", d.config["lvm.vg_name"])
 			if err != nil {
