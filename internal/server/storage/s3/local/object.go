@@ -3,11 +3,13 @@ package local
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -173,6 +175,201 @@ func (s *Server) putObject(w http.ResponseWriter, r *http.Request, key string) {
 
 	w.Header().Set("ETag", `"`+etag+`"`)
 	w.WriteHeader(http.StatusOK)
+}
+
+// copyObject handles a PUT carrying an X-Amz-Copy-Source header by copying
+// the referenced source object's data and metadata onto the destination key.
+//
+// The metadata directive defaults to COPY, which preserves the source
+// object's content-type and user metadata. REPLACE substitutes the values
+// supplied on the request.
+func (s *Server) copyObject(w http.ResponseWriter, r *http.Request, key string) {
+	srcKey, ok := parseCopySource(r.Header.Get("X-Amz-Copy-Source"))
+	if !ok {
+		(&s3.Error{Code: s3.ErrorInvalidRequest, Message: "Invalid X-Amz-Copy-Source header."}).Response(w)
+		return
+	}
+
+	srcPath, err := s.objectPath(srcKey)
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorInvalidRequest, Message: err.Error()}).Response(w)
+		return
+	}
+
+	dstPath, err := s.objectPath(key)
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorInvalidRequest, Message: err.Error()}).Response(w)
+		return
+	}
+
+	srcMeta, err := loadOrInferMeta(srcPath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Source object not found."}).Response(w)
+			return
+		}
+
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	src, err := os.Open(srcPath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Source object not found."}).Response(w)
+			return
+		}
+
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	defer func() { _ = src.Close() }()
+
+	err = os.MkdirAll(filepath.Dir(dstPath), 0o700)
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	tmp := dstPath + ".tmp"
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	hasher := md5.New()
+	written, err := io.Copy(io.MultiWriter(f, hasher), src)
+	closeErr := f.Close()
+	if err != nil || closeErr != nil {
+		_ = os.Remove(tmp)
+		msg := err
+		if msg == nil {
+			msg = closeErr
+		}
+
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: msg.Error()}).Response(w)
+		return
+	}
+
+	err = os.Rename(tmp, dstPath)
+	if err != nil {
+		_ = os.Remove(tmp)
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	contentType := srcMeta.ContentType
+	userMeta := srcMeta.UserMeta
+	if strings.EqualFold(r.Header.Get("X-Amz-Metadata-Directive"), "REPLACE") {
+		contentType = r.Header.Get("Content-Type")
+		userMeta = extractUserMeta(r.Header)
+	}
+
+	etag := hex.EncodeToString(hasher.Sum(nil))
+	lastMod := time.Now().UTC()
+	meta := &objectMeta{
+		ContentType: contentType,
+		ETag:        etag,
+		Size:        written,
+		LastMod:     lastMod,
+		UserMeta:    userMeta,
+	}
+
+	err = writeMeta(metaPathFor(dstPath), meta)
+	if err != nil {
+		_ = os.Remove(dstPath)
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	type copyResult struct {
+		XMLName      xml.Name `xml:"CopyObjectResult"`
+		ETag         string   `xml:"ETag"`
+		LastModified string   `xml:"LastModified"`
+	}
+
+	resp, err := xml.Marshal(&copyResult{
+		ETag:         `"` + etag + `"`,
+		LastModified: lastMod.Format("2006-01-02T15:04:05.000Z"),
+	})
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>`))
+	_, _ = w.Write(resp)
+}
+
+// parseCopySource extracts the source object key from an X-Amz-Copy-Source
+// header value. The value has the form "[/]bucket/key" with the key
+// optionally percent-encoded and an optional "?versionId=..." suffix.
+func parseCopySource(v string) (string, bool) {
+	if v == "" {
+		return "", false
+	}
+
+	// Drop the optional version-id query suffix.
+	idx := strings.Index(v, "?")
+	if idx >= 0 {
+		v = v[:idx]
+	}
+
+	decoded, err := url.PathUnescape(v)
+	if err != nil {
+		return "", false
+	}
+
+	decoded = strings.TrimPrefix(decoded, "/")
+
+	_, key, ok := strings.Cut(decoded, "/")
+	if !ok || key == "" {
+		return "", false
+	}
+
+	return key, true
+}
+
+// handleObjectACL stubs the object-level ?acl sub-resource.
+func (s *Server) handleObjectACL(w http.ResponseWriter, r *http.Request, key string) {
+	switch r.Method {
+	case http.MethodGet:
+		dataPath, err := s.objectPath(key)
+		if err != nil {
+			(&s3.Error{Code: s3.ErrorInvalidRequest, Message: err.Error()}).Response(w)
+			return
+		}
+
+		_, err = loadOrInferMeta(dataPath)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Object not found."}).Response(w)
+				return
+			}
+
+			(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+			return
+		}
+
+		const body = `<?xml version="1.0" encoding="UTF-8"?>` +
+			`<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">` +
+			`<Owner><ID></ID><DisplayName></DisplayName></Owner>` +
+			`<AccessControlList></AccessControlList>` +
+			`</AccessControlPolicy>`
+
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(body))
+	case http.MethodPut:
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.WriteHeader(http.StatusOK)
+	default:
+		(&s3.Error{Code: s3.ErrorInvalidRequest, Message: "Unsupported method for ?acl."}).Response(w)
+	}
 }
 
 func (s *Server) deleteObject(w http.ResponseWriter, key string) {

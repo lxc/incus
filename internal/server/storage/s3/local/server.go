@@ -200,12 +200,24 @@ func (s *Server) handleObject(w http.ResponseWriter, r *http.Request, objectKey 
 		return
 	}
 
+	// We don't actually support ACLs but still will return an empty one to avoid confusing clients.
+	_, ok = q["acl"]
+	if ok {
+		s.handleObjectACL(w, r, objectKey)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		s.getObject(w, r, objectKey)
 	case http.MethodHead:
 		s.headObject(w, r, objectKey)
 	case http.MethodPut:
+		if r.Header.Get("X-Amz-Copy-Source") != "" {
+			s.copyObject(w, r, objectKey)
+			return
+		}
+
 		s.putObject(w, r, objectKey)
 	case http.MethodDelete:
 		s.deleteObject(w, objectKey)
