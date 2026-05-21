@@ -416,7 +416,7 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 	}
 
 	// Get the image information from skopeo.
-	stdout, err := r.runSkopeo("inspect", name)
+	stdout, err := r.runSkopeo("inspect", name, "--no-tags")
 	if err != nil {
 		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "stdout": stdout, "stderr": err})
 		r.errors[name] = err

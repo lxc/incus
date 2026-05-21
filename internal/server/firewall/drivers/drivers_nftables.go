@@ -86,7 +86,7 @@ type nftGenericItem struct {
 // nftParseRuleset parses the ruleset and returns the generic parts as a slice of items.
 func (d Nftables) nftParseRuleset() ([]nftGenericItem, error) {
 	// Dump ruleset as JSON. Use -nn flags to avoid doing DNS lookups of IPs mentioned in any rules.
-	cmd := exec.Command("nft", "--json", "-nn", "list", "ruleset")
+	cmd := exec.Command("nft", "--terse", "--json", "-nn", "list", "ruleset")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -1600,7 +1600,7 @@ func (d Nftables) NetworkDeleteAddressSetsIfUnused(nftTable string) error {
 	}
 
 	// List rules to check for usage of sets aka @setName.
-	outputRules, err := subprocess.RunCommand("nft", "list", "ruleset", nftTable)
+	outputRules, err := subprocess.RunCommand("nft", "--terse", "list", "ruleset", nftTable)
 	if err != nil {
 		return fmt.Errorf("Failed to list nft ruleset: %w", err)
 	}
