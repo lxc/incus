@@ -56,11 +56,10 @@ To launch a system container with a Debian 12 image from the `images` server usi
 
 ### Launch an application container
 
-To launch an application (OCI) container, you first need to add an image registry:
+To launch an application (OCI) container, you first need to add an OCI compliant image registry.
+See {ref}`images-remote` for instructions.
 
-    incus remote add oci-docker https://docker.io --protocol=oci
-
-And then can launch a container from one of its images:
+Then you can launch a container from one of its images:
 
     incus launch oci-docker:hello-world --ephemeral --console
 
