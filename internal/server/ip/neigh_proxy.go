@@ -47,6 +47,7 @@ func (n *NeighProxy) netlinkNeigh() (*netlink.Neigh, error) {
 	return &netlink.Neigh{
 		LinkIndex: link.Attrs().Index,
 		Flags:     unix.NTF_PROXY,
+		State:     unix.NUD_PERMANENT,
 		IP:        n.Addr,
 	}, nil
 }

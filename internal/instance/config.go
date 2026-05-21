@@ -344,10 +344,16 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.expiry)
 	// Specify an expression like `1M 2H 3d 4w 5m 6y`.
+	//
+	// This value is used to compute the expiry date of newly created snapshots.
+	// It is added to the current time when a snapshot is taken, and the resulting timestamp is stored as that snapshot's individual expiry date.
+	// Changing this value only affects snapshots created after the change; the expiry date of existing snapshots is not modified.
+	//
+	// The supported units are `S` (seconds), `M` (minutes), `H` (hours), `d` (days), `w` (weeks), `m` (months) and `y` (years).
 	// ---
 	//  type: string
 	//  liveupdate: no
-	//  shortdesc: When snapshots are to be deleted
+	//  shortdesc: When newly created snapshots are to be deleted
 	"snapshots.expiry": func(value string) error {
 		// Validate expression
 		_, err := GetExpiry(time.Time{}, value)
@@ -356,10 +362,16 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// gendoc:generate(entity=instance, group=snapshots, key=snapshots.expiry.manual)
 	// Specify an expression like `1M 2H 3d 4w 5m 6y`.
+	//
+	// This value is used to compute the expiry date of newly created snapshots that are not created through scheduling.
+	// It is added to the current time when a snapshot is taken, and the resulting timestamp is stored as that snapshot's individual expiry date.
+	// Changing this value only affects snapshots created after the change; the expiry date of existing snapshots is not modified.
+	//
+	// See {config:option}`instance-snapshots:snapshots.expiry` for the supported units.
 	// ---
 	//  type: string
 	//  liveupdate: no
-	//  shortdesc: When snapshots are to be deleted (for those not created through scheduling)
+	//  shortdesc: When newly created snapshots are to be deleted (for those not created through scheduling)
 	"snapshots.expiry.manual": func(value string) error {
 		// Validate expression
 		_, err := GetExpiry(time.Time{}, value)

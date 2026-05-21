@@ -79,6 +79,7 @@ func (c *cmdLaunch) run(cmd *cobra.Command, args []string) error {
 			console := cmdConsole{}
 			console.global = c.global
 			console.flagType = c.flagConsole
+			console.withLog = c.flagConsole == "console"
 
 			consoleErr := console.console(d, instanceName)
 			if consoleErr != nil {
@@ -145,6 +146,7 @@ func (c *cmdLaunch) run(cmd *cobra.Command, args []string) error {
 		console := cmdConsole{}
 		console.global = c.global
 		console.flagType = c.flagConsole
+		console.withLog = c.flagConsole == "console"
 
 		consoleErr := console.console(d, instanceName)
 		if consoleErr != nil {

@@ -192,7 +192,7 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 
 		if memberID == c.nodeID {
 			memberAddress = ""
-		} else if nodeIsOffline(offlineThreshold, memberHeartbeat) {
+		} else if nodeIsOffline(offlineThreshold, memberHeartbeat, time.Time{}) {
 			memberAddress = "0.0.0.0"
 		}
 

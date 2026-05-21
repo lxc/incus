@@ -832,7 +832,7 @@ func (c *cmdForknet) dhcpApplyDNS(logger *logrus.Logger) error {
 		}
 
 		if len(out) > 0 {
-			_, err = fmt.Fprintf(f, "search %s\n", strings.Join(out, ", "))
+			_, err = fmt.Fprintf(f, "search %s\n", strings.Join(out, " "))
 			if err != nil {
 				logger.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
 				return err
