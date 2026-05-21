@@ -54,6 +54,24 @@ For example, enter the following command to add a remote through an IP address:
 You are prompted to confirm the remote server fingerprint and then asked for the token.
 <!-- Include end add remotes -->
 
+### Add a remote OCI compliant server (i.e. Docker Hub)
+
+To add a OCI compliant server as a remote, enter the following command:
+
+    incus remote add <remote_name> <URL> --protocol=oci
+
+The URL must use HTTPS.
+
+For example, enter the following command to add Docker Hub as a remote:
+
+    incus remote add oci-docker https://docker.io --protocol=oci
+
+To log in, use a token with `--token <token>`.
+
+For example, enter the following command to add your custom container registry with your own token as a remote:
+
+    incus remote add oci-myregistry https://code.example.org --token abcMyToken --protocol=oci
+
 ## Reference an image
 
 To reference an image, specify its remote and its alias or fingerprint, separated with a colon.
