@@ -382,17 +382,29 @@ func readEnvironmentFile(path string) (map[string]string, error) {
 
 	// Iterate over the lines.
 	for _, line := range lines {
-		if line == "" {
+		// Strip surrounding whitespace and skip empty lines and comments.
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
 
-		pieces := strings.SplitN(line, "=", 2)
-		value := ""
-		if len(pieces) > 1 {
-			value = pieces[1]
+		key, value, _ := strings.Cut(line, "=")
+		key = strings.TrimSpace(key)
+		if key == "" {
+			continue
 		}
 
-		envMap[pieces[0]] = value
+		// Strip a single pair of matching surrounding quotes from the value.
+		value = strings.TrimSpace(value)
+		if len(value) >= 2 {
+			first := value[0]
+			last := value[len(value)-1]
+			if (first == '"' || first == '\'') && first == last {
+				value = value[1 : len(value)-1]
+			}
+		}
+
+		envMap[key] = value
 	}
 
 	return envMap, nil
