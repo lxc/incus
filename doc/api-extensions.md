@@ -3094,3 +3094,12 @@ This adds a new `bridge.multicast_snooping` configuration option for
 managed bridge networks. When set to `false`, multicast snooping is
 disabled on the bridge, which can help with IPv6 protocols that rely
 on multicast such as NDP.
+
+## `storage_create_options`
+
+This introduces a new `block.create_options` configuration option to
+allow controlling the `mkfs` arguments when creating volumes on block
+devices.
+
+`btrfs.create_options` is also introduced to similarly control
+`mkfs.btrfs` options when creating a new storage pool.
