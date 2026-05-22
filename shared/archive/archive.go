@@ -50,6 +50,9 @@ func ExtractWithFds(cmdName string, args []string, allowedCmds []string, stdin i
 	cmd.Stdout = output
 	cmd.Stderr = &nullWriteCloser{&buffer}
 
+	// Always run in English so we can do error string matching.
+	cmd.Env = append(os.Environ(), "LC_ALL=C.UTF-8", "LANGUAGE=en")
+
 	// Call the wrapper if defined.
 	if RunWrapper != nil {
 		cleanup, err := RunWrapper(cmd, outputPath, allowedCmds)
@@ -278,16 +281,30 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 			}
 		}
 
-		// Check if we ran out of space
-		fs := unix.Statfs_t{}
+		// Check if we ran out of space.
+		outOfSpace := false
 
-		err1 := unix.Statfs(path, &fs)
-		if err1 != nil {
-			return err1
+		// Start by checking for the most common unpack error.
+		var runErr subprocess.RunError
+		if errors.As(err, &runErr) && strings.Contains(runErr.StdErr().String(), "No space left on device") {
+			outOfSpace = true
 		}
 
-		// Check if we're running out of space
-		if int64(fs.Bfree) < 10 {
+		// Fallback to checking if we filled the filesystem.
+		if !outOfSpace {
+			fs := unix.Statfs_t{}
+
+			err1 := unix.Statfs(path, &fs)
+			if err1 != nil {
+				return err1
+			}
+
+			if int64(fs.Bfree) < 10 {
+				outOfSpace = true
+			}
+		}
+
+		if outOfSpace {
 			if blockBackend {
 				return errors.New("Unable to unpack image, run out of disk space (consider increasing your pool's volume.size)")
 			}
