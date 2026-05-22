@@ -6253,6 +6253,15 @@
 			"common": {
 				"keys": [
 					{
+						"btrfs.create_options": {
+							"default": "-",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Additional options to pass to `mkfs.btrfs` when creating the pool",
+							"type": "string"
+						}
+					},
+					{
 						"btrfs.mount_options": {
 							"default": "`user_subvol_rm_allowed`",
 							"longdesc": "",
@@ -7031,6 +7040,15 @@
 			"common": {
 				"keys": [
 					{
+						"block.create_options": {
+							"condition": "block-based volume with content type `filesystem`",
+							"default": "same as `volume.block.create_options`",
+							"longdesc": "",
+							"shortdesc": "Additional options to pass to the file system creation tool when formatting the volume",
+							"type": "string"
+						}
+					},
+					{
 						"block.filesystem": {
 							"condition": "block-based volume with content type `filesystem`",
 							"default": "same as `volume.block.filesystem`",
@@ -7364,6 +7382,15 @@
 			"common": {
 				"keys": [
 					{
+						"block.create_options": {
+							"condition": "block-based volume with content type `filesystem`",
+							"default": "same as `volume.block.create_options`",
+							"longdesc": "",
+							"shortdesc": "Additional options to pass to the file system creation tool when formatting the volume",
+							"type": "string"
+						}
+					},
+					{
 						"block.filesystem": {
 							"condition": "block-based volume with content type `filesystem`",
 							"default": "same as `volume.block.filesystem`",
@@ -7523,6 +7550,15 @@
 			"common": {
 				"keys": [
 					{
+						"block.create_options": {
+							"condition": "block-based volume with content type `filesystem`",
+							"default": "same as `volume.block.create_options`",
+							"longdesc": "",
+							"shortdesc": "Additional options to pass to the file system creation tool when formatting the volume",
+							"type": "string"
+						}
+					},
+					{
 						"block.filesystem": {
 							"condition": "block-based volume with content type `filesystem`",
 							"default": "same as `volume.block.filesystem`",
@@ -7671,6 +7707,15 @@
 		"storage_volume_truenas": {
 			"common": {
 				"keys": [
+					{
+						"block.create_options": {
+							"condition": "-",
+							"default": "same as `volume.block.create_options`",
+							"longdesc": "",
+							"shortdesc": "Additional options to pass to the file system creation tool when formatting the volume",
+							"type": "string"
+						}
+					},
 					{
 						"block.filesystem": {
 							"condition": "-",
@@ -7821,6 +7866,15 @@
 		"storage_volume_zfs": {
 			"common": {
 				"keys": [
+					{
+						"block.create_options": {
+							"condition": "block-based volume with content type `filesystem` (`zfs.block_mode` enabled)",
+							"default": "same as `volume.block.create_options`",
+							"longdesc": "",
+							"shortdesc": "Additional options to pass to the file system creation tool when formatting the volume",
+							"type": "string"
+						}
+					},
 					{
 						"block.filesystem": {
 							"condition": "block-based volume with content type `filesystem` (`zfs.block_mode` enabled)",
