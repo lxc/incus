@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-22 05:44+0200\n"
+"POT-Creation-Date: 2026-05-22 05:53+0200\n"
 "PO-Revision-Date: 2026-05-03 04:10+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -643,7 +643,7 @@ msgstr "%q не является IP адресом"
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "%s %q на пуле %q в проекте %q (включая %d моментальных снимк(а)ов)"
 
-#: cmd/incus/image.go:1135
+#: cmd/incus/image.go:1134
 #, c-format
 msgid "%s (%d more)"
 msgstr "%s (%d более)"
@@ -702,7 +702,7 @@ msgstr "- Раздел диска %d"
 msgid "- Port %d (%s)"
 msgstr "- Порт %d (%s)"
 
-#: cmd/incus/warning.go:362
+#: cmd/incus/warning.go:361
 msgid "--all cannot be used together with other arguments"
 msgstr "--all не может использоваться вместе с другими аргументами"
 
@@ -809,11 +809,11 @@ msgstr "Адрес"
 msgid "ADDRESSES"
 msgstr "Адреса"
 
-#: cmd/incus/alias.go:148 cmd/incus/image.go:1102 cmd/incus/image_alias.go:246
+#: cmd/incus/alias.go:148 cmd/incus/image.go:1101 cmd/incus/image_alias.go:246
 msgid "ALIAS"
 msgstr "ПСЕВДОНИМ"
 
-#: cmd/incus/image.go:1103
+#: cmd/incus/image.go:1102
 msgid "ALIASES"
 msgstr "ПСЕВДОНИМЫ"
 
@@ -825,7 +825,7 @@ msgstr "путь к API"
 msgid "APP"
 msgstr "Приложение"
 
-#: cmd/incus/cluster.go:199 cmd/incus/image.go:1097 cmd/incus/list.go:473
+#: cmd/incus/cluster.go:199 cmd/incus/image.go:1096 cmd/incus/list.go:473
 msgid "ARCHITECTURE"
 msgstr "АРХИТЕКТУРА"
 
@@ -850,7 +850,7 @@ msgstr "Ключ доступа: %s"
 msgid "Access the expanded configuration"
 msgstr "Расширенная конфигурация"
 
-#: cmd/incus/warning.go:264 cmd/incus/warning.go:265
+#: cmd/incus/warning.go:263 cmd/incus/warning.go:264
 msgid "Acknowledge warning"
 msgstr "Принять предупреждение"
 
@@ -1276,7 +1276,7 @@ msgstr "Отправлено байтов"
 msgid "CANCELABLE"
 msgstr "ОТМЕНЯЕМОЕ"
 
-#: cmd/incus/config_trust.go:415
+#: cmd/incus/config_trust.go:414
 msgid "COMMON NAME"
 msgstr "ОБЩЕЕ ИМЯ"
 
@@ -1284,7 +1284,7 @@ msgstr "ОБЩЕЕ ИМЯ"
 msgid "CONTENT-TYPE"
 msgstr "ТИП СОДЕРЖИМОГО"
 
-#: cmd/incus/warning.go:210
+#: cmd/incus/warning.go:209
 msgid "COUNT"
 msgstr "СЧЕТЧИК"
 
@@ -1373,7 +1373,7 @@ msgid "Can't specify --project with --all-projects"
 msgstr "Нельзя указать --project вместе с --all-projects"
 
 #: cmd/incus/list.go:537 cmd/incus/storage_volume.go:1629
-#: cmd/incus/warning.go:225
+#: cmd/incus/warning.go:224
 msgid "Can't specify column L when not clustered"
 msgstr "Нельзя указать столбец L, если не используется кластерный режим"
 
@@ -1447,7 +1447,7 @@ msgstr "Карта %d:"
 msgid "Card: %s (%s)"
 msgstr "Карта: %s (%s)"
 
-#: cmd/incus/config_trust.go:790
+#: cmd/incus/config_trust.go:789
 #, c-format
 msgid "Certificate add token for %s deleted"
 msgstr "Сертификат добавляет токен для %s удаленных"
@@ -1597,8 +1597,8 @@ msgid "Clustering enabled"
 msgstr "Кластеризация включена"
 
 #: cmd/incus/cluster.go:171 cmd/incus/cluster.go:1123
-#: cmd/incus/cluster_group.go:439 cmd/incus/config_trust.go:399
-#: cmd/incus/config_trust.go:585 cmd/incus/image.go:1069
+#: cmd/incus/cluster_group.go:439 cmd/incus/config_trust.go:398
+#: cmd/incus/config_trust.go:584 cmd/incus/image.go:1068
 #: cmd/incus/image_alias.go:209 cmd/incus/list.go:140 cmd/incus/network.go:1044
 #: cmd/incus/network.go:1242 cmd/incus/network_allocations.go:67
 #: cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:412
@@ -1608,7 +1608,7 @@ msgstr "Кластеризация включена"
 #: cmd/incus/snapshot.go:342 cmd/incus/storage.go:660
 #: cmd/incus/storage_bucket.go:464 cmd/incus/storage_bucket.go:857
 #: cmd/incus/storage_volume.go:1488 cmd/incus/storage_volume.go:3333
-#: cmd/incus/top.go:67 cmd/incus/warning.go:98
+#: cmd/incus/top.go:67 cmd/incus/warning.go:97
 msgid "Columns"
 msgstr "Столбцы"
 
@@ -2052,7 +2052,7 @@ msgid "DEFAULT TARGET ADDRESS"
 msgstr "ЦЕЛЕВОЙ АДРЕС ПО УМОЛЧАНИЮ"
 
 #: cmd/incus/cluster.go:201 cmd/incus/cluster_group.go:465
-#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1098
+#: cmd/incus/config_trust.go:416 cmd/incus/image.go:1097
 #: cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1076
 #: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:143 cmd/incus/network_integration.go:428
@@ -2115,7 +2115,7 @@ msgstr "Задайте алгоритм сжатия или без сжатия:
 msgid "Delay:"
 msgstr "Задержка:"
 
-#: cmd/incus/warning.go:345
+#: cmd/incus/warning.go:344
 msgid "Delete all warnings"
 msgstr "Удалить все предупреждения"
 
@@ -2220,7 +2220,7 @@ msgstr "Удалить пулы хранения"
 msgid "Delete storage volume snapshots"
 msgstr "Удаление моментальных снимков тома хранения"
 
-#: cmd/incus/warning.go:342 cmd/incus/warning.go:343
+#: cmd/incus/warning.go:341 cmd/incus/warning.go:342
 msgid "Delete warnings"
 msgstr "Удалить предупреждения"
 
@@ -2395,7 +2395,7 @@ msgstr "Диски:"
 msgid "Display clusters from all projects"
 msgstr "Показать кластеры из всех проектов"
 
-#: cmd/incus/image.go:1071
+#: cmd/incus/image.go:1070
 msgid "Display images from all projects"
 msgstr "Показать образы из всех проектов"
 
@@ -2533,12 +2533,12 @@ msgstr "ЭФИМЕРНЫЙ"
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr "СУЩЕСТВУЮЩИЙ: %q (бэкенд=%q, источник=%q)"
 
-#: cmd/incus/cluster.go:1144 cmd/incus/config_trust.go:602
+#: cmd/incus/cluster.go:1144 cmd/incus/config_trust.go:601
 #: cmd/incus/snapshot.go:367 cmd/incus/storage_volume.go:3428
 msgid "EXPIRES AT"
 msgstr "ХРАНИТЬ ДО"
 
-#: cmd/incus/config_trust.go:419
+#: cmd/incus/config_trust.go:418
 msgid "EXPIRY DATE"
 msgstr "СРОК ХРАНЕНИЯ"
 
@@ -2656,8 +2656,8 @@ msgid "Edit trust configurations as YAML"
 msgstr "Редактировать конфигураций доверия сертификатам в формате YAML"
 
 #: cmd/incus/cluster.go:212 cmd/incus/cluster.go:1152
-#: cmd/incus/cluster_group.go:473 cmd/incus/config_trust.go:429
-#: cmd/incus/config_trust.go:610 cmd/incus/image.go:1116
+#: cmd/incus/cluster_group.go:473 cmd/incus/config_trust.go:428
+#: cmd/incus/config_trust.go:609 cmd/incus/image.go:1115
 #: cmd/incus/image_alias.go:258 cmd/incus/list.go:528 cmd/incus/network.go:1091
 #: cmd/incus/network.go:1280 cmd/incus/network_allocations.go:92
 #: cmd/incus/network_forward.go:157 cmd/incus/network_integration.go:438
@@ -2667,7 +2667,7 @@ msgstr "Редактировать конфигураций доверия се�
 #: cmd/incus/snapshot.go:376 cmd/incus/storage.go:698
 #: cmd/incus/storage_bucket.go:498 cmd/incus/storage_bucket.go:882
 #: cmd/incus/storage_volume.go:1646 cmd/incus/storage_volume.go:3436
-#: cmd/incus/top.go:95 cmd/incus/warning.go:236
+#: cmd/incus/top.go:95 cmd/incus/warning.go:235
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -3019,12 +3019,12 @@ msgstr "ОБЛАСТЬ ОТКАЗА"
 msgid "FILENAME"
 msgstr "ИМЯ ФАЙЛА"
 
-#: cmd/incus/config_trust.go:416 cmd/incus/image.go:1100
-#: cmd/incus/image.go:1101 cmd/incus/image_alias.go:247
+#: cmd/incus/config_trust.go:415 cmd/incus/image.go:1099
+#: cmd/incus/image.go:1100 cmd/incus/image_alias.go:247
 msgid "FINGERPRINT"
 msgstr "ОТПЕЧАТОК"
 
-#: cmd/incus/warning.go:211
+#: cmd/incus/warning.go:210
 msgid "FIRST SEEN"
 msgstr "ВПЕРВЫЕ ОБНАРУЖЕН"
 
@@ -3537,8 +3537,8 @@ msgstr ""
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:111 cmd/incus/cluster.go:172
 #: cmd/incus/cluster_group.go:440 cmd/incus/config_template.go:271
-#: cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:584
-#: cmd/incus/image.go:1070 cmd/incus/image_alias.go:208 cmd/incus/list.go:141
+#: cmd/incus/config_trust.go:399 cmd/incus/config_trust.go:583
+#: cmd/incus/image.go:1069 cmd/incus/image_alias.go:208 cmd/incus/list.go:141
 #: cmd/incus/network.go:1045 cmd/incus/network.go:1241
 #: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:64
 #: cmd/incus/network_forward.go:120 cmd/incus/network_integration.go:411
@@ -3548,7 +3548,7 @@ msgstr ""
 #: cmd/incus/project.go:993 cmd/incus/remote.go:970 cmd/incus/snapshot.go:341
 #: cmd/incus/storage.go:661 cmd/incus/storage_bucket.go:462
 #: cmd/incus/storage_bucket.go:855 cmd/incus/storage_volume.go:1515
-#: cmd/incus/storage_volume.go:3346 cmd/incus/warning.go:99
+#: cmd/incus/storage_volume.go:3346 cmd/incus/warning.go:98
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
@@ -3637,11 +3637,11 @@ msgstr ""
 "Это полезно для рабочих процессов дистанционной аутентификации, когда токен "
 "передается на другой сервер Incus."
 
-#: cmd/incus/image.go:1729
+#: cmd/incus/image.go:1728
 msgid "Generate a metadata tarball"
 msgstr "Сгенерировать архив с метаданными"
 
-#: cmd/incus/image.go:1731
+#: cmd/incus/image.go:1730
 msgid ""
 "Generate a metadata tarball\n"
 "\n"
@@ -3692,7 +3692,7 @@ msgstr "Получить текущий статус балансировщик�
 msgid "Get current load-balancer status"
 msgstr "Получить текущее состояние балансировщика нагрузки"
 
-#: cmd/incus/image.go:1524 cmd/incus/image.go:1525
+#: cmd/incus/image.go:1523 cmd/incus/image.go:1524
 msgid "Get image properties"
 msgstr "Получить свойства образа"
 
@@ -3972,7 +3972,7 @@ msgstr "IPv4-адрес восходящего канала"
 msgid "IPv6 uplink address"
 msgstr "IPv6-адрес восходящего канала"
 
-#: cmd/incus/config_trust.go:418
+#: cmd/incus/config_trust.go:417
 msgid "ISSUE DATE"
 msgstr "ДАТА ВЫПУСКА"
 
@@ -4037,7 +4037,7 @@ msgstr "Игнорировать состояние экземпляра"
 msgid "Image alias description"
 msgstr "Описание псевдонима образа"
 
-#: cmd/incus/image.go:1440
+#: cmd/incus/image.go:1439
 msgid "Image already up to date."
 msgstr "Образ уже обновлен."
 
@@ -4062,7 +4062,7 @@ msgstr "Формат образа"
 msgid "Image imported with fingerprint: %s"
 msgstr "Импортирован образ с отпечатком: %s"
 
-#: cmd/incus/image.go:1438
+#: cmd/incus/image.go:1437
 msgid "Image refreshed successfully!"
 msgstr "Образ успешно обновлен!"
 
@@ -4223,7 +4223,7 @@ msgstr "Недопустимый сегмент имени резервной к
 msgid "Invalid boolean value: %s"
 msgstr "Недопустимое значение логического типа: %s"
 
-#: cmd/incus/config_trust.go:516
+#: cmd/incus/config_trust.go:515
 msgid "Invalid certificate"
 msgstr "Недопустимый сертификат"
 
@@ -4352,7 +4352,7 @@ msgstr "Версия ядра"
 msgid "Key description"
 msgstr "Описание параметра"
 
-#: cmd/incus/warning.go:212
+#: cmd/incus/warning.go:211
 msgid "LAST SEEN"
 msgstr "БЫЛ НА СВЯЗИ"
 
@@ -4371,7 +4371,7 @@ msgstr "АДРЕС ДЛЯ ПОДКЛЮЧЕНИЙ"
 #: cmd/incus/list.go:518 cmd/incus/network.go:1269
 #: cmd/incus/network_forward.go:146 cmd/incus/network_load_balancer.go:152
 #: cmd/incus/operation.go:170 cmd/incus/storage_bucket.go:482
-#: cmd/incus/storage_volume.go:1625 cmd/incus/warning.go:221
+#: cmd/incus/storage_volume.go:1625 cmd/incus/warning.go:220
 msgid "LOCATION"
 msgstr "РАЗМЕЩЕНО"
 
@@ -4413,6 +4413,7 @@ msgid "List DHCP leases"
 msgstr "список DHCP аренды"
 
 #: cmd/incus/network.go:1220
+#, fuzzy
 msgid ""
 "List DHCP leases\n"
 "\n"
@@ -4420,7 +4421,7 @@ msgid ""
 "\n"
 "== Columns ==\n"
 "The -c option takes a comma separated list of arguments that control\n"
-"which network zone attributes to output when displaying in table or csv\n"
+"which DHCP leases attributes to output when displaying in table or csv\n"
 "format.\n"
 "\n"
 "Column arguments are either pre-defined shorthand chars (see below),\n"
@@ -4464,11 +4465,12 @@ msgstr "Вывести наборы адресов из всех проекто�
 msgid "List aliases"
 msgstr "Показать псевдонимы"
 
-#: cmd/incus/config_trust.go:564
+#: cmd/incus/config_trust.go:563
 msgid "List all active certificate add tokens"
 msgstr "Вывести все активные сертификаты и токены"
 
-#: cmd/incus/config_trust.go:565
+#: cmd/incus/config_trust.go:564
+#, fuzzy
 msgid ""
 "List all active certificate add tokens\n"
 "\n"
@@ -4476,8 +4478,8 @@ msgid ""
 "\n"
 "== Columns ==\n"
 "The -c option takes a comma separated list of arguments that control\n"
-"which network zone attributes to output when displaying in table or csv\n"
-"format.\n"
+"which certificate add tokens attributes to output when displaying in\n"
+"table or csv format.\n"
 "\n"
 "Column arguments are either pre-defined shorthand chars (see below),\n"
 "or (extended) config keys.\n"
@@ -4557,6 +4559,7 @@ msgid "List all the cluster groups"
 msgstr "Вывести все кластерные группы"
 
 #: cmd/incus/cluster_group.go:419
+#, fuzzy
 msgid ""
 "List all the cluster groups\n"
 "\n"
@@ -4564,8 +4567,8 @@ msgid ""
 "\n"
 "== Columns ==\n"
 "The -c option takes a comma separated list of arguments that control\n"
-"which instance attributes to output when displaying in table or csv\n"
-"format.\n"
+"which cluster groups attributes to output when displaying in table\n"
+"or csv format.\n"
 "\n"
 "Column arguments are either pre-defined shorthand chars (see below),\n"
 "or (extended) config keys.\n"
@@ -4641,7 +4644,7 @@ msgstr ""
 "    s - Статус\n"
 "    m - Сообщение"
 
-#: cmd/incus/warning.go:100
+#: cmd/incus/warning.go:99
 msgid "List all warnings"
 msgstr "Вывести все предупреждения"
 
@@ -4662,6 +4665,7 @@ msgid "List available network forwards"
 msgstr "Список доступных сетевых перенаправлений"
 
 #: cmd/incus/network_forward.go:97
+#, fuzzy
 msgid ""
 "List available network forwards\n"
 "\n"
@@ -4669,8 +4673,8 @@ msgid ""
 "\n"
 "== Columns ==\n"
 "The -c option takes a comma separated list of arguments that control\n"
-"which instance attributes to output when displaying in table or csv\n"
-"format.\n"
+"which netwprk forward attributes to output when displaying\n"
+"in table or csv format.\n"
 "\n"
 "Column arguments are either pre-defined shorthand chars (see below),\n"
 "or (extended) config keys.\n"
@@ -4806,9 +4810,14 @@ msgstr ""
 msgid "List available network zone records"
 msgstr "Вывести доступные записи сетевой DNS зоны"
 
+#: cmd/incus/network_zone.go:97
+msgid "List available network zones"
+msgstr "Вывести доступные сетевые DNS зоны"
+
 #: cmd/incus/network_zone.go:98
+#, fuzzy
 msgid ""
-"List available network zone\n"
+"List available network zones\n"
 "\n"
 "Default column layout: nDSdus\n"
 "\n"
@@ -4848,15 +4857,12 @@ msgstr ""
 "  n - Название сетевой DNS зоны\n"
 "  u - Используется"
 
-#: cmd/incus/network_zone.go:97
-msgid "List available network zones"
-msgstr "Вывести доступные сетевые DNS зоны"
-
 #: cmd/incus/network.go:1016
 msgid "List available networks"
 msgstr "Вывести доступные сети"
 
 #: cmd/incus/network.go:1017
+#, fuzzy
 msgid ""
 "List available networks\n"
 "\n"
@@ -4869,7 +4875,7 @@ msgid ""
 "  - \"type=bridge\" lists all networks with the type bridge\n"
 "\n"
 "The -c option takes a (optionally comma-separated) list of arguments\n"
-"that control which image attributes to output when displaying in table\n"
+"that control which networks attributes to output when displaying in table\n"
 "or csv format.\n"
 "\n"
 "Default column layout is: ntm46dus\n"
@@ -5067,6 +5073,7 @@ msgid "List images"
 msgstr "Вывести образы"
 
 #: cmd/incus/image.go:1043
+#, fuzzy
 msgid ""
 "List images\n"
 "\n"
@@ -5080,7 +5087,6 @@ msgid ""
 "Default column layout is: lfpdasu\n"
 "\n"
 "Column shorthand chars:\n"
-"\n"
 "    l - Shortest image alias (and optionally number of other aliases)\n"
 "    L - Newline-separated list of all image aliases\n"
 "    f - Fingerprint (short)\n"
@@ -5511,15 +5517,16 @@ msgid "List projects"
 msgstr "Вывести список проектов"
 
 #: cmd/incus/project.go:498
+#, fuzzy
 msgid ""
 "List projects\n"
 "\n"
 "The -c option takes a (optionally comma-separated) list of arguments\n"
-"that control which image attributes to output when displaying in table\n"
+"that control which project attributes to output when displaying in table\n"
 "or csv format.\n"
 "Default column layout is: nipvbwzdu\n"
-"Column shorthand chars:\n"
 "\n"
+"Column shorthand chars:\n"
 "n - Project Name\n"
 "i - Images\n"
 "p - Profiles\n"
@@ -5646,12 +5653,13 @@ msgid "List storage volume snapshots"
 msgstr "Список моментальных снимков тома хранения"
 
 #: cmd/incus/storage_volume.go:3335
+#, fuzzy
 msgid ""
 "List storage volume snapshots\n"
 "\n"
 "\tThe -c option takes a (optionally comma-separated) list of arguments\n"
-"\tthat control which image attributes to output when displaying in table\n"
-"\tor csv format.\n"
+"\tthat control which storage volume snapshot attributes to output\n"
+"\twhen displaying in table or csv format.\n"
 "\n"
 "\tColumn shorthand chars:\n"
 "\t\tn - Name\n"
@@ -5791,6 +5799,7 @@ msgid "List trusted clients"
 msgstr "Вывести список доверенных клиентов"
 
 #: cmd/incus/config_trust.go:378
+#, fuzzy
 msgid ""
 "List trusted clients\n"
 "\n"
@@ -5802,7 +5811,6 @@ msgid ""
 "Default column layout is: ntdfe\n"
 "\n"
 "Column shorthand chars:\n"
-"\n"
 "\tn - Name\n"
 "\tt - Type\n"
 "\tc - Common Name\n"
@@ -5837,6 +5845,7 @@ msgid "List warnings"
 msgstr "Вывести предупреждения"
 
 #: cmd/incus/warning.go:77
+#, fuzzy
 msgid ""
 "List warnings\n"
 "\n"
@@ -5847,7 +5856,6 @@ msgid ""
 "Default column layout is: utSscpLl\n"
 "\n"
 "Column shorthand chars:\n"
-"\n"
 "    c - Count\n"
 "    l - Last seen\n"
 "    L - Location\n"
@@ -6438,8 +6446,8 @@ msgstr ""
 "Для импорта из директории необходимо запустить программу с правами root"
 
 #: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1142
-#: cmd/incus/cluster_group.go:463 cmd/incus/config_trust.go:413
-#: cmd/incus/config_trust.go:600 cmd/incus/list.go:484
+#: cmd/incus/cluster_group.go:463 cmd/incus/config_trust.go:412
+#: cmd/incus/config_trust.go:599 cmd/incus/list.go:484
 #: cmd/incus/network.go:1071 cmd/incus/network_acl.go:162
 #: cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:427
 #: cmd/incus/network_peer.go:138 cmd/incus/network_zone.go:144
@@ -6455,13 +6463,9 @@ msgstr "НАЗВАНИЕ"
 msgid "NAT"
 msgstr "СЕТЕВАЯ ТРАНСЛЯЦИЯ АДРЕСОВ (NAT)"
 
-#: cmd/incus/storage_volume.go:4031
+#: cmd/incus/storage_volume.go:4031 cmd/incus/storage_volume.go:4032
 msgid "NBD access to a block storage volume"
 msgstr "доступ NBD к блочному тому хранения"
-
-#: cmd/incus/storage_volume.go:4032
-msgid "NBD access to a block storage volume."
-msgstr "доступ NBD к блочному тому хранения."
 
 #: cmd/incus/storage_volume.go:4096
 #, c-format
@@ -6783,7 +6787,7 @@ msgstr "Новая пара параметр/значение для приме�
 msgid "No %s storage backends available"
 msgstr "Бэкенд хранения данных %s недоступен"
 
-#: cmd/incus/config_trust.go:797
+#: cmd/incus/config_trust.go:796
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
 msgstr ""
@@ -6950,15 +6954,15 @@ msgstr "ПРОЦЕССЫ"
 msgid "PROFILES"
 msgstr "ПРОФИЛИ"
 
-#: cmd/incus/image.go:1099 cmd/incus/list.go:478 cmd/incus/network.go:1070
+#: cmd/incus/image.go:1098 cmd/incus/list.go:478 cmd/incus/network.go:1070
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:143 cmd/incus/profile.go:724
 #: cmd/incus/storage_bucket.go:479 cmd/incus/storage_volume.go:1636
-#: cmd/incus/top.go:82 cmd/incus/warning.go:213
+#: cmd/incus/top.go:82 cmd/incus/warning.go:212
 msgid "PROJECT"
 msgstr "ПРОЕКТ"
 
-#: cmd/incus/config_trust.go:421
+#: cmd/incus/config_trust.go:420
 msgid "PROJECTS"
 msgstr "ПРОЕКТЫ"
 
@@ -6966,7 +6970,7 @@ msgstr "ПРОЕКТЫ"
 msgid "PROTOCOL"
 msgstr "ПРОТОКОЛ"
 
-#: cmd/incus/image.go:1104 cmd/incus/remote.go:988
+#: cmd/incus/image.go:1103 cmd/incus/remote.go:988
 msgid "PUBLIC"
 msgstr "ПУБЛИЧНЫЙ"
 
@@ -7239,7 +7243,7 @@ msgstr "Проект для дистанционного сервера"
 msgid "Properties:"
 msgstr "Свойства:"
 
-#: cmd/incus/image.go:1569
+#: cmd/incus/image.go:1568
 msgid "Property not found"
 msgstr "Свойство не найдено"
 
@@ -7307,7 +7311,7 @@ msgstr "Отправка %s в %s: %%s"
 msgid "Query path must start with /"
 msgstr "Путь запроса должен начаться с /"
 
-#: cmd/incus/image.go:523 cmd/incus/image.go:905 cmd/incus/image.go:1463
+#: cmd/incus/image.go:523 cmd/incus/image.go:905 cmd/incus/image.go:1462
 msgid "Query virtual machine images"
 msgstr "Запрос образов виртуальных машин"
 
@@ -7315,7 +7319,7 @@ msgstr "Запрос образов виртуальных машин"
 msgid "RESOURCE"
 msgstr "РЕСУРСЫ"
 
-#: cmd/incus/config_trust.go:420
+#: cmd/incus/config_trust.go:419
 msgid "RESTRICTED"
 msgstr "ОГРАНИЧЕНО"
 
@@ -7383,7 +7387,7 @@ msgstr "Рекурсивно передать файлы"
 msgid "Refresh and update the existing storage volume copies"
 msgstr "Обновить существующие копии томов хранения"
 
-#: cmd/incus/image.go:1383 cmd/incus/image.go:1384
+#: cmd/incus/image.go:1382 cmd/incus/image.go:1383
 msgid "Refresh images"
 msgstr "Обновить образы"
 
@@ -7392,7 +7396,7 @@ msgstr "Обновить образы"
 msgid "Refreshing instance: %s"
 msgstr "Обновление экземпляра: %s"
 
-#: cmd/incus/image.go:1407
+#: cmd/incus/image.go:1406
 #, c-format
 msgid "Refreshing the image: %s"
 msgstr "обновление образа: %s"
@@ -7532,7 +7536,7 @@ msgstr "Удалить правила из сетевого списка кон�
 msgid "Remove snapshot %s from %s (yes/no): "
 msgstr "Удалить моментальный снимок %s из %s да(yes)/нет(no): "
 
-#: cmd/incus/config_trust.go:711 cmd/incus/config_trust.go:712
+#: cmd/incus/config_trust.go:710 cmd/incus/config_trust.go:711
 msgid "Remove trusted client"
 msgstr "Удалить доверенного клиента"
 
@@ -7673,7 +7677,7 @@ msgstr "Получить журнал консоли экземпляра"
 msgid "Retrieving image: %s"
 msgstr "Получение образа: %s"
 
-#: cmd/incus/config_trust.go:744 cmd/incus/config_trust.go:745
+#: cmd/incus/config_trust.go:743 cmd/incus/config_trust.go:744
 msgid "Revoke certificate add token"
 msgstr "Отозвать токен добавления сертификата"
 
@@ -7714,11 +7718,11 @@ msgstr "Запустить для всех экземпляров"
 msgid "Run against all projects"
 msgstr "Запустить во всех проектах"
 
-#: cmd/incus/warning.go:214
+#: cmd/incus/warning.go:213
 msgid "SEVERITY"
 msgstr "ВАЖНОСТЬ"
 
-#: cmd/incus/image.go:1105
+#: cmd/incus/image.go:1104
 msgid "SIZE"
 msgstr "РАЗМЕР"
 
@@ -7760,7 +7764,7 @@ msgstr "ЗАПУЩЕН В"
 
 #: cmd/incus/list.go:489 cmd/incus/network.go:1078
 #: cmd/incus/network_peer.go:142 cmd/incus/operation.go:167
-#: cmd/incus/storage.go:689 cmd/incus/warning.go:215
+#: cmd/incus/storage.go:689 cmd/incus/warning.go:214
 msgid "STATE"
 msgstr "СОСТОЯНИЕ"
 
@@ -7909,7 +7913,7 @@ msgstr ""
 "    incus profile device set [<сервер>:]<профиль> <устройство> <параметр> "
 "<значение>"
 
-#: cmd/incus/image.go:1587 cmd/incus/image.go:1588
+#: cmd/incus/image.go:1586 cmd/incus/image.go:1587
 msgid "Set image properties"
 msgstr "Задать свойства образа"
 
@@ -8337,7 +8341,7 @@ msgstr "Показать события из всех проектов"
 msgid "Show full device configuration"
 msgstr "Показать полную конфигурацию устройства"
 
-#: cmd/incus/image.go:1460 cmd/incus/image.go:1461
+#: cmd/incus/image.go:1459 cmd/incus/image.go:1460
 msgid "Show image properties"
 msgstr "Показать свойства образа"
 
@@ -8512,7 +8516,7 @@ msgstr "Показать ресурсы, доступные для пула хр
 msgid "Show the used and free space in bytes"
 msgstr "Показать использованное и свободное пространство в байтах"
 
-#: cmd/incus/config_trust.go:812 cmd/incus/config_trust.go:813
+#: cmd/incus/config_trust.go:811 cmd/incus/config_trust.go:812
 msgid "Show trust configurations"
 msgstr "Показать настройки доверия"
 
@@ -8528,7 +8532,7 @@ msgstr "Показать полезную информацию о образах
 msgid "Show useful information about storage pools"
 msgstr "Показать полезную информацию о пулах хранения"
 
-#: cmd/incus/warning.go:296 cmd/incus/warning.go:297
+#: cmd/incus/warning.go:295 cmd/incus/warning.go:296
 msgid "Show warning"
 msgstr "Показать предупреждения"
 
@@ -8786,16 +8790,16 @@ msgstr "СДЕЛАН В"
 msgid "TARGET"
 msgstr "ЦЕЛЬ"
 
-#: cmd/incus/cluster.go:1143 cmd/incus/config_trust.go:601
+#: cmd/incus/cluster.go:1143 cmd/incus/config_trust.go:600
 msgid "TOKEN"
 msgstr "ТОКЕН"
 
-#: cmd/incus/config_trust.go:414 cmd/incus/image.go:1106
+#: cmd/incus/config_trust.go:413 cmd/incus/image.go:1105
 #: cmd/incus/image_alias.go:248 cmd/incus/list.go:490 cmd/incus/network.go:1072
 #: cmd/incus/network.go:1268 cmd/incus/network_allocations.go:82
 #: cmd/incus/network_integration.go:429 cmd/incus/network_peer.go:141
 #: cmd/incus/operation.go:165 cmd/incus/storage_volume.go:1616
-#: cmd/incus/warning.go:216
+#: cmd/incus/warning.go:215
 msgid "TYPE"
 msgstr "ТИП"
 
@@ -9323,7 +9327,7 @@ msgstr "Тип: %s"
 msgid "UNLIMITED"
 msgstr "НЕОГРАНИЧЕННО"
 
-#: cmd/incus/image.go:1107
+#: cmd/incus/image.go:1106
 msgid "UPLOAD DATE"
 msgstr "ДАТА ВЫГРУЗКИ"
 
@@ -9352,7 +9356,7 @@ msgstr "USB-устройства:"
 msgid "USED BY"
 msgstr "ИСПОЛЬЗУЕТСЯ"
 
-#: cmd/incus/warning.go:217
+#: cmd/incus/warning.go:216
 msgid "UUID"
 msgstr "UUID"
 
@@ -9387,8 +9391,8 @@ msgid "Unknown channel type for client %q: %s"
 msgstr "Неизвестный тип канала связи для клиента %q: %s"
 
 #: cmd/incus/cluster.go:218 cmd/incus/cluster.go:1158
-#: cmd/incus/cluster_group.go:479 cmd/incus/config_trust.go:435
-#: cmd/incus/config_trust.go:616 cmd/incus/image.go:1122
+#: cmd/incus/cluster_group.go:479 cmd/incus/config_trust.go:434
+#: cmd/incus/config_trust.go:615 cmd/incus/image.go:1121
 #: cmd/incus/image_alias.go:264 cmd/incus/list.go:546 cmd/incus/network.go:1097
 #: cmd/incus/network.go:1286 cmd/incus/network_allocations.go:98
 #: cmd/incus/network_forward.go:163 cmd/incus/network_integration.go:444
@@ -9398,7 +9402,7 @@ msgstr "Неизвестный тип канала связи для клиен�
 #: cmd/incus/snapshot.go:382 cmd/incus/storage.go:704
 #: cmd/incus/storage_bucket.go:504 cmd/incus/storage_bucket.go:888
 #: cmd/incus/storage_volume.go:1652 cmd/incus/storage_volume.go:3442
-#: cmd/incus/top.go:101 cmd/incus/warning.go:242
+#: cmd/incus/top.go:101 cmd/incus/warning.go:241
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "Неизвестный сокращенный символ столбца '%c' в '%s'"
@@ -9444,7 +9448,7 @@ msgstr "Убрать все профили с целевого экземпля�
 msgid "Unset device configuration keys"
 msgstr "Убрать параметры конфигурации устройства"
 
-#: cmd/incus/image.go:1651 cmd/incus/image.go:1652
+#: cmd/incus/image.go:1650 cmd/incus/image.go:1651
 msgid "Unset image properties"
 msgstr "Убрать свойства образа"
 
@@ -11213,8 +11217,8 @@ msgstr "сеть или сетевая интеграция"
 msgid "new %s name"
 msgstr "новое название %s"
 
-#: cmd/incus/config_trust.go:478 cmd/incus/image.go:945 cmd/incus/image.go:950
-#: cmd/incus/image.go:1164
+#: cmd/incus/config_trust.go:477 cmd/incus/image.go:945 cmd/incus/image.go:950
+#: cmd/incus/image.go:1163
 msgid "no"
 msgstr "нет"
 
@@ -11395,9 +11399,9 @@ msgstr "UUID предупреждения"
 msgid "y"
 msgstr "да (y)"
 
-#: cmd/incus/cluster.go:725 cmd/incus/config_trust.go:475
+#: cmd/incus/cluster.go:725 cmd/incus/config_trust.go:474
 #: cmd/incus/delete.go:56 cmd/incus/image.go:947 cmd/incus/image.go:952
-#: cmd/incus/image.go:1161 cmd/incus/project.go:225 cmd/incus/snapshot.go:279
+#: cmd/incus/image.go:1160 cmd/incus/project.go:225 cmd/incus/snapshot.go:279
 msgid "yes"
 msgstr "да"
 
@@ -11409,6 +11413,9 @@ msgstr "DNS зона"
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#~ msgid "NBD access to a block storage volume."
+#~ msgstr "доступ NBD к блочному тому хранения."
 
 #~ msgid "Expiry date or time span for the new snapshot"
 #~ msgstr ""
