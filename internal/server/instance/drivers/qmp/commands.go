@@ -1774,6 +1774,11 @@ func (m *Monitor) QueryVirtioSoundDevice() error {
 	return m.Run("device-list-properties", map[string]string{"typename": "virtio-sound-pci"}, nil)
 }
 
+// QueryVirtioVGADevice checks whether virtio-vga support is available in QEMU.
+func (m *Monitor) QueryVirtioVGADevice() error {
+	return m.Run("device-list-properties", map[string]string{"typename": "virtio-vga"}, nil)
+}
+
 // AddDirtyBitmap creates a dirty bitmap for a block device.
 func (m *Monitor) AddDirtyBitmap(deviceNames []string, bitmapName string, granularity int, persistent bool, disabled bool) error {
 	actions := []TransactionAction{}
