@@ -1026,7 +1026,7 @@ Examples:
   - "type=bridge" lists all networks with the type bridge
 
 The -c option takes a (optionally comma-separated) list of arguments
-that control which image attributes to output when displaying in table
+that control which networks attributes to output when displaying in table
 or csv format.
 
 Default column layout is: ntm46dus
@@ -1224,7 +1224,7 @@ Default column layout: hmitL
 
 == Columns ==
 The -c option takes a comma separated list of arguments that control
-which network zone attributes to output when displaying in table or csv
+which DHCP leases attributes to output when displaying in table or csv
 format.
 
 Column arguments are either pre-defined shorthand chars (see below),

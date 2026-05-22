@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-05-22 05:44+0200\n"
+        "POT-Creation-Date: 2026-05-22 05:53+0200\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -359,7 +359,7 @@ msgstr  ""
 msgid   "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr  ""
 
-#: cmd/incus/image.go:1135
+#: cmd/incus/image.go:1134
 #, c-format
 msgid   "%s (%d more)"
 msgstr  ""
@@ -417,7 +417,7 @@ msgstr  ""
 msgid   "- Port %d (%s)"
 msgstr  ""
 
-#: cmd/incus/warning.go:362
+#: cmd/incus/warning.go:361
 msgid   "--all cannot be used together with other arguments"
 msgstr  ""
 
@@ -510,11 +510,11 @@ msgstr  ""
 msgid   "ADDRESSES"
 msgstr  ""
 
-#: cmd/incus/alias.go:148 cmd/incus/image.go:1102 cmd/incus/image_alias.go:246
+#: cmd/incus/alias.go:148 cmd/incus/image.go:1101 cmd/incus/image_alias.go:246
 msgid   "ALIAS"
 msgstr  ""
 
-#: cmd/incus/image.go:1103
+#: cmd/incus/image.go:1102
 msgid   "ALIASES"
 msgstr  ""
 
@@ -526,7 +526,7 @@ msgstr  ""
 msgid   "APP"
 msgstr  ""
 
-#: cmd/incus/cluster.go:199 cmd/incus/image.go:1097 cmd/incus/list.go:473
+#: cmd/incus/cluster.go:199 cmd/incus/image.go:1096 cmd/incus/list.go:473
 msgid   "ARCHITECTURE"
 msgstr  ""
 
@@ -551,7 +551,7 @@ msgstr  ""
 msgid   "Access the expanded configuration"
 msgstr  ""
 
-#: cmd/incus/warning.go:264 cmd/incus/warning.go:265
+#: cmd/incus/warning.go:263 cmd/incus/warning.go:264
 msgid   "Acknowledge warning"
 msgstr  ""
 
@@ -934,7 +934,7 @@ msgstr  ""
 msgid   "CANCELABLE"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:415
+#: cmd/incus/config_trust.go:414
 msgid   "COMMON NAME"
 msgstr  ""
 
@@ -942,7 +942,7 @@ msgstr  ""
 msgid   "CONTENT-TYPE"
 msgstr  ""
 
-#: cmd/incus/warning.go:210
+#: cmd/incus/warning.go:209
 msgid   "COUNT"
 msgstr  ""
 
@@ -1027,7 +1027,7 @@ msgstr  ""
 msgid   "Can't specify --project with --all-projects"
 msgstr  ""
 
-#: cmd/incus/list.go:537 cmd/incus/storage_volume.go:1629 cmd/incus/warning.go:225
+#: cmd/incus/list.go:537 cmd/incus/storage_volume.go:1629 cmd/incus/warning.go:224
 msgid   "Can't specify column L when not clustered"
 msgstr  ""
 
@@ -1092,7 +1092,7 @@ msgstr  ""
 msgid   "Card: %s (%s)"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:790
+#: cmd/incus/config_trust.go:789
 #, c-format
 msgid   "Certificate add token for %s deleted"
 msgstr  ""
@@ -1201,7 +1201,7 @@ msgstr  ""
 msgid   "Clustering enabled"
 msgstr  ""
 
-#: cmd/incus/cluster.go:171 cmd/incus/cluster.go:1123 cmd/incus/cluster_group.go:439 cmd/incus/config_trust.go:399 cmd/incus/config_trust.go:585 cmd/incus/image.go:1069 cmd/incus/image_alias.go:209 cmd/incus/list.go:140 cmd/incus/network.go:1044 cmd/incus/network.go:1242 cmd/incus/network_allocations.go:67 cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:412 cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:122 cmd/incus/operation.go:149 cmd/incus/profile.go:697 cmd/incus/project.go:517 cmd/incus/remote.go:971 cmd/incus/snapshot.go:342 cmd/incus/storage.go:660 cmd/incus/storage_bucket.go:464 cmd/incus/storage_bucket.go:857 cmd/incus/storage_volume.go:1488 cmd/incus/storage_volume.go:3333 cmd/incus/top.go:67 cmd/incus/warning.go:98
+#: cmd/incus/cluster.go:171 cmd/incus/cluster.go:1123 cmd/incus/cluster_group.go:439 cmd/incus/config_trust.go:398 cmd/incus/config_trust.go:584 cmd/incus/image.go:1068 cmd/incus/image_alias.go:209 cmd/incus/list.go:140 cmd/incus/network.go:1044 cmd/incus/network.go:1242 cmd/incus/network_allocations.go:67 cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:412 cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:122 cmd/incus/operation.go:149 cmd/incus/profile.go:697 cmd/incus/project.go:517 cmd/incus/remote.go:971 cmd/incus/snapshot.go:342 cmd/incus/storage.go:660 cmd/incus/storage_bucket.go:464 cmd/incus/storage_bucket.go:857 cmd/incus/storage_volume.go:1488 cmd/incus/storage_volume.go:3333 cmd/incus/top.go:67 cmd/incus/warning.go:97
 msgid   "Columns"
 msgstr  ""
 
@@ -1576,7 +1576,7 @@ msgstr  ""
 msgid   "DEFAULT TARGET ADDRESS"
 msgstr  ""
 
-#: cmd/incus/cluster.go:201 cmd/incus/cluster_group.go:465 cmd/incus/config_trust.go:417 cmd/incus/image.go:1098 cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1076 cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:143 cmd/incus/network_integration.go:428 cmd/incus/network_load_balancer.go:150 cmd/incus/network_peer.go:139 cmd/incus/network_zone.go:145 cmd/incus/network_zone.go:872 cmd/incus/operation.go:166 cmd/incus/profile.go:725 cmd/incus/project.go:548 cmd/incus/storage.go:686 cmd/incus/storage_bucket.go:481 cmd/incus/storage_bucket.go:873 cmd/incus/storage_volume.go:1618
+#: cmd/incus/cluster.go:201 cmd/incus/cluster_group.go:465 cmd/incus/config_trust.go:416 cmd/incus/image.go:1097 cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1076 cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:143 cmd/incus/network_integration.go:428 cmd/incus/network_load_balancer.go:150 cmd/incus/network_peer.go:139 cmd/incus/network_zone.go:145 cmd/incus/network_zone.go:872 cmd/incus/operation.go:166 cmd/incus/profile.go:725 cmd/incus/project.go:548 cmd/incus/storage.go:686 cmd/incus/storage_bucket.go:481 cmd/incus/storage_bucket.go:873 cmd/incus/storage_volume.go:1618
 msgid   "DESCRIPTION"
 msgstr  ""
 
@@ -1631,7 +1631,7 @@ msgstr  ""
 msgid   "Delay:"
 msgstr  ""
 
-#: cmd/incus/warning.go:345
+#: cmd/incus/warning.go:344
 msgid   "Delete all warnings"
 msgstr  ""
 
@@ -1735,7 +1735,7 @@ msgstr  ""
 msgid   "Delete storage volume snapshots"
 msgstr  ""
 
-#: cmd/incus/warning.go:342 cmd/incus/warning.go:343
+#: cmd/incus/warning.go:341 cmd/incus/warning.go:342
 msgid   "Delete warnings"
 msgstr  ""
 
@@ -1897,7 +1897,7 @@ msgstr  ""
 msgid   "Display clusters from all projects"
 msgstr  ""
 
-#: cmd/incus/image.go:1071
+#: cmd/incus/image.go:1070
 msgid   "Display images from all projects"
 msgstr  ""
 
@@ -2005,11 +2005,11 @@ msgstr  ""
 msgid   "EXISTING: %q (backend=%q, source=%q)"
 msgstr  ""
 
-#: cmd/incus/cluster.go:1144 cmd/incus/config_trust.go:602 cmd/incus/snapshot.go:367 cmd/incus/storage_volume.go:3428
+#: cmd/incus/cluster.go:1144 cmd/incus/config_trust.go:601 cmd/incus/snapshot.go:367 cmd/incus/storage_volume.go:3428
 msgid   "EXPIRES AT"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:419
+#: cmd/incus/config_trust.go:418
 msgid   "EXPIRY DATE"
 msgstr  ""
 
@@ -2116,7 +2116,7 @@ msgstr  ""
 msgid   "Edit trust configurations as YAML"
 msgstr  ""
 
-#: cmd/incus/cluster.go:212 cmd/incus/cluster.go:1152 cmd/incus/cluster_group.go:473 cmd/incus/config_trust.go:429 cmd/incus/config_trust.go:610 cmd/incus/image.go:1116 cmd/incus/image_alias.go:258 cmd/incus/list.go:528 cmd/incus/network.go:1091 cmd/incus/network.go:1280 cmd/incus/network_allocations.go:92 cmd/incus/network_forward.go:157 cmd/incus/network_integration.go:438 cmd/incus/network_load_balancer.go:163 cmd/incus/network_peer.go:150 cmd/incus/network_zone.go:158 cmd/incus/operation.go:181 cmd/incus/profile.go:741 cmd/incus/project.go:558 cmd/incus/remote.go:998 cmd/incus/snapshot.go:376 cmd/incus/storage.go:698 cmd/incus/storage_bucket.go:498 cmd/incus/storage_bucket.go:882 cmd/incus/storage_volume.go:1646 cmd/incus/storage_volume.go:3436 cmd/incus/top.go:95 cmd/incus/warning.go:236
+#: cmd/incus/cluster.go:212 cmd/incus/cluster.go:1152 cmd/incus/cluster_group.go:473 cmd/incus/config_trust.go:428 cmd/incus/config_trust.go:609 cmd/incus/image.go:1115 cmd/incus/image_alias.go:258 cmd/incus/list.go:528 cmd/incus/network.go:1091 cmd/incus/network.go:1280 cmd/incus/network_allocations.go:92 cmd/incus/network_forward.go:157 cmd/incus/network_integration.go:438 cmd/incus/network_load_balancer.go:163 cmd/incus/network_peer.go:150 cmd/incus/network_zone.go:158 cmd/incus/operation.go:181 cmd/incus/profile.go:741 cmd/incus/project.go:558 cmd/incus/remote.go:998 cmd/incus/snapshot.go:376 cmd/incus/storage.go:698 cmd/incus/storage_bucket.go:498 cmd/incus/storage_bucket.go:882 cmd/incus/storage_volume.go:1646 cmd/incus/storage_volume.go:3436 cmd/incus/top.go:95 cmd/incus/warning.go:235
 #, c-format
 msgid   "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr  ""
@@ -2369,11 +2369,11 @@ msgstr  ""
 msgid   "FILENAME"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:416 cmd/incus/image.go:1100 cmd/incus/image.go:1101 cmd/incus/image_alias.go:247
+#: cmd/incus/config_trust.go:415 cmd/incus/image.go:1099 cmd/incus/image.go:1100 cmd/incus/image_alias.go:247
 msgid   "FINGERPRINT"
 msgstr  ""
 
-#: cmd/incus/warning.go:211
+#: cmd/incus/warning.go:210
 msgid   "FIRST SEEN"
 msgstr  ""
 
@@ -2836,7 +2836,7 @@ msgstr  ""
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:111 cmd/incus/cluster.go:172 cmd/incus/cluster_group.go:440 cmd/incus/config_template.go:271 cmd/incus/config_trust.go:400 cmd/incus/config_trust.go:584 cmd/incus/image.go:1070 cmd/incus/image_alias.go:208 cmd/incus/list.go:141 cmd/incus/network.go:1045 cmd/incus/network.go:1241 cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:64 cmd/incus/network_forward.go:120 cmd/incus/network_integration.go:411 cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:116 cmd/incus/network_zone.go:120 cmd/incus/network_zone.go:819 cmd/incus/operation.go:147 cmd/incus/profile.go:698 cmd/incus/project.go:518 cmd/incus/project.go:993 cmd/incus/remote.go:970 cmd/incus/snapshot.go:341 cmd/incus/storage.go:661 cmd/incus/storage_bucket.go:462 cmd/incus/storage_bucket.go:855 cmd/incus/storage_volume.go:1515 cmd/incus/storage_volume.go:3346 cmd/incus/warning.go:99
+#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:111 cmd/incus/cluster.go:172 cmd/incus/cluster_group.go:440 cmd/incus/config_template.go:271 cmd/incus/config_trust.go:399 cmd/incus/config_trust.go:583 cmd/incus/image.go:1069 cmd/incus/image_alias.go:208 cmd/incus/list.go:141 cmd/incus/network.go:1045 cmd/incus/network.go:1241 cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:64 cmd/incus/network_forward.go:120 cmd/incus/network_integration.go:411 cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:116 cmd/incus/network_zone.go:120 cmd/incus/network_zone.go:819 cmd/incus/operation.go:147 cmd/incus/profile.go:698 cmd/incus/project.go:518 cmd/incus/project.go:993 cmd/incus/remote.go:970 cmd/incus/snapshot.go:341 cmd/incus/storage.go:661 cmd/incus/storage_bucket.go:462 cmd/incus/storage_bucket.go:855 cmd/incus/storage_volume.go:1515 cmd/incus/storage_volume.go:3346 cmd/incus/warning.go:98
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr  ""
 
@@ -2906,11 +2906,11 @@ msgid   "Generate a client trust token derived from the existing client certific
         "This is useful for remote authentication workflows where a token is passed to another Incus server."
 msgstr  ""
 
-#: cmd/incus/image.go:1729
+#: cmd/incus/image.go:1728
 msgid   "Generate a metadata tarball"
 msgstr  ""
 
-#: cmd/incus/image.go:1731
+#: cmd/incus/image.go:1730
 msgid   "Generate a metadata tarball\n"
         "\n"
         "This command produces an incus.tar.xz tarball for use during import with an existing QCOW2 or squashfs disk image.\n"
@@ -2947,7 +2947,7 @@ msgstr  ""
 msgid   "Get current load-balancer status"
 msgstr  ""
 
-#: cmd/incus/image.go:1524 cmd/incus/image.go:1525
+#: cmd/incus/image.go:1523 cmd/incus/image.go:1524
 msgid   "Get image properties"
 msgstr  ""
 
@@ -3208,7 +3208,7 @@ msgstr  ""
 msgid   "IPv6 uplink address"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:418
+#: cmd/incus/config_trust.go:417
 msgid   "ISSUE DATE"
 msgstr  ""
 
@@ -3261,7 +3261,7 @@ msgstr  ""
 msgid   "Image alias description"
 msgstr  ""
 
-#: cmd/incus/image.go:1440
+#: cmd/incus/image.go:1439
 msgid   "Image already up to date."
 msgstr  ""
 
@@ -3286,7 +3286,7 @@ msgstr  ""
 msgid   "Image imported with fingerprint: %s"
 msgstr  ""
 
-#: cmd/incus/image.go:1438
+#: cmd/incus/image.go:1437
 msgid   "Image refreshed successfully!"
 msgstr  ""
 
@@ -3440,7 +3440,7 @@ msgstr  ""
 msgid   "Invalid boolean value: %s"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:516
+#: cmd/incus/config_trust.go:515
 msgid   "Invalid certificate"
 msgstr  ""
 
@@ -3559,7 +3559,7 @@ msgstr  ""
 msgid   "Key description"
 msgstr  ""
 
-#: cmd/incus/warning.go:212
+#: cmd/incus/warning.go:211
 msgid   "LAST SEEN"
 msgstr  ""
 
@@ -3575,7 +3575,7 @@ msgstr  ""
 msgid   "LISTEN ADDRESS"
 msgstr  ""
 
-#: cmd/incus/list.go:518 cmd/incus/network.go:1269 cmd/incus/network_forward.go:146 cmd/incus/network_load_balancer.go:152 cmd/incus/operation.go:170 cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1625 cmd/incus/warning.go:221
+#: cmd/incus/list.go:518 cmd/incus/network.go:1269 cmd/incus/network_forward.go:146 cmd/incus/network_load_balancer.go:152 cmd/incus/operation.go:170 cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1625 cmd/incus/warning.go:220
 msgid   "LOCATION"
 msgstr  ""
 
@@ -3623,7 +3623,7 @@ msgid   "List DHCP leases\n"
         "\n"
         "== Columns ==\n"
         "The -c option takes a comma separated list of arguments that control\n"
-        "which network zone attributes to output when displaying in table or csv\n"
+        "which DHCP leases attributes to output when displaying in table or csv\n"
         "format.\n"
         "\n"
         "Column arguments are either pre-defined shorthand chars (see below),\n"
@@ -3647,19 +3647,19 @@ msgstr  ""
 msgid   "List aliases"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:564
+#: cmd/incus/config_trust.go:563
 msgid   "List all active certificate add tokens"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:565
+#: cmd/incus/config_trust.go:564
 msgid   "List all active certificate add tokens\n"
         "\n"
         "Default column layout: ntE\n"
         "\n"
         "== Columns ==\n"
         "The -c option takes a comma separated list of arguments that control\n"
-        "which network zone attributes to output when displaying in table or csv\n"
-        "format.\n"
+        "which certificate add tokens attributes to output when displaying in\n"
+        "table or csv format.\n"
         "\n"
         "Column arguments are either pre-defined shorthand chars (see below),\n"
         "or (extended) config keys.\n"
@@ -3708,8 +3708,8 @@ msgid   "List all the cluster groups\n"
         "\n"
         "== Columns ==\n"
         "The -c option takes a comma separated list of arguments that control\n"
-        "which instance attributes to output when displaying in table or csv\n"
-        "format.\n"
+        "which cluster groups attributes to output when displaying in table\n"
+        "or csv format.\n"
         "\n"
         "Column arguments are either pre-defined shorthand chars (see below),\n"
         "or (extended) config keys.\n"
@@ -3747,7 +3747,7 @@ msgid   "List all the cluster members\n"
         "    m - Message"
 msgstr  ""
 
-#: cmd/incus/warning.go:100
+#: cmd/incus/warning.go:99
 msgid   "List all warnings"
 msgstr  ""
 
@@ -3774,8 +3774,8 @@ msgid   "List available network forwards\n"
         "\n"
         "== Columns ==\n"
         "The -c option takes a comma separated list of arguments that control\n"
-        "which instance attributes to output when displaying in table or csv\n"
-        "format.\n"
+        "which netwprk forward attributes to output when displaying\n"
+        "in table or csv format.\n"
         "\n"
         "Column arguments are either pre-defined shorthand chars (see below),\n"
         "or (extended) config keys.\n"
@@ -3847,8 +3847,12 @@ msgstr  ""
 msgid   "List available network zone records"
 msgstr  ""
 
+#: cmd/incus/network_zone.go:97
+msgid   "List available network zones"
+msgstr  ""
+
 #: cmd/incus/network_zone.go:98
-msgid   "List available network zone\n"
+msgid   "List available network zones\n"
         "\n"
         "Default column layout: nDSdus\n"
         "\n"
@@ -3869,10 +3873,6 @@ msgid   "List available network zone\n"
         "  u - Used by"
 msgstr  ""
 
-#: cmd/incus/network_zone.go:97
-msgid   "List available network zones"
-msgstr  ""
-
 #: cmd/incus/network.go:1016
 msgid   "List available networks"
 msgstr  ""
@@ -3889,7 +3889,7 @@ msgid   "List available networks\n"
         "  - \"type=bridge\" lists all networks with the type bridge\n"
         "\n"
         "The -c option takes a (optionally comma-separated) list of arguments\n"
-        "that control which image attributes to output when displaying in table\n"
+        "that control which networks attributes to output when displaying in table\n"
         "or csv format.\n"
         "\n"
         "Default column layout is: ntm46dus\n"
@@ -4006,7 +4006,6 @@ msgid   "List images\n"
         "Default column layout is: lfpdasu\n"
         "\n"
         "Column shorthand chars:\n"
-        "\n"
         "    l - Shortest image alias (and optionally number of other aliases)\n"
         "    L - Newline-separated list of all image aliases\n"
         "    f - Fingerprint (short)\n"
@@ -4237,11 +4236,11 @@ msgstr  ""
 msgid   "List projects\n"
         "\n"
         "The -c option takes a (optionally comma-separated) list of arguments\n"
-        "that control which image attributes to output when displaying in table\n"
+        "that control which project attributes to output when displaying in table\n"
         "or csv format.\n"
         "Default column layout is: nipvbwzdu\n"
-        "Column shorthand chars:\n"
         "\n"
+        "Column shorthand chars:\n"
         "n - Project Name\n"
         "i - Images\n"
         "p - Profiles\n"
@@ -4312,8 +4311,8 @@ msgstr  ""
 msgid   "List storage volume snapshots\n"
         "\n"
         "	The -c option takes a (optionally comma-separated) list of arguments\n"
-        "	that control which image attributes to output when displaying in table\n"
-        "	or csv format.\n"
+        "	that control which storage volume snapshot attributes to output\n"
+        "	when displaying in table or csv format.\n"
         "\n"
         "	Column shorthand chars:\n"
         "		n - Name\n"
@@ -4395,7 +4394,6 @@ msgid   "List trusted clients\n"
         "Default column layout is: ntdfe\n"
         "\n"
         "Column shorthand chars:\n"
-        "\n"
         "	n - Name\n"
         "	t - Type\n"
         "	c - Common Name\n"
@@ -4421,7 +4419,6 @@ msgid   "List warnings\n"
         "Default column layout is: utSscpLl\n"
         "\n"
         "Column shorthand chars:\n"
-        "\n"
         "    c - Count\n"
         "    l - Last seen\n"
         "    L - Location\n"
@@ -4926,7 +4923,7 @@ msgstr  ""
 msgid   "Must run as root to import from directory"
 msgstr  ""
 
-#: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1142 cmd/incus/cluster_group.go:463 cmd/incus/config_trust.go:413 cmd/incus/config_trust.go:600 cmd/incus/list.go:484 cmd/incus/network.go:1071 cmd/incus/network_acl.go:162 cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:427 cmd/incus/network_peer.go:138 cmd/incus/network_zone.go:144 cmd/incus/network_zone.go:871 cmd/incus/profile.go:723 cmd/incus/project.go:541 cmd/incus/project.go:670 cmd/incus/remote.go:984 cmd/incus/snapshot.go:365 cmd/incus/storage.go:684 cmd/incus/storage_bucket.go:480 cmd/incus/storage_bucket.go:872 cmd/incus/storage_volume.go:1617 cmd/incus/storage_volume.go:3426
+#: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1142 cmd/incus/cluster_group.go:463 cmd/incus/config_trust.go:412 cmd/incus/config_trust.go:599 cmd/incus/list.go:484 cmd/incus/network.go:1071 cmd/incus/network_acl.go:162 cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:427 cmd/incus/network_peer.go:138 cmd/incus/network_zone.go:144 cmd/incus/network_zone.go:871 cmd/incus/profile.go:723 cmd/incus/project.go:541 cmd/incus/project.go:670 cmd/incus/remote.go:984 cmd/incus/snapshot.go:365 cmd/incus/storage.go:684 cmd/incus/storage_bucket.go:480 cmd/incus/storage_bucket.go:872 cmd/incus/storage_volume.go:1617 cmd/incus/storage_volume.go:3426
 msgid   "NAME"
 msgstr  ""
 
@@ -4934,12 +4931,8 @@ msgstr  ""
 msgid   "NAT"
 msgstr  ""
 
-#: cmd/incus/storage_volume.go:4031
+#: cmd/incus/storage_volume.go:4031 cmd/incus/storage_volume.go:4032
 msgid   "NBD access to a block storage volume"
-msgstr  ""
-
-#: cmd/incus/storage_volume.go:4032
-msgid   "NBD access to a block storage volume."
 msgstr  ""
 
 #: cmd/incus/storage_volume.go:4096
@@ -5248,7 +5241,7 @@ msgstr  ""
 msgid   "No %s storage backends available"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:797
+#: cmd/incus/config_trust.go:796
 #, c-format
 msgid   "No certificate add token for member %s on remote: %s"
 msgstr  ""
@@ -5398,11 +5391,11 @@ msgstr  ""
 msgid   "PROFILES"
 msgstr  ""
 
-#: cmd/incus/image.go:1099 cmd/incus/list.go:478 cmd/incus/network.go:1070 cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161 cmd/incus/network_zone.go:143 cmd/incus/profile.go:724 cmd/incus/storage_bucket.go:479 cmd/incus/storage_volume.go:1636 cmd/incus/top.go:82 cmd/incus/warning.go:213
+#: cmd/incus/image.go:1098 cmd/incus/list.go:478 cmd/incus/network.go:1070 cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161 cmd/incus/network_zone.go:143 cmd/incus/profile.go:724 cmd/incus/storage_bucket.go:479 cmd/incus/storage_volume.go:1636 cmd/incus/top.go:82 cmd/incus/warning.go:212
 msgid   "PROJECT"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:421
+#: cmd/incus/config_trust.go:420
 msgid   "PROJECTS"
 msgstr  ""
 
@@ -5410,7 +5403,7 @@ msgstr  ""
 msgid   "PROTOCOL"
 msgstr  ""
 
-#: cmd/incus/image.go:1104 cmd/incus/remote.go:988
+#: cmd/incus/image.go:1103 cmd/incus/remote.go:988
 msgid   "PUBLIC"
 msgstr  ""
 
@@ -5663,7 +5656,7 @@ msgstr  ""
 msgid   "Properties:"
 msgstr  ""
 
-#: cmd/incus/image.go:1569
+#: cmd/incus/image.go:1568
 msgid   "Property not found"
 msgstr  ""
 
@@ -5729,7 +5722,7 @@ msgstr  ""
 msgid   "Query path must start with /"
 msgstr  ""
 
-#: cmd/incus/image.go:523 cmd/incus/image.go:905 cmd/incus/image.go:1463
+#: cmd/incus/image.go:523 cmd/incus/image.go:905 cmd/incus/image.go:1462
 msgid   "Query virtual machine images"
 msgstr  ""
 
@@ -5737,7 +5730,7 @@ msgstr  ""
 msgid   "RESOURCE"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:420
+#: cmd/incus/config_trust.go:419
 msgid   "RESTRICTED"
 msgstr  ""
 
@@ -5786,7 +5779,7 @@ msgstr  ""
 msgid   "Refresh and update the existing storage volume copies"
 msgstr  ""
 
-#: cmd/incus/image.go:1383 cmd/incus/image.go:1384
+#: cmd/incus/image.go:1382 cmd/incus/image.go:1383
 msgid   "Refresh images"
 msgstr  ""
 
@@ -5795,7 +5788,7 @@ msgstr  ""
 msgid   "Refreshing instance: %s"
 msgstr  ""
 
-#: cmd/incus/image.go:1407
+#: cmd/incus/image.go:1406
 #, c-format
 msgid   "Refreshing the image: %s"
 msgstr  ""
@@ -5929,7 +5922,7 @@ msgstr  ""
 msgid   "Remove snapshot %s from %s (yes/no): "
 msgstr  ""
 
-#: cmd/incus/config_trust.go:711 cmd/incus/config_trust.go:712
+#: cmd/incus/config_trust.go:710 cmd/incus/config_trust.go:711
 msgid   "Remove trusted client"
 msgstr  ""
 
@@ -6061,7 +6054,7 @@ msgstr  ""
 msgid   "Retrieving image: %s"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:744 cmd/incus/config_trust.go:745
+#: cmd/incus/config_trust.go:743 cmd/incus/config_trust.go:744
 msgid   "Revoke certificate add token"
 msgstr  ""
 
@@ -6102,11 +6095,11 @@ msgstr  ""
 msgid   "Run against all projects"
 msgstr  ""
 
-#: cmd/incus/warning.go:214
+#: cmd/incus/warning.go:213
 msgid   "SEVERITY"
 msgstr  ""
 
-#: cmd/incus/image.go:1105
+#: cmd/incus/image.go:1104
 msgid   "SIZE"
 msgstr  ""
 
@@ -6146,7 +6139,7 @@ msgstr  ""
 msgid   "STARTED AT"
 msgstr  ""
 
-#: cmd/incus/list.go:489 cmd/incus/network.go:1078 cmd/incus/network_peer.go:142 cmd/incus/operation.go:167 cmd/incus/storage.go:689 cmd/incus/warning.go:215
+#: cmd/incus/list.go:489 cmd/incus/network.go:1078 cmd/incus/network_peer.go:142 cmd/incus/operation.go:167 cmd/incus/storage.go:689 cmd/incus/warning.go:214
 msgid   "STATE"
 msgstr  ""
 
@@ -6278,7 +6271,7 @@ msgid   "Set device configuration keys\n"
         "    incus profile device set [<remote>:]<profile> <device> <key> <value>"
 msgstr  ""
 
-#: cmd/incus/image.go:1587 cmd/incus/image.go:1588
+#: cmd/incus/image.go:1586 cmd/incus/image.go:1587
 msgid   "Set image properties"
 msgstr  ""
 
@@ -6588,7 +6581,7 @@ msgstr  ""
 msgid   "Show full device configuration"
 msgstr  ""
 
-#: cmd/incus/image.go:1460 cmd/incus/image.go:1461
+#: cmd/incus/image.go:1459 cmd/incus/image.go:1460
 msgid   "Show image properties"
 msgstr  ""
 
@@ -6744,7 +6737,7 @@ msgstr  ""
 msgid   "Show the used and free space in bytes"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:812 cmd/incus/config_trust.go:813
+#: cmd/incus/config_trust.go:811 cmd/incus/config_trust.go:812
 msgid   "Show trust configurations"
 msgstr  ""
 
@@ -6760,7 +6753,7 @@ msgstr  ""
 msgid   "Show useful information about storage pools"
 msgstr  ""
 
-#: cmd/incus/warning.go:296 cmd/incus/warning.go:297
+#: cmd/incus/warning.go:295 cmd/incus/warning.go:296
 msgid   "Show warning"
 msgstr  ""
 
@@ -7011,11 +7004,11 @@ msgstr  ""
 msgid   "TARGET"
 msgstr  ""
 
-#: cmd/incus/cluster.go:1143 cmd/incus/config_trust.go:601
+#: cmd/incus/cluster.go:1143 cmd/incus/config_trust.go:600
 msgid   "TOKEN"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:414 cmd/incus/image.go:1106 cmd/incus/image_alias.go:248 cmd/incus/list.go:490 cmd/incus/network.go:1072 cmd/incus/network.go:1268 cmd/incus/network_allocations.go:82 cmd/incus/network_integration.go:429 cmd/incus/network_peer.go:141 cmd/incus/operation.go:165 cmd/incus/storage_volume.go:1616 cmd/incus/warning.go:216
+#: cmd/incus/config_trust.go:413 cmd/incus/image.go:1105 cmd/incus/image_alias.go:248 cmd/incus/list.go:490 cmd/incus/network.go:1072 cmd/incus/network.go:1268 cmd/incus/network_allocations.go:82 cmd/incus/network_integration.go:429 cmd/incus/network_peer.go:141 cmd/incus/operation.go:165 cmd/incus/storage_volume.go:1616 cmd/incus/warning.go:215
 msgid   "TYPE"
 msgstr  ""
 
@@ -7453,7 +7446,7 @@ msgstr  ""
 msgid   "UNLIMITED"
 msgstr  ""
 
-#: cmd/incus/image.go:1107
+#: cmd/incus/image.go:1106
 msgid   "UPLOAD DATE"
 msgstr  ""
 
@@ -7477,7 +7470,7 @@ msgstr  ""
 msgid   "USED BY"
 msgstr  ""
 
-#: cmd/incus/warning.go:217
+#: cmd/incus/warning.go:216
 msgid   "UUID"
 msgstr  ""
 
@@ -7509,7 +7502,7 @@ msgstr  ""
 msgid   "Unknown channel type for client %q: %s"
 msgstr  ""
 
-#: cmd/incus/cluster.go:218 cmd/incus/cluster.go:1158 cmd/incus/cluster_group.go:479 cmd/incus/config_trust.go:435 cmd/incus/config_trust.go:616 cmd/incus/image.go:1122 cmd/incus/image_alias.go:264 cmd/incus/list.go:546 cmd/incus/network.go:1097 cmd/incus/network.go:1286 cmd/incus/network_allocations.go:98 cmd/incus/network_forward.go:163 cmd/incus/network_integration.go:444 cmd/incus/network_load_balancer.go:169 cmd/incus/network_peer.go:156 cmd/incus/network_zone.go:164 cmd/incus/operation.go:187 cmd/incus/profile.go:747 cmd/incus/project.go:564 cmd/incus/remote.go:1004 cmd/incus/snapshot.go:382 cmd/incus/storage.go:704 cmd/incus/storage_bucket.go:504 cmd/incus/storage_bucket.go:888 cmd/incus/storage_volume.go:1652 cmd/incus/storage_volume.go:3442 cmd/incus/top.go:101 cmd/incus/warning.go:242
+#: cmd/incus/cluster.go:218 cmd/incus/cluster.go:1158 cmd/incus/cluster_group.go:479 cmd/incus/config_trust.go:434 cmd/incus/config_trust.go:615 cmd/incus/image.go:1121 cmd/incus/image_alias.go:264 cmd/incus/list.go:546 cmd/incus/network.go:1097 cmd/incus/network.go:1286 cmd/incus/network_allocations.go:98 cmd/incus/network_forward.go:163 cmd/incus/network_integration.go:444 cmd/incus/network_load_balancer.go:169 cmd/incus/network_peer.go:156 cmd/incus/network_zone.go:164 cmd/incus/operation.go:187 cmd/incus/profile.go:747 cmd/incus/project.go:564 cmd/incus/remote.go:1004 cmd/incus/snapshot.go:382 cmd/incus/storage.go:704 cmd/incus/storage_bucket.go:504 cmd/incus/storage_bucket.go:888 cmd/incus/storage_volume.go:1652 cmd/incus/storage_volume.go:3442 cmd/incus/top.go:101 cmd/incus/warning.go:241
 #, c-format
 msgid   "Unknown column shorthand char '%c' in '%s'"
 msgstr  ""
@@ -7555,7 +7548,7 @@ msgstr  ""
 msgid   "Unset device configuration keys"
 msgstr  ""
 
-#: cmd/incus/image.go:1651 cmd/incus/image.go:1652
+#: cmd/incus/image.go:1650 cmd/incus/image.go:1651
 msgid   "Unset image properties"
 msgstr  ""
 
@@ -8745,7 +8738,7 @@ msgstr  ""
 msgid   "new %s name"
 msgstr  ""
 
-#: cmd/incus/config_trust.go:478 cmd/incus/image.go:945 cmd/incus/image.go:950 cmd/incus/image.go:1164
+#: cmd/incus/config_trust.go:477 cmd/incus/image.go:945 cmd/incus/image.go:950 cmd/incus/image.go:1163
 msgid   "no"
 msgstr  ""
 
@@ -8924,7 +8917,7 @@ msgstr  ""
 msgid   "y"
 msgstr  ""
 
-#: cmd/incus/cluster.go:725 cmd/incus/config_trust.go:475 cmd/incus/delete.go:56 cmd/incus/image.go:947 cmd/incus/image.go:952 cmd/incus/image.go:1161 cmd/incus/project.go:225 cmd/incus/snapshot.go:279
+#: cmd/incus/cluster.go:725 cmd/incus/config_trust.go:474 cmd/incus/delete.go:56 cmd/incus/image.go:947 cmd/incus/image.go:952 cmd/incus/image.go:1160 cmd/incus/project.go:225 cmd/incus/snapshot.go:279
 msgid   "yes"
 msgstr  ""
 

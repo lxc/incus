@@ -96,7 +96,7 @@ func (c *cmdNetworkZoneList) command() *cobra.Command {
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List available network zones")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List available network zone
+		`List available network zones
 
 Default column layout: nDSdus
 

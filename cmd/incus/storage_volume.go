@@ -3336,8 +3336,8 @@ func (c *cmdStorageVolumeSnapshotList) command() *cobra.Command {
 		`List storage volume snapshots
 
 	The -c option takes a (optionally comma-separated) list of arguments
-	that control which image attributes to output when displaying in table
-	or csv format.
+	that control which storage volume snapshot attributes to output
+	when displaying in table or csv format.
 
 	Column shorthand chars:
 		n - Name
@@ -4030,7 +4030,7 @@ func (c *cmdStorageVolumeNBD) Command() *cobra.Command {
 	cmd.Use = cli.U("nbd", cmdStorageVolumeNBDUsage...)
 	cmd.Short = i18n.G("NBD access to a block storage volume")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`NBD access to a block storage volume.`))
+		`NBD access to a block storage volume`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagAddress, "address", "", "", i18n.G("Specific address to listen on"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagWritable, "writable", i18n.G("Get write access to the disk"))
