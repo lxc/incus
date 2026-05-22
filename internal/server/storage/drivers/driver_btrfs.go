@@ -156,7 +156,7 @@ func (d *btrfs) Create() error {
 		reverter.Add(func() { _ = os.Remove(d.config["source"]) })
 
 		// Format the file.
-		_, err = makeFSType(d.config["source"], "btrfs", &mkfsOptions{Label: d.name})
+		_, err = makeFSType(d.config["source"], "btrfs", &mkfsOptions{Label: d.name, ExtraArgs: d.config["btrfs.create_options"]})
 		if err != nil {
 			return fmt.Errorf("Failed to format sparse file: %w", err)
 		}
@@ -172,7 +172,7 @@ func (d *btrfs) Create() error {
 		}
 
 		// Format the block device.
-		_, err := makeFSType(d.config["source"], "btrfs", &mkfsOptions{Label: d.name})
+		_, err := makeFSType(d.config["source"], "btrfs", &mkfsOptions{Label: d.name, ExtraArgs: d.config["btrfs.create_options"]})
 		if err != nil {
 			return fmt.Errorf("Failed to format block device: %w", err)
 		}
@@ -345,6 +345,15 @@ func (d *btrfs) Validate(config map[string]string) error {
 		//  default: `user_subvol_rm_allowed`
 		//  shortdesc: Mount options for block devices
 		"btrfs.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_btrfs, group=common, key=btrfs.create_options)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  default: -
+		//  shortdesc: Additional options to pass to `mkfs.btrfs` when creating the pool
+		"btrfs.create_options": validate.IsAny,
 	}
 
 	return d.validatePool(config, rules, nil)

@@ -196,8 +196,9 @@ func (d *truenas) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		}
 
 		fsVolFilesystem := vol.ConfigBlockFilesystem()
+		volCreateOptions := vol.ExpandedConfig("block.create_options")
 
-		_, err = makeFSType(devPath, fsVolFilesystem, nil)
+		_, err = makeFSType(devPath, fsVolFilesystem, &mkfsOptions{ExtraArgs: volCreateOptions})
 
 		// de-activate even if there is an err
 		err2 := d.deactivateIscsiDataset(dataset)
@@ -796,6 +797,15 @@ func (d *truenas) commonVolumeRules() map[string]func(value string) error {
 		//  default: same as `volume.block.mount_options`
 		//  shortdesc: Mount options for block-backed file system volumes
 		"block.mount_options": validate.IsAny,
+
+		// gendoc:generate(entity=storage_volume_truenas, group=common, key=block.create_options)
+		//
+		// ---
+		//  type: string
+		//  condition: -
+		//  default: same as `volume.block.create_options`
+		//  shortdesc: Additional options to pass to the file system creation tool when formatting the volume
+		"block.create_options": validate.IsAny,
 
 		// gendoc:generate(entity=storage_volume_truenas, group=common, key=truenas.blocksize)
 		//
@@ -2115,7 +2125,7 @@ func (d *truenas) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
 	// If vol has a source, ignore the block mode related config keys from the pool.
 	if vol.hasSource || vol.IsVMBlock() || vol.volType == VolumeTypeCustom && vol.contentType == ContentTypeBlock {
-		excludedKeys = []string{"block.filesystem", "block.mount_options"}
+		excludedKeys = []string{"block.filesystem", "block.mount_options", "block.create_options"}
 	}
 
 	// Copy volume.* configuration options from pool.
@@ -2150,6 +2160,11 @@ func (d *truenas) FillVolumeConfig(vol Volume) error {
 		if vol.config["block.mount_options"] == "" {
 			// Unchangeable volume property: Set unconditionally.
 			vol.config["block.mount_options"] = "discard"
+		}
+
+		// Inherit filesystem creation options from pool if not set.
+		if vol.config["block.create_options"] == "" {
+			vol.config["block.create_options"] = d.config["volume.block.create_options"]
 		}
 	}
 

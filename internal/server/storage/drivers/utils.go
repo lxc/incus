@@ -420,7 +420,8 @@ func enlargeVolumeBlockFile(path string, volSize int64) error {
 
 // mkfsOptions represents options for filesystem creation.
 type mkfsOptions struct {
-	Label string
+	Label     string
+	ExtraArgs string // Additional arguments passed verbatim to mkfs.
 }
 
 // makeFSType creates the provided filesystem.
@@ -440,6 +441,10 @@ func makeFSType(path string, fsType string, options *mkfsOptions) (string, error
 
 	if fsType == "ext4" {
 		cmd = append(cmd, "-E", "nodiscard,lazy_itable_init=0,lazy_journal_init=0")
+	}
+
+	if fsOptions.ExtraArgs != "" {
+		cmd = append(cmd, strings.Fields(fsOptions.ExtraArgs)...)
 	}
 
 	// Always add the path to the device as the last argument for wider compatibility with versions of mkfs.

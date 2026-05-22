@@ -5564,6 +5564,14 @@ Note that the claim must be contained in the access token.
 
 <!-- config group server-openfga end -->
 <!-- config group storage_btrfs-common start -->
+```{config:option} btrfs.create_options storage_btrfs-common
+:default: "-"
+:scope: "global"
+:shortdesc: "Additional options to pass to `mkfs.btrfs` when creating the pool"
+:type: "string"
+
+```
+
 ```{config:option} btrfs.mount_options storage_btrfs-common
 :default: "`user_subvol_rm_allowed`"
 :scope: "global"
@@ -6212,6 +6220,14 @@ Note that the claim must be contained in the access token.
 
 <!-- config group storage_volume_btrfs-common end -->
 <!-- config group storage_volume_ceph-common start -->
+```{config:option} block.create_options storage_volume_ceph-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.create_options`"
+:shortdesc: "Additional options to pass to the file system creation tool when formatting the volume"
+:type: "string"
+
+```
+
 ```{config:option} block.filesystem storage_volume_ceph-common
 :condition: "block-based volume with content type `filesystem`"
 :default: "same as `volume.block.filesystem`"
@@ -6498,6 +6514,14 @@ Note that the claim must be contained in the access token.
 
 <!-- config group storage_volume_dir-common end -->
 <!-- config group storage_volume_linstor-common start -->
+```{config:option} block.create_options storage_volume_linstor-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.create_options`"
+:shortdesc: "Additional options to pass to the file system creation tool when formatting the volume"
+:type: "string"
+
+```
+
 ```{config:option} block.filesystem storage_volume_linstor-common
 :condition: "block-based volume with content type `filesystem`"
 :default: "same as `volume.block.filesystem`"
@@ -6636,6 +6660,14 @@ Note that the claim must be contained in the access token.
 
 <!-- config group storage_volume_linstor-common end -->
 <!-- config group storage_volume_lvm-common start -->
+```{config:option} block.create_options storage_volume_lvm-common
+:condition: "block-based volume with content type `filesystem`"
+:default: "same as `volume.block.create_options`"
+:shortdesc: "Additional options to pass to the file system creation tool when formatting the volume"
+:type: "string"
+
+```
+
 ```{config:option} block.filesystem storage_volume_lvm-common
 :condition: "block-based volume with content type `filesystem`"
 :default: "same as `volume.block.filesystem`"
@@ -6765,6 +6797,14 @@ Note that the claim must be contained in the access token.
 
 <!-- config group storage_volume_lvm-common end -->
 <!-- config group storage_volume_truenas-common start -->
+```{config:option} block.create_options storage_volume_truenas-common
+:condition: "-"
+:default: "same as `volume.block.create_options`"
+:shortdesc: "Additional options to pass to the file system creation tool when formatting the volume"
+:type: "string"
+
+```
+
 ```{config:option} block.filesystem storage_volume_truenas-common
 :condition: "-"
 :default: "same as `volume.block.filesystem`"
@@ -6895,6 +6935,14 @@ Note that the claim must be contained in the access token.
 
 <!-- config group storage_volume_truenas-common end -->
 <!-- config group storage_volume_zfs-common start -->
+```{config:option} block.create_options storage_volume_zfs-common
+:condition: "block-based volume with content type `filesystem` (`zfs.block_mode` enabled)"
+:default: "same as `volume.block.create_options`"
+:shortdesc: "Additional options to pass to the file system creation tool when formatting the volume"
+:type: "string"
+
+```
+
 ```{config:option} block.filesystem storage_volume_zfs-common
 :condition: "block-based volume with content type `filesystem` (`zfs.block_mode` enabled)"
 :default: "same as `volume.block.filesystem`"
