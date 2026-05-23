@@ -1333,7 +1333,7 @@ func (d *common) devicesAdd(inst instance.Instance, instanceRunning bool, partia
 // devicesRegister calls the Register() function on all of the instance's devices.
 func (d *common) devicesRegister(inst instance.Instance) {
 	for _, entry := range d.ExpandedDevices().Sorted() {
-		err := device.Register(inst, d.state, entry.Name, entry.Config)
+		err := device.Register(inst, d.state, entry.Name, entry.Config, d.deviceVolatileGetFunc(entry.Name))
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
