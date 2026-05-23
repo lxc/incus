@@ -32,7 +32,7 @@ type cmdRemoteProxy struct {
 	flagTimeout int
 }
 
-var cmdRemoteProxyUsage = u.Usage{u.Colon(u.Remote), u.Target(u.Placeholder(i18n.G("socket file")))}
+var cmdRemoteProxyUsage = u.Usage{u.Colon(u.Remote), u.Target(u.Placeholder(i18n.G("unix socket file")))}
 
 func (c *cmdRemoteProxy) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -90,7 +90,7 @@ func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
 
 	err = os.Chmod(path, 0o600)
 	if err != nil {
-		return fmt.Errorf("Unable to set socket permissions: %w", err)
+		return fmt.Errorf("Unable to set unix socket permissions: %w", err)
 	}
 
 	// Get the connection info.
