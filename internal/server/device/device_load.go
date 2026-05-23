@@ -162,8 +162,8 @@ func Validate(instConfig instance.ConfigReader, s *state.State, name string, con
 
 // Register performs a lightweight load of the device, bypassing most
 // validation to very quickly register the device on server startup.
-func Register(inst instance.Instance, s *state.State, name string, conf deviceConfig.Device) error {
-	dev, err := load(inst, s, inst.Project().Name, name, conf, nil, nil)
+func Register(inst instance.Instance, s *state.State, name string, conf deviceConfig.Device, volatileGet VolatileGetter) error {
+	dev, err := load(inst, s, inst.Project().Name, name, conf, volatileGet, nil)
 	if err != nil {
 		return err
 	}
