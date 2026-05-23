@@ -364,7 +364,11 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 
 	defer func() { _ = client.Close() }()
 
-	lease, err := client.Request(context.Background(),
+	// Setup a 30s timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	lease, err := client.Request(ctx,
 		dhcpv4.WithoutOption(dhcpv4.OptionIPAddressLeaseTime),
 		dhcpv4.WithRequestedOptions(
 			dhcpv4.OptionSubnetMask,           // 1
@@ -378,6 +382,13 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 		),
 		dhcpv4.WithOption(dhcpv4.OptHostName(hostname)))
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			logger.WithField("hostname", hostname).
+				Info("No DHCPv4 server responded in time; giving up on DHCPv4")
+			errorChannel <- nil
+			return
+		}
+
 		logger.WithError(err).WithField("hostname", hostname).
 			Error("Giving up on DHCPv4, couldn't get a lease")
 		errorChannel <- err
@@ -387,8 +398,8 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 	// Parse the response.
 	if lease.Offer == nil {
 		logger.WithField("hostname", hostname).
-			Error("Giving up on DHCPv4, couldn't get a lease after 5s")
-		errorChannel <- err
+			Error("Giving up on DHCPv4, couldn't get a lease")
+		errorChannel <- errors.New("Giving up on DHCPv4, couldn't get a lease")
 		return
 	}
 
