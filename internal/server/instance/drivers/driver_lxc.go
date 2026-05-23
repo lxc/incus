@@ -7275,33 +7275,18 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 		containerMeta["privileged"] = "false"
 	}
 
-	// Setup security check.
-	rootfsPath, err := os.OpenFile(d.RootfsPath(), unix.O_PATH, 0)
+	// Open the container's rootfs as an os.Root. All template
+	// operations will then be relative to this root, avoiding issues with
+	// template files or paths within those templates attempting to access the
+	// fhost rootfs.
+	rootfs, err := os.OpenRoot(d.RootfsPath())
 	if err != nil {
 		return fmt.Errorf("Failed to open instance rootfs path: %w", err)
 	}
 
-	defer func() { _ = rootfsPath.Close() }()
+	defer func() { _ = rootfs.Close() }()
 
-	checkBeneath := func(targetPath string) error {
-		fd, err := unix.Openat2(int(rootfsPath.Fd()), targetPath, &unix.OpenHow{
-			Flags:   unix.O_PATH | unix.O_CLOEXEC,
-			Resolve: unix.RESOLVE_BENEATH | unix.RESOLVE_NO_MAGICLINKS,
-		})
-		if err != nil {
-			if errors.Is(err, unix.EXDEV) {
-				return errors.New("Template is attempting access to path outside of container")
-			}
-
-			return nil
-		}
-
-		_ = unix.Close(fd)
-
-		return nil
-	}
-
-	// Go through the templates
+	// Go through the templates.
 	for tplPath, tpl := range metadata.Templates {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
 			var w *os.File
@@ -7313,13 +7298,8 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				return nil
 			}
 
-			// Perform some security checks.
+			// Perform some early security checks on the template itself.
 			relPath := strings.TrimLeft(tplPath, "/")
-
-			err = checkBeneath(relPath)
-			if err != nil {
-				return err
-			}
 
 			if filepath.Base(tpl.Template) != tpl.Template {
 				return errors.New("Template path is attempting to read outside of template directory")
@@ -7343,15 +7323,47 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 				return errors.New("Template file is a symlink")
 			}
 
-			// Open the file to template, create if needed
-			fullpath := filepath.Join(d.RootfsPath(), relPath)
-			if util.PathExists(fullpath) {
+			// Create the directory hierarchy, this has to be done
+			// somewhat manually as we not only need to create anything that's missing
+			// but also set the correct uid/gid.
+			relDir := path.Dir(relPath)
+
+			parent := ""
+			for _, part := range strings.Split(relDir, "/") {
+				if part == "" || part == "." {
+					continue
+				}
+
+				cur := path.Join(parent, part)
+
+				err = rootfs.Mkdir(cur, 0o755)
+				if err == nil {
+					// Fix ownership of any directory we just created.
+					err = rootfs.Chown(cur, int(rootUID), int(rootGID))
+					if err != nil {
+						return fmt.Errorf("Failed to set ownership on template directory: %w", err)
+					}
+				} else if !errors.Is(err, fs.ErrExist) {
+					return fmt.Errorf("Failed to create template directory: %w", err)
+				}
+
+				parent = cur
+			}
+
+			// Check whether the target file already exists.
+			_, err = rootfs.Stat(relPath)
+			existing := err == nil
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("Failed to check template file: %w", err)
+			}
+
+			if existing {
 				if tpl.CreateOnly {
 					return nil
 				}
 
 				// Open the existing file
-				w, err = os.Create(fullpath)
+				w, err = rootfs.OpenFile(relPath, os.O_WRONLY|os.O_TRUNC, 0)
 				if err != nil {
 					return fmt.Errorf("Failed to create template file: %w", err)
 				}
@@ -7397,14 +7409,8 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 					fileMode = os.FileMode(mode) & os.ModePerm
 				}
 
-				// Create the directories leading to the file
-				err = internalUtil.MkdirAllOwner(path.Dir(fullpath), 0o755, int(rootUID), int(rootGID))
-				if err != nil {
-					return err
-				}
-
-				// Create the file itself
-				w, err = os.Create(fullpath)
+				// Create the file itself beneath the rootfs.
+				w, err = rootfs.OpenFile(relPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, fileMode.Perm())
 				if err != nil {
 					return err
 				}
