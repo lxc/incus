@@ -28,17 +28,17 @@ func (c *cmdLaunch) command() *cobra.Command {
 		`incus launch images:debian/12 u1
     Create and start a container named u1
 
-incus launch images:debian/12 u1 < config.yaml
-    Create and start a container with configuration from config.yaml
+incus launch images:debian/12 c1 < config.yaml
+    Create and start a container named "c1" with configuration from config.yaml
 
-incus launch images:debian/12 u2 -t aws:t2.micro
-    Create and start a container using the same size as an AWS t2.micro (1 vCPU, 1GiB of RAM)
+incus launch images:debian/12 c2 -t aws:t2.micro
+    Create and start a container named "c2" using the same size as an AWS t2.micro (1 vCPU, 1GiB of RAM)
 
 incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB
-    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM
+    Create and start a virtual machine named "v1" with 4 vCPUs and 4GiB of RAM
 
 incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
-    Create and start a virtual machine, overriding the disk size and bus`))
+    Create and start a virtual machine named "v2", overriding the disk size and bus`))
 	cmd.Hidden = false
 
 	cmd.RunE = c.run
