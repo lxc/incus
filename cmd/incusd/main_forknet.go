@@ -535,11 +535,21 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 
 	defer func() { _ = client.Close() }()
 
+	// Setup a 30s timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	// Try to get a lease.
-	advertisement, err := client.Solicit(context.Background(),
+	advertisement, err := client.Solicit(ctx,
 		dhcpv6.WithClientID(duid),
 		dhcpv6.WithFQDN(0, hostname))
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			logger.Info("No DHCPv6 server responded in time; giving up on DHCPv6")
+			errorChannel <- nil
+			return
+		}
+
 		logger.WithError(err).Error("Giving up on DHCPv6, error during DHCPv6 Solicit")
 		errorChannel <- err
 		return
@@ -567,8 +577,14 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 
 		infoRequest.MessageType = dhcpv6.MessageTypeInformationRequest
 		infoRequest.Options.Del(dhcpv6.OptionIANA)
-		reply, err := client.SendAndRead(context.Background(), nclient6.AllDHCPRelayAgentsAndServers, infoRequest, nclient6.IsMessageType(dhcpv6.MessageTypeReply))
+		reply, err := client.SendAndRead(ctx, nclient6.AllDHCPRelayAgentsAndServers, infoRequest, nclient6.IsMessageType(dhcpv6.MessageTypeReply))
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				logger.Info("No DHCPv6 server responded in time; giving up on DHCPv6")
+				errorChannel <- nil
+				return
+			}
+
 			logger.WithError(err).Error("Giving up on DHCPv6, error during DHCPv6 Info Request")
 			errorChannel <- err
 			return
@@ -591,10 +607,16 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 		return
 	}
 
-	reply, err := client.Request(context.Background(), advertisement,
+	reply, err := client.Request(ctx, advertisement,
 		dhcpv6.WithClientID(duid),
 		dhcpv6.WithFQDN(0, hostname))
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			logger.Info("No DHCPv6 server responded in time; giving up on DHCPv6")
+			errorChannel <- nil
+			return
+		}
+
 		logger.WithError(err).Error("Giving up on DHCPv6, error during DHCPv6 Request")
 		errorChannel <- err
 		return
