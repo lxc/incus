@@ -663,6 +663,24 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 	for {
 		// Calculate the renewal time.
 		t1 := ia.T1
+
+		if t1 == 0 {
+			for _, iaaddr := range ia.Options.Addresses() {
+				if iaaddr.PreferredLifetime <= 0 {
+					continue
+				}
+
+				renew := iaaddr.PreferredLifetime / 2
+				if t1 == 0 || renew < t1 {
+					t1 = renew
+				}
+			}
+		}
+
+		if t1 == 0 {
+			t1 = time.Minute
+		}
+
 		j := time.Duration(int64(t1) / 20) // 5%
 		if j > 0 {
 			t1 += time.Duration(rand.Int63n(int64(2*j))) - j
