@@ -203,8 +203,11 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
 	"github.com/insomniacslk/dhcp/iana"
+	"github.com/mdlayher/packet"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/bpf"
+	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/server/ip"
 	_ "github.com/lxc/incus/v7/shared/cgo" // Used by cgo
@@ -353,13 +356,76 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 	return finalErr
 }
 
-func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname string, logger *logrus.Logger) {
-	// Try to get a lease.
-	client, err := nclient4.New(iface)
+// newDHCPv4Conn opens a raw packet socket for DHCPv4 and uses BPF to filter the packets.
+func newDHCPv4Conn(iface string) (net.PacketConn, net.HardwareAddr, error) {
+	ifc, err := net.InterfaceByName(iface)
 	if err != nil {
-		logger.WithError(err).Error("Giving up on DHCPv4, couldn't set up client")
-		errorChannel <- err
-		return
+		return nil, nil, err
+	}
+
+	conn, err := packet.Listen(ifc, packet.Datagram, unix.ETH_P_IP, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Setup the filter.
+	filter, err := bpf.Assemble([]bpf.Instruction{
+		// Load the IPv4 protocol field and only keep UDP (17).
+		bpf.LoadAbsolute{Off: 9, Size: 1},
+		bpf.JumpIf{Cond: bpf.JumpNotEqual, Val: unix.IPPROTO_UDP, SkipTrue: 6},
+
+		// Load the flags and fragment offset and drop any fragment, as
+		// the transport header is only present in the first one.
+		bpf.LoadAbsolute{Off: 6, Size: 2},
+		bpf.JumpIf{Cond: bpf.JumpBitsSet, Val: 0x1fff, SkipTrue: 4},
+
+		// Set X to the IPv4 header length (4 * IHL).
+		bpf.LoadMemShift{Off: 0},
+
+		// Load the UDP destination port and only keep packets where it matches the DHCP client port (68).
+		bpf.LoadIndirect{Off: 2, Size: 2},
+		bpf.JumpIf{Cond: bpf.JumpNotEqual, Val: nclient4.ClientPort, SkipTrue: 1},
+
+		// Accept the packet, otherwise drop it.
+		bpf.RetConstant{Val: 0xffffffff},
+		bpf.RetConstant{Val: 0},
+	})
+	if err != nil {
+		_ = conn.Close()
+		return nil, nil, err
+	}
+
+	err = conn.SetBPF(filter)
+	if err != nil {
+		_ = conn.Close()
+		return nil, nil, err
+	}
+
+	return nclient4.NewBroadcastUDPConn(conn, &net.UDPAddr{Port: nclient4.ClientPort}), ifc.HardwareAddr, nil
+}
+
+func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname string, logger *logrus.Logger) {
+	var client *nclient4.Client
+
+	// Try to open a raw socket with a kernel-level BPF filter attached.
+	conn, hwAddr, err := newDHCPv4Conn(iface)
+	if err != nil {
+		logger.WithError(err).Warning("Couldn't set up filtered DHCPv4 socket, falling back to userspace filtering")
+
+		client, err = nclient4.New(iface)
+		if err != nil {
+			logger.WithError(err).Error("Giving up on DHCPv4, couldn't set up client")
+			errorChannel <- err
+			return
+		}
+	} else {
+		client, err = nclient4.NewWithConn(conn, hwAddr)
+		if err != nil {
+			logger.WithError(err).Error("Giving up on DHCPv4, couldn't set up client")
+			_ = conn.Close()
+			errorChannel <- err
+			return
+		}
 	}
 
 	defer func() { _ = client.Close() }()
