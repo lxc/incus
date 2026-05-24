@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-22 05:53+0200\n"
+"POT-Creation-Date: 2026-05-23 22:19-0400\n"
 "PO-Revision-Date: 2026-05-22 10:24+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -981,8 +981,8 @@ msgstr "Ytterligare hjälpämnen:"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
-":"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
+"klar):"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1218,8 +1218,8 @@ msgstr "Säkerhetskopior:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
-"=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
+"<nyckel>=<värde>: %s"
 
 #: cmd/incus/copy.go:137 cmd/incus/create.go:205 cmd/incus/move.go:250
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -2640,7 +2640,8 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/top.go:95 cmd/incus/warning.go:235
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr ""
+"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
 #: cmd/incus/cluster.go:773
 msgid "Enable clustering on a single non-clustered server"
@@ -3000,12 +3001,12 @@ msgstr "FÖRST SEDD"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:728
+#: cmd/incus/utils.go:740
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "Misslyckad SSH-handskakning med klient %q: %v"
 
-#: cmd/incus/utils.go:751
+#: cmd/incus/utils.go:763
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "Misslyckades med att acceptera kanalklient %q: %v"
@@ -3015,17 +3016,17 @@ msgstr "Misslyckades med att acceptera kanalklient %q: %v"
 msgid "Failed checking instance %s exists: %w"
 msgstr "Misslyckades med att kontrollera att instansen %s finns: %w"
 
-#: cmd/incus/utils.go:418
+#: cmd/incus/utils.go:430
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr "Kontrollen misslyckades, instans finns \"%s:%s\": %w"
 
-#: cmd/incus/utils.go:410
+#: cmd/incus/utils.go:422
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "Kontrollen misslyckades, instanssnapshot finns \"%s:%s\": %w"
 
-#: cmd/incus/utils.go:778
+#: cmd/incus/utils.go:790
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Misslyckades med att ansluta till instans SFTP för klient %q: %v"
@@ -3061,7 +3062,7 @@ msgstr "Misslyckades att ta bort instans %s i projekt %q: %w"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Misslyckades med att ta bort källvolymen efter kopiering: %w"
 
-#: cmd/incus/utils.go:685
+#: cmd/incus/utils.go:697
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Det gick inte att skapa SSH-värdnyckel: %w"
@@ -3101,7 +3102,7 @@ msgstr "Det gick inte att läsa in profilen %q för enhetsöverskrivning: %w"
 msgid "Failed loading storage pool %q: %w"
 msgstr "Misslyckades med att läsa in lagringspool %q: %w"
 
-#: cmd/incus/utils.go:690
+#: cmd/incus/utils.go:702
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Misslyckades med att analysera SSH-värdnyckel: %w"
@@ -3116,12 +3117,12 @@ msgstr "Misslyckad analys av valideringssvar: %w"
 msgid "Failed starting command: %w"
 msgstr "Startkommandot misslyckades: %w"
 
-#: cmd/incus/utils.go:598
+#: cmd/incus/utils.go:610
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Misslyckades med att starta sshfs: %w"
 
-#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:716
+#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:728
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Det gick inte att acceptera inkommande anslutning: %w"
@@ -3232,7 +3233,7 @@ msgstr "Projektet kunde inte hittas: %w"
 msgid "Failed to join cluster: %w"
 msgstr "Det gick inte att ansluta till klustret: %w"
 
-#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:701
+#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:713
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Misslyckades med att lyssna efter anslutning: %w"
@@ -3850,22 +3851,22 @@ msgstr "Värdnamn"
 msgid "Hugepages:\n"
 msgstr "Stora sidor:\n"
 
-#: cmd/incus/utils.go:801
+#: cmd/incus/utils.go:813
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "I/O-kopiering från SSH till instans misslyckades: %v"
 
-#: cmd/incus/utils.go:790
+#: cmd/incus/utils.go:802
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "I/O-kopiering från instans till SSH misslyckades: %v"
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:634
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "I/O-kopiering från instans till sshfs misslyckades: %v"
 
-#: cmd/incus/utils.go:632
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "I/O-kopiering från sshfs till instans misslyckades: %v"
@@ -4116,11 +4117,11 @@ msgstr "Endast instans"
 msgid "Instance description"
 msgstr "Instansbeskrivning"
 
-#: cmd/incus/utils.go:624
+#: cmd/incus/utils.go:636
 msgid "Instance disconnected"
 msgstr "Instans frånkopplad"
 
-#: cmd/incus/utils.go:792
+#: cmd/incus/utils.go:804
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "Instans frånkopplad för klient %q"
@@ -4465,6 +4466,7 @@ msgid "List all active cluster member join tokens"
 msgstr "Lista alla aktiva klustermedlemmars anslutningstoken"
 
 #: cmd/incus/cluster.go:1103
+#, fuzzy
 msgid ""
 "List all active cluster member join tokens\n"
 "\n"
@@ -4472,7 +4474,7 @@ msgid ""
 "\n"
 "== Columns ==\n"
 "The -c option takes a comma separated list of arguments that control\n"
-"which network zone attributes to output when displaying in table or csv\n"
+"which join tokens attributes to output when displaying in table or csv\n"
 "format.\n"
 "\n"
 "Column arguments are either pre-defined shorthand chars (see below),\n"
@@ -5860,12 +5862,12 @@ msgstr "Logisk router"
 msgid "Logical switch"
 msgstr "Logisk omkopplare"
 
-#: cmd/incus/utils.go:707
+#: cmd/incus/utils.go:719
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr "Logga in med användarnamn %q och lösenord %q"
 
-#: cmd/incus/utils.go:709
+#: cmd/incus/utils.go:721
 msgid "Login without username and password"
 msgstr "Logga in utan användarnamn och lösenord"
 
@@ -6913,7 +6915,7 @@ msgstr "Partitioner:"
 msgid "Password for %s: "
 msgstr "Lösenord för %s: "
 
-#: cmd/incus/utils.go:678
+#: cmd/incus/utils.go:690
 #, c-format
 msgid "Password rejected for %q"
 msgstr "Lösenordet avvisat för %q"
@@ -7001,7 +7003,7 @@ msgstr "Tryck på 's' + ENTER för att ändra sorteringsmetod"
 msgid "Press CTRL-C to exit"
 msgstr "Tryck på CTRL-C för att avsluta"
 
-#: cmd/incus/utils.go:602
+#: cmd/incus/utils.go:614
 msgid "Press ctrl+c to finish"
 msgstr "Tryck på Ctrl+C för att avsluta"
 
@@ -7656,17 +7658,17 @@ msgstr "KÄLLA"
 msgid "SR-IOV information:"
 msgstr "SR-IOV-information:"
 
-#: cmd/incus/utils.go:704
+#: cmd/incus/utils.go:716
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr "SSH SFTP lyssnar på %v"
 
-#: cmd/incus/utils.go:721
+#: cmd/incus/utils.go:733
 #, c-format
 msgid "SSH client connected %q"
 msgstr "SSH-klient ansluten %q"
 
-#: cmd/incus/utils.go:722
+#: cmd/incus/utils.go:734
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr "SSH-klienten frånkopplad %q"
@@ -8859,14 +8861,14 @@ msgstr "Nyckeln %q finns inte i klustergruppen %q"
 msgid "The key %q does not exist on cluster member %q"
 msgstr "Nyckeln %q finns inte på klustermedlemmen %q"
 
-#: cmd/incus/utils.go:508
+#: cmd/incus/utils.go:520
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
-"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med "
-"'%q:%q'."
+"Den lokala avbildningen '%q' kunde inte hittas, försöker istället med '%q:"
+"%q'."
 
-#: cmd/incus/utils.go:504
+#: cmd/incus/utils.go:516
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -9280,7 +9282,7 @@ msgstr "Fjärrserver otillgänglig"
 msgid "Unknown certificate type %q"
 msgstr "Okänd certifikattyp %q"
 
-#: cmd/incus/utils.go:744
+#: cmd/incus/utils.go:756
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr "Okänd kanaltyp för klient %q: %s"
@@ -9732,8 +9734,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
-"\n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
+"sätt, \n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -9776,7 +9778,8 @@ msgstr "Var ska denna lagringspool lagra sina data?"
 #: cmd/incus/export.go:50
 #, fuzzy
 msgid "Whether or not to only backup the instance (without dependent volumes)"
-msgstr "Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
+msgstr ""
+"Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
 
 #: cmd/incus/export.go:49
 msgid "Whether or not to only backup the instance (without snapshots)"
@@ -9798,7 +9801,8 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:97
 msgid "Whether or not to snapshot the instance's running state"
-msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr ""
+"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/rebuild.go:28
 msgid ""
@@ -10334,23 +10338,27 @@ msgstr ""
 "    För serverinformation."
 
 #: cmd/incus/launch.go:27
+#, fuzzy
 msgid ""
 "incus launch images:debian/12 u1\n"
 "    Create and start a container named u1\n"
 "\n"
-"incus launch images:debian/12 u1 < config.yaml\n"
-"    Create and start a container with configuration from config.yaml\n"
+"incus launch images:debian/12 c1 < config.yaml\n"
+"    Create and start a container named \"c1\" with configuration from "
+"config.yaml\n"
 "\n"
-"incus launch images:debian/12 u2 -t aws:t2.micro\n"
-"    Create and start a container using the same size as an AWS t2.micro (1 "
-"vCPU, 1GiB of RAM)\n"
+"incus launch images:debian/12 c2 -t aws:t2.micro\n"
+"    Create and start a container named \"c2\" using the same size as an AWS "
+"t2.micro (1 vCPU, 1GiB of RAM)\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
-"    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
+"    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
+"RAM\n"
 "\n"
 "incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
 "root,io.bus=nvme\n"
-"    Create and start a virtual machine, overriding the disk size and bus"
+"    Create and start a virtual machine named \"v2\", overriding the disk "
+"size and bus"
 msgstr ""
 "incus startbilder:debian/12 u1\n"
 "    Skapa och starta en container u1\n"
@@ -11180,19 +11188,15 @@ msgstr "rootfs-tarball"
 msgid "snapshot"
 msgstr "ögonblicksbild"
 
-#: cmd/incus/remote_unix.go:35
-msgid "socket file"
-msgstr "socket-fil"
-
 #: cmd/incus/storage.go:523
 msgid "space used"
 msgstr "använt utrymme"
 
-#: cmd/incus/utils.go:642
+#: cmd/incus/utils.go:654
 msgid "sshfs has stopped"
 msgstr "sshfs har stoppat"
 
-#: cmd/incus/utils.go:601
+#: cmd/incus/utils.go:613
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs monterar %q på %q"
@@ -11249,6 +11253,11 @@ msgstr "oväntade %s; förväntade %s"
 #: cmd/incus/usage/parse.go:47
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "oväntat slut på argumentet; glömde du ett suffix?"
+
+#: cmd/incus/remote_unix.go:35
+#, fuzzy
+msgid "unix socket file"
+msgstr "socket-fil"
 
 #: cmd/incus/version.go:39
 msgid "unreachable"

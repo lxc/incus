@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-22 05:53+0200\n"
+"POT-Creation-Date: 2026-05-23 22:19-0400\n"
 "PO-Revision-Date: 2026-05-22 10:22+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -284,8 +284,8 @@ msgstr ""
 "### config:\n"
 "###  user.foo: bah\n"
 "###\n"
-"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述（description"
-"）、配置键。"
+"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述"
+"（description）、配置键。"
 
 #: cmd/incus/network_address_set.go:460
 msgid ""
@@ -458,8 +458,8 @@ msgstr ""
 "### target_network: mynet\n"
 "### status: Pending\n"
 "###\n"
-"### 注意，名称（name）、目标项目（target_project）、目标网络（target_network"
-"）、状态（status）字段不能更改。"
+"### 注意，名称（name）、目标项目（target_project）、目标网络"
+"（target_network）、状态（status）字段不能更改。"
 
 #: cmd/incus/network_zone.go:1269
 msgid ""
@@ -2644,7 +2644,8 @@ msgstr ""
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
-msgstr "输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
+msgstr ""
+"输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
 
 #: cmd/incus/top.go:262
 msgid "Enter new delay in seconds:"
@@ -2786,11 +2787,11 @@ msgid ""
 msgstr ""
 "对本地或全局数据库执行 SQL 查询\n"
 "\n"
-"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地址"
-"）。\n"
+"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地"
+"址）。\n"
 "\n"
-"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器等）"
-"。\n"
+"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器"
+"等）。\n"
 "\n"
 "  如果您运行的是非集群服务器也同样适用，因为该实例等同于一个单成员集群。\n"
 "\n"
@@ -2825,8 +2826,8 @@ msgstr ""
 "在实例中执行命令\n"
 "\n"
 "该命令直接使用 exec 执行，因此不存在 shell 模式（变量、文件重定向等）。\n"
-"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传递"
-"，例如：\n"
+"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传"
+"递，例如：\n"
 "\n"
 "  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
 "默认为非交互式模式，如果标准输入和输出都是终端，则选择交互式模式（不考虑 "
@@ -2951,12 +2952,12 @@ msgstr "首次发现"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:728
+#: cmd/incus/utils.go:740
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "与客户端 %q 的 SSH 握手失败：%v"
 
-#: cmd/incus/utils.go:751
+#: cmd/incus/utils.go:763
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "接受通道客户端 %q 失败：%v"
@@ -2966,17 +2967,17 @@ msgstr "接受通道客户端 %q 失败：%v"
 msgid "Failed checking instance %s exists: %w"
 msgstr "检查实例是否存在“%s:%s”失败：%w"
 
-#: cmd/incus/utils.go:418
+#: cmd/incus/utils.go:430
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr "检查实例是否存在“%s:%s”失败：%w"
 
-#: cmd/incus/utils.go:410
+#: cmd/incus/utils.go:422
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr "检查实例快照是否存在“%s:%s”失败：%w"
 
-#: cmd/incus/utils.go:778
+#: cmd/incus/utils.go:790
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "连接到客户端 %q 的实例 SFTP 失败：%v"
@@ -3012,7 +3013,7 @@ msgstr "在项目 %q 中删除实例 %q 失败：%w"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "复制后删除源卷失败：%w"
 
-#: cmd/incus/utils.go:685
+#: cmd/incus/utils.go:697
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "生成 SSH 主机密钥失败：%w"
@@ -3052,7 +3053,7 @@ msgstr "加载覆盖设备的配置文件 %q 失败：%w"
 msgid "Failed loading storage pool %q: %w"
 msgstr "加载存储池 %q 失败：%w"
 
-#: cmd/incus/utils.go:690
+#: cmd/incus/utils.go:702
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "解析 SSH 主机密钥失败：%w"
@@ -3067,12 +3068,12 @@ msgstr "解析验证响应失败：%w"
 msgid "Failed starting command: %w"
 msgstr "启动命令失败：%w"
 
-#: cmd/incus/utils.go:598
+#: cmd/incus/utils.go:610
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "启动 sshfs 失败：%w"
 
-#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:716
+#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:728
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "接受传入连接失败：%w"
@@ -3182,7 +3183,7 @@ msgstr "找不到项目：%w"
 msgid "Failed to join cluster: %w"
 msgstr "加入集群失败：%w"
 
-#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:701
+#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:713
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "监听连接失败：%w"
@@ -3775,22 +3776,22 @@ msgstr "主机名"
 msgid "Hugepages:\n"
 msgstr "大页内存：\n"
 
-#: cmd/incus/utils.go:801
+#: cmd/incus/utils.go:813
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "从 SSH 到实例的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:790
+#: cmd/incus/utils.go:802
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "从实例到 SSH 的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:634
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "从实例到 sshfs 的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:632
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "从 sshfs 到实例的 I/O 复制操作失败：%v"
@@ -4035,11 +4036,11 @@ msgstr "仅实例"
 msgid "Instance description"
 msgstr "实例描述"
 
-#: cmd/incus/utils.go:624
+#: cmd/incus/utils.go:636
 msgid "Instance disconnected"
 msgstr "实例已断开连接"
 
-#: cmd/incus/utils.go:792
+#: cmd/incus/utils.go:804
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "客户端 %q 的实例已断开连接"
@@ -4387,7 +4388,7 @@ msgid ""
 "\n"
 "== Columns ==\n"
 "The -c option takes a comma separated list of arguments that control\n"
-"which network zone attributes to output when displaying in table or csv\n"
+"which join tokens attributes to output when displaying in table or csv\n"
 "format.\n"
 "\n"
 "Column arguments are either pre-defined shorthand chars (see below),\n"
@@ -5481,12 +5482,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:707
+#: cmd/incus/utils.go:719
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:709
+#: cmd/incus/utils.go:721
 msgid "Login without username and password"
 msgstr ""
 
@@ -6489,7 +6490,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr ""
 
-#: cmd/incus/utils.go:678
+#: cmd/incus/utils.go:690
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -6578,7 +6579,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:602
+#: cmd/incus/utils.go:614
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -7227,17 +7228,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:704
+#: cmd/incus/utils.go:716
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:721
+#: cmd/incus/utils.go:733
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:722
+#: cmd/incus/utils.go:734
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -8304,12 +8305,12 @@ msgstr ""
 msgid "The key %q does not exist on cluster member %q"
 msgstr ""
 
-#: cmd/incus/utils.go:508
+#: cmd/incus/utils.go:520
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
 
-#: cmd/incus/utils.go:504
+#: cmd/incus/utils.go:516
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -8702,7 +8703,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/utils.go:744
+#: cmd/incus/utils.go:756
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -9614,19 +9615,22 @@ msgid ""
 "incus launch images:debian/12 u1\n"
 "    Create and start a container named u1\n"
 "\n"
-"incus launch images:debian/12 u1 < config.yaml\n"
-"    Create and start a container with configuration from config.yaml\n"
+"incus launch images:debian/12 c1 < config.yaml\n"
+"    Create and start a container named \"c1\" with configuration from "
+"config.yaml\n"
 "\n"
-"incus launch images:debian/12 u2 -t aws:t2.micro\n"
-"    Create and start a container using the same size as an AWS t2.micro (1 "
-"vCPU, 1GiB of RAM)\n"
+"incus launch images:debian/12 c2 -t aws:t2.micro\n"
+"    Create and start a container named \"c2\" using the same size as an AWS "
+"t2.micro (1 vCPU, 1GiB of RAM)\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
-"    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
+"    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
+"RAM\n"
 "\n"
 "incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
 "root,io.bus=nvme\n"
-"    Create and start a virtual machine, overriding the disk size and bus"
+"    Create and start a virtual machine named \"v2\", overriding the disk "
+"size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:130
@@ -10209,19 +10213,15 @@ msgstr ""
 msgid "snapshot"
 msgstr ""
 
-#: cmd/incus/remote_unix.go:35
-msgid "socket file"
-msgstr ""
-
 #: cmd/incus/storage.go:523
 msgid "space used"
 msgstr "使用空间"
 
-#: cmd/incus/utils.go:642
+#: cmd/incus/utils.go:654
 msgid "sshfs has stopped"
 msgstr "sshfs 已停止"
 
-#: cmd/incus/utils.go:601
+#: cmd/incus/utils.go:613
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs 挂载 %q 在 %q"
@@ -10277,6 +10277,10 @@ msgstr ""
 
 #: cmd/incus/usage/parse.go:47
 msgid "unexpected end of argument; did you forget a suffix?"
+msgstr ""
+
+#: cmd/incus/remote_unix.go:35
+msgid "unix socket file"
 msgstr ""
 
 #: cmd/incus/version.go:39

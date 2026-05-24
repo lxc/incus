@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-22 05:53+0200\n"
+"POT-Creation-Date: 2026-05-23 22:19-0400\n"
 "PO-Revision-Date: 2026-05-22 10:24+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Georgian <https://hosted.weblate.org/projects/incus/cli/ka/>\n"
@@ -2592,12 +2592,12 @@ msgstr ""
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:728
+#: cmd/incus/utils.go:740
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:751
+#: cmd/incus/utils.go:763
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2607,17 +2607,17 @@ msgstr ""
 msgid "Failed checking instance %s exists: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:418
+#: cmd/incus/utils.go:430
 #, c-format
 msgid "Failed checking instance exists \"%s:%s\": %w"
 msgstr ""
 
-#: cmd/incus/utils.go:410
+#: cmd/incus/utils.go:422
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
 
-#: cmd/incus/utils.go:778
+#: cmd/incus/utils.go:790
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
@@ -2653,7 +2653,7 @@ msgstr ""
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:685
+#: cmd/incus/utils.go:697
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr ""
@@ -2693,7 +2693,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:690
+#: cmd/incus/utils.go:702
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr ""
@@ -2708,12 +2708,12 @@ msgstr ""
 msgid "Failed starting command: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:598
+#: cmd/incus/utils.go:610
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "sshfs-ის გაშვების შეცდომა: %w"
 
-#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:716
+#: cmd/incus/storage_volume.go:4091 cmd/incus/utils.go:728
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr ""
@@ -2823,7 +2823,7 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:701
+#: cmd/incus/storage_volume.go:4083 cmd/incus/utils.go:713
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr ""
@@ -3385,22 +3385,22 @@ msgstr "ჰოსტის სახელი"
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/utils.go:801
+#: cmd/incus/utils.go:813
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:790
+#: cmd/incus/utils.go:802
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:634
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:632
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr ""
@@ -3639,11 +3639,11 @@ msgstr "მხოლოდ გაშვებული ასლი"
 msgid "Instance description"
 msgstr ""
 
-#: cmd/incus/utils.go:624
+#: cmd/incus/utils.go:636
 msgid "Instance disconnected"
 msgstr "გაშვებული ასლი გაითიშა"
 
-#: cmd/incus/utils.go:792
+#: cmd/incus/utils.go:804
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "გაშვებული ასლი გაითიშა კლიენტისთვის %q"
@@ -3952,7 +3952,7 @@ msgid ""
 "\n"
 "== Columns ==\n"
 "The -c option takes a comma separated list of arguments that control\n"
-"which network zone attributes to output when displaying in table or csv\n"
+"which join tokens attributes to output when displaying in table or csv\n"
 "format.\n"
 "\n"
 "Column arguments are either pre-defined shorthand chars (see below),\n"
@@ -4772,12 +4772,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:707
+#: cmd/incus/utils.go:719
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:709
+#: cmd/incus/utils.go:721
 msgid "Login without username and password"
 msgstr ""
 
@@ -5776,7 +5776,7 @@ msgstr "დანაყოფები:"
 msgid "Password for %s: "
 msgstr "%s-ის პაროლი: "
 
-#: cmd/incus/utils.go:678
+#: cmd/incus/utils.go:690
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -5864,7 +5864,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:602
+#: cmd/incus/utils.go:614
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6499,17 +6499,17 @@ msgstr "წყარო"
 msgid "SR-IOV information:"
 msgstr "SR-IOV ინფორმაცია:"
 
-#: cmd/incus/utils.go:704
+#: cmd/incus/utils.go:716
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:721
+#: cmd/incus/utils.go:733
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:722
+#: cmd/incus/utils.go:734
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -7571,12 +7571,12 @@ msgstr ""
 msgid "The key %q does not exist on cluster member %q"
 msgstr ""
 
-#: cmd/incus/utils.go:508
+#: cmd/incus/utils.go:520
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:%q' instead."
 msgstr ""
 
-#: cmd/incus/utils.go:504
+#: cmd/incus/utils.go:516
 #, c-format
 msgid "The local image '%q' couldn't be found, trying '%q:' instead."
 msgstr ""
@@ -7969,7 +7969,7 @@ msgstr "მიუწვდომელი დაშორებული სე�
 msgid "Unknown certificate type %q"
 msgstr "უცნობი სერტიფიკატის ტიპი %q"
 
-#: cmd/incus/utils.go:744
+#: cmd/incus/utils.go:756
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -8870,19 +8870,22 @@ msgid ""
 "incus launch images:debian/12 u1\n"
 "    Create and start a container named u1\n"
 "\n"
-"incus launch images:debian/12 u1 < config.yaml\n"
-"    Create and start a container with configuration from config.yaml\n"
+"incus launch images:debian/12 c1 < config.yaml\n"
+"    Create and start a container named \"c1\" with configuration from "
+"config.yaml\n"
 "\n"
-"incus launch images:debian/12 u2 -t aws:t2.micro\n"
-"    Create and start a container using the same size as an AWS t2.micro (1 "
-"vCPU, 1GiB of RAM)\n"
+"incus launch images:debian/12 c2 -t aws:t2.micro\n"
+"    Create and start a container named \"c2\" using the same size as an AWS "
+"t2.micro (1 vCPU, 1GiB of RAM)\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
-"    Create and start a virtual machine with 4 vCPUs and 4GiB of RAM\n"
+"    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
+"RAM\n"
 "\n"
 "incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
 "root,io.bus=nvme\n"
-"    Create and start a virtual machine, overriding the disk size and bus"
+"    Create and start a virtual machine named \"v2\", overriding the disk "
+"size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:130
@@ -9448,19 +9451,15 @@ msgstr ""
 msgid "snapshot"
 msgstr "სწრაფი ასლი"
 
-#: cmd/incus/remote_unix.go:35
-msgid "socket file"
-msgstr "სოკეტის ფაილი"
-
 #: cmd/incus/storage.go:523
 msgid "space used"
 msgstr "გამოყენებული ადგილი"
 
-#: cmd/incus/utils.go:642
+#: cmd/incus/utils.go:654
 msgid "sshfs has stopped"
 msgstr "sshfs გაჩერებულია"
 
-#: cmd/incus/utils.go:601
+#: cmd/incus/utils.go:613
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr ""
@@ -9516,6 +9515,11 @@ msgstr ""
 #: cmd/incus/usage/parse.go:47
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr ""
+
+#: cmd/incus/remote_unix.go:35
+#, fuzzy
+msgid "unix socket file"
+msgstr "სოკეტის ფაილი"
 
 #: cmd/incus/version.go:39
 msgid "unreachable"
