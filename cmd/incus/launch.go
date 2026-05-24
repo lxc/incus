@@ -25,14 +25,14 @@ func (c *cmdLaunch) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Create and start instances from images`))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus launch images:debian/12 u1
-    Create and start a container named u1
+		`incus launch images:debian/12 c1
+    Create and start a container named "c1"
 
-incus launch images:debian/12 c1 < config.yaml
-    Create and start a container named "c1" with configuration from config.yaml
+incus launch images:debian/12 c2 < config.yaml
+    Create and start a container named "c2" with configuration from config.yaml
 
-incus launch images:debian/12 c2 -t aws:t2.micro
-    Create and start a container named "c2" using the same size as an AWS t2.micro (1 vCPU, 1GiB of RAM)
+incus launch images:debian/12 c3 -t aws:t2.micro
+    Create and start a container named "c3" using the same size as an AWS t2.micro (1 vCPU, 1GiB of RAM)
 
 incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB
     Create and start a virtual machine named "v1" with 4 vCPUs and 4GiB of RAM
