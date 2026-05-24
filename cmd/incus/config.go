@@ -97,7 +97,7 @@ func (c *cmdConfigEdit) command() *cobra.Command {
 		`Edit instance or server configurations as YAML`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus config edit <instance> < instance.yaml
-    Update the instance configuration from config.yaml.`))
+    Update the instance configuration from instance.yaml.`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.config.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cmd.RunE = c.run
