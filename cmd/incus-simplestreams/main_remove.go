@@ -96,7 +96,7 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 					delete(version.Items, "disk-kvm.img")
 					metaEntry.CombinedSha256DiskKvmImg = ""
 				} else if metaEntry.CombinedSha256SquashFs == image.Fingerprint {
-					// Deleting a container image.
+					// Deleting a squashfs container image.
 					err = c.remove(version.Items["squashfs"].Path)
 					if err != nil && !errors.Is(err, fs.ErrNotExist) {
 						return err
@@ -104,6 +104,15 @@ func (c *cmdRemove) run(cmd *cobra.Command, args []string) error {
 
 					delete(version.Items, "squashfs")
 					metaEntry.CombinedSha256SquashFs = ""
+				} else if metaEntry.CombinedSha256RootXz == image.Fingerprint {
+					// Deleting a tarball container image.
+					err = c.remove(version.Items["root.tar.xz"].Path)
+					if err != nil && !errors.Is(err, fs.ErrNotExist) {
+						return err
+					}
+
+					delete(version.Items, "root.tar.xz")
+					metaEntry.CombinedSha256RootXz = ""
 				} else {
 					continue
 				}
