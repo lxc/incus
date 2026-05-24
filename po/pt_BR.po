@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-24 14:46-0400\n"
+"POT-Creation-Date: 2026-05-24 15:02-0400\n"
 "PO-Revision-Date: 2026-05-22 10:19+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -9361,7 +9361,7 @@ msgstr ""
 #: cmd/incus/config.go:98
 msgid ""
 "incus config edit <instance> < instance.yaml\n"
-"    Update the instance configuration from config.yaml."
+"    Update the instance configuration from instance.yaml."
 msgstr ""
 
 #: cmd/incus/config.go:512
