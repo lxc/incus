@@ -2058,7 +2058,6 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 
 				return nil
 			})
-
 		}
 	}
 
