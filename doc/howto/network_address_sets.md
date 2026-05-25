@@ -5,7 +5,7 @@
 Network address sets are working with {ref}`ACLs <network-acls>` and work only with {ref}`network-ovn` or with {ref}`bridged networks <network-bridge-firewall>` using `nftables` only.
 ```
 
-Network address sets are a list of either IPv4, IPv6 addresses with or without CIDR suffix. They can be used in source or destination fields of {ref}`ACLs <network-acls-rules-properties>`.
+Network address sets are a list of either IPv4, IPv6 addresses with or without CIDR suffix. IP ranges (for example `10.0.0.120-10.0.0.130`) are also supported, though a single range may expand to at most 256 addresses. Larger sets of addresses should be expressed using CIDR notation instead. Address sets can be used in source or destination fields of {ref}`ACLs <network-acls-rules-properties>`.
 
 ## Address set properties
 
@@ -46,7 +46,7 @@ Adding addresses is pretty straightforward:
 incus network address-set add <name> <address1> <address2>
 ```
 
-There is no restriction about the kind of address you are appending in your set, a mix of IPv4, IPv6 and CIDR can be used without disruption.
+There is no restriction about the kind of address you are appending in your set. You can use any mix of IPv4, IPv6, CIDR subnets and IP ranges.
 
 To remove addresses, the same `remove` command can be used instead.
 
