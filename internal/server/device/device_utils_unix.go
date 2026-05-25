@@ -36,11 +36,12 @@ func unixDeviceAttributes(path string) (string, uint32, uint32, error) {
 
 	// Check what kind of file it is
 	dType := ""
-	if stat.Mode&unix.S_IFMT == unix.S_IFBLK {
+	switch stat.Mode & unix.S_IFMT {
+	case unix.S_IFBLK:
 		dType = "b"
-	} else if stat.Mode&unix.S_IFMT == unix.S_IFCHR {
+	case unix.S_IFCHR:
 		dType = "c"
-	} else {
+	default:
 		return "", 0, 0, errors.New("Not a device")
 	}
 
