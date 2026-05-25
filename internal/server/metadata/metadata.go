@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 )
 
+// Data holds the parsed server configuration metadata loaded from the embedded configuration.json.
 var Data map[string]any
 
 //go:embed configuration.json
