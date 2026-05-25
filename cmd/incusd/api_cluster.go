@@ -909,7 +909,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 
 		if d.systemdSocketActivated {
 			logger.Info("Exiting daemon following removal from cluster")
-			os.Exit(0)
+			os.Exit(0) // nolint:revive
 		} else {
 			logger.Info("Restarting daemon following removal from cluster")
 			err = localUtil.ReplaceDaemon()
