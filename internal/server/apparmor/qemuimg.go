@@ -22,6 +22,7 @@ type nullWriteCloser struct {
 	io.Writer
 }
 
+// Close is a no-op that satisfies the io.WriteCloser interface.
 func (nwc *nullWriteCloser) Close() error {
 	return nil
 }
