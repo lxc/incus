@@ -312,7 +312,7 @@ func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {
 		}
 	}
 
-	cpuType := strings.Split(bs.CPUType, ",")[0]
+	cpuType, _, _ := strings.Cut(bs.CPUType, ",")
 	if (cpuType == "host" || cpuType == "kvm64") && memoryHotplugEnabled {
 		if !util.IsTrueOrEmpty(limitsMemoryHotplug) {
 			maxMemoryBytes, err = units.ParseByteSizeString(limitsMemoryHotplug)

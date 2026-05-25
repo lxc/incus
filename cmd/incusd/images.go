@@ -2633,7 +2633,7 @@ func pruneLeftoverImages(s *state.State) {
 
 		// Check and delete leftovers
 		for _, entry := range entries {
-			fp := strings.Split(entry.Name(), ".")[0]
+			fp, _, _ := strings.Cut(entry.Name(), ".")
 			if !slices.Contains(images, fp) {
 				err = os.RemoveAll(internalUtil.VarPath("images", entry.Name()))
 				if err != nil {

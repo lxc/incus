@@ -152,7 +152,7 @@ func storagePoolVolumeBackupLoadByName(ctx context.Context, s *state.State, proj
 		return nil, err
 	}
 
-	volumeName := strings.Split(backupName, "/")[0]
+	volumeName, _, _ := strings.Cut(backupName, "/")
 	volBackup := backup.NewVolumeBackup(s, projectName, poolName, volumeName, b.ID, b.Name, b.CreationDate, b.ExpiryDate, b.VolumeOnly, b.OptimizedStorage)
 
 	return volBackup, nil
