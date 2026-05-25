@@ -35,27 +35,27 @@ var unixHotplugHandlers = map[string]func(UnixHotplugEvent) (*deviceConfig.RunCo
 var unixHotplugMutex sync.Mutex
 
 // unixHotplugRegisterHandler registers a handler function to be called whenever a Unix hotplug device event occurs.
-func unixHotplugRegisterHandler(instance instance.Instance, deviceName string, handler func(UnixHotplugEvent) (*deviceConfig.RunConfig, error)) {
+func unixHotplugRegisterHandler(inst instance.Instance, deviceName string, handler func(UnixHotplugEvent) (*deviceConfig.RunConfig, error)) {
 	unixHotplugMutex.Lock()
 	defer unixHotplugMutex.Unlock()
 
 	// Null delimited string of project name, instance name and device name.
-	key := fmt.Sprintf("%s\000%s\000%s", instance.Project().Name, instance.Name(), deviceName)
+	key := fmt.Sprintf("%s\000%s\000%s", inst.Project().Name, inst.Name(), deviceName)
 	unixHotplugHandlers[key] = handler
 }
 
 // unixHotplugUnregisterHandler removes a registered Unix hotplug handler function for a device.
-func unixHotplugUnregisterHandler(instance instance.Instance, deviceName string) {
+func unixHotplugUnregisterHandler(inst instance.Instance, deviceName string) {
 	unixHotplugMutex.Lock()
 	defer unixHotplugMutex.Unlock()
 
 	// Null delimited string of project name, instance name and device name.
-	key := fmt.Sprintf("%s\000%s\000%s", instance.Project().Name, instance.Name(), deviceName)
+	key := fmt.Sprintf("%s\000%s\000%s", inst.Project().Name, inst.Name(), deviceName)
 	delete(unixHotplugHandlers, key)
 }
 
 // UnixHotplugRunHandlers executes any handlers registered for Unix hotplug events.
-func UnixHotplugRunHandlers(state *state.State, event *UnixHotplugEvent) {
+func UnixHotplugRunHandlers(s *state.State, event *UnixHotplugEvent) {
 	unixHotplugMutex.Lock()
 	defer unixHotplugMutex.Unlock()
 
@@ -79,13 +79,13 @@ func UnixHotplugRunHandlers(state *state.State, event *UnixHotplugEvent) {
 		// If runConf supplied, load instance and call its Unix hotplug event handler function so
 		// any instance specific device actions can occur.
 		if runConf != nil {
-			instance, err := instance.LoadByProjectAndName(state, projectName, instanceName)
+			inst, err := instance.LoadByProjectAndName(s, projectName, instanceName)
 			if err != nil {
 				logger.Error("Unix hotplug event loading instance failed", logger.Ctx{"err": err, "project": projectName, "instance": instanceName, "device": deviceName})
 				continue
 			}
 
-			err = instance.DeviceEventHandler(runConf)
+			err = inst.DeviceEventHandler(runConf)
 			if err != nil {
 				logger.Error("Unix hotplug event instance handler failed", logger.Ctx{"err": err, "project": projectName, "instance": instanceName, "device": deviceName})
 				continue

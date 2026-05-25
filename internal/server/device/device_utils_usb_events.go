@@ -58,7 +58,7 @@ func usbUnregisterHandler(inst instance.Instance, deviceName string) {
 }
 
 // USBRunHandlers executes any handlers registered for USB events.
-func USBRunHandlers(state *state.State, event *USBEvent) {
+func USBRunHandlers(s *state.State, event *USBEvent) {
 	usbMutex.Lock()
 	defer usbMutex.Unlock()
 
@@ -82,13 +82,13 @@ func USBRunHandlers(state *state.State, event *USBEvent) {
 		// If runConf supplied, load instance and call its USB event handler function so
 		// any instance specific device actions can occur.
 		if runConf != nil {
-			instance, err := instance.LoadByProjectAndName(state, projectName, instanceName)
+			inst, err := instance.LoadByProjectAndName(s, projectName, instanceName)
 			if err != nil {
 				logger.Error("USB event loading instance failed", logger.Ctx{"err": err, "project": projectName, "instance": instanceName, "device": deviceName})
 				continue
 			}
 
-			err = instance.DeviceEventHandler(runConf)
+			err = inst.DeviceEventHandler(runConf)
 			if err != nil {
 				logger.Error("USB event instance handler failed", logger.Ctx{"err": err, "project": projectName, "instance": instanceName, "device": deviceName})
 				continue

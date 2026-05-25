@@ -88,9 +88,9 @@ func NetworkSetDevMAC(devName string, mac string) error {
 }
 
 // networkRemoveInterfaceIfNeeded removes a network interface by name but only if no other instance is using it.
-func networkRemoveInterfaceIfNeeded(state *state.State, nic string, current instance.Instance, parent string, vlanID string) error {
+func networkRemoveInterfaceIfNeeded(s *state.State, nic string, current instance.Instance, parent string, vlanID string) error {
 	// Check if it's used by another instance.
-	instances, err := instance.LoadNodeAll(state, instancetype.Any)
+	instances, err := instance.LoadNodeAll(s, instancetype.Any)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func networkRemoveInterfaceIfNeeded(state *state.State, nic string, current inst
 }
 
 // networkCreateVlanDeviceIfNeeded creates a VLAN device if doesn't already exist.
-func networkCreateVlanDeviceIfNeeded(state *state.State, parent string, vlanDevice string, vlanID string, gvrp bool) (string, error) {
+func networkCreateVlanDeviceIfNeeded(s *state.State, parent string, vlanDevice string, vlanID string, gvrp bool) (string, error) {
 	if vlanID != "" {
 		created, err := network.VLANInterfaceCreate(parent, vlanDevice, vlanID, gvrp)
 		if err != nil {
@@ -128,7 +128,7 @@ func networkCreateVlanDeviceIfNeeded(state *state.State, parent string, vlanDevi
 		}
 
 		// Check if it was created for another running instance.
-		instances, err := instance.LoadNodeAll(state, instancetype.Any)
+		instances, err := instance.LoadNodeAll(s, instancetype.Any)
 		if err != nil {
 			return "", err
 		}
