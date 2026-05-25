@@ -500,7 +500,10 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 			}
 		}
 
-		d = inst.(*qemu)
+		d, ok := inst.(*qemu)
+		if !ok {
+			return
+		}
 
 		switch event {
 		case qmp.EventAgentStarted:
@@ -4849,7 +4852,13 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	}
 
 	qemuDev["id"] = fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
-	qemuDev["drive"] = blockDev["node-name"].(string)
+
+	nodeName, ok := blockDev["node-name"].(string)
+	if !ok {
+		return nil, fmt.Errorf("Invalid block device node-name for %q", driveConf.DevName)
+	}
+
+	qemuDev["drive"] = nodeName
 
 	// Max serial length is 36 characters: prefix + 30 chars.
 	// For nvme and virtio-blk, the maximum serial length is 20 characters: prefix + 14 chars.
@@ -5155,7 +5164,12 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				qemuNetDev["vhostfds"] = strings.Join(vhostfds, ":")
 			}
 
-			qemuDev["netdev"] = qemuNetDev["id"].(string)
+			netDevID, ok := qemuNetDev["id"].(string)
+			if !ok {
+				return errors.New("Invalid network device ID")
+			}
+
+			qemuDev["netdev"] = netDevID
 			qemuDev["mac"] = devHwaddr
 
 			err = m.AddNIC(qemuNetDev, qemuDev, connected)
@@ -5262,7 +5276,12 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				qemuDev["driver"] = "usb-net"
 			}
 
-			qemuDev["netdev"] = qemuNetDev["id"].(string)
+			netDevID, ok := qemuNetDev["id"].(string)
+			if !ok {
+				return errors.New("Invalid network device ID")
+			}
+
+			qemuDev["netdev"] = netDevID
 			qemuDev["page-per-vq"] = true
 			qemuDev["iommu_platform"] = true
 			qemuDev["disable-legacy"] = true
@@ -8910,7 +8929,10 @@ func (d *qemu) FileSFTPConn() (net.Conn, error) {
 	}
 
 	// Get the HTTP transport.
-	httpTransport := client.Transport.(*http.Transport)
+	httpTransport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("Agent client transport is not an *http.Transport")
+	}
 
 	// Send the upgrade request.
 	u, err := url.Parse("https://custom.socket/1.0/sftp")
