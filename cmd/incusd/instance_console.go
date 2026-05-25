@@ -723,7 +723,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		// Send a ringbuffer request to the container.
 		logContents, err := c.ConsoleLog(console)
 		if err != nil {
-			errno, isErrno := linux.GetErrno(err)
+			isErrno, errno := linux.GetErrno(err)
 			if !isErrno {
 				return response.SmartError(err)
 			}
@@ -893,7 +893,7 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 
 	_, err = c.ConsoleLog(console)
 	if err != nil {
-		errno, isErrno := linux.GetErrno(err)
+		isErrno, errno := linux.GetErrno(err)
 		if !isErrno {
 			return response.SmartError(err)
 		}

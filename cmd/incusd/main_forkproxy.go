@@ -492,7 +492,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 		sAgain:
 			err = netutils.AbstractUnixSendFd(forkproxyUDSSockFDNum, int(file.Fd()))
 			if err != nil {
-				errno, ok := linux.GetErrno(err)
+				ok, errno := linux.GetErrno(err)
 				if ok && (errors.Is(errno, unix.EAGAIN)) {
 					goto sAgain
 				}
@@ -557,7 +557,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 	rAgain:
 		f, err := netutils.AbstractUnixReceiveFd(forkproxyUDSSockFDNum, netutils.UnixFdsAcceptExact)
 		if err != nil {
-			errno, ok := linux.GetErrno(err)
+			ok, errno := linux.GetErrno(err)
 			if ok && (errors.Is(errno, unix.EAGAIN)) {
 				goto rAgain
 			}
@@ -766,7 +766,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 		}
 
 		// keep retrying on EAGAIN
-		errno, ok := linux.GetErrno(er)
+		ok, errno := linux.GetErrno(er)
 		if ok && (errors.Is(errno, unix.EAGAIN)) {
 			goto rAgain
 		}
@@ -802,7 +802,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 			}
 
 			// keep retrying on EAGAIN
-			errno, ok := linux.GetErrno(ew)
+			ok, errno := linux.GetErrno(ew)
 			if ok && (errors.Is(errno, unix.EAGAIN)) {
 				goto wAgain
 			}
@@ -876,7 +876,7 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 	readAgain:
 		sData, sOob, _, _, err := src.ReadMsgUnix(dataBuf, oobBuf)
 		if err != nil {
-			errno, ok := linux.GetErrno(err)
+			ok, errno := linux.GetErrno(err)
 			if ok && errors.Is(errno, unix.EAGAIN) {
 				goto readAgain
 			}
@@ -906,7 +906,7 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 	writeAgain:
 		tData, tOob, err := dst.WriteMsgUnix(dataBuf[:sData], oobBuf[:sOob], nil)
 		if err != nil {
-			errno, ok := linux.GetErrno(err)
+			ok, errno := linux.GetErrno(err)
 			if ok && errors.Is(errno, unix.EAGAIN) {
 				goto writeAgain
 			}
