@@ -26,10 +26,10 @@ type VolumeBackup struct {
 }
 
 // NewVolumeBackup instantiates a new VolumeBackup struct.
-func NewVolumeBackup(state *state.State, projectName, poolName, volumeName string, ID int, name string, creationDate, expiryDate time.Time, volumeOnly, optimizedStorage bool) *VolumeBackup {
+func NewVolumeBackup(s *state.State, projectName, poolName, volumeName string, ID int, name string, creationDate, expiryDate time.Time, volumeOnly, optimizedStorage bool) *VolumeBackup {
 	return &VolumeBackup{
 		CommonBackup: CommonBackup{
-			state:            state,
+			state:            s,
 			id:               ID,
 			name:             name,
 			creationDate:     creationDate,
