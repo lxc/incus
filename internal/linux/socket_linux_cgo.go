@@ -61,7 +61,7 @@ func ReadPid(r *os.File) int {
 }
 
 func unCloexec(fd int) error {
-	var err error = nil
+	var err error
 	flags, _, errno := unix.Syscall(unix.SYS_FCNTL, uintptr(fd), unix.F_GETFD, 0)
 	if errno != 0 {
 		err = errno
