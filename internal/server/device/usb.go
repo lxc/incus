@@ -164,6 +164,7 @@ func (d *usb) Register() error {
 			if err != nil {
 				return nil, err
 			}
+
 		case "remove":
 			relativeTargetPath := strings.TrimPrefix(e.Path, "/")
 			err := unixDeviceRemove(devicesPath, "unix", deviceName, relativeTargetPath, &runConf)
