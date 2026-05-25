@@ -364,6 +364,7 @@ func SRIOVFindRepresentorPort(nicEntries []fs.DirEntry, pfSwitchID string, pfID 
 	return ""
 }
 
+// SRIOVGetSwitchAndPFID returns the switch ID and physical function ID for the given physical port device.
 func SRIOVGetSwitchAndPFID(parentDev string) (string, int, error) {
 	physPortName, err := os.ReadFile(filepath.Join(sysClassNet, parentDev, "phys_port_name"))
 	if err != nil {

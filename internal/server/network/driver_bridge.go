@@ -57,7 +57,7 @@ func (n *bridge) DBType() db.NetworkType {
 	return db.NetworkTypeBridge
 }
 
-// Config returns the network driver info.
+// Info returns the network driver info.
 func (n *bridge) Info() Info {
 	info := n.common.Info()
 	info.AddressForwards = true

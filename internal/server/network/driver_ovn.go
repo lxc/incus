@@ -143,7 +143,7 @@ func (n *ovn) DBType() db.NetworkType {
 	return db.NetworkTypeOVN
 }
 
-// Config returns the network driver info.
+// Info returns the network driver info.
 func (n *ovn) Info() Info {
 	info := n.common.Info()
 	info.Projects = true
@@ -155,6 +155,7 @@ func (n *ovn) Info() Info {
 	return info
 }
 
+// State returns the current state of the network.
 func (n *ovn) State() (*api.NetworkState, error) {
 	// Get the addresses.
 	var addresses []api.NetworkStateAddress
