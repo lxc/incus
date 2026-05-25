@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -149,12 +150,13 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 	}
 
 	if len(failures) != 0 {
-		msg := "The following instances failed to update (profile change still saved):\n"
+		var msg strings.Builder
+		msg.WriteString("The following instances failed to update (profile change still saved):\n")
 		for inst, err := range failures {
-			msg += fmt.Sprintf(" - Project: %s, Instance: %s: %v\n", inst.Project, inst.Name, err)
+			fmt.Fprintf(&msg, " - Project: %s, Instance: %s: %v\n", inst.Project, inst.Name, err)
 		}
 
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf("%s", msg.String())
 	}
 
 	return nil
@@ -194,12 +196,13 @@ func doProfileUpdateCluster(ctx context.Context, s *state.State, projectName str
 	}
 
 	if len(failures) != 0 {
-		msg := "The following instances failed to update (profile change still saved):\n"
+		var msg strings.Builder
+		msg.WriteString("The following instances failed to update (profile change still saved):\n")
 		for inst, err := range failures {
-			msg += fmt.Sprintf(" - Project: %s, Instance: %s: %v\n", inst.Project, inst.Name, err)
+			fmt.Fprintf(&msg, " - Project: %s, Instance: %s: %v\n", inst.Project, inst.Name, err)
 		}
 
-		return fmt.Errorf("%s", msg)
+		return fmt.Errorf("%s", msg.String())
 	}
 
 	return nil

@@ -699,18 +699,18 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog stri
 		fmt.Printf("  "+i18n.G("Processes: %d")+"\n", inst.State.Processes)
 
 		// Disk usage
-		diskInfo := ""
+		var diskInfo strings.Builder
 		if inst.State.Disk != nil {
 			for entry, disk := range inst.State.Disk {
 				if disk.Usage > 0 {
-					diskInfo += fmt.Sprintf("    %s: %s\n", entry, units.GetByteSizeStringIEC(disk.Usage, 2))
+					fmt.Fprintf(&diskInfo, "    %s: %s\n", entry, units.GetByteSizeStringIEC(disk.Usage, 2))
 				}
 			}
 		}
 
-		if diskInfo != "" {
+		if diskInfo.String() != "" {
 			fmt.Printf("  %s\n", i18n.G("Disk usage:"))
-			fmt.Print(diskInfo)
+			fmt.Print(diskInfo.String())
 		}
 
 		// CPU usage
@@ -748,7 +748,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog stri
 		}
 
 		// Network usage and IP info
-		networkInfo := ""
+		var networkInfo strings.Builder
 		if inst.State.Network != nil {
 			network := inst.State.Network
 
@@ -760,41 +760,41 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog stri
 			sort.Strings(netNames)
 
 			for _, netName := range netNames {
-				networkInfo += fmt.Sprintf("    %s:\n", netName)
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Type"), network[netName].Type)
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("State"), strings.ToUpper(network[netName].State))
+				fmt.Fprintf(&networkInfo, "    %s:\n", netName)
+				fmt.Fprintf(&networkInfo, "      %s: %s\n", i18n.G("Type"), network[netName].Type)
+				fmt.Fprintf(&networkInfo, "      %s: %s\n", i18n.G("State"), strings.ToUpper(network[netName].State))
 				if network[netName].HostName != "" {
-					networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Host interface"), network[netName].HostName)
+					fmt.Fprintf(&networkInfo, "      %s: %s\n", i18n.G("Host interface"), network[netName].HostName)
 				}
 
 				if network[netName].Hwaddr != "" {
-					networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("MAC address"), network[netName].Hwaddr)
+					fmt.Fprintf(&networkInfo, "      %s: %s\n", i18n.G("MAC address"), network[netName].Hwaddr)
 				}
 
 				if network[netName].Mtu != 0 {
-					networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("MTU"), network[netName].Mtu)
+					fmt.Fprintf(&networkInfo, "      %s: %d\n", i18n.G("MTU"), network[netName].Mtu)
 				}
 
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Bytes received"), units.GetByteSizeString(network[netName].Counters.BytesReceived, 2))
-				networkInfo += fmt.Sprintf("      %s: %s\n", i18n.G("Bytes sent"), units.GetByteSizeString(network[netName].Counters.BytesSent, 2))
-				networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("Packets received"), network[netName].Counters.PacketsReceived)
-				networkInfo += fmt.Sprintf("      %s: %d\n", i18n.G("Packets sent"), network[netName].Counters.PacketsSent)
+				fmt.Fprintf(&networkInfo, "      %s: %s\n", i18n.G("Bytes received"), units.GetByteSizeString(network[netName].Counters.BytesReceived, 2))
+				fmt.Fprintf(&networkInfo, "      %s: %s\n", i18n.G("Bytes sent"), units.GetByteSizeString(network[netName].Counters.BytesSent, 2))
+				fmt.Fprintf(&networkInfo, "      %s: %d\n", i18n.G("Packets received"), network[netName].Counters.PacketsReceived)
+				fmt.Fprintf(&networkInfo, "      %s: %d\n", i18n.G("Packets sent"), network[netName].Counters.PacketsSent)
 
-				networkInfo += fmt.Sprintf("      %s:\n", i18n.G("IP addresses"))
+				fmt.Fprintf(&networkInfo, "      %s:\n", i18n.G("IP addresses"))
 
 				for _, addr := range network[netName].Addresses {
 					if addr.Family == "inet" {
-						networkInfo += fmt.Sprintf("        %s:  %s/%s (%s)\n", addr.Family, addr.Address, addr.Netmask, addr.Scope)
+						fmt.Fprintf(&networkInfo, "        %s:  %s/%s (%s)\n", addr.Family, addr.Address, addr.Netmask, addr.Scope)
 					} else {
-						networkInfo += fmt.Sprintf("        %s: %s/%s (%s)\n", addr.Family, addr.Address, addr.Netmask, addr.Scope)
+						fmt.Fprintf(&networkInfo, "        %s: %s/%s (%s)\n", addr.Family, addr.Address, addr.Netmask, addr.Scope)
 					}
 				}
 			}
 		}
 
-		if networkInfo != "" {
+		if networkInfo.String() != "" {
 			fmt.Printf("  %s\n", i18n.G("Network usage:"))
-			fmt.Print(networkInfo)
+			fmt.Print(networkInfo.String())
 		}
 	}
 

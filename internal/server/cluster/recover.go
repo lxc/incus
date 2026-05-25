@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	cowsql "github.com/cowsql/go-cowsql"
@@ -181,12 +182,12 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 	}
 
 	// Create patch file for global nodes database.
-	content := ""
+	var content strings.Builder
 	for _, raftNode := range nodes {
-		content += fmt.Sprintf("UPDATE nodes SET address = %q WHERE id = %d;\n", raftNode.Address, raftNode.ID)
+		fmt.Fprintf(&content, "UPDATE nodes SET address = %q WHERE id = %d;\n", raftNode.Address, raftNode.ID)
 	}
 
-	if len(content) > 0 {
+	if len(content.String()) > 0 {
 		filePath := filepath.Join(database.Dir(), "patch.global.sql")
 		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
@@ -195,7 +196,7 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 
 		defer func() { _ = file.Close() }()
 
-		_, err = file.Write([]byte(content))
+		_, err = file.Write([]byte(content.String()))
 		if err != nil {
 			return err
 		}

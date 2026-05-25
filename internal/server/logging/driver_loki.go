@@ -350,14 +350,14 @@ func (l *LokiLogger) HandleEvent(event api.Event) {
 			}
 		}
 
-		messagePrefix := ""
+		var messagePrefix strings.Builder
 
 		// Add the remaining context as the message prefix.
 		for k, v := range ctx {
-			messagePrefix += fmt.Sprintf("%s=\"%s\" ", k, v)
+			fmt.Fprintf(&messagePrefix, "%s=\"%s\" ", k, v)
 		}
 
-		entry.Line = fmt.Sprintf("%s%s", messagePrefix, lifecycleEvent.Action)
+		entry.Line = fmt.Sprintf("%s%s", messagePrefix.String(), lifecycleEvent.Action)
 	case api.EventTypeLogging, api.EventTypeNetworkACL:
 		logEvent := api.EventLogging{}
 

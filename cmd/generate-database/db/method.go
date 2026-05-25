@@ -165,7 +165,7 @@ func (m *Method) getNames(buf *file.Buffer) error {
 		}
 
 		buf.L("%s %s {", branch, activeCriteria(filter, ignoredFilters[i]))
-		var args string
+		var args strings.Builder
 		for _, name := range filter {
 			for _, field := range mapping.Fields {
 				if name == field.Name && util.IsNeitherFalseNorEmpty(field.Config.Get("marshal")) {
@@ -176,14 +176,14 @@ func (m *Method) getNames(buf *file.Buffer) error {
 
 					buf.L("marshaledFilter%s, err := %s(filter.%s)", name, marshalFunc, name)
 					m.ifErrNotNil(buf, true, "nil", "err")
-					args += fmt.Sprintf("marshaledFilter%s,", name)
+					fmt.Fprintf(&args, "marshaledFilter%s,", name)
 				} else if name == field.Name {
-					args += fmt.Sprintf("filter.%s,", name)
+					fmt.Fprintf(&args, "filter.%s,", name)
 				}
 			}
 		}
 
-		buf.L("args = append(args, []any{%s}...)", args)
+		buf.L("args = append(args, []any{%s}...)", args.String())
 		buf.L("if len(filters) == 1 {")
 		buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "names", filter...))
 
@@ -374,7 +374,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 			}
 
 			buf.L("%s %s {", branch, activeCriteria(filter, ignoredFilters[i]))
-			var args string
+			var args strings.Builder
 			for _, name := range filter {
 				for _, field := range mapping.Fields {
 					if name == field.Name && util.IsNeitherFalseNorEmpty(field.Config.Get("marshal")) {
@@ -385,14 +385,14 @@ func (m *Method) getMany(buf *file.Buffer) error {
 
 						buf.L("marshaledFilter%s, err := %s(filter.%s)", name, marshalFunc, name)
 						m.ifErrNotNil(buf, true, "nil", "err")
-						args += fmt.Sprintf("marshaledFilter%s,", name)
+						fmt.Fprintf(&args, "marshaledFilter%s,", name)
 					} else if name == field.Name {
-						args += fmt.Sprintf("filter.%s,", name)
+						fmt.Fprintf(&args, "filter.%s,", name)
 					}
 				}
 			}
 
-			buf.L("args = append(args, []any{%s}...)", args)
+			buf.L("args = append(args, []any{%s}...)", args.String())
 			buf.L("if len(filters) == 1 {")
 			buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "objects", filter...))
 
@@ -850,25 +850,25 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 		buf.L("}")
 		buf.N()
 		buf.L("queryStr := fmt.Sprintf(%s, fillParent...)", stmtLocal)
-		createParams := ""
+		var createParams strings.Builder
 		columnFields := mapping.ColumnFields("ID")
 		if mapping.Type == ReferenceTable {
 			buf.L("for _, object := range objects {")
 		}
 
 		for i, field := range columnFields {
-			createParams += fmt.Sprintf("object.%s", field.Name)
+			fmt.Fprintf(&createParams, "object.%s", field.Name)
 			if i < len(columnFields) {
-				createParams += ", "
+				createParams.WriteString(", ")
 			}
 		}
 
 		refFields := mapping.RefFields()
 		if len(refFields) == 0 {
-			buf.L("_, err := db.ExecContext(ctx, queryStr, %s)", createParams)
+			buf.L("_, err := db.ExecContext(ctx, queryStr, %s)", createParams.String())
 			m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Insert failed for \"%%s_%s\" table: %%w", parentTablePrefix, err)`, lex.Plural(m.entity)))
 		} else {
-			buf.L("result, err := db.ExecContext(ctx, queryStr, %s)", createParams)
+			buf.L("result, err := db.ExecContext(ctx, queryStr, %s)", createParams.String())
 			m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Insert failed for \"%%s_%s\" table: %%w", parentTablePrefix, err)`, lex.Plural(m.entity)))
 			buf.L("id, err := result.LastInsertId()")
 			m.ifErrNotNil(buf, true, "fmt.Errorf(\"Failed to fetch ID: %w\", err)")
