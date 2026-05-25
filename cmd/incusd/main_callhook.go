@@ -115,6 +115,7 @@ func (c *cmdCallhook) run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+
 	case <-time.After(30 * time.Second):
 		return errors.New("Hook didn't finish within 30s")
 	}
