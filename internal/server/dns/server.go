@@ -53,9 +53,9 @@ type serverCmdInfo struct {
 }
 
 // NewServer returns a new server instance.
-func NewServer(db *db.Cluster, retriever ZoneRetriever) *Server {
+func NewServer(cluster *db.Cluster, retriever ZoneRetriever) *Server {
 	// Setup new struct.
-	s := &Server{db: db, zoneRetriever: retriever}
+	s := &Server{db: cluster, zoneRetriever: retriever}
 	return s
 }
 
