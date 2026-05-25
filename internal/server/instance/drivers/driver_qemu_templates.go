@@ -188,11 +188,12 @@ type qemuDevEntriesOpts struct {
 func qemuDeviceEntries(opts *qemuDevEntriesOpts) map[string]string {
 	entries := make(map[string]string)
 
-	if opts.dev.busName == "pci" || opts.dev.busName == "pcie" {
+	switch opts.dev.busName {
+	case "pci", "pcie":
 		entries["driver"] = opts.pciName
 		entries["bus"] = opts.dev.devBus
 		entries["addr"] = opts.dev.devAddr
-	} else if opts.dev.busName == "ccw" {
+	case "ccw":
 		entries["driver"] = opts.ccwName
 	}
 
@@ -719,7 +720,8 @@ func qemuHostDrive(opts *qemuHostDriveOpts) []cfg.Section {
 	var entries map[string]string
 	deviceOpts := qemuDevEntriesOpts{dev: opts.dev}
 
-	if opts.protocol == "9p" {
+	switch opts.protocol {
+	case "9p":
 		var readonly string
 		if opts.readonly {
 			readonly = "on"
@@ -744,7 +746,7 @@ func qemuHostDrive(opts *qemuHostDriveOpts) []cfg.Section {
 		entries = qemuDeviceEntries(&deviceOpts)
 		entries["mount_tag"] = opts.mountTag
 		entries["fsdev"] = opts.name
-	} else if opts.protocol == "virtio-fs" {
+	case "virtio-fs":
 		driveSection = cfg.Section{
 			Name:    fmt.Sprintf(`chardev "%s"`, opts.name),
 			Comment: opts.comment,
@@ -759,7 +761,7 @@ func qemuHostDrive(opts *qemuHostDriveOpts) []cfg.Section {
 		entries = qemuDeviceEntries(&deviceOpts)
 		entries["tag"] = opts.mountTag
 		entries["chardev"] = opts.name
-	} else {
+	default:
 		return []cfg.Section{}
 	}
 

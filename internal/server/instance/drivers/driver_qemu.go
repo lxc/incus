@@ -2942,11 +2942,12 @@ func (d *qemu) deviceAttachPCI(deviceName string, configCopy map[string]string, 
 	// Get the device config.
 	var devName, pciSlotName, pciIOMMUGroup string
 	for _, pciItem := range pciConfig {
-		if pciItem.Key == "devName" {
+		switch pciItem.Key {
+		case "devName":
 			devName = pciItem.Value
-		} else if pciItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = pciItem.Value
-		} else if pciItem.Key == "pciIOMMUGroup" {
+		case "pciIOMMUGroup":
 			pciIOMMUGroup = pciItem.Value
 		}
 	}
@@ -4752,11 +4753,12 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	directCache := true   // Bypass host cache, use O_DIRECT semantics by default.
 	noFlushCache := false // Don't ignore any flush requests for the device.
 
-	if cacheMode == "unsafe" {
+	switch cacheMode {
+	case "unsafe":
 		aioMode = "threads"
 		directCache = false
 		noFlushCache = true
-	} else if cacheMode == "writeback" {
+	case "writeback":
 		aioMode = "threads"
 		directCache = false
 	}
@@ -4817,12 +4819,13 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		blockDev["image"] = rbdImageName
 		for key, val := range opts {
 			// We use 'id' where qemu uses 'user'.
-			if key == "id" {
+			switch key {
+			case "id":
 				blockDev["user"] = val
 				userName = val
-			} else if key == "cluster" {
+			case "cluster":
 				clusterName = val
-			} else {
+			default:
 				blockDev[key] = val
 			}
 		}
@@ -4884,9 +4887,10 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		qemuDev["lun"] = 1
 		qemuDev["bus"] = "qemu_scsi.0"
 
-		if media == "disk" {
+		switch media {
+		case "disk":
 			qemuDev["driver"] = "scsi-hd"
-		} else if media == "cdrom" {
+		case "cdrom":
 			qemuDev["driver"] = "scsi-cd"
 		}
 	} else if slices.Contains([]string{"nvme", "virtio-blk"}, bus) {
@@ -5024,23 +5028,24 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 	var devName, nicName, devHwaddr, pciSlotName, pciIOMMUGroup, vDPADevName, vhostVDPAPath, maxVQP string
 	connected := true
 	for _, nicItem := range nicConfig {
-		if nicItem.Key == "devName" {
+		switch nicItem.Key {
+		case "devName":
 			devName = nicItem.Value
-		} else if nicItem.Key == "link" {
+		case "link":
 			nicName = nicItem.Value
-		} else if nicItem.Key == "hwaddr" {
+		case "hwaddr":
 			devHwaddr = nicItem.Value
-		} else if nicItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = nicItem.Value
-		} else if nicItem.Key == "pciIOMMUGroup" {
+		case "pciIOMMUGroup":
 			pciIOMMUGroup = nicItem.Value
-		} else if nicItem.Key == "vDPADevName" {
+		case "vDPADevName":
 			vDPADevName = nicItem.Value
-		} else if nicItem.Key == "vhostVDPAPath" {
+		case "vhostVDPAPath":
 			vhostVDPAPath = nicItem.Value
-		} else if nicItem.Key == "maxVQP" {
+		case "maxVQP":
 			maxVQP = nicItem.Value
-		} else if nicItem.Key == "connected" {
+		case "connected":
 			connected = util.IsTrueOrEmpty(nicItem.Value)
 		}
 	}
@@ -5382,11 +5387,12 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 
 	firmware := true
 	for _, pciItem := range pciConfig {
-		if pciItem.Key == "devName" {
+		switch pciItem.Key {
+		case "devName":
 			devName = pciItem.Value
-		} else if pciItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = pciItem.Value
-		} else if pciItem.Key == "firmware" {
+		case "firmware":
 			firmware = util.IsTrueOrEmpty(pciItem.Value)
 		}
 	}
@@ -5412,11 +5418,12 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []deviceConfig.RunConfigItem) error {
 	var devName, pciSlotName, vgpu string
 	for _, gpuItem := range gpuConfig {
-		if gpuItem.Key == "devName" {
+		switch gpuItem.Key {
+		case "devName":
 			devName = gpuItem.Value
-		} else if gpuItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = gpuItem.Value
-		} else if gpuItem.Key == "vgpu" {
+		case "vgpu":
 			vgpu = gpuItem.Value
 		}
 	}
@@ -5561,9 +5568,10 @@ func (d *qemu) addTPMDeviceConfig(conf *[]cfg.Section, tpmConfig []deviceConfig.
 	var devName, socketPath string
 
 	for _, tpmItem := range tpmConfig {
-		if tpmItem.Key == "path" {
+		switch tpmItem.Key {
+		case "path":
 			socketPath = tpmItem.Value
-		} else if tpmItem.Key == "devName" {
+		case "devName":
 			devName = tpmItem.Value
 		}
 	}
@@ -6623,7 +6631,8 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		for _, key := range changedConfig {
 			value := d.expandedConfig[key]
 
-			if key == "limits.cpu" {
+			switch key {
+			case "limits.cpu":
 				oldValue := oldExpandedConfig["limits.cpu"]
 
 				if oldValue != "" {
@@ -6648,25 +6657,25 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				if err != nil {
 					return fmt.Errorf("Failed updating cpu limit: %w", err)
 				}
-			} else if key == "limits.memory" {
+			case "limits.memory":
 				err = d.updateMemoryLimit(value)
 				if err != nil {
 					if err != nil {
 						return fmt.Errorf("Failed updating memory limit: %w", err)
 					}
 				}
-			} else if key == "security.csm" {
+			case "security.csm":
 				// Defer rebuilding nvram until next start.
 				d.localConfig["volatile.apply_nvram"] = "true"
-			} else if key == "security.secureboot" {
+			case "security.secureboot":
 				// Defer rebuilding nvram until next start.
 				d.localConfig["volatile.apply_nvram"] = "true"
-			} else if key == "security.guestapi" {
+			case "security.guestapi":
 				err = d.advertiseVsockAddress()
 				if err != nil {
 					return err
 				}
-			} else if key == "limits.memory.oom_priority" {
+			case "limits.memory.oom_priority":
 				// Configure the OOM priority.
 				err = d.setOOMPriority(d.InitPID())
 				if err != nil {

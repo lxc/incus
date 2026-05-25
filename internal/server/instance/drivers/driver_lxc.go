@@ -1524,9 +1524,10 @@ func (d *lxc) deviceAttachNIC(devName string, configCopy map[string]string, netI
 	ctDevName := ""
 	connected := true
 	for _, dev := range netIF {
-		if dev.Key == "link" {
+		switch dev.Key {
+		case "link":
 			ctDevName = dev.Value
-		} else if dev.Key == "connected" {
+		case "connected":
 			connected = util.IsTrueOrEmpty(dev.Value)
 		}
 	}
@@ -1680,11 +1681,12 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 
 			// Convert options into flags.
 			for _, opt := range mount.Opts {
-				if opt == "bind" {
+				switch opt {
+				case "bind":
 					flags |= unix.MS_BIND
-				} else if opt == "rbind" {
+				case "rbind":
 					flags |= unix.MS_BIND | unix.MS_REC
-				} else if opt == "ro" {
+				case "ro":
 					flags |= unix.MS_RDONLY
 				}
 			}
@@ -1881,11 +1883,12 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 
 	// Revert the currently applied on-disk idmap.
 	if diskIdmap != nil {
-		if storageType == "zfs" {
+		switch storageType {
+		case "zfs":
 			err = diskIdmap.UnshiftPath(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
-		} else if storageType == "btrfs" {
+		case "btrfs":
 			err = storageDrivers.UnshiftBtrfsRootfs(d.RootfsPath(), diskIdmap)
-		} else {
+		default:
 			err = diskIdmap.UnshiftPath(d.RootfsPath(), nil)
 		}
 
@@ -1900,11 +1903,12 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 	// idmap of the container now. Otherwise we will later instruct LXC to
 	// make use of idmapped storage.
 	if nextIdmap != nil && idmapType == idmap.StorageTypeNone {
-		if storageType == "zfs" {
+		switch storageType {
+		case "zfs":
 			err = nextIdmap.ShiftPath(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
-		} else if storageType == "btrfs" {
+		case "btrfs":
 			err = storageDrivers.ShiftBtrfsRootfs(d.RootfsPath(), nextIdmap)
-		} else {
+		default:
 			err = nextIdmap.ShiftPath(d.RootfsPath(), nil)
 		}
 
@@ -7111,11 +7115,12 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 				return fmt.Errorf("Storage type: %w", err)
 			}
 
-			if storageType == "zfs" {
+			switch storageType {
+			case "zfs":
 				err = idmapset.ShiftPath(args.StateDir, storageDrivers.ShiftZFSSkipper)
-			} else if storageType == "btrfs" {
+			case "btrfs":
 				err = storageDrivers.ShiftBtrfsRootfs(args.StateDir, idmapset)
-			} else {
+			default:
 				err = idmapset.ShiftPath(args.StateDir, nil)
 			}
 
