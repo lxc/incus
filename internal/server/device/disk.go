@@ -534,7 +534,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 	}
 
 	// Check ceph options are only used when ceph or cephfs type source is specified.
-	if !(d.sourceIsCeph() || d.sourceIsCephFs()) && (d.config["ceph.cluster_name"] != "" || d.config["ceph.user_name"] != "") {
+	if !d.sourceIsCeph() && !d.sourceIsCephFs() && (d.config["ceph.cluster_name"] != "" || d.config["ceph.user_name"] != "") {
 		return fmt.Errorf("Invalid options ceph.cluster_name/ceph.user_name for source %q", d.config["source"])
 	}
 
