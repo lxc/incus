@@ -627,8 +627,8 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 	// Apply the config overrides.
 	maps.Copy(targetInstInfo.Config, req.Config)
 
-	// If "security.secureboot" has changed, force a NVRAM reset.
-	if util.IsTrueOrEmpty(inst.ExpandedConfig()["security.secureboot"]) != util.IsTrueOrEmpty(req.Config["security.secureboot"]) {
+	// If "security.secureboot" has changed, force a NVRAM reset (VMs only).
+	if inst.Type() == instancetype.VM && util.IsTrueOrEmpty(inst.ExpandedConfig()["security.secureboot"]) != util.IsTrueOrEmpty(req.Config["security.secureboot"]) {
 		targetInstInfo.Config["volatile.apply_nvram"] = "true"
 	}
 
