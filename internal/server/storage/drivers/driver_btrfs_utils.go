@@ -86,14 +86,14 @@ func (d *btrfs) getMountOptions() string {
 
 func (d *btrfs) isSubvolume(path string) bool {
 	// Stat the path.
-	fs := unix.Stat_t{}
-	err := unix.Lstat(path, &fs)
+	stat := unix.Stat_t{}
+	err := unix.Lstat(path, &stat)
 	if err != nil {
 		return false
 	}
 
 	// Check if BTRFS_FIRST_FREE_OBJECTID is the inode number.
-	if fs.Ino != 256 {
+	if stat.Ino != 256 {
 		return false
 	}
 
