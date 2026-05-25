@@ -9,23 +9,23 @@ import (
 )
 
 // GetErrno checks if the Go error is a kernel errno.
-func GetErrno(err error) (errno error, iserrno bool) {
+func GetErrno(err error) (iserrno bool, errno error) {
 	var sysErr *os.SyscallError
 	if errors.As(err, &sysErr) {
-		return sysErr.Err, true
+		return true, sysErr.Err
 	}
 
 	var pathErr *os.PathError
 	if errors.As(err, &pathErr) {
-		return pathErr.Err, true
+		return true, pathErr.Err
 	}
 
 	var tmpErrno unix.Errno
 	if errors.As(err, &tmpErrno) {
-		return tmpErrno, true
+		return true, tmpErrno
 	}
 
-	return nil, false
+	return false, nil
 }
 
 // ExitStatus extracts the exit status from the error returned by exec.Cmd.
