@@ -359,6 +359,6 @@ __attribute__((constructor)) void init(void) {
 import "C"
 
 import (
-	// Used by cgo
+	// Used by cgo.
 	_ "github.com/lxc/incus/v7/shared/cgo"
 )
