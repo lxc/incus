@@ -8833,9 +8833,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					api.SecretNameState: stateConn,
 				}
 
-				for _, vol := range dependentVolumes {
-					d.disksToMigrate = append(d.disksToMigrate, vol)
-				}
+				d.disksToMigrate = append(d.disksToMigrate, dependentVolumes...)
 
 				dependentVolumeMove := args.ClusterMoveSourceName != "" && len(d.disksToMigrate) > 0
 
