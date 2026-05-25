@@ -484,7 +484,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 		d.globalConfigMu.Unlock()
 
 		// Run any update triggers.
-		err = doApi10UpdateTriggers(d, nil, changed, s.LocalConfig, clusterConf)
+		err = doAPI10UpdateTriggers(d, nil, changed, s.LocalConfig, clusterConf)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -793,7 +793,7 @@ func doAPI10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 	d.globalConfigMu.Unlock()
 
 	// Run any update triggers.
-	err = doApi10UpdateTriggers(d, nodeChanged, clusterChanged, newNodeConfig, newClusterConfig)
+	err = doAPI10UpdateTriggers(d, nodeChanged, clusterChanged, newNodeConfig, newClusterConfig)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -805,7 +805,7 @@ func doAPI10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 	return response.EmptySyncResponse
 }
 
-func doApi10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]string, nodeConfig *node.Config, clusterConf *clusterConfig.Config) error {
+func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]string, nodeConfig *node.Config, clusterConf *clusterConfig.Config) error {
 	s := d.State()
 
 	acmeChanged := false

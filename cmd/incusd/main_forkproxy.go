@@ -711,8 +711,8 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 	var err error
 
 	// Attempt casting to UDP connections
-	srcUDP, srcIsUdp := src.(*net.UDPConn)
-	dstUDP, dstIsUdp := dst.(*net.UDPConn)
+	srcUDP, srcIsUDP := src.(*net.UDPConn)
+	dstUDP, dstIsUDP := dst.(*net.UDPConn)
 
 	buf := make([]byte, 32*1024)
 	for {
@@ -720,7 +720,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 		var nr int
 		var er error
 
-		if srcIsUdp && srcUDP.RemoteAddr() == nil {
+		if srcIsUDP && srcUDP.RemoteAddr() == nil {
 			var addr net.Addr
 			nr, addr, er = srcUDP.ReadFrom(buf)
 			if er == nil {
@@ -759,7 +759,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 				us.timerLock.Unlock()
 
 				dst = us.target
-				dstUDP, dstIsUdp = dst.(*net.UDPConn)
+				dstUDP, dstIsUDP = dst.(*net.UDPConn)
 			}
 		} else {
 			nr, er = src.Read(buf)
@@ -776,7 +776,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 			var nw int
 			var ew error
 
-			if dstIsUdp && dstUDP.RemoteAddr() == nil {
+			if dstIsUDP && dstUDP.RemoteAddr() == nil {
 				var us *udpSession
 
 				udpSessionsLock.Lock()
