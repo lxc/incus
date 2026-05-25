@@ -89,7 +89,7 @@ func (e *websockListenerConnection) Reader(ctx context.Context, recvFunc EventHa
 		if recvFunc != nil {
 			for {
 				var event api.Event
-				err := e.Conn.ReadJSON(&event)
+				err := e.ReadJSON(&event)
 				if err != nil {
 					return // This detects if client has disconnected or sent invalid data.
 				}
@@ -100,7 +100,7 @@ func (e *websockListenerConnection) Reader(ctx context.Context, recvFunc EventHa
 		} else {
 			// Run a blocking reader to detect if the client has disconnected. We don't expect to get
 			// anything from the remote side, so this should remain blocked until disconnected.
-			_, _, _ = e.Conn.NextReader()
+			_, _, _ = e.NextReader()
 		}
 	}()
 
@@ -139,7 +139,7 @@ func (e *websockListenerConnection) WriteJSON(event any) error {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	err := e.Conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	err := e.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	if err != nil {
 		return fmt.Errorf("Failed setting write deadline: %w", err)
 	}
