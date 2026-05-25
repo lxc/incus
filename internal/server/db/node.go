@@ -424,8 +424,8 @@ func (c *ClusterTx) GetNodesCount(ctx context.Context) (int, error) {
 // RenameNode changes the name of an existing node.
 //
 // Return an error if a node with the same name already exists.
-func (c *ClusterTx) RenameNode(ctx context.Context, old string, new string) error {
-	count, err := query.Count(ctx, c.tx, "nodes", "name=?", new)
+func (c *ClusterTx) RenameNode(ctx context.Context, old string, newName string) error {
+	count, err := query.Count(ctx, c.tx, "nodes", "name=?", newName)
 	if err != nil {
 		return fmt.Errorf("failed to check existing nodes: %w", err)
 	}
@@ -435,7 +435,7 @@ func (c *ClusterTx) RenameNode(ctx context.Context, old string, new string) erro
 	}
 
 	stmt := `UPDATE nodes SET name=? WHERE name=?`
-	result, err := c.tx.Exec(stmt, new, old)
+	result, err := c.tx.Exec(stmt, newName, old)
 	if err != nil {
 		return fmt.Errorf("failed to update node name: %w", err)
 	}
