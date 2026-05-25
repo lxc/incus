@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"slices"
@@ -363,9 +364,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 				return nil
 			}
 
-			for k, v := range reqDevice {
-				devs[dev.Name][k] = v
-			}
+			maps.Copy(devs[dev.Name], reqDevice)
 
 			return nil
 		})
@@ -468,9 +467,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 						return nil
 					}
 
-					for k, v := range reqDevice {
-						devs[dev.Name][k] = v
-					}
+					maps.Copy(devs[dev.Name], reqDevice)
 
 					return nil
 				})
