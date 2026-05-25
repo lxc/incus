@@ -4946,16 +4946,6 @@ func imageSyncBetweenNodes(ctx context.Context, s *state.State, r *http.Request,
 		return nil
 	}
 
-	// Pick a random node from that slice as the source.
-	syncNodeAddress := syncNodeAddresses[rand.Intn(len(syncNodeAddresses))]
-
-	source, err := cluster.Connect(syncNodeAddress, s.Endpoints.NetworkCert(), s.ServerCert(), r, true)
-	if err != nil {
-		return fmt.Errorf("Failed to connect to source node for image synchronization: %w", err)
-	}
-
-	source = source.UseProject(project)
-
 	var image *api.Image
 
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
