@@ -4671,6 +4671,7 @@ func (b *backend) CreateBucketKey(projectName string, bucketName string, key api
 	return &newKey, err
 }
 
+// UpdateBucketKey updates an existing key on a storage bucket.
 func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName string, key api.StorageBucketKeyPut, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "bucketName": bucketName, "keyName": keyName, "desc": key.Description, "role": key.Role})
 	l.Debug("UpdateBucketKey started")
@@ -7567,6 +7568,7 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, writer 
 	return nil
 }
 
+// CreateCustomVolumeFromISO creates a custom volume from an ISO image.
 func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, srcData io.ReadSeeker, size int64, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volume": volName})
 	l.Debug("CreateCustomVolumeFromISO started")
