@@ -219,7 +219,11 @@ func (s *execWs) do(op *operations.Operation) error {
 			var rootUID, rootGID int64
 			var devptsFd *os.File
 
-			c := s.instance.(instance.Container)
+			c, ok := s.instance.(instance.Container)
+			if !ok {
+				return errors.New("Instance is not container type")
+			}
+
 			idmapset, err := c.CurrentIdmap()
 			if err != nil {
 				return err

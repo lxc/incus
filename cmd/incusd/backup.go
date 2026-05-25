@@ -146,7 +146,11 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	// Get IDMap to unshift container as the tarball is created.
 	var idmapSet *idmap.Set
 	if sourceInst.Type() == instancetype.Container {
-		c := sourceInst.(instance.Container)
+		c, ok := sourceInst.(instance.Container)
+		if !ok {
+			return errors.New("Instance is not container type")
+		}
+
 		idmapSet, err = c.DiskIdmap()
 		if err != nil {
 			return fmt.Errorf("Error getting container IDMAP: %w", err)

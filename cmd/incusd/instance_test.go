@@ -140,7 +140,8 @@ func (s *containerTestSuite) TestContainer_ProfilesOverwriteDefaultNic() {
 	out, _, err := c.Render()
 	s.Req.Nil(err)
 
-	state := out.(*api.Instance)
+	state, ok := out.(*api.Instance)
+	s.Req.True(ok)
 	defer func() { _ = c.Delete(true, true) }()
 
 	s.Equal(
