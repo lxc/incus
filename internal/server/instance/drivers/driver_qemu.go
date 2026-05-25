@@ -6657,6 +6657,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				if err != nil {
 					return fmt.Errorf("Failed updating cpu limit: %w", err)
 				}
+
 			case "limits.memory":
 				err = d.updateMemoryLimit(value)
 				if err != nil {
@@ -6675,6 +6676,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				if err != nil {
 					return err
 				}
+
 			case "limits.memory.oom_priority":
 				// Configure the OOM priority.
 				err = d.setOOMPriority(d.InitPID())
