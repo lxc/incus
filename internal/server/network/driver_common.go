@@ -436,11 +436,7 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 
 	// Diff the configurations.
 	changedKeys := []string{}
-	dbUpdateNeeded := false
-
-	if newNetwork.Description != n.description {
-		dbUpdateNeeded = true
-	}
+	dbUpdateNeeded := newNetwork.Description != n.description
 
 	for k, v := range oldNetwork.Config {
 		if v != newNetwork.Config[k] {
