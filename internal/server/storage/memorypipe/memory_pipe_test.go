@@ -2,14 +2,12 @@ package memorypipe
 
 import (
 	"bytes"
-	"context"
 	"testing"
 )
 
 // Test memorypipe.
 func TestMemoryPipe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	aEnd, bEnd := NewPipePair(ctx)
 
 	// Create four byte buffer and write it to pipe.
