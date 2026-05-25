@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-
 	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v7/client"
