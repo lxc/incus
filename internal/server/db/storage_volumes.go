@@ -202,8 +202,8 @@ func (c *ClusterTx) GetStoragePoolVolumes(ctx context.Context, poolID int64, mem
 	var volumes []*StorageVolume
 
 	err = query.Scan(ctx, c.Tx(), q.String(), func(scan func(dest ...any) error) error {
-		var volumeType int = int(-1)
-		var contentType int = int(-1)
+		volumeType := -1
+		contentType := -1
 		var vol StorageVolume
 
 		err := scan(&vol.Project, &vol.ID, &vol.Name, &vol.Location, &volumeType, &contentType, &vol.Description, &vol.CreatedAt)

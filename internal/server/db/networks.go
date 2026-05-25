@@ -603,7 +603,7 @@ func (c *ClusterTx) getNetworkByProjectAndName(ctx context.Context, projectName 
 // Returns network ID, network state, network type, and partially populated network info.
 func (c *ClusterTx) getPartialNetworkByProjectAndName(ctx context.Context, tx *ClusterTx, projectName string, networkName string, stateFilter NetworkState) (int64, NetworkState, NetworkType, *api.Network, error) {
 	var err error
-	var networkID int64 = int64(-1)
+	networkID := int64(-1)
 	var network api.Network
 	var networkState NetworkState
 	var networkType NetworkType

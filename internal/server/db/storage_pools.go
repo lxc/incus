@@ -456,7 +456,7 @@ func (c *ClusterTx) GetStoragePools(ctx context.Context, state *StoragePoolState
 	memberInfo := make(map[int64]map[int64]StoragePoolNode)
 
 	err = query.Scan(ctx, c.tx, q.String(), func(scan func(dest ...any) error) error {
-		var poolID int64 = int64(-1)
+		poolID := int64(-1)
 		var poolState StoragePoolState
 		var pool api.StoragePool
 
