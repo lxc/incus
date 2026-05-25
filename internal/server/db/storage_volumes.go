@@ -724,7 +724,11 @@ SELECT storage_volumes_snapshots.name FROM storage_volumes_snapshots
 	maxIndex := 0
 
 	for _, r := range results {
-		substr := r[0].(string)
+		substr, ok := r[0].(string)
+		if !ok {
+			continue
+		}
+
 		fields := strings.SplitN(pattern, "%d", 2)
 
 		var num int

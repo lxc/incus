@@ -1017,7 +1017,11 @@ ORDER BY instances_snapshots.creation_date, instances_snapshots.id
 	maxIndex := 0
 
 	for _, r := range results {
-		snapOnlyName := r[0].(string)
+		snapOnlyName, ok := r[0].(string)
+		if !ok {
+			continue
+		}
+
 		fields := strings.SplitN(pattern, "%d", 2)
 
 		var num int
