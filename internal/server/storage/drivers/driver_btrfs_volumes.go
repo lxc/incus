@@ -1496,6 +1496,14 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 
 		sentVols := 0
 
+		// Track subvolumes we set readonly so we can reset them once done.
+		var resetReadonly []string
+		defer func() {
+			for _, resetPath := range resetReadonly {
+				_ = d.setSubvolumeReadonlyProperty(resetPath, false)
+			}
+		}()
+
 		// Send volume (and any subvolumes if supported) to target.
 		for _, subVolume := range subvolumes {
 			if subVolume.Snapshot != snapName {
@@ -1518,7 +1526,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 						return err
 					}
 
-					defer func() { _ = d.setSubvolumeReadonlyProperty(parentPath, false) }()
+					resetReadonly = append(resetReadonly, parentPath)
 				}
 			}
 
@@ -1530,7 +1538,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 					return err
 				}
 
-				defer func() { _ = d.setSubvolumeReadonlyProperty(sourcePath, false) }()
+				resetReadonly = append(resetReadonly, sourcePath)
 			}
 
 			d.logger.Debug("Sending subvolume", logger.Ctx{"name": v.name, "source": sourcePath, "parent": parentPath, "path": subVolume.Path})
@@ -1735,6 +1743,14 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 
 		sentVols := 0
 
+		// Track subvolumes we set readonly so we can reset them once done.
+		var resetReadonly []string
+		defer func() {
+			for _, resetPath := range resetReadonly {
+				_ = d.setSubvolumeReadonlyProperty(resetPath, false)
+			}
+		}()
+
 		// Add volume (and any subvolumes if supported) to backup file.
 		for _, subVolume := range optimizedHeader.Subvolumes {
 			if subVolume.Snapshot != snapName {
@@ -1753,7 +1769,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 						return err
 					}
 
-					defer func() { _ = d.setSubvolumeReadonlyProperty(parentPath, false) }()
+					resetReadonly = append(resetReadonly, parentPath)
 				}
 			}
 
@@ -1765,7 +1781,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 					return err
 				}
 
-				defer func() { _ = d.setSubvolumeReadonlyProperty(sourcePath, false) }()
+				resetReadonly = append(resetReadonly, sourcePath)
 			}
 
 			// Default to no subvolume name for root subvolume to maintain backwards compatibility
