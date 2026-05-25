@@ -3403,7 +3403,7 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 	return cleanup, nil
 }
 
-// UnmountVolume simulates unmounting a volume snapshot.
+// UnmountVolumeSnapshot simulates unmounting a volume snapshot.
 func (d *zfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
 	unlock, err := snapVol.MountLock()
 	if err != nil {

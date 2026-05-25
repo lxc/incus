@@ -226,7 +226,7 @@ func (d *cephobject) bucketKeyRadosgwAccessRole(roleName string) (string, error)
 	return "", api.StatusErrorf(http.StatusBadRequest, "Invalid bucket key role")
 }
 
-// CreateBucket creates a new bucket.
+// CreateBucketKey creates a new bucket key.
 func (d *cephobject) CreateBucketKey(bucket Volume, keyName string, creds S3Credentials, roleName string, op *operations.Operation) (*S3Credentials, error) {
 	_, bucketName := project.StorageVolumeParts(bucket.name)
 	storageBucketName := d.radosgwBucketName(bucketName)
