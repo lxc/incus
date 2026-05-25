@@ -1244,6 +1244,7 @@ type dqliteNodeStore struct {
 	onDisk   client.NodeStore
 }
 
+// Get returns the list of servers from the active node store.
 func (s *dqliteNodeStore) Get(ctx context.Context) ([]client.NodeInfo, error) {
 	if s.inMemory != nil {
 		return s.inMemory.Get(ctx)
@@ -1252,6 +1253,7 @@ func (s *dqliteNodeStore) Get(ctx context.Context) ([]client.NodeInfo, error) {
 	return s.onDisk.Get(ctx)
 }
 
+// Set stores the list of servers in the active node store.
 func (s *dqliteNodeStore) Set(ctx context.Context, servers []client.NodeInfo) error {
 	if s.inMemory != nil {
 		return s.inMemory.Set(ctx, servers)
