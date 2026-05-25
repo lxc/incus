@@ -720,7 +720,6 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 					if volPath != "" {
 						return errors.New("Custom block volume snapshots cannot be used directly")
 					}
-
 				} else if contentType == db.StoragePoolVolumeContentTypeISO {
 					if instConf.Type() == instancetype.Container {
 						return errors.New("Custom ISO volumes cannot be used on containers")
