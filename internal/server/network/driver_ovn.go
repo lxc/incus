@@ -2477,9 +2477,10 @@ func (n *ovn) validateUplinkNetwork(p *api.Project, uplinkNetworkName string) (s
 	}
 
 	allowedNetworkCount := len(allowedUplinkNetworks)
-	if allowedNetworkCount == 0 {
+	switch allowedNetworkCount {
+	case 0:
 		return "", errors.New(`No allowed uplink networks in project`)
-	} else if allowedNetworkCount == 1 {
+	case 1:
 		// If there is only one allowed uplink network then use it if not specified by user.
 		return allowedUplinkNetworks[0], nil
 	}
@@ -4999,24 +5000,25 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			}
 
 			// Select the correct destination IP from the DNS records.
-			var ip net.IP
-			if k == "ipv4.nat" {
-				ip = dnsIPv4
-			} else if k == "ipv6.nat" {
-				ip = dnsIPv6
+			var ipAddress net.IP
+			switch k {
+			case "ipv4.nat":
+				ipAddress = dnsIPv4
+			case "ipv6.nat":
+				ipAddress = dnsIPv6
 			}
 
-			if ip == nil {
+			if ipAddress == nil {
 				continue // No qualifying target IP from DNS records.
 			}
 
-			err = n.ovnnb.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", nil, ip, ip, true, true)
+			err = n.ovnnb.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", nil, ipAddress, ipAddress, true, true)
 			if err != nil {
 				return "", nil, err
 			}
 
 			reverter.Add(func() {
-				_ = n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, ip)
+				_ = n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat_and_snat", false, ipAddress)
 			})
 		}
 	}
@@ -7481,7 +7483,8 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 	}
 
 	// Perform create-time validation.
-	if peer.Type == "local" {
+	switch peer.Type {
+	case "local":
 		// Default to network's project if target project not specified.
 		if peer.TargetProject == "" {
 			peer.TargetProject = n.Project()
@@ -7491,7 +7494,8 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 		if peer.TargetNetwork == "" {
 			return api.StatusErrorf(http.StatusBadRequest, "Target network is required")
 		}
-	} else if peer.Type == "remote" {
+
+	case "remote":
 		// Target integration name is required.
 		if peer.TargetIntegration == "" {
 			return api.StatusErrorf(http.StatusBadRequest, "Target integration is required")
@@ -8053,12 +8057,14 @@ func (n *ovn) PeerDelete(peerName string) error {
 	}
 
 	if peer.Status == api.NetworkStatusCreated {
-		if peer.Type == "local" {
+		switch peer.Type {
+		case "local":
 			err := n.localPeerDelete(peer)
 			if err != nil {
 				return err
 			}
-		} else if peer.Type == "remote" {
+
+		case "remote":
 			err := n.remotePeerDelete(peer)
 			if err != nil {
 				return err
