@@ -142,6 +142,7 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -u ./...
+	$(GO) get github.com/lxc/incus-os/incus-osd@9f09135e8e7128fef09f24958841d3ecfae200d7
 	$(GO) mod tidy --go=1.25.6
 	$(GO) get toolchain@none
 
