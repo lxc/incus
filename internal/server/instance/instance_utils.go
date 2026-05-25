@@ -446,7 +446,7 @@ func DeviceNextInterfaceHWAddr(pattern string) (string, error) {
 				return "", err
 			}
 
-			ret.WriteString(fmt.Sprintf("%x", c.Int64()))
+			fmt.Fprintf(&ret, "%x", c.Int64())
 		} else {
 			ret.WriteString(string(c))
 		}
