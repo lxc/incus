@@ -199,7 +199,6 @@ func (s *execWs) do(op *operations.Operation) error {
 	logger.Debug("Waiting for exec websockets to connect")
 	select {
 	case <-s.waitRequiredConnected.Done():
-		break
 	case <-time.After(time.Second * 10):
 		return errors.New("Timed out waiting for websockets to connect")
 	}
