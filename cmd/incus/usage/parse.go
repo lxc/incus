@@ -177,15 +177,11 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 	parsedCount := len(parsedValues)
 	usagePrefixLen := runewidth.StringWidth(cliColor.RawUsagePrefix) + runewidth.StringWidth(commandPath) + 1
 	cursor := 0
-	// We shrink renderedAtoms to the atoms we actually parsed.
 	if parseRTL {
 		slices.Reverse(parsedValues)
-		renderedAtoms = renderedAtoms[nAtoms-parsedCount:]
 		for i := range nAtoms - parsedCount {
 			cursor = cursor + wcWidths[i] + 1
 		}
-	} else {
-		renderedAtoms = renderedAtoms[:parsedCount]
 	}
 
 	padding := usagePrefixLen + 1
