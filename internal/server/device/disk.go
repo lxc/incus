@@ -2093,13 +2093,13 @@ func (d *disk) mountPoolVolume() (func(), string, *storagePools.MountInfo, error
 	}
 
 	if d.inst.Type() == instancetype.Container {
-		if dbVolume.ContentType == db.StoragePoolVolumeContentTypeNameFS {
-			err = d.storagePoolVolumeAttachShift(storageProjectName, d.pool.Name(), volName, db.StoragePoolVolumeTypeCustom, srcPath)
-			if err != nil {
-				return nil, "", nil, fmt.Errorf("Failed shifting custom storage volume %q on storage pool %q: %w", volName, d.pool.Name(), err)
-			}
-		} else {
+		if dbVolume.ContentType != db.StoragePoolVolumeContentTypeNameFS {
 			return nil, "", nil, errors.New("Only filesystem volumes are supported for containers")
+		}
+
+		err = d.storagePoolVolumeAttachShift(storageProjectName, d.pool.Name(), volName, db.StoragePoolVolumeTypeCustom, srcPath)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("Failed shifting custom storage volume %q on storage pool %q: %w", volName, d.pool.Name(), err)
 		}
 	}
 
@@ -3055,19 +3055,19 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 			}
 
 			var path string
-			if util.PathExists(fields[0]) {
-				if linux.IsBlockdevPath(fields[0]) {
-					path = fields[0]
-				} else {
-					subDevices, err := d.getParentBlocks(fields[0])
-					if err != nil {
-						return nil, err
-					}
-
-					devices = append(devices, subDevices...)
-				}
-			} else {
+			if !util.PathExists(fields[0]) {
 				continue
+			}
+
+			if linux.IsBlockdevPath(fields[0]) {
+				path = fields[0]
+			} else {
+				subDevices, err := d.getParentBlocks(fields[0])
+				if err != nil {
+					return nil, err
+				}
+
+				devices = append(devices, subDevices...)
 			}
 
 			if path != "" {
