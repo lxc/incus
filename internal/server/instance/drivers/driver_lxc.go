@@ -1335,7 +1335,7 @@ var (
 // IdmappedStorage determines if the container can use idmapped mounts.
 func (d *lxc) IdmappedStorage(fspath string, fstype string) idmap.StorageType {
 	var mode idmap.StorageType = idmap.StorageTypeNone
-	var bindMount bool = fstype == "none" || fstype == ""
+	bindMount := fstype == "none" || fstype == ""
 
 	buf := &unix.Statfs_t{}
 
