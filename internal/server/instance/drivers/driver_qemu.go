@@ -2367,13 +2367,13 @@ func (d *qemu) setupSEV(fdFiles *[]*os.File) (*qemuSevOpts, error) {
 
 	if util.IsTrue(d.expandedConfig["security.sev.policy.es"]) {
 		_, sevES := info.Features["sev-es"]
-		if sevES {
-			// This bit mask is used to specify a guest policy. '0x5' is for SEV-ES. The details of the available policies can be found in the link below (see chapter 3)
-			// https://www.amd.com/system/files/TechDocs/55766_SEV-KM_API_Specification.pdf
-			sevOpts.policy = "0x5"
-		} else {
+		if !sevES {
 			return nil, errors.New("AMD SEV-ES is not supported by the host")
 		}
+
+		// This bit mask is used to specify a guest policy. '0x5' is for SEV-ES. The details of the available policies can be found in the link below (see chapter 3)
+		// https://www.amd.com/system/files/TechDocs/55766_SEV-KM_API_Specification.pdf
+		sevOpts.policy = "0x5"
 	} else {
 		// '0x1' is for a regular SEV policy.
 		sevOpts.policy = "0x1"
