@@ -13,7 +13,7 @@ func Upgrade(hijackedConn net.Conn, protocolName string) error {
 	// Write the status line and upgrade header by hand since w.WriteHeader() would fail after Hijack().
 	sb := strings.Builder{}
 	sb.WriteString("HTTP/1.1 101 Switching Protocols\r\n")
-	sb.WriteString(fmt.Sprintf("Upgrade: %s\r\n", protocolName))
+	fmt.Fprintf(&sb, "Upgrade: %s\r\n", protocolName)
 	sb.WriteString("Connection: Upgrade\r\n\r\n")
 
 	_ = hijackedConn.SetWriteDeadline(time.Now().Add(time.Second * 5))
