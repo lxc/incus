@@ -17,9 +17,9 @@ import (
 
 // Schema for the cluster database.
 func Schema() *schema.Schema {
-	schema := schema.NewFromMap(updates)
-	schema.Fresh(freshSchema)
-	return schema
+	sch := schema.NewFromMap(updates)
+	sch.Fresh(freshSchema)
+	return sch
 }
 
 // FreshSchema returns the fresh schema definition of the global database.
@@ -2864,7 +2864,7 @@ func updateFromV25(ctx context.Context, tx *sql.Tx) error {
 		Config        map[string]string
 	}
 
-	sql := `
+	stmt := `
 SELECT id, name, storage_pool_id, node_id, type, coalesce(description, ''), project_id
     FROM storage_volumes
     WHERE snapshot=1
@@ -2875,7 +2875,7 @@ SELECT id, name, storage_pool_id, node_id, type, coalesce(description, ''), proj
 
 	// Fetch all snapshot rows in the storage_volumes table.
 	snapshots := make([]snapshot, 0, count)
-	err = query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
+	err = query.Scan(ctx, tx, stmt, func(scan func(dest ...any) error) error {
 		s := snapshot{}
 		err := scan(&s.ID, &s.Name, &s.StoragePoolID, &s.NodeID, &s.Type, &s.Description, &s.ProjectID)
 		if err != nil {
@@ -3392,9 +3392,9 @@ CREATE VIEW instances_snapshots_devices_ref (
 		ExpiryDate   sql.NullTime
 	}
 
-	sql := `SELECT id, name, type, creation_date, stateful, coalesce(description, ''), expiry_date FROM instances`
+	stmt := `SELECT id, name, type, creation_date, stateful, coalesce(description, ''), expiry_date FROM instances`
 	instances := make([]instance, 0, count)
-	err = query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
+	err = query.Scan(ctx, tx, stmt, func(scan func(dest ...any) error) error {
 		inst := instance{}
 		err := scan(&inst.ID, &inst.Name, &inst.Type, &inst.CreationDate, &inst.Stateful, &inst.Description, &inst.ExpiryDate)
 		if err != nil {
@@ -3438,13 +3438,13 @@ CREATE VIEW instances_snapshots_devices_ref (
 	}
 
 	configs := make([]instanceConfig, 0, count)
-	sql = `
+	stmt = `
 SELECT instances_config.id, instance_id, key, value
     FROM instances_config JOIN instances ON instances_config.instance_id = instances.id
     WHERE instances.type = 1
 `
 
-	err = query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
+	err = query.Scan(ctx, tx, stmt, func(scan func(dest ...any) error) error {
 		config := instanceConfig{}
 		err := scan(&config.ID, &config.InstanceID, &config.Key, &config.Value)
 		if err != nil {
@@ -3489,13 +3489,13 @@ SELECT instances_config.id, instance_id, key, value
 	}
 
 	devices := make([]device, 0, count)
-	sql = `
+	stmt = `
 SELECT instances_devices.id, instance_id, instances_devices.name, instances_devices.type
     FROM instances_devices JOIN instances ON instances_devices.instance_id = instances.id
     WHERE instances.type = 1
 `
 
-	err = query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
+	err = query.Scan(ctx, tx, stmt, func(scan func(dest ...any) error) error {
 		d := device{}
 		err := scan(&d.ID, &d.InstanceID, &d.Name, &d.Type)
 		if err != nil {
@@ -4436,7 +4436,7 @@ SELECT storage_volumes.id FROM storage_volumes
 	}
 
 	volumes := make([]volume, 0, len(volumeIDs))
-	sql := `
+	stmt := `
 SELECT
     storage_volumes.id,
     storage_volumes.name,
@@ -4449,7 +4449,7 @@ FROM storage_volumes
     WHERE storage_pools.driver='ceph'
 `
 
-	err = query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
+	err = query.Scan(ctx, tx, stmt, func(scan func(dest ...any) error) error {
 		vol := volume{}
 		err := scan(&vol.ID, &vol.Name, &vol.StoragePoolID, &vol.NodeID, &vol.Type, &vol.Description)
 		if err != nil {

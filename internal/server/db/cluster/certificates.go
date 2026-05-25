@@ -104,14 +104,14 @@ func (cert *Certificate) ToAPI(ctx context.Context, tx *sql.Tx) (*api.Certificat
 func GetCertificateByFingerprintPrefix(ctx context.Context, tx *sql.Tx, fingerprintPrefix string) (*Certificate, error) {
 	var err error
 	var cert *Certificate
-	sql := `
+	stmt := `
 SELECT certificates.fingerprint
 FROM certificates
 WHERE certificates.fingerprint LIKE ?
 ORDER BY certificates.fingerprint
 		`
 
-	fingerprints, err := query.SelectStrings(ctx, tx, sql, fingerprintPrefix+"%")
+	fingerprints, err := query.SelectStrings(ctx, tx, stmt, fingerprintPrefix+"%")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch certificates fingerprints matching prefix %q: %w", fingerprintPrefix, err)
 	}
