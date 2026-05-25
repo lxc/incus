@@ -69,13 +69,13 @@ func TestGateway_Single(t *testing.T) {
 	assert.Equal(t, "", leader)
 	assert.EqualError(t, err, cluster.ErrNodeIsNotClustered.Error())
 
-	driver, err := driver.New(
+	dqliteDriver, err := driver.New(
 		gateway.NodeStore(),
 		driver.WithDialFunc(gateway.DialFunc()),
 	)
 	require.NoError(t, err)
 
-	conn, err := driver.Open("test.db")
+	conn, err := dqliteDriver.Open("test.db")
 	require.NoError(t, err)
 
 	require.NoError(t, conn.Close())
@@ -106,13 +106,13 @@ func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 		mux.HandleFunc(path, handler)
 	}
 
-	driver, err := driver.New(
+	dqliteDriver, err := driver.New(
 		gateway.NodeStore(),
 		driver.WithDialFunc(gateway.DialFunc()),
 	)
 	require.NoError(t, err)
 
-	conn, err := driver.Open("test.db")
+	conn, err := dqliteDriver.Open("test.db")
 	require.NoError(t, err)
 
 	require.NoError(t, conn.Close())

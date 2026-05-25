@@ -65,9 +65,9 @@ type APIHeartbeatVersion struct {
 }
 
 // NewAPIHearbeat returns initialized APIHeartbeat.
-func NewAPIHearbeat(cluster *db.Cluster) *APIHeartbeat {
+func NewAPIHearbeat(dbCluster *db.Cluster) *APIHeartbeat {
 	return &APIHeartbeat{
-		cluster: cluster,
+		cluster: dbCluster,
 	}
 }
 
@@ -563,15 +563,15 @@ func HeartbeatNode(taskCtx context.Context, address string, networkCert *localtl
 	request = request.WithContext(ctx)
 	request.Close = true // Immediately close the connection after the request is done
 
-	response, err := client.Do(request)
+	resp, err := client.Do(request)
 	if err != nil {
 		return fmt.Errorf("Failed to send heartbeat request: %w", err)
 	}
 
-	defer func() { _ = response.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }()
 
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("Heartbeat request failed with status: %w", api.StatusErrorf(response.StatusCode, "%s", response.Status))
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Heartbeat request failed with status: %w", api.StatusErrorf(resp.StatusCode, "%s", resp.Status))
 	}
 
 	return nil

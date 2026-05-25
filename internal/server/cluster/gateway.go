@@ -41,7 +41,7 @@ import (
 // After creation, the Daemon is expected to expose whatever http handlers the
 // HandlerFuncs method returns and to access the dqlite cluster using the
 // dialer returned by the DialFunc method.
-func NewGateway(shutdownCtx context.Context, db *db.Node, networkCert *localtls.CertInfo, stateFunc func() *state.State, options ...Option) (*Gateway, error) {
+func NewGateway(shutdownCtx context.Context, nodeDB *db.Node, networkCert *localtls.CertInfo, stateFunc func() *state.State, options ...Option) (*Gateway, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	o := newOptions()
@@ -51,7 +51,7 @@ func NewGateway(shutdownCtx context.Context, db *db.Node, networkCert *localtls.
 
 	gateway := &Gateway{
 		shutdownCtx: shutdownCtx,
-		db:          db,
+		db:          nodeDB,
 		networkCert: networkCert,
 		options:     o,
 		ctx:         ctx,
@@ -274,16 +274,16 @@ func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts f
 				return
 			}
 
-			client, err := g.getClient()
+			dqliteClient, err := g.getClient()
 			if err != nil {
 				http.Error(w, "500 failed to get dqlite client", http.StatusInternalServerError)
 				return
 			}
 
-			defer func() { _ = client.Close() }()
+			defer func() { _ = dqliteClient.Close() }()
 			ctx, cancel := context.WithTimeout(g.ctx, 3*time.Second)
 			defer cancel()
-			leader, err := client.Leader(ctx)
+			leader, err := dqliteClient.Leader(ctx)
 			if err != nil {
 				http.Error(w, "500 failed to get leader address", http.StatusInternalServerError)
 				return
@@ -463,15 +463,15 @@ func (g *Gateway) Kill() {
 
 // TransferLeadership attempts to transfer leadership to another node.
 func (g *Gateway) TransferLeadership() error {
-	client, err := g.getClient()
+	dqliteClient, err := g.getClient()
 	if err != nil {
 		return err
 	}
 
-	defer func() { _ = client.Close() }()
+	defer func() { _ = dqliteClient.Close() }()
 
 	// Try to find a voter that is also online.
-	servers, err := client.Cluster(context.Background())
+	servers, err := dqliteClient.Cluster(context.Background())
 	if err != nil {
 		return err
 	}
@@ -502,7 +502,7 @@ func (g *Gateway) TransferLeadership() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	return client.Transfer(ctx, id)
+	return dqliteClient.Transfer(ctx, id)
 }
 
 // DemoteOfflineNode force demoting an offline node.
@@ -558,15 +558,15 @@ func (g *Gateway) Sync() {
 		return
 	}
 
-	client, err := g.getClient()
+	dqliteClient, err := g.getClient()
 	if err != nil {
 		logger.Warnf("Failed to get client: %v", err)
 		return
 	}
 
-	defer func() { _ = client.Close() }()
+	defer func() { _ = dqliteClient.Close() }()
 
-	files, err := client.Dump(context.Background(), "db.bin")
+	files, err := dqliteClient.Dump(context.Background(), "db.bin")
 	if err != nil {
 		// Just log a warning, since this is not fatal.
 		logger.Warnf("Failed get database dump: %v", err)
@@ -632,23 +632,23 @@ func (g *Gateway) LeaderAddress() (string, error) {
 		defer cancel()
 
 		for {
-			client, err := g.getClient()
+			dqliteClient, err := g.getClient()
 			if err != nil {
 				return "", fmt.Errorf("Failed to get dqlite client: %w", err)
 			}
 
-			leader, err := client.Leader(ctx)
+			leader, err := dqliteClient.Leader(ctx)
 			if err != nil {
-				_ = client.Close()
+				_ = dqliteClient.Close()
 				return "", fmt.Errorf("Failed to get leader address: %w", err)
 			}
 
 			if leader != nil && leader.Address != "" {
-				_ = client.Close()
+				_ = dqliteClient.Close()
 				return leader.Address, nil
 			}
 
-			_ = client.Close()
+			_ = dqliteClient.Close()
 
 			select {
 			case <-ctx.Done():
@@ -696,13 +696,13 @@ func (g *Gateway) LeaderAddress() (string, error) {
 
 	for _, address := range addresses {
 		timeout := 2 * time.Second
-		client := &http.Client{
+		httpClient := &http.Client{
 			Transport: transport,
 			Timeout:   timeout,
 		}
 
-		url := fmt.Sprintf("https://%s%s", address, databaseEndpoint)
-		request, err := http.NewRequest("GET", url, nil)
+		requestURL := fmt.Sprintf("https://%s%s", address, databaseEndpoint)
+		request, err := http.NewRequest("GET", requestURL, nil)
 		if err != nil {
 			return "", err
 		}
@@ -713,21 +713,21 @@ func (g *Gateway) LeaderAddress() (string, error) {
 		// more useful info.
 		ctx, cancel := context.WithTimeout(g.ctx, timeout+time.Second)
 		request = request.WithContext(ctx)
-		response, err := client.Do(request)
+		resp, err := httpClient.Do(request)
 		if err != nil {
 			cancel()
 			logger.Debugf("Failed to fetch leader address from %s", address)
 			continue
 		}
 
-		if response.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusOK {
 			cancel()
 			logger.Debugf("Request for leader address from %s failed", address)
 			continue
 		}
 
 		info := map[string]string{}
-		err = json.NewDecoder(response.Body).Decode(&info)
+		err = json.NewDecoder(resp.Body).Decode(&info)
 		if err != nil {
 			cancel()
 			logger.Debugf("Failed to parse leader address from %s", address)
@@ -891,15 +891,15 @@ func (g *Gateway) isLeader() (bool, error) {
 		return false, nil
 	}
 
-	client, err := g.getClient()
+	dqliteClient, err := g.getClient()
 	if err != nil {
 		return false, fmt.Errorf("Failed to get dqlite client: %w", err)
 	}
 
-	defer func() { _ = client.Close() }()
+	defer func() { _ = dqliteClient.Close() }()
 	ctx, cancel := context.WithTimeout(g.ctx, 3*time.Second)
 	defer cancel()
-	leader, err := client.Leader(ctx)
+	leader, err := dqliteClient.Leader(ctx)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get leader address: %w", err)
 	}
@@ -930,14 +930,14 @@ func (g *Gateway) currentRaftNodes() ([]db.RaftNode, error) {
 		return nil, ErrNotLeader
 	}
 
-	client, err := g.getClient()
+	dqliteClient, err := g.getClient()
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() { _ = client.Close() }()
+	defer func() { _ = dqliteClient.Close() }()
 
-	servers, err := client.Cluster(context.Background())
+	servers, err := dqliteClient.Cluster(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -1074,14 +1074,14 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 		return nil, fmt.Errorf("Failed sending HTTP request to %q: %w", request.URL, err)
 	}
 
-	response, err := http.ReadResponse(bufio.NewReader(conn), request)
+	resp, err := http.ReadResponse(bufio.NewReader(conn), request)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read response: %w", err)
 	}
 
 	// If the remote server has detected that we are out of date, let's
 	// trigger an upgrade.
-	if response.StatusCode == http.StatusUpgradeRequired {
+	if resp.StatusCode == http.StatusUpgradeRequired {
 		g.lock.Lock()
 		defer g.lock.Unlock()
 		if !g.upgradeTriggered {
@@ -1093,11 +1093,11 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 		return nil, errors.New("Upgrade needed")
 	}
 
-	if response.StatusCode != http.StatusSwitchingProtocols {
-		return nil, fmt.Errorf("Dialing failed: expected status code 101 got %d", response.StatusCode)
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		return nil, fmt.Errorf("Dialing failed: expected status code 101 got %d", resp.StatusCode)
 	}
 
-	if response.Header.Get("Upgrade") != "dqlite" {
+	if resp.Header.Get("Upgrade") != "dqlite" {
 		return nil, errors.New("Missing or unexpected Upgrade header in response")
 	}
 

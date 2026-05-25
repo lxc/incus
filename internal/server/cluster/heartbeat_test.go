@@ -85,9 +85,9 @@ type heartbeatFixture struct {
 // Bootstrap the first node of the cluster.
 func (f *heartbeatFixture) Bootstrap() *cluster.Gateway {
 	f.t.Logf("create bootstrap node for test cluster")
-	state, gateway, _ := f.node()
+	s, gateway, _ := f.node()
 
-	err := cluster.Bootstrap(state, gateway, "buzz")
+	err := cluster.Bootstrap(s, gateway, "buzz")
 	require.NoError(f.t, err)
 
 	return gateway
@@ -100,14 +100,14 @@ func (f *heartbeatFixture) Grow() *cluster.Gateway {
 	target := f.Leader()
 	targetState := f.states[target]
 
-	state, gateway, address := f.node()
+	s, gateway, address := f.node()
 	name := address
 
 	nodes, err := cluster.Accept(
 		targetState, target, name, address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86)
 	require.NoError(f.t, err)
 
-	err = cluster.Join(state, gateway, target.NetworkCert(), target.ServerCert(), name, nodes)
+	err = cluster.Join(s, gateway, target.NetworkCert(), target.ServerCert(), name, nodes)
 	require.NoError(f.t, err)
 
 	return gateway
@@ -201,13 +201,13 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 		f.servers = make(map[*cluster.Gateway]*httptest.Server)
 	}
 
-	state, cleanup := state.NewTestState(f.t)
+	s, cleanup := state.NewTestState(f.t)
 	f.cleanups = append(f.cleanups, cleanup)
 
 	serverCert := tlstest.TestingKeyPair(f.t)
-	state.ServerCert = func() *localtls.CertInfo { return serverCert }
+	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
-	gateway := newGateway(f.t, state.DB.Node, serverCert, state)
+	gateway := newGateway(f.t, s.DB.Node, serverCert, s)
 	f.cleanups = append(f.cleanups, func() { _ = gateway.Shutdown() })
 
 	mux := http.NewServeMux()
@@ -218,24 +218,24 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 	}
 
 	address := server.Listener.Addr().String()
-	mf := &membershipFixtures{t: f.t, state: state}
+	mf := &membershipFixtures{t: f.t, state: s}
 	mf.ClusterAddress(address)
 
 	var err error
-	require.NoError(f.t, state.DB.Cluster.Close())
+	require.NoError(f.t, s.DB.Cluster.Close())
 	store := gateway.NodeStore()
 	dial := gateway.DialFunc()
-	state.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dial))
+	s.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dial))
 	require.NoError(f.t, err)
 
-	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		state.GlobalConfig, err = clusterConfig.Load(ctx, tx)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		s.GlobalConfig, err = clusterConfig.Load(ctx, tx)
 		if err != nil {
 			return err
 		}
 
 		// Get the local node (will be used if clustered).
-		state.ServerName, err = tx.GetLocalNodeName(ctx)
+		s.ServerName, err = tx.GetLocalNodeName(ctx)
 		if err != nil {
 			return err
 		}
@@ -244,17 +244,17 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 	})
 	require.NoError(f.t, err)
 
-	err = state.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
-		state.LocalConfig, err = node.ConfigLoad(ctx, tx)
+	err = s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
+		s.LocalConfig, err = node.ConfigLoad(ctx, tx)
 		return err
 	})
 	require.NoError(f.t, err)
 
 	f.gateways[len(f.gateways)] = gateway
-	f.states[gateway] = state
+	f.states[gateway] = s
 	f.servers[gateway] = server
 
-	return state, gateway, address
+	return s, gateway, address
 }
 
 func (f *heartbeatFixture) Cleanup() {

@@ -95,13 +95,13 @@ func TestBootstrap_UnmetPreconditions(t *testing.T) {
 }
 
 func TestBootstrap(t *testing.T) {
-	state, cleanup := state.NewTestState(t)
+	s, cleanup := state.NewTestState(t)
 	defer cleanup()
 
 	serverCert := tlstest.TestingKeyPair(t)
-	state.ServerCert = func() *localtls.CertInfo { return serverCert }
+	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
-	gateway := newGateway(t, state.DB.Node, serverCert, state)
+	gateway := newGateway(t, s.DB.Node, serverCert, s)
 	defer func() { _ = gateway.Shutdown() }()
 
 	mux := http.NewServeMux()
@@ -109,14 +109,14 @@ func TestBootstrap(t *testing.T) {
 	defer server.Close()
 
 	address := server.Listener.Addr().String()
-	f := &membershipFixtures{t: t, state: state}
+	f := &membershipFixtures{t: t, state: s}
 	f.ClusterAddress(address)
 
-	err := cluster.Bootstrap(state, gateway, "buzz")
+	err := cluster.Bootstrap(s, gateway, "buzz")
 	require.NoError(t, err)
 
 	// The node-local database has now an entry in the raft_nodes table
-	err = state.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
+	err = s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodes, err := tx.GetRaftNodes(ctx)
 		require.NoError(t, err)
 		require.Len(t, nodes, 1)
@@ -127,7 +127,7 @@ func TestBootstrap(t *testing.T) {
 	require.NoError(t, err)
 
 	// The cluster database has now an entry in the nodes table
-	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		members, err := tx.GetNodes(ctx)
 		require.NoError(t, err)
 		require.Len(t, members, 1)
@@ -138,18 +138,18 @@ func TestBootstrap(t *testing.T) {
 	require.NoError(t, err)
 
 	// The cluster certificate is in place.
-	assert.True(t, util.PathExists(filepath.Join(state.OS.VarDir, "cluster.crt")))
+	assert.True(t, util.PathExists(filepath.Join(s.OS.VarDir, "cluster.crt")))
 
 	// The dqlite driver is now exposed over the network.
 	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
 		mux.HandleFunc(path, handler)
 	}
 
-	count, err := cluster.Count(state)
+	count, err := cluster.Count(s)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 
-	enabled, err := cluster.Enabled(state.DB.Node)
+	enabled, err := cluster.Enabled(s.DB.Node)
 	require.NoError(t, err)
 	assert.True(t, enabled)
 }
@@ -235,29 +235,29 @@ func TestAccept_UnmetPreconditions(t *testing.T) {
 
 // When a node gets accepted, it gets included in the raft nodes.
 func TestAccept(t *testing.T) {
-	state, cleanup := state.NewTestState(t)
+	s, cleanup := state.NewTestState(t)
 	defer cleanup()
 
 	serverCert := tlstest.TestingKeyPair(t)
-	state.ServerCert = func() *localtls.CertInfo { return serverCert }
+	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
-	gateway := newGateway(t, state.DB.Node, serverCert, state)
+	gateway := newGateway(t, s.DB.Node, serverCert, s)
 	defer func() { _ = gateway.Shutdown() }()
 
-	f := &membershipFixtures{t: t, state: state}
+	f := &membershipFixtures{t: t, state: s}
 	f.RaftNode("1.2.3.4:666")
 	f.ClusterNode("1.2.3.4:666")
 
-	err := state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
-		state.GlobalConfig, err = clusterConfig.Load(ctx, tx)
+		s.GlobalConfig, err = clusterConfig.Load(ctx, tx)
 		if err != nil {
 			return err
 		}
 
 		// Get the local node (will be used if clustered).
-		state.ServerName, err = tx.GetLocalNodeName(ctx)
+		s.ServerName, err = tx.GetLocalNodeName(ctx)
 		if err != nil {
 			return err
 		}
@@ -267,7 +267,7 @@ func TestAccept(t *testing.T) {
 	require.NoError(t, err)
 
 	nodes, err := cluster.Accept(
-		state, gateway, "buzz", "5.6.7.8:666", cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86)
+		s, gateway, "buzz", "5.6.7.8:666", cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86)
 	assert.NoError(t, err)
 	assert.Len(t, nodes, 2)
 	assert.Equal(t, uint64(1), nodes[0].ID)
@@ -355,12 +355,12 @@ func TestJoin(t *testing.T) {
 	server := newServer(targetCert, mux)
 	defer server.Close()
 
-	state, cleanup := state.NewTestState(t)
+	s, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	state.ServerCert = func() *localtls.CertInfo { return altServerCert }
+	s.ServerCert = func() *localtls.CertInfo { return altServerCert }
 
-	gateway := newGateway(t, state.DB.Node, targetCert, state)
+	gateway := newGateway(t, s.DB.Node, targetCert, s)
 
 	defer func() { _ = gateway.Shutdown() }()
 
@@ -370,22 +370,22 @@ func TestJoin(t *testing.T) {
 
 	address := server.Listener.Addr().String()
 
-	require.NoError(t, state.DB.Cluster.Close())
+	require.NoError(t, s.DB.Cluster.Close())
 
 	store := gateway.NodeStore()
 	dialFunc := gateway.DialFunc()
 
-	state.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dialFunc))
+	s.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dialFunc))
 	require.NoError(t, err)
 
-	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		state.GlobalConfig, err = clusterConfig.Load(ctx, tx)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		s.GlobalConfig, err = clusterConfig.Load(ctx, tx)
 		if err != nil {
 			return err
 		}
 
 		// Get the local node (will be used if clustered).
-		state.ServerName, err = tx.GetLocalNodeName(ctx)
+		s.ServerName, err = tx.GetLocalNodeName(ctx)
 		if err != nil {
 			return err
 		}
@@ -397,7 +397,7 @@ func TestJoin(t *testing.T) {
 	// Save the other instance of PreparedStmts here.
 	sourceStmts := dbCluster.PreparedStmts
 
-	f := &membershipFixtures{t: t, state: state}
+	f := &membershipFixtures{t: t, state: s}
 	f.ClusterAddress(address)
 
 	// Accept the joining node.
@@ -408,7 +408,7 @@ func TestJoin(t *testing.T) {
 
 	// Actually join the cluster.
 	dbCluster.PreparedStmts = sourceStmts
-	err = cluster.Join(state, gateway, targetCert, altServerCert, "rusp", raftNodes)
+	err = cluster.Join(s, gateway, targetCert, altServerCert, "rusp", raftNodes)
 	require.NoError(t, err)
 
 	// The leader now returns an updated list of raft nodes.
@@ -424,12 +424,12 @@ func TestJoin(t *testing.T) {
 	assert.Equal(t, db.RaftStandBy, raftNodes[1].Role)
 
 	// The Count function returns the number of nodes.
-	count, err := cluster.Count(state)
+	count, err := cluster.Count(s)
 	require.NoError(t, err)
 	assert.Equal(t, 2, count)
 
 	// Leave the cluster.
-	leaving, err := cluster.Leave(state, targetGateway, "rusp", false /* force */, false)
+	leaving, err := cluster.Leave(s, targetGateway, "rusp", false /* force */, false)
 	require.NoError(t, err)
 	assert.Equal(t, address, leaving)
 	dbCluster.PreparedStmts = targetStmts
