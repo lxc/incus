@@ -158,9 +158,9 @@ func main() {
 	forkproxyCmd := cmdForkproxy{global: &globalCmd}
 	app.AddCommand(forkproxyCmd.command())
 
-	// forkstart sub-command
-	forkstartCmd := cmdForkstart{global: &globalCmd}
-	app.AddCommand(forkstartCmd.command())
+	// forklxc sub-command
+	forklxcCmd := cmdForklxc{global: &globalCmd}
+	app.AddCommand(forklxcCmd.command())
 
 	// forkuevent sub-command
 	forkueventCmd := cmdForkuevent{global: &globalCmd}

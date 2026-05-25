@@ -2969,7 +2969,7 @@ func (d *lxc) Start(stateful bool) error {
 
 	name := project.Instance(d.Project().Name, d.name)
 
-	// Setup minimal environment for forkstart.
+	// Setup minimal environment for forklxc.
 	envDict := map[string]string{
 		"container": "lxc",
 	}
@@ -3003,7 +3003,7 @@ func (d *lxc) Start(stateful bool) error {
 		env,
 		nil,
 		d.state.OS.ExecPath,
-		"forkstart",
+		"forklxc",
 		name,
 		d.state.OS.LxcPath,
 		configPath,

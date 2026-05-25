@@ -14,14 +14,14 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-type cmdForkstart struct {
+type cmdForklxc struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForkstart) command() *cobra.Command {
+func (c *cmdForklxc) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
-	cmd.Use = "forkstart <container name> <containers path> <config>"
+	cmd.Use = "forklxc <container name> <containers path> <config>"
 	cmd.Short = "Start the container"
 	cmd.Long = `Description:
   Start the container
@@ -35,7 +35,7 @@ func (c *cmdForkstart) command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
+func (c *cmdForklxc) run(cmd *cobra.Command, args []string) error {
 	// Quick checks.
 	if len(args) != 4 {
 		_ = cmd.Help()
@@ -73,7 +73,7 @@ func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 	}
 
 	/* due to https://github.com/golang/go/issues/13155 and the
-	 * CollectOutput call we make for the forkstart process, we need to
+	 * CollectOutput call we make for the forklxc process, we need to
 	 * close our stdin/stdout/stderr here. Collecting some of the logs is
 	 * better than collecting no logs, though.
 	 */
@@ -82,7 +82,7 @@ func (c *cmdForkstart) run(cmd *cobra.Command, args []string) error {
 	_ = os.Stdout.Close()
 
 	// Redirect stdout and stderr to a log file
-	logPath := filepath.Join(logDir, "forkstart.log")
+	logPath := filepath.Join(logDir, "forklxc.log")
 	if util.PathExists(logPath) {
 		_ = os.Remove(logPath)
 	}
