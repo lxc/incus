@@ -1049,7 +1049,6 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	}
 
 	if vol.contentType == ContentTypeFS {
-
 		if vol.volType == VolumeTypeImage {
 			return fmt.Errorf("Image volumes cannot be resized: %w", ErrCannotBeShrunk)
 		}
@@ -1151,7 +1150,6 @@ func (d *truenas) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 			l.Debug("TrueNAS volume filesystem grown")
 		}
 	} else {
-
 		// Block Volume.
 
 		// Block image volumes cannot be resized because they have a readonly snapshot that doesn't get
