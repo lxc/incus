@@ -746,7 +746,6 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 			// custom volume disks (where initial.uid/gid/mode are used when auto-creating sub-directories).
 			initialConfig := make(map[string]string)
 			for k, v := range d.config {
-
 				// gendoc:generate(entity=devices, group=disk, key=initial.*)
 				//
 				// For root disk devices, this is used to override the storage pool's default volume
