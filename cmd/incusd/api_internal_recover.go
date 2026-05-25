@@ -137,6 +137,19 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 	// Used to store a handle to each pool containing user supplied config.
 	pools := make(map[string]storagePools.Pool)
 
+	// Track temporarily mounted pools to unmount when the function has finished.
+	// This way if we are dealing with an existing pool or have successfully created the DB record then
+	// we won't unmount it. As we should leave successfully imported pools mounted.
+	var mountedPoolNames []string
+	defer func() {
+		for _, poolName := range mountedPoolNames {
+			cleanupPool := pools[poolName]
+			if cleanupPool != nil && cleanupPool.ID() == storagePools.PoolIDTemporary {
+				_, _ = cleanupPool.Unmount()
+			}
+		}
+	}()
+
 	// Iterate the pools finding unknown volumes and perform validation.
 	for _, p := range userPools {
 		pool, err := storagePools.LoadByName(s, p.Name)
@@ -185,16 +198,9 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 			return response.SmartError(fmt.Errorf("Failed mounting pool %q: %w", pool.Name(), err))
 		}
 
-		// Unmount pool when done if not existing in DB after function has finished.
-		// This way if we are dealing with an existing pool or have successfully created the DB record then
-		// we won't unmount it. As we should leave successfully imported pools mounted.
+		// Record the pool to be unmounted when the function has finished.
 		if ourMount {
-			defer func() {
-				cleanupPool := pools[pool.Name()]
-				if cleanupPool != nil && cleanupPool.ID() == storagePools.PoolIDTemporary {
-					_, _ = cleanupPool.Unmount()
-				}
-			}()
+			mountedPoolNames = append(mountedPoolNames, pool.Name())
 
 			reverter.Add(func() {
 				cleanupPool := pools[pool.Name()]

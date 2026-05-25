@@ -424,6 +424,13 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			}
 		}
 
+		var snapInstOps []*operationlock.InstanceOperation
+		defer func() {
+			for _, snapInstOp := range snapInstOps {
+				snapInstOp.Done(nil)
+			}
+		}()
+
 		for _, srcSnap := range snapshots {
 			snapLocalDevices := srcSnap.LocalDevices().Clone()
 
@@ -485,7 +492,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			}
 
 			reverter.Add(cleanup)
-			defer snapInstOp.Done(err)
+			snapInstOps = append(snapInstOps, snapInstOp)
 		}
 	}
 
