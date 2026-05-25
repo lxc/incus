@@ -130,7 +130,7 @@ type StorageVolume struct {
 // Accepts filters for narrowing down the results returned. If memberSpecific is true, then the search is
 // restricted to volumes that belong to this member or belong to all members.
 func (c *ClusterTx) GetStoragePoolVolumes(ctx context.Context, poolID int64, memberSpecific bool, filters ...StorageVolumeFilter) ([]*StorageVolume, error) {
-	var q *strings.Builder = &strings.Builder{}
+	q := &strings.Builder{}
 	args := []any{poolID}
 
 	q.WriteString(`
