@@ -315,7 +315,7 @@ func (c *cmdForkproxy) command() *cobra.Command {
 func rearmUDPFd(epFd C.int, connFd C.int) {
 	var ev C.struct_epoll_event
 	ev.events = C.EPOLLIN | C.EPOLLONESHOT
-	*(*C.int)(unsafe.Pointer(uintptr(unsafe.Pointer(&ev)) + unsafe.Sizeof(ev.events))) = connFd
+	*(*C.int)(unsafe.Add(unsafe.Pointer(&ev), unsafe.Sizeof(ev.events))) = connFd
 	ret := C.epoll_ctl(epFd, C.EPOLL_CTL_MOD, connFd, &ev)
 	if ret < 0 {
 		fmt.Println("Error: Failed to add listener fd to epoll instance")
