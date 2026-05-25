@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-24 15:02-0400\n"
-"PO-Revision-Date: 2026-05-22 10:21+0000\n"
+"PO-Revision-Date: 2026-05-25 19:14+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
@@ -1248,8 +1248,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
-"<Schlüssel>=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,<Schlüssel>"
+"=<Wert>: %s"
 
 #: cmd/incus/copy.go:137 cmd/incus/create.go:205 cmd/incus/move.go:250
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1405,8 +1405,7 @@ msgstr ""
 #: cmd/incus/config.go:618
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
-"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:74
 msgid "Can't use --auto and --preseed together"
@@ -1424,8 +1423,7 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:78
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
-"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/snapshot.go:127 cmd/incus/storage_volume.go:3138
 msgid "Can't use both --no-expiry and --expiry"
@@ -1453,8 +1451,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:440
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
-"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:454
 msgid "Cannot set --volume-only when copying a snapshot"
@@ -2917,8 +2914,8 @@ msgstr ""
 "Mitglieds). \n"
 "\n"
 "  Die globale Datenbank teilen sich alle Mitglieder eines Clusters \n"
-"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, "
-"usw.). \n"
+"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, usw.). "
+"\n"
 "\n"
 "  Wenn Sie einen Server ohne Cluster betreiben, gilt dasgleiche, \n"
 "  denn der Server ist dann praktisch ein Cluster mit nur einem Mitglied. \n"
@@ -5816,8 +5813,7 @@ msgstr ""
 
 #: cmd/incus/file.go:494
 msgid "More than one file to download, but target is not a directory"
-msgstr ""
-"Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
+msgstr "Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
 
 #: cmd/incus/storage_volume.go:2445
 #, fuzzy
