@@ -640,7 +640,7 @@ func (d *zfs) importPool() (bool, error) {
 	}
 
 	// Check if the pool exists.
-	poolName := strings.Split(d.config["zfs.pool_name"], "/")[0]
+	poolName, _, _ := strings.Cut(d.config["zfs.pool_name"], "/")
 	exists, err = d.datasetExists(poolName)
 	if err != nil {
 		return false, err
@@ -732,7 +732,7 @@ func (d *zfs) Unmount() (bool, error) {
 	}
 
 	// Export the pool.
-	poolName := strings.Split(d.config["zfs.pool_name"], "/")[0]
+	poolName, _, _ := strings.Cut(d.config["zfs.pool_name"], "/")
 	_, err = subprocess.RunCommand("zpool", "export", poolName)
 	if err != nil {
 		return false, err

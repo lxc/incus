@@ -3039,7 +3039,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 
 	if fsName == "zfs" && util.PathExists("/dev/zfs") {
 		// Accessible zfs filesystems
-		poolName := strings.Split(dev[1], "/")[0]
+		poolName, _, _ := strings.Cut(dev[1], "/")
 
 		output, err := subprocess.RunCommand("zpool", "status", "-P", "-L", poolName)
 		if err != nil {

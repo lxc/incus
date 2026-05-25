@@ -177,7 +177,7 @@ func (d *zfs) getCachedProperty(dataset string, key string) (string, bool) {
 	}
 
 	// Update cache if needed.
-	parentDataset := strings.Split(dataset, "@")[0]
+	parentDataset, _, _ := strings.Cut(dataset, "@")
 	d.prefillCachedProperties(parentDataset)
 
 	// Get the value.
