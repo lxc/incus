@@ -111,65 +111,67 @@ func (s *execWs) connect(op *operations.Operation, r *http.Request, w http.Respo
 				return err
 			}
 
-			s.connsLock.Lock()
-			defer s.connsLock.Unlock()
+			return func() error {
+				s.connsLock.Lock()
+				defer s.connsLock.Unlock()
 
-			val, found := s.conns[fd]
-			if found && val == nil {
-				s.conns[fd] = conn
+				val, found := s.conns[fd]
+				if found && val == nil {
+					s.conns[fd] = conn
 
-				// Set TCP timeout options.
-				remoteTCP, _ := tcp.ExtractConn(conn.UnderlyingConn())
-				if remoteTCP != nil {
-					err = tcp.SetTimeouts(remoteTCP, 0)
-					if err != nil {
-						logger.Warn("Failed setting TCP timeouts on remote connection", logger.Ctx{"err": err})
-					}
-				}
-
-				// Start channel keep alive to run until channel is closed.
-				go func() {
-					pingInterval := time.Second * 10
-					t := time.NewTicker(pingInterval)
-					defer t.Stop()
-
-					for {
-						err := conn.WriteControl(websocket.PingMessage, []byte("keepalive"), time.Now().Add(5*time.Second))
+					// Set TCP timeout options.
+					remoteTCP, _ := tcp.ExtractConn(conn.UnderlyingConn())
+					if remoteTCP != nil {
+						err = tcp.SetTimeouts(remoteTCP, 0)
 						if err != nil {
-							return
+							logger.Warn("Failed setting TCP timeouts on remote connection", logger.Ctx{"err": err})
+						}
+					}
+
+					// Start channel keep alive to run until channel is closed.
+					go func() {
+						pingInterval := time.Second * 10
+						t := time.NewTicker(pingInterval)
+						defer t.Stop()
+
+						for {
+							err := conn.WriteControl(websocket.PingMessage, []byte("keepalive"), time.Now().Add(5*time.Second))
+							if err != nil {
+								return
+							}
+
+							<-t.C
+						}
+					}()
+
+					if fd == execWSControl {
+						s.waitControlConnected.Cancel() // Control connection connected.
+					}
+
+					for i, c := range s.conns {
+						if i == execWSControl && s.req.WaitForWS && !s.req.Interactive {
+							// Due to a historical bug in the LXC CLI command, we cannot force
+							// the client to connect a control socket when in non-interactive
+							// mode. This is because the older CLI tools did not connect this
+							// channel and so we would prevent the older CLIs connecting to
+							// newer servers. So skip the control connection from being
+							// considered as a required connection in this case.
+							continue
 						}
 
-						<-t.C
+						if c == nil {
+							return nil // Not all required connections connected yet.
+						}
 					}
-				}()
 
-				if fd == execWSControl {
-					s.waitControlConnected.Cancel() // Control connection connected.
+					s.waitRequiredConnected.Cancel() // All required connections now connected.
+					return nil
+				} else if !found {
+					return errors.New("Unknown websocket number")
 				}
 
-				for i, c := range s.conns {
-					if i == execWSControl && s.req.WaitForWS && !s.req.Interactive {
-						// Due to a historical bug in the LXC CLI command, we cannot force
-						// the client to connect a control socket when in non-interactive
-						// mode. This is because the older CLI tools did not connect this
-						// channel and so we would prevent the older CLIs connecting to
-						// newer servers. So skip the control connection from being
-						// considered as a required connection in this case.
-						continue
-					}
-
-					if c == nil {
-						return nil // Not all required connections connected yet.
-					}
-				}
-
-				s.waitRequiredConnected.Cancel() // All required connections now connected.
-				return nil
-			} else if !found {
-				return errors.New("Unknown websocket number")
-			}
-
-			return errors.New("Websocket number already connected")
+				return errors.New("Websocket number already connected")
+			}()
 		}
 	}
 

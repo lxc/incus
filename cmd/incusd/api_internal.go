@@ -32,6 +32,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
@@ -916,6 +917,13 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return err
 	}
 
+	var snapInstOps []*operationlock.InstanceOperation
+	defer func() {
+		for _, snapInstOp := range snapInstOps {
+			snapInstOp.Done(nil)
+		}
+	}()
+
 	for _, snap := range existingSnapshots {
 		snapInstName := fmt.Sprintf("%s%s%s", backupConf.Container.Name, internalInstance.SnapshotDelimiter, snap.Name)
 
@@ -1000,7 +1008,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		}
 
 		reverter.Add(cleanup)
-		defer snapInstOp.Done(err)
+		snapInstOps = append(snapInstOps, snapInstOp)
 
 		// Recreate missing mountpoints and symlinks.
 		volStorageName := project.Instance(projectName, snapInstName)

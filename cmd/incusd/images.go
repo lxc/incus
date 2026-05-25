@@ -2207,49 +2207,53 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 			}
 		}
 
-		createArgs := &incus.ImageCreateArgs{}
-		imageMetaPath := internalUtil.VarPath("images", newImage.Fingerprint)
-		imageRootfsPath := internalUtil.VarPath("images", newImage.Fingerprint+".rootfs")
+		createImage := func() error {
+			createArgs := &incus.ImageCreateArgs{}
+			imageMetaPath := internalUtil.VarPath("images", newImage.Fingerprint)
+			imageRootfsPath := internalUtil.VarPath("images", newImage.Fingerprint+".rootfs")
 
-		metaFile, err := os.Open(imageMetaPath)
-		if err != nil {
-			return err
-		}
-
-		defer func() { _ = metaFile.Close() }()
-
-		createArgs.MetaFile = metaFile
-		createArgs.MetaName = filepath.Base(imageMetaPath)
-		createArgs.Type = newImage.Type
-
-		if util.PathExists(imageRootfsPath) {
-			rootfsFile, err := os.Open(imageRootfsPath)
+			metaFile, err := os.Open(imageMetaPath)
 			if err != nil {
 				return err
 			}
 
-			defer func() { _ = rootfsFile.Close() }()
+			defer func() { _ = metaFile.Close() }()
 
-			createArgs.RootfsFile = rootfsFile
-			createArgs.RootfsName = filepath.Base(imageRootfsPath)
+			createArgs.MetaFile = metaFile
+			createArgs.MetaName = filepath.Base(imageMetaPath)
+			createArgs.Type = newImage.Type
+
+			if util.PathExists(imageRootfsPath) {
+				rootfsFile, err := os.Open(imageRootfsPath)
+				if err != nil {
+					return err
+				}
+
+				defer func() { _ = rootfsFile.Close() }()
+
+				createArgs.RootfsFile = rootfsFile
+				createArgs.RootfsName = filepath.Base(imageRootfsPath)
+			}
+
+			image := api.ImagesPost{}
+			image.Filename = createArgs.MetaName
+
+			op, err := client.CreateImage(image, createArgs)
+			if err != nil {
+				return err
+			}
+
+			select {
+			case <-ctx.Done():
+				_ = op.Cancel()
+				return ctx.Err()
+			default:
+			}
+
+			return op.Wait()
 		}
 
-		image := api.ImagesPost{}
-		image.Filename = createArgs.MetaName
-
-		op, err := client.CreateImage(image, createArgs)
-		if err != nil {
-			return err
-		}
-
-		select {
-		case <-ctx.Done():
-			_ = op.Cancel()
-			return ctx.Err()
-		default:
-		}
-
-		err = op.Wait()
+		err = createImage()
 		if err != nil {
 			return err
 		}
