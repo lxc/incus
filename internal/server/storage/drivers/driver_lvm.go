@@ -292,6 +292,7 @@ func (d *lvm) Create() error {
 		if vgExists {
 			return fmt.Errorf("A volume group already exists called %q", d.config["lvm.vg_name"])
 		}
+
 	case lvmSourceTypePhysicalDevice:
 		// We are using an existing physical device.
 		srcPath := d.config["source"]
@@ -337,6 +338,7 @@ func (d *lvm) Create() error {
 		if err != nil {
 			return err
 		}
+
 	case lvmSourceTypeVolumeGroup:
 		// We are using an existing volume group, so physical must exist already.
 		pvExists = true
