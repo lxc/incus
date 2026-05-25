@@ -643,11 +643,9 @@ func NotifyHeartbeat(s *state.State, gateway *Gateway) {
 	var wg sync.WaitGroup
 
 	// Refresh local event listeners.
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		EventsUpdateListeners(s, hbState.Members, s.Events.Inject)
-		wg.Done()
-	}()
+	})
 
 	// Notify all other members of the change in membership.
 	logger.Info("Notifying cluster members of local role change")

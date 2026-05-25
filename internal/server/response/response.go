@@ -698,10 +698,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 	})
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		_, err := util.SafeCopy(remoteConn, r.conn)
 		if err != nil {
 			if ctx.Err() == nil {
@@ -711,7 +708,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 
 		cancel()               // Cancel context first so when remoteConn is closed it doesn't cause a warning.
 		_ = remoteConn.Close() // Trigger the cancellation of the util.SafeCopy reading from remoteConn.
-	}()
+	})
 
 	_, err = util.SafeCopy(r.conn, remoteConn)
 	if err != nil {

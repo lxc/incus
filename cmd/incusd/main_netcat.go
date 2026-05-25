@@ -83,17 +83,15 @@ func (c *cmdNetcat) run(cmd *cobra.Command, args []string) error {
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
 
-	go func() {
+	wg.Go(func() {
 		_, err := util.SafeCopy(eagain.Writer{Writer: os.Stdout}, eagain.Reader{Reader: conn})
 		if err != nil && logErr == nil {
 			_, _ = fmt.Fprintf(logFile, "Error while copying from stdout to unix domain socket \"%s\": %s\n", args[0], err)
 		}
 
 		_ = conn.Close()
-		wg.Done()
-	}()
+	})
 
 	go func() {
 		_, err := util.SafeCopy(eagain.Writer{Writer: conn}, eagain.Reader{Reader: os.Stdin})

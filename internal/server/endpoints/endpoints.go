@@ -510,18 +510,14 @@ type Tomb struct {
 
 // Go runs f in a new goroutine and tracks its termination.
 func (g *Tomb) Go(f func() error) {
-	g.wg.Add(1)
-
-	go func() {
-		defer g.wg.Done()
-
+	g.wg.Go(func() {
 		err := f()
 		if err != nil {
 			g.errOnce.Do(func() {
 				g.err = err
 			})
 		}
-	}()
+	})
 }
 
 // Kill marks all running goroutings done.

@@ -35,12 +35,10 @@ func TestNotifyUpgradeCompleted(t *testing.T) {
 	gateway1 := f.Grow()
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
 
-	go func() {
+	wg.Go(func() {
 		gateway1.WaitUpgradeNotification()
-		wg.Done()
-	}()
+	})
 
 	state0 := f.State(gateway0)
 
