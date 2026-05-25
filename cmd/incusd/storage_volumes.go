@@ -2348,12 +2348,14 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
+
 	case db.StoragePoolVolumeTypeImage:
 		// Handle image update requests.
 		err = pool.UpdateImage(dbVolume.Name, req.Description, req.Config, op)
 		if err != nil {
 			return response.SmartError(err)
 		}
+
 	default:
 		return response.SmartError(errors.New("Invalid volume type"))
 	}
