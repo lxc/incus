@@ -3065,7 +3065,8 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	if req.Action == "evacuate" {
+	switch req.Action {
+	case "evacuate":
 		run := func(op *operations.Operation) error {
 			return evacuateClusterMember(context.Background(), s, op, name, req.Mode, evacuateStopInstance, evacuateMigrateInstance(r))
 		}
@@ -3076,7 +3077,7 @@ func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {
 		}
 
 		return operations.OperationResponse(op)
-	} else if req.Action == "restore" {
+	case "restore":
 		if req.Mode != "" && req.Mode != "skip" {
 			return response.BadRequest(fmt.Errorf("Invalid restore mode %q", req.Mode))
 		}

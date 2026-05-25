@@ -272,7 +272,8 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 	return func(d *Daemon, r *http.Request) response.Response {
 		// Expansion function to deal with partial fingerprints.
 		expandFingerprint := func(projectName string, fingerprint string) string {
-			if objectType == auth.ObjectTypeImage {
+			switch objectType {
+			case auth.ObjectTypeImage:
 				var imgInfo *api.Image
 
 				err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -287,7 +288,7 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 				}
 
 				fingerprint = imgInfo.Fingerprint
-			} else if objectType == auth.ObjectTypeCertificate {
+			case auth.ObjectTypeCertificate:
 				err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 					dbCertInfo, err := dbCluster.GetCertificateByFingerprintPrefix(ctx, tx.Tx(), fingerprint)
 					if err != nil {

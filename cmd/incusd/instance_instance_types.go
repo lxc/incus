@@ -250,9 +250,10 @@ func instanceParseType(value string) (map[string]string, error) {
 					return nil, fmt.Errorf("Bad custom instance type: %s", value)
 				}
 
-				if field[0] == 'c' {
+				switch field[0] {
+				case 'c':
 					newLimits.CPU = float32(floatValue)
-				} else if field[0] == 'm' {
+				case 'm':
 					newLimits.Memory = float32(floatValue)
 				}
 			}

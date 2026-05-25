@@ -190,7 +190,8 @@ var devIncusEventsGet = devIncusHandler{"/1.0/events", func(d *Daemon, c instanc
 var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
 	s := d.State()
 
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		var location string
 		if d.serverClustered {
 			location = c.Location()
@@ -212,7 +213,7 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 		}
 
 		return response.DevIncusResponse(http.StatusOK, apiGuest.DevIncusGet{APIVersion: version.APIVersion, Location: location, InstanceType: c.Type().String(), DevIncusPut: apiGuest.DevIncusPut{State: state.String()}}, "json", c.Type() == instancetype.VM)
-	} else if r.Method == "PATCH" {
+	case "PATCH":
 		if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 		}
