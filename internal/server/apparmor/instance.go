@@ -177,7 +177,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 	}
 
 	// Render the profile.
-	var sb *strings.Builder = &strings.Builder{}
+	sb := &strings.Builder{}
 	if inst.Type() == instancetype.Container {
 		err = lxcProfileTpl.Execute(sb, map[string]any{
 			"extra_binaries":   extraBinaries,

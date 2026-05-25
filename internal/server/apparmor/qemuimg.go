@@ -154,7 +154,7 @@ func qemuImgProfileLoad(sysOS *sys.OS, imgPath string, dstPath string, allowedCm
 // qemuImgProfile generates the AppArmor profile template from the given destination path.
 func qemuImgProfile(profileName string, imgPath string, dstPath string, allowedCmdPaths []string) (string, error) {
 	// Render the profile.
-	var sb *strings.Builder = &strings.Builder{}
+	sb := &strings.Builder{}
 	err := qemuImgProfileTpl.Execute(sb, map[string]any{
 		"name":            profileName,
 		"pathToImg":       imgPath,
