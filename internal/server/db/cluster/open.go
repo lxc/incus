@@ -193,7 +193,7 @@ INSERT INTO nodes(id, name, address, schema, api_extensions, arch, description) 
 
 			// Enable all features for default project.
 			for featureName := range ProjectFeatures {
-				_, _ = defaultProjectStmt.WriteString(fmt.Sprintf("INSERT INTO projects_config (project_id, key, value) VALUES (1, '%s', 'true');", featureName))
+				_, _ = fmt.Fprintf(&defaultProjectStmt, "INSERT INTO projects_config (project_id, key, value) VALUES (1, '%s', 'true');", featureName)
 			}
 
 			_, err = tx.Exec(defaultProjectStmt.String())
