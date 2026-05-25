@@ -99,9 +99,6 @@ var incusAgentLoader embed.FS
 // qemuSerialChardevName is used to communicate state with QEMU via QMP.
 const qemuSerialChardevName = "qemu_serial-chardev"
 
-// qemuPCIDeviceIDStart is the first PCI slot used for user configurable devices.
-const qemuPCIDeviceIDStart = 4
-
 // qemuDeviceIDPrefix used as part of the name given QEMU devices generated from user added devices.
 const qemuDeviceIDPrefix = "dev-incus_"
 
@@ -3894,7 +3891,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// on PCIe (which we need to maintain compatibility with network configuration in our existing VM images).
 	// It's also meant to group all low-bandwidth internal devices onto a single address. PCIe bus allows a
 	// total of 256 devices, but this assumes 32 chassis * 8 function. By using VFs for the internal fixed
-	// devices we avoid consuming a chassis for each one. See also the qemuPCIDeviceIDStart constant.
+	// devices we avoid consuming a chassis for each one.
 	devBus, devAddr, multi := bus.allocate(busFunctionGroupGeneric)
 	balloonOpts := qemuDevOpts{
 		busName:       bus.name,
@@ -10927,20 +10924,6 @@ func (d *qemu) fetchBlockDeviceChain(m *qmp.Monitor, blockDevName string) ([]str
 	}
 
 	return filterAndSortQcow2Blockdevs(blockdevNames, blockDevName), nil
-}
-
-// fetchRootBlockDeviceChain returns the ordered list of block device names
-// required to load the root disk device, including any dependent layers.
-func (d *qemu) fetchRootBlockDeviceChain(m *qmp.Monitor) ([]string, error) {
-	rootDevName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
-	if err != nil {
-		return nil, fmt.Errorf("Failed getting instance root disk: %w", err)
-	}
-
-	escapedDeviceName := linux.PathNameEncode(rootDevName)
-	rootNodeName := d.blockNodeName(escapedDeviceName)
-
-	return d.fetchBlockDeviceChain(m, rootNodeName)
 }
 
 // DeleteQcow2Snapshot deletes a qcow2 snapshot for a running instance.
