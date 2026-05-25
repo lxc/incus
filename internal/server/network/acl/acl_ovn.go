@@ -1109,7 +1109,6 @@ func OVNPortGroupDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB,
 	// For the indirectly referred to ACLs, store a list of the ACLs that are referring to it.
 	err = UsedBy(s, aclProjectName, func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, nicName string, nicConfig map[string]string) error {
 		switch u := usageType.(type) {
-
 		case db.InstanceArgs:
 			ignoreInst, isIgnoreInst := ignoreUsageType.(instance.Instance)
 
