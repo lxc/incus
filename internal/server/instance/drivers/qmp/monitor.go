@@ -294,7 +294,7 @@ func (m *Monitor) IncreaseID() uint32 {
 	return m.qmp.qmpIncreaseID()
 }
 
-// run executes a command.
+// Run executes a command.
 func (m *Monitor) Run(cmd string, args any, resp any) error {
 	id := m.IncreaseID()
 
