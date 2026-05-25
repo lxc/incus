@@ -249,9 +249,9 @@ func doInstanceStatePut(inst instance.Instance, req api.InstanceStatePut) error 
 			return inst.Stop(req.Stateful)
 		} else if req.Timeout == 0 {
 			return inst.Stop(false)
-		} else {
-			return inst.Shutdown(timeout)
 		}
+
+		return inst.Shutdown(timeout)
 
 	case internalInstance.Restart:
 		return inst.Restart(timeout)
