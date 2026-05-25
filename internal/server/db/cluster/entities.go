@@ -121,7 +121,11 @@ func URLToEntityType(rawURL string) (int, string, string, []string, error) {
 		if nFound == nPathArgs && err == nil {
 			pathArgs := make([]string, 0, nPathArgs)
 			for _, pathArgAny := range pathArgsAny {
-				pathArgPtr := pathArgAny.(*string)
+				pathArgPtr, ok := pathArgAny.(*string)
+				if !ok {
+					return -1, "", "", nil, fmt.Errorf("Unexpected path argument type for entity URL %q", u.String())
+				}
+
 				pathArgs = append(pathArgs, *pathArgPtr)
 			}
 
