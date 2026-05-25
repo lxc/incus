@@ -806,9 +806,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 			return errors.New("Only Incus-managed disks are allowed with migration.stateful=true")
 		}
 
-		if d.config["io.bus"] == "nvme" {
+		switch d.config["io.bus"] {
+		case "nvme":
 			return errors.New("NVME disks aren't supported with migration.stateful=true")
-		} else if d.config["io.bus"] == "virtiofs" {
+		case "virtiofs":
 			return errors.New("Virtiofs mounts aren't supported with migration.stateful=true")
 		}
 

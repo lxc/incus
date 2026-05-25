@@ -776,7 +776,8 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 	if d.config["nested"] != "" {
 		delete(saveData, "host_name") // Nested NICs don't have a host side interface.
 	} else {
-		if d.config["acceleration"] == "sriov" {
+		switch d.config["acceleration"] {
+		case "sriov":
 			vswitch, err := d.state.OVS()
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
@@ -832,7 +833,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 			integrationBridgeNICName = vfRepresentor
 			peerName = vfDev
-		} else if d.config["acceleration"] == "vdpa" {
+		case "vdpa":
 			vswitch, err := d.state.OVS()
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
@@ -897,7 +898,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 			integrationBridgeNICName = vfRepresentor
 			peerName = vfDev
-		} else {
+		default:
 			// Create veth pair and configure the peer end with custom hwaddr and mtu if supplied.
 			if d.inst.Type() == instancetype.Container {
 				if saveData["host_name"] == "" {
@@ -1036,19 +1037,21 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		instType := d.inst.Type()
-		if instType == instancetype.VM {
+		switch instType {
+		case instancetype.VM:
 			runConf.NetworkInterface = append(runConf.NetworkInterface,
 				[]deviceConfig.RunConfigItem{
 					{Key: "devName", Value: d.name},
 					{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
 				}...)
-			if d.config["acceleration"] == "sriov" {
+			switch d.config["acceleration"] {
+			case "sriov":
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
 					[]deviceConfig.RunConfigItem{
 						{Key: "pciSlotName", Value: vfPCIDev.SlotName},
 						{Key: "pciIOMMUGroup", Value: fmt.Sprintf("%d", pciIOMMUGroup)},
 					}...)
-			} else if d.config["acceleration"] == "vdpa" {
+			case "vdpa":
 				if vDPADevice == nil {
 					return nil, errors.New("vDPA device is nil")
 				}
@@ -1061,13 +1064,13 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 						{Key: "vDPADevName", Value: vDPADevice.Name},
 						{Key: "vhostVDPAPath", Value: vDPADevice.VhostVDPA.Path},
 					}...)
-			} else {
+			default:
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
 					[]deviceConfig.RunConfigItem{
 						{Key: "hwaddr", Value: d.config["hwaddr"]},
 					}...)
 			}
-		} else if instType == instancetype.Container {
+		case instancetype.Container:
 			runConf.NetworkInterface = append(runConf.NetworkInterface,
 				deviceConfig.RunConfigItem{Key: "hwaddr", Value: d.config["hwaddr"]},
 			)

@@ -1540,9 +1540,10 @@ func allowedIPNets(config deviceConfig.Device) (IPv4Nets []*net.IPNet, IPv6Nets 
 
 		// Get a CIDR string for the instance address
 		if ipAddr != "" {
-			if ipVersion == 4 {
+			switch ipVersion {
+			case 4:
 				routes = append(routes, fmt.Sprintf("%s/32", ipAddr))
-			} else if ipVersion == 6 {
+			case 6:
 				routes = append(routes, fmt.Sprintf("%s/128", ipAddr))
 			}
 		}
