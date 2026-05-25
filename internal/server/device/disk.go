@@ -2523,7 +2523,11 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 	var nextIdmap *idmap.Set
 	nextJSONMap := "[]"
 	if util.IsFalseOrEmpty(poolVolumePut.Config["security.shifted"]) {
-		c := d.inst.(instance.Container)
+		c, ok := d.inst.(instance.Container)
+		if !ok {
+			return errors.New("Storage volume idmap shifting is only supported for containers")
+		}
+
 		// Get the container's idmap.
 		if c.IsRunning() {
 			nextIdmap, err = c.CurrentIdmap()
@@ -2569,7 +2573,10 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 						continue
 					}
 
-					ct := inst.(instance.Container)
+					ct, ok := inst.(instance.Container)
+					if !ok {
+						continue
+					}
 
 					var ctNextIdmap *idmap.Set
 
