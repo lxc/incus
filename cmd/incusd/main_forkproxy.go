@@ -280,7 +280,7 @@ type cmdForkproxy struct {
 	global *cmdGlobal
 }
 
-// UDP session tracking (map "client tuple" to udp session)
+// UDP session tracking (map "client tuple" to udp session).
 var (
 	udpSessions     = map[string]*udpSession{}
 	udpSessionsLock sync.Mutex
