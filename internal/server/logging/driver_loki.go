@@ -402,7 +402,7 @@ func (l *LokiLogger) HandleEvent(event api.Event) {
 
 		// Add the remaining context as the message prefix. The keys are sorted alphabetically.
 		for _, k := range keys {
-			message.WriteString(fmt.Sprintf("%s=%q ", k, ctx[k]))
+			fmt.Fprintf(&message, "%s=%q ", k, ctx[k])
 		}
 
 		message.WriteString(logEvent.Message)
