@@ -112,6 +112,7 @@ func (w *execWrapper) Write(p []byte) (int, error) {
 	return w.f.Write(p)
 }
 
+// Close closes the underlying os.File.
 func (w *execWrapper) Close() error {
 	return w.f.Close()
 }
