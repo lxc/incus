@@ -62,7 +62,7 @@ func (o Object) projectAndElements() (string, []string) {
 	_, identifier, _ := strings.Cut(o.String(), objectTypeDelimiter)
 
 	var projectName string
-	escapedObjectComponents := strings.SplitN(identifier, objectElementDelimiter, -1)
+	escapedObjectComponents := strings.Split(identifier, objectElementDelimiter)
 	components := make([]string, 0, len(escapedObjectComponents))
 	for i, escapedComponent := range escapedObjectComponents {
 		if validator.requireProject && i == 0 {
