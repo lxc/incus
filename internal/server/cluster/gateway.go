@@ -17,7 +17,7 @@ import (
 	"time"
 
 	dqlite "github.com/cowsql/go-cowsql"
-	client "github.com/cowsql/go-cowsql/client"
+	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/v7/internal/server/certificate"
 	"github.com/lxc/incus/v7/internal/server/db"
