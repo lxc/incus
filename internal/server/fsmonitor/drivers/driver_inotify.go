@@ -22,6 +22,7 @@ type inotify struct {
 	watcher *in.Watcher
 }
 
+// Name returns the name of the driver.
 func (d *inotify) Name() string {
 	return "inotify"
 }
