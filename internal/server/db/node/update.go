@@ -19,9 +19,9 @@ import (
 
 // Schema for the local database.
 func Schema() *schema.Schema {
-	schema := schema.NewFromMap(updates)
-	schema.Fresh(freshSchema)
-	return schema
+	sch := schema.NewFromMap(updates)
+	sch.Fresh(freshSchema)
+	return sch
 }
 
 // FreshSchema returns the fresh schema definition of the local database.
@@ -156,9 +156,9 @@ func updateFromV39(ctx context.Context, tx *sql.Tx) error {
 		Address string
 	}
 
-	sql := "SELECT id, address FROM raft_nodes"
+	stmt := "SELECT id, address FROM raft_nodes"
 	nodes := []node{}
-	err := query.Scan(ctx, tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, tx, stmt, func(scan func(dest ...any) error) error {
 		n := node{}
 
 		err := scan(&n.ID, &n.Address)
