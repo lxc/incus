@@ -712,15 +712,16 @@ func (g *Gateway) LeaderAddress() (string, error) {
 		// Use 1s later timeout to give HTTP client chance timeout with
 		// more useful info.
 		ctx, cancel := context.WithTimeout(g.ctx, timeout+time.Second)
-		defer cancel()
 		request = request.WithContext(ctx)
 		response, err := client.Do(request)
 		if err != nil {
+			cancel()
 			logger.Debugf("Failed to fetch leader address from %s", address)
 			continue
 		}
 
 		if response.StatusCode != http.StatusOK {
+			cancel()
 			logger.Debugf("Request for leader address from %s failed", address)
 			continue
 		}
@@ -728,16 +729,19 @@ func (g *Gateway) LeaderAddress() (string, error) {
 		info := map[string]string{}
 		err = json.NewDecoder(response.Body).Decode(&info)
 		if err != nil {
+			cancel()
 			logger.Debugf("Failed to parse leader address from %s", address)
 			continue
 		}
 
 		leader := info["leader"]
 		if leader == "" {
+			cancel()
 			logger.Debugf("Raft node %s returned no leader address", address)
 			continue
 		}
 
+		cancel()
 		return leader, nil
 	}
 

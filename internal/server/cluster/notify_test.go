@@ -31,7 +31,8 @@ func TestNewNotifier(t *testing.T) {
 	cert := tlstest.TestingKeyPair(t)
 
 	f := notifyFixtures{t: t, state: state}
-	defer f.Nodes(cert, 3)()
+	nodesCleanup := f.Nodes(cert, 3)
+	defer nodesCleanup()
 
 	// Populate state.LocalConfig after nodes created above.
 	var err error
@@ -79,7 +80,8 @@ func TestNewNotify_NotifyAllError(t *testing.T) {
 	cert := tlstest.TestingKeyPair(t)
 
 	f := notifyFixtures{t: t, state: state}
-	defer f.Nodes(cert, 3)()
+	nodesCleanup := f.Nodes(cert, 3)
+	defer nodesCleanup()
 
 	f.Down(1)
 
@@ -109,7 +111,8 @@ func TestNewNotify_NotifyAlive(t *testing.T) {
 	cert := tlstest.TestingKeyPair(t)
 
 	f := notifyFixtures{t: t, state: state}
-	defer f.Nodes(cert, 3)()
+	nodesCleanup := f.Nodes(cert, 3)
+	defer nodesCleanup()
 
 	f.Down(1)
 
