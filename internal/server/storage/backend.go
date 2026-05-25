@@ -7008,17 +7008,20 @@ func (b *backend) ListUnknownVolumes(op *operations.Operation) (map[string][]*ba
 			return nil, fmt.Errorf("Storage driver returned unexpected VM volume with filesystem content type (%q)", poolVol.Name())
 		}
 
-		if volType == drivers.VolumeTypeVM || volType == drivers.VolumeTypeContainer {
+		switch volType {
+		case drivers.VolumeTypeVM, drivers.VolumeTypeContainer:
 			err = b.detectUnknownInstanceVolume(&poolVol, projectVols, op)
 			if err != nil {
 				return nil, err
 			}
-		} else if volType == drivers.VolumeTypeCustom {
+
+		case drivers.VolumeTypeCustom:
 			err = b.detectUnknownCustomVolume(&poolVol, projectVols, op)
 			if err != nil {
 				return nil, err
 			}
-		} else if volType == drivers.VolumeTypeBucket {
+
+		case drivers.VolumeTypeBucket:
 			err = b.detectUnknownBuckets(&poolVol, projectVols, op)
 			if err != nil {
 				return nil, err
@@ -7213,11 +7216,12 @@ func (b *backend) detectUnknownCustomVolume(vol *drivers.Volume, projectVols map
 	contentType := vol.ContentType()
 	var apiContentType string
 
-	if contentType == drivers.ContentTypeBlock {
+	switch contentType {
+	case drivers.ContentTypeBlock:
 		apiContentType = db.StoragePoolVolumeContentTypeNameBlock
-	} else if contentType == drivers.ContentTypeISO {
+	case drivers.ContentTypeISO:
 		apiContentType = db.StoragePoolVolumeContentTypeNameISO
-	} else if contentType == drivers.ContentTypeFS {
+	case drivers.ContentTypeFS:
 		apiContentType = db.StoragePoolVolumeContentTypeNameFS
 
 		// Detect block volume filesystem (by mounting it (if not already) with filesystem probe mode).
@@ -7246,7 +7250,8 @@ func (b *backend) detectUnknownCustomVolume(vol *drivers.Volume, projectVols map
 			// Record detected filesystem in config.
 			vol.Config()["block.filesystem"] = blockFS
 		}
-	} else {
+
+	default:
 		return fmt.Errorf("Unknown custom volume content type %q", contentType)
 	}
 
