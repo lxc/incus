@@ -63,11 +63,12 @@ func load(s *state.State, args db.InstanceArgs, p api.Project) (instance.Instanc
 	var inst instance.Instance
 	var err error
 
-	if args.Type == instancetype.Container {
+	switch args.Type {
+	case instancetype.Container:
 		inst, err = lxcLoad(s, args, p)
-	} else if args.Type == instancetype.VM {
+	case instancetype.VM:
 		inst, err = qemuLoad(s, args, p)
-	} else {
+	default:
 		return nil, fmt.Errorf("Invalid instance type for instance %s", args.Name)
 	}
 
@@ -146,9 +147,10 @@ func validDevices(s *state.State, p api.Project, instanceType instancetype.Type,
 }
 
 func create(s *state.State, args db.InstanceArgs, p api.Project, partialDeviceValidation bool, op *operations.Operation) (instance.Instance, revert.Hook, error) {
-	if args.Type == instancetype.Container {
+	switch args.Type {
+	case instancetype.Container:
 		return lxcCreate(s, args, p, partialDeviceValidation, op)
-	} else if args.Type == instancetype.VM {
+	case instancetype.VM:
 		return qemuCreate(s, args, p, partialDeviceValidation, op)
 	}
 
