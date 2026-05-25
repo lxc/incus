@@ -54,6 +54,7 @@ type ProductVersionItem struct {
 	CombinedSha256RootXz      string `json:"combined_rootxz_sha256,omitempty"`
 	CombinedSha256            string `json:"combined_sha256,omitempty"`
 	CombinedSha256SquashFs    string `json:"combined_squashfs_sha256,omitempty"`
+	CombinedType              string `json:"combined_type,omitempty"`
 	FileType                  string `json:"ftype"`
 	HashMd5                   string `json:"md5,omitempty"`
 	Path                      string `json:"path"`
@@ -193,6 +194,9 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 					}
 				} else {
 					image.Properties["type"] = "tar.gz"
+					if meta.CombinedType == "virtual-machine" {
+						image.Type = "virtual-machine"
+					}
 				}
 
 				// Clear unset properties
