@@ -720,27 +720,27 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 	}
 
 	if volExists {
-		if refresh {
-			newVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
-			tmpVolName := fmt.Sprintf("%s%s", vol.name, tmpVolSuffix)
-			tmpVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, tmpVolName)
-
-			// Rename existing volume to temporary new name so we can revert if needed.
-			err := d.renameLogicalVolume(newVolPath, tmpVolPath)
-			if err != nil {
-				return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
-			}
-
-			// Record this volume to be removed at the very end.
-			removeVols = append(removeVols, tmpVolName)
-
-			reverter.Add(func() {
-				// Rename the original volume back to the original name.
-				_ = d.renameLogicalVolume(tmpVolPath, newVolPath)
-			})
-		} else {
+		if !refresh {
 			return fmt.Errorf("LVM volume already exists %q", vol.name)
 		}
+
+		newVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
+		tmpVolName := fmt.Sprintf("%s%s", vol.name, tmpVolSuffix)
+		tmpVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, tmpVolName)
+
+		// Rename existing volume to temporary new name so we can revert if needed.
+		err := d.renameLogicalVolume(newVolPath, tmpVolPath)
+		if err != nil {
+			return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
+		}
+
+		// Record this volume to be removed at the very end.
+		removeVols = append(removeVols, tmpVolName)
+
+		reverter.Add(func() {
+			// Rename the original volume back to the original name.
+			_ = d.renameLogicalVolume(tmpVolPath, newVolPath)
+		})
 	} else {
 		volPath := vol.MountPath()
 		err := vol.EnsureMountPath(false)
