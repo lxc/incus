@@ -2385,11 +2385,9 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	// Run asynchronously so that connecting to remote members doesn't delay other heartbeat tasks.
 	wg := sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		cluster.EventsUpdateListeners(d.State(), heartbeatData.Members, d.events.Inject)
-		wg.Done()
-	}()
+	})
 
 	// Only update the node list if there are no state change task failures.
 	// If there are failures, then we leave the old state so that we can re-try the tasks again next heartbeat.
