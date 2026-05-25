@@ -208,8 +208,8 @@ func OperationCreate(s *state.State, projectName string, opClass OperationClass,
 }
 
 // SetEventServer allows injection of event server.
-func (op *Operation) SetEventServer(events *events.Server) {
-	op.events = events
+func (op *Operation) SetEventServer(eventServer *events.Server) {
+	op.events = eventServer
 }
 
 // SetRequestor sets a requestor for this operation from an http.Request.
