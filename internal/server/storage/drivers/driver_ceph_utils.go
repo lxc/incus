@@ -936,8 +936,9 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 		name = strings.SplitN(name, "image_", 2)[1]
 
 		// Check for block indicator.
-		if strings.HasSuffix(name, ".block") {
-			name = strings.TrimSuffix(name, ".block")
+		before, ok := strings.CutSuffix(name, ".block")
+		if ok {
+			name = before
 			vol.contentType = ContentTypeBlock
 		} else {
 			vol.contentType = ContentTypeFS
@@ -978,11 +979,12 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 		name = strings.SplitN(name, "custom_", 2)[1]
 
 		// Check for block or ISO indicator.
-		if strings.HasSuffix(name, ".block") {
-			name = strings.TrimSuffix(name, ".block")
+		before, ok := strings.CutSuffix(name, ".block")
+		if ok {
+			name = before
 			vol.contentType = ContentTypeBlock
-		} else if strings.HasSuffix(name, ".iso") {
-			name = strings.TrimSuffix(name, ".iso")
+		} else if before, ok := strings.CutSuffix(name, ".iso"); ok {
+			name = before
 			vol.contentType = ContentTypeISO
 		} else {
 			vol.contentType = ContentTypeFS
@@ -1012,8 +1014,9 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 		name = strings.SplitN(name, "container_", 2)[1]
 
 		// Check for block indicator.
-		if strings.HasSuffix(name, ".block") {
-			name = strings.TrimSuffix(name, ".block")
+		before, ok := strings.CutSuffix(name, ".block")
+		if ok {
+			name = before
 			vol.contentType = ContentTypeBlock
 		} else {
 			vol.contentType = ContentTypeFS
@@ -1043,8 +1046,9 @@ func (d *ceph) parseParent(parent string) (Volume, string, error) {
 		name = strings.SplitN(name, "virtual-machine_", 2)[1]
 
 		// Check for block indicator.
-		if strings.HasSuffix(name, ".block") {
-			name = strings.TrimSuffix(name, ".block")
+		before, ok := strings.CutSuffix(name, ".block")
+		if ok {
+			name = before
 			vol.contentType = ContentTypeBlock
 		} else {
 			vol.contentType = ContentTypeFS

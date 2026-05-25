@@ -226,8 +226,9 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 			return nil
 		}
 
-		if strings.HasSuffix(value, "%") {
-			num, err := strconv.ParseInt(strings.TrimSuffix(value, "%"), 10, 64)
+		before, ok := strings.CutSuffix(value, "%")
+		if ok {
+			num, err := strconv.ParseInt(before, 10, 64)
 			if err != nil {
 				return err
 			}
@@ -478,9 +479,10 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 			return nil
 		}
 
-		if strings.HasSuffix(value, "%") {
+		before, ok := strings.CutSuffix(value, "%")
+		if ok {
 			// Percentage based allocation
-			_, err := strconv.Atoi(strings.TrimSuffix(value, "%"))
+			_, err := strconv.Atoi(before)
 			if err != nil {
 				return err
 			}
