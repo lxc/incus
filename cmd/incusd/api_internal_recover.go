@@ -141,38 +141,38 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 	for _, p := range userPools {
 		pool, err := storagePools.LoadByName(s, p.Name)
 		if err != nil {
-			if response.IsNotFoundError(err) {
-				// If the pool DB record doesn't exist, and we are clustered, then don't proceed
-				// any further as we do not support pool DB record recovery when clustered.
-				if s.ServerClustered {
-					return response.BadRequest(errors.New("Storage pool recovery not supported when clustered"))
-				}
-
-				// If pool doesn't exist in DB, initialize a temporary pool with the supplied info.
-				poolInfo := api.StoragePool{
-					Name:           p.Name,
-					Driver:         p.Driver,
-					StoragePoolPut: p.StoragePoolPut,
-					Status:         api.StoragePoolStatusCreated,
-				}
-
-				pool, err = storagePools.NewTemporary(s, &poolInfo)
-				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed to initialize unknown pool %q: %w", p.Name, err))
-				}
-
-				// Populate configuration with default values.
-				err := pool.Driver().FillConfig()
-				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed to evaluate the default configuration values for unknown pool %q: %w", p.Name, err))
-				}
-
-				err = pool.Driver().Validate(poolInfo.Config)
-				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed config validation for unknown pool %q: %w", p.Name, err))
-				}
-			} else {
+			if !response.IsNotFoundError(err) {
 				return response.SmartError(fmt.Errorf("Failed loading existing pool %q: %w", p.Name, err))
+			}
+
+			// If the pool DB record doesn't exist, and we are clustered, then don't proceed
+			// any further as we do not support pool DB record recovery when clustered.
+			if s.ServerClustered {
+				return response.BadRequest(errors.New("Storage pool recovery not supported when clustered"))
+			}
+
+			// If pool doesn't exist in DB, initialize a temporary pool with the supplied info.
+			poolInfo := api.StoragePool{
+				Name:           p.Name,
+				Driver:         p.Driver,
+				StoragePoolPut: p.StoragePoolPut,
+				Status:         api.StoragePoolStatusCreated,
+			}
+
+			pool, err = storagePools.NewTemporary(s, &poolInfo)
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed to initialize unknown pool %q: %w", p.Name, err))
+			}
+
+			// Populate configuration with default values.
+			err := pool.Driver().FillConfig()
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed to evaluate the default configuration values for unknown pool %q: %w", p.Name, err))
+			}
+
+			err = pool.Driver().Validate(poolInfo.Config)
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed config validation for unknown pool %q: %w", p.Name, err))
 			}
 		}
 
@@ -224,13 +224,13 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 			var profileProjectname string
 			var networkProjectName string
 
-			if projectInfo != nil {
-				profileProjectname = project.ProfileProjectFromRecord(projectInfo)
-				networkProjectName = project.NetworkProjectFromRecord(projectInfo)
-			} else {
+			if projectInfo == nil {
 				addDependencyError(fmt.Errorf("Project %q", projectName))
 				continue // Skip further validation if project is missing.
 			}
+
+			profileProjectname = project.ProfileProjectFromRecord(projectInfo)
+			networkProjectName = project.NetworkProjectFromRecord(projectInfo)
 
 			for _, poolVol := range poolVols {
 				if poolVol.Container == nil {

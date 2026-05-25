@@ -507,12 +507,12 @@ func (s *containerTestSuite) TestContainer_findIdmap_maxed() {
 		instances = append(instances, c)
 
 		/* we should fail if there are no ids left */
-		if i != 6 {
-			s.Req.Nil(err)
-		} else {
+		if i == 6 {
 			s.Req.NotNil(err)
 			return
 		}
+
+		s.Req.Nil(err)
 
 		op.Done(nil)
 

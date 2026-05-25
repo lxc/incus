@@ -577,63 +577,63 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 		} else {
 			// Check if certificate add token supplied as token.
 			joinToken, err := localtls.CertificateTokenDecode(req.TrustToken)
-			if err == nil {
-				// If so then check there is a matching join operation.
-				joinOp, err := certificateTokenValid(s, r, joinToken)
-				if err != nil {
-					return response.InternalError(fmt.Errorf("Failed during search for certificate add token operation: %w", err))
-				}
+			if err != nil {
+				return response.Forbidden(nil)
+			}
 
-				if joinOp == nil {
-					return response.Forbidden(errors.New("No matching certificate add operation found"))
-				}
+			// If so then check there is a matching join operation.
+			joinOp, err := certificateTokenValid(s, r, joinToken)
+			if err != nil {
+				return response.InternalError(fmt.Errorf("Failed during search for certificate add token operation: %w", err))
+			}
 
-				// Create a new request from the token data as the user isn't allowed to override anything.
-				req = api.CertificatesPost{}
-				switch tokenReq := joinOp.Metadata["request"].(type) {
-				case api.CertificatesPost:
-					req.Name = tokenReq.Name
-					req.Type = tokenReq.Type
-					req.Restricted = tokenReq.Restricted
-					req.Projects = tokenReq.Projects
-				case map[string]any:
-					name, ok := tokenReq["name"].(string)
-					if !ok {
-						return response.InternalError(errors.New("Bad certificate add operation data"))
-					}
+			if joinOp == nil {
+				return response.Forbidden(errors.New("No matching certificate add operation found"))
+			}
 
-					certType, ok := tokenReq["type"].(string)
-					if !ok {
-						return response.InternalError(errors.New("Bad certificate add operation data"))
-					}
-
-					restricted, ok := tokenReq["restricted"].(bool)
-					if !ok {
-						return response.InternalError(errors.New("Bad certificate add operation data"))
-					}
-
-					projects, ok := tokenReq["projects"].([]any)
-					if !ok {
-						return response.InternalError(errors.New("Bad certificate add operation data"))
-					}
-
-					req.Name = name
-					req.Type = certType
-					req.Restricted = restricted
-					for _, project := range projects {
-						projectName, ok := project.(string)
-						if !ok {
-							return response.InternalError(errors.New("Bad certificate add operation data"))
-						}
-
-						req.Projects = append(req.Projects, projectName)
-					}
-
-				default:
+			// Create a new request from the token data as the user isn't allowed to override anything.
+			req = api.CertificatesPost{}
+			switch tokenReq := joinOp.Metadata["request"].(type) {
+			case api.CertificatesPost:
+				req.Name = tokenReq.Name
+				req.Type = tokenReq.Type
+				req.Restricted = tokenReq.Restricted
+				req.Projects = tokenReq.Projects
+			case map[string]any:
+				name, ok := tokenReq["name"].(string)
+				if !ok {
 					return response.InternalError(errors.New("Bad certificate add operation data"))
 				}
-			} else {
-				return response.Forbidden(nil)
+
+				certType, ok := tokenReq["type"].(string)
+				if !ok {
+					return response.InternalError(errors.New("Bad certificate add operation data"))
+				}
+
+				restricted, ok := tokenReq["restricted"].(bool)
+				if !ok {
+					return response.InternalError(errors.New("Bad certificate add operation data"))
+				}
+
+				projects, ok := tokenReq["projects"].([]any)
+				if !ok {
+					return response.InternalError(errors.New("Bad certificate add operation data"))
+				}
+
+				req.Name = name
+				req.Type = certType
+				req.Restricted = restricted
+				for _, project := range projects {
+					projectName, ok := project.(string)
+					if !ok {
+						return response.InternalError(errors.New("Bad certificate add operation data"))
+					}
+
+					req.Projects = append(req.Projects, projectName)
+				}
+
+			default:
+				return response.InternalError(errors.New("Bad certificate add operation data"))
 			}
 		}
 	}
