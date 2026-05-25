@@ -37,11 +37,11 @@ func WriteTempFile(dir string, prefix string, content string) (string, error) {
 // functions.
 func TestNewFromMap(t *testing.T) {
 	db := newDB(t)
-	schema := schema.NewFromMap(map[int]schema.Update{
+	sch := schema.NewFromMap(map[int]schema.Update{
 		1: updateCreateTable,
 		2: updateInsertValue,
 	})
-	initial, err := schema.Ensure(db)
+	initial, err := sch.Ensure(db)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, initial)
 }
@@ -59,13 +59,13 @@ func TestNewFromMap_MissingVersions(t *testing.T) {
 // If the database schema version is more recent than our update series, an
 // error is returned.
 func TestSchemaEnsure_VersionMoreRecentThanExpected(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateNoop)
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateNoop)
+	_, err := sch.Ensure(db)
 	assert.NoError(t, err)
 
-	schema, _ = newSchemaAndDB(t)
-	_, err = schema.Ensure(db)
+	sch, _ = newSchemaAndDB(t)
+	_, err = sch.Ensure(db)
 	assert.NotNil(t, err)
 	assert.EqualError(t, err, "schema version '1' is more recent than expected '0'")
 }
@@ -73,11 +73,11 @@ func TestSchemaEnsure_VersionMoreRecentThanExpected(t *testing.T) {
 // If a "fresh" SQL statement for creating the schema from scratch is provided,
 // but it fails to run, an error is returned.
 func TestSchemaEnsure_FreshStatementError(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateNoop)
-	schema.Fresh("garbage")
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateNoop)
+	sch.Fresh("garbage")
 
-	_, err := schema.Ensure(db)
+	_, err := sch.Ensure(db)
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "cannot apply fresh schema")
 }
@@ -85,27 +85,27 @@ func TestSchemaEnsure_FreshStatementError(t *testing.T) {
 // If the database schema contains "holes" in the applied versions, an error is
 // returned.
 func TestSchemaEnsure_MissingVersion(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateNoop)
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateNoop)
+	_, err := sch.Ensure(db)
 	assert.NoError(t, err)
 
 	_, err = db.Exec(`INSERT INTO schema (version, updated_at) VALUES (3, strftime("%s"))`)
 	assert.NoError(t, err)
 
-	schema.Add(updateNoop)
-	schema.Add(updateNoop)
+	sch.Add(updateNoop)
+	sch.Add(updateNoop)
 
-	_, err = schema.Ensure(db)
+	_, err = sch.Ensure(db)
 	assert.NotNil(t, err)
 	assert.EqualError(t, err, "Missing updates: 1 to 3")
 }
 
 // If the schema has no update, the schema table gets created and has no version.
 func TestSchemaEnsure_ZeroUpdates(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
+	sch, db := newSchemaAndDB(t)
 
-	_, err := schema.Ensure(db)
+	_, err := sch.Ensure(db)
 	assert.NoError(t, err)
 
 	tx, err := db.Begin()
@@ -119,11 +119,11 @@ func TestSchemaEnsure_ZeroUpdates(t *testing.T) {
 // If the schema has updates and no one was applied yet, all of them get
 // applied.
 func TestSchemaEnsure_ApplyAllUpdates(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	schema.Add(updateInsertValue)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	sch.Add(updateInsertValue)
 
-	initial, err := schema.Ensure(db)
+	initial, err := sch.Ensure(db)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, initial)
 
@@ -146,22 +146,22 @@ func TestSchemaEnsure_ApplyAllUpdates(t *testing.T) {
 // possible to apply further updates from there, and only these new ones will
 // be inserted in the schema table.
 func TestSchemaEnsure_ApplyAfterInitialDumpCreation(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	schema.Add(updateAddColumn)
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	sch.Add(updateAddColumn)
+	_, err := sch.Ensure(db)
 	assert.NoError(t, err)
 
-	dump, err := schema.Dump(db)
+	dump, err := sch.Dump(db)
 	assert.NoError(t, err)
 
 	_, db = newSchemaAndDB(t)
-	schema.Fresh(dump)
-	_, err = schema.Ensure(db)
+	sch.Fresh(dump)
+	_, err = sch.Ensure(db)
 	assert.NoError(t, err)
 
-	schema.Add(updateNoop)
-	_, err = schema.Ensure(db)
+	sch.Add(updateNoop)
+	_, err = sch.Ensure(db)
 	assert.NoError(t, err)
 
 	tx, err := db.Begin()
@@ -176,13 +176,13 @@ func TestSchemaEnsure_ApplyAfterInitialDumpCreation(t *testing.T) {
 // If the schema has updates and part of them were already applied, only the
 // missing ones are applied.
 func TestSchemaEnsure_OnlyApplyMissing(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	_, err := sch.Ensure(db)
 	assert.NoError(t, err)
 
-	schema.Add(updateInsertValue)
-	initial, err := schema.Ensure(db)
+	sch.Add(updateInsertValue)
+	initial, err := sch.Ensure(db)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, initial)
 
@@ -203,10 +203,10 @@ func TestSchemaEnsure_OnlyApplyMissing(t *testing.T) {
 // If a update fails, an error is returned, and all previous changes are rolled
 // back.
 func TestSchemaEnsure_FailingUpdate(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	schema.Add(updateBoom)
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	sch.Add(updateBoom)
+	_, err := sch.Ensure(db)
 	assert.EqualError(t, err, "failed to apply update 1: boom")
 
 	tx, err := db.Begin()
@@ -222,10 +222,10 @@ func TestSchemaEnsure_FailingUpdate(t *testing.T) {
 // If a hook fails, an error is returned, and all previous changes are rolled
 // back.
 func TestSchemaEnsure_FailingHook(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	schema.Hook(func(context.Context, int, *sql.Tx) error { return errors.New("boom") })
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	sch.Hook(func(context.Context, int, *sql.Tx) error { return errors.New("boom") })
+	_, err := sch.Ensure(db)
 	assert.EqualError(t, err, "failed to execute hook (version 0): boom")
 
 	tx, err := db.Begin()
@@ -247,11 +247,11 @@ func TestSchemaEnsure_CheckGracefulAbort(t *testing.T) {
 		return schema.ErrGracefulAbort
 	}
 
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	schema.Check(check)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	sch.Check(check)
 
-	_, err := schema.Ensure(db)
+	_, err := sch.Ensure(db)
 	require.EqualError(t, err, "schema check gracefully aborted")
 
 	tx, err := db.Begin()
@@ -267,18 +267,18 @@ func TestSchemaEnsure_CheckGracefulAbort(t *testing.T) {
 // The SQL text returns by Dump() can be used to create the schema from
 // scratch, without applying each individual update.
 func TestSchemaDump(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	schema.Add(updateAddColumn)
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	sch.Add(updateAddColumn)
+	_, err := sch.Ensure(db)
 	assert.NoError(t, err)
 
-	dump, err := schema.Dump(db)
+	dump, err := sch.Dump(db)
 	assert.NoError(t, err)
 
 	_, db = newSchemaAndDB(t)
-	schema.Fresh(dump)
-	_, err = schema.Ensure(db)
+	sch.Fresh(dump)
+	_, err = sch.Ensure(db)
 	assert.NoError(t, err)
 
 	tx, err := db.Begin()
@@ -297,13 +297,13 @@ func TestSchemaDump(t *testing.T) {
 
 // If not all updates are applied, Dump() returns an error.
 func TestSchemaDump_MissingUpdatees(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	_, err := schema.Ensure(db)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	_, err := sch.Ensure(db)
 	assert.NoError(t, err)
-	schema.Add(updateAddColumn)
+	sch.Add(updateAddColumn)
 
-	_, err = schema.Dump(db)
+	_, err = sch.Dump(db)
 	assert.EqualError(t, err, "update level is 1, expected 2")
 }
 
@@ -315,12 +315,12 @@ func TestSchema_Trim(t *testing.T) {
 		3: updateAddColumn,
 	}
 
-	schema := schema.NewFromMap(updates)
-	trimmed := schema.Trim(2)
+	sch := schema.NewFromMap(updates)
+	trimmed := sch.Trim(2)
 	assert.Len(t, trimmed, 1)
 
 	db := newDB(t)
-	_, err := schema.Ensure(db)
+	_, err := sch.Ensure(db)
 	require.NoError(t, err)
 
 	tx, err := db.Begin()
@@ -339,8 +339,8 @@ func TestSchema_ExeciseUpdate(t *testing.T) {
 		3: updateAddColumn,
 	}
 
-	schema := schema.NewFromMap(updates)
-	db, err := schema.ExerciseUpdate(2, nil)
+	sch := schema.NewFromMap(updates)
+	db, err := sch.ExerciseUpdate(2, nil)
 	require.NoError(t, err)
 
 	tx, err := db.Begin()
@@ -358,27 +358,27 @@ func TestSchema_ExeciseUpdate(t *testing.T) {
 
 // A custom schema file path is given, but it does not exists. This is a no-op.
 func TestSchema_File_NotExists(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
-	schema.File("/non/existing/file/path")
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
+	sch.File("/non/existing/file/path")
 
-	_, err := schema.Ensure(db)
+	_, err := sch.Ensure(db)
 	require.NoError(t, err)
 }
 
 // A custom schema file path is given, but it contains non valid SQL. An error
 // is returned an no change to the database is performed at all.
 func TestSchema_File_Garbage(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
-	schema.Add(updateCreateTable)
+	sch, db := newSchemaAndDB(t)
+	sch.Add(updateCreateTable)
 
 	path, err := WriteTempFile("", "incus-db-schema-", "SELECT FROM baz")
 	require.NoError(t, err)
 	defer func() { _ = os.Remove(path) }()
 
-	schema.File(path)
+	sch.File(path)
 
-	_, err = schema.Ensure(db)
+	_, err = sch.Ensure(db)
 
 	message := fmt.Sprintf("failed to execute queries from %s: near \"FROM\": syntax error", path)
 	require.EqualError(t, err, message)
@@ -387,10 +387,10 @@ func TestSchema_File_Garbage(t *testing.T) {
 // A custom schema file path is given, it runs some queries that repair an
 // otherwise broken update, before the update is run.
 func TestSchema_File(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
+	sch, db := newSchemaAndDB(t)
 
 	// Add an update that would insert a value into a non-existing table.
-	schema.Add(updateInsertValue)
+	sch.Add(updateInsertValue)
 
 	path, err := WriteTempFile("", "incus-db-schema-",
 		`CREATE TABLE test (id INTEGER);
@@ -399,9 +399,9 @@ INSERT INTO test VALUES (2);
 	require.NoError(t, err)
 	defer func() { _ = os.Remove(path) }()
 
-	schema.File(path)
+	sch.File(path)
 
-	_, err = schema.Ensure(db)
+	_, err = sch.Ensure(db)
 	require.NoError(t, err)
 
 	// The file does not exist anymore.
@@ -419,10 +419,10 @@ INSERT INTO test VALUES (2);
 // A both a custom schema file path and a hook are set, the hook runs before
 // the queries in the file are executed.
 func TestSchema_File_Hook(t *testing.T) {
-	schema, db := newSchemaAndDB(t)
+	sch, db := newSchemaAndDB(t)
 
 	// Add an update that would insert a value into a non-existing table.
-	schema.Add(updateInsertValue)
+	sch.Add(updateInsertValue)
 
 	// Add a custom schema update query file that inserts a value into a
 	// non-existing table.
@@ -430,11 +430,11 @@ func TestSchema_File_Hook(t *testing.T) {
 	require.NoError(t, err)
 	defer func() { _ = os.Remove(path) }()
 
-	schema.File(path)
+	sch.File(path)
 
 	// Add a hook that takes care of creating the test table, this shows
 	// that it's run before anything else.
-	schema.Hook(func(ctx context.Context, version int, tx *sql.Tx) error {
+	sch.Hook(func(ctx context.Context, version int, tx *sql.Tx) error {
 		if version == -1 {
 			_, err := tx.Exec("CREATE TABLE test (id INTEGER)")
 			return err
@@ -443,7 +443,7 @@ func TestSchema_File_Hook(t *testing.T) {
 		return nil
 	})
 
-	_, err = schema.Ensure(db)
+	_, err = sch.Ensure(db)
 	require.NoError(t, err)
 
 	// The table was created, and the both rows inserted as well.
