@@ -578,7 +578,7 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 			req.Profiles = []string{api.ProjectDefaultName}
 		}
 
-		profileIds := make([]int64, len(req.Profiles))
+		profileIDs := make([]int64, len(req.Profiles))
 
 		for i, profile := range req.Profiles {
 			profileID, _, err := tx.GetProfile(ctx, project, profile)
@@ -588,12 +588,12 @@ func imgPostRemoteInfo(ctx context.Context, s *state.State, r *http.Request, req
 				return err
 			}
 
-			profileIds[i] = profileID
+			profileIDs[i] = profileID
 		}
 
 		// Update the DB record if needed
 		if req.Public || req.AutoUpdate || req.Filename != "" || len(req.Properties) > 0 || len(req.Profiles) > 0 {
-			err := tx.UpdateImage(ctx, id, req.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, project, profileIds)
+			err := tx.UpdateImage(ctx, id, req.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, project, profileIDs)
 			if err != nil {
 				return err
 			}
@@ -931,7 +931,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 		}
 	}
 
-	var profileIds []int64
+	var profileIDs []int64
 	if len(profilesHeaders) > 0 {
 		profileNames, _ := url.ParseQuery(profilesHeaders)
 
@@ -941,7 +941,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			profiles = []string{profilesHeaders}
 		}
 
-		profileIds = make([]int64, len(profiles))
+		profileIDs = make([]int64, len(profiles))
 
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			for i, val := range profiles {
@@ -952,7 +952,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 					return err
 				}
 
-				profileIds[i] = profileID
+				profileIDs[i] = profileID
 			}
 
 			return nil
@@ -994,7 +994,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// Create the database entry
-			return tx.CreateImage(ctx, project, info.Fingerprint, info.Filename, info.Size, info.Public, info.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, info.Type, profileIds)
+			return tx.CreateImage(ctx, project, info.Fingerprint, info.Filename, info.Size, info.Public, info.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, info.Type, profileIDs)
 		})
 		if err != nil {
 			return nil, err
@@ -3346,7 +3346,7 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 		req.Profiles = []string{"default"}
 	}
 
-	profileIds := make([]int64, len(req.Profiles))
+	profileIDs := make([]int64, len(req.Profiles))
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		for i, profile := range req.Profiles {
@@ -3357,10 +3357,10 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			profileIds[i] = profileID
+			profileIDs[i] = profileID
 		}
 
-		return tx.UpdateImage(ctx, id, info.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, req.Properties, projectName, profileIds)
+		return tx.UpdateImage(ctx, id, info.Filename, info.Size, req.Public, req.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, req.Properties, projectName, profileIDs)
 	})
 	if err != nil {
 		if response.IsNotFoundError(err) {

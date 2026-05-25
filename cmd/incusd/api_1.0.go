@@ -502,7 +502,7 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 		return response.PreconditionFailed(err)
 	}
 
-	return doApi10Update(d, r, req, false)
+	return doAPI10Update(d, r, req, false)
 }
 
 // swagger:operation PATCH /1.0 server server_patch
@@ -571,10 +571,10 @@ func api10Patch(d *Daemon, r *http.Request) response.Response {
 		return response.EmptySyncResponse
 	}
 
-	return doApi10Update(d, r, req, true)
+	return doAPI10Update(d, r, req, true)
 }
 
-func doApi10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) response.Response {
+func doAPI10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) response.Response {
 	s := d.State()
 
 	// First deal with config specific to the local daemon

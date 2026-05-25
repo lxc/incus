@@ -537,7 +537,7 @@ func fileSFTPHead(client *sftp.Client, path string) response.Response {
 
 func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess func()) response.Response {
 	// Extract file ownership and mode from headers
-	uid, gid, mode, type_, write := api.ParseFileHeaders(r.Header)
+	uid, gid, mode, fileType, write := api.ParseFileHeaders(r.Header)
 
 	if !slices.Contains([]string{"overwrite", "append"}, write) {
 		return response.BadRequest(fmt.Errorf("Bad file write mode: %s", write))
@@ -547,7 +547,7 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 	_, err := client.Stat(path)
 	exists := err == nil
 
-	switch type_ {
+	switch fileType {
 	case "file":
 		fileMode := os.O_RDWR
 
@@ -650,7 +650,7 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 		onSuccess()
 		return response.EmptySyncResponse
 	default:
-		return response.BadRequest(fmt.Errorf("Bad file type: %s", type_))
+		return response.BadRequest(fmt.Errorf("Bad file type: %s", fileType))
 	}
 }
 

@@ -75,8 +75,8 @@ func restServer(d *Daemon) *http.Server {
 	uiPath := os.Getenv("INCUS_UI")
 	uiEnabled := uiPath != "" && util.PathExists(fmt.Sprintf("%s/index.html", uiPath))
 	if uiEnabled {
-		uiHttpDir := uiHttpDir{http.Dir(uiPath)}
-		router.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiHttpDir)))
+		uiDir := uiHTTPDir{http.Dir(uiPath)}
+		router.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(uiDir)))
 		router.HandleFunc("/ui", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/ui/", http.StatusMovedPermanently)
 		})
@@ -86,8 +86,8 @@ func restServer(d *Daemon) *http.Server {
 	documentationPath := os.Getenv("INCUS_DOCUMENTATION")
 	docEnabled := documentationPath != "" && util.PathExists(documentationPath)
 	if docEnabled {
-		documentationHttpDir := documentationHttpDir{http.Dir(documentationPath)}
-		router.PathPrefix("/documentation/").Handler(http.StripPrefix("/documentation/", http.FileServer(documentationHttpDir)))
+		documentationDir := documentationHTTPDir{http.Dir(documentationPath)}
+		router.PathPrefix("/documentation/").Handler(http.StripPrefix("/documentation/", http.FileServer(documentationDir)))
 		router.HandleFunc("/documentation", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/documentation/", http.StatusMovedPermanently)
 		})
@@ -468,12 +468,12 @@ func isClusterInternal(r *http.Request) bool {
 	return r.Header.Get("User-Agent") == clusterRequest.UserAgentClient
 }
 
-type uiHttpDir struct {
+type uiHTTPDir struct {
 	http.FileSystem
 }
 
 // Open is part of the http.FileSystem interface.
-func (httpFS uiHttpDir) Open(name string) (http.File, error) {
+func (httpFS uiHTTPDir) Open(name string) (http.File, error) {
 	fsFile, err := httpFS.FileSystem.Open(name)
 	if err != nil && errors.Is(err, fs.ErrNotExist) {
 		return httpFS.FileSystem.Open("index.html")
@@ -482,12 +482,12 @@ func (httpFS uiHttpDir) Open(name string) (http.File, error) {
 	return fsFile, err
 }
 
-type documentationHttpDir struct {
+type documentationHTTPDir struct {
 	http.FileSystem
 }
 
 // Open is part of the http.FileSystem interface.
-func (httpFS documentationHttpDir) Open(name string) (http.File, error) {
+func (httpFS documentationHTTPDir) Open(name string) (http.File, error) {
 	fsFile, err := httpFS.FileSystem.Open(name)
 	if err != nil && errors.Is(err, fs.ErrNotExist) {
 		return httpFS.FileSystem.Open("index.html")
