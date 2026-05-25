@@ -1754,16 +1754,12 @@ func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP)
 		endBig.SetBytes(endIP)
 
 		// Iterate through IPs in range, return the first unallocated one found.
-		for {
-			if startBig.Cmp(endBig) > 0 {
-				break
-			}
-
-			ip := net.IP(startBig.Bytes())
+		for startBig.Cmp(endBig) <= 0 {
+			ipAddress := net.IP(startBig.Bytes())
 
 			// Check IP is not already allocated.
 			freeIP := true
-			if slices.ContainsFunc(allAllocated, ip.Equal) {
+			if slices.ContainsFunc(allAllocated, ipAddress.Equal) {
 				freeIP = false
 			}
 
