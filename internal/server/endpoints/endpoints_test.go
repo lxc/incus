@@ -42,10 +42,10 @@ func newEndpoints(t *testing.T) (*endpoints.Endpoints, *endpoints.Config, func()
 		VsockServer:    newServer(),
 	}
 
-	endpoints := endpoints.Unstarted()
+	eps := endpoints.Unstarted()
 
 	cleanup := func() {
-		assert.NoError(t, endpoints.Down())
+		assert.NoError(t, eps.Down())
 
 		// We need to kick the garbage collector because otherwise FDs
 		// will be left open and confuse the http.GetListeners() code
@@ -57,7 +57,7 @@ func newEndpoints(t *testing.T) (*endpoints.Endpoints, *endpoints.Config, func()
 		}
 	}
 
-	return endpoints, config, cleanup
+	return eps, config, cleanup
 }
 
 // Perform an HTTP GET "/" over the unix socket at the given path.
@@ -93,10 +93,10 @@ func newServer() *http.Server {
 
 // Set the environment-variable for socket-based activation using the given
 // file.
-func setupSocketBasedActivation(endpoints *endpoints.Endpoints, file *os.File) {
+func setupSocketBasedActivation(eps *endpoints.Endpoints, file *os.File) {
 	_ = os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
 	_ = os.Setenv("LISTEN_FDS", "1")
-	endpoints.SystemdListenFDsStart(int(file.Fd()))
+	eps.SystemdListenFDsStart(int(file.Fd()))
 }
 
 // Assert that there are no socket-based activation variables in the
