@@ -254,6 +254,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 		if err != nil {
 			return err
 		}
+
 	default:
 		return fmt.Errorf(i18n.G("Unknown file type '%s'"), fileType)
 	}
