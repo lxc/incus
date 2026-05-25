@@ -297,12 +297,12 @@ func (d *common) Backups() ([]backup.InstanceBackup, error) {
 	// Build the backup list
 	backups := []backup.InstanceBackup{}
 	for _, backupName := range backupNames {
-		backup, err := instance.BackupLoadByName(d.state, d.project.Name, backupName)
+		b, err := instance.BackupLoadByName(d.state, d.project.Name, backupName)
 		if err != nil {
 			return nil, err
 		}
 
-		backups = append(backups, *backup)
+		backups = append(backups, *b)
 	}
 
 	return backups, nil
