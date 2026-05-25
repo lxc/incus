@@ -429,7 +429,7 @@ func (c *ClusterTx) storagePoolNodeState(poolID int64, state StoragePoolState) e
 // Can optionally accept a state filter, if nil, then pools in any state are returned.
 // Can optionally accept one or more poolNames to further filter the returned pools.
 func (c *ClusterTx) GetStoragePools(ctx context.Context, state *StoragePoolState, poolNames ...string) (map[int64]api.StoragePool, map[int64]map[int64]StoragePoolNode, error) {
-	var q *strings.Builder = &strings.Builder{}
+	q := &strings.Builder{}
 	var args []any
 
 	q.WriteString("SELECT id, name, driver, description, state FROM storage_pools ")
@@ -660,7 +660,7 @@ func (c *ClusterTx) GetStoragePoolWithID(ctx context.Context, poolID int) (int64
 // GetStoragePool returns a single storage pool.
 func (c *ClusterTx) getStoragePool(ctx context.Context, onlyCreated bool, where string, args ...any) (int64, *api.StoragePool, map[int64]StoragePoolNode, error) {
 	var err error
-	var q *strings.Builder = &strings.Builder{}
+	q := &strings.Builder{}
 	q.WriteString("SELECT id, name, driver, description, state FROM storage_pools WHERE ")
 	q.WriteString(where)
 
