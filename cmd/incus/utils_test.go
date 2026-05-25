@@ -68,9 +68,9 @@ func (s *utilsTestSuite) TestgetExistingAliasesEmpty() {
 }
 
 func (s *utilsTestSuite) TestStructHasFields() {
-	s.Equal(structHasField(reflect.TypeOf(api.Image{}), "type"), true)
-	s.Equal(structHasField(reflect.TypeOf(api.Image{}), "public"), true)
-	s.Equal(structHasField(reflect.TypeOf(api.Image{}), "foo"), false)
+	s.Equal(structHasField(reflect.TypeFor[api.Image](), "type"), true)
+	s.Equal(structHasField(reflect.TypeFor[api.Image](), "public"), true)
+	s.Equal(structHasField(reflect.TypeFor[api.Image](), "foo"), false)
 }
 
 func (s *utilsTestSuite) TestGetServerSupportedFilters() {

@@ -1622,7 +1622,7 @@ func prepareNetworkServerFilters(filters []string) []string {
 				firstPart = strings.Split(key, ".")[0]
 			}
 
-			if !structHasField(reflect.TypeOf(api.Network{}), firstPart) {
+			if !structHasField(reflect.TypeFor[api.Network](), firstPart) {
 				filter = fmt.Sprintf("config.%s", filter)
 			}
 
