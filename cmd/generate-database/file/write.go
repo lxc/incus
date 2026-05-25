@@ -53,7 +53,8 @@ func Reset(path string, imports []string, buildComment string, iface bool) error
 		}
 	}
 
-	content := fmt.Sprintf(`%s%s
+	var content strings.Builder
+	fmt.Fprintf(&content, `%s%s
 
 package %s
 
@@ -61,19 +62,19 @@ import (
 `, buildComment, codeGeneratedByLine, os.Getenv("GOPACKAGE"))
 
 	for _, uri := range imports {
-		content += fmt.Sprintf("\t%q\n", uri)
+		fmt.Fprintf(&content, "\t%q\n", uri)
 	}
 
-	content += ")\n\n"
+	content.WriteString(")\n\n")
 
-	bytes := []byte(content)
+	bytes := []byte(content.String())
 
 	var err error
 
 	if path == "-" {
 		_, err = os.Stdout.Write(bytes)
 	} else {
-		err = os.WriteFile(path, []byte(content), 0o644)
+		err = os.WriteFile(path, []byte(content.String()), 0o644)
 	}
 
 	if err != nil {

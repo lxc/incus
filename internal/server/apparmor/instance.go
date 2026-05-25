@@ -147,11 +147,11 @@ func instanceProfileGenerate(sysOS *sys.OS, inst instance, extraBinaries []strin
 // instanceProfile generates the AppArmor profile template from the given instance.
 func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (string, error) {
 	// Prepare raw.apparmor.
-	rawContent := ""
+	var rawContent strings.Builder
 	rawApparmor, ok := inst.ExpandedConfig()["raw.apparmor"]
 	if ok {
 		for _, line := range strings.Split(strings.Trim(rawApparmor, "\n"), "\n") {
-			rawContent += fmt.Sprintf("  %s\n", line)
+			fmt.Fprintf(&rawContent, "  %s\n", line)
 		}
 	}
 
@@ -188,7 +188,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"name":             InstanceProfileName(inst),
 			"namespace":        InstanceNamespaceName(inst),
 			"nesting":          util.IsTrue(inst.ExpandedConfig()["security.nesting"]),
-			"raw":              rawContent,
+			"raw":              rawContent.String(),
 			"unprivileged":     util.IsFalseOrEmpty(inst.ExpandedConfig()["security.privileged"]) || sysOS.RunningInUserNS,
 			"zfs_delegation":   !inst.IsPrivileged() && storageDrivers.ZFSSupportsDelegation() && util.PathExists("/dev/zfs"),
 		})
@@ -278,7 +278,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"id":             inst.ID(),
 			"name":           InstanceProfileName(inst),
 			"path":           path,
-			"raw":            rawContent,
+			"raw":            rawContent.String(),
 			"edk2Paths":      edk2Paths,
 			"agentPath":      agentPath,
 		})
