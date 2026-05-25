@@ -26,7 +26,7 @@ import (
 
 type deviceTaskCPU struct {
 	id    int64
-	strId string
+	strID string
 	count *int
 }
 
@@ -37,12 +37,12 @@ func (c deviceTaskCPUs) Less(i, j int) bool { return *c[i].count < *c[j].count }
 func (c deviceTaskCPUs) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 
 func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.UnixHotplugEvent, error) {
-	NETLINK_KOBJECT_UEVENT := 15
-	UEVENT_BUFFER_SIZE := 2048
+	netlinkKObjectUevent := 15
+	ueventBufferSize := 2048
 
 	fd, err := unix.Socket(
 		unix.AF_NETLINK, unix.SOCK_RAW|unix.SOCK_CLOEXEC,
-		NETLINK_KOBJECT_UEVENT,
+		netlinkKObjectUevent,
 	)
 	if err != nil {
 		return nil, nil, nil, err
@@ -64,7 +64,7 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
 	chUnix := make(chan device.UnixHotplugEvent)
 
 	go func(chCPU chan []string, chUSB chan device.USBEvent, chUnix chan device.UnixHotplugEvent) {
-		b := make([]byte, UEVENT_BUFFER_SIZE*2)
+		b := make([]byte, ueventBufferSize*2)
 		for {
 			r, err := unix.Read(fd, b)
 			if err != nil {
@@ -295,16 +295,16 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
  * The `loadBalancing` flag indicates whether the CPU pinning should be load balanced or not (e.g, NUMA placement when `limits.cpu` is a single number which means
  * a required number of vCPUs per instance that can be chosen within a CPU pool).
  */
-func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst instance.Instance, effectiveCpus []int64, targetCpuPool []int64, targetCpuNum int, loadBalancing bool) {
-	if len(targetCpuPool) < targetCpuNum {
-		diffCount := len(targetCpuPool) - targetCpuNum
-		logger.Warnf("%v CPUs have been required for pinning, but %v CPUs won't be allocated", len(targetCpuPool), -diffCount)
-		targetCpuNum = len(targetCpuPool)
+func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst instance.Instance, effectiveCpus []int64, targetCPUPool []int64, targetCpuNum int, loadBalancing bool) {
+	if len(targetCPUPool) < targetCpuNum {
+		diffCount := len(targetCPUPool) - targetCpuNum
+		logger.Warnf("%v CPUs have been required for pinning, but %v CPUs won't be allocated", len(targetCPUPool), -diffCount)
+		targetCpuNum = len(targetCPUPool)
 	}
 
-	// If the `targetCpuPool` has been manually specified (explicit CPU IDs/ranges specified with `limits.cpu`)
-	if len(targetCpuPool) == targetCpuNum && !loadBalancing {
-		for _, nr := range targetCpuPool {
+	// If the `targetCPUPool` has been manually specified (explicit CPU IDs/ranges specified with `limits.cpu`)
+	if len(targetCPUPool) == targetCpuNum && !loadBalancing {
+		for _, nr := range targetCPUPool {
 			if !slices.Contains(effectiveCpus, nr) {
 				continue
 			}
@@ -320,14 +320,14 @@ func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst insta
 		return
 	}
 
-	// If we need to load-balance the instance across the CPUs of `targetCpuPool` (e.g, NUMA placement),
-	// the heuristic is to sort the `targetCpuPool` by usage (number of instances already pinned to each CPU)
+	// If we need to load-balance the instance across the CPUs of `targetCPUPool` (e.g, NUMA placement),
+	// the heuristic is to sort the `targetCPUPool` by usage (number of instances already pinned to each CPU)
 	// and then assign the instance to the first `desiredCpuNum` least used CPUs.
 	usage := map[int64]deviceTaskCPU{}
-	for _, id := range targetCpuPool {
+	for _, id := range targetCPUPool {
 		cpu := deviceTaskCPU{}
 		cpu.id = id
-		cpu.strId = fmt.Sprintf("%d", id)
+		cpu.strID = fmt.Sprintf("%d", id)
 
 		count := 0
 		_, ok := fixedInstances[id]
@@ -544,7 +544,7 @@ func deviceTaskBalance(s *state.State) {
 	for _, id := range cpus {
 		cpu := deviceTaskCPU{}
 		cpu.id = id
-		cpu.strId = fmt.Sprintf("%d", id)
+		cpu.strID = fmt.Sprintf("%d", id)
 		count := 0
 		cpu.count = &count
 
@@ -558,7 +558,7 @@ func deviceTaskBalance(s *state.State) {
 			continue
 		}
 
-		id := c.strId
+		id := c.strID
 		for _, ctn := range ctns {
 			_, ok := pinning[ctn]
 			if ok {
@@ -584,7 +584,7 @@ func deviceTaskBalance(s *state.State) {
 
 			count -= 1
 
-			id := cpu.strId
+			id := cpu.strID
 			_, ok := pinning[ctn]
 			if ok {
 				pinning[ctn] = append(pinning[ctn], id)
