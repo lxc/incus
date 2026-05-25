@@ -851,7 +851,7 @@ func InstanceContentType(inst instance.ConfigReader) drivers.ContentType {
 // VolumeUsedByProfileDevices finds profiles using a volume and passes them to profileFunc for evaluation.
 // The profileFunc is provided with a profile config, project config and a list of device names that are using
 // the volume.
-func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName string, vol *api.StorageVolume, profileFunc func(profileID int64, profile api.Profile, project api.Project, usedByDevices []string) error) error {
+func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName string, vol *api.StorageVolume, profileFunc func(profileID int64, profile api.Profile, p api.Project, usedByDevices []string) error) error {
 	// Convert the volume type name to our internal integer representation.
 	volumeType, err := VolumeTypeNameToDBType(vol.Type)
 	if err != nil {
@@ -964,7 +964,7 @@ func VolumeUsedByProfileDevices(s *state.State, poolName string, projectName str
 // is returned immediately. The instanceFunc is executed during a DB transaction, so DB queries are not permitted.
 // The instanceFunc is provided with a instance config, project config, instance's profiles and a list of device
 // names that are using the volume.
-func VolumeUsedByInstanceDevices(s *state.State, poolName string, projectName string, vol *api.StorageVolume, expandDevices bool, instanceFunc func(inst db.InstanceArgs, project api.Project, usedByDevices []string) error) error {
+func VolumeUsedByInstanceDevices(s *state.State, poolName string, projectName string, vol *api.StorageVolume, expandDevices bool, instanceFunc func(inst db.InstanceArgs, p api.Project, usedByDevices []string) error) error {
 	// Convert the volume type name to our internal integer representation.
 	volumeType, err := VolumeTypeNameToDBType(vol.Type)
 	if err != nil {
