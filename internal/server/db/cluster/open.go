@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	driver "github.com/cowsql/go-cowsql/driver"
+	"github.com/cowsql/go-cowsql/driver"
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/internal/server/db/schema"
