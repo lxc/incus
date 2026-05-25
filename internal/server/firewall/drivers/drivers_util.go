@@ -112,25 +112,6 @@ func getOptimisedDNATRanges(forward *AddressForward) map[[2]uint64][2]uint64 {
 	return snatRules
 }
 
-// subnetMask returns the subnet mask of the given network as a string. Both IPv4 and IPv6 are handled.
-func subnetMask(ipNet *net.IPNet) string {
-	if ipNet.IP.To4() != nil {
-		return fmt.Sprintf("%d.%d.%d.%d", ipNet.Mask[0], ipNet.Mask[1], ipNet.Mask[2], ipNet.Mask[3])
-	}
-
-	var hexMask []rune
-	for i, r := range ipNet.Mask.String() {
-		if i%4 == 0 && i != 0 {
-			hexMask = append(hexMask, ':')
-		}
-
-		hexMask = append(hexMask, r)
-	}
-
-	// Shorten into canonical form.
-	return net.ParseIP(string(hexMask)).String()
-}
-
 // subnetPrefixHex returns the hex string which prefixes a subnet (e.g. the hex prefix of "fd25:c7e3:5dec:e4dd:ef14::1/64"
 // is "fd25c7e35dece4dd"). Only for use with IPv6 networks.
 func subnetPrefixHex(ipNet *net.IPNet) (string, error) {
