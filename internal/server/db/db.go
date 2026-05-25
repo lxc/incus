@@ -152,7 +152,7 @@ func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore
 		logPriority := 1 // 0 is discard, 1 is Debug, 2 is Error
 		if i > 5 {
 			logPriority = 2
-			if i > 15 && !((i % 5) == 0) {
+			if i > 15 && i%5 != 0 {
 				logPriority = 0
 			}
 		}
