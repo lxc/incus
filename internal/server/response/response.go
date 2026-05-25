@@ -43,6 +43,7 @@ type devIncusResponse struct {
 	contentType string
 }
 
+// Render writes the response to the provided http.ResponseWriter.
 func (r *devIncusResponse) Render(w http.ResponseWriter) error {
 	var err error
 
@@ -153,6 +154,7 @@ func SyncResponsePlain(success bool, compress bool, metadata string) Response {
 	return &syncResponse{success: success, metadata: metadata, plaintext: true, compress: compress}
 }
 
+// Render writes the response to the provided http.ResponseWriter.
 func (r *syncResponse) Render(w http.ResponseWriter) error {
 	// Set an appropriate ETag header
 	if r.etag != nil {
@@ -344,6 +346,7 @@ func (r *errorResponse) Code() int {
 	return r.code
 }
 
+// Render writes the response to the provided http.ResponseWriter.
 func (r *errorResponse) Render(w http.ResponseWriter) error {
 	var output io.Writer
 
@@ -412,6 +415,7 @@ func FileResponse(r *http.Request, files []FileResponseEntry, headers map[string
 	return &fileResponse{r, files, headers}
 }
 
+// Render writes the response to the provided http.ResponseWriter.
 func (r *fileResponse) Render(w http.ResponseWriter) error {
 	if r.headers != nil {
 		for k, v := range r.headers {
@@ -532,6 +536,7 @@ func ForwardedResponse(client incus.InstanceServer, request *http.Request) Respo
 	}
 }
 
+// Render writes the response to the provided http.ResponseWriter.
 func (r *forwardedResponse) Render(w http.ResponseWriter) error {
 	info, err := r.client.GetConnectionInfo()
 	if err != nil {
@@ -590,6 +595,7 @@ func ManualResponse(hook func(w http.ResponseWriter) error) Response {
 	return &manualResponse{hook: hook}
 }
 
+// Render writes the response to the provided http.ResponseWriter.
 func (r *manualResponse) Render(w http.ResponseWriter) error {
 	return r.hook(w)
 }
