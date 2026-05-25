@@ -88,9 +88,9 @@ func (c *ClusterTx) GetNonPendingStoragePoolsNamesToIDs(ctx context.Context) (ma
 		name string
 	}
 
-	sql := "SELECT id, name FROM storage_pools WHERE NOT state=?"
+	stmt := "SELECT id, name FROM storage_pools WHERE NOT state=?"
 	pools := []pool{}
-	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, c.tx, stmt, func(scan func(dest ...any) error) error {
 		var p pool
 		err := scan(&p.id, &p.name)
 		if err != nil {
@@ -268,9 +268,9 @@ func (c *ClusterTx) CreatePendingStoragePool(ctx context.Context, node string, n
 		state  StoragePoolState
 	}{}
 
-	sql := "SELECT id, driver, state FROM storage_pools WHERE name=?"
+	stmt := "SELECT id, driver, state FROM storage_pools WHERE name=?"
 	count := 0
-	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, c.tx, stmt, func(scan func(dest ...any) error) error {
 		// Ensure that there is at most one pool with the given name.
 		if count != 0 {
 			return errors.New("more than one pool exists with the given name")
@@ -370,13 +370,13 @@ func (c *ClusterTx) storagePoolState(name string, state StoragePoolState) error 
 // storagePoolNodes returns the nodes keyed by node ID that the given storage pool is defined on.
 func (c *ClusterTx) storagePoolNodes(ctx context.Context, poolID int64) (map[int64]StoragePoolNode, error) {
 	nodes := []StoragePoolNode{}
-	sql := `
+	stmt := `
 		SELECT nodes.id, nodes.name, storage_pools_nodes.state FROM nodes
 		JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id
 		WHERE storage_pools_nodes.storage_pool_id = ?
 	`
 
-	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, c.tx, stmt, func(scan func(dest ...any) error) error {
 		node := StoragePoolNode{}
 
 		err := scan(&node.ID, &node.Name, &node.State)
@@ -590,11 +590,11 @@ func (c *ClusterTx) storagePools(ctx context.Context, where string, args ...any)
 // being used by at least one storage pool.
 func (c *ClusterTx) GetStoragePoolDrivers(ctx context.Context) ([]string, error) {
 	var poolDriver string
-	query := "SELECT DISTINCT driver FROM storage_pools"
+	stmt := "SELECT DISTINCT driver FROM storage_pools"
 	inargs := []any{}
 	outargs := []any{poolDriver}
 
-	result, err := queryScan(ctx, c, query, inargs, outargs)
+	result, err := queryScan(ctx, c, stmt, inargs, outargs)
 	if err != nil {
 		return []string{}, err
 	}

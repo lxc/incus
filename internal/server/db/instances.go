@@ -729,7 +729,7 @@ func (c *ClusterTx) configUpdate(id int, values map[string]string, insertSQL, de
 
 	// Insert/update keys
 	if len(changes) > 0 {
-		query := insertSQL
+		q := insertSQL
 		exprs := []string{}
 		params := []any{}
 		for key, value := range changes {
@@ -737,8 +737,8 @@ func (c *ClusterTx) configUpdate(id int, values map[string]string, insertSQL, de
 			params = append(params, []any{id, key, value}...)
 		}
 
-		query += strings.Join(exprs, ",")
-		_, err := c.tx.Exec(query, params...)
+		q += strings.Join(exprs, ",")
+		_, err := c.tx.Exec(q, params...)
 		if err != nil {
 			return err
 		}
@@ -746,14 +746,14 @@ func (c *ClusterTx) configUpdate(id int, values map[string]string, insertSQL, de
 
 	// Delete keys
 	if len(deletes) > 0 {
-		query := fmt.Sprintf(deleteSQL, query.Params(len(deletes)))
+		q := fmt.Sprintf(deleteSQL, query.Params(len(deletes)))
 		params := []any{}
 		for _, key := range deletes {
 			params = append(params, key)
 		}
 
 		params = append(params, id)
-		_, err := c.tx.Exec(query, params...)
+		_, err := c.tx.Exec(q, params...)
 		if err != nil {
 			return err
 		}
@@ -858,7 +858,7 @@ func (c *ClusterTx) GetInstancePool(ctx context.Context, projectName string, ins
 	// unique, and their storage volumes carry the same name, their storage
 	// volumes are unique too.
 	poolName := ""
-	query := fmt.Sprintf(`
+	q := fmt.Sprintf(`
 SELECT storage_pools.name FROM storage_pools
   JOIN storage_volumes_all ON storage_pools.id=storage_volumes_all.storage_pool_id
   JOIN instances ON instances.name=storage_volumes_all.name
@@ -875,7 +875,7 @@ SELECT storage_pools.name FROM storage_pools
 		inargs = append(inargs, driver)
 	}
 
-	err := c.tx.QueryRowContext(ctx, query, inargs...).Scan(outargs...)
+	err := c.tx.QueryRowContext(ctx, q, inargs...).Scan(outargs...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", api.StatusErrorf(http.StatusNotFound, "Instance storage pool not found")
@@ -1056,13 +1056,13 @@ WHERE instances_config.id IN (
 
 // CreateInstanceConfig inserts a new config for the instance with the given ID.
 func CreateInstanceConfig(ctx context.Context, tx *sql.Tx, id int, config map[string]string) error {
-	sql := "INSERT INTO instances_config (instance_id, key, value) values (?, ?, ?)"
+	stmt := "INSERT INTO instances_config (instance_id, key, value) values (?, ?, ?)"
 	for k, v := range config {
 		if v == "" {
 			continue
 		}
 
-		_, err := tx.ExecContext(ctx, sql, id, k, v)
+		_, err := tx.ExecContext(ctx, stmt, id, k, v)
 		if err != nil {
 			return fmt.Errorf("Error adding configuration item %q = %q to instance %d: %w", k, v, id, err)
 		}

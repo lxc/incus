@@ -133,11 +133,11 @@ WHERE volumes.id=?
 func (c *ClusterTx) GetStorageVolumeSnapshotExpiry(ctx context.Context, volumeID int64) (time.Time, error) {
 	var expiry time.Time
 
-	query := "SELECT expiry_date FROM storage_volumes_snapshots WHERE id=?"
+	stmt := "SELECT expiry_date FROM storage_volumes_snapshots WHERE id=?"
 	inargs := []any{volumeID}
 	outargs := []any{&expiry}
 
-	err := dbQueryRowScan(ctx, c, query, inargs, outargs)
+	err := dbQueryRowScan(ctx, c, stmt, inargs, outargs)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return expiry, api.StatusErrorf(http.StatusNotFound, "Storage pool volume snapshot not found")

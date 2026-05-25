@@ -601,7 +601,7 @@ type StorageVolumeArgs struct {
 func (c *ClusterTx) GetStorageVolumeNodes(ctx context.Context, poolID int64, projectName string, volumeName string, volumeType int) ([]NodeInfo, error) {
 	nodes := []NodeInfo{}
 
-	sql := `
+	stmt := `
 	SELECT coalesce(nodes.id,0) AS nodeID, coalesce(nodes.address,"") AS nodeAddress, coalesce(nodes.name,"") AS nodeName
 	FROM storage_volumes_all
 	JOIN projects ON projects.id = storage_volumes_all.project_id
@@ -612,7 +612,7 @@ func (c *ClusterTx) GetStorageVolumeNodes(ctx context.Context, poolID int64, pro
 		AND storage_volumes_all.type=?
 `
 
-	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, c.tx, stmt, func(scan func(dest ...any) error) error {
 		node := NodeInfo{}
 		err := scan(&node.ID, &node.Address, &node.Name)
 		if err != nil {
@@ -834,7 +834,7 @@ func storagePoolVolumeContentTypeToName(contentType int) (string, error) {
 
 // GetCustomVolumesInProject returns all custom volumes in the given project.
 func (c *ClusterTx) GetCustomVolumesInProject(ctx context.Context, project string) ([]StorageVolumeArgs, error) {
-	sql := `
+	stmt := `
 SELECT
 	storage_volumes.id,
 	storage_volumes.name,
@@ -848,7 +848,7 @@ WHERE storage_volumes.type = ? AND projects.name = ?
 `
 
 	volumes := []StorageVolumeArgs{}
-	err := query.Scan(ctx, c.tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, c.tx, stmt, func(scan func(dest ...any) error) error {
 		volume := StorageVolumeArgs{}
 		err := scan(&volume.ID, &volume.Name, &volume.CreationDate, &volume.PoolName, &volume.NodeID)
 		if err != nil {

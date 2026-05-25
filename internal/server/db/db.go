@@ -55,21 +55,21 @@ func OpenNode(dir string, fresh func(*Node) error) (*Node, error) {
 		return nil, err
 	}
 
-	node := &Node{
+	n := &Node{
 		db:  db,
 		dir: dir,
 	}
 
 	if initial == 0 {
 		if fresh != nil {
-			err := fresh(node)
+			err := fresh(n)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	return node, nil
+	return n, nil
 }
 
 // DirectAccess is a bit of a hack which allows getting a database Node struct from any standard Go sql.DB.
@@ -196,12 +196,12 @@ func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore
 	}
 
 	if !nodesVersionsMatch {
-		cluster := &Cluster{
+		c := &Cluster{
 			db:         db,
 			closingCtx: closingCtx,
 		}
 
-		return cluster, ErrSomeNodesAreBehind
+		return c, ErrSomeNodesAreBehind
 	}
 
 	stmts, err := cluster.PrepareStmts(db, false)
