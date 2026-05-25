@@ -126,12 +126,12 @@ func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[in
 	apiDevices := DevicesToAPI(devices)
 	expandedDevices := ExpandInstanceDevices(config.NewDevices(apiDevices), apiProfiles)
 
-	config, err := GetInstanceConfig(ctx, tx, i.ID)
+	instanceConfig, err := GetInstanceConfig(ctx, tx, i.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	expandedConfig := ExpandInstanceConfig(config, apiProfiles)
+	expandedConfig := ExpandInstanceConfig(instanceConfig, apiProfiles)
 
 	archName, err := osarch.ArchitectureName(i.Architecture)
 	if err != nil {
@@ -141,7 +141,7 @@ func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[in
 	return &api.Instance{
 		InstancePut: api.InstancePut{
 			Architecture: archName,
-			Config:       config,
+			Config:       instanceConfig,
 			Devices:      apiDevices,
 			Ephemeral:    i.Ephemeral,
 			Profiles:     profileNames,
