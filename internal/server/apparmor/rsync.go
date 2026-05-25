@@ -165,7 +165,7 @@ func rsyncProfile(sysOS *sys.OS, name string, sourcePath string, dstPath string)
 		execPath = fullPath
 	}
 
-	var sb *strings.Builder = &strings.Builder{}
+	sb := &strings.Builder{}
 	err = rsyncProfileTpl.Execute(sb, map[string]any{
 		"name":        name,
 		"execPath":    execPath,
