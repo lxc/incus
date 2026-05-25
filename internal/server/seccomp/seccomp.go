@@ -1503,13 +1503,13 @@ func (srv *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 	args.value = buf
 
 	whiteout := 0
-	if string(args.name) == "trusted.overlay.opaque" && string(args.value) == "y" {
-		whiteout = 1
-	} else {
+	if string(args.name) != "trusted.overlay.opaque" || string(args.value) != "y" {
 		ctx["syscall_continue"] = "true"
 		C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
 		return 0
 	}
+
+	whiteout = 1
 
 	_, stderr, err := subprocess.RunCommandSplit(
 		context.TODO(),
