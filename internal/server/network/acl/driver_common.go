@@ -472,10 +472,7 @@ func (d *common) validateRule(direction ruleDirection, rule api.NetworkACLRule) 
 // Returns whether the subjects include names, IPv4 and IPv6 addresses respectively.
 func (d *common) validateRuleSubjects(fieldName string, direction ruleDirection, subjects []string, validSubjectNames []string) (bool, bool, bool, error) {
 	// Check if named subjects are allowed in field/direction combination.
-	allowSubjectNames := false
-	if (fieldName == "Source" && direction == ruleDirectionIngress) || (fieldName == "Destination" && direction == ruleDirectionEgress) {
-		allowSubjectNames = true
-	}
+	allowSubjectNames := (fieldName == "Source" && direction == ruleDirectionIngress) || (fieldName == "Destination" && direction == ruleDirectionEgress)
 
 	isNetworkAddress := func(value string) (uint, error) {
 		ip := net.ParseIP(value)
