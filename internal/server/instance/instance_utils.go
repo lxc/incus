@@ -65,12 +65,12 @@ func exclusiveConfigKeys(key1 string, key2 string, config map[string]string) (va
 
 	val, ok = config[key1]
 	if ok {
-		return
+		return val, ok, nil
 	}
 
 	val, ok = config[key2]
 	if ok {
-		return
+		return val, ok, nil
 	}
 
 	return "", false, nil
