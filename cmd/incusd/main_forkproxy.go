@@ -396,7 +396,7 @@ func listenerInstance(epFd C.int, lAddr *deviceConfig.ProxyAddress, cAddr *devic
 				proto = fmt.Sprintf("%s4", proto)
 			}
 
-			_, _ = dstConn.Write([]byte(fmt.Sprintf("PROXY %s %s %s %s %s\r\n", proto, cHost, dHost, cPort, dPort)))
+			_, _ = fmt.Fprintf(dstConn, "PROXY %s %s %s %s %s\r\n", proto, cHost, dHost, cPort, dPort)
 		}
 	}
 
