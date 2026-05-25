@@ -14,7 +14,7 @@ import (
 )
 
 // FirewallApplyACLRules applies ACL rules to network firewall.
-func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName string, aclNet NetworkACLUsage) error {
+func FirewallApplyACLRules(s *state.State, l logger.Logger, aclProjectName string, aclNet NetworkACLUsage) error {
 	rules, err := FirewallACLRules(s, aclNet.Name, aclProjectName, aclNet.Config)
 	if err != nil {
 		return err
