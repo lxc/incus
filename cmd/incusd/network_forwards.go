@@ -225,7 +225,6 @@ func networkForwardsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		for _, record := range records {
-
 			if clauses != nil && len(clauses.Clauses) > 0 {
 				match, err := filter.Match(*record, *clauses)
 				if err != nil {
