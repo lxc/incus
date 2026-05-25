@@ -49,7 +49,7 @@ import (
 )
 
 // ValidDevices is linked from instance/drivers.validDevices to validate device config.
-var ValidDevices func(state *state.State, p api.Project, instanceType instancetype.Type, localDevices deviceConfig.Devices, expandedDevices deviceConfig.Devices) error
+var ValidDevices func(s *state.State, p api.Project, instanceType instancetype.Type, localDevices deviceConfig.Devices, expandedDevices deviceConfig.Devices) error
 
 // Load is linked from instance/drivers.load to allow different instance types to be loaded.
 var Load func(s *state.State, args db.InstanceArgs, p api.Project) (Instance, error)
@@ -151,7 +151,7 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 	return nil
 }
 
-func validConfigKey(os *sys.OS, key string, value string, instanceType instancetype.Type) error {
+func validConfigKey(sysOS *sys.OS, key string, value string, instanceType instancetype.Type) error {
 	f, err := instance.ConfigKeyChecker(key, instanceType.ToAPI())
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func validConfigKey(os *sys.OS, key string, value string, instanceType instancet
 	}
 
 	if key == "security.syscalls.deny_compat" || key == "security.syscalls.blacklist_compat" {
-		for _, arch := range os.Architectures {
+		for _, arch := range sysOS.Architectures {
 			if arch == osarch.ARCH_64BIT_INTEL_X86 ||
 				arch == osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN ||
 				arch == osarch.ARCH_64BIT_POWERPC_BIG_ENDIAN {
@@ -291,7 +291,7 @@ func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, project, 
 		instanceName := parts[0]
 		snapshotName := parts[1]
 
-		instance, err := cluster.GetInstance(ctx, tx.Tx(), project, instanceName)
+		inst, err := cluster.GetInstance(ctx, tx.Tx(), project, instanceName)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to fetch instance %q in project %q: %w", name, project, err)
 		}
@@ -301,7 +301,7 @@ func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, project, 
 			return nil, fmt.Errorf("Failed to fetch snapshot %q of instance %q in project %q: %w", snapshotName, instanceName, project, err)
 		}
 
-		c := snapshot.ToInstance(instance.Name, instance.Node, instance.Type, instance.Architecture)
+		c := snapshot.ToInstance(inst.Name, inst.Node, inst.Type, inst.Architecture)
 		container = &c
 	} else {
 		container, err = cluster.GetInstance(ctx, tx.Tx(), project, name)
@@ -470,12 +470,12 @@ func BackupLoadByName(s *state.State, project, name string) (*backup.InstanceBac
 	}
 
 	// Load the instance it belongs to
-	instance, err := LoadByID(s, args.InstanceID)
+	inst, err := LoadByID(s, args.InstanceID)
 	if err != nil {
 		return nil, err
 	}
 
-	return backup.NewInstanceBackup(s, instance, args.ID, name, args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.RootOnly, args.OptimizedStorage), nil
+	return backup.NewInstanceBackup(s, inst, args.ID, name, args.CreationDate, args.ExpiryDate, args.InstanceOnly, args.RootOnly, args.OptimizedStorage), nil
 }
 
 // ResolveImage takes an instance source and returns a hash suitable for instance creation or download.
