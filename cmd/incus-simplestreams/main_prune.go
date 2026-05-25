@@ -155,8 +155,7 @@ func (c *cmdPrune) prune() error {
 
 		updatedVersions := map[string]simplestreams.ProductVersion{}
 		iteration := 0
-		for i := len(versionNames) - 1; i >= 0; i-- {
-			version := versionNames[i]
+		for _, version := range slices.Backward(versionNames) {
 			if iteration <= c.flagRetention {
 				updatedVersions[version] = product.Versions[version]
 			} else if c.flagVerbose {

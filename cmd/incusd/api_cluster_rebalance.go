@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -290,8 +291,8 @@ func clusterRebalanceServers(ctx context.Context, s *state.State, srcServer *Ser
 
 			// Build the scriptlet candidate list sorted from least to most loaded.
 			sortedCandidates := make([]db.NodeInfo, 0, len(instanceCandidates))
-			for i := len(instanceCandidates) - 1; i >= 0; i-- {
-				sortedCandidates = append(sortedCandidates, instanceCandidates[i].NodeInfo)
+			for _, instanceCandidate := range slices.Backward(instanceCandidates) {
+				sortedCandidates = append(sortedCandidates, instanceCandidate.NodeInfo)
 			}
 
 			scriptCtx, cancel := context.WithTimeout(ctx, time.Second*5)

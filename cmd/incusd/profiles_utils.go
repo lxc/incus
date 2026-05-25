@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -58,8 +59,8 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 
 			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 				// Check what profile the device comes from by working backwards along the profiles list.
-				for i := len(inst.Profiles) - 1; i >= 0; i-- {
-					_, profile, err := tx.GetProfile(ctx, p.Name, inst.Profiles[i].Name)
+				for _, v := range slices.Backward(inst.Profiles) {
+					_, profile, err := tx.GetProfile(ctx, p.Name, v.Name)
 					if err != nil {
 						return err
 					}
@@ -68,7 +69,7 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 					_, ok := profile.Devices[oldProfileRootDiskDeviceKey]
 					if ok {
 						// Found the profile.
-						if inst.Profiles[i].Name == profileName {
+						if v.Name == profileName {
 							// If it's the current profile, then we can't modify that root device.
 							return errors.New("At least one instance relies on this profile's root disk device")
 						}
