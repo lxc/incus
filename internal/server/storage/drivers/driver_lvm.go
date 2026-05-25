@@ -129,9 +129,10 @@ func (d *lvm) init(s *state.State, name string, config map[string]string, log lo
 		_, exists := d.config["lvm.vg_name"]
 		if !exists {
 			sourceType := d.getSourceType(d.config["source"])
-			if sourceType == lvmSourceTypeDefault || sourceType == lvmSourceTypePhysicalDevice {
+			switch sourceType {
+			case lvmSourceTypeDefault, lvmSourceTypePhysicalDevice:
 				d.config["lvm.vg_name"] = d.name
-			} else if sourceType == lvmSourceTypeVolumeGroup {
+			case lvmSourceTypeVolumeGroup:
 				d.config["lvm.vg_name"] = d.config["source"]
 			}
 		}
@@ -217,7 +218,8 @@ func (d *lvm) Create() error {
 		}
 	}
 
-	if sourceType == lvmSourceTypeDefault {
+	switch sourceType {
+	case lvmSourceTypeDefault:
 		if d.clustered {
 			return errors.New("lvmcluster requires a shared physical device or a pre-existing shared VG to be used as source")
 		}
@@ -290,7 +292,7 @@ func (d *lvm) Create() error {
 		if vgExists {
 			return fmt.Errorf("A volume group already exists called %q", d.config["lvm.vg_name"])
 		}
-	} else if sourceType == lvmSourceTypePhysicalDevice {
+	case lvmSourceTypePhysicalDevice:
 		// We are using an existing physical device.
 		srcPath := d.config["source"]
 
@@ -335,7 +337,7 @@ func (d *lvm) Create() error {
 		if err != nil {
 			return err
 		}
-	} else if sourceType == lvmSourceTypeVolumeGroup {
+	case lvmSourceTypeVolumeGroup:
 		// We are using an existing volume group, so physical must exist already.
 		pvExists = true
 
@@ -359,7 +361,8 @@ func (d *lvm) Create() error {
 		if !vgExists {
 			return fmt.Errorf("The requested volume group %q does not exist", d.config["lvm.vg_name"])
 		}
-	} else {
+
+	default:
 		return errors.New("Invalid source property")
 	}
 
