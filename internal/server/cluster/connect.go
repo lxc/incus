@@ -81,8 +81,8 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 	args.Proxy = proxy
 
 	// Connect to the target server.
-	url := fmt.Sprintf("https://%s", address)
-	return incus.ConnectIncus(url, args)
+	serverURL := fmt.Sprintf("https://%s", address)
+	return incus.ConnectIncus(serverURL, args)
 }
 
 // ConnectIfInstanceIsRemote figures out the address of the cluster member which is running the instance with the

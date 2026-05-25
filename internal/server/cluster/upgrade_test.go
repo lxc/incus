@@ -77,10 +77,10 @@ func TestMaybeUpdate_Upgrade(t *testing.T) {
 	err = os.WriteFile(script, data, 0o755)
 	require.NoError(t, err)
 
-	state, cleanup := state.NewTestState(t)
+	s, cleanup := state.NewTestState(t)
 	defer cleanup()
 
-	_ = state.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
+	_ = s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodes := []db.RaftNode{
 			{NodeInfo: client.NodeInfo{ID: 1, Address: "0.0.0.0:666"}},
 			{NodeInfo: client.NodeInfo{ID: 2, Address: "1.2.3.4:666"}},
@@ -91,7 +91,7 @@ func TestMaybeUpdate_Upgrade(t *testing.T) {
 		return nil
 	})
 
-	_ = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	_ = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		id, err := tx.CreateNode("buzz", "1.2.3.4:666")
 		require.NoError(t, err)
 
@@ -110,7 +110,7 @@ func TestMaybeUpdate_Upgrade(t *testing.T) {
 	_ = os.Setenv("INCUS_CLUSTER_UPDATE", script)
 	defer func() { _ = os.Unsetenv("INCUS_CLUSTER_UPDATE") }()
 
-	_ = cluster.MaybeUpdate(state)
+	_ = cluster.MaybeUpdate(s)
 
 	_, err = os.Stat(stamp)
 	require.NoError(t, err)
@@ -130,20 +130,20 @@ func TestMaybeUpdate_NothingToDo(t *testing.T) {
 	err = os.WriteFile(script, data, 0o755)
 	require.NoError(t, err)
 
-	state, cleanup := state.NewTestState(t)
+	s, cleanup := state.NewTestState(t)
 	defer cleanup()
 
 	_ = os.Setenv("INCUS_CLUSTER_UPDATE", script)
 	defer func() { _ = os.Unsetenv("INCUS_CLUSTER_UPDATE") }()
 
-	_ = cluster.MaybeUpdate(state)
+	_ = cluster.MaybeUpdate(s)
 
 	_, err = os.Stat(stamp)
 	require.True(t, errors.Is(err, fs.ErrNotExist))
 }
 
 func TestUpgradeMembersWithoutRole(t *testing.T) {
-	state, cleanup := state.NewTestState(t)
+	s, cleanup := state.NewTestState(t)
 	defer cleanup()
 
 	serverCert := tlstest.TestingKeyPair(t)
@@ -152,11 +152,11 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	defer server.Close()
 
 	address := server.Listener.Addr().String()
-	setRaftRole(t, state.DB.Node, address)
+	setRaftRole(t, s.DB.Node, address)
 
-	state.ServerCert = func() *localtls.CertInfo { return serverCert }
+	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
-	gateway := newGateway(t, state.DB.Node, serverCert, state)
+	gateway := newGateway(t, s.DB.Node, serverCert, s)
 	defer func() { _ = gateway.Shutdown() }()
 
 	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
@@ -164,16 +164,16 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	}
 
 	var err error
-	require.NoError(t, state.DB.Cluster.Close())
+	require.NoError(t, s.DB.Cluster.Close())
 	store := gateway.NodeStore()
 	dial := gateway.DialFunc()
-	state.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dial))
+	s.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dial))
 	require.NoError(t, err)
-	gateway.Cluster = state.DB.Cluster
+	gateway.Cluster = s.DB.Cluster
 
 	// Add a couple of members to the database.
 	var members []db.NodeInfo
-	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		_, err := tx.CreateNode("foo", "1.2.3.4")
 		require.NoError(t, err)
 		_, err = tx.CreateNode("bar", "5.6.7.8")

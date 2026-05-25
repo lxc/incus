@@ -28,12 +28,12 @@ func ListDatabaseNodes(database *db.Node) ([]string, error) {
 	}
 
 	addresses := make([]string, 0)
-	for _, node := range nodes {
-		if node.Role != db.RaftVoter {
+	for _, raftNode := range nodes {
+		if raftNode.Role != db.RaftVoter {
 			continue
 		}
 
-		addresses = append(addresses, node.Address)
+		addresses = append(addresses, raftNode.Address)
 	}
 
 	return addresses, nil
@@ -182,8 +182,8 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 
 	// Create patch file for global nodes database.
 	content := ""
-	for _, node := range nodes {
-		content += fmt.Sprintf("UPDATE nodes SET address = %q WHERE id = %d;\n", node.Address, node.ID)
+	for _, raftNode := range nodes {
+		content += fmt.Sprintf("UPDATE nodes SET address = %q WHERE id = %d;\n", raftNode.Address, raftNode.ID)
 	}
 
 	if len(content) > 0 {
@@ -217,9 +217,9 @@ func RemoveRaftNode(gateway *Gateway, address string) error {
 	}
 
 	var id uint64
-	for _, node := range nodes {
-		if node.Address == address {
-			id = node.ID
+	for _, raftNode := range nodes {
+		if raftNode.Address == address {
+			id = raftNode.ID
 			break
 		}
 	}
@@ -229,7 +229,7 @@ func RemoveRaftNode(gateway *Gateway, address string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	client, err := client.FindLeader(
+	dqliteClient, err := client.FindLeader(
 		ctx, gateway.NodeStore(),
 		client.WithDialFunc(gateway.raftDial()),
 		client.WithLogFunc(DqliteLog),
@@ -238,8 +238,8 @@ func RemoveRaftNode(gateway *Gateway, address string) error {
 		return fmt.Errorf("Failed to connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = client.Close() }()
-	err = client.Remove(ctx, id)
+	defer func() { _ = dqliteClient.Close() }()
+	err = dqliteClient.Remove(ctx, id)
 	if err != nil {
 		return fmt.Errorf("Failed to remove node: %w", err)
 	}

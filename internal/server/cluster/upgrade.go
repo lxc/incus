@@ -23,8 +23,8 @@ import (
 // cluster that any possible pending database update has been applied, and any
 // nodes which was waiting for this node to be upgraded should re-check if it's
 // okay to move forward.
-func NotifyUpgradeCompleted(state *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo) error {
-	notifier, err := NewNotifier(state, networkCert, serverCert, NotifyTryAll)
+func NotifyUpgradeCompleted(s *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo) error {
+	notifier, err := NewNotifier(s, networkCert, serverCert, NotifyTryAll)
 	if err != nil {
 		return err
 	}
