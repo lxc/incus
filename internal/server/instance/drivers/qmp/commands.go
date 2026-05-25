@@ -1648,7 +1648,8 @@ func (m *Monitor) RingbufRead(device string) (string, error) {
 
 // ChardevChange changes the backend of a specified chardev. Currently supports the socket and ringbuf backends.
 func (m *Monitor) ChardevChange(device string, info ChardevChangeInfo) error {
-	if info.Type == "socket" {
+	switch info.Type {
+	case "socket":
 		// Share the existing file descriptor with qemu.
 		err := m.SendFile(info.FDName, info.File)
 		if err != nil {
@@ -1687,7 +1688,7 @@ func (m *Monitor) ChardevChange(device string, info ChardevChangeInfo) error {
 		}
 
 		return nil
-	} else if info.Type == "ringbuf" {
+	case "ringbuf":
 		var args struct {
 			ID      string `json:"id"`
 			Backend struct {
