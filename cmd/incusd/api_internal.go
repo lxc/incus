@@ -909,10 +909,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 	defer instOp.Done(err)
 
 	instancePath := storagePools.InstancePath(instanceType, projectName, backupConf.Container.Name, false)
-	isPrivileged := false
-	if backupConf.Container.Config["security.privileged"] == "" {
-		isPrivileged = true
-	}
+	isPrivileged := backupConf.Container.Config["security.privileged"] == ""
 
 	err = storagePools.CreateContainerMountpoint(instanceMountPoint, instancePath, isPrivileged)
 	if err != nil {
