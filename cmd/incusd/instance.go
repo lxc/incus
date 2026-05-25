@@ -463,10 +463,10 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 					"path": "/",
 					"pool": instRootDiskDevice["pool"],
 				}
-			} else { //nolint:staticcheck // (keep the empty branch for the comment)
-				// Snapshot has multiple root disk devices, we can't automatically fix this so
-				// leave alone so we don't prevent copy.
 			}
+
+			// If the snapshot has multiple root disk devices, we can't automatically fix this so
+			// leave alone so we don't prevent copy.
 
 			fields := strings.SplitN(srcSnap.Name(), internalInstance.SnapshotDelimiter, 2)
 			newSnapName := fmt.Sprintf("%s/%s", inst.Name(), fields[1])
