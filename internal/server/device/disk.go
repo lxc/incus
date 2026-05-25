@@ -3029,9 +3029,9 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 
 	// Deal with per-filesystem oddities. We don't care about failures here
 	// because any non-special filesystem => directory backend.
-	fs, _ := linux.DetectFilesystem(expPath)
+	fsName, _ := linux.DetectFilesystem(expPath)
 
-	if fs == "zfs" && util.PathExists("/dev/zfs") {
+	if fsName == "zfs" && util.PathExists("/dev/zfs") {
 		// Accessible zfs filesystems
 		poolName := strings.Split(dev[1], "/")[0]
 
@@ -3085,7 +3085,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 		if len(devices) == 0 {
 			return nil, fmt.Errorf("Unable to find backing block for zfs pool %q", poolName)
 		}
-	} else if fs == "btrfs" && util.PathExists(dev[1]) {
+	} else if fsName == "btrfs" && util.PathExists(dev[1]) {
 		// Accessible btrfs filesystems
 		output, err := subprocess.RunCommand("btrfs", "filesystem", "show", dev[1])
 		if err != nil {

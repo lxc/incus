@@ -45,7 +45,7 @@ type ovnNet interface {
 	network.Network
 
 	InstanceDevicePortValidateExternalRoutes(deviceInstance instance.Instance, deviceName string, externalRoutes []*net.IPNet) error
-	InstanceDevicePortAdd(instanceUUID string, deviceName string, deviceConfig deviceConfig.Device) error
+	InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error
 	InstanceDevicePortStart(opts *network.OVNInstanceNICSetupOpts, securityACLsRemove []string) (ovn.OVNSwitchPort, []net.IP, error)
 	InstanceDevicePortStop(ovsExternalOVNPort ovn.OVNSwitchPort, opts *network.OVNInstanceNICStopOpts) error
 	InstanceDevicePortRemove(instanceUUID string, devName string, devConfig deviceConfig.Device, hasDuplicate bool) error
@@ -382,7 +382,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 	netConfig := d.network.Config()
 
 	if d.config["ipv4.address"] != "" && d.config["ipv4.address"] != "none" {
-		ip, subnet, err := net.ParseCIDR(netConfig["ipv4.address"])
+		ipAddr, subnet, err := net.ParseCIDR(netConfig["ipv4.address"])
 		if err != nil {
 			return fmt.Errorf("Invalid network ipv4.address: %w", err)
 		}
@@ -394,7 +394,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		}
 
 		// IP should not be the same as the parent managed network address.
-		if ip.Equal(net.ParseIP(d.config["ipv4.address"])) {
+		if ipAddr.Equal(net.ParseIP(d.config["ipv4.address"])) {
 			return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv4.address"], d.config["parent"])
 		}
 	}
@@ -405,7 +405,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 			return fmt.Errorf("Cannot specify %q when %q is not set", "ipv6.address", "ipv4.address")
 		}
 
-		ip, subnet, err := net.ParseCIDR(netConfig["ipv6.address"])
+		ipAddr, subnet, err := net.ParseCIDR(netConfig["ipv6.address"])
 		if err != nil {
 			return fmt.Errorf("Invalid network ipv6.address: %w", err)
 		}
@@ -417,7 +417,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		}
 
 		// IP should not be the same as the parent managed network address.
-		if ip.Equal(net.ParseIP(d.config["ipv6.address"])) {
+		if ipAddr.Equal(net.ParseIP(d.config["ipv6.address"])) {
 			return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv6.address"], d.config["parent"])
 		}
 	}
@@ -1463,11 +1463,11 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 			// the bridge, the NIC is likely to use its MAC and SLAAC to configure its address.
 			hwAddr, err := net.ParseMAC(d.config["hwaddr"])
 			if err == nil {
-				ip, err := eui64.ParseMAC(v6subnet.IP, hwAddr)
+				eui64IP, err := eui64.ParseMAC(v6subnet.IP, hwAddr)
 				if err == nil {
 					addresses = append(addresses, api.InstanceStateNetworkAddress{
 						Family:  "inet6",
-						Address: ip.String(),
+						Address: eui64IP.String(),
 						Netmask: v6mask,
 						Scope:   "global",
 					})

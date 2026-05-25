@@ -12,13 +12,13 @@ import (
 )
 
 // newByType returns a new uninitialized device based of the type indicated by the project and device config.
-func newByType(state *state.State, projectName string, conf deviceConfig.Device) (device, error) {
+func newByType(s *state.State, projectName string, conf deviceConfig.Device) (device, error) {
 	if conf["type"] == "" {
 		return nil, errors.New("Missing device type in config")
 	}
 
 	// NIC type is required to lookup network devices.
-	nicType, err := nictype.NICType(state, projectName, conf)
+	nicType, err := nictype.NICType(s, projectName, conf)
 	if err != nil {
 		return nil, err
 	}
@@ -99,15 +99,15 @@ func newByType(state *state.State, projectName string, conf deviceConfig.Device)
 }
 
 // load instantiates a device and initializes its internal state. It does not validate the config supplied.
-func load(inst instance.Instance, state *state.State, projectName string, name string, conf deviceConfig.Device, volatileGet VolatileGetter, volatileSet VolatileSetter) (device, error) {
+func load(inst instance.Instance, s *state.State, projectName string, name string, conf deviceConfig.Device, volatileGet VolatileGetter, volatileSet VolatileSetter) (device, error) {
 	// Warning: When validating a profile, inst is expected to be provided as nil.
-	dev, err := newByType(state, projectName, conf)
+	dev, err := newByType(s, projectName, conf)
 	if err != nil {
 		return nil, fmt.Errorf("Failed loading device %q: %w", name, err)
 	}
 
 	// Setup the device's internal variables.
-	err = dev.init(inst, state, name, conf, volatileGet, volatileSet)
+	err = dev.init(inst, s, name, conf, volatileGet, volatileSet)
 	if err != nil {
 		return nil, fmt.Errorf("Failed loading device %q: %w", name, err)
 	}
@@ -173,8 +173,8 @@ func Register(inst instance.Instance, s *state.State, name string, conf deviceCo
 
 // LoadByType loads a device by type based on its project and config.
 // It does not validate config beyond the type fields.
-func LoadByType(state *state.State, projectName string, conf deviceConfig.Device) (Type, error) {
-	dev, err := newByType(state, projectName, conf)
+func LoadByType(s *state.State, projectName string, conf deviceConfig.Device) (Type, error) {
+	dev, err := newByType(s, projectName, conf)
 	if err != nil {
 		return nil, fmt.Errorf("Failed loading device type: %w", err)
 	}
