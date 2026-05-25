@@ -153,7 +153,7 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	return nil
 }
 
-func lxcStatusCode(state liblxc.State) api.StatusCode {
+func lxcStatusCode(lxcState liblxc.State) api.StatusCode {
 	return map[int]api.StatusCode{
 		1: api.Stopped,
 		2: api.Starting,
@@ -164,7 +164,7 @@ func lxcStatusCode(state liblxc.State) api.StatusCode {
 		7: api.Frozen,
 		8: api.Thawed,
 		9: api.Error,
-	}[int(state)]
+	}[int(lxcState)]
 }
 
 // lxcCreate creates the DB storage records and sets up instance devices.
@@ -2231,13 +2231,13 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 		// Pass any mounts into LXC.
 		if len(runConf.Mounts) > 0 {
-			escapePathFstab := func(path string) string {
+			escapePathFstab := func(mountPath string) string {
 				r := strings.NewReplacer(
 					" ", "\\040",
 					"\t", "\\011",
 					"\n", "\\012",
 					"\\", "\\\\")
-				return r.Replace(path)
+				return r.Replace(mountPath)
 			}
 
 			for _, mount := range runConf.Mounts {
@@ -3707,8 +3707,8 @@ func (d *lxc) getLxcState() (liblxc.State, error) {
 	}(cc)
 
 	select {
-	case state := <-monitor:
-		return state, nil
+	case lxcState := <-monitor:
+		return lxcState, nil
 	case <-time.After(5 * time.Second):
 		return liblxc.StateMap["FROZEN"], errors.New("Monitor is unresponsive")
 	}
@@ -5459,18 +5459,18 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	defer func() { _ = d.unmount() }()
 
 	// Get IDMap to unshift container as the tarball is created.
-	idmap, err := d.DiskIdmap()
+	diskIdmap, err := d.DiskIdmap()
 	if err != nil {
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
 	}
 
 	// Create the tarball.
-	metaTarWriter := instancewriter.NewInstanceTarWriter(metaWriter, idmap)
+	metaTarWriter := instancewriter.NewInstanceTarWriter(metaWriter, diskIdmap)
 
 	var rootfsTarWriter *instancewriter.InstanceTarWriter
 	if rootfsWriter != nil {
-		rootfsTarWriter = instancewriter.NewInstanceTarWriter(rootfsWriter, idmap)
+		rootfsTarWriter = instancewriter.NewInstanceTarWriter(rootfsWriter, diskIdmap)
 	}
 
 	// Keep track of the first path we saw for each path with nlink>1.
@@ -5911,7 +5911,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	} else if idmapset != nil {
 		offerHeader.Idmap = make([]*migration.IDMapType, 0, len(idmapset.Entries))
 		for _, ctnIdmap := range idmapset.Entries {
-			idmap := migration.IDMapType{
+			idmapEntry := migration.IDMapType{
 				Isuid:    proto.Bool(ctnIdmap.IsUID),
 				Isgid:    proto.Bool(ctnIdmap.IsGID),
 				Hostid:   proto.Int32(int32(ctnIdmap.HostID)),
@@ -5919,7 +5919,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 				Maprange: proto.Int32(int32(ctnIdmap.MapRange)),
 			}
 
-			offerHeader.Idmap = append(offerHeader.Idmap, &idmap)
+			offerHeader.Idmap = append(offerHeader.Idmap, &idmapEntry)
 		}
 	}
 
@@ -6384,9 +6384,9 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 
 	// The function readCriuStatsDump() reads the CRIU 'stats-dump' file
 	// in path and returns the pages_written, pages_skipped_parent, error.
-	readCriuStatsDump := func(path string) (uint64, uint64, error) {
+	readCriuStatsDump := func(statsPath string) (uint64, uint64, error) {
 		// Get dump statistics with crit
-		dumpStats, err := crit.GetDumpStats(path)
+		dumpStats, err := crit.GetDumpStats(statsPath)
 		if err != nil {
 			return 0, 0, fmt.Errorf("Failed to parse CRIU's 'stats-dump' file: %w", err)
 		}
@@ -6429,11 +6429,11 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 
 	// If in pre-dump mode, the receiving side expects a message to know if this was the last pre-dump.
 	logger.Debug("Sending another CRIU pre-dump header")
-	sync := migration.MigrationSync{
+	syncMsg := migration.MigrationSync{
 		FinalPreDump: proto.Bool(final),
 	}
 
-	data, err := proto.Marshal(&sync)
+	data, err := proto.Marshal(&syncMsg)
 	if err != nil {
 		return false, err
 	}
@@ -8054,13 +8054,13 @@ func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 			continue
 		}
 
-		state := api.InstanceStateDisk{}
+		diskState := api.InstanceStateDisk{}
 		if usage != nil {
-			state.Usage = usage.Used
-			state.Total = usage.Total
+			diskState.Usage = usage.Used
+			diskState.Total = usage.Total
 		}
 
-		disk[dev.Name] = state
+		disk[dev.Name] = diskState
 	}
 
 	return disk
@@ -8744,12 +8744,12 @@ func (d *lxc) isCurrentlyPrivileged() bool {
 		return d.IsPrivileged()
 	}
 
-	idmap, err := d.CurrentIdmap()
+	currentIdmap, err := d.CurrentIdmap()
 	if err != nil {
 		return d.IsPrivileged()
 	}
 
-	return idmap == nil
+	return currentIdmap == nil
 }
 
 // IsPrivileged returns if instance is privileged.
@@ -8868,12 +8868,12 @@ func (d *lxc) statusCode() api.StatusCode {
 		}
 	}
 
-	state, err := d.getLxcState()
+	lxcState, err := d.getLxcState()
 	if err != nil {
 		return api.Error
 	}
 
-	statusCode := lxcStatusCode(state)
+	statusCode := lxcStatusCode(lxcState)
 
 	if statusCode == api.Running && util.IsTrue(d.LocalConfig()["volatile.last_state.ready"]) {
 		return api.Ready
@@ -9113,17 +9113,17 @@ func (d *lxc) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error
 	// Get network stats
 	networkState := d.networkState(hostInterfaces)
 
-	for name, state := range networkState {
+	for name, netState := range networkState {
 		labels := map[string]string{"device": name}
 
-		out.AddSamples(metrics.NetworkReceiveBytesTotal, metrics.Sample{Value: float64(state.Counters.BytesReceived), Labels: labels})
-		out.AddSamples(metrics.NetworkReceivePacketsTotal, metrics.Sample{Value: float64(state.Counters.PacketsReceived), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitBytesTotal, metrics.Sample{Value: float64(state.Counters.BytesSent), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitPacketsTotal, metrics.Sample{Value: float64(state.Counters.PacketsSent), Labels: labels})
-		out.AddSamples(metrics.NetworkReceiveErrsTotal, metrics.Sample{Value: float64(state.Counters.ErrorsReceived), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitErrsTotal, metrics.Sample{Value: float64(state.Counters.ErrorsSent), Labels: labels})
-		out.AddSamples(metrics.NetworkReceiveDropTotal, metrics.Sample{Value: float64(state.Counters.PacketsDroppedInbound), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitDropTotal, metrics.Sample{Value: float64(state.Counters.PacketsDroppedOutbound), Labels: labels})
+		out.AddSamples(metrics.NetworkReceiveBytesTotal, metrics.Sample{Value: float64(netState.Counters.BytesReceived), Labels: labels})
+		out.AddSamples(metrics.NetworkReceivePacketsTotal, metrics.Sample{Value: float64(netState.Counters.PacketsReceived), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitBytesTotal, metrics.Sample{Value: float64(netState.Counters.BytesSent), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitPacketsTotal, metrics.Sample{Value: float64(netState.Counters.PacketsSent), Labels: labels})
+		out.AddSamples(metrics.NetworkReceiveErrsTotal, metrics.Sample{Value: float64(netState.Counters.ErrorsReceived), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitErrsTotal, metrics.Sample{Value: float64(netState.Counters.ErrorsSent), Labels: labels})
+		out.AddSamples(metrics.NetworkReceiveDropTotal, metrics.Sample{Value: float64(netState.Counters.PacketsDroppedInbound), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitDropTotal, metrics.Sample{Value: float64(netState.Counters.PacketsDroppedOutbound), Labels: labels})
 	}
 
 	// Get number of processes

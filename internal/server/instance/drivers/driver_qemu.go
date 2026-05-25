@@ -473,7 +473,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	// after we have returned the callback function.
 	instProject := d.Project()
 	instanceName := d.Name()
-	state := d.state
+	s := d.state
 
 	return func(event string, data map[string]any) {
 		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange, qmp.EventBlockJobCompleted, qmp.EventBlockJobError}, event) {
@@ -485,14 +485,14 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 
 		inst := instanceRefGet(instProject.Name, instanceName)
 		if inst == nil {
-			inst, err = instance.LoadByProjectAndName(state, instProject.Name, instanceName)
+			inst, err = instance.LoadByProjectAndName(s, instProject.Name, instanceName)
 			if err != nil {
 				l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": instanceName})
 				// If DB not available, try loading from backup file.
 				l.Warn("Failed loading instance from database to handle monitor event, trying backup file", logger.Ctx{"err": err})
 
 				instancePath := filepath.Join(internalUtil.VarPath("virtual-machines"), project.Instance(instProject.Name, instanceName))
-				inst, err = instance.LoadFromBackup(state, instProject.Name, instancePath, false)
+				inst, err = instance.LoadFromBackup(s, instProject.Name, instancePath, false)
 				if err != nil {
 					l.Error("Failed loading instance to handle monitor event", logger.Ctx{"err": err})
 					return
@@ -514,11 +514,11 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 				return
 			}
 
-			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
+			s.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
 
 		case qmp.EventAgentStopped:
 			d.logger.Debug("Instance agent stopped")
-			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
+			s.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
 
 		case qmp.EventVMReset:
 			monitor, err := d.qmpConnect()
@@ -10270,7 +10270,7 @@ func (d *qemu) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, erro
 	}
 
 	if d.agentMetricsEnabled() {
-		metrics, err := d.getAgentMetrics()
+		agentMetrics, err := d.getAgentMetrics()
 		if err != nil {
 			if !errors.Is(err, errQemuAgentOffline) {
 				d.logger.Warn("Could not get VM metrics from agent", logger.Ctx{"err": err})
@@ -10280,7 +10280,7 @@ func (d *qemu) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, erro
 			return d.getQemuMetrics()
 		}
 
-		return metrics, nil
+		return agentMetrics, nil
 	}
 
 	return d.getQemuMetrics()
@@ -10351,13 +10351,13 @@ func (d *qemu) getNetworkState() (map[string]api.InstanceStateNetwork, error) {
 			continue
 		}
 
-		network, err := nic.State()
+		nicState, err := nic.State()
 		if err != nil {
 			return nil, fmt.Errorf("Failed getting NIC state for %q: %w", k, err)
 		}
 
-		if network != nil {
-			networks[k] = *network
+		if nicState != nil {
+			networks[k] = *nicState
 		}
 	}
 
