@@ -8409,6 +8409,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	return nil
 }
 
+// MigrateReceive receives an instance being migrated from a source.
 func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	d.logger.Debug("Migration receive starting")
 	defer d.logger.Debug("Migration receive stopped")
@@ -8910,7 +8911,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	}
 }
 
-// CGroupSet is not implemented for VMs.
+// CGroup is not implemented for VMs.
 func (d *qemu) CGroup() (*cgroup.CGroup, error) {
 	return nil, instance.ErrNotImplemented
 }
@@ -10262,6 +10263,7 @@ func (d *qemu) version() (*version.DottedVersion, error) {
 	return qemuVer, nil
 }
 
+// Metrics returns the metrics set for the instance.
 func (d *qemu) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error) {
 	if !d.IsRunning() {
 		return nil, ErrInstanceIsStopped

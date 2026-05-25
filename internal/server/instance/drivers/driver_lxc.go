@@ -5815,6 +5815,7 @@ fi
 	return f.Close()
 }
 
+// MigrateSend sends an instance to a target for migration.
 func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Migration send starting")
 	defer d.logger.Debug("Migration send stopped")
@@ -6473,6 +6474,7 @@ func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.Set) error {
 	return nil
 }
 
+// MigrateReceive receives an instance being migrated from a source.
 func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	d.logger.Debug("Migration receive starting")
 	defer d.logger.Debug("Migration receive stopped")
@@ -8890,6 +8892,7 @@ func (d *lxc) LogFilePath() string {
 	return filepath.Join(d.LogPath(), "lxc.log")
 }
 
+// CGroup returns the cgroup handler for the instance.
 func (d *lxc) CGroup() (*cgroup.CGroup, error) {
 	// Load the go-lxc struct
 	cc, err := d.initLXC(false)
@@ -8964,6 +8967,7 @@ func (d *lxc) Info() instance.Info {
 	}
 }
 
+// Metrics returns the metrics set for the instance.
 func (d *lxc) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error) {
 	out := metrics.NewMetricSet(map[string]string{"project": d.project.Name, "name": d.name, "type": instancetype.Container.String()})
 
