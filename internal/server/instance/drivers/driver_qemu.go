@@ -5087,13 +5087,22 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			// Open the device once for each queue and pass to QEMU.
 			fds := make([]string, 0, queueCount)
 			vhostfds := make([]string, 0, queueCount)
+
+			// Collect the opened file handles so they can all be closed once the devices have been added.
+			openFiles := make([]*os.File, 0, queueCount)
+			defer func() {
+				for _, f := range openFiles {
+					_ = f.Close()
+				}
+			}()
+
 			for i := range queueCount {
 				devFile, err := deviceFile()
 				if err != nil {
 					return fmt.Errorf("Error opening netdev file for queue %d: %w", i, err)
 				}
 
-				defer func() { _ = devFile.Close() }() // Close file after device has been added.
+				openFiles = append(openFiles, devFile)
 
 				devFDName := fmt.Sprintf("%s.%d", devFile.Name(), i)
 				err = m.SendFile(devFDName, devFile)
@@ -5112,7 +5121,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 						return fmt.Errorf("Error opening /dev/vhost-net for queue %d: %w", i, err)
 					}
 
-					defer func() { _ = vhostFile.Close() }() // Close file after device has been added.
+					openFiles = append(openFiles, vhostFile)
 
 					vhostFDName := fmt.Sprintf("%s.%d", vhostFile.Name(), i)
 					err = m.SendFile(vhostFDName, vhostFile)

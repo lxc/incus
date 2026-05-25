@@ -1703,30 +1703,37 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 				return fmt.Errorf("Failed to add mount for device inside container: %s", err)
 			}
 		} else {
-			relativeTargetPath := strings.TrimPrefix(mount.TargetPath, "/")
+			err := func() error {
+				relativeTargetPath := strings.TrimPrefix(mount.TargetPath, "/")
 
-			// Connect to files API.
-			files, err := d.FileSFTP()
-			if err != nil {
-				return err
-			}
-
-			defer func() { _ = files.Close() }()
-
-			_, err = files.Lstat(relativeTargetPath)
-			if err == nil {
-				err := d.removeMount(mount.TargetPath)
+				// Connect to files API.
+				files, err := d.FileSFTP()
 				if err != nil {
-					return fmt.Errorf("Error unmounting the device path inside container: %s", err)
+					return err
 				}
 
-				// Only remove mountpoints created in /dev.
-				if strings.HasPrefix(mount.TargetPath, "dev/") {
-					err := files.Remove(relativeTargetPath)
+				defer func() { _ = files.Close() }()
+
+				_, err = files.Lstat(relativeTargetPath)
+				if err == nil {
+					err := d.removeMount(mount.TargetPath)
 					if err != nil {
-						return err
+						return fmt.Errorf("Error unmounting the device path inside container: %s", err)
+					}
+
+					// Only remove mountpoints created in /dev.
+					if strings.HasPrefix(mount.TargetPath, "dev/") {
+						err := files.Remove(relativeTargetPath)
+						if err != nil {
+							return err
+						}
 					}
 				}
+
+				return nil
+			}()
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -4996,25 +5003,32 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						return err
 					}
 				} else {
-					// Connect to files API.
-					files, err := d.FileSFTP()
+					err = func() error {
+						// Connect to files API.
+						files, err := d.FileSFTP()
+						if err != nil {
+							return err
+						}
+
+						defer func() { _ = files.Close() }()
+
+						_, err = files.Lstat("/dev/incus")
+						if err == nil {
+							err = d.removeMount("/dev/incus")
+							if err != nil {
+								return err
+							}
+
+							err = files.Remove("/dev/incus")
+							if err != nil {
+								return err
+							}
+						}
+
+						return nil
+					}()
 					if err != nil {
 						return err
-					}
-
-					defer func() { _ = files.Close() }()
-
-					_, err = files.Lstat("/dev/incus")
-					if err == nil {
-						err = d.removeMount("/dev/incus")
-						if err != nil {
-							return err
-						}
-
-						err = files.Remove("/dev/incus")
-						if err != nil {
-							return err
-						}
 					}
 				}
 			} else if key == "linux.kernel_modules" && value != "" {
