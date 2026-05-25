@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-24 15:02-0400\n"
 "PO-Revision-Date: 2026-05-25 19:13+0000\n"
-"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -731,9 +731,8 @@ msgid "--network-port can't be used without --network-address"
 msgstr "--network-port kan inte användas utan --network-address"
 
 #: cmd/incus/utils_copy.go:65
-#, fuzzy
 msgid "--no-dereference/-P cannot be used together with stdout as a target"
-msgstr "--no-profiles kan inte användas tillsammans med andra argument"
+msgstr "--no-dereference/-P kan inte användas med stdout som mål"
 
 #: cmd/incus/utils_copy.go:40
 msgid ""
@@ -849,9 +848,8 @@ msgid "Acknowledge warning"
 msgstr "Bekräfta varning"
 
 #: cmd/incus/query.go:48
-#, fuzzy
 msgid "Action"
-msgstr "villkor"
+msgstr "Åtgärden"
 
 #: cmd/incus/query.go:81
 #, c-format
@@ -1993,9 +1991,8 @@ msgid "Create storage pools"
 msgstr "Skapa lagringspooler"
 
 #: cmd/incus/storage_volume.go:191
-#, fuzzy
 msgid "Create the custom storage volume if it doesn't already exist"
-msgstr "Skapa nya anpassade lagringsvolymer"
+msgstr "Skapa den anpassade lagringsvolymer om den inte redan finns"
 
 #: cmd/incus/copy.go:68 cmd/incus/create.go:71
 msgid "Create the instance with no profiles applied"
@@ -2322,9 +2319,9 @@ msgid "Didn't get name of new instance from the server"
 msgstr "Fick inte namnet på den nya instansen från servern"
 
 #: cmd/incus/snapshot.go:200
-#, fuzzy
 msgid "Didn't get name of new instance snapshot from the server"
-msgstr "Fick inte namnet på den nya instansen från servern"
+msgstr ""
+"Kunde inte hämta namnet på den nya instansens ögonblicksbild från servern"
 
 #: cmd/incus/storage_volume.go:3221
 msgid "Didn't get name of new volume snapshot from the server"
@@ -2786,7 +2783,6 @@ msgid "Execute a SQL query against the local or global database"
 msgstr "Utför en SQL-fråga mot den lokala eller globala databasen"
 
 #: cmd/incus/admin_sql.go:30
-#, fuzzy
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -2827,8 +2823,7 @@ msgstr ""
 "innehåller\n"
 "  klusterspecifika data (t.ex. profiler, behållare etc.).\n"
 "\n"
-"  Om du kör en icke-klustrad server gäller samma sak, eftersom den\n"
-"  instansen i praktiken är ett kluster med en enda medlem.\n"
+"Icke-klustrade servrar har fortfarande både lokala och globala databaser.\n"
 "\n"
 "  Om <query> är det speciella värdet \"-\", läses frågan från\n"
 "  standardinmatningen.\n"
@@ -2904,6 +2899,8 @@ msgid ""
 "Expiry for the new snapshot (either a time span like `1d 3H` or a date in "
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
+"Utgångsdatum för den nya ögonblicksbilden (antingen ett tidsintervall som "
+"`1d 3H` eller ett datum i formatet `2006/01/02 15:04 MST`)"
 
 #: cmd/incus/debug.go:45
 msgid "Export a virtual machine's memory state"
@@ -3011,7 +3008,7 @@ msgid "Failed accepting channel client %q: %v"
 msgstr "Misslyckades med att acceptera kanalklient %q: %v"
 
 #: cmd/incus/delete.go:92
-#, fuzzy, c-format
+#, c-format
 msgid "Failed checking instance %s exists: %w"
 msgstr "Misslyckades med att kontrollera att instansen %s finns: %w"
 
@@ -4363,7 +4360,6 @@ msgid "List DHCP leases"
 msgstr "Lista DHCP-leasingavtal"
 
 #: cmd/incus/network.go:1220
-#, fuzzy
 msgid ""
 "List DHCP leases\n"
 "\n"
@@ -4392,7 +4388,7 @@ msgstr ""
 "\n"
 "== Kolumner ==\n"
 "Flaggan -c tar en kommaseparerad lista med argument som styr vilka\n"
-"nätverkszonattribut som ska visas när de visas i tabell- eller csv-format.\n"
+"DHCP-lån attribut som ska visas när de visas i tabell- eller csv-format.\n"
 "Kolumnargument\n"
 "\n"
 "är antingen fördefinierade förkortningstecken (se nedan) eller (utökade)\n"
@@ -4400,12 +4396,12 @@ msgstr ""
 "\n"
 "mellan på varandra följande förkortningstecken är valfria.\n"
 "\n"
-"Fördefinierade korta tecken för\n"
-"kolumner: h -\n"
-"Värdnamn m -\n"
-"MAC-adress i -\n"
-"IP-adress t\n"
-"- Typ L - Plats för DHCP-lån (t.ex. dess klustermedlem)"
+"Fördefinierade korta tecken för kolumner:\n"
+"  h -Värdnamn\n"
+"  m - MAC-adress\n"
+"  i - IP-adress \n"
+"  t - Typ\n"
+"   L - Plats för DHCP-lån (t.ex. dess klustermedlem)"
 
 #: cmd/incus/network_address_set.go:101
 msgid "List address sets across all projects"
@@ -4420,7 +4416,6 @@ msgid "List all active certificate add tokens"
 msgstr "Lista alla aktiva certifikat-tilläggstoken"
 
 #: cmd/incus/config_trust.go:564
-#, fuzzy
 msgid ""
 "List all active certificate add tokens\n"
 "\n"
@@ -4447,25 +4442,25 @@ msgstr ""
 "\n"
 "Kolumner ==\n"
 "Flaggan -c tar en kommaseparerad lista med argument som styr vilka\n"
-"nätverkszonattribut som ska visas när de visas i tabell- eller csv-format.\n"
+"aktiva certifikat-token attribut som ska visas när de visas i tabell- eller "
+"csv-format.\n"
 "Kolumnargument\n"
 "\n"
 "är antingen fördefinierade förkortningstecken (se nedan) eller (utökade)\n"
 "konfigurationsnycklar.\n"
 "\n"
-"Kommatecken mellan på varandra följande förkortningstecken\n"
+"Kommatecken mellan på varandra följande förkortningstecken är valfria. \n"
 "\n"
-"är valfria. Fördefinierade\n"
-"kolumnförkortningstecken:\n"
-"n - Namn t -\n"
-"Token E - Går ut"
+"Fördefinierade kolumnförkortningstecken:\n"
+"  n - Namn\n"
+"  t - Token\n"
+"  E - Går ut"
 
 #: cmd/incus/cluster.go:1102
 msgid "List all active cluster member join tokens"
 msgstr "Lista alla aktiva klustermedlemmars anslutningstoken"
 
 #: cmd/incus/cluster.go:1103
-#, fuzzy
 msgid ""
 "List all active cluster member join tokens\n"
 "\n"
@@ -4492,7 +4487,8 @@ msgstr ""
 "\n"
 "Kolumner ==\n"
 "Flaggan -c tar en kommaseparerad lista med argument som styr vilka\n"
-"nätverkszonattribut som ska visas när de visas i tabell- eller csv-format.\n"
+"anslutningstoken attribut som ska visas när de visas i tabell- eller csv-"
+"format.\n"
 "Kolumnargument\n"
 "\n"
 "är antingen fördefinierade förkortningstecken (se nedan) eller (utökade)\n"
@@ -4510,7 +4506,6 @@ msgid "List all the cluster groups"
 msgstr "Lista alla klustergrupper"
 
 #: cmd/incus/cluster_group.go:419
-#, fuzzy
 msgid ""
 "List all the cluster groups\n"
 "\n"
@@ -4537,7 +4532,8 @@ msgstr ""
 "\n"
 "Kolumner ==\n"
 "Flaggan -c tar en kommaseparerad lista med argument som styr vilka\n"
-"instansattribut som ska visas när de visas i tabell- eller csv-format.\n"
+"klustergrupper attribut som ska visas när de visas i tabell- eller csv-"
+"format.\n"
 "Kolumnargument\n"
 "\n"
 "är antingen fördefinierade förkortningstecken (se nedan) eller (utökade)\n"
@@ -4546,9 +4542,9 @@ msgstr ""
 "Kommatecken mellan på varandra följande förkortningstecken är\n"
 "\n"
 "valfria. Fördefinierade kolumnförkortningstecken:\n"
-"n - Namn d\n"
-"- Beskrivning m -\n"
-"Medlem"
+"  n - Namn\n"
+"  d - Beskrivning\n"
+"  m - Medlem"
 
 #: cmd/incus/cluster.go:150
 msgid "List all the cluster members"
@@ -4764,7 +4760,6 @@ msgid "List available network zones"
 msgstr "Lista tillgängliga nätverkszoner"
 
 #: cmd/incus/network_zone.go:98
-#, fuzzy
 msgid ""
 "List available network zones\n"
 "\n"
@@ -4786,12 +4781,12 @@ msgid ""
 "  n - Name\n"
 "  u - Used by"
 msgstr ""
-"Lista över tillgängliga\n"
+"Lista över tillgängliga nätverkszoner\n"
 "\n"
-"nätverkszoner Standardkolumnlayout:\n"
+"Standardkolumnlayout: nDSdus \n"
 "\n"
-"nDSdus == Kolumner\n"
-"== Flaggan -c tar en kommaseparerad lista med argument som styr vilka\n"
+"== Kolumner==\n"
+" Flaggan -c tar en kommaseparerad lista med argument som styr vilka\n"
 "nätverkszonattribut som ska visas när de visas i tabell- eller csv-format.\n"
 "Kolumnargument\n"
 "\n"
@@ -4801,17 +4796,16 @@ msgstr ""
 "mellan på varandra följande förkortningstecken är valfria.\n"
 "\n"
 "Fördefinierade kolumnförkortningstecken:\n"
-"d - Beskrivning e -\n"
-"Projektnamn n - Namn\n"
-"u - Används\n"
-"av"
+"  d - Beskrivning\n"
+"  e - Projektnamn\n"
+"  n - Namn\n"
+"  u - Används av"
 
 #: cmd/incus/network.go:1016
 msgid "List available networks"
 msgstr "Lista tillgängliga nätverk"
 
 #: cmd/incus/network.go:1017
-#, fuzzy
 msgid ""
 "List available networks\n"
 "\n"
@@ -4920,7 +4914,6 @@ msgid "List background operations"
 msgstr "Lista bakgrundsoperationer"
 
 #: cmd/incus/operation.go:124
-#, fuzzy
 msgid ""
 "List background operations\n"
 "\n"
@@ -4951,7 +4944,8 @@ msgstr ""
 "\n"
 "== Kolumner ==\n"
 "Flaggan -c tar en kommaseparerad lista med argument som styr vilka\n"
-"instansattribut som ska visas när de visas i tabell- eller csv-format.\n"
+"bakgrundsoperationer attribut som ska visas när de visas i tabell- eller csv-"
+"format.\n"
 "Kolumnargument\n"
 "\n"
 "är antingen fördefinierade förkortningstecken (se nedan) eller (utökade)\n"
@@ -5021,7 +5015,6 @@ msgid "List images"
 msgstr "Lista avbilder"
 
 #: cmd/incus/image.go:1043
-#, fuzzy
 msgid ""
 "List images\n"
 "\n"
@@ -5059,7 +5052,6 @@ msgstr ""
 "Standardkolumnlayout är: lfpdasu\n"
 "\n"
 "Kolumnförkortningar:\n"
-"\n"
 "    l - Kortaste bildalias (och valfritt antal andra alias)\n"
 "    L - Nyradesseparerad lista över alla bildalias\n"
 "    f - Fingeravtryck (kort)\n"
@@ -5224,14 +5216,15 @@ msgstr ""
 "nyckel/värdepar som hänvisar till ett konfigurationselement. För dessa\n"
 "kan namnområdet förkortas till den minsta entydiga identifieraren. Ett\n"
 "nyckel/värdepar där nyckeln är en förkortning. Flera värden måste avgränsas "
-"med ','. Tillgängliga förkortningar: -\n"
-"type={instanstyp} -\n"
-"status={instansens aktuella livscykelstatus} -\n"
-"architecture={instansarkitektur} -\n"
-"location={platsnamn} - ipv4={ip\n"
-"eller CIDR} - ipv6={ip\n"
-"eller CIDR} Exempel: -\n"
+"med ','. Tillgängliga förkortningar:\n"
+"  - type={instanstyp} -\n"
+"  - status={instansens aktuella livscykelstatus} -\n"
+"  - architecture={instansarkitektur} -\n"
+"  - location={platsnamn} \n"
+"  - ipv4={ip eller CIDR}\n"
+"  - ipv6={ip eller CIDR} \n"
 "\n"
+"Exempel: -\n"
 "\"user.blah=abc\"\n"
 "listar alla instanser med användaregenskapen \"blah\" inställd på \"abc\". - "
 "\"u.blah=abc\" gör\n"
@@ -5257,31 +5250,31 @@ msgstr ""
 "(utökade) konfigurationsnycklar. Kommatecken mellan på varandra följande\n"
 "förkortningstecken är valfria.\n"
 "\n"
-"Fördefinierade kolumnförkortningstecken: 4 - IPv4-adress 6\n"
-"\n"
-"- IPv6-adress a - Arkitektur b -\n"
-"Lagringspool c -\n"
-"Skapandedatum d -\n"
-"Beskrivning D -\n"
-"diskanvändning e -\n"
-"Projektnamn l - Senast\n"
-"använda datum m -\n"
-"Minnesanvändning\n"
-"M – Minnesanvändning\n"
-"(%) n – Namn N – Antal\n"
-"processer p – PID\n"
-"för instansens init-process\n"
-"P – Profiler\n"
-"s – Status S – Antal\n"
-"ögonblicksbilder t – Typ (permanent eller\n"
-"tillfällig) u –\n"
-"CPU-användning\n"
-"(i sekunder) U - Startdatum\n"
-"L - Instansens plats (t.ex. dess\n"
-"klustermedlem) f - Fingeravtryck\n"
-"för basavbildning\n"
-"(kort) F - Fingeravtryck för basavbildning (långt) Anpassade\n"
-"kolumner definieras med\n"
+"Fördefinierade kolumnförkortningstecken:\n"
+"  4 - IPv4-adress \n"
+"  6 - IPv6-adress\n"
+"  a - Arkitektur\n"
+"  b - Lagringspool\n"
+"  c - Skapandedatum\n"
+"  d - Beskrivning\n"
+"  D - diskanvändning\n"
+"  e - Projektnamn\n"
+"  l - Senast använda datum \n"
+"  m - Minnesanvändning\n"
+"  M – Minnesanvändning(%)\n"
+"  n – Namn \n"
+"  N – Antal processer \n"
+"  p – PID för instansens init-process\n"
+"  P – Profiler\n"
+"  s – Status \n"
+"  S – Antal ögonblicksbilder \n"
+"  t – Typ (permanent eller tillfällig) \n"
+"  u –CPU-användning (i sekunder)\n"
+"  U - Startdatum\n"
+"  L - Instansens plats (t.ex. dess klustermedlem) \n"
+"  f - Fingeravtryck för basavbildning (kort) \n"
+"  F - Fingeravtryck för basavbildning (långt) \n"
+"Anpassade kolumner definieras med "
 "\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "\n"
 "KEY: Den (utökade) konfigurations- eller enhetsnyckeln som ska visas. Om\n"
@@ -5457,7 +5450,6 @@ msgid "List projects"
 msgstr "Lista projekt"
 
 #: cmd/incus/project.go:498
-#, fuzzy
 msgid ""
 "List projects\n"
 "\n"
@@ -5480,7 +5472,7 @@ msgstr ""
 "Lista projekt\n"
 "\n"
 "Flaggan -c tar en lista (valfritt kommaseparerad) med argument som styr\n"
-"vilka avbildningsattribut som ska visas när de visas i tabell- eller\n"
+"vilka projekt attribut som ska visas när de visas i tabell- eller\n"
 "csv-format.\n"
 "Standardkolumnlayout är: nipvbwzdu\n"
 "Kolumnförkortningar:\n"
@@ -5591,7 +5583,6 @@ msgid "List storage volume snapshots"
 msgstr "Lista över lagringsvolymsnapshots"
 
 #: cmd/incus/storage_volume.go:3335
-#, fuzzy
 msgid ""
 "List storage volume snapshots\n"
 "\n"
@@ -5607,7 +5598,8 @@ msgstr ""
 "Lista över ögonblicksbilder för lagringsvolymer\n"
 "\n"
 "\tFlaggan -c tar en lista (valfritt kommaseparerad) med argument som\n"
-"\tstyr vilka avbildningsattribut som ska visas när de visas i tabell- eller\n"
+"\tstyr vilka ögonblicksbilder attribut som ska visas när de visas i tabell- "
+"eller\n"
 "\tcsv-format.\n"
 "\n"
 "\tFörkortningar för kolumner:\n"
@@ -5652,8 +5644,7 @@ msgstr ""
 "Lista lagringsvolymer\n"
 "\n"
 "Ett enda nyckelord som \"vol\" som listar alla lagringsvolymer med ett namn "
-"som börjar\n"
-"med \"vol\".\n"
+"som börjar med \"vol\".\n"
 "Ett reguljärt uttryck på lagringsvolymens namn. (t.ex. .*vol.*01$).\n"
 "Ett nyckel/värdepar där nyckeln är ett lagringsvolymsfältnamn. Flera värden "
 "måste avgränsas med ','.\n"
@@ -5738,7 +5729,6 @@ msgid "List trusted clients"
 msgstr "Lista betrodda kunder"
 
 #: cmd/incus/config_trust.go:378
-#, fuzzy
 msgid ""
 "List trusted clients\n"
 "\n"
@@ -5769,24 +5759,22 @@ msgstr ""
 "\n"
 "Standardkolumnlayout är: ntdfe\n"
 "\n"
-"Kolumnförkortningar: n -\n"
-"\n"
-"Namn t -\n"
-"Typ c -\n"
-"Gemensamt namn f\n"
-"- Fingeravtryck d\n"
-"- Beskrivning i -\n"
-"Utfärdandedatum\n"
-"e - Utgångsdatum\n"
-"r - Om certifikatet är begränsat p -\n"
-"Nyradseparerad lista över projekt"
+"Kolumnförkortningar:\n"
+"\tn - Namn\n"
+"\tt - Typ\n"
+"\tc - Gemensamt namn\n"
+"\tf - Fingeravtryck\n"
+"\td - Beskrivning\n"
+"\ti - Utfärdandedatum\n"
+"\te - Utgångsdatum\n"
+"\tr - Om certifikatet är begränsat\n"
+"\tp - Nyradseparerad lista över projekt"
 
 #: cmd/incus/warning.go:76
 msgid "List warnings"
 msgstr "Lista varningar"
 
 #: cmd/incus/warning.go:77
-#, fuzzy
 msgid ""
 "List warnings\n"
 "\n"
@@ -5815,17 +5803,16 @@ msgstr ""
 "\n"
 "Standardkolumnlayout är: utSscpLl\n"
 "\n"
-"Kolumnförkortningar: c\n"
-"\n"
-"- Antal l -\n"
-"Senast sett L -\n"
-"Plats f - Första\n"
-"gången sett p -\n"
-"Projekt s -\n"
-"Allvarlighetsgrad\n"
-"S - Status u -\n"
-"UUID t - Ty\n"
-"p"
+"Kolumnförkortningar:\n"
+"    c - Antal\n"
+"    l - Senast sett\n"
+"    L - Plats\n"
+"    f - Första gången sett\n"
+"    p - Projekt\n"
+"    s - Allvarlighetsgrad\n"
+"    S - Status\n"
+"    u - UUID\n"
+"    t - Typ"
 
 #: cmd/incus/operation.go:32 cmd/incus/operation.go:33
 msgid "List, show and delete background operations"
@@ -7556,10 +7543,10 @@ msgid ""
 "If --stateful is passed, then the running state will be restored too.\n"
 "If --diskonly is passed, then only the disk will be restored."
 msgstr ""
-"Återställ instans från\n"
+"Återställ instans från ögonblicksbilder\n"
 "\n"
-"ögonblicksbilder Om --stateful anges kommer\n"
-"även körningsstatusen att återställas."
+"Om --stateful anges kommer även körningsstatusen att återställas.\n"
+"Om --diskonly skickas, återställs endast disken."
 
 #: cmd/incus/snapshot.go:524
 msgid "Restore instance snapshots"
@@ -8530,7 +8517,7 @@ msgstr "Tillstånd: %s"
 
 #: cmd/incus/info.go:842
 msgid "Stateful"
-msgstr "Stateful"
+msgstr "Tillståndsfull"
 
 #: cmd/incus/info.go:646
 #, c-format
@@ -9658,7 +9645,7 @@ msgid "Volume description"
 msgstr "Volymbeskrivning"
 
 #: cmd/incus/storage_volume.go:3230
-#, fuzzy, c-format
+#, c-format
 msgid "Volume snapshot name is: %s"
 msgstr "Volymens ögonblicksbildsnamn är: %s"
 
@@ -9719,7 +9706,7 @@ msgstr "Vänta tills operationen är klar"
 
 #: cmd/incus/color/color.go:35
 msgid "Warning:"
-msgstr "varning"
+msgstr "Varning:"
 
 #: cmd/incus/admin_init_interactive.go:541
 msgid ""
@@ -9775,10 +9762,8 @@ msgid "Where should this storage pool store its data?"
 msgstr "Var ska denna lagringspool lagra sina data?"
 
 #: cmd/incus/export.go:50
-#, fuzzy
 msgid "Whether or not to only backup the instance (without dependent volumes)"
-msgstr ""
-"Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
+msgstr "Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
 
 #: cmd/incus/export.go:49
 msgid "Whether or not to only backup the instance (without snapshots)"
@@ -9925,7 +9910,6 @@ msgid "backup file"
 msgstr "backup-fil"
 
 #: cmd/incus/usage/usage.go:814
-#, fuzzy
 msgid "bucket"
 msgstr "förvaringshink"
 
@@ -9948,7 +9932,6 @@ msgid "cert.key"
 msgstr "cert.key"
 
 #: cmd/incus/usage/usage.go:815
-#, fuzzy
 msgid "client"
 msgstr "klient"
 
@@ -10011,24 +9994,20 @@ msgid "expected %s"
 msgstr "förväntade %s"
 
 #: cmd/incus/usage/usage.go:822
-#, fuzzy
 msgid "expiry"
-msgstr "upphörande"
+msgstr "Utgångsdatum"
 
 #: cmd/incus/usage/usage.go:823
-#, fuzzy
 msgid "file"
 msgstr "fil"
 
 #: cmd/incus/usage/usage.go:824
-#, fuzzy
 msgid "filter"
 msgstr "filtrera"
 
 #: cmd/incus/usage/usage.go:825
-#, fuzzy
 msgid "fingerprint"
-msgstr "avtryck"
+msgstr "fingeravtryck"
 
 #: cmd/incus/usage/usage.go:826
 msgid "group"
@@ -10421,7 +10400,6 @@ msgstr ""
 "Visa endast livscykelhändelser."
 
 #: cmd/incus/move.go:51
-#, fuzzy
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -10437,7 +10415,7 @@ msgstr ""
 "destinationsnamnet skiljer sig åt.\n"
 "\n"
 "incus move <instansen gamla namn> <instansen  nytt namn>[--instance-only]\n"
-"    Byt namn på en ögonblicksbild."
+"    Byt namn på en instans."
 
 #: cmd/incus/network_acl.go:358
 msgid ""
@@ -11063,7 +11041,6 @@ msgid "listen address"
 msgstr "lyssningsadress"
 
 #: cmd/incus/usage/usage.go:831
-#, fuzzy
 msgid "listen port"
 msgstr "lyssna port"
 
@@ -11140,7 +11117,6 @@ msgid "pool"
 msgstr "lagringspool"
 
 #: cmd/incus/usage/usage.go:841
-#, fuzzy
 msgid "port"
 msgstr "port"
 
@@ -11149,7 +11125,6 @@ msgid "preseed.yaml"
 msgstr "preseed.yaml"
 
 #: cmd/incus/usage/usage.go:842
-#, fuzzy
 msgid "profile"
 msgstr "profil"
 
@@ -11166,14 +11141,12 @@ msgid "query"
 msgstr "fråga"
 
 #: cmd/incus/usage/usage.go:846
-#, fuzzy
 msgid "record"
 msgstr "rekord"
 
 #: cmd/incus/usage/usage.go:847
-#, fuzzy
 msgid "remote"
-msgstr "<fjärr>"
+msgstr "fjärr"
 
 #: cmd/incus/usage/usage.go:851
 msgid "role"
@@ -11218,7 +11191,6 @@ msgid "target %s"
 msgstr "mål %s"
 
 #: cmd/incus/usage/usage.go:856
-#, fuzzy
 msgid "template"
 msgstr "mall"
 
@@ -11254,9 +11226,8 @@ msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "oväntat slut på argumentet; glömde du ett suffix?"
 
 #: cmd/incus/remote_unix.go:35
-#, fuzzy
 msgid "unix socket file"
-msgstr "socket-fil"
+msgstr "unix socket-fil"
 
 #: cmd/incus/version.go:39
 msgid "unreachable"
@@ -11271,9 +11242,8 @@ msgid "value"
 msgstr "värde"
 
 #: cmd/incus/usage/usage.go:861
-#, fuzzy
 msgid "volume"
-msgstr "Kolumner"
+msgstr "volymen"
 
 #: cmd/incus/usage/usage.go:862
 msgid "warning UUID"
@@ -11290,7 +11260,6 @@ msgid "yes"
 msgstr "ja"
 
 #: cmd/incus/usage/usage.go:863
-#, fuzzy
 msgid "zone"
 msgstr "zon"
 
