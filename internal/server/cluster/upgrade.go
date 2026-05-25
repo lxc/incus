@@ -208,8 +208,8 @@ func UpgradeMembersWithoutRole(gateway *Gateway, members []db.NodeInfo) error {
 		logger.Info("Add spare dqlite node", logger.Ctx{"id": info.ID, "address": info.Address})
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
 		err = dqliteClient.Add(ctx, info.NodeInfo)
+		cancel()
 		if err != nil {
 			return fmt.Errorf("Failed to add dqlite member: %w", err)
 		}
