@@ -481,32 +481,39 @@ func (r *fileResponse) Render(w http.ResponseWriter) error {
 	w.Header().Set("Transfer-Encoding", "chunked")
 
 	for _, entry := range r.files {
-		var rd io.Reader
-		if entry.File != nil {
-			rd = entry.File
-		} else {
-			fd, err := os.Open(entry.Path)
+		err := func() error {
+			var rd io.Reader
+			if entry.File != nil {
+				rd = entry.File
+			} else {
+				fd, err := os.Open(entry.Path)
+				if err != nil {
+					return err
+				}
+
+				defer func() { _ = fd.Close() }()
+
+				rd = fd
+			}
+
+			fw, err := mw.CreateFormFile(entry.Identifier, entry.Filename)
 			if err != nil {
 				return err
 			}
 
-			defer func() { _ = fd.Close() }()
+			_, err = util.SafeCopy(fw, rd)
+			if err != nil {
+				return err
+			}
 
-			rd = fd
-		}
+			if entry.Cleanup != nil {
+				entry.Cleanup()
+			}
 
-		fw, err := mw.CreateFormFile(entry.Identifier, entry.Filename)
+			return nil
+		}()
 		if err != nil {
 			return err
-		}
-
-		_, err = util.SafeCopy(fw, rd)
-		if err != nil {
-			return err
-		}
-
-		if entry.Cleanup != nil {
-			entry.Cleanup()
 		}
 	}
 
