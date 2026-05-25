@@ -882,12 +882,12 @@ func loopFileSizeDefault() (uint64, error) {
 func loopDeviceSetup(sourcePath string) (string, error) {
 	out, err := subprocess.RunCommand("losetup", "--find", "--nooverlap", "--direct-io=on", "--show", sourcePath)
 	if err != nil {
-		if strings.Contains(err.Error(), "direct io") || strings.Contains(err.Error(), "Invalid argument") {
-			out, err = subprocess.RunCommand("losetup", "--find", "--nooverlap", "--show", sourcePath)
-			if err != nil {
-				return "", err
-			}
-		} else {
+		if !strings.Contains(err.Error(), "direct io") && !strings.Contains(err.Error(), "Invalid argument") {
+			return "", err
+		}
+
+		out, err = subprocess.RunCommand("losetup", "--find", "--nooverlap", "--show", sourcePath)
+		if err != nil {
 			return "", err
 		}
 	}

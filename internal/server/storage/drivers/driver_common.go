@@ -188,11 +188,11 @@ key:
 			}
 		}
 
-		if removeUnknownKeys {
-			delete(vol.config, k)
-		} else {
+		if !removeUnknownKeys {
 			return fmt.Errorf("Invalid option for volume %q option %q", vol.name, k)
 		}
+
+		delete(vol.config, k)
 	}
 
 	// If volume type is not custom or bucket, don't allow "size" property.
