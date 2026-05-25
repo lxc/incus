@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 )
 
+// AddRecord adds a new DNS record to the network zone.
 func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
 	// Validate.
 	err := d.validateName(req.Name)
@@ -62,6 +63,7 @@ func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
 	return nil
 }
 
+// GetRecords returns all DNS records configured on the network zone.
 func (d *zone) GetRecords() ([]api.NetworkZoneRecord, error) {
 	s := d.state
 
@@ -97,6 +99,7 @@ func (d *zone) GetRecords() ([]api.NetworkZoneRecord, error) {
 	return records, nil
 }
 
+// GetRecord returns the DNS record with the given name from the network zone.
 func (d *zone) GetRecord(name string) (*api.NetworkZoneRecord, error) {
 	var record *api.NetworkZoneRecord
 
@@ -132,6 +135,7 @@ func (d *zone) GetRecord(name string) (*api.NetworkZoneRecord, error) {
 	return record, nil
 }
 
+// UpdateRecord updates the configuration of the named DNS record in the network zone.
 func (d *zone) UpdateRecord(name string, req api.NetworkZoneRecordPut, clientType request.ClientType) error {
 	s := d.state
 
@@ -189,6 +193,7 @@ func (d *zone) UpdateRecord(name string, req api.NetworkZoneRecordPut, clientTyp
 	return nil
 }
 
+// DeleteRecord removes the named DNS record from the network zone.
 func (d *zone) DeleteRecord(name string) error {
 	s := d.state
 
