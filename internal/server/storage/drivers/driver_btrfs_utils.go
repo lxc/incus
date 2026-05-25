@@ -614,7 +614,7 @@ func (d *btrfs) receiveSubVolume(r io.Reader, receivePath string, tracker *iopro
 	}
 
 	// Setup progress tracker.
-	var stdin io.Reader = r
+	stdin := r
 	if tracker != nil {
 		stdin = &ioprogress.ProgressReader{
 			Reader:  r,
