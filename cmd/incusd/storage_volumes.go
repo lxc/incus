@@ -1727,7 +1727,7 @@ func storageVolumePostClusteringMigrate(s *state.State, r *http.Request, srcPool
 }
 
 // storagePoolVolumeTypePostMigration handles volume migration type POST requests.
-func storagePoolVolumeTypePostMigration(state *state.State, r *http.Request, requestProjectName string, projectName string, poolName string, volumeName string, req api.StorageVolumePost) response.Response {
+func storagePoolVolumeTypePostMigration(s *state.State, r *http.Request, requestProjectName string, projectName string, poolName string, volumeName string, req api.StorageVolumePost) response.Response {
 	ws, err := newStorageMigrationSource(req.VolumeOnly, req.Target)
 	if err != nil {
 		return response.InternalError(err)
@@ -1742,12 +1742,12 @@ func storagePoolVolumeTypePostMigration(state *state.State, r *http.Request, req
 	}
 
 	run := func(op *operations.Operation) error {
-		return ws.DoStorage(state, projectName, poolName, volumeName, op)
+		return ws.DoStorage(s, projectName, poolName, volumeName, op)
 	}
 
 	if req.Target != nil {
 		// Push mode.
-		op, err := operations.OperationCreate(state, requestProjectName, operations.OperationClassTask, operationtype.VolumeMigrate, resources, nil, run, nil, nil, r)
+		op, err := operations.OperationCreate(s, requestProjectName, operations.OperationClassTask, operationtype.VolumeMigrate, resources, nil, run, nil, nil, r)
 		if err != nil {
 			return response.InternalError(err)
 		}
@@ -1756,7 +1756,7 @@ func storagePoolVolumeTypePostMigration(state *state.State, r *http.Request, req
 	}
 
 	// Pull mode.
-	op, err := operations.OperationCreate(state, requestProjectName, operations.OperationClassWebsocket, operationtype.VolumeMigrate, resources, ws.Metadata(), run, ws.Cancel, ws.Connect, r)
+	op, err := operations.OperationCreate(s, requestProjectName, operations.OperationClassWebsocket, operationtype.VolumeMigrate, resources, ws.Metadata(), run, ws.Cancel, ws.Connect, r)
 	if err != nil {
 		return response.InternalError(err)
 	}

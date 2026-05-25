@@ -20,13 +20,13 @@ import (
 
 // This task function expires logs when executed. It's started by the Daemon
 // and will run once every 24h.
-func expireLogsTask(state *state.State) (task.Func, task.Schedule) {
+func expireLogsTask(s *state.State) (task.Func, task.Schedule) {
 	f := func(ctx context.Context) {
 		opRun := func(op *operations.Operation) error {
-			return expireLogs(ctx, state)
+			return expireLogs(ctx, s)
 		}
 
-		op, err := operations.OperationCreate(state, "", operations.OperationClassTask, operationtype.LogsExpire, nil, nil, opRun, nil, nil, nil)
+		op, err := operations.OperationCreate(s, "", operations.OperationClassTask, operationtype.LogsExpire, nil, nil, opRun, nil, nil, nil)
 		if err != nil {
 			logger.Error("Failed creating log files expiry operation", logger.Ctx{"err": err})
 			return
@@ -51,15 +51,15 @@ func expireLogsTask(state *state.State) (task.Func, task.Schedule) {
 	return f, task.Daily()
 }
 
-func expireLogs(ctx context.Context, state *state.State) error {
+func expireLogs(ctx context.Context, s *state.State) error {
 	// List the instances.
-	instances, err := instance.LoadNodeAll(state, instancetype.Any)
+	instances, err := instance.LoadNodeAll(s, instancetype.Any)
 	if err != nil {
 		return err
 	}
 
 	// List the directory.
-	entries, err := os.ReadDir(state.OS.LogDir)
+	entries, err := os.ReadDir(s.OS.LogDir)
 	if err != nil {
 		return err
 	}

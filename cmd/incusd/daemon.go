@@ -186,7 +186,7 @@ type DaemonConfig struct {
 }
 
 // newDaemon returns a new Daemon object with the given configuration.
-func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
+func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
 	incusEvents := events.NewServer(daemon.Debug, daemon.Verbose, cluster.EventHubPush)
 	devIncusEvents := events.NewDevIncusServer(daemon.Debug, daemon.Verbose)
 	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
@@ -197,7 +197,7 @@ func newDaemon(config *DaemonConfig, os *sys.OS) *Daemon {
 		devIncusEvents: devIncusEvents,
 		events:         incusEvents,
 		db:             &db.DB{},
-		os:             os,
+		os:             osInfo,
 		setupChan:      make(chan struct{}),
 		waitReady:      cancel.New(context.Background()),
 		shutdownCtx:    shutdownCtx,
@@ -222,8 +222,8 @@ func defaultDaemonConfig() *DaemonConfig {
 // defaultDaemon returns a new, un-initialized Daemon object with default values.
 func defaultDaemon() *Daemon {
 	config := defaultDaemonConfig()
-	os := sys.DefaultOS()
-	return newDaemon(config, os)
+	osInfo := sys.DefaultOS()
+	return newDaemon(config, osInfo)
 }
 
 // APIEndpoint represents a URL in our API.
@@ -583,8 +583,8 @@ func (d *Daemon) State() *state.State {
 	// Build a list of instance types.
 	drivers := instanceDrivers.DriverStatuses()
 	instanceTypes := make(map[instancetype.Type]error, len(drivers))
-	for driverType, driver := range drivers {
-		instanceTypes[driverType] = driver.Info.Error
+	for driverType, drv := range drivers {
+		instanceTypes[driverType] = drv.Info.Error
 	}
 
 	d.globalConfigMu.Lock()
@@ -620,12 +620,12 @@ func (d *Daemon) State() *state.State {
 	}
 }
 
-func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
+func (d *Daemon) createCmd(restAPI *mux.Router, apiVersion string, c APIEndpoint) {
 	var uri string
 	if c.Path == "" {
-		uri = fmt.Sprintf("/%s", version)
-	} else if version != "" {
-		uri = fmt.Sprintf("/%s/%s", version, c.Path)
+		uri = fmt.Sprintf("/%s", apiVersion)
+	} else if apiVersion != "" {
+		uri = fmt.Sprintf("/%s/%s", apiVersion, c.Path)
 	} else {
 		uri = fmt.Sprintf("/%s", c.Path)
 	}
@@ -634,7 +634,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		w.Header().Set("Content-Type", "application/json")
 
 		// Block on daemon startup except for the "internal" and "os" APIs.
-		if !slices.Contains([]string{"internal", "os"}, version) {
+		if !slices.Contains([]string{"internal", "os"}, apiVersion) {
 			select {
 			case <-d.setupChan:
 			default:
@@ -660,7 +660,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		}
 
 		// Restrict internal queries to remote, non-cluster, clients
-		if version == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
+		if apiVersion == "internal" && !slices.Contains([]string{"unix", "cluster"}, protocol) {
 			internalAllowed := func() bool {
 				// Reject any unauthenticated request.
 				if !trusted {
@@ -750,7 +750,7 @@ func (d *Daemon) createCmd(restAPI *mux.Router, version string, c APIEndpoint) {
 		// - /1.0/operations endpoints
 		// - GET queries
 		allowedDuringShutdown := func() bool {
-			if version == "internal" {
+			if apiVersion == "internal" {
 				return true
 			}
 
@@ -993,9 +993,9 @@ func (d *Daemon) init() error {
 
 	// Detect and cached available instance types from operational drivers.
 	drivers := instanceDrivers.DriverStatuses()
-	for _, driver := range drivers {
-		if driver.Warning != nil {
-			dbWarnings = append(dbWarnings, *driver.Warning)
+	for _, drv := range drivers {
+		if drv.Warning != nil {
+			dbWarnings = append(dbWarnings, *drv.Warning)
 		}
 	}
 
@@ -1632,8 +1632,8 @@ func (d *Daemon) stopClusterTasks() {
 // numRunningInstances returns the number of running instances.
 func (d *Daemon) numRunningInstances(instances []instance.Instance) int {
 	count := 0
-	for _, instance := range instances {
-		if instance.IsRunning() {
+	for _, inst := range instances {
+		if inst.IsRunning() {
 			count = count + 1
 		}
 	}
@@ -2193,9 +2193,9 @@ func initializeDbObject(d *Daemon) error {
 
 	// Hook to run when the local database is created from scratch. It will
 	// create the default profile and mark all patches as applied.
-	freshHook := func(db *db.Node) error {
+	freshHook := func(nodeDB *db.Node) error {
 		for _, patchName := range patchesGetNames() {
-			err := db.MarkPatchAsApplied(patchName)
+			err := nodeDB.MarkPatchAsApplied(patchName)
 			if err != nil {
 				return err
 			}
@@ -2277,15 +2277,15 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLead
 
 	// Extract the raft nodes from the heartbeat info.
 	raftNodes := make([]db.RaftNode, 0)
-	for _, node := range hbData.Members {
-		if node.RaftID > 0 {
+	for _, member := range hbData.Members {
+		if member.RaftID > 0 {
 			raftNodes = append(raftNodes, db.RaftNode{
 				NodeInfo: dqliteClient.NodeInfo{
-					ID:      node.RaftID,
-					Address: node.Address,
-					Role:    db.RaftRole(node.RaftRole),
+					ID:      member.RaftID,
+					Address: member.Address,
+					Role:    db.RaftRole(member.RaftRole),
 				},
-				Name: node.Name,
+				Name: member.Name,
 			})
 		}
 	}
@@ -2407,9 +2407,9 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 		onlineVoters := 0
 		onlineStandbys := 0
 
-		for _, node := range heartbeatData.Members {
-			role := db.RaftRole(node.RaftRole)
-			if node.Online {
+		for _, member := range heartbeatData.Members {
+			role := db.RaftRole(member.RaftRole)
+			if member.Online {
 				// Count online members that have voter or stand-by raft role.
 				switch role {
 				case db.RaftVoter:
@@ -2418,12 +2418,12 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 					onlineStandbys++
 				}
 
-				if node.RaftID == 0 {
+				if member.RaftID == 0 {
 					hasNodesNotPartOfRaft = true
 				}
 
 				// Check if a 'database-client' node currently has a raft role other than 'spare'.
-				if slices.Contains(node.Roles, db.ClusterRoleDatabaseClient) && node.RaftRole != int(db.RaftSpare) {
+				if slices.Contains(member.Roles, db.ClusterRoleDatabaseClient) && member.RaftRole != int(db.RaftSpare) {
 					hasDbClientToProcess = true
 				}
 			} else if role != db.RaftSpare {

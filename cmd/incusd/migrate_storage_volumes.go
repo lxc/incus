@@ -67,10 +67,10 @@ func newStorageMigrationSource(volumeOnly bool, pushTarget *api.StorageVolumePos
 	return &ret, nil
 }
 
-func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, poolName string, volName string, migrateOp *operations.Operation) error {
+func (s *migrationSourceWs) DoStorage(st *state.State, projectName string, poolName string, volName string, migrateOp *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "pool": poolName, "volume": volName, "push": s.pushOperationURL != ""})
 
-	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*30)
+	ctx, cancel := context.WithTimeout(st.ShutdownCtx, time.Second*30)
 	defer cancel()
 
 	l.Info("Waiting for migration connections on source")
@@ -89,7 +89,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 
 	var poolMigrationTypes []localMigration.Type
 
-	pool, err := storagePools.LoadByName(state, poolName)
+	pool, err := storagePools.LoadByName(st, poolName)
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (s *migrationSourceWs) DoStorage(state *state.State, projectName string, po
 		}
 	}
 
-	fsConn, err := s.conns[api.SecretNameFilesystem].WebsocketIO(state.ShutdownCtx)
+	fsConn, err := s.conns[api.SecretNameFilesystem].WebsocketIO(st.ShutdownCtx)
 	if err != nil {
 		return err
 	}
@@ -285,10 +285,10 @@ func newStorageMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 	return &sink, nil
 }
 
-func (c *migrationSink) DoStorage(state *state.State, projectName string, poolName string, req *api.StorageVolumesPost, op *operations.Operation) error {
+func (c *migrationSink) DoStorage(st *state.State, projectName string, poolName string, req *api.StorageVolumesPost, op *operations.Operation) error {
 	l := logger.AddContext(logger.Ctx{"project": projectName, "pool": poolName, "volume": req.Name, "push": c.push})
 
-	ctx, cancel := context.WithTimeout(state.ShutdownCtx, time.Second*30)
+	ctx, cancel := context.WithTimeout(st.ShutdownCtx, time.Second*30)
 	defer cancel()
 
 	l.Info("Waiting for migration connections on target")
@@ -319,7 +319,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 	// The function that will be executed to receive the sender's migration data.
 	var myTarget func(conn io.ReadWriteCloser, op *operations.Operation, args migrationSinkArgs) error
 
-	pool, err := storagePools.LoadByName(state, poolName)
+	pool, err := storagePools.LoadByName(st, poolName)
 	if err != nil {
 		return err
 	}
@@ -474,7 +474,7 @@ func (c *migrationSink) DoStorage(state *state.State, projectName string, poolNa
 				RefreshExcludeOlder: c.refreshExcludeOlder,
 			}
 
-			fsConn, err := c.conns[api.SecretNameFilesystem].WebsocketIO(state.ShutdownCtx)
+			fsConn, err := c.conns[api.SecretNameFilesystem].WebsocketIO(st.ShutdownCtx)
 			if err != nil {
 				fsTransfer <- err
 				return

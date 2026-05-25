@@ -211,8 +211,8 @@ func warningsGet(d *Daemon, r *http.Request) response.Response {
 		}
 
 		for _, w := range filters {
-			url := fmt.Sprintf("/%s/warnings/%s", version.APIVersion, w.UUID)
-			resultList = append(resultList, url)
+			warningURL := fmt.Sprintf("/%s/warnings/%s", version.APIVersion, w.UUID)
+			resultList = append(resultList, warningURL)
 		}
 
 		return response.SyncResponse(true, resultList)
@@ -534,7 +534,7 @@ func getWarningEntityURL(ctx context.Context, tx *sql.Tx, warning *cluster.Warni
 		return "", errors.New("Unknown entity type")
 	}
 
-	var url string
+	var entityURL string
 	switch warning.EntityTypeCode {
 	case cluster.TypeImage:
 		entities, err := cluster.GetImages(ctx, tx, cluster.ImageFilter{ID: &warning.EntityID})
@@ -547,7 +547,7 @@ func getWarningEntityURL(ctx context.Context, tx *sql.Tx, warning *cluster.Warni
 		}
 
 		apiImage := api.Image{Fingerprint: entities[0].Fingerprint}
-		url = apiImage.URL(version.APIVersion, entities[0].Project).String()
+		entityURL = apiImage.URL(version.APIVersion, entities[0].Project).String()
 	case cluster.TypeProfile:
 		entities, err := cluster.GetProfiles(ctx, tx, cluster.ProfileFilter{ID: &warning.EntityID})
 		if err != nil {
@@ -559,7 +559,7 @@ func getWarningEntityURL(ctx context.Context, tx *sql.Tx, warning *cluster.Warni
 		}
 
 		apiProfile := api.Profile{Name: entities[0].Name}
-		url = apiProfile.URL(version.APIVersion, entities[0].Project).String()
+		entityURL = apiProfile.URL(version.APIVersion, entities[0].Project).String()
 	case cluster.TypeProject:
 		entities, err := cluster.GetProjects(ctx, tx, cluster.ProjectFilter{ID: &warning.EntityID})
 		if err != nil {
@@ -571,7 +571,7 @@ func getWarningEntityURL(ctx context.Context, tx *sql.Tx, warning *cluster.Warni
 		}
 
 		apiProject := api.Project{Name: entities[0].Name}
-		url = apiProject.URL(version.APIVersion).String()
+		entityURL = apiProject.URL(version.APIVersion).String()
 	case cluster.TypeCertificate:
 		entities, err := cluster.GetCertificates(ctx, tx, cluster.CertificateFilter{ID: &warning.EntityID})
 		if err != nil {
@@ -583,7 +583,7 @@ func getWarningEntityURL(ctx context.Context, tx *sql.Tx, warning *cluster.Warni
 		}
 
 		apiCertificate := api.Certificate{Fingerprint: entities[0].Fingerprint}
-		url = apiCertificate.URL(version.APIVersion).String()
+		entityURL = apiCertificate.URL(version.APIVersion).String()
 	case cluster.TypeContainer:
 		fallthrough
 	case cluster.TypeInstance:
@@ -597,8 +597,8 @@ func getWarningEntityURL(ctx context.Context, tx *sql.Tx, warning *cluster.Warni
 		}
 
 		apiInstance := api.Instance{Name: entities[0].Name}
-		url = apiInstance.URL(version.APIVersion, entities[0].Project).String()
+		entityURL = apiInstance.URL(version.APIVersion, entities[0].Project).String()
 	}
 
-	return url, nil
+	return entityURL, nil
 }

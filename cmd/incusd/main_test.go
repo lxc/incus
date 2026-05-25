@@ -50,22 +50,22 @@ type daemonTestSuite struct {
 
 const daemonTestSuiteDefaultStoragePool string = "testrunPool"
 
-func (suite *daemonTestSuite) SetupTest() {
+func (s *daemonTestSuite) SetupTest() {
 	tmpdir, err := os.MkdirTemp("", "incus_testrun_")
 	if err != nil {
-		suite.T().Errorf("failed to create temp dir: %v", err)
+		s.T().Errorf("failed to create temp dir: %v", err)
 	}
 
-	suite.tmpdir = tmpdir
+	s.tmpdir = tmpdir
 
-	err = os.Setenv("INCUS_DIR", suite.tmpdir)
+	err = os.Setenv("INCUS_DIR", s.tmpdir)
 	if err != nil {
-		suite.T().Errorf("failed to set INCUS_DIR: %v", err)
+		s.T().Errorf("failed to set INCUS_DIR: %v", err)
 	}
 
-	suite.d, err = mockStartDaemon()
+	s.d, err = mockStartDaemon()
 	if err != nil {
-		suite.T().Errorf("failed to start daemon: %v", err)
+		s.T().Errorf("failed to start daemon: %v", err)
 	}
 
 	// Create default storage pool. Make sure that we don't pass a nil to
@@ -74,9 +74,9 @@ func (suite *daemonTestSuite) SetupTest() {
 
 	// Create the database entry for the storage pool.
 	poolDescription := fmt.Sprintf("%s storage pool", daemonTestSuiteDefaultStoragePool)
-	_, err = dbStoragePoolCreateAndUpdateCache(context.Background(), suite.d.State(), daemonTestSuiteDefaultStoragePool, poolDescription, "mock", poolConfig)
+	_, err = dbStoragePoolCreateAndUpdateCache(context.Background(), s.d.State(), daemonTestSuiteDefaultStoragePool, poolDescription, "mock", poolConfig)
 	if err != nil {
-		suite.T().Errorf("failed to create default storage pool: %v", err)
+		s.T().Errorf("failed to create default storage pool: %v", err)
 	}
 
 	rootDev := map[string]string{}
@@ -88,7 +88,7 @@ func (suite *daemonTestSuite) SetupTest() {
 		Config: rootDev,
 	}
 
-	err = suite.d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		profile, err := cluster.GetProfile(ctx, tx.Tx(), "default", "default")
 		if err != nil {
 			return err
@@ -97,20 +97,20 @@ func (suite *daemonTestSuite) SetupTest() {
 		return cluster.UpdateProfileDevices(ctx, tx.Tx(), int64(profile.ID), map[string]cluster.Device{"root": device})
 	})
 	if err != nil {
-		suite.T().Errorf("failed to update default profile: %v", err)
+		s.T().Errorf("failed to update default profile: %v", err)
 	}
 
-	suite.Req = require.New(suite.T())
+	s.Req = require.New(s.T())
 }
 
-func (suite *daemonTestSuite) TearDownTest() {
-	err := suite.d.Stop(context.Background(), unix.SIGQUIT)
+func (s *daemonTestSuite) TearDownTest() {
+	err := s.d.Stop(context.Background(), unix.SIGQUIT)
 	if err != nil {
-		suite.T().Errorf("failed to stop daemon: %v", err)
+		s.T().Errorf("failed to stop daemon: %v", err)
 	}
 
-	err = os.RemoveAll(suite.tmpdir)
+	err = os.RemoveAll(s.tmpdir)
 	if err != nil {
-		suite.T().Errorf("failed to remove temp dir: %v", err)
+		s.T().Errorf("failed to remove temp dir: %v", err)
 	}
 }

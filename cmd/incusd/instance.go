@@ -803,9 +803,9 @@ func pruneExpiredAndAutoCreateInstanceSnapshotsTask(d *Daemon) (task.Func, task.
 }
 
 // getSourceImageFromInstanceSource returns the image to use for an instance source.
-func getSourceImageFromInstanceSource(ctx context.Context, s *state.State, tx *db.ClusterTx, project string, source api.InstanceSource, imageRef *string, instType string) (*api.Image, error) {
+func getSourceImageFromInstanceSource(ctx context.Context, s *state.State, tx *db.ClusterTx, projectName string, source api.InstanceSource, imageRef *string, instType string) (*api.Image, error) {
 	// Resolve the image.
-	sourceImageRefUpdate, err := instance.ResolveImage(ctx, tx, project, source)
+	sourceImageRefUpdate, err := instance.ResolveImage(ctx, tx, projectName, source)
 	if err != nil {
 		return nil, err
 	}
@@ -827,7 +827,7 @@ func getSourceImageFromInstanceSource(ctx context.Context, s *state.State, tx *d
 	}
 
 	// Check if image has an entry in the database.
-	_, sourceImage, err := tx.GetImageByFingerprintPrefix(ctx, sourceImageHash, dbCluster.ImageFilter{Project: &project})
+	_, sourceImage, err := tx.GetImageByFingerprintPrefix(ctx, sourceImageHash, dbCluster.ImageFilter{Project: &projectName})
 	if err != nil {
 		return nil, err
 	}

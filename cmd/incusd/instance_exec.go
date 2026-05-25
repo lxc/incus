@@ -609,8 +609,8 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if client != nil {
-		url := api.NewURL().Path(version.APIVersion, "instances", name, "exec").Project(projectName)
-		resp, _, err := client.RawQuery("POST", url.String(), post, "")
+		execURL := api.NewURL().Path(version.APIVersion, "instances", name, "exec").Project(projectName)
+		resp, _, err := client.RawQuery("POST", execURL.String(), post, "")
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -699,35 +699,35 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if post.WaitForWS {
-		ws := &execWs{}
-		ws.s = d.State()
-		ws.fds = map[int]string{}
+		execWS := &execWs{}
+		execWS.s = d.State()
+		execWS.fds = map[int]string{}
 
-		ws.conns = map[int]*websocket.Conn{}
-		ws.conns[execWSControl] = nil
-		ws.conns[0] = nil // This is used for either TTY or Stdin.
+		execWS.conns = map[int]*websocket.Conn{}
+		execWS.conns[execWSControl] = nil
+		execWS.conns[0] = nil // This is used for either TTY or Stdin.
 		if !post.Interactive {
-			ws.conns[execWSStdout] = nil
-			ws.conns[execWSStderr] = nil
+			execWS.conns[execWSStdout] = nil
+			execWS.conns[execWSStderr] = nil
 		}
 
-		ws.waitRequiredConnected = cancel.New(context.Background())
-		ws.waitControlConnected = cancel.New(context.Background())
+		execWS.waitRequiredConnected = cancel.New(context.Background())
+		execWS.waitControlConnected = cancel.New(context.Background())
 
-		for i := range ws.conns {
-			ws.fds[i], err = internalUtil.RandomHexString(32)
+		for i := range execWS.conns {
+			execWS.fds[i], err = internalUtil.RandomHexString(32)
 			if err != nil {
 				return response.InternalError(err)
 			}
 		}
 
-		ws.instance = inst
-		ws.req = post
+		execWS.instance = inst
+		execWS.req = post
 
 		resources := map[string][]api.URL{}
-		resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", ws.instance.Name())}
+		resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", execWS.instance.Name())}
 
-		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.metadata(), ws.do, ws.cancel, ws.connect, r)
+		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, execWS.metadata(), execWS.do, execWS.cancel, execWS.connect, r)
 		if err != nil {
 			return response.InternalError(err)
 		}
