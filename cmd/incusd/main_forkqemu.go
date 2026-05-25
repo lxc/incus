@@ -14,19 +14,19 @@ import (
 
 var reLimitsArg = regexp.MustCompile(`^limit=(\w+):(\w+):(\w+)$`)
 
-type cmdForklimits struct {
+type cmdForkqemu struct {
 	global *cmdGlobal
 }
 
-func (c *cmdForklimits) command() *cobra.Command {
+func (c *cmdForkqemu) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
-	cmd.Use = "forklimits [fd=<number>...] [limit=<name>:<softlimit>:<hardlimit>...] -- <command> [<arg>...]"
+	cmd.Use = "forkqemu [fd=<number>...] [limit=<name>:<softlimit>:<hardlimit>...] -- <command> [<arg>...]"
 	cmd.Short = "Execute a task inside the container"
 	cmd.Long = `Description:
   Execute a command with specific limits set.
 
-  This internal command is used to spawn a command with limits set. It can also pass through one or more filed escriptors specified by fd=n arguments.
+  This internal command is used to spawn a command with limits set. It can also pass through one or more file descriptors specified by fd=n arguments.
   These are passed through in the order they are specified.
 `
 	cmd.RunE = c.run
@@ -35,7 +35,7 @@ func (c *cmdForklimits) command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdForklimits) run(cmd *cobra.Command, _ []string) error {
+func (c *cmdForkqemu) run(cmd *cobra.Command, _ []string) error {
 	// Use raw args instead of cobra passed args, as we need to access the "--" argument.
 	args := c.global.rawArgs(cmd)
 

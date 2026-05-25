@@ -126,9 +126,9 @@ func main() {
 	forkfileCmd := cmdForkfile{global: &globalCmd}
 	app.AddCommand(forkfileCmd.command())
 
-	// forklimits sub-command
-	forklimitsCmd := cmdForklimits{global: &globalCmd}
-	app.AddCommand(forklimitsCmd.command())
+	// forkqemu sub-command
+	forkqemuCmd := cmdForkqemu{global: &globalCmd}
+	app.AddCommand(forkqemuCmd.command())
 
 	// forkmigrate sub-command
 	forkmigrateCmd := cmdForkmigrate{global: &globalCmd}

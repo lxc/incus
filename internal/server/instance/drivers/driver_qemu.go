@@ -2034,23 +2034,23 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	// Run the qemu command via forklimits so we can selectively increase ulimits.
-	forkLimitsCmd := []string{
-		"forklimits",
+	// Run the qemu command via forkqemu so we can selectively increase ulimits.
+	forkQemuCmd := []string{
+		"forkqemu",
 	}
 
 	if !d.state.OS.RunningInUserNS {
 		// Required for PCI passthrough.
-		forkLimitsCmd = append(forkLimitsCmd, "limit=memlock:unlimited:unlimited")
+		forkQemuCmd = append(forkQemuCmd, "limit=memlock:unlimited:unlimited")
 	}
 
 	for i := range fdFiles {
 		// Pass through any file descriptors as 3+i (as first 3 file descriptors are taken as standard).
-		forkLimitsCmd = append(forkLimitsCmd, fmt.Sprintf("fd=%d", 3+i))
+		forkQemuCmd = append(forkQemuCmd, fmt.Sprintf("fd=%d", 3+i))
 	}
 
 	// Log the QEMU command line.
-	fullCmd := append(forkLimitsCmd, "--", qemuPath)
+	fullCmd := append(forkQemuCmd, "--", qemuPath)
 	fullCmd = append(fullCmd, d.cmdArgs...)
 	d.logger.Debug("Starting QEMU", logger.Ctx{"command": fullCmd})
 
