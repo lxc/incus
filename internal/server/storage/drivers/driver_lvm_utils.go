@@ -589,9 +589,10 @@ func (d *lvm) lvmFullVolumeName(volType VolumeType, contentType ContentType, vol
 	}
 
 	contentTypeSuffix := ""
-	if contentType == ContentTypeBlock {
+	switch contentType {
+	case ContentTypeBlock:
 		contentTypeSuffix = lvmBlockVolSuffix
-	} else if contentType == ContentTypeISO {
+	case ContentTypeISO:
 		contentTypeSuffix = lvmISOVolSuffix
 	}
 

@@ -26,9 +26,10 @@ func CephGetRBDImageName(vol Volume, snapName string, zombie bool) string {
 		parentName = fmt.Sprintf("%s_%s", parentName, vol.ConfigBlockFilesystem())
 	}
 
-	if vol.contentType == ContentTypeBlock {
+	switch vol.contentType {
+	case ContentTypeBlock:
 		parentName = fmt.Sprintf("%s%s", parentName, cephBlockVolSuffix)
-	} else if vol.contentType == ContentTypeISO {
+	case ContentTypeISO:
 		parentName = fmt.Sprintf("%s%s", parentName, cephISOVolSuffix)
 	}
 
@@ -162,11 +163,12 @@ func CephMonitors(cluster string, client string) (Monitors, error) {
 	var ep Monitors
 	for _, mon := range monitors.Mons {
 		for _, addr := range mon.PublicAddrs.Addrvec {
-			if addr.Type == "v1" {
+			switch addr.Type {
+			case "v1":
 				ep.V1 = append(ep.V1, addr.Addr)
-			} else if addr.Type == "v2" {
+			case "v2":
 				ep.V2 = append(ep.V2, addr.Addr)
-			} else {
+			default:
 				logger.Warnf("Unknown ceph monitor address type: %q:%q",
 					addr.Type, addr.Addr,
 				)

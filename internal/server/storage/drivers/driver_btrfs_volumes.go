@@ -334,12 +334,14 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 			snapVol, _ := vol.NewSnapshot(snapName)
 			snapDir := "snapshots"
 			srcFilePrefix := snapName
-			if vol.volType == VolumeTypeVM {
+			switch vol.volType {
+			case VolumeTypeVM:
 				snapDir = "virtual-machine-snapshots"
 				if vol.contentType == ContentTypeFS {
 					srcFilePrefix = fmt.Sprintf("%s-config", snapName)
 				}
-			} else if vol.volType == VolumeTypeCustom {
+
+			case VolumeTypeCustom:
 				snapDir = "volume-snapshots"
 			}
 
@@ -353,13 +355,15 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 
 	// Extract main volume.
 	srcFilePrefix := "container"
-	if vol.volType == VolumeTypeVM {
+	switch vol.volType {
+	case VolumeTypeVM:
 		if vol.contentType == ContentTypeFS {
 			srcFilePrefix = "virtual-machine-config"
 		} else {
 			srcFilePrefix = "virtual-machine"
 		}
-	} else if vol.volType == VolumeTypeCustom {
+
+	case VolumeTypeCustom:
 		srcFilePrefix = "volume"
 	}
 
@@ -1819,12 +1823,14 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 		// Make a binary btrfs backup.
 		snapDir := "snapshots"
 		fileName := snapName
-		if vol.volType == VolumeTypeVM {
+		switch vol.volType {
+		case VolumeTypeVM:
 			snapDir = "virtual-machine-snapshots"
 			if vol.contentType == ContentTypeFS {
 				fileName = fmt.Sprintf("%s-config", snapName)
 			}
-		} else if vol.volType == VolumeTypeCustom {
+
+		case VolumeTypeCustom:
 			snapDir = "volume-snapshots"
 		}
 
@@ -1869,13 +1875,15 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 
 	// Dump the instance to a file.
 	fileNamePrefix := "container"
-	if vol.volType == VolumeTypeVM {
+	switch vol.volType {
+	case VolumeTypeVM:
 		if vol.contentType == ContentTypeFS {
 			fileNamePrefix = "virtual-machine-config"
 		} else {
 			fileNamePrefix = "virtual-machine"
 		}
-	} else if vol.volType == VolumeTypeCustom {
+
+	case VolumeTypeCustom:
 		fileNamePrefix = "volume"
 	}
 
