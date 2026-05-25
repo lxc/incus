@@ -982,11 +982,11 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 				// if the restored volume is larger than the config's size and it cannot be shrunk
 				// to the equivalent size on the target storage driver, don't fail as the backup
 				// has still been restored successfully.
-				if errors.Is(err, drivers.ErrCannotBeShrunk) {
-					l.Warn("Could not apply volume quota from root disk config as restored volume cannot be shrunk", logger.Ctx{"size": size})
-				} else {
+				if !errors.Is(err, drivers.ErrCannotBeShrunk) {
 					return fmt.Errorf("Failed applying volume quota to root disk: %w", err)
 				}
+
+				l.Warn("Could not apply volume quota from root disk config as restored volume cannot be shrunk", logger.Ctx{"size": size})
 			}
 
 			// Apply the filesystem volume quota (only when main volume is block).
