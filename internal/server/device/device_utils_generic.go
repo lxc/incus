@@ -50,8 +50,6 @@ func checkAttachedRunningProcesses(devicePath string) ([]string, error) {
 			continue // If we can't read a process's maps file, skip it.
 		}
 
-		defer f.Close()
-
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			if strings.Contains(scanner.Text(), devicePath) {
@@ -59,6 +57,8 @@ func checkAttachedRunningProcesses(devicePath string) ([]string, error) {
 				break
 			}
 		}
+
+		_ = f.Close()
 	}
 
 	return processes, nil
