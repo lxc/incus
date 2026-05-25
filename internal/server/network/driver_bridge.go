@@ -1747,7 +1747,6 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Configure tunnels.
 	for _, tunnel := range tunnels {
-
 		getConfig := func(key string) string {
 			return n.config[fmt.Sprintf("tunnel.%s.%s", tunnel, key)]
 		}
