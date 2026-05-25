@@ -35,13 +35,13 @@ type common struct {
 	patches     map[string]func() error
 }
 
-func (d *common) init(state *state.State, name string, config map[string]string, logger logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
+func (d *common) init(s *state.State, name string, config map[string]string, log logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
 	d.name = name
 	d.config = config
 	d.getVolID = volIDFunc
 	d.commonRules = commonRules
-	d.state = state
-	d.logger = logger
+	d.state = s
+	d.logger = log
 }
 
 // isRemote returns false indicating this driver does not use remote storage.

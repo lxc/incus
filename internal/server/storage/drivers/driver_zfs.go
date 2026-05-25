@@ -88,12 +88,12 @@ func (d *zfs) load() error {
 
 	// Get the version information.
 	if zfsVersion == "" {
-		version, err := d.version()
+		ver, err := d.version()
 		if err != nil {
 			return err
 		}
 
-		zfsVersion = version
+		zfsVersion = ver
 	}
 
 	ourVer, err := version.Parse(zfsVersion)

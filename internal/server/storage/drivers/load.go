@@ -25,11 +25,11 @@ type Validators struct {
 }
 
 // Load returns a Driver for an existing low-level storage pool.
-func Load(state *state.State, driverName string, name string, config map[string]string, logger logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) (Driver, error) {
+func Load(s *state.State, driverName string, name string, config map[string]string, log logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) (Driver, error) {
 	var driverFunc func() driver
 
 	// Locate the driver loader.
-	if state.OS.MockMode {
+	if s.OS.MockMode {
 		driverFunc = func() driver { return &mock{} }
 	} else {
 		df, ok := drivers[driverName]
@@ -41,7 +41,7 @@ func Load(state *state.State, driverName string, name string, config map[string]
 	}
 
 	d := driverFunc()
-	d.init(state, name, config, logger, volIDFunc, commonRules)
+	d.init(s, name, config, log, volIDFunc, commonRules)
 
 	err := d.load()
 	if err != nil {

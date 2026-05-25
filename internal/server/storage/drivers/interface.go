@@ -18,7 +18,7 @@ import (
 type driver interface {
 	Driver
 
-	init(state *state.State, name string, config map[string]string, logger logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators)
+	init(s *state.State, name string, config map[string]string, log logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators)
 	load() error
 	isRemote() bool
 }
