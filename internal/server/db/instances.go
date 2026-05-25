@@ -164,7 +164,7 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 	`)
 
 	// Project filter.
-	q.WriteString(fmt.Sprintf("WHERE projects.name IN %s", query.Params(len(projects))))
+	fmt.Fprintf(&q, "WHERE projects.name IN %s", query.Params(len(projects)))
 	for _, project := range projects {
 		args = append(args, project)
 	}
@@ -323,7 +323,7 @@ func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, 
 
 		first = false
 
-		q.WriteString(fmt.Sprintf("%d", instanceID))
+		fmt.Fprintf(&q, "%d", instanceID)
 	}
 
 	q.WriteString(`)`)
@@ -403,7 +403,7 @@ func (c *ClusterTx) instanceDevicesFill(ctx context.Context, snapshotsMode bool,
 
 		first = false
 
-		q.WriteString(fmt.Sprintf("%d", instanceID))
+		fmt.Fprintf(&q, "%d", instanceID)
 	}
 
 	q.WriteString(`)`)
@@ -487,7 +487,7 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 
 		first = false
 
-		q.WriteString(fmt.Sprintf("%d", instanceID))
+		fmt.Fprintf(&q, "%d", instanceID)
 	}
 
 	q.WriteString(`)

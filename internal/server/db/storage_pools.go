@@ -445,7 +445,7 @@ func (c *ClusterTx) GetStoragePools(ctx context.Context, state *StoragePoolState
 			verb = "AND"
 		}
 
-		q.WriteString(fmt.Sprintf("%s storage_pools.name IN %s", verb, query.Params(len(poolNames))))
+		fmt.Fprintf(q, "%s storage_pools.name IN %s", verb, query.Params(len(poolNames)))
 		for _, poolName := range poolNames {
 			args = append(args, poolName)
 		}
