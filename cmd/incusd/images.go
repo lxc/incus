@@ -1170,18 +1170,18 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 	var imageMetadata map[string]any
 	if !trusted && (secret == "" || fingerprint == "") {
 		return response.Forbidden(nil)
-	} else {
-		// We need to invalidate the secret whether the source is trusted or not.
-		op, err := imageValidSecret(s, r, projectName, fingerprint, secret)
-		if err != nil {
-			return response.SmartError(err)
-		}
+	}
 
-		if op != nil {
-			imageMetadata = op.Metadata
-		} else if !trusted {
-			return response.Forbidden(nil)
-		}
+	// We need to invalidate the secret whether the source is trusted or not.
+	validOp, err := imageValidSecret(s, r, projectName, fingerprint, secret)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if validOp != nil {
+		imageMetadata = validOp.Metadata
+	} else if !trusted {
+		return response.Forbidden(nil)
 	}
 
 	// create a directory under which we keep everything while building

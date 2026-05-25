@@ -70,9 +70,9 @@ func getCronSyntax(spec string, subjectID int64) string {
 
 		if strings.Count(alias, "%s") > 1 {
 			return fmt.Sprintf(alias, obfuscatedMinute, obfuscatedHour)
-		} else {
-			return fmt.Sprintf(alias, obfuscatedMinute)
 		}
+
+		return fmt.Sprintf(alias, obfuscatedMinute)
 	}
 
 	return spec
