@@ -23,7 +23,7 @@ func DotGo(updates map[int]Update, name string) error {
 		return fmt.Errorf("failed to open schema.go for writing: %w", err)
 	}
 
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	schema := NewFromMap(updates)
 
