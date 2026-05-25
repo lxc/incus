@@ -5197,7 +5197,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						}
 					}
 				}
-
 			} else if key == "limits.cpu" || key == "limits.cpu.nodes" {
 				// Clear the "volatile.cpu.nodes" if needed.
 				d.ClearLimitsCPUNodes(changedConfig)
