@@ -151,7 +151,7 @@ func (d *truenas) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) err
 
 	datasets := d.initialDatasets()
 	fullDatasetPaths := make([]string, len(datasets))
-	for i := 0; i < len(datasets); i++ {
+	for i := range datasets {
 		fullDatasetPaths[i] = filepath.Join(d.config["truenas.dataset"], datasets[i])
 	}
 

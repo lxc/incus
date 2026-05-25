@@ -1155,7 +1155,7 @@ func IPisBroadcast(subnet *net.IPNet, ipAddress net.IP) bool {
 	}
 
 	broadcast := make(net.IP, 4)
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		broadcast[i] = subnet.IP[i] | ^subnet.Mask[i]
 	}
 
