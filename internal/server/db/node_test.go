@@ -91,8 +91,8 @@ func TestNodeIsOutdated_OneNodeWithHigherVersion(t *testing.T) {
 	id, err := tx.CreateNode("buzz", "1.2.3.4:666")
 	require.NoError(t, err)
 
-	version := [2]int{cluster.SchemaVersion + 1, len(version.APIExtensions)}
-	err = tx.SetNodeVersion(id, version)
+	ver := [2]int{cluster.SchemaVersion + 1, len(version.APIExtensions)}
+	err = tx.SetNodeVersion(id, ver)
 	require.NoError(t, err)
 
 	outdated, err := tx.NodeIsOutdated(context.Background())
@@ -108,8 +108,8 @@ func TestNodeIsOutdated_OneNodeWithLowerVersion(t *testing.T) {
 	id, err := tx.CreateNode("buzz", "1.2.3.4:666")
 	require.NoError(t, err)
 
-	version := [2]int{cluster.SchemaVersion, len(version.APIExtensions) - 1}
-	err = tx.SetNodeVersion(id, version)
+	ver := [2]int{cluster.SchemaVersion, len(version.APIExtensions) - 1}
+	err = tx.SetNodeVersion(id, ver)
 	require.NoError(t, err)
 
 	outdated, err := tx.NodeIsOutdated(context.Background())
