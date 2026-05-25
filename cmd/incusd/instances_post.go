@@ -1657,7 +1657,12 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 
 	websockets := map[string]string{}
 	for k, v := range opAPI.Metadata {
-		websockets[k] = v.(string)
+		vStr, ok := v.(string)
+		if !ok {
+			continue
+		}
+
+		websockets[k] = vStr
 	}
 
 	// Reset the source for a migration

@@ -891,14 +891,20 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 
 	expiresAt, ok := metadata["expires_at"]
 	if ok {
-		info.ExpiresAt = expiresAt.(time.Time)
+		expiry, ok := expiresAt.(time.Time)
+		if ok {
+			info.ExpiresAt = expiry
+		}
 	} else if imageMeta.ExpiryDate > 0 {
 		info.ExpiresAt = time.Unix(imageMeta.ExpiryDate, 0)
 	}
 
 	properties, ok := metadata["properties"]
 	if ok {
-		info.Properties = properties.(map[string]string)
+		props, ok := properties.(map[string]string)
+		if ok {
+			info.Properties = props
+		}
 	} else {
 		info.Properties = imageMeta.Properties
 	}
@@ -989,7 +995,10 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 	} else {
 		public, ok := metadata["public"]
 		if ok {
-			info.Public = public.(bool)
+			isPublic, ok := public.(bool)
+			if ok {
+				info.Public = isPublic
+			}
 		}
 
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1314,7 +1323,10 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 			// Keep secret if available
 			secret, ok := op.Metadata()["secret"]
 			if ok {
-				metadata["secret"] = secret.(string)
+				secretStr, ok := secret.(string)
+				if ok {
+					metadata["secret"] = secretStr
+				}
 			}
 
 			_ = op.UpdateMetadata(metadata)
@@ -4565,7 +4577,10 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 
 		val, ok := opAPI.Metadata["secret"]
 		if ok {
-			secret = val.(string)
+			secretStr, ok := val.(string)
+			if ok {
+				secret = secretStr
+			}
 		}
 
 		opWaitAPI, _, err := remote.GetOperationWaitSecret(opAPI.ID, secret, -1)

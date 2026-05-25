@@ -358,7 +358,11 @@ type ConnPidMapper struct {
 }
 
 func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState) {
-	unixConn := conn.(*net.UnixConn)
+	unixConn, ok := conn.(*net.UnixConn)
+	if !ok {
+		return
+	}
+
 	switch connState {
 	case http.StateNew:
 		cred, err := linux.GetUcred(unixConn)
@@ -449,7 +453,12 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 				return nil, errors.New("Instance is not container type")
 			}
 
-			return inst.(instance.Container), nil
+			c, ok := inst.(instance.Container)
+			if !ok {
+				return nil, errors.New("Instance is not container type")
+			}
+
+			return c, nil
 		}
 
 		re, err := regexp.Compile(`^PPid:\s+([0-9]+)$`)
@@ -497,7 +506,12 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 		}
 
 		if origPidNs == pidNs {
-			return inst.(instance.Container), nil
+			c, ok := inst.(instance.Container)
+			if !ok {
+				return nil, errors.New("Instance is not container type")
+			}
+
+			return c, nil
 		}
 	}
 

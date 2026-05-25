@@ -364,9 +364,17 @@ func clusterMemberJoinTokenValid(s *state.State, r *http.Request, projectName st
 
 			// Depending on whether it's a local operation or not, expiry will either be a time.Time or a string.
 			if s.ServerName == foundOp.Location {
-				expiry, _ = expiresAt.(time.Time)
+				expiry, ok = expiresAt.(time.Time)
+				if !ok {
+					return nil, api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+				}
 			} else {
-				expiry, _ = time.Parse(time.RFC3339Nano, expiresAt.(string))
+				expiryStr, ok := expiresAt.(string)
+				if !ok {
+					return nil, api.StatusErrorf(http.StatusInternalServerError, "Invalid expiry metadata")
+				}
+
+				expiry, _ = time.Parse(time.RFC3339Nano, expiryStr)
 			}
 
 			// Check if token has expired.
@@ -416,10 +424,10 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 
 		expiresAt, ok := foundOp.Metadata["expiresAt"]
 		if ok {
-			expiry, _ := expiresAt.(time.Time)
+			expiry, ok := expiresAt.(time.Time)
 
 			// Check if token has expired.
-			if time.Now().After(expiry) {
+			if ok && time.Now().After(expiry) {
 				return nil, api.StatusErrorf(http.StatusForbidden, "Token has expired")
 			}
 		}
@@ -589,11 +597,36 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 					req.Restricted = tokenReq.Restricted
 					req.Projects = tokenReq.Projects
 				case map[string]any:
-					req.Name = tokenReq["name"].(string)
-					req.Type = tokenReq["type"].(string)
-					req.Restricted = tokenReq["restricted"].(bool)
-					for _, project := range tokenReq["projects"].([]any) {
-						req.Projects = append(req.Projects, project.(string))
+					name, ok := tokenReq["name"].(string)
+					if !ok {
+						return response.InternalError(errors.New("Bad certificate add operation data"))
+					}
+
+					certType, ok := tokenReq["type"].(string)
+					if !ok {
+						return response.InternalError(errors.New("Bad certificate add operation data"))
+					}
+
+					restricted, ok := tokenReq["restricted"].(bool)
+					if !ok {
+						return response.InternalError(errors.New("Bad certificate add operation data"))
+					}
+
+					projects, ok := tokenReq["projects"].([]any)
+					if !ok {
+						return response.InternalError(errors.New("Bad certificate add operation data"))
+					}
+
+					req.Name = name
+					req.Type = certType
+					req.Restricted = restricted
+					for _, project := range projects {
+						projectName, ok := project.(string)
+						if !ok {
+							return response.InternalError(errors.New("Bad certificate add operation data"))
+						}
+
+						req.Projects = append(req.Projects, projectName)
 					}
 
 				default:

@@ -995,7 +995,12 @@ func clusterCopyCustomVolumeInternal(s *state.State, r *http.Request, sourceAddr
 	opAPI := op.Get()
 
 	for k, v := range opAPI.Metadata {
-		websockets[k] = v.(string)
+		vStr, ok := v.(string)
+		if !ok {
+			continue
+		}
+
+		websockets[k] = vStr
 	}
 
 	// Reset the source for a migration
