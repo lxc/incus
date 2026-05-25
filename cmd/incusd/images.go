@@ -1290,13 +1290,14 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 			/* Processing image upload */
 			info, err = getImgPostInfo(context.TODO(), s, r, builddir, projectName, post, imageMetadata)
 		} else {
-			if req.Source.Type == "image" {
+			switch req.Source.Type {
+			case "image":
 				/* Processing image copy from remote */
 				info, err = imgPostRemoteInfo(context.TODO(), s, r, req, op, projectName, budget)
-			} else if req.Source.Type == "url" {
+			case "url":
 				/* Processing image copy from URL */
 				info, err = imgPostURLInfo(context.TODO(), s, r, req, op, projectName, budget)
-			} else {
+			default:
 				/* Processing image creation from container */
 				imagePublishLock.Lock()
 				info, err = imgPostInstanceInfo(context.TODO(), s, r, req, op, builddir, budget)

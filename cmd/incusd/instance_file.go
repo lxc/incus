@@ -547,7 +547,8 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 	_, err := client.Stat(path)
 	exists := err == nil
 
-	if type_ == "file" {
+	switch type_ {
+	case "file":
 		fileMode := os.O_RDWR
 
 		if write == "overwrite" {
@@ -594,7 +595,7 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 
 		onSuccess()
 		return response.EmptySyncResponse
-	} else if type_ == "symlink" {
+	case "symlink":
 		// Figure out target.
 		target, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -615,7 +616,7 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 
 		onSuccess()
 		return response.EmptySyncResponse
-	} else if type_ == "directory" {
+	case "directory":
 		// Check if it already exists.
 		if exists {
 			return response.EmptySyncResponse
@@ -648,7 +649,7 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 
 		onSuccess()
 		return response.EmptySyncResponse
-	} else {
+	default:
 		return response.BadRequest(fmt.Errorf("Bad file type: %s", type_))
 	}
 }

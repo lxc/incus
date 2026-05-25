@@ -67,9 +67,10 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 
 		// Do nothing if the node is already in expected state.
 		if node.State == newState {
-			if newState == db.ClusterMemberStateEvacuated {
+			switch newState {
+			case db.ClusterMemberStateEvacuated:
 				return errors.New("Cluster member is already evacuated")
-			} else if newState == db.ClusterMemberStateCreated {
+			case db.ClusterMemberStateCreated:
 				return errors.New("Cluster member is already restored")
 			}
 

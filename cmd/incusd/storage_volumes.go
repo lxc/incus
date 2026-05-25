@@ -2303,7 +2303,8 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 	op := &operations.Operation{}
 	op.SetRequestor(r)
 
-	if volumeType == db.StoragePoolVolumeTypeCustom {
+	switch volumeType {
+	case db.StoragePoolVolumeTypeCustom:
 		// Restore custom volume from snapshot if requested. This should occur first
 		// before applying config changes so that changes are applied to the
 		// restored volume.
@@ -2331,7 +2332,7 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 				return response.SmartError(err)
 			}
 		}
-	} else if volumeType == db.StoragePoolVolumeTypeContainer || volumeType == db.StoragePoolVolumeTypeVM {
+	case db.StoragePoolVolumeTypeContainer, db.StoragePoolVolumeTypeVM:
 		inst, err := instance.LoadByProjectAndName(s, projectName, dbVolume.Name)
 		if err != nil {
 			return response.SmartError(err)
@@ -2342,13 +2343,13 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
-	} else if volumeType == db.StoragePoolVolumeTypeImage {
+	case db.StoragePoolVolumeTypeImage:
 		// Handle image update requests.
 		err = pool.UpdateImage(dbVolume.Name, req.Description, req.Config, op)
 		if err != nil {
 			return response.SmartError(err)
 		}
-	} else {
+	default:
 		return response.SmartError(errors.New("Invalid volume type"))
 	}
 
