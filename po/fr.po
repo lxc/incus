@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-24 15:02-0400\n"
-"PO-Revision-Date: 2026-05-22 10:19+0000\n"
-"Last-Translator: Varlorg <varlorg@gmail.com>\n"
+"PO-Revision-Date: 2026-05-25 19:11+0000\n"
+"Last-Translator: montag451 <montag451@laposte.net>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -3057,8 +3057,8 @@ msgstr "Échec de la vérification de l'existence de l'instance \"%s:%s\" : %w
 #, c-format
 msgid "Failed checking instance snapshot exists \"%s:%s\": %w"
 msgstr ""
-"Échec de la vérification de l'existence de l'instantané d'instance \"%s:"
-"%s\" : %w"
+"Échec de la vérification de l'existence de l'instantané d'instance \"%s:%s\" "
+": %w"
 
 #: cmd/incus/utils.go:790
 #, c-format
@@ -3203,8 +3203,7 @@ msgstr "Échec de la configuration du cluster : %w"
 #: cmd/incus/admin_init.go:107
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr ""
-"Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:102
 #, c-format
@@ -4019,8 +4018,7 @@ msgstr ""
 
 #: cmd/incus/image.go:696 cmd/incus/publish.go:46
 msgid "If the image alias already exists, delete and create a new one"
-msgstr ""
-"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:100 cmd/incus/storage_volume.go:3104
 msgid "If the snapshot name already exists, delete and create a new one"
