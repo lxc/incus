@@ -1268,8 +1268,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			addrs, err := iface.Addrs()
 			if err == nil {
 				for _, addr := range addrs {
-					ip, _, err := net.ParseCIDR(addr.String())
-					if ip != nil && err == nil && ip.IsGlobalUnicast() {
+					ipAddress, _, err := net.ParseCIDR(addr.String())
+					if ipAddress != nil && err == nil && ipAddress.IsGlobalUnicast() {
 						unused = false
 						break
 					}
@@ -3276,11 +3276,11 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 		if projectName == n.project {
 			// Add our own gateway IPs.
 			for _, addr := range []string{n.config["ipv4.address"], n.config["ipv6.address"]} {
-				ip, _, _ := net.ParseCIDR(addr)
-				if ip != nil {
+				ipAddress, _, _ := net.ParseCIDR(addr)
+				if ipAddress != nil {
 					leases = append(leases, api.NetworkLease{
 						Hostname: fmt.Sprintf("%s.gw", n.Name()),
-						Address:  ip.String(),
+						Address:  ipAddress.String(),
 						Type:     "gateway",
 					})
 				}

@@ -665,19 +665,19 @@ func inRoutingTable(subnet *net.IPNet) bool {
 		fields := strings.Fields(string(line))
 
 		// Get the IP
-		var ip net.IP
+		var ipAddress net.IP
 		if filename == "ipv6_route" {
-			ip, err = hex.DecodeString(fields[0])
+			ipAddress, err = hex.DecodeString(fields[0])
 			if err != nil {
 				continue
 			}
 		} else {
-			bytes, err := hex.DecodeString(fields[1])
+			ipBytes, err := hex.DecodeString(fields[1])
 			if err != nil {
 				continue
 			}
 
-			ip = net.IPv4(bytes[3], bytes[2], bytes[1], bytes[0])
+			ipAddress = net.IPv4(ipBytes[3], ipBytes[2], ipBytes[1], ipBytes[0])
 		}
 
 		// Get the mask
@@ -690,16 +690,16 @@ func inRoutingTable(subnet *net.IPNet) bool {
 
 			mask = net.CIDRMask(int(size), 128)
 		} else {
-			bytes, err := hex.DecodeString(fields[7])
+			maskBytes, err := hex.DecodeString(fields[7])
 			if err != nil {
 				continue
 			}
 
-			mask = net.IPv4Mask(bytes[3], bytes[2], bytes[1], bytes[0])
+			mask = net.IPv4Mask(maskBytes[3], maskBytes[2], maskBytes[1], maskBytes[0])
 		}
 
 		// Generate a new network
-		lineNet := net.IPNet{IP: ip, Mask: mask}
+		lineNet := net.IPNet{IP: ipAddress, Mask: mask}
 
 		// Ignore default gateway
 		if lineNet.IP.Equal(net.ParseIP("::")) {
@@ -721,9 +721,9 @@ func inRoutingTable(subnet *net.IPNet) bool {
 
 // pingIP sends a single ping packet to the specified IP, returns nil error if IP is reachable.
 // If ctx doesn't have a deadline then the default timeout used is 1s.
-func pingIP(ctx context.Context, ip net.IP) error {
+func pingIP(ctx context.Context, ipAddress net.IP) error {
 	cmd := "ping"
-	if ip.To4() == nil {
+	if ipAddress.To4() == nil {
 		cmd = "ping6"
 	}
 
@@ -733,7 +733,7 @@ func pingIP(ctx context.Context, ip net.IP) error {
 		timeout = time.Until(deadline)
 	}
 
-	_, err := subprocess.RunCommandContext(ctx, cmd, "-n", "-q", ip.String(), "-c", "1", "-w", fmt.Sprintf("%d", int(timeout.Seconds())))
+	_, err := subprocess.RunCommandContext(ctx, cmd, "-n", "-q", ipAddress.String(), "-c", "1", "-w", fmt.Sprintf("%d", int(timeout.Seconds())))
 
 	return err
 }
@@ -743,10 +743,10 @@ func pingSubnet(subnet *net.IPNet) bool {
 	var failLock sync.Mutex
 	var wgChecks sync.WaitGroup
 
-	ping := func(ip net.IP) {
+	ping := func(ipAddress net.IP) {
 		defer wgChecks.Done()
 
-		if pingIP(context.TODO(), ip) != nil {
+		if pingIP(context.TODO(), ipAddress) != nil {
 			return
 		}
 
@@ -756,12 +756,12 @@ func pingSubnet(subnet *net.IPNet) bool {
 		failLock.Unlock()
 	}
 
-	poke := func(ip net.IP) {
+	poke := func(ipAddress net.IP) {
 		defer wgChecks.Done()
 
-		addr := fmt.Sprintf("%s:22", ip.String())
-		if ip.To4() == nil {
-			addr = fmt.Sprintf("[%s]:22", ip.String())
+		addr := fmt.Sprintf("%s:22", ipAddress.String())
+		if ipAddress.To4() == nil {
+			addr = fmt.Sprintf("[%s]:22", ipAddress.String())
 		}
 
 		_, err := net.DialTimeout("tcp", addr, time.Second)
@@ -896,9 +896,9 @@ func GetLeaseAddresses(networkName string, hwaddr string) ([]net.IP, error) {
 		}
 
 		// Parse the IP.
-		ip := net.ParseIP(fields[2])
-		if ip != nil {
-			addresses = append(addresses, ip)
+		ipAddress := net.ParseIP(fields[2])
+		if ipAddress != nil {
+			addresses = append(addresses, ipAddress)
 		}
 	}
 
@@ -970,12 +970,12 @@ func usesIPv6Firewall(netConfig map[string]string) bool {
 // returned combined with the first allowed network they are within.
 // If no allowedNets supplied they are returned as-is.
 func parseIPRange(ipRange string, allowedNets ...*net.IPNet) (*iprange.Range, error) {
-	inAllowedNet := func(ip net.IP, allowedNet *net.IPNet) net.IP {
-		if ip == nil {
+	inAllowedNet := func(ipAddress net.IP, allowedNet *net.IPNet) net.IP {
+		if ipAddress == nil {
 			return nil
 		}
 
-		ipv4 := ip.To4()
+		ipv4 := ipAddress.To4()
 
 		// Only match IPv6 addresses against IPv6 networks.
 		if ipv4 == nil && allowedNet.IP.To4() != nil {
@@ -984,22 +984,22 @@ func parseIPRange(ipRange string, allowedNets ...*net.IPNet) (*iprange.Range, er
 
 		// Combine IP with network prefix if IP starts with a zero.
 		// If IP is v4, then compare against 4-byte representation, otherwise use 16 byte representation.
-		if (ipv4 != nil && ipv4[0] == 0) || (ipv4 == nil && ip[0] == 0) {
+		if (ipv4 != nil && ipv4[0] == 0) || (ipv4 == nil && ipAddress[0] == 0) {
 			allowedNet16 := allowedNet.IP.To16()
 			ipCombined := make(net.IP, net.IPv6len)
-			for i, b := range ip {
+			for i, b := range ipAddress {
 				ipCombined[i] = allowedNet16[i] | b
 			}
 
-			ip = ipCombined
+			ipAddress = ipCombined
 		}
 
 		// Check start IP is within one of the allowed networks.
-		if !allowedNet.Contains(ip) {
+		if !allowedNet.Contains(ipAddress) {
 			return nil
 		}
 
-		return ip
+		return ipAddress
 	}
 
 	rangeParts := strings.SplitN(ipRange, "-", 2)
@@ -1198,28 +1198,28 @@ func SubnetContains(outerSubnet *net.IPNet, innerSubnet *net.IPNet) bool {
 }
 
 // SubnetContainsIP returns true if outsetSubnet contains IP address.
-func SubnetContainsIP(outerSubnet *net.IPNet, ip net.IP) bool {
+func SubnetContainsIP(outerSubnet *net.IPNet, ipAddress net.IP) bool {
 	// Convert ip to ipNet.
-	ipIsIP4 := ip.To4() != nil
+	ipIsIP4 := ipAddress.To4() != nil
 
 	prefix := 32
 	if !ipIsIP4 {
 		prefix = 128
 	}
 
-	_, ipSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", ip.String(), prefix))
+	_, ipSubnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", ipAddress.String(), prefix))
 	if err != nil {
 		return false
 	}
 
-	ipSubnet.IP = ip
+	ipSubnet.IP = ipAddress
 
 	return SubnetContains(outerSubnet, ipSubnet)
 }
 
 // SubnetIterate iterates through each IP in a subnet calling a function for each IP.
 // If the ipFunc returns a non-nil error then the iteration stops and the error is returned.
-func SubnetIterate(subnet *net.IPNet, ipFunc func(ip net.IP) error) error {
+func SubnetIterate(subnet *net.IPNet, ipFunc func(ipAddress net.IP) error) error {
 	inc := big.NewInt(1)
 
 	// Convert route start IP to native representations to allow incrementing.
@@ -1233,12 +1233,12 @@ func SubnetIterate(subnet *net.IPNet, ipFunc func(ip net.IP) error) error {
 
 	// Iterate through IPs in subnet, calling ipFunc for each one.
 	for {
-		ip := net.IP(startBig.Bytes())
-		if !subnet.Contains(ip) {
+		ipAddress := net.IP(startBig.Bytes())
+		if !subnet.Contains(ipAddress) {
 			break
 		}
 
-		err := ipFunc(ip)
+		err := ipFunc(ipAddress)
 		if err != nil {
 			return err
 		}
@@ -1292,13 +1292,13 @@ func InterfaceStatus(nicName string) ([]net.IP, bool, error) {
 
 	var globalUnicastIPs []net.IP
 	for _, address := range addresses {
-		ip, _, _ := net.ParseCIDR(address.String())
-		if ip == nil {
+		ipAddress, _, _ := net.ParseCIDR(address.String())
+		if ipAddress == nil {
 			continue
 		}
 
-		if ip.IsGlobalUnicast() {
-			globalUnicastIPs = append(globalUnicastIPs, ip)
+		if ipAddress.IsGlobalUnicast() {
+			globalUnicastIPs = append(globalUnicastIPs, ipAddress)
 		}
 	}
 
@@ -1366,14 +1366,14 @@ func ParseIPCIDRToNet(ipAddressCIDR string) (*net.IPNet, error) {
 }
 
 // IPToNet converts an IP to a single host IPNet.
-func IPToNet(ip net.IP) net.IPNet {
+func IPToNet(ipAddress net.IP) net.IPNet {
 	bits := 32
-	if ip.To4() == nil {
+	if ipAddress.To4() == nil {
 		bits = 128
 	}
 
 	return net.IPNet{
-		IP:   ip,
+		IP:   ipAddress,
 		Mask: net.CIDRMask(bits, bits),
 	}
 }

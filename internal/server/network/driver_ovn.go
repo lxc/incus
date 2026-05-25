@@ -1231,12 +1231,12 @@ func (n *ovn) getUnderlayInfo() (uint32, net.IP, error) {
 			}
 
 			for _, addr := range addrs {
-				ip, _, err := net.ParseCIDR(addr.String())
+				ipAddress, _, err := net.ParseCIDR(addr.String())
 				if err != nil {
 					continue
 				}
 
-				if ip.Equal(findIP) {
+				if ipAddress.Equal(findIP) {
 					underlayMTU, err := GetDevMTU(iface.Name)
 					if err != nil {
 						return 0, fmt.Errorf("Failed getting MTU for %q: %w", iface.Name, err)
@@ -1716,12 +1716,12 @@ func (n *ovn) uplinkAllAllocatedIPs(ctx context.Context, tx *db.ClusterTx, uplin
 
 			for _, k := range []string{ovnVolatileUplinkIPv4, ovnVolatileUplinkIPv6} {
 				if netInfo.Config[k] != "" {
-					ip := net.ParseIP(netInfo.Config[k])
-					if ip != nil {
-						if ip.To4() != nil {
-							v4IPs = append(v4IPs, ip)
+					ipAddress := net.ParseIP(netInfo.Config[k])
+					if ipAddress != nil {
+						if ipAddress.To4() != nil {
+							v4IPs = append(v4IPs, ipAddress)
 						} else {
-							v6IPs = append(v6IPs, ip)
+							v6IPs = append(v6IPs, ipAddress)
 						}
 					}
 				}
@@ -1772,7 +1772,7 @@ func (n *ovn) uplinkAllocateIP(ipRanges []*iprange.Range, allAllocated []net.IP)
 				continue
 			}
 
-			return ip, nil
+			return ipAddress, nil
 		}
 	}
 
@@ -1992,14 +1992,14 @@ func (n *ovn) pingOVNRouter() {
 	var ips []net.IP
 
 	for _, key := range []string{ovnVolatileUplinkIPv4, ovnVolatileUplinkIPv6} {
-		ip := net.ParseIP(n.config[key])
-		if ip != nil {
-			ips = append(ips, ip)
+		ipAddress := net.ParseIP(n.config[key])
+		if ipAddress != nil {
+			ips = append(ips, ipAddress)
 		}
 	}
 
 	for i := range ips {
-		ip := ips[i] // Local var
+		ipAddress := ips[i] // Local var
 
 		// Now that the OVN router is connected to the uplink bridge, attempt to ping the OVN
 		// router's external IPv6 from the host running the uplink bridge in an attempt to trigger the
@@ -2014,9 +2014,9 @@ func (n *ovn) pingOVNRouter() {
 
 			// Try several attempts as it can take a few seconds for the network to come up.
 			for range 5 {
-				err = pingIP(context.TODO(), ip)
+				err = pingIP(context.TODO(), ipAddress)
 				if err == nil {
-					n.logger.Debug("OVN router external IP address reachable", logger.Ctx{"ip": ip.String()})
+					n.logger.Debug("OVN router external IP address reachable", logger.Ctx{"ip": ipAddress.String()})
 					return
 				}
 
@@ -2025,7 +2025,7 @@ func (n *ovn) pingOVNRouter() {
 
 			// We would expect this on a chassis node that isn't the active router gateway, it doesn't
 			// always indicate a problem.
-			n.logger.Debug("OVN router external IP address unreachable", logger.Ctx{"ip": ip.String(), "err": err})
+			n.logger.Debug("OVN router external IP address unreachable", logger.Ctx{"ip": ipAddress.String(), "err": err})
 		}()
 	}
 }
@@ -4458,16 +4458,16 @@ func (n *ovn) getInstanceDevicePortName(instanceUUID string, deviceName string) 
 }
 
 // instanceDevicePortRoutesParse parses the instance NIC device config for internal routes and external routes.
-func (n *ovn) instanceDevicePortRoutesParse(deviceConfig map[string]string) ([]*net.IPNet, []*net.IPNet, error) {
+func (n *ovn) instanceDevicePortRoutesParse(devConfig map[string]string) ([]*net.IPNet, []*net.IPNet, error) {
 	var err error
 
 	internalRoutes := []*net.IPNet{}
 	for _, key := range []string{"ipv4.routes", "ipv6.routes"} {
-		if deviceConfig[key] == "" {
+		if devConfig[key] == "" {
 			continue
 		}
 
-		internalRoutes, err = SubnetParseAppend(internalRoutes, util.SplitNTrimSpace(deviceConfig[key], ",", -1, false)...)
+		internalRoutes, err = SubnetParseAppend(internalRoutes, util.SplitNTrimSpace(devConfig[key], ",", -1, false)...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Invalid %q value: %w", key, err)
 		}
@@ -4475,11 +4475,11 @@ func (n *ovn) instanceDevicePortRoutesParse(deviceConfig map[string]string) ([]*
 
 	externalRoutes := []*net.IPNet{}
 	for _, key := range []string{"ipv4.routes.external", "ipv6.routes.external"} {
-		if deviceConfig[key] == "" {
+		if devConfig[key] == "" {
 			continue
 		}
 
-		externalRoutes, err = SubnetParseAppend(externalRoutes, util.SplitNTrimSpace(deviceConfig[key], ",", -1, false)...)
+		externalRoutes, err = SubnetParseAppend(externalRoutes, util.SplitNTrimSpace(devConfig[key], ",", -1, false)...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Invalid %q value: %w", key, err)
 		}
@@ -4601,7 +4601,7 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 
 // InstanceDevicePortAdd adds empty DNS record (to indicate port has been added) and any DHCP reservations for
 // instance device port.
-func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, deviceConfig deviceConfig.Device) error {
+func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error {
 	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
 
 	reverter := revert.New()
@@ -4617,19 +4617,19 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 	})
 
 	// If NIC has static IPv4 address then create a DHCPv4 reservation.
-	if deviceConfig["ipv4.address"] != "" {
-		ip := net.ParseIP(deviceConfig["ipv4.address"])
-		if ip != nil {
+	if devConfig["ipv4.address"] != "" {
+		ipAddress := net.ParseIP(devConfig["ipv4.address"])
+		if ipAddress != nil {
 			dhcpReservations, err := n.ovnnb.GetLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName())
 			if err != nil {
 				return fmt.Errorf("Failed getting DHCPv4 reservations: %w", err)
 			}
 
-			if !n.hasDHCPv4Reservation(dhcpReservations, ip) {
-				dhcpReservations = append(dhcpReservations, iprange.Range{Start: ip})
+			if !n.hasDHCPv4Reservation(dhcpReservations, ipAddress) {
+				dhcpReservations = append(dhcpReservations, iprange.Range{Start: ipAddress})
 				err = n.ovnnb.UpdateLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName(), dhcpReservations)
 				if err != nil {
-					return fmt.Errorf("Failed adding DHCPv4 reservation for %q: %w", ip.String(), err)
+					return fmt.Errorf("Failed adding DHCPv4 reservation for %q: %w", ipAddress.String(), err)
 				}
 			}
 		}
@@ -4640,9 +4640,9 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devi
 }
 
 // hasDHCPv4Reservation returns whether IP is in the supplied reservation list.
-func (n *ovn) hasDHCPv4Reservation(dhcpReservations []iprange.Range, ip net.IP) bool {
+func (n *ovn) hasDHCPv4Reservation(dhcpReservations []iprange.Range, ipAddress net.IP) bool {
 	for _, dhcpReservation := range dhcpReservations {
-		if dhcpReservation.Start.Equal(ip) && dhcpReservation.End == nil {
+		if dhcpReservation.Start.Equal(ipAddress) && dhcpReservation.End == nil {
 			return true
 		}
 	}
@@ -4826,16 +4826,16 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	// checkAndStoreIP checks if the supplied IP is valid and can be used for a missing DNS IP.
 	// If the found IP is needed, stores into the relevant dnsIPv{X} variable and into dnsIPs slice.
-	checkAndStoreIP := func(ip net.IP) {
-		if ip != nil {
-			isV4 := ip.To4() != nil
+	checkAndStoreIP := func(ipAddress net.IP) {
+		if ipAddress != nil {
+			isV4 := ipAddress.To4() != nil
 			if dnsIPv4 == nil && isV4 {
-				dnsIPv4 = ip
+				dnsIPv4 = ipAddress
 			} else if dnsIPv6 == nil && !isV4 {
-				dnsIPv6 = ip
+				dnsIPv6 = ipAddress
 			}
 
-			dnsIPs = append(dnsIPs, ip)
+			dnsIPs = append(dnsIPs, ipAddress)
 		}
 	}
 
@@ -5395,15 +5395,15 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 // If the security.acls.default.{in,e}gress.action or security.acls.default.{in,e}gress.logged settings are not
 // specified in the NIC device config, then the settings on the network are used, and if not specified there then
 // it returns "reject" and false respectively.
-func (n *ovn) instanceDeviceACLDefaults(deviceConfig deviceConfig.Device, direction string) (string, bool) {
+func (n *ovn) instanceDeviceACLDefaults(devConfig deviceConfig.Device, direction string) (string, bool) {
 	defaults := map[string]string{
 		fmt.Sprintf("security.acls.default.%s.action", direction): "reject",
 		fmt.Sprintf("security.acls.default.%s.logged", direction): "false",
 	}
 
 	for k := range defaults {
-		if deviceConfig[k] != "" {
-			defaults[k] = deviceConfig[k]
+		if devConfig[k] != "" {
+			defaults[k] = devConfig[k]
 		} else if n.config[k] != "" {
 			defaults[k] = n.config[k]
 		}
@@ -7134,11 +7134,11 @@ func (n *ovn) Leases(projectName string, clientType request.ClientType) ([]api.N
 	if projectName == n.project {
 		// Add our own gateway IPs.
 		for _, addr := range []string{n.config["ipv4.address"], n.config["ipv6.address"]} {
-			ip, _, _ := net.ParseCIDR(addr)
-			if ip != nil {
+			ipAddress, _, _ := net.ParseCIDR(addr)
+			if ipAddress != nil {
 				leases = append(leases, api.NetworkLease{
 					Hostname: fmt.Sprintf("%s.gw", n.Name()),
-					Address:  ip.String(),
+					Address:  ipAddress.String(),
 					Type:     "gateway",
 				})
 			}
