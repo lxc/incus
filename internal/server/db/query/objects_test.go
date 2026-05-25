@@ -119,8 +119,8 @@ func TestUpsertObject_Insert(t *testing.T) {
 		return scan(&object.ID, &object.Name)
 	}
 
-	sql := "SELECT id, name FROM test WHERE name=?"
-	err = query.Scan(context.TODO(), tx, sql, dest, "egg")
+	stmt := "SELECT id, name FROM test WHERE name=?"
+	err = query.Scan(context.TODO(), tx, stmt, dest, "egg")
 	require.NoError(t, err)
 
 	assert.Equal(t, 2, object.ID)
@@ -149,10 +149,10 @@ func TestUpsertObject_Update(t *testing.T) {
 		return scan(&object.ID, &object.Name)
 	}
 
-	sql := "SELECT id, name FROM test WHERE name=?"
+	stmt := "SELECT id, name FROM test WHERE name=?"
 	require.NoError(t, err)
 
-	err = query.Scan(context.TODO(), tx, sql, dest, "egg")
+	err = query.Scan(context.TODO(), tx, stmt, dest, "egg")
 	require.NoError(t, err)
 
 	assert.Equal(t, 1, object.ID)
