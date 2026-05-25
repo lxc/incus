@@ -15,8 +15,8 @@ type common struct {
 	prefixPath string
 }
 
-func (d *common) init(logger logger.Logger, path string) {
-	d.logger = logger
+func (d *common) init(l logger.Logger, path string) {
+	d.logger = l
 	d.watches = make(map[string]map[string]func(string, string) bool)
 	d.prefixPath = path
 }

@@ -10,7 +10,7 @@ import (
 type driver interface {
 	Driver
 
-	init(logger logger.Logger, path string)
+	init(l logger.Logger, path string)
 	load(ctx context.Context) error
 }
 
