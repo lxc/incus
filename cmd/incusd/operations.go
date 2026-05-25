@@ -57,12 +57,12 @@ var operationWebsocket = APIEndpoint{
 
 // waitForOperations waits for operations to finish.
 // There's a timeout for console/exec operations that when reached will shut down the instances forcefully.
-func waitForOperations(ctx context.Context, cluster *db.Cluster, consoleShutdownTimeout time.Duration) {
+func waitForOperations(ctx context.Context, clusterDB *db.Cluster, consoleShutdownTimeout time.Duration) {
 	timeout := time.After(consoleShutdownTimeout)
 
 	defer func() {
-		_ = cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-			err := dbCluster.DeleteOperations(ctx, tx.Tx(), cluster.GetNodeID())
+		_ = clusterDB.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			err := dbCluster.DeleteOperations(ctx, tx.Tx(), clusterDB.GetNodeID())
 			if err != nil {
 				logger.Error("Failed cleaning up operations")
 			}

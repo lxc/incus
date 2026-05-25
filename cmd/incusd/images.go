@@ -667,14 +667,14 @@ func imgPostURLInfo(ctx context.Context, s *state.State, r *http.Request, req ap
 		return nil, errors.New("Missing Incus-Image-Hash header")
 	}
 
-	url := raw.Header.Get("Incus-Image-URL")
-	if url == "" {
+	imageURL := raw.Header.Get("Incus-Image-URL")
+	if imageURL == "" {
 		return nil, errors.New("Missing Incus-Image-URL header")
 	}
 
 	// Download the image itself.
 	info, _, err := imageDownload(ctx, r, s, op, &imageDownloadArgs{
-		Server:      url,
+		Server:      imageURL,
 		Protocol:    "direct",
 		Alias:       hash,
 		AutoUpdate:  req.AutoUpdate,
@@ -1957,11 +1957,11 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 		if len(nodes) > 1 {
 			var nodeIDs []int64
 
-			for _, node := range nodes {
+			for _, address := range nodes {
 				err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 					var err error
 
-					nodeInfo, err := tx.GetNodeByAddress(ctx, node)
+					nodeInfo, err := tx.GetNodeByAddress(ctx, address)
 					if err != nil {
 						return err
 					}
@@ -2001,15 +2001,15 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 		var newImage *api.Image
 
 		for _, image := range images {
-			filter := dbCluster.ImageFilter{Project: &image.Project}
+			imageFilter := dbCluster.ImageFilter{Project: &image.Project}
 			if image.Public {
-				filter.Public = &image.Public
+				imageFilter.Public = &image.Public
 			}
 
 			var imageInfo *api.Image
 
 			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-				_, imageInfo, err = tx.GetImage(ctx, image.Fingerprint, filter)
+				_, imageInfo, err = tx.GetImage(ctx, image.Fingerprint, imageFilter)
 
 				return err
 			})
@@ -3055,12 +3055,12 @@ func imageDeleteFromDisk(fingerprint string) {
 }
 
 func doImageGet(ctx context.Context, tx *db.ClusterTx, project, fingerprint string, public bool) (*api.Image, error) {
-	filter := dbCluster.ImageFilter{Project: &project}
+	imageFilter := dbCluster.ImageFilter{Project: &project}
 	if public {
-		filter.Public = &public
+		imageFilter.Public = &public
 	}
 
-	_, imgInfo, err := tx.GetImageByFingerprintPrefix(ctx, fingerprint, filter)
+	_, imgInfo, err := tx.GetImageByFingerprintPrefix(ctx, fingerprint, imageFilter)
 	if err != nil {
 		return nil, err
 	}

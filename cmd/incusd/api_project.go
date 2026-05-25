@@ -1349,7 +1349,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Setup the state struct.
-	state := api.ProjectState{}
+	projectState := api.ProjectState{}
 
 	// Get current limits and usage.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1358,7 +1358,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		state.Resources = result
+		projectState.Resources = result
 
 		return nil
 	})
@@ -1366,7 +1366,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	return response.SyncResponse(true, &state)
+	return response.SyncResponse(true, &projectState)
 }
 
 // Check if a project is empty.

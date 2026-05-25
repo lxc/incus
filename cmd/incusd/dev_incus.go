@@ -204,15 +204,15 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 			}
 		}
 
-		var state api.StatusCode
+		var statusCode api.StatusCode
 
 		if util.IsTrue(c.LocalConfig()["volatile.last_state.ready"]) {
-			state = api.Ready
+			statusCode = api.Ready
 		} else {
-			state = api.Started
+			statusCode = api.Started
 		}
 
-		return response.DevIncusResponse(http.StatusOK, apiGuest.DevIncusGet{APIVersion: version.APIVersion, Location: location, InstanceType: c.Type().String(), DevIncusPut: apiGuest.DevIncusPut{State: state.String()}}, "json", c.Type() == instancetype.VM)
+		return response.DevIncusResponse(http.StatusOK, apiGuest.DevIncusGet{APIVersion: version.APIVersion, Location: location, InstanceType: c.Type().String(), DevIncusPut: apiGuest.DevIncusPut{State: statusCode.String()}}, "json", c.Type() == instancetype.VM)
 	case "PATCH":
 		if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
@@ -225,18 +225,18 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, "%s", err.Error()), c.Type() == instancetype.VM)
 		}
 
-		state := api.StatusCodeFromString(req.State)
+		statusCode := api.StatusCodeFromString(req.State)
 
-		if state != api.Started && state != api.Ready {
+		if statusCode != api.Started && statusCode != api.Ready {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, "Invalid state %q", req.State), c.Type() == instancetype.VM)
 		}
 
-		err = c.VolatileSet(map[string]string{"volatile.last_state.ready": strconv.FormatBool(state == api.Ready)})
+		err = c.VolatileSet(map[string]string{"volatile.last_state.ready": strconv.FormatBool(statusCode == api.Ready)})
 		if err != nil {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, "%s", err.Error()), c.Type() == instancetype.VM)
 		}
 
-		if state == api.Ready {
+		if statusCode == api.Ready {
 			s.Events.SendLifecycle(c.Project().Name, lifecycle.InstanceReady.Event(c, nil))
 		}
 
@@ -357,9 +357,9 @@ type ConnPidMapper struct {
 	mLock sync.Mutex
 }
 
-func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, state http.ConnState) {
+func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState) {
 	unixConn := conn.(*net.UnixConn)
-	switch state {
+	switch connState {
 	case http.StateNew:
 		cred, err := linux.GetUcred(unixConn)
 		if err != nil {
@@ -391,7 +391,7 @@ func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, state http.ConnState) {
 		delete(m.m, unixConn)
 		m.mLock.Unlock()
 	default:
-		logger.Debugf("Unknown state for connection %s", state)
+		logger.Debugf("Unknown state for connection %s", connState)
 	}
 }
 
