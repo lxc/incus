@@ -731,10 +731,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	memberSpecific := false
-	if request.QueryParam(r, "target") != "" {
-		memberSpecific = true
-	}
+	memberSpecific := request.QueryParam(r, "target") != ""
 
 	var hiddenPoolNames []string
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {

@@ -1128,10 +1128,7 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 		return response.InternalError(err)
 	}
 
-	push := false
-	if req.Source.Mode == "push" {
-		push = true
-	}
+	push := req.Source.Mode == "push"
 
 	// Initialize migrationArgs, don't set the Storage property yet, this is done in DoStorage,
 	// to avoid this function relying on the legacy storage layer.
