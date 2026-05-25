@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"strconv"
 	"strings"
@@ -952,9 +953,7 @@ func (d *truenas) UpdateVolume(vol Volume, changedConfig map[string]string) erro
 	}
 
 	defer func() {
-		for k, v := range old {
-			vol.config[k] = v
-		}
+		maps.Copy(vol.config, old)
 	}()
 
 	// If any of the relevant keys changed, re-apply the quota.

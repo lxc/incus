@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand/v2"
 	"net/http"
@@ -123,9 +124,7 @@ func (d *common) CreationDate() time.Time {
 func (d *common) UpdateDevices(devices deviceConfig.Devices) error {
 	d.localDevices = devices
 
-	for name, devConfig := range devices {
-		d.expandedDevices[name] = devConfig
-	}
+	maps.Copy(d.expandedDevices, devices)
 
 	return nil
 }

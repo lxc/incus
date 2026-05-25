@@ -509,9 +509,7 @@ func (op *Operation) Render() (string, *api.Operation, error) {
 
 	// Make a read-only copy of the metadata to avoid concurrent reads/writes.
 	metadata := map[string]any{}
-	for k, v := range op.metadata {
-		metadata[k] = v
-	}
+	maps.Copy(metadata, op.metadata)
 
 	// Put together the response struct.
 	retOp := &api.Operation{
@@ -674,9 +672,7 @@ func (op *Operation) Metadata() map[string]any {
 
 	// Make a read-only copy of the metadata to avoid concurrent reads/writes.
 	metadata := map[string]any{}
-	for k, v := range op.metadata {
-		metadata[k] = v
-	}
+	maps.Copy(metadata, op.metadata)
 
 	return metadata
 }
