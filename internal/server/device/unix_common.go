@@ -187,6 +187,7 @@ func (d *unixCommon) Register() error {
 			if err != nil {
 				return nil, err
 			}
+
 		case "remove":
 			// Skip if host side instance device file doesn't exist.
 			if !util.PathExists(devPath) {
