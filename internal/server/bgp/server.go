@@ -60,9 +60,6 @@ func NewServer() *Server {
 	return s
 }
 
-func (s *Server) setup() {
-}
-
 // Start sets up the BGP listener.
 func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 	// If routerID is nil, fill with our best guess.
