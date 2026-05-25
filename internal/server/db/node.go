@@ -274,7 +274,7 @@ func (c *ClusterTx) GetNodeWithID(ctx context.Context, nodeID int) (NodeInfo, er
 // GetPendingNodeByAddress returns the pending node with the given network address.
 func (c *ClusterTx) GetPendingNodeByAddress(ctx context.Context, address string) (NodeInfo, error) {
 	null := NodeInfo{}
-	nodes, err := c.nodes(ctx, true /*pending */, "address=?", address)
+	nodes, err := c.nodes(ctx, true /* pending */, "address=?", address)
 	if err != nil {
 		return null, err
 	}
