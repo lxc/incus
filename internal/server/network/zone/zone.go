@@ -59,7 +59,7 @@ func (d *zone) ID() int64 {
 	return d.id
 }
 
-// Name returns the project.
+// Project returns the project name.
 func (d *zone) Project() string {
 	return d.projectName
 }
