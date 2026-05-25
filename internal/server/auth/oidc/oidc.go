@@ -151,8 +151,11 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	}
 
 	user, ok := claims.Claims["email"]
-	if ok && user != nil && user.(string) != "" {
-		return user.(string), nil
+	if ok && user != nil {
+		email, ok := user.(string)
+		if ok && email != "" {
+			return email, nil
+		}
 	}
 
 	return claims.Subject, nil
