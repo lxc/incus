@@ -20,6 +20,7 @@ func OperationWebSocket(req *http.Request, op *Operation) response.Response {
 	return &operationWebSocket{req, op}
 }
 
+// Render handles the websocket connection for the operation.
 func (r *operationWebSocket) Render(w http.ResponseWriter) error {
 	chanErr, err := r.op.Connect(r.req, w)
 	if err != nil {
@@ -55,6 +56,7 @@ func ForwardedOperationWebSocket(req *http.Request, id string, source *websocket
 	return &forwardedOperationWebSocket{req, id, source}
 }
 
+// Render proxies the websocket connection to the node running the operation.
 func (r *forwardedOperationWebSocket) Render(w http.ResponseWriter) error {
 	// Upgrade target connection to websocket.
 	target, err := ws.Upgrader.Upgrade(w, r.req, nil)
