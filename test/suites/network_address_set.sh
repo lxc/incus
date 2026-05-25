@@ -7,6 +7,18 @@ test_address_set() {
     incus network address-set create testAS
     incus network address-set delete testAS
 
+    # IP ranges are accepted, including across both address families.
+    incus network address-set create testAS
+    incus network address-set add testAS 10.0.0.120-10.0.0.130
+    incus network address-set show testAS | grep -q "10.0.0.120-10.0.0.130"
+    incus network address-set add testAS 2001:db8::1-2001:db8::10
+    incus network address-set show testAS | grep -q "2001:db8::1-2001:db8::10"
+    # An invalid range (start after end) is rejected.
+    ! incus network address-set add testAS 10.0.0.130-10.0.0.120 || false
+    # A range exceeding 256 addresses is rejected, CIDR should be used instead.
+    ! incus network address-set add testAS 10.0.0.0-10.0.255.255 || false
+    incus network address-set delete testAS
+
     incus project create testproj -c features.networks=true
     incus network address-set create testAS --project testproj
     incus network address-set ls --project testproj | grep -q "testAS"
@@ -114,6 +126,18 @@ EOF
     ping -c2 192.0.2.2 > /dev/null
     incus network set "${brName}" security.acls=""
     incus network acl delete cidrACL
+    incus network address-set rm testAS
+
+    # An IP range covering the container address is expanded and applied to the firewall.
+    incus network address-set create testAS
+    incus network address-set add testAS 192.0.2.1-192.0.2.5
+    incus network acl create rangeACL
+    # shellcheck disable=2016
+    incus network acl rule add rangeACL ingress action=allow protocol=icmp4 destination='\$testAS'
+    incus network set "${brName}" security.acls="rangeACL"
+    ping -c2 192.0.2.2 > /dev/null
+    incus network set "${brName}" security.acls=""
+    incus network acl delete rangeACL
     incus network address-set rm testAS
 
     incus network address-set create testAS
