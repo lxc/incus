@@ -790,7 +790,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		delete(changes, "network.ovn.client_key")
 
 		// Apply remaining configuration changes.
-		err = doApi10UpdateTriggers(d, nil, changes, nodeConfig, currentClusterConfig)
+		err = doAPI10UpdateTriggers(d, nil, changes, nodeConfig, currentClusterConfig)
 		if err != nil {
 			return err
 		}

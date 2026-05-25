@@ -295,15 +295,15 @@ func deviceNetlinkListener() (chan []string, chan device.USBEvent, chan device.U
  * The `loadBalancing` flag indicates whether the CPU pinning should be load balanced or not (e.g, NUMA placement when `limits.cpu` is a single number which means
  * a required number of vCPUs per instance that can be chosen within a CPU pool).
  */
-func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst instance.Instance, effectiveCpus []int64, targetCPUPool []int64, targetCpuNum int, loadBalancing bool) {
-	if len(targetCPUPool) < targetCpuNum {
-		diffCount := len(targetCPUPool) - targetCpuNum
+func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst instance.Instance, effectiveCpus []int64, targetCPUPool []int64, targetCPUNum int, loadBalancing bool) {
+	if len(targetCPUPool) < targetCPUNum {
+		diffCount := len(targetCPUPool) - targetCPUNum
 		logger.Warnf("%v CPUs have been required for pinning, but %v CPUs won't be allocated", len(targetCPUPool), -diffCount)
-		targetCpuNum = len(targetCPUPool)
+		targetCPUNum = len(targetCPUPool)
 	}
 
 	// If the `targetCPUPool` has been manually specified (explicit CPU IDs/ranges specified with `limits.cpu`)
-	if len(targetCPUPool) == targetCpuNum && !loadBalancing {
+	if len(targetCPUPool) == targetCPUNum && !loadBalancing {
 		for _, nr := range targetCPUPool {
 			if !slices.Contains(effectiveCpus, nr) {
 				continue
@@ -347,7 +347,7 @@ func fillFixedInstances(fixedInstances map[int64][]instance.Instance, inst insta
 	sort.Sort(sortedUsage)
 	count := 0
 	for _, cpu := range sortedUsage {
-		if count == targetCpuNum {
+		if count == targetCPUNum {
 			break
 		}
 
