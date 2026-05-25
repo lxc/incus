@@ -225,7 +225,7 @@ func (d *common) updateVolume(vol Volume, changedConfig map[string]string) error
 	return nil
 }
 
-// MigrationType returns the type of transfer methods to be used when doing migrations between pools
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools
 // in preference order.
 func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	var transportType migration.MigrationFSType
@@ -547,6 +547,7 @@ func (d *common) UpdateBucketKey(bucket Volume, keyName string, creds S3Credenti
 	return nil, ErrNotSupported
 }
 
+// DeleteBucketKey deletes an existing bucket key.
 func (d *common) DeleteBucketKey(bucket Volume, keyName string, op *operations.Operation) error {
 	return nil
 }

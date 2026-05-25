@@ -653,6 +653,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 	return nil
 }
 
+// Validate checks that all provided keys are supported and that no conflicting or missing config exists.
 func (d *lvm) Validate(config map[string]string) error {
 	// gendoc:generate(entity=storage_lvm, group=common, key=source)
 	//
