@@ -982,15 +982,15 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 	if exists {
 		// Do not create a database entry if the request is coming from the internal
 		// cluster communications for image synchronization
-		if isClusterNotification(r) {
-			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.AddImageToLocalNode(ctx, project, info.Fingerprint)
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
+		if !isClusterNotification(r) {
 			return &info, errors.New("Image with same fingerprint already exists")
+		}
+
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.AddImageToLocalNode(ctx, project, info.Fingerprint)
+		})
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		public, ok := metadata["public"]

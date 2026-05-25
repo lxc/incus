@@ -318,11 +318,11 @@ func internalShutdown(d *Daemon, r *http.Request) response.Response {
 
 		// Send the response before the daemon process ends.
 		f, ok := w.(http.Flusher)
-		if ok {
-			f.Flush()
-		} else {
+		if !ok {
 			return errors.New("http.ResponseWriter is not type http.Flusher")
 		}
+
+		f.Flush()
 
 		// Send result of d.Stop() to cmdDaemon so that process stops with correct exit code from Stop().
 		go func() {

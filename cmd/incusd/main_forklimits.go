@@ -93,11 +93,11 @@ func (c *cmdForklimits) run(cmd *cobra.Command, _ []string) error {
 		var resource int
 		var rLimit unix.Rlimit
 
-		if limit.name == "memlock" {
-			resource = unix.RLIMIT_MEMLOCK
-		} else {
+		if limit.name != "memlock" {
 			return fmt.Errorf("Unsupported limit type: %q", limit.name)
 		}
+
+		resource = unix.RLIMIT_MEMLOCK
 
 		if limit.soft == "unlimited" {
 			rLimit.Cur = unix.RLIM_INFINITY
