@@ -20,7 +20,7 @@ func (s *utilsPropertiesTestSuite) TestStringToTimeHookFuncValidData() {
 	layout := time.RFC3339
 	hook := stringToTimeHookFunc(layout)
 
-	result, err := hook(reflect.TypeOf(""), reflect.TypeOf(time.Time{}), "2023-07-12T07:34:00Z")
+	result, err := hook(reflect.TypeFor[string](), reflect.TypeFor[time.Time](), "2023-07-12T07:34:00Z")
 	s.NoError(err)
 	s.Equal(time.Date(2023, 7, 12, 7, 34, 0, 0, time.UTC), result)
 }
@@ -29,7 +29,7 @@ func (s *utilsPropertiesTestSuite) TestStringToTimeHookFuncInvalidData() {
 	layout := time.RFC3339
 	hook := stringToTimeHookFunc(layout)
 
-	_, err := hook(reflect.TypeOf(""), reflect.TypeOf(time.Time{}), "not a time")
+	_, err := hook(reflect.TypeFor[string](), reflect.TypeFor[time.Time](), "not a time")
 	s.Error(err, "Expected an error but got nil")
 }
 

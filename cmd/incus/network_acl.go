@@ -850,7 +850,7 @@ func (c *cmdNetworkACLRule) commandAdd() *cobra.Command {
 // networkACLRuleJSONStructFieldMap returns a map of JSON tag names to struct field indices for api.NetworkACLRule.
 func networkACLRuleJSONStructFieldMap() map[string]int {
 	// Use reflect to get field names in rule from json tags.
-	ruleType := reflect.TypeOf(api.NetworkACLRule{})
+	ruleType := reflect.TypeFor[api.NetworkACLRule]()
 	allowedKeys := make(map[string]int, ruleType.NumField())
 
 	for i := range ruleType.NumField() {

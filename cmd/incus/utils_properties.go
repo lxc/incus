@@ -16,7 +16,7 @@ import (
 // stringToTimeHookFunc is a custom decoding hook that converts string values to time.Time using the given layout.
 func stringToTimeHookFunc(layout string) mapstructure.DecodeHookFuncType {
 	return func(from reflect.Type, to reflect.Type, data any) (any, error) {
-		if from.Kind() == reflect.String && to == reflect.TypeOf(time.Time{}) {
+		if from.Kind() == reflect.String && to == reflect.TypeFor[time.Time]() {
 			strValue, ok := data.(string)
 			if !ok {
 				return nil, errors.New("Unexpected data type")
