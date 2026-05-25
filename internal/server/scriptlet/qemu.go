@@ -258,9 +258,10 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 
 			newCmdArgs = append(newCmdArgs, arg)
 
-			if arg == "-bios" {
+			switch arg {
+			case "-bios":
 				newFoundBios = true
-			} else if arg == "-kernel" {
+			case "-kernel":
 				newFoundKernel = true
 			}
 		}
@@ -268,9 +269,10 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		// Check whether -bios or -kernel are in the current arguments
 		var foundBios, foundKernel bool
 		for _, arg := range *cmdArgs {
-			if arg == "-bios" {
+			switch arg {
+			case "-bios":
 				foundBios = true
-			} else if arg == "-kernel" {
+			case "-kernel":
 				foundKernel = true
 			}
 
