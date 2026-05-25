@@ -6752,7 +6752,12 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 
 	// Only populate Container field for non-snapshot instances.
 	if !inst.IsSnapshot() {
-		config.Container = ci.(*api.Instance)
+		apiInst, ok := ci.(*api.Instance)
+		if !ok {
+			return nil, fmt.Errorf("Unexpected instance type %T for non-snapshot instance", ci)
+		}
+
+		config.Container = apiInst
 
 		if snapshots {
 			snapshots, err := inst.Snapshots()
