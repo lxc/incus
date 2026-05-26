@@ -3123,3 +3123,11 @@ those TPM devices.
 This introduces `linstor.raw.*` configuration keys for both LINSTOR
 storage pools and storage volumes, allowing to set low-level
 properties to resource groups and resource definitions.
+
+## `network_address_set_ip_ranges`
+
+This adds support for IP ranges (e.g. `10.0.0.120-10.0.0.130`) in network
+address sets, matching what's already allowed in network ACL rules.
+
+A single range may expand to at most 256 addresses. Larger sets of
+addresses should be expressed using CIDR notation instead.
