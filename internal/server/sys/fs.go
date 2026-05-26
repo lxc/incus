@@ -21,7 +21,7 @@ func (s *OS) GlobalDatabaseDir() string {
 }
 
 // GlobalDatabasePath returns the path of the global database SQLite file
-// managed by dqlite.
+// managed by cowsql.
 func (s *OS) GlobalDatabasePath() string {
 	return filepath.Join(s.GlobalDatabaseDir(), "db.bin")
 }

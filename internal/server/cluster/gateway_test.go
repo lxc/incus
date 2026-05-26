@@ -69,19 +69,19 @@ func TestGateway_Single(t *testing.T) {
 	assert.Equal(t, "", leader)
 	assert.EqualError(t, err, cluster.ErrNodeIsNotClustered.Error())
 
-	dqliteDriver, err := driver.New(
+	cowsqlDriver, err := driver.New(
 		gateway.NodeStore(),
 		driver.WithDialFunc(gateway.DialFunc()),
 	)
 	require.NoError(t, err)
 
-	conn, err := dqliteDriver.Open("test.db")
+	conn, err := cowsqlDriver.Open("test.db")
 	require.NoError(t, err)
 
 	require.NoError(t, conn.Close())
 }
 
-// If there's a network address configured, we expose the dqlite endpoint with
+// If there's a network address configured, we expose the cowsql endpoint with
 // an HTTP handler.
 func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 	node, cleanup := db.NewTestNode(t)
@@ -106,13 +106,13 @@ func TestGateway_SingleWithNetworkAddress(t *testing.T) {
 		mux.HandleFunc(path, handler)
 	}
 
-	dqliteDriver, err := driver.New(
+	cowsqlDriver, err := driver.New(
 		gateway.NodeStore(),
 		driver.WithDialFunc(gateway.DialFunc()),
 	)
 	require.NoError(t, err)
 
-	conn, err := dqliteDriver.Open("test.db")
+	conn, err := cowsqlDriver.Open("test.db")
 	require.NoError(t, err)
 
 	require.NoError(t, conn.Close())

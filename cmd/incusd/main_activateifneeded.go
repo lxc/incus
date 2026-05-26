@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	sql.Register("dqlite_direct_access", &sqlite3.SQLiteDriver{ConnectHook: sqliteDirectAccess})
+	sql.Register("cowsql_direct_access", &sqlite3.SQLiteDriver{ConnectHook: sqliteDirectAccess})
 }
 
 type cmdActivateifneeded struct {
@@ -101,7 +101,7 @@ func (c *cmdActivateifneeded) run(_ *cobra.Command, _ []string) error {
 		return nil
 	}
 
-	sqldb, err = sql.Open("dqlite_direct_access", path+"?mode=ro")
+	sqldb, err = sql.Open("cowsql_direct_access", path+"?mode=ro")
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (c *cmdActivateifneeded) run(_ *cobra.Command, _ []string) error {
 }
 
 // Configure the sqlite connection so that it's safe to access the
-// dqlite-managed sqlite file, also without setting up raft.
+// cowsql-managed sqlite file, also without setting up raft.
 func sqliteDirectAccess(conn *sqlite3.SQLiteConn) error {
 	// Ensure journal mode is set to WAL, as this is a requirement for
 	// replication.
@@ -185,7 +185,7 @@ func sqliteDirectAccess(conn *sqlite3.SQLiteConn) error {
 	}
 
 	// Ensure WAL autocheckpoint is disabled, since checkpoints are
-	// triggered explicitly by dqlite.
+	// triggered explicitly by cowsql.
 	_, err = conn.Exec("PRAGMA wal_autocheckpoint=0", nil)
 	if err != nil {
 		return err

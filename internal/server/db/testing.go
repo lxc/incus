@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	dqlite "github.com/cowsql/go-cowsql"
+	cowsql "github.com/cowsql/go-cowsql"
 	"github.com/cowsql/go-cowsql/client"
 	"github.com/cowsql/go-cowsql/driver"
 	"github.com/stretchr/testify/assert"
@@ -59,8 +59,8 @@ func NewTestNodeTx(t *testing.T) (*NodeTx, func()) {
 // NewTestCluster creates a new Cluster for testing purposes, along with a function
 // that can be used to clean it up when done.
 func NewTestCluster(t *testing.T) (*Cluster, func()) {
-	// Create an in-memory dqlite SQL server and associated store.
-	dir, store, serverCleanup := NewTestDqliteServer(t)
+	// Create an in-memory cowsql SQL server and associated store.
+	dir, store, serverCleanup := NewTestCowsqlServer(t)
 
 	log := newLogFunc(t)
 
@@ -99,11 +99,11 @@ func NewTestClusterTx(t *testing.T) (*ClusterTx, func()) {
 	return clusterTx, cleanup
 }
 
-// NewTestDqliteServer creates a new test dqlite server.
+// NewTestCowsqlServer creates a new test cowsql server.
 //
 // Return the directory backing the test server and a newly created server
 // store that can be used to connect to it.
-func NewTestDqliteServer(t *testing.T) (string, driver.NodeStore, func()) {
+func NewTestCowsqlServer(t *testing.T) (string, driver.NodeStore, func()) {
 	t.Helper()
 
 	listener, err := net.Listen("unix", "")
@@ -116,8 +116,8 @@ func NewTestDqliteServer(t *testing.T) (string, driver.NodeStore, func()) {
 	err = os.Mkdir(filepath.Join(dir, "global"), 0o755)
 	require.NoError(t, err)
 
-	server, err := dqlite.New(
-		uint64(1), address, filepath.Join(dir, "global"), dqlite.WithBindAddress(address))
+	server, err := cowsql.New(
+		uint64(1), address, filepath.Join(dir, "global"), cowsql.WithBindAddress(address))
 	require.NoError(t, err)
 
 	err = server.Start()
@@ -140,7 +140,7 @@ func NewTestDqliteServer(t *testing.T) (string, driver.NodeStore, func()) {
 func newDir(t *testing.T) (string, func()) {
 	t.Helper()
 
-	dir, err := os.MkdirTemp("", "dqlite-replication-test-")
+	dir, err := os.MkdirTemp("", "cowsql-replication-test-")
 	assert.NoError(t, err)
 
 	cleanup := func() {

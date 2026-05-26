@@ -30,10 +30,10 @@ import (
 func Open(name string, store driver.NodeStore, options ...driver.Option) (*sql.DB, error) {
 	drv, err := driver.New(store, options...)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create dqlite driver: %w", err)
+		return nil, fmt.Errorf("Failed to create cowsql driver: %w", err)
 	}
 
-	driverName := dqliteDriverName()
+	driverName := cowsqlDriverName()
 	sql.Register(driverName, drv)
 
 	// Create the cluster db. This won't immediately establish any network
@@ -230,18 +230,18 @@ INSERT INTO nodes_cluster_groups (node_id, group_id) VALUES(1, 1);
 	return true, err
 }
 
-// Generate a new name for the dqlite driver registration. We need it to be
+// Generate a new name for the cowsql driver registration. We need it to be
 // unique for testing, see below.
-func dqliteDriverName() string {
-	defer atomic.AddUint64(&dqliteDriverSerial, 1)
-	return fmt.Sprintf("dqlite-%d", dqliteDriverSerial)
+func cowsqlDriverName() string {
+	defer atomic.AddUint64(&cowsqlDriverSerial, 1)
+	return fmt.Sprintf("cowsql-%d", cowsqlDriverSerial)
 }
 
-// Monotonic serial number for registering new instances of dqlite.Driver
+// Monotonic serial number for registering new instances of cowsql.Driver
 // using the database/sql stdlib package. This is needed since there's no way
 // to unregister drivers, and in unit tests more than one driver gets
 // registered.
-var dqliteDriverSerial uint64
+var cowsqlDriverSerial uint64
 
 func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) error {
 	// Get the current versions in the nodes table.

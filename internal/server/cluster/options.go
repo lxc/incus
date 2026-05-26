@@ -3,7 +3,7 @@ package cluster
 // Option to be passed to NewGateway to customize the resulting instance.
 type Option func(*options)
 
-// LogLevel sets the logging level for messages emitted by dqlite and raft.
+// LogLevel sets the logging level for messages emitted by cowsql and raft.
 func LogLevel(level string) Option {
 	return func(options *options) {
 		options.logLevel = level
