@@ -110,6 +110,13 @@ test_storage_driver_linstor() {
         storage_check_create_options_applied "incustest-$(basename "${INCUS_DIR}")-pool1" xfs  c4 pool
         incus delete -f c4
 
+        # Edit raw DRBD keys
+        linstor -m resource-group list-properties "incustest-$(basename "${INCUS_DIR}")-pool1" | jq -e 'any(.[0][]; .key == "DrbdOptions/Disk/rs-discard-granularity" and .value == "1048576")'
+        incus storage set "incustest-$(basename "${INCUS_DIR}")-pool1" linstor.raw.DrbdOptions/Disk/rs-discard-granularity=524288
+        linstor -m resource-group list-properties "incustest-$(basename "${INCUS_DIR}")-pool1" | jq -e 'any(.[0][]; .key == "DrbdOptions/Disk/rs-discard-granularity" and .value == "524288")'
+        incus storage unset "incustest-$(basename "${INCUS_DIR}")-pool1" linstor.raw.DrbdOptions/Disk/rs-discard-granularity
+        linstor -m resource-group list-properties "incustest-$(basename "${INCUS_DIR}")-pool1" | jq -e 'any(.[0][]; .key == "DrbdOptions/Disk/rs-discard-granularity" and .value == "1048576")'
+
         # Cleanup
         incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c1
         incus storage volume delete "incustest-$(basename "${INCUS_DIR}")-pool1" c2
