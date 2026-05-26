@@ -24,7 +24,7 @@ func parseMetadata(metadata any) (map[string]any, error) {
 
 			newMetadata[k.String()] = s.MapIndex(k).Interface()
 		}
-	} else if s.Kind() == reflect.Ptr && !s.Elem().IsValid() {
+	} else if s.Kind() == reflect.Pointer && !s.Elem().IsValid() {
 		return nil, nil
 	} else {
 		return nil, errors.New("Invalid metadata provided (type isn't a map)")
