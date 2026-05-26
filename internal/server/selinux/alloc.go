@@ -34,12 +34,14 @@ func AllocateLevel(used map[string]struct{}) (string, func(), error) {
 
 		parsed, err := goselinux.NewContext(label)
 		if err != nil {
+			goselinux.ReleaseLabel(label)
 			allocMu.Unlock()
 			return "", nil, fmt.Errorf("Failed to parse allocated SELinux label %q: %w", label, err)
 		}
 
 		level := parsed["level"]
 		if level == "" {
+			goselinux.ReleaseLabel(label)
 			allocMu.Unlock()
 			return "", nil, fmt.Errorf("Allocated SELinux label %q has empty level", label)
 		}
@@ -50,6 +52,7 @@ func AllocateLevel(used map[string]struct{}) (string, func(), error) {
 			return level, allocMu.Unlock, nil
 		}
 
+		goselinux.ReleaseLabel(label)
 		logger.Debug("SELinux level collision, retrying", logger.Ctx{"level": level, "attempt": i + 1})
 	}
 
