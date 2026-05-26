@@ -538,6 +538,7 @@ var APIExtensions = []string{
 	"network_bridge_multicast_snooping",
 	"storage_create_options",
 	"instances_tpm_platform_cert",
+	"linstor_raw",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

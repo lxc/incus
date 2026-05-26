@@ -3117,3 +3117,9 @@ When set, new TPM devices will be getting an Endorsement Key that's
 signed by that CA. This can be used to validate that the VM is in fact
 running in the expected Incus environment, providing a root of trust for
 those TPM devices.
+
+## `linstor_raw`
+
+This introduces `linstor.raw.*` configuration keys for both LINSTOR
+storage pools and storage volumes, allowing to set low-level
+properties to resource groups and resource definitions.
