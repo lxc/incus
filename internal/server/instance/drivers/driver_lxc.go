@@ -3733,7 +3733,11 @@ func (d *lxc) RenderWithUsage() (any, any, error) {
 		return resp, etag, nil
 	}
 
-	snapResp.Size = volumeState.Used
+	// A negative usage means the driver couldn't determine it, so leave the size unset.
+	if volumeState.Used >= 0 {
+		snapResp.Size = volumeState.Used
+	}
+
 	return snapResp, etag, nil
 }
 
