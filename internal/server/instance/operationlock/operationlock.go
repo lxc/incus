@@ -44,7 +44,7 @@ const ActionConsoleRetrieve Action = "console_retrieve"
 
 // ErrNonReusuableSucceeded is returned when no operation is created due to having to wait for a matching
 // non-reusuable operation that has now completed successfully.
-var ErrNonReusuableSucceeded error = errors.New("A matching non-reusable operation has now succeeded")
+var ErrNonReusuableSucceeded = errors.New("A matching non-reusable operation has now succeeded")
 
 var (
 	instanceOperationsLock sync.Mutex
