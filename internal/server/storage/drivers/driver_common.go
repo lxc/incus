@@ -50,7 +50,7 @@ func (d *common) isRemote() bool {
 }
 
 // validatePool validates a pool config against common rules and optional driver specific rules.
-func (d *common) validatePool(config map[string]string, driverRules map[string]func(value string) error, volumeRules map[string]func(value string) error) error {
+func (d *common) validatePool(config map[string]string, driverRules map[string]func(value string) error, volumeRules map[string]func(value string) error, skip ...string) error {
 	checkedFields := map[string]struct{}{}
 
 	// Get rules common for all drivers.
@@ -75,6 +75,7 @@ func (d *common) validatePool(config map[string]string, driverRules map[string]f
 	}
 
 	// Look for any unchecked fields, as these are unknown fields and validation should fail.
+key:
 	for k := range config {
 		_, checked := checkedFields[k]
 		if checked {
@@ -84,6 +85,13 @@ func (d *common) validatePool(config map[string]string, driverRules map[string]f
 		// User keys are not validated.
 		if strings.HasPrefix(k, "user.") {
 			continue
+		}
+
+		// Skipped keys are not validated.
+		for _, skipped := range skip {
+			if strings.HasPrefix(k, skipped+".") {
+				continue key
+			}
 		}
 
 		return fmt.Errorf("Invalid option %q", k)
@@ -142,7 +150,7 @@ func (d *common) FillVolumeConfig(vol Volume) error {
 // This functions has a removeUnknownKeys option that if set to true will remove any unknown fields
 // (excluding those starting with "user.") which can be used when translating a volume config to a
 // different storage driver that has different options.
-func (d *common) validateVolume(vol Volume, driverRules map[string]func(value string) error, removeUnknownKeys bool) error {
+func (d *common) validateVolume(vol Volume, driverRules map[string]func(value string) error, removeUnknownKeys bool, skip ...string) error {
 	checkedFields := map[string]struct{}{}
 
 	// Get rules common for all drivers.
@@ -161,6 +169,7 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 	}
 
 	// Look for any unchecked fields, as these are unknown fields and validation should fail.
+key:
 	for k := range vol.config {
 		_, checked := checkedFields[k]
 		if checked {
@@ -170,6 +179,13 @@ func (d *common) validateVolume(vol Volume, driverRules map[string]func(value st
 		// User keys are not validated.
 		if strings.HasPrefix(k, "user.") {
 			continue
+		}
+
+		// Skipped keys are not validated.
+		for _, skipped := range skip {
+			if strings.HasPrefix(k, skipped+".") {
+				continue key
+			}
 		}
 
 		if removeUnknownKeys {

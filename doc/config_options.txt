@@ -5935,6 +5935,13 @@ Note that the claim must be contained in the access token.
 
 ```
 
+```{config:option} linstor.raw.* storage_linstor-common
+:scope: "global"
+:shortdesc: "Extra LINSTOR properties to set. For example, `BCache/PoolName` is encoded as `linstor.raw.BCache/PoolName`."
+:type: "string"
+
+```
+
 ```{config:option} linstor.resource_group.name storage_linstor-common
 :default: "`incus`"
 :scope: "global"
@@ -6601,6 +6608,13 @@ Note that the claim must be contained in the access token.
 :default: "same as `volume.initial.uid` or `0`"
 :shortdesc: "UID of the volume owner in the instance"
 :type: "int"
+
+```
+
+```{config:option} linstor.raw.* storage_volume_linstor-common
+:scope: "global"
+:shortdesc: "Extra LINSTOR properties to set. For example, `BCache/PoolName` is encoded as `linstor.raw.BCache/PoolName`."
+:type: "string"
 
 ```
 

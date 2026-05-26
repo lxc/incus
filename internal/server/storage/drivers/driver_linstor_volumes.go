@@ -230,6 +230,13 @@ func (d *linstor) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	//  default: same as `volume.snapshot.schedule`
 	//  shortdesc: {{snapshot_schedule_format}}
 
+	// gendoc:generate(entity=storage_volume_linstor, group=common, key=linstor.raw.*)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Extra LINSTOR properties to set. For example, `BCache/PoolName` is encoded as `linstor.raw.BCache/PoolName`.
+
 	commonRules := d.commonVolumeRules()
 
 	// Disallow block.* settings for regular custom block volumes. These settings only make sense
@@ -241,7 +248,7 @@ func (d *linstor) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 		delete(commonRules, "block.mount_options")
 	}
 
-	return d.validateVolume(vol, commonRules, removeUnknownKeys)
+	return d.validateVolume(vol, commonRules, removeUnknownKeys, LinstorRawConfigKeyPrefix)
 }
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied
