@@ -2878,7 +2878,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		}
 	}
 
-	var mode os.FileMode
+	mode := -1
 	if c.storageVolumeFile.flagMode != "" {
 		if len(c.storageVolumeFile.flagMode) == 3 {
 			c.storageVolumeFile.flagMode = "0" + c.storageVolumeFile.flagMode
@@ -2889,16 +2889,19 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 			return err
 		}
 
-		mode = os.FileMode(m)
+		mode = int(os.FileMode(m).Perm())
 	}
 
 	// Push the files
 	var f *os.File
 	var linkTarget string
 	var size int64
-	m := mode
-	uid := max(c.storageVolumeFile.flagUID, 0)
-	gid := max(c.storageVolumeFile.flagGID, 0)
+	args := incus.InstanceFileArgs{
+		UID:  int64(c.storageVolumeFile.flagUID),
+		GID:  int64(c.storageVolumeFile.flagGID),
+		Mode: mode,
+	}
+
 	if isStdin(srcFile) {
 		if targetIsDir {
 			return errors.New(i18n.G("A target file name must be specified when pushing from stdin; the target is a directory"))
@@ -2913,7 +2916,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 
 		// Recursively copy directories.
 		if srcInfo.IsDir() {
-			return sftpRecursivePushFile(sftpConn, wPath, srcFile, target, c.global.flagQuiet, c.pusher.flagDereference, targetExists)
+			return sftpRecursivePushFile(sftpConn, wPath, srcFile, target, args, c.global.flagQuiet, c.pusher.flagDereference, targetExists)
 		}
 
 		if srcInfo.Mode()&os.ModeSymlink != 0 {
@@ -2931,20 +2934,18 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 			defer func() { _ = f.Close() }()
 		}
 
-		if c.storageVolumeFile.flagUID == -1 || c.storageVolumeFile.flagGID == -1 {
-			dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
+		dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
 
-			if c.storageVolumeFile.flagMode == "" {
-				m = dMode
-			}
+		if args.Mode == -1 {
+			args.Mode = int(dMode)
+		}
 
-			if c.storageVolumeFile.flagUID == -1 {
-				uid = dUID
-			}
+		if args.UID == -1 {
+			args.UID = int64(dUID)
+		}
 
-			if c.storageVolumeFile.flagGID == -1 {
-				gid = dGID
-			}
+		if args.GID == -1 {
+			args.GID = int64(dGID)
 		}
 	}
 
@@ -2959,37 +2960,21 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	// Create needed paths if requested
 	if c.storageVolumeFile.flagMkdir {
 		mode := os.FileMode(DirMode)
-		err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(uid), int64(gid))
+		err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(args.UID), int64(args.GID))
 		if err != nil {
 			return err
 		}
 	}
 
-	// Transfer the files.
-	args := incus.InstanceFileArgs{
-		UID:  -1,
-		GID:  -1,
-		Mode: -1,
-	}
-
 	// Check if the path already exists.
 	_, err = sftpConn.Stat(targetPath)
-	fileExists := err == nil
-
-	if !c.noModeChange {
-		if !fileExists || c.storageVolumeFile.flagUID != -1 {
-			args.UID = int64(uid)
-		}
-
-		if !fileExists || c.storageVolumeFile.flagGID != -1 {
-			args.GID = int64(gid)
-		}
-
-		if !fileExists || c.storageVolumeFile.flagMode != "" {
-			args.Mode = int(m.Perm())
-		}
+	if err == nil && c.noModeChange {
+		args.UID = -1
+		args.GID = -1
+		args.Mode = -1
 	}
 
+	// Transfer the files.
 	progress := cli.ProgressRenderer{
 		Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), srcFile, targetPath),
 		Quiet:  c.global.flagQuiet,

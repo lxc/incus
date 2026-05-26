@@ -143,7 +143,7 @@ func (p *pushable) statFile(path string) (os.FileInfo, string, error) {
 	if errSymlink == nil {
 		// Here, we perform a special handling if -P is used on a directory symlink.
 		if srcStat.IsDir() && !p.flagRecursive && (!isSymlink || !p.flagNoDereference) {
-			return nil, "", errors.New(i18n.G("--recursive/-r is required when pulling directories"))
+			return nil, "", errors.New(i18n.G("--recursive/-r is required when pushing directories"))
 		}
 	}
 
