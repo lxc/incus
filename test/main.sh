@@ -299,6 +299,7 @@ run_standalone_storage() {
     run_test test_storage_volume_filemanip "storage volume file manipulations"
     run_test test_storage_volume_import "storage volume import"
     run_test test_storage_volume_initial_config "storage volume initial configuration"
+    run_test test_storage_volume_rebuild "storage volume rebuild"
     run_test test_storage_volume_recover "Recover storage volumes"
     run_test test_storage_volume_snapshots "storage volume snapshots"
 }
