@@ -672,9 +672,9 @@ echo "Hello world" | incus file push - foo/root/test
    To read "Hello world" from standard input and write it into /root/test in instance "foo".`))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push (in recursive mode, only sets the target directory's UID if it doesn't exist and -p is used)"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push (in recursive mode, only sets the target directory's GID if it doesn't exist and -p is used)"))
-	cli.AddStringFlag(cmd.Flags(), &c.file.flagMode, "mode", "", "", i18n.G("Set the file's perms on push (in recursive mode, sets the target directory's permissions if it doesn't exist)"))
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push (in recursive mode, only sets the target directory's UID)"))
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push (in recursive mode, only sets the target directory's GID)"))
+	cli.AddStringFlag(cmd.Flags(), &c.file.flagMode, "mode", "", "", i18n.G("Set the file's perms on push (in recursive mode, only sets the target directory's permissions)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagFollow, "follow|H", i18n.G("Follow command-line symbolic links in source path"))
@@ -727,7 +727,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 		return errors.New(i18n.G("Missing target directory"))
 	}
 
-	var mode os.FileMode
+	mode := -1
 	if c.file.flagMode != "" {
 		if len(c.file.flagMode) == 3 {
 			c.file.flagMode = "0" + c.file.flagMode
@@ -738,7 +738,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 			return err
 		}
 
-		mode = os.FileMode(m)
+		mode = int(os.FileMode(m).Perm())
 	}
 
 	var errs []error
@@ -750,9 +750,12 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 			var f *os.File
 			var linkTarget string
 			var size int64
-			m := mode
-			uid := max(c.file.flagUID, 0)
-			gid := max(c.file.flagGID, 0)
+			args := incus.InstanceFileArgs{
+				UID:  int64(c.file.flagUID),
+				GID:  int64(c.file.flagGID),
+				Mode: mode,
+			}
+
 			if isStdin(path) {
 				if !canProcessStdin {
 					return errors.New(i18n.G("stdin can only be used once, with no other source arguments"))
@@ -772,7 +775,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 
 				// Recursively copy directories.
 				if srcInfo.IsDir() {
-					return sftpRecursivePushFile(sftpConn, wPath, path, target, c.global.flagQuiet, c.pusher.flagDereference, len(srcFiles) > 1 || targetExists)
+					return sftpRecursivePushFile(sftpConn, wPath, path, target, args, c.global.flagQuiet, c.pusher.flagDereference, len(srcFiles) > 1 || targetExists)
 				}
 
 				if srcInfo.Mode()&os.ModeSymlink != 0 {
@@ -790,20 +793,18 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 					defer func() { _ = f.Close() }()
 				}
 
-				if c.file.flagUID == -1 || c.file.flagGID == -1 {
-					dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
+				dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
 
-					if c.file.flagMode == "" {
-						m = dMode
-					}
+				if args.Mode == -1 {
+					args.Mode = int(dMode)
+				}
 
-					if c.file.flagUID == -1 {
-						uid = dUID
-					}
+				if args.UID == -1 {
+					args.UID = int64(dUID)
+				}
 
-					if c.file.flagGID == -1 {
-						gid = dGID
-					}
+				if args.GID == -1 {
+					args.GID = int64(dGID)
 				}
 			}
 
@@ -818,37 +819,21 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 			// Create needed paths if requested
 			if c.file.flagMkdir {
 				mode := os.FileMode(DirMode)
-				err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(uid), int64(gid))
+				err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(args.UID), int64(args.GID))
 				if err != nil {
 					return err
 				}
 			}
 
-			// Transfer the files.
-			args := incus.InstanceFileArgs{
-				UID:  -1,
-				GID:  -1,
-				Mode: -1,
-			}
-
 			// Check if the path already exists.
 			_, err := sftpConn.Stat(targetPath)
-			fileExists := err == nil
-
-			if !c.noModeChange {
-				if !fileExists || c.file.flagUID != -1 {
-					args.UID = int64(uid)
-				}
-
-				if !fileExists || c.file.flagGID != -1 {
-					args.GID = int64(gid)
-				}
-
-				if !fileExists || c.file.flagMode != "" {
-					args.Mode = int(m.Perm())
-				}
+			if err == nil && c.noModeChange {
+				args.UID = -1
+				args.GID = -1
+				args.Mode = -1
 			}
 
+			// Transfer the files.
 			progress := cli.ProgressRenderer{
 				Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), path, targetPath),
 				Quiet:  c.global.flagQuiet,

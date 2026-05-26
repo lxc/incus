@@ -260,7 +260,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 	return nil
 }
 
-func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source string, target string, quiet bool, dereference bool, createRoot bool) error {
+func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source string, target string, args incus.InstanceFileArgs, quiet bool, dereference bool, createRoot bool) error {
 	root := ""
 	if createRoot {
 		root = filepath.Base(source)
@@ -270,6 +270,7 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 		}
 	}
 
+	isRoot := true
 	sendFile := func(p string, fInfo os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), p, err)
@@ -283,17 +284,32 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 		// Prepare for file transfer
 		targetPath := filepath.Join(target, root, p[len(walkableSource):])
 		mode, uid, gid := internalIO.GetOwnerMode(fInfo)
-		args := incus.InstanceFileArgs{
+		fileArgs := incus.InstanceFileArgs{
 			UID:  int64(uid),
 			GID:  int64(gid),
 			Mode: int(mode.Perm()),
+		}
+
+		if isRoot {
+			isRoot = false
+			if args.UID != -1 {
+				fileArgs.UID = args.UID
+			}
+
+			if args.GID != -1 {
+				fileArgs.GID = args.GID
+			}
+
+			if args.Mode != -1 {
+				fileArgs.Mode = args.Mode
+			}
 		}
 
 		var readCloser io.ReadCloser
 
 		if fInfo.IsDir() {
 			// Directory handling
-			args.Type = "directory"
+			fileArgs.Type = "directory"
 		} else if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink && !dereference {
 			// Symlink handling
 			symlinkTarget, err := os.Readlink(p)
@@ -301,9 +317,9 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 				return err
 			}
 
-			args.Type = "symlink"
-			args.Content = strings.NewReader(symlinkTarget)
-			readCloser = io.NopCloser(args.Content)
+			fileArgs.Type = "symlink"
+			fileArgs.Content = strings.NewReader(symlinkTarget)
+			readCloser = io.NopCloser(fileArgs.Content)
 		} else {
 			// File handling
 			f, err := os.Open(p)
@@ -313,8 +329,8 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 
 			defer func() { _ = f.Close() }()
 
-			args.Type = "file"
-			args.Content = f
+			fileArgs.Type = "file"
+			fileArgs.Content = f
 			readCloser = f
 		}
 
@@ -323,18 +339,18 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 			Quiet:  quiet,
 		}
 
-		if args.Type != "directory" {
-			contentLength, err := args.Content.Seek(0, io.SeekEnd)
+		if fileArgs.Type != "directory" {
+			contentLength, err := fileArgs.Content.Seek(0, io.SeekEnd)
 			if err != nil {
 				return err
 			}
 
-			_, err = args.Content.Seek(0, io.SeekStart)
+			_, err = fileArgs.Content.Seek(0, io.SeekStart)
 			if err != nil {
 				return err
 			}
 
-			args.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
+			fileArgs.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
 				ReadCloser: readCloser,
 				Tracker: &ioprogress.ProgressTracker{
 					Length: contentLength,
@@ -345,20 +361,20 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 						})
 					},
 				},
-			}, args.Content)
+			}, fileArgs.Content)
 		}
 
-		logger.Infof("Pushing %s to %s (%s)", p, targetPath, args.Type)
-		err = sftpCreateFile(sftpConn, targetPath, args, true)
+		logger.Infof("Pushing %s to %s (%s)", p, targetPath, fileArgs.Type)
+		err = sftpCreateFile(sftpConn, targetPath, fileArgs, true)
 		if err != nil {
-			if args.Type != "directory" {
+			if fileArgs.Type != "directory" {
 				progress.Done("")
 			}
 
 			return err
 		}
 
-		if args.Type != "directory" {
+		if fileArgs.Type != "directory" {
 			progress.Done("")
 		}
 
@@ -410,8 +426,8 @@ func sftpRecursiveMkdir(sftpConn *sftp.Client, p string, mode *os.FileMode, uid 
 		}
 
 		args := incus.InstanceFileArgs{
-			UID:  uid,
-			GID:  gid,
+			UID:  max(uid, 0),
+			GID:  max(gid, 0),
 			Mode: modeArg,
 			Type: "directory",
 		}

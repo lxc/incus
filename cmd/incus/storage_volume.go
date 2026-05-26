@@ -2913,7 +2913,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 
 		// Recursively copy directories.
 		if srcInfo.IsDir() {
-			return sftpRecursivePushFile(sftpConn, wPath, srcFile, target, c.global.flagQuiet, c.pusher.flagDereference, targetExists)
+			return sftpRecursivePushFile(sftpConn, wPath, srcFile, target, incus.InstanceFileArgs{}, c.global.flagQuiet, c.pusher.flagDereference, targetExists)
 		}
 
 		if srcInfo.Mode()&os.ModeSymlink != 0 {
