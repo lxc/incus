@@ -127,6 +127,66 @@ test_filemanip() {
 
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
 
+    # Special case where we are overriding combinations of UID/GID and mode, for both recursive and
+    # non-recursive operations.
+
+    incus file push -r --uid=1234 --gid=5678 source filemanip/tmp/ptest
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "5678" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
+    # The stat fields are NOT applied recursively.
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
+    incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+
+    incus file push -r --mode=751 source filemanip/tmp/ptest
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "$(id -u)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "751" ]
+    # The stat fields are NOT applied recursively.
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
+    incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+
+    incus file push -r --uid=1234 --gid=5678 --mode=751 source filemanip/tmp/ptest
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "5678" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "751" ]
+    # The stat fields are NOT applied recursively.
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
+    incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+
+    incus file push -pr --uid=1234 --gid=5678 source/foo filemanip/tmp/ptest/source/
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "5678" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "5678" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
+    incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+
+    incus file push -pr --mode=751 source/foo filemanip/tmp/ptest/source/
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "751" ]
+    incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+
+    incus file push -pr --uid=1234 --gid=5678 --mode=751 source/foo filemanip/tmp/ptest/source/
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "5678" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "5678" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "751" ]
+    incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+
     # Special case where we are in the same directory as the one we are currently
     # created.
     cd source
