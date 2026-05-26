@@ -265,8 +265,8 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 
 	for _, backup := range backups {
 		if !recursion {
-			url := api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", "custom", volumeName, "backups", strings.Split(backup.Name(), "/")[1]).String()
-			resultString = append(resultString, url)
+			backupURL := api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", "custom", volumeName, "backups", strings.Split(backup.Name(), "/")[1]).String()
+			resultString = append(resultString, backupURL)
 		} else {
 			render := backup.Render()
 			resultMap = append(resultMap, render)

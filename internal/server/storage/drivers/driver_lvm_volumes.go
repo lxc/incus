@@ -1018,7 +1018,8 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 		reverter.Add(func() { _, _ = d.deactivateVolume(vol) })
 	}
 
-	if vol.contentType == ContentTypeFS {
+	switch vol.contentType {
+	case ContentTypeFS:
 		// Check if already mounted.
 		mountPath := vol.MountPath()
 		if !linux.IsMountPoint(mountPath) {
@@ -1048,7 +1049,8 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 
 			d.logger.Debug("Mounted logical volume", logger.Ctx{"volName": vol.name, "dev": volDevPath, "path": mountPath, "options": mountOptions})
 		}
-	} else if vol.contentType == ContentTypeBlock || vol.contentType == ContentTypeISO {
+
+	case ContentTypeBlock, ContentTypeISO:
 		// For VMs, mount the filesystem volume.
 		if vol.IsVMBlock() {
 			fsVol := vol.NewVMBlockFilesystemVolume()

@@ -190,7 +190,8 @@ var devIncusEventsGet = devIncusHandler{"/1.0/events", func(d *Daemon, c instanc
 var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
 	s := d.State()
 
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		var location string
 		if d.serverClustered {
 			location = c.Location()
@@ -203,16 +204,16 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 			}
 		}
 
-		var state api.StatusCode
+		var statusCode api.StatusCode
 
 		if util.IsTrue(c.LocalConfig()["volatile.last_state.ready"]) {
-			state = api.Ready
+			statusCode = api.Ready
 		} else {
-			state = api.Started
+			statusCode = api.Started
 		}
 
-		return response.DevIncusResponse(http.StatusOK, apiGuest.DevIncusGet{APIVersion: version.APIVersion, Location: location, InstanceType: c.Type().String(), DevIncusPut: apiGuest.DevIncusPut{State: state.String()}}, "json", c.Type() == instancetype.VM)
-	} else if r.Method == "PATCH" {
+		return response.DevIncusResponse(http.StatusOK, apiGuest.DevIncusGet{APIVersion: version.APIVersion, Location: location, InstanceType: c.Type().String(), DevIncusPut: apiGuest.DevIncusPut{State: statusCode.String()}}, "json", c.Type() == instancetype.VM)
+	case "PATCH":
 		if util.IsFalse(c.ExpandedConfig()["security.guestapi"]) {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 		}
@@ -224,18 +225,18 @@ var devIncusAPIHandler = devIncusHandler{"/1.0", func(d *Daemon, c instance.Inst
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, "%s", err.Error()), c.Type() == instancetype.VM)
 		}
 
-		state := api.StatusCodeFromString(req.State)
+		statusCode := api.StatusCodeFromString(req.State)
 
-		if state != api.Started && state != api.Ready {
+		if statusCode != api.Started && statusCode != api.Ready {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, "Invalid state %q", req.State), c.Type() == instancetype.VM)
 		}
 
-		err = c.VolatileSet(map[string]string{"volatile.last_state.ready": strconv.FormatBool(state == api.Ready)})
+		err = c.VolatileSet(map[string]string{"volatile.last_state.ready": strconv.FormatBool(statusCode == api.Ready)})
 		if err != nil {
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, "%s", err.Error()), c.Type() == instancetype.VM)
 		}
 
-		if state == api.Ready {
+		if statusCode == api.Ready {
 			s.Events.SendLifecycle(c.Project().Name, lifecycle.InstanceReady.Event(c, nil))
 		}
 
@@ -356,9 +357,13 @@ type ConnPidMapper struct {
 	mLock sync.Mutex
 }
 
-func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, state http.ConnState) {
-	unixConn := conn.(*net.UnixConn)
-	switch state {
+func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState) {
+	unixConn, ok := conn.(*net.UnixConn)
+	if !ok {
+		return
+	}
+
+	switch connState {
 	case http.StateNew:
 		cred, err := linux.GetUcred(unixConn)
 		if err != nil {
@@ -390,7 +395,7 @@ func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, state http.ConnState) {
 		delete(m.m, unixConn)
 		m.mLock.Unlock()
 	default:
-		logger.Debugf("Unknown state for connection %s", state)
+		logger.Debugf("Unknown state for connection %s", connState)
 	}
 }
 
@@ -448,7 +453,12 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 				return nil, errors.New("Instance is not container type")
 			}
 
-			return inst.(instance.Container), nil
+			c, ok := inst.(instance.Container)
+			if !ok {
+				return nil, errors.New("Instance is not container type")
+			}
+
+			return c, nil
 		}
 
 		re, err := regexp.Compile(`^PPid:\s+([0-9]+)$`)
@@ -496,7 +506,12 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 		}
 
 		if origPidNs == pidNs {
-			return inst.(instance.Container), nil
+			c, ok := inst.(instance.Container)
+			if !ok {
+				return nil, errors.New("Instance is not container type")
+			}
+
+			return c, nil
 		}
 	}
 

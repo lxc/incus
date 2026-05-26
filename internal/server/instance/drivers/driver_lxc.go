@@ -153,7 +153,7 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	return nil
 }
 
-func lxcStatusCode(state liblxc.State) api.StatusCode {
+func lxcStatusCode(lxcState liblxc.State) api.StatusCode {
 	return map[int]api.StatusCode{
 		1: api.Stopped,
 		2: api.Starting,
@@ -164,7 +164,7 @@ func lxcStatusCode(state liblxc.State) api.StatusCode {
 		7: api.Frozen,
 		8: api.Thawed,
 		9: api.Error,
-	}[int(state)]
+	}[int(lxcState)]
 }
 
 // lxcCreate creates the DB storage records and sets up instance devices.
@@ -1335,7 +1335,7 @@ var (
 // IdmappedStorage determines if the container can use idmapped mounts.
 func (d *lxc) IdmappedStorage(fspath string, fstype string) idmap.StorageType {
 	var mode idmap.StorageType = idmap.StorageTypeNone
-	var bindMount bool = fstype == "none" || fstype == ""
+	bindMount := fstype == "none" || fstype == ""
 
 	buf := &unix.Statfs_t{}
 
@@ -1524,9 +1524,10 @@ func (d *lxc) deviceAttachNIC(devName string, configCopy map[string]string, netI
 	ctDevName := ""
 	connected := true
 	for _, dev := range netIF {
-		if dev.Key == "link" {
+		switch dev.Key {
+		case "link":
 			ctDevName = dev.Value
-		} else if dev.Key == "connected" {
+		case "connected":
 			connected = util.IsTrueOrEmpty(dev.Value)
 		}
 	}
@@ -1680,11 +1681,12 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 
 			// Convert options into flags.
 			for _, opt := range mount.Opts {
-				if opt == "bind" {
+				switch opt {
+				case "bind":
 					flags |= unix.MS_BIND
-				} else if opt == "rbind" {
+				case "rbind":
 					flags |= unix.MS_BIND | unix.MS_REC
-				} else if opt == "ro" {
+				case "ro":
 					flags |= unix.MS_RDONLY
 				}
 			}
@@ -1703,30 +1705,37 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 				return fmt.Errorf("Failed to add mount for device inside container: %s", err)
 			}
 		} else {
-			relativeTargetPath := strings.TrimPrefix(mount.TargetPath, "/")
+			err := func() error {
+				relativeTargetPath := strings.TrimPrefix(mount.TargetPath, "/")
 
-			// Connect to files API.
-			files, err := d.FileSFTP()
-			if err != nil {
-				return err
-			}
-
-			defer func() { _ = files.Close() }()
-
-			_, err = files.Lstat(relativeTargetPath)
-			if err == nil {
-				err := d.removeMount(mount.TargetPath)
+				// Connect to files API.
+				files, err := d.FileSFTP()
 				if err != nil {
-					return fmt.Errorf("Error unmounting the device path inside container: %s", err)
+					return err
 				}
 
-				// Only remove mountpoints created in /dev.
-				if strings.HasPrefix(mount.TargetPath, "dev/") {
-					err := files.Remove(relativeTargetPath)
+				defer func() { _ = files.Close() }()
+
+				_, err = files.Lstat(relativeTargetPath)
+				if err == nil {
+					err := d.removeMount(mount.TargetPath)
 					if err != nil {
-						return err
+						return fmt.Errorf("Error unmounting the device path inside container: %s", err)
+					}
+
+					// Only remove mountpoints created in /dev.
+					if strings.HasPrefix(mount.TargetPath, "dev/") {
+						err := files.Remove(relativeTargetPath)
+						if err != nil {
+							return err
+						}
 					}
 				}
+
+				return nil
+			}()
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -1874,11 +1883,12 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 
 	// Revert the currently applied on-disk idmap.
 	if diskIdmap != nil {
-		if storageType == "zfs" {
+		switch storageType {
+		case "zfs":
 			err = diskIdmap.UnshiftPath(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
-		} else if storageType == "btrfs" {
+		case "btrfs":
 			err = storageDrivers.UnshiftBtrfsRootfs(d.RootfsPath(), diskIdmap)
-		} else {
+		default:
 			err = diskIdmap.UnshiftPath(d.RootfsPath(), nil)
 		}
 
@@ -1893,11 +1903,12 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 	// idmap of the container now. Otherwise we will later instruct LXC to
 	// make use of idmapped storage.
 	if nextIdmap != nil && idmapType == idmap.StorageTypeNone {
-		if storageType == "zfs" {
+		switch storageType {
+		case "zfs":
 			err = nextIdmap.ShiftPath(d.RootfsPath(), storageDrivers.ShiftZFSSkipper)
-		} else if storageType == "btrfs" {
+		case "btrfs":
 			err = storageDrivers.ShiftBtrfsRootfs(d.RootfsPath(), nextIdmap)
-		} else {
+		default:
 			err = nextIdmap.ShiftPath(d.RootfsPath(), nil)
 		}
 
@@ -2224,13 +2235,13 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 		// Pass any mounts into LXC.
 		if len(runConf.Mounts) > 0 {
-			escapePathFstab := func(path string) string {
+			escapePathFstab := func(mountPath string) string {
 				r := strings.NewReplacer(
 					" ", "\\040",
 					"\t", "\\011",
 					"\n", "\\012",
 					"\\", "\\\\")
-				return r.Replace(path)
+				return r.Replace(mountPath)
 			}
 
 			for _, mount := range runConf.Mounts {
@@ -3700,8 +3711,8 @@ func (d *lxc) getLxcState() (liblxc.State, error) {
 	}(cc)
 
 	select {
-	case state := <-monitor:
-		return state, nil
+	case lxcState := <-monitor:
+		return lxcState, nil
 	case <-time.After(5 * time.Second):
 		return liblxc.StateMap["FROZEN"], errors.New("Monitor is unresponsive")
 	}
@@ -4996,25 +5007,32 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						return err
 					}
 				} else {
-					// Connect to files API.
-					files, err := d.FileSFTP()
+					err = func() error {
+						// Connect to files API.
+						files, err := d.FileSFTP()
+						if err != nil {
+							return err
+						}
+
+						defer func() { _ = files.Close() }()
+
+						_, err = files.Lstat("/dev/incus")
+						if err == nil {
+							err = d.removeMount("/dev/incus")
+							if err != nil {
+								return err
+							}
+
+							err = files.Remove("/dev/incus")
+							if err != nil {
+								return err
+							}
+						}
+
+						return nil
+					}()
 					if err != nil {
 						return err
-					}
-
-					defer func() { _ = files.Close() }()
-
-					_, err = files.Lstat("/dev/incus")
-					if err == nil {
-						err = d.removeMount("/dev/incus")
-						if err != nil {
-							return err
-						}
-
-						err = files.Remove("/dev/incus")
-						if err != nil {
-							return err
-						}
 					}
 				}
 			} else if key == "linux.kernel_modules" && value != "" {
@@ -5197,7 +5215,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						}
 					}
 				}
-
 			} else if key == "limits.cpu" || key == "limits.cpu.nodes" {
 				// Clear the "volatile.cpu.nodes" if needed.
 				d.ClearLimitsCPUNodes(changedConfig)
@@ -5446,18 +5463,18 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 	defer func() { _ = d.unmount() }()
 
 	// Get IDMap to unshift container as the tarball is created.
-	idmap, err := d.DiskIdmap()
+	diskIdmap, err := d.DiskIdmap()
 	if err != nil {
 		d.logger.Error("Failed exporting instance", ctxMap)
 		return nil, err
 	}
 
 	// Create the tarball.
-	metaTarWriter := instancewriter.NewInstanceTarWriter(metaWriter, idmap)
+	metaTarWriter := instancewriter.NewInstanceTarWriter(metaWriter, diskIdmap)
 
 	var rootfsTarWriter *instancewriter.InstanceTarWriter
 	if rootfsWriter != nil {
-		rootfsTarWriter = instancewriter.NewInstanceTarWriter(rootfsWriter, idmap)
+		rootfsTarWriter = instancewriter.NewInstanceTarWriter(rootfsWriter, diskIdmap)
 	}
 
 	// Keep track of the first path we saw for each path with nlink>1.
@@ -5802,6 +5819,7 @@ fi
 	return f.Close()
 }
 
+// MigrateSend sends an instance to a target for migration.
 func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Migration send starting")
 	defer d.logger.Debug("Migration send stopped")
@@ -5897,7 +5915,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	} else if idmapset != nil {
 		offerHeader.Idmap = make([]*migration.IDMapType, 0, len(idmapset.Entries))
 		for _, ctnIdmap := range idmapset.Entries {
-			idmap := migration.IDMapType{
+			idmapEntry := migration.IDMapType{
 				Isuid:    proto.Bool(ctnIdmap.IsUID),
 				Isgid:    proto.Bool(ctnIdmap.IsGID),
 				Hostid:   proto.Int32(int32(ctnIdmap.HostID)),
@@ -5905,7 +5923,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 				Maprange: proto.Int32(int32(ctnIdmap.MapRange)),
 			}
 
-			offerHeader.Idmap = append(offerHeader.Idmap, &idmap)
+			offerHeader.Idmap = append(offerHeader.Idmap, &idmapEntry)
 		}
 	}
 
@@ -6370,9 +6388,9 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 
 	// The function readCriuStatsDump() reads the CRIU 'stats-dump' file
 	// in path and returns the pages_written, pages_skipped_parent, error.
-	readCriuStatsDump := func(path string) (uint64, uint64, error) {
+	readCriuStatsDump := func(statsPath string) (uint64, uint64, error) {
 		// Get dump statistics with crit
-		dumpStats, err := crit.GetDumpStats(path)
+		dumpStats, err := crit.GetDumpStats(statsPath)
 		if err != nil {
 			return 0, 0, fmt.Errorf("Failed to parse CRIU's 'stats-dump' file: %w", err)
 		}
@@ -6415,11 +6433,11 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 
 	// If in pre-dump mode, the receiving side expects a message to know if this was the last pre-dump.
 	logger.Debug("Sending another CRIU pre-dump header")
-	sync := migration.MigrationSync{
+	syncMsg := migration.MigrationSync{
 		FinalPreDump: proto.Bool(final),
 	}
 
-	data, err := proto.Marshal(&sync)
+	data, err := proto.Marshal(&syncMsg)
 	if err != nil {
 		return false, err
 	}
@@ -6460,6 +6478,7 @@ func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.Set) error {
 	return nil
 }
 
+// MigrateReceive receives an instance being migrated from a source.
 func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	d.logger.Debug("Migration receive starting")
 	defer d.logger.Debug("Migration receive stopped")
@@ -7096,11 +7115,12 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 				return fmt.Errorf("Storage type: %w", err)
 			}
 
-			if storageType == "zfs" {
+			switch storageType {
+			case "zfs":
 				err = idmapset.ShiftPath(args.StateDir, storageDrivers.ShiftZFSSkipper)
-			} else if storageType == "btrfs" {
+			case "btrfs":
 				err = storageDrivers.ShiftBtrfsRootfs(args.StateDir, idmapset)
-			} else {
+			default:
 				err = idmapset.ShiftPath(args.StateDir, nil)
 			}
 
@@ -8039,13 +8059,13 @@ func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 			continue
 		}
 
-		state := api.InstanceStateDisk{}
+		diskState := api.InstanceStateDisk{}
 		if usage != nil {
-			state.Usage = usage.Used
-			state.Total = usage.Total
+			diskState.Usage = usage.Used
+			diskState.Total = usage.Total
 		}
 
-		disk[dev.Name] = state
+		disk[dev.Name] = diskState
 	}
 
 	return disk
@@ -8729,12 +8749,12 @@ func (d *lxc) isCurrentlyPrivileged() bool {
 		return d.IsPrivileged()
 	}
 
-	idmap, err := d.CurrentIdmap()
+	currentIdmap, err := d.CurrentIdmap()
 	if err != nil {
 		return d.IsPrivileged()
 	}
 
-	return idmap == nil
+	return currentIdmap == nil
 }
 
 // IsPrivileged returns if instance is privileged.
@@ -8853,12 +8873,12 @@ func (d *lxc) statusCode() api.StatusCode {
 		}
 	}
 
-	state, err := d.getLxcState()
+	lxcState, err := d.getLxcState()
 	if err != nil {
 		return api.Error
 	}
 
-	statusCode := lxcStatusCode(state)
+	statusCode := lxcStatusCode(lxcState)
 
 	if statusCode == api.Running && util.IsTrue(d.LocalConfig()["volatile.last_state.ready"]) {
 		return api.Ready
@@ -8877,6 +8897,7 @@ func (d *lxc) LogFilePath() string {
 	return filepath.Join(d.LogPath(), "lxc.log")
 }
 
+// CGroup returns the cgroup handler for the instance.
 func (d *lxc) CGroup() (*cgroup.CGroup, error) {
 	// Load the go-lxc struct
 	cc, err := d.initLXC(false)
@@ -8951,6 +8972,7 @@ func (d *lxc) Info() instance.Info {
 	}
 }
 
+// Metrics returns the metrics set for the instance.
 func (d *lxc) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error) {
 	out := metrics.NewMetricSet(map[string]string{"project": d.project.Name, "name": d.name, "type": instancetype.Container.String()})
 
@@ -9096,17 +9118,17 @@ func (d *lxc) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error
 	// Get network stats
 	networkState := d.networkState(hostInterfaces)
 
-	for name, state := range networkState {
+	for name, netState := range networkState {
 		labels := map[string]string{"device": name}
 
-		out.AddSamples(metrics.NetworkReceiveBytesTotal, metrics.Sample{Value: float64(state.Counters.BytesReceived), Labels: labels})
-		out.AddSamples(metrics.NetworkReceivePacketsTotal, metrics.Sample{Value: float64(state.Counters.PacketsReceived), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitBytesTotal, metrics.Sample{Value: float64(state.Counters.BytesSent), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitPacketsTotal, metrics.Sample{Value: float64(state.Counters.PacketsSent), Labels: labels})
-		out.AddSamples(metrics.NetworkReceiveErrsTotal, metrics.Sample{Value: float64(state.Counters.ErrorsReceived), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitErrsTotal, metrics.Sample{Value: float64(state.Counters.ErrorsSent), Labels: labels})
-		out.AddSamples(metrics.NetworkReceiveDropTotal, metrics.Sample{Value: float64(state.Counters.PacketsDroppedInbound), Labels: labels})
-		out.AddSamples(metrics.NetworkTransmitDropTotal, metrics.Sample{Value: float64(state.Counters.PacketsDroppedOutbound), Labels: labels})
+		out.AddSamples(metrics.NetworkReceiveBytesTotal, metrics.Sample{Value: float64(netState.Counters.BytesReceived), Labels: labels})
+		out.AddSamples(metrics.NetworkReceivePacketsTotal, metrics.Sample{Value: float64(netState.Counters.PacketsReceived), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitBytesTotal, metrics.Sample{Value: float64(netState.Counters.BytesSent), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitPacketsTotal, metrics.Sample{Value: float64(netState.Counters.PacketsSent), Labels: labels})
+		out.AddSamples(metrics.NetworkReceiveErrsTotal, metrics.Sample{Value: float64(netState.Counters.ErrorsReceived), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitErrsTotal, metrics.Sample{Value: float64(netState.Counters.ErrorsSent), Labels: labels})
+		out.AddSamples(metrics.NetworkReceiveDropTotal, metrics.Sample{Value: float64(netState.Counters.PacketsDroppedInbound), Labels: labels})
+		out.AddSamples(metrics.NetworkTransmitDropTotal, metrics.Sample{Value: float64(netState.Counters.PacketsDroppedOutbound), Labels: labels})
 	}
 
 	// Get number of processes

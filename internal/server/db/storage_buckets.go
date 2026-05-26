@@ -39,7 +39,7 @@ type StorageBucket struct {
 // Accepts filters for narrowing down the results returned. If memberSpecific is true, then the search is
 // restricted to buckets that belong to this member or belong to all members.
 func (c *ClusterTx) GetStoragePoolBuckets(ctx context.Context, memberSpecific bool, filters ...StorageBucketFilter) ([]*StorageBucket, error) {
-	var q *strings.Builder = &strings.Builder{}
+	q := &strings.Builder{}
 	var args []any
 
 	q.WriteString(`
@@ -111,7 +111,7 @@ func (c *ClusterTx) GetStoragePoolBuckets(ctx context.Context, memberSpecific bo
 				q.WriteString(" OR ")
 			}
 
-			q.WriteString(fmt.Sprintf("(%s)", strings.Join(qFilters, " AND ")))
+			fmt.Fprintf(q, "(%s)", strings.Join(qFilters, " AND "))
 		}
 
 		q.WriteString(")")
@@ -226,7 +226,7 @@ func (c *ClusterTx) GetStoragePoolLocalBucket(ctx context.Context, bucketName st
 // GetStoragePoolLocalBucketByAccessKey returns the local Storage Bucket for the given bucket access key.
 // The search is restricted to buckets that belong to this member.
 func (c *ClusterTx) GetStoragePoolLocalBucketByAccessKey(ctx context.Context, accessKey string) (*StorageBucket, error) {
-	var q *strings.Builder = &strings.Builder{}
+	q := &strings.Builder{}
 
 	q.WriteString(`
 	SELECT
@@ -425,7 +425,7 @@ type StorageBucketKey struct {
 // If there are no bucket keys, it returns an empty list and no error.
 // Accepts filters for narrowing down the results returned.
 func (c *ClusterTx) GetStoragePoolBucketKeys(ctx context.Context, bucketID int64, filters ...StorageBucketKeyFilter) ([]*StorageBucketKey, error) {
-	var q *strings.Builder = &strings.Builder{}
+	q := &strings.Builder{}
 	args := []any{bucketID}
 
 	q.WriteString(`
@@ -459,7 +459,7 @@ func (c *ClusterTx) GetStoragePoolBucketKeys(ctx context.Context, bucketID int64
 				q.WriteString(" OR ")
 			}
 
-			q.WriteString(fmt.Sprintf("(%s)", strings.Join(qFilters, " AND ")))
+			fmt.Fprintf(q, "(%s)", strings.Join(qFilters, " AND "))
 		}
 
 		q.WriteString(")")

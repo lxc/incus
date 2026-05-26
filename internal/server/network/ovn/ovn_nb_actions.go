@@ -326,13 +326,14 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 	var logicalIP string
 	var externalIP string
 
-	if natType == "snat" {
+	switch natType {
+	case "snat":
 		logicalIP = intNet.String()
 		externalIP = extIP.String()
-	} else if natType == "dnat_and_snat" {
+	case "dnat_and_snat":
 		logicalIP = intIP.String()
 		externalIP = extIP.String()
-	} else {
+	default:
 		return fmt.Errorf("Invalid NAT rule type %q", natType)
 	}
 
@@ -3154,7 +3155,8 @@ func (o *NB) aclRuleAddOperations(ctx context.Context, entityTable string, entit
 		operations = append(operations, createOps...)
 
 		// Add ACL rule to entity.
-		if entityTable == "logical_switch" {
+		switch entityTable {
+		case "logical_switch":
 			ls := ovnNB.LogicalSwitch{
 				Name: entityName,
 			}
@@ -3169,7 +3171,7 @@ func (o *NB) aclRuleAddOperations(ctx context.Context, entityTable string, entit
 			}
 
 			operations = append(operations, updateOps...)
-		} else if entityTable == "port_group" {
+		case "port_group":
 			pg := ovnNB.PortGroup{
 				Name: entityName,
 			}
@@ -3184,7 +3186,7 @@ func (o *NB) aclRuleAddOperations(ctx context.Context, entityTable string, entit
 			}
 
 			operations = append(operations, updateOps...)
-		} else {
+		default:
 			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
 		}
 	}
@@ -3216,7 +3218,8 @@ func (o *NB) aclRuleDeleteOperations(ctx context.Context, entityTable string, en
 		operations = append(operations, deleteOps...)
 
 		// Remove ACL rule from entity.
-		if entityTable == "logical_switch" {
+		switch entityTable {
+		case "logical_switch":
 			ls := ovnNB.LogicalSwitch{
 				Name: entityName,
 			}
@@ -3231,7 +3234,7 @@ func (o *NB) aclRuleDeleteOperations(ctx context.Context, entityTable string, en
 			}
 
 			operations = append(operations, updateOps...)
-		} else if entityTable == "port_group" {
+		case "port_group":
 			pg := ovnNB.PortGroup{
 				Name: entityName,
 			}
@@ -3246,7 +3249,7 @@ func (o *NB) aclRuleDeleteOperations(ctx context.Context, entityTable string, en
 			}
 
 			operations = append(operations, updateOps...)
-		} else {
+		default:
 			return nil, fmt.Errorf("Unsupported entity table %q", entityTable)
 		}
 	}

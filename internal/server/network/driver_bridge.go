@@ -57,7 +57,7 @@ func (n *bridge) DBType() db.NetworkType {
 	return db.NetworkTypeBridge
 }
 
-// Config returns the network driver info.
+// Info returns the network driver info.
 func (n *bridge) Info() Info {
 	info := n.common.Info()
 	info.AddressForwards = true
@@ -913,7 +913,7 @@ func (n *bridge) Delete(clientType request.ClientType) error {
 		return err
 	}
 
-	return n.common.delete(clientType)
+	return n.delete(clientType)
 }
 
 // Rename renames a network.
@@ -933,7 +933,7 @@ func (n *bridge) Rename(newName string) error {
 	}
 
 	// Rename common steps.
-	err := n.common.rename(newName)
+	err := n.rename(newName)
 	if err != nil {
 		return err
 	}
@@ -1268,8 +1268,8 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			addrs, err := iface.Addrs()
 			if err == nil {
 				for _, addr := range addrs {
-					ip, _, err := net.ParseCIDR(addr.String())
-					if ip != nil && err == nil && ip.IsGlobalUnicast() {
+					ipAddress, _, err := net.ParseCIDR(addr.String())
+					if ipAddress != nil && err == nil && ipAddress.IsGlobalUnicast() {
 						unused = false
 						break
 					}
@@ -1747,7 +1747,6 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 	// Configure tunnels.
 	for _, tunnel := range tunnels {
-
 		getConfig := func(key string) string {
 			return n.config[fmt.Sprintf("tunnel.%s.%s", tunnel, key)]
 		}
@@ -2141,7 +2140,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		return fmt.Errorf("Failed generating auto config: %w", err)
 	}
 
-	dbUpdateNeeded, changedKeys, oldNetwork, err := n.common.configChanged(newNetwork)
+	dbUpdateNeeded, changedKeys, oldNetwork, err := n.configChanged(newNetwork)
 	if err != nil {
 		return err
 	}
@@ -2154,7 +2153,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 	// pending, then don't apply the new settings to the node, just to the database record (ready for the
 	// actual global create request to be initiated).
 	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
-		return n.common.update(newNetwork, targetNode, clientType)
+		return n.update(newNetwork, targetNode, clientType)
 	}
 
 	reverter := revert.New()
@@ -2165,7 +2164,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		// Define a function which reverts everything.
 		reverter.Add(func() {
 			// Reset changes to all nodes and database.
-			_ = n.common.update(oldNetwork, targetNode, clientType)
+			_ = n.update(oldNetwork, targetNode, clientType)
 
 			// Reset any change that was made to local bridge.
 			_ = n.setup(newNetwork.Config)
@@ -2222,7 +2221,7 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 	}
 
 	// Apply changes to all nodes and database.
-	err = n.common.update(newNetwork, targetNode, clientType)
+	err = n.update(newNetwork, targetNode, clientType)
 	if err != nil {
 		return err
 	}
@@ -3276,11 +3275,11 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 		if projectName == n.project {
 			// Add our own gateway IPs.
 			for _, addr := range []string{n.config["ipv4.address"], n.config["ipv6.address"]} {
-				ip, _, _ := net.ParseCIDR(addr)
-				if ip != nil {
+				ipAddress, _, _ := net.ParseCIDR(addr)
+				if ipAddress != nil {
 					leases = append(leases, api.NetworkLease{
 						Hostname: fmt.Sprintf("%s.gw", n.Name()),
-						Address:  ip.String(),
+						Address:  ipAddress.String(),
 						Type:     "gateway",
 					})
 				}

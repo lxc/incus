@@ -20,15 +20,15 @@ func TestNode_Schema(t *testing.T) {
 
 	// The underlying node-level database has exactly one row in the schema
 	// table.
-	db := node.DB()
-	tx, err := db.Begin()
+	dbHandle := node.DB()
+	tx, err := dbHandle.Begin()
 	require.NoError(t, err)
 	n, err := query.Count(context.Background(), tx, "schema", "")
 	require.NoError(t, err)
 	assert.Equal(t, 1, n)
 
 	assert.NoError(t, tx.Commit())
-	assert.NoError(t, db.Close())
+	assert.NoError(t, dbHandle.Close())
 }
 
 // A gRPC SQL connection is established when starting to interact with the
@@ -39,13 +39,13 @@ func TestCluster_Setup(t *testing.T) {
 
 	// The underlying node-level database has exactly one row in the schema
 	// table.
-	db := cluster.DB()
-	tx, err := db.Begin()
+	dbHandle := cluster.DB()
+	tx, err := dbHandle.Begin()
 	require.NoError(t, err)
 	n, err := query.Count(context.Background(), tx, "schema", "")
 	require.NoError(t, err)
 	assert.Equal(t, 1, n)
 
 	assert.NoError(t, tx.Commit())
-	assert.NoError(t, db.Close())
+	assert.NoError(t, dbHandle.Close())
 }

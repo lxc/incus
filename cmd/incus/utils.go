@@ -23,7 +23,6 @@ import (
 	incus "github.com/lxc/incus/v7/client"
 	u "github.com/lxc/incus/v7/cmd/incus/usage"
 	"github.com/lxc/incus/v7/internal/i18n"
-	"github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/shared/api"
 	config "github.com/lxc/incus/v7/shared/cliconfig"
 	"github.com/lxc/incus/v7/shared/termios"
@@ -291,43 +290,6 @@ func deleteImagesByAliases(client incus.InstanceServer, aliases []api.ImageAlias
 	return nil
 }
 
-func getConfig(args ...string) (map[string]string, error) {
-	if len(args) == 2 && !strings.Contains(args[0], "=") {
-		if args[1] == "-" && !termios.IsTerminal(getStdinFd()) {
-			buf, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return nil, fmt.Errorf(i18n.G("Can't read from stdin: %w"), err)
-			}
-
-			args[1] = string(buf[:])
-		}
-
-		return map[string]string{args[0]: args[1]}, nil
-	}
-
-	values := map[string]string{}
-
-	for _, arg := range args {
-		fields := strings.SplitN(arg, "=", 2)
-		if len(fields) != 2 {
-			return nil, fmt.Errorf(i18n.G("Invalid key=value configuration: %s"), arg)
-		}
-
-		if fields[1] == "-" && !termios.IsTerminal(getStdinFd()) {
-			buf, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return nil, fmt.Errorf(i18n.G("Can't read from stdin: %w"), err)
-			}
-
-			fields[1] = string(buf[:])
-		}
-
-		values[fields[0]] = fields[1]
-	}
-
-	return values, nil
-}
-
 // kvToMap converts a parsed KV list to a KV map.
 func kvToMap(p *u.Parsed) (map[string]string, error) {
 	values := map[string]string{}
@@ -410,30 +372,6 @@ func readEnvironmentFile(path string) (map[string]string, error) {
 	return envMap, nil
 }
 
-// instancesExist iterates over a list of instances (or snapshots) and checks that they exist.
-func instancesExist(resources []remoteResource) error {
-	for _, resource := range resources {
-		// Handle snapshots.
-		if instance.IsSnapshot(resource.name) {
-			parent, snap, _ := api.GetParentAndSnapshotName(resource.name)
-
-			_, _, err := resource.server.GetInstanceSnapshot(parent, snap)
-			if err != nil {
-				return fmt.Errorf(i18n.G("Failed checking instance snapshot exists \"%s:%s\": %w"), resource.remote, resource.name, err)
-			}
-
-			continue
-		}
-
-		_, _, err := resource.server.GetInstance(resource.name)
-		if err != nil {
-			return fmt.Errorf(i18n.G("Failed checking instance exists \"%s:%s\": %w"), resource.remote, resource.name, err)
-		}
-	}
-
-	return nil
-}
-
 // structHasField checks if specified struct includes field with given name.
 func structHasField(typ reflect.Type, field string) bool {
 	var parent reflect.Type
@@ -488,37 +426,6 @@ func getServerSupportedFilters(filters []string, clientFilters []string, singleV
 	}
 
 	return supportedFilters, unsupportedFilters
-}
-
-// guessImage checks that the image name (provided by the user) is correct given an instance remote and image remote.
-func guessImage(conf *config.Config, d incus.InstanceServer, instRemote string, imgRemote string, imageRef string) (string, string) {
-	if instRemote != imgRemote {
-		return imgRemote, imageRef
-	}
-
-	fields := strings.SplitN(imageRef, "/", 2)
-	_, ok := conf.Remotes[fields[0]]
-	if !ok {
-		return imgRemote, imageRef
-	}
-
-	_, _, err := d.GetImageAlias(imageRef)
-	if err == nil {
-		return imgRemote, imageRef
-	}
-
-	_, _, err = d.GetImage(imageRef)
-	if err == nil {
-		return imgRemote, imageRef
-	}
-
-	if len(fields) == 1 {
-		fmt.Fprintf(os.Stderr, i18n.G("The local image '%q' couldn't be found, trying '%q:' instead.")+"\n", imageRef, fields[0])
-		return fields[0], "default"
-	}
-
-	fmt.Fprintf(os.Stderr, i18n.G("The local image '%q' couldn't be found, trying '%q:%q' instead.")+"\n", imageRef, fields[0], fields[1])
-	return fields[0], fields[1]
 }
 
 // getImgInfo returns an image server and image info for the given image name (given by a user)

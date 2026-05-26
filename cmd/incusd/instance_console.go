@@ -503,8 +503,8 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if client != nil {
-		url := api.NewURL().Path(version.APIVersion, "instances", name, "console").Project(projectName)
-		resp, _, err := client.RawQuery("POST", url.String(), post, "")
+		consoleURL := api.NewURL().Path(version.APIVersion, "instances", name, "console").Project(projectName)
+		resp, _, err := client.RawQuery("POST", consoleURL.String(), post, "")
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -577,31 +577,31 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	ws := &consoleWs{}
-	ws.fds = map[int]string{}
-	ws.conns = map[int]*websocket.Conn{}
-	ws.conns[-1] = nil
-	ws.conns[0] = nil
-	ws.dynamic = map[*websocket.Conn]*os.File{}
-	for i := -1; i < len(ws.conns)-1; i++ {
-		ws.fds[i], err = internalUtil.RandomHexString(32)
+	consoleWS := &consoleWs{}
+	consoleWS.fds = map[int]string{}
+	consoleWS.conns = map[int]*websocket.Conn{}
+	consoleWS.conns[-1] = nil
+	consoleWS.conns[0] = nil
+	consoleWS.dynamic = map[*websocket.Conn]*os.File{}
+	for i := -1; i < len(consoleWS.conns)-1; i++ {
+		consoleWS.fds[i], err = internalUtil.RandomHexString(32)
 		if err != nil {
 			return response.InternalError(err)
 		}
 	}
 
-	ws.allConnected = make(chan bool, 1)
-	ws.controlConnected = make(chan bool, 1)
-	ws.instance = inst
-	ws.state = s
-	ws.width = post.Width
-	ws.height = post.Height
-	ws.protocol = post.Type
+	consoleWS.allConnected = make(chan bool, 1)
+	consoleWS.controlConnected = make(chan bool, 1)
+	consoleWS.instance = inst
+	consoleWS.state = s
+	consoleWS.width = post.Width
+	consoleWS.height = post.Height
+	consoleWS.protocol = post.Type
 
 	resources := map[string][]api.URL{}
-	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", ws.instance.Name())}
+	resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", consoleWS.instance.Name())}
 
-	op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.ConsoleShow, resources, ws.metadata(), ws.do, ws.cancel, ws.connect, r)
+	op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.ConsoleShow, resources, consoleWS.metadata(), consoleWS.do, consoleWS.cancel, consoleWS.connect, r)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -723,7 +723,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 		// Send a ringbuffer request to the container.
 		logContents, err := c.ConsoleLog(console)
 		if err != nil {
-			errno, isErrno := linux.GetErrno(err)
+			isErrno, errno := linux.GetErrno(err)
 			if !isErrno {
 				return response.SmartError(err)
 			}
@@ -859,10 +859,10 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(errors.New("Instance is not container type"))
 	}
 
-	truncateConsoleLogFile := func(path string) error {
+	truncateConsoleLogFile := func(logPath string) error {
 		// Check that this is a regular file. We don't want to try and unlink
 		// /dev/stderr or /dev/null or something.
-		st, err := os.Stat(path)
+		st, err := os.Stat(logPath)
 		if err != nil {
 			return err
 		}
@@ -871,11 +871,11 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 			return errors.New("The console log is not a regular file")
 		}
 
-		if path == "" {
+		if logPath == "" {
 			return errors.New("Container does not keep a console logfile")
 		}
 
-		return os.Truncate(path, 0)
+		return os.Truncate(logPath, 0)
 	}
 
 	if !inst.IsRunning() {
@@ -893,7 +893,7 @@ func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {
 
 	_, err = c.ConsoleLog(console)
 	if err != nil {
-		errno, isErrno := linux.GetErrno(err)
+		isErrno, errno := linux.GetErrno(err)
 		if !isErrno {
 			return response.SmartError(err)
 		}

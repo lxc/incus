@@ -146,7 +146,8 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 
 	logger.Infof("Pulling %s from %s (%s)", target, normalizedSource, fileType)
 
-	if fileType == "directory" {
+	switch fileType {
+	case "directory":
 		err := os.Mkdir(target, fInfo.Mode())
 		if err != nil {
 			// If the error isn’t that the path already exists, there’s nothing we can do about it.
@@ -186,7 +187,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 				return err
 			}
 		}
-	} else if fileType == "file" {
+	case "file":
 		src, err := sftpConn.Open(normalizedSource)
 		if err != nil {
 			return err
@@ -243,7 +244,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 		}
 
 		progress.Done("")
-	} else if fileType == "symlink" {
+	case "symlink":
 		linkTarget, err := sftpConn.ReadLink(normalizedSource)
 		if err != nil {
 			return err
@@ -253,7 +254,8 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 		if err != nil {
 			return err
 		}
-	} else {
+
+	default:
 		return fmt.Errorf(i18n.G("Unknown file type '%s'"), fileType)
 	}
 

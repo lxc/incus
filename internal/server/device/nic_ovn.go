@@ -45,7 +45,7 @@ type ovnNet interface {
 	network.Network
 
 	InstanceDevicePortValidateExternalRoutes(deviceInstance instance.Instance, deviceName string, externalRoutes []*net.IPNet) error
-	InstanceDevicePortAdd(instanceUUID string, deviceName string, deviceConfig deviceConfig.Device) error
+	InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error
 	InstanceDevicePortStart(opts *network.OVNInstanceNICSetupOpts, securityACLsRemove []string) (ovn.OVNSwitchPort, []net.IP, error)
 	InstanceDevicePortStop(ovsExternalOVNPort ovn.OVNSwitchPort, opts *network.OVNInstanceNICStopOpts) error
 	InstanceDevicePortRemove(instanceUUID string, devName string, devConfig deviceConfig.Device, hasDuplicate bool) error
@@ -382,7 +382,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 	netConfig := d.network.Config()
 
 	if d.config["ipv4.address"] != "" && d.config["ipv4.address"] != "none" {
-		ip, subnet, err := net.ParseCIDR(netConfig["ipv4.address"])
+		ipAddr, subnet, err := net.ParseCIDR(netConfig["ipv4.address"])
 		if err != nil {
 			return fmt.Errorf("Invalid network ipv4.address: %w", err)
 		}
@@ -394,7 +394,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		}
 
 		// IP should not be the same as the parent managed network address.
-		if ip.Equal(net.ParseIP(d.config["ipv4.address"])) {
+		if ipAddr.Equal(net.ParseIP(d.config["ipv4.address"])) {
 			return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv4.address"], d.config["parent"])
 		}
 	}
@@ -405,7 +405,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 			return fmt.Errorf("Cannot specify %q when %q is not set", "ipv6.address", "ipv4.address")
 		}
 
-		ip, subnet, err := net.ParseCIDR(netConfig["ipv6.address"])
+		ipAddr, subnet, err := net.ParseCIDR(netConfig["ipv6.address"])
 		if err != nil {
 			return fmt.Errorf("Invalid network ipv6.address: %w", err)
 		}
@@ -417,7 +417,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		}
 
 		// IP should not be the same as the parent managed network address.
-		if ip.Equal(net.ParseIP(d.config["ipv6.address"])) {
+		if ipAddr.Equal(net.ParseIP(d.config["ipv6.address"])) {
 			return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv6.address"], d.config["parent"])
 		}
 	}
@@ -776,7 +776,8 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 	if d.config["nested"] != "" {
 		delete(saveData, "host_name") // Nested NICs don't have a host side interface.
 	} else {
-		if d.config["acceleration"] == "sriov" {
+		switch d.config["acceleration"] {
+		case "sriov":
 			vswitch, err := d.state.OVS()
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
@@ -832,7 +833,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 			integrationBridgeNICName = vfRepresentor
 			peerName = vfDev
-		} else if d.config["acceleration"] == "vdpa" {
+		case "vdpa":
 			vswitch, err := d.state.OVS()
 			if err != nil {
 				return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
@@ -897,7 +898,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 			integrationBridgeNICName = vfRepresentor
 			peerName = vfDev
-		} else {
+		default:
 			// Create veth pair and configure the peer end with custom hwaddr and mtu if supplied.
 			if d.inst.Type() == instancetype.Container {
 				if saveData["host_name"] == "" {
@@ -1036,19 +1037,21 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		}
 
 		instType := d.inst.Type()
-		if instType == instancetype.VM {
+		switch instType {
+		case instancetype.VM:
 			runConf.NetworkInterface = append(runConf.NetworkInterface,
 				[]deviceConfig.RunConfigItem{
 					{Key: "devName", Value: d.name},
 					{Key: "mtu", Value: fmt.Sprintf("%d", mtu)},
 				}...)
-			if d.config["acceleration"] == "sriov" {
+			switch d.config["acceleration"] {
+			case "sriov":
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
 					[]deviceConfig.RunConfigItem{
 						{Key: "pciSlotName", Value: vfPCIDev.SlotName},
 						{Key: "pciIOMMUGroup", Value: fmt.Sprintf("%d", pciIOMMUGroup)},
 					}...)
-			} else if d.config["acceleration"] == "vdpa" {
+			case "vdpa":
 				if vDPADevice == nil {
 					return nil, errors.New("vDPA device is nil")
 				}
@@ -1061,13 +1064,14 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 						{Key: "vDPADevName", Value: vDPADevice.Name},
 						{Key: "vhostVDPAPath", Value: vDPADevice.VhostVDPA.Path},
 					}...)
-			} else {
+			default:
 				runConf.NetworkInterface = append(runConf.NetworkInterface,
 					[]deviceConfig.RunConfigItem{
 						{Key: "hwaddr", Value: d.config["hwaddr"]},
 					}...)
 			}
-		} else if instType == instancetype.Container {
+
+		case instancetype.Container:
 			runConf.NetworkInterface = append(runConf.NetworkInterface,
 				deviceConfig.RunConfigItem{Key: "hwaddr", Value: d.config["hwaddr"]},
 			)
@@ -1463,11 +1467,11 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 			// the bridge, the NIC is likely to use its MAC and SLAAC to configure its address.
 			hwAddr, err := net.ParseMAC(d.config["hwaddr"])
 			if err == nil {
-				ip, err := eui64.ParseMAC(v6subnet.IP, hwAddr)
+				eui64IP, err := eui64.ParseMAC(v6subnet.IP, hwAddr)
 				if err == nil {
 					addresses = append(addresses, api.InstanceStateNetworkAddress{
 						Family:  "inet6",
-						Address: ip.String(),
+						Address: eui64IP.String(),
 						Netmask: v6mask,
 						Scope:   "global",
 					})

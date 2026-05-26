@@ -21,7 +21,7 @@ func ExampleIncrement() {
 			fmt.Printf("Recovered: %v\n", r)
 		}
 	}()
-	var maxUint uint = ^uint(0)
+	maxUint := ^uint(0)
 	fmt.Println(Increment(refCounter2, maxUint))
 
 	// Output: 1

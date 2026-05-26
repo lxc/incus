@@ -81,8 +81,8 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 	args.Proxy = proxy
 
 	// Connect to the target server.
-	url := fmt.Sprintf("https://%s", address)
-	return incus.ConnectIncus(url, args)
+	serverURL := fmt.Sprintf("https://%s", address)
+	return incus.ConnectIncus(serverURL, args)
 }
 
 // ConnectIfInstanceIsRemote figures out the address of the cluster member which is running the instance with the
@@ -172,22 +172,22 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 			return nil, err
 		}
 
-		if remoteInstance != nil {
-			var instNode db.NodeInfo
-			err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				instNode, err = tx.GetNodeByName(ctx, remoteInstance.Node)
-				return err
-			})
-			if err != nil {
-				return nil, fmt.Errorf("Failed getting cluster member info for %q: %w", remoteInstance.Node, err)
-			}
-
-			// Replace node list with instance's cluster member node (which might be local member).
-			nodes = []db.NodeInfo{instNode}
-		} else {
+		if remoteInstance == nil {
 			// Volume isn't exclusively attached to an instance. Use local cluster member.
 			return nil, nil
 		}
+
+		var instNode db.NodeInfo
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			instNode, err = tx.GetNodeByName(ctx, remoteInstance.Node)
+			return err
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting cluster member info for %q: %w", remoteInstance.Node, err)
+		}
+
+		// Replace node list with instance's cluster member node (which might be local member).
+		nodes = []db.NodeInfo{instNode}
 	}
 
 	nodeCount := len(nodes)

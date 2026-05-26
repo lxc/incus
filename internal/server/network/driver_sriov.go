@@ -68,7 +68,7 @@ func (n *sriov) Validate(config map[string]string, clientType request.ClientType
 func (n *sriov) Delete(clientType request.ClientType) error {
 	n.logger.Debug("Delete", logger.Ctx{"clientType": clientType})
 
-	return n.common.delete(clientType)
+	return n.delete(clientType)
 }
 
 // Rename renames a network.
@@ -76,7 +76,7 @@ func (n *sriov) Rename(newName string) error {
 	n.logger.Debug("Rename", logger.Ctx{"newName": newName})
 
 	// Rename common steps.
-	err := n.common.rename(newName)
+	err := n.rename(newName)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (n *sriov) Stop() error {
 func (n *sriov) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
 	n.logger.Debug("Update", logger.Ctx{"clientType": clientType, "newNetwork": newNetwork})
 
-	dbUpdateNeeded, _, oldNetwork, err := n.common.configChanged(newNetwork)
+	dbUpdateNeeded, _, oldNetwork, err := n.configChanged(newNetwork)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (n *sriov) Update(newNetwork api.NetworkPut, targetNode string, clientType 
 	// pending, then don't apply the new settings to the node, just to the database record (ready for the
 	// actual global create request to be initiated).
 	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
-		return n.common.update(newNetwork, targetNode, clientType)
+		return n.update(newNetwork, targetNode, clientType)
 	}
 
 	reverter := revert.New()
@@ -139,11 +139,11 @@ func (n *sriov) Update(newNetwork api.NetworkPut, targetNode string, clientType 
 	// Define a function which reverts everything.
 	reverter.Add(func() {
 		// Reset changes to all nodes and database.
-		_ = n.common.update(oldNetwork, targetNode, clientType)
+		_ = n.update(oldNetwork, targetNode, clientType)
 	})
 
 	// Apply changes to all nodes and database.
-	err = n.common.update(newNetwork, targetNode, clientType)
+	err = n.update(newNetwork, targetNode, clientType)
 	if err != nil {
 		return err
 	}

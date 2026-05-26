@@ -818,11 +818,11 @@ func patchStorageRenameCustomISOBlockVolumes(_ string, d *Daemon) error {
 	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		// If we're not clustered, we're the leader.
-		if errors.Is(err, cluster.ErrNodeIsNotClustered) {
-			isLeader = true
-		} else {
+		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
 			return err
 		}
+
+		isLeader = true
 	} else if localConfig.ClusterAddress() == leaderAddress {
 		isLeader = true
 	}
@@ -1082,11 +1082,12 @@ func patchStorageZfsUnsetInvalidBlockSettings(_ string, d *Daemon) error {
 				continue
 			}
 
-			if vol.Type == db.StoragePoolVolumeTypeNameVM {
+			switch vol.Type {
+			case db.StoragePoolVolumeTypeNameVM:
 				volType = volTypeVM
-			} else if vol.Type == db.StoragePoolVolumeTypeNameCustom {
+			case db.StoragePoolVolumeTypeNameCustom:
 				volType = volTypeCustom
-			} else {
+			default:
 				// Should not happen.
 				continue
 			}
@@ -1202,11 +1203,12 @@ func patchStorageZfsUnsetInvalidBlockSettingsV2(_ string, d *Daemon) error {
 				continue
 			}
 
-			if vol.Type == db.StoragePoolVolumeTypeNameVM {
+			switch vol.Type {
+			case db.StoragePoolVolumeTypeNameVM:
 				volType = volTypeVM
-			} else if vol.Type == db.StoragePoolVolumeTypeNameCustom {
+			case db.StoragePoolVolumeTypeNameCustom:
 				volType = volTypeCustom
-			} else {
+			default:
 				// Should not happen.
 				continue
 			}

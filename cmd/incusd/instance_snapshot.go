@@ -176,11 +176,11 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 		for _, snap := range snaps {
 			_, snapName, _ := api.GetParentAndSnapshotName(snap)
 			if projectName == api.ProjectDefaultName {
-				url := fmt.Sprintf("/%s/instances/%s/snapshots/%s", version.APIVersion, cname, snapName)
-				resultString = append(resultString, url)
+				snapURL := fmt.Sprintf("/%s/instances/%s/snapshots/%s", version.APIVersion, cname, snapName)
+				resultString = append(resultString, snapURL)
 			} else {
-				url := fmt.Sprintf("/%s/instances/%s/snapshots/%s?project=%s", version.APIVersion, cname, snapName, projectName)
-				resultString = append(resultString, url)
+				snapURL := fmt.Sprintf("/%s/instances/%s/snapshots/%s?project=%s", version.APIVersion, cname, snapName, projectName)
+				resultString = append(resultString, snapURL)
 			}
 		}
 	} else {

@@ -99,9 +99,6 @@ var incusAgentLoader embed.FS
 // qemuSerialChardevName is used to communicate state with QEMU via QMP.
 const qemuSerialChardevName = "qemu_serial-chardev"
 
-// qemuPCIDeviceIDStart is the first PCI slot used for user configurable devices.
-const qemuPCIDeviceIDStart = 4
-
 // qemuDeviceIDPrefix used as part of the name given QEMU devices generated from user added devices.
 const qemuDeviceIDPrefix = "dev-incus_"
 
@@ -476,7 +473,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	// after we have returned the callback function.
 	instProject := d.Project()
 	instanceName := d.Name()
-	state := d.state
+	s := d.state
 
 	return func(event string, data map[string]any) {
 		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange, qmp.EventBlockJobCompleted, qmp.EventBlockJobError}, event) {
@@ -488,14 +485,14 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 
 		inst := instanceRefGet(instProject.Name, instanceName)
 		if inst == nil {
-			inst, err = instance.LoadByProjectAndName(state, instProject.Name, instanceName)
+			inst, err = instance.LoadByProjectAndName(s, instProject.Name, instanceName)
 			if err != nil {
 				l := logger.AddContext(logger.Ctx{"project": instProject.Name, "instance": instanceName})
 				// If DB not available, try loading from backup file.
 				l.Warn("Failed loading instance from database to handle monitor event, trying backup file", logger.Ctx{"err": err})
 
 				instancePath := filepath.Join(internalUtil.VarPath("virtual-machines"), project.Instance(instProject.Name, instanceName))
-				inst, err = instance.LoadFromBackup(state, instProject.Name, instancePath, false)
+				inst, err = instance.LoadFromBackup(s, instProject.Name, instancePath, false)
 				if err != nil {
 					l.Error("Failed loading instance to handle monitor event", logger.Ctx{"err": err})
 					return
@@ -503,7 +500,10 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 			}
 		}
 
-		d = inst.(*qemu)
+		d, ok := inst.(*qemu)
+		if !ok {
+			return
+		}
 
 		switch event {
 		case qmp.EventAgentStarted:
@@ -514,11 +514,11 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 				return
 			}
 
-			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
+			s.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
 
 		case qmp.EventAgentStopped:
 			d.logger.Debug("Instance agent stopped")
-			state.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
+			s.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStopped.Event(d, nil))
 
 		case qmp.EventVMReset:
 			monitor, err := d.qmpConnect()
@@ -2370,13 +2370,13 @@ func (d *qemu) setupSEV(fdFiles *[]*os.File) (*qemuSevOpts, error) {
 
 	if util.IsTrue(d.expandedConfig["security.sev.policy.es"]) {
 		_, sevES := info.Features["sev-es"]
-		if sevES {
-			// This bit mask is used to specify a guest policy. '0x5' is for SEV-ES. The details of the available policies can be found in the link below (see chapter 3)
-			// https://www.amd.com/system/files/TechDocs/55766_SEV-KM_API_Specification.pdf
-			sevOpts.policy = "0x5"
-		} else {
+		if !sevES {
 			return nil, errors.New("AMD SEV-ES is not supported by the host")
 		}
+
+		// This bit mask is used to specify a guest policy. '0x5' is for SEV-ES. The details of the available policies can be found in the link below (see chapter 3)
+		// https://www.amd.com/system/files/TechDocs/55766_SEV-KM_API_Specification.pdf
+		sevOpts.policy = "0x5"
 	} else {
 		// '0x1' is for a regular SEV policy.
 		sevOpts.policy = "0x1"
@@ -2942,11 +2942,12 @@ func (d *qemu) deviceAttachPCI(deviceName string, configCopy map[string]string, 
 	// Get the device config.
 	var devName, pciSlotName, pciIOMMUGroup string
 	for _, pciItem := range pciConfig {
-		if pciItem.Key == "devName" {
+		switch pciItem.Key {
+		case "devName":
 			devName = pciItem.Value
-		} else if pciItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = pciItem.Value
-		} else if pciItem.Key == "pciIOMMUGroup" {
+		case "pciIOMMUGroup":
 			pciIOMMUGroup = pciItem.Value
 		}
 	}
@@ -3894,7 +3895,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// on PCIe (which we need to maintain compatibility with network configuration in our existing VM images).
 	// It's also meant to group all low-bandwidth internal devices onto a single address. PCIe bus allows a
 	// total of 256 devices, but this assumes 32 chassis * 8 function. By using VFs for the internal fixed
-	// devices we avoid consuming a chassis for each one. See also the qemuPCIDeviceIDStart constant.
+	// devices we avoid consuming a chassis for each one.
 	devBus, devAddr, multi := bus.allocate(busFunctionGroupGeneric)
 	balloonOpts := qemuDevOpts{
 		busName:       bus.name,
@@ -4752,11 +4753,12 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	directCache := true   // Bypass host cache, use O_DIRECT semantics by default.
 	noFlushCache := false // Don't ignore any flush requests for the device.
 
-	if cacheMode == "unsafe" {
+	switch cacheMode {
+	case "unsafe":
 		aioMode = "threads"
 		directCache = false
 		noFlushCache = true
-	} else if cacheMode == "writeback" {
+	case "writeback":
 		aioMode = "threads"
 		directCache = false
 	}
@@ -4817,12 +4819,13 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		blockDev["image"] = rbdImageName
 		for key, val := range opts {
 			// We use 'id' where qemu uses 'user'.
-			if key == "id" {
+			switch key {
+			case "id":
 				blockDev["user"] = val
 				userName = val
-			} else if key == "cluster" {
+			case "cluster":
 				clusterName = val
-			} else {
+			default:
 				blockDev[key] = val
 			}
 		}
@@ -4852,7 +4855,13 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	}
 
 	qemuDev["id"] = fmt.Sprintf("%s%s", qemuDeviceIDPrefix, escapedDeviceName)
-	qemuDev["drive"] = blockDev["node-name"].(string)
+
+	nodeName, ok := blockDev["node-name"].(string)
+	if !ok {
+		return nil, fmt.Errorf("Invalid block device node-name for %q", driveConf.DevName)
+	}
+
+	qemuDev["drive"] = nodeName
 
 	// Max serial length is 36 characters: prefix + 30 chars.
 	// For nvme and virtio-blk, the maximum serial length is 20 characters: prefix + 14 chars.
@@ -4878,9 +4887,10 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		qemuDev["lun"] = 1
 		qemuDev["bus"] = "qemu_scsi.0"
 
-		if media == "disk" {
+		switch media {
+		case "disk":
 			qemuDev["driver"] = "scsi-hd"
-		} else if media == "cdrom" {
+		case "cdrom":
 			qemuDev["driver"] = "scsi-cd"
 		}
 	} else if slices.Contains([]string{"nvme", "virtio-blk"}, bus) {
@@ -5018,23 +5028,24 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 	var devName, nicName, devHwaddr, pciSlotName, pciIOMMUGroup, vDPADevName, vhostVDPAPath, maxVQP string
 	connected := true
 	for _, nicItem := range nicConfig {
-		if nicItem.Key == "devName" {
+		switch nicItem.Key {
+		case "devName":
 			devName = nicItem.Value
-		} else if nicItem.Key == "link" {
+		case "link":
 			nicName = nicItem.Value
-		} else if nicItem.Key == "hwaddr" {
+		case "hwaddr":
 			devHwaddr = nicItem.Value
-		} else if nicItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = nicItem.Value
-		} else if nicItem.Key == "pciIOMMUGroup" {
+		case "pciIOMMUGroup":
 			pciIOMMUGroup = nicItem.Value
-		} else if nicItem.Key == "vDPADevName" {
+		case "vDPADevName":
 			vDPADevName = nicItem.Value
-		} else if nicItem.Key == "vhostVDPAPath" {
+		case "vhostVDPAPath":
 			vhostVDPAPath = nicItem.Value
-		} else if nicItem.Key == "maxVQP" {
+		case "maxVQP":
 			maxVQP = nicItem.Value
-		} else if nicItem.Key == "connected" {
+		case "connected":
 			connected = util.IsTrueOrEmpty(nicItem.Value)
 		}
 	}
@@ -5090,13 +5101,22 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 			// Open the device once for each queue and pass to QEMU.
 			fds := make([]string, 0, queueCount)
 			vhostfds := make([]string, 0, queueCount)
+
+			// Collect the opened file handles so they can all be closed once the devices have been added.
+			openFiles := make([]*os.File, 0, queueCount)
+			defer func() {
+				for _, f := range openFiles {
+					_ = f.Close()
+				}
+			}()
+
 			for i := range queueCount {
 				devFile, err := deviceFile()
 				if err != nil {
 					return fmt.Errorf("Error opening netdev file for queue %d: %w", i, err)
 				}
 
-				defer func() { _ = devFile.Close() }() // Close file after device has been added.
+				openFiles = append(openFiles, devFile)
 
 				devFDName := fmt.Sprintf("%s.%d", devFile.Name(), i)
 				err = m.SendFile(devFDName, devFile)
@@ -5115,7 +5135,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 						return fmt.Errorf("Error opening /dev/vhost-net for queue %d: %w", i, err)
 					}
 
-					defer func() { _ = vhostFile.Close() }() // Close file after device has been added.
+					openFiles = append(openFiles, vhostFile)
 
 					vhostFDName := fmt.Sprintf("%s.%d", vhostFile.Name(), i)
 					err = m.SendFile(vhostFDName, vhostFile)
@@ -5149,7 +5169,12 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				qemuNetDev["vhostfds"] = strings.Join(vhostfds, ":")
 			}
 
-			qemuDev["netdev"] = qemuNetDev["id"].(string)
+			netDevID, ok := qemuNetDev["id"].(string)
+			if !ok {
+				return errors.New("Invalid network device ID")
+			}
+
+			qemuDev["netdev"] = netDevID
 			qemuDev["mac"] = devHwaddr
 
 			err = m.AddNIC(qemuNetDev, qemuDev, connected)
@@ -5256,7 +5281,12 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				qemuDev["driver"] = "usb-net"
 			}
 
-			qemuDev["netdev"] = qemuNetDev["id"].(string)
+			netDevID, ok := qemuNetDev["id"].(string)
+			if !ok {
+				return errors.New("Invalid network device ID")
+			}
+
+			qemuDev["netdev"] = netDevID
 			qemuDev["page-per-vq"] = true
 			qemuDev["iommu_platform"] = true
 			qemuDev["disable-legacy"] = true
@@ -5357,11 +5387,12 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 
 	firmware := true
 	for _, pciItem := range pciConfig {
-		if pciItem.Key == "devName" {
+		switch pciItem.Key {
+		case "devName":
 			devName = pciItem.Value
-		} else if pciItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = pciItem.Value
-		} else if pciItem.Key == "firmware" {
+		case "firmware":
 			firmware = util.IsTrueOrEmpty(pciItem.Value)
 		}
 	}
@@ -5387,11 +5418,12 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []deviceConfig.RunConfigItem) error {
 	var devName, pciSlotName, vgpu string
 	for _, gpuItem := range gpuConfig {
-		if gpuItem.Key == "devName" {
+		switch gpuItem.Key {
+		case "devName":
 			devName = gpuItem.Value
-		} else if gpuItem.Key == "pciSlotName" {
+		case "pciSlotName":
 			pciSlotName = gpuItem.Value
-		} else if gpuItem.Key == "vgpu" {
+		case "vgpu":
 			vgpu = gpuItem.Value
 		}
 	}
@@ -5536,9 +5568,10 @@ func (d *qemu) addTPMDeviceConfig(conf *[]cfg.Section, tpmConfig []deviceConfig.
 	var devName, socketPath string
 
 	for _, tpmItem := range tpmConfig {
-		if tpmItem.Key == "path" {
+		switch tpmItem.Key {
+		case "path":
 			socketPath = tpmItem.Value
-		} else if tpmItem.Key == "devName" {
+		case "devName":
 			devName = tpmItem.Value
 		}
 	}
@@ -6598,7 +6631,8 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		for _, key := range changedConfig {
 			value := d.expandedConfig[key]
 
-			if key == "limits.cpu" {
+			switch key {
+			case "limits.cpu":
 				oldValue := oldExpandedConfig["limits.cpu"]
 
 				if oldValue != "" {
@@ -6623,25 +6657,27 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				if err != nil {
 					return fmt.Errorf("Failed updating cpu limit: %w", err)
 				}
-			} else if key == "limits.memory" {
+
+			case "limits.memory":
 				err = d.updateMemoryLimit(value)
 				if err != nil {
 					if err != nil {
 						return fmt.Errorf("Failed updating memory limit: %w", err)
 					}
 				}
-			} else if key == "security.csm" {
+			case "security.csm":
 				// Defer rebuilding nvram until next start.
 				d.localConfig["volatile.apply_nvram"] = "true"
-			} else if key == "security.secureboot" {
+			case "security.secureboot":
 				// Defer rebuilding nvram until next start.
 				d.localConfig["volatile.apply_nvram"] = "true"
-			} else if key == "security.guestapi" {
+			case "security.guestapi":
 				err = d.advertiseVsockAddress()
 				if err != nil {
 					return err
 				}
-			} else if key == "limits.memory.oom_priority" {
+
+			case "limits.memory.oom_priority":
 				// Configure the OOM priority.
 				err = d.setOOMPriority(d.InitPID())
 				if err != nil {
@@ -8384,6 +8420,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	return nil
 }
 
+// MigrateReceive receives an instance being migrated from a source.
 func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	d.logger.Debug("Migration receive starting")
 	defer d.logger.Debug("Migration receive stopped")
@@ -8807,9 +8844,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					api.SecretNameState: stateConn,
 				}
 
-				for _, vol := range dependentVolumes {
-					d.disksToMigrate = append(d.disksToMigrate, vol)
-				}
+				d.disksToMigrate = append(d.disksToMigrate, dependentVolumes...)
 
 				dependentVolumeMove := args.ClusterMoveSourceName != "" && len(d.disksToMigrate) > 0
 
@@ -8885,7 +8920,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	}
 }
 
-// CGroupSet is not implemented for VMs.
+// CGroup is not implemented for VMs.
 func (d *qemu) CGroup() (*cgroup.CGroup, error) {
 	return nil, instance.ErrNotImplemented
 }
@@ -8904,7 +8939,10 @@ func (d *qemu) FileSFTPConn() (net.Conn, error) {
 	}
 
 	// Get the HTTP transport.
-	httpTransport := client.Transport.(*http.Transport)
+	httpTransport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("Agent client transport is not an *http.Transport")
+	}
 
 	// Send the upgrade request.
 	u, err := url.Parse("https://custom.socket/1.0/sftp")
@@ -10234,13 +10272,14 @@ func (d *qemu) version() (*version.DottedVersion, error) {
 	return qemuVer, nil
 }
 
+// Metrics returns the metrics set for the instance.
 func (d *qemu) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error) {
 	if !d.IsRunning() {
 		return nil, ErrInstanceIsStopped
 	}
 
 	if d.agentMetricsEnabled() {
-		metrics, err := d.getAgentMetrics()
+		agentMetrics, err := d.getAgentMetrics()
 		if err != nil {
 			if !errors.Is(err, errQemuAgentOffline) {
 				d.logger.Warn("Could not get VM metrics from agent", logger.Ctx{"err": err})
@@ -10250,7 +10289,7 @@ func (d *qemu) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, erro
 			return d.getQemuMetrics()
 		}
 
-		return metrics, nil
+		return agentMetrics, nil
 	}
 
 	return d.getQemuMetrics()
@@ -10321,13 +10360,13 @@ func (d *qemu) getNetworkState() (map[string]api.InstanceStateNetwork, error) {
 			continue
 		}
 
-		network, err := nic.State()
+		nicState, err := nic.State()
 		if err != nil {
 			return nil, fmt.Errorf("Failed getting NIC state for %q: %w", k, err)
 		}
 
-		if network != nil {
-			networks[k] = *network
+		if nicState != nil {
+			networks[k] = *nicState
 		}
 	}
 
@@ -10927,20 +10966,6 @@ func (d *qemu) fetchBlockDeviceChain(m *qmp.Monitor, blockDevName string) ([]str
 	}
 
 	return filterAndSortQcow2Blockdevs(blockdevNames, blockDevName), nil
-}
-
-// fetchRootBlockDeviceChain returns the ordered list of block device names
-// required to load the root disk device, including any dependent layers.
-func (d *qemu) fetchRootBlockDeviceChain(m *qmp.Monitor) ([]string, error) {
-	rootDevName, _, err := internalInstance.GetRootDiskDevice(d.expandedDevices.CloneNative())
-	if err != nil {
-		return nil, fmt.Errorf("Failed getting instance root disk: %w", err)
-	}
-
-	escapedDeviceName := linux.PathNameEncode(rootDevName)
-	rootNodeName := d.blockNodeName(escapedDeviceName)
-
-	return d.fetchBlockDeviceChain(m, rootNodeName)
 }
 
 // DeleteQcow2Snapshot deletes a qcow2 snapshot for a running instance.

@@ -534,7 +534,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 	}
 
 	// Check ceph options are only used when ceph or cephfs type source is specified.
-	if !(d.sourceIsCeph() || d.sourceIsCephFs()) && (d.config["ceph.cluster_name"] != "" || d.config["ceph.user_name"] != "") {
+	if !d.sourceIsCeph() && !d.sourceIsCephFs() && (d.config["ceph.cluster_name"] != "" || d.config["ceph.user_name"] != "") {
 		return fmt.Errorf("Invalid options ceph.cluster_name/ceph.user_name for source %q", d.config["source"])
 	}
 
@@ -720,7 +720,6 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 					if volPath != "" {
 						return errors.New("Custom block volume snapshots cannot be used directly")
 					}
-
 				} else if contentType == db.StoragePoolVolumeContentTypeISO {
 					if instConf.Type() == instancetype.Container {
 						return errors.New("Custom ISO volumes cannot be used on containers")
@@ -746,7 +745,6 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 			// custom volume disks (where initial.uid/gid/mode are used when auto-creating sub-directories).
 			initialConfig := make(map[string]string)
 			for k, v := range d.config {
-
 				// gendoc:generate(entity=devices, group=disk, key=initial.*)
 				//
 				// For root disk devices, this is used to override the storage pool's default volume
@@ -808,9 +806,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 			return errors.New("Only Incus-managed disks are allowed with migration.stateful=true")
 		}
 
-		if d.config["io.bus"] == "nvme" {
+		switch d.config["io.bus"] {
+		case "nvme":
 			return errors.New("NVME disks aren't supported with migration.stateful=true")
-		} else if d.config["io.bus"] == "virtiofs" {
+		case "virtiofs":
 			return errors.New("Virtiofs mounts aren't supported with migration.stateful=true")
 		}
 
@@ -2095,13 +2094,13 @@ func (d *disk) mountPoolVolume() (func(), string, *storagePools.MountInfo, error
 	}
 
 	if d.inst.Type() == instancetype.Container {
-		if dbVolume.ContentType == db.StoragePoolVolumeContentTypeNameFS {
-			err = d.storagePoolVolumeAttachShift(storageProjectName, d.pool.Name(), volName, db.StoragePoolVolumeTypeCustom, srcPath)
-			if err != nil {
-				return nil, "", nil, fmt.Errorf("Failed shifting custom storage volume %q on storage pool %q: %w", volName, d.pool.Name(), err)
-			}
-		} else {
+		if dbVolume.ContentType != db.StoragePoolVolumeContentTypeNameFS {
 			return nil, "", nil, errors.New("Only filesystem volumes are supported for containers")
+		}
+
+		err = d.storagePoolVolumeAttachShift(storageProjectName, d.pool.Name(), volName, db.StoragePoolVolumeTypeCustom, srcPath)
+		if err != nil {
+			return nil, "", nil, fmt.Errorf("Failed shifting custom storage volume %q on storage pool %q: %w", volName, d.pool.Name(), err)
 		}
 	}
 
@@ -2504,7 +2503,7 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 		return err
 	}
 
-	poolVolumePut := dbVolume.StorageVolume.Writable()
+	poolVolumePut := dbVolume.Writable()
 
 	// Check if unmapped.
 	if util.IsTrue(poolVolumePut.Config["security.unmapped"]) {
@@ -2525,7 +2524,11 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 	var nextIdmap *idmap.Set
 	nextJSONMap := "[]"
 	if util.IsFalseOrEmpty(poolVolumePut.Config["security.shifted"]) {
-		c := d.inst.(instance.Container)
+		c, ok := d.inst.(instance.Container)
+		if !ok {
+			return errors.New("Storage volume idmap shifting is only supported for containers")
+		}
+
 		// Get the container's idmap.
 		if c.IsRunning() {
 			nextIdmap, err = c.CurrentIdmap()
@@ -2571,7 +2574,10 @@ func (d *disk) storagePoolVolumeAttachShift(projectName, poolName, volumeName st
 						continue
 					}
 
-					ct := inst.(instance.Container)
+					ct, ok := inst.(instance.Container)
+					if !ok {
+						continue
+					}
 
 					var ctNextIdmap *idmap.Set
 
@@ -3029,9 +3035,9 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 
 	// Deal with per-filesystem oddities. We don't care about failures here
 	// because any non-special filesystem => directory backend.
-	fs, _ := linux.DetectFilesystem(expPath)
+	fsName, _ := linux.DetectFilesystem(expPath)
 
-	if fs == "zfs" && util.PathExists("/dev/zfs") {
+	if fsName == "zfs" && util.PathExists("/dev/zfs") {
 		// Accessible zfs filesystems
 		poolName := strings.Split(dev[1], "/")[0]
 
@@ -3057,19 +3063,19 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 			}
 
 			var path string
-			if util.PathExists(fields[0]) {
-				if linux.IsBlockdevPath(fields[0]) {
-					path = fields[0]
-				} else {
-					subDevices, err := d.getParentBlocks(fields[0])
-					if err != nil {
-						return nil, err
-					}
-
-					devices = append(devices, subDevices...)
-				}
-			} else {
+			if !util.PathExists(fields[0]) {
 				continue
+			}
+
+			if linux.IsBlockdevPath(fields[0]) {
+				path = fields[0]
+			} else {
+				subDevices, err := d.getParentBlocks(fields[0])
+				if err != nil {
+					return nil, err
+				}
+
+				devices = append(devices, subDevices...)
 			}
 
 			if path != "" {
@@ -3085,7 +3091,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 		if len(devices) == 0 {
 			return nil, fmt.Errorf("Unable to find backing block for zfs pool %q", poolName)
 		}
-	} else if fs == "btrfs" && util.PathExists(dev[1]) {
+	} else if fsName == "btrfs" && util.PathExists(dev[1]) {
 		// Accessible btrfs filesystems
 		output, err := subprocess.RunCommand("btrfs", "filesystem", "show", dev[1])
 		if err != nil {

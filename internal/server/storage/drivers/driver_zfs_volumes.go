@@ -474,12 +474,14 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 		for _, snapName := range srcBackup.Snapshots {
 			prefix := "snapshots"
 			fileName := fmt.Sprintf("%s.bin", snapName)
-			if v.volType == VolumeTypeVM {
+			switch v.volType {
+			case VolumeTypeVM:
 				prefix = "virtual-machine-snapshots"
 				if v.contentType == ContentTypeFS {
 					fileName = fmt.Sprintf("%s-config.bin", snapName)
 				}
-			} else if v.volType == VolumeTypeCustom {
+
+			case VolumeTypeCustom:
 				prefix = "volume-snapshots"
 			}
 
@@ -493,13 +495,15 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 
 		// Extract main volume.
 		fileName := "container.bin"
-		if v.volType == VolumeTypeVM {
+		switch v.volType {
+		case VolumeTypeVM:
 			if v.contentType == ContentTypeFS {
 				fileName = "virtual-machine-config.bin"
 			} else {
 				fileName = "virtual-machine.bin"
 			}
-		} else if v.volType == VolumeTypeCustom {
+
+		case VolumeTypeCustom:
 			fileName = "volume.bin"
 		}
 
@@ -3054,12 +3058,14 @@ func (d *zfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, bas
 			// Make a binary zfs backup.
 			prefix := "snapshots"
 			fileName := fmt.Sprintf("%s.bin", snapName)
-			if vol.volType == VolumeTypeVM {
+			switch vol.volType {
+			case VolumeTypeVM:
 				prefix = "virtual-machine-snapshots"
 				if vol.contentType == ContentTypeFS {
 					fileName = fmt.Sprintf("%s-config.bin", snapName)
 				}
-			} else if vol.volType == VolumeTypeCustom {
+
+			case VolumeTypeCustom:
 				prefix = "volume-snapshots"
 			}
 
@@ -3090,13 +3096,15 @@ func (d *zfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, bas
 
 	// Dump the container to a file.
 	fileName := "container.bin"
-	if vol.volType == VolumeTypeVM {
+	switch vol.volType {
+	case VolumeTypeVM:
 		if vol.contentType == ContentTypeFS {
 			fileName = "virtual-machine-config.bin"
 		} else {
 			fileName = "virtual-machine.bin"
 		}
-	} else if vol.volType == VolumeTypeCustom {
+
+	case VolumeTypeCustom:
 		fileName = "volume.bin"
 	}
 
@@ -3403,7 +3411,7 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 	return cleanup, nil
 }
 
-// UnmountVolume simulates unmounting a volume snapshot.
+// UnmountVolumeSnapshot simulates unmounting a volume snapshot.
 func (d *zfs) UnmountVolumeSnapshot(snapVol Volume, op *operations.Operation) (bool, error) {
 	unlock, err := snapVol.MountLock()
 	if err != nil {

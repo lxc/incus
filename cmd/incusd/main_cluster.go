@@ -101,7 +101,7 @@ type ClusterConfig struct {
 
 // ToRaftNode converts a ClusterConfig struct to a RaftNode struct.
 func (c ClusterMember) ToRaftNode() (*db.RaftNode, error) {
-	node := &db.RaftNode{
+	raftNode := &db.RaftNode{
 		NodeInfo: client.NodeInfo{
 			ID:      c.ID,
 			Address: c.Address,
@@ -121,9 +121,9 @@ func (c ClusterMember) ToRaftNode() (*db.RaftNode, error) {
 		return nil, fmt.Errorf("unknown raft role: %q", c.Role)
 	}
 
-	node.Role = role
+	raftNode.Role = role
 
-	return node, nil
+	return raftNode, nil
 }
 
 type cmdClusterEdit struct {
@@ -179,8 +179,8 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 
 	config := ClusterConfig{Members: []ClusterMember{}}
 
-	for _, node := range nodes {
-		member := ClusterMember{ID: node.ID, Name: node.Name, Address: node.Address, Role: node.Role.String()}
+	for _, raftNode := range nodes {
+		member := ClusterMember{ID: raftNode.ID, Name: raftNode.Name, Address: raftNode.Address, Role: raftNode.Role.String()}
 		config.Members = append(config.Members, member)
 	}
 
@@ -213,8 +213,8 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 			// Convert ClusterConfig back to RaftNodes.
 			newNodes := []db.RaftNode{}
 			var newNode *db.RaftNode
-			for _, node := range newConfig.Members {
-				newNode, err = node.ToRaftNode()
+			for _, raftNode := range newConfig.Members {
+				newNode, err = raftNode.ToRaftNode()
 				if err != nil {
 					break
 				}
@@ -332,8 +332,8 @@ func (c *cmdClusterShow) run(_ *cobra.Command, _ []string) error {
 
 	config := ClusterConfig{Members: []ClusterMember{}}
 
-	for _, node := range nodes {
-		member := ClusterMember{ID: node.ID, Name: node.Name, Address: node.Address, Role: node.Role.String()}
+	for _, raftNode := range nodes {
+		member := ClusterMember{ID: raftNode.ID, Name: raftNode.Name, Address: raftNode.Address, Role: raftNode.Role.String()}
 		config.Members = append(config.Members, member)
 	}
 
@@ -345,7 +345,7 @@ func (c *cmdClusterShow) run(_ *cobra.Command, _ []string) error {
 	if len(config.Members) > 0 {
 		fmt.Printf(SegmentComment+"\n\n%s", segmentID, data)
 	} else {
-		fmt.Print(data)
+		fmt.Print(string(data))
 	}
 
 	return nil
@@ -429,14 +429,14 @@ func (c *cmdClusterRecoverFromQuorumLoss) run(_ *cobra.Command, _ []string) erro
 		}
 	}
 
-	os := sys.DefaultOS()
+	localOS := sys.DefaultOS()
 
-	db, err := db.OpenNode(filepath.Join(os.VarDir, "database"), nil)
+	database, err := db.OpenNode(filepath.Join(localOS.VarDir, "database"), nil)
 	if err != nil {
 		return fmt.Errorf("Failed to open local database: %w", err)
 	}
 
-	return cluster.Recover(db)
+	return cluster.Recover(database)
 }
 
 func (c *cmdClusterRecoverFromQuorumLoss) promptConfirmation() error {
@@ -500,13 +500,13 @@ func (c *cmdClusterRemoveRaftNode) run(cmd *cobra.Command, args []string) error 
 		}
 	}
 
-	client, err := incus.ConnectIncusUnix("", nil)
+	server, err := incus.ConnectIncusUnix("", nil)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to daemon: %w", err)
 	}
 
 	endpoint := fmt.Sprintf("/internal/cluster/raft-node/%s", address)
-	_, _, err = client.RawQuery("DELETE", endpoint, nil, "")
+	_, _, err = server.RawQuery("DELETE", endpoint, nil, "")
 	if err != nil {
 		return err
 	}

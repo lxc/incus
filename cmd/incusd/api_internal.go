@@ -32,6 +32,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
@@ -318,11 +319,11 @@ func internalShutdown(d *Daemon, r *http.Request) response.Response {
 
 		// Send the response before the daemon process ends.
 		f, ok := w.(http.Flusher)
-		if ok {
-			f.Flush()
-		} else {
+		if !ok {
 			return errors.New("http.ResponseWriter is not type http.Flusher")
 		}
+
+		f.Flush()
 
 		// Send result of d.Stop() to cmdDaemon so that process stops with correct exit code from Stop().
 		go func() {
@@ -528,14 +529,14 @@ func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 
 	dumpOption := query.DumpOptions(dumpInt)
 
-	var db *sql.DB
+	var dbConn *sql.DB
 	if database == "global" {
-		db = s.DB.Cluster.DB()
+		dbConn = s.DB.Cluster.DB()
 	} else {
-		db = s.DB.Node.DB()
+		dbConn = s.DB.Node.DB()
 	}
 
-	tx, err := db.BeginTx(r.Context(), nil)
+	tx, err := dbConn.BeginTx(r.Context(), nil)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed to start transaction: %w", err))
 	}
@@ -569,11 +570,11 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("No query provided"))
 	}
 
-	var db *sql.DB
+	var dbConn *sql.DB
 	if req.Database == "global" {
-		db = s.DB.Cluster.DB()
+		dbConn = s.DB.Cluster.DB()
 	} else {
-		db = s.DB.Node.DB()
+		dbConn = s.DB.Node.DB()
 	}
 
 	batch := internalSQL.SQLBatch{}
@@ -583,25 +584,25 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponse(true, batch)
 	}
 
-	for _, query := range strings.Split(req.Query, ";") {
-		query = strings.TrimLeft(query, " ")
+	for _, statement := range strings.Split(req.Query, ";") {
+		statement = strings.TrimLeft(statement, " ")
 
-		if query == "" {
+		if statement == "" {
 			continue
 		}
 
 		result := internalSQL.SQLResult{}
 
-		tx, err := db.Begin()
+		tx, err := dbConn.Begin()
 		if err != nil {
 			return response.SmartError(err)
 		}
 
-		if strings.HasPrefix(strings.ToUpper(query), "SELECT") {
-			err = internalSQLSelect(tx, query, &result)
+		if strings.HasPrefix(strings.ToUpper(statement), "SELECT") {
+			err = internalSQLSelect(tx, statement, &result)
 			_ = tx.Rollback()
 		} else {
-			err = internalSQLExec(tx, query, &result)
+			err = internalSQLExec(tx, statement, &result)
 			if err != nil {
 				_ = tx.Rollback()
 			} else {
@@ -618,10 +619,10 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponse(true, batch)
 }
 
-func internalSQLSelect(tx *sql.Tx, query string, result *internalSQL.SQLResult) error {
+func internalSQLSelect(tx *sql.Tx, statement string, result *internalSQL.SQLResult) error {
 	result.Type = "select"
 
-	rows, err := tx.Query(query)
+	rows, err := tx.Query(statement)
 	if err != nil {
 		return fmt.Errorf("Failed to execute query: %w", err)
 	}
@@ -665,9 +666,9 @@ func internalSQLSelect(tx *sql.Tx, query string, result *internalSQL.SQLResult) 
 	return nil
 }
 
-func internalSQLExec(tx *sql.Tx, query string, result *internalSQL.SQLResult) error {
+func internalSQLExec(tx *sql.Tx, statement string, result *internalSQL.SQLResult) error {
 	result.Type = "exec"
-	r, err := tx.Exec(query)
+	r, err := tx.Exec(statement)
 	if err != nil {
 		return fmt.Errorf("Failed to exec query: %w", err)
 	}
@@ -909,15 +910,19 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 	defer instOp.Done(err)
 
 	instancePath := storagePools.InstancePath(instanceType, projectName, backupConf.Container.Name, false)
-	isPrivileged := false
-	if backupConf.Container.Config["security.privileged"] == "" {
-		isPrivileged = true
-	}
+	isPrivileged := backupConf.Container.Config["security.privileged"] == ""
 
 	err = storagePools.CreateContainerMountpoint(instanceMountPoint, instancePath, isPrivileged)
 	if err != nil {
 		return err
 	}
+
+	var snapInstOps []*operationlock.InstanceOperation
+	defer func() {
+		for _, snapInstOp := range snapInstOps {
+			snapInstOp.Done(nil)
+		}
+	}()
 
 	for _, snap := range existingSnapshots {
 		snapInstName := fmt.Sprintf("%s%s%s", backupConf.Container.Name, internalInstance.SnapshotDelimiter, snap.Name)
@@ -1003,7 +1008,7 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		}
 
 		reverter.Add(cleanup)
-		defer snapInstOp.Done(err)
+		snapInstOps = append(snapInstOps, snapInstOp)
 
 		// Recreate missing mountpoints and symlinks.
 		volStorageName := project.Instance(projectName, snapInstName)

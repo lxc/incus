@@ -460,7 +460,7 @@ func (c *ClusterTx) GetImageFromAnyProject(ctx context.Context, fingerprint stri
 // getImagesByFingerprintPrefix returns the images with fingerprints matching the prefix.
 // Optional filters 'project' and 'public' will be included if not nil.
 func (c *ClusterTx) getImagesByFingerprintPrefix(ctx context.Context, fingerprintPrefix string, filter cluster.ImageFilter) ([]cluster.Image, error) {
-	sql := `
+	q := `
 SELECT images.id, projects.name AS project, images.fingerprint, images.type, images.filename, images.size, images.public, images.architecture, images.creation_date, images.expiry_date, images.upload_date, images.cached, images.last_use_date, images.auto_update
 FROM images
 JOIN projects ON images.project_id = projects.id
@@ -468,23 +468,23 @@ WHERE images.fingerprint LIKE ?
 `
 	args := []any{fingerprintPrefix + "%"}
 	if filter.Project != nil {
-		sql += `AND project = ?
+		q += `AND project = ?
 	`
 		args = append(args, *filter.Project)
 	}
 
 	if filter.Public != nil {
-		sql += `AND images.public = ?
+		q += `AND images.public = ?
 	`
 		args = append(args, *filter.Public)
 	}
 
-	sql += `ORDER BY projects.id, images.fingerprint
+	q += `ORDER BY projects.id, images.fingerprint
 `
 
 	images := make([]cluster.Image, 0)
 
-	err := query.Scan(ctx, c.Tx(), sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, c.Tx(), q, func(scan func(dest ...any) error) error {
 		var img cluster.Image
 
 		err := scan(
@@ -785,7 +785,7 @@ func (c *ClusterTx) SetImageCachedAndLastUseDate(ctx context.Context, projectNam
 }
 
 // UpdateImage updates the image with the given ID.
-func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz int64, public bool, autoUpdate bool, architecture string, createdAt time.Time, expiresAt time.Time, properties map[string]string, project string, profileIds []int64) error {
+func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz int64, public bool, autoUpdate bool, architecture string, createdAt time.Time, expiresAt time.Time, properties map[string]string, project string, profileIDs []int64) error {
 	arch, err := osarch.ArchitectureID(architecture)
 	if err != nil {
 		arch = 0
@@ -801,8 +801,8 @@ func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz in
 		autoUpdateInt = 1
 	}
 
-	sql := `UPDATE images SET filename=?, size=?, public=?, auto_update=?, architecture=?, creation_date=?, expiry_date=? WHERE id=?`
-	_, err = c.tx.ExecContext(ctx, sql, fname, sz, publicInt, autoUpdateInt, arch, createdAt, expiresAt, id)
+	stmt := `UPDATE images SET filename=?, size=?, public=?, auto_update=?, architecture=?, creation_date=?, expiry_date=? WHERE id=?`
+	_, err = c.tx.ExecContext(ctx, stmt, fname, sz, publicInt, autoUpdateInt, arch, createdAt, expiresAt, id)
 	if err != nil {
 		return err
 	}
@@ -812,19 +812,19 @@ func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz in
 		return err
 	}
 
-	sql = `INSERT INTO images_properties (image_id, type, key, value) VALUES (?, ?, ?, ?)`
+	stmt = `INSERT INTO images_properties (image_id, type, key, value) VALUES (?, ?, ?, ?)`
 	for key, value := range properties {
 		if value == "" {
 			continue
 		}
 
-		_, err = c.tx.ExecContext(ctx, sql, id, 0, key, value)
+		_, err = c.tx.ExecContext(ctx, stmt, id, 0, key, value)
 		if err != nil {
 			return err
 		}
 	}
 
-	if project != "" && profileIds != nil {
+	if project != "" && profileIDs != nil {
 		enabled, err := cluster.ProjectHasProfiles(ctx, c.tx, project)
 		if err != nil {
 			return err
@@ -845,9 +845,9 @@ func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz in
 			return err
 		}
 
-		sql = `INSERT INTO images_profiles (image_id, profile_id) VALUES (?, ?)`
-		for _, profileID := range profileIds {
-			_, err = c.tx.ExecContext(ctx, sql, id, profileID)
+		stmt = `INSERT INTO images_profiles (image_id, profile_id) VALUES (?, ?)`
+		for _, profileID := range profileIDs {
+			_, err = c.tx.ExecContext(ctx, stmt, id, profileID)
 			if err != nil {
 				return err
 			}
@@ -858,7 +858,7 @@ func (c *ClusterTx) UpdateImage(ctx context.Context, id int, fname string, sz in
 }
 
 // CreateImage creates a new image.
-func (c *ClusterTx) CreateImage(ctx context.Context, project string, fp string, fname string, sz int64, public bool, autoUpdate bool, architecture string, createdAt time.Time, expiresAt time.Time, properties map[string]string, typeName string, profileIds []int64) error {
+func (c *ClusterTx) CreateImage(ctx context.Context, project string, fp string, fname string, sz int64, public bool, autoUpdate bool, architecture string, createdAt time.Time, expiresAt time.Time, properties map[string]string, typeName string, profileIDs []int64) error {
 	arch, err := osarch.ArchitectureID(architecture)
 	if err != nil {
 		arch = 0
@@ -897,8 +897,8 @@ func (c *ClusterTx) CreateImage(ctx context.Context, project string, fp string, 
 		autoUpdateInt = 1
 	}
 
-	sql := `INSERT INTO images (project_id, fingerprint, filename, size, public, auto_update, architecture, creation_date, expiry_date, upload_date, type) VALUES ((SELECT id FROM projects WHERE name = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	result, err := c.tx.ExecContext(ctx, sql, imageProject, fp, fname, sz, publicInt, autoUpdateInt, arch, createdAt, expiresAt, time.Now().UTC(), imageType)
+	stmt := `INSERT INTO images (project_id, fingerprint, filename, size, public, auto_update, architecture, creation_date, expiry_date, upload_date, type) VALUES ((SELECT id FROM projects WHERE name = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	result, err := c.tx.ExecContext(ctx, stmt, imageProject, fp, fname, sz, publicInt, autoUpdateInt, arch, createdAt, expiresAt, time.Now().UTC(), imageType)
 	if err != nil {
 		return fmt.Errorf("Failed saving main image record: %w", err)
 	}
@@ -914,21 +914,21 @@ func (c *ClusterTx) CreateImage(ctx context.Context, project string, fp string, 
 	}
 
 	if len(properties) > 0 {
-		sql = `INSERT INTO images_properties (image_id, type, key, value) VALUES (?, 0, ?, ?)`
+		stmt = `INSERT INTO images_properties (image_id, type, key, value) VALUES (?, 0, ?, ?)`
 		for k, v := range properties {
 			// we can assume, that there is just one
 			// value per key
-			_, err = c.tx.ExecContext(ctx, sql, id, k, v)
+			_, err = c.tx.ExecContext(ctx, stmt, id, k, v)
 			if err != nil {
 				return fmt.Errorf("Failed saving image properties %d: %w", id, err)
 			}
 		}
 	}
 
-	if profileIds != nil {
-		sql = `INSERT INTO images_profiles (image_id, profile_id) VALUES (?, ?)`
-		for _, profileID := range profileIds {
-			_, err = c.tx.ExecContext(ctx, sql, id, profileID)
+	if profileIDs != nil {
+		stmt = `INSERT INTO images_profiles (image_id, profile_id) VALUES (?, ?)`
+		for _, profileID := range profileIDs {
+			_, err = c.tx.ExecContext(ctx, stmt, id, profileID)
 			if err != nil {
 				return fmt.Errorf("Failed saving image profiles: %w", err)
 			}
@@ -985,9 +985,9 @@ func (c *ClusterTx) CreateImage(ctx context.Context, project string, fp string, 
 			pIDs = append(pIDs, dbProfiles[0].ID)
 		}
 
-		sql = `INSERT OR IGNORE INTO images_profiles (image_id, profile_id) VALUES (?, ?)`
+		stmt = `INSERT OR IGNORE INTO images_profiles (image_id, profile_id) VALUES (?, ?)`
 		for _, profileID := range pIDs {
-			_, err = c.tx.ExecContext(ctx, sql, id, profileID)
+			_, err = c.tx.ExecContext(ctx, stmt, id, profileID)
 			if err != nil {
 				return err
 			}

@@ -38,14 +38,17 @@ func (d *mock) Info() Info {
 	}
 }
 
+// FillConfig populates the storage pool's missing config with default values.
 func (d *mock) FillConfig() error {
 	return nil
 }
 
+// Create is called during pool creation and is provided the function to create the underlying storage.
 func (d *mock) Create() error {
 	return nil
 }
 
+// Delete removes the storage pool from the storage device.
 func (d *mock) Delete(op *operations.Operation) error {
 	return nil
 }

@@ -731,10 +731,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	memberSpecific := false
-	if request.QueryParam(r, "target") != "" {
-		memberSpecific = true
-	}
+	memberSpecific := request.QueryParam(r, "target") != ""
 
 	var hiddenPoolNames []string
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -919,7 +916,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 
 	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
 
-	response := doStoragePoolUpdate(s, pool, req, targetNode, clientType, r.Method, s.ServerClustered)
+	resp = doStoragePoolUpdate(s, pool, req, targetNode, clientType, r.Method, s.ServerClustered)
 
 	requestor := request.CreateRequestor(r)
 
@@ -933,7 +930,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 		s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.StoragePoolUpdated.Event(pool.Name(), requestor, ctx))
 	}
 
-	return response
+	return resp
 }
 
 // swagger:operation PATCH /1.0/storage-pools/{poolName} storage storage_pool_patch

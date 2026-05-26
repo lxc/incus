@@ -12,7 +12,7 @@ var drivers = map[string]func() driver{
 }
 
 // Load returns a Driver for an existing low-level FS monitor.
-func Load(ctx context.Context, logger logger.Logger, driverName string, path string) (Driver, error) {
+func Load(ctx context.Context, l logger.Logger, driverName string, path string) (Driver, error) {
 	df, ok := drivers[driverName]
 	if !ok {
 		return nil, ErrUnknownDriver
@@ -20,7 +20,7 @@ func Load(ctx context.Context, logger logger.Logger, driverName string, path str
 
 	d := df()
 
-	d.init(logger, path)
+	d.init(l, path)
 
 	err := d.load(ctx)
 	if err != nil {

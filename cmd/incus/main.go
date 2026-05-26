@@ -609,16 +609,6 @@ func (c *cmdGlobal) parseServers(remotes ...string) ([]remoteResource, error) {
 	return resources, nil
 }
 
-func (c *cmdGlobal) checkArgs(cmd *cobra.Command, args []string, minArgs int, maxArgs int) (bool, error) {
-	exit, err := cli.CheckArgs(cmd, args, minArgs, maxArgs)
-	if err == cli.ErrBadArgs {
-		// Use translated error message.
-		return exit, errors.New(i18n.G("Invalid number of arguments"))
-	}
-
-	return exit, err
-}
-
 // Return the default list format if the user configured it, otherwise just return "table".
 func (c *cmdGlobal) defaultListFormat() string {
 	if c.conf == nil || c.conf.Defaults.ListFormat == "" {

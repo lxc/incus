@@ -982,11 +982,11 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 				// if the restored volume is larger than the config's size and it cannot be shrunk
 				// to the equivalent size on the target storage driver, don't fail as the backup
 				// has still been restored successfully.
-				if errors.Is(err, drivers.ErrCannotBeShrunk) {
-					l.Warn("Could not apply volume quota from root disk config as restored volume cannot be shrunk", logger.Ctx{"size": size})
-				} else {
+				if !errors.Is(err, drivers.ErrCannotBeShrunk) {
 					return fmt.Errorf("Failed applying volume quota to root disk: %w", err)
 				}
+
+				l.Warn("Could not apply volume quota from root disk config as restored volume cannot be shrunk", logger.Ctx{"size": size})
 			}
 
 			// Apply the filesystem volume quota (only when main volume is block).
@@ -4671,6 +4671,7 @@ func (b *backend) CreateBucketKey(projectName string, bucketName string, key api
 	return &newKey, err
 }
 
+// UpdateBucketKey updates an existing key on a storage bucket.
 func (b *backend) UpdateBucketKey(projectName string, bucketName string, keyName string, key api.StorageBucketKeyPut, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "bucketName": bucketName, "keyName": keyName, "desc": key.Description, "role": key.Role})
 	l.Debug("UpdateBucketKey started")
@@ -6751,7 +6752,12 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 
 	// Only populate Container field for non-snapshot instances.
 	if !inst.IsSnapshot() {
-		config.Container = ci.(*api.Instance)
+		apiInst, ok := ci.(*api.Instance)
+		if !ok {
+			return nil, fmt.Errorf("Unexpected instance type %T for non-snapshot instance", ci)
+		}
+
+		config.Container = apiInst
 
 		if snapshots {
 			snapshots, err := inst.Snapshots()
@@ -7002,17 +7008,20 @@ func (b *backend) ListUnknownVolumes(op *operations.Operation) (map[string][]*ba
 			return nil, fmt.Errorf("Storage driver returned unexpected VM volume with filesystem content type (%q)", poolVol.Name())
 		}
 
-		if volType == drivers.VolumeTypeVM || volType == drivers.VolumeTypeContainer {
+		switch volType {
+		case drivers.VolumeTypeVM, drivers.VolumeTypeContainer:
 			err = b.detectUnknownInstanceVolume(&poolVol, projectVols, op)
 			if err != nil {
 				return nil, err
 			}
-		} else if volType == drivers.VolumeTypeCustom {
+
+		case drivers.VolumeTypeCustom:
 			err = b.detectUnknownCustomVolume(&poolVol, projectVols, op)
 			if err != nil {
 				return nil, err
 			}
-		} else if volType == drivers.VolumeTypeBucket {
+
+		case drivers.VolumeTypeBucket:
 			err = b.detectUnknownBuckets(&poolVol, projectVols, op)
 			if err != nil {
 				return nil, err
@@ -7207,11 +7216,12 @@ func (b *backend) detectUnknownCustomVolume(vol *drivers.Volume, projectVols map
 	contentType := vol.ContentType()
 	var apiContentType string
 
-	if contentType == drivers.ContentTypeBlock {
+	switch contentType {
+	case drivers.ContentTypeBlock:
 		apiContentType = db.StoragePoolVolumeContentTypeNameBlock
-	} else if contentType == drivers.ContentTypeISO {
+	case drivers.ContentTypeISO:
 		apiContentType = db.StoragePoolVolumeContentTypeNameISO
-	} else if contentType == drivers.ContentTypeFS {
+	case drivers.ContentTypeFS:
 		apiContentType = db.StoragePoolVolumeContentTypeNameFS
 
 		// Detect block volume filesystem (by mounting it (if not already) with filesystem probe mode).
@@ -7240,7 +7250,8 @@ func (b *backend) detectUnknownCustomVolume(vol *drivers.Volume, projectVols map
 			// Record detected filesystem in config.
 			vol.Config()["block.filesystem"] = blockFS
 		}
-	} else {
+
+	default:
 		return fmt.Errorf("Unknown custom volume content type %q", contentType)
 	}
 
@@ -7567,6 +7578,7 @@ func (b *backend) BackupCustomVolume(projectName string, volName string, writer 
 	return nil
 }
 
+// CreateCustomVolumeFromISO creates a custom volume from an ISO image.
 func (b *backend) CreateCustomVolumeFromISO(projectName string, volName string, srcData io.ReadSeeker, size int64, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volume": volName})
 	l.Debug("CreateCustomVolumeFromISO started")

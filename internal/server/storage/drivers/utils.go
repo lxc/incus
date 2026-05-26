@@ -170,12 +170,12 @@ func sameMount(srcPath string, dstPath string) bool {
 }
 
 // TryMount tries mounting a filesystem multiple times. This is useful for unreliable backends.
-func TryMount(src string, dst string, fs string, flags uintptr, options string) error {
+func TryMount(src string, dst string, fsName string, flags uintptr, options string) error {
 	var err error
 
 	// Attempt 20 mounts over 10s
 	for range 20 {
-		err = unix.Mount(src, dst, fs, flags, options)
+		err = unix.Mount(src, dst, fsName, flags, options)
 		if err == nil {
 			break
 		}
@@ -184,7 +184,7 @@ func TryMount(src string, dst string, fs string, flags uintptr, options string) 
 	}
 
 	if err != nil {
-		return fmt.Errorf("Failed to mount %q on %q using %q: %w", src, dst, fs, err)
+		return fmt.Errorf("Failed to mount %q on %q using %q: %w", src, dst, fsName, err)
 	}
 
 	return nil
@@ -751,14 +751,14 @@ func BTRFSSubVolumesGet(path string) ([]string, error) {
 // Deprecated: Use IsSubvolume from the Btrfs driver instead.
 // btrfsIsSubvolume checks if a given path is a subvolume.
 func btrfsIsSubVolume(subvolPath string) bool {
-	fs := unix.Stat_t{}
-	err := unix.Lstat(subvolPath, &fs)
+	stat := unix.Stat_t{}
+	err := unix.Lstat(subvolPath, &stat)
 	if err != nil {
 		return false
 	}
 
 	// Check if BTRFS_FIRST_FREE_OBJECTID
-	if fs.Ino != 256 {
+	if stat.Ino != 256 {
 		return false
 	}
 
@@ -882,12 +882,12 @@ func loopFileSizeDefault() (uint64, error) {
 func loopDeviceSetup(sourcePath string) (string, error) {
 	out, err := subprocess.RunCommand("losetup", "--find", "--nooverlap", "--direct-io=on", "--show", sourcePath)
 	if err != nil {
-		if strings.Contains(err.Error(), "direct io") || strings.Contains(err.Error(), "Invalid argument") {
-			out, err = subprocess.RunCommand("losetup", "--find", "--nooverlap", "--show", sourcePath)
-			if err != nil {
-				return "", err
-			}
-		} else {
+		if !strings.Contains(err.Error(), "direct io") && !strings.Contains(err.Error(), "Invalid argument") {
+			return "", err
+		}
+
+		out, err = subprocess.RunCommand("losetup", "--find", "--nooverlap", "--show", sourcePath)
+		if err != nil {
 			return "", err
 		}
 	}

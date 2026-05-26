@@ -16,6 +16,7 @@ type dnsHandler struct {
 	server *Server
 }
 
+// ServeDNS handles an incoming DNS query and writes the response.
 func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	// Don't allow concurrent queries.
 	d.server.mu.Lock()

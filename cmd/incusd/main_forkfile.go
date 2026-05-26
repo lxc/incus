@@ -178,7 +178,7 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 				mu.RUnlock()
 
 				// Daemon has been inactive for 10s, exit.
-				os.Exit(0)
+				os.Exit(0) // nolint:revive
 			}
 
 			mu.RUnlock()
@@ -208,7 +208,7 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 			time.Sleep(time.Second)
 		}
 
-		os.Exit(0)
+		os.Exit(0) // nolint:revive
 	}()
 
 	// Connection handler.

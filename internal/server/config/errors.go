@@ -41,7 +41,7 @@ func (l *ErrorList) Error() string {
 	errorMessage.WriteString(firstError)
 
 	if errorCount > 1 {
-		errorMessage.WriteString(fmt.Sprintf(" (and %d more errors)", errorCount-1))
+		fmt.Fprintf(&errorMessage, " (and %d more errors)", errorCount-1)
 	}
 
 	return errorMessage.String()

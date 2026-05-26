@@ -37,7 +37,7 @@ type zone struct {
 }
 
 // init initialize internal variables.
-func (d *zone) init(state *state.State, id int64, projectName string, info *api.NetworkZone) {
+func (d *zone) init(s *state.State, id int64, projectName string, info *api.NetworkZone) {
 	if info == nil {
 		d.info = &api.NetworkZone{}
 	} else {
@@ -47,7 +47,7 @@ func (d *zone) init(state *state.State, id int64, projectName string, info *api.
 	d.logger = logger.AddContext(logger.Ctx{"project": projectName, "networkzone": d.info.Name})
 	d.id = id
 	d.projectName = projectName
-	d.state = state
+	d.state = s
 
 	if d.info.Config == nil {
 		d.info.Config = make(map[string]string)
@@ -59,7 +59,7 @@ func (d *zone) ID() int64 {
 	return d.id
 }
 
-// Name returns the project.
+// Project returns the project name.
 func (d *zone) Project() string {
 	return d.projectName
 }

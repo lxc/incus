@@ -160,7 +160,8 @@ func (d *unixCommon) Register() error {
 
 		runConf := deviceConfig.RunConfig{}
 
-		if e.Action == "add" {
+		switch e.Action {
+		case "add":
 			// Skip if host side instance device file already exists.
 			if util.PathExists(devPath) {
 				return nil, nil
@@ -186,7 +187,8 @@ func (d *unixCommon) Register() error {
 			if err != nil {
 				return nil, err
 			}
-		} else if e.Action == "remove" {
+
+		case "remove":
 			// Skip if host side instance device file doesn't exist.
 			if !util.PathExists(devPath) {
 				return nil, nil

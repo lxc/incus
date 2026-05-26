@@ -111,65 +111,67 @@ func (s *execWs) connect(op *operations.Operation, r *http.Request, w http.Respo
 				return err
 			}
 
-			s.connsLock.Lock()
-			defer s.connsLock.Unlock()
+			return func() error {
+				s.connsLock.Lock()
+				defer s.connsLock.Unlock()
 
-			val, found := s.conns[fd]
-			if found && val == nil {
-				s.conns[fd] = conn
+				val, found := s.conns[fd]
+				if found && val == nil {
+					s.conns[fd] = conn
 
-				// Set TCP timeout options.
-				remoteTCP, _ := tcp.ExtractConn(conn.UnderlyingConn())
-				if remoteTCP != nil {
-					err = tcp.SetTimeouts(remoteTCP, 0)
-					if err != nil {
-						logger.Warn("Failed setting TCP timeouts on remote connection", logger.Ctx{"err": err})
-					}
-				}
-
-				// Start channel keep alive to run until channel is closed.
-				go func() {
-					pingInterval := time.Second * 10
-					t := time.NewTicker(pingInterval)
-					defer t.Stop()
-
-					for {
-						err := conn.WriteControl(websocket.PingMessage, []byte("keepalive"), time.Now().Add(5*time.Second))
+					// Set TCP timeout options.
+					remoteTCP, _ := tcp.ExtractConn(conn.UnderlyingConn())
+					if remoteTCP != nil {
+						err = tcp.SetTimeouts(remoteTCP, 0)
 						if err != nil {
-							return
+							logger.Warn("Failed setting TCP timeouts on remote connection", logger.Ctx{"err": err})
+						}
+					}
+
+					// Start channel keep alive to run until channel is closed.
+					go func() {
+						pingInterval := time.Second * 10
+						t := time.NewTicker(pingInterval)
+						defer t.Stop()
+
+						for {
+							err := conn.WriteControl(websocket.PingMessage, []byte("keepalive"), time.Now().Add(5*time.Second))
+							if err != nil {
+								return
+							}
+
+							<-t.C
+						}
+					}()
+
+					if fd == execWSControl {
+						s.waitControlConnected.Cancel() // Control connection connected.
+					}
+
+					for i, c := range s.conns {
+						if i == execWSControl && s.req.WaitForWS && !s.req.Interactive {
+							// Due to a historical bug in the LXC CLI command, we cannot force
+							// the client to connect a control socket when in non-interactive
+							// mode. This is because the older CLI tools did not connect this
+							// channel and so we would prevent the older CLIs connecting to
+							// newer servers. So skip the control connection from being
+							// considered as a required connection in this case.
+							continue
 						}
 
-						<-t.C
+						if c == nil {
+							return nil // Not all required connections connected yet.
+						}
 					}
-				}()
 
-				if fd == execWSControl {
-					s.waitControlConnected.Cancel() // Control connection connected.
+					s.waitRequiredConnected.Cancel() // All required connections now connected.
+					return nil
+				} else if !found {
+					return errors.New("Unknown websocket number")
 				}
 
-				for i, c := range s.conns {
-					if i == execWSControl && s.req.WaitForWS && !s.req.Interactive {
-						// Due to a historical bug in the LXC CLI command, we cannot force
-						// the client to connect a control socket when in non-interactive
-						// mode. This is because the older CLI tools did not connect this
-						// channel and so we would prevent the older CLIs connecting to
-						// newer servers. So skip the control connection from being
-						// considered as a required connection in this case.
-						continue
-					}
-
-					if c == nil {
-						return nil // Not all required connections connected yet.
-					}
-				}
-
-				s.waitRequiredConnected.Cancel() // All required connections now connected.
-				return nil
-			} else if !found {
-				return errors.New("Unknown websocket number")
-			} else {
 				return errors.New("Websocket number already connected")
-			}
+			}()
 		}
 	}
 
@@ -197,7 +199,6 @@ func (s *execWs) do(op *operations.Operation) error {
 	logger.Debug("Waiting for exec websockets to connect")
 	select {
 	case <-s.waitRequiredConnected.Done():
-		break
 	case <-time.After(time.Second * 10):
 		return errors.New("Timed out waiting for websockets to connect")
 	}
@@ -219,7 +220,11 @@ func (s *execWs) do(op *operations.Operation) error {
 			var rootUID, rootGID int64
 			var devptsFd *os.File
 
-			c := s.instance.(instance.Container)
+			c, ok := s.instance.(instance.Container)
+			if !ok {
+				return errors.New("Instance is not container type")
+			}
+
 			idmapset, err := c.CurrentIdmap()
 			if err != nil {
 				return err
@@ -609,8 +614,8 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if client != nil {
-		url := api.NewURL().Path(version.APIVersion, "instances", name, "exec").Project(projectName)
-		resp, _, err := client.RawQuery("POST", url.String(), post, "")
+		execURL := api.NewURL().Path(version.APIVersion, "instances", name, "exec").Project(projectName)
+		resp, _, err := client.RawQuery("POST", execURL.String(), post, "")
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -699,35 +704,35 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if post.WaitForWS {
-		ws := &execWs{}
-		ws.s = d.State()
-		ws.fds = map[int]string{}
+		execWS := &execWs{}
+		execWS.s = d.State()
+		execWS.fds = map[int]string{}
 
-		ws.conns = map[int]*websocket.Conn{}
-		ws.conns[execWSControl] = nil
-		ws.conns[0] = nil // This is used for either TTY or Stdin.
+		execWS.conns = map[int]*websocket.Conn{}
+		execWS.conns[execWSControl] = nil
+		execWS.conns[0] = nil // This is used for either TTY or Stdin.
 		if !post.Interactive {
-			ws.conns[execWSStdout] = nil
-			ws.conns[execWSStderr] = nil
+			execWS.conns[execWSStdout] = nil
+			execWS.conns[execWSStderr] = nil
 		}
 
-		ws.waitRequiredConnected = cancel.New(context.Background())
-		ws.waitControlConnected = cancel.New(context.Background())
+		execWS.waitRequiredConnected = cancel.New(context.Background())
+		execWS.waitControlConnected = cancel.New(context.Background())
 
-		for i := range ws.conns {
-			ws.fds[i], err = internalUtil.RandomHexString(32)
+		for i := range execWS.conns {
+			execWS.fds[i], err = internalUtil.RandomHexString(32)
 			if err != nil {
 				return response.InternalError(err)
 			}
 		}
 
-		ws.instance = inst
-		ws.req = post
+		execWS.instance = inst
+		execWS.req = post
 
 		resources := map[string][]api.URL{}
-		resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", ws.instance.Name())}
+		resources["instances"] = []api.URL{*api.NewURL().Path(version.APIVersion, "instances", execWS.instance.Name())}
 
-		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, ws.metadata(), ws.do, ws.cancel, ws.connect, r)
+		op, err := operations.OperationCreate(s, projectName, operations.OperationClassWebsocket, operationtype.CommandExec, resources, execWS.metadata(), execWS.do, execWS.cancel, execWS.connect, r)
 		if err != nil {
 			return response.InternalError(err)
 		}

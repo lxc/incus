@@ -1058,7 +1058,8 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if elements[2] == "storage-pools" {
-				if elements[4] == "buckets" {
+				switch elements[4] {
+				case "buckets":
 					if entries["storage-buckets"] == nil {
 						entries["storage-buckets"] = []string{}
 					}
@@ -1070,7 +1071,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 					}
 
 					entries["storage-buckets"] = append(entries["storage-buckets"], entry)
-				} else if elements[4] == "volumes" {
+				case "volumes":
 					if entries["storage-volumes"] == nil {
 						entries["storage-volumes"] = []string{}
 					}
@@ -1348,7 +1349,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Setup the state struct.
-	state := api.ProjectState{}
+	projectState := api.ProjectState{}
 
 	// Get current limits and usage.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -1357,7 +1358,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		state.Resources = result
+		projectState.Resources = result
 
 		return nil
 	})
@@ -1365,7 +1366,7 @@ func projectStateGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	return response.SyncResponse(true, &state)
+	return response.SyncResponse(true, &projectState)
 }
 
 // Check if a project is empty.

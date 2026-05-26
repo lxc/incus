@@ -549,7 +549,7 @@ func (o *VSwitch) GetOVNBridgeMappings(ctx context.Context, bridgeName string) (
 		return []string{}, nil
 	}
 
-	return strings.SplitN(val, ",", -1), nil
+	return strings.Split(val, ","), nil
 }
 
 // AddOVNBridgeMapping appends an OVN bridge mapping between a bridge and the logical provider name.
@@ -573,7 +573,7 @@ func (o *VSwitch) AddOVNBridgeMapping(ctx context.Context, bridgeName string, pr
 
 	var mappings []string
 	if val != "" {
-		mappings = strings.SplitN(val, ",", -1)
+		mappings = strings.Split(val, ",")
 	} else {
 		mappings = []string{}
 	}
@@ -630,7 +630,7 @@ func (o *VSwitch) RemoveOVNBridgeMapping(ctx context.Context, bridgeName string,
 
 	// Get the current bridge mappings.
 	val := vSwitch.ExternalIDs["ovn-bridge-mappings"]
-	mappings := strings.SplitN(val, ",", -1)
+	mappings := strings.Split(val, ",")
 	newMappings := []string{}
 
 	// Remove the mapping from the list.

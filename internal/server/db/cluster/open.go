@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	driver "github.com/cowsql/go-cowsql/driver"
+	"github.com/cowsql/go-cowsql/driver"
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/internal/server/db/schema"
@@ -28,13 +28,13 @@ import (
 // The dialer argument is a function that returns a gRPC dialer that can be
 // used to connect to a database node using the gRPC SQL package.
 func Open(name string, store driver.NodeStore, options ...driver.Option) (*sql.DB, error) {
-	driver, err := driver.New(store, options...)
+	drv, err := driver.New(store, options...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create dqlite driver: %w", err)
 	}
 
 	driverName := dqliteDriverName()
-	sql.Register(driverName, driver)
+	sql.Register(driverName, drv)
 
 	// Create the cluster db. This won't immediately establish any network
 	// connection, that will happen only when a db transaction is started
@@ -150,15 +150,15 @@ func EnsureSchema(db *sql.DB, address string, dir string) (bool, error) {
 		return err
 	}
 
-	schema := Schema()
-	schema.File(filepath.Join(dir, "patch.global.sql")) // Optional custom queries
-	schema.Check(check)
-	schema.Hook(hook)
+	sch := Schema()
+	sch.File(filepath.Join(dir, "patch.global.sql")) // Optional custom queries
+	sch.Check(check)
+	sch.Hook(hook)
 
 	var initial int
 	err := query.Retry(context.TODO(), func(_ context.Context) error {
 		var err error
-		initial, err = schema.Ensure(db)
+		initial, err = sch.Ensure(db)
 		return err
 	})
 	if someNodesAreBehind {
@@ -193,7 +193,7 @@ INSERT INTO nodes(id, name, address, schema, api_extensions, arch, description) 
 
 			// Enable all features for default project.
 			for featureName := range ProjectFeatures {
-				_, _ = defaultProjectStmt.WriteString(fmt.Sprintf("INSERT INTO projects_config (project_id, key, value) VALUES (1, '%s', 'true');", featureName))
+				_, _ = fmt.Fprintf(&defaultProjectStmt, "INSERT INTO projects_config (project_id, key, value) VALUES (1, '%s', 'true');", featureName)
 			}
 
 			_, err = tx.Exec(defaultProjectStmt.String())
@@ -250,9 +250,9 @@ func checkClusterIsUpgradable(ctx context.Context, tx *sql.Tx, target [2]int) er
 		return fmt.Errorf("failed to fetch current nodes versions: %w", err)
 	}
 
-	for _, version := range versions {
+	for _, ver := range versions {
 		// Compare schema versions only.
-		n, err := daemonUtil.CompareVersions(target, version, false)
+		n, err := daemonUtil.CompareVersions(target, ver, false)
 		if err != nil {
 			return err
 		}

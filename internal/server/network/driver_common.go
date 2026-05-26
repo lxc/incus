@@ -278,11 +278,12 @@ func (n *common) Config() map[string]string {
 	return n.config
 }
 
+// IsManaged returns whether the network is managed by Incus.
 func (n *common) IsManaged() bool {
 	return n.managed
 }
 
-// Config returns the common network driver info.
+// Info returns the common network driver info.
 func (n *common) Info() Info {
 	return Info{
 		Projects:           false,
@@ -435,11 +436,7 @@ func (n *common) configChanged(newNetwork api.NetworkPut) (bool, []string, api.N
 
 	// Diff the configurations.
 	changedKeys := []string{}
-	dbUpdateNeeded := false
-
-	if newNetwork.Description != n.description {
-		dbUpdateNeeded = true
-	}
+	dbUpdateNeeded := newNetwork.Description != n.description
 
 	for k, v := range oldNetwork.Config {
 		if v != newNetwork.Config[k] {
@@ -1520,7 +1517,7 @@ func (n *common) Leases(projectName string, clientType request.ClientType) ([]ap
 	return nil, ErrNotImplemented
 }
 
-// PeerCrete returns ErrNotImplemented for drivers that do not support forwards.
+// PeerCreate returns ErrNotImplemented for drivers that do not support forwards.
 func (n *common) PeerCreate(forward api.NetworkPeersPost) error {
 	return ErrNotImplemented
 }
@@ -1658,6 +1655,7 @@ func (n *common) peerUsedBy(peerName string, firstOnly bool) ([]string, error) {
 	return usedBy, nil
 }
 
+// State returns the current state of the network.
 func (n *common) State() (*api.NetworkState, error) {
 	if n.config["parent"] != "" {
 		return resources.GetNetworkState(n.config["parent"])

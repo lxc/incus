@@ -12,7 +12,7 @@ import (
 )
 
 // OpenPtyInDevpts creates a new PTS pair, configures them and returns them.
-func OpenPtyInDevpts(devpts_fd int, uid, gid int64) (*os.File, *os.File, error) {
+func OpenPtyInDevpts(devptsFd int, uid, gid int64) (*os.File, *os.File, error) {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -21,8 +21,8 @@ func OpenPtyInDevpts(devpts_fd int, uid, gid int64) (*os.File, *os.File, error) 
 	var err error
 
 	// Create a PTS pair.
-	if devpts_fd >= 0 {
-		fd, err = unix.Openat(devpts_fd, "ptmx", unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
+	if devptsFd >= 0 {
+		fd, err = unix.Openat(devptsFd, "ptmx", unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
 	} else {
 		fd, err = unix.Openat(-1, "/dev/ptmx", unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
 	}
@@ -54,7 +54,7 @@ func OpenPtyInDevpts(devpts_fd int, uid, gid int64) (*os.File, *os.File, error) 
 
 		pty = os.NewFile(ptyFd, fmt.Sprintf("/dev/pts/%d", id))
 	} else {
-		if devpts_fd >= 0 {
+		if devptsFd >= 0 {
 			return nil, nil, errors.New("TIOCGPTPEER required but not available")
 		}
 

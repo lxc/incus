@@ -193,24 +193,24 @@ func (list Devices) Update(newlist Devices, updateFields func(Device, Device) []
 
 // Clone returns a copy of the Devices set.
 func (list Devices) Clone() Devices {
-	copy := make(Devices, len(list))
+	cpy := make(Devices, len(list))
 
 	for deviceName, device := range list {
-		copy[deviceName] = device.Clone()
+		cpy[deviceName] = device.Clone()
 	}
 
-	return copy
+	return cpy
 }
 
 // CloneNative returns a copy of the Devices set as a native map[string]map[string]string type.
 func (list Devices) CloneNative() map[string]map[string]string {
-	copy := make(map[string]map[string]string, len(list))
+	cpy := make(map[string]map[string]string, len(list))
 
 	for deviceName, device := range list {
-		copy[deviceName] = device.Clone()
+		cpy[deviceName] = device.Clone()
 	}
 
-	return copy
+	return cpy
 }
 
 // Sorted returns the name of all devices in the set, sorted properly.

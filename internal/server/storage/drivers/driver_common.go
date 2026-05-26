@@ -35,13 +35,13 @@ type common struct {
 	patches     map[string]func() error
 }
 
-func (d *common) init(state *state.State, name string, config map[string]string, logger logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
+func (d *common) init(s *state.State, name string, config map[string]string, log logger.Logger, volIDFunc func(volType VolumeType, volName string) (int64, error), commonRules *Validators) {
 	d.name = name
 	d.config = config
 	d.getVolID = volIDFunc
 	d.commonRules = commonRules
-	d.state = state
-	d.logger = logger
+	d.state = s
+	d.logger = log
 }
 
 // isRemote returns false indicating this driver does not use remote storage.
@@ -188,11 +188,11 @@ key:
 			}
 		}
 
-		if removeUnknownKeys {
-			delete(vol.config, k)
-		} else {
+		if !removeUnknownKeys {
 			return fmt.Errorf("Invalid option for volume %q option %q", vol.name, k)
 		}
+
+		delete(vol.config, k)
 	}
 
 	// If volume type is not custom or bucket, don't allow "size" property.
@@ -225,7 +225,7 @@ func (d *common) updateVolume(vol Volume, changedConfig map[string]string) error
 	return nil
 }
 
-// MigrationType returns the type of transfer methods to be used when doing migrations between pools
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools
 // in preference order.
 func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	var transportType migration.MigrationFSType
@@ -547,6 +547,7 @@ func (d *common) UpdateBucketKey(bucket Volume, keyName string, creds S3Credenti
 	return nil, ErrNotSupported
 }
 
+// DeleteBucketKey deletes an existing bucket key.
 func (d *common) DeleteBucketKey(bucket Volume, keyName string, op *operations.Operation) error {
 	return nil
 }

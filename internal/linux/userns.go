@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// RunningInUserNS returns true if the current process is running inside a user namespace.
 func RunningInUserNS() bool {
 	file, err := os.Open("/proc/self/uid_map")
 	if err != nil {

@@ -54,14 +54,16 @@ import (
 	_ "github.com/lxc/incus/v7/shared/cgo" // Used by cgo
 )
 
+// ABSTRACT_UNIX_SOCK_LEN is the maximum length of an abstract unix socket path.
 const ABSTRACT_UNIX_SOCK_LEN int = C.ABSTRACT_UNIX_SOCK_LEN
 
+// ReadPid reads a PID from the provided file.
 func ReadPid(r *os.File) int {
 	return int(C.read_pid(C.int(r.Fd())))
 }
 
 func unCloexec(fd int) error {
-	var err error = nil
+	var err error
 	flags, _, errno := unix.Syscall(unix.SYS_FCNTL, uintptr(fd), unix.F_GETFD, 0)
 	if errno != 0 {
 		err = errno
@@ -77,6 +79,7 @@ func unCloexec(fd int) error {
 	return err
 }
 
+// PidFdOpen opens a pidfd referring to the process with the given PID.
 func PidFdOpen(Pid int, Flags uint32) (*os.File, error) {
 	pidFd, errno := C.incus_pidfd_open(C.int(Pid), C.uint32_t(Flags))
 	if errno != nil {
@@ -91,6 +94,7 @@ func PidFdOpen(Pid int, Flags uint32) (*os.File, error) {
 	return os.NewFile(uintptr(pidFd), fmt.Sprintf("%d", Pid)), nil
 }
 
+// PidfdSendSignal sends a signal to the process referred to by the given pidfd.
 func PidfdSendSignal(Pidfd int, Signal int, Flags uint32) error {
 	ret, errno := C.incus_pidfd_send_signal(C.int(Pidfd), C.int(Signal), nil, C.uint32_t(Flags))
 	if ret != 0 {
@@ -108,6 +112,7 @@ const (
 	CLOSE_RANGE_CLOEXEC uint32 = C.CLOSE_RANGE_CLOEXEC
 )
 
+// CloseRange closes all file descriptors in the given range.
 func CloseRange(FirstFd uint32, LastFd uint32, Flags uint32) error {
 	ret, errno := C.incus_close_range(C.uint32_t(FirstFd), C.uint32_t(LastFd), C.uint32_t(Flags))
 	if ret != 0 {

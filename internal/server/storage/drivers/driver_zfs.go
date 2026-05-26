@@ -88,12 +88,12 @@ func (d *zfs) load() error {
 
 	// Get the version information.
 	if zfsVersion == "" {
-		version, err := d.version()
+		ver, err := d.version()
 		if err != nil {
 			return err
 		}
 
-		zfsVersion = version
+		zfsVersion = ver
 	}
 
 	ourVer, err := version.Parse(zfsVersion)
@@ -741,6 +741,7 @@ func (d *zfs) Unmount() (bool, error) {
 	return true, nil
 }
 
+// GetResources returns the pool resource usage information.
 func (d *zfs) GetResources() (*api.ResourcesStoragePool, error) {
 	// Get both properties in a single call, bypassing the per-dataset cache so
 	// we don't trigger a recursive `zfs list` over every volume and snapshot in
@@ -769,7 +770,7 @@ func (d *zfs) GetResources() (*api.ResourcesStoragePool, error) {
 	return &res, nil
 }
 
-// MigrationType returns the type of transfer methods to be used when doing migrations between pools in preference order.
+// MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
 func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	var rsyncFeatures []string
 

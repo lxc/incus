@@ -123,7 +123,7 @@ func GetProfilesIfEnabled(ctx context.Context, tx *sql.Tx, projectName string, n
 
 // ExpandInstanceConfig expands the given instance config with the config
 // values of the given profiles.
-func ExpandInstanceConfig(config map[string]string, profiles []api.Profile) map[string]string {
+func ExpandInstanceConfig(localConfig map[string]string, profiles []api.Profile) map[string]string {
 	expandedConfig := map[string]string{}
 
 	// Apply all the profiles
@@ -137,7 +137,7 @@ func ExpandInstanceConfig(config map[string]string, profiles []api.Profile) map[
 	}
 
 	// Stick the given config on top
-	maps.Copy(expandedConfig, config)
+	maps.Copy(expandedConfig, localConfig)
 
 	return expandedConfig
 }

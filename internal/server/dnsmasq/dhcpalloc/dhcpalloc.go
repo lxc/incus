@@ -19,7 +19,7 @@ import (
 )
 
 // ErrDHCPNotSupported indicates network doesn't support DHCP for this IP protocol.
-var ErrDHCPNotSupported error = errors.New("Network doesn't support DHCP")
+var ErrDHCPNotSupported = errors.New("Network doesn't support DHCP")
 
 // DHCPValidIP returns whether an IP fits inside one of the supplied DHCP ranges and subnet.
 func DHCPValidIP(subnet *net.IPNet, ranges []iprange.Range, IP net.IP) bool {
@@ -212,11 +212,7 @@ func (t *Transaction) getDHCPFreeIPv4(usedIPs map[[4]byte]dnsmasq.DHCPAllocation
 		endBig := big.NewInt(0)
 		endBig.SetBytes(IPRange.End)
 
-		for {
-			if startBig.Cmp(endBig) >= 0 {
-				break
-			}
-
+		for startBig.Cmp(endBig) < 0 {
 			IP := net.IP(startBig.Bytes())
 
 			// Check IP generated is not Incus's IP.
@@ -303,11 +299,7 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 		endBig := big.NewInt(0)
 		endBig.SetBytes(IPRange.End)
 
-		for {
-			if startBig.Cmp(endBig) >= 0 {
-				break
-			}
-
+		for startBig.Cmp(endBig) < 0 {
 			IP := net.IP(startBig.Bytes())
 
 			// Check IP generated is not Incus's IP.

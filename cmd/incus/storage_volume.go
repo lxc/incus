@@ -161,15 +161,6 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	return cmd
 }
 
-func (c *cmdStorageVolume) parseVolumeWithPool(name string) (string, string) {
-	fields := strings.SplitN(name, "/", 2)
-	if len(fields) == 1 {
-		return fields[0], ""
-	}
-
-	return fields[1], fields[0]
-}
-
 // Attach.
 type cmdStorageVolumeAttach struct {
 	global        *cmdGlobal

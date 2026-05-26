@@ -368,7 +368,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 				return nil
 			}
 
-			ip, _, err := net.ParseCIDR(parentAddress)
+			ipAddr, _, err := net.ParseCIDR(parentAddress)
 			if err != nil {
 				return fmt.Errorf("Invalid network ipv4.address: %w", err)
 			}
@@ -378,7 +378,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			}
 
 			// IP should not be the same as the parent managed network address.
-			if ip.Equal(net.ParseIP(d.config["ipv4.address"])) {
+			if ipAddr.Equal(net.ParseIP(d.config["ipv4.address"])) {
 				return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv4.address"], d.config["parent"])
 			}
 		}
@@ -403,7 +403,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 				return nil
 			}
 
-			ip, _, err := net.ParseCIDR(parentAddress)
+			ipAddr, _, err := net.ParseCIDR(parentAddress)
 			if err != nil {
 				return fmt.Errorf("Invalid network ipv6.address: %w", err)
 			}
@@ -413,7 +413,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			}
 
 			// IP should not be the same as the parent managed network address.
-			if ip.Equal(net.ParseIP(d.config["ipv6.address"])) {
+			if ipAddr.Equal(net.ParseIP(d.config["ipv6.address"])) {
 				return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv6.address"], d.config["parent"])
 			}
 		}
@@ -1540,9 +1540,10 @@ func allowedIPNets(config deviceConfig.Device) (IPv4Nets []*net.IPNet, IPv6Nets 
 
 		// Get a CIDR string for the instance address
 		if ipAddr != "" {
-			if ipVersion == 4 {
+			switch ipVersion {
+			case 4:
 				routes = append(routes, fmt.Sprintf("%s/32", ipAddr))
-			} else if ipVersion == 6 {
+			case 6:
 				routes = append(routes, fmt.Sprintf("%s/128", ipAddr))
 			}
 		}
@@ -1584,8 +1585,8 @@ const (
 )
 
 // networkClearLease clears leases from a running dnsmasq process.
-func (d *nicBridged) networkClearLease(name string, network string, hwaddr string, mode int) error {
-	leaseFile := internalUtil.VarPath("networks", network, "dnsmasq.leases")
+func (d *nicBridged) networkClearLease(name string, networkName string, hwaddr string, mode int) error {
+	leaseFile := internalUtil.VarPath("networks", networkName, "dnsmasq.leases")
 
 	// Check that we are in fact running a dnsmasq for the network
 	if !util.PathExists(leaseFile) {
@@ -1598,32 +1599,32 @@ func (d *nicBridged) networkClearLease(name string, network string, hwaddr strin
 		return err
 	}
 
-	iface, err := net.InterfaceByName(network)
+	iface, err := net.InterfaceByName(networkName)
 	if err != nil {
-		return fmt.Errorf("Failed getting bridge interface state for %q: %w", network, err)
+		return fmt.Errorf("Failed getting bridge interface state for %q: %w", networkName, err)
 	}
 
 	// Get IPv4 and IPv6 address of interface running dnsmasq on host.
 	addrs, err := iface.Addrs()
 	if err != nil {
-		return fmt.Errorf("Failed getting bridge interface addresses for %q: %w", network, err)
+		return fmt.Errorf("Failed getting bridge interface addresses for %q: %w", networkName, err)
 	}
 
 	var dstIPv4, dstIPv6 net.IP
 	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
+		ipAddr, _, err := net.ParseCIDR(addr.String())
 		if err != nil {
 			return err
 		}
 
-		if !ip.IsGlobalUnicast() {
+		if !ipAddr.IsGlobalUnicast() {
 			continue
 		}
 
-		if ip.To4() == nil {
-			dstIPv6 = ip
+		if ipAddr.To4() == nil {
+			dstIPv6 = ipAddr
 		} else {
-			dstIPv4 = ip
+			dstIPv4 = ipAddr
 		}
 	}
 
@@ -1980,8 +1981,8 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 
 	// ipStore appends an IP to ips if not already stored.
 	ipStore := func(newIP net.IP) {
-		for _, ip := range ips {
-			if ip.Equal(newIP) {
+		for _, existingIP := range ips {
+			if existingIP.Equal(newIP) {
 				return
 			}
 		}
@@ -2020,9 +2021,9 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 				// If stateful DHCPv6 is disabled, and IPv6 is enabled on the bridge, the NIC
 				// is likely to use its MAC and SLAAC to configure its address.
 				if hwAddr != nil {
-					ip, err := eui64.ParseMAC(v6subnet.IP, hwAddr)
+					eui64IP, err := eui64.ParseMAC(v6subnet.IP, hwAddr)
 					if err == nil {
-						ipStore(ip)
+						ipStore(eui64IP)
 					}
 				}
 			}
@@ -2055,18 +2056,18 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 
 	// Convert IPs to InstanceStateNetworkAddresses.
 	addresses := []api.InstanceStateNetworkAddress{}
-	for _, ip := range ips {
+	for _, ipAddr := range ips {
 		addr := api.InstanceStateNetworkAddress{}
-		addr.Address = ip.String()
+		addr.Address = ipAddr.String()
 		addr.Family = "inet"
 		addr.Netmask = v4mask
 
-		if ip.To4() == nil {
+		if ipAddr.To4() == nil {
 			addr.Family = "inet6"
 			addr.Netmask = v6mask
 		}
 
-		if ip.IsLinkLocalUnicast() {
+		if ipAddr.IsLinkLocalUnicast() {
 			addr.Scope = "link"
 
 			if addr.Family == "inet6" {
@@ -2093,7 +2094,7 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 		return nil, fmt.Errorf("Failed getting network interface counters: %w", err)
 	}
 
-	network := api.InstanceStateNetwork{
+	netState := api.InstanceStateNetwork{
 		Addresses: addresses,
 		Counters: api.InstanceStateNetworkCounters{
 			BytesReceived:   hostCounters.BytesSent,
@@ -2108,7 +2109,7 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 		Type:     "broadcast",
 	}
 
-	return &network, nil
+	return &netState, nil
 }
 
 func (d *nicBridged) getHostMTU() (int, error) {

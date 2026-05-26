@@ -280,7 +280,7 @@ type cmdForkproxy struct {
 	global *cmdGlobal
 }
 
-// UDP session tracking (map "client tuple" to udp session)
+// UDP session tracking (map "client tuple" to udp session).
 var (
 	udpSessions     = map[string]*udpSession{}
 	udpSessionsLock sync.Mutex
@@ -396,7 +396,7 @@ func listenerInstance(epFd C.int, lAddr *deviceConfig.ProxyAddress, cAddr *devic
 				proto = fmt.Sprintf("%s4", proto)
 			}
 
-			_, _ = dstConn.Write([]byte(fmt.Sprintf("PROXY %s %s %s %s %s\r\n", proto, cHost, dHost, cPort, dPort)))
+			_, _ = fmt.Fprintf(dstConn, "PROXY %s %s %s %s %s\r\n", proto, cHost, dHost, cPort, dPort)
 		}
 	}
 
@@ -492,7 +492,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 		sAgain:
 			err = netutils.AbstractUnixSendFd(forkproxyUDSSockFDNum, int(file.Fd()))
 			if err != nil {
-				errno, ok := linux.GetErrno(err)
+				ok, errno := linux.GetErrno(err)
 				if ok && (errors.Is(errno, unix.EAGAIN)) {
 					goto sAgain
 				}
@@ -557,7 +557,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 	rAgain:
 		f, err := netutils.AbstractUnixReceiveFd(forkproxyUDSSockFDNum, netutils.UnixFdsAcceptExact)
 		if err != nil {
-			errno, ok := linux.GetErrno(err)
+			ok, errno := linux.GetErrno(err)
 			if ok && (errors.Is(errno, unix.EAGAIN)) {
 				goto rAgain
 			}
@@ -711,8 +711,8 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 	var err error
 
 	// Attempt casting to UDP connections
-	srcUdp, srcIsUdp := src.(*net.UDPConn)
-	dstUdp, dstIsUdp := dst.(*net.UDPConn)
+	srcUDP, srcIsUDP := src.(*net.UDPConn)
+	dstUDP, dstIsUDP := dst.(*net.UDPConn)
 
 	buf := make([]byte, 32*1024)
 	for {
@@ -720,9 +720,9 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 		var nr int
 		var er error
 
-		if srcIsUdp && srcUdp.RemoteAddr() == nil {
+		if srcIsUDP && srcUDP.RemoteAddr() == nil {
 			var addr net.Addr
-			nr, addr, er = srcUdp.ReadFrom(buf)
+			nr, addr, er = srcUDP.ReadFrom(buf)
 			if er == nil {
 				// Look for existing UDP session
 				udpSessionsLock.Lock()
@@ -759,14 +759,14 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 				us.timerLock.Unlock()
 
 				dst = us.target
-				dstUdp, dstIsUdp = dst.(*net.UDPConn)
+				dstUDP, dstIsUDP = dst.(*net.UDPConn)
 			}
 		} else {
 			nr, er = src.Read(buf)
 		}
 
 		// keep retrying on EAGAIN
-		errno, ok := linux.GetErrno(er)
+		ok, errno := linux.GetErrno(er)
 		if ok && (errors.Is(errno, unix.EAGAIN)) {
 			goto rAgain
 		}
@@ -776,7 +776,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 			var nw int
 			var ew error
 
-			if dstIsUdp && dstUdp.RemoteAddr() == nil {
+			if dstIsUDP && dstUDP.RemoteAddr() == nil {
 				var us *udpSession
 
 				udpSessionsLock.Lock()
@@ -796,13 +796,13 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 				us.timer.Reset(30 * time.Minute)
 				us.timerLock.Unlock()
 
-				nw, ew = dstUdp.WriteTo(buf[0:nr], us.client)
+				nw, ew = dstUDP.WriteTo(buf[0:nr], us.client)
 			} else {
 				nw, ew = dst.Write(buf[0:nr])
 			}
 
 			// keep retrying on EAGAIN
-			errno, ok := linux.GetErrno(ew)
+			ok, errno := linux.GetErrno(ew)
 			if ok && (errors.Is(errno, unix.EAGAIN)) {
 				goto wAgain
 			}
@@ -876,7 +876,7 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 	readAgain:
 		sData, sOob, _, _, err := src.ReadMsgUnix(dataBuf, oobBuf)
 		if err != nil {
-			errno, ok := linux.GetErrno(err)
+			ok, errno := linux.GetErrno(err)
 			if ok && errors.Is(errno, unix.EAGAIN) {
 				goto readAgain
 			}
@@ -906,7 +906,7 @@ func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
 	writeAgain:
 		tData, tOob, err := dst.WriteMsgUnix(dataBuf[:sData], oobBuf[:sOob], nil)
 		if err != nil {
-			errno, ok := linux.GetErrno(err)
+			ok, errno := linux.GetErrno(err)
 			if ok && errors.Is(errno, unix.EAGAIN) {
 				goto writeAgain
 			}

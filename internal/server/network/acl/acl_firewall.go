@@ -14,7 +14,7 @@ import (
 )
 
 // FirewallApplyACLRules applies ACL rules to network firewall.
-func FirewallApplyACLRules(s *state.State, logger logger.Logger, aclProjectName string, aclNet NetworkACLUsage) error {
+func FirewallApplyACLRules(s *state.State, l logger.Logger, aclProjectName string, aclNet NetworkACLUsage) error {
 	rules, err := FirewallACLRules(s, aclNet.Name, aclProjectName, aclNet.Config)
 	if err != nil {
 		return err
@@ -55,14 +55,14 @@ func FirewallACLRules(s *state.State, aclDeviceName string, aclProjectName strin
 				firewallACLRule.LogName = fmt.Sprintf("%s-%s-%d", logPrefix, direction, ruleIndex)
 			}
 
-			switch {
-			case rule.Action == "drop":
+			switch rule.Action {
+			case "drop":
 				dropRules = append(dropRules, firewallACLRule)
-			case rule.Action == "reject":
+			case "reject":
 				rejectRules = append(rejectRules, firewallACLRule)
-			case rule.Action == "allow":
+			case "allow":
 				allowRules = append(allowRules, firewallACLRule)
-			case rule.Action == "allow-stateless": // TODO: add NOTRACK support
+			case "allow-stateless": // TODO: add NOTRACK support
 				allowStatelessRules = append(allowStatelessRules, firewallACLRule)
 			default:
 				return fmt.Errorf("Unrecognised action %q", rule.Action)

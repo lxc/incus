@@ -151,13 +151,17 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	}
 
 	user, ok := claims.Claims["email"]
-	if ok && user != nil && user.(string) != "" {
-		return user.(string), nil
+	if ok && user != nil {
+		email, ok := user.(string)
+		if ok && email != "" {
+			return email, nil
+		}
 	}
 
 	return claims.Subject, nil
 }
 
+// Login starts the OIDC login flow by redirecting the client to the provider's authorization endpoint.
 func (o *Verifier) Login(w http.ResponseWriter, r *http.Request) {
 	// Get the provider.
 	provider, err := o.getProvider(r)
@@ -171,6 +175,7 @@ func (o *Verifier) Login(w http.ResponseWriter, r *http.Request) {
 	handler(w, r)
 }
 
+// Logout ends the OIDC session and clears the authentication cookies.
 func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 	// Attempt to get the provider.
 	provider, _ := o.getProvider(r)
@@ -224,6 +229,7 @@ func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &refreshCookie)
 }
 
+// Callback handles the redirect back from the OIDC provider and completes the login flow.
 func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 	// Get the provider.
 	provider, err := o.getProvider(r)

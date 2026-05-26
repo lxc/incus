@@ -954,10 +954,7 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	allNodes := false
-	if s.ServerClustered && request.QueryParam(r, "target") == "" {
-		allNodes = true
-	}
+	allNodes := s.ServerClustered && request.QueryParam(r, "target") == ""
 
 	n, err := doNetworkGet(s, r, allNodes, projectName, reqProject.Config, networkName)
 	if err != nil {
@@ -2142,18 +2139,18 @@ func networkStateGet(d *Daemon, r *http.Request) response.Response {
 		return response.NotFound(errors.New("Network not found"))
 	}
 
-	var state *api.NetworkState
+	var networkState *api.NetworkState
 	if n != nil {
-		state, err = n.State()
+		networkState, err = n.State()
 		if err != nil {
 			return response.SmartError(err)
 		}
 	} else {
-		state, err = resources.GetNetworkState(networkName)
+		networkState, err = resources.GetNetworkState(networkName)
 		if err != nil {
 			return response.SmartError(err)
 		}
 	}
 
-	return response.SyncResponse(true, state)
+	return response.SyncResponse(true, networkState)
 }

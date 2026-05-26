@@ -121,7 +121,7 @@ func archiveProfile(name string, outputPath string, allowedCommandPaths []string
 	}
 
 	// Render the profile.
-	var sb *strings.Builder = &strings.Builder{}
+	sb := &strings.Builder{}
 	err = archiveProfileTpl.Execute(sb, map[string]any{
 		"name":                name,
 		"outputPath":          outputPathFull, // Use deferenced path in AppArmor profile.

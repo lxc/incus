@@ -30,8 +30,8 @@ const (
 
 // NewNotifier builds a Notifier that can be used to notify other peers using
 // the given policy.
-func NewNotifier(state *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, policy NotifierPolicy) (Notifier, error) {
-	localClusterAddress := state.LocalConfig.ClusterAddress()
+func NewNotifier(s *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, policy NotifierPolicy) (Notifier, error) {
+	localClusterAddress := s.LocalConfig.ClusterAddress()
 
 	// Fast-track the case where we're not clustered at all.
 	if localClusterAddress == "" {
@@ -42,7 +42,7 @@ func NewNotifier(state *state.State, networkCert *localtls.CertInfo, serverCert 
 	var err error
 	var members []db.NodeInfo
 	var offlineThreshold time.Duration
-	err = state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		offlineThreshold, err = tx.GetNodeOfflineThreshold(ctx)
 		if err != nil {
 			return err

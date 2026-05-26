@@ -20,7 +20,7 @@ import (
 )
 
 // ConfigToInstanceDBArgs converts the instance config in the backup config to DB InstanceArgs.
-func ConfigToInstanceDBArgs(state *state.State, c *config.Config, projectName string, applyProfiles bool) (*db.InstanceArgs, error) {
+func ConfigToInstanceDBArgs(s *state.State, c *config.Config, projectName string, applyProfiles bool) (*db.InstanceArgs, error) {
 	if c.Container == nil {
 		return nil, nil
 	}
@@ -44,7 +44,7 @@ func ConfigToInstanceDBArgs(state *state.State, c *config.Config, projectName st
 	}
 
 	if applyProfiles {
-		err := state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			inst.Profiles = make([]api.Profile, 0, len(c.Container.Profiles))
 			profiles, err := cluster.GetProfilesIfEnabled(ctx, tx.Tx(), projectName, c.Container.Profiles)
 			if err != nil {

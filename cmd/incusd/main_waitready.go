@@ -87,7 +87,6 @@ func (c *cmdWaitready) run(_ *cobra.Command, _ []string) error {
 	if c.flagTimeout > 0 {
 		select {
 		case <-finger:
-			break
 		case <-time.After(time.Second * time.Duration(c.flagTimeout)):
 			return fmt.Errorf("Daemon still not running after %ds timeout (%v)", c.flagTimeout, errLast)
 		}
