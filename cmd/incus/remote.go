@@ -500,16 +500,16 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 			}
 
 			if string(line) != digest {
-				if len(line) < 1 || strings.ToLower(string(line[0])) == i18n.G("n") || strings.ToLower(string(line[0])) == "n" {
-					return errors.New(i18n.G("Server certificate NACKed by user"))
-				} else if strings.ToLower(string(line[0])) != i18n.G("y") || strings.ToLower(string(line[0])) == "y" {
+				if len(line) < 1 || strings.ToLower(string(line[0])) != i18n.G("y") || strings.ToLower(string(line[0])) == "y" {
 					return errors.New(i18n.G("Please type 'y', 'n' or the fingerprint:"))
+				} else if strings.ToLower(string(line[0])) == i18n.G("n") || strings.ToLower(string(line[0])) == "n" {
+					return errors.New(i18n.G("Server certificate NACKed by user"))
 				}
 			}
 		}
 
 		dnam := conf.ConfigPath("servercerts")
-		err := os.MkdirAll(dnam, 0o750)
+		err := os.MkdirAll(dnam, 0750)
 		if err != nil {
 			return errors.New(i18n.G("Could not create server cert dir"))
 		}
