@@ -2884,11 +2884,15 @@ func (b *backend) GetInstanceUsage(inst instance.Instance) (*VolumeUsage, error)
 
 	// Get the usage.
 	size, err := b.driver.GetVolumeUsage(vol)
-	if err != nil {
+	if err != nil && !errors.Is(err, drivers.ErrNotSupported) {
 		return nil, err
 	}
 
-	val.Used = size
+	if err != nil {
+		val.Used = -1
+	} else {
+		val.Used = size
+	}
 
 	// Get the total size.
 	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
@@ -6042,11 +6046,15 @@ func (b *backend) GetCustomVolumeUsage(projectName, volName string) (*VolumeUsag
 
 	// Get the usage.
 	size, err := b.driver.GetVolumeUsage(vol)
-	if err != nil {
+	if err != nil && !errors.Is(err, drivers.ErrNotSupported) {
 		return nil, err
 	}
 
-	val.Used = size
+	if err != nil {
+		val.Used = -1
+	} else {
+		val.Used = size
+	}
 
 	// Get the total size.
 	sizeStr, ok := vol.Config()["size"]
