@@ -2049,6 +2049,16 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		forkQemuCmd = append(forkQemuCmd, fmt.Sprintf("fd=%d", 3+i))
 	}
 
+	// Ensure SELinux context is generated and persisted.
+	contextIsNew, err := d.selinuxEnsureContext()
+	if err != nil {
+		return err
+	}
+
+	if seCtx := d.localConfig["volatile.selinux.context"]; seCtx != "" {
+		forkQemuCmd = append(forkQemuCmd, "secontext="+seCtx)
+	}
+
 	// Log the QEMU command line.
 	fullCmd := append(forkQemuCmd, "--", qemuPath)
 	fullCmd = append(fullCmd, d.cmdArgs...)
@@ -2069,17 +2079,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	p.SetApparmor(apparmor.InstanceProfileName(d))
-
-	// Ensure SELinux context is generated and persisted.
-	contextIsNew, err := d.selinuxEnsureContext()
-	if err != nil {
-		return err
-	}
-
-	// Set SELinux context for the QEMU process.
-	if selinuxCtx := d.localConfig["volatile.selinux.context"]; selinuxCtx != "" {
-		p.SetSELinux(selinuxCtx)
-	}
 
 	// Update the backup.yaml file just before starting the instance process, but after all devices have been
 	// setup, so that the backup file contains the volatile keys used for this instance start, so that they can
