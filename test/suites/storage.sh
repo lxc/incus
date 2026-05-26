@@ -881,8 +881,8 @@ test_storage() {
         # Disable quotas. The usage should be 0.
         # shellcheck disable=SC2031
         btrfs quota disable "${INCUS_DIR}/storage-pools/${pool_name}"
-        usage=$(incus query /1.0/instances/c1/state | jq '.disk.root')
-        [ "${usage}" = "null" ]
+        usage=$(incus query /1.0/instances/c1/state | jq '.disk.root.usage')
+        [ "${usage}" = "-1" ]
 
         # Enable quotas. The usage should then be > 0.
         # shellcheck disable=SC2031
