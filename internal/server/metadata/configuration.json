@@ -6700,6 +6700,14 @@
 						}
 					},
 					{
+						"linstor.raw.*": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Extra LINSTOR properties to set. For example, `BCache/PoolName` is encoded as `linstor.raw.BCache/PoolName`.",
+							"type": "string"
+						}
+					},
+					{
 						"linstor.resource_group.name": {
 							"default": "`incus`",
 							"longdesc": "",
@@ -7476,6 +7484,14 @@
 							"longdesc": "",
 							"shortdesc": "UID of the volume owner in the instance",
 							"type": "int"
+						}
+					},
+					{
+						"linstor.raw.*": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Extra LINSTOR properties to set. For example, `BCache/PoolName` is encoded as `linstor.raw.BCache/PoolName`.",
+							"type": "string"
 						}
 					},
 					{
