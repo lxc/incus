@@ -4649,6 +4649,33 @@ func (n *ovn) hasDHCPv4Reservation(dhcpReservations []iprange.Range, ip net.IP) 
 	return false
 }
 
+// forwardHasDefaultTarget reports whether a network forward exists for the given listen address
+// and has a default target address configured.
+func (n *ovn) forwardHasDefaultTarget(listenAddress string) (bool, error) {
+	var hasDefaultTarget bool
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		dbForward, err := dbCluster.GetNetworkForward(ctx, tx.Tx(), n.ID(), listenAddress)
+		if err != nil {
+			return err
+		}
+
+		forward, err := dbForward.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		hasDefaultTarget = forward.Config["target_address"] != ""
+
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return hasDefaultTarget, nil
+}
+
 // InstanceDevicePortStart sets up an instance device port to the internal logical switch.
 // Accepts a list of ACLs being removed from the NIC device (if called as part of a NIC update).
 // Returns the logical switch port name and a list of IPs that were allocated to the port for DNS.
@@ -4857,28 +4884,59 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			return "", nil, fmt.Errorf("Invalid external address %q", value)
 		}
 
-		if err := n.ovnnb.CreateLogicalRouterNAT(
-			context.TODO(),
-			n.getRouterName(),
-			"snat",
-			intNet,
-			extIP,
-			nil,
-			false,
-			true,
-		); err != nil {
-			return "", nil, fmt.Errorf("Failed to add SNAT %q: %w", value, err)
+		// Check if we should setup a full bi-directional NAT for the address.
+		useDNATAndSNAT, err := n.forwardHasDefaultTarget(value)
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed to check network forward for external address %q: %w", value, err)
 		}
 
-		reverter.Add(func() {
-			_ = n.ovnnb.DeleteLogicalRouterNAT(
+		if useDNATAndSNAT {
+			if err := n.ovnnb.CreateLogicalRouterNAT(
+				context.TODO(),
+				n.getRouterName(),
+				"dnat_and_snat",
+				nil,
+				extIP,
+				intNet.IP,
+				false,
+				true,
+			); err != nil {
+				return "", nil, fmt.Errorf("Failed to add DNAT and SNAT %q: %w", value, err)
+			}
+
+			reverter.Add(func() {
+				_ = n.ovnnb.DeleteLogicalRouterNAT(
+					context.TODO(),
+					n.getRouterName(),
+					"dnat_and_snat",
+					false,
+					extIP,
+				)
+			})
+		} else {
+			if err := n.ovnnb.CreateLogicalRouterNAT(
 				context.TODO(),
 				n.getRouterName(),
 				"snat",
-				false,
+				intNet,
 				extIP,
-			)
-		})
+				nil,
+				false,
+				true,
+			); err != nil {
+				return "", nil, fmt.Errorf("Failed to add SNAT %q: %w", value, err)
+			}
+
+			reverter.Add(func() {
+				_ = n.ovnnb.DeleteLogicalRouterNAT(
+					context.TODO(),
+					n.getRouterName(),
+					"snat",
+					false,
+					extIP,
+				)
+			})
+		}
 	}
 
 	// Get dynamic IPs for switch port if any IPs not assigned statically.
@@ -5537,10 +5595,12 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 			return fmt.Errorf("Invalid external address %q", value)
 		}
 
-		// Remove the SNAT entry.
-		err := n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", false, extIP)
-		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
-			return err
+		// Remove the NAT entry for the external address.
+		for _, natType := range []string{"snat", "dnat_and_snat"} {
+			err := n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), natType, false, extIP)
+			if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+				return err
+			}
 		}
 	}
 
