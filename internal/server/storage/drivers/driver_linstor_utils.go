@@ -102,6 +102,14 @@ func drbdPropsMap(key string) (string, error) {
 			return "", fmt.Errorf("DRBD property %q must be set with the %q configuration key", rawKey, incusKey)
 		}
 
+		if slices.Contains([]string{
+			"DrbdOptions/Net/allow-two-primaries",
+			"DrbdOptions/Resource/quorum",
+			"DrbdOptions/auto-verify-alg",
+		}, rawKey) {
+			return "", fmt.Errorf("DRBD property %q cannot be manually set", rawKey)
+		}
+
 		return rawKey, nil
 	}
 
@@ -1053,23 +1061,20 @@ func (d *linstor) updateResourceDefinition(vol Volume, changedConfig map[string]
 	}
 
 	// Parse and set properties to be overwritten.
-	overrideProps, err := d.drbdPropsFromConfig(changedConfig)
+	changedProps, err := d.drbdPropsFromConfig(changedConfig)
 	if err != nil {
-		return fmt.Errorf("Could parse config into DRBD props: %w", err)
+		return fmt.Errorf("Could not parse configuration into DRBD properties: %w", err)
 	}
 
-	// Parse and set properties to be deleted.
+	overrideProps := make(map[string]string)
 	deleteProps := []string{}
-	for key, value := range changedConfig {
-		if value != "" {
-			continue
-		}
 
-		prop, err := drbdPropsMap(key)
-		if err == nil {
-			deleteProps = append(deleteProps, prop)
-		} else if !errors.Is(err, errNotDRBDKey) {
-			return err
+	// Discriminate properties changed and properties deleted.
+	for key, value := range changedProps {
+		if value == "" {
+			deleteProps = append(deleteProps, key)
+		} else {
+			overrideProps[key] = value
 		}
 	}
 
