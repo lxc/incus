@@ -19,7 +19,7 @@ import (
 )
 
 // ErrDHCPNotSupported indicates network doesn't support DHCP for this IP protocol.
-var ErrDHCPNotSupported error = errors.New("Network doesn't support DHCP")
+var ErrDHCPNotSupported = errors.New("Network doesn't support DHCP")
 
 // DHCPValidIP returns whether an IP fits inside one of the supplied DHCP ranges and subnet.
 func DHCPValidIP(subnet *net.IPNet, ranges []iprange.Range, IP net.IP) bool {
