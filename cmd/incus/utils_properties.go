@@ -104,7 +104,7 @@ func stringToFloatHookFunc() mapstructure.DecodeHookFunc {
 func getFieldByJSONTag(obj any, tag string) (any, error) {
 	var res any
 	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 
@@ -137,7 +137,7 @@ func getFromStruct(v reflect.Value, tag string) (bool, any) {
 		}
 
 		if v.Type().Field(i).Anonymous {
-			if field.Kind() == reflect.Ptr {
+			if field.Kind() == reflect.Pointer {
 				field = field.Elem()
 			}
 
