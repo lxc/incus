@@ -162,7 +162,14 @@ func (d *linstor) Validate(config map[string]string) error {
 		"source": validate.IsAny,
 	}
 
-	return d.validatePool(config, rules, d.commonVolumeRules())
+	// gendoc:generate(entity=storage_linstor, group=common, key=linstor.raw.*)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Extra LINSTOR properties to set. For example, `BCache/PoolName` is encoded as `linstor.raw.BCache/PoolName`.
+
+	return d.validatePool(config, rules, d.commonVolumeRules(), LinstorRawConfigKeyPrefix)
 }
 
 // FillConfig populates the storage pool's configuration file with the default values.

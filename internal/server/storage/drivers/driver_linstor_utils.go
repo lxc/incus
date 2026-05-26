@@ -31,6 +31,9 @@ var LinstorSatellitePaths = []string{"/usr/share/linstor-server/bin"}
 // LinstorDefaultResourceGroupPlaceCount represents the default Linstor resource group place count.
 const LinstorDefaultResourceGroupPlaceCount = "2"
 
+// LinstorDefaultResyncDiscardGranularity represents the default Linstor resync granularity.
+const LinstorDefaultResyncDiscardGranularity = "1048576"
+
 // LinstorDefaultVolumePrefix represents the default Linstor volume prefix.
 const LinstorDefaultVolumePrefix = "incus-volume-"
 
@@ -39,6 +42,9 @@ const LinstorResourceGroupNameConfigKey = "linstor.resource_group.name"
 
 // LinstorResourceGroupPlaceCountConfigKey represents the config key that describes the resource group place count.
 const LinstorResourceGroupPlaceCountConfigKey = "linstor.resource_group.place_count"
+
+// LinstorRawConfigKeyPrefix represents the config key namespace that describes additional LINSTOR properties.
+const LinstorRawConfigKeyPrefix = "linstor.raw"
 
 // LinstorResourceGroupStoragePoolConfigKey represents the config key that describes the resource group storage pool.
 const LinstorResourceGroupStoragePoolConfigKey = "linstor.resource_group.storage_pool"
@@ -76,11 +82,39 @@ var errResourceDefinitionNotFound = errors.New("Resource definition not found")
 // errSnapshotNotFound indicates that a snapshot could not be found in Linstor.
 var errSnapshotNotFound = errors.New("Resource definition not found")
 
+// errNotDRBDKey indicates that a configuration key is not a DRBD property.
+var errNotDRBDKey = errors.New("not found")
+
 // drbdPropsMap maps incus config keys to DRBD options.
-var drbdPropsMap = map[string]string{
-	DrbdOnNoQuorumConfigKey:              "DrbdOptions/Resource/on-no-quorum",
-	DrbdAutoDiskfulConfigKey:             "DrbdOptions/auto-diskful",
-	DrbdAutoAddQuorumTiebreakerConfigKey: "DrbdOptions/auto-add-quorum-tiebreaker",
+func drbdPropsMap(key string) (string, error) {
+	rawKey, found := strings.CutPrefix(key, LinstorRawConfigKeyPrefix+".")
+	if found {
+		if strings.HasPrefix(rawKey, "Aux/Incus/") {
+			return "", errors.New("Incus metadata cannot be manually set")
+		}
+
+		incusKey, found := map[string]string{
+			"DrbdOptions/Resource/on-no-quorum":      DrbdOnNoQuorumConfigKey,
+			"DrbdOptions/auto-diskful":               DrbdAutoDiskfulConfigKey,
+			"DrbdOptions/auto-add-quorum-tiebreaker": DrbdAutoAddQuorumTiebreakerConfigKey,
+		}[rawKey]
+		if found {
+			return "", fmt.Errorf("DRBD property %q must be set with the %q configuration key", rawKey, incusKey)
+		}
+
+		return rawKey, nil
+	}
+
+	rawKey, found = map[string]string{
+		DrbdOnNoQuorumConfigKey:              "DrbdOptions/Resource/on-no-quorum",
+		DrbdAutoDiskfulConfigKey:             "DrbdOptions/auto-diskful",
+		DrbdAutoAddQuorumTiebreakerConfigKey: "DrbdOptions/auto-add-quorum-tiebreaker",
+	}[key]
+	if found {
+		return rawKey, nil
+	}
+
+	return "", errNotDRBDKey
 }
 
 // drbdVersion returns the DRBD version of the currently loaded kernel module.
@@ -236,12 +270,12 @@ func (d *linstor) createResourceGroup() error {
 	// Set additional properties based on the config.
 	props, err := d.drbdPropsFromConfig(d.config)
 	if err != nil {
-		return fmt.Errorf("Could parse config into DRBD props: %w", err)
+		return fmt.Errorf("Could not parse configuration into DRBD properties: %w", err)
 	}
 
 	// Some tuning to speed up resync.
 	if props["DrbdOptions/Disk/rs-discard-granularity"] == "" {
-		props["DrbdOptions/Disk/rs-discard-granularity"] = "1048576"
+		props["DrbdOptions/Disk/rs-discard-granularity"] = LinstorDefaultResyncDiscardGranularity
 	}
 
 	err = linstor.Client.ResourceGroups.Modify(context.TODO(), resourceGroup.Name, linstorClient.ResourceGroupModify{
@@ -282,27 +316,25 @@ func (d *linstor) updateResourceGroup(changedConfig map[string]string) error {
 	}
 
 	// Parse and set properties to be overwritten.
-	overrideProps, err := d.drbdPropsFromConfig(changedConfig)
+	changedProps, err := d.drbdPropsFromConfig(changedConfig)
 	if err != nil {
-		return fmt.Errorf("Could parse config into DRBD props: %w", err)
+		return fmt.Errorf("Could not parse configuration into DRBD properties: %w", err)
 	}
 
-	resourceGroupModify.OverrideProps = overrideProps
+	resourceGroupModify.OverrideProps = make(map[string]string)
 
-	// Parse and set properties to be deleted.
-	deleteProps := []string{}
-	for key, value := range changedConfig {
-		if value != "" {
-			continue
-		}
-
-		prop, ok := drbdPropsMap[key]
-		if ok {
-			deleteProps = append(deleteProps, prop)
+	// Discriminate properties changed and properties deleted.
+	for key, value := range changedProps {
+		if value == "" {
+			if key == "DrbdOptions/Disk/rs-discard-granularity" {
+				resourceGroupModify.OverrideProps[key] = LinstorDefaultResyncDiscardGranularity
+			} else {
+				resourceGroupModify.DeleteProps = append(resourceGroupModify.DeleteProps, key)
+			}
+		} else {
+			resourceGroupModify.OverrideProps[key] = value
 		}
 	}
-
-	resourceGroupModify.DeleteProps = deleteProps
 
 	resourceGroupName := d.config[LinstorResourceGroupNameConfigKey]
 
@@ -1033,9 +1065,11 @@ func (d *linstor) updateResourceDefinition(vol Volume, changedConfig map[string]
 			continue
 		}
 
-		prop, ok := drbdPropsMap[key]
-		if ok {
+		prop, err := drbdPropsMap(key)
+		if err == nil {
 			deleteProps = append(deleteProps, prop)
+		} else if !errors.Is(err, errNotDRBDKey) {
+			return err
 		}
 	}
 
@@ -1054,10 +1088,14 @@ func (d *linstor) updateResourceDefinition(vol Volume, changedConfig map[string]
 func (d *linstor) drbdPropsFromConfig(config map[string]string) (map[string]string, error) {
 	props := map[string]string{}
 
-	for key, prop := range drbdPropsMap {
-		value, changed := config[key]
-		if !changed {
-			continue
+	for key, value := range config {
+		prop, err := drbdPropsMap(key)
+		if err != nil {
+			if errors.Is(err, errNotDRBDKey) {
+				continue
+			} else {
+				return nil, err
+			}
 		}
 
 		switch key {
