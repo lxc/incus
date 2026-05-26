@@ -195,7 +195,7 @@ func assertNode(t *testing.T, db *sql.DB, address string, schema int, apiExtensi
 func newDir(t *testing.T) (string, func()) {
 	t.Helper()
 
-	dir, err := os.MkdirTemp("", "dqlite-replication-test-")
+	dir, err := os.MkdirTemp("", "cowsql-replication-test-")
 	assert.NoError(t, err)
 
 	cleanup := func() {

@@ -172,7 +172,7 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	segmentID, err := db.DqliteLatestSegment()
+	segmentID, err := db.CowsqlLatestSegment()
 	if err != nil {
 		return err
 	}
@@ -325,7 +325,7 @@ func (c *cmdClusterShow) run(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	segmentID, err := db.DqliteLatestSegment()
+	segmentID, err := db.CowsqlLatestSegment()
 	if err != nil {
 		return err
 	}

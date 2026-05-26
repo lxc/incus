@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	dqlite "github.com/cowsql/go-cowsql"
+	cowsql "github.com/cowsql/go-cowsql"
 	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/v7/internal/server/certificate"
@@ -31,15 +31,15 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-// NewGateway creates a new Gateway for managing access to the dqlite cluster.
+// NewGateway creates a new Gateway for managing access to the cowsql cluster.
 //
 // When a new gateway is created, the node-level database is queried to check
 // what kind of role this node plays and if it's exposed over the network. It
 // will initialize internal data structures accordingly, for example starting a
-// local dqlite server if this node is a database node.
+// local cowsql server if this node is a database node.
 //
 // After creation, the Daemon is expected to expose whatever http handlers the
-// HandlerFuncs method returns and to access the dqlite cluster using the
+// HandlerFuncs method returns and to access the cowsql cluster using the
 // dialer returned by the DialFunc method.
 func NewGateway(shutdownCtx context.Context, nodeDB *db.Node, networkCert *localtls.CertInfo, stateFunc func() *state.State, options ...Option) (*Gateway, error) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -58,7 +58,7 @@ func NewGateway(shutdownCtx context.Context, nodeDB *db.Node, networkCert *local
 		cancel:      cancel,
 		upgradeCh:   make(chan struct{}),
 		acceptCh:    make(chan net.Conn),
-		store:       &dqliteNodeStore{},
+		store:       &cowsqlNodeStore{},
 		state:       stateFunc,
 	}
 
@@ -76,28 +76,28 @@ type HeartbeatHook func(heartbeatData *APIHeartbeat, isLeader bool, unavailableM
 // HeartbeatHandler represents a function that can be called when a heartbeat request arrives.
 type HeartbeatHandler func(w http.ResponseWriter, r *http.Request, isLeader bool, hbData *APIHeartbeat)
 
-// Gateway mediates access to the dqlite cluster using a gRPC SQL client, and
-// possibly runs a dqlite replica on this member (if we're configured to do so).
+// Gateway mediates access to the cowsql cluster using a gRPC SQL client, and
+// possibly runs a cowsql replica on this member (if we're configured to do so).
 type Gateway struct {
 	db          *db.Node
 	networkCert *localtls.CertInfo
 	options     *options
 
-	// The raft instance to use for creating the dqlite driver. It's nil if
+	// The raft instance to use for creating the cowsql driver. It's nil if
 	// this member is not supposed to be part of the raft cluster.
 	info *db.RaftNode
 
-	// The gRPC server exposing the dqlite driver created by this
+	// The gRPC server exposing the cowsql driver created by this
 	// gateway. It's nil if this member is not supposed to be part of the
 	// raft cluster.
-	server   *dqlite.Node
+	server   *cowsql.Node
 	acceptCh chan net.Conn
 	stopCh   chan struct{}
 
-	// A dialer that will connect to the dqlite server using a loopback
+	// A dialer that will connect to the cowsql server using a loopback
 	// net.Conn. It's non-nil when clustering is not enabled on this member
-	// and so we don't expose any dqlite or raft network endpoint,
-	// but still we want to use dqlite as backend for the "cluster"
+	// and so we don't expose any cowsql or raft network endpoint,
+	// but still we want to use cowsql as backend for the "cluster"
 	// database, to minimize the difference between code paths in
 	// clustering and non-clustering modes.
 	memoryDial client.DialFunc
@@ -125,23 +125,23 @@ type Gateway struct {
 	HeartbeatLock             sync.Mutex
 
 	// NodeStore wrapper.
-	store *dqliteNodeStore
+	store *cowsqlNodeStore
 
 	lock sync.RWMutex
 
-	// Abstract unix socket that the local dqlite task is listening to.
+	// Abstract unix socket that the local cowsql task is listening to.
 	bindAddress string
 
 	// State function.
 	state func() *state.State
 }
 
-// Current dqlite protocol version.
-const dqliteVersion = 1
+// Current cowsql protocol version.
+const cowsqlVersion = 1
 
-// Set the dqlite version header.
-func setDqliteVersionHeader(request *http.Request) {
-	request.Header.Set("X-Dqlite-Version", fmt.Sprintf("%d", dqliteVersion))
+// Set the cowsql version header.
+func setCowsqlVersionHeader(request *http.Request) {
+	request.Header.Set("X-Dqlite-Version", fmt.Sprintf("%d", cowsqlVersion))
 }
 
 // HandlerFuncs returns the HTTP handlers that should be added to the REST API
@@ -152,7 +152,7 @@ func setDqliteVersionHeader(request *http.Request) {
 //
 // These handlers might return 404, either because this server is a
 // non-clustered member not available over the network or because it is not a
-// database node part of the dqlite cluster.
+// database node part of the cowsql cluster.
 func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts func() (map[certificate.Type]map[string]x509.Certificate, error)) map[string]http.HandlerFunc {
 	database := func(w http.ResponseWriter, r *http.Request) {
 		g.lock.RLock()
@@ -172,22 +172,22 @@ func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts f
 
 		g.lock.RUnlock()
 
-		// Compare the dqlite version of the connecting client
+		// Compare the cowsql version of the connecting client
 		// with our own one.
 		versionHeader := r.Header.Get("X-Dqlite-Version")
 		if versionHeader == "" {
-			// No version header means an old pre dqlite 1.0 client.
+			// No version header means an old pre cowsql 1.0 client.
 			versionHeader = "0"
 		}
 
 		version, err := strconv.Atoi(versionHeader)
 		if err != nil {
-			http.Error(w, "400 invalid dqlite version", http.StatusBadRequest)
+			http.Error(w, "400 invalid cowsql version", http.StatusBadRequest)
 			return
 		}
 
-		if version != dqliteVersion {
-			if version > dqliteVersion {
+		if version != cowsqlVersion {
+			if version > cowsqlVersion {
 				g.lock.Lock()
 				if !g.upgradeTriggered {
 					err = triggerUpdate(g.state())
@@ -196,9 +196,9 @@ func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts f
 					}
 				}
 				g.lock.Unlock()
-				http.Error(w, "503 unsupported dqlite version", http.StatusServiceUnavailable)
+				http.Error(w, "503 unsupported cowsql version", http.StatusServiceUnavailable)
 			} else {
-				http.Error(w, "426 dqlite version too old ", http.StatusUpgradeRequired)
+				http.Error(w, "426 cowsql version too old ", http.StatusUpgradeRequired)
 			}
 
 			return
@@ -274,16 +274,16 @@ func (g *Gateway) HandlerFuncs(heartbeatHandler HeartbeatHandler, trustedCerts f
 				return
 			}
 
-			dqliteClient, err := g.getClient()
+			cowsqlClient, err := g.getClient()
 			if err != nil {
-				http.Error(w, "500 failed to get dqlite client", http.StatusInternalServerError)
+				http.Error(w, "500 failed to get cowsql client", http.StatusInternalServerError)
 				return
 			}
 
-			defer func() { _ = dqliteClient.Close() }()
+			defer func() { _ = cowsqlClient.Close() }()
 			ctx, cancel := context.WithTimeout(g.ctx, 3*time.Second)
 			defer cancel()
-			leader, err := dqliteClient.Leader(ctx)
+			leader, err := cowsqlClient.Leader(ctx)
 			if err != nil {
 				http.Error(w, "500 failed to get leader address", http.StatusInternalServerError)
 				return
@@ -354,28 +354,28 @@ func (g *Gateway) WaitUpgradeNotification() {
 	}
 }
 
-// IsDqliteNode returns true if this gateway is running a dqlite node.
-func (g *Gateway) IsDqliteNode() bool {
+// IsCowsqlNode returns true if this gateway is running a cowsql node.
+func (g *Gateway) IsCowsqlNode() bool {
 	g.lock.RLock()
 	defer g.lock.RUnlock()
 
 	if g.info != nil {
 		if g.server == nil {
-			panic("gateway has node identity but no dqlite server")
+			panic("gateway has node identity but no cowsql server")
 		}
 
 		return true
 	}
 
 	if g.server != nil {
-		panic("gateway dqlite server but no node identity")
+		panic("gateway cowsql server but no node identity")
 	}
 
 	return true
 }
 
 // DialFunc returns a dial function that can be used to connect to one of the
-// dqlite nodes.
+// cowsql nodes.
 func (g *Gateway) DialFunc() client.DialFunc {
 	return func(ctx context.Context, address string) (net.Conn, error) {
 		g.lock.RLock()
@@ -386,7 +386,7 @@ func (g *Gateway) DialFunc() client.DialFunc {
 			return g.memoryDial(ctx, address)
 		}
 
-		conn, err := dqliteNetworkDial(ctx, "dqlite", address, g)
+		conn, err := cowsqlNetworkDial(ctx, "dqlite", address, g)
 		if err != nil {
 			return nil, err
 		}
@@ -409,7 +409,7 @@ func (g *Gateway) raftDial() client.DialFunc {
 			return nil, err
 		}
 
-		conn, err := dqliteNetworkDial(ctx, "raft", nodeAddress, g)
+		conn, err := cowsqlNetworkDial(ctx, "raft", nodeAddress, g)
 		if err != nil {
 			return nil, err
 		}
@@ -431,13 +431,13 @@ func (g *Gateway) raftDial() client.DialFunc {
 
 		_ = listener.Close()
 
-		go dqliteProxy("raft", g.stopCh, conn, goUnix)
+		go cowsqlProxy("raft", g.stopCh, conn, goUnix)
 
 		return cUnix, nil
 	}
 }
 
-// Context returns a cancellation context to pass to dqlite.NewDriver as
+// Context returns a cancellation context to pass to cowsql.NewDriver as
 // option.
 //
 // This context gets cancelled by Gateway.Kill() and at that point any
@@ -446,7 +446,7 @@ func (g *Gateway) Context() context.Context {
 	return g.ctx
 }
 
-// NodeStore returns a dqlite server store that can be used to lookup the
+// NodeStore returns a cowsql server store that can be used to lookup the
 // addresses of known database nodes.
 func (g *Gateway) NodeStore() client.NodeStore {
 	return g.store
@@ -463,15 +463,15 @@ func (g *Gateway) Kill() {
 
 // TransferLeadership attempts to transfer leadership to another node.
 func (g *Gateway) TransferLeadership() error {
-	dqliteClient, err := g.getClient()
+	cowsqlClient, err := g.getClient()
 	if err != nil {
 		return err
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
+	defer func() { _ = cowsqlClient.Close() }()
 
 	// Try to find a voter that is also online.
-	servers, err := dqliteClient.Cluster(context.Background())
+	servers, err := cowsqlClient.Cluster(context.Background())
 	if err != nil {
 		return err
 	}
@@ -502,14 +502,14 @@ func (g *Gateway) TransferLeadership() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	return dqliteClient.Transfer(ctx, id)
+	return cowsqlClient.Transfer(ctx, id)
 }
 
 // DemoteOfflineNode force demoting an offline node.
 func (g *Gateway) DemoteOfflineNode(raftID uint64) error {
 	cli, err := g.getClient()
 	if err != nil {
-		return fmt.Errorf("Connect to local dqlite node: %w", err)
+		return fmt.Errorf("Connect to local cowsql node: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -558,15 +558,15 @@ func (g *Gateway) Sync() {
 		return
 	}
 
-	dqliteClient, err := g.getClient()
+	cowsqlClient, err := g.getClient()
 	if err != nil {
 		logger.Warnf("Failed to get client: %v", err)
 		return
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
+	defer func() { _ = cowsqlClient.Close() }()
 
-	files, err := dqliteClient.Dump(context.Background(), "db.bin")
+	files, err := cowsqlClient.Dump(context.Background(), "db.bin")
 	if err != nil {
 		// Just log a warning, since this is not fatal.
 		logger.Warnf("Failed get database dump: %v", err)
@@ -632,23 +632,23 @@ func (g *Gateway) LeaderAddress() (string, error) {
 		defer cancel()
 
 		for {
-			dqliteClient, err := g.getClient()
+			cowsqlClient, err := g.getClient()
 			if err != nil {
-				return "", fmt.Errorf("Failed to get dqlite client: %w", err)
+				return "", fmt.Errorf("Failed to get cowsql client: %w", err)
 			}
 
-			leader, err := dqliteClient.Leader(ctx)
+			leader, err := cowsqlClient.Leader(ctx)
 			if err != nil {
-				_ = dqliteClient.Close()
+				_ = cowsqlClient.Close()
 				return "", fmt.Errorf("Failed to get leader address: %w", err)
 			}
 
 			if leader != nil && leader.Address != "" {
-				_ = dqliteClient.Close()
+				_ = cowsqlClient.Close()
 				return leader.Address, nil
 			}
 
-			_ = dqliteClient.Close()
+			_ = cowsqlClient.Close()
 
 			select {
 			case <-ctx.Done():
@@ -707,7 +707,7 @@ func (g *Gateway) LeaderAddress() (string, error) {
 			return "", err
 		}
 
-		setDqliteVersionHeader(request)
+		setCowsqlVersionHeader(request)
 
 		// Use 1s later timeout to give HTTP client chance timeout with
 		// more useful info.
@@ -776,7 +776,7 @@ func (g *Gateway) init(bootstrap bool) error {
 	}
 
 	// If the resulting raft instance is not nil, it means that this node
-	// should serve as database node, so create a dqlite driver possibly
+	// should serve as database node, so create a cowsql driver possibly
 	// exposing it over the network.
 	if info != nil {
 		// Use the autobind feature of abstract unix sockets to get a
@@ -789,8 +789,8 @@ func (g *Gateway) init(bootstrap bool) error {
 		g.bindAddress = listener.Addr().String()
 		_ = listener.Close()
 
-		options := []dqlite.Option{
-			dqlite.WithBindAddress(g.bindAddress),
+		options := []cowsql.Option{
+			cowsql.WithBindAddress(g.bindAddress),
 		}
 
 		if info.Address == "1" {
@@ -798,26 +798,26 @@ func (g *Gateway) init(bootstrap bool) error {
 				panic("unexpected server ID")
 			}
 
-			g.memoryDial = dqliteMemoryDial(g.bindAddress)
+			g.memoryDial = cowsqlMemoryDial(g.bindAddress)
 			g.store.inMemory = client.NewInmemNodeStore()
 			err = g.store.Set(context.Background(), []client.NodeInfo{info.NodeInfo})
 			if err != nil {
 				return fmt.Errorf("Failed setting node info in store: %w", err)
 			}
 		} else {
-			go runDqliteProxy(g.stopCh, g.bindAddress, g.acceptCh)
+			go runCowsqlProxy(g.stopCh, g.bindAddress, g.acceptCh)
 			g.store.inMemory = nil
-			options = append(options, dqlite.WithDialFunc(g.raftDial()))
+			options = append(options, cowsql.WithDialFunc(g.raftDial()))
 		}
 
-		server, err := dqlite.New(
+		server, err := cowsql.New(
 			info.ID,
 			info.Address,
 			dir,
 			options...,
 		)
 		if err != nil {
-			return fmt.Errorf("Failed to create dqlite server: %w", err)
+			return fmt.Errorf("Failed to create cowsql server: %w", err)
 		}
 
 		// Force the correct configuration into the bootstrap node, this is needed
@@ -826,7 +826,7 @@ func (g *Gateway) init(bootstrap bool) error {
 		if bootstrap {
 			logger.Debugf("Bootstrap database gateway ID:%v Address:%v",
 				info.ID, info.Address)
-			cluster := []dqlite.NodeInfo{
+			cluster := []cowsql.NodeInfo{
 				{ID: uint64(info.ID), Address: info.Address},
 			}
 
@@ -838,7 +838,7 @@ func (g *Gateway) init(bootstrap bool) error {
 
 		err = server.Start()
 		if err != nil {
-			return fmt.Errorf("Failed to start dqlite server: %w", err)
+			return fmt.Errorf("Failed to start cowsql server: %w", err)
 		}
 
 		g.lock.Lock()
@@ -891,15 +891,15 @@ func (g *Gateway) isLeader() (bool, error) {
 		return false, nil
 	}
 
-	dqliteClient, err := g.getClient()
+	cowsqlClient, err := g.getClient()
 	if err != nil {
-		return false, fmt.Errorf("Failed to get dqlite client: %w", err)
+		return false, fmt.Errorf("Failed to get cowsql client: %w", err)
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
+	defer func() { _ = cowsqlClient.Close() }()
 	ctx, cancel := context.WithTimeout(g.ctx, 3*time.Second)
 	defer cancel()
-	leader, err := dqliteClient.Leader(ctx)
+	leader, err := cowsqlClient.Leader(ctx)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get leader address: %w", err)
 	}
@@ -930,14 +930,14 @@ func (g *Gateway) currentRaftNodes() ([]db.RaftNode, error) {
 		return nil, ErrNotLeader
 	}
 
-	dqliteClient, err := g.getClient()
+	cowsqlClient, err := g.getClient()
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
+	defer func() { _ = cowsqlClient.Close() }()
 
-	servers, err := dqliteClient.Cluster(context.Background())
+	servers, err := cowsqlClient.Cluster(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -1017,7 +1017,7 @@ func (g *Gateway) nodeAddress(raftAddress string) (string, error) {
 	return address, nil
 }
 
-func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway) (net.Conn, error) {
+func cowsqlNetworkDial(ctx context.Context, name string, addr string, g *Gateway) (net.Conn, error) {
 	transport, cleanup, err := tlsTransport(g.networkCert, g.state().ServerCert())
 	if err != nil {
 		return nil, err
@@ -1043,7 +1043,7 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 	}
 
 	request.Header.Set("Upgrade", "dqlite")
-	setDqliteVersionHeader(request)
+	setCowsqlVersionHeader(request)
 	request = request.WithContext(ctx)
 
 	reverter := revert.New()
@@ -1057,7 +1057,7 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 	reverter.Add(func() { _ = conn.Close() })
 
 	l := logger.AddContext(logger.Ctx{"name": name, "local": conn.LocalAddr(), "remote": conn.RemoteAddr()})
-	l.Debug("Dqlite connected outbound")
+	l.Debug("Cowsql connected outbound")
 
 	remoteTCP, err := tcp.ExtractConn(conn)
 	if err != nil {
@@ -1105,20 +1105,20 @@ func dqliteNetworkDial(ctx context.Context, name string, addr string, g *Gateway
 	return conn, nil
 }
 
-// Create a dial function that connects to the local dqlite.
-func dqliteMemoryDial(bindAddress string) client.DialFunc {
+// Create a dial function that connects to the local cowsql.
+func cowsqlMemoryDial(bindAddress string) client.DialFunc {
 	return func(ctx context.Context, address string) (net.Conn, error) {
 		return net.Dial("unix", bindAddress)
 	}
 }
 
-// The API endpoint path that gets routed to a dqlite server handler for
-// performing SQL queries against the dqlite server running on this node.
+// The API endpoint path that gets routed to a cowsql server handler for
+// performing SQL queries against the cowsql server running on this node.
 const databaseEndpoint = "/internal/database"
 
-// DqliteLog redirects dqlite's logs to our own logger.
-func DqliteLog(l client.LogLevel, format string, a ...any) {
-	format = fmt.Sprintf("Dqlite: %s", format)
+// CowsqlLog redirects cowsql's logs to our own logger.
+func CowsqlLog(l client.LogLevel, format string, a ...any) {
+	format = fmt.Sprintf("Cowsql: %s", format)
 	switch l {
 	case client.LogDebug:
 		logger.Debugf(format, a...)
@@ -1132,8 +1132,8 @@ func DqliteLog(l client.LogLevel, format string, a ...any) {
 }
 
 // Copy incoming TLS streams from upgraded HTTPS connections into Unix sockets
-// connected to the dqlite task.
-func runDqliteProxy(stopCh chan struct{}, bindAddress string, acceptCh chan net.Conn) {
+// connected to the cowsql task.
+func runCowsqlProxy(stopCh chan struct{}, bindAddress string, acceptCh chan net.Conn) {
 	for {
 		remote := <-acceptCh
 		local, err := net.Dial("unix", bindAddress)
@@ -1141,16 +1141,16 @@ func runDqliteProxy(stopCh chan struct{}, bindAddress string, acceptCh chan net.
 			continue
 		}
 
-		go dqliteProxy("dqlite", stopCh, remote, local)
+		go cowsqlProxy("dqlite", stopCh, remote, local)
 	}
 }
 
 // Copies data between a remote TLS network connection and a local unix socket.
 // Accepts name argument that can be used to identify the connection in the logs.
-func dqliteProxy(name string, stopCh chan struct{}, remote net.Conn, local net.Conn) {
+func cowsqlProxy(name string, stopCh chan struct{}, remote net.Conn, local net.Conn) {
 	l := logger.AddContext(logger.Ctx{"name": name, "local": remote.LocalAddr(), "remote": remote.RemoteAddr()})
-	l.Debug("Dqlite proxy started")
-	defer l.Debug("Dqlite proxy stopped")
+	l.Debug("Cowsql proxy started")
+	defer l.Debug("Cowsql proxy stopped")
 
 	remoteTCP, err := tcp.ExtractConn(remote)
 	if err != nil {
@@ -1215,17 +1215,17 @@ func dqliteProxy(name string, stopCh chan struct{}, remote net.Conn, local net.C
 	}
 
 	if errs[0] != nil || errs[1] != nil {
-		err := dqliteProxyError{first: errs[0], second: errs[1]}
-		l.Debug("Dqlite proxy failed", logger.Ctx{"err": err})
+		err := cowsqlProxyError{first: errs[0], second: errs[1]}
+		l.Debug("Cowsql proxy failed", logger.Ctx{"err": err})
 	}
 }
 
-type dqliteProxyError struct {
+type cowsqlProxyError struct {
 	first  error
 	second error
 }
 
-func (e dqliteProxyError) Error() string {
+func (e cowsqlProxyError) Error() string {
 	msg := ""
 	if e.first != nil {
 		msg += "first: " + e.first.Error()
@@ -1243,13 +1243,13 @@ func (e dqliteProxyError) Error() string {
 }
 
 // Conditionally uses the in-memory or the on-disk server store.
-type dqliteNodeStore struct {
+type cowsqlNodeStore struct {
 	inMemory client.NodeStore
 	onDisk   client.NodeStore
 }
 
 // Get returns the list of servers from the active node store.
-func (s *dqliteNodeStore) Get(ctx context.Context) ([]client.NodeInfo, error) {
+func (s *cowsqlNodeStore) Get(ctx context.Context) ([]client.NodeInfo, error) {
 	if s.inMemory != nil {
 		return s.inMemory.Get(ctx)
 	}
@@ -1258,7 +1258,7 @@ func (s *dqliteNodeStore) Get(ctx context.Context) ([]client.NodeInfo, error) {
 }
 
 // Set stores the list of servers in the active node store.
-func (s *dqliteNodeStore) Set(ctx context.Context, servers []client.NodeInfo) error {
+func (s *cowsqlNodeStore) Set(ctx context.Context, servers []client.NodeInfo) error {
 	if s.inMemory != nil {
 		return s.inMemory.Set(ctx, servers)
 	}

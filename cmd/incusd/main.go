@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	dqlite "github.com/cowsql/go-cowsql"
+	cowsql "github.com/cowsql/go-cowsql"
 	"github.com/spf13/cobra"
 
 	"github.com/lxc/incus/v7/internal/rsync"
@@ -29,12 +29,12 @@ type cmdGlobal struct {
 }
 
 func (c *cmdGlobal) run(_ *cobra.Command, _ []string) error {
-	// Configure dqlite to *not* disable internal SQLite locking, since we
-	// use SQLite both through dqlite and through go-dqlite, potentially
+	// Configure cowsql to *not* disable internal SQLite locking, since we
+	// use SQLite both through cowsql and through go-cowsql, potentially
 	// from different threads at the same time. We need to call this
 	// function as early as possible since this is a global setting in
 	// SQLite, which can't be changed afterwise.
-	err := dqlite.ConfigMultiThread()
+	err := cowsql.ConfigMultiThread()
 	if err != nil {
 		return err
 	}

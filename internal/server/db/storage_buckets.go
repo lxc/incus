@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	dqliteDriver "github.com/cowsql/go-cowsql/driver"
+	cowsqlDriver "github.com/cowsql/go-cowsql/driver"
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/internal/version"
@@ -301,9 +301,9 @@ func (c *ClusterTx) CreateStoragePoolBucket(ctx context.Context, poolID int64, p
 		VALUES (?, ?, ?, ?, (SELECT id FROM projects WHERE name = ?))
 		`, poolID, nodeID, info.Name, info.Description, projectName)
 	if err != nil {
-		var dqliteErr dqliteDriver.Error
+		var cowsqlErr cowsqlDriver.Error
 		// Detect SQLITE_CONSTRAINT_UNIQUE (2067) errors.
-		if errors.As(err, &dqliteErr) && dqliteErr.Code == 2067 {
+		if errors.As(err, &cowsqlErr) && cowsqlErr.Code == 2067 {
 			return -1, api.StatusErrorf(http.StatusConflict, "A bucket for that name already exists")
 		}
 
@@ -526,9 +526,9 @@ func (c *ClusterTx) CreateStoragePoolBucketKey(ctx context.Context, bucketID int
 		VALUES (?, ?, ?, ?, ?, ?)
 		`, bucketID, info.Name, info.Description, info.Role, info.AccessKey, info.SecretKey)
 	if err != nil {
-		var dqliteErr dqliteDriver.Error
+		var cowsqlErr cowsqlDriver.Error
 		// Detect SQLITE_CONSTRAINT_UNIQUE (2067) errors.
-		if errors.As(err, &dqliteErr) && dqliteErr.Code == 2067 {
+		if errors.As(err, &cowsqlErr) && cowsqlErr.Code == 2067 {
 			return -1, api.StatusErrorf(http.StatusConflict, "A bucket key for that name already exists")
 		}
 

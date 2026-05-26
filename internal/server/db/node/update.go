@@ -103,7 +103,7 @@ var updates = map[int]schema.Update{
 }
 
 // UpdateFromPreClustering is the last schema version where clustering support
-// was not available, and hence no cluster dqlite database is used.
+// was not available, and hence no cluster cowsql database is used.
 const UpdateFromPreClustering = 36
 
 // Schema updates begin here
@@ -235,14 +235,14 @@ INSERT INTO config (key, value)
 }
 
 // Add a raft_nodes table to be used when running in clustered mode. It lists
-// the current nodes in the cluster that are participating in the dqlite
+// the current nodes in the cluster that are participating in the cowsql
 // database Raft cluster.
 //
 // The 'id' column contains the raft server ID of the database node, and the
 // 'address' column its network address. Both are used internally by the raft
 // Go package to manage the cluster.
 //
-// Typical setups will have 3 cluster members that participate to the dqlite
+// Typical setups will have 3 cluster members that participate to the cowsql
 // database Raft cluster, and an arbitrary number of additional cluster
 // members that don't. Non-database nodes are not tracked in this table, but rather
 // in the nodes table of the cluster database itself.

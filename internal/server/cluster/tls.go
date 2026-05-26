@@ -71,7 +71,7 @@ func tlsCheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *l
 	}
 
 	for _, i := range r.TLS.PeerCertificates {
-		// Trust our own server certificate. This allows Dqlite to start with a connection back to this
+		// Trust our own server certificate. This allows Cowsql to start with a connection back to this
 		// member before the database is available. It also allows us to switch the server certificate to
 		// the network certificate during cluster upgrade to per-server certificates, and it be trusted.
 		trustedServerCert, _ := x509.ParseCertificate(serverCert.KeyPair().Certificate[0])

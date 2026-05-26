@@ -19,7 +19,7 @@ type NodeTx struct {
 // It wraps low-level sql.Tx objects and offers a high-level API to fetch and
 // update data.
 type ClusterTx struct {
-	tx     *sql.Tx // Handle to a transaction in the cluster dqlite database.
+	tx     *sql.Tx // Handle to a transaction in the cluster cowsql database.
 	nodeID int64   // Node ID of this server.
 }
 

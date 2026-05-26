@@ -2435,7 +2435,7 @@ test_clustering_rebalance() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node4 | grep -q "\- database$"
 
     # Respawn the second node. It won't be able to disrupt the current leader,
-    # since dqlite uses pre-vote.
+    # since cowsql uses pre-vote.
     respawn_incus_cluster_member "${ns2}" "${INCUS_TWO_DIR}"
     sleep 12
 
