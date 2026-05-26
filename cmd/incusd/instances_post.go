@@ -567,7 +567,7 @@ func validateDependentVolumes(source instance.Instance, req *api.InstancesPost) 
 }
 
 // ErrPoolNotRemote indicates the pool is not remote.
-var ErrPoolNotRemote error = errors.New("Pool is not remote")
+var ErrPoolNotRemote = errors.New("Pool is not remote")
 
 // checkVolumesOnRemoteStorage checks whether root and dependent disks are located on remote storage.
 func checkVolumesOnRemoteStorage(s *state.State, pool *api.StoragePool, inst instance.Instance) error {
