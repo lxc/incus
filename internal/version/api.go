@@ -540,6 +540,7 @@ var APIExtensions = []string{
 	"instances_tpm_platform_cert",
 	"linstor_raw",
 	"network_address_set_ip_ranges",
+	"storage_volumes_rebuild",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
