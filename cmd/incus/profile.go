@@ -132,7 +132,7 @@ func (c *cmdProfileAdd) command() *cobra.Command {
 }
 
 func (c *cmdProfileAdd) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ incus profile assign foo --no-profiles
 }
 
 func (c *cmdProfileAssign) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileAssignUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileAssignUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func (c *cmdProfileCopy) command() *cobra.Command {
 }
 
 func (c *cmdProfileCopy) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileCopyUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileCopyUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -364,7 +364,7 @@ incus profile create p1 < config.yaml
 }
 
 func (c *cmdProfileCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -432,7 +432,7 @@ func (c *cmdProfileDelete) command() *cobra.Command {
 }
 
 func (c *cmdProfileDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -515,7 +515,7 @@ func (c *cmdProfileEdit) helpTemplate() string {
 }
 
 func (c *cmdProfileEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -625,7 +625,7 @@ func (c *cmdProfileGet) command() *cobra.Command {
 }
 
 func (c *cmdProfileGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -771,7 +771,7 @@ func (c *cmdProfileList) usedByColumnData(profile api.Profile) string {
 }
 
 func (c *cmdProfileList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -865,7 +865,7 @@ func (c *cmdProfileRemove) command() *cobra.Command {
 }
 
 func (c *cmdProfileRemove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -941,7 +941,7 @@ func (c *cmdProfileRename) command() *cobra.Command {
 }
 
 func (c *cmdProfileRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1039,7 +1039,7 @@ func (c *cmdProfileSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdProfileSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1075,7 +1075,7 @@ func (c *cmdProfileShow) command() *cobra.Command {
 }
 
 func (c *cmdProfileShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1135,7 +1135,7 @@ func (c *cmdProfileUnset) command() *cobra.Command {
 }
 
 func (c *cmdProfileUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProfileUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProfileUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}

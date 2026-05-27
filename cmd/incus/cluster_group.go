@@ -128,7 +128,7 @@ incus cluster group assign foo default
 }
 
 func (c *cmdClusterGroupAssign) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupAssignUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupAssignUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ incus cluster group create g1 < config.yaml
 }
 
 func (c *cmdClusterGroupCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (c *cmdClusterGroupDelete) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func (c *cmdClusterGroupEdit) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -499,7 +499,7 @@ func (c *cmdClusterGroupList) membersColumnData(group api.ClusterGroup) string {
 }
 
 func (c *cmdClusterGroupList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -581,7 +581,7 @@ func (c *cmdClusterGroupRemove) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupRemove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -652,7 +652,7 @@ func (c *cmdClusterGroupRename) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -702,7 +702,7 @@ func (c *cmdClusterGroupShow) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -758,7 +758,7 @@ func (c *cmdClusterGroupAdd) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupAdd) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -826,7 +826,7 @@ func (c *cmdClusterGroupGet) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -931,7 +931,7 @@ func (c *cmdClusterGroupSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdClusterGroupSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -975,7 +975,7 @@ func (c *cmdClusterGroupUnset) command() *cobra.Command {
 }
 
 func (c *cmdClusterGroupUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGroupUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGroupUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}

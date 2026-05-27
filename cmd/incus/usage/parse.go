@@ -17,9 +17,19 @@ import (
 	"github.com/lxc/incus/v7/shared/cliconfig"
 )
 
-// ExplainOnly is a global switch putting the parser into explain mode, i.e. showing the user how
-// their arguments are parsed.
-var ExplainOnly = false
+// Config is the type of parser configurations.
+type Config struct {
+	CLIConfig     *cliconfig.Config
+	CLIConfigPath string
+	Command       *cobra.Command
+	ExplainOnly   bool
+	RTL           bool
+}
+
+// SaveCLIConfig saves the client configuration.
+func (c *Config) SaveCLIConfig() error {
+	return c.CLIConfig.SaveConfig(c.CLIConfigPath)
+}
 
 func formatAlternatives(alternatives []string) string {
 	n := len(alternatives)
@@ -256,19 +266,15 @@ func (u Usage) diagnose(cmd *cobra.Command, parsedValues []*Parsed, parseRTL boo
 }
 
 // Parse parses a usage.
-func (u Usage) Parse(conf *cliconfig.Config, cmd *cobra.Command, args []string, rtl ...bool) ([]*Parsed, error) {
+func (u Usage) Parse(conf Config, args []string) ([]*Parsed, error) {
 	// Build a local server cache.
 	servers := map[string]incus.InstanceServer{}
 	nArgs := len(args)
 	nAtoms := len(u)
-	parseRTL := false
-	if len(rtl) > 0 {
-		parseRTL = rtl[0]
-	}
 
 	argsInUse := args
 	atoms := u
-	if parseRTL {
+	if conf.RTL {
 		slices.Reverse(argsInUse)
 
 		// We don’t want to modify the original slice, as this may be reused.
@@ -280,17 +286,17 @@ func (u Usage) Parse(conf *cliconfig.Config, cmd *cobra.Command, args []string, 
 
 	var result []*Parsed
 	for _, atom := range atoms {
-		p, err := atom.Parse(conf, cmd, servers, &argsInUse, parseRTL)
+		p, err := atom.Parse(conf, servers, &argsInUse)
 		if err != nil {
 			_, ok := err.(*notEnoughArgumentsError)
 			if ok && nArgs == 0 {
-				_ = cmd.Help()
+				_ = conf.Command.Help()
 				// This makes the output error a bit easier to read.
 				fmt.Println()
 				return nil, err
 			}
 
-			u.diagnose(cmd, result, parseRTL)
+			u.diagnose(conf.Command, result, conf.RTL)
 			return nil, err
 		}
 
@@ -299,16 +305,16 @@ func (u Usage) Parse(conf *cliconfig.Config, cmd *cobra.Command, args []string, 
 
 	if len(argsInUse) != 0 {
 		err := &tooManyArgumentsError{argsInUse}
-		u.diagnose(cmd, result, parseRTL)
+		u.diagnose(conf.Command, result, conf.RTL)
 		return nil, err
 	}
 
-	if ExplainOnly {
-		u.diagnose(cmd, result, parseRTL)
+	if conf.ExplainOnly {
+		u.diagnose(conf.Command, result, conf.RTL)
 		return nil, ErrExplainOnly
 	}
 
-	if parseRTL {
+	if conf.RTL {
 		slices.Reverse(result)
 	}
 

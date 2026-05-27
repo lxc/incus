@@ -173,7 +173,7 @@ func (c *cmdNetworkAttach) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAttach) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAttachUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAttachUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (c *cmdNetworkAttachProfile) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAttachProfile) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAttachProfileUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAttachProfileUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,7 @@ incus network create bar network=baz --type ovn
 }
 
 func (c *cmdNetworkCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -455,7 +455,7 @@ func (c *cmdNetworkDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -558,7 +558,7 @@ func (c *cmdNetworkDetach) findDevice(devices map[string]map[string]string, netw
 }
 
 func (c *cmdNetworkDetach) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkDetachUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkDetachUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -622,7 +622,7 @@ func (c *cmdNetworkDetachProfile) command() *cobra.Command {
 }
 
 func (c *cmdNetworkDetachProfile) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkDetachProfileUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkDetachProfileUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -701,7 +701,7 @@ func (c *cmdNetworkEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -815,7 +815,7 @@ func (c *cmdNetworkGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -883,7 +883,7 @@ func (c *cmdNetworkInfo) command() *cobra.Command {
 }
 
 func (c *cmdNetworkInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1145,7 +1145,7 @@ func (c *cmdNetworkList) stateColumnData(network api.Network) string {
 }
 
 func (c *cmdNetworkList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1314,7 +1314,7 @@ func (c *cmdNetworkListLeases) locationColumnData(lease api.NetworkLease) string
 }
 
 func (c *cmdNetworkListLeases) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkListLeasesUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkListLeasesUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1383,7 +1383,7 @@ func (c *cmdNetworkRename) command() *cobra.Command {
 }
 
 func (c *cmdNetworkRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1487,7 +1487,7 @@ func (c *cmdNetworkSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdNetworkSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1524,7 +1524,7 @@ func (c *cmdNetworkShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1591,7 +1591,7 @@ func (c *cmdNetworkUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}

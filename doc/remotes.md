@@ -51,7 +51,7 @@ To see which server is configured as the default remote, enter the following com
 You can configure remotes on a global, per-system basis.
 These remotes are available for every user of the Incus server for which you add the configuration.
 
-Users can override these system remotes (for example, by running [`incus remote rename`](incus_remote_rename.md) or [`incus remote set-url`](incus_remote_set-url.md)), which results in the remote and its associated certificates being copied to the user configuration.
+Users can override these system remotes (for example, by running [`incus remote rename`](incus_remote_rename.md) or [`incus remote set-urls`](incus_remote_set-urls.md)), which results in the remote and its associated certificates being copied to the user configuration.
 
 To configure a global remote, create or edit a `config.yml` file that is located in `/etc/incus/`.
 

@@ -40,7 +40,7 @@ func (c *cmdAdminWaitready) command() *cobra.Command {
 }
 
 func (c *cmdAdminWaitready) run(cmd *cobra.Command, args []string) error {
-	_, err := cmdAdminWaitreadyUsage.Parse(c.global.conf, cmd, args)
+	_, err := c.global.Parse(cmdAdminWaitreadyUsage, cmd, args)
 	if err != nil {
 		return err
 	}

@@ -207,7 +207,7 @@ func (c *cmdStorageVolumeAttach) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeAttach) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeAttachUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeAttachUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -322,7 +322,7 @@ func (c *cmdStorageVolumeAttachProfile) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeAttachProfile) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeAttachProfileUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeAttachProfileUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -564,7 +564,7 @@ func (c *cmdStorageVolumeCopy) copyOrMove(cmd *cobra.Command, parsed []*u.Parsed
 }
 
 func (c *cmdStorageVolumeCopy) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeCopyUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeCopyUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -613,7 +613,7 @@ incus storage volume create default foo < config.yaml
 }
 
 func (c *cmdStorageVolumeCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -709,7 +709,7 @@ func (c *cmdStorageVolumeDelete) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -819,7 +819,7 @@ func (c *cmdStorageVolumeDetach) findDevice(devices map[string]map[string]string
 }
 
 func (c *cmdStorageVolumeDetach) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeDetachUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeDetachUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -889,7 +889,7 @@ func (c *cmdStorageVolumeDetachProfile) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeDetachProfile) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeDetachProfileUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeDetachProfileUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -979,7 +979,7 @@ func (c *cmdStorageVolumeEdit) helpTemplate() string {
 }
 
 func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1179,7 +1179,7 @@ incus storage volume get default virtual-machine/data snapshots.expiry
 }
 
 func (c *cmdStorageVolumeGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1291,7 +1291,7 @@ incus storage volume info default virtual-machine/v1
 }
 
 func (c *cmdStorageVolumeInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1527,7 +1527,7 @@ Column shorthand chars:
 }
 
 func (c *cmdStorageVolumeList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1739,7 +1739,7 @@ func (c *cmdStorageVolumeMove) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeMove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeMoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeMoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1800,7 +1800,7 @@ This is only allowed for custom volumes that have no snapshots.`))
 }
 
 func (c *cmdStorageVolumeRebuild) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeRebuildUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeRebuildUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1904,7 +1904,7 @@ func (c *cmdStorageVolumeRename) rename(d incus.InstanceServer, poolName string,
 }
 
 func (c *cmdStorageVolumeRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2059,7 +2059,7 @@ func (c *cmdStorageVolumeSet) set(cmd *cobra.Command, parsed []*u.Parsed) error 
 }
 
 func (c *cmdStorageVolumeSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2115,7 +2115,7 @@ incus storage volume show default container/c1
 }
 
 func (c *cmdStorageVolumeShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2209,7 +2209,7 @@ incus storage volume unset default virtual-machine/v1 snapshots.expiry
 }
 
 func (c *cmdStorageVolumeUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2314,7 +2314,7 @@ incus file create --type=symlink foo bar/baz qux
 }
 
 func (c *cmdStorageVolumeFileCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeFileCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeFileCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2472,7 +2472,7 @@ func (c *cmdStorageVolumeFileDelete) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeFileDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeFileDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeFileDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2561,7 +2561,7 @@ incus storage volume file mount mypool myvolume
 }
 
 func (c *cmdStorageVolumeFileMount) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeFileMountUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeFileMountUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2640,7 +2640,7 @@ func (c *cmdStorageVolumeFileEdit) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeFileEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeFileEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeFileEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -2876,7 +2876,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 }
 
 func (c *cmdStorageVolumeFilePull) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeFilePullUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeFilePullUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3087,7 +3087,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 }
 
 func (c *cmdStorageVolumeFilePush) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeFilePushUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeFilePushUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3190,7 +3190,7 @@ incus storage volume snapshot create default vol1 snap0 < config.yaml
 }
 
 func (c *cmdStorageVolumeSnapshotCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeSnapshotCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeSnapshotCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3340,7 +3340,7 @@ func (c *cmdStorageVolumeSnapshotDelete) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeSnapshotDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeSnapshotDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeSnapshotDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3434,7 +3434,7 @@ func (c *cmdStorageVolumeSnapshotList) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeSnapshotList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeSnapshotListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeSnapshotListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3576,7 +3576,7 @@ func (c *cmdStorageVolumeSnapshotRename) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeSnapshotRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeSnapshotRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeSnapshotRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3646,7 +3646,7 @@ func (c *cmdStorageVolumeSnapshotRestore) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeSnapshotRestore) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeSnapshotRestoreUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeSnapshotRestoreUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3706,7 +3706,7 @@ func (c *cmdStorageVolumeSnapshotShow) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeSnapshotShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeSnapshotShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeSnapshotShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3782,7 +3782,7 @@ func (c *cmdStorageVolumeExport) command() *cobra.Command {
 }
 
 func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeExportUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeExportUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -3986,7 +3986,7 @@ incus storage volume import default some-installer.iso installer --type=iso
 }
 
 func (c *cmdStorageVolumeImport) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeImportUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeImportUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -4122,7 +4122,7 @@ func (c *cmdStorageVolumeNBD) Command() *cobra.Command {
 
 // Run runs the actual command logic.
 func (c *cmdStorageVolumeNBD) Run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageVolumeNBDUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageVolumeNBDUsage, cmd, args)
 	if err != nil {
 		return err
 	}

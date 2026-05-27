@@ -326,7 +326,7 @@ type settable interface {
 // commands.
 func unsetKey(s settable, cmd *cobra.Command, parsed []*u.Parsed) error {
 	i := len(parsed) - 1
-	parsed[i], _ = u.KV.List(0).Parse(nil, nil, nil, &[]string{parsed[i].String + "="}, false)
+	parsed[i], _ = u.KV.List(0).Parse(u.Config{}, nil, &[]string{parsed[i].String + "="})
 	return s.set(cmd, parsed)
 }
 

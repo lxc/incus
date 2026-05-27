@@ -188,7 +188,7 @@ func (c *cmdNetworkZoneList) usedByColumnData(networkZone api.NetworkZone) strin
 }
 
 func (c *cmdNetworkZoneList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func (c *cmdNetworkZoneShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -322,7 +322,7 @@ func (c *cmdNetworkZoneGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -393,7 +393,7 @@ incus network zone create z1 < config.yaml
 }
 
 func (c *cmdNetworkZoneCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -519,7 +519,7 @@ func (c *cmdNetworkZoneSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdNetworkZoneSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -563,7 +563,7 @@ func (c *cmdNetworkZoneUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -615,7 +615,7 @@ func (c *cmdNetworkZoneEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkZoneEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -714,7 +714,7 @@ func (c *cmdNetworkZoneDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -834,7 +834,7 @@ func (c *cmdNetworkZoneRecordList) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneRecordList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -907,7 +907,7 @@ func (c *cmdNetworkZoneRecordShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneRecordShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -971,7 +971,7 @@ func (c *cmdNetworkZoneRecordGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneRecordGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1047,7 +1047,7 @@ incus network zone record create z1 r1 < config.yaml
 }
 
 func (c *cmdNetworkZoneRecordCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1177,7 +1177,7 @@ func (c *cmdNetworkZoneRecordSet) set(cmd *cobra.Command, parsed []*u.Parsed) er
 }
 
 func (c *cmdNetworkZoneRecordSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1225,7 +1225,7 @@ func (c *cmdNetworkZoneRecordUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneRecordUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1281,7 +1281,7 @@ func (c *cmdNetworkZoneRecordEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkZoneRecordEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1389,7 +1389,7 @@ func (c *cmdNetworkZoneRecordDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneRecordDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1461,7 +1461,7 @@ func (c *cmdNetworkZoneRecordEntry) commandAdd() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneRecordEntry) runAdd(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordEntryAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordEntryAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1513,7 +1513,7 @@ func (c *cmdNetworkZoneRecordEntry) commandRemove() *cobra.Command {
 }
 
 func (c *cmdNetworkZoneRecordEntry) runRemove(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkZoneRecordEntryRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkZoneRecordEntryRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}

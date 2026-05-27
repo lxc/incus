@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-26 18:33-0400\n"
+"POT-Creation-Date: 2026-05-27 19:31+0000\n"
 "PO-Revision-Date: 2026-05-26 12:15+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -664,7 +664,7 @@ msgstr "%s (backend=%q, källa=%q)"
 msgid "%s is not a directory"
 msgstr "%s är inte en katalog"
 
-#: cmd/incus/usage/usage.go:343
+#: cmd/incus/usage/usage.go:344
 #, c-format
 msgid "%s the %s syntax is deprecated; %s\n"
 msgstr "%s %s syntax är föråldrad; %s\n"
@@ -674,16 +674,16 @@ msgstr "%s %s syntax är föråldrad; %s\n"
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' är inte en filtyp som stöds"
 
-#: cmd/incus/usage/parse.go:234
+#: cmd/incus/usage/parse.go:244
 #, c-format
 msgid "(skipped: %s)\n"
 msgstr "(hoppad över: %s)\n"
 
-#: cmd/incus/usage/parse.go:236
+#: cmd/incus/usage/parse.go:246
 msgid "(skipped: no value given)"
 msgstr "(hoppades över: inget värde angivet)"
 
-#: cmd/incus/usage/parse.go:35
+#: cmd/incus/usage/parse.go:45
 msgid ", "
 msgstr ", "
 
@@ -783,7 +783,7 @@ msgstr "--target kan inte användas med instanser"
 msgid "=> Query %d:"
 msgstr "=> Fråga %d:"
 
-#: cmd/incus/remote.go:689
+#: cmd/incus/remote.go:749
 msgid "A client certificate is already present"
 msgstr "Ett klientcertifikat finns redan"
 
@@ -795,7 +795,7 @@ msgstr ""
 "Ett destinationsfilnamn måste anges vid överföring från stdin; destinationen "
 "är en katalog"
 
-#: cmd/incus/usage/usage.go:808
+#: cmd/incus/usage/usage.go:813
 msgid "ACL"
 msgstr "ACL"
 
@@ -819,19 +819,19 @@ msgstr "ALIASER"
 msgid "API path"
 msgstr "API-sökväg"
 
-#: cmd/incus/list.go:799
+#: cmd/incus/list.go:790
 msgid "APP"
 msgstr "APP"
 
-#: cmd/incus/cluster.go:199 cmd/incus/image.go:1096 cmd/incus/list.go:473
+#: cmd/incus/cluster.go:199 cmd/incus/image.go:1096 cmd/incus/list.go:464
 msgid "ARCHITECTURE"
 msgstr "ARKITEKTUR"
 
-#: cmd/incus/remote.go:987
+#: cmd/incus/remote.go:1047
 msgid "AUTH TYPE"
 msgstr "AUTENTISERINGSTYP"
 
-#: cmd/incus/remote.go:136
+#: cmd/incus/remote.go:141
 msgid "Accept certificate"
 msgstr "Acceptera certifikat"
 
@@ -902,6 +902,7 @@ msgid "Add new remote servers"
 msgstr "Lägg till nya fjärrservrar"
 
 #: cmd/incus/remote.go:126
+#, fuzzy
 msgid ""
 "Add new remote servers\n"
 "\n"
@@ -911,6 +912,12 @@ msgid ""
 "protocol:\n"
 "  incus remote add some-name https://LOGIN:PASSWORD@example.com/some/path --"
 "protocol=simplestreams\n"
+"\n"
+"Several remote targets can be provided, to handle switching to other servers "
+"if one is down:\n"
+"  incus remote add some-name server1.example.com server2.example.com\n"
+"\n"
+"The remote name can be ignored if a single target is provided.\n"
 msgstr ""
 "Lägg till nya fjärrservrar\n"
 "\n"
@@ -1005,6 +1012,11 @@ msgstr "Addres: %s"
 msgid "Address: %v"
 msgstr "Adress: %v"
 
+#: cmd/incus/remote.go:331
+#, fuzzy
+msgid "Addresses cannot be empty"
+msgstr "Poolnamnet får inte vara tomt"
+
 #: cmd/incus/storage_bucket.go:180
 #, c-format
 msgid "Admin access key: %s"
@@ -1054,7 +1066,7 @@ msgstr "Alla profiler borttagna från %s"
 msgid "All projects"
 msgstr "Alla projekt"
 
-#: cmd/incus/remote.go:218
+#: cmd/incus/remote.go:222
 msgid "All server addresses are unavailable"
 msgstr "Alla serveradresser är otillgängliga"
 
@@ -1145,7 +1157,7 @@ msgstr ""
 "Med det här kommandot kan du interagera med startkonsolen för en instans\n"
 "och hämta tidigare loggposter från den."
 
-#: cmd/incus/remote.go:597
+#: cmd/incus/remote.go:657
 #, c-format
 msgid "Authentication type '%s' not supported by server"
 msgstr "Autentiseringstyp '%s' stöds inte av servern"
@@ -1172,7 +1184,7 @@ msgstr "Automatiskt (icke-interaktivt) läge"
 msgid "Available Commands:"
 msgstr "Tillgängliga kommandon:"
 
-#: cmd/incus/remote.go:173
+#: cmd/incus/remote.go:178
 msgid "Available projects:"
 msgstr "Tillgängliga projekt:"
 
@@ -1181,7 +1193,7 @@ msgstr "Tillgängliga projekt:"
 msgid "Average: %.2f %.2f %.2f"
 msgstr "Genomsnitt: %.2f %.2f %.2f"
 
-#: cmd/incus/list.go:479 cmd/incus/list.go:480
+#: cmd/incus/list.go:470 cmd/incus/list.go:471
 msgid "BASE IMAGE"
 msgstr "BASBILD"
 
@@ -1230,7 +1242,7 @@ msgstr ""
 msgid "Bad key=value pair: %q"
 msgstr "Felaktigt nyckel=värde-par: %q"
 
-#: cmd/incus/remote.go:143
+#: cmd/incus/remote.go:148
 msgid "Binary helper for retrieving credentials"
 msgstr "Binär hjälpfunktion för hämtning av inloggningsuppgifter"
 
@@ -1288,7 +1300,7 @@ msgstr "Antal"
 msgid "CPU TIME(s)"
 msgstr "CPU-TID(er)"
 
-#: cmd/incus/list.go:491
+#: cmd/incus/list.go:482
 msgid "CPU USAGE"
 msgstr "CPU-ANVÄNDNING"
 
@@ -1312,7 +1324,7 @@ msgstr "CPU:er:"
 msgid "CREATED"
 msgstr "SKAPAD"
 
-#: cmd/incus/list.go:475
+#: cmd/incus/list.go:466
 msgid "CREATED AT"
 msgstr "SKAPAD"
 
@@ -1353,19 +1365,19 @@ msgstr "Kan inte läsa från miljöfil: %w"
 msgid "Can't read from stdin: %w"
 msgstr "Kan inte läsa från stdin: %w"
 
-#: cmd/incus/remote.go:1240
+#: cmd/incus/remote.go:1309
 msgid "Can't remove the default remote"
 msgstr "Kan inte ta bort standardfjärrkontrollen"
 
-#: cmd/incus/list.go:506
+#: cmd/incus/list.go:497
 msgid "Can't specify --fast with --columns"
 msgstr "Kan inte ange --fast med --columns"
 
-#: cmd/incus/cluster.go:275 cmd/incus/list.go:412 cmd/incus/profile.go:783
+#: cmd/incus/cluster.go:275 cmd/incus/list.go:403 cmd/incus/profile.go:783
 msgid "Can't specify --project with --all-projects"
 msgstr "Kan inte ange --project med --all-projects"
 
-#: cmd/incus/list.go:537 cmd/incus/storage_volume.go:1624
+#: cmd/incus/list.go:528 cmd/incus/storage_volume.go:1624
 #: cmd/incus/warning.go:224
 msgid "Can't specify column L when not clustered"
 msgstr "Kan inte ange kolumn L när den inte är klustrad"
@@ -1394,6 +1406,10 @@ msgstr "Kan inte använda --minimal och --preseed tillsammans"
 #: cmd/incus/snapshot.go:127 cmd/incus/storage_volume.go:3205
 msgid "Can't use both --no-expiry and --expiry"
 msgstr "Kan inte använda både --no-expiry och --expiry"
+
+#: cmd/incus/remote.go:477
+msgid "Cannot mix HTTPS and Unix URLs"
+msgstr ""
 
 #: cmd/incus/create.go:314
 #, c-format
@@ -1446,7 +1462,7 @@ msgstr "Certifikatstoken för %s borttaget"
 msgid "Certificate description"
 msgstr "Certifikatbeskrivning"
 
-#: cmd/incus/remote.go:261
+#: cmd/incus/remote.go:275
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
@@ -1462,7 +1478,7 @@ msgstr ""
 "Certifikatets fingeravtryck stämmer inte överens mellan anslutningstoken och "
 "klustermedlem %q"
 
-#: cmd/incus/remote.go:494
+#: cmd/incus/remote.go:554
 #, c-format
 msgid "Certificate fingerprint: %s"
 msgstr "Certifikatets fingeravtryck: %s"
@@ -1486,7 +1502,7 @@ msgstr "Välj %s:"
 msgid "Client %s certificate add token:"
 msgstr "Klient %s certifikat lägg till token:"
 
-#: cmd/incus/remote.go:643
+#: cmd/incus/remote.go:703
 msgid "Client certificate now trusted by server:"
 msgstr "Klientcertifikatet är nu betrott av servern:"
 
@@ -1596,7 +1612,7 @@ msgstr "Klustering aktiverad"
 #: cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:412
 #: cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117
 #: cmd/incus/network_zone.go:122 cmd/incus/operation.go:149
-#: cmd/incus/profile.go:697 cmd/incus/project.go:517 cmd/incus/remote.go:971
+#: cmd/incus/profile.go:697 cmd/incus/project.go:517 cmd/incus/remote.go:1031
 #: cmd/incus/snapshot.go:342 cmd/incus/storage.go:660
 #: cmd/incus/storage_bucket.go:464 cmd/incus/storage_bucket.go:857
 #: cmd/incus/storage_volume.go:1483 cmd/incus/storage_volume.go:3400
@@ -1604,11 +1620,11 @@ msgstr "Klustering aktiverad"
 msgid "Columns"
 msgstr "Kolumner"
 
-#: cmd/incus/main.go:142
+#: cmd/incus/main.go:153
 msgid "Command line client for Incus"
 msgstr "Kommandoradsklient för Incus"
 
-#: cmd/incus/main.go:143
+#: cmd/incus/main.go:154
 msgid ""
 "Command line client for Incus\n"
 "\n"
@@ -1814,12 +1830,12 @@ msgstr "Kärna %d"
 msgid "Cores:"
 msgstr "Kärnor:"
 
-#: cmd/incus/remote.go:530
+#: cmd/incus/remote.go:590
 #, c-format
 msgid "Could not close server cert file %q: %w"
 msgstr "Kunde inte stänga servercertifikatfilen %q: %w"
 
-#: cmd/incus/remote.go:267 cmd/incus/remote.go:514
+#: cmd/incus/remote.go:281 cmd/incus/remote.go:574
 msgid "Could not create server cert dir"
 msgstr "Kunde inte skapa servercertifikatskatalog"
 
@@ -1849,7 +1865,7 @@ msgid "Could not write new remote certificate for remote '%s' with error: %v"
 msgstr ""
 "Det gick inte att skriva ett nytt fjärrcertifikat för fjärr '%s' med fel: %v"
 
-#: cmd/incus/remote.go:525
+#: cmd/incus/remote.go:585
 #, c-format
 msgid "Could not write server cert file %q: %w"
 msgstr "Kunde inte skriva servercertifikatfilen %q: %w"
@@ -2035,7 +2051,7 @@ msgstr "STANDARDMÅLADRESS"
 
 #: cmd/incus/cluster.go:201 cmd/incus/cluster_group.go:465
 #: cmd/incus/config_trust.go:416 cmd/incus/image.go:1097
-#: cmd/incus/image_alias.go:249 cmd/incus/list.go:476 cmd/incus/network.go:1076
+#: cmd/incus/image_alias.go:249 cmd/incus/list.go:467 cmd/incus/network.go:1076
 #: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:143 cmd/incus/network_integration.go:428
 #: cmd/incus/network_load_balancer.go:150 cmd/incus/network_peer.go:139
@@ -2050,7 +2066,7 @@ msgstr "BESKRIVNING"
 msgid "DISK"
 msgstr "DISK"
 
-#: cmd/incus/list.go:477
+#: cmd/incus/list.go:468
 msgid "DISK USAGE"
 msgstr "DISKANVÄNDNING"
 
@@ -2458,7 +2474,7 @@ msgstr "Vill du fortsätta utan tunn provisionering?"
 msgid "Don't require user confirmation for using --force"
 msgstr "Kräv inte användarens bekräftelse för att använda --force"
 
-#: cmd/incus/main.go:165
+#: cmd/incus/main.go:176
 msgid "Don't show progress information"
 msgstr "Visa inte information om framsteg"
 
@@ -2499,7 +2515,7 @@ msgstr ""
 msgid "ENTRIES"
 msgstr "POSTER"
 
-#: cmd/incus/list.go:803
+#: cmd/incus/list.go:794
 msgid "EPHEMERAL"
 msgstr "EFEMER"
 
@@ -2631,12 +2647,12 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/cluster.go:212 cmd/incus/cluster.go:1152
 #: cmd/incus/cluster_group.go:473 cmd/incus/config_trust.go:428
 #: cmd/incus/config_trust.go:609 cmd/incus/image.go:1115
-#: cmd/incus/image_alias.go:258 cmd/incus/list.go:528 cmd/incus/network.go:1091
+#: cmd/incus/image_alias.go:258 cmd/incus/list.go:519 cmd/incus/network.go:1091
 #: cmd/incus/network.go:1280 cmd/incus/network_allocations.go:92
 #: cmd/incus/network_forward.go:157 cmd/incus/network_integration.go:438
 #: cmd/incus/network_load_balancer.go:163 cmd/incus/network_peer.go:150
 #: cmd/incus/network_zone.go:158 cmd/incus/operation.go:181
-#: cmd/incus/profile.go:741 cmd/incus/project.go:558 cmd/incus/remote.go:998
+#: cmd/incus/profile.go:741 cmd/incus/project.go:558 cmd/incus/remote.go:1058
 #: cmd/incus/snapshot.go:376 cmd/incus/storage.go:698
 #: cmd/incus/storage_bucket.go:498 cmd/incus/storage_bucket.go:882
 #: cmd/incus/storage_volume.go:1641 cmd/incus/storage_volume.go:3503
@@ -2759,7 +2775,7 @@ msgstr "Fel vid borttagning av egenskap: %v"
 msgid "Error updating template file: %s"
 msgstr "Fel vid uppdatering av mallfil: %s"
 
-#: cmd/incus/main.go:413
+#: cmd/incus/main.go:424
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr "Fel vid exekvering av aliasutvidgning: %s\n"
@@ -3000,16 +3016,16 @@ msgstr "FINGERAVTRYCK"
 msgid "FIRST SEEN"
 msgstr "FÖRST SEDD"
 
-#: cmd/incus/info.go:693 cmd/incus/remote.go:120
+#: cmd/incus/info.go:693
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:647
+#: cmd/incus/utils.go:646
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "Misslyckad SSH-handskakning med klient %q: %v"
 
-#: cmd/incus/utils.go:670
+#: cmd/incus/utils.go:669
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "Misslyckades med att acceptera kanalklient %q: %v"
@@ -3019,7 +3035,7 @@ msgstr "Misslyckades med att acceptera kanalklient %q: %v"
 msgid "Failed checking instance %s exists: %w"
 msgstr "Misslyckades med att kontrollera att instansen %s finns: %w"
 
-#: cmd/incus/utils.go:697
+#: cmd/incus/utils.go:696
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Misslyckades med att ansluta till instans SFTP för klient %q: %v"
@@ -3055,7 +3071,7 @@ msgstr "Misslyckades att ta bort instans %s i projekt %q: %w"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Misslyckades med att ta bort källvolymen efter kopiering: %w"
 
-#: cmd/incus/utils.go:604
+#: cmd/incus/utils.go:603
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Det gick inte att skapa SSH-värdnyckel: %w"
@@ -3095,7 +3111,7 @@ msgstr "Det gick inte att läsa in profilen %q för enhetsöverskrivning: %w"
 msgid "Failed loading storage pool %q: %w"
 msgstr "Misslyckades med att läsa in lagringspool %q: %w"
 
-#: cmd/incus/utils.go:609
+#: cmd/incus/utils.go:608
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Misslyckades med att analysera SSH-värdnyckel: %w"
@@ -3110,17 +3126,17 @@ msgstr "Misslyckad analys av valideringssvar: %w"
 msgid "Failed starting command: %w"
 msgstr "Startkommandot misslyckades: %w"
 
-#: cmd/incus/utils.go:517
+#: cmd/incus/utils.go:516
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Misslyckades med att starta sshfs: %w"
 
-#: cmd/incus/storage_volume.go:4158 cmd/incus/utils.go:635
+#: cmd/incus/storage_volume.go:4158 cmd/incus/utils.go:634
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Det gick inte att acceptera inkommande anslutning: %w"
 
-#: cmd/incus/remote.go:228
+#: cmd/incus/remote.go:232
 msgid "Failed to add remote"
 msgstr "Det gick inte att lägga till fjärrkontrollen"
 
@@ -3145,7 +3161,7 @@ msgstr "Det gick inte att kontrollera om daemonen är redo (försök %d): %v"
 msgid "Failed to close export file: %w"
 msgstr "Det gick inte att stänga exportfilen: %w"
 
-#: cmd/incus/remote.go:284
+#: cmd/incus/remote.go:298
 #, c-format
 msgid "Failed to close server cert file %q: %w"
 msgstr "Det gick inte att stänga servercertifikatfilen %q: %w"
@@ -3170,7 +3186,7 @@ msgstr "Det gick inte att ansluta till lokal daemon: %w"
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Det gick inte att ansluta till målklusterknutpunkten %q: %w"
 
-#: cmd/incus/remote.go:274
+#: cmd/incus/remote.go:288
 #, c-format
 msgid "Failed to create %q: %w"
 msgstr "Det gick inte att skapa %q: %w"
@@ -3185,7 +3201,7 @@ msgstr "Det gick inte att skapa alias %s: %w"
 msgid "Failed to create backup: %v"
 msgstr "Det gick inte att skapa säkerhetskopia: %v"
 
-#: cmd/incus/remote.go:299
+#: cmd/incus/remote.go:313
 #, c-format
 msgid "Failed to create certificate: %w"
 msgstr "Det gick inte att skapa certifikatet: %w"
@@ -3216,7 +3232,7 @@ msgstr "Det gick inte att hämta säkerhetskopian av lagringsbucket: %w"
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
 
-#: cmd/incus/remote.go:306
+#: cmd/incus/remote.go:320
 #, c-format
 msgid "Failed to find project: %w"
 msgstr "Projektet kunde inte hittas: %w"
@@ -3226,12 +3242,12 @@ msgstr "Projektet kunde inte hittas: %w"
 msgid "Failed to join cluster: %w"
 msgstr "Det gick inte att ansluta till klustret: %w"
 
-#: cmd/incus/storage_volume.go:4150 cmd/incus/utils.go:620
+#: cmd/incus/storage_volume.go:4150 cmd/incus/utils.go:619
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Misslyckades med att lyssna efter anslutning: %w"
 
-#: cmd/incus/main.go:133 cmd/incus/main_aliases.go:225
+#: cmd/incus/main.go:144 cmd/incus/main_aliases.go:225
 #, c-format
 msgid "Failed to load configuration: %s"
 msgstr "Konfigurationen kunde inte läsas in: %s"
@@ -3343,7 +3359,7 @@ msgstr "Det gick inte att uppdatera klustermedlemmens status: %w"
 msgid "Failed to walk path for %s: %s"
 msgstr "Kunde inte gå sökvägen för %s: %s"
 
-#: cmd/incus/remote.go:279
+#: cmd/incus/remote.go:293
 #, c-format
 msgid "Failed to write server cert file %q: %w"
 msgstr "Det gick inte att skriva servercertifikatfilen %q: %w"
@@ -3426,7 +3442,7 @@ msgstr "Tvinga instansen att stanna"
 msgid "Force the removal of running instances"
 msgstr "Tvinga bort aktiva instanser"
 
-#: cmd/incus/main.go:161
+#: cmd/incus/main.go:172
 msgid "Force using the local unix socket"
 msgstr "Tvinga användning av den lokala Unix-socketen"
 
@@ -3506,7 +3522,7 @@ msgstr ""
 #: cmd/incus/network_load_balancer.go:127 cmd/incus/network_peer.go:116
 #: cmd/incus/network_zone.go:120 cmd/incus/network_zone.go:819
 #: cmd/incus/operation.go:147 cmd/incus/profile.go:698 cmd/incus/project.go:518
-#: cmd/incus/project.go:993 cmd/incus/remote.go:970 cmd/incus/snapshot.go:341
+#: cmd/incus/project.go:993 cmd/incus/remote.go:1030 cmd/incus/snapshot.go:341
 #: cmd/incus/storage.go:661 cmd/incus/storage_bucket.go:462
 #: cmd/incus/storage_bucket.go:855 cmd/incus/storage_volume.go:1510
 #: cmd/incus/storage_volume.go:3413 cmd/incus/warning.go:98
@@ -3526,7 +3542,7 @@ msgstr "Format (json|pretty|yaml)"
 msgid "Format (man|md|rest|yaml)"
 msgstr "Format (man|md|rest|yaml)"
 
-#: cmd/incus/remote.go:752
+#: cmd/incus/remote.go:812
 msgid "Format (pem|pfx)"
 msgstr "Format (pem|pfx)"
 
@@ -3565,7 +3581,7 @@ msgstr "Frekvens: %vMhz"
 msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
 msgstr "Frekvens: %vMhz (min: %vMhz, max: %vMhz)"
 
-#: cmd/incus/remote.go:990
+#: cmd/incus/remote.go:1050
 msgid "GLOBAL"
 msgstr "GLOBALT"
 
@@ -3577,11 +3593,11 @@ msgstr "GPU:"
 msgid "GPUs:"
 msgstr "Grafikkort:"
 
-#: cmd/incus/remote.go:858
+#: cmd/incus/remote.go:918
 msgid "Generate a client token derived from the client certificate"
 msgstr "Generera en klienttoken som härrör från klientcertifikatet"
 
-#: cmd/incus/remote.go:859
+#: cmd/incus/remote.go:919
 msgid ""
 "Generate a client trust token derived from the existing client certificate "
 "and private key.\n"
@@ -3629,12 +3645,12 @@ msgstr ""
 msgid "Generate manpages for all commands"
 msgstr "Skapa man-sidor för alla kommandon"
 
-#: cmd/incus/remote.go:671
+#: cmd/incus/remote.go:731
 msgid "Generate the client certificate"
 msgstr "Skapa klientcertifikatet"
 
-#: cmd/incus/remote.go:196 cmd/incus/remote.go:435 cmd/incus/remote.go:694
-#: cmd/incus/remote.go:778 cmd/incus/remote.go:883
+#: cmd/incus/remote.go:201 cmd/incus/remote.go:484 cmd/incus/remote.go:754
+#: cmd/incus/remote.go:838 cmd/incus/remote.go:943
 msgid "Generating a client certificate. This may take a minute..."
 msgstr "Genererar ett klientcertifikat. Detta kan ta en minut..."
 
@@ -3844,22 +3860,22 @@ msgstr "Värdnamn"
 msgid "Hugepages:\n"
 msgstr "Stora sidor:\n"
 
-#: cmd/incus/utils.go:720
+#: cmd/incus/utils.go:719
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "I/O-kopiering från SSH till instans misslyckades: %v"
 
-#: cmd/incus/utils.go:709
+#: cmd/incus/utils.go:708
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "I/O-kopiering från instans till SSH misslyckades: %v"
 
-#: cmd/incus/utils.go:541
+#: cmd/incus/utils.go:540
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "I/O-kopiering från instans till sshfs misslyckades: %v"
 
-#: cmd/incus/utils.go:551
+#: cmd/incus/utils.go:550
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "I/O-kopiering från sshfs till instans misslyckades: %v"
@@ -3891,10 +3907,6 @@ msgstr "INSTANSNAMN"
 msgid "IOMMU group: %v"
 msgstr "IOMMU-grupp: %v"
 
-#: cmd/incus/remote.go:120
-msgid "IP"
-msgstr "IP"
-
 #: cmd/incus/network.go:1267
 msgid "IP ADDRESS"
 msgstr "IP-ADRESS"
@@ -3907,11 +3919,15 @@ msgstr "IP-adresser"
 msgid "IP addresses:"
 msgstr "IP-adresser:"
 
-#: cmd/incus/list.go:471 cmd/incus/network.go:1074
+#: cmd/incus/remote.go:120 cmd/incus/remote.go:1375
+msgid "IP/FQDN/URL"
+msgstr ""
+
+#: cmd/incus/list.go:462 cmd/incus/network.go:1074
 msgid "IPV4"
 msgstr "IPV4"
 
-#: cmd/incus/list.go:472 cmd/incus/network.go:1075
+#: cmd/incus/list.go:463 cmd/incus/network.go:1075
 msgid "IPV6"
 msgstr "IPV6"
 
@@ -3940,7 +3956,7 @@ msgstr "Om bildaliaset redan finns, ta bort det och skapa ett nytt"
 msgid "If an instance is running, stop it and then rebuild it"
 msgstr "Om en instans körs, stoppa den och bygg om den sedan"
 
-#: cmd/incus/main.go:167
+#: cmd/incus/main.go:178
 msgid ""
 "If the command is valid, explain its parsed arguments instead of running it"
 msgstr ""
@@ -3956,7 +3972,7 @@ msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "Om namnet på ögonblicksbilden redan finns, ta bort det och skapa ett nytt"
 
-#: cmd/incus/main.go:521
+#: cmd/incus/main.go:532
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4110,11 +4126,11 @@ msgstr "Endast instans"
 msgid "Instance description"
 msgstr "Instansbeskrivning"
 
-#: cmd/incus/utils.go:543
+#: cmd/incus/utils.go:542
 msgid "Instance disconnected"
 msgstr "Instans frånkopplad"
 
-#: cmd/incus/utils.go:711
+#: cmd/incus/utils.go:710
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "Instans frånkopplad för klient %q"
@@ -4152,7 +4168,7 @@ msgstr "Ogiltig IP-adress eller DNS-namn"
 msgid "Invalid URL %q: %w"
 msgstr "Ogiltig URL %q: %w"
 
-#: cmd/incus/remote.go:387
+#: cmd/incus/remote.go:353
 #, c-format
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Ogiltigt URL-schema \"%s\" i \"%s\""
@@ -4177,7 +4193,7 @@ msgstr "Ogiltigt booleskt värde: %s"
 msgid "Invalid certificate"
 msgstr "Ogiltigt certifikat"
 
-#: cmd/incus/remote.go:768
+#: cmd/incus/remote.go:828
 #, c-format
 msgid "Invalid certificate format %q"
 msgstr "Ogiltigt certifikatformat %q"
@@ -4187,12 +4203,12 @@ msgstr "Ogiltigt certifikatformat %q"
 msgid "Invalid cluster join token: %w"
 msgstr "Ogiltig klusteranslutningstoken: %w"
 
-#: cmd/incus/list.go:571
+#: cmd/incus/list.go:562
 #, c-format
 msgid "Invalid config key '%s' in '%s'"
 msgstr "Ogiltig konfigurationsnyckel '%s' i '%s'"
 
-#: cmd/incus/list.go:564
+#: cmd/incus/list.go:555
 #, c-format
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "Ogiltigt format för konfigurationsnyckelkolumn (för många fält): '%s'"
@@ -4221,19 +4237,19 @@ msgstr "Ogiltig inmatning, ange ett positivt tal"
 msgid "Invalid join token: %w"
 msgstr "Ogiltigt anslutningstoken: %w"
 
-#: cmd/incus/list.go:592
+#: cmd/incus/list.go:583
 #, c-format
 msgid "Invalid max width (must -1, 0 or a positive integer) '%s' in '%s'"
 msgstr ""
 "Ogiltig maximal bredd (måste vara -1, 0 eller ett positivt heltal) '%s' i "
 "'%s'"
 
-#: cmd/incus/list.go:588
+#: cmd/incus/list.go:579
 #, c-format
 msgid "Invalid max width (must be an integer) '%s' in '%s'"
 msgstr "Ogiltig maximal bredd (måste vara ett heltal) '%s' i '%s'"
 
-#: cmd/incus/list.go:578
+#: cmd/incus/list.go:569
 #, c-format
 msgid ""
 "Invalid name in '%s', empty string is only allowed when defining maxWidth"
@@ -4244,7 +4260,7 @@ msgstr ""
 msgid "Invalid peer type"
 msgstr "Ogiltig peer-typ"
 
-#: cmd/incus/remote.go:376
+#: cmd/incus/remote.go:456
 #, c-format
 msgid "Invalid protocol: %s"
 msgstr "Ogiltigt protokoll: %s"
@@ -4291,7 +4307,7 @@ msgstr "Nyckelbeskrivning"
 msgid "LAST SEEN"
 msgstr "SENAST SETT"
 
-#: cmd/incus/list.go:481
+#: cmd/incus/list.go:472
 msgid "LAST USED AT"
 msgstr "SENAST ANVÄND VID"
 
@@ -4303,7 +4319,7 @@ msgstr "GRÄNS"
 msgid "LISTEN ADDRESS"
 msgstr "Lyssna på adress"
 
-#: cmd/incus/list.go:518 cmd/incus/network.go:1269
+#: cmd/incus/list.go:509 cmd/incus/network.go:1269
 #: cmd/incus/network_forward.go:146 cmd/incus/network_load_balancer.go:152
 #: cmd/incus/operation.go:170 cmd/incus/storage_bucket.go:482
 #: cmd/incus/storage_volume.go:1620 cmd/incus/warning.go:220
@@ -5657,11 +5673,11 @@ msgstr ""
 "    u - Antal referenser (används av)\n"
 "    U - Aktuell diskanvändning"
 
-#: cmd/incus/remote.go:944
+#: cmd/incus/remote.go:1004
 msgid "List the available remotes"
 msgstr "Lista tillgängliga fjärrkontroller"
 
-#: cmd/incus/remote.go:945
+#: cmd/incus/remote.go:1005
 msgid ""
 "List the available remotes\n"
 "\n"
@@ -5835,12 +5851,12 @@ msgstr "Logisk router"
 msgid "Logical switch"
 msgstr "Logisk omkopplare"
 
-#: cmd/incus/utils.go:626
+#: cmd/incus/utils.go:625
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr "Logga in med användarnamn %q och lösenord %q"
 
-#: cmd/incus/utils.go:628
+#: cmd/incus/utils.go:627
 msgid "Login without username and password"
 msgstr "Logga in utan användarnamn och lösenord"
 
@@ -5892,11 +5908,11 @@ msgstr "MEDLEMMAR"
 msgid "MEMORY"
 msgstr "MINNE"
 
-#: cmd/incus/list.go:482
+#: cmd/incus/list.go:473
 msgid "MEMORY USAGE"
 msgstr "MINNESANVÄNDNING"
 
-#: cmd/incus/list.go:483
+#: cmd/incus/list.go:474
 #, c-format
 msgid "MEMORY USAGE%"
 msgstr "MINNESANVÄNDNING %"
@@ -5922,7 +5938,7 @@ msgstr "MTU"
 msgid "MTU: %d"
 msgstr "MTU: %d"
 
-#: cmd/incus/remote.go:142
+#: cmd/incus/remote.go:147
 msgid "Maintain remote connection for faster commands"
 msgstr "Behåll fjärranslutningen för snabbare kommandon"
 
@@ -6147,7 +6163,7 @@ msgstr "Hantera betrodda kunder"
 msgid "Manage warnings"
 msgstr "Hantera varningar"
 
-#: cmd/incus/remote.go:672
+#: cmd/incus/remote.go:732
 msgid "Manually trigger the generation of a client certificate"
 msgstr "Manuell aktivering av generering av ett klientcertifikat"
 
@@ -6357,12 +6373,12 @@ msgstr "Måste köras som root för att importera från katalogen"
 
 #: cmd/incus/cluster.go:196 cmd/incus/cluster.go:1142
 #: cmd/incus/cluster_group.go:463 cmd/incus/config_trust.go:412
-#: cmd/incus/config_trust.go:599 cmd/incus/list.go:484
+#: cmd/incus/config_trust.go:599 cmd/incus/list.go:475
 #: cmd/incus/network.go:1071 cmd/incus/network_acl.go:162
 #: cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:427
 #: cmd/incus/network_peer.go:138 cmd/incus/network_zone.go:144
 #: cmd/incus/network_zone.go:871 cmd/incus/profile.go:723
-#: cmd/incus/project.go:541 cmd/incus/project.go:670 cmd/incus/remote.go:984
+#: cmd/incus/project.go:541 cmd/incus/project.go:670 cmd/incus/remote.go:1044
 #: cmd/incus/snapshot.go:365 cmd/incus/storage.go:684
 #: cmd/incus/storage_bucket.go:480 cmd/incus/storage_bucket.go:872
 #: cmd/incus/storage_volume.go:1612 cmd/incus/storage_volume.go:3493
@@ -6421,7 +6437,7 @@ msgstr "NICar:"
 #: cmd/incus/network.go:1120 cmd/incus/operation.go:214
 #: cmd/incus/project.go:579 cmd/incus/project.go:588 cmd/incus/project.go:597
 #: cmd/incus/project.go:606 cmd/incus/project.go:615 cmd/incus/project.go:624
-#: cmd/incus/remote.go:1048 cmd/incus/remote.go:1057 cmd/incus/remote.go:1066
+#: cmd/incus/remote.go:1117 cmd/incus/remote.go:1126 cmd/incus/remote.go:1135
 msgid "NO"
 msgstr "NEJ"
 
@@ -6483,7 +6499,7 @@ msgstr "Namn på befintlig brygga eller värdgränssnitt:"
 msgid "Name of the new storage pool"
 msgstr "Namn på den nya lagringspoolen"
 
-#: cmd/incus/remote.go:178
+#: cmd/incus/remote.go:183
 msgid "Name of the project to use for this remote:"
 msgstr "Namn på projektet som ska användas för denna fjärrkontroll:"
 
@@ -6774,7 +6790,7 @@ msgstr ""
 msgid "Only \"custom\" volumes can be rebuilt"
 msgstr "Endast \"anpassade\" volymer kan exporteras"
 
-#: cmd/incus/remote.go:363
+#: cmd/incus/remote.go:442
 msgid "Only https URLs are supported for oci and simplestreams"
 msgstr "Endast https-URL:er stöds för oci och simplestreams"
 
@@ -6809,7 +6825,7 @@ msgstr "Operation %s raderad"
 msgid "Optimized Storage"
 msgstr "Optimerad lagring"
 
-#: cmd/incus/main.go:162
+#: cmd/incus/main.go:173
 msgid "Override the source project"
 msgstr "Åsidosätt källprojektet"
 
@@ -6835,7 +6851,7 @@ msgstr "PCI-enheter:"
 msgid "PEER"
 msgstr "PEER"
 
-#: cmd/incus/list.go:486
+#: cmd/incus/list.go:477
 msgid "PID"
 msgstr "PID"
 
@@ -6848,15 +6864,15 @@ msgstr "PID: %d"
 msgid "PORTS"
 msgstr "PORTAR"
 
-#: cmd/incus/list.go:485
+#: cmd/incus/list.go:476
 msgid "PROCESSES"
 msgstr "PROCESSER"
 
-#: cmd/incus/list.go:487 cmd/incus/project.go:543
+#: cmd/incus/list.go:478 cmd/incus/project.go:543
 msgid "PROFILES"
 msgstr "PROFILER"
 
-#: cmd/incus/image.go:1098 cmd/incus/list.go:478 cmd/incus/network.go:1070
+#: cmd/incus/image.go:1098 cmd/incus/list.go:469 cmd/incus/network.go:1070
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:143 cmd/incus/profile.go:724
 #: cmd/incus/storage_bucket.go:479 cmd/incus/storage_volume.go:1631
@@ -6868,11 +6884,11 @@ msgstr "PROJEKT"
 msgid "PROJECTS"
 msgstr "PROJEKT"
 
-#: cmd/incus/remote.go:986
+#: cmd/incus/remote.go:1046
 msgid "PROTOCOL"
 msgstr "PROTOKOLL"
 
-#: cmd/incus/image.go:1103 cmd/incus/remote.go:988
+#: cmd/incus/image.go:1103 cmd/incus/remote.go:1048
 msgid "PUBLIC"
 msgstr "PUBLIK"
 
@@ -6888,12 +6904,12 @@ msgstr "Skickade paket"
 msgid "Partitions:"
 msgstr "Partitioner:"
 
-#: cmd/incus/main.go:481 cmd/incus/remote.go:817
+#: cmd/incus/main.go:492 cmd/incus/remote.go:877
 #, c-format
 msgid "Password for %s: "
 msgstr "Lösenord för %s: "
 
-#: cmd/incus/utils.go:597
+#: cmd/incus/utils.go:596
 #, c-format
 msgid "Password rejected for %q"
 msgstr "Lösenordet avvisat för %q"
@@ -6923,15 +6939,18 @@ msgstr "Utför en inkrementell kopiering"
 msgid "Please create those missing entries and then hit ENTER:"
 msgstr "Skapa de saknade posterna och tryck sedan på ENTER:"
 
-#: cmd/incus/remote.go:219
-msgid "Please provide an alternate server address (empty to abort):"
+#: cmd/incus/remote.go:223
+#, fuzzy
+msgid ""
+"Please provide alternate server addresses separated with commas (empty to "
+"abort):"
 msgstr "Ange en alternativ serveradress (lämna tomt för att avbryta):"
 
 #: cmd/incus/cluster.go:1708
 msgid "Please provide join token:"
 msgstr "Ange anslutningstoken:"
 
-#: cmd/incus/remote.go:506
+#: cmd/incus/remote.go:566
 msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr "Skriv 'y', 'n' eller fingeravtrycket:"
 
@@ -6981,7 +7000,7 @@ msgstr "Tryck på 's' + ENTER för att ändra sorteringsmetod"
 msgid "Press CTRL-C to exit"
 msgstr "Tryck på CTRL-C för att avsluta"
 
-#: cmd/incus/utils.go:521
+#: cmd/incus/utils.go:520
 msgid "Press ctrl+c to finish"
 msgstr "Tryck på Ctrl+C för att avsluta"
 
@@ -7006,11 +7025,11 @@ msgstr ""
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr "Snygg rendering (förkortning för --format=pretty)"
 
-#: cmd/incus/main.go:160
+#: cmd/incus/main.go:171
 msgid "Print help"
 msgstr "Skriv ut hjälp"
 
-#: cmd/incus/remote.go:749
+#: cmd/incus/remote.go:809
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr ""
 "Skriv ut eller hämta det klientcertifikat som används av denna Incus-klient"
@@ -7019,7 +7038,7 @@ msgstr ""
 msgid "Print the raw response"
 msgstr "Skriv ut det råa svaret"
 
-#: cmd/incus/main.go:159
+#: cmd/incus/main.go:170
 msgid "Print version number"
 msgstr "Skriv ut versionsnummer"
 
@@ -7132,7 +7151,7 @@ msgstr "Projekt %s döpt om till %s"
 msgid "Project description"
 msgstr "Projektbeskrivning"
 
-#: cmd/incus/remote.go:141
+#: cmd/incus/remote.go:146
 msgid "Project to use for the remote"
 msgstr "Projekt att använda för fjärrkontrollen"
 
@@ -7158,7 +7177,7 @@ msgstr "Angiven certifikatväg finns inte: %s"
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Proxy-timeout (avslutas när inga anslutningar finns)"
 
-#: cmd/incus/remote.go:140
+#: cmd/incus/remote.go:145
 msgid "Public image server"
 msgstr "Publik avbildningsserver"
 
@@ -7302,37 +7321,37 @@ msgstr "Uppdateringsinstans: %s"
 msgid "Refreshing the image: %s"
 msgstr "Uppdaterar avbildningen: %s"
 
-#: cmd/incus/remote.go:1157
+#: cmd/incus/remote.go:424 cmd/incus/remote.go:1226
 #, c-format
 msgid "Remote %s already exists"
 msgstr "Fjärrkontroll %s finns redan"
 
-#: cmd/incus/remote.go:1148 cmd/incus/remote.go:1228 cmd/incus/remote.go:1292
-#: cmd/incus/remote.go:1340
+#: cmd/incus/remote.go:1217 cmd/incus/remote.go:1297 cmd/incus/remote.go:1361
+#: cmd/incus/remote.go:1410
 #, c-format
 msgid "Remote %s doesn't exist"
 msgstr "Fjärrkontroll %s finns inte"
 
-#: cmd/incus/remote.go:336
-#, c-format
-msgid "Remote %s exists as <%s>"
-msgstr "Fjärrkontroll %s finns som <%s>"
-
-#: cmd/incus/remote.go:1236
+#: cmd/incus/remote.go:1305
 #, c-format
 msgid "Remote %s is global and cannot be removed"
 msgstr "Fjärrkontroll %s är global och kan inte tas bort"
 
-#: cmd/incus/remote.go:1152 cmd/incus/remote.go:1232 cmd/incus/remote.go:1344
+#: cmd/incus/remote.go:1221 cmd/incus/remote.go:1301 cmd/incus/remote.go:1414
 #, c-format
 msgid "Remote %s is static and cannot be modified"
 msgstr "Fjärrservern %s är statisk och kan inte ändras"
 
-#: cmd/incus/remote.go:330
+#: cmd/incus/remote.go:418
 msgid "Remote names may not contain colons"
 msgstr "Fjärrnamn får inte innehålla kolon"
 
-#: cmd/incus/remote.go:137
+#: cmd/incus/remote.go:415
+#, fuzzy
+msgid "Remote names may not contain colons; please provide an explicit one"
+msgstr "Fjärrnamn får inte innehålla kolon"
+
+#: cmd/incus/remote.go:142
 msgid "Remote trust token"
 msgstr "Fjärrtillförlitlighetstoken"
 
@@ -7420,7 +7439,7 @@ msgstr "Ta bort portar från en lastbalanserare"
 msgid "Remove profiles from instances"
 msgstr "Ta bort profiler från instanser"
 
-#: cmd/incus/remote.go:1200 cmd/incus/remote.go:1201
+#: cmd/incus/remote.go:1269 cmd/incus/remote.go:1270
 msgid "Remove remotes"
 msgstr "Ta bort fjärrkontroller"
 
@@ -7490,7 +7509,7 @@ msgstr "Byt namn på profiler"
 msgid "Rename projects"
 msgstr "Byt namn på projekt"
 
-#: cmd/incus/remote.go:1119 cmd/incus/remote.go:1120
+#: cmd/incus/remote.go:1188 cmd/incus/remote.go:1189
 msgid "Rename remotes"
 msgstr "Byt namn på fjärrkontroller"
 
@@ -7629,7 +7648,7 @@ msgstr "STORLEK"
 msgid "SKU: %v"
 msgstr "SKU: %v"
 
-#: cmd/incus/list.go:488
+#: cmd/incus/list.go:479
 msgid "SNAPSHOTS"
 msgstr "ÖGONBLICKSBILDER"
 
@@ -7641,26 +7660,26 @@ msgstr "KÄLLA"
 msgid "SR-IOV information:"
 msgstr "SR-IOV-information:"
 
-#: cmd/incus/utils.go:623
+#: cmd/incus/utils.go:622
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr "SSH SFTP lyssnar på %v"
 
-#: cmd/incus/utils.go:640
+#: cmd/incus/utils.go:639
 #, c-format
 msgid "SSH client connected %q"
 msgstr "SSH-klient ansluten %q"
 
-#: cmd/incus/utils.go:641
+#: cmd/incus/utils.go:640
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr "SSH-klienten frånkopplad %q"
 
-#: cmd/incus/list.go:492
+#: cmd/incus/list.go:483
 msgid "STARTED AT"
 msgstr "STARTAD"
 
-#: cmd/incus/list.go:489 cmd/incus/network.go:1078
+#: cmd/incus/list.go:480 cmd/incus/network.go:1078
 #: cmd/incus/network_peer.go:142 cmd/incus/operation.go:167
 #: cmd/incus/storage.go:689 cmd/incus/warning.go:214
 msgid "STATE"
@@ -7670,7 +7689,7 @@ msgstr "TILLSTÅND"
 msgid "STATEFUL"
 msgstr "TILLSTÅNDSFULL"
 
-#: cmd/incus/remote.go:989
+#: cmd/incus/remote.go:1049
 msgid "STATIC"
 msgstr "STATISK"
 
@@ -7682,7 +7701,7 @@ msgstr "STATUS"
 msgid "STORAGE BUCKETS"
 msgstr "LAGRINGSBUCKETS"
 
-#: cmd/incus/list.go:474
+#: cmd/incus/list.go:465
 msgid "STORAGE POOL"
 msgstr "LAGRINGSPOOL"
 
@@ -7734,15 +7753,15 @@ msgstr "Serienummer: %v"
 msgid "Serial: %s"
 msgstr "Serienummer: %s"
 
-#: cmd/incus/remote.go:139
+#: cmd/incus/remote.go:144
 msgid "Server authentication type (tls or oidc)"
 msgstr "Serverautentiseringstyp (tls eller oidc)"
 
-#: cmd/incus/remote.go:504
+#: cmd/incus/remote.go:564
 msgid "Server certificate NACKed by user"
 msgstr "Servercertifikat avvisat av användaren"
 
-#: cmd/incus/remote.go:639
+#: cmd/incus/remote.go:699
 msgid "Server doesn't trust us after authentication"
 msgstr "Servern litar inte på oss efter autentisering"
 
@@ -7751,7 +7770,7 @@ msgstr "Servern litar inte på oss efter autentisering"
 msgid "Server isn't part of a cluster"
 msgstr "Servern ingår inte i ett kluster"
 
-#: cmd/incus/remote.go:138
+#: cmd/incus/remote.go:143
 msgid "Server protocol (incus, oci or simplestreams)"
 msgstr "Serverprotokoll (incus, oci eller simplestreams)"
 
@@ -8066,8 +8085,13 @@ msgstr ""
 "<värde> Om typen inte anges antar Incus att typen är \"custom\". Värden\n"
 "som stöds för typen är \"custom\", \"container\" och \"virtual-machine\"."
 
-#: cmd/incus/remote.go:1311 cmd/incus/remote.go:1312
+#: cmd/incus/remote.go:1382
 msgid "Set the URL for the remote"
+msgstr "Ställ in URL-adressen för fjärrkontrollen"
+
+#: cmd/incus/remote.go:1381
+#, fuzzy
+msgid "Set the URLs for the remote"
 msgstr "Ställ in URL-adressen för fjärrkontrollen"
 
 #: cmd/incus/file.go:110 cmd/incus/storage_volume.go:2298
@@ -8201,11 +8225,11 @@ msgstr "Konfigurera enhetsbaserad lagring med DEVICE"
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr "Konfigurera loopbaserad lagring med STORLEK i GiB"
 
-#: cmd/incus/main.go:163
+#: cmd/incus/main.go:174
 msgid "Show all debug messages"
 msgstr "Visa alla felsökningsmeddelanden"
 
-#: cmd/incus/main.go:164
+#: cmd/incus/main.go:175
 msgid "Show all information messages"
 msgstr "Visa alla informationsmeddelanden"
 
@@ -8253,7 +8277,7 @@ msgstr "Visa instans- eller serverinformation"
 msgid "Show instance snapshot configuration"
 msgstr "Visa konfiguration för instansöversikt"
 
-#: cmd/incus/main.go:352 cmd/incus/main.go:353
+#: cmd/incus/main.go:363 cmd/incus/main.go:364
 msgid "Show less common commands"
 msgstr "Visa mindre vanliga kommandon"
 
@@ -8380,7 +8404,7 @@ msgstr ""
 msgid "Show the current project"
 msgstr "Visa det aktuella projektet"
 
-#: cmd/incus/remote.go:716 cmd/incus/remote.go:717
+#: cmd/incus/remote.go:776 cmd/incus/remote.go:777
 msgid "Show the default remote"
 msgstr "Visa standardfjärrkontrollen"
 
@@ -8666,7 +8690,7 @@ msgstr "Växling (topp)"
 msgid "Switch the current project"
 msgstr "Byt aktuellt projekt"
 
-#: cmd/incus/remote.go:1264 cmd/incus/remote.go:1265
+#: cmd/incus/remote.go:1333 cmd/incus/remote.go:1334
 msgid "Switch the default remote"
 msgstr "Byt standardfjärrkontroll"
 
@@ -8691,7 +8715,7 @@ msgid "TOKEN"
 msgstr "TOKEN"
 
 #: cmd/incus/config_trust.go:413 cmd/incus/image.go:1105
-#: cmd/incus/image_alias.go:248 cmd/incus/list.go:490 cmd/incus/network.go:1072
+#: cmd/incus/image_alias.go:248 cmd/incus/list.go:481 cmd/incus/network.go:1072
 #: cmd/incus/network.go:1268 cmd/incus/network_allocations.go:82
 #: cmd/incus/network_integration.go:429 cmd/incus/network_peer.go:141
 #: cmd/incus/operation.go:165 cmd/incus/storage_volume.go:1611
@@ -9030,7 +9054,7 @@ msgstr "Den angivna disken finns inte i den givna poolen (hittade %s)"
 msgid "The type to create (file, symlink, or directory)"
 msgstr "Den typ som ska skapas (fil, symlänk eller katalog)"
 
-#: cmd/incus/main.go:404
+#: cmd/incus/main.go:415
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -9050,7 +9074,7 @@ msgstr ""
 msgid "This command isn't supported on Windows"
 msgstr "Det här kommandot stöds inte i Windows"
 
-#: cmd/incus/usage/parse.go:111
+#: cmd/incus/usage/parse.go:121
 msgid ""
 "This command was called with --explain; its arguments are valid, but no "
 "further processing is done"
@@ -9095,7 +9119,7 @@ msgstr "För att skapa ett nytt nätverk, använd: incus network create"
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "För att koppla bort från konsolen, tryck på: <ctrl>+a q"
 
-#: cmd/incus/main.go:529
+#: cmd/incus/main.go:540
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -9161,7 +9185,7 @@ msgstr "Överföring av instans: %s"
 msgid "Transmit policy"
 msgstr "Överföringspolicy"
 
-#: cmd/incus/remote.go:611
+#: cmd/incus/remote.go:671
 #, c-format
 msgid "Trust token for %s: "
 msgstr "Förtroendetoken för %s: "
@@ -9206,8 +9230,8 @@ msgstr "OBEGRÄNSAD"
 msgid "UPLOAD DATE"
 msgstr "UPPLADDNINGSDATUM"
 
-#: cmd/incus/cluster.go:197 cmd/incus/remote.go:120 cmd/incus/remote.go:985
-#: cmd/incus/usage/usage.go:859
+#: cmd/incus/cluster.go:197 cmd/incus/remote.go:1045
+#: cmd/incus/usage/usage.go:864
 msgid "URL"
 msgstr "URL"
 
@@ -9251,7 +9275,7 @@ msgstr ""
 msgid "Unable to create a temporary file: %v"
 msgstr "Det går inte att skapa en tillfällig fil: %v"
 
-#: cmd/incus/remote.go:256 cmd/incus/remote.go:290
+#: cmd/incus/remote.go:270 cmd/incus/remote.go:304
 msgid "Unavailable remote server"
 msgstr "Fjärrserver otillgänglig"
 
@@ -9260,7 +9284,7 @@ msgstr "Fjärrserver otillgänglig"
 msgid "Unknown certificate type %q"
 msgstr "Okänd certifikattyp %q"
 
-#: cmd/incus/utils.go:663
+#: cmd/incus/utils.go:662
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr "Okänd kanaltyp för klient %q: %s"
@@ -9268,12 +9292,12 @@ msgstr "Okänd kanaltyp för klient %q: %s"
 #: cmd/incus/cluster.go:218 cmd/incus/cluster.go:1158
 #: cmd/incus/cluster_group.go:479 cmd/incus/config_trust.go:434
 #: cmd/incus/config_trust.go:615 cmd/incus/image.go:1121
-#: cmd/incus/image_alias.go:264 cmd/incus/list.go:546 cmd/incus/network.go:1097
+#: cmd/incus/image_alias.go:264 cmd/incus/list.go:537 cmd/incus/network.go:1097
 #: cmd/incus/network.go:1286 cmd/incus/network_allocations.go:98
 #: cmd/incus/network_forward.go:163 cmd/incus/network_integration.go:444
 #: cmd/incus/network_load_balancer.go:169 cmd/incus/network_peer.go:156
 #: cmd/incus/network_zone.go:164 cmd/incus/operation.go:187
-#: cmd/incus/profile.go:747 cmd/incus/project.go:564 cmd/incus/remote.go:1004
+#: cmd/incus/profile.go:747 cmd/incus/project.go:564 cmd/incus/remote.go:1064
 #: cmd/incus/snapshot.go:382 cmd/incus/storage.go:704
 #: cmd/incus/storage_bucket.go:504 cmd/incus/storage_bucket.go:888
 #: cmd/incus/storage_volume.go:1647 cmd/incus/storage_volume.go:3509
@@ -9292,7 +9316,7 @@ msgstr "Okänd konsoltyp %q"
 msgid "Unknown file type '%s'"
 msgstr "Okänd filtyp '%s'"
 
-#: cmd/incus/usage/usage.go:376
+#: cmd/incus/usage/usage.go:377
 #, c-format
 msgid "Unknown flag --%s"
 msgstr "Okänd flagga --%s"
@@ -9529,7 +9553,7 @@ msgstr "Användande:"
 msgid "Usage: %s"
 msgstr "Användning: %s"
 
-#: cmd/incus/main.go:50
+#: cmd/incus/main.go:61
 msgid ""
 "Use \"{{.CommandPath}} [<command>] --help\" for more information about a "
 "command."
@@ -9552,7 +9576,7 @@ msgstr ""
 "Använd lagringsdrivrutinens optimerade format (kan endast återställas på en "
 "liknande pool, ignoreras för ISO-lagringsvolymer)"
 
-#: cmd/incus/main.go:166
+#: cmd/incus/main.go:177
 msgid "Use with help or --help to view sub-commands"
 msgstr "Använd med help eller --help för att visa underkommandon"
 
@@ -9863,7 +9887,7 @@ msgstr "Vill du använda klustring?"
 #: cmd/incus/network.go:1117 cmd/incus/operation.go:217
 #: cmd/incus/project.go:581 cmd/incus/project.go:590 cmd/incus/project.go:599
 #: cmd/incus/project.go:608 cmd/incus/project.go:617 cmd/incus/project.go:626
-#: cmd/incus/remote.go:1050 cmd/incus/remote.go:1059 cmd/incus/remote.go:1068
+#: cmd/incus/remote.go:1119 cmd/incus/remote.go:1128 cmd/incus/remote.go:1137
 msgid "YES"
 msgstr "JA"
 
@@ -9871,11 +9895,11 @@ msgstr "JA"
 msgid "You are currently missing the following:"
 msgstr "Du saknar för närvarande följande:"
 
-#: cmd/incus/exec.go:112
+#: cmd/incus/exec.go:111
 msgid "You can't pass -t and -T at the same time"
 msgstr "Du kan inte använda -t och -T samtidigt"
 
-#: cmd/incus/exec.go:116
+#: cmd/incus/exec.go:115
 msgid "You can't pass -t or -T at the same time as --mode"
 msgstr "Du kan inte ange -t eller -T samtidigt som --mode"
 
@@ -9887,15 +9911,15 @@ msgstr "Du måste ange ett namn på målinstansen"
 msgid "Zone description"
 msgstr "Zonbeskrivning"
 
-#: cmd/incus/usage/usage.go:809
+#: cmd/incus/usage/usage.go:814
 msgid "address"
 msgstr "adress"
 
-#: cmd/incus/usage/usage.go:810
+#: cmd/incus/usage/usage.go:815
 msgid "address set"
 msgstr "adressuppsättning"
 
-#: cmd/incus/usage/usage.go:811
+#: cmd/incus/usage/usage.go:816
 msgid "alias"
 msgstr "alias"
 
@@ -9903,24 +9927,24 @@ msgstr "alias"
 msgid "application"
 msgstr "applikation"
 
-#: cmd/incus/usage/usage.go:812
+#: cmd/incus/usage/usage.go:817
 msgid "backend"
 msgstr "backend"
 
-#: cmd/incus/usage/usage.go:813
+#: cmd/incus/usage/usage.go:818
 msgid "backup file"
 msgstr "backup-fil"
 
-#: cmd/incus/usage/usage.go:814
+#: cmd/incus/usage/usage.go:819
 msgid "bucket"
 msgstr "förvaringshink"
 
-#: cmd/incus/usage/parse.go:77
+#: cmd/incus/usage/parse.go:87
 #, c-format
 msgid "cannot parse this argument; unexpected %s"
 msgstr "kan inte analysera detta argument; oväntade %s"
 
-#: cmd/incus/usage/parse.go:80
+#: cmd/incus/usage/parse.go:90
 #, c-format
 msgid "cannot parse this argument; unexpected %s in %s"
 msgstr "kan inte analysera detta argument; oväntade %s i %s"
@@ -9933,7 +9957,7 @@ msgstr "cert.crt"
 msgid "cert.key"
 msgstr "cert.key"
 
-#: cmd/incus/usage/usage.go:815
+#: cmd/incus/usage/usage.go:820
 msgid "client"
 msgstr "klient"
 
@@ -9945,7 +9969,7 @@ msgstr "kluster"
 msgid "command"
 msgstr "kommando"
 
-#: cmd/incus/usage/usage.go:816
+#: cmd/incus/usage/usage.go:821
 msgid "command-line argument"
 msgstr "kommandoradsargument"
 
@@ -9953,7 +9977,7 @@ msgstr "kommandoradsargument"
 msgid "condition"
 msgstr "villkor"
 
-#: cmd/incus/project.go:672 cmd/incus/remote.go:1019
+#: cmd/incus/project.go:672 cmd/incus/remote.go:1079
 msgid "current"
 msgstr "nuvarande"
 
@@ -9961,11 +9985,11 @@ msgstr "nuvarande"
 msgid "description"
 msgstr "beskrivning"
 
-#: cmd/incus/usage/usage.go:817
+#: cmd/incus/usage/usage.go:822
 msgid "device"
 msgstr "enhet"
 
-#: cmd/incus/usage/usage.go:819
+#: cmd/incus/usage/usage.go:824
 msgid "directory"
 msgstr "katalog"
 
@@ -9973,7 +9997,7 @@ msgstr "katalog"
 msgid "disabled"
 msgstr "inaktiverad"
 
-#: cmd/incus/storage.go:520 cmd/incus/usage/usage.go:820
+#: cmd/incus/storage.go:520 cmd/incus/usage/usage.go:825
 msgid "driver"
 msgstr "drivrutin"
 
@@ -9990,32 +10014,32 @@ msgstr "efemer"
 msgid "error: %v"
 msgstr "fel: %v"
 
-#: cmd/incus/usage/parse.go:95
+#: cmd/incus/usage/parse.go:105
 #, c-format
 msgid "expected %s"
 msgstr "förväntade %s"
 
-#: cmd/incus/usage/usage.go:822
+#: cmd/incus/usage/usage.go:827
 msgid "expiry"
 msgstr "Utgångsdatum"
 
-#: cmd/incus/usage/usage.go:823
+#: cmd/incus/usage/usage.go:828
 msgid "file"
 msgstr "fil"
 
-#: cmd/incus/usage/usage.go:824
+#: cmd/incus/usage/usage.go:829
 msgid "filter"
 msgstr "filtrera"
 
-#: cmd/incus/usage/usage.go:825
+#: cmd/incus/usage/usage.go:830
 msgid "fingerprint"
 msgstr "fingeravtryck"
 
-#: cmd/incus/usage/usage.go:826
+#: cmd/incus/usage/usage.go:831
 msgid "group"
 msgstr "grupp"
 
-#: cmd/incus/usage/usage.go:827
+#: cmd/incus/usage/usage.go:832
 msgid "image"
 msgstr "avbild"
 
@@ -11028,31 +11052,35 @@ msgstr ""
 msgid "info"
 msgstr "info"
 
-#: cmd/incus/usage/usage.go:828
+#: cmd/incus/usage/usage.go:833
 msgid "instance"
 msgstr "instans"
 
-#: cmd/incus/usage/usage.go:829
+#: cmd/incus/usage/usage.go:834
 msgid "interface"
 msgstr "gränssnitt"
 
-#: cmd/incus/usage/usage.go:832
+#: cmd/incus/usage/usage.go:837
 msgid "key"
 msgstr "nyckel"
 
-#: cmd/incus/usage/usage.go:830
+#: cmd/incus/remote.go:1089
+msgid "last"
+msgstr ""
+
+#: cmd/incus/usage/usage.go:835
 msgid "listen address"
 msgstr "lyssningsadress"
 
-#: cmd/incus/usage/usage.go:831
+#: cmd/incus/usage/usage.go:836
 msgid "listen port"
 msgstr "lyssna port"
 
-#: cmd/incus/usage/usage.go:834
+#: cmd/incus/usage/usage.go:839
 msgid "member"
 msgstr "medlem"
 
-#: cmd/incus/remote.go:503
+#: cmd/incus/remote.go:563
 msgid "n"
 msgstr "n"
 
@@ -11060,11 +11088,11 @@ msgstr "n"
 msgid "name"
 msgstr "namn"
 
-#: cmd/incus/usage/usage.go:835
+#: cmd/incus/usage/usage.go:840
 msgid "network"
 msgstr "nätverk"
 
-#: cmd/incus/usage/usage.go:836
+#: cmd/incus/usage/usage.go:841
 msgid "network integration"
 msgstr "nätverk integration"
 
@@ -11072,7 +11100,7 @@ msgstr "nätverk integration"
 msgid "network or integration"
 msgstr "nätverk eller integration"
 
-#: cmd/incus/usage/usage.go:894
+#: cmd/incus/usage/usage.go:899
 #, c-format
 msgid "new %s name"
 msgstr "nytt %s namn"
@@ -11082,29 +11110,29 @@ msgstr "nytt %s namn"
 msgid "no"
 msgstr "nej"
 
-#: cmd/incus/usage/parse.go:50
+#: cmd/incus/usage/parse.go:60
 #, c-format
 msgid "not enough arguments; expected a value for %s"
 msgstr "inte tillräckligt med argument; förväntade sig ett värde för %s"
 
-#: cmd/incus/remote.go:495
+#: cmd/incus/remote.go:555
 msgid "ok (y/n/[fingerprint])?"
 msgstr "ok (y/n/[fingeravtryck])?"
 
-#: cmd/incus/usage/parse.go:35
+#: cmd/incus/usage/parse.go:45
 #, c-format
 msgid "one of %s or %s"
 msgstr "en av %s eller %s"
 
-#: cmd/incus/usage/usage.go:837
+#: cmd/incus/usage/usage.go:842
 msgid "operation"
 msgstr "operation"
 
-#: cmd/incus/usage/usage.go:838
+#: cmd/incus/usage/usage.go:843
 msgid "path"
 msgstr "sökväg"
 
-#: cmd/incus/usage/usage.go:839
+#: cmd/incus/usage/usage.go:844
 msgid "peer"
 msgstr "nätverkspeern"
 
@@ -11116,11 +11144,11 @@ msgstr "vänligen byt till syntaxen “<key>=<value>”"
 msgid "please use `incus profile`"
 msgstr "använd `incus profile`"
 
-#: cmd/incus/usage/usage.go:840
+#: cmd/incus/usage/usage.go:845
 msgid "pool"
 msgstr "lagringspool"
 
-#: cmd/incus/usage/usage.go:841
+#: cmd/incus/usage/usage.go:846
 msgid "port"
 msgstr "port"
 
@@ -11128,31 +11156,31 @@ msgstr "port"
 msgid "preseed.yaml"
 msgstr "preseed.yaml"
 
-#: cmd/incus/usage/usage.go:842
+#: cmd/incus/usage/usage.go:847
 msgid "profile"
 msgstr "profil"
 
-#: cmd/incus/usage/usage.go:843
+#: cmd/incus/usage/usage.go:848
 msgid "project"
 msgstr "projekt"
 
-#: cmd/incus/usage/usage.go:844
+#: cmd/incus/usage/usage.go:849
 msgid "protocol"
 msgstr "protokoll"
 
-#: cmd/incus/usage/usage.go:845
+#: cmd/incus/usage/usage.go:850
 msgid "query"
 msgstr "fråga"
 
-#: cmd/incus/usage/usage.go:846
+#: cmd/incus/usage/usage.go:851
 msgid "record"
 msgstr "rekord"
 
-#: cmd/incus/usage/usage.go:847
+#: cmd/incus/usage/usage.go:852
 msgid "remote"
 msgstr "fjärr"
 
-#: cmd/incus/usage/usage.go:851
+#: cmd/incus/usage/usage.go:856
 msgid "role"
 msgstr "roll"
 
@@ -11160,7 +11188,7 @@ msgstr "roll"
 msgid "rootfs tarball"
 msgstr "rootfs-tarball"
 
-#: cmd/incus/usage/usage.go:852
+#: cmd/incus/usage/usage.go:857
 msgid "snapshot"
 msgstr "ögonblicksbild"
 
@@ -11168,11 +11196,11 @@ msgstr "ögonblicksbild"
 msgid "space used"
 msgstr "använt utrymme"
 
-#: cmd/incus/utils.go:561
+#: cmd/incus/utils.go:560
 msgid "sshfs has stopped"
 msgstr "sshfs har stoppat"
 
-#: cmd/incus/utils.go:520
+#: cmd/incus/utils.go:519
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs monterar %q på %q"
@@ -11181,28 +11209,28 @@ msgstr "sshfs monterar %q på %q"
 msgid "stdin can only be used once, with no other source arguments"
 msgstr "stdin kan bara användas en gång, utan andra källargument"
 
-#: cmd/incus/usage/usage.go:854
+#: cmd/incus/usage/usage.go:859
 msgid "symlink target path"
 msgstr "symlänkens målsökväg"
 
-#: cmd/incus/usage/usage.go:855
+#: cmd/incus/usage/usage.go:860
 msgid "tarball"
 msgstr "arkiv"
 
-#: cmd/incus/usage/usage.go:900
+#: cmd/incus/usage/usage.go:905
 #, c-format
 msgid "target %s"
 msgstr "mål %s"
 
-#: cmd/incus/usage/usage.go:856
+#: cmd/incus/usage/usage.go:861
 msgid "template"
 msgstr "mall"
 
-#: cmd/incus/remote.go:120 cmd/incus/usage/usage.go:857
+#: cmd/incus/remote.go:120 cmd/incus/usage/usage.go:862
 msgid "token"
 msgstr "token"
 
-#: cmd/incus/usage/parse.go:67
+#: cmd/incus/usage/parse.go:77
 #, c-format
 msgid "too many arguments; unexpected %s"
 msgstr "för många argument; oväntade %s"
@@ -11211,21 +11239,21 @@ msgstr "för många argument; oväntade %s"
 msgid "total space"
 msgstr "totalt utrymme"
 
-#: cmd/incus/usage/usage.go:853 cmd/incus/usage/usage.go:858
+#: cmd/incus/usage/usage.go:858 cmd/incus/usage/usage.go:863
 msgid "type"
 msgstr "typ"
 
-#: cmd/incus/usage/parse.go:91
+#: cmd/incus/usage/parse.go:101
 #, c-format
 msgid "unexpected %s"
 msgstr "oväntat %s"
 
-#: cmd/incus/usage/parse.go:98
+#: cmd/incus/usage/parse.go:108
 #, c-format
 msgid "unexpected %s; expected %s"
 msgstr "oväntade %s; förväntade %s"
 
-#: cmd/incus/usage/parse.go:47
+#: cmd/incus/usage/parse.go:57
 msgid "unexpected end of argument; did you forget a suffix?"
 msgstr "oväntat slut på argumentet; glömde du ett suffix?"
 
@@ -11241,19 +11269,19 @@ msgstr "går inte att nå"
 msgid "used by"
 msgstr "används av"
 
-#: cmd/incus/usage/usage.go:860
+#: cmd/incus/usage/usage.go:865
 msgid "value"
 msgstr "värde"
 
-#: cmd/incus/usage/usage.go:861
+#: cmd/incus/usage/usage.go:866
 msgid "volume"
 msgstr "volymen"
 
-#: cmd/incus/usage/usage.go:862
+#: cmd/incus/usage/usage.go:867
 msgid "warning UUID"
 msgstr "varning UUID"
 
-#: cmd/incus/remote.go:505
+#: cmd/incus/remote.go:565
 msgid "y"
 msgstr "j"
 
@@ -11263,14 +11291,21 @@ msgstr "j"
 msgid "yes"
 msgstr "ja"
 
-#: cmd/incus/usage/usage.go:863
+#: cmd/incus/usage/usage.go:868
 msgid "zone"
 msgstr "zon"
 
-#: cmd/incus/usage/utils.go:52
+#: cmd/incus/usage/utils.go:62
 #, c-format
 msgid "“%s”"
 msgstr "“%s”"
+
+#~ msgid "IP"
+#~ msgstr "IP"
+
+#, c-format
+#~ msgid "Remote %s exists as <%s>"
+#~ msgstr "Fjärrkontroll %s finns som <%s>"
 
 #, c-format
 #~ msgid "Failed checking instance exists \"%s:%s\": %w"

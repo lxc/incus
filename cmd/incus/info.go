@@ -64,7 +64,7 @@ incus info [<remote>:] [--resources]
 }
 
 func (c *cmdInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}

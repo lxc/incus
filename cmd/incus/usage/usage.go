@@ -7,12 +7,10 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v7/client"
 	cliColor "github.com/lxc/incus/v7/cmd/incus/color"
 	"github.com/lxc/incus/v7/internal/i18n"
-	"github.com/lxc/incus/v7/shared/cliconfig"
 )
 
 // makeList is a helper function building list atoms.
@@ -37,7 +35,7 @@ func makeOptional(atom Atom, chain []Atom) Atom {
 type Atom interface {
 	List(minOccurrences int, separator ...string) Atom
 	Optional(chain ...Atom) Atom
-	Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error)
+	Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error)
 	Render() string
 	Remote() Atom
 }
@@ -58,7 +56,7 @@ func (a alternative) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (a alternative) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+func (a alternative) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
 	// Parsing alternatives is not implemented cleverly at all: the first matching atom is the one
 	// that will be used. This means that matching against something optional will always succeed,
 	// which may not be intended.
@@ -77,7 +75,7 @@ func (a alternative) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers m
 		// something bad happened.
 		argsCopy := make([]string, len(*args))
 		copy(argsCopy, *args)
-		p, err := atom.Parse(conf, cmd, servers, &argsCopy, parseRTL)
+		p, err := atom.Parse(conf, servers, &argsCopy)
 		if err != nil {
 			if isParsingError(err) {
 				continue
@@ -140,14 +138,14 @@ func (c compound) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+func (c compound) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
 	var consumed []string
 	n := len(c.atoms)
 	ps := make([]*Parsed, n)
 	atoms := c.atoms
 
 	// RTL parsing requires us to reverse our atoms when the sequence is separated by spaces.
-	if c.separator == " " && parseRTL {
+	if c.separator == " " && conf.RTL {
 		// We don’t want to modify the original slice, as this may be reused.
 		atoms = make([]Atom, n)
 		for i, atom := range c.atoms {
@@ -168,6 +166,9 @@ func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 		nOpt++
 	}
 
+	confLTR := conf
+	confLTR.RTL = false
+
 	// The parsing method differs a bit depending on the separator in use.
 	if c.separator == " " {
 		nSub := len(*args)
@@ -180,7 +181,7 @@ func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 				break
 			}
 
-			p, err := o.Parse(conf, cmd, servers, &[]string{}, false)
+			p, err := o.Parse(confLTR, servers, &[]string{})
 			if err != nil {
 				return nil, err
 			}
@@ -190,7 +191,7 @@ func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 		}
 
 		for i < n {
-			p, err := atoms[i].Parse(conf, cmd, servers, args, false)
+			p, err := atoms[i].Parse(confLTR, servers, args)
 			if err != nil {
 				return nil, err
 			}
@@ -205,7 +206,7 @@ func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 			i++
 		}
 
-		if parseRTL {
+		if conf.RTL {
 			slices.Reverse(consumed)
 			slices.Reverse(ps)
 		}
@@ -227,7 +228,7 @@ func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 				break
 			}
 
-			p, err := o.Parse(conf, cmd, servers, &[]string{}, false)
+			p, err := o.Parse(confLTR, servers, &[]string{})
 			if err != nil {
 				return nil, err
 			}
@@ -238,7 +239,7 @@ func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 
 		// Parsing up to the penultimate atom behaves normally.
 		for i < n-1 {
-			p, err := atoms[i].Parse(conf, cmd, servers, &subArgs, false)
+			p, err := atoms[i].Parse(confLTR, servers, &subArgs)
 			if err != nil {
 				return nil, err
 			}
@@ -257,7 +258,7 @@ func (c compound) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[
 			lastArgs = append(lastArgs, strings.Join(subArgs, c.separator))
 		}
 
-		p, err := atoms[n-1].Parse(conf, cmd, servers, &lastArgs, false)
+		p, err := atoms[n-1].Parse(confLTR, servers, &lastArgs)
 		if err != nil {
 			return nil, err
 		}
@@ -333,8 +334,8 @@ func (d deprecated) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (d deprecated) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
-	parsed, err := d.atom.Parse(conf, cmd, servers, args, parseRTL)
+func (d deprecated) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	parsed, err := d.atom.Parse(conf, servers, args)
 	if err != nil {
 		return nil, err
 	}
@@ -370,8 +371,8 @@ func (f flag) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (f flag) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
-	cmdFlag := cmd.Flag(f.name)
+func (f flag) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	cmdFlag := conf.Command.Flag(f.name)
 	if cmdFlag == nil {
 		return nil, fmt.Errorf(i18n.G("Unknown flag --%s"), f.name)
 	}
@@ -410,8 +411,8 @@ func (h hide) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (h hide) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
-	return h.atom.Parse(conf, cmd, servers, args, parseRTL)
+func (h hide) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
+	return h.atom.Parse(conf, servers, args)
 }
 
 // Render renders the atom's usage string.
@@ -442,7 +443,7 @@ func (l list) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (l list) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+func (l list) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
 	var ps []*Parsed
 	var consumed []string
 
@@ -450,7 +451,7 @@ func (l list) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[stri
 	if l.separator == " " {
 		// The required occurrences of the list can have direct access to the args.
 		for range l.minOccurrences {
-			p, err := l.atom.Parse(conf, cmd, servers, args, parseRTL)
+			p, err := l.atom.Parse(conf, servers, args)
 			if err != nil {
 				return nil, err
 			}
@@ -465,7 +466,7 @@ func (l list) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[stri
 		for {
 			argsCopy := make([]string, len(*args))
 			copy(argsCopy, *args)
-			p, err := l.atom.Parse(conf, cmd, servers, &argsCopy, parseRTL)
+			p, err := l.atom.Parse(conf, servers, &argsCopy)
 			if err != nil {
 				// If there is a parsing error, simply throw it away.
 				if isParsingError(err) {
@@ -480,7 +481,7 @@ func (l list) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[stri
 			consumed = append(consumed, p.String)
 		}
 
-		if parseRTL {
+		if conf.RTL {
 			slices.Reverse(consumed)
 			slices.Reverse(ps)
 		}
@@ -499,7 +500,9 @@ func (l list) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[stri
 
 		i := 0
 		for i < l.minOccurrences || len(subArgs) > 0 {
-			p, err := l.atom.Parse(conf, cmd, servers, &subArgs, false)
+			confLTR := conf
+			confLTR.RTL = false
+			p, err := l.atom.Parse(confLTR, servers, &subArgs)
 			if err != nil {
 				// If there is a parsing error and the list is optional, simply throw it away and rollback
 				// the whole thing.
@@ -575,13 +578,13 @@ func (o optional) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (o optional) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+func (o optional) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
 	// We need to perform a deep copy of the arguments here, to easily rollback to a clean state if
 	// something bad happened.
 	argsCopy := make([]string, len(*args))
 	copy(argsCopy, *args)
 
-	p, err := o.atom.Parse(conf, cmd, servers, &argsCopy, parseRTL)
+	p, err := o.atom.Parse(conf, servers, &argsCopy)
 	if err != nil {
 		// If there is a parsing error, simply throw it away.
 		if isParsingError(err) {
@@ -622,7 +625,7 @@ func (p placeholder) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (p placeholder) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+func (p placeholder) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
 	if len(*args) == 0 {
 		return nil, &notEnoughArgumentsError{p}
 	}
@@ -660,7 +663,7 @@ func (r remote) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (r remote) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+func (r remote) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
 	skipped := false
 	arg := ""
 	if len(*args) == 0 {
@@ -673,7 +676,7 @@ func (r remote) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[st
 		return nil, &notEnoughArgumentsError{r}
 	}
 
-	remoteName, rest, err := conf.ParseRemote(arg)
+	remoteName, rest, err := conf.CLIConfig.ParseRemote(arg)
 	if err != nil {
 		return nil, err
 	}
@@ -689,7 +692,7 @@ func (r remote) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[st
 	if r.suffix == nil {
 		if rest != "" {
 			// Because this atom is skipped, we fallback to the default remote.
-			remoteServer, serverErr := getInstanceServer(conf, servers, conf.DefaultRemote)
+			remoteServer, serverErr := getInstanceServer(conf, servers, conf.CLIConfig.DefaultRemote)
 			if serverErr != nil {
 				return nil, serverErr
 			}
@@ -705,13 +708,15 @@ func (r remote) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[st
 			}
 
 			if r.optional {
-				return &Parsed{source: r, err: err, RemoteName: conf.DefaultRemote, RemoteServer: remoteServer, Skipped: true}, nil
+				return &Parsed{source: r, err: err, RemoteName: conf.CLIConfig.DefaultRemote, RemoteServer: remoteServer, Skipped: true}, nil
 			}
 
 			return nil, err
 		}
 	} else {
-		p, err = r.suffix.Parse(conf, cmd, servers, &restArgs, false)
+		confLTR := conf
+		confLTR.RTL = false
+		p, err = r.suffix.Parse(confLTR, servers, &restArgs)
 		if err != nil {
 			return nil, err
 		}
@@ -773,7 +778,7 @@ func (v verbatim) Optional(chain ...Atom) Atom {
 }
 
 // Parse parses the atom.
-func (v verbatim) Parse(conf *cliconfig.Config, cmd *cobra.Command, servers map[string]incus.InstanceServer, args *[]string, parseRTL bool) (*Parsed, error) {
+func (v verbatim) Parse(conf Config, servers map[string]incus.InstanceServer, args *[]string) (*Parsed, error) {
 	if len(*args) == 0 {
 		return nil, &notEnoughArgumentsError{v}
 	}

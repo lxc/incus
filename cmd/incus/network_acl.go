@@ -120,7 +120,7 @@ func (c *cmdNetworkACLList) command() *cobra.Command {
 }
 
 func (c *cmdNetworkACLList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (c *cmdNetworkACLShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkACLShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -251,7 +251,7 @@ func (c *cmdNetworkACLShowLog) command() *cobra.Command {
 }
 
 func (c *cmdNetworkACLShowLog) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLShowLogUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLShowLogUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func (c *cmdNetworkACLGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkACLGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -377,7 +377,7 @@ incus network acl create a1 < config.yaml
 }
 
 func (c *cmdNetworkACLCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -505,7 +505,7 @@ func (c *cmdNetworkACLSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdNetworkACLSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -549,7 +549,7 @@ func (c *cmdNetworkACLUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkACLUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -613,7 +613,7 @@ func (c *cmdNetworkACLEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkACLEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -716,7 +716,7 @@ func (c *cmdNetworkACLRename) command() *cobra.Command {
 }
 
 func (c *cmdNetworkACLRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -762,7 +762,7 @@ func (c *cmdNetworkACLDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkACLDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -904,7 +904,7 @@ func (c *cmdNetworkACLRule) parseConfigToRule(config map[string]string) (*api.Ne
 }
 
 func (c *cmdNetworkACLRule) runAdd(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLRuleAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLRuleAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -982,7 +982,7 @@ func (c *cmdNetworkACLRule) commandRemove() *cobra.Command {
 }
 
 func (c *cmdNetworkACLRule) runRemove(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkACLRuleRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkACLRuleRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}

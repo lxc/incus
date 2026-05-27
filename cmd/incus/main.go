@@ -36,6 +36,7 @@ type cmdGlobal struct {
 	cmd      *cobra.Command
 	ret      int
 
+	flagExplain    bool
 	flagForceLocal bool
 	flagHelp       bool
 	flagHelpAll    bool
@@ -45,6 +46,16 @@ type cmdGlobal struct {
 	flagQuiet      bool
 	flagVersion    bool
 	flagSubCmds    bool
+}
+
+// Parse configures the parser and calls it on the given arguments.
+func (c *cmdGlobal) Parse(usage u.Usage, cmd *cobra.Command, args []string, rtl ...bool) ([]*u.Parsed, error) {
+	conf := u.Config{CLIConfig: c.conf, CLIConfigPath: c.confPath, Command: cmd, ExplainOnly: c.flagExplain}
+	if len(rtl) > 0 {
+		conf.RTL = rtl[0]
+	}
+
+	return usage.Parse(conf, args)
 }
 
 var commandFooter = i18n.G(`Use "{{.CommandPath}} [<command>] --help" for more information about a command.`)
@@ -164,7 +175,7 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.PersistentFlags().BoolVarP(&globalCmd.flagLogVerbose, "verbose", "v", false, i18n.G("Show all information messages"))
 	app.PersistentFlags().BoolVarP(&globalCmd.flagQuiet, "quiet", "q", false, i18n.G("Don't show progress information"))
 	app.PersistentFlags().BoolVar(&globalCmd.flagSubCmds, "sub-commands", false, i18n.G("Use with help or --help to view sub-commands"))
-	app.PersistentFlags().BoolVar(&u.ExplainOnly, "explain", false, i18n.G("If the command is valid, explain its parsed arguments instead of running it"))
+	app.PersistentFlags().BoolVar(&globalCmd.flagExplain, "explain", false, i18n.G("If the command is valid, explain its parsed arguments instead of running it"))
 
 	// Wrappers
 	app.PersistentPreRunE = globalCmd.preRun

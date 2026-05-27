@@ -61,7 +61,7 @@ incus monitor --type=lifecycle
 }
 
 func (c *cmdMonitor) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdMonitorUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdMonitorUsage, cmd, args)
 	if err != nil {
 		return err
 	}

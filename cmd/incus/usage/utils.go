@@ -10,12 +10,12 @@ import (
 	"github.com/lxc/incus/v7/shared/cliconfig"
 )
 
-func getInstanceServer(conf *cliconfig.Config, servers map[string]incus.InstanceServer, remoteName string) (incus.InstanceServer, error) {
+func getInstanceServer(conf Config, servers map[string]incus.InstanceServer, remoteName string) (incus.InstanceServer, error) {
 	// Look for a the remote in our cache.
 	remoteServer, ok := servers[remoteName]
 	if !ok {
 		// New connection
-		d, err := conf.GetInstanceServer(remoteName)
+		d, err := conf.CLIConfig.GetInstanceServer(remoteName)
 		if err != nil {
 			return nil, err
 		}
@@ -24,19 +24,29 @@ func getInstanceServer(conf *cliconfig.Config, servers map[string]incus.Instance
 		remoteServer = d
 	}
 
+	if remoteName != "local" {
+		info, err := remoteServer.GetConnectionInfo()
+		if err == nil && info.URL != conf.CLIConfig.Remotes[remoteName].LastWorkingAddr {
+			remote := conf.CLIConfig.Remotes[remoteName]
+			remote.LastWorkingAddr = info.URL
+			conf.CLIConfig.Remotes[remoteName] = remote
+			_ = conf.SaveCLIConfig()
+		}
+	}
+
 	return remoteServer, nil
 }
 
 // ParseString returns a parsed atom corresponding to a single string.
 func ParseString(s string) *Parsed {
-	p, _ := placeholder{}.Parse(nil, nil, nil, &[]string{s}, false)
+	p, _ := placeholder{}.Parse(Config{RTL: false}, nil, &[]string{s})
 	return p
 }
 
 // ParseDefault returns a parsed atom corresponding to how the given atom is parsed without any
 // argument.
 func ParseDefault(atom Atom, conf *cliconfig.Config) (*Parsed, error) {
-	return atom.Parse(conf, nil, map[string]incus.InstanceServer{}, &[]string{}, false)
+	return atom.Parse(Config{CLIConfig: conf, RTL: false}, map[string]incus.InstanceServer{}, &[]string{})
 }
 
 // renderRaw returns the atom rendered after disabling terminal coloring.
