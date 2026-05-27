@@ -41,9 +41,10 @@ func ParseCPU(cpuAllowance string, cpuPriority string) (int64, int64, int64, err
 	cpuCfsPeriod := int64(-1)
 
 	if cpuAllowance != "" {
-		if strings.HasSuffix(cpuAllowance, "%") {
+		before, ok := strings.CutSuffix(cpuAllowance, "%")
+		if ok {
 			// Percentage based allocation
-			percent, err := strconv.Atoi(strings.TrimSuffix(cpuAllowance, "%"))
+			percent, err := strconv.Atoi(before)
 			if err != nil {
 				return -1, -1, -1, err
 			}

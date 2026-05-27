@@ -720,7 +720,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		// Client and metric type certificates from the cluster we are joining will not be added until later.
 		s.UpdateCertificateCache()
 
-		// Update local setup and possibly join the raft dqlite cluster.
+		// Update local setup and possibly join the raft cowsql cluster.
 		nodes := make([]db.RaftNode, len(info.RaftNodes))
 		for i, raftNode := range info.RaftNodes {
 			nodes[i].ID = raftNode.ID
@@ -2326,7 +2326,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 
 	err = rebalanceMemberRoles(s, d.gateway, r, nil)
 	if err != nil {
-		logger.Warnf("Failed to rebalance dqlite nodes: %v", err)
+		logger.Warnf("Failed to rebalance cowsql nodes: %v", err)
 	}
 
 	// If this leader node removed itself, just disable clustering.
@@ -2459,7 +2459,7 @@ type internalClusterPostAcceptResponse struct {
 	PrivateKey []byte             `json:"private_key" yaml:"private_key"`
 }
 
-// Represent a node that is part of the dqlite raft cluster.
+// Represent a node that is part of the cowsql raft cluster.
 type internalRaftNode struct {
 	ID      uint64 `json:"id" yaml:"id"`
 	Address string `json:"address" yaml:"address"`
@@ -2504,7 +2504,7 @@ func internalClusterPostRebalance(d *Daemon, r *http.Request) response.Response 
 	return response.SyncResponse(true, nil)
 }
 
-// Check if there's a dqlite node whose role should be changed, and post a
+// Check if there's a cowsql node whose role should be changed, and post a
 // change role request if so.
 func rebalanceMemberRoles(s *state.State, gateway *cluster.Gateway, r *http.Request, unavailableMembers []string) error {
 	if s.ShutdownCtx.Err() != nil {
@@ -2665,7 +2665,7 @@ findLeader:
 	return nil
 }
 
-// Used to assign a new role to a the local dqlite node.
+// Used to assign a new role to a the local cowsql node.
 func internalClusterPostAssign(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 	req := internalClusterPostAssignRequest{}

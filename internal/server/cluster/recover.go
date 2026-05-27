@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-	dqlite "github.com/cowsql/go-cowsql"
+	cowsql "github.com/cowsql/go-cowsql"
 	"github.com/cowsql/go-cowsql/client"
 
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -41,7 +42,7 @@ func ListDatabaseNodes(database *db.Node) ([]string, error) {
 
 // Recover attempts data recovery on the cluster database.
 func Recover(database *db.Node) error {
-	// Figure out if we actually act as dqlite node.
+	// Figure out if we actually act as cowsql node.
 	var info *db.RaftNode
 	err := database.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
 		var err error
@@ -64,16 +65,16 @@ func Recover(database *db.Node) error {
 	}
 
 	dir := filepath.Join(database.Dir(), "global")
-	server, err := dqlite.New(
+	server, err := cowsql.New(
 		uint64(info.ID),
 		info.Address,
 		dir,
 	)
 	if err != nil {
-		return fmt.Errorf("Failed to create dqlite server: %w", err)
+		return fmt.Errorf("Failed to create cowsql server: %w", err)
 	}
 
-	cluster := []dqlite.NodeInfo{
+	cluster := []cowsql.NodeInfo{
 		{ID: uint64(info.ID), Address: info.Address},
 	}
 
@@ -166,8 +167,8 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 	}
 
 	dir := filepath.Join(database.Dir(), "global")
-	// Replace cluster configuration in dqlite.
-	err = dqlite.ReconfigureMembershipExt(dir, nodes)
+	// Replace cluster configuration in cowsql.
+	err = cowsql.ReconfigureMembershipExt(dir, nodes)
 	if err != nil {
 		return fmt.Errorf("Failed to recover database state: %w", err)
 	}
@@ -181,12 +182,12 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 	}
 
 	// Create patch file for global nodes database.
-	content := ""
+	var content strings.Builder
 	for _, raftNode := range nodes {
-		content += fmt.Sprintf("UPDATE nodes SET address = %q WHERE id = %d;\n", raftNode.Address, raftNode.ID)
+		fmt.Fprintf(&content, "UPDATE nodes SET address = %q WHERE id = %d;\n", raftNode.Address, raftNode.ID)
 	}
 
-	if len(content) > 0 {
+	if len(content.String()) > 0 {
 		filePath := filepath.Join(database.Dir(), "patch.global.sql")
 		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
@@ -195,7 +196,7 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 
 		defer func() { _ = file.Close() }()
 
-		_, err = file.Write([]byte(content))
+		_, err = file.Write([]byte(content.String()))
 		if err != nil {
 			return err
 		}
@@ -229,17 +230,17 @@ func RemoveRaftNode(gateway *Gateway, address string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	dqliteClient, err := client.FindLeader(
+	cowsqlClient, err := client.FindLeader(
 		ctx, gateway.NodeStore(),
 		client.WithDialFunc(gateway.raftDial()),
-		client.WithLogFunc(DqliteLog),
+		client.WithLogFunc(CowsqlLog),
 	)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
-	err = dqliteClient.Remove(ctx, id)
+	defer func() { _ = cowsqlClient.Close() }()
+	err = cowsqlClient.Remove(ctx, id)
 	if err != nil {
 		return fmt.Errorf("Failed to remove node: %w", err)
 	}

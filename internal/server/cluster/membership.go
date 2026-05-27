@@ -27,7 +27,7 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-// errClusterBusy is returned by dqlite if attempting attempting to join a cluster at the same time as a role-change.
+// errClusterBusy is returned by cowsql if attempting attempting to join a cluster at the same time as a role-change.
 // This error tells us we can retry and probably join the cluster or fail due to something else.
 // The error code here is SQLITE_BUSY.
 var errClusterBusy = errors.New("A configuration change is already in progress (5)")
@@ -103,11 +103,11 @@ func Bootstrap(s *state.State, gateway *Gateway, serverName string) error {
 	}
 
 	// Reload the trusted certificate cache to enable the certificate we just added to the local trust store
-	// to be used when validating endpoint connections. This will allow Dqlite to connect to ourselves.
+	// to be used when validating endpoint connections. This will allow Cowsql to connect to ourselves.
 	s.UpdateCertificateCache()
 
-	// Shutdown the gateway. This will trash any dqlite connection against
-	// our in-memory dqlite driver and shutdown the associated raft
+	// Shutdown the gateway. This will trash any cowsql connection against
+	// our in-memory cowsql driver and shutdown the associated raft
 	// instance. We also lock regular access to the cluster database since
 	// we don't want any other database code to run while we're
 	// reconfiguring raft.
@@ -142,7 +142,7 @@ func Bootstrap(s *state.State, gateway *Gateway, serverName string) error {
 	}
 
 	// Re-initialize the gateway. This will create a new raft factory an
-	// dqlite driver instance, which will be exposed over gRPC by the
+	// cowsql driver instance, which will be exposed over gRPC by the
 	// gateway handlers.
 	err = gateway.init(true)
 	if err != nil {
@@ -389,7 +389,7 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 	}
 
 	// Shutdown the gateway and wipe any raft data. This will trash any
-	// gRPC SQL connection against our in-memory dqlite driver and shutdown
+	// gRPC SQL connection against our in-memory cowsql driver and shutdown
 	// the associated raft instance.
 	err = gateway.Shutdown()
 	if err != nil {
@@ -402,7 +402,7 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 	}
 
 	// Re-initialize the gateway. This will create a new raft factory an
-	// dqlite driver instance, which will be exposed over gRPC by the
+	// cowsql driver instance, which will be exposed over gRPC by the
 	// gateway handlers.
 	gateway.networkCert = networkCert
 	err = gateway.init(false)
@@ -422,19 +422,19 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 		panic("Joining member not found")
 	}
 
-	logger.Info("Joining dqlite raft cluster", logger.Ctx{"id": info.ID, "local": info.Address, "role": info.Role})
+	logger.Info("Joining cowsql raft cluster", logger.Ctx{"id": info.ID, "local": info.Address, "role": info.Role})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	dqliteClient, err := client.FindLeader(
+	cowsqlClient, err := client.FindLeader(
 		ctx, gateway.NodeStore(),
 		client.WithDialFunc(gateway.raftDial()),
-		client.WithLogFunc(DqliteLog),
+		client.WithLogFunc(CowsqlLog),
 	)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
+	defer func() { _ = cowsqlClient.Close() }()
 
 	logger.Info("Adding node to cluster", logger.Ctx{"id": info.ID, "local": info.Address, "role": info.Role})
 	ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
@@ -447,7 +447,7 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 		case <-ctx.Done():
 			return fmt.Errorf("Failed to join cluster: %w", ctx.Err())
 		default:
-			err = dqliteClient.Add(ctx, info.NodeInfo)
+			err = cowsqlClient.Add(ctx, info.NodeInfo)
 			if err != nil && err.Error() == errClusterBusy.Error() {
 				// If the cluster is busy with a role change, sleep a second and then keep trying to join.
 				time.Sleep(1 * time.Second)
@@ -643,11 +643,9 @@ func NotifyHeartbeat(s *state.State, gateway *Gateway) {
 	var wg sync.WaitGroup
 
 	// Refresh local event listeners.
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		EventsUpdateListeners(s, hbState.Members, s.Events.Inject)
-		wg.Done()
-	}()
+	})
 
 	// Notify all other members of the change in membership.
 	logger.Info("Notifying cluster members of local role change")
@@ -768,7 +766,7 @@ func Rebalance(s *state.State, gateway *Gateway, unavailableMembers []string) (s
 	return candidateAddress, nodes, nil
 }
 
-// Assign a new role to the local dqlite node.
+// Assign a new role to the local cowsql node.
 func Assign(s *state.State, gateway *Gateway, nodes []db.RaftNode) error {
 	// Figure out our own address.
 	address := ""
@@ -819,18 +817,18 @@ func Assign(s *state.State, gateway *Gateway, nodes []db.RaftNode) error {
 
 	var transactor func(context.Context, func(ctx context.Context, tx *db.ClusterTx) error) error
 
-	// If we are already running a dqlite node, it means we have cleanly
+	// If we are already running a cowsql node, it means we have cleanly
 	// joined the cluster before, using the roles support API. In that case
 	// there's no need to restart the gateway and we can just change our
-	// dqlite role.
-	if gateway.IsDqliteNode() {
+	// cowsql role.
+	if gateway.IsCowsqlNode() {
 		transactor = s.DB.Cluster.Transaction
 		goto assign
 	}
 
 	// If we get here it means that we are an upgraded node from cluster
 	// without roles support, or we didn't cleanly join the cluster. Either
-	// way, we don't have a dqlite node running, so we need to restart the
+	// way, we don't have a cowsql node running, so we need to restart the
 	// gateway.
 
 	// Lock regular access to the cluster database since we don't want any
@@ -850,7 +848,7 @@ func Assign(s *state.State, gateway *Gateway, nodes []db.RaftNode) error {
 	}
 
 	// Re-initialize the gateway. This will create a new raft factory an
-	// dqlite driver instance, which will be exposed over gRPC by the
+	// cowsql driver instance, which will be exposed over gRPC by the
 	// gateway handlers.
 	err = gateway.init(false)
 	if err != nil {
@@ -863,16 +861,16 @@ assign:
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	dqliteClient, err := client.FindLeader(ctx, gateway.NodeStore(), client.WithDialFunc(gateway.raftDial()))
+	cowsqlClient, err := client.FindLeader(ctx, gateway.NodeStore(), client.WithDialFunc(gateway.raftDial()))
 	if err != nil {
 		return fmt.Errorf("Connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
+	defer func() { _ = cowsqlClient.Close() }()
 
 	// Figure out our current role.
 	role := db.RaftRole(-1)
-	currentCluster, err := dqliteClient.Cluster(ctx)
+	currentCluster, err := cowsqlClient.Cluster(ctx)
 	if err != nil {
 		return fmt.Errorf("Fetch current cluster configuration: %w", err)
 	}
@@ -892,14 +890,14 @@ assign:
 	// notified to us. This prevent us from thinking we're still voters and
 	// potentially disrupt the cluster.
 	if role == db.RaftVoter && info.Role == db.RaftSpare {
-		err = dqliteClient.Assign(ctx, info.ID, db.RaftStandBy)
+		err = cowsqlClient.Assign(ctx, info.ID, db.RaftStandBy)
 		if err != nil {
 			return fmt.Errorf("Failed to step back to stand-by: %w", err)
 		}
 
 		local, err := gateway.getClient()
 		if err != nil {
-			return fmt.Errorf("Failed to get local dqlite client: %w", err)
+			return fmt.Errorf("Failed to get local cowsql client: %w", err)
 		}
 
 		notified := false
@@ -936,7 +934,7 @@ assign:
 		defer cancel()
 	}
 
-	err = dqliteClient.Assign(ctx, info.ID, info.Role)
+	err = cowsqlClient.Assign(ctx, info.ID, info.Role)
 	if err != nil {
 		return fmt.Errorf("Failed to assign role: %w", err)
 	}
@@ -1026,18 +1024,18 @@ func Leave(s *state.State, gateway *Gateway, name string, force bool, pending bo
 
 	// Get the address of another database node,
 	logger.Info(
-		"Remove node from dqlite raft cluster",
+		"Remove node from cowsql raft cluster",
 		logger.Ctx{"id": info.ID, "address": info.Address})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	dqliteClient, err := gateway.getClient()
+	cowsqlClient, err := gateway.getClient()
 	if err != nil {
 		return "", fmt.Errorf("Failed to connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
-	err = dqliteClient.Remove(ctx, info.ID)
+	defer func() { _ = cowsqlClient.Close() }()
+	err = cowsqlClient.Remove(ctx, info.ID)
 	if err != nil {
 		return "", fmt.Errorf("Failed to leave the cluster: %w", err)
 	}
@@ -1065,7 +1063,7 @@ func Handover(s *state.State, gateway *Gateway, address string) (string, []db.Ra
 	}
 
 	if nodeID == 0 {
-		return "", nil, fmt.Errorf("No dqlite node has address %s: %w", address, err)
+		return "", nil, fmt.Errorf("No cowsql node has address %s: %w", address, err)
 	}
 
 	roles, err := newRolesChanges(s, gateway, nodes, nil)

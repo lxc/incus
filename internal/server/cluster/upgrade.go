@@ -41,7 +41,7 @@ func NotifyUpgradeCompleted(s *state.State, networkCert *localtls.CertInfo, serv
 			return fmt.Errorf("failed to create database notify upgrade request: %w", err)
 		}
 
-		setDqliteVersionHeader(request)
+		setCowsqlVersionHeader(request)
 
 		httpClient, err := client.GetHTTPClient()
 		if err != nil {
@@ -155,12 +155,12 @@ func UpgradeMembersWithoutRole(gateway *Gateway, members []db.NodeInfo) error {
 		raftNodeIDs[node.ID] = true
 	}
 
-	dqliteClient, err := gateway.getClient()
+	cowsqlClient, err := gateway.getClient()
 	if err != nil {
-		return fmt.Errorf("Failed to connect to local dqlite member: %w", err)
+		return fmt.Errorf("Failed to connect to local cowsql member: %w", err)
 	}
 
-	defer func() { _ = dqliteClient.Close() }()
+	defer func() { _ = cowsqlClient.Close() }()
 
 	// Check that each member is present in the raft configuration, and add it if not.
 	for _, member := range members {
@@ -205,13 +205,13 @@ func UpgradeMembersWithoutRole(gateway *Gateway, members []db.NodeInfo) error {
 			Name: "",
 		}
 
-		logger.Info("Add spare dqlite node", logger.Ctx{"id": info.ID, "address": info.Address})
+		logger.Info("Add spare cowsql node", logger.Ctx{"id": info.ID, "address": info.Address})
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err = dqliteClient.Add(ctx, info.NodeInfo)
+		err = cowsqlClient.Add(ctx, info.NodeInfo)
 		cancel()
 		if err != nil {
-			return fmt.Errorf("Failed to add dqlite member: %w", err)
+			return fmt.Errorf("Failed to add cowsql member: %w", err)
 		}
 	}
 

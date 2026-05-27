@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -259,8 +260,8 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 
 func (f *heartbeatFixture) Cleanup() {
 	// Run the cleanups in reverse order
-	for i := len(f.cleanups) - 1; i >= 0; i-- {
-		f.cleanups[i]()
+	for _, v := range slices.Backward(f.cleanups) {
+		v()
 	}
 
 	for _, server := range f.servers {

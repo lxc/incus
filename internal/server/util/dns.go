@@ -2,6 +2,7 @@ package util
 
 import (
 	"net"
+	"slices"
 )
 
 // Zone suffixes.
@@ -28,8 +29,7 @@ func ReverseDNS(ip net.IP) (arpa string) {
 	buf := make([]byte, 0, len(ip)*4+len(IPv6Arpa))
 
 	// Add it, in reverse, to the buffer.
-	for i := len(ip) - 1; i >= 0; i-- {
-		v := ip[i]
+	for _, v := range slices.Backward(ip) {
 		buf = append(buf, hexDigit[v&0xF],
 			'.',
 			hexDigit[v>>4],

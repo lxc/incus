@@ -14,16 +14,16 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 )
 
-// RaftNode holds information about a single node in the dqlite raft cluster.
+// RaftNode holds information about a single node in the cowsql raft cluster.
 //
 // This is just a convenience alias for the equivalent data structure in the
-// dqlite client package.
+// cowsql client package.
 type RaftNode struct {
 	client.NodeInfo
 	Name string
 }
 
-// RaftRole captures the role of dqlite/raft node.
+// RaftRole captures the role of cowsql/raft node.
 type RaftRole = client.NodeRole
 
 // RaftNode roles.
@@ -34,7 +34,7 @@ const (
 )
 
 // GetRaftNodes returns information about all cluster members that are members of the
-// dqlite Raft cluster (possibly including the local member). If this server
+// cowsql Raft cluster (possibly including the local member). If this server
 // is not running in clustered mode, an empty list is returned.
 func (n *NodeTx) GetRaftNodes(ctx context.Context) ([]RaftNode, error) {
 	nodes := []RaftNode{}
@@ -59,7 +59,7 @@ func (n *NodeTx) GetRaftNodes(ctx context.Context) ([]RaftNode, error) {
 }
 
 // GetRaftNodeAddresses returns the addresses of all servers that are members of
-// the dqlite Raft cluster (possibly including the local member). If this server
+// the cowsql Raft cluster (possibly including the local member). If this server
 // is not running in clustered mode, an empty list is returned.
 func (n *NodeTx) GetRaftNodeAddresses(ctx context.Context) ([]string, error) {
 	return query.SelectStrings(ctx, n.tx, "SELECT address FROM raft_nodes")
@@ -107,7 +107,7 @@ func (n *NodeTx) CreateFirstRaftNode(address string, name string) error {
 }
 
 // CreateRaftNode adds a node to the current list of nodes that are part of the
-// dqlite Raft cluster. It returns the ID of the newly inserted row.
+// cowsql Raft cluster. It returns the ID of the newly inserted row.
 func (n *NodeTx) CreateRaftNode(address string, name string) (int64, error) {
 	columns := []string{"address", "name"}
 	values := []any{address, name}
@@ -115,7 +115,7 @@ func (n *NodeTx) CreateRaftNode(address string, name string) (int64, error) {
 }
 
 // RemoveRaftNode removes a node from the current list of nodes that are
-// part of the dqlite Raft cluster.
+// part of the cowsql Raft cluster.
 func (n *NodeTx) RemoveRaftNode(id int64) error {
 	deleted, err := query.DeleteObject(n.tx, "raft_nodes", id)
 	if err != nil {

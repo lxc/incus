@@ -51,6 +51,6 @@ func newConfig() *DaemonConfig {
 	return &DaemonConfig{
 		RaftLatency:        0.8,
 		Trace:              []string{"dqlite"},
-		DqliteSetupTimeout: 10 * time.Second,
+		CowsqlSetupTimeout: 10 * time.Second,
 	}
 }

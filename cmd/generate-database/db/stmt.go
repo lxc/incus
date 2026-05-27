@@ -62,7 +62,7 @@ func NewStmt(localPath string, parsedPkgs []*packages.Package, entity, kind stri
 
 // Generate plumbing and wiring code for the desired statement.
 func (s *Stmt) Generate(buf *file.Buffer) error {
-	kind := strings.Split(s.kind, "-by-")[0]
+	kind, _, _ := strings.Cut(s.kind, "-by-")
 
 	switch kind {
 	case "objects":

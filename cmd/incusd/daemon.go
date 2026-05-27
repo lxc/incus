@@ -20,7 +20,7 @@ import (
 	"sync"
 	"time"
 
-	dqliteClient "github.com/cowsql/go-cowsql/client"
+	cowsqlClient "github.com/cowsql/go-cowsql/client"
 	"github.com/cowsql/go-cowsql/driver"
 	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"
@@ -182,7 +182,7 @@ type DaemonConfig struct {
 	Group              string        // Group name the local unix socket should be chown'ed to
 	Trace              []string      // List of sub-systems to trace
 	RaftLatency        float64       // Coarse grain measure of the cluster latency
-	DqliteSetupTimeout time.Duration // How long to wait for the cluster database to be up
+	CowsqlSetupTimeout time.Duration // How long to wait for the cluster database to be up
 }
 
 // newDaemon returns a new Daemon object with the given configuration.
@@ -215,7 +215,7 @@ func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
 func defaultDaemonConfig() *DaemonConfig {
 	return &DaemonConfig{
 		RaftLatency:        3.0,
-		DqliteSetupTimeout: 36 * time.Hour, // Account for snap refresh lag
+		CowsqlSetupTimeout: 36 * time.Hour, // Account for snap refresh lag
 	}
 }
 
@@ -1081,7 +1081,7 @@ func (d *Daemon) init() error {
 		d.serverCertInt = serverCert
 	}
 
-	/* Setup dqlite */
+	/* Setup cowsql */
 	clusterLogLevel := "ERROR"
 	if slices.Contains(trace, "dqlite") {
 		clusterLogLevel = "TRACE"
@@ -1169,14 +1169,14 @@ func (d *Daemon) init() error {
 			driver.WithContext(d.gateway.Context()),
 			driver.WithConnectionTimeout(10 * time.Second),
 			driver.WithContextTimeout(contextTimeout),
-			driver.WithLogFunc(cluster.DqliteLog),
+			driver.WithLogFunc(cluster.CowsqlLog),
 		}
 
 		if slices.Contains(trace, "database") {
-			options = append(options, driver.WithTracing(dqliteClient.LogDebug))
+			options = append(options, driver.WithTracing(cowsqlClient.LogDebug))
 		}
 
-		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.DqliteSetupTimeout, options...)
+		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.CowsqlSetupTimeout, options...)
 		if err == nil {
 			logger.Info("Initialized global database")
 			break
@@ -1799,7 +1799,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	}
 
 	if d.gateway != nil {
-		trackError(d.gateway.Shutdown(), "Shutdown dqlite")
+		trackError(d.gateway.Shutdown(), "Shutdown cowsql")
 	}
 
 	if d.endpoints != nil {
@@ -2280,7 +2280,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLead
 	for _, member := range hbData.Members {
 		if member.RaftID > 0 {
 			raftNodes = append(raftNodes, db.RaftNode{
-				NodeInfo: dqliteClient.NodeInfo{
+				NodeInfo: cowsqlClient.NodeInfo{
 					ID:      member.RaftID,
 					Address: member.Address,
 					Role:    db.RaftRole(member.RaftRole),
@@ -2385,11 +2385,9 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	// Run asynchronously so that connecting to remote members doesn't delay other heartbeat tasks.
 	wg := sync.WaitGroup{}
 
-	wg.Add(1)
-	go func() {
+	wg.Go(func() {
 		cluster.EventsUpdateListeners(d.State(), heartbeatData.Members, d.events.Inject)
-		wg.Done()
-	}()
+	})
 
 	// Only update the node list if there are no state change task failures.
 	// If there are failures, then we leave the old state so that we can re-try the tasks again next heartbeat.

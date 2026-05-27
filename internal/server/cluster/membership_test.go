@@ -140,7 +140,7 @@ func TestBootstrap(t *testing.T) {
 	// The cluster certificate is in place.
 	assert.True(t, util.PathExists(filepath.Join(s.OS.VarDir, "cluster.crt")))
 
-	// The dqlite driver is now exposed over the network.
+	// The cowsql driver is now exposed over the network.
 	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
 		mux.HandleFunc(path, handler)
 	}

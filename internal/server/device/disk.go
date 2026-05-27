@@ -2951,8 +2951,9 @@ func (d *disk) parseLimit(dev deviceConfig.Device) (int64, int64, int64, int64, 
 			return bps, iops, nil
 		}
 
-		if strings.HasSuffix(value, "iops") {
-			iops, err = strconv.ParseInt(strings.TrimSuffix(value, "iops"), 10, 64)
+		before, ok := strings.CutSuffix(value, "iops")
+		if ok {
+			iops, err = strconv.ParseInt(before, 10, 64)
 			if err != nil {
 				return -1, -1, err
 			}
@@ -3039,7 +3040,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 
 	if fsName == "zfs" && util.PathExists("/dev/zfs") {
 		// Accessible zfs filesystems
-		poolName := strings.Split(dev[1], "/")[0]
+		poolName, _, _ := strings.Cut(dev[1], "/")
 
 		output, err := subprocess.RunCommand("zpool", "status", "-P", "-L", poolName)
 		if err != nil {

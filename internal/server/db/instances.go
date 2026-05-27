@@ -292,7 +292,7 @@ func (c *ClusterTx) InstanceList(ctx context.Context, instanceFunc func(inst Ins
 func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, instanceArgs *map[int]InstanceArgs) error {
 	instances := *instanceArgs
 
-	// Don't use query parameters for the IN statement to workaround an issue in Dqlite (apparently)
+	// Don't use query parameters for the IN statement to workaround an issue in Cowsql (apparently)
 	// that means that >255 query parameters causes partial result sets. See #10705
 	// This is safe as the inputs are ints.
 	var q strings.Builder
@@ -364,7 +364,7 @@ func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, 
 func (c *ClusterTx) instanceDevicesFill(ctx context.Context, snapshotsMode bool, instanceArgs *map[int]InstanceArgs) error {
 	instances := *instanceArgs
 
-	// Don't use query parameters for the IN statement to workaround an issue in Dqlite (apparently)
+	// Don't use query parameters for the IN statement to workaround an issue in Cowsql (apparently)
 	// that means that >255 query parameters causes partial result sets. See #10705
 	// This is safe as the inputs are ints.
 	var q strings.Builder
@@ -455,7 +455,7 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 	instances := *instanceArgs
 
 	// Get profiles referenced by instances.
-	// Don't use query parameters for the IN statement to workaround an issue in Dqlite (apparently)
+	// Don't use query parameters for the IN statement to workaround an issue in Cowsql (apparently)
 	// that means that >255 query parameters causes partial result sets. See #10705
 	// This is safe as the inputs are ints.
 	var q strings.Builder

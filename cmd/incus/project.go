@@ -1043,7 +1043,7 @@ func (c *cmdProjectInfo) run(cmd *cobra.Command, args []string) error {
 	byteLimits := []string{"disk", "memory"}
 	data := [][]string{}
 	for k, v := range projectState.Resources {
-		shortKey := strings.SplitN(k, ".", 2)[0]
+		shortKey, _, _ := strings.Cut(k, ".")
 
 		limit := i18n.G("UNLIMITED")
 		if v.Limit >= 0 {

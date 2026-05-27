@@ -472,11 +472,10 @@ func getImgInfo(d incus.InstanceServer, conf *config.Config, imgRemote string, i
 // removeElementsFromSlice returns a slice equivalent to removing the given elements from the given list.
 // Elements not present in the list are ignored.
 func removeElementsFromSlice[T comparable](list []T, elements ...T) []T {
-	for i := len(elements) - 1; i >= 0; i-- {
-		element := elements[i]
+	for i, element := range slices.Backward(elements) {
 		match := false
-		for j := len(list) - 1; j >= 0; j-- {
-			if element == list[j] {
+		for j, l := range slices.Backward(list) {
+			if element == l {
 				match = true
 				list = slices.Delete(list, j, j+1)
 				break

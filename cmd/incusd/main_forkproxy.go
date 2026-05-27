@@ -315,7 +315,7 @@ func (c *cmdForkproxy) command() *cobra.Command {
 func rearmUDPFd(epFd C.int, connFd C.int) {
 	var ev C.struct_epoll_event
 	ev.events = C.EPOLLIN | C.EPOLLONESHOT
-	*(*C.int)(unsafe.Pointer(uintptr(unsafe.Pointer(&ev)) + unsafe.Sizeof(ev.events))) = connFd
+	*(*C.int)(unsafe.Add(unsafe.Pointer(&ev), unsafe.Sizeof(ev.events))) = connFd
 	ret := C.epoll_ctl(epFd, C.EPOLL_CTL_MOD, connFd, &ev)
 	if ret < 0 {
 		fmt.Println("Error: Failed to add listener fd to epoll instance")
@@ -478,7 +478,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			listenPortCount := len(lAddr.Ports)
 			listenAddresses = make([]string, 0, listenPortCount)
 
-			for i := 0; i < listenPortCount; i++ {
+			for i := range listenPortCount {
 				listenAddresses = append(listenAddresses, net.JoinHostPort(lAddr.Address, fmt.Sprintf("%d", lAddr.Ports[i])))
 			}
 		}
@@ -689,7 +689,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			break
 		}
 
-		for i := C.int(0); i < nfds; i++ {
+		for i := range nfds {
 			curFd := *(*C.int)(unsafe.Pointer(&events[i].data))
 			srcConn, ok := listenerMap[int(curFd)]
 			if !ok {
@@ -962,7 +962,7 @@ func tryListen(protocol string, addr string) (net.Listener, error) {
 	var listener net.Listener
 	var err error
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		listener, err = net.Listen(protocol, addr)
 		if err == nil {
 			break
@@ -987,7 +987,7 @@ func tryListenUDP(protocol string, addr string) (*os.File, error) {
 		return nil, err
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		UDPConn, err = net.ListenUDP(protocol, udpAddr)
 		if err == nil {
 			file, err := UDPConn.File()

@@ -391,7 +391,7 @@ func (g *cmdGlobal) cmpInstancesAndSnapshots(toComplete string) ([]string, cobra
 		resource := resources[0]
 
 		if strings.Contains(resource.name, instance.SnapshotDelimiter) {
-			instName := strings.SplitN(resource.name, instance.SnapshotDelimiter, 2)[0]
+			instName, _, _ := strings.Cut(resource.name, instance.SnapshotDelimiter)
 			snapshots, _ := resource.server.GetInstanceSnapshotNames(instName)
 			for _, snapshot := range snapshots {
 				results = append(results, fmt.Sprintf("%s/%s", instName, snapshot))
@@ -1123,7 +1123,7 @@ func (g *cmdGlobal) cmpStoragePoolWithVolume(toComplete string) ([]string, cobra
 		return results, cobra.ShellCompDirectiveNoSpace
 	}
 
-	pool := strings.Split(toComplete, "/")[0]
+	pool, _, _ := strings.Cut(toComplete, "/")
 	volumes, compdir := g.cmpStoragePoolVolumes(pool)
 	if compdir == cobra.ShellCompDirectiveError {
 		return nil, compdir

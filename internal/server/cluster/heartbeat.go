@@ -309,7 +309,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 	}
 
 	// Avoid concurrent heartbeat loops.
-	// This is possible when both the regular task and the out of band heartbeat round from a dqlite
+	// This is possible when both the regular task and the out of band heartbeat round from a cowsql
 	// connection or notification restart both kick in at the same time.
 	g.HeartbeatLock.Lock()
 	defer g.HeartbeatLock.Unlock()
@@ -555,7 +555,7 @@ func HeartbeatNode(taskCtx context.Context, address string, networkCert *localtl
 		return err
 	}
 
-	setDqliteVersionHeader(request)
+	setCowsqlVersionHeader(request)
 
 	// Use 1s later timeout to give HTTP client chance timeout with more useful info.
 	ctx, cancel := context.WithTimeout(taskCtx, timeout+time.Second)
