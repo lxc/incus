@@ -2112,7 +2112,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	// Apply CPU pinning.
 	if bs.CPUTopology.vCPUs == nil {
-		if d.architectureSupportsCPUHotplug() && bs.CPUTopology.Cores > 1 {
+		if d.architectureSupportsCPUHotplug() && !bs.CPUTopology.Explicit && bs.CPUTopology.Cores > 1 {
 			// Hotplug the CPUs.
 			err := d.setCPUs(monitor, bs.CPUTopology.Cores)
 			if err != nil {
@@ -4300,21 +4300,30 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 
 	hostNodes := []uint64{}
 	if cpuInfo.vCPUs == nil {
-		// If not pinning, default to exposing cores.
-		// Only one CPU will be added here, as the others will be hotplugged during start.
-		if d.architectureSupportsCPUHotplug() {
+		if cpuInfo.Explicit {
+			// An explicit CPU topology was requested, expose it verbatim to the guest.
+			// This is incompatible with CPU hotplugging.
+			cpuOpts.cpuSockets = cpuInfo.Sockets
+			cpuOpts.cpuCores = cpuInfo.Cores
+			cpuOpts.cpuThreads = cpuInfo.Threads
+			cpuOpts.cpuCount = cpuInfo.Sockets * cpuInfo.Cores * cpuInfo.Threads
+		} else if d.architectureSupportsCPUHotplug() {
+			// If not pinning, default to exposing cores.
+			// Only one CPU will be added here, as the others will be hotplugged during start.
 			cpuOpts.cpuCount = 1
 			cpuOpts.cpuCores = 1
+			cpuOpts.cpuSockets = 1
+			cpuOpts.cpuThreads = 1
 
 			// Expose the total requested by the user already so the hotplug limit can be set higher if needed.
 			cpuOpts.cpuRequested = cpuInfo.Cores
 		} else {
 			cpuOpts.cpuCount = cpuInfo.Cores
 			cpuOpts.cpuCores = cpuInfo.Cores
+			cpuOpts.cpuSockets = 1
+			cpuOpts.cpuThreads = 1
 		}
 
-		cpuOpts.cpuSockets = 1
-		cpuOpts.cpuThreads = 1
 		hostNodes = []uint64{0}
 
 		// Handle NUMA restrictions.
@@ -4405,10 +4414,11 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, bs *qemuBootState) error 
 		return err
 	}
 
-	cpuPinning := bs.CPUTopology.vCPUs != nil
+	// A fixed topology is written verbatim, either due to CPU pinning or an explicit topology request.
+	cpuFixedTopology := bs.CPUTopology.vCPUs != nil || bs.CPUTopology.Explicit
 
 	*conf = append(*conf, qemuMemory(&qemuMemoryOpts{bs.MemoryTopology.Base / 1024 / 1024, bs.MemoryTopology.Max / 1024 / 1024})...)
-	*conf = append(*conf, qemuCPU(cpuOpts, cpuPinning)...)
+	*conf = append(*conf, qemuCPU(cpuOpts, cpuFixedTopology)...)
 
 	return nil
 }
@@ -6638,7 +6648,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				if oldValue != "" {
 					_, err := strconv.Atoi(oldValue)
 					if err != nil {
-						return fmt.Errorf("Cannot update key %q when using CPU pinning and the VM is running", key)
+						return fmt.Errorf("Cannot update key %q when using CPU pinning or an explicit CPU topology and the VM is running", key)
 					}
 				}
 
@@ -6649,7 +6659,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 				limit, err := strconv.Atoi(value)
 				if err != nil {
-					return errors.New("Cannot change CPU pinning when VM is running")
+					return errors.New("Cannot change to CPU pinning or an explicit CPU topology when the VM is running")
 				}
 
 				// Hotplug the CPUs.
@@ -7007,10 +7017,10 @@ func (d *qemu) hotplugMemory(monitor *qmp.Monitor, sizeBytes int64) error {
 		return err
 	}
 
-	cpuPinning := cpuInfo.vCPUs != nil
+	cpuFixedTopology := cpuInfo.vCPUs != nil || cpuInfo.Explicit
 
 	// Get CPUs and memory configuration
-	conf := qemuCPU(cpuOpts, cpuPinning)
+	conf := qemuCPU(cpuOpts, cpuFixedTopology)
 
 	memoryObjects := map[int]cfg.Section{}
 	for _, section := range conf {
