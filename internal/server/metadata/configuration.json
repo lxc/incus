@@ -2622,7 +2622,7 @@
 						"limits.cpu": {
 							"defaultdesc": "1 (VMs)",
 							"liveupdate": "yes",
-							"longdesc": "A number or a specific range of CPUs to expose to the instance.\n\nSee {ref}`instance-options-limits-cpu` for more information.",
+							"longdesc": "A number or a specific range of CPUs to expose to the instance.\nFor virtual machines, a CPU topology of the form `sockets=2,cores=4,threads=2` may also be provided.\n\nSee {ref}`instance-options-limits-cpu` for more information.",
 							"shortdesc": "Which CPUs to expose to the instance",
 							"type": "string"
 						}
