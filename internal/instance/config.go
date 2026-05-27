@@ -180,6 +180,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu)
 	// A number or a specific range of CPUs to expose to the instance.
+	// For virtual machines, a CPU topology of the form `sockets=2,cores=4,threads=2` may also be provided.
 	//
 	// See {ref}`instance-options-limits-cpu` for more information.
 	// ---
@@ -187,7 +188,15 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  defaultdesc: 1 (VMs)
 	//  liveupdate: yes
 	//  shortdesc: Which CPUs to expose to the instance
-	"limits.cpu": validate.Optional(validate.IsValidCPUSet),
+	"limits.cpu": validate.Optional(func(value string) error {
+		// A CPU topology (e.g. "sockets=2,cores=4,threads=2") is only valid for VMs and is
+		// rejected for containers later on, once the instance type is known.
+		if strings.Contains(value, "=") {
+			return validate.IsValidCPUTopology(value)
+		}
+
+		return validate.IsValidCPUSet(value)
+	}),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu.nodes)
 	// A comma-separated list of NUMA node IDs or ranges to place the instance CPUs on.
