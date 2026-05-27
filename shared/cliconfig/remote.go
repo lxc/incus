@@ -33,6 +33,7 @@ type RemoteTLS struct {
 // Remote holds details for communication with a remote daemon.
 type Remote struct {
 	Addrs           []string   `yaml:"-"`
+	LastWorkingAddr string     `yaml:"last_working_address,omitempty"`
 	AuthType        string     `yaml:"auth_type,omitempty"`
 	KeepAlive       int        `yaml:"keepalive,omitempty"`
 	Project         string     `yaml:"project,omitempty"`
@@ -77,6 +78,30 @@ func (r *Remote) UnmarshalYAML(unmarshal func(any) error) error {
 	}
 
 	return nil
+}
+
+// RollingAddrs allows iterating over the set of addresses starting with the last known working one.
+func (r *Remote) RollingAddrs() <-chan string {
+	ch := make(chan string)
+
+	go func() {
+		defer close(ch)
+		start := 0
+		if r.LastWorkingAddr != "" {
+			for i, addr := range r.Addrs {
+				if addr == r.LastWorkingAddr {
+					start = i
+					break
+				}
+			}
+		}
+
+		for i := 0; i < len(r.Addrs); i++ {
+			ch <- r.Addrs[(start+i)%len(r.Addrs)]
+		}
+	}()
+
+	return ch
 }
 
 // ParseRemote splits remote and object.
@@ -195,7 +220,7 @@ func (c *Config) GetInstanceServer(name string) (incus.InstanceServer, error) {
 
 	var errs []error
 
-	for _, addr := range remote.Addrs {
+	for addr := range remote.RollingAddrs() {
 		// Get connection arguments
 		args, err := c.getConnectionArgs(name, addr)
 		if err != nil {
@@ -338,7 +363,7 @@ func (c *Config) GetImageServer(name string) (incus.ImageServer, error) {
 
 	var errs []error
 
-	for _, addr := range remote.Addrs {
+	for addr := range remote.RollingAddrs() {
 		// Get connection arguments
 		args, err := c.getConnectionArgs(name, addr)
 		if err != nil {

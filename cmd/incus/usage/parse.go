@@ -19,10 +19,16 @@ import (
 
 // Config is the type of parser configurations.
 type Config struct {
-	CLIConfig   *cliconfig.Config
-	Command     *cobra.Command
-	ExplainOnly bool
-	RTL         bool
+	CLIConfig     *cliconfig.Config
+	CLIConfigPath string
+	Command       *cobra.Command
+	ExplainOnly   bool
+	RTL           bool
+}
+
+// SaveCLIConfig saves the client configuration.
+func (c *Config) SaveCLIConfig() error {
+	return c.CLIConfig.SaveConfig(c.CLIConfigPath)
 }
 
 func formatAlternatives(alternatives []string) string {

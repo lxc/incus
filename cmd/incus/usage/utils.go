@@ -10,18 +10,28 @@ import (
 	"github.com/lxc/incus/v7/shared/cliconfig"
 )
 
-func getInstanceServer(conf *cliconfig.Config, servers map[string]incus.InstanceServer, remoteName string) (incus.InstanceServer, error) {
+func getInstanceServer(conf Config, servers map[string]incus.InstanceServer, remoteName string) (incus.InstanceServer, error) {
 	// Look for a the remote in our cache.
 	remoteServer, ok := servers[remoteName]
 	if !ok {
 		// New connection
-		d, err := conf.GetInstanceServer(remoteName)
+		d, err := conf.CLIConfig.GetInstanceServer(remoteName)
 		if err != nil {
 			return nil, err
 		}
 
 		servers[remoteName] = d
 		remoteServer = d
+	}
+
+	if remoteName != "local" {
+		info, err := remoteServer.GetConnectionInfo()
+		if err == nil && info.URL != conf.CLIConfig.Remotes[remoteName].LastWorkingAddr {
+			remote := conf.CLIConfig.Remotes[remoteName]
+			remote.LastWorkingAddr = info.URL
+			conf.CLIConfig.Remotes[remoteName] = remote
+			_ = conf.SaveCLIConfig()
+		}
 	}
 
 	return remoteServer, nil

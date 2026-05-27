@@ -692,7 +692,7 @@ func (r remote) Parse(conf Config, servers map[string]incus.InstanceServer, args
 	if r.suffix == nil {
 		if rest != "" {
 			// Because this atom is skipped, we fallback to the default remote.
-			remoteServer, serverErr := getInstanceServer(conf.CLIConfig, servers, conf.CLIConfig.DefaultRemote)
+			remoteServer, serverErr := getInstanceServer(conf, servers, conf.CLIConfig.DefaultRemote)
 			if serverErr != nil {
 				return nil, serverErr
 			}
@@ -726,7 +726,7 @@ func (r remote) Parse(conf Config, servers map[string]incus.InstanceServer, args
 		return nil, &argumentNotFullyConsumedError{restArgs[0], arg}
 	}
 
-	remoteServer, err := getInstanceServer(conf.CLIConfig, servers, remoteName)
+	remoteServer, err := getInstanceServer(conf, servers, remoteName)
 	if err != nil {
 		return nil, err
 	}
