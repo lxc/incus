@@ -702,7 +702,7 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog stri
 		diskInfo := ""
 		if inst.State.Disk != nil {
 			for entry, disk := range inst.State.Disk {
-				if disk.Usage != 0 {
+				if disk.Usage > 0 {
 					diskInfo += fmt.Sprintf("    %s: %s\n", entry, units.GetByteSizeStringIEC(disk.Usage, 2))
 				}
 			}
