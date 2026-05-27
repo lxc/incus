@@ -2323,6 +2323,7 @@ See {ref}`instance-options-qemu` for more information.
 :shortdesc: "Which CPUs to expose to the instance"
 :type: "string"
 A number or a specific range of CPUs to expose to the instance.
+For virtual machines, a CPU topology of the form `sockets=2,cores=4,threads=2` may also be provided.
 
 See {ref}`instance-options-limits-cpu` for more information.
 ```
