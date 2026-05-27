@@ -3138,3 +3138,11 @@ This extension adds the ability to rebuild a custom storage volume.
 The underlying volume is deleted and a new empty one is created with
 the same configuration. The rebuild is only allowed when the volume
 has no snapshots.
+
+## `api_fragments`
+
+URL fragments in API paths are to be treated by clients as references
+to configuration keys for the objects said paths point to.
+
+For example, `/1.0?target=foo#storage.logs_volume` refers to the
+`storage.logs_volume` configuration key for the cluster member `foo`.
