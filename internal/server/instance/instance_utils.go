@@ -165,6 +165,10 @@ func validConfigKey(sysOS *sys.OS, key string, value string, instanceType instan
 		return fmt.Errorf("%s isn't supported for VMs", key)
 	}
 
+	if key == "limits.cpu" && instanceType == instancetype.Container && strings.Contains(value, "=") {
+		return errors.New("CPU topology syntax for limits.cpu is only supported for virtual machines")
+	}
+
 	if key == "raw.lxc" {
 		return lxcValidConfig(value)
 	}
@@ -1269,7 +1273,15 @@ func ResourceUsage(instConfig map[string]string, instDevices map[string]map[stri
 	if limitsCPU != "" {
 		// Check if using shared CPU limits.
 		cpuUsage, err = strconv.ParseInt(limitsCPU, 10, 64)
-		if err != nil {
+		if err != nil && instType == api.InstanceTypeVM && strings.Contains(limitsCPU, "=") {
+			// Or compute the total from an explicit CPU topology.
+			sockets, cores, threads, err := validate.ParseCPUTopology(limitsCPU)
+			if err != nil {
+				return -1, -1, -1, fmt.Errorf("Failed parsing instance resources limits.cpu: %w", err)
+			}
+
+			cpuUsage = int64(sockets * cores * threads)
+		} else if err != nil {
 			// Or get count of pinned CPUs.
 			pinnedCPUs, err := resources.ParseCpuset(limitsCPU)
 			if err != nil {
