@@ -1083,7 +1083,16 @@ func (c *cmdRemoteList) remoteNameColumnData(name string, _ config.Remote) strin
 }
 
 func (c *cmdRemoteList) addrColumnData(_ string, rc config.Remote) string {
-	return strings.Join(rc.Addrs, "\n")
+	lines := make([]string, len(rc.Addrs))
+	for i, addr := range rc.Addrs {
+		if len(rc.Addrs) > 1 && addr == rc.LastWorkingAddr {
+			lines[i] = fmt.Sprintf("%s (%s)", addr, i18n.G("last"))
+		} else {
+			lines[i] = addr
+		}
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 func (c *cmdRemoteList) protocolColumnData(_ string, rc config.Remote) string {

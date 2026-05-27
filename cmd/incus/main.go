@@ -50,7 +50,7 @@ type cmdGlobal struct {
 
 // Parse configures the parser and calls it on the given arguments.
 func (c *cmdGlobal) Parse(usage u.Usage, cmd *cobra.Command, args []string, rtl ...bool) ([]*u.Parsed, error) {
-	conf := u.Config{CLIConfig: c.conf, Command: cmd, ExplainOnly: c.flagExplain}
+	conf := u.Config{CLIConfig: c.conf, CLIConfigPath: c.confPath, Command: cmd, ExplainOnly: c.flagExplain}
 	if len(rtl) > 0 {
 		conf.RTL = rtl[0]
 	}
