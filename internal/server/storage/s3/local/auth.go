@@ -3,7 +3,9 @@ package local
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/sha1"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -32,6 +34,18 @@ const (
 // to be computed for verification. The caller must use r.Body, not the
 // original.
 func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
+	query := r.URL.Query()
+
+	// Handle pre-signed SigV4.
+	if query.Get("X-Amz-Signature") != "" {
+		return s.authenticatePresignedV4(r)
+	}
+
+	// Handle pre-signed SigV2.
+	if query.Get("AWSAccessKeyId") != "" || query.Get("Signature") != "" {
+		return s.authenticatePresignedV2(r)
+	}
+
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Missing Authorization header."}
@@ -42,17 +56,8 @@ func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Could not extract access key."}
 	}
 
-	var secret string
-	var role Role
-	for _, c := range s.creds {
-		if c.AccessKey == accessKey {
-			secret = c.SecretKey
-			role = c.Role
-			break
-		}
-	}
-
-	if secret == "" {
+	secret, role, found := s.lookupCredential(accessKey)
+	if !found {
 		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Unknown access key."}
 	}
 
@@ -101,7 +106,7 @@ func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 		bodyHash = unsignedPayload
 	}
 
-	canonical := canonicalRequest(r, parsed.signedHeaders, bodyHash)
+	canonical := canonicalRequest(r, r.URL.Query(), parsed.signedHeaders, bodyHash)
 
 	stringToSign := strings.Join([]string{
 		"AWS4-HMAC-SHA256",
@@ -122,6 +127,188 @@ func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 		if err != nil {
 			return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: err.Error()}
 		}
+	}
+
+	return role, nil
+}
+
+func (s *Server) lookupCredential(accessKey string) (string, Role, bool) {
+	for _, c := range s.creds {
+		if c.AccessKey == accessKey {
+			return c.SecretKey, c.Role, true
+		}
+	}
+
+	return "", "", false
+}
+
+// Handle pre-signed SigV4 request validation.
+func (s *Server) authenticatePresignedV4(r *http.Request) (Role, *s3.Error) {
+	q := r.URL.Query()
+
+	algorithm := q.Get("X-Amz-Algorithm")
+	if algorithm != "AWS4-HMAC-SHA256" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Unsupported presigned signature algorithm."}
+	}
+
+	credential := q.Get("X-Amz-Credential")
+	if credential == "" {
+		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Missing X-Amz-Credential."}
+	}
+
+	// <accessKey>/<date>/<region>/<service>/aws4_request
+	//
+	// Access keys may contain "/" so do a reverse split.
+	fields := strings.Split(credential, "/")
+	if len(fields) < 5 {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Malformed X-Amz-Credential."}
+	}
+
+	accessKey := strings.Join(fields[:len(fields)-4], "/")
+	scopeDate := fields[len(fields)-4]
+	scopeRegion := fields[len(fields)-3]
+	scopeService := fields[len(fields)-2]
+	scope := strings.Join(fields[len(fields)-4:], "/")
+
+	secret, role, found := s.lookupCredential(accessKey)
+	if !found {
+		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Unknown access key."}
+	}
+
+	amzDate := q.Get("X-Amz-Date")
+	if amzDate == "" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Missing X-Amz-Date."}
+	}
+
+	signedAt, err := time.Parse("20060102T150405Z", amzDate)
+	if err != nil {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Invalid X-Amz-Date."}
+	}
+
+	expiresStr := q.Get("X-Amz-Expires")
+	if expiresStr == "" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Missing X-Amz-Expires."}
+	}
+
+	expires, err := strconv.Atoi(expiresStr)
+	if err != nil || expires <= 0 {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Invalid X-Amz-Expires."}
+	}
+
+	if time.Duration(expires)*time.Second > 7*24*time.Hour {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "X-Amz-Expires exceeds the maximum of 7 days."}
+	}
+
+	if time.Now().UTC().After(signedAt.Add(time.Duration(expires) * time.Second)) {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Presigned URL has expired."}
+	}
+
+	signedHeaders := strings.Split(q.Get("X-Amz-SignedHeaders"), ";")
+	if len(signedHeaders) == 0 || signedHeaders[0] == "" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Missing X-Amz-SignedHeaders."}
+	}
+
+	sort.Strings(signedHeaders)
+
+	// The canonical query string covers every query parameter except the
+	// signature itself.
+	canonicalQuery := make(url.Values, len(q))
+	for k, v := range q {
+		if k == "X-Amz-Signature" {
+			continue
+		}
+
+		canonicalQuery[k] = v
+	}
+
+	canonical := canonicalRequest(r, canonicalQuery, signedHeaders, unsignedPayload)
+
+	stringToSign := strings.Join([]string{
+		"AWS4-HMAC-SHA256",
+		amzDate,
+		scope,
+		sha256Hex([]byte(canonical)),
+	}, "\n")
+
+	signingKey := deriveSigningKey(secret, scopeDate, scopeRegion, scopeService)
+	expected := hmacSHA256Hex(signingKey, stringToSign)
+
+	if !hmac.Equal([]byte(expected), []byte(q.Get("X-Amz-Signature"))) {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Signature mismatch."}
+	}
+
+	return role, nil
+}
+
+var presignedV2ResourceSubresources = []string{
+	"response-content-disposition",
+	"response-content-type",
+}
+
+// Handle pre-signed SigV2 request validation.
+func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
+	q := r.URL.Query()
+
+	accessKey := q.Get("AWSAccessKeyId")
+	if accessKey == "" {
+		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Missing AWSAccessKeyId."}
+	}
+
+	secret, role, found := s.lookupCredential(accessKey)
+	if !found {
+		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Unknown access key."}
+	}
+
+	providedSignature := q.Get("Signature")
+	if providedSignature == "" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Missing Signature."}
+	}
+
+	expiresStr := q.Get("Expires")
+	if expiresStr == "" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Missing Expires."}
+	}
+
+	// Expires is an absolute Unix timestamp at which the URL stops being valid.
+	expires, err := strconv.ParseInt(expiresStr, 10, 64)
+	if err != nil {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Invalid Expires."}
+	}
+
+	if time.Now().Unix() > expires {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Presigned URL has expired."}
+	}
+
+	// Build the canonical resource: the URI-encoded path (which includes the
+	// bucket for path-style requests) followed by any signed sub-resources.
+	resource := r.URL.EscapedPath()
+	separator := "?"
+	for _, name := range presignedV2ResourceSubresources {
+		v := q.Get(name)
+		if v == "" {
+			continue
+		}
+
+		resource += separator + name + "=" + v
+		separator = "&"
+	}
+
+	// SigV2 string-to-sign for a query-string authenticated request:
+	// VERB \n Content-MD5 \n Content-Type \n Expires \n CanonicalizedResource.
+	stringToSign := strings.Join([]string{
+		r.Method,
+		r.Header.Get("Content-MD5"),
+		r.Header.Get("Content-Type"),
+		expiresStr,
+		resource,
+	}, "\n")
+
+	mac := hmac.New(sha1.New, []byte(secret))
+	_, _ = mac.Write([]byte(stringToSign))
+	expected := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+
+	if !hmac.Equal([]byte(expected), []byte(providedSignature)) {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Signature mismatch."}
 	}
 
 	return role, nil
@@ -276,7 +463,7 @@ func parseAuthorizationHeader(h string) (*parsedAuthorization, error) {
 }
 
 // canonicalRequest builds the canonical request string defined by SigV4.
-func canonicalRequest(r *http.Request, signedHeaders []string, bodyHash string) string {
+func canonicalRequest(r *http.Request, query url.Values, signedHeaders []string, bodyHash string) string {
 	var sb strings.Builder
 
 	sb.WriteString(r.Method)
@@ -285,7 +472,7 @@ func canonicalRequest(r *http.Request, signedHeaders []string, bodyHash string) 
 	sb.WriteString(canonicalURI(r.URL.Path))
 	sb.WriteByte('\n')
 
-	sb.WriteString(canonicalQueryString(r.URL.Query()))
+	sb.WriteString(canonicalQueryString(query))
 	sb.WriteByte('\n')
 
 	for _, name := range signedHeaders {
@@ -434,7 +621,7 @@ func SignRequest(r *http.Request, accessKey, secretKey, region, service string, 
 	signed := []string{"host", "x-amz-content-sha256", "x-amz-date"}
 	sort.Strings(signed)
 
-	canonical := canonicalRequest(r, signed, bodyHash)
+	canonical := canonicalRequest(r, r.URL.Query(), signed, bodyHash)
 	scope := strings.Join([]string{scopeDate, region, service, "aws4_request"}, "/")
 	stringToSign := strings.Join([]string{
 		"AWS4-HMAC-SHA256",
