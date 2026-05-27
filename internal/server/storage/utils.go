@@ -1063,31 +1063,26 @@ func VolumeUsedByExclusiveRemoteInstancesWithProfiles(s *state.State, poolName s
 	return remoteInstance, nil
 }
 
-// VolumeUsedByDaemon indicates whether the volume is used by daemon storage.
-func VolumeUsedByDaemon(s *state.State, poolName string, volumeName string) (bool, error) {
-	var storageBackups string
-	var storageImages string
+// VolumeUsedByDaemon indicates whether the volume is used by daemon storage, by returning a
+// configuration fragment.
+func VolumeUsedByDaemon(s *state.State, poolName string, volumeName string) (string, error) {
+	daemonVolumes := make(map[string]string, 3)
 	err := s.DB.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodeConfig, err := node.ConfigLoad(ctx, tx)
 		if err != nil {
 			return err
 		}
 
-		storageBackups = nodeConfig.StorageBackupsVolume()
-		storageImages = nodeConfig.StorageImagesVolume()
-
+		daemonVolumes[nodeConfig.StorageBackupsVolume()] = "storage.backups_volume"
+		daemonVolumes[nodeConfig.StorageImagesVolume()] = "storage.images_volume"
+		daemonVolumes[nodeConfig.StorageLogsVolume()] = "storage.logs_volume"
 		return nil
 	})
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	fullName := fmt.Sprintf("%s/%s", poolName, volumeName)
-	if storageBackups == fullName || storageImages == fullName {
-		return true, nil
-	}
-
-	return false, nil
+	return daemonVolumes[fmt.Sprintf("%s/%s", poolName, volumeName)], nil
 }
 
 // FallbackMigrationType returns the fallback migration transport to use based on volume content type.

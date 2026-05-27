@@ -107,13 +107,13 @@ func storagePoolVolumeUsedByGet(s *state.State, requestProjectName string, poolN
 	}
 
 	// Check if the daemon itself is using it.
-	used, err := storagePools.VolumeUsedByDaemon(s, poolName, vol.Name)
+	frag, err := storagePools.VolumeUsedByDaemon(s, poolName, vol.Name)
 	if err != nil {
 		return []string{}, err
 	}
 
-	if used {
-		return []string{api.NewURL().Path(version.APIVersion).String()}, nil
+	if frag != "" {
+		return []string{api.NewURL().Path(version.APIVersion).Target(vol.Location).Fragment(frag).String()}, nil
 	}
 
 	// Look for instances using this volume.

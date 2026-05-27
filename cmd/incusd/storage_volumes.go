@@ -1533,12 +1533,12 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check if the daemon itself is using it.
-	used, err := storagePools.VolumeUsedByDaemon(s, srcPoolName, volumeName)
+	frag, err := storagePools.VolumeUsedByDaemon(s, srcPoolName, volumeName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	if used {
+	if frag != "" {
 		return response.SmartError(errors.New("Volume is used by Incus itself and cannot be renamed"))
 	}
 
