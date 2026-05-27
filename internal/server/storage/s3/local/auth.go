@@ -3,7 +3,9 @@ package local
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/sha1"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -32,9 +34,16 @@ const (
 // to be computed for verification. The caller must use r.Body, not the
 // original.
 func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
+	query := r.URL.Query()
+
 	// Handle pre-signed SigV4.
-	if r.URL.Query().Get("X-Amz-Signature") != "" {
+	if query.Get("X-Amz-Signature") != "" {
 		return s.authenticatePresignedV4(r)
+	}
+
+	// Handle pre-signed SigV2.
+	if query.Get("AWSAccessKeyId") != "" || query.Get("Signature") != "" {
+		return s.authenticatePresignedV2(r)
 	}
 
 	authHeader := r.Header.Get("Authorization")
@@ -225,6 +234,80 @@ func (s *Server) authenticatePresignedV4(r *http.Request) (Role, *s3.Error) {
 	expected := hmacSHA256Hex(signingKey, stringToSign)
 
 	if !hmac.Equal([]byte(expected), []byte(q.Get("X-Amz-Signature"))) {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Signature mismatch."}
+	}
+
+	return role, nil
+}
+
+var presignedV2ResourceSubresources = []string{
+	"response-content-disposition",
+	"response-content-type",
+}
+
+// Handle pre-signed SigV2 request validation.
+func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
+	q := r.URL.Query()
+
+	accessKey := q.Get("AWSAccessKeyId")
+	if accessKey == "" {
+		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Missing AWSAccessKeyId."}
+	}
+
+	secret, role, found := s.lookupCredential(accessKey)
+	if !found {
+		return "", &s3.Error{Code: s3.ErrorCodeInvalidAccessKeyID, Message: "Unknown access key."}
+	}
+
+	providedSignature := q.Get("Signature")
+	if providedSignature == "" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Missing Signature."}
+	}
+
+	expiresStr := q.Get("Expires")
+	if expiresStr == "" {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Missing Expires."}
+	}
+
+	// Expires is an absolute Unix timestamp at which the URL stops being valid.
+	expires, err := strconv.ParseInt(expiresStr, 10, 64)
+	if err != nil {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Invalid Expires."}
+	}
+
+	if time.Now().Unix() > expires {
+		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Presigned URL has expired."}
+	}
+
+	// Build the canonical resource: the URI-encoded path (which includes the
+	// bucket for path-style requests) followed by any signed sub-resources.
+	resource := r.URL.EscapedPath()
+	separator := "?"
+	for _, name := range presignedV2ResourceSubresources {
+		v := q.Get(name)
+		if v == "" {
+			continue
+		}
+
+		resource += separator + name + "=" + v
+		separator = "&"
+	}
+
+	// SigV2 string-to-sign for a query-string authenticated request:
+	// VERB \n Content-MD5 \n Content-Type \n Expires \n CanonicalizedResource.
+	stringToSign := strings.Join([]string{
+		r.Method,
+		r.Header.Get("Content-MD5"),
+		r.Header.Get("Content-Type"),
+		expiresStr,
+		resource,
+	}, "\n")
+
+	mac := hmac.New(sha1.New, []byte(secret))
+	_, _ = mac.Write([]byte(stringToSign))
+	expected := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+
+	if !hmac.Equal([]byte(expected), []byte(providedSignature)) {
 		return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Signature mismatch."}
 	}
 
