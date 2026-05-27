@@ -127,6 +127,21 @@ test_storage_buckets() {
     s3cmdrun "${incus_backend}" "${roAccessKey}" "${roSecretKey}" get "s3://${bucketPrefix}.foo/${incusTestFile}" "${incusTestFile}.get"
     rm "${incusTestFile}.get"
 
+    if [ "$incus_backend" != "ceph" ]; then
+        # Test using a presigned URL.
+        signedURL=$(s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" signurl "s3://${bucketPrefix}.foo/${incusTestFile}" "+60" | tr -d '[:space:]')
+        signedURL="https://${signedURL#http://}"
+        curl -sS -k -f "${signedURL}" -o "${incusTestFile}.signed"
+        cmp "${incusTestFile}" "${incusTestFile}.signed"
+        rm "${incusTestFile}.signed"
+
+        # An expired presigned URL must be rejected.
+        expiredEpoch=$(($(date +%s) - 60))
+        expiredURL=$(s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" signurl "s3://${bucketPrefix}.foo/${incusTestFile}" "${expiredEpoch}" | tr -d '[:space:]')
+        expiredURL="https://${expiredURL#http://}"
+        ! curl -sS -k -f "${expiredURL}" -o /dev/null || false
+    fi
+
     # Test copying a file within a bucket (S3 CopyObject).
     s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" cp "s3://${bucketPrefix}.foo/${incusTestFile}" "s3://${bucketPrefix}.foo/${incusTestFile}.copy"
     s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" ls "s3://${bucketPrefix}.foo" | grep -F "${incusTestFile}.copy"
