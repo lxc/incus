@@ -133,7 +133,7 @@ incus project create p1 < config.yaml
 }
 
 func (c *cmdProjectCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func (c *cmdProjectDelete) promptConfirmation(p *u.Parsed) error {
 }
 
 func (c *cmdProjectDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func (c *cmdProjectEdit) helpTemplate() string {
 }
 
 func (c *cmdProjectEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -449,7 +449,7 @@ func (c *cmdProjectGet) command() *cobra.Command {
 }
 
 func (c *cmdProjectGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -638,7 +638,7 @@ func (c *cmdProjectList) usedByColumnData(project api.Project) string {
 }
 
 func (c *cmdProjectList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -718,7 +718,7 @@ func (c *cmdProjectRename) command() *cobra.Command {
 }
 
 func (c *cmdProjectRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -817,7 +817,7 @@ func (c *cmdProjectSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdProjectSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -861,7 +861,7 @@ func (c *cmdProjectUnset) command() *cobra.Command {
 }
 
 func (c *cmdProjectUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -898,7 +898,7 @@ func (c *cmdProjectShow) command() *cobra.Command {
 }
 
 func (c *cmdProjectShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -951,7 +951,7 @@ func (c *cmdProjectSwitch) command() *cobra.Command {
 
 func (c *cmdProjectSwitch) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdProjectSwitchUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectSwitchUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1010,7 +1010,7 @@ func (c *cmdProjectInfo) command() *cobra.Command {
 }
 
 func (c *cmdProjectInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1101,7 +1101,7 @@ func (c *cmdProjectGetCurrent) command() *cobra.Command {
 }
 
 func (c *cmdProjectGetCurrent) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdProjectGetCurrentUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdProjectGetCurrentUsage, cmd, args)
 	if err != nil {
 		return err
 	}

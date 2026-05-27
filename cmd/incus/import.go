@@ -44,7 +44,7 @@ func (c *cmdImport) command() *cobra.Command {
 }
 
 func (c *cmdImport) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImportUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImportUsage, cmd, args)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,7 @@ import (
 )
 
 func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdWebuiUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdWebuiUsage, cmd, args)
 	if err != nil {
 		return err
 	}

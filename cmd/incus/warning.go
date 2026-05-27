@@ -108,7 +108,7 @@ Column shorthand chars:
 }
 
 func (c *cmdWarningList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdWarningListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdWarningListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -269,7 +269,7 @@ func (c *cmdWarningAcknowledge) command() *cobra.Command {
 }
 
 func (c *cmdWarningAcknowledge) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdWarningAcknowledgeUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdWarningAcknowledgeUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -301,7 +301,7 @@ func (c *cmdWarningShow) command() *cobra.Command {
 }
 
 func (c *cmdWarningShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdWarningShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdWarningShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -349,7 +349,7 @@ func (c *cmdWarningDelete) command() *cobra.Command {
 }
 
 func (c *cmdWarningDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdWarningDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdWarningDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}

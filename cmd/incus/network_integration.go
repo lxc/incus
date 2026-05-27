@@ -101,7 +101,7 @@ incus network integration create o1 ovn < config.yaml
 }
 
 func (c *cmdNetworkIntegrationCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (c *cmdNetworkIntegrationDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkIntegrationDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -240,7 +240,7 @@ func (c *cmdNetworkIntegrationEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkIntegrationEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -341,7 +341,7 @@ func (c *cmdNetworkIntegrationGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkIntegrationGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -468,7 +468,7 @@ func (c *cmdNetworkIntegrationList) usedByColumnData(integration api.NetworkInte
 }
 
 func (c *cmdNetworkIntegrationList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -528,7 +528,7 @@ func (c *cmdNetworkIntegrationRename) command() *cobra.Command {
 }
 
 func (c *cmdNetworkIntegrationRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -613,7 +613,7 @@ func (c *cmdNetworkIntegrationSet) set(cmd *cobra.Command, parsed []*u.Parsed) e
 }
 
 func (c *cmdNetworkIntegrationSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -645,7 +645,7 @@ func (c *cmdNetworkIntegrationUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkIntegrationUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -674,7 +674,7 @@ func (c *cmdNetworkIntegrationShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkIntegrationShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkIntegrationShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkIntegrationShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}

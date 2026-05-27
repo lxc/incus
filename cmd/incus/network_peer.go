@@ -192,7 +192,7 @@ func (c *cmdNetworkPeerList) stateColumnData(peer api.NetworkPeer) string {
 }
 
 func (c *cmdNetworkPeerList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -262,7 +262,7 @@ func (c *cmdNetworkPeerShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkPeerShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -331,7 +331,7 @@ incus network peer create default peer3 web/default < config.yaml
 }
 
 func (c *cmdNetworkPeerCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -452,7 +452,7 @@ func (c *cmdNetworkPeerGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkPeerGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -568,7 +568,7 @@ func (c *cmdNetworkPeerSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdNetworkPeerSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -616,7 +616,7 @@ func (c *cmdNetworkPeerUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkPeerUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -672,7 +672,7 @@ func (c *cmdNetworkPeerEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkPeerEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -780,7 +780,7 @@ func (c *cmdNetworkPeerDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkPeerDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkPeerDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkPeerDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}

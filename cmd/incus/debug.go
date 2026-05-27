@@ -57,7 +57,7 @@ func (c *cmdDebugMemory) command() *cobra.Command {
 }
 
 func (c *cmdDebugMemory) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdDebugMemoryUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdDebugMemoryUsage, cmd, args)
 	if err != nil {
 		return err
 	}

@@ -400,7 +400,7 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Do NOT blindly copy the following parsing line; it is a dirty hack to disambiguate the parser.
-	parsed, err := cmdRemoteAddUsage.Parse(conf, cmd, args, len(args) == 1)
+	parsed, err := c.global.Parse(cmdRemoteAddUsage, cmd, args, len(args) == 1)
 	if err != nil {
 		return err
 	}
@@ -739,7 +739,7 @@ func (c *cmdRemoteGenerateCertificate) command() *cobra.Command {
 
 func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	_, err := cmdRemoteGenerateCertificateUsage.Parse(c.global.conf, cmd, args)
+	_, err := c.global.Parse(cmdRemoteGenerateCertificateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -782,7 +782,7 @@ func (c *cmdRemoteGetDefault) command() *cobra.Command {
 }
 
 func (c *cmdRemoteGetDefault) run(cmd *cobra.Command, args []string) error {
-	_, err := cmdRemoteGetDefaultUsage.Parse(c.global.conf, cmd, args)
+	_, err := c.global.Parse(cmdRemoteGetDefaultUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -816,7 +816,7 @@ func (c *cmdRemoteGetClientCertificate) command() *cobra.Command {
 
 func (c *cmdRemoteGetClientCertificate) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdRemoteGetClientCertificateUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteGetClientCertificateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -926,7 +926,7 @@ This is useful for remote authentication workflows where a token is passed to an
 
 func (c *cmdRemoteGetClientToken) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdRemoteGetClientTokenUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteGetClientTokenUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1133,7 +1133,7 @@ func (c *cmdRemoteList) globalColumnData(_ string, rc config.Remote) string {
 
 func (c *cmdRemoteList) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	_, err := cmdRemoteListUsage.Parse(conf, cmd, args)
+	_, err := c.global.Parse(cmdRemoteListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1194,7 +1194,7 @@ func (c *cmdRemoteRename) command() *cobra.Command {
 
 func (c *cmdRemoteRename) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdRemoteRenameUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1275,7 +1275,7 @@ func (c *cmdRemoteRemove) command() *cobra.Command {
 
 func (c *cmdRemoteRemove) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdRemoteRemoveUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1339,7 +1339,7 @@ func (c *cmdRemoteSwitch) command() *cobra.Command {
 
 func (c *cmdRemoteSwitch) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdRemoteSwitchUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteSwitchUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1387,7 +1387,7 @@ func (c *cmdRemoteSetURL) command() *cobra.Command {
 
 func (c *cmdRemoteSetURL) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdRemoteSetURLUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteSetURLUsage, cmd, args)
 	if err != nil {
 		return err
 	}

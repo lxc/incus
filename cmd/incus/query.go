@@ -65,7 +65,7 @@ func (c *cmdQuery) pretty(input any) string {
 }
 
 func (c *cmdQuery) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdQueryUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdQueryUsage, cmd, args)
 	if err != nil {
 		return err
 	}

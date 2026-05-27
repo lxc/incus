@@ -30,7 +30,7 @@ func (c *cmdVersion) command() *cobra.Command {
 }
 
 func (c *cmdVersion) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdVersionUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdVersionUsage, cmd, args)
 	if err != nil {
 		return err
 	}

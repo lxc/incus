@@ -106,7 +106,7 @@ This will issue a trust token to be used by the client to add itself to the trus
 }
 
 func (c *cmdConfigTrustAdd) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ The following certificate types are supported:
 }
 
 func (c *cmdConfigTrustAddCertificate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustAddCertificateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustAddCertificateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func (c *cmdConfigTrustEdit) helpTemplate() string {
 }
 
 func (c *cmdConfigTrustEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -486,7 +486,7 @@ func (c *cmdConfigTrustList) projectColumnData(rowData rowData) string {
 }
 
 func (c *cmdConfigTrustList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -639,7 +639,7 @@ func (c *cmdConfigTrustListTokens) expiresAtColumnData(token *api.CertificateAdd
 }
 
 func (c *cmdConfigTrustListTokens) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustListTokensUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustListTokensUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -716,7 +716,7 @@ func (c *cmdConfigTrustRemove) command() *cobra.Command {
 }
 
 func (c *cmdConfigTrustRemove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -749,7 +749,7 @@ func (c *cmdConfigTrustRevokeToken) command() *cobra.Command {
 }
 
 func (c *cmdConfigTrustRevokeToken) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustRevokeTokenUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustRevokeTokenUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -817,7 +817,7 @@ func (c *cmdConfigTrustShow) command() *cobra.Command {
 }
 
 func (c *cmdConfigTrustShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTrustShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTrustShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}

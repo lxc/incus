@@ -198,7 +198,7 @@ It requires the source to be an alias and for it to be public.`))
 
 func (c *cmdImageCopy) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdImageCopyUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageCopyUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func (c *cmdImageDelete) command() *cobra.Command {
 }
 
 func (c *cmdImageDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -421,7 +421,7 @@ func (c *cmdImageEdit) helpTemplate() string {
 }
 
 func (c *cmdImageEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -535,7 +535,7 @@ The output target is optional and defaults to the working directory.`))
 }
 
 func (c *cmdImageExport) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageExportUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageExportUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -739,7 +739,7 @@ func (c *cmdImageImport) packImageDir(path string) (string, error) {
 func (c *cmdImageImport) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
-	parsed, err := cmdImageImportUsage.Parse(c.global.conf, cmd, args, true)
+	parsed, err := c.global.Parse(cmdImageImportUsage, cmd, args, true)
 	if err != nil {
 		return err
 	}
@@ -917,7 +917,7 @@ func (c *cmdImageInfo) command() *cobra.Command {
 }
 
 func (c *cmdImageInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1283,7 +1283,7 @@ func (c *cmdImageList) imageShouldShow(filters []string, state *api.Image) bool 
 }
 
 func (c *cmdImageList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1392,7 +1392,7 @@ func (c *cmdImageRefresh) command() *cobra.Command {
 }
 
 func (c *cmdImageRefresh) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageRefreshUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageRefreshUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1474,7 +1474,7 @@ func (c *cmdImageShow) command() *cobra.Command {
 }
 
 func (c *cmdImageShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1542,7 +1542,7 @@ func (c *cmdImageGetProp) command() *cobra.Command {
 }
 
 func (c *cmdImageGetProp) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageGetPropUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageGetPropUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1628,7 +1628,7 @@ func (c *cmdImageSetProp) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdImageSetProp) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageSetPropUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageSetPropUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1664,7 +1664,7 @@ func (c *cmdImageUnsetProp) command() *cobra.Command {
 }
 
 func (c *cmdImageUnsetProp) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageUnsetPropUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageUnsetPropUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1744,7 +1744,7 @@ This command will prompt for all of the metadata tarball fields:
 }
 
 func (c *cmdImageGenerateMetadata) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageGenerateMetadataUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageGenerateMetadataUsage, cmd, args)
 	if err != nil {
 		return err
 	}
