@@ -39,7 +39,7 @@ func (c *cmdAdminRecover) command() *cobra.Command {
 }
 
 func (c *cmdAdminRecover) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdAdminRecoverUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdAdminRecoverUsage, cmd, args)
 	if err != nil {
 		return err
 	}

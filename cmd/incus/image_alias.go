@@ -98,7 +98,7 @@ func (c *cmdImageAliasCreate) command() *cobra.Command {
 }
 
 func (c *cmdImageAliasCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageAliasCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageAliasCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (c *cmdImageAliasDelete) command() *cobra.Command {
 }
 
 func (c *cmdImageAliasDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageAliasDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageAliasDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (c *cmdImageAliasList) descriptionColumntData(imageAlias api.ImageAliasesEn
 }
 
 func (c *cmdImageAliasList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageAliasListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageAliasListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -375,7 +375,7 @@ func (c *cmdImageAliasRename) command() *cobra.Command {
 }
 
 func (c *cmdImageAliasRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdImageAliasRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdImageAliasRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}

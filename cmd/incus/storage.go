@@ -131,7 +131,7 @@ incus storage create s1 dir < config.yaml
 }
 
 func (c *cmdStorageCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func (c *cmdStorageDelete) command() *cobra.Command {
 }
 
 func (c *cmdStorageDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -300,7 +300,7 @@ func (c *cmdStorageEdit) helpTemplate() string {
 }
 
 func (c *cmdStorageEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -410,7 +410,7 @@ func (c *cmdStorageGet) command() *cobra.Command {
 }
 
 func (c *cmdStorageGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -481,7 +481,7 @@ func (c *cmdStorageInfo) command() *cobra.Command {
 }
 
 func (c *cmdStorageInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -736,7 +736,7 @@ func (c *cmdStorageList) stateColumnData(storage api.StoragePool) string {
 }
 
 func (c *cmdStorageList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -863,7 +863,7 @@ func (c *cmdStorageSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdStorageSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -904,7 +904,7 @@ func (c *cmdStorageShow) command() *cobra.Command {
 }
 
 func (c *cmdStorageShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -988,7 +988,7 @@ func (c *cmdStorageUnset) command() *cobra.Command {
 }
 
 func (c *cmdStorageUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}

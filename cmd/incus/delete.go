@@ -146,7 +146,7 @@ func (c *cmdDelete) deleteOne(p *u.Parsed) error {
 }
 
 func (c *cmdDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}

@@ -125,7 +125,7 @@ incus profile device add [<remote>:]profile1 <device-name> disk pool=some-pool s
 }
 
 func (c *cmdConfigDeviceAdd) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceAddUsage).Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(c.configDevice.formatUsage(cmdConfigDeviceAddUsage), cmd, args)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func (c *cmdConfigDeviceGet) command() *cobra.Command {
 }
 
 func (c *cmdConfigDeviceGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceGetUsage).Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(c.configDevice.formatUsage(cmdConfigDeviceGetUsage), cmd, args)
 	if err != nil {
 		return err
 	}
@@ -316,7 +316,7 @@ func (c *cmdConfigDeviceList) command() *cobra.Command {
 }
 
 func (c *cmdConfigDeviceList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceListUsage).Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(c.configDevice.formatUsage(cmdConfigDeviceListUsage), cmd, args)
 	if err != nil {
 		return err
 	}
@@ -380,7 +380,7 @@ func (c *cmdConfigDeviceOverride) command() *cobra.Command {
 }
 
 func (c *cmdConfigDeviceOverride) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigDeviceOverrideUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigDeviceOverrideUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -471,7 +471,7 @@ func (c *cmdConfigDeviceRemove) command() *cobra.Command {
 }
 
 func (c *cmdConfigDeviceRemove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceRemoveUsage).Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(c.configDevice.formatUsage(cmdConfigDeviceRemoveUsage), cmd, args)
 	if err != nil {
 		return err
 	}
@@ -664,7 +664,7 @@ func (c *cmdConfigDeviceSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdConfigDeviceSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceSetUsage).Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(c.configDevice.formatUsage(cmdConfigDeviceSetUsage), cmd, args)
 	if err != nil {
 		return err
 	}
@@ -706,7 +706,7 @@ func (c *cmdConfigDeviceShow) command() *cobra.Command {
 }
 
 func (c *cmdConfigDeviceShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceShowUsage).Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(c.configDevice.formatUsage(cmdConfigDeviceShowUsage), cmd, args)
 	if err != nil {
 		return err
 	}
@@ -785,7 +785,7 @@ func (c *cmdConfigDeviceUnset) command() *cobra.Command {
 }
 
 func (c *cmdConfigDeviceUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.configDevice.formatUsage(cmdConfigDeviceUnsetUsage).Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(c.configDevice.formatUsage(cmdConfigDeviceUnsetUsage), cmd, args)
 	if err != nil {
 		return err
 	}

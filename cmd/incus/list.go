@@ -391,7 +391,7 @@ func (c *cmdList) showInstances(instances []api.InstanceFull, filters []string, 
 }
 
 func (c *cmdList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdListUsage, cmd, args)
 	if err != nil {
 		return err
 	}

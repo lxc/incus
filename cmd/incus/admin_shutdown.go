@@ -47,7 +47,7 @@ func (c *cmdAdminShutdown) command() *cobra.Command {
 }
 
 func (c *cmdAdminShutdown) run(cmd *cobra.Command, args []string) error {
-	_, err := cmdAdminShutdownUsage.Parse(c.global.conf, cmd, args)
+	_, err := c.global.Parse(cmdAdminShutdownUsage, cmd, args)
 	if err != nil {
 		return err
 	}

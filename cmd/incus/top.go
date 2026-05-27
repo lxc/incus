@@ -139,7 +139,7 @@ func (c *cmdTop) diskUsageColumnData(dd displayData) string {
 // This function implements the `top` command. It queries the metrics API at (/1.0/metrics) and renders a list of
 // instances with their CPU, memory and disk usage columns.
 func (c *cmdTop) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdTopUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdTopUsage, cmd, args)
 	if err != nil {
 		return err
 	}

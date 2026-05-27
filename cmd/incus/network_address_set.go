@@ -112,7 +112,7 @@ func (c *cmdNetworkAddressSetList) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAddressSetList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (c *cmdNetworkAddressSetShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAddressSetShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ incus network address-set create as1 < config.yaml
 }
 
 func (c *cmdNetworkAddressSetCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func (c *cmdNetworkAddressSetSet) set(cmd *cobra.Command, parsed []*u.Parsed) er
 }
 
 func (c *cmdNetworkAddressSetSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -420,7 +420,7 @@ func (c *cmdNetworkAddressSetUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAddressSetUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -473,7 +473,7 @@ func (c *cmdNetworkAddressSetEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkAddressSetEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -571,7 +571,7 @@ func (c *cmdNetworkAddressSetRename) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAddressSetRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -616,7 +616,7 @@ func (c *cmdNetworkAddressSetDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAddressSetDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -666,7 +666,7 @@ func (c *cmdNetworkAddressSetAdd) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAddressSetAdd) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -713,7 +713,7 @@ func (c *cmdNetworkAddressSetRemove) command() *cobra.Command {
 }
 
 func (c *cmdNetworkAddressSetRemove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkAddressSetRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkAddressSetRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}

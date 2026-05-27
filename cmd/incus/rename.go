@@ -35,8 +35,7 @@ func (c *cmdRename) command() *cobra.Command {
 }
 
 func (c *cmdRename) run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-	parsed, err := cmdRenameUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}

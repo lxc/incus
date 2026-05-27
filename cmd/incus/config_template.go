@@ -89,7 +89,7 @@ incus config template create u1 t1 < config.tpl
 }
 
 func (c *cmdConfigTemplateCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTemplateCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTemplateCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (c *cmdConfigTemplateDelete) command() *cobra.Command {
 }
 
 func (c *cmdConfigTemplateDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTemplateDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTemplateDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (c *cmdConfigTemplateEdit) command() *cobra.Command {
 }
 
 func (c *cmdConfigTemplateEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTemplateEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTemplateEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (c *cmdConfigTemplateList) command() *cobra.Command {
 }
 
 func (c *cmdConfigTemplateList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTemplateListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTemplateListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -351,7 +351,7 @@ func (c *cmdConfigTemplateShow) command() *cobra.Command {
 }
 
 func (c *cmdConfigTemplateShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigTemplateShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigTemplateShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}

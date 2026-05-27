@@ -85,7 +85,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
 }
 
 func (c *cmdCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}

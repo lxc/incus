@@ -191,7 +191,7 @@ func (c *cmdNetworkForwardList) locationColumnData(forward api.NetworkForward) s
 }
 
 func (c *cmdNetworkForwardList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (c *cmdNetworkForwardShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkForwardShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -323,7 +323,7 @@ incus network forward create n1 127.0.0.1 < config.yaml
 }
 
 func (c *cmdNetworkForwardCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -424,7 +424,7 @@ func (c *cmdNetworkForwardGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkForwardGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -548,7 +548,7 @@ func (c *cmdNetworkForwardSet) set(cmd *cobra.Command, parsed []*u.Parsed) error
 }
 
 func (c *cmdNetworkForwardSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -596,7 +596,7 @@ func (c *cmdNetworkForwardUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkForwardUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -661,7 +661,7 @@ func (c *cmdNetworkForwardEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -779,7 +779,7 @@ func (c *cmdNetworkForwardDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkForwardDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -862,7 +862,7 @@ func (c *cmdNetworkForwardPort) commandAdd() *cobra.Command {
 }
 
 func (c *cmdNetworkForwardPort) runAdd(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardPortAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardPortAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -934,7 +934,7 @@ func (c *cmdNetworkForwardPort) commandRemove() *cobra.Command {
 }
 
 func (c *cmdNetworkForwardPort) runRemove(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkForwardPortRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkForwardPortRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}

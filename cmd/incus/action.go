@@ -337,7 +337,7 @@ func (c *cmdAction) doAction(action string, conf *config.Config, p *u.Parsed) er
 
 // It handles actions on instances (single or all) and manages error handling, console flag restrictions, and batch operations.
 func (c *cmdAction) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdActionUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdActionUsage, cmd, args)
 	if err != nil {
 		return err
 	}

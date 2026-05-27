@@ -47,7 +47,7 @@ func (c *cmdManpage) command() *cobra.Command {
 }
 
 func (c *cmdManpage) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdManpageUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdManpageUsage, cmd, args)
 	if err != nil {
 		return err
 	}

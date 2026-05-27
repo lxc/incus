@@ -58,7 +58,7 @@ Supported Conditions:
 }
 
 func (c *cmdWait) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdWaitUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdWaitUsage, cmd, args)
 	if err != nil {
 		return err
 	}

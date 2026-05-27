@@ -111,7 +111,7 @@ func (er stdinMirror) Read(p []byte) (int, error) {
 }
 
 func (c *cmdConsole) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConsoleUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConsoleUsage, cmd, args)
 	if err != nil {
 		return err
 	}

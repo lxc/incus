@@ -126,7 +126,7 @@ incus file create --type=symlink foo/bar baz
 }
 
 func (c *cmdFileCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdFileCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdFileCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (c *cmdFileDelete) command() *cobra.Command {
 }
 
 func (c *cmdFileDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdFileDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdFileDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -371,7 +371,7 @@ func (c *cmdFileEdit) command() *cobra.Command {
 }
 
 func (c *cmdFileEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdFileEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdFileEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -639,7 +639,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 func (c *cmdFilePull) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
-	parsed, err := cmdFilePullUsage.Parse(c.global.conf, cmd, args, true)
+	parsed, err := c.global.Parse(cmdFilePullUsage, cmd, args, true)
 	if err != nil {
 		return err
 	}
@@ -877,7 +877,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 func (c *cmdFilePush) run(cmd *cobra.Command, args []string) error {
 	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
 	// most cases is NOT what you want.
-	parsed, err := cmdFilePushUsage.Parse(c.global.conf, cmd, args, true)
+	parsed, err := c.global.Parse(cmdFilePushUsage, cmd, args, true)
 	if err != nil {
 		return err
 	}
@@ -933,7 +933,7 @@ incus file mount foo
 }
 
 func (c *cmdFileMount) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdFileMountUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdFileMountUsage, cmd, args)
 	if err != nil {
 		return err
 	}

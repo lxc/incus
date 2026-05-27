@@ -131,7 +131,7 @@ func (c *cmdNetworkListAllocations) macAddressColumnData(alloc api.NetworkAlloca
 }
 
 func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkListAllocationsUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkListAllocationsUsage, cmd, args)
 	if err != nil {
 		return err
 	}

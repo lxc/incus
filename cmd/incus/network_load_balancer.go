@@ -193,7 +193,7 @@ func (c *cmdNetworkLoadBalancerList) locationColumnData(loadBalancer api.Network
 }
 
 func (c *cmdNetworkLoadBalancerList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -266,7 +266,7 @@ func (c *cmdNetworkLoadBalancerShow) command() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -326,7 +326,7 @@ incus network load-balancer create n1 127.0.0.1 < config.yaml
 }
 
 func (c *cmdNetworkLoadBalancerCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -410,7 +410,7 @@ func (c *cmdNetworkLoadBalancerGet) command() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -534,7 +534,7 @@ func (c *cmdNetworkLoadBalancerSet) set(cmd *cobra.Command, parsed []*u.Parsed) 
 }
 
 func (c *cmdNetworkLoadBalancerSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -565,7 +565,7 @@ func (c *cmdNetworkLoadBalancerUnset) command() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -640,7 +640,7 @@ func (c *cmdNetworkLoadBalancerEdit) helpTemplate() string {
 }
 
 func (c *cmdNetworkLoadBalancerEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -759,7 +759,7 @@ func (c *cmdNetworkLoadBalancerDelete) command() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -837,7 +837,7 @@ func (c *cmdNetworkLoadBalancerBackend) commandAdd() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerBackend) runAdd(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerBackendAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerBackendAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -901,7 +901,7 @@ func (c *cmdNetworkLoadBalancerBackend) commandRemove() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerBackend) runRemove(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerBackendRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerBackendRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -996,7 +996,7 @@ func (c *cmdNetworkLoadBalancerPort) commandAdd() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerPort) runAdd(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerPortAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerPortAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1061,7 +1061,7 @@ func (c *cmdNetworkLoadBalancerPort) commandRemove() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerPort) runRemove(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerPortRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerPortRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1135,7 +1135,7 @@ func (c *cmdNetworkLoadBalancerInfo) command() *cobra.Command {
 }
 
 func (c *cmdNetworkLoadBalancerInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdNetworkLoadBalancerInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdNetworkLoadBalancerInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}

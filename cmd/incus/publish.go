@@ -62,7 +62,7 @@ func (c *cmdPublish) command() *cobra.Command {
 }
 
 func (c *cmdPublish) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdPublishUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdPublishUsage, cmd, args)
 	if err != nil {
 		return err
 	}

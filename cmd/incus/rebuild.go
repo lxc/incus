@@ -37,7 +37,7 @@ func (c *cmdRebuild) command() *cobra.Command {
 
 func (c *cmdRebuild) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	parsed, err := cmdRebuildUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRebuildUsage, cmd, args)
 	if err != nil {
 		return err
 	}

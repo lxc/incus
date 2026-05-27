@@ -64,7 +64,7 @@ func (c *cmdAdminInit) command() *cobra.Command {
 }
 
 func (c *cmdAdminInit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdAdminInitUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdAdminInitUsage, cmd, args)
 	if err != nil {
 		return err
 	}

@@ -66,7 +66,7 @@ func (c *cmdClusterRoleAdd) command() *cobra.Command {
 }
 
 func (c *cmdClusterRoleAdd) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterRoleAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterRoleAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (c *cmdClusterRoleRemove) command() *cobra.Command {
 }
 
 func (c *cmdClusterRoleRemove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterRoleRemoteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterRoleRemoteUsage, cmd, args)
 	if err != nil {
 		return err
 	}

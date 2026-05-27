@@ -422,7 +422,7 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 }
 
 func (c *cmdCopy) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdCopyUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdCopyUsage, cmd, args)
 	if err != nil {
 		return err
 	}

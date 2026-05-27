@@ -98,8 +98,7 @@ func (c *cmdExec) sendTermSize(control *websocket.Conn) error {
 }
 
 func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
-	conf := c.global.conf
-	parsed, err := cmdExecUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdExecUsage, cmd, args)
 	if err != nil {
 		return err
 	}

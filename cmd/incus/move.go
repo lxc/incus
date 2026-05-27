@@ -84,7 +84,7 @@ incus move <old name> <new name> [--instance-only]
 }
 
 func (c *cmdMove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdMoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdMoveUsage, cmd, args)
 	if err != nil {
 		return nil
 	}

@@ -72,7 +72,7 @@ func (c *cmdAliasAdd) command() *cobra.Command {
 func (c *cmdAliasAdd) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
-	parsed, err := cmdAliasAddUsage.Parse(conf, cmd, args)
+	parsed, err := c.global.Parse(cmdAliasAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (c *cmdAliasList) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	_, err := cmdAliasListUsage.Parse(c.global.conf, cmd, args)
+	_, err := c.global.Parse(cmdAliasListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (c *cmdAliasRename) command() *cobra.Command {
 func (c *cmdAliasRename) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
-	parsed, err := cmdAliasRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdAliasRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (c *cmdAliasRemove) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
 
 	// Quick checks.
-	parsed, err := cmdAliasRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdAliasRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}

@@ -49,7 +49,7 @@ func (c *cmdRemoteProxy) command() *cobra.Command {
 }
 
 func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdRemoteProxyUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteProxyUsage, cmd, args)
 	if err != nil {
 		return err
 	}

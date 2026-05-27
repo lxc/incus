@@ -47,6 +47,16 @@ type cmdGlobal struct {
 	flagSubCmds    bool
 }
 
+// Parse configures the parser and calls it on the given arguments.
+func (c *cmdGlobal) Parse(usage u.Usage, cmd *cobra.Command, args []string, rtl ...bool) ([]*u.Parsed, error) {
+	conf := u.Config{CLIConfig: c.conf, Command: cmd}
+	if len(rtl) > 0 {
+		conf.RTL = rtl[0]
+	}
+
+	return usage.Parse(conf, args)
+}
+
 var commandFooter = i18n.G(`Use "{{.CommandPath}} [<command>] --help" for more information about a command.`)
 
 func usageTemplate() string {

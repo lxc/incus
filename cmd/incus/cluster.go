@@ -264,7 +264,7 @@ func (c *cmdClusterList) messageColumnData(cluster api.ClusterMember) string {
 }
 
 func (c *cmdClusterList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func (c *cmdClusterShow) command() *cobra.Command {
 }
 
 func (c *cmdClusterShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -401,7 +401,7 @@ func (c *cmdClusterInfo) command() *cobra.Command {
 }
 
 func (c *cmdClusterInfo) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterInfoUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterInfoUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -460,7 +460,7 @@ func (c *cmdClusterGet) command() *cobra.Command {
 }
 
 func (c *cmdClusterGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -565,7 +565,7 @@ func (c *cmdClusterSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 }
 
 func (c *cmdClusterSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -609,7 +609,7 @@ func (c *cmdClusterUnset) command() *cobra.Command {
 }
 
 func (c *cmdClusterUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -647,7 +647,7 @@ func (c *cmdClusterRename) command() *cobra.Command {
 }
 
 func (c *cmdClusterRename) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterRenameUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterRenameUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -730,7 +730,7 @@ Are you really sure you want to force removing %s? (yes/no): `), formatRemote(c.
 }
 
 func (c *cmdClusterRemove) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterRemoveUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterRemoveUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -795,7 +795,7 @@ func (c *cmdClusterEnable) command() *cobra.Command {
 }
 
 func (c *cmdClusterEnable) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterEnableUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterEnableUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -879,7 +879,7 @@ func (c *cmdClusterEdit) helpTemplate() string {
 }
 
 func (c *cmdClusterEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -982,7 +982,7 @@ func (c *cmdClusterJoin) command() *cobra.Command {
 }
 
 func (c *cmdClusterJoin) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterJoinUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterJoinUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1047,7 +1047,7 @@ func (c *cmdClusterAdd) command() *cobra.Command {
 }
 
 func (c *cmdClusterAdd) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterAddUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterAddUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1178,7 +1178,7 @@ func (c *cmdClusterListTokens) expiresAtColumnData(token *api.ClusterMemberJoinT
 }
 
 func (c *cmdClusterListTokens) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterListTokensUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterListTokensUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1271,7 +1271,7 @@ func (c *cmdClusterRevokeToken) command() *cobra.Command {
 }
 
 func (c *cmdClusterRevokeToken) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterRevokeTokenUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterRevokeTokenUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1366,7 +1366,7 @@ func (c *cmdClusterUpdateCertificate) command() *cobra.Command {
 }
 
 func (c *cmdClusterUpdateCertificate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterUpdateCertificateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterUpdateCertificateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1506,7 +1506,7 @@ func (c *cmdClusterEvacuateAction) command() *cobra.Command {
 }
 
 func (c *cmdClusterEvacuateAction) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdClusterEvacuateRestoreUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdClusterEvacuateRestoreUsage, cmd, args)
 	if err != nil {
 		return err
 	}

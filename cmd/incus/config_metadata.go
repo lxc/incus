@@ -95,7 +95,7 @@ func (c *cmdConfigMetadataEdit) helpTemplate() string {
 }
 
 func (c *cmdConfigMetadataEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigMetadataEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigMetadataEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (c *cmdConfigMetadataShow) command() *cobra.Command {
 }
 
 func (c *cmdConfigMetadataShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdConfigMetadataShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdConfigMetadataShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}

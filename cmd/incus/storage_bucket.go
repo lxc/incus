@@ -120,7 +120,7 @@ incus storage bucket create p1 b01 < config.yaml
 }
 
 func (c *cmdStorageBucketCreate) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (c *cmdStorageBucketDelete) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketDelete) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -270,7 +270,7 @@ func (c *cmdStorageBucketEdit) helpTemplate() string {
 }
 
 func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func (c *cmdStorageBucketGet) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketGet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketGetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketGetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -528,7 +528,7 @@ func (c *cmdStorageBucketList) projectColumnData(bucket api.StorageBucket) strin
 }
 
 func (c *cmdStorageBucketList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -677,7 +677,7 @@ func (c *cmdStorageBucketSet) set(cmd *cobra.Command, parsed []*u.Parsed) error 
 }
 
 func (c *cmdStorageBucketSet) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketSetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketSetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -709,7 +709,7 @@ func (c *cmdStorageBucketShow) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -763,7 +763,7 @@ func (c *cmdStorageBucketUnset) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketUnset) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketUnsetUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketUnsetUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -908,7 +908,7 @@ func (c *cmdStorageBucketKeyList) roleColumnData(buckKey api.StorageBucketKey) s
 }
 
 func (c *cmdStorageBucketKeyList) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketKeyListUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketKeyListUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -989,7 +989,7 @@ incus storage bucket key create p1 b01 k1 < config.yaml
 }
 
 func (c *cmdStorageBucketKeyCreate) runAdd(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketKeyCreateUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketKeyCreateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1075,7 +1075,7 @@ func (c *cmdStorageBucketKeyDelete) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketKeyDelete) runRemove(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketKeyDeleteUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketKeyDeleteUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1138,7 +1138,7 @@ func (c *cmdStorageBucketKeyEdit) helpTemplate() string {
 }
 
 func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketKeyEditUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketKeyEditUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1245,7 +1245,7 @@ func (c *cmdStorageBucketKeyShow) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketKeyShow) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketKeyShowUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketKeyShowUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1305,7 +1305,7 @@ func (c *cmdStorageBucketExport) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketExportUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketExportUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -1482,7 +1482,7 @@ func (c *cmdStorageBucketImport) command() *cobra.Command {
 }
 
 func (c *cmdStorageBucketImport) run(cmd *cobra.Command, args []string) error {
-	parsed, err := cmdStorageBucketImportUsage.Parse(c.global.conf, cmd, args)
+	parsed, err := c.global.Parse(cmdStorageBucketImportUsage, cmd, args)
 	if err != nil {
 		return err
 	}
