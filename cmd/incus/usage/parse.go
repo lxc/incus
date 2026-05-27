@@ -19,14 +19,11 @@ import (
 
 // Config is the type of parser configurations.
 type Config struct {
-	CLIConfig *cliconfig.Config
-	Command   *cobra.Command
-	RTL       bool
+	CLIConfig   *cliconfig.Config
+	Command     *cobra.Command
+	ExplainOnly bool
+	RTL         bool
 }
-
-// ExplainOnly is a global switch putting the parser into explain mode, i.e. showing the user how
-// their arguments are parsed.
-var ExplainOnly = false
 
 func formatAlternatives(alternatives []string) string {
 	n := len(alternatives)
@@ -306,7 +303,7 @@ func (u Usage) Parse(conf Config, args []string) ([]*Parsed, error) {
 		return nil, err
 	}
 
-	if ExplainOnly {
+	if conf.ExplainOnly {
 		u.diagnose(conf.Command, result, conf.RTL)
 		return nil, ErrExplainOnly
 	}
