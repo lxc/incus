@@ -80,3 +80,10 @@ func (u *URL) WithQuery(key string, value string) *URL {
 
 	return u
 }
+
+// Fragment sets the fragment of the URL.
+func (u *URL) Fragment(fragment string) *URL {
+	u.URL.Fragment = fragment
+
+	return u
+}
