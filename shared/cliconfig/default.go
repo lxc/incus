@@ -6,7 +6,7 @@ import (
 
 // LocalRemote is the default local remote (over the unix socket).
 var LocalRemote = Remote{
-	Addr:     "unix://",
+	Addrs:    []string{"unix://"},
 	Static:   true,
 	Public:   false,
 	Protocol: "incus",
@@ -14,7 +14,7 @@ var LocalRemote = Remote{
 
 // ImagesRemote is the community image server (over simplestreams).
 var ImagesRemote = Remote{
-	Addr:     "https://images.linuxcontainers.org",
+	Addrs:    []string{"https://images.linuxcontainers.org"},
 	Public:   true,
 	Protocol: "simplestreams",
 }
