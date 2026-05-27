@@ -29,6 +29,7 @@ const (
 	TypeWarning               = 16
 	TypeClusterGroup          = 17
 	TypeStorageBucket         = 18
+	TypeServer                = 19
 )
 
 // EntityNames associates an entity code to its name.
@@ -37,20 +38,21 @@ var EntityNames = map[int]string{
 	TypeClusterGroup:          "cluster group",
 	TypeContainer:             "container",
 	TypeImage:                 "image",
-	TypeInstanceBackup:        "instance backup",
 	TypeInstance:              "instance",
+	TypeInstanceBackup:        "instance backup",
 	TypeInstanceSnapshot:      "instance snapshot",
-	TypeNetworkACL:            "network acl",
 	TypeNetwork:               "network",
+	TypeNetworkACL:            "network acl",
 	TypeNode:                  "node",
 	TypeOperation:             "operation",
 	TypeProfile:               "profile",
 	TypeProject:               "project",
+	TypeServer:                "server",
 	TypeStorageBucket:         "storage bucket",
 	TypeStoragePool:           "storage pool",
+	TypeStorageVolume:         "storage volume",
 	TypeStorageVolumeBackup:   "storage volume backup",
 	TypeStorageVolumeSnapshot: "storage volume snapshot",
-	TypeStorageVolume:         "storage volume",
 	TypeWarning:               "warning",
 }
 
@@ -63,20 +65,21 @@ var EntityURIs = map[int]string{
 	TypeClusterGroup:          "/" + version.APIVersion + "/cluster/groups/%s",
 	TypeContainer:             "/" + version.APIVersion + "/containers/%s?project=%s",
 	TypeImage:                 "/" + version.APIVersion + "/images/%s?project=%s",
+	TypeInstance:              "/" + version.APIVersion + "/instances/%s?project=%s",
 	TypeInstanceBackup:        "/" + version.APIVersion + "/instances/%s/backups/%s?project=%s",
 	TypeInstanceSnapshot:      "/" + version.APIVersion + "/instances/%s/snapshots/%s?project=%s",
-	TypeInstance:              "/" + version.APIVersion + "/instances/%s?project=%s",
-	TypeNetworkACL:            "/" + version.APIVersion + "/network-acls/%s?project=%s",
 	TypeNetwork:               "/" + version.APIVersion + "/networks/%s?project=%s",
+	TypeNetworkACL:            "/" + version.APIVersion + "/network-acls/%s?project=%s",
 	TypeNode:                  "/" + version.APIVersion + "/cluster/members/%s",
 	TypeOperation:             "/" + version.APIVersion + "/operations/%s",
 	TypeProfile:               "/" + version.APIVersion + "/profiles/%s?project=%s",
 	TypeProject:               "/" + version.APIVersion + "/projects/%s",
+	TypeServer:                "/" + version.APIVersion,
 	TypeStorageBucket:         "/" + version.APIVersion + "/storage-pools/%s/buckets/%s?project=%s",
 	TypeStoragePool:           "/" + version.APIVersion + "/storage-pools/%s",
+	TypeStorageVolume:         "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s?project=%s",
 	TypeStorageVolumeBackup:   "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s/backups/%s?project=%s",
 	TypeStorageVolumeSnapshot: "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s/snapshots/%s?project=%s",
-	TypeStorageVolume:         "/" + version.APIVersion + "/storage-pools/%s/volumes/%s/%s?project=%s",
 	TypeWarning:               "/" + version.APIVersion + "/warnings/%s",
 }
 
