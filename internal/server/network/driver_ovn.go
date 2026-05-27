@@ -1831,14 +1831,16 @@ func (n *ovn) uplinkPortBridgeVars(uplinkNet Network) *ovnUplinkPortBridgeVars {
 // connects veth pair to uplink bridge and OVS bridge.
 func (n *ovn) startUplinkPortBridge(uplinkNet Network) error {
 	if uplinkNet.Config()["bridge.driver"] != "openvswitch" {
-		return n.startUplinkPortBridgeNative(uplinkNet, uplinkNet.Name())
+		return n.startUplinkPortBridgeNative(uplinkNet, uplinkNet.Name(), "")
 	}
 
 	return n.startUplinkPortBridgeOVS(uplinkNet, uplinkNet.Name())
 }
 
 // startUplinkPortBridgeNative connects an OVN logical router to an uplink native bridge.
-func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string) error {
+// If vlanID is set, the bridge end of the veth pair is configured as an access port for that VLAN so
+// the connection only carries traffic for the requested VLAN without having to alter the bridge itself.
+func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string, vlanID string) error {
 	// Do this after gaining lock so that on failure we revert before release locking.
 	reverter := revert.New()
 	defer reverter.Fail()
@@ -1917,6 +1919,26 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 	err = link.SetUp()
 	if err != nil {
 		return fmt.Errorf("Failed to bring up uplink veth interface %q: %w", vars.uplinkEnd, err)
+	}
+
+	// Apply VLAN filtering config if a VLAN ID is specified.
+	if vlanID != "" {
+		uplinkEndLink := &ip.Link{Name: vars.uplinkEnd}
+
+		// Remove the bridge's default PVID that gets added automatically when the port joins the bridge.
+		defaultPVID, err := BridgeVLANDefaultPVID(bridgeDevice)
+		if err == nil && defaultPVID != "" && defaultPVID != "0" && defaultPVID != vlanID {
+			err = uplinkEndLink.BridgeVLANDelete(defaultPVID, false)
+			if err != nil {
+				return fmt.Errorf("Failed to remove default VLAN %q from uplink veth interface %q: %w", defaultPVID, vars.uplinkEnd, err)
+			}
+		}
+
+		// Add the requested VLAN as the port's PVID and egress it untagged.
+		err = uplinkEndLink.BridgeVLANAdd(vlanID, true, true, false)
+		if err != nil {
+			return fmt.Errorf("Failed to add VLAN %q to uplink veth interface %q: %w", vlanID, vars.uplinkEnd, err)
+		}
 	}
 
 	// Ensure uplink OVS end veth interface is up.
@@ -2033,6 +2055,15 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 	defer reverter.Fail()
 
 	uplinkConfig := uplinkNet.Config()
+
+	// Handle bridges with VLAN filtering.
+	if uplinkConfig["vlan"] != "" && IsNativeBridge(uplinkConfig["parent"]) {
+		status, err := BridgeVLANFilteringStatus(uplinkConfig["parent"])
+		if err == nil && status == "1" {
+			return n.startUplinkPortBridgeNative(uplinkNet, uplinkConfig["parent"], uplinkConfig["vlan"])
+		}
+	}
+
 	uplinkHostName := GetHostDevice(uplinkConfig["parent"], uplinkConfig["vlan"])
 
 	if !InterfaceExists(uplinkHostName) {
@@ -2041,7 +2072,7 @@ func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 
 	// Detect if uplink interface is a native bridge.
 	if IsNativeBridge(uplinkHostName) {
-		return n.startUplinkPortBridgeNative(uplinkNet, uplinkHostName)
+		return n.startUplinkPortBridgeNative(uplinkNet, uplinkHostName, "")
 	}
 
 	// Detect if uplink interface is a OVS bridge.
@@ -2271,6 +2302,15 @@ func (n *ovn) deleteUplinkPortBridgeOVS(uplinkNet Network, ovsBridge string) err
 // deleteUplinkPortPhysical deletes uplink OVS bridge and OVN bridge mappings if not in use.
 func (n *ovn) deleteUplinkPortPhysical(uplinkNet Network) error {
 	uplinkConfig := uplinkNet.Config()
+
+	// Handle bridges with VLAN filtering.
+	if uplinkConfig["vlan"] != "" && IsNativeBridge(uplinkConfig["parent"]) {
+		status, err := BridgeVLANFilteringStatus(uplinkConfig["parent"])
+		if err == nil && status == "1" {
+			return n.deleteUplinkPortBridgeNative(uplinkNet)
+		}
+	}
+
 	uplinkHostName := GetHostDevice(uplinkConfig["parent"], uplinkConfig["vlan"])
 
 	// Detect if uplink interface is a native bridge.
