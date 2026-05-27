@@ -357,26 +357,43 @@ func (n *physical) setup(oldConfig map[string]string) error {
 
 	hostName := GetHostDevice(n.config["parent"], n.config["vlan"])
 
-	created, err := VLANInterfaceCreate(n.config["parent"], hostName, n.config["vlan"], util.IsTrue(n.config["gvrp"]))
-	if err != nil {
-		return err
+	// When the parent is a VLAN filtering native bridge and a VLAN is configured, don't create a
+	// stacked VLAN interface on the bridge. Such an interface would only be reachable if the VLAN was
+	// also present on the bridge's own self port, which would affect the whole bridge. Consumers of
+	// this network (such as OVN uplinks) connect to the parent bridge directly using a per-VLAN access
+	// port instead.
+	bridgeVLAN := false
+	if n.config["vlan"] != "" && IsNativeBridge(n.config["parent"]) {
+		status, err := BridgeVLANFilteringStatus(n.config["parent"])
+		if err == nil && status == "1" {
+			bridgeVLAN = true
+		}
 	}
 
-	if created {
-		reverter.Add(func() { _ = InterfaceRemove(hostName) })
-	}
-
-	// Set the MTU.
-	if n.config["mtu"] != "" {
-		mtu, err := strconv.ParseUint(n.config["mtu"], 10, 32)
+	var err error
+	created := false
+	if !bridgeVLAN {
+		created, err = VLANInterfaceCreate(n.config["parent"], hostName, n.config["vlan"], util.IsTrue(n.config["gvrp"]))
 		if err != nil {
-			return fmt.Errorf("Invalid MTU %q: %w", n.config["mtu"], err)
+			return err
 		}
 
-		phyLink := &ip.Link{Name: hostName}
-		err = phyLink.SetMTU(uint32(mtu))
-		if err != nil {
-			return fmt.Errorf("Failed setting MTU %q on %q: %w", n.config["mtu"], phyLink.Name, err)
+		if created {
+			reverter.Add(func() { _ = InterfaceRemove(hostName) })
+		}
+
+		// Set the MTU.
+		if n.config["mtu"] != "" {
+			mtu, err := strconv.ParseUint(n.config["mtu"], 10, 32)
+			if err != nil {
+				return fmt.Errorf("Invalid MTU %q: %w", n.config["mtu"], err)
+			}
+
+			phyLink := &ip.Link{Name: hostName}
+			err = phyLink.SetMTU(uint32(mtu))
+			if err != nil {
+				return fmt.Errorf("Failed setting MTU %q on %q: %w", n.config["mtu"], phyLink.Name, err)
+			}
 		}
 	}
 
