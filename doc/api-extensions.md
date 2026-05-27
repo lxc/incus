@@ -3146,3 +3146,9 @@ to configuration keys for the objects said paths point to.
 
 For example, `/1.0?target=foo#storage.logs_volume` refers to the
 `storage.logs_volume` configuration key for the cluster member `foo`.
+
+## `instance_limits_cpu_topology`
+
+This extends the `limits.cpu` configuration key for virtual machines to
+allow specifying an explicit CPU topology of the form
+`sockets=2,cores=4,threads=2`.

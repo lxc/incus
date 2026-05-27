@@ -542,6 +542,7 @@ var APIExtensions = []string{
 	"network_address_set_ip_ranges",
 	"storage_volumes_rebuild",
 	"api_fragments",
+	"instance_limits_cpu_topology",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
