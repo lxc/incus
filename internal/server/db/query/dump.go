@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // DumpOptions represents different types of dump.
@@ -107,7 +109,7 @@ func getEntitiesSchemas(ctx context.Context, tx *sql.Tx) (map[string][2]string, 
 		return nil, nil, fmt.Errorf("Could not get table names and their schema: %w", err)
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	tablesSchemas := make(map[string][2]string)
 	var names []string
@@ -143,7 +145,7 @@ func getTableData(ctx context.Context, tx *sql.Tx, table string) ([]string, erro
 		return nil, fmt.Errorf("Failed to fetch rows for table %q: %w", table, err)
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	// Get the column names.
 	columns, err := rows.Columns()
