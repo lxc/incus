@@ -2078,61 +2078,16 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 }
 
 func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFingerprint string, newImage *api.Image) error {
-	// Get config of all nodes (incl. own) and check for storage.images_volume.
-	// If the setting is missing, distribute the image to the node.
-	// If the option is set, only distribute the image once to nodes with this
-	// specific pool/volume.
-
-	// imageVolumes is a list containing of all image volumes specified by
-	// storage.images_volume. Since this option is node specific, the values
-	// may be different for each cluster member.
-	var imageVolumes []string
-
-	err := s.DB.Node.Transaction(ctx, func(ctx context.Context, tx *db.NodeTx) error {
-		config, err := node.ConfigLoad(ctx, tx)
-		if err != nil {
-			return err
-		}
-
-		vol := config.StorageImagesVolume()
-		if vol != "" {
-			fields := strings.Split(vol, "/")
-
-			var pool *api.StoragePool
-
-			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-				_, pool, _, err = tx.GetStoragePool(ctx, fields[0])
-
-				return err
-			})
-			if err != nil {
-				return fmt.Errorf("Failed to get storage pool info: %w", err)
-			}
-
-			// Add the volume to the list if the pool is backed by remote
-			// storage as only then the volumes are shared.
-			if slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
-				imageVolumes = append(imageVolumes, vol)
-			}
-		}
-
-		return nil
-	})
-	// No need to return with an error as this is only an optimization in the
-	// distribution process. Instead, only log the error.
-	if err != nil {
-		logger.Error("Failed to load config", logger.Ctx{"err": err})
-	}
-
 	// Skip own node
 	localClusterAddress := s.LocalConfig.ClusterAddress()
 
 	var poolIDs []int64
 	var poolNames []string
 
-	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the IDs of all storage pools on which a storage volume
 		// for the requested image currently exists.
+		var err error
 		poolIDs, err = tx.GetPoolsWithImage(ctx, newImage.Fingerprint)
 		if err != nil {
 			logger.Error("Error getting image storage pools", logger.Ctx{"err": err, "fingerprint": oldFingerprint})
@@ -2173,39 +2128,6 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 		}
 
 		client = client.UseTarget(nodeInfo.Name)
-
-		resp, _, err := client.GetServer()
-		if err != nil {
-			logger.Error("Failed to retrieve information about cluster member", logger.Ctx{"err": err, "remote": nodeAddress})
-		} else {
-			vol := resp.Config["storage.images_volume"]
-			skipDistribution := false
-
-			// If storage.images_volume is set on the cluster member, check if
-			// the image has already been downloaded to this volume. If so,
-			// skip distributing the image to this cluster member.
-			// If the option is unset, distribute the image.
-			if vol != "" {
-				if slices.Contains(imageVolumes, vol) {
-					skipDistribution = true
-				}
-
-				if skipDistribution {
-					continue
-				}
-
-				fields := strings.Split(vol, "/")
-
-				pool, _, err := client.GetStoragePool(fields[0])
-				if err != nil {
-					logger.Error("Failed to get storage pool info", logger.Ctx{"err": err, "pool": fields[0]})
-				} else {
-					if slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
-						imageVolumes = append(imageVolumes, vol)
-					}
-				}
-			}
-		}
 
 		createImage := func() error {
 			createArgs := &incus.ImageCreateArgs{}
