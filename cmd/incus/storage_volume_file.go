@@ -154,7 +154,7 @@ func (c *cmdStorageVolumeFileCreate) run(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	defer func() { _ = sftpConn.Close() }()
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 	// Determine the target uid
 	uid := max(c.storageVolumeFile.flagUID, 0)
@@ -298,7 +298,7 @@ func (c *cmdStorageVolumeFileDelete) run(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	defer func() { _ = sftpConn.Close() }()
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 	if c.flagForce {
 		err = sftpConn.RemoveAll(fPath)
@@ -406,7 +406,7 @@ func (c *cmdStorageVolumeFileMount) run(cmd *cobra.Command, args []string) error
 			return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 		}
 
-		defer func() { _ = sftpConn.Close() }()
+		defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 		return sshfsMount(cmd.Context(), sftpConn, entity, "", targetPath)
 	}
@@ -480,7 +480,7 @@ func (c *cmdStorageVolumeFileEdit) run(cmd *cobra.Command, args []string) error 
 	c.filePush.edit = true
 
 	// Extract current value
-	defer func() { _ = os.Remove(fname) }()
+	defer logger.WarnOnError(func() error { return os.Remove(fname) }, "Failed to remove temporary file")
 	err = c.filePull.pull(parsed[0], parsed[1], fname)
 	if err != nil {
 		return err
@@ -595,7 +595,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 		return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 	}
 
-	defer func() { _ = sftpConn.Close() }()
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 	srcInfo, normalizedPath, err := c.puller.statFile(sftpConn, fPath)
 	if err != nil {
@@ -632,7 +632,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 			return err
 		}
 
-		defer func() { _ = f.Close() }() // nolint:revive
+		defer logger.WarnOnError(f.Close, "Failed to close file") // nolint:revive
 
 		err = os.Chmod(targetPath, os.FileMode(srcInfo.Mode()))
 		if err != nil {
@@ -674,7 +674,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 			return err
 		}
 
-		defer func() { _ = src.Close() }()
+		defer logger.WarnOnError(src.Close, "Failed to close source file")
 
 		_, err = util.SafeCopy(writer, src)
 		if err != nil {
@@ -759,7 +759,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 	}
 
-	defer func() { _ = sftpConn.Close() }()
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 	targetInfo, err := sftpConn.Stat(target)
 	if err == nil {
@@ -826,7 +826,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 			}
 
 			size = srcInfo.Size()
-			defer func() { _ = f.Close() }()
+			defer logger.WarnOnError(f.Close, "Failed to close file")
 		}
 
 		dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)

@@ -159,7 +159,7 @@ func (c *cmdExec) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer func() { _ = termios.Restore(stdinFd, oldttystate) }()
+		defer logger.WarnOnError(func() error { return termios.Restore(stdinFd, oldttystate) }, "Failed to restore terminal")
 	}
 
 	// Setup interactive console handler

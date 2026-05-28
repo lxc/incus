@@ -31,6 +31,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	config "github.com/lxc/incus/v7/shared/cliconfig"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -859,7 +860,7 @@ func (c *cmdRemoteGetClientCertificate) run(cmd *cobra.Command, args []string) e
 			return err
 		}
 
-		defer func() { _ = w.Close() }()
+		defer logger.WarnOnError(w.Close, "Failed to close file")
 
 		switch c.flagFormat {
 		case "pem":

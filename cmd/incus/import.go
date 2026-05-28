@@ -12,6 +12,7 @@ import (
 	"github.com/lxc/incus/v7/internal/i18n"
 	cli "github.com/lxc/incus/v7/shared/cmd"
 	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/units"
 )
 
@@ -64,7 +65,7 @@ func (c *cmdImport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer func() { _ = file.Close() }()
+		defer logger.WarnOnError(file.Close, "Failed to close file")
 	}
 
 	fstat, err := file.Stat()

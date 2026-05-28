@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v7/internal/i18n"
 	"github.com/lxc/incus/v7/shared/api"
 	config "github.com/lxc/incus/v7/shared/cliconfig"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/termios"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
@@ -643,7 +644,7 @@ func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authN
 		go func() {
 			fmt.Printf(i18n.G("SSH client connected %q")+"\n", nConn.RemoteAddr())
 			defer fmt.Printf(i18n.G("SSH client disconnected %q")+"\n", nConn.RemoteAddr())
-			defer func() { _ = nConn.Close() }()
+			defer logger.WarnOnError(nConn.Close, "Failed to close connection")
 
 			// Before use, a handshake must be performed on the incoming net.Conn.
 			_, chans, reqs, err := ssh.NewServerConn(nConn, sshConfig)
@@ -693,7 +694,7 @@ func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authN
 
 				// Handle each channel in its own go routine.
 				go func() {
-					defer func() { _ = channel.Close() }()
+					defer logger.WarnOnError(channel.Close, "Failed to close channel")
 
 					// Connect to the instance's SFTP server.
 					sftpConn, err := sftpConn()
@@ -702,7 +703,7 @@ func sshSFTPServer(ctx context.Context, sftpConn func() (net.Conn, error), authN
 						return
 					}
 
-					defer func() { _ = sftpConn.Close() }()
+					defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 					// Copy SFTP data between client and remote instance.
 					ctx, cancel := context.WithCancel(ctx)

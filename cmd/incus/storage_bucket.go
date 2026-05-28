@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v7/shared/archive"
 	cli "github.com/lxc/incus/v7/shared/cmd"
 	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/termios"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
@@ -1417,7 +1418,7 @@ func (c *cmdStorageBucketExport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer func() { _ = target.Close() }()
+		defer logger.WarnOnError(target.Close, "Failed to close target file")
 	}
 
 	// Prepare the download request.
@@ -1517,7 +1518,7 @@ func (c *cmdStorageBucketImport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer func() { _ = file.Close() }()
+		defer logger.WarnOnError(file.Close, "Failed to close file")
 	}
 
 	fstat, err := file.Stat()

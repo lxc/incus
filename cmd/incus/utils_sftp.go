@@ -74,7 +74,7 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 			return fmt.Errorf(i18n.G("Failed to open target file %q: %w"), targetPath, err)
 		}
 
-		defer func() { _ = file.Close() }()
+		defer logger.WarnOnError(file.Close, "Failed to close file")
 
 		if push {
 			_, err = util.SafeCopy(file, args.Content)
@@ -193,14 +193,14 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 			return err
 		}
 
-		defer func() { _ = src.Close() }()
+		defer logger.WarnOnError(src.Close, "Failed to close source file")
 
 		dst, err := os.Create(target)
 		if err != nil {
 			return err
 		}
 
-		defer func() { _ = dst.Close() }()
+		defer logger.WarnOnError(dst.Close, "Failed to close target file")
 
 		err = os.Chmod(target, fInfo.Mode())
 		if err != nil {
@@ -329,7 +329,7 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 				return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), p, err)
 			}
 
-			defer func() { _ = f.Close() }()
+			defer logger.WarnOnError(f.Close, "Failed to close file")
 
 			fileArgs.Type = "file"
 			fileArgs.Content = f

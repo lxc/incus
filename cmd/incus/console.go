@@ -174,7 +174,7 @@ func (c *cmdConsole) text(d incus.InstanceServer, name string) error {
 		return err
 	}
 
-	defer func() { _ = termios.Restore(cfd, oldTTYstate) }()
+	defer logger.WarnOnError(func() error { return termios.Restore(cfd, oldTTYstate) }, "Failed to restore terminal")
 
 	handler := c.controlSocketHandler
 
@@ -329,7 +329,7 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 			return err
 		}
 
-		defer func() { _ = os.Remove(path.Name()) }()
+		defer logger.WarnOnError(func() error { return os.Remove(path.Name()) }, "Failed to remove temporary file")
 
 		socket = fmt.Sprintf("spice+unix://%s", path.Name())
 	} else {
