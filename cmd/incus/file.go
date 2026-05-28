@@ -672,8 +672,8 @@ echo "Hello world" | incus file push - foo/root/test
    To read "Hello world" from standard input and write it into /root/test in instance "foo".`))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push (in recursive mode, only sets the target directory's UID)"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push (in recursive mode, only sets the target directory's GID)"))
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push"))
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push"))
 	cli.AddStringFlag(cmd.Flags(), &c.file.flagMode, "mode", "", "", i18n.G("Set the file's perms on push (in recursive mode, only sets the target directory's permissions)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))
