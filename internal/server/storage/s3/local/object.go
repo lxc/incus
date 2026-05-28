@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/v7/internal/server/storage/s3"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 func (s *Server) objectPath(key string) (string, error) {
@@ -84,7 +85,7 @@ func (s *Server) getObject(w http.ResponseWriter, r *http.Request, key string) {
 		return
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	rangeHeader := r.Header.Get("Range")
 	if rangeHeader == "" {
@@ -224,7 +225,7 @@ func (s *Server) copyObject(w http.ResponseWriter, r *http.Request, key string) 
 		return
 	}
 
-	defer func() { _ = src.Close() }()
+	defer logger.WarnOnError(src.Close, "Failed to close source file")
 
 	err = os.MkdirAll(filepath.Dir(dstPath), 0o700)
 	if err != nil {
