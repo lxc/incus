@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/operations"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/units"
@@ -395,7 +396,7 @@ func (d *btrfs) Update(changedConfig map[string]string) error {
 			return err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		sizeBytes, _ := units.ParseByteSizeString(size)
 
@@ -409,7 +410,7 @@ func (d *btrfs) Update(changedConfig map[string]string) error {
 			return err
 		}
 
-		defer func() { _ = loopDeviceAutoDetach(loopDevPath) }()
+		defer logger.WarnOnError(func() error { return loopDeviceAutoDetach(loopDevPath) }, "Failed to detach loop device")
 
 		err = loopDeviceSetCapacity(loopDevPath)
 		if err != nil {
@@ -445,7 +446,7 @@ func (d *btrfs) Mount() (bool, error) {
 			return false, err
 		}
 
-		defer func() { _ = loopDeviceAutoDetach(mntSrc) }()
+		defer logger.WarnOnError(func() error { return loopDeviceAutoDetach(mntSrc) }, "Failed to detach loop device")
 	} else if filepath.IsAbs(d.config["source"]) {
 		// Bring up an existing device or path.
 		mntSrc = d.config["source"]

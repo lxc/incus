@@ -339,7 +339,7 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 			return err
 		}
 
-		defer func() { _ = d.rbdUnmapVolume(v, true) }()
+		defer logger.WarnOnError(func() error { return d.rbdUnmapVolume(v, true) }, "Failed to unmap volume")
 
 		if vol.contentType == ContentTypeFS {
 			// Re-generate the UUID. Do this first as ensuring permissions and setting quota can
@@ -636,7 +636,7 @@ func (d *ceph) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vo
 		return err
 	}
 
-	defer func() { _ = d.rbdUnmapVolume(vol, true) }()
+	defer logger.WarnOnError(func() error { return d.rbdUnmapVolume(vol, true) }, "Failed to unmap volume")
 
 	// Re-generate the UUID.
 	err = d.generateUUID(vol.ConfigBlockFilesystem(), devPath)
@@ -1097,7 +1097,7 @@ func (d *ceph) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, o
 	}
 
 	if ourMap {
-		defer func() { _ = d.rbdUnmapVolume(vol, true) }()
+		defer logger.WarnOnError(func() error { return d.rbdUnmapVolume(vol, true) }, "Failed to unmap volume")
 	}
 
 	oldSizeBytes, err := BlockDiskSizeBytes(devPath)
@@ -1582,7 +1582,7 @@ func (d *ceph) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *lo
 		return err
 	}
 
-	defer func() { _ = d.rbdDeleteVolumeSnapshot(vol, runningSnapName) }()
+	defer logger.WarnOnError(func() error { return d.rbdDeleteVolumeSnapshot(vol, runningSnapName) }, "Failed to delete volume snapshot")
 
 	cur := d.getRBDVolumeName(vol, runningSnapName, true)
 
@@ -1615,7 +1615,7 @@ func (d *ceph) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 		// of the underlying filesystem can be inconsistent or, in the worst case, empty.
 		unfreezeFS, err := d.filesystemFreeze(sourcePath)
 		if err == nil {
-			defer func() { _ = unfreezeFS() }()
+			defer logger.WarnOnError(unfreezeFS, "Failed to unfreeze filesystem")
 		}
 	}
 
@@ -1922,7 +1922,7 @@ func (d *ceph) RestoreVolume(vol Volume, snapshotName string, op *operations.Ope
 	}
 
 	if ourUnmount {
-		defer func() { _ = d.MountVolume(vol, op) }()
+		defer logger.WarnOnError(func() error { return d.MountVolume(vol, op) }, "Failed to mount volume")
 	}
 
 	_, err = subprocess.RunCommand(
@@ -1950,7 +1950,7 @@ func (d *ceph) RestoreVolume(vol Volume, snapshotName string, op *operations.Ope
 		return err
 	}
 
-	defer func() { _ = d.rbdUnmapVolume(snapVol, true) }()
+	defer logger.WarnOnError(func() error { return d.rbdUnmapVolume(snapVol, true) }, "Failed to unmap volume")
 
 	// Re-generate the UUID.
 	err = d.generateUUID(snapVol.ConfigBlockFilesystem(), devPath)

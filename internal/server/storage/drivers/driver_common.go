@@ -318,7 +318,7 @@ func (d *common) moveGPTAltHeader(devPath string) error {
 				return err
 			}
 
-			defer func() { _ = loopDeviceAutoDetach(devPath) }()
+			defer logger.WarnOnError(func() error { return loopDeviceAutoDetach(devPath) }, "Failed to detach loop device")
 		}
 	}
 

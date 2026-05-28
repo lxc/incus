@@ -270,7 +270,7 @@ func (d *lvm) Create() error {
 			return err
 		}
 
-		defer func() { _ = loopDeviceAutoDetach(loopDevPath) }()
+		defer logger.WarnOnError(func() error { return loopDeviceAutoDetach(loopDevPath) }, "Failed to detach loop device")
 
 		// Check if the physical volume already exists.
 		pvName = loopDevPath
@@ -532,7 +532,7 @@ func (d *lvm) Delete(op *operations.Operation) error {
 			return err
 		}
 
-		defer func() { _ = loopDeviceAutoDetach(loopDevPath) }()
+		defer logger.WarnOnError(func() error { return loopDeviceAutoDetach(loopDevPath) }, "Failed to detach loop device")
 	}
 
 	vgExists, vgTags, err := d.volumeGroupExists(d.config["lvm.vg_name"])
@@ -905,7 +905,7 @@ func (d *lvm) Update(changedConfig map[string]string) error {
 			return err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		sizeBytes, _ := units.ParseByteSizeString(size)
 

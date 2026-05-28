@@ -231,7 +231,7 @@ func (d *btrfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcDat
 		return nil, nil, fmt.Errorf("Failed to create temporary directory %q: %w", tmpUnpackDir, err)
 	}
 
-	defer func() { _ = os.RemoveAll(tmpUnpackDir) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(tmpUnpackDir) }, "Failed to remove temporary directory")
 
 	err = os.Chmod(tmpUnpackDir, 0o100)
 	if err != nil {
@@ -688,7 +688,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 		return fmt.Errorf("Failed to create temporary directory under %q: %w", instancesPath, err)
 	}
 
-	defer func() { _ = os.RemoveAll(tmpVolumesMountPoint) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(tmpVolumesMountPoint) }, "Failed to remove temporary directory")
 
 	err = os.Chmod(tmpVolumesMountPoint, 0o100)
 	if err != nil {
@@ -1613,7 +1613,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 		return fmt.Errorf("Failed to create temporary directory under %q: %w", instancesPath, err)
 	}
 
-	defer func() { _ = os.RemoveAll(tmpVolumesMountPoint) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(tmpVolumesMountPoint) }, "Failed to remove temporary directory")
 
 	err = os.Chmod(tmpVolumesMountPoint, 0o100)
 	if err != nil {
@@ -1627,7 +1627,7 @@ func (d *btrfs) migrateVolumeOptimized(vol Volume, conn io.ReadWriteCloser, volS
 		return err
 	}
 
-	defer func() { _ = d.deleteSubvolume(migrationSendSnapshotPrefix, true) }()
+	defer logger.WarnOnError(func() error { return d.deleteSubvolume(migrationSendSnapshotPrefix, true) }, "Failed to delete subvolume")
 
 	// Send main volume (and any subvolumes if supported) to target.
 	return sendVolume(vol, migrationSendSnapshotPrefix, lastVolPath)
@@ -1711,8 +1711,8 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 			return fmt.Errorf("Failed to open temporary file for BTRFS backup: %w", err)
 		}
 
-		defer func() { _ = tmpFile.Close() }()
-		defer func() { _ = os.Remove(tmpFile.Name()) }()
+		defer logger.WarnOnError(tmpFile.Close, "Failed to close temporary file")
+		defer logger.WarnOnError(func() error { return os.Remove(tmpFile.Name()) }, "Failed to remove temporary file")
 
 		// Write the subvolume to the file.
 		d.logger.Debug("Generating optimized volume file", logger.Ctx{"sourcePath": path, "parent": parent, "file": tmpFile.Name(), "name": fileName})
@@ -1852,7 +1852,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 		return fmt.Errorf("Failed to create temporary directory under %q: %w", instancesPath, err)
 	}
 
-	defer func() { _ = os.RemoveAll(tmpInstanceMntPoint) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(tmpInstanceMntPoint) }, "Failed to remove temporary directory")
 
 	err = os.Chmod(tmpInstanceMntPoint, 0o100)
 	if err != nil {
@@ -1866,7 +1866,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 		return err
 	}
 
-	defer func() { _ = d.deleteSubvolume(targetVolume, true) }()
+	defer logger.WarnOnError(func() error { return d.deleteSubvolume(targetVolume, true) }, "Failed to delete subvolume")
 
 	err = d.setSubvolumeReadonlyProperty(targetVolume, true)
 	if err != nil {

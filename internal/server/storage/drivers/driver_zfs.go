@@ -605,7 +605,7 @@ func (d *zfs) Update(changedConfig map[string]string) error {
 			return err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		sizeBytes, _ := units.ParseByteSizeString(size)
 
