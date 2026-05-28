@@ -134,9 +134,9 @@ test_filemanip() {
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "1234" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "5678" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
-    # The stat fields are NOT applied recursively.
-    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "5678" ]
+    # The mode is NOT applied recursively.
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
 
@@ -144,9 +144,9 @@ test_filemanip() {
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "$(id -u)" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "$(id -g)" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "751" ]
-    # The stat fields are NOT applied recursively.
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    # The mode is NOT applied recursively.
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
 
@@ -154,9 +154,9 @@ test_filemanip() {
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "1234" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "5678" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "751" ]
-    # The stat fields are NOT applied recursively.
-    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "1234" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "5678" ]
+    # The mode is NOT applied recursively.
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
 
