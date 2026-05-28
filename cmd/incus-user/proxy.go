@@ -11,6 +11,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/linux"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
+	incusLogger "github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -103,7 +104,7 @@ func proxyConnection(conn *net.UnixConn, serverUnixPath string) {
 		return
 	}
 
-	defer func() { _ = client.Close() }()
+	defer incusLogger.WarnOnError(client.Close, "Failed to close connection")
 
 	// Get the TLS configuration
 	tlsConfig, err := tlsConfig(creds.Uid)
