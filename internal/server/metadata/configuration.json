@@ -3428,6 +3428,13 @@
 						}
 					},
 					{
+						"volatile.last_state.agent": {
+							"longdesc": "",
+							"shortdesc": "Instance agent state as of last host shutdown",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.last_state.idmap": {
 							"longdesc": "",
 							"shortdesc": "Serialized instance UID/GID map",
