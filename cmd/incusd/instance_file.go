@@ -318,7 +318,7 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 		return response.InternalError(err)
 	}
 
-	defer func() { _ = client.Close() }()
+	defer logger.WarnOnError(client.Close, "Failed to close SFTP client")
 
 	return fileSFTPPost(client, path, r, func() {
 		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFilePushed.Event(inst, logger.Ctx{"path": path}))
@@ -374,7 +374,7 @@ func instanceFileDelete(s *state.State, inst instance.Instance, path string, r *
 		return response.InternalError(err)
 	}
 
-	defer func() { _ = client.Close() }()
+	defer logger.WarnOnError(client.Close, "Failed to close SFTP client")
 
 	return fileSFTPDelete(client, path, r, func() {
 		s.Events.SendLifecycle(inst.Project().Name, lifecycle.InstanceFileDeleted.Event(inst, logger.Ctx{"path": path}))
@@ -559,7 +559,7 @@ func fileSFTPPost(client *sftp.Client, path string, r *http.Request, onSuccess f
 			return response.SmartError(err)
 		}
 
-		defer func() { _ = file.Close() }()
+		defer logger.WarnOnError(file.Close, "Failed to close file")
 
 		// Go to the end of the file.
 		_, err = file.Seek(0, io.SeekEnd)

@@ -19,6 +19,7 @@ import (
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -119,8 +120,8 @@ func instanceDebugMemoryGet(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		defer reader.Close()
-		defer writer.Close()
+		defer logger.WarnOnError(reader.Close, "Failed to close pipe reader")
+		defer logger.WarnOnError(writer.Close, "Failed to close pipe writer")
 
 		chCopy := make(chan error)
 

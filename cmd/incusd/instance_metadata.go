@@ -110,7 +110,7 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = storagePools.InstanceUnmount(pool, c, nil) }()
+	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, c, nil) }, "Failed to unmount instance")
 
 	// If missing, just return empty result
 	metadataPath := filepath.Join(c.Path(), "metadata.yaml")
@@ -124,7 +124,7 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	defer func() { _ = metadataFile.Close() }()
+	defer logger.WarnOnError(metadataFile.Close, "Failed to close metadata file")
 
 	data, err := io.ReadAll(metadataFile)
 	if err != nil {
@@ -222,7 +222,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = storagePools.InstanceUnmount(pool, inst, nil) }()
+	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, inst, nil) }, "Failed to unmount instance")
 
 	// Read the existing data.
 	metadataPath := filepath.Join(inst.Path(), "metadata.yaml")
@@ -233,7 +233,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 			return response.InternalError(err)
 		}
 
-		defer func() { _ = metadataFile.Close() }()
+		defer logger.WarnOnError(metadataFile.Close, "Failed to close metadata file")
 
 		data, err := io.ReadAll(metadataFile)
 		if err != nil {
@@ -349,7 +349,7 @@ func instanceMetadataPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = storagePools.InstanceUnmount(pool, inst, nil) }()
+	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, inst, nil) }, "Failed to unmount instance")
 
 	return doInstanceMetadataUpdate(s, inst, metadata, r)
 }
@@ -466,7 +466,7 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = storagePools.InstanceUnmount(pool, c, nil) }()
+	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, c, nil) }, "Failed to unmount instance")
 
 	// Look at the request
 	templateName := r.FormValue("path")
@@ -509,7 +509,7 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = template.Close() }()
+	defer logger.WarnOnError(template.Close, "Failed to close template file")
 
 	tempfile, err := os.CreateTemp("", "incus_template")
 	if err != nil {
@@ -618,7 +618,7 @@ func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = storagePools.InstanceUnmount(pool, c, nil) }()
+	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, c, nil) }, "Failed to unmount instance")
 
 	// Look at the request
 	templateName := r.FormValue("path")
@@ -737,7 +737,7 @@ func instanceMetadataTemplatesDelete(d *Daemon, r *http.Request) response.Respon
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = storagePools.InstanceUnmount(pool, c, nil) }()
+	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, c, nil) }, "Failed to unmount instance")
 
 	// Look at the request
 	templateName := r.FormValue("path")

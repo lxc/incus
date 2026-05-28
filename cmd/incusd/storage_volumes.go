@@ -2697,7 +2697,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 		return response.InternalError(err)
 	}
 
-	defer func() { _ = os.Remove(isoFile.Name()) }()
+	defer logger.WarnOnError(func() error { return os.Remove(isoFile.Name()) }, "Failed to remove ISO file")
 	reverter.Add(func() { _ = isoFile.Close() })
 
 	// Get disk budget for the project if any.
@@ -2725,7 +2725,7 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 	runReverter := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
-		defer func() { _ = isoFile.Close() }()
+		defer logger.WarnOnError(isoFile.Close, "Failed to close ISO file")
 		defer runReverter.Fail()
 
 		pool, err := storagePools.LoadByName(s, pool)
@@ -2765,7 +2765,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 		return response.InternalError(err)
 	}
 
-	defer func() { _ = os.Remove(backupFile.Name()) }()
+	defer logger.WarnOnError(func() error { return os.Remove(backupFile.Name()) }, "Failed to remove backup file")
 	reverter.Add(func() { _ = backupFile.Close() })
 
 	// Get disk budget for the project if any.
@@ -2810,7 +2810,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 			return response.InternalError(err)
 		}
 
-		defer func() { _ = os.Remove(tarFile.Name()) }()
+		defer logger.WarnOnError(func() error { return os.Remove(tarFile.Name()) }, "Failed to remove tarball file")
 
 		// Decompress to tarFile temporary file.
 		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
@@ -2901,7 +2901,7 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	runReverter := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
-		defer func() { _ = backupFile.Close() }()
+		defer logger.WarnOnError(backupFile.Close, "Failed to close backup file")
 		defer runReverter.Fail()
 
 		pool, err := storagePools.LoadByName(s, bInfo.Pool)

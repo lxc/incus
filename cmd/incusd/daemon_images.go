@@ -373,14 +373,14 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return nil, false, err
 		}
 
-		defer func() { _ = dest.Close() }()
+		defer logger.WarnOnError(dest.Close, "Failed to close image file")
 
 		destRootfs, err := os.Create(destName + ".rootfs")
 		if err != nil {
 			return nil, false, err
 		}
 
-		defer func() { _ = destRootfs.Close() }()
+		defer logger.WarnOnError(destRootfs.Close, "Failed to close rootfs file")
 
 		// Get the image information
 		if info == nil {
@@ -518,7 +518,7 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			return nil, false, err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close image file")
 
 		// Hashing
 		hash256 := sha256.New()

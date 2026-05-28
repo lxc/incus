@@ -150,8 +150,8 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 			return err
 		}
 
-		defer func() { _ = tempfile.Close() }()
-		defer func() { _ = os.Remove(tempfile.Name()) }()
+		defer logger.WarnOnError(tempfile.Close, "Failed to close temporary file")
+		defer logger.WarnOnError(func() error { return os.Remove(tempfile.Name()) }, "Failed to remove temporary file")
 
 		// Prepare 'tar2sqfs' arguments
 		args := []string{"tar2sqfs"}
@@ -260,8 +260,8 @@ func imgPostInstanceInfo(ctx context.Context, s *state.State, r *http.Request, r
 		return nil, err
 	}
 
-	defer func() { _ = os.Remove(metaFile.Name()) }()
-	defer func() { _ = os.Remove(rootfsFile.Name()) }()
+	defer logger.WarnOnError(func() error { return os.Remove(metaFile.Name()) }, "Failed to remove metadata file")
+	defer logger.WarnOnError(func() error { return os.Remove(rootfsFile.Name()) }, "Failed to remove rootfs file")
 
 	// Calculate (close estimate of) total size of input to image
 	totalSize := int64(0)
@@ -739,7 +739,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, err
 		}
 
-		defer func() { _ = os.Remove(imageTarf.Name()) }()
+		defer logger.WarnOnError(func() error { return os.Remove(imageTarf.Name()) }, "Failed to remove image tarball")
 
 		// Parse the POST data
 		_, err = post.Seek(0, io.SeekStart)
@@ -790,7 +790,7 @@ func getImgPostInfo(ctx context.Context, s *state.State, r *http.Request, buildd
 			return nil, err
 		}
 
-		defer func() { _ = os.Remove(rootfsTarf.Name()) }()
+		defer logger.WarnOnError(func() error { return os.Remove(rootfsTarf.Name()) }, "Failed to remove rootfs tarball")
 
 		size, err = util.SafeCopy(io.MultiWriter(rootfsTarf, hash256), part)
 		info.Size += size
@@ -1440,7 +1440,7 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 		return nil, "unknown", err
 	}
 
-	defer func() { _ = r.Close() }()
+	defer logger.WarnOnError(r.Close, "Failed to close file")
 
 	// Decompress if needed
 	_, algo, unpacker, err := archive.DetectCompressionFile(r)
@@ -1472,17 +1472,17 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 			return nil, "unknown", err
 		}
 
-		defer func() { _ = stdout.Close() }()
+		defer logger.WarnOnError(stdout.Close, "Failed to close stdout pipe")
 
 		err = cmd.Start()
 		if err != nil {
 			return nil, "unknown", err
 		}
 
-		defer func() { _ = cmd.Wait() }()
+		defer logger.WarnOnError(cmd.Wait, "Failed to wait for command")
 
 		// Double close stdout, this is to avoid blocks in Wait()
-		defer func() { _ = stdout.Close() }()
+		defer logger.WarnOnError(stdout.Close, "Failed to close stdout pipe")
 
 		tr = tar.NewReader(stdout)
 	} else {
@@ -2140,7 +2140,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 				return err
 			}
 
-			defer func() { _ = metaFile.Close() }()
+			defer logger.WarnOnError(metaFile.Close, "Failed to close metadata file")
 
 			createArgs.MetaFile = metaFile
 			createArgs.MetaName = filepath.Base(imageMetaPath)
@@ -2152,7 +2152,7 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 					return err
 				}
 
-				defer func() { _ = rootfsFile.Close() }()
+				defer logger.WarnOnError(rootfsFile.Close, "Failed to close rootfs file")
 
 				createArgs.RootfsFile = rootfsFile
 				createArgs.RootfsName = filepath.Base(imageRootfsPath)
@@ -4460,7 +4460,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		defer func() { _ = metaFile.Close() }()
+		defer logger.WarnOnError(metaFile.Close, "Failed to close metadata file")
 
 		createArgs.MetaFile = metaFile
 		createArgs.MetaName = filepath.Base(imageMetaPath)
@@ -4471,7 +4471,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			defer func() { _ = rootfsFile.Close() }()
+			defer logger.WarnOnError(rootfsFile.Close, "Failed to close rootfs file")
 
 			createArgs.RootfsFile = rootfsFile
 			createArgs.RootfsName = filepath.Base(imageRootfsPath)
@@ -4591,21 +4591,21 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 		return fmt.Errorf("failed to create temporary directory for download: %w", err)
 	}
 
-	defer func() { _ = os.RemoveAll(buildDir) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(buildDir) }, "Failed to remove build directory")
 
 	metaFile, err := os.CreateTemp(buildDir, "incus_tar_")
 	if err != nil {
 		return err
 	}
 
-	defer func() { _ = metaFile.Close() }()
+	defer logger.WarnOnError(metaFile.Close, "Failed to close metadata file")
 
 	rootfsFile, err := os.CreateTemp(buildDir, "incus_tar_")
 	if err != nil {
 		return err
 	}
 
-	defer func() { _ = rootfsFile.Close() }()
+	defer logger.WarnOnError(rootfsFile.Close, "Failed to close rootfs file")
 
 	getReq := incus.ImageFileRequest{
 		MetaFile:   io.ReadWriteSeeker(metaFile),

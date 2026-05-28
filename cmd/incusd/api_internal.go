@@ -625,7 +625,7 @@ func internalSQLSelect(tx *sql.Tx, statement string, result *internalSQL.SQLResu
 		return fmt.Errorf("Failed to execute query: %w", err)
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	result.Columns, err = rows.Columns()
 	if err != nil {
