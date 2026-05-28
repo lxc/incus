@@ -436,7 +436,7 @@ func (d *proxy) checkProcStarted(logPath string) (bool, error) {
 		return false, err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -608,7 +608,7 @@ func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
 		return nil, err
 	}
 
-	defer func() { _ = cc.Release() }()
+	defer logger.WarnOnError(cc.Release, "Failed to release container")
 
 	containerPid := strconv.Itoa(cc.InitPid())
 	daemonPid := strconv.Itoa(os.Getpid())
