@@ -29,15 +29,29 @@ type uploadInfo struct {
 	Initiated   time.Time         `json:"initiated"`
 }
 
-func (s *Server) uploadDir(uploadID string) string {
-	return filepath.Join(s.uploadsDir(), uploadID)
+// uploadsRoot opens the uploads directory as an os.Root, confining all
+// uploadID-derived path operations and preventing path traversal.
+func (s *Server) uploadsRoot() (*os.Root, error) {
+	err := os.MkdirAll(s.uploadsDir(), 0o700)
+	if err != nil {
+		return nil, err
+	}
+
+	return os.OpenRoot(s.uploadsDir())
 }
 
 func (s *Server) initiateMultipartUpload(w http.ResponseWriter, r *http.Request, key string) {
 	id := uuid.New().String()
-	dir := s.uploadDir(id)
 
-	err := os.MkdirAll(dir, 0o700)
+	root, err := s.uploadsRoot()
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	defer func() { _ = root.Close() }()
+
+	err = root.Mkdir(id, 0o700)
 	if err != nil {
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
 		return
@@ -56,7 +70,7 @@ func (s *Server) initiateMultipartUpload(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	err = os.WriteFile(filepath.Join(dir, "upload.json"), b, 0o600)
+	err = root.WriteFile(filepath.Join(id, "upload.json"), b, 0o600)
 	if err != nil {
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
 		return
@@ -82,8 +96,15 @@ func (s *Server) initiateMultipartUpload(w http.ResponseWriter, r *http.Request,
 }
 
 func (s *Server) uploadPart(w http.ResponseWriter, r *http.Request, key, uploadID string) {
-	dir := s.uploadDir(uploadID)
-	_, err := os.Stat(dir)
+	root, err := s.uploadsRoot()
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	defer func() { _ = root.Close() }()
+
+	_, err = root.Stat(uploadID)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			(&s3.Error{Code: s3.ErrorInvalidRequest, Message: "Upload not found."}).Response(w)
@@ -101,10 +122,10 @@ func (s *Server) uploadPart(w http.ResponseWriter, r *http.Request, key, uploadI
 		return
 	}
 
-	partPath := filepath.Join(dir, fmt.Sprintf("part-%05d", partNumber))
+	partPath := filepath.Join(uploadID, fmt.Sprintf("part-%05d", partNumber))
 	tmp := partPath + ".tmp"
 
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	f, err := root.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
 		return
@@ -114,7 +135,7 @@ func (s *Server) uploadPart(w http.ResponseWriter, r *http.Request, key, uploadI
 	_, err = io.Copy(io.MultiWriter(f, hasher), r.Body)
 	closeErr := f.Close()
 	if err != nil || closeErr != nil {
-		_ = os.Remove(tmp)
+		_ = root.Remove(tmp)
 		msg := err
 		if msg == nil {
 			msg = closeErr
@@ -124,9 +145,9 @@ func (s *Server) uploadPart(w http.ResponseWriter, r *http.Request, key, uploadI
 		return
 	}
 
-	err = os.Rename(tmp, partPath)
+	err = root.Rename(tmp, partPath)
 	if err != nil {
-		_ = os.Remove(tmp)
+		_ = root.Remove(tmp)
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
 		return
 	}
@@ -148,9 +169,15 @@ type completePart struct {
 }
 
 func (s *Server) completeMultipartUpload(w http.ResponseWriter, r *http.Request, key, uploadID string) {
-	dir := s.uploadDir(uploadID)
+	root, err := s.uploadsRoot()
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
 
-	infoBytes, err := os.ReadFile(filepath.Join(dir, "upload.json"))
+	defer func() { _ = root.Close() }()
+
+	infoBytes, err := root.ReadFile(filepath.Join(uploadID, "upload.json"))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			(&s3.Error{Code: s3.ErrorInvalidRequest, Message: "Upload not found."}).Response(w)
@@ -206,8 +233,8 @@ func (s *Server) completeMultipartUpload(w http.ResponseWriter, r *http.Request,
 	combined := md5.New()
 	var size int64
 	for _, p := range req.Parts {
-		partPath := filepath.Join(dir, fmt.Sprintf("part-%05d", p.PartNumber))
-		f, err := os.Open(partPath)
+		partPath := filepath.Join(uploadID, fmt.Sprintf("part-%05d", p.PartNumber))
+		f, err := root.Open(partPath)
 		if err != nil {
 			_ = out.Close()
 			_ = os.Remove(tmp)
@@ -258,7 +285,7 @@ func (s *Server) completeMultipartUpload(w http.ResponseWriter, r *http.Request,
 	}
 
 	// Clean up the upload directory.
-	_ = os.RemoveAll(dir)
+	_ = root.RemoveAll(uploadID)
 
 	type completeResult struct {
 		XMLName xml.Name `xml:"CompleteMultipartUploadResult"`
@@ -279,9 +306,15 @@ func (s *Server) completeMultipartUpload(w http.ResponseWriter, r *http.Request,
 }
 
 func (s *Server) abortMultipartUpload(w http.ResponseWriter, key, uploadID string) {
-	dir := s.uploadDir(uploadID)
+	root, err := s.uploadsRoot()
+	if err != nil {
+		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
 
-	err := os.RemoveAll(dir)
+	defer func() { _ = root.Close() }()
+
+	err = root.RemoveAll(uploadID)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
 		return
