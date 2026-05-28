@@ -560,8 +560,8 @@ func SupportsVFS3FSCaps(prefix string) bool {
 		return false
 	}
 
-	defer func() { _ = tmpfile.Close() }()
-	defer func() { _ = os.Remove(tmpfile.Name()) }()
+	defer logger.WarnOnError(tmpfile.Close, "Failed to close temporary file")
+	defer logger.WarnOnError(func() error { return os.Remove(tmpfile.Name()) }, "Failed to remove temporary file")
 
 	err = os.Chmod(tmpfile.Name(), 0o001)
 	if err != nil {
