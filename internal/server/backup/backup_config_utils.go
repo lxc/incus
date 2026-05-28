@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
 )
 
@@ -180,7 +181,7 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 		return err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	data, err := yaml.Dump(&backup, yaml.V2)
 	if err != nil {
