@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
+	"github.com/lxc/incus/v7/shared/validate"
 )
 
 // Instance driver definitions.
@@ -97,13 +98,13 @@ func validDevices(s *state.State, p api.Project, instanceType instancetype.Type,
 				continue // Don't check the device twice if present in both local and expanded.
 			}
 
-			// Enforce a maximum name length of 64 characters.
-			// This is a safe maximum allowing use for sockets and other filesystem use.
-			if len(deviceName) > 64 {
-				return errors.New("The maximum device name length is 64 characters")
+			// Validate the device name.
+			err := validate.IsAPIName(deviceName, false)
+			if err != nil {
+				return fmt.Errorf("Invalid device name %q: %w", deviceName, err)
 			}
 
-			err := device.Validate(instConf, s, deviceName, devConf, false)
+			err = device.Validate(instConf, s, deviceName, devConf, false)
 			if err != nil {
 				if expanded && errors.Is(err, device.ErrUnsupportedDevType) {
 					// Skip unsupported devices in expanded config.
