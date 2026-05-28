@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/v7/internal/rsync"
@@ -183,9 +184,14 @@ func daemonStorageValidate(s *state.State, storageType string, target string) er
 
 	err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Validate pool exists.
-		poolID, _, _, err = tx.GetStoragePool(ctx, poolName)
+		var pool *api.StoragePool
+		poolID, pool, _, err = tx.GetStoragePool(ctx, poolName)
 		if err != nil {
 			return fmt.Errorf("Unable to load storage pool %q: %w", poolName, err)
+		}
+
+		if slices.Contains(db.StorageRemoteDriverNames(), pool.Driver) {
+			return errors.New("Daemon storage volumes cannot be located on clustered storage pools")
 		}
 
 		// Confirm volume exists.
