@@ -176,7 +176,7 @@ It requires the source to be an alias and for it to be public.`))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAutoUpdate, "auto-update", i18n.G("Keep the image up to date after initial copy"))
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagAliases, "alias", i18n.G("New aliases to add to the image"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagVM, "vm", i18n.G("Copy virtual machine images"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", "pull", "", i18n.G("Transfer mode. One of pull (default), push or relay"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", "pull", "", i18n.G("Transfer mode. One of pull, push or relay"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTargetProject, "target-project", "", "", i18n.G("Copy to a project different from the source"))
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagProfile, "profile|p", i18n.G("Profile to apply to the new image"))
 	cmd.RunE = c.run
