@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-27 19:31+0000\n"
+"POT-Creation-Date: 2026-05-28 12:18-0400\n"
 "PO-Revision-Date: 2026-05-28 05:29+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -284,8 +284,8 @@ msgstr ""
 "### config:\n"
 "###  user.foo: bah\n"
 "###\n"
-"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述（description"
-"）、配置键。"
+"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述"
+"（description）、配置键。"
 
 #: cmd/incus/network_address_set.go:460
 msgid ""
@@ -458,8 +458,8 @@ msgstr ""
 "### target_network: mynet\n"
 "### status: Pending\n"
 "###\n"
-"### 注意，名称（name）、目标项目（target_project）、目标网络（target_network"
-"）、状态（status）字段不能更改。"
+"### 注意，名称（name）、目标项目（target_project）、目标网络"
+"（target_network）、状态（status）字段不能更改。"
 
 #: cmd/incus/network_zone.go:1269
 msgid ""
@@ -2664,7 +2664,8 @@ msgstr ""
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
-msgstr "输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
+msgstr ""
+"输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
 
 #: cmd/incus/top.go:262
 msgid "Enter new delay in seconds:"
@@ -2806,11 +2807,11 @@ msgid ""
 msgstr ""
 "对本地或全局数据库执行 SQL 查询\n"
 "\n"
-"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地址"
-"）。\n"
+"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地"
+"址）。\n"
 "\n"
-"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器等）"
-"。\n"
+"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器"
+"等）。\n"
 "\n"
 "  如果您运行的是非集群服务器也同样适用，因为该实例等同于一个单成员集群。\n"
 "\n"
@@ -2845,8 +2846,8 @@ msgstr ""
 "在实例中执行命令\n"
 "\n"
 "该命令直接使用 exec 执行，因此不存在 shell 模式（变量、文件重定向等）。\n"
-"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传递"
-"，例如：\n"
+"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传"
+"递，例如：\n"
 "\n"
 "  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
 "默认为非交互式模式，如果标准输入和输出都是终端，则选择交互式模式（不考虑 "
@@ -7584,12 +7585,8 @@ msgid ""
 "machine\"."
 msgstr ""
 
-#: cmd/incus/remote.go:1382
-msgid "Set the URL for the remote"
-msgstr ""
-
-#: cmd/incus/remote.go:1381
-msgid "Set the URLs for the remote"
+#: cmd/incus/remote.go:1381 cmd/incus/remote.go:1382
+msgid "Set the URL(s) for the remote"
 msgstr ""
 
 #: cmd/incus/file.go:110 cmd/incus/storage_volume.go:2298
@@ -8310,10 +8307,6 @@ msgstr ""
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
-#: cmd/incus/config.go:590
-msgid "The is no config key to set on an instance snapshot."
-msgstr ""
-
 #: cmd/incus/cluster_group.go:857
 #, c-format
 msgid "The key %q does not exist on cluster group %q"
@@ -8498,6 +8491,10 @@ msgstr ""
 msgid "The type to create (file, symlink, or directory)"
 msgstr ""
 
+#: cmd/incus/config.go:590
+msgid "There is no config key to set on an instance snapshot."
+msgstr ""
+
 #: cmd/incus/main.go:415
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
@@ -8587,20 +8584,9 @@ msgstr ""
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
 
-#: cmd/incus/image.go:179
-msgid "Transfer mode. One of pull (default), push or relay"
-msgstr ""
-
+#: cmd/incus/copy.go:62 cmd/incus/image.go:179 cmd/incus/move.go:64
 #: cmd/incus/storage_volume.go:390
-msgid "Transfer mode. One of pull (default), push or relay."
-msgstr ""
-
-#: cmd/incus/copy.go:62
 msgid "Transfer mode. One of pull, push or relay"
-msgstr ""
-
-#: cmd/incus/move.go:64
-msgid "Transfer mode. One of pull, push or relay."
 msgstr ""
 
 #: cmd/incus/image.go:768
