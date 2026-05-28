@@ -9482,11 +9482,19 @@ func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcDat
 			return errors.New("Bad dependent volume definition found in index")
 		}
 
+		if disk.Volume == nil || disk.Pool == nil {
+			return errors.New("Bad dependent volume definition found in index")
+		}
+
 		optimizedStorage := srcBackup.OptimizedStorage
 		optimizedHeader := srcBackup.OptimizedHeader
 
 		snapshots := []string{}
 		for _, snap := range disk.VolumeSnapshots {
+			if snap == nil {
+				return errors.New("Bad dependent volume snapshot definition found in index")
+			}
+
 			snapshots = append(snapshots, snap.Name)
 		}
 
