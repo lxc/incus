@@ -498,7 +498,7 @@ func updateFromV18(ctx context.Context, tx *sql.Tx) error {
 		return err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	for rows.Next() {
 		err := rows.Scan(&id, &value)
@@ -544,7 +544,7 @@ func updateFromV18(ctx context.Context, tx *sql.Tx) error {
 		return err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	for rows.Next() {
 		err := rows.Scan(&id, &value)
@@ -864,7 +864,7 @@ PRAGMA foreign_keys=ON; -- Make sure we turn integrity checks back on.`
 		return err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	var tablestodelete []string
 	var rowidtodelete []int
@@ -920,7 +920,7 @@ CREATE TABLE IF NOT EXISTS config (
 	passOut, err := os.Open(passfname)
 	oldPassword := ""
 	if err == nil {
-		defer func() { _ = passOut.Close() }()
+		defer logger.WarnOnError(passOut.Close, "Failed to close file")
 		buff := make([]byte, 96)
 		_, err = passOut.Read(buff)
 		if err != nil {
