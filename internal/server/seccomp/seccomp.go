@@ -1227,7 +1227,7 @@ func CallForkmknod(c Instance, dev deviceConfig.Device, requestPID int, s *state
 		return int(-C.EPERM)
 	}
 
-	defer func() { _ = pidFd.Close() }()
+	defer logger.WarnOnError(pidFd.Close, "Failed to close pidfd")
 
 	_, stderr, err := subprocess.RunCommandSplit(
 		context.TODO(),
@@ -1444,7 +1444,7 @@ func (srv *Server) HandleSetxattrSyscall(c Instance, siov *Iovec) int {
 		return 0
 	}
 
-	defer func() { _ = pidFd.Close() }()
+	defer logger.WarnOnError(pidFd.Close, "Failed to close pidfd")
 
 	uid, gid, fsuid, fsgid, err := TaskIDs(args.pid)
 	if err != nil {
@@ -1582,7 +1582,7 @@ func (srv *Server) HandleSchedSetschedulerSyscall(c Instance, siov *Iovec) int {
 		return 0
 	}
 
-	defer func() { _ = pidFd.Close() }()
+	defer logger.WarnOnError(pidFd.Close, "Failed to close pidfd")
 
 	uid, gid, _, _, err := TaskIDs(args.pidCaller)
 	if err != nil {
@@ -2014,7 +2014,7 @@ func (srv *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 		return 0
 	}
 
-	defer func() { _ = pidFd.Close() }()
+	defer logger.WarnOnError(pidFd.Close, "Failed to close pidfd")
 
 	mntSource := [unix.PathMax]C.char{}
 	mntTarget := [unix.PathMax]C.char{}
