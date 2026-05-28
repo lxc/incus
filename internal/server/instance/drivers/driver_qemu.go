@@ -1157,14 +1157,14 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 			return fmt.Errorf("Failed opening state file %q: %w", statePath, err)
 		}
 
-		defer func() { _ = stateFile.Close() }()
+		defer logger.WarnOnError(stateFile.Close, "Failed to close state file")
 
 		uncompressedState, err := gzip.NewReader(stateFile)
 		if err != nil {
 			return fmt.Errorf("Failed opening state gzip reader: %w", err)
 		}
 
-		defer func() { _ = uncompressedState.Close() }()
+		defer logger.WarnOnError(uncompressedState.Close, "Failed to close state reader")
 
 		pipeRead, pipeWrite, err := os.Pipe()
 		if err != nil {
@@ -1225,14 +1225,14 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 		return err
 	}
 
-	defer func() { _ = stateFile.Close() }()
+	defer logger.WarnOnError(stateFile.Close, "Failed to close state file")
 
 	compressedState, err := gzip.NewWriterLevel(stateFile, gzip.BestSpeed)
 	if err != nil {
 		return err
 	}
 
-	defer func() { _ = compressedState.Close() }()
+	defer logger.WarnOnError(compressedState.Close, "Failed to close state writer")
 
 	pipeRead, pipeWrite, err := os.Pipe()
 	if err != nil {
@@ -3673,7 +3673,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 				return err
 			}
 
-			defer func() { _ = w.Close() }()
+			defer logger.WarnOnError(w.Close, "Failed to close file")
 
 			// Read the template.
 			tplString, err := os.ReadFile(filepath.Join(d.TemplatesPath(), tpl.Template))
@@ -4593,7 +4593,7 @@ func (d *qemu) addDriveDirConfigVirtiofs(qemuDev map[string]any, agentMounts *[]
 			return fmt.Errorf("Error connecting to virtiofs socket %q: %w", virtiofsdSockPath, err)
 		}
 
-		defer func() { _ = virtiofsSock.Close() }() // Close file after device has been added.
+		defer logger.WarnOnError(virtiofsSock.Close, "Failed to close virtiofs socket") // Close file after device has been added.
 
 		virtiofsFile, err := virtiofsSock.File()
 		if err != nil {
@@ -4987,7 +4987,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				return fmt.Errorf("Failed opening file descriptor for disk device %q: %w", driveConf.DevName, err)
 			}
 
-			defer func() { _ = f.Close() }()
+			defer logger.WarnOnError(f.Close, "Failed to close file")
 
 			info, err := m.SendFileWithFDSet(nodeName, f, readonly)
 			if err != nil {
@@ -5285,7 +5285,7 @@ func (d *qemu) addNetDevConfig(busName string, qemuDev map[string]any, bootIndex
 				return fmt.Errorf("Error opening vDPA device file %q: %w", vdpaDevFile.Name(), err)
 			}
 
-			defer func() { _ = vdpaDevFile.Close() }() // Close file after device has been added.
+			defer logger.WarnOnError(vdpaDevFile.Close, "Failed to close vDPA device file") // Close file after device has been added.
 
 			vDPADevFDName := fmt.Sprintf("%s.0", vdpaDevFile.Name())
 			err = m.SendFile(vDPADevFDName, vdpaDevFile)
@@ -5572,7 +5572,7 @@ func (d *qemu) addUSBDeviceConfig(usbDev deviceConfig.USBDeviceItem) (monitorHoo
 			return fmt.Errorf("Failed to open host device: %w", err)
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		info, err := m.SendFileWithFDSet(qemuDev["id"].(string), f, false)
 		if err != nil {
@@ -6739,7 +6739,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				return err
 			}
 
-			defer func() { _ = d.unmount() }()
+			defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
 		}
 
 		// Re-generate the NVRAM.
@@ -7406,7 +7406,7 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 		return nil, err
 	}
 
-	defer func() { _ = d.unmount() }()
+	defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
 
 	// Create the tarball.
 	metaTarWriter := instancewriter.NewInstanceTarWriter(metaWriter, nil)
@@ -7496,7 +7496,7 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 		return nil, err
 	}
 
-	defer func() { _ = os.RemoveAll(tempDir) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(tempDir) }, "Failed to remove temporary directory")
 
 	data, err := yaml.Dump(&meta, yaml.V2)
 	if err != nil {
@@ -7536,7 +7536,7 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 		return nil, err
 	}
 
-	defer func() { _ = os.RemoveAll(tmpPath) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(tmpPath) }, "Failed to remove temporary directory")
 
 	if mountInfo.DiskPath == "" {
 		return nil, errors.New("No disk path available from mount")
@@ -7953,7 +7953,7 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 		return "", "", nil, fmt.Errorf("Failed opening file image for migration storage snapshot %q: %w", snapshotFile, err)
 	}
 
-	defer func() { _ = os.Remove(snapshotFile) }()
+	defer logger.WarnOnError(func() error { return os.Remove(snapshotFile) }, "Failed to remove snapshot file")
 
 	// Pass the snapshot file to the running QEMU process.
 	snapFile, err := os.OpenFile(snapshotFile, unix.O_RDWR, 0)
@@ -7961,7 +7961,7 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 		return "", "", nil, fmt.Errorf("Failed opening file descriptor for migration storage snapshot %q: %w", snapshotFile, err)
 	}
 
-	defer func() { _ = snapFile.Close() }()
+	defer logger.WarnOnError(snapFile.Close, "Failed to close snapshot file")
 
 	// Remove the snapshot file as we don't want to sync this to the target.
 	err = os.Remove(snapshotFile)
@@ -7974,7 +7974,7 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 		return "", "", nil, fmt.Errorf("Failed sending file descriptor of %q for migration storage snapshot: %w", snapFile.Name(), err)
 	}
 
-	defer func() { _ = monitor.RemoveFDFromFDSet(snapshotDiskName) }()
+	defer logger.WarnOnError(func() error { return monitor.RemoveFDFromFDSet(snapshotDiskName) }, "Failed to remove FD from FD set")
 
 	_ = snapFile.Close() // Don't prevent clean unmount when instance is stopped.
 
@@ -8078,7 +8078,7 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 		return nil, fmt.Errorf("Failed creating NBD unix listener: %w", err)
 	}
 
-	defer func() { _ = listener.Close() }()
+	defer logger.WarnOnError(listener.Close, "Failed to close listener")
 
 	g, _ := errgroup.WithContext(context.Background())
 
@@ -8089,7 +8089,7 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 			return fmt.Errorf("Failed accepting connection to NBD client unix listener: %w", err)
 		}
 
-		defer func() { _ = nbdConn.Close() }()
+		defer logger.WarnOnError(nbdConn.Close, "Failed to close connection")
 
 		d.logger.Debug("NBD connection on source started")
 		go func() { _, _ = util.SafeCopy(filesystemConn, nbdConn) }()
@@ -9180,7 +9180,7 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 	// This is the signal control handler, it receives signals from lxc CLI and forwards them to the VM agent.
 	controlHandler := func(control *websocket.Conn) {
 		closeMsg := websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")
-		defer func() { _ = control.WriteMessage(websocket.CloseMessage, closeMsg) }()
+		defer logger.WarnOnError(func() error { return control.WriteMessage(websocket.CloseMessage, closeMsg) }, "Failed to write close message")
 
 		for {
 			select {
@@ -10075,7 +10075,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		return nil, err
 	}
 
-	defer func() { _ = os.Remove(monitorPath.Name()) }()
+	defer logger.WarnOnError(func() error { return os.Remove(monitorPath.Name()) }, "Failed to remove monitor file")
 
 	qemuArgs := []string{
 		qemuPath,
@@ -10133,7 +10133,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		return nil, fmt.Errorf("Failed starting QEMU: %w", err)
 	}
 
-	defer func() { _ = checkFeature.Process.Kill() }()
+	defer logger.WarnOnError(checkFeature.Process.Kill, "Failed to kill QEMU process")
 
 	// Start go routine that waits for QEMU to exit and captures the exit error (if any).
 	errWaitCh := make(chan error, 1)
@@ -10189,7 +10189,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		return nil, err
 	}
 
-	defer func() { _ = os.Remove(blockDevPath.Name()) }()
+	defer logger.WarnOnError(func() error { return os.Remove(blockDevPath.Name()) }, "Failed to remove block device file")
 
 	// Check io_uring feature.
 	blockDev := map[string]any{
@@ -10747,7 +10747,7 @@ func (d *qemu) ConsoleLog() (string, error) {
 			return "", err
 		}
 
-		defer logFile.Close()
+		defer logger.WarnOnError(logFile.Close, "Failed to close log file")
 
 		_, err = logFile.WriteString(logString)
 		if err != nil {
@@ -10957,7 +10957,7 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 		return fmt.Errorf("Failed opening file descriptor for disk device %s: %w", devPath, err)
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	devName = d.blockNodeName(linux.PathNameEncode(devName))
 
@@ -11185,7 +11185,7 @@ func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, di
 		return "", fmt.Errorf("Failed opening file descriptor for disk device %q: %w", devName, err)
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	info, err := m.SendFileWithFDSet(backingNodeName, f, readonly)
 	if err != nil {

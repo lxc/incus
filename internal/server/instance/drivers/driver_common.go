@@ -838,7 +838,7 @@ func (d *common) snapshotCommon(inst instance.Instance, name string, expiry time
 		return fmt.Errorf("Create instance snapshot (mount source): %w", err)
 	}
 
-	defer func() { _ = pool.UnmountInstance(inst, d.op) }()
+	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, d.op) }, "Failed to unmount instance")
 
 	// Attempt to update backup.yaml for instance.
 	err = inst.UpdateBackupFile()
