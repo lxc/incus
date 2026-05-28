@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -147,7 +148,7 @@ func (s *SimpleStreams) cachedDownload(path string) ([]byte, error) {
 		return nil, err
 	}
 
-	defer func() { _ = r.Body.Close() }()
+	defer logger.WarnOnError(r.Body.Close, "Failed to close response body")
 
 	if r.StatusCode != http.StatusOK {
 		// On local connectivity error, return from cache anyway
