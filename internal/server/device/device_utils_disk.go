@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
 	"github.com/lxc/incus/v7/shared/idmap"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
@@ -336,7 +337,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 		return nil, nil, err
 	}
 
-	defer func() { _ = socketFileDir.Close() }()
+	defer logger.WarnOnError(socketFileDir.Close, "Failed to close socket directory")
 
 	socketFile := fmt.Sprintf("/proc/self/fd/%d/%s", socketFileDir.Fd(), filepath.Base(socketPath))
 
@@ -360,7 +361,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 		return nil, nil, fmt.Errorf("Failed to getting unix listener file for virtiofsd: %w", err)
 	}
 
-	defer func() { _ = unixFile.Close() }()
+	defer logger.WarnOnError(unixFile.Close, "Failed to close unix listener file")
 
 	switch cacheOption {
 	case "metadata":

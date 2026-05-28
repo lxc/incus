@@ -14,6 +14,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
@@ -147,7 +148,7 @@ func (d *tpm) maybeProvision(tpmDevPath string) error {
 		return fmt.Errorf("Failed to create swtpm_setup config directory: %w", err)
 	}
 
-	defer func() { _ = os.RemoveAll(confDir) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(confDir) }, "Failed to remove config directory")
 
 	issuerCertPath := filepath.Join(confDir, "issuercert.pem")
 	signingKeyPath := filepath.Join(confDir, "signkey.pem")
@@ -351,7 +352,7 @@ func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
 	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
 	runConf := deviceConfig.RunConfig{}
 
-	defer func() { _ = os.Remove(pidPath) }()
+	defer logger.WarnOnError(func() error { return os.Remove(pidPath) }, "Failed to remove PID file")
 
 	if util.PathExists(pidPath) {
 		proc, err := subprocess.ImportProcess(pidPath)

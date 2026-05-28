@@ -2204,7 +2204,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 				return nil, "", false, err
 			}
 
-			defer func() { _ = f.Close() }()
+			defer logger.WarnOnError(f.Close, "Failed to close file")
 
 			srcPath = fmt.Sprintf("/proc/self/fd/%d", f.Fd())
 		}
@@ -2234,7 +2234,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 				return nil, "", false, fmt.Errorf("Failed opening volume path %q: %w", srcPath, err)
 			}
 
-			defer func() { _ = srcVolPath.Close() }()
+			defer logger.WarnOnError(srcVolPath.Close, "Failed to close volume path")
 
 			openHow := &unix.OpenHow{
 				Flags:   unix.O_PATH | unix.O_CLOEXEC,
@@ -2266,7 +2266,7 @@ func (d *disk) createDevice(srcPath string) (func(), string, bool, error) {
 			}
 
 			srcPathFd := os.NewFile(uintptr(fd), volPath)
-			defer func() { _ = srcPathFd.Close() }()
+			defer logger.WarnOnError(srcPathFd.Close, "Failed to close volume sub-path")
 
 			// Check if the sub-path is a file or a directory.
 			fullSubPath := filepath.Join(srcPath, volPath)
@@ -2398,7 +2398,7 @@ func (d *disk) createVolumeSubPath(volConfig map[string]string, volRootPath stri
 		return fmt.Errorf("Failed opening volume path %q: %w", volRootPath, err)
 	}
 
-	defer func() { _ = volRoot.Close() }()
+	defer logger.WarnOnError(volRoot.Close, "Failed to close volume path")
 
 	var current string
 	for _, component := range strings.Split(volPath, "/") {
@@ -2465,7 +2465,7 @@ func (d *disk) localSourceOpen(srcPath string) (*os.File, error) {
 			return nil, fmt.Errorf("Failed opening allowed parent source path %q: %w", d.restrictedParentSourcePath, err)
 		}
 
-		defer func() { _ = allowedParent.Close() }()
+		defer logger.WarnOnError(allowedParent.Close, "Failed to close allowed parent source path")
 
 		// For restricted source paths we use openat2 to prevent resolving to a mount path above the
 		// allowed parent source path. Requires Linux kernel >= 5.6.
@@ -3004,7 +3004,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 		return nil, err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(file)
 	match := ""
@@ -3142,7 +3142,7 @@ func (d *disk) generateVMAgentDrive() (string, error) {
 	defer diskISOGenerateMu.Unlock()
 
 	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
-	defer func() { _ = os.RemoveAll(scratchDir) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(scratchDir) }, "Failed to remove scratch directory")
 
 	// Check we have the mkisofs or genisoimage tool available.
 	var mkisofsPath string
@@ -3225,7 +3225,7 @@ func (d *disk) generateVMConfigDrive() (string, error) {
 	defer diskISOGenerateMu.Unlock()
 
 	scratchDir := filepath.Join(d.inst.DevicesPath(), linux.PathNameEncode(d.name))
-	defer func() { _ = os.RemoveAll(scratchDir) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(scratchDir) }, "Failed to remove scratch directory")
 
 	// Check we have the mkisofs tool available.
 	mkisofsPath, err := exec.LookPath("mkisofs")
@@ -3336,7 +3336,7 @@ func (d *disk) Remove(cleanupDependencies bool) error {
 			return err
 		}
 
-		defer func() { _ = pool.UnmountInstance(d.inst, nil) }()
+		defer logger.WarnOnError(func() error { return pool.UnmountInstance(d.inst, nil) }, "Failed to unmount instance")
 
 		isoPath := filepath.Join(d.inst.Path(), "config.iso")
 		err = os.Remove(isoPath)
