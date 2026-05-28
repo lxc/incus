@@ -113,7 +113,7 @@ func (d *qemu) getQemuMemoryMetrics(monitor *qmp.Monitor) (metrics.MemoryMetrics
 		return out, err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	// Read it line by line.
 	memRSS := int64(-1)

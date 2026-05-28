@@ -1629,7 +1629,7 @@ func (d *lxc) deviceDetachNIC(configCopy map[string]string, netIF []deviceConfig
 			return err
 		}
 
-		defer func() { _ = cc.Release() }()
+		defer logger.WarnOnError(cc.Release, "Failed to release container")
 
 		// Get interfaces inside container.
 		ifaces, err := cc.Interfaces()
@@ -1714,7 +1714,7 @@ func (d *lxc) deviceHandleMounts(mounts []deviceConfig.MountEntryItem) error {
 					return err
 				}
 
-				defer func() { _ = files.Close() }()
+				defer logger.WarnOnError(files.Close, "Failed to close SFTP connection")
 
 				_, err = files.Lstat(relativeTargetPath)
 				if err == nil {
@@ -1810,7 +1810,7 @@ func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 			return err
 		}
 
-		defer func() { _ = pidFd.Close() }()
+		defer logger.WarnOnError(pidFd.Close, "Failed to close PID fd")
 
 		for _, eventParts := range runConf.Uevents {
 			length := 0
@@ -3943,7 +3943,7 @@ func (d *lxc) snapshot(name string, expiry time.Time, stateful bool) error {
 			return err
 		}
 
-		defer func() { _ = os.RemoveAll(stateDir) }()
+		defer logger.WarnOnError(func() error { return os.RemoveAll(stateDir) }, "Failed to remove state directory")
 
 		// Release liblxc container once done.
 		defer func() {
@@ -5021,7 +5021,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 							return err
 						}
 
-						defer func() { _ = files.Close() }()
+						defer logger.WarnOnError(files.Close, "Failed to close SFTP connection")
 
 						_, err = files.Lstat("/dev/incus")
 						if err == nil {
@@ -5467,7 +5467,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 		return nil, err
 	}
 
-	defer func() { _ = d.unmount() }()
+	defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
 
 	// Get IDMap to unshift container as the tarball is created.
 	diskIdmap, err := d.DiskIdmap()
@@ -5606,7 +5606,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 		return nil, err
 	}
 
-	defer func() { _ = os.RemoveAll(tempDir) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(tempDir) }, "Failed to remove temporary directory")
 
 	data, err := yaml.Dump(&meta, yaml.V2)
 	if err != nil {
@@ -5740,7 +5740,7 @@ func getCRIULogErrors(imagesDir string, method string) (string, error) {
 		return "", err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(f)
 	ret := []string{}
@@ -6268,7 +6268,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 				}
 			} else {
 				d.logger.Debug("The version of liblxc is older than 2.0.4 and the live migration will probably fail")
-				defer func() { _ = os.RemoveAll(checkpointDir) }()
+				defer logger.WarnOnError(func() error { return os.RemoveAll(checkpointDir) }, "Failed to remove checkpoint directory")
 				criuMigrationArgs := instance.CriuMigrationArgs{
 					Cmd:          liblxc.MIGRATE_DUMP,
 					StateDir:     checkpointDir,
@@ -6905,7 +6905,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				return err
 			}
 
-			defer func() { _ = os.RemoveAll(imagesDir) }()
+			defer logger.WarnOnError(func() error { return os.RemoveAll(imagesDir) }, "Failed to remove images directory")
 
 			sync := &migration.MigrationSync{
 				FinalPreDump: proto.Bool(false),
@@ -7311,7 +7311,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 		return fmt.Errorf("Failed to open instance rootfs path: %w", err)
 	}
 
-	defer func() { _ = rootfs.Close() }()
+	defer logger.WarnOnError(rootfs.Close, "Failed to close rootfs")
 
 	// Go through the templates.
 	for tplPath, tpl := range metadata.Templates {
@@ -7453,7 +7453,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 					return err
 				}
 			}
-			defer func() { _ = w.Close() }()
+			defer logger.WarnOnError(w.Close, "Failed to close file")
 
 			// Read the template
 			tplString, err := os.ReadFile(filepath.Join(d.TemplatesPath(), tpl.Template))
@@ -7516,7 +7516,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 		return nil, err
 	}
 
-	defer func() { _ = dirFile.Close() }()
+	defer logger.WarnOnError(dirFile.Close, "Failed to close directory")
 
 	forkfileAddr, err := net.ResolveUnixAddr("unix", fmt.Sprintf("/proc/self/fd/%d/forkfile.sock", dirFile.Fd()))
 	if err != nil {
@@ -7579,7 +7579,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 				return
 			}
 
-			defer func() { _ = d.unmount() }()
+			defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
 		}
 
 		// Start building the command.
@@ -7598,7 +7598,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 			return
 		}
 
-		defer func() { _ = forkfileFile.Close() }()
+		defer logger.WarnOnError(forkfileFile.Close, "Failed to close forkfile listener")
 
 		args = append(args, "3")
 		extraFiles = append(extraFiles, forkfileFile)
@@ -7610,7 +7610,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 			return
 		}
 
-		defer func() { _ = rootfsFile.Close() }()
+		defer logger.WarnOnError(rootfsFile.Close, "Failed to close rootfs")
 
 		args = append(args, "4")
 		extraFiles = append(extraFiles, rootfsFile)
@@ -7623,7 +7623,7 @@ func (d *lxc) FileSFTPConn() (net.Conn, error) {
 				return
 			}
 
-			defer func() { _ = pidFd.Close() }()
+			defer logger.WarnOnError(pidFd.Close, "Failed to close PID fd")
 			args = append(args, "5")
 			extraFiles = append(extraFiles, pidFd)
 		} else {
@@ -7894,7 +7894,7 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 		return nil, err
 	}
 
-	defer func() { _ = logFile.Close() }()
+	defer logger.WarnOnError(logFile.Close, "Failed to close log file")
 
 	// Prepare the subcommand
 	cname := project.Instance(d.Project().Name, d.Name())
@@ -7946,7 +7946,7 @@ func (d *lxc) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, st
 
 	// Setup communication PIPE
 	rStatus, wStatus, err := os.Pipe()
-	defer func() { _ = rStatus.Close() }()
+	defer logger.WarnOnError(rStatus.Close, "Failed to close pipe")
 	if err != nil {
 		return nil, err
 	}
@@ -8306,7 +8306,7 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 		_ = f.Close()
 	}
 
-	defer func() { _ = os.Remove(tmpMount) }()
+	defer logger.WarnOnError(func() error { return os.Remove(tmpMount) }, "Failed to remove temporary mount")
 
 	// Mount the filesystem
 	err = unix.Mount(source, tmpMount, fstype, uintptr(flags), "")
@@ -8314,7 +8314,7 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 		return fmt.Errorf("Failed to setup temporary mount: %s", err)
 	}
 
-	defer func() { _ = unix.Unmount(tmpMount, unix.MNT_DETACH) }()
+	defer logger.WarnOnError(func() error { return unix.Unmount(tmpMount, unix.MNT_DETACH) }, "Failed to unmount temporary mount")
 
 	// Ensure that only flags modifying mount _properties_ make it through.
 	// Strip things such as MS_BIND which would cause the creation of a
@@ -8341,7 +8341,7 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 		return err
 	}
 
-	defer func() { _ = pidFd.Close() }()
+	defer logger.WarnOnError(pidFd.Close, "Failed to close PID fd")
 
 	if !strings.HasPrefix(target, "/") {
 		target = "/" + target
@@ -8419,7 +8419,7 @@ func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idma
 		return err
 	}
 
-	defer func() { _ = pidFd.Close() }()
+	defer logger.WarnOnError(pidFd.Close, "Failed to close PID fd")
 
 	pidStr := fmt.Sprintf("%d", pid)
 
@@ -8545,7 +8545,7 @@ func (d *lxc) InsertSeccompUnixDevice(prefix string, m deviceConfig.Device, pid 
 	tgtPath := dev.RelativePath
 
 	// Bind-mount it into the container
-	defer func() { _ = os.Remove(devPath) }()
+	defer logger.WarnOnError(func() error { return os.Remove(devPath) }, "Failed to remove device path")
 	return d.insertMountGo(devPath, tgtPath, "none", unix.MS_BIND, pid, idmap.StorageTypeNone)
 }
 
@@ -8618,7 +8618,7 @@ func (d *lxc) FillNetworkDevice(name string, m deviceConfig.Device) (deviceConfi
 		cname := project.Instance(d.Project().Name, d.Name())
 		cc, err := liblxc.NewContainer(cname, d.state.OS.LxcPath)
 		if err == nil {
-			defer func() { _ = cc.Release() }()
+			defer logger.WarnOnError(cc.Release, "Failed to release container")
 
 			interfaces, err := cc.Interfaces()
 			if err == nil {
@@ -9441,7 +9441,7 @@ func (d *lxc) setupCredentials(update bool) error {
 		return fmt.Errorf("Failed to open the credentials directory: %w", err)
 	}
 
-	defer func() { _ = credsRoot.Close() }()
+	defer logger.WarnOnError(credsRoot.Close, "Failed to close credentials directory")
 
 	for k, v := range credentials {
 		err := credsRoot.WriteFile(k, v, 0o400)
