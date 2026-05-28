@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // GetNetworksLocalConfig returns a map associating each network name to its
@@ -126,7 +127,7 @@ func (c *ClusterTx) getCreatedNetworks(ctx context.Context, projectName string) 
 		return nil, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	projectNetworks := make(map[string]map[int64]api.Network)
 
@@ -797,7 +798,7 @@ func networkConfigAdd(tx *sql.Tx, networkID, nodeID int64, config map[string]str
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 
 	for k, v := range config {
 		if v == "" {

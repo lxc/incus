@@ -215,7 +215,7 @@ func (c *ClusterTx) CreateInstanceBackup(ctx context.Context, args InstanceBacku
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 	result, err := stmt.Exec(args.InstanceID, args.Name,
 		args.CreationDate.Unix(), args.ExpiryDate.Unix(), instanceOnlyInt,
 		rootOnlyInt, optimizedStorageInt)
@@ -255,7 +255,7 @@ func (c *ClusterTx) RenameInstanceBackup(ctx context.Context, oldName, newName s
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 
 	logger.Debug(
 		"Calling SQL Query",
@@ -444,7 +444,7 @@ func (c *ClusterTx) CreateStoragePoolVolumeBackup(ctx context.Context, args Stor
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 	result, err := stmt.Exec(args.VolumeID, args.Name,
 		args.CreationDate.Unix(), args.ExpiryDate.Unix(), volumeOnlyInt,
 		optimizedStorageInt)
@@ -563,7 +563,7 @@ func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, oldName, newName str
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 
 	logger.Debug(
 		"Calling SQL Query",
@@ -658,7 +658,7 @@ func (c *ClusterTx) CreateStoragePoolBucketBackup(ctx context.Context, args Stor
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 	result, err := stmt.Exec(args.BucketID, args.Name,
 		args.CreationDate.Unix(), args.ExpiryDate.Unix())
 	if err != nil {
@@ -785,7 +785,7 @@ func (c *ClusterTx) RenameBucketBackup(ctx context.Context, oldName, newName str
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 
 	logger.Debug(
 		"Calling SQL Query",

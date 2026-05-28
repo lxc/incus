@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // GetStoragePoolVolumesWithType return a list of all volumes of the given type.
@@ -773,7 +774,7 @@ func storageVolumeConfigAdd(tx *sql.Tx, volumeID int64, volumeConfig map[string]
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 
 	for k, v := range volumeConfig {
 		if v == "" {

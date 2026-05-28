@@ -13,6 +13,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // StorageRemoteDriverNames returns a list of remote storage driver names.
@@ -796,7 +797,7 @@ func (c *ClusterTx) storagePoolConfigAdd(poolID, nodeID int64, poolConfig map[st
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 
 	driver, err := c.GetStoragePoolDriver(context.Background(), poolID)
 	if err != nil {
