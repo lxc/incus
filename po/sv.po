@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-27 19:31+0000\n"
-"PO-Revision-Date: 2026-05-28 05:28+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-05-28 15:30+0000\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -757,9 +757,8 @@ msgid "--recursive/-r is required when pulling directories"
 msgstr "--recursive/-r krävs vid hämtning av kataloger"
 
 #: cmd/incus/utils_copy.go:146
-#, fuzzy
 msgid "--recursive/-r is required when pushing directories"
-msgstr "--recursive/-r krävs vid hämtning av kataloger"
+msgstr "--rekursiv/-r krävs vid överföring av kataloger"
 
 #: cmd/incus/copy.go:165
 msgid "--refresh can only be used with instances"
@@ -902,7 +901,6 @@ msgid "Add new remote servers"
 msgstr "Lägg till nya fjärrservrar"
 
 #: cmd/incus/remote.go:126
-#, fuzzy
 msgid ""
 "Add new remote servers\n"
 "\n"
@@ -927,6 +925,12 @@ msgstr ""
 "\"simplestreams\":\n"
 "  incus remote add något-namn https://INLOGGNING:LÖSENORD@exempel.se/någon/"
 "sökväg --protocol=simplestreams\n"
+"\n"
+"Flera fjärrmål kan tillhandahållas för att hantera växling till andra "
+"servrar om en är nere:\n"
+"  incus remote add some-name server1.example.com server2.example.com\n"
+"\n"
+"Fjärrnamnet kan ignoreras om ett enda mål anges.\n"
 
 #: cmd/incus/config_trust.go:93
 msgid "Add new trusted client"
@@ -1013,9 +1017,8 @@ msgid "Address: %v"
 msgstr "Adress: %v"
 
 #: cmd/incus/remote.go:331
-#, fuzzy
 msgid "Addresses cannot be empty"
-msgstr "Poolnamnet får inte vara tomt"
+msgstr "Adresser kan inte vara tomma"
 
 #: cmd/incus/storage_bucket.go:180
 #, c-format
@@ -1409,7 +1412,7 @@ msgstr "Kan inte använda både --no-expiry och --expiry"
 
 #: cmd/incus/remote.go:477
 msgid "Cannot mix HTTPS and Unix URLs"
-msgstr ""
+msgstr "Kan inte blanda HTTPS- och Unix-URL:er"
 
 #: cmd/incus/create.go:314
 #, c-format
@@ -3920,7 +3923,7 @@ msgstr "IP-adresser:"
 
 #: cmd/incus/remote.go:120 cmd/incus/remote.go:1375
 msgid "IP/FQDN/URL"
-msgstr ""
+msgstr "IP/fullständigt kvalificerat domännamn/URL"
 
 #: cmd/incus/list.go:462 cmd/incus/network.go:1074
 msgid "IPV4"
@@ -6785,9 +6788,8 @@ msgstr ""
 "En eller flera angivna adresser finns för närvarande inte i uppsättningen"
 
 #: cmd/incus/storage_volume.go:1814
-#, fuzzy
 msgid "Only \"custom\" volumes can be rebuilt"
-msgstr "Endast \"anpassade\" volymer kan exporteras"
+msgstr "Endast \"anpassade\" volymer kan återskapas"
 
 #: cmd/incus/remote.go:442
 msgid "Only https URLs are supported for oci and simplestreams"
@@ -6939,11 +6941,12 @@ msgid "Please create those missing entries and then hit ENTER:"
 msgstr "Skapa de saknade posterna och tryck sedan på ENTER:"
 
 #: cmd/incus/remote.go:223
-#, fuzzy
 msgid ""
 "Please provide alternate server addresses separated with commas (empty to "
 "abort):"
-msgstr "Ange en alternativ serveradress (lämna tomt för att avbryta):"
+msgstr ""
+"Ange alternativa serveradresser separerade med kommatecken (lämna tomt för "
+"att avbryta):"
 
 #: cmd/incus/cluster.go:1708
 msgid "Please provide join token:"
@@ -7256,9 +7259,8 @@ msgid "Rebuild as an empty instance"
 msgstr "Återuppbygg som en tom instans"
 
 #: cmd/incus/storage_volume.go:1778
-#, fuzzy
 msgid "Rebuild custom storage volumes"
-msgstr "Ta bort anpassade lagringsvolymer"
+msgstr "återskapa anpassade lagringsvolymer"
 
 #: cmd/incus/rebuild.go:27
 msgid "Rebuild instances"
@@ -7346,9 +7348,8 @@ msgid "Remote names may not contain colons"
 msgstr "Fjärrnamn får inte innehålla kolon"
 
 #: cmd/incus/remote.go:415
-#, fuzzy
 msgid "Remote names may not contain colons; please provide an explicit one"
-msgstr "Fjärrnamn får inte innehålla kolon"
+msgstr "Fjärrnamn får inte innehålla kolon; vänligen ge en tydlig sådan"
 
 #: cmd/incus/remote.go:142
 msgid "Remote trust token"
@@ -8089,9 +8090,8 @@ msgid "Set the URL for the remote"
 msgstr "Ställ in URL-adressen för fjärrkontrollen"
 
 #: cmd/incus/remote.go:1381
-#, fuzzy
 msgid "Set the URLs for the remote"
-msgstr "Ställ in URL-adressen för fjärrkontrollen"
+msgstr "Ställ in URL:erna för fjärr"
 
 #: cmd/incus/file.go:110 cmd/incus/storage_volume.go:2298
 msgid "Set the file's gid on create"
@@ -8110,13 +8110,12 @@ msgid "Set the file's perms on push"
 msgstr "Ställ in filens behörigheter vid push"
 
 #: cmd/incus/file.go:677
-#, fuzzy
 msgid ""
 "Set the file's perms on push (in recursive mode, only sets the target "
 "directory's permissions)"
 msgstr ""
-"Ange filens behörigheter vid push (i rekursivt läge, anger målkatalogens "
-"behörigheter om den inte finns)"
+"Ange filbehörigheter vid pushing (i rekursivt läge, ange behörigheter för "
+"målkatalogen)"
 
 #: cmd/incus/file.go:111 cmd/incus/storage_volume.go:2299
 msgid "Set the file's uid on create"
@@ -8127,22 +8126,20 @@ msgid "Set the file's uid on push"
 msgstr "Ställ in filens uid vid push"
 
 #: cmd/incus/file.go:676
-#, fuzzy
 msgid ""
 "Set the files' GIDs on push (in recursive mode, only sets the target "
 "directory's GID)"
 msgstr ""
-"Ange filernas GID vid push (i rekursivt läge, anger bara målkatalogens GID "
-"om den inte finns och -p används)"
+"Ange GID för filerna vid överföring (i rekursivt läge, ange endast GID för "
+"målkatalogen)"
 
 #: cmd/incus/file.go:675
-#, fuzzy
 msgid ""
 "Set the files' UIDs on push (in recursive mode, only sets the target "
 "directory's UID)"
 msgstr ""
-"Ange filernas UID vid push (i rekursivt läge, anger bara målkatalogens UID "
-"om den inte finns och -p används)"
+"Ange UID för filerna vid överföring (i rekursivt läge, ange endast UID för "
+"målkatalogen)"
 
 #: cmd/incus/cluster_group.go:880
 msgid "Set the key as a cluster group property"
@@ -8642,9 +8639,9 @@ msgid "Storage volume %s deleted"
 msgstr "Lagringsvolym %s raderad"
 
 #: cmd/incus/storage_volume.go:1847
-#, fuzzy, c-format
+#, c-format
 msgid "Storage volume %s rebuilt"
-msgstr "Lagringsvolym %s skapad"
+msgstr "Lagringsvolym %s återskapat"
 
 #: cmd/incus/storage_volume.go:485
 msgid "Storage volume copied successfully!"
@@ -9816,6 +9813,11 @@ msgid ""
 "\n"
 "This is only allowed for custom volumes that have no snapshots."
 msgstr ""
+"Rensa den underliggande lagringsvolymen och återskapa den som tom med samma "
+"konfiguration.\n"
+"\n"
+"Detta är endast tillåtet för anpassade volymer som inte har några "
+"ögonblicksbilder."
 
 #: cmd/incus/admin_init_interactive.go:68
 msgid "Would you like a YAML \"init\" preseed to be printed?"
@@ -11063,7 +11065,7 @@ msgstr "nyckel"
 
 #: cmd/incus/remote.go:1089
 msgid "last"
-msgstr ""
+msgstr "sista"
 
 #: cmd/incus/usage/usage.go:835
 msgid "listen address"
