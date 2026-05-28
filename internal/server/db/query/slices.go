@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // SelectStrings executes a statement which must yield rows with a single string
@@ -85,7 +87,7 @@ func scanSingleColumn(ctx context.Context, tx *sql.Tx, query string, args []any,
 		return err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	for rows.Next() {
 		err := scan(rows)

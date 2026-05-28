@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // SelectConfig executes a query statement against a "config" table, which must
@@ -23,7 +25,7 @@ func SelectConfig(ctx context.Context, tx *sql.Tx, table string, where string, a
 		return nil, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	values := map[string]string{}
 	for rows.Next() {

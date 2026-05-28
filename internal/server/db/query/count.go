@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // Count returns the number of rows in the given table.
@@ -19,7 +21,7 @@ func Count(ctx context.Context, tx *sql.Tx, table string, where string, args ...
 		return -1, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	// Ensure we read one and only one row.
 	if !rows.Next() {
