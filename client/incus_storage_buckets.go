@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/cancel"
 	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -472,7 +473,7 @@ func (r *ProtocolIncus) GetStoragePoolBucketBackupFile(pool string, bucketName s
 		return nil, err
 	}
 
-	defer func() { _ = response.Body.Close() }()
+	defer logger.WarnOnError(response.Body.Close, "Failed to close response body")
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
@@ -544,7 +545,7 @@ func (r *ProtocolIncus) CreateStoragePoolBucketBackupStream(poolName string, buc
 		return err
 	}
 
-	defer func() { _ = response.Body.Close() }()
+	defer logger.WarnOnError(response.Body.Close, "Failed to close response body")
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
@@ -602,7 +603,7 @@ func (r *ProtocolIncus) CreateStoragePoolBucketFromBackup(pool string, args Stor
 		return nil, err
 	}
 
-	defer func() { _ = resp.Body.Close() }()
+	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	// Handle errors.
 	response, _, err := incusParseResponse(resp)

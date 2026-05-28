@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -177,7 +178,7 @@ func (r *ProtocolIncus) GetMetrics() (string, error) {
 		return "", err
 	}
 
-	defer func() { _ = resp.Body.Close() }()
+	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("Bad HTTP status: %d", resp.StatusCode)

@@ -176,9 +176,9 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 					return -1, err
 				}
 
-				defer func() { _ = deltaFile.Close() }()
+				defer logger.WarnOnError(deltaFile.Close, "Failed to close temporary file")
 
-				defer func() { _ = os.Remove(deltaFile.Name()) }()
+				defer logger.WarnOnError(func() error { return os.Remove(deltaFile.Name()) }, "Failed to remove temporary file")
 
 				// Download the delta
 				_, err = download(file.Path, "rootfs delta", file.Sha256, deltaFile)
@@ -192,9 +192,9 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 					return -1, err
 				}
 
-				defer func() { _ = patchedFile.Close() }()
+				defer logger.WarnOnError(patchedFile.Close, "Failed to close temporary file")
 
-				defer func() { _ = os.Remove(patchedFile.Name()) }()
+				defer logger.WarnOnError(func() error { return os.Remove(patchedFile.Name()) }, "Failed to remove temporary file")
 
 				// Apply it
 				_, err = subprocess.RunCommand("xdelta3", "-f", "-d", "-s", srcPath, deltaFile.Name(), patchedFile.Name())

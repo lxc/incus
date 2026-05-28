@@ -58,7 +58,7 @@ func unpackOCIImage(imagePath string, imageTag string, bundlePath string) error 
 	}
 
 	engineExt := casext.NewEngine(engine)
-	defer func() { _ = engine.Close() }()
+	defer logger.WarnOnError(engine.Close, "Failed to close CAS engine")
 
 	return umoci.Unpack(engineExt, imageTag, bundlePath, unpackOptions)
 }
