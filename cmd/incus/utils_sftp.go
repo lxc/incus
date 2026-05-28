@@ -292,16 +292,16 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 			Mode: int(mode.Perm()),
 		}
 
+		if args.UID != -1 {
+			fileArgs.UID = args.UID
+		}
+
+		if args.GID != -1 {
+			fileArgs.GID = args.GID
+		}
+
 		if isRoot {
 			isRoot = false
-			if args.UID != -1 {
-				fileArgs.UID = args.UID
-			}
-
-			if args.GID != -1 {
-				fileArgs.GID = args.GID
-			}
-
 			if args.Mode != -1 {
 				fileArgs.Mode = args.Mode
 			}
