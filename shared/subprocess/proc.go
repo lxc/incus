@@ -13,6 +13,7 @@ import (
 
 	"go.yaml.in/yaml/v4"
 
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -177,11 +178,11 @@ func (p *Process) start(ctx context.Context, fds []*os.File) error {
 	}
 
 	if p.Stdout != nil && p.closeFds {
-		defer func() { _ = p.Stdout.Close() }()
+		defer logger.WarnOnError(p.Stdout.Close, "Failed to close stdout")
 	}
 
 	if p.Stderr != nil && p.Stderr != p.Stdout && p.closeFds {
-		defer func() { _ = p.Stderr.Close() }()
+		defer logger.WarnOnError(p.Stderr.Close, "Failed to close stderr")
 	}
 
 	// Start the process.
