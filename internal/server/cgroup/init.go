@@ -124,7 +124,7 @@ func Init() {
 		return
 	}
 
-	defer func() { _ = selfCg.Close() }()
+	defer logger.WarnOnError(selfCg.Close, "Failed to close file")
 
 	// Go through the file line by line.
 	scanSelfCg := bufio.NewScanner(selfCg)
