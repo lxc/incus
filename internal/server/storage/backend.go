@@ -1094,7 +1094,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 			return err
 		}
 
-		defer func() { _ = src.Unfreeze() }()
+		defer logger.WarnOnError(src.Unfreeze, "Failed to unfreeze instance")
 
 		// Attempt to sync the filesystem.
 		_ = linux.SyncFS(src.RootfsPath())
@@ -1656,7 +1656,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 			return err
 		}
 
-		defer func() { _ = src.Unfreeze() }()
+		defer logger.WarnOnError(src.Unfreeze, "Failed to unfreeze instance")
 
 		// Attempt to sync the filesystem.
 		_ = linux.SyncFS(src.RootfsPath())
@@ -1805,7 +1805,7 @@ func (b *backend) isoFiller(data io.Reader) func(vol drivers.Volume, rootBlockPa
 			return -1, err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		return util.SafeCopy(f, data)
 	}
@@ -2677,7 +2677,7 @@ func (b *backend) MigrateInstance(inst instance.Instance, conn io.ReadWriteClose
 			return err
 		}
 
-		defer func() { _ = inst.Unfreeze() }()
+		defer logger.WarnOnError(inst.Unfreeze, "Failed to unfreeze instance")
 
 		// Attempt to sync the filesystem.
 		_ = linux.SyncFS(inst.RootfsPath())
@@ -3222,7 +3222,7 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 			return err
 		}
 
-		defer func() { _ = src.Unfreeze() }()
+		defer logger.WarnOnError(src.Unfreeze, "Failed to unfreeze instance")
 
 		// Attempt to sync the filesystem.
 		_ = linux.SyncFS(src.RootfsPath())
@@ -4389,7 +4389,7 @@ func (b *backend) initLocalBucketLayout(projectName, bucketName string, op *oper
 		return err
 	}
 
-	defer func() { _ = unmount() }()
+	defer logger.WarnOnError(unmount, "Failed to unmount bucket")
 
 	return os.MkdirAll(filepath.Join(mountPath, "data"), 0o700)
 }
@@ -8749,7 +8749,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 	// Define function to send a block volume.
 	sendBlockVol := func(vol drivers.Volume, conn io.ReadWriteCloser, blockIndex int) error {
 		// Close when done to indicate to target side we are finished sending this volume.
-		defer func() { _ = conn.Close() }()
+		defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 		var wrapper *ioprogress.ProgressTracker
 		if volSrcArgs.TrackProgress {
@@ -8793,7 +8793,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 			return fmt.Errorf("Error opening file for reading %q: %w", nbdPath, err)
 		}
 
-		defer func() { _ = from.Close() }()
+		defer logger.WarnOnError(from.Close, "Failed to close source file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(from)
@@ -8964,7 +8964,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 			return fmt.Errorf("Error opening file for writing %q: %w", path, err)
 		}
 
-		defer func() { _ = to.Close() }()
+		defer logger.WarnOnError(to.Close, "Failed to close destination file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(conn)
