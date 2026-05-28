@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"os"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // DetectCompression detects compression from a file name.
@@ -14,7 +16,7 @@ func DetectCompression(fname string) ([]string, string, []string, error) {
 		return nil, "", nil, err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	return DetectCompressionFile(f)
 }
