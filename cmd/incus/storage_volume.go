@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/shared/archive"
 	cli "github.com/lxc/incus/v7/shared/cmd"
 	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/termios"
 	"github.com/lxc/incus/v7/shared/units"
@@ -2394,7 +2395,7 @@ func (c *cmdStorageVolumeExport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer func() { _ = target.Close() }()
+		defer logger.WarnOnError(target.Close, "Failed to close target file")
 	}
 
 	// Prepare the download request.
@@ -2505,7 +2506,7 @@ func (c *cmdStorageVolumeImport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer func() { _ = file.Close() }()
+		defer logger.WarnOnError(file.Close, "Failed to close file")
 	}
 
 	fstat, err := file.Stat()
@@ -2653,7 +2654,7 @@ func (c *cmdStorageVolumeNBD) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Failed to accept incoming connection: %w"), err)
 	}
 
-	defer func() { _ = nConn.Close() }()
+	defer logger.WarnOnError(nConn.Close, "Failed to close connection")
 
 	fmt.Printf(i18n.G("NBD client connected %q")+"\n", nConn.RemoteAddr())
 	defer fmt.Printf(i18n.G("NBD client disconnected %q")+"\n", nConn.RemoteAddr())
@@ -2664,7 +2665,7 @@ func (c *cmdStorageVolumeNBD) Run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("NBD connection failed: %v")+"\n", err)
 	}
 
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	// Proxy the traffic.
 	var wg sync.WaitGroup
