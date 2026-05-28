@@ -327,7 +327,7 @@ func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag strin
 		return nil, "", err
 	}
 
-	defer func() { _ = resp.Body.Close() }()
+	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	return incusParseResponse(resp)
 }

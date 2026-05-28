@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/cancel"
 	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
@@ -234,7 +235,7 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 		return nil, err
 	}
 
-	defer func() { _ = response.Body.Close() }()
+	defer logger.WarnOnError(response.Body.Close, "Failed to close response body")
 	defer close(doneCh)
 
 	if response.StatusCode != http.StatusOK {
@@ -607,7 +608,7 @@ func (r *ProtocolIncus) CreateImage(image api.ImagesPost, args *ImageCreateArgs)
 		return nil, err
 	}
 
-	defer func() { _ = resp.Body.Close() }()
+	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	// Handle errors
 	response, _, err := incusParseResponse(resp)
@@ -837,14 +838,14 @@ func (r *ProtocolIncus) CopyImage(source ImageServer, image api.Image, args *Ima
 			return nil, err
 		}
 
-		defer func() { _ = os.Remove(metaFile.Name()) }()
+		defer logger.WarnOnError(func() error { return os.Remove(metaFile.Name()) }, "Failed to remove temporary file")
 
 		rootfsFile, err := os.CreateTemp(r.tempPath, "incus_image_")
 		if err != nil {
 			return nil, err
 		}
 
-		defer func() { _ = os.Remove(rootfsFile.Name()) }()
+		defer logger.WarnOnError(func() error { return os.Remove(rootfsFile.Name()) }, "Failed to remove temporary file")
 
 		// Import image
 		req := ImageFileRequest{

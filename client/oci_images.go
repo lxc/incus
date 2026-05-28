@@ -162,7 +162,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		return nil, err
 	}
 
-	defer func() { _ = os.RemoveAll(ociPath) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(ociPath) }, "Failed to remove temporary directory")
 
 	err = os.Mkdir(filepath.Join(ociPath, "oci"), 0o700)
 	if err != nil {
@@ -234,8 +234,8 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	// Push the metadata tarball.
 	pipeRead, pipeWrite = io.Pipe()
-	defer pipeRead.Close()
-	defer pipeWrite.Close()
+	defer logger.WarnOnError(pipeRead.Close, "Failed to close pipe reader")
+	defer logger.WarnOnError(pipeWrite.Close, "Failed to close pipe writer")
 
 	if req.ProgressHandler != nil {
 		pipeRead = &ioprogress.ProgressReader{
@@ -270,8 +270,8 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	// Push the rootfs tarball.
 	pipeRead, pipeWrite = io.Pipe()
-	defer pipeRead.Close()
-	defer pipeWrite.Close()
+	defer logger.WarnOnError(pipeRead.Close, "Failed to close pipe reader")
+	defer logger.WarnOnError(pipeWrite.Close, "Failed to close pipe writer")
 
 	if req.ProgressHandler != nil {
 		pipeRead = &ioprogress.ProgressReader{
@@ -371,7 +371,7 @@ func (r *ProtocolOCI) runSkopeo(action string, image string, args ...string) (st
 			return "", err
 		}
 
-		defer authFile.Close()
+		defer logger.WarnOnError(authFile.Close, "Failed to close auth file")
 		defer os.Remove(authFile.Name())
 
 		err = authFile.Chmod(0o600)
