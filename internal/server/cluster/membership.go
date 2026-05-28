@@ -434,7 +434,7 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 		return fmt.Errorf("Failed to connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = cowsqlClient.Close() }()
+	defer logger.WarnOnError(cowsqlClient.Close, "Failed to close client")
 
 	logger.Info("Adding node to cluster", logger.Ctx{"id": info.ID, "local": info.Address, "role": info.Role})
 	ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
@@ -866,7 +866,7 @@ assign:
 		return fmt.Errorf("Connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = cowsqlClient.Close() }()
+	defer logger.WarnOnError(cowsqlClient.Close, "Failed to close client")
 
 	// Figure out our current role.
 	role := db.RaftRole(-1)
@@ -1035,7 +1035,7 @@ func Leave(s *state.State, gateway *Gateway, name string, force bool, pending bo
 		return "", fmt.Errorf("Failed to connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = cowsqlClient.Close() }()
+	defer logger.WarnOnError(cowsqlClient.Close, "Failed to close client")
 	err = cowsqlClient.Remove(ctx, info.ID)
 	if err != nil {
 		return "", fmt.Errorf("Failed to leave the cluster: %w", err)
