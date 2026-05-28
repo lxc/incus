@@ -9,6 +9,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -139,7 +140,7 @@ func GetProjectIDsToNames(ctx context.Context, tx *sql.Tx) (map[int64]string, er
 		return nil, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	result := map[int64]string{}
 	for i := 0; rows.Next(); i++ {

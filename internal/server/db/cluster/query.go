@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // Update the schema and api_extensions columns of the row in the nodes table
@@ -49,7 +50,7 @@ func selectNodesVersions(ctx context.Context, tx *sql.Tx) ([][2]int, error) {
 			return nil, err
 		}
 	}
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 	err = query.SelectObjects(ctx, stmt, func(scan func(dest ...any) error) error {
 		version := [2]int{}
 		err := scan(&version[0], &version[1])
