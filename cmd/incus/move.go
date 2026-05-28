@@ -61,7 +61,7 @@ incus move <old name> <new name> [--instance-only]
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagProfile, "profile|p", i18n.G("Profile to apply to the target instance"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagNoProfiles, "no-profiles", i18n.G("Unset all profiles on the target instance"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagInstanceOnly, "instance-only", i18n.G("Move the instance without its snapshots"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", moveDefaultMode, "", i18n.G("Transfer mode. One of pull, push or relay."))
+	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", moveDefaultMode, "", i18n.G("Transfer mode. One of pull, push or relay"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagStateless, "stateless", i18n.G("Copy a stateful instance stateless"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorage, "storage|s", "", "", i18n.G("Storage pool name"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTarget, "target", "", "", i18n.G("Cluster member name"))
