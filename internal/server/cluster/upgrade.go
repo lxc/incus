@@ -160,7 +160,7 @@ func UpgradeMembersWithoutRole(gateway *Gateway, members []db.NodeInfo) error {
 		return fmt.Errorf("Failed to connect to local cowsql member: %w", err)
 	}
 
-	defer func() { _ = cowsqlClient.Close() }()
+	defer logger.WarnOnError(cowsqlClient.Close, "Failed to close client")
 
 	// Check that each member is present in the raft configuration, and add it if not.
 	for _, member := range members {

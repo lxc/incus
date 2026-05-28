@@ -14,6 +14,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/node"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // ListDatabaseNodes returns a list of database node names.
@@ -194,7 +195,7 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 			return err
 		}
 
-		defer func() { _ = file.Close() }()
+		defer logger.WarnOnError(file.Close, "Failed to close file")
 
 		_, err = file.Write([]byte(content.String()))
 		if err != nil {
@@ -239,7 +240,7 @@ func RemoveRaftNode(gateway *Gateway, address string) error {
 		return fmt.Errorf("Failed to connect to cluster leader: %w", err)
 	}
 
-	defer func() { _ = cowsqlClient.Close() }()
+	defer logger.WarnOnError(cowsqlClient.Close, "Failed to close client")
 	err = cowsqlClient.Remove(ctx, id)
 	if err != nil {
 		return fmt.Errorf("Failed to remove node: %w", err)
