@@ -117,7 +117,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 	// Download function
 	download := func(path string, filename string, hash string, target io.WriteSeeker) (int64, error) {
 		// Try over http
-		uri, err := url.JoinPath(fmt.Sprintf("http://%s", strings.TrimPrefix(r.httpHost, "https://")), path)
+		uri, err := urlJoinPathAbsolute(fmt.Sprintf("http://%s", strings.TrimPrefix(r.httpHost, "https://")), path)
 		if err != nil {
 			return -1, err
 		}
@@ -130,7 +130,7 @@ func (r *ProtocolSimpleStreams) GetImageFile(fingerprint string, req ImageFileRe
 			}
 
 			// Try over https
-			uri, err := url.JoinPath(r.httpHost, path)
+			uri, err := urlJoinPathAbsolute(r.httpHost, path)
 			if err != nil {
 				return -1, err
 			}
@@ -373,4 +373,21 @@ func (r *ProtocolSimpleStreams) GetImageAliasArchitectures(imageType string, nam
 // ExportImage exports (copies) an image to a remote server.
 func (r *ProtocolSimpleStreams) ExportImage(_ string, _ api.ImageExportPost) (Operation, error) {
 	return nil, errors.New("Exporting images is not supported by the simplestreams protocol")
+}
+
+func urlJoinPathAbsolute(baseHost string, path string) (result string, err error) {
+	if strings.HasPrefix("/", path) {
+		// absolute path
+		baseHostURL, err := url.ParseRequestURI(baseHost)
+		if err != nil {
+			return "", err
+		}
+
+		baseHostURL.Path = path
+
+		return baseHostURL.String(), nil
+	}
+
+	// relative path
+	return url.JoinPath(baseHost, path)
 }
