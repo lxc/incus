@@ -587,7 +587,7 @@ func (c *cmdConfigSet) set(cmd *cobra.Command, parsed []*u.Parsed) error {
 				return op.Wait()
 			}
 
-			return errors.New(i18n.G("The is no config key to set on an instance snapshot."))
+			return errors.New(i18n.G("There is no config key to set on an instance snapshot."))
 		}
 
 		inst, etag, err := d.GetInstance(parsedPath.String)
