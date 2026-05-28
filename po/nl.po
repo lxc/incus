@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-27 19:31+0000\n"
+"POT-Creation-Date: 2026-05-28 12:18-0400\n"
 "PO-Revision-Date: 2026-05-28 05:31+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -7177,12 +7177,8 @@ msgid ""
 "machine\"."
 msgstr ""
 
-#: cmd/incus/remote.go:1382
-msgid "Set the URL for the remote"
-msgstr ""
-
-#: cmd/incus/remote.go:1381
-msgid "Set the URLs for the remote"
+#: cmd/incus/remote.go:1381 cmd/incus/remote.go:1382
+msgid "Set the URL(s) for the remote"
 msgstr ""
 
 #: cmd/incus/file.go:110 cmd/incus/storage_volume.go:2298
@@ -7905,10 +7901,6 @@ msgstr ""
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr ""
 
-#: cmd/incus/config.go:590
-msgid "The is no config key to set on an instance snapshot."
-msgstr ""
-
 #: cmd/incus/cluster_group.go:857
 #, c-format
 msgid "The key %q does not exist on cluster group %q"
@@ -8093,6 +8085,10 @@ msgstr ""
 msgid "The type to create (file, symlink, or directory)"
 msgstr ""
 
+#: cmd/incus/config.go:590
+msgid "There is no config key to set on an instance snapshot."
+msgstr ""
+
 #: cmd/incus/main.go:415
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
@@ -8182,20 +8178,9 @@ msgstr ""
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
 
-#: cmd/incus/image.go:179
-msgid "Transfer mode. One of pull (default), push or relay"
-msgstr ""
-
+#: cmd/incus/copy.go:62 cmd/incus/image.go:179 cmd/incus/move.go:64
 #: cmd/incus/storage_volume.go:390
-msgid "Transfer mode. One of pull (default), push or relay."
-msgstr ""
-
-#: cmd/incus/copy.go:62
 msgid "Transfer mode. One of pull, push or relay"
-msgstr ""
-
-#: cmd/incus/move.go:64
-msgid "Transfer mode. One of pull, push or relay."
 msgstr ""
 
 #: cmd/incus/image.go:768

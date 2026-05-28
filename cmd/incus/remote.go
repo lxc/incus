@@ -1378,8 +1378,8 @@ func (c *cmdRemoteSetURL) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("set-urls", cmdRemoteSetURLUsage...)
 	cmd.Aliases = []string{"set-url"}
-	cmd.Short = i18n.G("Set the URLs for the remote")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set the URL for the remote`))
+	cmd.Short = i18n.G("Set the URL(s) for the remote")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set the URL(s) for the remote`))
 
 	cmd.RunE = c.run
 
