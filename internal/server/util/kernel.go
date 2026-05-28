@@ -6,6 +6,8 @@ import (
 	"os"
 	"slices"
 	"strings"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // SupportsFilesystem checks whether a given filesystem is already supported
@@ -17,7 +19,7 @@ func SupportsFilesystem(filesystem string) bool {
 		return false
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -40,7 +42,7 @@ func HugepagesPath() (string, error) {
 		return "", err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(file)
 	matches := []string{}
