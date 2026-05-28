@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -22,7 +23,7 @@ SELECT COUNT(name) FROM sqlite_master WHERE type = 'table' AND name = 'schema'
 		return false, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	if !rows.Next() {
 		return false, errors.New("schema table query returned no rows")
