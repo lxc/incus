@@ -14,6 +14,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/migration"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/ws"
 )
@@ -26,7 +27,7 @@ func rsyncSend(ctx context.Context, conn *websocket.Conn, path string, rsyncArgs
 	}
 
 	if dataSocket != nil {
-		defer func() { _ = dataSocket.Close() }()
+		defer logger.WarnOnError(dataSocket.Close, "Failed to close connection")
 	}
 
 	readDone, writeDone := ws.Mirror(conn, dataSocket)
