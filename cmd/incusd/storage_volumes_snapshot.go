@@ -186,12 +186,12 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 	}
 
 	// Check that this isn't a restricted volume
-	used, err := storagePools.VolumeUsedByDaemon(s, poolName, volumeName)
+	frag, err := storagePools.VolumeUsedByDaemon(s, poolName, volumeName)
 	if err != nil {
 		return response.InternalError(err)
 	}
 
-	if used {
+	if frag != "" {
 		return response.BadRequest(errors.New("Volumes used by Incus itself cannot have snapshots"))
 	}
 

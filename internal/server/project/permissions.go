@@ -1682,6 +1682,8 @@ func FilterUsedBy(authorizer auth.Authorizer, r *http.Request, entries []string)
 			object = auth.ObjectStorageVolume(projectName, pathArgs[0], pathArgs[1], pathArgs[2], location)
 		case cluster.TypeStorageBucket:
 			object = auth.ObjectStorageBucket(projectName, pathArgs[0], pathArgs[1], location)
+		case cluster.TypeServer:
+			object = auth.ObjectServer()
 		default:
 			continue
 		}
