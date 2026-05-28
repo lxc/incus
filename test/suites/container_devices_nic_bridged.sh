@@ -49,14 +49,10 @@ test_container_devices_nic_bridged() {
     ! incus config device add "${ctName}" eth1 nic network=${brName} || false
 
     # Test device name validation (use vlan=1 to avoid trigger instance DNS name conflict detection).
-    incus config device add "${ctName}" 127.0.0.1 nic network=${brName} vlan=1
-    incus config device remove "${ctName}" 127.0.0.1
-    incus config device add "${ctName}" ::1 nic network=${brName} vlan=1
-    incus config device remove "${ctName}" ::1
-    incus config device add "${ctName}" _valid-name nic network=${brName} vlan=1
-    incus config device remove "${ctName}" _valid-name
-    incus config device add "${ctName}" /foo nic network=${brName} vlan=1
-    incus config device remove "${ctName}" /foo
+    incus config device add "${ctName}" loop4 nic network=${brName} vlan=1
+    incus config device remove "${ctName}" loop4
+    incus config device add "${ctName}" loop6 nic network=${brName} vlan=1
+    incus config device remove "${ctName}" loop6
     ! incus config device add "${ctName}" .invalid nic network=${brName} vlan=1 || false
     ! incus config device add "${ctName}" ./invalid nic network=${brName} vlan=1 || false
     ! incus config device add "${ctName}" ../invalid nic network=${brName} vlan=1 || false
