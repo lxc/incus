@@ -953,6 +953,54 @@ func IsValidCPUSet(value string) error {
 	return nil
 }
 
+// ParseCPUTopology parses a CPU topology definition of the form "sockets=2,cores=4,threads=2".
+// Any of the three fields may be omitted, in which case it defaults to 1.
+// It returns the number of sockets, cores (per socket) and threads (per core).
+func ParseCPUTopology(value string) (int, int, int, error) {
+	sockets := 1
+	cores := 1
+	threads := 1
+
+	seen := map[string]bool{}
+	for _, chunk := range util.SplitNTrimSpace(value, ",", -1, true) {
+		fields := util.SplitNTrimSpace(chunk, "=", 2, true)
+		if len(fields) != 2 {
+			return 0, 0, 0, fmt.Errorf("Invalid CPU topology entry: %q", chunk)
+		}
+
+		key := fields[0]
+		if seen[key] {
+			return 0, 0, 0, fmt.Errorf("Duplicate CPU topology entry: %q", key)
+		}
+
+		seen[key] = true
+
+		count, err := strconv.Atoi(fields[1])
+		if err != nil || count < 1 {
+			return 0, 0, 0, fmt.Errorf("Invalid CPU topology value for %q: %q", key, fields[1])
+		}
+
+		switch key {
+		case "sockets":
+			sockets = count
+		case "cores":
+			cores = count
+		case "threads":
+			threads = count
+		default:
+			return 0, 0, 0, fmt.Errorf("Unknown CPU topology entry: %q", key)
+		}
+	}
+
+	return sockets, cores, threads, nil
+}
+
+// IsValidCPUTopology checks value is a valid CPU topology definition.
+func IsValidCPUTopology(value string) error {
+	_, _, _, err := ParseCPUTopology(value)
+	return err
+}
+
 // IsShorterThan checks whether a string is shorter than a specific length.
 func IsShorterThan(length int) func(value string) error {
 	return func(value string) error {

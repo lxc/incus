@@ -44,6 +44,7 @@ import (
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
 )
 
 // Track last autorestart of an instance.
@@ -1631,6 +1632,15 @@ func (d *common) balanceNUMANodes() error {
 	cpusPerNumaNode := int(cpu.Total) / len(nodes)
 
 	limitsCPU, err := strconv.Atoi(conf["limits.cpu"])
+	if err != nil && strings.Contains(conf["limits.cpu"], "=") {
+		// Compute the total from an explicit CPU topology.
+		sockets, cores, threads, topologyErr := validate.ParseCPUTopology(conf["limits.cpu"])
+		if topologyErr == nil {
+			limitsCPU = sockets * cores * threads
+			err = nil
+		}
+	}
+
 	if err == nil && limitsCPU > cpusPerNumaNode {
 		numaNodesToUse := int(math.Ceil(float64(limitsCPU) / float64(cpusPerNumaNode)))
 

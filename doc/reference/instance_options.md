@@ -159,6 +159,16 @@ To avoid high resource usage and compatibility issues with guests, Incus limits 
 VMs needing more than 64 CPU cores will need to be shut down to adjust their `limits.cpu` property.
 ```
 
+You can also request a specific CPU topology by setting `limits.cpu` to a value of the form `sockets=2,cores=4,threads=2`.
+Any of the three fields may be omitted, in which case it defaults to `1`.
+For example, `sockets=2` results in two vCPUs (two sockets, each with a single core and a single thread), while `cores=4` results in four vCPUs (a single socket with four cores).
+The resulting topology is exposed verbatim to the guest and the vCPUs are not pinned to specific physical cores on the host.
+
+```{note}
+Using the CPU topology syntax is incompatible with CPU hotplugging.
+The virtual machine must be stopped to switch to or away from such a value.
+```
+
 When `limits.cpu` is set to a range or comma-separated list of CPU IDs (as provided by [`incus info --resources`](incus_info.md)), the vCPUs are pinned to those physical cores.
 In this scenario, Incus checks whether the CPU configuration lines up with a realistic hardware topology and if it does, it replicates that topology in the guest.
 When doing CPU pinning, it is not possible to change the configuration while the VM is running.
