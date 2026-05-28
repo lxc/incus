@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 var (
@@ -29,7 +30,7 @@ func storageAddDriveInfo(devicePath string, disk *api.ResourcesStorageDisk) erro
 	// Attempt to open the device path
 	f, err := os.Open(devicePath)
 	if err == nil {
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		// Retrieve the block size
 		// This can't just be done with unix.Ioctl as that particular
@@ -53,7 +54,7 @@ func storageAddDriveInfo(devicePath string, disk *api.ResourcesStorageDisk) erro
 			return fmt.Errorf("Failed to open %q: %w", udevInfo, err)
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		udevProperties := map[string]string{}
 		udevInfo := bufio.NewScanner(f)

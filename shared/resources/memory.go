@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/units"
 )
 
@@ -39,7 +40,7 @@ func parseMeminfo(path string) (*meminfo, error) {
 		return nil, fmt.Errorf("Failed to open %q: %w", path, err)
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 	memInfo := bufio.NewScanner(f)
 
 	// Get common memory information
