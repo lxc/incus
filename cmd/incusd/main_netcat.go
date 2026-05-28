@@ -11,6 +11,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/eagain"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -61,7 +62,7 @@ func (c *cmdNetcat) run(cmd *cobra.Command, args []string) error {
 
 	logFile, logErr := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_SYNC, 0o644)
 	if logErr == nil {
-		defer func() { _ = logFile.Close() }()
+		defer logger.WarnOnError(logFile.Close, "Failed to close log file")
 	}
 
 	uAddr, err := net.ResolveUnixAddr("unix", args[0])

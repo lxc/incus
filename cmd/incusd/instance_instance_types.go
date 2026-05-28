@@ -133,7 +133,7 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 			return ctx.Err()
 		}
 
-		defer func() { _ = resp.Body.Close() }()
+		defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("Failed to get %s", url)

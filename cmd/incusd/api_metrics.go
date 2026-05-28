@@ -495,7 +495,7 @@ func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *met
 
 		resp, err := client.Get("http://incus-os/metrics")
 		if err == nil {
-			defer resp.Body.Close()
+			defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 			osMetrics, err := io.ReadAll(resp.Body)
 			if err == nil {

@@ -272,6 +272,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/network"
 	_ "github.com/lxc/incus/v7/shared/cgo" // Used by cgo
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 const forkproxyUDSSockFDNum int = C.FORKPROXY_UDS_SOCK_FD_NUM
@@ -462,7 +463,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if C.whoami == C.FORKPROXY_CHILD {
-		defer func() { _ = unix.Close(forkproxyUDSSockFDNum) }()
+		defer logger.WarnOnError(func() error { return unix.Close(forkproxyUDSSockFDNum) }, "Failed to close socket")
 
 		if lAddr.ConnType == "unix" && !lAddr.Abstract {
 			err := os.Remove(lAddr.Address)
@@ -633,7 +634,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 	signal.Notify(sigs, unix.SIGTERM)
 
 	if lAddr.ConnType == "unix" && !lAddr.Abstract {
-		defer func() { _ = os.Remove(lAddr.Address) }()
+		defer logger.WarnOnError(func() error { return os.Remove(lAddr.Address) }, "Failed to remove socket")
 	}
 
 	epFd := C.epoll_create1(C.EPOLL_CLOEXEC)
@@ -661,7 +662,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 
 		_ = unix.Kill(self, unix.SIGKILL)
 	}()
-	defer func() { _ = unix.Kill(self, unix.SIGTERM) }()
+	defer logger.WarnOnError(func() error { return unix.Kill(self, unix.SIGTERM) }, "Failed to send SIGTERM")
 
 	for _, f := range files {
 		var ev C.struct_epoll_event

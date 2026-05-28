@@ -88,7 +88,7 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 		return response.InternalError(err)
 	}
 
-	defer resp.Body.Close()
+	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	challenge, err := io.ReadAll(resp.Body)
 	if err != nil {

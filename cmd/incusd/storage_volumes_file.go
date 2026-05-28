@@ -363,7 +363,7 @@ func storageVolumeFilePost(s *state.State, vol storageDrivers.Volume, volumeProj
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = client.Close() }()
+	defer logger.WarnOnError(client.Close, "Failed to close SFTP client")
 
 	return fileSFTPPost(client, path, r, func() {
 		s.Events.SendLifecycle(volumeProjectName, lifecycle.StorageVolumeFilePushed.Event(vol, string(vol.Type()), volumeProjectName, nil, logger.Ctx{"path": path}))
@@ -428,7 +428,7 @@ func storageVolumeFileDelete(s *state.State, vol storageDrivers.Volume, volumePr
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = client.Close() }()
+	defer logger.WarnOnError(client.Close, "Failed to close SFTP client")
 
 	return fileSFTPDelete(client, path, r, func() {
 		s.Events.SendLifecycle(volumeProjectName, lifecycle.StorageVolumeFileDeleted.Event(vol, string(vol.Type()), volumeProjectName, nil, logger.Ctx{"path": path}))

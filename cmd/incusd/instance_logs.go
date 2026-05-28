@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/internal/version"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 )
 
@@ -424,7 +425,7 @@ func instanceExecOutputsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = pool.UnmountInstance(inst, nil) }()
+	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
 
 	// Read exec record-output files
 	dents, err := os.ReadDir(inst.ExecOutputPath())
@@ -638,7 +639,7 @@ func instanceExecOutputDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	defer func() { _ = pool.UnmountInstance(inst, nil) }()
+	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
 
 	err = os.Remove(filepath.Join(inst.ExecOutputPath(), file))
 	if err != nil {

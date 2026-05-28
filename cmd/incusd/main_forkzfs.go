@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 type cmdForkZFS struct {
@@ -74,7 +75,7 @@ func (c *cmdForkZFS) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close mountinfo file")
 
 	// Unmount all mounts under the main directory
 	scanner := bufio.NewScanner(file)
