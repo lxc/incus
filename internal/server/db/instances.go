@@ -19,6 +19,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // InstanceArgs is a value object holding all db-related details about an instance.
@@ -111,7 +112,7 @@ SELECT nodes.id, nodes.address
 		return "", err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	if !rows.Next() {
 		return "", api.StatusErrorf(http.StatusNotFound, "Instance not found")
@@ -176,7 +177,7 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 		return nil, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	memberAddressInstances := make(map[string][]Instance)
 

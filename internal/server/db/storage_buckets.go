@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // StorageBucketFilter used for filtering storage buckets with GetStorageBuckets().
@@ -335,7 +336,7 @@ func storageBucketPoolConfigAdd(tx *sql.Tx, bucketID int64, config map[string]st
 		return err
 	}
 
-	defer func() { _ = stmt.Close() }()
+	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
 
 	for k, v := range config {
 		if v == "" {

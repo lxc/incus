@@ -8,6 +8,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
 	"github.com/lxc/incus/v7/internal/server/db/query"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // GetAllNodesWithOperations returns a list of nodes that have operations in any project.
@@ -48,7 +49,7 @@ WHERE (projects.name = ? OR operations.project_id IS NULL) and operations.type =
 		return nil, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	for rows.Next() {
 		var op cluster.Operation

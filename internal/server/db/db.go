@@ -426,7 +426,7 @@ func CowsqlLatestSegment() (string, error) {
 		return "", fmt.Errorf("Unable to open directory %s with error %v", dir, err)
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	fileNames, err := file.Readdirnames(0)
 	if err != nil {
@@ -489,7 +489,7 @@ func queryScan(ctx context.Context, c *ClusterTx, q string, inargs []any, outfmt
 		return [][]any{}, err
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	for rows.Next() {
 		ptrargs := make([]any, len(outfmt))
