@@ -20,6 +20,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/archive"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
 	"github.com/lxc/incus/v7/shared/simplestreams"
 	"github.com/lxc/incus/v7/shared/util"
@@ -171,7 +172,7 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defer metaFile.Close()
+	defer logger.WarnOnError(metaFile.Close, "Failed to close file")
 
 	// Read the header.
 	_, _, unpacker, err := archive.DetectCompressionFile(metaFile)
@@ -276,7 +277,7 @@ func (c *cmdAdd) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer dataFile.Close()
+		defer logger.WarnOnError(dataFile.Close, "Failed to close file")
 
 		// Parse the content.
 		data, err = c.parseImage(metaFile, dataFile)
