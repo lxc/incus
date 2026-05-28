@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-27 19:31+0000\n"
-"PO-Revision-Date: 2026-05-28 05:29+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-05-28 15:30+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -908,7 +908,6 @@ msgid "Add new remote servers"
 msgstr "Adiciona novos servidores remotos"
 
 #: cmd/incus/remote.go:126
-#, fuzzy
 msgid ""
 "Add new remote servers\n"
 "\n"
@@ -933,6 +932,12 @@ msgstr ""
 "\"simplestreams\":\n"
 "  incus remote add algum-nome https://LOGIN:PASSWORD@example.com/some/path --"
 "protocol=simplestreams\n"
+"\n"
+"Podem se fornecidos vários alvos remotos, para lidar com a mudança para "
+"outros servidores se um estiver em baixo:\n"
+"  incus remote add some-name server1.example.com server2.example.com\n"
+"\n"
+"O nome remoto pode ser ignorado se for fornecido um único alvo.\n"
 
 #: cmd/incus/config_trust.go:93
 msgid "Add new trusted client"
@@ -1019,9 +1024,8 @@ msgid "Address: %v"
 msgstr "Endereço: %v"
 
 #: cmd/incus/remote.go:331
-#, fuzzy
 msgid "Addresses cannot be empty"
-msgstr "Nome da pool não pode ser vazio"
+msgstr "Endereços não podem ser vazios"
 
 #: cmd/incus/storage_bucket.go:180
 #, c-format
@@ -1418,7 +1422,7 @@ msgstr "Não pode usar ambos --no-expiry e --expiry"
 
 #: cmd/incus/remote.go:477
 msgid "Cannot mix HTTPS and Unix URLs"
-msgstr ""
+msgstr "Não pode misturar URLs HTTPS e Unix"
 
 #: cmd/incus/create.go:314
 #, c-format
@@ -3941,7 +3945,7 @@ msgstr "Endereços IP:"
 
 #: cmd/incus/remote.go:120 cmd/incus/remote.go:1375
 msgid "IP/FQDN/URL"
-msgstr ""
+msgstr "IP/FQDN/URL"
 
 #: cmd/incus/list.go:462 cmd/incus/network.go:1074
 msgid "IPV4"
@@ -6859,9 +6863,8 @@ msgid "One or more provided address isn't currently in the set"
 msgstr "Um ou mais endereços fornecidos não está atualmente no conjunto"
 
 #: cmd/incus/storage_volume.go:1814
-#, fuzzy
 msgid "Only \"custom\" volumes can be rebuilt"
-msgstr "Apenas volumes \"personalizados\" podem ser exportados"
+msgstr "Apenas volumes \"personalizados\" podem ser reconstruídos"
 
 #: cmd/incus/remote.go:442
 msgid "Only https URLs are supported for oci and simplestreams"
@@ -7013,12 +7016,12 @@ msgid "Please create those missing entries and then hit ENTER:"
 msgstr "Por favor crie as entradas em falta e depois clique em ENTER:"
 
 #: cmd/incus/remote.go:223
-#, fuzzy
 msgid ""
 "Please provide alternate server addresses separated with commas (empty to "
 "abort):"
 msgstr ""
-"Por favor forneça um endereço de servidor alternativo (vazio para abortar):"
+"Por favor forneça endereços de servidor alternativo separados por vírgulas "
+"(vazio para abortar):"
 
 #: cmd/incus/cluster.go:1708
 msgid "Please provide join token:"
@@ -7331,9 +7334,8 @@ msgid "Rebuild as an empty instance"
 msgstr "Recompila como nova instância"
 
 #: cmd/incus/storage_volume.go:1778
-#, fuzzy
 msgid "Rebuild custom storage volumes"
-msgstr "Apaga volumes de armazenamento personalizados"
+msgstr "Reconstruir volumes de armazenamento personalizados"
 
 #: cmd/incus/rebuild.go:27
 msgid "Rebuild instances"
@@ -7421,9 +7423,9 @@ msgid "Remote names may not contain colons"
 msgstr "Nomes remotos podem não conter dois pontos"
 
 #: cmd/incus/remote.go:415
-#, fuzzy
 msgid "Remote names may not contain colons; please provide an explicit one"
-msgstr "Nomes remotos podem não conter dois pontos"
+msgstr ""
+"Nomes remotos podem não conter dois pontos; por favor forneça um explícito"
 
 #: cmd/incus/remote.go:142
 msgid "Remote trust token"
@@ -8168,9 +8170,8 @@ msgid "Set the URL for the remote"
 msgstr "Define a URL para o remoto"
 
 #: cmd/incus/remote.go:1381
-#, fuzzy
 msgid "Set the URLs for the remote"
-msgstr "Define a URL para o remoto"
+msgstr "Define os URLs para o remoto"
 
 #: cmd/incus/file.go:110 cmd/incus/storage_volume.go:2298
 msgid "Set the file's gid on create"
@@ -8718,9 +8719,9 @@ msgid "Storage volume %s deleted"
 msgstr "Volume de armazenamento %s apagado"
 
 #: cmd/incus/storage_volume.go:1847
-#, fuzzy, c-format
+#, c-format
 msgid "Storage volume %s rebuilt"
-msgstr "Volume de armazenamento %s criado"
+msgstr "Volume de armazenamento %s reconstruído"
 
 #: cmd/incus/storage_volume.go:485
 msgid "Storage volume copied successfully!"
@@ -9910,6 +9911,10 @@ msgid ""
 "\n"
 "This is only allowed for custom volumes that have no snapshots."
 msgstr ""
+"Limpa o volume de armazenamento subjacente e recria-o como vazio usando a "
+"mesma configuração.\n"
+"\n"
+"Isto só é permitido para volumes personalizados que não têm instantâneos."
 
 #: cmd/incus/admin_init_interactive.go:68
 msgid "Would you like a YAML \"init\" preseed to be printed?"
@@ -11162,7 +11167,7 @@ msgstr "chave"
 
 #: cmd/incus/remote.go:1089
 msgid "last"
-msgstr ""
+msgstr "último"
 
 #: cmd/incus/usage/usage.go:835
 msgid "listen address"
