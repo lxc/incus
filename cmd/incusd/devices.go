@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -21,6 +23,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/resources"
+	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -675,6 +678,72 @@ func devicesRegister(instances []instance.Instance) {
 		}
 
 		inst.RegisterDevices()
+	}
+}
+
+// cleanupOrphanedProxyHelpers reaps forkproxy helpers left running for stopped containers.
+func cleanupOrphanedProxyHelpers(instances []instance.Instance) {
+	for _, inst := range instances {
+		// Only containers spawn forkproxy helpers; proxy devices on VMs only support NAT mode.
+		if inst.Type() != instancetype.Container {
+			continue
+		}
+
+		// Running instances still need their helpers; only consider stopped instances.
+		if inst.IsRunning() {
+			continue
+		}
+
+		devicesPath := inst.DevicesPath()
+		if !util.PathExists(devicesPath) {
+			continue
+		}
+
+		for devName, devConfig := range inst.ExpandedDevices() {
+			if devConfig["type"] != "proxy" {
+				continue
+			}
+
+			pidPath := filepath.Join(devicesPath, fmt.Sprintf("proxy.%s", devName))
+			if !util.PathExists(pidPath) {
+				continue
+			}
+
+			p, err := subprocess.ImportProcess(pidPath)
+			if err != nil {
+				logger.Warn("Failed to import orphaned forkproxy helper, removing stale pid file", logger.Ctx{
+					"project":  inst.Project().Name,
+					"instance": inst.Name(),
+					"device":   devName,
+					"err":      err,
+				})
+
+				_ = os.Remove(pidPath)
+				continue
+			}
+
+			// Verify the PID still belongs to a forkproxy helper before
+			// signalling it, otherwise PID reuse could result in killing
+			// an unrelated process.
+			cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", p.PID))
+			if err != nil || !bytes.Contains(cmdline, []byte("forkproxy")) {
+				_ = os.Remove(pidPath)
+				continue
+			}
+
+			err = p.Stop()
+			if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
+				logger.Warn("Failed to stop orphaned forkproxy helper", logger.Ctx{
+					"project":  inst.Project().Name,
+					"instance": inst.Name(),
+					"device":   devName,
+					"pid":      p.PID,
+					"err":      err,
+				})
+			}
+
+			_ = os.Remove(pidPath)
+		}
 	}
 }
 
