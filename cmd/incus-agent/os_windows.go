@@ -121,7 +121,7 @@ func runService(name string, agentCmd *cmdAgent) error {
 		}
 	}
 
-	defer elog.Close()
+	defer logger.WarnOnError(elog.Close, "Failed to close event log")
 
 	elog.Info(1, fmt.Sprintf("Starting %s service", name))
 	run := svc.Run
@@ -204,7 +204,7 @@ func osGetOSState() *api.InstanceStateOSInfo {
 		return nil
 	}
 
-	defer k.Close()
+	defer logger.WarnOnError(k.Close, "Failed to close registry key")
 
 	// Get local hostname.
 	hostname, err := os.Hostname()
