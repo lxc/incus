@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 type ethtoolReq struct {
@@ -155,7 +156,7 @@ func ethtoolAddCardInfo(name string, info *api.ResourcesNetworkCard) error {
 		return fmt.Errorf("Failed to open IPPROTO_IP socket: %w", err)
 	}
 
-	defer func() { _ = unix.Close(ethtoolFd) }()
+	defer logger.WarnOnError(func() error { return unix.Close(ethtoolFd) }, "Failed to close socket")
 
 	// Driver info
 	ethDrvInfo := ethtoolDrvInfo{
@@ -377,7 +378,7 @@ func ethtoolAddPortInfo(info *api.ResourcesNetworkCardPort) error {
 		return fmt.Errorf("Failed to open IPPROTO_IP socket: %w", err)
 	}
 
-	defer func() { _ = unix.Close(ethtoolFd) }()
+	defer logger.WarnOnError(func() error { return unix.Close(ethtoolFd) }, "Failed to close socket")
 
 	// Prepare the request struct
 	req := ethtoolReq{}
