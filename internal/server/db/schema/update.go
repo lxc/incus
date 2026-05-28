@@ -8,6 +8,8 @@ import (
 	"runtime"
 
 	_ "github.com/mattn/go-sqlite3" // For opening the in-memory database
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // DotGo writes '<name>.go' source file in the package of the calling function, containing
@@ -23,7 +25,7 @@ func DotGo(updates map[int]Update, name string) error {
 		return fmt.Errorf("failed to open schema.go for writing: %w", err)
 	}
 
-	defer func() { _ = db.Close() }()
+	defer logger.WarnOnError(db.Close, "Failed to close database")
 
 	schema := NewFromMap(updates)
 
@@ -45,7 +47,7 @@ func DotGo(updates map[int]Update, name string) error {
 		return fmt.Errorf("failed to open Go file for writing: %w", err)
 	}
 
-	defer file.Close()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	pkg := path.Base(path.Dir(filename))
 	_, err = file.Write(fmt.Appendf(nil, dotGoTemplate, pkg, dump))
