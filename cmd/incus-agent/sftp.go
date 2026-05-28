@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/sftp"
 
 	"github.com/lxc/incus/v7/internal/server/response"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 var sftpCmd = APIEndpoint{
@@ -60,7 +61,7 @@ func (r *sftpServe) Render(w http.ResponseWriter) error {
 		return nil
 	}
 
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	err = response.Upgrade(conn, "sftp")
 	if err != nil {
