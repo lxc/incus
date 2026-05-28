@@ -213,7 +213,7 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 	// Stop the TPM emulator if anything goes wrong.
 	reverter.Add(func() { _ = proc.Stop() })
 
-	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", d.name))
+	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
 
 	err = proc.Save(pidPath)
 	if err != nil {
@@ -318,7 +318,7 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 
 	reverter.Add(func() { _ = proc.Stop() })
 
-	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", d.name))
+	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
 
 	err = proc.Save(pidPath)
 	if err != nil {
@@ -347,7 +347,7 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 
 // Stop terminates the TPM emulator.
 func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
-	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", d.name))
+	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
 	runConf := deviceConfig.RunConfig{}
 
 	defer func() { _ = os.Remove(pidPath) }()
