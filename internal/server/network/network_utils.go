@@ -362,7 +362,7 @@ func DefaultGatewaySubnetV4() (*net.IPNet, string, error) {
 		return nil, "", err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	ifaceName := ""
 
@@ -653,7 +653,7 @@ func inRoutingTable(subnet *net.IPNet) bool {
 		return false
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	scanner := bufio.NewReader(file)
 	for {
@@ -825,7 +825,7 @@ func GetHostDevice(parent string, vlan string) string {
 		return defaultVlan
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
