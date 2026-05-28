@@ -320,7 +320,7 @@ func ensureSparseFile(filePath string, sizeBytes int64) error {
 		return fmt.Errorf("Failed to open %s: %w", filePath, err)
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	err = f.Truncate(sizeBytes)
 	if err != nil {
@@ -810,7 +810,7 @@ func BlockDiskSizeBytes(blockDiskPath string) (int64, error) {
 			return -1, err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 		fd := int(f.Fd())
 
 		// Retrieve the block device size.
@@ -839,7 +839,7 @@ func GetPhysicalBlockSize(blockDiskPath string) (int, error) {
 		return -1, err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	// Query the physical block size.
 	var res int32
@@ -925,7 +925,7 @@ func wipeBlockHeaders(path string) error {
 		return err
 	}
 
-	defer fdZero.Close()
+	defer logger.WarnOnError(fdZero.Close, "Failed to close file")
 
 	// Open the target disk.
 	fdDisk, err := os.OpenFile(path, os.O_RDWR, 0o600)
@@ -933,7 +933,7 @@ func wipeBlockHeaders(path string) error {
 		return err
 	}
 
-	defer fdDisk.Close()
+	defer logger.WarnOnError(fdDisk.Close, "Failed to close file")
 
 	// Wipe the 4MiB header.
 	_, err = io.CopyN(fdDisk, fdZero, 1024*1024*4)
@@ -1110,7 +1110,7 @@ func BackupVolume(d Driver, v Volume, writer instancewriter.InstanceWriter, moun
 			return fmt.Errorf("Error opening file for reading %q: %w", blockPath, err)
 		}
 
-		defer func() { _ = from.Close() }()
+		defer logger.WarnOnError(from.Close, "Failed to close file")
 
 		var fileSize int64
 		fileSize, err = strconv.ParseInt(v.config["size"], 10, 64)
@@ -1237,7 +1237,7 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 			return fmt.Errorf("Error opening directory: %w", err)
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		allowedCmds := []string{}
 		if len(unpacker) > 0 {
@@ -1276,7 +1276,7 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 				return fmt.Errorf("Error opening file for writing %q: %w", targetPath, err)
 			}
 
-			defer func() { _ = to.Close() }()
+			defer logger.WarnOnError(to.Close, "Failed to close file")
 
 			// Restore original size of volume from raw block backup file size.
 			d.Logger().Debug("Setting volume size from source", logger.Ctx{"source": srcFile, "target": targetPath, "size": hdr.Size})

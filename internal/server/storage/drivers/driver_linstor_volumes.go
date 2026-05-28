@@ -849,7 +849,7 @@ func (d *linstor) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation)
 		// LINSTOR snapshot can be inconsistent or, in the worst case, empty.
 		unfreezeFS, err := d.filesystemFreeze(sourcePath)
 		if err == nil {
-			defer func() { _ = unfreezeFS() }()
+			defer logger.WarnOnError(unfreezeFS, "Failed to unfreeze filesystem")
 		}
 	}
 
@@ -984,7 +984,7 @@ func (d *linstor) RestoreVolume(vol Volume, snapshotName string, op *operations.
 	}
 
 	if ourUnmount {
-		defer func() { _ = d.MountVolume(vol, op) }()
+		defer logger.WarnOnError(func() error { return d.MountVolume(vol, op) }, "Failed to mount volume")
 	}
 
 	snapVol, err := vol.NewSnapshot(snapshotName)

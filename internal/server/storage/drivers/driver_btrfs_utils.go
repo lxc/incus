@@ -51,7 +51,7 @@ func setReceivedUUID(path string, UUID string) error {
 		return fmt.Errorf("Failed opening %s: %w", path, err)
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	args := btrfsIoctlReceivedSubvolArgs{}
 
@@ -347,7 +347,7 @@ func (d *btrfs) getQGroup(path string) (string, int64, error) {
 }
 
 func (d *btrfs) sendSubvolume(path string, parent string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker) error {
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	// Assemble btrfs send command.
 	args := []string{"send"}
