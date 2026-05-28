@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/archive"
 	"github.com/lxc/incus/v7/shared/ask"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -247,7 +248,7 @@ func (m *Migration) askPath(question string) (string, error) {
 			return "", err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		// Download the target.
 		resp, err := http.Get(path)
@@ -255,7 +256,7 @@ func (m *Migration) askPath(question string) (string, error) {
 			return "", err
 		}
 
-		defer resp.Body.Close()
+		defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 		fmt.Printf("Downloading %q\n", path)
 
@@ -503,7 +504,7 @@ func (c *cmdMigrate) run(_ *cobra.Command, _ []string) error {
 	}()
 
 	if clientFingerprint != "" {
-		defer func() { _ = server.DeleteCertificate(clientFingerprint) }()
+		defer logger.WarnOnError(func() error { return server.DeleteCertificate(clientFingerprint) }, "Failed to delete certificate")
 	}
 
 	// Provide migration type
