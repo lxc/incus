@@ -20,6 +20,8 @@ import (
 	"io/fs"
 	"log"
 	"os"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 var (
@@ -51,7 +53,7 @@ func Load() {
 		return
 	}
 
-	defer func() { _ = usbids.Close() }()
+	defer logger.WarnOnError(usbids.Close, "Failed to close file")
 
 	ids, cls, err := ParseIDs(usbids)
 	if err != nil {
