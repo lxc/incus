@@ -29,7 +29,7 @@ func ClearBlock(blockPath string, blockOffset int64) error {
 		return err
 	}
 
-	defer fd.Close()
+	defer logger.WarnOnError(fd.Close, "Failed to close file")
 
 	// Get the size of the file/block.
 	size, err := fd.Seek(0, io.SeekEnd)
@@ -167,7 +167,7 @@ func ClearBlock(blockPath string, blockOffset int64) error {
 			return err
 		}
 
-		defer fd.Close()
+		defer logger.WarnOnError(fd.Close, "Failed to close file")
 
 		found, err = checkMarkers(fd)
 		if err != nil {
@@ -194,7 +194,7 @@ func ClearBlock(blockPath string, blockOffset int64) error {
 			return err
 		}
 
-		defer fd.Close()
+		defer logger.WarnOnError(fd.Close, "Failed to close file")
 
 		found, err = checkMarkers(fd)
 		if err != nil {
@@ -221,7 +221,7 @@ func ClearBlock(blockPath string, blockOffset int64) error {
 			return err
 		}
 
-		defer fd.Close()
+		defer logger.WarnOnError(fd.Close, "Failed to close file")
 
 		found, err = checkMarkers(fd)
 		if err != nil {
@@ -245,14 +245,14 @@ func ClearBlock(blockPath string, blockOffset int64) error {
 		return err
 	}
 
-	defer zero.Close()
+	defer logger.WarnOnError(zero.Close, "Failed to close file")
 
 	fd, err = os.OpenFile(blockPath, os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
 
-	defer fd.Close()
+	defer logger.WarnOnError(fd.Close, "Failed to close file")
 
 	_, err = fd.Seek(blockOffset, 0)
 	if err != nil {

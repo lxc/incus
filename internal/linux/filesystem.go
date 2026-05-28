@@ -13,6 +13,8 @@ import (
 
 	"github.com/pkg/xattr"
 	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // Filesystem magic numbers.
@@ -95,7 +97,7 @@ func hasMountEntry(name string) int {
 		return -1
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -153,7 +155,7 @@ func SyncFS(path string) error {
 		return err
 	}
 
-	defer func() { _ = fsFile.Close() }()
+	defer logger.WarnOnError(fsFile.Close, "Failed to close file")
 
 	// Call SyncFS.
 	return unix.Syncfs(int(fsFile.Fd()))
@@ -286,7 +288,7 @@ func GetMountinfo(path string) ([]string, error) {
 		return nil, err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
