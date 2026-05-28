@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // Client represents an IncusOS API client.
@@ -43,7 +44,7 @@ func (c *Client) query(method string, path string) (*api.Response, error) {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	// Convert to an Incus response struct.
 	apiResp := &api.Response{}
