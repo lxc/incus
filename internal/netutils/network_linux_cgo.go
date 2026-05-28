@@ -18,6 +18,7 @@ import (
 	"unsafe"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // Allow the caller to set expectations.
@@ -74,7 +75,7 @@ func NetnsGetifaddrs(initPID int32, hostInterfaces []net.Interface) (map[string]
 			return nil, err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		netnsID = C.netns_get_nsid(C.__s32(f.Fd()))
 		if netnsID < 0 {
