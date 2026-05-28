@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/ask"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
 )
 
@@ -59,7 +60,7 @@ func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defer metaFile.Close()
+	defer logger.WarnOnError(metaFile.Close, "Failed to close file")
 
 	// Generate the metadata.
 	timestamp := time.Now().UTC()
