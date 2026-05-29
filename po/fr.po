@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-28 12:53-0400\n"
-"PO-Revision-Date: 2026-05-29 23:59+0000\n"
-"Last-Translator: Benjamin Somers <benjamin.somers@imt-atlantique.fr>\n"
+"PO-Revision-Date: 2026-05-30 00:00+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -4010,8 +4010,7 @@ msgstr "Identifiant : %v"
 #: cmd/incus/image.go:175
 #, fuzzy
 msgid "If an alias already exists, delete and recreate it"
-msgstr ""
-"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/rebuild.go:33
 msgid "If an instance is running, stop it and then rebuild it"
