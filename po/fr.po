@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-28 12:53-0400\n"
 "PO-Revision-Date: 2026-05-30 00:00+0000\n"
-"Last-Translator: Corabel Bertolini <Corabel.Bertolini@freemailonline.us>\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -795,7 +795,7 @@ msgstr "--target ne peut pas être utilisé avec des instances"
 #: cmd/incus/admin_sql.go:128
 #, c-format
 msgid "=> Query %d:"
-msgstr "=> Requête %d:"
+msgstr "=> Requête %d :"
 
 #: cmd/incus/remote.go:749
 msgid "A client certificate is already present"
@@ -865,9 +865,8 @@ msgid "Acknowledge warning"
 msgstr "Prendre acte d’un avertissement"
 
 #: cmd/incus/query.go:48
-#, fuzzy
 msgid "Action"
-msgstr "condition"
+msgstr "Action"
 
 #: cmd/incus/query.go:81
 #, c-format
@@ -1361,7 +1360,7 @@ msgstr "Caches mémoire :"
 #: cmd/incus/admin_init_interactive.go:601
 #, c-format
 msgid "Can't bind address %q: %w"
-msgstr "Impossible de se lier à l’adresse %q: %w"
+msgstr "Impossible de se lier à l’adresse %q : %w"
 
 #: cmd/incus/move.go:115
 msgid "Can't override configuration or profiles in local rename"
@@ -1470,7 +1469,7 @@ msgstr "Impossible de définir cette clef : %s"
 #: cmd/incus/info.go:549 cmd/incus/info.go:561
 #, c-format
 msgid "Card %d:"
-msgstr "Cartes %d:"
+msgstr "Cartes %d :"
 
 #: cmd/incus/info.go:127
 #, c-format
@@ -1518,7 +1517,7 @@ msgstr "Test si le démon est prêt (tentative %d)"
 #: cmd/incus/cluster.go:1833
 #, c-format
 msgid "Choose %s:"
-msgstr "Choisir %s:"
+msgstr "Choisir %s :"
 
 #: cmd/incus/config_trust.go:141
 #, c-format
@@ -1861,7 +1860,7 @@ msgstr "Cœurs :"
 #: cmd/incus/remote.go:590
 #, c-format
 msgid "Could not close server cert file %q: %w"
-msgstr "Impossible de fermer le fichier de certificat serveur %q: %w"
+msgstr "Impossible de fermer le fichier de certificat serveur %q : %w"
 
 #: cmd/incus/remote.go:281 cmd/incus/remote.go:574
 msgid "Could not create server cert dir"
@@ -1897,7 +1896,7 @@ msgstr ""
 #: cmd/incus/remote.go:585
 #, c-format
 msgid "Could not write server cert file %q: %w"
-msgstr "Impossible d'écrire le fichier de certificat serveur %q: %w"
+msgstr "Impossible d'écrire le fichier de certificat serveur %q : %w"
 
 #: cmd/incus/network_zone.go:1545
 msgid "Couldn't find a matching entry"
@@ -1906,7 +1905,7 @@ msgstr "Impossible de trouver une entrée correspondante"
 #: cmd/incus/admin_init_interactive.go:452
 #, c-format
 msgid "Couldn't statfs %s: %w"
-msgstr "Impossible de statfs %s: %w"
+msgstr "Impossible de statfs %s : %w"
 
 #: cmd/incus/cluster_group.go:171 cmd/incus/cluster_group.go:172
 msgid "Create a cluster group"
@@ -2330,13 +2329,13 @@ msgstr ""
 "instance. Surchargez le périphérique ou modifiez le profil"
 
 #: cmd/incus/config_device.go:526
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Device from profile(s) cannot be removed from individual instance. Override "
 "device “%s” or modify profile instead"
 msgstr ""
 "Le périphériques du ou des profiles ne peut pas être supprimé pour une "
-"instance. Surchargez le périphérique ou modifiez le profil"
+"instance. Surchargez le périphérique “%s” ou modifiez le profil"
 
 #: cmd/incus/config_device.go:275
 msgid "Device from profile(s) cannot be retrieved for individual instance"
@@ -3069,9 +3068,9 @@ msgid "Failed accepting channel client %q: %v"
 msgstr "Échec de l'acceptation du canal client %q : %v"
 
 #: cmd/incus/delete.go:92
-#, fuzzy, c-format
+#, c-format
 msgid "Failed checking instance %s exists: %w"
-msgstr "Échec de la vérification de l'existence de l'instance \"%s:%s\" : %w"
+msgstr "Échec de la vérification de l'existence de l'instance \"%s\" : %w"
 
 #: cmd/incus/utils.go:696
 #, c-format
@@ -3103,9 +3102,9 @@ msgstr ""
 "Échec de la conversion de l'opération de jeton en jeton de connexion : %w"
 
 #: cmd/incus/delete.go:142
-#, fuzzy, c-format
+#, c-format
 msgid "Failed deleting instance %s in project %q: %w"
-msgstr "Échec de la suppression de l'instance %q dans le projet %q : %w"
+msgstr "Échec de la suppression de l'instance %s dans le projet %q : %w"
 
 #: cmd/incus/storage_volume.go:554
 #, c-format
@@ -3188,9 +3187,9 @@ msgid "Failed to add server cert to cluster: %w"
 msgstr "Échec de l'ajout d'un certificat de serveur au cluster : %w"
 
 #: cmd/incus/image.go:283
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to check for existing aliases: %w"
-msgstr "Échec de la création de l'alias %s : %w"
+msgstr "Échec de la vérification des alias existants : %w"
 
 #: cmd/incus/admin_waitready.go:85
 #, c-format
@@ -3423,9 +3422,9 @@ msgid "Fast mode (same as --columns=nsacPt)"
 msgstr "Mode rapide (identique à --columns=nsacPt)"
 
 #: cmd/incus/export.go:181
-#, fuzzy, c-format
+#, c-format
 msgid "Fetch instance backup file: %w"
-msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
+msgstr "Récupération du fichier de sauvegarde de l'instance : %w"
 
 #: cmd/incus/image.go:965
 #, c-format
@@ -4760,7 +4759,6 @@ msgid "List available network peers"
 msgstr "Liste les pairs réseau disponibles"
 
 #: cmd/incus/network_peer.go:93
-#, fuzzy
 msgid ""
 "List available network peers\n"
 "\n"
@@ -4789,8 +4787,17 @@ msgstr ""
 "\n"
 "== Colonnes ==\n"
 "L’option -c prend une liste d’arguments séparés par des virgules "
-"(optionnelles) contrôlant quels attributs de bail DHCP afficher lorsque "
-"l’affichage est demandé dans un format tabulaire.\n"
+"(optionnelles)\n"
+" contrôlant quels attributs de pairs réseau  afficher lorsque l’affichage "
+"est demandé\n"
+" dans un format tabulaire.\n"
+"\n"
+"Les arguments de colonne sont soit des caractères abrégés prédéfinis (voir "
+"ci-dessous),\n"
+"soit des clés de configuration (étendues).\n"
+"\n"
+"Les virgules entre des caractères sténographiques consécutifs sont "
+"facultatives.\n"
 "\n"
 "Les arguments valides pour cette option sont les caractères suivants :\n"
 " – n : nom\n"
@@ -5832,9 +5839,9 @@ msgid "Location: %s"
 msgstr ""
 
 #: cmd/incus/info.go:926
-#, fuzzy, c-format
+#, c-format
 msgid "Log (%s):"
-msgstr "CPUs (%s):"
+msgstr "Journal (%s) :"
 
 #: cmd/incus/monitor.go:81
 msgid "Log level filtering can only be used with pretty formatting"
@@ -8525,9 +8532,9 @@ msgid "Stopping instance failed!"
 msgstr "L'arrêt de l'instance a échoué !"
 
 #: cmd/incus/delete.go:113
-#, fuzzy, c-format
+#, c-format
 msgid "Stopping the instance %s failed: %s"
-msgstr "L'arrêt de l'instance a échoué : %s"
+msgstr "L'arrêt de l'instance %s a échoué : %s"
 
 #: cmd/incus/admin_init.go:58
 msgid "Storage backend to use (btrfs, dir, lvm or zfs, default: dir)"
@@ -8788,11 +8795,11 @@ msgid "The following unknown volumes have been found:"
 msgstr "Les volumes inconnus suivants ont été trouvés :"
 
 #: cmd/incus/delete.go:97
-#, fuzzy, c-format
+#, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
-"L’instance est en cours d'exécution, veuillez d’abord l’arrêter ou indiquer "
-"--force"
+"L’instance %s est en cours d'exécution, veuillez d’abord l’arrêter ou "
+"indiquer --force"
 
 #: cmd/incus/publish.go:90
 msgid ""
@@ -8841,10 +8848,9 @@ msgid "The property %q does not exist on the instance %q: %v"
 msgstr "La propriété %q n’existe pas sur l’instance %q : %v"
 
 #: cmd/incus/config.go:431
-#, fuzzy, c-format
+#, c-format
 msgid "The property %q does not exist on the instance snapshot %s: %v"
-msgstr ""
-"La propriété %q n’existe pas sur l’instantané d’instance « %s/%s » : %v"
+msgstr "La propriété %q n’existe pas sur l’instantané d’instance «%s » : %v"
 
 #: cmd/incus/network_load_balancer.go:433
 #, c-format
@@ -8971,25 +8977,28 @@ msgstr ""
 "Le serveur n’implémente pas la nouvelle version (v2) de l’API des ressources"
 
 #: cmd/incus/network.go:533
-#, fuzzy, c-format
+#, c-format
 msgid "The specified NIC does not point to the given network (found %s)"
-msgstr "le périphérique indiqué ne correspond pas au réseau"
+msgstr ""
+"La carte réseau spécifiée ne pointe pas vers le réseau spécifié (trouvé %s)"
 
 #: cmd/incus/network.go:529
-#, fuzzy, c-format
+#, c-format
 msgid "The specified device is not a NIC (%s device)"
-msgstr "Le périphérique indiqué n'existe pas"
+msgstr "Le périphérique spécifié n'est pas une carte réseau (périphérique %s)"
 
 #: cmd/incus/storage_volume.go:783
-#, fuzzy, c-format
+#, c-format
 msgid "The specified device is not a disk (%s device)"
-msgstr "Le périphérique indiqué n'existe pas"
+msgstr "Le périphérique spécifié n'est pas un disque (périphérique %s)"
 
 #: cmd/incus/storage_volume.go:791
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
-msgstr "La propriété %q n’existe pas sur le volume de stockage %q : %v"
+msgstr ""
+"Le disque spécifié ne pointe pas vers le volume de stockage spécifié (trouvé "
+": %s)"
 
 #: cmd/incus/storage_volume.go:787
 #, c-format
@@ -9001,10 +9010,9 @@ msgid "The type to create (file, symlink, or directory)"
 msgstr "Le type de fichier à créer (« file », « symlink » ou « directory »)"
 
 #: cmd/incus/config.go:590
-#, fuzzy
 msgid "There is no config key to set on an instance snapshot."
 msgstr ""
-"La propriété %q n’existe pas sur l’instantané d’instance « %s/%s » : %v"
+"Il n'y a aucune clef de configuration à définir sur un instantané d'instance."
 
 #: cmd/incus/main.go:415
 msgid ""
@@ -9498,9 +9506,8 @@ msgid "Upper devices"
 msgstr "Création du conteneur"
 
 #: cmd/incus/color/color.go:37
-#, fuzzy
 msgid "Usage:"
-msgstr "Utilisation : %s"
+msgstr "Utilisation :"
 
 #: cmd/incus/storage_volume.go:1357
 #, c-format
@@ -9611,9 +9618,9 @@ msgid "Volume description"
 msgstr "Description du volume"
 
 #: cmd/incus/storage_volume_snapshot.go:224
-#, fuzzy, c-format
+#, c-format
 msgid "Volume snapshot name is: %s"
-msgstr "'/' n'est pas autorisé dans le nom d'un instantané"
+msgstr "Le nom de l'instantané de volume est : %s"
 
 #: cmd/incus/info.go:293
 #, c-format
@@ -9664,9 +9671,8 @@ msgid "Wait for the operation to complete"
 msgstr "Attendre la fin de l’opération"
 
 #: cmd/incus/color/color.go:35
-#, fuzzy
 msgid "Warning:"
-msgstr "Afficher un avertissement"
+msgstr "Avertissement :"
 
 #: cmd/incus/admin_init_interactive.go:541
 msgid ""
@@ -10247,7 +10253,6 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/move.go:51
-#, fuzzy
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -10257,16 +10262,13 @@ msgid ""
 "incus move <old name> <new name> [--instance-only]\n"
 "    Rename a local instance."
 msgstr ""
-"incus move [<serveur distant>:]<instance source> [<serveur distant>:]"
-"[<instance cible>] [--instance-only]\n"
+"incus move [<serveur distant>:]<instance source> [<serveur distant> "
+":][<instance cible>] [--instance-only]\n"
 "    Déplacer une instance entre deux hôtes, avec renommage si le nom de "
 "destination est différent.\n"
 "\n"
 "incus move <ancien nom> <nouveau nom> [--instance-only]\n"
-"    Renommer une instance locale.\n"
-"\n"
-"incus move <instance>/<ancien instantané> <instance>/<nouvel instantané>\n"
-"    Renommer un instantané."
+"    Renommer une instance locale."
 
 #: cmd/incus/network_acl.go:358
 #, fuzzy
