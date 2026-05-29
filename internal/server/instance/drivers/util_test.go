@@ -4,19 +4,34 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/cfg"
 )
 
-// Test roundDownToBlockSize.
-func TestRoundDownToBlockSize(t *testing.T) {
-	const blockSize = 128 * 1024 * 1024
+// Test roundUpToBlockSize.
+func TestRoundToBlockSize(t *testing.T) {
+	const blockSize int64 = 128 * 1024 * 1024 // 128MiB
 
-	value := roundDownToBlockSize(1073741824, blockSize)
-	assert.Equal(t, int64(1073741824), value)
+	// Already block-aligned values are returned unchanged.
+	value := roundUpToBlockSize(1073741824, blockSize)
+	require.Equal(t, int64(1073741824), value)
 
-	value = roundDownToBlockSize(1000000000, blockSize)
-	assert.Equal(t, int64(805306368), value)
+	// Unaligned values round up to the next block.
+	value = roundUpToBlockSize(1000000000, blockSize)
+	require.Equal(t, int64(1073741824), value)
+
+	// Values smaller than a single block round up to one block rather than 0.
+	value = roundUpToBlockSize(1, blockSize)
+	require.Equal(t, blockSize, value)
+
+	// Values in the second block round up to two blocks rather than 0.
+	value = roundUpToBlockSize(blockSize+1, blockSize)
+	require.Equal(t, 2*blockSize, value)
+
+	// Zero stays zero.
+	value = roundUpToBlockSize(0, blockSize)
+	require.Equal(t, int64(0), value)
 }
 
 // Test memoryConfigSectionToMap.

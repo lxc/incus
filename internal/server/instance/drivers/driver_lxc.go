@@ -5214,7 +5214,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 						// Maximum priority (10) should be default swappiness (60).
 						err = cg.SetMemorySwappiness(int64(70 - priority))
-						if err != nil {
+						if err != nil && !errors.Is(err, cgroup.ErrControllerMissing) {
 							return err
 						}
 					}
