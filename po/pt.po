@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-28 12:53-0400\n"
 "PO-Revision-Date: 2026-05-30 00:03+0000\n"
-"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -8173,9 +8173,8 @@ msgstr ""
 "machine\"."
 
 #: cmd/incus/remote.go:1381 cmd/incus/remote.go:1382
-#, fuzzy
 msgid "Set the URL(s) for the remote"
-msgstr "Define os URLs para o remoto"
+msgstr "Define os URL(s) para o remoto"
 
 #: cmd/incus/file.go:110 cmd/incus/storage_volume_file.go:106
 msgid "Set the file's gid on create"
@@ -9135,7 +9134,6 @@ msgid "The type to create (file, symlink, or directory)"
 msgstr "O tipo a criar (ficheiro, link simbólico, ou diretório)"
 
 #: cmd/incus/config.go:590
-#, fuzzy
 msgid "There is no config key to set on an instance snapshot."
 msgstr ""
 "Não há nenhuma chave de configuração a definir a um instantâneo de instância."
