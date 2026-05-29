@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-28 12:53-0400\n"
 "PO-Revision-Date: 2026-05-30 00:01+0000\n"
-"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -5282,8 +5282,8 @@ msgstr ""
 "  L - Instansens plats (t.ex. dess klustermedlem) \n"
 "  f - Fingeravtryck för basavbildning (kort) \n"
 "  F - Fingeravtryck för basavbildning (långt) \n"
-"Anpassade kolumner definieras med \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Anpassade kolumner definieras med "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "\n"
 "KEY: Den (utökade) konfigurations- eller enhetsnyckeln som ska visas. Om\n"
 "[config:|devices:] utelämnas är standardvärdet konfigurationsnyckeln. NAME: "
@@ -8093,7 +8093,6 @@ msgstr ""
 "som stöds för typen är \"custom\", \"container\" och \"virtual-machine\"."
 
 #: cmd/incus/remote.go:1381 cmd/incus/remote.go:1382
-#, fuzzy
 msgid "Set the URL(s) for the remote"
 msgstr "Ställ in URL:erna för fjärr"
 
@@ -9045,7 +9044,6 @@ msgid "The type to create (file, symlink, or directory)"
 msgstr "Den typ som ska skapas (fil, symlänk eller katalog)"
 
 #: cmd/incus/config.go:590
-#, fuzzy
 msgid "There is no config key to set on an instance snapshot."
 msgstr ""
 "Det finns ingen konfigurationsnyckel att ställa in på en instanssnapshot."
@@ -9764,8 +9762,7 @@ msgstr "Var ska denna lagringspool lagra sina data?"
 
 #: cmd/incus/export.go:50
 msgid "Whether or not to only backup the instance (without dependent volumes)"
-msgstr ""
-"Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
+msgstr "Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
 
 #: cmd/incus/export.go:49
 msgid "Whether or not to only backup the instance (without snapshots)"
