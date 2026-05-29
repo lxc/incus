@@ -4573,7 +4573,7 @@ func (d *qemu) addDriveDirConfigVirtiofs(qemuDev map[string]any, agentMounts *[]
 		defer reverter.Fail()
 
 		// Detect virtiofsd path.
-		virtiofsdSockPath := filepath.Join(d.DevicesPath(), fmt.Sprintf("virtio-fs.%s.sock", driveConf.DevName))
+		virtiofsdSockPath := filepath.Join(d.DevicesPath(), fmt.Sprintf("virtio-fs.%s.sock", linux.PathNameEncode(driveConf.DevName)))
 		if !util.PathExists(virtiofsdSockPath) {
 			return errors.New("Virtiofsd isn't running")
 		}
