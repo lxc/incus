@@ -211,6 +211,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/server/ip"
 	_ "github.com/lxc/incus/v7/shared/cgo" // Used by cgo
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -428,7 +429,7 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 		}
 	}
 
-	defer func() { _ = client.Close() }()
+	defer logger.WarnOnError(client.Close, "Failed to close DHCP client")
 
 	// Setup a 30s timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -599,7 +600,7 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 		return
 	}
 
-	defer func() { _ = client.Close() }()
+	defer logger.WarnOnError(client.Close, "Failed to close DHCP client")
 
 	// Setup a 30s timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -918,7 +919,7 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 		return err
 	}
 
-	defer f.Close()
+	defer logger.WarnOnError(f.Close, "Failed to close resolv.conf")
 
 	// Write unique nameservers.
 	for ns := range nameservers {
