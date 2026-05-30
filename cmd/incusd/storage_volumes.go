@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
 	"github.com/lxc/incus/v7/internal/filter"
@@ -412,13 +411,13 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 	targetMember := request.QueryParam(r, "target")
 	memberSpecific := targetMember != ""
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the volume type.
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := pathVar(r, "type")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -810,7 +809,7 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -859,9 +858,8 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Handle being called through the typed URL.
-	_, ok := mux.Vars(r)["type"]
-	if ok {
-		req.Type, err = url.PathUnescape(mux.Vars(r)["type"])
+	if r.PathValue("type") != "" {
+		req.Type, err = pathVar(r, "type")
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -1247,12 +1245,12 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the name of the storage volume.
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := pathVar(r, "volumeName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := pathVar(r, "type")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1262,7 +1260,7 @@ func storagePoolVolumePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
-	srcPoolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	srcPoolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1981,19 +1979,19 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 func storagePoolVolumeGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := pathVar(r, "type")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the storage volume.
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := pathVar(r, "volumeName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2232,19 +2230,19 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := pathVar(r, "type")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the storage volume.
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := pathVar(r, "volumeName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2421,12 +2419,12 @@ func storagePoolVolumePatch(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the name of the storage volume.
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := pathVar(r, "volumeName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := pathVar(r, "type")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2436,7 +2434,7 @@ func storagePoolVolumePatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2568,12 +2566,12 @@ func storagePoolVolumeDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the name of the storage volume.
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := pathVar(r, "volumeName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := pathVar(r, "type")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2583,7 +2581,7 @@ func storagePoolVolumeDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get the name of the storage pool the volume is supposed to be attached to.
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}

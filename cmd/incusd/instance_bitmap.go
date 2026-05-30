@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/mux"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
@@ -59,7 +56,7 @@ func instanceBitmapsPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	cname, err := url.PathUnescape(mux.Vars(r)["name"])
+	cname, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

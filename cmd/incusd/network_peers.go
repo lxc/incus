@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -163,7 +161,7 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -343,7 +341,7 @@ func networkPeersPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Invalid network peer name: %w", err))
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -420,7 +418,7 @@ func networkPeerDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -439,7 +437,7 @@ func networkPeerDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support peering", n.Type()))
 	}
 
-	peerName, err := url.PathUnescape(mux.Vars(r)["peerName"])
+	peerName, err := pathVar(r, "peerName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -517,7 +515,7 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -536,7 +534,7 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support peering", n.Type()))
 	}
 
-	peerName, err := url.PathUnescape(mux.Vars(r)["peerName"])
+	peerName, err := pathVar(r, "peerName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -668,7 +666,7 @@ func networkPeerPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -687,7 +685,7 @@ func networkPeerPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support peering", n.Type()))
 	}
 
-	peerName, err := url.PathUnescape(mux.Vars(r)["peerName"])
+	peerName, err := pathVar(r, "peerName")
 	if err != nil {
 		return response.SmartError(err)
 	}

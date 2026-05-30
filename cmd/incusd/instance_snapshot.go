@@ -11,8 +11,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/jmap"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -136,7 +134,7 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	cname, err := url.PathUnescape(mux.Vars(r)["name"])
+	cname, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -252,7 +250,7 @@ func instanceSnapshotsPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -359,12 +357,12 @@ func instanceSnapshotHandler(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	instName, err := url.PathUnescape(mux.Vars(r)["name"])
+	instName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	snapshotName, err := url.PathUnescape(mux.Vars(r)["snapshotName"])
+	snapshotName, err := pathVar(r, "snapshotName")
 	if err != nil {
 		return response.SmartError(err)
 	}

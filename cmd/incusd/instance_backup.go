@@ -7,11 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/jmap"
@@ -137,7 +134,7 @@ func instanceBackupsGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	cname, err := url.PathUnescape(mux.Vars(r)["name"])
+	cname, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -234,7 +231,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -484,7 +481,7 @@ func instanceBackupGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -493,7 +490,7 @@ func instanceBackupGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -563,7 +560,7 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -572,7 +569,7 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -667,7 +664,7 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -676,7 +673,7 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -754,7 +751,7 @@ func instanceBackupExportGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -763,7 +760,7 @@ func instanceBackupExportGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Invalid instance name"))
 	}
 
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}
