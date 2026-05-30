@@ -3196,3 +3196,12 @@ container's `resolv.conf`, which is then extended with any value received
 over DHCP.
 
 All of those keys are only valid for OCI containers.
+
+## `infiniband_sriov_guid`
+
+This adds two new configuration keys, `node_guid` and `port_guid`, to
+`infiniband` devices using the `sriov` `nictype`.
+
+When set, the matching GUID of the allocated virtual function is changed
+to the provided value when the instance starts and restored to its
+original value when the instance stops.
