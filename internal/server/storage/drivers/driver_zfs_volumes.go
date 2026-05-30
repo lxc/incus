@@ -1033,22 +1033,17 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 				}
 
 				respSnapshots = keptRespSnapshots
-			} else if len(migrationHeader.SnapshotDatasets) > 0 {
-				// No common base. Wipe target snapshots and request a full
-				// transfer of the source's snapshots.
-				for _, snapVol := range snapshots {
-					err = d.DeleteVolume(snapVol, op)
-					if err != nil {
-						return err
-					}
-				}
-
-				respSnapshots = []ZFSDataset{}
-
+			} else if len(snapshots) == 0 {
+				// The target has no snapshots so fallback to a full transfer.
 				syncSnapshots = nil
 				for _, dataset := range migrationHeader.SnapshotDatasets {
 					syncSnapshots = append(syncSnapshots, &migration.Snapshot{Name: &dataset.Name})
 				}
+			} else if len(migrationHeader.SnapshotDatasets) > 0 {
+				// The target has snapshots and no shared GUIDs,
+				// processing would cause the snapshots to be deleted and the migration to
+				// then fail.
+				return errors.New("Cannot refresh volume: source and target snapshots have no common base (GUID mismatch). Delete the target volume and copy again.")
 			}
 		}
 
