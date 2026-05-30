@@ -4,9 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
+	"strconv"
 	"strings"
 
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
+	"github.com/lxc/incus/v7/internal/server/ip"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/api"
 )
@@ -150,4 +153,98 @@ func infinibandSetDevMAC(ibDev string, hwaddr string) error {
 	}
 
 	return errors.New("Invalid length")
+}
+
+// infinibandValidGUID validates an Infiniband node or port GUID,
+// e.g. "4a:c8:f9:1b:aa:57:ef:19".
+func infinibandValidGUID(value string) error {
+	_, err := net.ParseMAC(value)
+
+	// A GUID is 8 bytes of hex separated by colons (23 characters).
+	if err != nil || len(value) != 23 || strings.ContainsAny(value, "-.") {
+		return errors.New("Invalid value, must be 8 bytes of hex separated by colons")
+	}
+
+	return nil
+}
+
+// infinibandVFID returns the SR-IOV virtual function index of vfName relative to its parent
+// physical function. It returns -1 if vfName isn't a virtual function of parent.
+func infinibandVFID(parent string, vfName string) (int, error) {
+	sriovNumVFsBuf, err := os.ReadFile(fmt.Sprintf("/sys/class/net/%s/device/sriov_numvfs", parent))
+	if err != nil {
+		return -1, err
+	}
+
+	sriovNumVFs, err := strconv.Atoi(strings.TrimSpace(string(sriovNumVFsBuf)))
+	if err != nil {
+		return -1, err
+	}
+
+	for vfID := range sriovNumVFs {
+		ents, err := os.ReadDir(fmt.Sprintf("/sys/class/net/%s/device/virtfn%d/net", parent, vfID))
+		if err != nil {
+			continue // The directory won't exist if the VF has been unbound and used with a VM.
+		}
+
+		for _, ent := range ents {
+			if ent.Name() == vfName {
+				return vfID, nil
+			}
+		}
+	}
+
+	return -1, nil
+}
+
+// infinibandZeroGUID clears an administratively assigned GUID, leaving the kernel to assign one.
+const infinibandZeroGUID = "00:00:00:00:00:00:00:00"
+
+// infinibandSetVFGUIDs sets the node and/or port GUID of a virtual function through netlink.
+// Empty values are left unchanged. Mainline only exposes the administratively assigned GUIDs
+// through netlink, so the previous values can't be read back and aren't snapshotted.
+func infinibandSetVFGUIDs(parent string, vfID int, nodeGUID string, portGUID string) error {
+	link := &ip.Link{Name: parent}
+
+	if nodeGUID != "" {
+		err := link.SetVfNodeGUID(strconv.Itoa(vfID), nodeGUID)
+		if err != nil {
+			return fmt.Errorf("Failed to set node_guid %q on %q (VF %d): %w", nodeGUID, parent, vfID, err)
+		}
+	}
+
+	if portGUID != "" {
+		err := link.SetVfPortGUID(strconv.Itoa(vfID), portGUID)
+		if err != nil {
+			return fmt.Errorf("Failed to set port_guid %q on %q (VF %d): %w", portGUID, parent, vfID, err)
+		}
+	}
+
+	return nil
+}
+
+// infinibandRestoreVFGUIDs clears any node or port GUID previously set on the virtual function
+// recorded in volatile. Mainline can't read the original GUID, so the administrative override is
+// reset to all-zeros (kernel assigned) rather than restored to a prior value.
+func infinibandRestoreVFGUIDs(parent string, nodeGUID string, portGUID string, volatile map[string]string) error {
+	if volatile["last_state.vf.id"] == "" {
+		return nil
+	}
+
+	vfID, err := strconv.Atoi(volatile["last_state.vf.id"])
+	if err != nil {
+		return fmt.Errorf("Failed parsing VF ID %q for %q: %w", volatile["last_state.vf.id"], parent, err)
+	}
+
+	clearNode := ""
+	if nodeGUID != "" {
+		clearNode = infinibandZeroGUID
+	}
+
+	clearPort := ""
+	if portGUID != "" {
+		clearPort = infinibandZeroGUID
+	}
+
+	return infinibandSetVFGUIDs(parent, vfID, clearNode, clearPort)
 }
