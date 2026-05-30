@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/mux"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/request"
@@ -63,7 +60,7 @@ func instanceAccess(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -82,7 +79,7 @@ func instanceAccess(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	access, err := s.Authorizer.GetInstanceAccess(context.TODO(), projectName, mux.Vars(r)["name"])
+	access, err := s.Authorizer.GetInstanceAccess(context.TODO(), projectName, r.PathValue("name"))
 	if err != nil {
 		return response.InternalError(err)
 	}

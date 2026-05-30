@@ -8,9 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/filter"
@@ -464,7 +461,7 @@ func profileGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -556,7 +553,7 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -676,7 +673,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -808,7 +805,7 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -901,7 +898,7 @@ func profileDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

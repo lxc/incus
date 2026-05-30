@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
-
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"
 	clusterRequest "github.com/lxc/incus/v7/internal/server/cluster/request"
@@ -163,7 +161,7 @@ func networkForwardsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -333,7 +331,7 @@ func networkForwardsPost(d *Daemon, r *http.Request) response.Response {
 
 	req.Normalise() // So we handle the request in normalised/canonical form.
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -412,7 +410,7 @@ func networkForwardDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -431,7 +429,7 @@ func networkForwardDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support forwards", n.Type()))
 	}
 
-	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	listenAddress, err := pathVar(r, "listenAddress")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -511,7 +509,7 @@ func networkForwardGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -530,7 +528,7 @@ func networkForwardGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support forwards", n.Type()))
 	}
 
-	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	listenAddress, err := pathVar(r, "listenAddress")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -684,7 +682,7 @@ func networkForwardPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	networkName, err := url.PathUnescape(mux.Vars(r)["networkName"])
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -703,7 +701,7 @@ func networkForwardPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Network driver %q does not support forwards", n.Type()))
 	}
 
-	listenAddress, err := url.PathUnescape(mux.Vars(r)["listenAddress"])
+	listenAddress, err := pathVar(r, "listenAddress")
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -410,7 +408,7 @@ func evacuateShutdown(ctx context.Context, s *state.State, name string) error {
 func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) response.Response {
 	s := d.State()
 
-	originName, err := url.PathUnescape(mux.Vars(r)["name"])
+	originName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -2,9 +2,6 @@ package main
 
 import (
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/response"
@@ -138,7 +135,7 @@ func storagePoolResourcesGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get the existing storage pool
-	poolName, err := url.PathUnescape(mux.Vars(r)["name"])
+	poolName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -6,10 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -391,7 +388,7 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the integration name.
-	integrationName, err := url.PathUnescape(mux.Vars(r)["integration"])
+	integrationName, err := pathVar(r, "integration")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -506,7 +503,7 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the integration name.
-	integrationName, err := url.PathUnescape(mux.Vars(r)["integration"])
+	integrationName, err := pathVar(r, "integration")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -671,7 +668,7 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	integrationName, err := url.PathUnescape(mux.Vars(r)["integration"])
+	integrationName, err := pathVar(r, "integration")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -836,7 +833,7 @@ func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	// Get the integration name.
-	integrationName, err := url.PathUnescape(mux.Vars(r)["integration"])
+	integrationName, err := pathVar(r, "integration")
 	if err != nil {
 		return response.SmartError(err)
 	}

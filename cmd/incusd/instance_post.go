@@ -7,11 +7,8 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"net/url"
 	"slices"
 	"strings"
-
-	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v7/client"
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
@@ -90,7 +87,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	projectName := request.ProjectParam(r)
 	target := request.QueryParam(r, "target")
 
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

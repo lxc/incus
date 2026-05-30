@@ -22,7 +22,6 @@ import (
 
 	cowsqlClient "github.com/cowsql/go-cowsql/client"
 	"github.com/cowsql/go-cowsql/driver"
-	"github.com/gorilla/mux"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
 
@@ -228,15 +227,31 @@ func defaultDaemon() *Daemon {
 
 // APIEndpoint represents a URL in our API.
 type APIEndpoint struct {
-	Name    string             // Name for this endpoint.
-	Path    string             // Path pattern for this endpoint.
-	Aliases []APIEndpointAlias // Any aliases for this endpoint.
-	Get     APIEndpointAction
-	Head    APIEndpointAction
-	Put     APIEndpointAction
-	Post    APIEndpointAction
-	Delete  APIEndpointAction
-	Patch   APIEndpointAction
+	Name          string             // Name for this endpoint.
+	Path          string             // Path pattern for this endpoint.
+	Aliases       []APIEndpointAlias // Any aliases for this endpoint.
+	SuffixActions []APIEndpointSuffixAction
+	Get           APIEndpointAction
+	Head          APIEndpointAction
+	Put           APIEndpointAction
+	Post          APIEndpointAction
+	Delete        APIEndpointAction
+	Patch         APIEndpointAction
+}
+
+// APIEndpointSuffixAction represents actions handled on a sub-path of an
+// endpoint (for example "/1.0/images/{fingerprint}/export"). It is used when a
+// dedicated route would conflict with another multi-segment wildcard route
+// under http.ServeMux. The endpoint is registered as a subtree and the suffix
+// is matched against the request path at dispatch time.
+type APIEndpointSuffixAction struct {
+	Name   string // Path suffix this action applies to (e.g. "/export").
+	Get    APIEndpointAction
+	Head   APIEndpointAction
+	Put    APIEndpointAction
+	Post   APIEndpointAction
+	Delete APIEndpointAction
+	Patch  APIEndpointAction
 }
 
 // APIEndpointAlias represents an alias URL of and APIEndpoint in our API.
@@ -620,7 +635,7 @@ func (d *Daemon) State() *state.State {
 	}
 }
 
-func (d *Daemon) createCmd(restAPI *mux.Router, apiVersion string, c APIEndpoint) {
+func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpoint) {
 	var uri string
 	if c.Path == "" {
 		uri = fmt.Sprintf("/%s", apiVersion)
@@ -630,16 +645,32 @@ func (d *Daemon) createCmd(restAPI *mux.Router, apiVersion string, c APIEndpoint
 		uri = fmt.Sprintf("/%s", c.Path)
 	}
 
-	route := restAPI.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
+		// Resolve the action set for this request. Suffix actions allow a
+		// single subtree route to serve sub-paths (e.g. "/export") that would
+		// otherwise conflict with another multi-segment wildcard route. A local
+		// copy is used so concurrent requests don't race on the shared endpoint.
+		ep := c
+		for _, suffix := range c.SuffixActions {
+			if strings.HasSuffix(r.URL.Path, suffix.Name) {
+				ep.Get = suffix.Get
+				ep.Head = suffix.Head
+				ep.Put = suffix.Put
+				ep.Post = suffix.Post
+				ep.Delete = suffix.Delete
+				ep.Patch = suffix.Patch
+				break
+			}
+		}
 
 		// Block on daemon startup except for the "internal" and "os" APIs.
 		if !slices.Contains([]string{"internal", "os"}, apiVersion) {
 			select {
 			case <-d.setupChan:
 			default:
-				response := response.Unavailable(errors.New("Daemon is starting up"))
-				_ = response.Render(w)
+				_ = response.Unavailable(errors.New("Daemon is starting up")).Render(w)
 				return
 			}
 		}
@@ -809,17 +840,17 @@ func (d *Daemon) createCmd(restAPI *mux.Router, apiVersion string, c APIEndpoint
 
 		switch r.Method {
 		case "GET":
-			resp = handleRequest(c.Get)
+			resp = handleRequest(ep.Get)
 		case "HEAD":
-			resp = handleRequest(c.Head)
+			resp = handleRequest(ep.Head)
 		case "PUT":
-			resp = handleRequest(c.Put)
+			resp = handleRequest(ep.Put)
 		case "POST":
-			resp = handleRequest(c.Post)
+			resp = handleRequest(ep.Post)
 		case "DELETE":
-			resp = handleRequest(c.Delete)
+			resp = handleRequest(ep.Delete)
 		case "PATCH":
-			resp = handleRequest(c.Patch)
+			resp = handleRequest(ep.Patch)
 		default:
 			resp = response.NotFound(fmt.Errorf("Method %q not found", r.Method))
 		}
@@ -837,13 +868,26 @@ func (d *Daemon) createCmd(restAPI *mux.Router, apiVersion string, c APIEndpoint
 				logger.Error("Failed writing error for HTTP response", logger.Ctx{"url": uri, "err": err, "writeErr": writeErr})
 			}
 		}
-	})
-
-	// If the endpoint has a canonical name then record it so it can be used to build URLS
-	// and accessed in the context of the request by the handler function.
-	if c.Name != "" {
-		route.Name(c.Name)
 	}
+
+	restAPI.HandleFunc(uri, handler)
+
+	// Endpoints with suffix actions are registered as a subtree so they can
+	// also serve their sub-paths (e.g. "/export"). The exact route above keeps
+	// the canonical (no trailing slash) URL from being redirected.
+	if len(c.SuffixActions) > 0 {
+		restAPI.HandleFunc(uri+"/", handler)
+	}
+}
+
+// pathVar returns the value of the named path variable from the request URL.
+//
+// The HTTP router (http.ServeMux) already URL-decodes path segments, so unlike
+// the previous gorilla/mux based implementation the value must not be unescaped
+// again. An error is returned to keep call sites uniform with the previous
+// url.PathUnescape based code.
+func pathVar(r *http.Request, name string) (string, error) {
+	return r.PathValue(name), nil
 }
 
 // have we setup shared mounts?

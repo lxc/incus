@@ -7,11 +7,8 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"net/url"
 	"slices"
 	"sync"
-
-	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/filter"
@@ -726,7 +723,7 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -846,7 +843,7 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1087,7 +1084,7 @@ func doStoragePoolUpdate(s *state.State, pool storagePools.Pool, req api.Storage
 func storagePoolDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}

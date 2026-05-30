@@ -7,11 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/jmap"
@@ -190,13 +187,13 @@ func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get the name of the storage bucket.
-	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
+	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get the name of the storage pool the bucket is supposed to be attached to.
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -318,7 +315,7 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 		return response.SmartError(err)
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -332,7 +329,7 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
-	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
+	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -567,7 +564,7 @@ func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -581,12 +578,12 @@ func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
-	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
+	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -666,7 +663,7 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -680,12 +677,12 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
-	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
+	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -793,7 +790,7 @@ func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response
 		return response.SmartError(err)
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -807,12 +804,12 @@ func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response
 		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
-	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
+	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -902,7 +899,7 @@ func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Respo
 		return response.SmartError(err)
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -916,13 +913,13 @@ func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Respo
 		return response.BadRequest(errors.New("Storage pool does not support buckets"))
 	}
 
-	bucketName, err := url.PathUnescape(mux.Vars(r)["bucketName"])
+	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Get backup name.
-	backupName, err := url.PathUnescape(mux.Vars(r)["backupName"])
+	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
 	}

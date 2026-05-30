@@ -7,11 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -270,7 +267,7 @@ func warningsGet(d *Daemon, r *http.Request) response.Response {
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func warningGet(d *Daemon, r *http.Request) response.Response {
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := pathVar(r, "id")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -369,7 +366,7 @@ func warningPatch(d *Daemon, r *http.Request) response.Response {
 func warningPut(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := pathVar(r, "id")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -436,7 +433,7 @@ func warningPut(d *Daemon, r *http.Request) response.Response {
 func warningDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := pathVar(r, "id")
 	if err != nil {
 		return response.SmartError(err)
 	}
