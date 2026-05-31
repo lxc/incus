@@ -46,9 +46,7 @@ The Incus OpenFGA authorization model describes API resources in terms of their 
 The full Incus OpenFGA authorization model is defined in `internal/server/auth/driver_openfga_model.openfga`:
 
 ```{literalinclude} ../internal/server/auth/driver_openfga_model.openfga
----
-language: none
----
+:language: none
 ```
 
 ```{important}
