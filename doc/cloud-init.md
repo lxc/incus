@@ -40,6 +40,21 @@ For instances that do not have the `incus-agent`, you can pass in the extra `clo
 
     incus config device add INSTANCE cloud-init disk source=cloud-init:config
 
+```{note}
+When relying on the `incus-agent` to apply the `cloud-init` configuration, the instance needs to have a set of file templates in place for:
+
+* `/var/lib/cloud/seed/nocloud-net/meta-data`
+* `/var/lib/cloud/seed/nocloud-net/network-config`
+* `/var/lib/cloud/seed/nocloud-net/user-data`
+* `/var/lib/cloud/seed/nocloud-net/vendor-data`
+
+When making a new image, it's easiest to replicate those from one of our own `cloud-init` enabled images.
+
+Those file templates get applied by the `incus-agent` on first boot. The
+agent then triggers a reboot, causing `cloud-init` to run cleanly and
+apply the configuration to the virtual machine.
+```
+
 ## Configuration options
 
 Incus supports two different sets of configuration options for configuring `cloud-init`: `cloud-init.*` and `user.*`.
@@ -53,7 +68,7 @@ The following configuration options are supported:
 * `cloud-init.user-data` or `user.user-data` (see {ref}`cloud-init:user_data_formats`)
 * `cloud-init.network-config` or `user.network-config` (see {ref}`cloud-init:network_config`)
 
-For more information about the configuration options, see the [`cloud-init` instance options](instance-options-cloud-init), and the documentation for the {ref}`LXD data source <cloud-init:datasource_lxd>` in the `cloud-init` documentation.
+For more information about the configuration options, see the [`cloud-init` instance options](instance-options-cloud-init).
 
 ### Vendor data and user data
 
