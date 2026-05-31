@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -37,26 +36,22 @@ func CertificateNeedsUpdate(domain string, cert *x509.Certificate, threshold tim
 func RunACMEChallenge(ctx context.Context, dir, caURL, domain, email, challengeType, provider, port, proxy string, resolvers, environment []string) ([]byte, []byte, error) {
 	env := os.Environ()
 
-	// Detect the installed lego version as the command line interface changed in lego v5.
-	stdout, _, err := subprocess.RunCommandSplit(ctx, env, nil, "lego", "--version")
+	// Detect the installed lego command line interface as it changed in lego v5.
+	//
+	// Lego v5 broke its CLI backward compatibility by moving some flags
+	// from the root to the "run" sub-command as well as renaming other
+	// options.
+	//
+	// Unfortunately because "lego --version" is often overridden by
+	// packagers and other distributors, parsing the version string doesn't
+	// really work (Debian reports "dev" for example). Instead, we need to look
+	// at the help message...
+	stdout, _, err := subprocess.RunCommandSplit(ctx, env, nil, "lego", "run", "--help")
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed to determine lego version: %w", err)
 	}
 
-	// The output is of the form "lego version 5.0.1 linux/amd64".
-	fields := strings.Fields(stdout)
-	if len(fields) < 3 {
-		return nil, nil, fmt.Errorf("Unexpected lego version output: %q", stdout)
-	}
-
-	legoMajor, _, _ := strings.Cut(fields[2], ".")
-
-	major, err := strconv.Atoi(legoMajor)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to parse lego version %q: %w", fields[2], err)
-	}
-
-	legoV5 := major >= 5
+	legoV5 := strings.Contains(stdout, "--http.address")
 
 	args := []string{
 		"--accept-tos",
