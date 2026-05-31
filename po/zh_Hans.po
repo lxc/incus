@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-28 12:53-0400\n"
+"POT-Creation-Date: 2026-05-31 22:44+0000\n"
 "PO-Revision-Date: 2026-05-30 00:04+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -284,8 +284,8 @@ msgstr ""
 "### config:\n"
 "###  user.foo: bah\n"
 "###\n"
-"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述（description"
-"）、配置键。"
+"### 注意，只能修改入口规则（ingress）、出口规则（egress）、描述"
+"（description）、配置键。"
 
 #: cmd/incus/network_address_set.go:460
 msgid ""
@@ -458,8 +458,8 @@ msgstr ""
 "### target_network: mynet\n"
 "### status: Pending\n"
 "###\n"
-"### 注意，名称（name）、目标项目（target_project）、目标网络（target_network"
-"）、状态（status）字段不能更改。"
+"### 注意，名称（name）、目标项目（target_project）、目标网络"
+"（target_network）、状态（status）字段不能更改。"
 
 #: cmd/incus/network_zone.go:1269
 msgid ""
@@ -1343,7 +1343,7 @@ msgstr "无法在本地重命名中覆盖配置或配置文件"
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
-#: cmd/incus/utils.go:336
+#: cmd/incus/utils.go:341
 #, c-format
 msgid "Can't read from environment file: %w"
 msgstr "无法读取环境文件：%w"
@@ -1542,7 +1542,7 @@ msgid "Cluster member %s removed from group %s"
 msgstr "已从组 %s 中移除集群成员 %s"
 
 #: cmd/incus/config.go:102 cmd/incus/config.go:382 cmd/incus/config.go:522
-#: cmd/incus/config.go:689 cmd/incus/config.go:809 cmd/incus/copy.go:66
+#: cmd/incus/config.go:689 cmd/incus/config.go:812 cmd/incus/copy.go:66
 #: cmd/incus/create.go:70 cmd/incus/info.go:53 cmd/incus/move.go:67
 #: cmd/incus/network.go:348 cmd/incus/network.go:798 cmd/incus/network.go:871
 #: cmd/incus/network.go:1047 cmd/incus/network.go:1428
@@ -2667,7 +2667,8 @@ msgstr ""
 msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
-msgstr "输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
+msgstr ""
+"输入排序类型（“a”表示字母顺序，“c”表示CPU，“m”表示内存，“d”表示磁盘）："
 
 #: cmd/incus/top.go:262
 msgid "Enter new delay in seconds:"
@@ -2809,11 +2810,11 @@ msgid ""
 msgstr ""
 "对本地或全局数据库执行 SQL 查询\n"
 "\n"
-"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地址"
-"）。\n"
+"本地数据库专门用于您命令所针对的集群成员，并包含成员特定数据（如成员网络地"
+"址）。\n"
 "\n"
-"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器等）"
-"。\n"
+"  全局数据库对集群中所有成员通用，并包含集群特定数据（如配置文件、容器"
+"等）。\n"
 "\n"
 "  如果您运行的是非集群服务器也同样适用，因为该实例等同于一个单成员集群。\n"
 "\n"
@@ -2848,8 +2849,8 @@ msgstr ""
 "在实例中执行命令\n"
 "\n"
 "该命令直接使用 exec 执行，因此不存在 shell 模式（变量、文件重定向等）。\n"
-"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传递"
-"，例如：\n"
+"如果需要 shell 环境，您需要执行 shell 可执行文件，并将 shell 命令作为参数传"
+"递，例如：\n"
 "\n"
 "  incus exec <instance> -- sh -c \"cd /tmp && pwd\"\n"
 "默认为非交互式模式，如果标准输入和输出都是终端，则选择交互式模式（不考虑 "
@@ -2974,12 +2975,12 @@ msgstr "首次发现"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:651
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "与客户端 %q 的 SSH 握手失败：%v"
 
-#: cmd/incus/utils.go:669
+#: cmd/incus/utils.go:674
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "接受通道客户端 %q 失败：%v"
@@ -2989,7 +2990,7 @@ msgstr "接受通道客户端 %q 失败：%v"
 msgid "Failed checking instance %s exists: %w"
 msgstr "检查实例是否存在“%s:%s”失败：%w"
 
-#: cmd/incus/utils.go:696
+#: cmd/incus/utils.go:701
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "连接到客户端 %q 的实例 SFTP 失败：%v"
@@ -3025,7 +3026,7 @@ msgstr "在项目 %q 中删除实例 %q 失败：%w"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "复制后删除源卷失败：%w"
 
-#: cmd/incus/utils.go:603
+#: cmd/incus/utils.go:608
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "生成 SSH 主机密钥失败：%w"
@@ -3065,7 +3066,7 @@ msgstr "加载覆盖设备的配置文件 %q 失败：%w"
 msgid "Failed loading storage pool %q: %w"
 msgstr "加载存储池 %q 失败：%w"
 
-#: cmd/incus/utils.go:608
+#: cmd/incus/utils.go:613
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "解析 SSH 主机密钥失败：%w"
@@ -3080,12 +3081,12 @@ msgstr "解析验证响应失败：%w"
 msgid "Failed starting command: %w"
 msgstr "启动命令失败：%w"
 
-#: cmd/incus/utils.go:516
+#: cmd/incus/utils.go:521
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "启动 sshfs 失败：%w"
 
-#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:634
+#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:639
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "接受传入连接失败：%w"
@@ -3195,7 +3196,7 @@ msgstr "找不到项目：%w"
 msgid "Failed to join cluster: %w"
 msgstr "加入集群失败：%w"
 
-#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:619
+#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:624
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "监听连接失败：%w"
@@ -3788,22 +3789,22 @@ msgstr "主机名"
 msgid "Hugepages:\n"
 msgstr "大页内存：\n"
 
-#: cmd/incus/utils.go:719
+#: cmd/incus/utils.go:724
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "从 SSH 到实例的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:708
+#: cmd/incus/utils.go:713
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "从实例到 SSH 的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:540
+#: cmd/incus/utils.go:545
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "从实例到 sshfs 的 I/O 复制操作失败：%v"
 
-#: cmd/incus/utils.go:550
+#: cmd/incus/utils.go:555
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "从 sshfs 到实例的 I/O 复制操作失败：%v"
@@ -4047,11 +4048,11 @@ msgstr "仅实例"
 msgid "Instance description"
 msgstr "实例描述"
 
-#: cmd/incus/utils.go:542
+#: cmd/incus/utils.go:547
 msgid "Instance disconnected"
 msgstr "实例已断开连接"
 
-#: cmd/incus/utils.go:710
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "客户端 %q 的实例已断开连接"
@@ -5485,12 +5486,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:625
+#: cmd/incus/utils.go:630
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:627
+#: cmd/incus/utils.go:632
 msgid "Login without username and password"
 msgstr ""
 
@@ -6498,7 +6499,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr ""
 
-#: cmd/incus/utils.go:596
+#: cmd/incus/utils.go:601
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -6589,7 +6590,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:520
+#: cmd/incus/utils.go:525
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -7245,17 +7246,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:627
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:639
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:640
+#: cmd/incus/utils.go:645
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -8701,7 +8702,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/utils.go:662
+#: cmd/incus/utils.go:667
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -8768,8 +8769,16 @@ msgstr ""
 msgid "Unset image properties"
 msgstr ""
 
-#: cmd/incus/config.go:805 cmd/incus/config.go:806
+#: cmd/incus/config.go:805
 msgid "Unset instance or server configuration keys"
+msgstr ""
+
+#: cmd/incus/config.go:806
+msgid ""
+"Unset instance or server configuration keys\n"
+"\n"
+"Unsetting several keys in one go is only supported for instance "
+"configuration.\n"
 msgstr ""
 
 #: cmd/incus/network_acl.go:530 cmd/incus/network_acl.go:531
@@ -8851,73 +8860,89 @@ msgid ""
 msgstr ""
 
 #: cmd/incus/cluster_group.go:959
-msgid "Unset the key as a cluster group property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as cluster group properties"
+msgstr "获取作为集群组属性的密钥"
 
 #: cmd/incus/cluster.go:593
-msgid "Unset the key as a cluster property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as cluster properties"
+msgstr "获取作为集群属性的密钥"
+
+#: cmd/incus/config.go:813
+#, fuzzy
+msgid "Unset the keys as instance properties"
+msgstr "获取作为实例属性的密钥"
 
 #: cmd/incus/network_acl.go:534
-msgid "Unset the key as a network ACL property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network ACL properties"
+msgstr "获取作为网络 ACL 属性的密钥"
 
 #: cmd/incus/network_address_set.go:405
 #, fuzzy
-msgid "Unset the key as a network address set property"
+msgid "Unset the keys as network address set properties"
 msgstr "获取作为网络对等属性的密钥"
 
 #: cmd/incus/network_forward.go:577
-msgid "Unset the key as a network forward property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network forward properties"
+msgstr "获取作为网络转发属性的密钥"
 
 #: cmd/incus/network_integration.go:643
-msgid "Unset the key as a network integration property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network integration properties"
+msgstr "获取作为网络集成属性的密钥"
 
 #: cmd/incus/network_load_balancer.go:563
-msgid "Unset the key as a network load balancer property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network load balancer properties"
+msgstr "获取作为网络负载均衡器属性的密钥"
 
 #: cmd/incus/network_peer.go:597
-msgid "Unset the key as a network peer property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network peer properties"
+msgstr "获取作为网络对等属性的密钥"
 
 #: cmd/incus/network.go:1575
-msgid "Unset the key as a network property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network properties"
+msgstr "获取作为网络属性的密钥"
 
 #: cmd/incus/network_zone.go:548
-msgid "Unset the key as a network zone property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network zone properties"
+msgstr "获取作为网络区域属性的密钥"
 
 #: cmd/incus/network_zone.go:1206
-msgid "Unset the key as a network zone record property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network zone record properties"
+msgstr "获取作为网络区域记录属性的密钥"
 
 #: cmd/incus/profile.go:1120
-msgid "Unset the key as a profile property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as profile properties"
+msgstr "获取作为配置文件属性的密钥"
 
 #: cmd/incus/project.go:846
-msgid "Unset the key as a project property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as project properties"
+msgstr "获取作为项目属性的密钥"
 
 #: cmd/incus/storage_bucket.go:759
-msgid "Unset the key as a storage bucket property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as storage bucket properties"
+msgstr "获取作为存储桶属性的密钥"
 
 #: cmd/incus/storage.go:972
-msgid "Unset the key as a storage property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as storage properties"
+msgstr "获取作为存储属性的密钥"
 
 #: cmd/incus/storage_volume.go:2186
-msgid "Unset the key as a storage volume property"
-msgstr ""
-
-#: cmd/incus/config.go:810
-msgid "Unset the key as an instance property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as storage volume properties"
+msgstr "获取作为存储卷属性的密钥"
 
 #: cmd/incus/info.go:912
 #, c-format
@@ -10227,11 +10252,11 @@ msgstr ""
 msgid "space used"
 msgstr "使用空间"
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:565
 msgid "sshfs has stopped"
 msgstr "sshfs 已停止"
 
-#: cmd/incus/utils.go:519
+#: cmd/incus/utils.go:524
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs 挂载 %q 在 %q"

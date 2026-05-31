@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-28 12:53-0400\n"
+"POT-Creation-Date: 2026-05-31 22:44+0000\n"
 "PO-Revision-Date: 2026-05-30 00:01+0000\n"
 "Last-Translator: Alberto Donato <ack@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -1341,7 +1341,7 @@ msgstr ""
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
-#: cmd/incus/utils.go:336
+#: cmd/incus/utils.go:341
 #, fuzzy, c-format
 msgid "Can't read from environment file: %w"
 msgstr "Impossible leggere da stdin: %s"
@@ -1542,7 +1542,7 @@ msgid "Cluster member %s removed from group %s"
 msgstr ""
 
 #: cmd/incus/config.go:102 cmd/incus/config.go:382 cmd/incus/config.go:522
-#: cmd/incus/config.go:689 cmd/incus/config.go:809 cmd/incus/copy.go:66
+#: cmd/incus/config.go:689 cmd/incus/config.go:812 cmd/incus/copy.go:66
 #: cmd/incus/create.go:70 cmd/incus/info.go:53 cmd/incus/move.go:67
 #: cmd/incus/network.go:348 cmd/incus/network.go:798 cmd/incus/network.go:871
 #: cmd/incus/network.go:1047 cmd/incus/network.go:1428
@@ -2936,12 +2936,12 @@ msgstr ""
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:651
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:669
+#: cmd/incus/utils.go:674
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2951,7 +2951,7 @@ msgstr ""
 msgid "Failed checking instance %s exists: %w"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/utils.go:696
+#: cmd/incus/utils.go:701
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
@@ -2987,7 +2987,7 @@ msgstr "Accetta certificato"
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:603
+#: cmd/incus/utils.go:608
 #, fuzzy, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Accetta certificato"
@@ -3027,7 +3027,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/utils.go:608
+#: cmd/incus/utils.go:613
 #, fuzzy, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Accetta certificato"
@@ -3042,12 +3042,12 @@ msgstr "Accetta certificato"
 msgid "Failed starting command: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/utils.go:516
+#: cmd/incus/utils.go:521
 #, fuzzy, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:634
+#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:639
 #, fuzzy, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Accetta certificato"
@@ -3157,7 +3157,7 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:619
+#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:624
 #, fuzzy, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Accetta certificato"
@@ -3740,22 +3740,22 @@ msgstr "Creazione del container in corso"
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/utils.go:719
+#: cmd/incus/utils.go:724
 #, fuzzy, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "errore di processamento degli alias %s\n"
 
-#: cmd/incus/utils.go:708
+#: cmd/incus/utils.go:713
 #, fuzzy, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "errore di processamento degli alias %s\n"
 
-#: cmd/incus/utils.go:540
+#: cmd/incus/utils.go:545
 #, fuzzy, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "errore di processamento degli alias %s\n"
 
-#: cmd/incus/utils.go:550
+#: cmd/incus/utils.go:555
 #, fuzzy, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "errore di processamento degli alias %s\n"
@@ -4002,11 +4002,11 @@ msgstr "Il nome del container è: %s"
 msgid "Instance description"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/utils.go:542
+#: cmd/incus/utils.go:547
 msgid "Instance disconnected"
 msgstr ""
 
-#: cmd/incus/utils.go:710
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -5152,12 +5152,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:625
+#: cmd/incus/utils.go:630
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:627
+#: cmd/incus/utils.go:632
 msgid "Login without username and password"
 msgstr ""
 
@@ -6191,7 +6191,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr "Password amministratore per %s: "
 
-#: cmd/incus/utils.go:596
+#: cmd/incus/utils.go:601
 #, fuzzy, c-format
 msgid "Password rejected for %q"
 msgstr "Password amministratore per %s: "
@@ -6284,7 +6284,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:520
+#: cmd/incus/utils.go:525
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6954,17 +6954,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:627
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:639
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:640
+#: cmd/incus/utils.go:645
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -8454,7 +8454,7 @@ msgstr "Aggiungi un nuovo server remoto"
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/utils.go:662
+#: cmd/incus/utils.go:667
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -8524,8 +8524,16 @@ msgstr ""
 msgid "Unset image properties"
 msgstr ""
 
-#: cmd/incus/config.go:805 cmd/incus/config.go:806
+#: cmd/incus/config.go:805
 msgid "Unset instance or server configuration keys"
+msgstr ""
+
+#: cmd/incus/config.go:806
+msgid ""
+"Unset instance or server configuration keys\n"
+"\n"
+"Unsetting several keys in one go is only supported for instance "
+"configuration.\n"
 msgstr ""
 
 #: cmd/incus/network_acl.go:530 cmd/incus/network_acl.go:531
@@ -8615,78 +8623,88 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:959
 #, fuzzy
-msgid "Unset the key as a cluster group property"
+msgid "Unset the keys as cluster group properties"
 msgstr "Il nome del container è: %s"
 
 #: cmd/incus/cluster.go:593
-msgid "Unset the key as a cluster property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as cluster properties"
+msgstr "Il nome del container è: %s"
+
+#: cmd/incus/config.go:813
+#, fuzzy
+msgid "Unset the keys as instance properties"
+msgstr "Il nome del container è: %s"
 
 #: cmd/incus/network_acl.go:534
-msgid "Unset the key as a network ACL property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network ACL properties"
+msgstr "Creazione del container in corso"
 
 #: cmd/incus/network_address_set.go:405
 #, fuzzy
-msgid "Unset the key as a network address set property"
+msgid "Unset the keys as network address set properties"
 msgstr "Creazione del container in corso"
 
 #: cmd/incus/network_forward.go:577
-msgid "Unset the key as a network forward property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network forward properties"
+msgstr "Il nome del container è: %s"
 
 #: cmd/incus/network_integration.go:643
 #, fuzzy
-msgid "Unset the key as a network integration property"
+msgid "Unset the keys as network integration properties"
 msgstr "Creazione del container in corso"
 
 #: cmd/incus/network_load_balancer.go:563
 #, fuzzy
-msgid "Unset the key as a network load balancer property"
+msgid "Unset the keys as network load balancer properties"
 msgstr "Il nome del container è: %s"
 
 #: cmd/incus/network_peer.go:597
-msgid "Unset the key as a network peer property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network peer properties"
+msgstr "Creazione del container in corso"
 
 #: cmd/incus/network.go:1575
-msgid "Unset the key as a network property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network properties"
+msgstr "Creazione del container in corso"
 
 #: cmd/incus/network_zone.go:548
 #, fuzzy
-msgid "Unset the key as a network zone property"
+msgid "Unset the keys as network zone properties"
 msgstr "Creazione del container in corso"
 
 #: cmd/incus/network_zone.go:1206
 #, fuzzy
-msgid "Unset the key as a network zone record property"
+msgid "Unset the keys as network zone record properties"
 msgstr "Il nome del container è: %s"
 
 #: cmd/incus/profile.go:1120
-msgid "Unset the key as a profile property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as profile properties"
+msgstr "Creazione del container in corso"
 
 #: cmd/incus/project.go:846
-msgid "Unset the key as a project property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as project properties"
+msgstr "Il nome del container è: %s"
 
 #: cmd/incus/storage_bucket.go:759
 #, fuzzy
-msgid "Unset the key as a storage bucket property"
+msgid "Unset the keys as storage bucket properties"
 msgstr "Il nome del container è: %s"
 
 #: cmd/incus/storage.go:972
-msgid "Unset the key as a storage property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as storage properties"
+msgstr "Il nome del container è: %s"
 
 #: cmd/incus/storage_volume.go:2186
-msgid "Unset the key as a storage volume property"
-msgstr ""
-
-#: cmd/incus/config.go:810
-msgid "Unset the key as an instance property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as storage volume properties"
+msgstr "Il nome del container è: %s"
 
 #: cmd/incus/info.go:912
 #, c-format
@@ -9992,11 +10010,11 @@ msgstr ""
 msgid "space used"
 msgstr ""
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:565
 msgid "sshfs has stopped"
 msgstr ""
 
-#: cmd/incus/utils.go:519
+#: cmd/incus/utils.go:524
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr ""

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-28 12:53-0400\n"
+"POT-Creation-Date: 2026-05-31 22:44+0000\n"
 "PO-Revision-Date: 2026-05-30 00:00+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -1263,8 +1263,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,<Schlüssel>"
-"=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
+"<Schlüssel>=<Wert>: %s"
 
 #: cmd/incus/copy.go:137 cmd/incus/create.go:205 cmd/incus/move.go:250
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1389,7 +1389,7 @@ msgstr ""
 msgid "Can't perform local rename without a new instance name"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/utils.go:336
+#: cmd/incus/utils.go:341
 #, c-format
 msgid "Can't read from environment file: %w"
 msgstr "Kann nicht aus der Umgebungsdatei lesen: %w"
@@ -1420,7 +1420,8 @@ msgstr ""
 #: cmd/incus/config.go:618
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr ""
+"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:74
 msgid "Can't use --auto and --preseed together"
@@ -1438,7 +1439,8 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:78
 msgid "Can't use --minimal and --preseed together"
-msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr ""
+"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/snapshot.go:127 cmd/incus/storage_volume_snapshot.go:132
 msgid "Can't use both --no-expiry and --expiry"
@@ -1470,7 +1472,8 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:432
 msgid "Cannot set --target when source server is not clustered"
-msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr ""
+"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:446
 msgid "Cannot set --volume-only when copying a snapshot"
@@ -1601,7 +1604,7 @@ msgid "Cluster member %s removed from group %s"
 msgstr "Gerät %s wurde von %s entfernt\n"
 
 #: cmd/incus/config.go:102 cmd/incus/config.go:382 cmd/incus/config.go:522
-#: cmd/incus/config.go:689 cmd/incus/config.go:809 cmd/incus/copy.go:66
+#: cmd/incus/config.go:689 cmd/incus/config.go:812 cmd/incus/copy.go:66
 #: cmd/incus/create.go:70 cmd/incus/info.go:53 cmd/incus/move.go:67
 #: cmd/incus/network.go:348 cmd/incus/network.go:798 cmd/incus/network.go:871
 #: cmd/incus/network.go:1047 cmd/incus/network.go:1428
@@ -2937,8 +2940,8 @@ msgstr ""
 "Mitglieds). \n"
 "\n"
 "  Die globale Datenbank teilen sich alle Mitglieder eines Clusters \n"
-"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, usw.). "
-"\n"
+"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, "
+"usw.). \n"
 "\n"
 "  Wenn Sie einen Server ohne Cluster betreiben, gilt dasgleiche, \n"
 "  denn der Server ist dann praktisch ein Cluster mit nur einem Mitglied. \n"
@@ -3125,12 +3128,12 @@ msgstr "ZUERST BEOBACHTET"
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:651
 #, fuzzy, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "SSH handshake mit Client %q gescheitert: %v"
 
-#: cmd/incus/utils.go:669
+#: cmd/incus/utils.go:674
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -3140,7 +3143,7 @@ msgstr ""
 msgid "Failed checking instance %s exists: %w"
 msgstr "Check ob Instanz existiert fehlgeschlagen \"%s:%s\": %w"
 
-#: cmd/incus/utils.go:696
+#: cmd/incus/utils.go:701
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
@@ -3176,7 +3179,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/utils.go:603
+#: cmd/incus/utils.go:608
 #, fuzzy, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3216,7 +3219,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/utils.go:608
+#: cmd/incus/utils.go:613
 #, fuzzy, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3231,12 +3234,12 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed starting command: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/utils.go:516
+#: cmd/incus/utils.go:521
 #, fuzzy, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:634
+#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:639
 #, fuzzy, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3346,7 +3349,7 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:619
+#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:624
 #, fuzzy, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3940,22 +3943,22 @@ msgstr "Name"
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/utils.go:719
+#: cmd/incus/utils.go:724
 #, fuzzy, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/utils.go:708
+#: cmd/incus/utils.go:713
 #, fuzzy, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/utils.go:540
+#: cmd/incus/utils.go:545
 #, fuzzy, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/utils.go:550
+#: cmd/incus/utils.go:555
 #, fuzzy, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -4207,12 +4210,12 @@ msgstr ""
 msgid "Instance description"
 msgstr "Entferntes Administrator Passwort"
 
-#: cmd/incus/utils.go:542
+#: cmd/incus/utils.go:547
 #, fuzzy
 msgid "Instance disconnected"
 msgstr "Entferntes Administrator Passwort"
 
-#: cmd/incus/utils.go:710
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -5368,12 +5371,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:625
+#: cmd/incus/utils.go:630
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:627
+#: cmd/incus/utils.go:632
 msgid "Login without username and password"
 msgstr ""
 
@@ -5818,7 +5821,8 @@ msgstr ""
 
 #: cmd/incus/file.go:494
 msgid "More than one file to download, but target is not a directory"
-msgstr "Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
+msgstr ""
+"Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
 
 #: cmd/incus/storage_volume_file.go:335
 #, fuzzy
@@ -6445,7 +6449,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr "Administrator Passwort für %s: "
 
-#: cmd/incus/utils.go:596
+#: cmd/incus/utils.go:601
 #, fuzzy, c-format
 msgid "Password rejected for %q"
 msgstr "Administrator Passwort für %s: "
@@ -6541,7 +6545,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:520
+#: cmd/incus/utils.go:525
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -7232,17 +7236,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:627
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:639
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:640
+#: cmd/incus/utils.go:645
 #, fuzzy, c-format
 msgid "SSH client disconnected %q"
 msgstr "Entferntes Administrator Passwort"
@@ -8783,7 +8787,7 @@ msgstr "Neue entfernte Server hinzufügen"
 msgid "Unknown certificate type %q"
 msgstr "Unbekannter Befehl %s für Abbild"
 
-#: cmd/incus/utils.go:662
+#: cmd/incus/utils.go:667
 #, fuzzy, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr "Unbekannter Befehl %s für Abbild"
@@ -8854,10 +8858,18 @@ msgstr "Alternatives config Verzeichnis."
 msgid "Unset image properties"
 msgstr ""
 
-#: cmd/incus/config.go:805 cmd/incus/config.go:806
+#: cmd/incus/config.go:805
 #, fuzzy
 msgid "Unset instance or server configuration keys"
 msgstr "Alternatives config Verzeichnis."
+
+#: cmd/incus/config.go:806
+msgid ""
+"Unset instance or server configuration keys\n"
+"\n"
+"Unsetting several keys in one go is only supported for instance "
+"configuration.\n"
+msgstr ""
 
 #: cmd/incus/network_acl.go:530 cmd/incus/network_acl.go:531
 #, fuzzy
@@ -8953,83 +8965,88 @@ msgstr "Profil %s erstellt\n"
 
 #: cmd/incus/cluster_group.go:959
 #, fuzzy
-msgid "Unset the key as a cluster group property"
+msgid "Unset the keys as cluster group properties"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
 #: cmd/incus/cluster.go:593
-msgid "Unset the key as a cluster property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as cluster properties"
+msgstr "Anhalten des Containers fehlgeschlagen!"
+
+#: cmd/incus/config.go:813
+#, fuzzy
+msgid "Unset the keys as instance properties"
+msgstr "Anhalten des Containers fehlgeschlagen!"
 
 #: cmd/incus/network_acl.go:534
-msgid "Unset the key as a network ACL property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network ACL properties"
+msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network_address_set.go:405
 #, fuzzy
-msgid "Unset the key as a network address set property"
+msgid "Unset the keys as network address set properties"
 msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network_forward.go:577
 #, fuzzy
-msgid "Unset the key as a network forward property"
+msgid "Unset the keys as network forward properties"
 msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network_integration.go:643
 #, fuzzy
-msgid "Unset the key as a network integration property"
+msgid "Unset the keys as network integration properties"
 msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network_load_balancer.go:563
 #, fuzzy
-msgid "Unset the key as a network load balancer property"
+msgid "Unset the keys as network load balancer properties"
 msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network_peer.go:597
 #, fuzzy
-msgid "Unset the key as a network peer property"
+msgid "Unset the keys as network peer properties"
 msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network.go:1575
 #, fuzzy
-msgid "Unset the key as a network property"
+msgid "Unset the keys as network properties"
 msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/network_zone.go:548
 #, fuzzy
-msgid "Unset the key as a network zone property"
+msgid "Unset the keys as network zone properties"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
 #: cmd/incus/network_zone.go:1206
 #, fuzzy
-msgid "Unset the key as a network zone record property"
+msgid "Unset the keys as network zone record properties"
 msgstr "Profil %s erstellt\n"
 
 #: cmd/incus/profile.go:1120
-msgid "Unset the key as a profile property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as profile properties"
+msgstr "Anhalten des Containers fehlgeschlagen!"
 
 #: cmd/incus/project.go:846
-msgid "Unset the key as a project property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as project properties"
+msgstr "Kein Zertifikat für diese Verbindung"
 
 #: cmd/incus/storage_bucket.go:759
 #, fuzzy
-msgid "Unset the key as a storage bucket property"
+msgid "Unset the keys as storage bucket properties"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
 #: cmd/incus/storage.go:972
 #, fuzzy
-msgid "Unset the key as a storage property"
+msgid "Unset the keys as storage properties"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
 #: cmd/incus/storage_volume.go:2186
 #, fuzzy
-msgid "Unset the key as a storage volume property"
+msgid "Unset the keys as storage volume properties"
 msgstr "Kein Zertifikat für diese Verbindung"
-
-#: cmd/incus/config.go:810
-msgid "Unset the key as an instance property"
-msgstr ""
 
 #: cmd/incus/info.go:912
 #, c-format
@@ -10553,11 +10570,11 @@ msgstr ""
 msgid "space used"
 msgstr "Speicherplatz in Benutzung"
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:565
 msgid "sshfs has stopped"
 msgstr "sshfs wurde gestoppt"
 
-#: cmd/incus/utils.go:519
+#: cmd/incus/utils.go:524
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs mounted %q auf %q"

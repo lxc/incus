@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-28 12:53-0400\n"
+"POT-Creation-Date: 2026-05-31 22:44+0000\n"
 "PO-Revision-Date: 2026-05-30 00:00+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1005,8 +1005,8 @@ msgstr "Rubriques d’aide additionnelles :"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Propriété de configuration du pool de stockage supplémentaire (<clef>"
-"=<valuer>, rien lorsque terminé) :"
+"Propriété de configuration du pool de stockage supplémentaire "
+"(<clef>=<valuer>, rien lorsque terminé) :"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1116,7 +1116,8 @@ msgstr "Rejoingez-vous un cluster existant ?"
 #: cmd/incus/cluster.go:1518
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
-msgstr "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
+msgstr ""
+"Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
 
 #: cmd/incus/console.go:443
 msgid "As neither could be found, the raw SPICE socket can be found at:"
@@ -1247,8 +1248,8 @@ msgstr "Sauvegardes :"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Impossible de traiter ce remplacement, la syntaxe attendue est <périphérique>"
-",<clef>=<valeur> : %s"
+"Impossible de traiter ce remplacement, la syntaxe attendue est "
+"<périphérique>,<clef>=<valeur> : %s"
 
 #: cmd/incus/copy.go:137 cmd/incus/create.go:205 cmd/incus/move.go:250
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1372,7 +1373,7 @@ msgstr ""
 msgid "Can't perform local rename without a new instance name"
 msgstr "Profil à appliquer au nouveau conteneur"
 
-#: cmd/incus/utils.go:336
+#: cmd/incus/utils.go:341
 #, c-format
 msgid "Can't read from environment file: %w"
 msgstr "Impossible de lire depuis le fichier d'environnement : %w"
@@ -1582,7 +1583,7 @@ msgid "Cluster member %s removed from group %s"
 msgstr "Le membre du cluster « %s » a été supprimé du groupe « %s »"
 
 #: cmd/incus/config.go:102 cmd/incus/config.go:382 cmd/incus/config.go:522
-#: cmd/incus/config.go:689 cmd/incus/config.go:809 cmd/incus/copy.go:66
+#: cmd/incus/config.go:689 cmd/incus/config.go:812 cmd/incus/copy.go:66
 #: cmd/incus/create.go:70 cmd/incus/info.go:53 cmd/incus/move.go:67
 #: cmd/incus/network.go:348 cmd/incus/network.go:798 cmd/incus/network.go:871
 #: cmd/incus/network.go:1047 cmd/incus/network.go:1428
@@ -2725,8 +2726,8 @@ msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
-"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, « m "
-"» pour mémoire, ou « d » pour disque) :"
+"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, "
+"« m » pour mémoire, ou « d » pour disque) :"
 
 #: cmd/incus/top.go:262
 msgid "Enter new delay in seconds:"
@@ -3056,12 +3057,12 @@ msgstr "PREMIÈRE VUE"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:651
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "Échec de l'authentification SSH avec le client %q : %v"
 
-#: cmd/incus/utils.go:669
+#: cmd/incus/utils.go:674
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "Échec de l'acceptation du canal client %q : %v"
@@ -3071,7 +3072,7 @@ msgstr "Échec de l'acceptation du canal client %q : %v"
 msgid "Failed checking instance %s exists: %w"
 msgstr "Échec de la vérification de l'existence de l'instance \"%s\" : %w"
 
-#: cmd/incus/utils.go:696
+#: cmd/incus/utils.go:701
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Échec de la connexion au SFTP de l'instance pour le client %q : %v"
@@ -3110,7 +3111,7 @@ msgstr "Échec de la suppression de l'instance %s dans le projet %q : %w"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Échec de la suppression du volume source après la copie : %w"
 
-#: cmd/incus/utils.go:603
+#: cmd/incus/utils.go:608
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Échec de la génération de la clef d’hôte SSH : %w"
@@ -3151,7 +3152,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr "Échec du chargement du pool de stockage %q : %w"
 
-#: cmd/incus/utils.go:608
+#: cmd/incus/utils.go:613
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Échec de l’analyse de la clef d’hôte SSH : %w"
@@ -3166,12 +3167,12 @@ msgstr "Échec de l'analyse de la réponse de validation : %w"
 msgid "Failed starting command: %w"
 msgstr "Échec de l'exécution de la commande : %w"
 
-#: cmd/incus/utils.go:516
+#: cmd/incus/utils.go:521
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Échec du démarrage de sshfs : %w"
 
-#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:634
+#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:639
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Échec de l'acceptation de la connexion entrante : %w"
@@ -3214,7 +3215,8 @@ msgstr "Échec de la configuration du cluster : %w"
 #: cmd/incus/admin_init.go:107
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr ""
+"Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:102
 #, c-format
@@ -3283,7 +3285,7 @@ msgstr "Échec de la recherche du projet : %w"
 msgid "Failed to join cluster: %w"
 msgstr "Échec de l'adhésion au cluster : %w"
 
-#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:619
+#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:624
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Échec de la mise en écoute des demandes de connexion : %w"
@@ -3783,7 +3785,8 @@ msgstr "Obtenir la clé en tant que propriété d'instance"
 
 #: cmd/incus/cluster_group.go:807
 msgid "Get values for cluster group configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
 
 #: cmd/incus/cluster.go:441
 msgid "Get values for cluster member configuration keys"
@@ -3851,7 +3854,8 @@ msgstr "Clé de configuration invalide"
 
 #: cmd/incus/storage_bucket.go:368 cmd/incus/storage_bucket.go:369
 msgid "Get values for storage bucket configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
 
 #: cmd/incus/storage.go:389 cmd/incus/storage.go:390
 msgid "Get values for storage pool configuration keys"
@@ -3878,8 +3882,8 @@ msgstr ""
 "Si le type n’est pas spécifié, Incus considère le type « custom ».\n"
 "Les types reconnus sont « custom », « container » et « virtual-machine ».\n"
 "\n"
-"Pour un instantané, préciser son nom (le type doit être explicitement défini)"
-"."
+"Pour un instantané, préciser son nom (le type doit être explicitement "
+"défini)."
 
 #: cmd/incus/storage_volume.go:2579
 msgid "Get write access to the disk"
@@ -3917,22 +3921,22 @@ msgstr "Nom d’hôte"
 msgid "Hugepages:\n"
 msgstr "Hugepages :\n"
 
-#: cmd/incus/utils.go:719
+#: cmd/incus/utils.go:724
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "La copie d'E/S de SSH vers l'instance a échoué : %v"
 
-#: cmd/incus/utils.go:708
+#: cmd/incus/utils.go:713
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "La copie d'E/S de l'instance vers SSH a échoué : %v"
 
-#: cmd/incus/utils.go:540
+#: cmd/incus/utils.go:545
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "La copie d'E/S de l'instance vers sshfs a échoué : %v"
 
-#: cmd/incus/utils.go:550
+#: cmd/incus/utils.go:555
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "La copie d'E/S de sshfs vers l'instance a échoué : %v"
@@ -4008,7 +4012,8 @@ msgstr "Identifiant : %v"
 #: cmd/incus/image.go:175
 #, fuzzy
 msgid "If an alias already exists, delete and recreate it"
-msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr ""
+"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/rebuild.go:33
 msgid "If an instance is running, stop it and then rebuild it"
@@ -4025,7 +4030,8 @@ msgstr ""
 
 #: cmd/incus/image.go:696 cmd/incus/publish.go:46
 msgid "If the image alias already exists, delete and create a new one"
-msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr ""
+"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:100 cmd/incus/storage_volume_snapshot.go:98
 msgid "If the snapshot name already exists, delete and create a new one"
@@ -4190,12 +4196,12 @@ msgstr "Le nom du conteneur est : %s"
 msgid "Instance description"
 msgstr "Mot de passe de l'administrateur distant"
 
-#: cmd/incus/utils.go:542
+#: cmd/incus/utils.go:547
 #, fuzzy
 msgid "Instance disconnected"
 msgstr "Mot de passe de l'administrateur distant"
 
-#: cmd/incus/utils.go:710
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "Instance déconnectée pour le client %q"
@@ -5278,8 +5284,8 @@ msgstr ""
 "configuration (par exemple, « volatile.eth0.hwaddr=10:66:6a:.* »).\n"
 "\n"
 "Exemples :\n"
-" – « user.blah=abc » listera toutes les instances dont la propriété libre «"
-" blah » est égale à « abc »,\n"
+" – « user.blah=abc » listera toutes les instances dont la propriété libre "
+"« blah » est égale à « abc »,\n"
 " – « u.blah=abc » aura le même effet,\n"
 " – « security.privileged=true » listera toutes les instances privilégiées,\n"
 " – « s.privileged=true » aura le même effet,\n"
@@ -5324,8 +5330,8 @@ msgstr ""
 "À ces colonnes s’ajoutent des colonnes personnalisées qui peuvent être "
 "définies avec « [config:|devices:]<clef>[:<nom>][:<largeur maximale>] » :\n"
 " – <clef> représente le nom de la clef de configuration de l’instance "
-"(config) ou des périphériques (devices) à afficher (si « config: » et «"
-" devices: » sont omis, « config: » est choisi par défaut),\n"
+"(config) ou des périphériques (devices) à afficher (si « config: » et "
+"« devices: » sont omis, « config: » est choisi par défaut),\n"
 " – <nom> représente le nom de la colonne à afficher (par défaut, le nom de "
 "la clef),\n"
 " – <largeur maximale> est la largeur maximale de la colonne (les résultats "
@@ -5854,12 +5860,12 @@ msgstr "Routeur logique"
 msgid "Logical switch"
 msgstr "Switch logique"
 
-#: cmd/incus/utils.go:625
+#: cmd/incus/utils.go:630
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr "Connexion avec le nom d’utilisateur %q et le mot de passe %q"
 
-#: cmd/incus/utils.go:627
+#: cmd/incus/utils.go:632
 msgid "Login without username and password"
 msgstr "Connexion sans nom d’utilisateur ni mot de passe"
 
@@ -6246,8 +6252,8 @@ msgstr "Configuration minimale (non-interactif)"
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
-"Verbosité minimale des journaux (uniquement disponible avec le format «"
-" pretty »)"
+"Verbosité minimale des journaux (uniquement disponible avec le format "
+"« pretty »)"
 
 #: cmd/incus/admin_init_interactive.go:470
 msgid "Minimum size is 1GiB"
@@ -6926,7 +6932,7 @@ msgstr "Partitions :"
 msgid "Password for %s: "
 msgstr "Mot de passe administrateur pour %s : "
 
-#: cmd/incus/utils.go:596
+#: cmd/incus/utils.go:601
 #, c-format
 msgid "Password rejected for %q"
 msgstr "Mot de passe rejeté pour %q"
@@ -7021,7 +7027,7 @@ msgstr "Entrer « s » + Entrée pour changer la méthode de tri"
 msgid "Press CTRL-C to exit"
 msgstr "Entrer Ctrl+C pour quitter"
 
-#: cmd/incus/utils.go:520
+#: cmd/incus/utils.go:525
 msgid "Press ctrl+c to finish"
 msgstr "Entrer Ctrl+C pour terminer"
 
@@ -7325,7 +7331,8 @@ msgstr "Pousser ou récupérer des fichiers récursivement"
 
 #: cmd/incus/storage_volume.go:392
 msgid "Refresh and update the existing storage volume copies"
-msgstr "Rafraîchir et mettre à jour les copies du volume de stockage existantes"
+msgstr ""
+"Rafraîchir et mettre à jour les copies du volume de stockage existantes"
 
 #: cmd/incus/image.go:1382 cmd/incus/image.go:1383
 #, fuzzy
@@ -7393,8 +7400,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
-"Supprimer %s et tout ce qu’il contient (instances, images, volumes, réseaux"
-"…) (oui/non) : "
+"Supprimer %s et tout ce qu’il contient (instances, images, volumes, "
+"réseaux…) (oui/non) : "
 
 #: cmd/incus/cluster_group.go:563
 msgid "Remove a cluster member from a cluster group"
@@ -7701,17 +7708,17 @@ msgstr "SOURCE"
 msgid "SR-IOV information:"
 msgstr "Information SR-IOV :"
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:627
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr "Le SFTP SSH écoute sur %v"
 
-#: cmd/incus/utils.go:639
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "SSH client connected %q"
 msgstr "Client SSH %q connecté"
 
-#: cmd/incus/utils.go:640
+#: cmd/incus/utils.go:645
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr "Client SSH déconnecté %q"
@@ -7981,7 +7988,8 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:1118 cmd/incus/network_zone.go:1119
 msgid "Set network zone record configuration keys"
-msgstr "Définir des clefs de configuration sur un enregistrement de zone réseau"
+msgstr ""
+"Définir des clefs de configuration sur un enregistrement de zone réseau"
 
 #: cmd/incus/profile.go:979
 #, fuzzy
@@ -8996,8 +9004,8 @@ msgstr "Le périphérique spécifié n'est pas un disque (périphérique %s)"
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
 msgstr ""
-"Le disque spécifié ne pointe pas vers le volume de stockage spécifié (trouvé "
-": %s)"
+"Le disque spécifié ne pointe pas vers le volume de stockage spécifié "
+"(trouvé : %s)"
 
 #: cmd/incus/storage_volume.go:787
 #, c-format
@@ -9232,7 +9240,7 @@ msgstr "Serveur distant indisponible"
 msgid "Unknown certificate type %q"
 msgstr "Type de certificat inconnu : %q"
 
-#: cmd/incus/utils.go:662
+#: cmd/incus/utils.go:667
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -9301,10 +9309,18 @@ msgstr "Clé de configuration invalide"
 msgid "Unset image properties"
 msgstr ""
 
-#: cmd/incus/config.go:805 cmd/incus/config.go:806
+#: cmd/incus/config.go:805
 #, fuzzy
 msgid "Unset instance or server configuration keys"
 msgstr "Clé de configuration invalide"
+
+#: cmd/incus/config.go:806
+msgid ""
+"Unset instance or server configuration keys\n"
+"\n"
+"Unsetting several keys in one go is only supported for instance "
+"configuration.\n"
+msgstr ""
 
 #: cmd/incus/network_acl.go:530 cmd/incus/network_acl.go:531
 msgid "Unset network ACL configuration keys"
@@ -9388,83 +9404,88 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:959
 #, fuzzy
-msgid "Unset the key as a cluster group property"
+msgid "Unset the keys as cluster group properties"
 msgstr "Obtenir la clé en tant que propriété du cluster"
 
 #: cmd/incus/cluster.go:593
-msgid "Unset the key as a cluster property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as cluster properties"
+msgstr "Obtenir la clé en tant que propriété du cluster"
+
+#: cmd/incus/config.go:813
+#, fuzzy
+msgid "Unset the keys as instance properties"
+msgstr "Obtenir la clé en tant que propriété d'instance"
 
 #: cmd/incus/network_acl.go:534
-msgid "Unset the key as a network ACL property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as network ACL properties"
+msgstr "Obtenir la clé en tant que propriété ACL du réseau"
 
 #: cmd/incus/network_address_set.go:405
 #, fuzzy
-msgid "Unset the key as a network address set property"
+msgid "Unset the keys as network address set properties"
 msgstr "Nom du réseau"
 
 #: cmd/incus/network_forward.go:577
 #, fuzzy
-msgid "Unset the key as a network forward property"
+msgid "Unset the keys as network forward properties"
 msgstr "Nom du réseau"
 
 #: cmd/incus/network_integration.go:643
 #, fuzzy
-msgid "Unset the key as a network integration property"
+msgid "Unset the keys as network integration properties"
 msgstr "Nom du réseau"
 
 #: cmd/incus/network_load_balancer.go:563
 #, fuzzy
-msgid "Unset the key as a network load balancer property"
+msgid "Unset the keys as network load balancer properties"
 msgstr "Nom du réseau"
 
 #: cmd/incus/network_peer.go:597
 #, fuzzy
-msgid "Unset the key as a network peer property"
+msgid "Unset the keys as network peer properties"
 msgstr "Nom du réseau"
 
 #: cmd/incus/network.go:1575
 #, fuzzy
-msgid "Unset the key as a network property"
+msgid "Unset the keys as network properties"
 msgstr "Nom du réseau"
 
 #: cmd/incus/network_zone.go:548
 #, fuzzy
-msgid "Unset the key as a network zone property"
+msgid "Unset the keys as network zone properties"
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/network_zone.go:1206
 #, fuzzy
-msgid "Unset the key as a network zone record property"
+msgid "Unset the keys as network zone record properties"
 msgstr "Clé de configuration invalide"
 
 #: cmd/incus/profile.go:1120
-msgid "Unset the key as a profile property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as profile properties"
+msgstr "Obtenir la clé en tant que propriété du profil"
 
 #: cmd/incus/project.go:846
-msgid "Unset the key as a project property"
-msgstr ""
+#, fuzzy
+msgid "Unset the keys as project properties"
+msgstr "Obtenir la clé en tant que propriété du projet"
 
 #: cmd/incus/storage_bucket.go:759
 #, fuzzy
-msgid "Unset the key as a storage bucket property"
+msgid "Unset the keys as storage bucket properties"
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/storage.go:972
 #, fuzzy
-msgid "Unset the key as a storage property"
+msgid "Unset the keys as storage properties"
 msgstr "Copie de l'image : %s"
 
 #: cmd/incus/storage_volume.go:2186
 #, fuzzy
-msgid "Unset the key as a storage volume property"
+msgid "Unset the keys as storage volume properties"
 msgstr "Copie de l'image : %s"
-
-#: cmd/incus/config.go:810
-msgid "Unset the key as an instance property"
-msgstr ""
 
 #: cmd/incus/info.go:912
 #, c-format
@@ -10261,8 +10282,8 @@ msgid ""
 "incus move <old name> <new name> [--instance-only]\n"
 "    Rename a local instance."
 msgstr ""
-"incus move [<serveur distant>:]<instance source> [<serveur distant> "
-":][<instance cible>] [--instance-only]\n"
+"incus move [<serveur distant>:]<instance source> [<serveur distant> :]"
+"[<instance cible>] [--instance-only]\n"
 "    Déplacer une instance entre deux hôtes, avec renommage si le nom de "
 "destination est différent.\n"
 "\n"
@@ -10860,11 +10881,11 @@ msgstr "instantané"
 msgid "space used"
 msgstr "espace utilisé"
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:565
 msgid "sshfs has stopped"
 msgstr "sshfs s'est arrêté"
 
-#: cmd/incus/utils.go:519
+#: cmd/incus/utils.go:524
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs monté %q sur %q"
