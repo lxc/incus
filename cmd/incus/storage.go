@@ -959,7 +959,7 @@ type cmdStorageUnset struct {
 	flagIsProperty bool
 }
 
-var cmdStorageUnsetUsage = u.Usage{u.Pool.Remote(), u.Key}
+var cmdStorageUnsetUsage = u.Usage{u.Pool.Remote(), u.Key.List(1)}
 
 func (c *cmdStorageUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -969,7 +969,7 @@ func (c *cmdStorageUnset) command() *cobra.Command {
 		`Unset storage pool configuration keys`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a storage property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as storage properties"))
 	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

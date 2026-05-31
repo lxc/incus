@@ -582,7 +582,7 @@ type cmdClusterUnset struct {
 	flagIsProperty bool
 }
 
-var cmdClusterUnsetUsage = u.Usage{u.Member.Remote(), u.Key}
+var cmdClusterUnsetUsage = u.Usage{u.Member.Remote(), u.Key.List(1)}
 
 func (c *cmdClusterUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -590,7 +590,7 @@ func (c *cmdClusterUnset) command() *cobra.Command {
 	cmd.Short = i18n.G("Unset a cluster member's configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, cmd.Short)
 
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a cluster property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as cluster properties"))
 	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

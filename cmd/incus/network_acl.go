@@ -522,7 +522,7 @@ type cmdNetworkACLUnset struct {
 	flagIsProperty bool
 }
 
-var cmdNetworkACLUnsetUsage = u.Usage{u.ACL.Remote(), u.Key}
+var cmdNetworkACLUnsetUsage = u.Usage{u.ACL.Remote(), u.Key.List(1)}
 
 func (c *cmdNetworkACLUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -531,7 +531,7 @@ func (c *cmdNetworkACLUnset) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset network ACL configuration keys"))
 	cmd.RunE = c.run
 
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a network ACL property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as network ACL properties"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {

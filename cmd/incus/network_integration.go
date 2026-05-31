@@ -630,7 +630,7 @@ type cmdNetworkIntegrationUnset struct {
 	flagIsProperty bool
 }
 
-var cmdNetworkIntegrationUnsetUsage = u.Usage{u.NetworkIntegration.Remote(), u.Key}
+var cmdNetworkIntegrationUnsetUsage = u.Usage{u.NetworkIntegration.Remote(), u.Key.List(1)}
 
 func (c *cmdNetworkIntegrationUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -640,7 +640,7 @@ func (c *cmdNetworkIntegrationUnset) command() *cobra.Command {
 		`Unset network integration configuration keys`))
 
 	cmd.RunE = c.run
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a network integration property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as network integration properties"))
 	return cmd
 }
 

@@ -797,17 +797,20 @@ type cmdConfigUnset struct {
 	flagIsProperty bool
 }
 
-var cmdConfigUnsetUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote(), u.Key}
+var cmdConfigUnsetUsage = u.Usage{u.MakePath(u.Instance, u.Snapshot.Optional()).Optional().Remote(), u.Key.List(1)}
 
 func (c *cmdConfigUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("unset", cmdConfigUnsetUsage...)
 	cmd.Short = i18n.G("Unset instance or server configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Unset instance or server configuration keys`))
+		`Unset instance or server configuration keys
+
+Unsetting several keys in one go is only supported for instance configuration.
+`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.config.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as an instance property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as instance properties"))
 	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -826,9 +829,8 @@ func (c *cmdConfigUnset) command() *cobra.Command {
 }
 
 func (c *cmdConfigUnset) run(cmd *cobra.Command, args []string) error {
-	// Do NOT blindly copy the following parsing line; it performs right-to-left parsing, which in
-	// most cases is NOT what you want.
-	parsed, err := c.global.Parse(cmdConfigUnsetUsage, cmd, args, true)
+	// Do NOT blindly copy the following parsing line; it is a dirty hack to disambiguate the parser.
+	parsed, err := c.global.Parse(cmdConfigUnsetUsage, cmd, args, len(args) == 1)
 	if err != nil {
 		return err
 	}

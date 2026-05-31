@@ -747,7 +747,7 @@ type cmdStorageBucketUnset struct {
 	flagIsProperty bool
 }
 
-var cmdStorageBucketUnsetUsage = u.Usage{u.Pool.Remote(), u.Bucket, u.Key}
+var cmdStorageBucketUnsetUsage = u.Usage{u.Pool.Remote(), u.Bucket, u.Key.List(1)}
 
 func (c *cmdStorageBucketUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -756,7 +756,7 @@ func (c *cmdStorageBucketUnset) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset storage bucket configuration keys`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storageBucket.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a storage bucket property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as storage bucket properties"))
 	cmd.RunE = c.run
 
 	return cmd

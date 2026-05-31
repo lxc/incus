@@ -834,7 +834,7 @@ type cmdProjectUnset struct {
 	flagIsProperty bool
 }
 
-var cmdProjectUnsetUsage = u.Usage{u.Project.Remote(), u.Key}
+var cmdProjectUnsetUsage = u.Usage{u.Project.Remote(), u.Key.List(1)}
 
 func (c *cmdProjectUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -843,7 +843,7 @@ func (c *cmdProjectUnset) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset project configuration keys`))
 
 	cmd.RunE = c.run
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a project property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as project properties"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {

@@ -1563,7 +1563,7 @@ type cmdNetworkUnset struct {
 	flagIsProperty bool
 }
 
-var cmdNetworkUnsetUsage = u.Usage{u.Network.Remote(), u.Key}
+var cmdNetworkUnsetUsage = u.Usage{u.Network.Remote(), u.Key.List(1)}
 
 func (c *cmdNetworkUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -1572,7 +1572,7 @@ func (c *cmdNetworkUnset) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset network configuration keys`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.network.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a network property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as network properties"))
 	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
