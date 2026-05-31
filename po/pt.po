@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-28 12:53-0400\n"
-"PO-Revision-Date: 2026-05-30 00:03+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-05-31 08:01+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -8209,14 +8209,12 @@ msgid "Set the file's uid on push"
 msgstr "Define o uid do ficheiro ao ser enviado"
 
 #: cmd/incus/file.go:676
-#, fuzzy
 msgid "Set the files' GIDs on push"
-msgstr "Define as permissões do ficheiro ao ser enviado"
+msgstr "Define os GIDs do ficheiro ao ser enviado"
 
 #: cmd/incus/file.go:675
-#, fuzzy
 msgid "Set the files' UIDs on push"
-msgstr "Define as permissões do ficheiro ao ser enviado"
+msgstr "Define os UIDs do ficheiro ao ser enviado"
 
 #: cmd/incus/cluster_group.go:880
 msgid "Set the key as a cluster group property"
