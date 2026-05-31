@@ -751,7 +751,7 @@ type cmdConfigDeviceUnset struct {
 	profile         *cmdProfile
 }
 
-var cmdConfigDeviceUnsetUsage = u.Usage{u.Device, u.Key}
+var cmdConfigDeviceUnsetUsage = u.Usage{u.Device, u.Key.List(1)}
 
 func (c *cmdConfigDeviceUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}

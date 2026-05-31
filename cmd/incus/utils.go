@@ -325,8 +325,13 @@ type settable interface {
 // unsetKey reparses the last argument passed to an `unset` command to make it suitable for `set`
 // commands.
 func unsetKey(s settable, cmd *cobra.Command, parsed []*u.Parsed) error {
-	i := len(parsed) - 1
-	parsed[i], _ = u.KV.List(0).Parse(u.Config{}, nil, &[]string{parsed[i].String + "="})
+	last := len(parsed) - 1
+	args := make([]string, len(parsed[last].StringList))
+	for i, arg := range parsed[last].StringList {
+		args[i] = arg + "="
+	}
+
+	parsed[last], _ = u.KV.List(1).Parse(u.Config{}, nil, &args)
 	return s.set(cmd, parsed)
 }
 
