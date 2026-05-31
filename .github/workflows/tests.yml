@@ -241,6 +241,12 @@ jobs:
           sudo ip link delete docker0
           sudo nft flush ruleset
 
+      - name: Remove pre-installed Java
+        run: |
+          set -eux
+          sudo apt-get update
+          sudo apt-get remove --yes --purge temurin.*
+
       - name: Checkout
         uses: actions/checkout@v6
 
@@ -498,7 +504,7 @@ jobs:
           chmod +x ~
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
-          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh ${{ matrix.suite }}
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} JAVA_HOME= ./main.sh ${{ matrix.suite }}
 
   client:
     name: Client
