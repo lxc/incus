@@ -264,6 +264,12 @@ jobs:
           echo "PATH=$HOME/go/bin:$HOME/sdk/gotip/bin/:$PATH" >> $GITHUB_ENV
         if: matrix.go == 'tip'
 
+      - name: Setup Java 21
+        run: |
+          set -x
+          sudo update-alternatives --set java /usr/lib/jvm/temurin-21-jdk-amd64/bin/java
+          echo "JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: |
           set -x
@@ -451,7 +457,7 @@ jobs:
           sudo apt-get update
 
           # Install everything required to compile DRBD and run LINSTOR tools.
-          sudo apt-get install --no-install-recommends -y \
+          sudo "JAVA_HOME=$JAVA_HOME" apt-get install --no-install-recommends -y \
             drbd-dkms \
             linstor-client \
             linstor-controller \
@@ -498,7 +504,7 @@ jobs:
           chmod +x ~
           echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
           cd test
-          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS, INCUS_BACKEND=${{ matrix.backend }} env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh ${{ matrix.suite }}
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_BACKEND,INCUS_CEPH_CLUSTER,INCUS_CEPH_CEPHFS,INCUS_CEPH_CEPHOBJECT_RADOSGW,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_LINSTOR_CLUSTER,INCUS_OFFLINE,INCUS_SKIP_TESTS,INCUS_REQUIRED_TESTS "INCUS_BACKEND=${{ matrix.backend }}" "JAVA_HOME=$JAVA_HOME" "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" ./main.sh ${{ matrix.suite }}
 
   client:
     name: Client
