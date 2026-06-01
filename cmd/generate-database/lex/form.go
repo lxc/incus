@@ -1,6 +1,7 @@
 package lex
 
 import (
+	"slices"
 	"strings"
 )
 

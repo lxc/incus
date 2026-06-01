@@ -578,6 +578,7 @@ func validateFieldConfig(config url.Values) error {
 			"join",
 			"leftjoin",
 			"joinon",
+			"joinas",
 			"omit":
 
 			_, err := exactlyOneValue(tag, values)
