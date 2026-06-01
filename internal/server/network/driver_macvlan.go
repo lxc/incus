@@ -30,6 +30,7 @@ func (n *macvlan) Validate(config map[string]string, clientType request.ClientTy
 		//
 		// ---
 		//  type: string
+		//  scope: local
 		//  condition: -
 		//  shortdesc: Parent interface to create macvlan NICs on
 		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),

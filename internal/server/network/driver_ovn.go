@@ -494,6 +494,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		//
 		// ---
 		//  type: string
+		//  scope: local
 		//  shortdesc: Comma-separated list of unconfigured network interfaces to include in the bridge
 		"bridge.external_interfaces": validate.Optional(validateExternalInterfaces),
 
