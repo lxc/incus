@@ -37,6 +37,7 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 		//
 		// ---
 		// type: string
+		// scope: local
 		// condition: -
 		// shortdesc: Existing interface to use for network
 		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),

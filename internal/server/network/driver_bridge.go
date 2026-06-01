@@ -178,6 +178,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//
 		// ---
 		//  type: string
+		//  scope: local
 		//  condition: BGP server
 		//  default: local address
 		//  shortdesc: Override the next-hop for advertised prefixes
@@ -187,6 +188,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//
 		// ---
 		//  type: string
+		//  scope: local
 		//  condition: BGP server
 		//  default: local address
 		//  shortdesc: Override the next-hop for advertised prefixes

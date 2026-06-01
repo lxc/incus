@@ -28,6 +28,7 @@ func (n *sriov) Validate(config map[string]string, clientType request.ClientType
 		//
 		// ---
 		// type: string
+		// scope: local
 		// condition: -
 		// shortdesc: Parent interface to create `sriov` NICs on
 		"parent": validate.Required(validate.IsNotEmpty, validate.IsInterfaceName),
