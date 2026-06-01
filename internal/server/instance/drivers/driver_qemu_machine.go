@@ -186,6 +186,9 @@ func (d *qemu) cpuType(bs *qemuBootState) (string, error) {
 		if !d.CanLiveMigrate() {
 			// x86_64 can use hv_time to improve Windows guest performance.
 			cpuExtensions = append(cpuExtensions, "hv_passthrough")
+		} else {
+			// Try to emulate hv_passthrough without the migration limitation. Of this set, particularly hv_time has a strong effect on I/O performance.
+			cpuExtensions = append(cpuExtensions, "hv_relaxed", "hv_vpindex", "hv_runtime", "hv_time", "hv_synic", "hv_stimer", "hv_tlbflush", "hv_ipi", "hv_frequencies", "hv_stimer_direct", "hv_xmm_input", "hv_tlbflush_ext")
 		}
 
 		// x86_64 requires the use of topoext when SMT is used.
