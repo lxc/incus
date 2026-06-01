@@ -3300,6 +3300,7 @@ User keys can be used in search.
 ```{config:option} bgp.ipv4.nexthop network_bridge-common
 :condition: "BGP server"
 :default: "local address"
+:scope: "local"
 :shortdesc: "Override the next-hop for advertised prefixes"
 :type: "string"
 
@@ -3308,6 +3309,7 @@ User keys can be used in search.
 ```{config:option} bgp.ipv6.nexthop network_bridge-common
 :condition: "BGP server"
 :default: "local address"
+:scope: "local"
 :shortdesc: "Override the next-hop for advertised prefixes"
 :type: "string"
 
@@ -3861,6 +3863,7 @@ User keys can be used in search.
 
 ```{config:option} parent network_macvlan-common
 :condition: "-"
+:scope: "local"
 :shortdesc: "Parent interface to create macvlan NICs on"
 :type: "string"
 
@@ -3882,6 +3885,7 @@ User keys can be used in search.
 <!-- config group network_macvlan-common end -->
 <!-- config group network_ovn-common start -->
 ```{config:option} bridge.external_interfaces network_ovn-common
+:scope: "local"
 :shortdesc: "Comma-separated list of unconfigured network interfaces to include in the bridge"
 :type: "string"
 
@@ -4230,6 +4234,7 @@ User keys can be used in search.
 
 ```{config:option} parent network_physical-common
 :condition: "-"
+:scope: "local"
 :shortdesc: "Existing interface to use for network"
 :type: "string"
 
@@ -4353,6 +4358,7 @@ User keys can be used in search.
 
 ```{config:option} parent network_sriov-common
 :condition: "-"
+:scope: "local"
 :shortdesc: "Parent interface to create `sriov` NICs on"
 :type: "string"
 
