@@ -1,6 +1,7 @@
 package lex
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -16,7 +17,7 @@ func Plural(s string) string {
 		return s + "es"
 	}
 
-	if strings.HasSuffix(s, "y") {
+	if strings.HasSuffix(s, "y") && !slices.Contains([]string{"a", "e", "i", "o", "u"}, string(s[len(s)-2])) {
 		return s[:len(s)-1] + "ies"
 	}
 

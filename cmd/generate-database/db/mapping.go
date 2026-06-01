@@ -361,6 +361,11 @@ func (f *Field) SelectColumn(mapping *Mapping, primaryTable string) (string, err
 	var column string
 	join := f.joinConfig()
 	if join != "" {
+		joinAs := f.Config.Get("joinas")
+		if joinAs != "" {
+			join = joinAs + "." + strings.Split(join, ".")[1]
+		}
+
 		column = join
 	} else {
 		column = fmt.Sprintf("%s.%s", tableName, columnName)
@@ -459,7 +464,14 @@ func (f *Field) JoinClause(mapping *Mapping, table string) (string, error) {
 		joinTo = f.Config.Get("jointo")
 	}
 
-	return fmt.Sprintf(joinTemplate, joinTable, joinOn, joinTable, joinTo), nil
+	joinAs := f.Config.Get("joinas")
+	if joinAs == "" {
+		joinAs = joinTable
+	} else {
+		joinTable = joinTable + " " + joinAs
+	}
+
+	return fmt.Sprintf(joinTemplate, joinTable, joinOn, joinAs, joinTo), nil
 }
 
 // InsertColumn returns a column name and parameter value suitable for an 'INSERT', 'UPDATE', or 'DELETE' statement.
