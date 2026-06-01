@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-05-31 22:44+0000\n"
-"PO-Revision-Date: 2026-05-31 08:01+0000\n"
+"PO-Revision-Date: 2026-06-02 01:01+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.6.dev0\n"
+"X-Generator: Weblate 2026.6\n"
 
 #: cmd/incus/info.go:437
 msgid "  Chassis:"
@@ -9438,6 +9438,10 @@ msgid ""
 "Unsetting several keys in one go is only supported for instance "
 "configuration.\n"
 msgstr ""
+"Desconfigurar instância ou chaves de configuração do servidor\n"
+"\n"
+"Desconfigurar várias chaves duma vez só é permitido para configuração de "
+"instância.\n"
 
 #: cmd/incus/network_acl.go:530 cmd/incus/network_acl.go:531
 msgid "Unset network ACL configuration keys"
@@ -9525,91 +9529,80 @@ msgstr ""
 "machine\"."
 
 #: cmd/incus/cluster_group.go:959
-#, fuzzy
 msgid "Unset the keys as cluster group properties"
-msgstr "Retira definições da chave como propriedade de grupo de agrupamento"
+msgstr "Retira definições das chaves como propriedades de grupo de agrupamento"
 
 #: cmd/incus/cluster.go:593
-#, fuzzy
 msgid "Unset the keys as cluster properties"
-msgstr "Retira definições da chave como propriedade de agrupamento"
+msgstr "Retira definições das chaves como propriedades de agrupamento"
 
 #: cmd/incus/config.go:813
-#, fuzzy
 msgid "Unset the keys as instance properties"
-msgstr "Retira definições da chave como propriedade de instância"
+msgstr "Retira definições das chaves como propriedades de instância"
 
 #: cmd/incus/network_acl.go:534
-#, fuzzy
 msgid "Unset the keys as network ACL properties"
-msgstr "Retira definições da chave como propriedade de ACL de rede"
+msgstr "Retira definições das chaves como propriedades de ACL de rede"
 
 #: cmd/incus/network_address_set.go:405
-#, fuzzy
 msgid "Unset the keys as network address set properties"
 msgstr ""
-"Retira definições da chave como propriedade de conjunto de endereços de rede"
+"Retira definições das chaves como propriedades de conjunto de endereços de "
+"rede"
 
 #: cmd/incus/network_forward.go:577
-#, fuzzy
 msgid "Unset the keys as network forward properties"
-msgstr "Retira definições da chave como propriedade de encaminhamento de rede"
+msgstr ""
+"Retira definições das chaves como propriedades de encaminhamento de rede"
 
 #: cmd/incus/network_integration.go:643
-#, fuzzy
 msgid "Unset the keys as network integration properties"
-msgstr "Retira definições da chave como propriedade de integração de rede"
+msgstr "Retira definições das chaves como propriedades de integração de rede"
 
 #: cmd/incus/network_load_balancer.go:563
-#, fuzzy
 msgid "Unset the keys as network load balancer properties"
 msgstr ""
-"Retira definições da chave como propriedade de balanceador de carga de rede"
+"Retira definições das chaves como propriedades de balanceador de carga de "
+"rede"
 
 #: cmd/incus/network_peer.go:597
-#, fuzzy
 msgid "Unset the keys as network peer properties"
-msgstr "Retira definições da chave como propriedade de peer de rede"
+msgstr "Retira definições das chaves como propriedades de peer de rede"
 
 #: cmd/incus/network.go:1575
-#, fuzzy
 msgid "Unset the keys as network properties"
-msgstr "Retira definições da chave como propriedade de rede"
+msgstr "Retira definições das chaves como propriedades de rede"
 
 #: cmd/incus/network_zone.go:548
-#, fuzzy
 msgid "Unset the keys as network zone properties"
-msgstr "Retira definições da chave como propriedade de zona de rede"
+msgstr "Retira definições das chaves como propriedades de zona de rede"
 
 #: cmd/incus/network_zone.go:1206
-#, fuzzy
 msgid "Unset the keys as network zone record properties"
-msgstr "Retira definições da chave como propriedade de registo de zona de rede"
+msgstr ""
+"Retira definições das chaves como propriedades de registo de zona de rede"
 
 #: cmd/incus/profile.go:1120
-#, fuzzy
 msgid "Unset the keys as profile properties"
-msgstr "Retira definições da chave como propriedade de perfil"
+msgstr "Retira definições das chaves como propriedades de perfil"
 
 #: cmd/incus/project.go:846
-#, fuzzy
 msgid "Unset the keys as project properties"
-msgstr "Retira definições da chave como propriedade de projeto"
+msgstr "Retira definições das chaves como propriedades de projeto"
 
 #: cmd/incus/storage_bucket.go:759
-#, fuzzy
 msgid "Unset the keys as storage bucket properties"
-msgstr "Retira definições da chave como propriedade de bucket de armazenamento"
+msgstr ""
+"Retira definições das chaves como propriedades de balde de armazenamento"
 
 #: cmd/incus/storage.go:972
-#, fuzzy
 msgid "Unset the keys as storage properties"
-msgstr "Retira definições da chave como propriedade de armazenamento"
+msgstr "Retira definições das chaves como propriedades de armazenamento"
 
 #: cmd/incus/storage_volume.go:2186
-#, fuzzy
 msgid "Unset the keys as storage volume properties"
-msgstr "Retira definições da chave como propriedade de volume de armazenamento"
+msgstr ""
+"Retira definições das chaves como propriedades de volume de armazenamento"
 
 #: cmd/incus/info.go:912
 #, c-format
