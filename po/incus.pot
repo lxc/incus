@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-05-28 12:53-0400\n"
+        "POT-Creation-Date: 2026-05-31 22:44+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1018,7 +1018,7 @@ msgstr  ""
 msgid   "Can't perform local rename without a new instance name"
 msgstr  ""
 
-#: cmd/incus/utils.go:336
+#: cmd/incus/utils.go:341
 #, c-format
 msgid   "Can't read from environment file: %w"
 msgstr  ""
@@ -1210,7 +1210,7 @@ msgstr  ""
 msgid   "Cluster member %s removed from group %s"
 msgstr  ""
 
-#: cmd/incus/config.go:102 cmd/incus/config.go:382 cmd/incus/config.go:522 cmd/incus/config.go:689 cmd/incus/config.go:809 cmd/incus/copy.go:66 cmd/incus/create.go:70 cmd/incus/info.go:53 cmd/incus/move.go:67 cmd/incus/network.go:348 cmd/incus/network.go:798 cmd/incus/network.go:871 cmd/incus/network.go:1047 cmd/incus/network.go:1428 cmd/incus/network.go:1512 cmd/incus/network.go:1574 cmd/incus/network_forward.go:248 cmd/incus/network_forward.go:319 cmd/incus/network_forward.go:484 cmd/incus/network_forward.go:623 cmd/incus/network_forward.go:764 cmd/incus/network_forward.go:842 cmd/incus/network_forward.go:915 cmd/incus/network_load_balancer.go:251 cmd/incus/network_load_balancer.go:322 cmd/incus/network_load_balancer.go:470 cmd/incus/network_load_balancer.go:592 cmd/incus/network_load_balancer.go:744 cmd/incus/network_load_balancer.go:821 cmd/incus/network_load_balancer.go:886 cmd/incus/network_load_balancer.go:980 cmd/incus/network_load_balancer.go:1046 cmd/incus/storage.go:117 cmd/incus/storage.go:393 cmd/incus/storage.go:469 cmd/incus/storage.go:799 cmd/incus/storage.go:892 cmd/incus/storage.go:971 cmd/incus/storage_bucket.go:114 cmd/incus/storage_bucket.go:203 cmd/incus/storage_bucket.go:253 cmd/incus/storage_bucket.go:371 cmd/incus/storage_bucket.go:600 cmd/incus/storage_bucket.go:705 cmd/incus/storage_bucket.go:758 cmd/incus/storage_bucket.go:856 cmd/incus/storage_bucket.go:982 cmd/incus/storage_bucket.go:1072 cmd/incus/storage_bucket.go:1121 cmd/incus/storage_bucket.go:1241 cmd/incus/storage_bucket.go:1299 cmd/incus/storage_bucket.go:1478 cmd/incus/storage_volume.go:388 cmd/incus/storage_volume.go:595 cmd/incus/storage_volume.go:690 cmd/incus/storage_volume.go:946 cmd/incus/storage_volume.go:1155 cmd/incus/storage_volume.go:1272 cmd/incus/storage_volume.go:1718 cmd/incus/storage_volume.go:1781 cmd/incus/storage_volume.go:1865 cmd/incus/storage_volume.go:1947 cmd/incus/storage_volume.go:2096 cmd/incus/storage_volume.go:2185 cmd/incus/storage_volume.go:2241 cmd/incus/storage_volume.go:2449 cmd/incus/storage_volume_snapshot.go:99 cmd/incus/storage_volume_snapshot.go:247 cmd/incus/storage_volume_snapshot.go:483 cmd/incus/storage_volume_snapshot.go:552 cmd/incus/storage_volume_snapshot.go:616
+#: cmd/incus/config.go:102 cmd/incus/config.go:382 cmd/incus/config.go:522 cmd/incus/config.go:689 cmd/incus/config.go:812 cmd/incus/copy.go:66 cmd/incus/create.go:70 cmd/incus/info.go:53 cmd/incus/move.go:67 cmd/incus/network.go:348 cmd/incus/network.go:798 cmd/incus/network.go:871 cmd/incus/network.go:1047 cmd/incus/network.go:1428 cmd/incus/network.go:1512 cmd/incus/network.go:1574 cmd/incus/network_forward.go:248 cmd/incus/network_forward.go:319 cmd/incus/network_forward.go:484 cmd/incus/network_forward.go:623 cmd/incus/network_forward.go:764 cmd/incus/network_forward.go:842 cmd/incus/network_forward.go:915 cmd/incus/network_load_balancer.go:251 cmd/incus/network_load_balancer.go:322 cmd/incus/network_load_balancer.go:470 cmd/incus/network_load_balancer.go:592 cmd/incus/network_load_balancer.go:744 cmd/incus/network_load_balancer.go:821 cmd/incus/network_load_balancer.go:886 cmd/incus/network_load_balancer.go:980 cmd/incus/network_load_balancer.go:1046 cmd/incus/storage.go:117 cmd/incus/storage.go:393 cmd/incus/storage.go:469 cmd/incus/storage.go:799 cmd/incus/storage.go:892 cmd/incus/storage.go:971 cmd/incus/storage_bucket.go:114 cmd/incus/storage_bucket.go:203 cmd/incus/storage_bucket.go:253 cmd/incus/storage_bucket.go:371 cmd/incus/storage_bucket.go:600 cmd/incus/storage_bucket.go:705 cmd/incus/storage_bucket.go:758 cmd/incus/storage_bucket.go:856 cmd/incus/storage_bucket.go:982 cmd/incus/storage_bucket.go:1072 cmd/incus/storage_bucket.go:1121 cmd/incus/storage_bucket.go:1241 cmd/incus/storage_bucket.go:1299 cmd/incus/storage_bucket.go:1478 cmd/incus/storage_volume.go:388 cmd/incus/storage_volume.go:595 cmd/incus/storage_volume.go:690 cmd/incus/storage_volume.go:946 cmd/incus/storage_volume.go:1155 cmd/incus/storage_volume.go:1272 cmd/incus/storage_volume.go:1718 cmd/incus/storage_volume.go:1781 cmd/incus/storage_volume.go:1865 cmd/incus/storage_volume.go:1947 cmd/incus/storage_volume.go:2096 cmd/incus/storage_volume.go:2185 cmd/incus/storage_volume.go:2241 cmd/incus/storage_volume.go:2449 cmd/incus/storage_volume_snapshot.go:99 cmd/incus/storage_volume_snapshot.go:247 cmd/incus/storage_volume_snapshot.go:483 cmd/incus/storage_volume_snapshot.go:552 cmd/incus/storage_volume_snapshot.go:616
 msgid   "Cluster member name"
 msgstr  ""
 
@@ -2398,12 +2398,12 @@ msgstr  ""
 msgid   "FQDN"
 msgstr  ""
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:651
 #, c-format
 msgid   "Failed SSH handshake with client %q: %v"
 msgstr  ""
 
-#: cmd/incus/utils.go:669
+#: cmd/incus/utils.go:674
 #, c-format
 msgid   "Failed accepting channel client %q: %v"
 msgstr  ""
@@ -2413,7 +2413,7 @@ msgstr  ""
 msgid   "Failed checking instance %s exists: %w"
 msgstr  ""
 
-#: cmd/incus/utils.go:696
+#: cmd/incus/utils.go:701
 #, c-format
 msgid   "Failed connecting to instance SFTP for client %q: %v"
 msgstr  ""
@@ -2448,7 +2448,7 @@ msgstr  ""
 msgid   "Failed deleting source volume after copy: %w"
 msgstr  ""
 
-#: cmd/incus/utils.go:603
+#: cmd/incus/utils.go:608
 #, c-format
 msgid   "Failed generating SSH host key: %w"
 msgstr  ""
@@ -2488,7 +2488,7 @@ msgstr  ""
 msgid   "Failed loading storage pool %q: %w"
 msgstr  ""
 
-#: cmd/incus/utils.go:608
+#: cmd/incus/utils.go:613
 #, c-format
 msgid   "Failed parsing SSH host key: %w"
 msgstr  ""
@@ -2503,12 +2503,12 @@ msgstr  ""
 msgid   "Failed starting command: %w"
 msgstr  ""
 
-#: cmd/incus/utils.go:516
+#: cmd/incus/utils.go:521
 #, c-format
 msgid   "Failed starting sshfs: %w"
 msgstr  ""
 
-#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:634
+#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:639
 #, c-format
 msgid   "Failed to accept incoming connection: %w"
 msgstr  ""
@@ -2617,7 +2617,7 @@ msgstr  ""
 msgid   "Failed to join cluster: %w"
 msgstr  ""
 
-#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:619
+#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:624
 #, c-format
 msgid   "Failed to listen for connection: %w"
 msgstr  ""
@@ -3136,22 +3136,22 @@ msgstr  ""
 msgid   "Hugepages:\n"
 msgstr  ""
 
-#: cmd/incus/utils.go:719
+#: cmd/incus/utils.go:724
 #, c-format
 msgid   "I/O copy from SSH to instance failed: %v"
 msgstr  ""
 
-#: cmd/incus/utils.go:708
+#: cmd/incus/utils.go:713
 #, c-format
 msgid   "I/O copy from instance to SSH failed: %v"
 msgstr  ""
 
-#: cmd/incus/utils.go:540
+#: cmd/incus/utils.go:545
 #, c-format
 msgid   "I/O copy from instance to sshfs failed: %v"
 msgstr  ""
 
-#: cmd/incus/utils.go:550
+#: cmd/incus/utils.go:555
 #, c-format
 msgid   "I/O copy from sshfs to instance failed: %v"
 msgstr  ""
@@ -3386,11 +3386,11 @@ msgstr  ""
 msgid   "Instance description"
 msgstr  ""
 
-#: cmd/incus/utils.go:542
+#: cmd/incus/utils.go:547
 msgid   "Instance disconnected"
 msgstr  ""
 
-#: cmd/incus/utils.go:710
+#: cmd/incus/utils.go:715
 #, c-format
 msgid   "Instance disconnected for client %q"
 msgstr  ""
@@ -4462,12 +4462,12 @@ msgstr  ""
 msgid   "Logical switch"
 msgstr  ""
 
-#: cmd/incus/utils.go:625
+#: cmd/incus/utils.go:630
 #, c-format
 msgid   "Login with username %q and password %q"
 msgstr  ""
 
-#: cmd/incus/utils.go:627
+#: cmd/incus/utils.go:632
 msgid   "Login without username and password"
 msgstr  ""
 
@@ -5426,7 +5426,7 @@ msgstr  ""
 msgid   "Password for %s: "
 msgstr  ""
 
-#: cmd/incus/utils.go:596
+#: cmd/incus/utils.go:601
 #, c-format
 msgid   "Password rejected for %q"
 msgstr  ""
@@ -5514,7 +5514,7 @@ msgstr  ""
 msgid   "Press CTRL-C to exit"
 msgstr  ""
 
-#: cmd/incus/utils.go:520
+#: cmd/incus/utils.go:525
 msgid   "Press ctrl+c to finish"
 msgstr  ""
 
@@ -6125,17 +6125,17 @@ msgstr  ""
 msgid   "SR-IOV information:"
 msgstr  ""
 
-#: cmd/incus/utils.go:622
+#: cmd/incus/utils.go:627
 #, c-format
 msgid   "SSH SFTP listening on %v"
 msgstr  ""
 
-#: cmd/incus/utils.go:639
+#: cmd/incus/utils.go:644
 #, c-format
 msgid   "SSH client connected %q"
 msgstr  ""
 
-#: cmd/incus/utils.go:640
+#: cmd/incus/utils.go:645
 #, c-format
 msgid   "SSH client disconnected %q"
 msgstr  ""
@@ -7485,7 +7485,7 @@ msgstr  ""
 msgid   "Unknown certificate type %q"
 msgstr  ""
 
-#: cmd/incus/utils.go:662
+#: cmd/incus/utils.go:667
 #, c-format
 msgid   "Unknown channel type for client %q: %s"
 msgstr  ""
@@ -7540,8 +7540,14 @@ msgstr  ""
 msgid   "Unset image properties"
 msgstr  ""
 
-#: cmd/incus/config.go:805 cmd/incus/config.go:806
+#: cmd/incus/config.go:805
 msgid   "Unset instance or server configuration keys"
+msgstr  ""
+
+#: cmd/incus/config.go:806
+msgid   "Unset instance or server configuration keys\n"
+        "\n"
+        "Unsetting several keys in one go is only supported for instance configuration.\n"
 msgstr  ""
 
 #: cmd/incus/network_acl.go:530 cmd/incus/network_acl.go:531
@@ -7620,71 +7626,71 @@ msgid   "Unset storage volume configuration keys\n"
 msgstr  ""
 
 #: cmd/incus/cluster_group.go:959
-msgid   "Unset the key as a cluster group property"
+msgid   "Unset the keys as cluster group properties"
 msgstr  ""
 
 #: cmd/incus/cluster.go:593
-msgid   "Unset the key as a cluster property"
+msgid   "Unset the keys as cluster properties"
+msgstr  ""
+
+#: cmd/incus/config.go:813
+msgid   "Unset the keys as instance properties"
 msgstr  ""
 
 #: cmd/incus/network_acl.go:534
-msgid   "Unset the key as a network ACL property"
+msgid   "Unset the keys as network ACL properties"
 msgstr  ""
 
 #: cmd/incus/network_address_set.go:405
-msgid   "Unset the key as a network address set property"
+msgid   "Unset the keys as network address set properties"
 msgstr  ""
 
 #: cmd/incus/network_forward.go:577
-msgid   "Unset the key as a network forward property"
+msgid   "Unset the keys as network forward properties"
 msgstr  ""
 
 #: cmd/incus/network_integration.go:643
-msgid   "Unset the key as a network integration property"
+msgid   "Unset the keys as network integration properties"
 msgstr  ""
 
 #: cmd/incus/network_load_balancer.go:563
-msgid   "Unset the key as a network load balancer property"
+msgid   "Unset the keys as network load balancer properties"
 msgstr  ""
 
 #: cmd/incus/network_peer.go:597
-msgid   "Unset the key as a network peer property"
+msgid   "Unset the keys as network peer properties"
 msgstr  ""
 
 #: cmd/incus/network.go:1575
-msgid   "Unset the key as a network property"
+msgid   "Unset the keys as network properties"
 msgstr  ""
 
 #: cmd/incus/network_zone.go:548
-msgid   "Unset the key as a network zone property"
+msgid   "Unset the keys as network zone properties"
 msgstr  ""
 
 #: cmd/incus/network_zone.go:1206
-msgid   "Unset the key as a network zone record property"
+msgid   "Unset the keys as network zone record properties"
 msgstr  ""
 
 #: cmd/incus/profile.go:1120
-msgid   "Unset the key as a profile property"
+msgid   "Unset the keys as profile properties"
 msgstr  ""
 
 #: cmd/incus/project.go:846
-msgid   "Unset the key as a project property"
+msgid   "Unset the keys as project properties"
 msgstr  ""
 
 #: cmd/incus/storage_bucket.go:759
-msgid   "Unset the key as a storage bucket property"
+msgid   "Unset the keys as storage bucket properties"
 msgstr  ""
 
 #: cmd/incus/storage.go:972
-msgid   "Unset the key as a storage property"
+msgid   "Unset the keys as storage properties"
 msgstr  ""
 
 #: cmd/incus/storage_volume.go:2186
-msgid   "Unset the key as a storage volume property"
-msgstr  ""
-
-#: cmd/incus/config.go:810
-msgid   "Unset the key as an instance property"
+msgid   "Unset the keys as storage volume properties"
 msgstr  ""
 
 #: cmd/incus/info.go:912
@@ -8826,11 +8832,11 @@ msgstr  ""
 msgid   "space used"
 msgstr  ""
 
-#: cmd/incus/utils.go:560
+#: cmd/incus/utils.go:565
 msgid   "sshfs has stopped"
 msgstr  ""
 
-#: cmd/incus/utils.go:519
+#: cmd/incus/utils.go:524
 #, c-format
 msgid   "sshfs mounting %q on %q"
 msgstr  ""

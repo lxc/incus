@@ -2165,7 +2165,7 @@ type cmdStorageVolumeUnset struct {
 	flagIsProperty bool
 }
 
-var cmdStorageVolumeUnsetUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.StorageVolumeType.Optional(), u.Volume, u.Snapshot.Optional()), u.Key}
+var cmdStorageVolumeUnsetUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.StorageVolumeType.Optional(), u.Volume, u.Snapshot.Optional()), u.Key.List(1)}
 
 func (c *cmdStorageVolumeUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -2183,7 +2183,7 @@ incus storage volume unset default virtual-machine/v1 snapshots.expiry
     Removes the snapshot expiration period of virtual machine volume "v1" in pool "default"`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a storage volume property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as storage volume properties"))
 	cmd.RunE = c.run
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

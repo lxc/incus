@@ -1108,7 +1108,7 @@ type cmdProfileUnset struct {
 	flagIsProperty bool
 }
 
-var cmdProfileUnsetUsage = u.Usage{u.Profile.Remote(), u.Key}
+var cmdProfileUnsetUsage = u.Usage{u.Profile.Remote(), u.Key.List(1)}
 
 func (c *cmdProfileUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -1117,7 +1117,7 @@ func (c *cmdProfileUnset) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Unset profile configuration keys`))
 
 	cmd.RunE = c.run
-	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the key as a profile property"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as profile properties"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
