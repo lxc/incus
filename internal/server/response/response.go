@@ -758,7 +758,14 @@ func (r *pipeResponse) Render(w http.ResponseWriter) error {
 	}
 
 	_, err := util.SafeCopy(w, r.reader)
-	return err
+	if err != nil {
+		// It's too late to send a clean error back to the client, so
+		// instead use the Go HTTP ErrAbortHandler logic to terminate the
+		// connection. This does not cause the daemon itself to panic.
+		panic(http.ErrAbortHandler)
+	}
+
+	return nil
 }
 
 // String returns a quick description of the response.
