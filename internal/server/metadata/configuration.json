@@ -3677,6 +3677,7 @@
 							"condition": "BGP server",
 							"default": "local address",
 							"longdesc": "",
+							"scope": "local",
 							"shortdesc": "Override the next-hop for advertised prefixes",
 							"type": "string"
 						}
@@ -3686,6 +3687,7 @@
 							"condition": "BGP server",
 							"default": "local address",
 							"longdesc": "",
+							"scope": "local",
 							"shortdesc": "Override the next-hop for advertised prefixes",
 							"type": "string"
 						}
@@ -4323,6 +4325,7 @@
 						"parent": {
 							"condition": "-",
 							"longdesc": "",
+							"scope": "local",
 							"shortdesc": "Parent interface to create macvlan NICs on",
 							"type": "string"
 						}
@@ -4351,6 +4354,7 @@
 					{
 						"bridge.external_interfaces": {
 							"longdesc": "",
+							"scope": "local",
 							"shortdesc": "Comma-separated list of unconfigured network interfaces to include in the bridge",
 							"type": "string"
 						}
@@ -4751,6 +4755,7 @@
 						"parent": {
 							"condition": "-",
 							"longdesc": "",
+							"scope": "local",
 							"shortdesc": "Existing interface to use for network",
 							"type": "string"
 						}
@@ -4902,6 +4907,7 @@
 						"parent": {
 							"condition": "-",
 							"longdesc": "",
+							"scope": "local",
 							"shortdesc": "Parent interface to create `sriov` NICs on",
 							"type": "string"
 						}

@@ -480,23 +480,24 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		// ---
 		//  type: string
 		//  shortdesc: MAC address for the virtual bridge interface
-
 		"bridge.hwaddr": validate.Optional(validate.IsNetworkMAC),
+
 		// gendoc:generate(entity=network_ovn, group=common, key=bridge.mtu)
 		//
 		// ---
 		//  type: integer
 		//  shortdesc: Bridge MTU (default allows host to host Geneve tunnels)
 		//  default: `1442`
-
 		"bridge.mtu": validate.Optional(validate.IsNetworkMTU),
+
 		// gendoc:generate(entity=network_ovn, group=common, key=bridge.external_interfaces)
 		//
 		// ---
 		//  type: string
+		//  scope: local
 		//  shortdesc: Comma-separated list of unconfigured network interfaces to include in the bridge
-
 		"bridge.external_interfaces": validate.Optional(validateExternalInterfaces),
+
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.address)
 		//
 		// ---
