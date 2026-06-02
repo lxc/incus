@@ -9123,8 +9123,8 @@ func (b *backend) qcow2BackupVolume(vol drivers.Volume, dbVol *db.StorageVolume,
 		return err
 	}
 
-	inst, deviceName, err := InstanceByVolumeName(b.state, b.name, projectName, vol.Name(), volumeDBType)
-	if err != nil {
+	inst, deviceName, err := InstanceByVolumeName(b.state, b.name, projectName, dbVol.Name, volumeDBType)
+	if err != nil && !errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
 		return err
 	}
 
