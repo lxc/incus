@@ -11074,6 +11074,12 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 		return nil, "", err
 	}
 
+	// Cleanup any leftover sockets.
+	err = os.Remove(socketPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, "", fmt.Errorf("Failed to remove stale migration socket %q: %w", socketPath, err)
+	}
+
 	migrationSock, err := net.ListenUnix("unix", addr)
 	if err != nil {
 		return nil, "", fmt.Errorf("Error connecting to migration socket %q: %w", socketPath, err)
