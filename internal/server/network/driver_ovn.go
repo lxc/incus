@@ -8360,6 +8360,18 @@ func (n *ovn) updateTunnels(newConfig map[string]string, changedKeys []string, r
 		return err
 	}
 
+	// Work out whether there are any tunnels to create or remove from OVN.
+	hasTunnels := len(n.getTunnels(newConfig)) > 0
+	if reinitialize {
+		hasTunnels = hasTunnels || len(n.getTunnels(n.config)) > 0
+	} else {
+		hasTunnels = hasTunnels || len(n.getTunnelsFromChangedKeys(changedKeys)) > 0
+	}
+
+	if !hasTunnels {
+		return nil
+	}
+
 	chassisName, err := n.getActiveChassisName()
 	if err != nil {
 		return err
