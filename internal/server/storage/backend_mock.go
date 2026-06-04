@@ -464,6 +464,11 @@ func (b *mockBackend) GetInstanceNBD(inst instance.Instance, writable bool) (net
 	return nil, nil, nil
 }
 
+// GetInstanceAllDisksNBD returns a single NBD connection exporting all of the instance's disks.
+func (b *mockBackend) GetInstanceAllDisksNBD(inst instance.Instance) (net.Conn, func(), error) {
+	return nil, nil, nil
+}
+
 // GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
 func (b *mockBackend) GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error) {
 	return nil, nil, nil

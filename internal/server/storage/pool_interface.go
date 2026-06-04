@@ -99,6 +99,7 @@ type Pool interface {
 	BackupInstance(inst instance.Instance, tarWriter *instancewriter.InstanceTarWriter, optimized bool, snapshots bool, dependentVolumes bool, op *operations.Operation) error
 	CreateInstanceFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) (func(instance.Instance) error, revert.Hook, error)
 	GetInstanceNBD(inst instance.Instance, writable bool) (net.Conn, func(), error)
+	GetInstanceAllDisksNBD(inst instance.Instance) (net.Conn, func(), error)
 
 	// Images.
 	EnsureImage(fingerprint string, op *operations.Operation) error
