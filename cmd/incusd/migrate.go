@@ -86,6 +86,10 @@ func (c *migrationFields) recv(m proto.Message, handshake bool) error {
 
 		// Remove the deadline after the request.
 		defer func() { _ = conn.SetReadDeadline(time.Time{}) }()
+
+		// When handling a handshake, parse the header to make sure we
+		// didn't get a remote side failure.
+		return migration.ProtoRecvHeader(conn, m)
 	}
 
 	return migration.ProtoRecv(conn, m)
