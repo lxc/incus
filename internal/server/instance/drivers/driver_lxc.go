@@ -9492,6 +9492,11 @@ func (d *lxc) ConnectNBD(diskName string, volSize int64, writable bool) (net.Con
 	return nil, nil, instance.ErrNotImplemented
 }
 
+// ConnectNBDAllDisks exports all disks over NBD. Not supported by containers.
+func (d *lxc) ConnectNBDAllDisks() (net.Conn, func(), error) {
+	return nil, nil, instance.ErrNotImplemented
+}
+
 // setNICLink sets the link status of the given device.
 func (d *lxc) setNICLink(devName string, connected bool, assumeUp bool) error {
 	// This check is added so that devices that cannot handle link states do not fail to initialize.
