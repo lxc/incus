@@ -772,7 +772,7 @@ func (g *Gateway) init(bootstrap bool) error {
 
 	dir := filepath.Join(g.db.Dir(), "global")
 	if util.PathExists(filepath.Join(dir, "logs.db")) {
-		return errors.New("Unsupported upgrade path, please first upgrade to LXD 4.0")
+		return errors.New("Unsupported upgrade path, please reinstall")
 	}
 
 	// If the resulting raft instance is not nil, it means that this node
