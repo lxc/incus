@@ -313,6 +313,11 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		}
 	}
 
+	// Refuse to migrate onto an existing instance of a different type.
+	if inst != nil && inst.Type() != dbType {
+		return response.Conflict(fmt.Errorf("Instance %q already exists with a different type", req.Name))
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
