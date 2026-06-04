@@ -7764,7 +7764,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	d.logger.Debug("Got migration offer response from target")
 
 	// Negotiated migration types.
-	migrationTypes, err := localMigration.MatchTypes(respHeader, migration.MigrationFSType_RSYNC, poolMigrationTypes)
+	migrationTypes, err := localMigration.MatchTypes(respHeader, storagePools.FallbackMigrationType(contentType), poolMigrationTypes)
 	if err != nil {
 		err := fmt.Errorf("Failed to negotiate migration type: %w", err)
 		op.Done(err)
