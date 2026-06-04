@@ -543,7 +543,7 @@ func internalRecoverImportInstance(s *state.State, pool storagePools.Pool, proje
 		return nil, nil, errors.New("Invalid instance type")
 	}
 
-	inst, instOp, cleanup, err := instance.CreateInternal(s, *dbInst, nil, false, true, false)
+	inst, instOp, cleanup, err := instance.CreateInternal(s, *dbInst, nil, false, true, true)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed creating instance record: %w", err)
 	}
