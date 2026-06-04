@@ -112,6 +112,7 @@ type Instance interface {
 	DeleteQcow2Snapshot(devName string, snapshotIndex int, backingFilename string) error
 	ExportQcow2Block(diskName string, blockIndex int) (func(), string, error)
 	ConnectNBD(diskName string, diskSize int64, writable bool) (net.Conn, func(), error)
+	ConnectNBDAllDisks() (net.Conn, func(), error)
 
 	// Config handling.
 	Rename(newName string, applyTemplateTrigger bool) error
