@@ -1044,7 +1044,7 @@ func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string
 		_ = monitor.NBDServerStop()
 	}()
 
-	err = monitor.NBDBlockExportAdd(blockExport, true, nil)
+	err = monitor.NBDBlockExportAdd(blockExport, blockExport, true, nil)
 	if err != nil {
 		return fmt.Errorf("Failed adding root disk to NBD server: %w", err)
 	}
@@ -11144,7 +11144,7 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 
 	exportDiskPath := fmt.Sprintf("nbd+unix:///%s?socket=%s", exportBlockName, socketPath)
 
-	err = monitor.NBDBlockExportAdd(exportBlockName, false, nil)
+	err = monitor.NBDBlockExportAdd(exportBlockName, exportBlockName, false, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed adding disk to NBD server: %w", err)
 	}
@@ -11334,7 +11334,7 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 		reverter.Add(cleanupSnapshot)
 	}
 
-	err = monitor.NBDBlockExportAdd(blockExport, writable, bitmapNames)
+	err = monitor.NBDBlockExportAdd(blockExport, "", writable, bitmapNames)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed adding disk to NBD server: %w", err)
 	}
