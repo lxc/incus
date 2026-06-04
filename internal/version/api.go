@@ -543,6 +543,7 @@ var APIExtensions = []string{
 	"storage_volumes_rebuild",
 	"api_fragments",
 	"instance_limits_cpu_topology",
+	"instance_nbd",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
