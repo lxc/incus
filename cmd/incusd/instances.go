@@ -73,6 +73,13 @@ var instanceSFTPCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: instanceSFTPHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanConnectSFTP, "name")},
 }
 
+var instanceNBDCmd = APIEndpoint{
+	Name: "instanceNBD",
+	Path: "instances/{name}/nbd",
+
+	Get: APIEndpointAction{Handler: instanceNBDHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanConnectNBD, "name")},
+}
+
 var instanceFileCmd = APIEndpoint{
 	Name: "instanceFile",
 	Path: "instances/{name}/files",

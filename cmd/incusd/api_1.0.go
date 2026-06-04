@@ -66,6 +66,7 @@ var api10 = []APIEndpoint{
 	instanceMetadataCmd,
 	instanceMetadataTemplatesCmd,
 	instancesCmd,
+	instanceNBDCmd,
 	instanceRebuildCmd,
 	instanceSFTPCmd,
 	instanceSnapshotCmd,
