@@ -3152,3 +3152,9 @@ For example, `/1.0?target=foo#storage.logs_volume` refers to the
 This extends the `limits.cpu` configuration key for virtual machines to
 allow specifying an explicit CPU topology of the form
 `sockets=2,cores=4,threads=2`.
+
+## `instance_nbd`
+
+This adds a new `GET /1.0/instances/{name}/nbd` endpoint which acts
+similarly to the equivalent storage volume endpoint but allows concurrent
+access to all disks attached to the VM.
