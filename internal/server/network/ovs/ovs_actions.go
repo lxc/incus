@@ -697,6 +697,74 @@ func (o *VSwitch) GetBridgePorts(ctx context.Context, bridgeName string) ([]stri
 	return portNames, nil
 }
 
+// RemoveStaleBridgePorts goes through the OVS bridge and clears any external port that's currently detached/orphan.
+func (o *VSwitch) RemoveStaleBridgePorts(ctx context.Context) error {
+	// Get all the bridges.
+	bridges := []ovsSwitch.Bridge{}
+
+	err := o.client.List(ctx, &bridges)
+	if err != nil {
+		return err
+	}
+
+	for _, bridge := range bridges {
+		for _, portUUID := range bridge.Ports {
+			// Get the port.
+			port := ovsSwitch.Port{
+				UUID: portUUID,
+			}
+
+			err = o.client.Get(ctx, &port)
+			if err != nil {
+				return err
+			}
+
+			// Never remove the bridge's own internal port.
+			if port.Name == bridge.Name {
+				continue
+			}
+
+			// Only consider ports whose interfaces are all backed by a missing kernel device.
+			stale := len(port.Interfaces) > 0
+			for _, ifaceUUID := range port.Interfaces {
+				iface := ovsSwitch.Interface{
+					UUID: ifaceUUID,
+				}
+
+				err = o.client.Get(ctx, &iface)
+				if err != nil {
+					return err
+				}
+
+				// Only system interfaces are backed by a standalone kernel network device.
+				// Internal, patch and tunnel interfaces don't have one and must be left alone.
+				if iface.Type != "" && iface.Type != "system" {
+					stale = false
+					break
+				}
+
+				// Keep the port if the kernel network device still exists.
+				if util.PathExists(fmt.Sprintf("/sys/class/net/%s", iface.Name)) {
+					stale = false
+					break
+				}
+			}
+
+			if !stale {
+				continue
+			}
+
+			// Remove the stale port.
+			err = o.DeleteBridgePort(ctx, bridge.Name, port.Name)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // GetHardwareOffload returns true if hardware offloading is enabled.
 func (o *VSwitch) GetHardwareOffload(ctx context.Context) (bool, error) {
 	// Get the root switch.

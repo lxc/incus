@@ -1702,6 +1702,15 @@ func networkLeasesGet(d *Daemon, r *http.Request) response.Response {
 func networkStartup(s *state.State) error {
 	var err error
 
+	// Cleanup leftover OVS ports.
+	vswitch, err := s.OVS()
+	if err == nil {
+		err = vswitch.RemoveStaleBridgePorts(s.ShutdownCtx)
+		if err != nil {
+			logger.Warn("Failed to clean up stale OVS ports", logger.Ctx{"err": err})
+		}
+	}
+
 	// Get a list of projects.
 	var projectNames []string
 
