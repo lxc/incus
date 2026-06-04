@@ -25,8 +25,6 @@ Incus is a true open source community project, free of any [CLA](https://en.wiki
 remains released under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0).
 It's maintained by the same team of developers that first created LXD.
 
-LXD users wishing to migrate to Incus can easily do so through a migration tool called [`lxd-to-incus`](https://linuxcontainers.org/incus/docs/main/howto/server_migrate_lxd/).
-
 ## Get started
 
 See [Getting started](https://linuxcontainers.org/incus/docs/main/tutorial/first_steps/) in the Incus documentation for installation instructions and first steps.

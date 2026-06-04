@@ -101,7 +101,6 @@ There are two options currently available to Debian users.
 
     On Debian systems, running `apt install incus` will get Incus installed with all dependencies required for running containers and virtual machines.
     If you only wish to run containers in Incus, you can run just `apt install incus-base`.
-    If migrating from LXD, also run `apt install incus-extra` to get the `lxd-to-incus` command.
 
 1. Zabbly package repository
 
@@ -189,8 +188,6 @@ Install Incus with:
 
     zypper in incus
 
-If migrating from LXD, please also install `incus-tools` for `lxd-to-incus`.
-
 The default setup should work fine for most users, but if you intend to run many containers on your system you may wish to apply some custom `sysctl` settings [as suggested in the production deployments guide](./reference/server_settings.md).
 
 Please report packaging issues [here](https://bugzilla.opensuse.org/).
@@ -233,7 +230,6 @@ There are two options currently available to Ubuntu users.
     A native `incus` package is currently available in Ubuntu 24.04 LTS and later.
     On such systems, just running `apt install incus` will get Incus installed.
     To run virtual machines, also run `apt install qemu-system`.
-    If migrating from LXD, also run `apt install incus-tools` to get the `lxd-to-incus` command.
 
 1. Zabbly package repository
 

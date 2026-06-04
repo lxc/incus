@@ -30,10 +30,6 @@ After going through these steps, you will have a general idea of how to use Incu
 
 1. Initialize Incus
 
-   ```{note}
-   If you are migrating from an existing LXD installation, skip this step and refer to {ref}`server-migrate-lxd` instead.
-   ```
-
    Incus requires some initial setup for networking and storage. This can be done interactively through:
 
        incus admin init
