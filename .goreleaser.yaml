@@ -66,19 +66,6 @@ archives:
       {{- else if eq .Arch "arm64" }}aarch64
       {{- else }}{{ .Arch }}{{ end }}
 
-  - id: lxd-to-incus
-    ids:
-      - lxd-to-incus
-    formats:
-      - binary
-    name_template: >-
-      bin.
-      {{- if eq .Os "darwin" }}macos
-      {{- else }}{{ .Os }}{{ end }}.lxd-to-incus.
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "arm64" }}aarch64
-      {{- else }}{{ .Arch }}{{ end }}
-
 before:
   hooks:
     - go mod download
@@ -152,16 +139,6 @@ builds:
     - amd64
     - arm64
 
- - id: lxd-to-incus
-   main: ./cmd/lxd-to-incus
-   env:
-    - CGO_ENABLED=0
-   goos:
-    - linux
-   goarch:
-    - amd64
-    - arm64
-
 changelog:
   use: "github-native"
 
@@ -195,7 +172,6 @@ sboms:
     - incus-benchmark
     - incus-migrate
     - incus-simplestreams
-    - lxd-to-incus
   - id: source
     artifacts: source
 

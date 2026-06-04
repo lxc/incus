@@ -10,13 +10,7 @@ import (
 // ParseFileHeaders extracts the file ownership, type, mode and operation type from HTTP headers.
 func ParseFileHeaders(headers http.Header) (int64, int64, int, string, string) {
 	getHeader := func(key string) string {
-		value := headers.Get(fmt.Sprintf("X-Incus-%s", key))
-		if value == "" {
-			// Legacy support.
-			value = headers.Get(fmt.Sprintf("X-LXD-%s", key))
-		}
-
-		return value
+		return headers.Get(fmt.Sprintf("X-Incus-%s", key))
 	}
 
 	uid, err := strconv.ParseInt(getHeader("uid"), 10, 64)

@@ -42,7 +42,6 @@ On top of those, the following optional binaries may also be made available:
 - `incus-benchmark`
 - `incus-migrate`
 - `lxc-to-incus`
-- `lxd-to-incus` (should be kept to root only)
 
 ## Incus agent binaries
 
