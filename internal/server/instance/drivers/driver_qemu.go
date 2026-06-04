@@ -9383,6 +9383,13 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 
 	// If VM is stopped or errored, we're done here.
 	if d.isErrorStatusCode(statusCode) || !d.isRunningStatusCode(statusCode) {
+		diskState, err := d.diskState()
+		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
+			d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
+		}
+
+		status.Disk = diskState
+
 		return status, nil
 	}
 
