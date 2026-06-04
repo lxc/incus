@@ -60,7 +60,7 @@ func (c *migrationFields) send(m proto.Message) error {
 		return fmt.Errorf("Control connection not initialized: %w", err)
 	}
 
-	_ = conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
+	_ = conn.SetWriteDeadline(time.Now().Add(2 * time.Minute))
 
 	err = migration.ProtoSend(conn, m)
 	if err != nil {
@@ -82,7 +82,7 @@ func (c *migrationFields) recv(m proto.Message, handshake bool) error {
 	// Later calls are done during migration as migration barrier and
 	// can potentially take multiple hours.
 	if handshake {
-		_ = conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		_ = conn.SetReadDeadline(time.Now().Add(2 * time.Minute))
 
 		// Remove the deadline after the request.
 		defer func() { _ = conn.SetReadDeadline(time.Time{}) }()
