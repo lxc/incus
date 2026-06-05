@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -25,6 +24,7 @@ import (
 	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
 	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/scriptlet"
 	"github.com/lxc/incus/v7/internal/server/state"
@@ -42,6 +42,29 @@ type (
 	evacuateStopFunc    func(inst instance.Instance, action string) error
 	evacuateMigrateFunc func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, op *operations.Operation) error
 )
+
+// evacuationProgressHandler allows wrapping progress data with a prefix string (instance identifier).
+func evacuationProgressHandler(op *operations.Operation, prefix string) func(newOp api.Operation) {
+	return func(newOp api.Operation) {
+		msg := prefix
+
+		for key, value := range newOp.Metadata {
+			if !strings.HasSuffix(key, "_progress") {
+				continue
+			}
+
+			str, ok := value.(string)
+			if !ok || str == "" {
+				continue
+			}
+
+			msg = fmt.Sprintf("%s: %s", prefix, str)
+			break
+		}
+
+		_ = op.ExtendMetadata(map[string]any{"evacuation_progress": msg})
+	}
+}
 
 type evacuateOpts struct {
 	s               *state.State
@@ -146,7 +169,9 @@ func evacuateMigrateInstance(r *http.Request) evacuateMigrateFunc {
 			Live:      live,
 		}
 
-		err := migrateInstance(ctx, s, inst, req, sourceMemberInfo, targetMemberInfo, "", op)
+		progressHandler := evacuationProgressHandler(op, fmt.Sprintf("Migrating %q in project %q to %q", inst.Name(), inst.Project().Name, targetMemberInfo.Name))
+
+		err := migrateInstance(ctx, s, inst, req, sourceMemberInfo, targetMemberInfo, "", op, progressHandler)
 		if err != nil {
 			return fmt.Errorf("Failed to migrate instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
 		}
@@ -598,9 +623,19 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 
 	source = source.UseTarget(originName)
 
+	_, err = source.GetEvents()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to source events: %w", err)
+	}
+
 	migrationOp, err := source.MigrateInstance(inst.Name(), req)
 	if err != nil {
 		return fmt.Errorf("Migration API failure: %w", err)
+	}
+
+	_, err = migrationOp.AddHandler(evacuationProgressHandler(op, fmt.Sprintf("Migrating %q in project %q from %q", inst.Name(), inst.Project().Name, inst.Location())))
+	if err != nil {
+		return fmt.Errorf("Failed to setup migration progress handler: %w", err)
 	}
 
 	err = migrationOp.Wait()
@@ -667,23 +702,11 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 			return fmt.Errorf("Failed getting cluster members: %w", err)
 		}
 
-		// Filter candidates by group if needed.
+		// Filter candidates by the instance's cluster group and offline servers.
 		group := inst.LocalConfig()["volatile.cluster.group"]
-		if group != "" {
-			newMembers := make([]db.NodeInfo, 0, len(allMembers))
-			for _, member := range allMembers {
-				if !slices.Contains(member.Groups, group) {
-					continue
-				}
-
-				newMembers = append(newMembers, member)
-			}
-
-			allMembers = newMembers
-		}
-
-		// Filter offline servers.
-		candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, []int{inst.Architecture()}, "", nil, s.GlobalConfig.OfflineThreshold())
+		instProject := inst.Project()
+		clusterGroupsAllowed := project.GetRestrictedClusterGroups(&instProject)
+		candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, []int{inst.Architecture()}, group, clusterGroupsAllowed, s.GlobalConfig.OfflineThreshold())
 		if err != nil {
 			return err
 		}

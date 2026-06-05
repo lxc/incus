@@ -496,7 +496,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		// Setup the instance move operation.
 		run := func(op *operations.Operation) error {
 			inst.SetOperation(op)
-			return migrateInstance(context.TODO(), s, inst, req, sourceMemberInfo, targetMemberInfo, targetGroupName, op)
+			return migrateInstance(context.TODO(), s, inst, req, sourceMemberInfo, targetMemberInfo, targetGroupName, op, nil)
 		}
 
 		resources := map[string][]api.URL{}
@@ -546,7 +546,13 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 }
 
 // Perform the server-side migration.
-func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance, req api.InstancePost, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, targetGroupName string, op *operations.Operation) error {
+func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance, req api.InstancePost, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, targetGroupName string, op *operations.Operation, progressHandler func(newOp api.Operation)) error {
+	if progressHandler == nil {
+		progressHandler = func(newOp api.Operation) {
+			_ = op.UpdateMetadata(newOp.Metadata)
+		}
+	}
+
 	// Load the instance storage pool.
 	sourcePool, err := storagePools.LoadByInstance(s, inst)
 	if err != nil {
@@ -807,11 +813,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		// Setup a progress handler.
-		handler := func(newOp api.Operation) {
-			_ = op.UpdateMetadata(newOp.Metadata)
-		}
-
-		_, err = destOp.AddHandler(handler)
+		_, err = destOp.AddHandler(progressHandler)
 		if err != nil {
 			return err
 		}
@@ -956,11 +958,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		// Setup a progress handler.
-		handler := func(newOp api.Operation) {
-			_ = op.UpdateMetadata(newOp.Metadata)
-		}
-
-		_, err = destOp.AddHandler(handler)
+		_, err = destOp.AddHandler(progressHandler)
 		if err != nil {
 			return err
 		}
