@@ -9688,6 +9688,37 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 	return conn, cleanup, nil
 }
 
+// GetInstanceAllDisksNBD returns a single NBD connection exporting all of the instance's disks.
+func (b *backend) GetInstanceAllDisksNBD(inst instance.Instance) (net.Conn, func(), error) {
+	if !inst.IsRunning() {
+		return nil, nil, errors.New("Exporting all disks over NBD is only available on running instances")
+	}
+
+	unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { unlock() })
+
+	conn, disconnect, err := inst.ConnectNBDAllDisks()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cleanup := func() {
+		disconnect()
+		unlock()
+	}
+
+	reverter.Success()
+
+	return conn, cleanup, nil
+}
+
 // GetCustomVolumeNBD returns an NBD connection to a VM's additional disk.
 func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writable bool) (net.Conn, func(), error) {
 	// Get the volume.

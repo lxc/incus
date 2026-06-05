@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-31 22:44+0000\n"
+"POT-Creation-Date: 2026-06-05 03:05-0400\n"
 "PO-Revision-Date: 2026-06-02 01:01+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2111,11 +2111,11 @@ msgstr "Daemon ainda a correr após o tempo limite %d"
 msgid "Date: %s"
 msgstr "Data: %s"
 
-#: cmd/incus/debug.go:24
+#: cmd/incus/debug.go:26
 msgid "Debug commands"
 msgstr "Comandos de depuração"
 
-#: cmd/incus/debug.go:25
+#: cmd/incus/debug.go:27
 msgid "Debug commands for instances"
 msgstr "Comandos de depuração para instâncias"
 
@@ -2953,7 +2953,7 @@ msgstr ""
 "Expiração para o novo instantâneo (seja em tempo de vida como `1d 3H` ou uma "
 "data em formato `2006/01/02 15:04 MST`)"
 
-#: cmd/incus/debug.go:45
+#: cmd/incus/debug.go:50
 msgid "Export a virtual machine's memory state"
 msgstr "Exporta estado de memória de uma máquina virtual"
 
@@ -2995,7 +2995,7 @@ msgstr "Exporta bucket de armazenamento"
 msgid "Export storage buckets as tarball."
 msgstr "Exporta buckets de armazenamento como tarball."
 
-#: cmd/incus/debug.go:46
+#: cmd/incus/debug.go:51
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3162,7 +3162,8 @@ msgstr "Falhou ao iniciar comando: %w"
 msgid "Failed starting sshfs: %w"
 msgstr "Falhou ao iniciar sshfs: %w"
 
-#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:639
+#: cmd/incus/debug.go:160 cmd/incus/storage_volume.go:2634
+#: cmd/incus/utils.go:639
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Falhou ao aceitar ligação a chegar: %w"
@@ -3247,7 +3248,7 @@ msgstr "Falhou ao criar salvaguarda de volume de armazenamento: %w"
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "Falhou ao apagar instância original após a copiar: %w"
 
-#: cmd/incus/debug.go:76
+#: cmd/incus/debug.go:81
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "Falhou ao despejar memória de instância: %w"
@@ -3273,7 +3274,8 @@ msgstr "Falhou ao encontrar projeto: %w"
 msgid "Failed to join cluster: %w"
 msgstr "Falhou ao juntar a agrupamento: %w"
 
-#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:624
+#: cmd/incus/debug.go:152 cmd/incus/storage_volume.go:2626
+#: cmd/incus/utils.go:624
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Falhou ao escutar por ligação: %w"
@@ -3576,7 +3578,7 @@ msgstr "Formato (pem|pfx)"
 msgid "Format (table|compact)"
 msgstr "Formato (table|compact)"
 
-#: cmd/incus/debug.go:54
+#: cmd/incus/debug.go:59
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
@@ -6475,22 +6477,36 @@ msgstr "NAT"
 msgid "NBD access to a block storage volume"
 msgstr "Acesso NBD a volume de armazenamento de bloco"
 
-#: cmd/incus/storage_volume.go:2639
+#: cmd/incus/debug.go:104
+#, fuzzy
+msgid "NBD access to all of an instance's disks"
+msgstr "Acesso NBD a volume de armazenamento de bloco"
+
+#: cmd/incus/debug.go:105
+msgid ""
+"NBD access to all of an instance's disks\n"
+"\n"
+"This exposes all of a running virtual machine's disks over a local NBD\n"
+"server, with each disk reachable as an NBD export named after its Incus\n"
+"device name."
+msgstr ""
+
+#: cmd/incus/debug.go:165 cmd/incus/storage_volume.go:2639
 #, c-format
 msgid "NBD client connected %q"
 msgstr "Cliente NBD ligado %q"
 
-#: cmd/incus/storage_volume.go:2640
+#: cmd/incus/debug.go:166 cmd/incus/storage_volume.go:2640
 #, c-format
 msgid "NBD client disconnected %q"
 msgstr "Cliente NBD desligado %q"
 
-#: cmd/incus/storage_volume.go:2645
+#: cmd/incus/debug.go:171 cmd/incus/storage_volume.go:2645
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr "Ligação NBD falhou: %v"
 
-#: cmd/incus/storage_volume.go:2629
+#: cmd/incus/debug.go:155 cmd/incus/storage_volume.go:2629
 #, c-format
 msgid "NBD listening on %v"
 msgstr "NBD a escutar em %v"
@@ -8584,7 +8600,7 @@ msgstr ""
 msgid "Source:"
 msgstr "Fonte:"
 
-#: cmd/incus/storage_volume.go:2578
+#: cmd/incus/debug.go:112 cmd/incus/storage_volume.go:2578
 msgid "Specific address to listen on"
 msgstr "Endereço específico onde escutar"
 
@@ -10314,7 +10330,7 @@ msgstr ""
 "   Para puxar /etc/hosts a partir do volume personalizado e escrever o seu "
 "resultado na saída standard."
 
-#: cmd/incus/debug.go:49
+#: cmd/incus/debug.go:54
 msgid ""
 "incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."

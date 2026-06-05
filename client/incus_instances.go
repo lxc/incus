@@ -1722,6 +1722,20 @@ func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, err
 	return conn, nil
 }
 
+// GetInstanceNBDConn returns a connection to the instance's NBD endpoint exposing all of its disks.
+func (r *ProtocolIncus) GetInstanceNBDConn(instanceName string) (net.Conn, error) {
+	if !r.HasExtension("instance_nbd") {
+		return nil, errors.New(`The server is missing the required "instance_nbd" API extension`)
+	}
+
+	apiURL := api.NewURL()
+	apiURL.URL = r.httpBaseURL // Preload the URL with the client base URL.
+	apiURL.Path("1.0", "instances", instanceName, "nbd")
+	r.setURLQueryAttributes(&apiURL.URL)
+
+	return r.rawConn(&apiURL.URL, "nbd")
+}
+
 // GetInstanceFileSFTPConn returns a connection to the instance's SFTP endpoint.
 func (r *ProtocolIncus) GetInstanceFileSFTPConn(instanceName string) (net.Conn, error) {
 	apiURL := api.NewURL()

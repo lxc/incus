@@ -1216,11 +1216,12 @@ func (m *Monitor) NBDServerStop() error {
 }
 
 // NBDBlockExportAdd exports a writable device via the NBD server.
-func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, writable bool, bitmapNames []string) error {
+func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, exportName string, writable bool, bitmapNames []string) error {
 	var args struct {
 		ID       string `json:"id"`
 		Type     string `json:"type"`
 		NodeName string `json:"node-name"`
+		Name     string `json:"name"`
 		Writable bool   `json:"writable"`
 		Bitmaps  []struct {
 			Node string `json:"node"`
@@ -1231,6 +1232,7 @@ func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, writable bool, bitmap
 	args.ID = deviceNodeName
 	args.Type = "nbd"
 	args.NodeName = deviceNodeName
+	args.Name = exportName
 	args.Writable = writable
 
 	for _, b := range bitmapNames {
@@ -1355,6 +1357,67 @@ func (m *Monitor) BlockDevSnapshot(deviceNodeName string, snapshotNodeName strin
 	}
 
 	return nil
+}
+
+// BlockDevSnapshotTarget describes a single blockdev-snapshot action.
+type BlockDevSnapshotTarget struct {
+	Node    string `json:"node"`
+	Overlay string `json:"overlay"`
+}
+
+// BlockDevSnapshotTransaction atomically creates the given device snapshots in a single
+// transaction so that all overlays are taken at the same point in time.
+func (m *Monitor) BlockDevSnapshotTransaction(snapshots []BlockDevSnapshotTarget) error {
+	type action struct {
+		Type string                 `json:"type"`
+		Data BlockDevSnapshotTarget `json:"data"`
+	}
+
+	actions := make([]action, 0, len(snapshots))
+	for _, snapshot := range snapshots {
+		actions = append(actions, action{
+			Type: "blockdev-snapshot",
+			Data: snapshot,
+		})
+	}
+
+	var args struct {
+		Actions []action `json:"actions"`
+	}
+
+	args.Actions = actions
+
+	err := m.Run("transaction", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// BlockNodeSize returns the virtual size in bytes of the given block node.
+func (m *Monitor) BlockNodeSize(nodeName string) (int64, error) {
+	var resp struct {
+		Return []struct {
+			NodeName string `json:"node-name"`
+			Image    struct {
+				VirtualSize int64 `json:"virtual-size"`
+			} `json:"image"`
+		} `json:"return"`
+	}
+
+	err := m.Run("query-named-block-nodes", nil, &resp)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, node := range resp.Return {
+		if node.NodeName == nodeName {
+			return node.Image.VirtualSize, nil
+		}
+	}
+
+	return 0, fmt.Errorf("Block node %q not found", nodeName)
 }
 
 // blockJobWaitReady waits until the specified jobID is ready, errored or missing.

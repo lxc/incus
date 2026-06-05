@@ -136,6 +136,8 @@ type InstanceServer interface {
 	GetInstanceFileSFTPConn(instanceName string) (net.Conn, error)
 	GetInstanceFileSFTP(instanceName string) (*sftp.Client, error)
 
+	GetInstanceNBDConn(instanceName string) (net.Conn, error)
+
 	GetInstanceSnapshotNames(instanceName string) (names []string, err error)
 	GetInstanceSnapshots(instanceName string) (snapshots []api.InstanceSnapshot, err error)
 	GetInstanceSnapshot(instanceName string, name string) (snapshot *api.InstanceSnapshot, ETag string, err error)

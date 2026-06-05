@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-05-31 22:44+0000\n"
+"POT-Creation-Date: 2026-06-05 03:05-0400\n"
 "PO-Revision-Date: 2026-05-30 00:04+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -2072,11 +2072,11 @@ msgstr "超时 %d 秒后，守护进程仍在运行"
 msgid "Date: %s"
 msgstr "日期：%s"
 
-#: cmd/incus/debug.go:24
+#: cmd/incus/debug.go:26
 msgid "Debug commands"
 msgstr "调试命令"
 
-#: cmd/incus/debug.go:25
+#: cmd/incus/debug.go:27
 msgid "Debug commands for instances"
 msgstr "实例的调试命令"
 
@@ -2881,7 +2881,7 @@ msgid ""
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
 
-#: cmd/incus/debug.go:45
+#: cmd/incus/debug.go:50
 msgid "Export a virtual machine's memory state"
 msgstr "导出虚拟机内存状态"
 
@@ -2924,7 +2924,7 @@ msgstr "导出存储桶"
 msgid "Export storage buckets as tarball."
 msgstr "将存储桶导出为 tar 包。"
 
-#: cmd/incus/debug.go:46
+#: cmd/incus/debug.go:51
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3086,7 +3086,8 @@ msgstr "启动命令失败：%w"
 msgid "Failed starting sshfs: %w"
 msgstr "启动 sshfs 失败：%w"
 
-#: cmd/incus/storage_volume.go:2634 cmd/incus/utils.go:639
+#: cmd/incus/debug.go:160 cmd/incus/storage_volume.go:2634
+#: cmd/incus/utils.go:639
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "接受传入连接失败：%w"
@@ -3171,7 +3172,7 @@ msgstr "创建存储卷备份失败：%w"
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "复制后删除原始实例失败：%w"
 
-#: cmd/incus/debug.go:76
+#: cmd/incus/debug.go:81
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "转储实例内存失败：%w"
@@ -3196,7 +3197,8 @@ msgstr "找不到项目：%w"
 msgid "Failed to join cluster: %w"
 msgstr "加入集群失败：%w"
 
-#: cmd/incus/storage_volume.go:2626 cmd/incus/utils.go:624
+#: cmd/incus/debug.go:152 cmd/incus/storage_volume.go:2626
+#: cmd/incus/utils.go:624
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "监听连接失败：%w"
@@ -3493,7 +3495,7 @@ msgstr "格式化（table|compact）"
 msgid "Format (table|compact)"
 msgstr "格式化（table|compact）"
 
-#: cmd/incus/debug.go:54
+#: cmd/incus/debug.go:59
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr "内存转储格式（如 elf、win-dmp、kdump-zlib、kdump-raw-zlib 等）"
@@ -5988,22 +5990,36 @@ msgstr ""
 msgid "NBD access to a block storage volume"
 msgstr "删除自定义存储卷"
 
-#: cmd/incus/storage_volume.go:2639
+#: cmd/incus/debug.go:104
+#, fuzzy
+msgid "NBD access to all of an instance's disks"
+msgstr "删除自定义存储卷"
+
+#: cmd/incus/debug.go:105
+msgid ""
+"NBD access to all of an instance's disks\n"
+"\n"
+"This exposes all of a running virtual machine's disks over a local NBD\n"
+"server, with each disk reachable as an NBD export named after its Incus\n"
+"device name."
+msgstr ""
+
+#: cmd/incus/debug.go:165 cmd/incus/storage_volume.go:2639
 #, c-format
 msgid "NBD client connected %q"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2640
+#: cmd/incus/debug.go:166 cmd/incus/storage_volume.go:2640
 #, fuzzy, c-format
 msgid "NBD client disconnected %q"
 msgstr "实例已断开连接"
 
-#: cmd/incus/storage_volume.go:2645
+#: cmd/incus/debug.go:171 cmd/incus/storage_volume.go:2645
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2629
+#: cmd/incus/debug.go:155 cmd/incus/storage_volume.go:2629
 #, c-format
 msgid "NBD listening on %v"
 msgstr ""
@@ -7985,7 +8001,7 @@ msgstr ""
 msgid "Source:"
 msgstr ""
 
-#: cmd/incus/storage_volume.go:2578
+#: cmd/incus/debug.go:112 cmd/incus/storage_volume.go:2578
 msgid "Specific address to listen on"
 msgstr ""
 
@@ -9554,7 +9570,7 @@ msgid ""
 "standard output."
 msgstr ""
 
-#: cmd/incus/debug.go:49
+#: cmd/incus/debug.go:54
 msgid ""
 "incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
