@@ -33,7 +33,8 @@ func createContainer(c incus.InstanceServer, fingerprint string, name string, pr
 
 func startContainer(c incus.InstanceServer, name string) error {
 	op, err := c.UpdateInstanceState(
-		name, api.InstanceStatePut{Action: "start", Timeout: -1}, "")
+		name, api.InstanceStatePut{Action: "start", Timeout: -1}, "",
+	)
 	if err != nil {
 		return err
 	}
@@ -43,7 +44,8 @@ func startContainer(c incus.InstanceServer, name string) error {
 
 func stopContainer(c incus.InstanceServer, name string) error {
 	op, err := c.UpdateInstanceState(
-		name, api.InstanceStatePut{Action: "stop", Timeout: -1, Force: true}, "")
+		name, api.InstanceStatePut{Action: "stop", Timeout: -1, Force: true}, "",
+	)
 	if err != nil {
 		return err
 	}
@@ -53,7 +55,8 @@ func stopContainer(c incus.InstanceServer, name string) error {
 
 func freezeContainer(c incus.InstanceServer, name string) error {
 	op, err := c.UpdateInstanceState(
-		name, api.InstanceStatePut{Action: "freeze", Timeout: -1}, "")
+		name, api.InstanceStatePut{Action: "freeze", Timeout: -1}, "",
+	)
 	if err != nil {
 		return err
 	}

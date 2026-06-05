@@ -114,7 +114,8 @@ l - Listen Address
 d - Description
 D - Default Target Address
 p - Port
-L - Location of the network zone (e.g. its cluster member)`))
+L - Location of the network zone (e.g. its cluster member)`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -477,7 +478,8 @@ func (c *cmdNetworkForwardSet) command() *cobra.Command {
 		`Set network forward keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<network> <listen_address> <key> <value>`))
+    incus network set [<remote>:]<network> <listen_address> <key> <value>`,
+	))
 	cmd.RunE = c.run
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network forward property"))
@@ -657,7 +659,8 @@ func (c *cmdNetworkForwardEdit) helpTemplate() string {
 ###   target_port: 80,81,8080-8090
 ### location: server01
 ###
-### Note that the listen_address and location cannot be changed.`)
+### Note that the listen_address and location cannot be changed.`,
+	)
 }
 
 func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {

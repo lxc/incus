@@ -138,7 +138,8 @@ func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 	monitorCookie, err := ovn.Monitor(context.TODO(), ovn.NewMonitor(
 		ovsdbClient.WithTable(&ovnSB.Chassis{}),
 		ovsdbClient.WithTable(&ovnSB.PortBinding{}),
-		ovsdbClient.WithTable(&ovnSB.ServiceMonitor{})))
+		ovsdbClient.WithTable(&ovnSB.ServiceMonitor{}),
+	))
 	if err != nil {
 		return nil, err
 	}

@@ -30,10 +30,12 @@ func (c *cmdImport) command() *cobra.Command {
 	cmd.Use = cli.U("import", cmdImportUsage...)
 	cmd.Short = i18n.G("Import instance backups")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Import backups of instances including their snapshots.`))
+		`Import backups of instances including their snapshots.`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus import backup0.tar.gz
-    Create a new instance using backup0.tar.gz as the source.`))
+    Create a new instance using backup0.tar.gz as the source.`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorage, "storage|s", "", "", i18n.G("Storage pool name"))

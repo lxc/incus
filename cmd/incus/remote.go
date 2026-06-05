@@ -135,7 +135,8 @@ Several remote targets can be provided, to handle switching to other servers if 
   incus remote add some-name server1.example.com server2.example.com
 
 The remote name can be ignored if a single target is provided.
-`))
+`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAcceptCert, "accept-certificate", i18n.G("Accept certificate"))
@@ -730,7 +731,8 @@ func (c *cmdRemoteGenerateCertificate) command() *cobra.Command {
 	cmd.Use = cli.U("generate-certificate", cmdRemoteGenerateCertificateUsage...)
 	cmd.Short = i18n.G("Generate the client certificate")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Manually trigger the generation of a client certificate`))
+		`Manually trigger the generation of a client certificate`,
+	))
 
 	cmd.RunE = c.run
 
@@ -919,7 +921,8 @@ func (c *cmdRemoteGetClientToken) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Generate a client trust token derived from the existing client certificate and private key.
 
-This is useful for remote authentication workflows where a token is passed to another Incus server.`))
+This is useful for remote authentication workflows where a token is passed to another Incus server.`,
+	))
 	cmd.RunE = c.run
 	return cmd
 }
@@ -1024,7 +1027,8 @@ Pre-defined column shorthand chars:
   a - Auth Type
   P - Public
   s - Static
-  g - Global`))
+  g - Global`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))

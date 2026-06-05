@@ -336,7 +336,8 @@ func (c *cmdStorageVolumeSnapshotList) command() *cobra.Command {
 	Column shorthand chars:
 		n - Name
 		T - Taken at
-		E - Expiry`))
+		E - Expiry`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
@@ -612,7 +613,8 @@ func (c *cmdStorageVolumeSnapshotShow) command() *cobra.Command {
 	cmd.Use = cli.U("show", cmdStorageVolumeSnapshotShowUsage...)
 	cmd.Short = i18n.G("Show storage volume snapshot configurations")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show storage volume snapshhot configurations`))
+		`Show storage volume snapshhot configurations`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 
 	cmd.RunE = c.run

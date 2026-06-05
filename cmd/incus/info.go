@@ -38,13 +38,15 @@ func (c *cmdInfo) command() *cobra.Command {
 	cmd.Use = cli.U("info", cmdInfoUsage...)
 	cmd.Short = i18n.G("Show instance or server information")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show instance or server information`))
+		`Show instance or server information`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus info [<remote>:]<instance> [--show-log]
     For instance information.
 
 incus info [<remote>:] [--resources]
-    For server information.`))
+    For server information.`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagShowAccess, "show-access", i18n.G("Show the instance's access list"))

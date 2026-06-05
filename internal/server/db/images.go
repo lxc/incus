@@ -408,7 +408,8 @@ func (c *ClusterTx) GetImageByFingerprintPrefix(ctx context.Context, fingerprint
 	err = c.imageFill(
 		ctx, object.ID, &image,
 		&object.CreationDate.Time, &object.ExpiryDate.Time, &object.LastUseDate.Time,
-		&object.UploadDate, object.Architecture, object.Type)
+		&object.UploadDate, object.Architecture, object.Type,
+	)
 	if err != nil {
 		return -1, nil, fmt.Errorf("Fill image details: %w", err)
 	}
@@ -449,7 +450,8 @@ func (c *ClusterTx) GetImageFromAnyProject(ctx context.Context, fingerprint stri
 	err = c.imageFill(
 		ctx, object.ID, &image,
 		&object.CreationDate.Time, &object.ExpiryDate.Time, &object.LastUseDate.Time,
-		&object.UploadDate, object.Architecture, object.Type)
+		&object.UploadDate, object.Architecture, object.Type,
+	)
 	if err != nil {
 		return -1, nil, fmt.Errorf("Get image %q: Fill image details: %w", fingerprint, err)
 	}

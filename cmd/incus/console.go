@@ -48,7 +48,8 @@ func (c *cmdConsole) command() *cobra.Command {
 		`Attach to instance consoles
 
 This command allows you to interact with the boot console of an instance
-as well as retrieve past log entries from it.`))
+as well as retrieve past log entries from it.`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Forces a connection to the console, even if there is already an active session"))

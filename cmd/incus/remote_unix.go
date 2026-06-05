@@ -39,7 +39,8 @@ func (c *cmdRemoteProxy) command() *cobra.Command {
 	cmd.Use = cli.U("proxy", cmdRemoteProxyUsage...)
 	cmd.Short = i18n.G("Run a local API proxy")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Run a local API proxy for the remote`))
+		`Run a local API proxy for the remote`,
+	))
 
 	cmd.RunE = c.run
 

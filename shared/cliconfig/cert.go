@@ -113,8 +113,8 @@ func (c *Config) GetClientCertificate(name string) (string, string, string, erro
 					return "", "", "", err
 				}
 
-				ecdsaKey, okEcdsa := (sshKey).(*ecdsa.PrivateKey)
-				rsaKey, okRsa := (sshKey).(*rsa.PrivateKey)
+				ecdsaKey, okEcdsa := sshKey.(*ecdsa.PrivateKey)
+				rsaKey, okRsa := sshKey.(*rsa.PrivateKey)
 				if okEcdsa {
 					derKey, err := x509.MarshalECPrivateKey(ecdsaKey)
 					if err != nil {

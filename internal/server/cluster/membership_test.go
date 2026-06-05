@@ -267,7 +267,8 @@ func TestAccept(t *testing.T) {
 	require.NoError(t, err)
 
 	nodes, err := cluster.Accept(
-		s, gateway, "buzz", "5.6.7.8:666", cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86)
+		s, gateway, "buzz", "5.6.7.8:666", cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
+	)
 	assert.NoError(t, err)
 	assert.Len(t, nodes, 2)
 	assert.Equal(t, uint64(1), nodes[0].ID)
@@ -403,7 +404,8 @@ func TestJoin(t *testing.T) {
 	// Accept the joining node.
 	dbCluster.PreparedStmts = targetStmts
 	raftNodes, err := cluster.Accept(
-		targetState, targetGateway, "rusp", address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86)
+		targetState, targetGateway, "rusp", address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
+	)
 	require.NoError(t, err)
 
 	// Actually join the cluster.

@@ -121,7 +121,8 @@ Pre-defined column shorthand chars:
   l - Listen Address
   d - Description
   p - Ports
-  L - Location of the operation (e.g. its cluster member)`))
+  L - Location of the operation (e.g. its cluster member)`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -463,7 +464,8 @@ func (c *cmdNetworkLoadBalancerSet) command() *cobra.Command {
 		`Set network load balancer keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<network> <listen_address> <key> <value>`))
+    incus network set [<remote>:]<network> <listen_address> <key> <value>`,
+	))
 	cmd.RunE = c.run
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network load balancer property"))
@@ -636,7 +638,8 @@ func (c *cmdNetworkLoadBalancerEdit) helpTemplate() string {
 ###    - backend2
 ### location: server01
 ###
-### Note that the listen_address and location cannot be changed.`)
+### Note that the listen_address and location cannot be changed.`,
+	)
 }
 
 func (c *cmdNetworkLoadBalancerEdit) run(cmd *cobra.Command, args []string) error {

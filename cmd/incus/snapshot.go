@@ -87,7 +87,8 @@ func (c *cmdSnapshotCreate) command() *cobra.Command {
 		`Create instance snapshots
 
 When --stateful is used, attempt to checkpoint the instance's
-running state, including process memory state, TCP connections, ...`))
+running state, including process memory state, TCP connections, ...`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus snapshot create u1 snap0
 	Create a snapshot of "u1" called "snap0".
 
@@ -336,7 +337,8 @@ Pre-defined column shorthand chars:
   n - Name
   T - Taken At
   E - Expires At
-  s - Stateful`))
+  s - Stateful`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultSnapshotColumns, "", i18n.G("Columns"))
@@ -526,10 +528,12 @@ func (c *cmdSnapshotRestore) command() *cobra.Command {
 		`Restore instance from snapshots
 
 If --stateful is passed, then the running state will be restored too.
-If --diskonly is passed, then only the disk will be restored.`))
+If --diskonly is passed, then only the disk will be restored.`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus snapshot restore u1 snap0
-    Restore instance u1 to snapshot snap0`))
+    Restore instance u1 to snapshot snap0`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagStateful, "stateful", i18n.G("Whether or not to restore the instance's running state from snapshot (if available)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagDiskOnly, "diskonly", i18n.G("Whether or not to restore the instance's disk only"))
@@ -589,7 +593,8 @@ func (c *cmdSnapshotShow) command() *cobra.Command {
 	cmd.Use = cli.U("show", cmdSnapshotShowUsage...)
 	cmd.Short = i18n.G("Show instance snapshot configuration")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show instance snapshot configuration`))
+		`Show instance snapshot configuration`,
+	))
 
 	cmd.RunE = c.run
 

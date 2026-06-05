@@ -102,13 +102,15 @@ func (c *cmdClusterGroupAssign) command() *cobra.Command {
 	cmd.Aliases = []string{"apply"}
 	cmd.Short = i18n.G("Assign sets of groups to cluster members")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Assign sets of groups to cluster members`))
+		`Assign sets of groups to cluster members`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus cluster group assign foo default,bar
     Set the groups for "foo" to "default" and "bar".
 
 incus cluster group assign foo default
-    Reset "foo" to only using the "default" cluster group.`))
+    Reset "foo" to only using the "default" cluster group.`,
+	))
 
 	cmd.RunE = c.run
 
@@ -397,7 +399,8 @@ func (c *cmdClusterGroupEdit) run(cmd *cobra.Command, args []string) error {
 func (c *cmdClusterGroupEdit) helpTemplate() string {
 	return i18n.G(
 		`### This is a YAML representation of the cluster group.
-### Any line starting with a '# will be ignored.`)
+### Any line starting with a '# will be ignored.`,
+	)
 }
 
 // List.
@@ -434,7 +437,8 @@ Commas between consecutive shorthand chars are optional.
 Pre-defined column shorthand chars:
   n - Name
   d - Description
-  m - Member`))
+  m - Member`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultClusterGroupColumns, "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -561,7 +565,8 @@ func (c *cmdClusterGroupRemove) command() *cobra.Command {
 	cmd.Use = cli.U("remove", cmdClusterGroupRemoveUsage...)
 	cmd.Short = i18n.G("Remove member from group")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Remove a cluster member from a cluster group`))
+		`Remove a cluster member from a cluster group`,
+	))
 
 	cmd.RunE = c.run
 
@@ -738,7 +743,8 @@ func (c *cmdClusterGroupAdd) command() *cobra.Command {
 	cmd.Use = cli.U("add", cmdClusterGroupAddUsage...)
 	cmd.Short = i18n.G("Add member to group")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Add a cluster member to a cluster group`))
+		`Add a cluster member to a cluster group`,
+	))
 
 	cmd.RunE = c.run
 

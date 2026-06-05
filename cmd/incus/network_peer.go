@@ -110,7 +110,8 @@ Pre-defined column shorthand chars:
   d - description
   p - Peer
   t - Type
-  s - State`))
+  s - State`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -505,7 +506,8 @@ func (c *cmdNetworkPeerSet) command() *cobra.Command {
 		`Set network peer keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<network> <peer_name> <key> <value>`))
+    incus network set [<remote>:]<network> <peer_name> <key> <value>`,
+	))
 	cmd.RunE = c.run
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network peer property"))
@@ -668,7 +670,8 @@ func (c *cmdNetworkPeerEdit) helpTemplate() string {
 ### target_network: mynet
 ### status: Pending
 ###
-### Note that the name, target_project, target_network and status fields cannot be changed.`)
+### Note that the name, target_project, target_network and status fields cannot be changed.`,
+	)
 }
 
 func (c *cmdNetworkPeerEdit) run(cmd *cobra.Command, args []string) error {

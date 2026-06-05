@@ -984,7 +984,8 @@ func (c *ClusterTx) NodeIsEmpty(ctx context.Context, id int64) (string, error) {
 
 	if len(instances) > 0 {
 		message := fmt.Sprintf(
-			"Node still has the following instances: %s", strings.Join(instances, ", "))
+			"Node still has the following instances: %s", strings.Join(instances, ", "),
+		)
 		return message, nil
 	}
 
@@ -1029,7 +1030,8 @@ func (c *ClusterTx) NodeIsEmpty(ctx context.Context, id int64) (string, error) {
 
 	if len(fingerprints) > 0 {
 		message := fmt.Sprintf(
-			"Node still has the following images: %s", strings.Join(fingerprints, ", "))
+			"Node still has the following images: %s", strings.Join(fingerprints, ", "),
+		)
 		return message, nil
 	}
 
@@ -1052,7 +1054,8 @@ SELECT storage_volumes.name
 
 	if len(volumes) > 0 {
 		message := fmt.Sprintf(
-			"Node still has the following custom volumes: %s", strings.Join(volumes, ", "))
+			"Node still has the following custom volumes: %s", strings.Join(volumes, ", "),
+		)
 		return message, nil
 	}
 

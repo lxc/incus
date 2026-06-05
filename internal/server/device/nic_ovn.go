@@ -1072,7 +1072,8 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			}
 
 		case instancetype.Container:
-			runConf.NetworkInterface = append(runConf.NetworkInterface,
+			runConf.NetworkInterface = append(
+				runConf.NetworkInterface,
 				deviceConfig.RunConfigItem{Key: "hwaddr", Value: d.config["hwaddr"]},
 			)
 		}

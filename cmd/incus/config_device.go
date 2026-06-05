@@ -97,14 +97,16 @@ func (c *cmdConfigDeviceAdd) command() *cobra.Command {
     Will mount the host's /share/c1 onto /opt in the instance.
 
 incus config device add [<remote>:]instance1 <device-name> disk pool=some-pool source=some-volume path=/opt
-    Will mount the some-volume volume on some-pool onto /opt in the instance.`))
+    Will mount the some-volume volume on some-pool onto /opt in the instance.`,
+		))
 	} else if c.profile != nil {
 		cmd.Example = cli.FormatSection("", i18n.G(
 			`incus profile device add [<remote>:]profile1 <device-name> disk source=/share/c1 path=/opt
     Will mount the host's /share/c1 onto /opt in the instance.
 
 incus profile device add [<remote>:]profile1 <device-name> disk pool=some-pool source=some-volume path=/opt
-    Will mount the some-volume volume on some-pool onto /opt in the instance.`))
+    Will mount the some-volume volume on some-pool onto /opt in the instance.`,
+		))
 	}
 
 	cmd.RunE = c.run
@@ -209,7 +211,8 @@ func (c *cmdConfigDeviceGet) command() *cobra.Command {
 	cmd.Use = cli.U("get", c.configDevice.formatUsage(cmdConfigDeviceGetUsage)...)
 	cmd.Short = i18n.G("Get values for device configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Get values for device configuration keys`))
+		`Get values for device configuration keys`,
+	))
 
 	cmd.RunE = c.run
 
@@ -364,7 +367,8 @@ func (c *cmdConfigDeviceOverride) command() *cobra.Command {
 	cmd.Use = cli.U("override", cmdConfigDeviceOverrideUsage...)
 	cmd.Short = i18n.G("Copy profile inherited devices and override configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Copy profile inherited devices and override configuration keys`))
+		`Copy profile inherited devices and override configuration keys`,
+	))
 
 	cmd.RunE = c.run
 
@@ -568,13 +572,15 @@ func (c *cmdConfigDeviceSet) command() *cobra.Command {
 			`Set device configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus config device set [<remote>:]<instance> <device> <key> <value>`))
+    incus config device set [<remote>:]<instance> <device> <key> <value>`,
+		))
 	} else if c.profile != nil {
 		cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 			`Set device configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus profile device set [<remote>:]<profile> <device> <key> <value>`))
+    incus profile device set [<remote>:]<profile> <device> <key> <value>`,
+		))
 	}
 
 	cmd.RunE = c.run

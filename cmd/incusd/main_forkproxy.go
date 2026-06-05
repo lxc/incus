@@ -493,7 +493,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 			err = netutils.AbstractUnixSendFd(forkproxyUDSSockFDNum, int(file.Fd()))
 			if err != nil {
 				ok, errno := linux.GetErrno(err)
-				if ok && (errors.Is(errno, unix.EAGAIN)) {
+				if ok && errors.Is(errno, unix.EAGAIN) {
 					goto sAgain
 				}
 
@@ -558,7 +558,7 @@ func (c *cmdForkproxy) run(cmd *cobra.Command, args []string) error {
 		f, err := netutils.AbstractUnixReceiveFd(forkproxyUDSSockFDNum, netutils.UnixFdsAcceptExact)
 		if err != nil {
 			ok, errno := linux.GetErrno(err)
-			if ok && (errors.Is(errno, unix.EAGAIN)) {
+			if ok && errors.Is(errno, unix.EAGAIN) {
 				goto rAgain
 			}
 
@@ -767,7 +767,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 
 		// keep retrying on EAGAIN
 		ok, errno := linux.GetErrno(er)
-		if ok && (errors.Is(errno, unix.EAGAIN)) {
+		if ok && errors.Is(errno, unix.EAGAIN) {
 			goto rAgain
 		}
 
@@ -803,7 +803,7 @@ func proxyCopy(dst net.Conn, src net.Conn) error {
 
 			// keep retrying on EAGAIN
 			ok, errno := linux.GetErrno(ew)
-			if ok && (errors.Is(errno, unix.EAGAIN)) {
+			if ok && errors.Is(errno, unix.EAGAIN) {
 				goto wAgain
 			}
 

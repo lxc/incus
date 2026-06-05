@@ -145,7 +145,8 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	}
 
 	err = checkRestrictionsOnVolatileConfig(
-		info.Project, instanceType, req.Name, req.Config, map[string]string{}, strip)
+		info.Project, instanceType, req.Name, req.Config, map[string]string{}, strip,
+	)
 	if err != nil {
 		return err
 	}
@@ -1062,7 +1063,8 @@ func AllowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req
 	// Special case restriction checks on volatile.* keys, since we want to
 	// detect if they were changed or added.
 	err = checkRestrictionsOnVolatileConfig(
-		info.Project, instType, updatedInstance.Name, req.Config, currentConfig, false)
+		info.Project, instType, updatedInstance.Name, req.Config, currentConfig, false,
+	)
 	if err != nil {
 		return err
 	}

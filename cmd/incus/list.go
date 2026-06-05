@@ -125,7 +125,8 @@ Custom columns are defined with "[config:|devices:]key[:name][:maxWidth]":
   Defaults to the key if not specified or empty.
 
   MAXWIDTH: Max width of the column (longer results are truncated).
-  Defaults to -1 (unlimited). Use 0 to limit to the column header size.`))
+  Defaults to -1 (unlimited). Use 0 to limit to the column header size.`,
+	))
 
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP
@@ -134,7 +135,8 @@ Custom columns are defined with "[config:|devices:]key[:name][:maxWidth]":
   "ETHP" is a custom column generated from a device key.
 
 incus list -c ns,user.comment:comment
-  List instances with their running state and user comment.`))
+  List instances with their running state and user comment.`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultColumns, "", i18n.G("Columns"))

@@ -190,7 +190,8 @@ func (d *cephfs) Create() error {
 
 			if !osdPoolExists {
 				// Create new osd pool.
-				_, err := subprocess.RunCommand("ceph",
+				_, err := subprocess.RunCommand(
+					"ceph",
 					"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
 					"--cluster", d.config["cephfs.cluster_name"],
 					"osd",
@@ -205,7 +206,8 @@ func (d *cephfs) Create() error {
 
 				reverter.Add(func() {
 					// Delete the OSD pool.
-					_, _ = subprocess.RunCommand("ceph",
+					_, _ = subprocess.RunCommand(
+						"ceph",
 						"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
 						"--cluster", d.config["cephfs.cluster_name"],
 						"osd",
@@ -220,7 +222,8 @@ func (d *cephfs) Create() error {
 		}
 
 		// Create the filesystem.
-		_, err := subprocess.RunCommand("ceph",
+		_, err := subprocess.RunCommand(
+			"ceph",
 			"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
 			"--cluster", d.config["cephfs.cluster_name"],
 			"fs",
@@ -235,7 +238,8 @@ func (d *cephfs) Create() error {
 
 		reverter.Add(func() {
 			// Set the FS to fail so that we can remove it.
-			_, _ = subprocess.RunCommand("ceph",
+			_, _ = subprocess.RunCommand(
+				"ceph",
 				"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
 				"--cluster", d.config["cephfs.cluster_name"],
 				"fs",
@@ -244,7 +248,8 @@ func (d *cephfs) Create() error {
 			)
 
 			// Delete the FS.
-			_, _ = subprocess.RunCommand("ceph",
+			_, _ = subprocess.RunCommand(
+				"ceph",
 				"--name", fmt.Sprintf("client.%s", d.config["cephfs.user.name"]),
 				"--cluster", d.config["cephfs.cluster_name"],
 				"fs",

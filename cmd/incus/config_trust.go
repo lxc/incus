@@ -95,7 +95,8 @@ func (c *cmdConfigTrustAdd) command() *cobra.Command {
 		`Add new trusted client
 
 This will issue a trust token to be used by the client to add itself to the trust store.
-`))
+`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagRestricted, "restricted", i18n.G("Restrict the certificate to one or more projects"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagProjects, "projects", "", "", i18n.G("List of projects to restrict the certificate to"))
@@ -171,7 +172,8 @@ func (c *cmdConfigTrustAddCertificate) command() *cobra.Command {
 The following certificate types are supported:
 - client (default)
 - metrics
-`))
+`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagRestricted, "restricted", i18n.G("Restrict the certificate to one or more projects"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagProjects, "projects", "", "", i18n.G("List of projects to restrict the certificate to"))
@@ -271,7 +273,8 @@ func (c *cmdConfigTrustEdit) helpTemplate() string {
 		`### This is a YAML representation of the certificate.
 ### Any line starting with a '# will be ignored.
 ###
-### Note that the fingerprint is shown but cannot be changed`)
+### Note that the fingerprint is shown but cannot be changed`,
+	)
 }
 
 func (c *cmdConfigTrustEdit) run(cmd *cobra.Command, args []string) error {
@@ -393,7 +396,8 @@ Column shorthand chars:
 	i - Issue date
 	e - Expiry date
 	r - Whether certificate is restricted
-	p - Newline-separated list of projects`))
+	p - Newline-separated list of projects`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", "ntdfe", "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -579,7 +583,8 @@ Commas between consecutive shorthand chars are optional.
 Pre-defined column shorthand chars:
   n - Name
   t - Token
-  E - Expires At`))
+  E - Expires At`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultConfigTrustListTokenColumns, "", i18n.G("Columns"))
 

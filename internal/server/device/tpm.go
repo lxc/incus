@@ -177,7 +177,8 @@ func (d *tpm) maybeProvision(tpmDevPath string) error {
 		return fmt.Errorf("Failed writing swtpm_setup config: %w", err)
 	}
 
-	_, err = subprocess.RunCommand("swtpm_setup",
+	_, err = subprocess.RunCommand(
+		"swtpm_setup",
 		"--tpm2",
 		"--tpmstate", tpmDevPath,
 		"--create-ek-cert",

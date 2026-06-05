@@ -19,7 +19,8 @@ func (c *cmdAdmin) command() *cobra.Command {
 	cmd.Use = cli.U("admin")
 	cmd.Short = i18n.G("Manage incus daemon")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Manage incus daemon`))
+		`Manage incus daemon`,
+	))
 
 	// os
 	adminOSCmd := cmdAdminOS{global: c.global}

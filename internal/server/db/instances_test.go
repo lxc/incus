@@ -433,7 +433,8 @@ func TestGetInstancesByMemberAddress(t *testing.T) {
 			"":            {{ID: 2, Project: api.ProjectDefaultName, Name: "c2", Location: "none"}},
 			"1.2.3.4:666": {{ID: 1, Project: api.ProjectDefaultName, Name: "c1", Location: "node2"}, {ID: 4, Project: api.ProjectDefaultName, Name: "c4", Location: "node2"}},
 			"0.0.0.0":     {{ID: 3, Project: api.ProjectDefaultName, Name: "c3", Location: "node3"}},
-		}, result)
+		}, result,
+	)
 }
 
 func TestGetInstancePool(t *testing.T) {

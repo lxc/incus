@@ -68,7 +68,8 @@ func (c *cmdConfigTemplateCreate) command() *cobra.Command {
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create new instance file templates")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Create new instance file templates`))
+		`Create new instance file templates`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus config template create u1 t1
     Create template t1 for instance u1
 
@@ -331,7 +332,8 @@ func (c *cmdConfigTemplateShow) command() *cobra.Command {
 	cmd.Use = cli.U("show", cmdConfigTemplateShowUsage...)
 	cmd.Short = i18n.G("Show content of instance file templates")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show content of instance file templates`))
+		`Show content of instance file templates`,
+	))
 
 	cmd.RunE = c.run
 

@@ -796,7 +796,8 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 
 			// Use a fixed address as the auto next-hop default gateway if using this IP family.
 			if len(ipAddresses) > 0 && nicHasAutoGateway(d.config[fmt.Sprintf("%s.gateway", keyPrefix)]) {
-				runConf.NetworkInterface = append(runConf.NetworkInterface,
+				runConf.NetworkInterface = append(
+					runConf.NetworkInterface,
 					deviceConfig.RunConfigItem{Key: fmt.Sprintf("%s.gateway", keyPrefix), Value: d.ipHostAddress(keyPrefix).String()},
 				)
 			}
@@ -804,7 +805,8 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			for _, addrStr := range ipAddresses {
 				// Add addresses to instance NIC.
 				if keyPrefix == "ipv6" {
-					runConf.NetworkInterface = append(runConf.NetworkInterface,
+					runConf.NetworkInterface = append(
+						runConf.NetworkInterface,
 						deviceConfig.RunConfigItem{Key: "ipv6.address", Value: fmt.Sprintf("%s/128", addrStr)},
 					)
 				} else {
@@ -812,7 +814,8 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 					// this link. This stops liblxc from trying to calculate a broadcast address
 					// (and getting it wrong) which can prevent instances communicating with each other
 					// using adjacent IP addresses.
-					runConf.NetworkInterface = append(runConf.NetworkInterface,
+					runConf.NetworkInterface = append(
+						runConf.NetworkInterface,
 						deviceConfig.RunConfigItem{Key: "ipv4.address", Value: fmt.Sprintf("%s/32 0.0.0.0", addrStr)},
 					)
 				}

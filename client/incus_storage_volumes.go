@@ -432,7 +432,8 @@ func (r *ProtocolIncus) DeleteStoragePoolVolumeSnapshot(pool string, volumeType 
 	// Send the request
 	path := fmt.Sprintf(
 		"/storage-pools/%s/volumes/%s/%s/snapshots/%s",
-		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.PathEscape(snapshotName))
+		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.PathEscape(snapshotName),
+	)
 
 	op, _, err := r.queryOperation("DELETE", path, nil, "")
 	if err != nil {
@@ -1533,7 +1534,8 @@ func (r *ProtocolIncus) GetStorageVolumeBitmapNames(pool string, volumeType stri
 	urls := []string{}
 	baseURL := fmt.Sprintf(
 		"/storage-pools/%s/volumes/%s/%s/bitmaps",
-		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName))
+		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName),
+	)
 	_, err := r.queryStruct("GET", baseURL, nil, "", &urls)
 	if err != nil {
 		return nil, err
@@ -1591,7 +1593,8 @@ func (r *ProtocolIncus) DeleteStorageVolumeBitmap(pool string, volumeType string
 
 	path := fmt.Sprintf(
 		"/storage-pools/%s/volumes/%s/%s/bitmaps/%s",
-		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.PathEscape(bitmapName))
+		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.PathEscape(bitmapName),
+	)
 
 	_, _, err := r.query("DELETE", path, nil, "")
 	if err != nil {

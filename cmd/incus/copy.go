@@ -52,7 +52,8 @@ Transfer modes (--mode):
  - relay: The CLI connects to both source and server and proxies the data (both source and target must listen on network)
 
 The pull transfer mode is the default as it is compatible with all server versions.
-`))
+`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagConfig, "config|c", i18n.G("Config key/value to apply to the new instance"))

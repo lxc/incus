@@ -469,7 +469,8 @@ func (c *cmdNetworkAddressSetEdit) helpTemplate() string {
 ###  - 2001:db8::1
 ### external_ids:
 ###  user.foo: bar
-`)
+`,
+	)
 }
 
 func (c *cmdNetworkAddressSetEdit) run(cmd *cobra.Command, args []string) error {

@@ -184,7 +184,8 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 	stdout, err := r.runSkopeo(
 		"copy", info.Alias,
 		"--remove-signatures",
-		fmt.Sprintf("oci:%s:%s", filepath.Join(ociPath, "oci"), imageTag))
+		fmt.Sprintf("oci:%s:%s", filepath.Join(ociPath, "oci"), imageTag),
+	)
 	if err != nil {
 		logger.Debug("Error copying remote image to local", logger.Ctx{"image": info.Alias, "stdout": stdout, "stderr": err})
 		return nil, err
@@ -398,7 +399,8 @@ func (r *ProtocolOCI) runSkopeo(action string, image string, args ...string) (st
 		env,
 		nil,
 		"skopeo",
-		args...)
+		args...,
+	)
 	if err != nil {
 		return "", err
 	}

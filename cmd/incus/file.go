@@ -97,13 +97,15 @@ func (c *cmdFileCreate) command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdFileCreateUsage...)
 	cmd.Short = i18n.G("Create files and directories in instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Create files and directories in instances`))
+		`Create files and directories in instances`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file create foo/bar
    To create a file /bar in the foo instance.
 
 incus file create --type=symlink foo/bar baz
-   To create a symlink /bar in instance foo whose target is baz.`))
+   To create a symlink /bar in instance foo whose target is baz.`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Force creating files or directories"))
@@ -441,7 +443,8 @@ func (c *cmdFilePull) command() *cobra.Command {
    To pull /etc/hosts from the instance and write it to the current directory.
 
 incus file pull foo/etc/hosts -
-   To pull /etc/hosts from the instance and write its output to standard output.`))
+   To pull /etc/hosts from the instance and write its output to standard output.`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
 	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
@@ -669,7 +672,8 @@ func (c *cmdFilePush) command() *cobra.Command {
    To push /etc/hosts into the instance "foo".
 
 echo "Hello world" | incus file push - foo/root/test
-   To read "Hello world" from standard input and write it into /root/test in instance "foo".`))
+   To read "Hello world" from standard input and write it into /root/test in instance "foo".`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
 	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push"))
@@ -903,13 +907,15 @@ func (c *cmdFileMount) command() *cobra.Command {
 	cmd.Short = i18n.G("Mount files from instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Mount files from instances.
-If no target path is provided, start an SSH SFTP listener instead.`))
+If no target path is provided, start an SSH SFTP listener instead.`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus file mount foo/root fooroot
    To mount /root from the instance foo onto the local fooroot directory.
 
 incus file mount foo
-   To start an SSH SFTP listener for the root filesystem of instance foo.`))
+   To start an SSH SFTP listener for the root filesystem of instance foo.`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagListen, "listen", "", "", i18n.G("Setup SSH SFTP listener on address:port instead of mounting"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAuthNone, "no-auth", i18n.G("Disable authentication when using SSH SFTP listener"))

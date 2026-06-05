@@ -36,10 +36,12 @@ func (c *cmdQuery) command() *cobra.Command {
 	cmd.Use = cli.U("query", cmdQueryUsage...)
 	cmd.Short = i18n.G("Send a raw query to the server")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Send a raw query to the server`))
+		`Send a raw query to the server`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus query -X DELETE --wait /1.0/instances/c1
-    Delete local instance "c1".`))
+    Delete local instance "c1".`,
+	))
 	cmd.Hidden = true
 
 	cmd.RunE = c.run

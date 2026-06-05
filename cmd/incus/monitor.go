@@ -38,7 +38,8 @@ func (c *cmdMonitor) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Monitor a local or remote server
 
-By default the monitor will listen to all message types.`))
+By default the monitor will listen to all message types.`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus monitor --type=logging
     Only show log messages.
@@ -47,7 +48,8 @@ incus monitor --pretty --type=logging --loglevel=info
     Show a pretty log of messages with info level or higher.
 
 incus monitor --type=lifecycle
-    Only show lifecycle events.`))
+    Only show lifecycle events.`,
+	))
 	cmd.Hidden = true
 
 	cmd.RunE = c.run

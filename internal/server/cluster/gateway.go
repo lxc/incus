@@ -855,7 +855,8 @@ func (g *Gateway) init(bootstrap bool) error {
 
 	g.lock.Lock()
 	g.store.onDisk = client.NewNodeStore(
-		g.db.DB(), "main", "raft_nodes", "address")
+		g.db.DB(), "main", "raft_nodes", "address",
+	)
 	g.lock.Unlock()
 
 	return nil
