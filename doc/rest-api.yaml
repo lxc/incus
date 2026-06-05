@@ -11048,6 +11048,43 @@ paths:
             summary: Create or replace a template file
             tags:
                 - instances
+    /1.0/instances/{name}/nbd:
+        get:
+            description: |-
+                Upgrades the request to an NBD connection exposing all of the instance's block devices.
+                Each disk is exported under an NBD export named after its Incus device name.
+
+                This is only available on running virtual machines. For stopped instances, access the disks
+                individually through the storage volume NBD endpoint.
+            operationId: instance_nbd_get
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "101":
+                    description: Switching protocols to NBD
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get an NBD connection for all of the instance's disks
+            tags:
+                - instances
     /1.0/instances/{name}/rebuild:
         post:
             consumes:
