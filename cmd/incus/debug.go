@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"sync"
 
 	"github.com/spf13/cobra"
 
@@ -26,6 +28,9 @@ func (c *cmdDebug) command() *cobra.Command {
 
 	debugAttachCmd := cmdDebugMemory{global: c.global, debug: c}
 	cmd.AddCommand(debugAttachCmd.command())
+
+	debugNBDCmd := cmdDebugNBD{global: c.global, debug: c}
+	cmd.AddCommand(debugNBDCmd.command())
 
 	return cmd
 }
@@ -82,6 +87,116 @@ func (c *cmdDebugMemory) run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+type cmdDebugNBD struct {
+	global *cmdGlobal
+	debug  *cmdDebug
+
+	flagAddress string
+}
+
+var cmdDebugNBDUsage = u.Usage{u.Instance.Remote()}
+
+func (c *cmdDebugNBD) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("nbd", cmdDebugNBDUsage...)
+	cmd.Short = i18n.G("NBD access to all of an instance's disks")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`NBD access to all of an instance's disks
+
+This exposes all of a running virtual machine's disks over a local NBD
+server, with each disk reachable as an NBD export named after its Incus
+device name.`,
+	))
+
+	cli.AddStringFlag(cmd.Flags(), &c.flagAddress, "address", "", "", i18n.G("Specific address to listen on"))
+
+	cmd.RunE = c.run
+
+	// completion for instance.
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdDebugNBD) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdDebugNBDUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+
+	// Check that the instance exists before starting the NBD server.
+	_, _, err = d.GetInstance(instanceName)
+	if err != nil {
+		return err
+	}
+
+	// Proxy to a local listener.
+	listenAddr := c.flagAddress
+
+	if listenAddr == "" {
+		listenAddr = "127.0.0.1:0" // Listen on a random local port if not specified.
+	}
+
+	listener, err := net.Listen("tcp", listenAddr)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to listen for connection: %w"), err)
+	}
+
+	fmt.Printf(i18n.G("NBD listening on %v")+"\n", listener.Addr())
+
+	// Wait for a connection.
+	nConn, err := listener.Accept()
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to accept incoming connection: %w"), err)
+	}
+
+	defer func() { _ = nConn.Close() }()
+
+	fmt.Printf(i18n.G("NBD client connected %q")+"\n", nConn.RemoteAddr())
+	defer fmt.Printf(i18n.G("NBD client disconnected %q")+"\n", nConn.RemoteAddr())
+
+	// Connect to NBD.
+	conn, err := d.GetInstanceNBDConn(instanceName)
+	if err != nil {
+		return fmt.Errorf(i18n.G("NBD connection failed: %v")+"\n", err)
+	}
+
+	defer func() { _ = conn.Close() }()
+
+	// Proxy the traffic.
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		_, _ = util.SafeCopy(conn, nConn)
+		_ = conn.Close()
+		_ = nConn.Close()
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		_, _ = util.SafeCopy(nConn, conn)
+		_ = conn.Close()
+		_ = nConn.Close()
+	}()
+
+	wg.Wait()
 
 	return nil
 }
