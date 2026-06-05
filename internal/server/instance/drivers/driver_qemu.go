@@ -11631,6 +11631,10 @@ func (d *qemu) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) 
 
 // selinuxEnsureContext generates and persists the SELinux context for this instance.
 func (d *qemu) selinuxEnsureContext() (bool, error) {
+	if !d.state.OS.SELinuxEnabled {
+		return false, nil
+	}
+
 	previousCtx := d.localConfig["volatile.selinux.context"]
 
 	allocLevel := func() (string, func(), error) {
@@ -11665,6 +11669,10 @@ func (d *qemu) selinuxEnsureContext() (bool, error) {
 
 // selinuxLabelFiles applies SELinux file labels to the VM instance directory.
 func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
+	if !d.state.OS.SELinuxEnabled {
+		return nil
+	}
+
 	ctx := d.localConfig["volatile.selinux.context"]
 	if ctx == "" {
 		return nil

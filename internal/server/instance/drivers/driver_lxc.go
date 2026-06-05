@@ -1937,6 +1937,10 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 // selinuxEnsureContext generates and persists the SELinux context for this instance.
 // Returns true if we need to relabel the rootfs, false if labeling is not required or wanted.
 func (d *lxc) selinuxEnsureContext() (bool, error) {
+	if !d.state.OS.SELinuxEnabled {
+		return false, nil
+	}
+
 	previousCtx := d.localConfig["volatile.selinux.context"]
 
 	allocLevel := func() (string, func(), error) {
@@ -1971,6 +1975,10 @@ func (d *lxc) selinuxEnsureContext() (bool, error) {
 
 // selinuxLabelFiles applies SELinux file labels to the instance rootfs.
 func (d *lxc) selinuxLabelFiles(contextIsNew bool) error {
+	if !d.state.OS.SELinuxEnabled {
+		return nil
+	}
+
 	ctx := d.localConfig["volatile.selinux.context"]
 	if ctx == "" {
 		return nil
