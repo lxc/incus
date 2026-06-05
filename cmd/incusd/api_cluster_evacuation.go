@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -667,23 +666,9 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 			return fmt.Errorf("Failed getting cluster members: %w", err)
 		}
 
-		// Filter candidates by group if needed.
+		// Filter candidates by the instance's cluster group and offline servers.
 		group := inst.LocalConfig()["volatile.cluster.group"]
-		if group != "" {
-			newMembers := make([]db.NodeInfo, 0, len(allMembers))
-			for _, member := range allMembers {
-				if !slices.Contains(member.Groups, group) {
-					continue
-				}
-
-				newMembers = append(newMembers, member)
-			}
-
-			allMembers = newMembers
-		}
-
-		// Filter offline servers.
-		candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, []int{inst.Architecture()}, "", nil, s.GlobalConfig.OfflineThreshold())
+		candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, []int{inst.Architecture()}, group, nil, s.GlobalConfig.OfflineThreshold())
 		if err != nil {
 			return err
 		}
