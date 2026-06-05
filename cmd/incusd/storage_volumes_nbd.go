@@ -3,10 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"slices"
-
-	"github.com/gorilla/mux"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/server/cluster"
@@ -78,17 +75,17 @@ func storagePoolVolumeTypeNBDHandler(d *Daemon, r *http.Request) response.Respon
 	}
 
 	// Get the volume details.
-	volumeTypeName, err := url.PathUnescape(mux.Vars(r)["type"])
+	volumeTypeName, err := pathVar(r, "type")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	volumeName, err := url.PathUnescape(mux.Vars(r)["volumeName"])
+	volumeName, err := pathVar(r, "volumeName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	poolName, err := url.PathUnescape(mux.Vars(r)["poolName"])
+	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
 	}

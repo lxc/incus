@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -171,7 +168,7 @@ func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 
 	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := pathVar(r, "zone")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -261,7 +258,7 @@ func networkZoneRecordsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := pathVar(r, "zone")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -333,12 +330,12 @@ func networkZoneRecordDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := pathVar(r, "zone")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	recordName, err := url.PathUnescape(mux.Vars(r)["name"])
+	recordName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -418,12 +415,12 @@ func networkZoneRecordGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := pathVar(r, "zone")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	recordName, err := url.PathUnescape(mux.Vars(r)["name"])
+	recordName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -540,12 +537,12 @@ func networkZoneRecordPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	zoneName, err := url.PathUnescape(mux.Vars(r)["zone"])
+	zoneName, err := pathVar(r, "zone")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	recordName, err := url.PathUnescape(mux.Vars(r)["name"])
+	recordName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/v7/internal/jmap"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -178,7 +175,7 @@ func waitForOperations(ctx context.Context, clusterDB *db.Cluster, consoleShutdo
 func operationGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := pathVar(r, "id")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -257,7 +254,7 @@ func operationGet(d *Daemon, r *http.Request) response.Response {
 func operationDelete(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := pathVar(r, "id")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -940,7 +937,7 @@ func operationsGetByType(s *state.State, r *http.Request, projectName string, op
 func operationWaitGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := pathVar(r, "id")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1137,7 +1134,7 @@ func (r *operationWebSocket) Code() int {
 func operationWebsocketGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	id, err := url.PathUnescape(mux.Vars(r)["id"])
+	id, err := pathVar(r, "id")
 	if err != nil {
 		return response.SmartError(err)
 	}

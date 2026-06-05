@@ -7,14 +7,12 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/sftp"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
@@ -33,7 +31,7 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
-	name, err := url.PathUnescape(mux.Vars(r)["name"])
+	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

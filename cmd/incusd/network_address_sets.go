@@ -6,9 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-
-	"github.com/gorilla/mux"
 
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -361,7 +358,7 @@ func networkAddressSetDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	addrSetName, err := url.PathUnescape(mux.Vars(r)["name"])
+	addrSetName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -440,7 +437,7 @@ func networkAddressSetGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	addrSetName, err := url.PathUnescape(mux.Vars(r)["name"])
+	addrSetName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -547,7 +544,7 @@ func networkAddressSetPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	addrSetName, err := url.PathUnescape(mux.Vars(r)["name"])
+	addrSetName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -639,7 +636,7 @@ func networkAddressSetPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	addrSetName, err := url.PathUnescape(mux.Vars(r)["name"])
+	addrSetName, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
 	}

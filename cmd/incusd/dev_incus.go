@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gorilla/mux"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/linux"
@@ -81,7 +79,7 @@ var devIncusConfigKeyGet = devIncusHandler{"/1.0/config/{key}", func(d *Daemon, 
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusForbidden, "not authorized"), c.Type() == instancetype.VM)
 	}
 
-	key, err := url.PathUnescape(mux.Vars(r)["key"])
+	key, err := pathVar(r, "key")
 	if err != nil {
 		return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusBadRequest, "bad request"), c.Type() == instancetype.VM)
 	}
@@ -266,7 +264,7 @@ var devIncusDevicesGet = devIncusHandler{"/1.0/devices", func(d *Daemon, c insta
 }}
 
 var handlers = []devIncusHandler{
-	{"/", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
+	{"/{$}", func(d *Daemon, c instance.Instance, w http.ResponseWriter, r *http.Request) response.Response {
 		return response.DevIncusResponse(http.StatusOK, []string{"/1.0"}, "json", c.Type() == instancetype.VM)
 	}},
 	devIncusAPIHandler,
@@ -315,8 +313,7 @@ func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Requ
 }
 
 func devIncusAPI(d *Daemon, f hoistFunc) http.Handler {
-	router := mux.NewRouter()
-	router.UseEncodedPath() // Allow encoded values in path segments.
+	router := http.NewServeMux()
 
 	for _, handler := range handlers {
 		router.HandleFunc(handler.path, f(handler.f, d))
