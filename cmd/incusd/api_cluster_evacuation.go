@@ -43,6 +43,29 @@ type (
 	evacuateMigrateFunc func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, live bool, startInstance bool, op *operations.Operation) error
 )
 
+// evacuationProgressHandler allows wrapping progress data with a prefix string (instance identifier).
+func evacuationProgressHandler(op *operations.Operation, prefix string) func(newOp api.Operation) {
+	return func(newOp api.Operation) {
+		msg := prefix
+
+		for key, value := range newOp.Metadata {
+			if !strings.HasSuffix(key, "_progress") {
+				continue
+			}
+
+			str, ok := value.(string)
+			if !ok || str == "" {
+				continue
+			}
+
+			msg = fmt.Sprintf("%s: %s", prefix, str)
+			break
+		}
+
+		_ = op.ExtendMetadata(map[string]any{"evacuation_progress": msg})
+	}
+}
+
 type evacuateOpts struct {
 	s               *state.State
 	instances       []instance.Instance
@@ -146,7 +169,9 @@ func evacuateMigrateInstance(r *http.Request) evacuateMigrateFunc {
 			Live:      live,
 		}
 
-		err := migrateInstance(ctx, s, inst, req, sourceMemberInfo, targetMemberInfo, "", op)
+		progressHandler := evacuationProgressHandler(op, fmt.Sprintf("Migrating %q in project %q to %q", inst.Name(), inst.Project().Name, targetMemberInfo.Name))
+
+		err := migrateInstance(ctx, s, inst, req, sourceMemberInfo, targetMemberInfo, "", op, progressHandler)
 		if err != nil {
 			return fmt.Errorf("Failed to migrate instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
 		}
@@ -598,9 +623,19 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 
 	source = source.UseTarget(originName)
 
+	_, err = source.GetEvents()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to source events: %w", err)
+	}
+
 	migrationOp, err := source.MigrateInstance(inst.Name(), req)
 	if err != nil {
 		return fmt.Errorf("Migration API failure: %w", err)
+	}
+
+	_, err = migrationOp.AddHandler(evacuationProgressHandler(op, fmt.Sprintf("Migrating %q in project %q from %q", inst.Name(), inst.Project().Name, inst.Location())))
+	if err != nil {
+		return fmt.Errorf("Failed to setup migration progress handler: %w", err)
 	}
 
 	err = migrationOp.Wait()
