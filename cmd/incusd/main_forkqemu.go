@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	goselinux "github.com/opencontainers/selinux/go-selinux"
-
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 )

@@ -9,7 +9,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"sync/atomic"
 	"syscall"
 
 	"go.yaml.in/yaml/v4"
@@ -17,8 +16,6 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
-
-var selinuxEnabled atomic.Bool
 
 // Process struct. Has ability to set runtime arguments.
 type Process struct {

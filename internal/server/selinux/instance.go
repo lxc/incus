@@ -23,7 +23,7 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 		return "", false, nil, nil
 	}
 
-	var release func() = func() {}
+	release := func() {}
 
 	daemonCtx, err := goselinux.NewContext(s.SELinuxContextDaemon)
 	if err != nil {
@@ -44,7 +44,7 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 	}
 
 	// Resolve MCS level: explicit override -> cached volatile -> auto-generated.
-	seLevel := "s0"
+	var seLevel string
 
 	if cl := localConfig["security.selinux.level"]; cl != "" {
 		// Explicit override (user provides full level, e.g. "s0:c100,c200").
