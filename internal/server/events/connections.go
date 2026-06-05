@@ -220,7 +220,7 @@ func (e *streamListenerConnection) WriteJSON(event any) error {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 
-	err := e.SetWriteDeadline(time.Now().Add(5 * (time.Second)))
+	err := e.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	if err != nil {
 		return fmt.Errorf("Failed setting write deadline: %w", err)
 	}

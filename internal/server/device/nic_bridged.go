@@ -1728,7 +1728,8 @@ func (d *nicBridged) networkDHCPv4Release(srcMAC net.HardwareAddr, srcIP net.IP,
 	}
 
 	// Add options to DHCP release packet.
-	dhcp.Options = append(dhcp.Options,
+	dhcp.Options = append(
+		dhcp.Options,
 		layers.NewDHCPOption(layers.DHCPOptMessageType, []byte{byte(layers.DHCPMsgTypeRelease)}),
 		layers.NewDHCPOption(layers.DHCPOptServerID, dstIP.To4()),
 	)
@@ -1796,7 +1797,8 @@ func (d *nicBridged) networkDHCPv6Release(srcDUID string, srcIAID string, srcIP 
 	ianaRaw := d.networkDHCPv6CreateIANA(srcIAIDRaw32, iaAddr)
 
 	// Add options to DHCP release packet.
-	dhcp.Options = append(dhcp.Options,
+	dhcp.Options = append(
+		dhcp.Options,
 		layers.NewDHCPv6Option(layers.DHCPv6OptServerID, dstDUIDRaw),
 		layers.NewDHCPv6Option(layers.DHCPv6OptClientID, srcDUIDRaw),
 		layers.NewDHCPv6Option(layers.DHCPv6OptIANA, ianaRaw),

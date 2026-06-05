@@ -212,7 +212,8 @@ func MetricSetFromAPI(metrics *Metrics, labels map[string]string) (*MetricSet, e
 			return labels
 		}
 
-		set.AddSamples(CPUSecondsTotal,
+		set.AddSamples(
+			CPUSecondsTotal,
 			Sample{
 				Value:  stats.SecondsIOWait,
 				Labels: getLabels("iowait"),

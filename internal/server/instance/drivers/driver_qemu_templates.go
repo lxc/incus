@@ -142,7 +142,8 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 		cfg.Section{
 			Name:    "boot-opts",
 			Entries: map[string]string{"strict": "on"},
-		})
+		},
+	)
 }
 
 type qemuMemoryOpts struct {

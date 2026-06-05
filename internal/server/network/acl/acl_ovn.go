@@ -982,7 +982,8 @@ func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, rout
 			icmpPingReplyType = 129
 		}
 
-		rules = append(rules,
+		rules = append(
+			rules,
 			ovn.OVNACLRule{
 				Direction: "to-lport",
 				Action:    "allow",
@@ -1005,7 +1006,8 @@ func OVNApplyNetworkBaselineRules(client *ovn.NB, switchName ovn.OVNSwitch, rout
 			ipVersion = 6
 		}
 
-		rules = append(rules,
+		rules = append(
+			rules,
 			ovn.OVNACLRule{
 				Direction: "to-lport",
 				Action:    "allow",

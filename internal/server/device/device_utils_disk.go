@@ -204,7 +204,8 @@ func diskCephRbdMap(clusterName string, userName string, poolName string, volume
 		"--cluster", clusterName,
 		"--pool", poolName,
 		"map",
-		volumeName)
+		volumeName,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -225,7 +226,8 @@ again:
 	_, err := subprocess.RunCommand(
 		"rbd",
 		"unmap",
-		unmapImageName)
+		unmapImageName,
+	)
 	if err != nil {
 		var runError subprocess.RunError
 		if errors.As(err, &runError) {

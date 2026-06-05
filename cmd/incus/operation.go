@@ -31,7 +31,8 @@ func (c *cmdOperation) command() *cobra.Command {
 	cmd.Use = cli.U("operation")
 	cmd.Short = i18n.G("List, show and delete background operations")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`List, show and delete background operations`))
+		`List, show and delete background operations`,
+	))
 	cmd.Hidden = true
 
 	// Delete
@@ -66,7 +67,8 @@ func (c *cmdOperationDelete) command() *cobra.Command {
 	cmd.Aliases = []string{"cancel", "rm", "remove"}
 	cmd.Short = i18n.G("Delete background operations (will attempt to cancel)")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Delete background operations (will attempt to cancel)`))
+		`Delete background operations (will attempt to cancel)`,
+	))
 
 	cmd.RunE = c.run
 
@@ -143,7 +145,8 @@ Pre-defined column shorthand chars:
   s - State
   c - Cancelable
   C - Created
-  L - Location of the operation (e.g. its cluster member)`))
+  L - Location of the operation (e.g. its cluster member)`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("List operations from all projects"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultOperationColumns, "", i18n.G("Columns"))
@@ -288,10 +291,12 @@ func (c *cmdOperationShow) command() *cobra.Command {
 	cmd.Use = cli.U("show", cmdOperationShowUsage...)
 	cmd.Short = i18n.G("Show details on a background operation")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show details on a background operation`))
+		`Show details on a background operation`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus operation show 344a79e4-d88a-45bf-9c39-c72c26f6ab8a
-    Show details on that operation UUID`))
+    Show details on that operation UUID`,
+	))
 
 	cmd.RunE = c.run
 

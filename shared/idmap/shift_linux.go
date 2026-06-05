@@ -523,9 +523,9 @@ func shiftACLType(path string, aclType int, shiftIDs func(uid int64, gid int64) 
 		// Shift the value
 		newID := int64(-1)
 		if tag == C.ACL_USER {
-			newID, _ = shiftIDs((int64)(*idp), -1)
+			newID, _ = shiftIDs(int64(*idp), -1)
 		} else {
-			_, newID = shiftIDs(-1, (int64)(*idp))
+			_, newID = shiftIDs(-1, int64(*idp))
 		}
 
 		// Skip values that are out of range.

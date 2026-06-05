@@ -105,7 +105,8 @@ func (f *heartbeatFixture) Grow() *cluster.Gateway {
 	name := address
 
 	nodes, err := cluster.Accept(
-		targetState, target, name, address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86)
+		targetState, target, name, address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
+	)
 	require.NoError(f.t, err)
 
 	err = cluster.Join(s, gateway, target.NetworkCert(), target.ServerCert(), name, nodes)

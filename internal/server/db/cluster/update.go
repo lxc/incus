@@ -3425,7 +3425,8 @@ CREATE VIEW instances_snapshots_devices_ref (
 		ctx,
 		tx,
 		"instances_config JOIN instances ON instances_config.instance_id = instances.id",
-		"instances.type = 1")
+		"instances.type = 1",
+	)
 	if err != nil {
 		return fmt.Errorf("Failed to count rows in instances_config table: %w", err)
 	}
@@ -3476,7 +3477,8 @@ SELECT instances_config.id, instance_id, key, value
 		ctx,
 		tx,
 		"instances_devices JOIN instances ON instances_devices.instance_id = instances.id",
-		"instances.type = 1")
+		"instances.type = 1",
+	)
 	if err != nil {
 		return fmt.Errorf("Failed to count rows in instances_devices table: %w", err)
 	}

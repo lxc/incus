@@ -264,10 +264,12 @@ func (c *cmdStorageEdit) command() *cobra.Command {
 	cmd.Use = cli.U("edit", cmdStorageEditUsage...)
 	cmd.Short = i18n.G("Edit storage pool configurations as YAML")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Edit storage pool configurations as YAML`))
+		`Edit storage pool configurations as YAML`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage edit [<remote>:]<pool> < pool.yaml
-    Update a storage pool using the content of pool.yaml.`))
+    Update a storage pool using the content of pool.yaml.`,
+	))
 
 	cmd.RunE = c.run
 
@@ -296,7 +298,8 @@ func (c *cmdStorageEdit) helpTemplate() string {
 ### config:
 ###   size: "61203283968"
 ###   source: default
-###   zfs.pool_name: default`)
+###   zfs.pool_name: default`,
+	)
 }
 
 func (c *cmdStorageEdit) run(cmd *cobra.Command, args []string) error {
@@ -388,7 +391,8 @@ func (c *cmdStorageGet) command() *cobra.Command {
 	cmd.Use = cli.U("get", cmdStorageGetUsage...)
 	cmd.Short = i18n.G("Get values for storage pool configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Get values for storage pool configuration keys`))
+		`Get values for storage pool configuration keys`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Get the key as a storage property"))
@@ -463,7 +467,8 @@ func (c *cmdStorageInfo) command() *cobra.Command {
 	cmd.Use = cli.U("info", cmdStorageInfoUsage...)
 	cmd.Short = i18n.G("Show useful information about storage pools")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show useful information about storage pools`))
+		`Show useful information about storage pools`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagBytes, "bytes", i18n.G("Show the used and free space in bytes"))
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
@@ -656,7 +661,8 @@ Pre-defined column shorthand chars:
   d - Description
   S - Source
   u - used by
-  s - state`))
+  s - state`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultStorageColumns, "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 
@@ -794,7 +800,8 @@ func (c *cmdStorageSet) command() *cobra.Command {
 		`Set storage pool configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus storage set [<remote>:]<pool> <key> <value>`))
+    incus storage set [<remote>:]<pool> <key> <value>`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a storage property"))
@@ -886,7 +893,8 @@ func (c *cmdStorageShow) command() *cobra.Command {
 	cmd.Use = cli.U("show", cmdStorageShowUsage...)
 	cmd.Short = i18n.G("Show storage pool configurations and resources")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show storage pool configurations and resources`))
+		`Show storage pool configurations and resources`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagResources, "resources", i18n.G("Show the resources available to the storage pool"))
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
@@ -966,7 +974,8 @@ func (c *cmdStorageUnset) command() *cobra.Command {
 	cmd.Use = cli.U("unset", cmdStorageUnsetUsage...)
 	cmd.Short = i18n.G("Unset storage pool configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Unset storage pool configuration keys`))
+		`Unset storage pool configuration keys`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Unset the keys as storage properties"))

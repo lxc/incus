@@ -41,12 +41,14 @@ func (s *containerTestSuite) TestContainer_ProfilesDefault() {
 	s.Len(
 		profiles,
 		1,
-		"No default profile created on instanceCreateInternal.")
+		"No default profile created on instanceCreateInternal.",
+	)
 
 	s.Equal(
 		"default",
 		profiles[0].Name,
-		"First profile should be the default profile.")
+		"First profile should be the default profile.",
+	)
 }
 
 func (s *containerTestSuite) TestContainer_ProfilesMulti() {
@@ -103,11 +105,13 @@ func (s *containerTestSuite) TestContainer_ProfilesMulti() {
 	s.Len(
 		profiles,
 		2,
-		"Didn't get both profiles in instanceCreateInternal.")
+		"Didn't get both profiles in instanceCreateInternal.",
+	)
 
 	s.True(
 		c.IsPrivileged(),
-		"The container is not privileged (didn't apply the unprivileged profile?).")
+		"The container is not privileged (didn't apply the unprivileged profile?).",
+	)
 }
 
 func (s *containerTestSuite) TestContainer_ProfilesOverwriteDefaultNic() {
@@ -147,7 +151,8 @@ func (s *containerTestSuite) TestContainer_ProfilesOverwriteDefaultNic() {
 	s.Equal(
 		"unknownbr0",
 		state.Devices["eth0"]["parent"],
-		"Container config doesn't overwrite profile config.")
+		"Container config doesn't overwrite profile config.",
+	)
 }
 
 func (s *containerTestSuite) TestContainer_LoadFromDB() {

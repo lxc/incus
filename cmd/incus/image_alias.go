@@ -71,7 +71,8 @@ func (c *cmdImageAliasCreate) command() *cobra.Command {
 	cmd.Aliases = []string{"add"}
 	cmd.Short = i18n.G("Create aliases for existing images")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Create aliases for existing images`))
+		`Create aliases for existing images`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagDescription, "description", "", "", i18n.G("Image alias description"))
 
@@ -204,7 +205,8 @@ Pre-defined column shorthand chars:
   a - Alias
   f - Fingerprint
   t - Type
-  d - Description`))
+  d - Description`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultImageAliasColumns, "", i18n.G("Columns"))
 

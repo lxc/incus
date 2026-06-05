@@ -117,7 +117,8 @@ func NewTestCowsqlServer(t *testing.T) (string, driver.NodeStore, func()) {
 	require.NoError(t, err)
 
 	server, err := cowsql.New(
-		uint64(1), address, filepath.Join(dir, "global"), cowsql.WithBindAddress(address))
+		uint64(1), address, filepath.Join(dir, "global"), cowsql.WithBindAddress(address),
+	)
 	require.NoError(t, err)
 
 	err = server.Start()

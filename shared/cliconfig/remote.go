@@ -296,7 +296,8 @@ func (c *Config) getImageServer(args *incus.ConnectionArgs, remote Remote, addr 
 				strings.NewReader(u.Host),
 				&stdout,
 				remote.CredHelper,
-				"get")
+				"get",
+			)
 			if err != nil {
 				return nil, err
 			}

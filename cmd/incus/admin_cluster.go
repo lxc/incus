@@ -24,7 +24,8 @@ func (c *cmdAdminCluster) command() *cobra.Command {
 	cmd.Use = cli.U("cluster")
 	cmd.Short = i18n.G("Low-level cluster administration commands")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Low level administration tools for inspecting and recovering clusters.`))
+		`Low level administration tools for inspecting and recovering clusters.`,
+	))
 
 	cmd.Run = c.run
 	return cmd

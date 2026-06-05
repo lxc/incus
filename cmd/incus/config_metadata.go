@@ -91,7 +91,8 @@ func (c *cmdConfigMetadataEdit) helpTemplate() string {
 ###     - ""
 ###     create_only: false
 ###     template: template.tpl
-###     properties: {}`)
+###     properties: {}`,
+	)
 }
 
 func (c *cmdConfigMetadataEdit) run(cmd *cobra.Command, args []string) error {

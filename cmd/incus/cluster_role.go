@@ -107,7 +107,8 @@ func (c *cmdClusterRoleRemove) command() *cobra.Command {
 	cmd.Aliases = []string{"delete", "rm"}
 	cmd.Short = i18n.G("Remove roles from a cluster member")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Remove roles from a cluster member`))
+		`Remove roles from a cluster member`,
+	))
 
 	cmd.RunE = c.run
 

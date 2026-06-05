@@ -9098,7 +9098,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 		return nil, nil, fmt.Errorf("Connect to console socket %q: %w", path, err)
 	}
 
-	file, err := (conn.(*net.UnixConn)).File()
+	file, err := conn.(*net.UnixConn).File()
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
 			_ = d.consoleSwapSocketWithRB()

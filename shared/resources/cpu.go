@@ -153,7 +153,7 @@ func getCPUCache(path string) ([]api.ResourcesCPUCache, error) {
 				cacheSizeStr = strings.TrimSuffix(cacheSizeStr, "K")
 			}
 
-			cacheSize, err := strconv.ParseUint((cacheSizeStr), 10, 64)
+			cacheSize, err := strconv.ParseUint(cacheSizeStr, 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to parse cache size: %w", err)
 			}

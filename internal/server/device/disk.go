@@ -789,7 +789,8 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 						storagePools.InstanceContentType(d.inst),
 						d.name,
 						initialConfig,
-						d.pool.Driver().Config())
+						d.pool.Driver().Config(),
+					)
 
 					err = d.pool.Driver().ValidateVolume(vol, true)
 					if err != nil {

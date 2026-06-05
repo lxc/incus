@@ -64,7 +64,8 @@ as a compressed tarball (or for split images, the concatenation of the
 metadata and rootfs tarballs).
 
 Images can be referenced by their full hash, shortest unique partial
-hash or alias name (if one is set).`))
+hash or alias name (if one is set).`,
+	))
 
 	// Alias
 	imageAliasCmd := cmdImageAlias{global: c.global, image: c}
@@ -168,7 +169,8 @@ func (c *cmdImageCopy) command() *cobra.Command {
 		`Copy images between servers
 
 The auto-update flag instructs the server to keep this image up to date.
-It requires the source to be an alias and for it to be public.`))
+It requires the source to be an alias and for it to be public.`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagPublic, "public", i18n.G("Make image public"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagCopyAliases, "copy-aliases", i18n.G("Copy aliases from source"))
@@ -395,7 +397,8 @@ func (c *cmdImageEdit) command() *cobra.Command {
     Launch a text editor to edit the properties
 
 incus image edit <image> < image.yaml
-    Load the image properties from a YAML file`))
+    Load the image properties from a YAML file`,
+	))
 
 	cmd.RunE = c.run
 
@@ -417,7 +420,8 @@ func (c *cmdImageEdit) helpTemplate() string {
 ###
 ### Each property is represented by a single line:
 ### An example would be:
-###  description: My custom image`)
+###  description: My custom image`,
+	)
 }
 
 func (c *cmdImageEdit) run(cmd *cobra.Command, args []string) error {
@@ -518,7 +522,8 @@ func (c *cmdImageExport) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Export and download images
 
-The output target is optional and defaults to the working directory.`))
+The output target is optional and defaults to the working directory.`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagVM, "vm", i18n.G("Query virtual machine images"))
 	cmd.RunE = c.run
@@ -690,7 +695,8 @@ func (c *cmdImageImport) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Import image into the image store
 
-Directory import is only available on Linux and must be performed as root.`))
+Directory import is only available on Linux and must be performed as root.`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagPublic, "public", i18n.G("Make image public"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagReuse, "reuse", i18n.G("If the image alias already exists, delete and create a new one"))
@@ -900,7 +906,8 @@ func (c *cmdImageInfo) command() *cobra.Command {
 	cmd.Use = cli.U("info", cmdImageInfoUsage...)
 	cmd.Short = i18n.G("Show useful information about images")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Show useful information about images`))
+		`Show useful information about images`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagVM, "vm", i18n.G("Query virtual machine images"))
 	cmd.RunE = c.run
@@ -1063,7 +1070,8 @@ Column shorthand chars:
     a - Architecture
     s - Size
     u - Upload date
-    t - Type`))
+    t - Type`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultImagesColumns, "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))

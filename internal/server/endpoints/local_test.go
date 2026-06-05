@@ -70,7 +70,8 @@ func TestEndpoints_LocalUnknownUnixGroup(t *testing.T) {
 	err := endpoints.Up(config)
 
 	assert.EqualError(
-		t, err, "Local endpoint: cannot get group ID of 'xquibaz': group: unknown group xquibaz")
+		t, err, "Local endpoint: cannot get group ID of 'xquibaz': group: unknown group xquibaz",
+	)
 }
 
 // If another endpoint is already listening on the unix socket, an error is returned.

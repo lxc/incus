@@ -54,7 +54,7 @@ func GetIP(subnet *net.IPNet, host int64) net.IP {
 		mask, size := subnet.Mask.Size()
 
 		bigHosts := big.NewFloat(0)
-		bigHosts.SetFloat64((math.Pow(2, float64(size-mask))))
+		bigHosts.SetFloat64(math.Pow(2, float64(size-mask)))
 		bigHostsInt, _ := bigHosts.Int(nil)
 
 		bigCount.Set(bigHostsInt)
@@ -197,10 +197,11 @@ func (t *Transaction) getDHCPFreeIPv4(usedIPs map[[4]byte]dnsmasq.DHCPAllocation
 
 	// If no custom ranges defined, convert subnet pool to a range.
 	if len(dhcpRanges) <= 0 {
-		dhcpRanges = append(dhcpRanges, iprange.Range{
-			Start: GetIP(subnet, 1).To4(),
-			End:   GetIP(subnet, -2).To4(),
-		},
+		dhcpRanges = append(
+			dhcpRanges, iprange.Range{
+				Start: GetIP(subnet, 1).To4(),
+				End:   GetIP(subnet, -2).To4(),
+			},
 		)
 	}
 
@@ -283,10 +284,11 @@ func (t *Transaction) getDHCPFreeIPv6(usedIPs map[[16]byte]dnsmasq.DHCPAllocatio
 
 	// If no custom ranges defined, convert subnet pool to a range.
 	if len(dhcpRanges) <= 0 {
-		dhcpRanges = append(dhcpRanges, iprange.Range{
-			Start: GetIP(subnet, 1).To16(),
-			End:   GetIP(subnet, -1).To16(),
-		},
+		dhcpRanges = append(
+			dhcpRanges, iprange.Range{
+				Start: GetIP(subnet, 1).To16(),
+				End:   GetIP(subnet, -1).To16(),
+			},
 		)
 	}
 

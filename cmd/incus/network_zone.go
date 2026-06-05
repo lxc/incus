@@ -114,7 +114,8 @@ Pre-defined column shorthand chars:
   d - Description
   e - Project name
   n - Name
-  u - Used by`))
+  u - Used by`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -465,7 +466,8 @@ func (c *cmdNetworkZoneSet) command() *cobra.Command {
 		`Set network zone configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<Zone> <key> <value>`))
+    incus network set [<remote>:]<Zone> <key> <value>`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network zone property"))
@@ -611,7 +613,8 @@ func (c *cmdNetworkZoneEdit) helpTemplate() string {
 ### description: Internal domain
 ### config:
 ###  user.foo: bah
-`)
+`,
+	)
 }
 
 func (c *cmdNetworkZoneEdit) run(cmd *cobra.Command, args []string) error {
@@ -1117,7 +1120,8 @@ func (c *cmdNetworkZoneRecordSet) command() *cobra.Command {
 	cmd.Use = cli.U("set", cmdNetworkZoneRecordSetUsage...)
 	cmd.Short = i18n.G("Set network zone record configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Set network zone record configuration keys`))
+		`Set network zone record configuration keys`,
+	))
 
 	cmd.RunE = c.run
 
@@ -1277,7 +1281,8 @@ func (c *cmdNetworkZoneRecordEdit) helpTemplate() string {
 ### description: SPF record
 ### config:
 ###  user.foo: bah
-`)
+`,
+	)
 }
 
 func (c *cmdNetworkZoneRecordEdit) run(cmd *cobra.Command, args []string) error {
