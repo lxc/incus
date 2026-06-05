@@ -24,6 +24,7 @@ import (
 	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
 	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/scriptlet"
 	"github.com/lxc/incus/v7/internal/server/state"
@@ -668,7 +669,9 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 
 		// Filter candidates by the instance's cluster group and offline servers.
 		group := inst.LocalConfig()["volatile.cluster.group"]
-		candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, []int{inst.Architecture()}, group, nil, s.GlobalConfig.OfflineThreshold())
+		instProject := inst.Project()
+		clusterGroupsAllowed := project.GetRestrictedClusterGroups(&instProject)
+		candidateMembers, err = tx.GetCandidateMembers(ctx, allMembers, []int{inst.Architecture()}, group, clusterGroupsAllowed, s.GlobalConfig.OfflineThreshold())
 		if err != nil {
 			return err
 		}
