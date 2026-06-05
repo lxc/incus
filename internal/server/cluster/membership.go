@@ -1025,7 +1025,8 @@ func Leave(s *state.State, gateway *Gateway, name string, force bool, pending bo
 	// Get the address of another database node,
 	logger.Info(
 		"Remove node from cowsql raft cluster",
-		logger.Ctx{"id": info.ID, "address": info.Address})
+		logger.Ctx{"id": info.ID, "address": info.Address},
+	)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

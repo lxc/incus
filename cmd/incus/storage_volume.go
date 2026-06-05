@@ -66,7 +66,8 @@ func (c *cmdStorageVolume) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Manage storage volumes
 
-Unless specified through a prefix, all volume operations affect "custom" (user created) volumes.`))
+Unless specified through a prefix, all volume operations affect "custom" (user created) volumes.`,
+	))
 
 	// Attach
 	storageVolumeAttachCmd := cmdStorageVolumeAttach{global: c.global, storage: c.storage, storageVolume: c}
@@ -178,7 +179,8 @@ func (c *cmdStorageVolumeAttach) command() *cobra.Command {
 	cmd.Use = cli.U("attach", cmdStorageVolumeAttachUsage...)
 	cmd.Short = i18n.G("Attach new custom storage volumes to instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Attach new custom storage volumes to instances`))
+		`Attach new custom storage volumes to instances`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagCreate, "create", i18n.G("Create the custom storage volume if it doesn't already exist"))
 
@@ -295,7 +297,8 @@ func (c *cmdStorageVolumeAttachProfile) command() *cobra.Command {
 	cmd.Use = cli.U("attach-profile", cmdStorageVolumeAttachProfileUsage...)
 	cmd.Short = i18n.G("Attach new custom storage volumes to profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Attach new custom storage volumes to profiles`))
+		`Attach new custom storage volumes to profiles`,
+	))
 
 	cmd.RunE = c.run
 
@@ -748,7 +751,8 @@ func (c *cmdStorageVolumeDetach) command() *cobra.Command {
 	cmd.Use = cli.U("detach", cmdStorageVolumeDetachUsage...)
 	cmd.Short = i18n.G("Detach custom storage volumes from instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Detach custom storage volumes from instances`))
+		`Detach custom storage volumes from instances`,
+	))
 
 	cmd.RunE = c.run
 
@@ -862,7 +866,8 @@ func (c *cmdStorageVolumeDetachProfile) command() *cobra.Command {
 	cmd.Use = cli.U("detach-profile", cmdStorageVolumeDetachProfileUsage...)
 	cmd.Short = i18n.G("Detach custom storage volumes from profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Detach custom storage volumes from profiles`))
+		`Detach custom storage volumes from profiles`,
+	))
 
 	cmd.RunE = c.run
 
@@ -935,13 +940,15 @@ func (c *cmdStorageVolumeEdit) command() *cobra.Command {
 		`Edit storage volume configurations as YAML
 
 If the type is not specified, incus assumes the type is "custom".
-Supported values for type are "custom", "container" and "virtual-machine".`))
+Supported values for type are "custom", "container" and "virtual-machine".`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage volume edit default container/c1
     Edit container storage volume "c1" in pool "default"
 
 incus storage volume edit default foo < volume.yaml
-    Edit custom storage volume "foo" in pool "default" using the content of volume.yaml`))
+    Edit custom storage volume "foo" in pool "default" using the content of volume.yaml`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cmd.RunE = c.run
@@ -972,7 +979,8 @@ func (c *cmdStorageVolumeEdit) helpTemplate() string {
 ### type: custom
 ### used_by: []
 ### config:
-###   size: "61203283968"`)
+###   size: "61203283968"`,
+	)
 }
 
 func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
@@ -1144,13 +1152,15 @@ func (c *cmdStorageVolumeGet) command() *cobra.Command {
 If the type is not specified, incus assumes the type is "custom".
 Supported values for type are "custom", "container" and "virtual-machine".
 
-For snapshots, add the snapshot name (only if type is one of custom, container or virtual-machine).`))
+For snapshots, add the snapshot name (only if type is one of custom, container or virtual-machine).`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage volume get default data size
     Returns the size of a custom volume "data" in pool "default"
 
 incus storage volume get default virtual-machine/data snapshots.expiry
-    Returns the snapshot expiration period for a virtual machine "data" in pool "default"`))
+    Returns the snapshot expiration period for a virtual machine "data" in pool "default"`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Get the key as a storage volume property"))
@@ -1262,7 +1272,8 @@ func (c *cmdStorageVolumeInfo) command() *cobra.Command {
 		`Show storage volume state information
 
 If the type is not specified, Incus assumes the type is "custom".
-Supported values for type are "custom", "container" and "virtual-machine".`))
+Supported values for type are "custom", "container" and "virtual-machine".`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume info default foo
     Returns state information for a custom volume "foo" in pool "default"
 
@@ -1503,7 +1514,8 @@ Column shorthand chars:
     n - Name
     t - Type of volume (custom, image, container or virtual-machine)
     u - Number of references (used by)
-    U - Current disk usage`))
+    U - Current disk usage`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
@@ -1712,7 +1724,8 @@ func (c *cmdStorageVolumeMove) command() *cobra.Command {
 	cmd.Aliases = []string{"mv"}
 	cmd.Short = i18n.G("Move custom storage volumes between pools")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Move custom storage volumes between pools`))
+		`Move custom storage volumes between pools`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolumeCopy.flagMode, "mode", "pull", "", i18n.G("Transfer mode, one of pull (default), push or relay"))
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
@@ -1776,7 +1789,8 @@ func (c *cmdStorageVolumeRebuild) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Wipe the underlying storage volume and re-create it as empty using the same configuration.
 
-This is only allowed for custom volumes that have no snapshots.`))
+This is only allowed for custom volumes that have no snapshots.`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cmd.RunE = c.run
@@ -1936,13 +1950,15 @@ For backward compatibility, a single configuration key may still be set with:
     incus storage volume set [<remote>:]<pool> [<type>/]<volume> <key> <value>
 
 If the type is not specified, Incus assumes the type is "custom".
-Supported values for type are "custom", "container" and "virtual-machine".`))
+Supported values for type are "custom", "container" and "virtual-machine".`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus storage volume set default data size=1GiB
     Sets the size of a custom volume "data" in pool "default" to 1 GiB
 
 incus storage volume set default virtual-machine/data snapshots.expiry=7d
-    Sets the snapshot expiration period for a virtual machine "data" in pool "default" to seven days`))
+    Sets the snapshot expiration period for a virtual machine "data" in pool "default" to seven days`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.storage.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a storage volume property"))
@@ -2083,7 +2099,8 @@ func (c *cmdStorageVolumeShow) command() *cobra.Command {
 If the type is not specified, Incus assumes the type is "custom".
 Supported values for type are "custom", "container" and "virtual-machine".
 
-For snapshots, add the snapshot name (only if type is one of custom, container or virtual-machine).`))
+For snapshots, add the snapshot name (only if type is one of custom, container or virtual-machine).`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume show default foo
     Will show the properties of custom volume "foo" in pool "default"
 
@@ -2175,7 +2192,8 @@ func (c *cmdStorageVolumeUnset) command() *cobra.Command {
 		`Unset storage volume configuration keys
 
 If the type is not specified, Incus assumes the type is "custom".
-Supported values for type are "custom", "container" and "virtual-machine".`))
+Supported values for type are "custom", "container" and "virtual-machine".`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus storage volume unset default foo size
     Removes the size/quota of custom volume "foo" in pool "default"
 
@@ -2573,7 +2591,8 @@ func (c *cmdStorageVolumeNBD) Command() *cobra.Command {
 	cmd.Use = cli.U("nbd", cmdStorageVolumeNBDUsage...)
 	cmd.Short = i18n.G("NBD access to a block storage volume")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`NBD access to a block storage volume`))
+		`NBD access to a block storage volume`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagAddress, "address", "", "", i18n.G("Specific address to listen on"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagWritable, "writable", i18n.G("Get write access to the disk"))

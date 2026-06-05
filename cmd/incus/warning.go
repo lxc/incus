@@ -92,7 +92,8 @@ Column shorthand chars:
     s - Severity
     S - Status
     u - UUID
-    t - Type`))
+    t - Type`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultWarningColumns, "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))

@@ -40,7 +40,8 @@ func (c *cmdNetwork) command() *cobra.Command {
 	cmd.Use = cli.U("network")
 	cmd.Short = i18n.G("Manage and attach instances to networks")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Manage and attach instances to networks`))
+		`Manage and attach instances to networks`,
+	))
 
 	// Attach
 	networkAttachCmd := cmdNetworkAttach{global: c.global, network: c}
@@ -153,7 +154,8 @@ func (c *cmdNetworkAttach) command() *cobra.Command {
 	cmd.Use = cli.U("attach", cmdNetworkAttachUsage...)
 	cmd.Short = i18n.G("Attach network interfaces to instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Attach new network interfaces to instances`))
+		`Attach new network interfaces to instances`,
+	))
 
 	cmd.RunE = c.run
 
@@ -243,7 +245,8 @@ func (c *cmdNetworkAttachProfile) command() *cobra.Command {
 	cmd.Use = cli.U("attach-profile", cmdNetworkAttachProfileUsage...)
 	cmd.Short = i18n.G("Attach network interfaces to profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Attach network interfaces to profiles`))
+		`Attach network interfaces to profiles`,
+	))
 
 	cmd.RunE = c.run
 
@@ -498,7 +501,8 @@ func (c *cmdNetworkDetach) command() *cobra.Command {
 	cmd.Use = cli.U("detach", cmdNetworkDetachUsage...)
 	cmd.Short = i18n.G("Detach network interfaces from instances")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Detach network interfaces from instances`))
+		`Detach network interfaces from instances`,
+	))
 
 	cmd.RunE = c.run
 
@@ -602,7 +606,8 @@ func (c *cmdNetworkDetachProfile) command() *cobra.Command {
 	cmd.Use = cli.U("detach-profile", cmdNetworkDetachProfileUsage...)
 	cmd.Short = i18n.G("Detach network interfaces from profiles")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Detach network interfaces from profiles`))
+		`Detach network interfaces from profiles`,
+	))
 
 	cmd.RunE = c.run
 
@@ -665,7 +670,8 @@ func (c *cmdNetworkEdit) command() *cobra.Command {
 	cmd.Use = cli.U("edit", cmdNetworkEditUsage...)
 	cmd.Short = i18n.G("Edit network configurations as YAML")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Edit network configurations as YAML`))
+		`Edit network configurations as YAML`,
+	))
 
 	cmd.RunE = c.run
 
@@ -697,7 +703,8 @@ func (c *cmdNetworkEdit) helpTemplate() string {
 ### managed: true
 ### type: bridge
 ###
-### Note that only the configuration can be changed.`)
+### Note that only the configuration can be changed.`,
+	)
 }
 
 func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
@@ -793,7 +800,8 @@ func (c *cmdNetworkGet) command() *cobra.Command {
 	cmd.Use = cli.U("get", cmdNetworkGetUsage...)
 	cmd.Short = i18n.G("Get values for network configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Get values for network configuration keys`))
+		`Get values for network configuration keys`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.network.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Get the key as a network property"))
@@ -866,7 +874,8 @@ func (c *cmdNetworkInfo) command() *cobra.Command {
 	cmd.Use = cli.U("info", cmdNetworkInfoUsage...)
 	cmd.Short = i18n.G("Get runtime information on networks")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Get runtime information on networks`))
+		`Get runtime information on networks`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.network.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cmd.RunE = c.run
@@ -1039,7 +1048,8 @@ m - Managed status
 n - Network Interface Name
 s - State
 t - Interface type
-u - Used by (count)`))
+u - Used by (count)`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkColumns, "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -1237,7 +1247,8 @@ Pre-defined column shorthand chars:
   m - MAC Address
   i - IP Address
   t - Type
-  L - Location of the DHCP Lease (e.g. its cluster member)`))
+  L - Location of the DHCP Lease (e.g. its cluster member)`,
+	))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkListLeasesColumns, "", i18n.G("Columns"))
 
@@ -1423,7 +1434,8 @@ func (c *cmdNetworkSet) command() *cobra.Command {
 		`Set network configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus network set [<remote>:]<network> <key> <value>`))
+    incus network set [<remote>:]<network> <key> <value>`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.network.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a network property"))

@@ -26,7 +26,8 @@ func (c *cmdManpage) command() *cobra.Command {
 	cmd.Use = cli.U("manpage", cmdManpageUsage...)
 	cmd.Short = i18n.G("Generate manpages for all commands")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Generate manpages for all commands`))
+		`Generate manpages for all commands`,
+	))
 	cmd.Hidden = true
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", "man", "", i18n.G("Format (man|md|rest|yaml)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAll, "all|a", i18n.G("Include less common commands"))

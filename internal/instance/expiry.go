@@ -62,7 +62,8 @@ func GetExpiry(refDate time.Time, s string) (time.Time, error) {
 	}
 
 	t := refDate.AddDate(expiry["y"], expiry["m"], expiry["d"]+expiry["w"]*7).Add(
-		time.Hour*time.Duration(expiry["H"]) + time.Minute*time.Duration(expiry["M"]) + time.Second*time.Duration(expiry["S"]))
+		time.Hour*time.Duration(expiry["H"]) + time.Minute*time.Duration(expiry["M"]) + time.Second*time.Duration(expiry["S"]),
+	)
 
 	return t, nil
 }

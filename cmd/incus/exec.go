@@ -52,7 +52,8 @@ executable, passing the shell commands as arguments, for example:
 
   incus exec <instance> -- sh -c "cd /tmp && pwd"
 
-Mode defaults to non-interactive, interactive mode is selected if both stdin AND stdout are terminals (stderr is ignored).`))
+Mode defaults to non-interactive, interactive mode is selected if both stdin AND stdout are terminals (stderr is ignored).`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus exec c1 bash
 	Run the "bash" command in instance "c1"
 

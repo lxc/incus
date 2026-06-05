@@ -1452,7 +1452,8 @@ func (r *ProtocolIncus) GetInstanceFile(instanceName string, filePath string) (i
 	if r.IsAgent() {
 		requestURL, err = urlEncode(
 			fmt.Sprintf("%s/1.0/files", r.httpBaseURL.String()),
-			map[string]string{"path": filePath})
+			map[string]string{"path": filePath},
+		)
 	} else {
 		var path string
 
@@ -1464,7 +1465,8 @@ func (r *ProtocolIncus) GetInstanceFile(instanceName string, filePath string) (i
 		// Prepare the HTTP request
 		requestURL, err = urlEncode(
 			fmt.Sprintf("%s/1.0%s/%s/files", r.httpBaseURL.String(), path, url.PathEscape(instanceName)),
-			map[string]string{"path": filePath})
+			map[string]string{"path": filePath},
+		)
 	}
 
 	if err != nil {

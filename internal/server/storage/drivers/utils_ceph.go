@@ -150,7 +150,8 @@ func CephMonitors(cluster string, client string) (Monitors, error) {
 		} `json:"mons"`
 	}{}
 
-	err := callCephJSON(&monitors,
+	err := callCephJSON(
+		&monitors,
 		"--cluster", cluster,
 		"--name", EnsureClientPrefix(client),
 		"mon", "dump",
@@ -169,7 +170,8 @@ func CephMonitors(cluster string, client string) (Monitors, error) {
 			case "v2":
 				ep.V2 = append(ep.V2, addr.Addr)
 			default:
-				logger.Warnf("Unknown ceph monitor address type: %q:%q",
+				logger.Warnf(
+					"Unknown ceph monitor address type: %q:%q",
 					addr.Type, addr.Addr,
 				)
 			}

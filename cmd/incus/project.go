@@ -300,10 +300,12 @@ func (c *cmdProjectEdit) command() *cobra.Command {
 	cmd.Use = cli.U("edit", cmdProjectEditUsage...)
 	cmd.Short = i18n.G("Edit project configurations as YAML")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Edit project configurations as YAML`))
+		`Edit project configurations as YAML`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus project edit <project> < project.yaml
-    Update a project using the content of project.yaml`))
+    Update a project using the content of project.yaml`,
+	))
 
 	cmd.RunE = c.run
 
@@ -336,7 +338,8 @@ func (c *cmdProjectEdit) helpTemplate() string {
 ### description: My own project
 ### name: my-project
 ###
-### Note that the name is shown but cannot be changed`)
+### Note that the name is shown but cannot be changed`,
+	)
 }
 
 func (c *cmdProjectEdit) run(cmd *cobra.Command, args []string) error {
@@ -428,7 +431,8 @@ func (c *cmdProjectGet) command() *cobra.Command {
 	cmd.Use = cli.U("get", cmdProjectGetUsage...)
 	cmd.Short = i18n.G("Get values for project configuration keys")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Get values for project configuration keys`))
+		`Get values for project configuration keys`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Get the key as a project property"))
@@ -512,7 +516,8 @@ b - Storage Buckets
 w - Networks
 z - Network Zones
 d - Description
-u - Used By`))
+u - Used By`,
+	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultProjectColumns, "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -763,7 +768,8 @@ func (c *cmdProjectSet) command() *cobra.Command {
 		`Set project configuration keys
 
 For backward compatibility, a single configuration key may still be set with:
-    incus project set [<remote>:]<project> <key> <value>`))
+    incus project set [<remote>:]<project> <key> <value>`,
+	))
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagIsProperty, "property|p", i18n.G("Set the key as a project property"))
@@ -988,7 +994,8 @@ func (c *cmdProjectInfo) command() *cobra.Command {
 	cmd.Use = cli.U("info", cmdProjectInfoUsage...)
 	cmd.Short = i18n.G("Get a summary of resource allocations")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Get a summary of resource allocations`))
+		`Get a summary of resource allocations`,
+	))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagShowAccess, "show-access", i18n.G("Show the instance's access list"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 

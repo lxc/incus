@@ -1834,7 +1834,8 @@ func (d *lxc) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 				nil,
 				[]*os.File{pidFd},
 				d.state.OS.ExecPath,
-				args...)
+				args...,
+			)
 			if err != nil {
 				return err
 			}
@@ -2240,7 +2241,8 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 					" ", "\\040",
 					"\t", "\\011",
 					"\n", "\\012",
-					"\\", "\\\\")
+					"\\", "\\\\",
+				)
 				return r.Replace(mountPath)
 			}
 
@@ -2920,7 +2922,8 @@ func (d *lxc) Start(stateful bool) error {
 		name,
 		d.state.OS.LxcPath,
 		configPath,
-		d.LogPath())
+		d.LogPath(),
+	)
 	if err != nil && !d.IsRunning() {
 		// Attempt to extract the LXC errors
 		lxcLog := ""
@@ -8356,7 +8359,8 @@ func (d *lxc) insertMountGo(source, target, fstype string, flags int, mntnsPID i
 		mntsrc,
 		target,
 		string(idmapType),
-		fmt.Sprintf("%d", shiftfsFlags))
+		fmt.Sprintf("%d", shiftfsFlags),
+	)
 	if err != nil {
 		return err
 	}
@@ -8386,7 +8390,8 @@ func (d *lxc) insertMountLXC(source, target, fstype string, flags int) error {
 		source,
 		target,
 		fstype,
-		fmt.Sprintf("%d", flags))
+		fmt.Sprintf("%d", flags),
+	)
 	if err != nil {
 		return err
 	}
@@ -8435,7 +8440,8 @@ func (d *lxc) moveMount(source, target, fstype string, flags int, idmapType idma
 		source,
 		target,
 		string(idmapType),
-		fmt.Sprintf("%d", flags))
+		fmt.Sprintf("%d", flags),
+	)
 	if err != nil {
 		return err
 	}
@@ -8477,7 +8483,8 @@ func (d *lxc) removeMount(mount string) error {
 		cname,
 		d.state.OS.LxcPath,
 		configPath,
-		mount)
+		mount,
+	)
 	if err != nil {
 		return err
 	}

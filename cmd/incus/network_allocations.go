@@ -55,7 +55,8 @@ Pre-defined column shorthand chars:
   a - Address
   t - Type
   n - NAT
-  m - Mac Address`))
+  m - Mac Address`,
+	))
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.MaximumNArgs(1)

@@ -37,7 +37,8 @@ Supported Conditions:
   ip               Wait for any globally routable IP address
   ipv4             Wait for a globally routable IPv4 address
   ipv6             Wait for a globally routable IPv6 address
-  status=STATUS    Wait for the instance status to become STATUS`))
+  status=STATUS    Wait for the instance status to become STATUS`,
+	))
 	cmd.Example = cli.FormatSection("", i18n.G(`incus wait v1 agent
 	Wait for VM instance v1 to have a functional agent.`))
 

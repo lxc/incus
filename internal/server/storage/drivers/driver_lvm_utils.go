@@ -412,13 +412,15 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 
 	if makeThinLv {
 		targetVg := fmt.Sprintf("%s/%s", vgName, thinPoolName)
-		args = append(args,
+		args = append(
+			args,
 			"--thin",
 			"--virtualsize", fmt.Sprintf("%db", lvSizeBytes),
 			targetVg,
 		)
 	} else {
-		args = append(args,
+		args = append(
+			args,
 			"--size", fmt.Sprintf("%db", lvSizeBytes),
 			vgName,
 		)

@@ -711,7 +711,8 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 				"--pool", d.config["ceph.osd.pool_name"],
 				"snap",
 				"purge",
-				d.getRBDVolumeName(vol, "", false))
+				d.getRBDVolumeName(vol, "", false),
+			)
 			if err != nil {
 				return err
 			}
@@ -766,7 +767,8 @@ func (d *ceph) hasVolume(rbdVolumeName string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 
-	_, err := subprocess.RunCommandContext(ctx,
+	_, err := subprocess.RunCommandContext(
+		ctx,
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -1031,7 +1033,8 @@ func (d *ceph) GetVolumeUsage(vol Volume) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 
-	jsonInfo, err := subprocess.RunCommandContext(ctx,
+	jsonInfo, err := subprocess.RunCommandContext(
+		ctx,
 		"rbd",
 		"du",
 		"--format", "json",
@@ -1200,7 +1203,8 @@ func (d *ceph) GetVolumeDiskPath(vol Volume) (string, error) {
 func (d *ceph) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
 
-	cmd := exec.Command("rbd",
+	cmd := exec.Command(
+		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
@@ -1659,7 +1663,8 @@ func (d *ceph) DeleteVolumeSnapshot(snapVol Volume, op *operations.Operation) er
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"info",
-		d.getRBDVolumeName(snapVol, "", false))
+		d.getRBDVolumeName(snapVol, "", false),
+	)
 	if err != nil {
 		return nil
 	}
@@ -1928,7 +1933,8 @@ func (d *ceph) RestoreVolume(vol Volume, snapshotName string, op *operations.Ope
 		"snap",
 		"rollback",
 		"--snap", fmt.Sprintf("snapshot_%s", snapshotName),
-		d.getRBDVolumeName(vol, "", false))
+		d.getRBDVolumeName(vol, "", false),
+	)
 	if err != nil {
 		return err
 	}

@@ -1093,7 +1093,8 @@ func (d *Daemon) init() error {
 		networkCert,
 		d.State,
 		cluster.Latency(d.config.RaftLatency),
-		cluster.LogLevel(clusterLogLevel))
+		cluster.LogLevel(clusterLogLevel),
+	)
 	if err != nil {
 		return err
 	}

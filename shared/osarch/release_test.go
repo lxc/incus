@@ -30,7 +30,8 @@ VERSION_ID="16.04"
 			"NAME":       "Ubuntu",
 			"ID":         "ubuntu",
 			"VERSION_ID": "16.04",
-		}, lsbRelease)
+		}, lsbRelease,
+	)
 }
 
 func (s *releaseTestSuite) TestGetOSReleaseSingleQuotes() {
@@ -71,7 +72,8 @@ VERSION_ID="16.04"
 			"NAME":       "Ubuntu",
 			"ID":         "ubuntu",
 			"VERSION_ID": "16.04",
-		}, lsbRelease)
+		}, lsbRelease,
+	)
 }
 
 func (s *releaseTestSuite) TestGetOSReleaseInvalidLine() {

@@ -157,7 +157,8 @@ func createApp() (*cobra.Command, *cmdGlobal, error) {
 All of Incus's features can be driven through the various commands below.
 For help with any of those, simply call them with --help.
 
-Custom commands can be defined through aliases, use "incus alias" to control those.`))
+Custom commands can be defined through aliases, use "incus alias" to control those.`,
+	))
 	app.SilenceUsage = true
 	app.SilenceErrors = true
 	app.CompletionOptions = cobra.CompletionOptions{HiddenDefaultCmd: true}

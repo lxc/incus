@@ -230,11 +230,13 @@ func TestUpdateFromV5(t *testing.T) {
 		// Create two nodes.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 		_, err = db.Exec(
 			"INSERT INTO nodes VALUES (2, 'n2', '', '5.6.7.8:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Create a pool p1 of type zfs.
@@ -301,11 +303,13 @@ func TestUpdateFromV6(t *testing.T) {
 		// Create two nodes.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 		_, err = db.Exec(
 			"INSERT INTO nodes VALUES (2, 'n2', '', '5.6.7.8:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Create a pool p1 of type zfs.
@@ -357,7 +361,8 @@ func TestUpdateFromV9(t *testing.T) {
 		// Create a node.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Create an operation.
@@ -383,7 +388,8 @@ func TestUpdateFromV11(t *testing.T) {
 		// Insert a node.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Insert a container.
@@ -471,7 +477,8 @@ func TestUpdateFromV14(t *testing.T) {
 		// Insert a node.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Insert a container.
@@ -500,7 +507,8 @@ func TestUpdateFromV15(t *testing.T) {
 		// Insert a node.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Insert an instance.
@@ -592,7 +600,8 @@ func TestUpdateFromV19(t *testing.T) {
 		// Insert a node.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 	})
 	require.NoError(t, err)
@@ -629,7 +638,8 @@ func TestUpdateFromV25(t *testing.T) {
 		// Insert a node.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0, 1)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Insert a pool
@@ -688,7 +698,8 @@ func TestUpdateFromV26_WithVolumes(t *testing.T) {
 		// Insert a node.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0, 1)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Insert a pool
@@ -726,12 +737,14 @@ func TestUpdateFromV34(t *testing.T) {
 		// Insert two nodes.
 		_, err := db.Exec(
 			"INSERT INTO nodes VALUES (1, 'n1', '', '1.2.3.4:666', 1, 32, ?, 0, 1, NULL)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		_, err = db.Exec(
 			"INSERT INTO nodes VALUES (2, 'n2', '', '5.6.7.8:666', 1, 32, ?, 0, 1, NULL)",
-			time.Now())
+			time.Now(),
+		)
 		require.NoError(t, err)
 
 		// Insert a storage pool.

@@ -61,7 +61,8 @@ Column shorthand chars:
   e - Project name
   m - Memory usage
   n - Instance name
-  u - CPU usage (in seconds)`))
+  u - CPU usage (in seconds)`,
+	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Display instances from all projects"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultTopColumns, "", i18n.G("Columns"))

@@ -263,7 +263,8 @@ func (c *ClusterTx) RenameInstanceBackup(ctx context.Context, oldName, newName s
 			"query":   "UPDATE instances_backups SET name = ? WHERE name = ?",
 			"oldName": oldName,
 			"newName": newName,
-		})
+		},
+	)
 	_, err = stmt.ExecContext(ctx, newName, oldName)
 	if err != nil {
 		return err
@@ -570,7 +571,8 @@ func (c *ClusterTx) RenameVolumeBackup(ctx context.Context, oldName, newName str
 			"query":   "UPDATE storage_volumes_backups SET name = ? WHERE name = ?",
 			"oldName": oldName,
 			"newName": newName,
-		})
+		},
+	)
 	_, err = stmt.Exec(newName, oldName)
 	if err != nil {
 		return err
@@ -791,7 +793,8 @@ func (c *ClusterTx) RenameBucketBackup(ctx context.Context, oldName, newName str
 			"query":   "UPDATE storage_buckets_backups SET name = ? WHERE name = ?",
 			"oldName": oldName,
 			"newName": newName,
-		})
+		},
+	)
 	_, err = stmt.Exec(newName, oldName)
 	if err != nil {
 		return err
