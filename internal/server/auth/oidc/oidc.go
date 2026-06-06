@@ -101,6 +101,11 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		// Attempt the refresh.
 		tokens, err := rp.RefreshTokens[*oidc.IDTokenClaims](context.TODO(), provider, cookie.Value, "", "")
 		if err != nil {
+			// If the refresh token is no longer usable, clear the cookies so the UI can redirect to login.
+			if w != nil && isTerminalRefreshError(err) {
+				o.clearCookies(w)
+			}
+
 			return "", &AuthError{err}
 		}
 
@@ -276,6 +281,21 @@ func (o *Verifier) clearCookies(w http.ResponseWriter) {
 
 		http.SetCookie(w, &cookie)
 	}
+}
+
+// isTerminalRefreshError reports whether the refresh failed because the refresh token is no longer usable.
+func isTerminalRefreshError(err error) bool {
+	var oidcErr *oidc.Error
+	if !errors.As(err, &oidcErr) {
+		return false
+	}
+
+	switch oidcErr.ErrorType {
+	case oidc.InvalidGrant, oidc.AccessDenied, oidc.ExpiredToken:
+		return true
+	}
+
+	return false
 }
 
 // VerifyAccessToken is a wrapper around op.VerifyAccessToken which avoids having to deal with Go generics elsewhere. It validates the access token (issuer, signature and expiration).
