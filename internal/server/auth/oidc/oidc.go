@@ -101,6 +101,11 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		// Attempt the refresh.
 		tokens, err := rp.RefreshTokens[*oidc.IDTokenClaims](context.TODO(), provider, cookie.Value, "", "")
 		if err != nil {
+			// If the refresh token is no longer usable, clear the cookies so the UI can redirect to login.
+			if w != nil && isTerminalRefreshError(err) {
+				o.clearCookies(w)
+			}
+
 			return "", &AuthError{err}
 		}
 
@@ -112,31 +117,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 		// If we have a ResponseWriter, refresh the cookies.
 		if w != nil {
-			// Update the access token cookie.
-			accessCookie := http.Cookie{
-				Name:     "oidc_access",
-				Value:    tokens.AccessToken,
-				Path:     "/",
-				Secure:   true,
-				HttpOnly: true,
-				SameSite: http.SameSiteStrictMode,
-			}
-
-			http.SetCookie(w, &accessCookie)
-
-			// Update the refresh token cookie.
-			if tokens.RefreshToken != "" {
-				refreshCookie := http.Cookie{
-					Name:     "oidc_refresh",
-					Value:    tokens.RefreshToken,
-					Path:     "/",
-					Secure:   true,
-					HttpOnly: true,
-					SameSite: http.SameSiteStrictMode,
-				}
-
-				http.SetCookie(w, &refreshCookie)
-			}
+			o.setCookies(w, tokens)
 		}
 	}
 
@@ -192,41 +173,8 @@ func (o *Verifier) Logout(w http.ResponseWriter, r *http.Request) {
 		_, _ = rp.EndSession(r.Context(), provider, token, fmt.Sprintf("https://%s", r.Host), "", "", nil)
 	}
 
-	// Access token.
-	accessCookie := http.Cookie{
-		Name:     "oidc_access",
-		Path:     "/",
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Unix(0, 0),
-	}
-
-	http.SetCookie(w, &accessCookie)
-
-	// ID token.
-	idCookie := http.Cookie{
-		Name:     "oidc_id",
-		Path:     "/",
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Unix(0, 0),
-	}
-
-	http.SetCookie(w, &idCookie)
-
-	// Refresh token.
-	refreshCookie := http.Cookie{
-		Name:     "oidc_refresh",
-		Path:     "/",
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-		Expires:  time.Unix(0, 0),
-	}
-
-	http.SetCookie(w, &refreshCookie)
+	// Clear the authentication cookies.
+	o.clearCookies(w)
 }
 
 // Callback handles the redirect back from the OIDC provider and completes the login flow.
@@ -240,45 +188,8 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handler := rp.CodeExchangeHandler(func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[*oidc.IDTokenClaims], state string, rp rp.RelyingParty) {
-		// Access token.
-		accessCookie := http.Cookie{
-			Name:     "oidc_access",
-			Value:    tokens.AccessToken,
-			Path:     "/",
-			Secure:   true,
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		}
-
-		http.SetCookie(w, &accessCookie)
-
-		// Refresh token.
-		if tokens.RefreshToken != "" {
-			refreshCookie := http.Cookie{
-				Name:     "oidc_refresh",
-				Value:    tokens.RefreshToken,
-				Path:     "/",
-				Secure:   true,
-				HttpOnly: true,
-				SameSite: http.SameSiteStrictMode,
-			}
-
-			http.SetCookie(w, &refreshCookie)
-		}
-
-		// ID token.
-		if tokens.IDToken != "" {
-			idCookie := http.Cookie{
-				Name:     "oidc_id",
-				Value:    tokens.IDToken,
-				Path:     "/",
-				Secure:   true,
-				HttpOnly: true,
-				SameSite: http.SameSiteStrictMode,
-			}
-
-			http.SetCookie(w, &idCookie)
-		}
+		// Set the authentication cookies.
+		o.setCookies(w, tokens)
 
 		// Send to the UI.
 		// NOTE: Once the UI does the redirection on its own, we may be able to use the referer here instead.
@@ -286,6 +197,105 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 	}, provider)
 
 	handler(w, r)
+}
+
+// cookieExpiry returns the cookie expiration, preferring the provider's refresh token lifetime over a 30 day default.
+func cookieExpiry(tokens *oidc.Tokens[*oidc.IDTokenClaims]) time.Time {
+	// Fall back to 30 days when the provider doesn't report a refresh token lifetime.
+	lifetime := 30 * 24 * time.Hour
+
+	if tokens != nil && tokens.Token != nil {
+		expiresIn, ok := tokens.Extra("refresh_expires_in").(float64)
+		if ok && expiresIn > 0 {
+			lifetime = time.Duration(expiresIn) * time.Second
+
+			// Make the lifetime a second shorter than the refresh timer.
+			if lifetime > time.Second {
+				lifetime -= time.Second
+			}
+		}
+	}
+
+	return time.Now().Add(lifetime)
+}
+
+// setCookies sets the OIDC authentication cookies on the response based on the provided tokens.
+func (o *Verifier) setCookies(w http.ResponseWriter, tokens *oidc.Tokens[*oidc.IDTokenClaims]) {
+	expiry := cookieExpiry(tokens)
+
+	// Access token.
+	accessCookie := http.Cookie{
+		Name:     "oidc_access",
+		Value:    tokens.AccessToken,
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Expires:  expiry,
+	}
+
+	http.SetCookie(w, &accessCookie)
+
+	// Refresh token.
+	if tokens.RefreshToken != "" {
+		refreshCookie := http.Cookie{
+			Name:     "oidc_refresh",
+			Value:    tokens.RefreshToken,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+			Expires:  expiry,
+		}
+
+		http.SetCookie(w, &refreshCookie)
+	}
+
+	// ID token.
+	if tokens.IDToken != "" {
+		idCookie := http.Cookie{
+			Name:     "oidc_id",
+			Value:    tokens.IDToken,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+			Expires:  expiry,
+		}
+
+		http.SetCookie(w, &idCookie)
+	}
+}
+
+// clearCookies removes the OIDC authentication cookies from the browser.
+func (o *Verifier) clearCookies(w http.ResponseWriter) {
+	for _, name := range []string{"oidc_access", "oidc_id", "oidc_refresh"} {
+		cookie := http.Cookie{
+			Name:     name,
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+			Expires:  time.Unix(0, 0),
+		}
+
+		http.SetCookie(w, &cookie)
+	}
+}
+
+// isTerminalRefreshError reports whether the refresh failed because the refresh token is no longer usable.
+func isTerminalRefreshError(err error) bool {
+	var oidcErr *oidc.Error
+	if !errors.As(err, &oidcErr) {
+		return false
+	}
+
+	switch oidcErr.ErrorType {
+	case oidc.InvalidGrant, oidc.AccessDenied, oidc.ExpiredToken:
+		return true
+	}
+
+	return false
 }
 
 // VerifyAccessToken is a wrapper around op.VerifyAccessToken which avoids having to deal with Go generics elsewhere. It validates the access token (issuer, signature and expiration).

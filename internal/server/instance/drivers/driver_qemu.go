@@ -766,6 +766,11 @@ func (d *qemu) onStop(target string, reason string) error {
 		d.logger.Error("VM process failed to stop", logger.Ctx{"timeout": waitTimeout})
 	}
 
+	// Fully cleanup the existing QEMU monitor.
+	if monitor != nil {
+		monitor.Disconnect()
+	}
+
 	// Record power state.
 	err = d.VolatileSet(map[string]string{
 		"volatile.last_state.power": instance.PowerStateStopped,

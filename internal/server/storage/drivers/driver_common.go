@@ -334,7 +334,10 @@ func (d *common) moveGPTAltHeader(devPath string) error {
 		if errors.As(runErr.Unwrap(), &exitError) {
 			// sgdisk manpage says exit status 3 means:
 			// "Non-GPT disk detected and no -g option, but operation requires a write action".
-			if exitError.ExitCode() == 3 {
+
+			// Exit status 2 means an error reading the partition table.
+			// This can happen on raw or MBR-only disk image.
+			if exitError.ExitCode() == 2 || exitError.ExitCode() == 3 {
 				return nil // Non-error as non-GPT disk specified.
 			}
 		}
