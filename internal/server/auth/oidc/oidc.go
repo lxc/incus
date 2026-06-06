@@ -194,8 +194,30 @@ func (o *Verifier) Callback(w http.ResponseWriter, r *http.Request) {
 	handler(w, r)
 }
 
+// cookieExpiry returns the cookie expiration, preferring the provider's refresh token lifetime over a 30 day default.
+func cookieExpiry(tokens *oidc.Tokens[*oidc.IDTokenClaims]) time.Time {
+	// Fall back to 30 days when the provider doesn't report a refresh token lifetime.
+	lifetime := 30 * 24 * time.Hour
+
+	if tokens != nil && tokens.Token != nil {
+		expiresIn, ok := tokens.Extra("refresh_expires_in").(float64)
+		if ok && expiresIn > 0 {
+			lifetime = time.Duration(expiresIn) * time.Second
+
+			// Make the lifetime a second shorter than the refresh timer.
+			if lifetime > time.Second {
+				lifetime -= time.Second
+			}
+		}
+	}
+
+	return time.Now().Add(lifetime)
+}
+
 // setCookies sets the OIDC authentication cookies on the response based on the provided tokens.
 func (o *Verifier) setCookies(w http.ResponseWriter, tokens *oidc.Tokens[*oidc.IDTokenClaims]) {
+	expiry := cookieExpiry(tokens)
+
 	// Access token.
 	accessCookie := http.Cookie{
 		Name:     "oidc_access",
@@ -204,6 +226,7 @@ func (o *Verifier) setCookies(w http.ResponseWriter, tokens *oidc.Tokens[*oidc.I
 		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
+		Expires:  expiry,
 	}
 
 	http.SetCookie(w, &accessCookie)
@@ -217,6 +240,7 @@ func (o *Verifier) setCookies(w http.ResponseWriter, tokens *oidc.Tokens[*oidc.I
 			Secure:   true,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
+			Expires:  expiry,
 		}
 
 		http.SetCookie(w, &refreshCookie)
@@ -231,6 +255,7 @@ func (o *Verifier) setCookies(w http.ResponseWriter, tokens *oidc.Tokens[*oidc.I
 			Secure:   true,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
+			Expires:  expiry,
 		}
 
 		http.SetCookie(w, &idCookie)
