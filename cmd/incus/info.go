@@ -25,10 +25,11 @@ import (
 type cmdInfo struct {
 	global *cmdGlobal
 
-	flagShowAccess bool
-	flagShowLog    string
-	flagResources  bool
-	flagTarget     string
+	flagShowAccess    bool
+	flagShowLog       string
+	flagResources     bool
+	flagShowSensitive bool
+	flagTarget        string
 }
 
 var cmdInfoUsage = u.Usage{u.Instance.Optional().Remote()}
@@ -52,6 +53,7 @@ incus info [<remote>:] [--resources]
 	cli.AddBoolFlag(cmd.Flags(), &c.flagShowAccess, "show-access", i18n.G("Show the instance's access list"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagShowLog, "show-log", "", "default", i18n.G("Show the instance's recent log entries"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagResources, "resources", i18n.G("Show the resources available to the server"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagShowSensitive, "show-sensitive", i18n.G("Show the server's sensitive information (full certificates, private keys and the API extension list)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTarget, "target", "", "", i18n.G("Cluster member name"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -621,7 +623,13 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&serverStatus, yaml.V2)
+	// Show the filtered output unless --show-sensitive is passed by the user.
+	var out any = &serverStatus
+	if !c.flagShowSensitive {
+		out = serverStatus.Filtered()
+	}
+
+	data, err := yaml.Dump(out, yaml.V2)
 	if err != nil {
 		return err
 	}
