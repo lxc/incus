@@ -1,5 +1,11 @@
 package api
 
+import (
+	"strings"
+
+	"go.yaml.in/yaml/v4"
+)
+
 // ServerEnvironment represents the read-only environment fields of a server configuration.
 type ServerEnvironment struct {
 	// List of addresses the server is listening on
@@ -160,7 +166,7 @@ type ServerUntrusted struct {
 	// List of supported API extensions
 	// Read only: true
 	// Example: ["etag", "patch", "network", "storage"]
-	APIExtensions []string `json:"api_extensions" yaml:"api_extensions"`
+	APIExtensions []string `json:"api_extensions" yaml:"api_extensions,omitempty"`
 
 	// Support status of the current API (one of "devel", "stable" or "deprecated")
 	// Read only: true
@@ -218,4 +224,91 @@ type Server struct {
 // Writable converts a full Server struct into a ServerPut struct (filters read-only fields).
 func (srv *Server) Writable() ServerPut {
 	return srv.ServerPut
+}
+
+// isConfigKeySensitive is used to check if a given configuration key is likely to be sensitive and should be censored.
+func isConfigKeySensitive(key string) bool {
+	fields := strings.Split(key, ".")
+	segment := fields[len(fields)-1]
+
+	for _, suffix := range []string{"key", "cert", "password", "secret", "token"} {
+		if strings.HasSuffix(segment, suffix) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ServerFiltered represents a Server with all sensitive information removed and some other noisy attributes cleared out.
+type ServerFiltered struct {
+	Server `yaml:",inline"`
+
+	// Number of supported API extensions
+	// Example: 412
+	APIExtensionsCount int `json:"api_extensions_count"`
+}
+
+// MarshalYAML is used as a workaround to keep the field ordering the same in the output by injecting api_extensions_count at the right spot.
+func (srv ServerFiltered) MarshalYAML() (any, error) {
+	node := yaml.Node{}
+
+	err := node.Encode(srv.Server)
+	if err != nil {
+		return nil, err
+	}
+
+	if srv.APIExtensionsCount > 0 {
+		count := yaml.Node{}
+		err = count.Encode(srv.APIExtensionsCount)
+		if err != nil {
+			return nil, err
+		}
+
+		key := yaml.Node{Kind: yaml.ScalarNode, Value: "api_extensions_count"}
+
+		// Insert just before "api_status", matching the spot of the API extension list.
+		idx := len(node.Content)
+		for i := 0; i < len(node.Content); i += 2 {
+			if node.Content[i].Value == "api_status" {
+				idx = i
+				break
+			}
+		}
+
+		content := make([]*yaml.Node, 0, len(node.Content)+2)
+		content = append(content, node.Content[:idx]...)
+		content = append(content, &key, &count)
+		content = append(content, node.Content[idx:]...)
+		node.Content = content
+	}
+
+	return &node, nil
+}
+
+// Filtered converts Server to ServerFiltered by filtering out the sensitive config keys and summarizing some of the data.
+func (srv *Server) Filtered() *ServerFiltered {
+	filtered := ServerFiltered{Server: *srv}
+
+	// Drop the full server certificate (we keep the fingerprint).
+	filtered.Environment.Certificate = ""
+
+	// Replace the full API extension list with a count.
+	filtered.APIExtensionsCount = len(srv.APIExtensions)
+	filtered.APIExtensions = nil
+
+	// Censor any sensitive configuration value.
+	if srv.Config != nil {
+		filtered.Config = make(ConfigMap, len(srv.Config))
+		for k, v := range srv.Config {
+			if v != "" && isConfigKeySensitive(k) {
+				filtered.Config[k] = "SENSITIVE"
+				continue
+			}
+
+			filtered.Config[k] = v
+		}
+	}
+
+	return &filtered
 }
