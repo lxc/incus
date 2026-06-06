@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-05 22:23-0400\n"
-"PO-Revision-Date: 2026-05-30 00:01+0000\n"
-"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
+"PO-Revision-Date: 2026-06-06 23:38+0000\n"
+"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.6.dev0\n"
+"X-Generator: Weblate 2026.6\n"
 
 #: cmd/incus/info.go:457
 msgid "  Chassis:"
@@ -995,8 +995,8 @@ msgstr "Ytterligare hjälpämnen:"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
-"klar):"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
+":"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1236,8 +1236,8 @@ msgstr "Säkerhetskopior:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
-"<nyckel>=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
+"=<värde>: %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:205 cmd/incus/move.go:252
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -2665,8 +2665,7 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/top.go:96 cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr ""
-"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
 
 #: cmd/incus/cluster.go:775
 msgid "Enable clustering on a single non-clustered server"
@@ -9767,8 +9766,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
-"sätt, \n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
+"\n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -9833,8 +9832,7 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:98
 msgid "Whether or not to snapshot the instance's running state"
-msgstr ""
-"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/rebuild.go:28
 msgid ""
