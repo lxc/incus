@@ -44,6 +44,10 @@ func (c *cmdAdmin) command() *cobra.Command {
 	sqlCmd := cmdAdminSQL{global: c.global}
 	cmd.AddCommand(sqlCmd.command())
 
+	// update-certificate sub-command
+	updateCertCmd := cmdAdminUpdateCertificate{global: c.global}
+	cmd.AddCommand(updateCertCmd.command())
+
 	// waitready sub-command
 	adminWaitreadyCmd := cmdAdminWaitready{global: c.global}
 	cmd.AddCommand(adminWaitreadyCmd.command())
