@@ -2128,7 +2128,7 @@ func (d *zfs) getVolumeDiskPathFromDataset(dataset string) (string, error) {
 			return ""
 		}
 
-		defer func() { _ = r.Close() }()
+		defer logger.WarnOnError(r.Close, "Failed to close file")
 
 		// Perform the BLKZNAME ioctl.
 		buf := [256]byte{}
@@ -3011,8 +3011,8 @@ func (d *zfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, bas
 			return fmt.Errorf("Failed to open temporary file for ZFS backup: %w", err)
 		}
 
-		defer func() { _ = tmpFile.Close() }()
-		defer func() { _ = os.Remove(tmpFile.Name()) }()
+		defer logger.WarnOnError(tmpFile.Close, "Failed to close temporary file")
+		defer logger.WarnOnError(func() error { return os.Remove(tmpFile.Name()) }, "Failed to remove temporary file")
 
 		// Write the subvolume to the file.
 		d.logger.Debug("Generating optimized volume file", logger.Ctx{"sourcePath": path, "file": tmpFile.Name(), "name": fileName})

@@ -156,7 +156,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		return nil
 	}
 
-	defer func() { _ = conn.Close() }() // Ensure listener below ends when this function ends.
+	defer logger.WarnOnError(conn.Close, "Failed to close connection") // Ensure listener below ends when this function ends.
 
 	listenerConnection := events.NewWebsocketListenerConnection(conn)
 	listener, err := s.Events.AddListener(projectName, allProjects, projectPermissionFunc, listenerConnection, types, excludeSources, recvFunc, excludeLocations)

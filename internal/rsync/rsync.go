@@ -145,7 +145,7 @@ func sendSetup(name string, path string, bwlimit string, execPath string, featur
 		return nil, nil, nil, err
 	}
 
-	defer func() { _ = l.Close() }()
+	defer logger.WarnOnError(l.Close, "Failed to close listener")
 
 	/*
 	 * Here, the path /tmp/foo is ignored. Since we specify localhost,

@@ -1634,7 +1634,7 @@ func (d *nicBridged) networkClearLease(name string, networkName string, hwaddr s
 		return err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	var dstDUID string
 	errs := []error{}
@@ -1713,7 +1713,7 @@ func (d *nicBridged) networkDHCPv4Release(srcMAC net.HardwareAddr, srcIP net.IP,
 		return err
 	}
 
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	// Random DHCP transaction ID
 	xid := rand.Uint32()
@@ -1765,7 +1765,7 @@ func (d *nicBridged) networkDHCPv6Release(srcDUID string, srcIAID string, srcIP 
 		return err
 	}
 
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	// Construct a DHCPv6 packet pretending to be from the source IP and MAC supplied.
 	dhcp := layers.DHCPv6{

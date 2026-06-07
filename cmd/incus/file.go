@@ -161,7 +161,7 @@ func (c *cmdFileCreate) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defer func() { _ = sftpConn.Close() }()
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 	// Determine the target uid
 	uid := max(c.file.flagUID, 0)
@@ -401,7 +401,7 @@ func (c *cmdFileEdit) run(cmd *cobra.Command, args []string) error {
 	c.filePush.edit = true
 
 	// Extract current value
-	defer func() { _ = os.Remove(fname) }()
+	defer logger.WarnOnError(func() error { return os.Remove(fname) }, "Failed to remove temporary file")
 	err = c.filePull.pull(parsed, fname)
 	if err != nil {
 		return err
@@ -573,7 +573,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 					return err
 				}
 
-				defer func() { _ = f.Close() }() // nolint:revive
+				defer logger.WarnOnError(f.Close, "Failed to close file") // nolint:revive
 
 				err = os.Chmod(targetPath, os.FileMode(srcInfo.Mode()))
 				if err != nil {
@@ -615,7 +615,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 					return err
 				}
 
-				defer func() { _ = src.Close() }()
+				defer logger.WarnOnError(src.Close, "Failed to close source file")
 
 				_, err = util.SafeCopy(writer, src)
 				if err != nil {
@@ -715,7 +715,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 		return err
 	}
 
-	defer func() { _ = sftpConn.Close() }()
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 	targetInfo, err := sftpConn.Stat(target)
 	if err == nil {
@@ -794,7 +794,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 					}
 
 					size = srcInfo.Size()
-					defer func() { _ = f.Close() }()
+					defer logger.WarnOnError(f.Close, "Failed to close file")
 				}
 
 				dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
@@ -991,7 +991,7 @@ func (c *cmdFileMount) run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf(i18n.G("Failed connecting to instance SFTP: %w"), err)
 		}
 
-		defer func() { _ = sftpConn.Close() }()
+		defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
 
 		return sshfsMount(cmd.Context(), sftpConn, instanceName, instancePath, targetPath)
 	}

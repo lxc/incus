@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/migration"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
@@ -330,7 +331,7 @@ func (d *zfs) needsRecursion(dataset string) bool {
 }
 
 func (d *zfs) sendDataset(dataset string, parent string, volSrcArgs *migration.VolumeSourceArgs, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTracker) error {
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	// Assemble zfs send command.
 	args := []string{"send"}

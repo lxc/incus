@@ -19,6 +19,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/sys"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/archive"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 )
 
@@ -50,7 +51,7 @@ func TarReader(r io.ReadSeeker, sysOS *sys.OS, outputPath string) (*tar.Reader, 
 func Upload(reader *io.PipeReader, req *api.BackupTarget) error {
 	// We want to close the reader as soon as something bad occurs, ensuring that we don't hang on a
 	// pipe that's unable to consume anything.
-	defer func() { _ = reader.Close() }()
+	defer logger.WarnOnError(reader.Close, "Failed to close reader")
 
 	if req.Protocol != "s3" {
 		return fmt.Errorf("Unsupported backup target protocol %q", req.Protocol)

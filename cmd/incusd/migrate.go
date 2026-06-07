@@ -22,6 +22,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/idmap"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 type migrationFields struct {
@@ -85,7 +86,7 @@ func (c *migrationFields) recv(m proto.Message, handshake bool) error {
 		_ = conn.SetReadDeadline(time.Now().Add(2 * time.Minute))
 
 		// Remove the deadline after the request.
-		defer func() { _ = conn.SetReadDeadline(time.Time{}) }()
+		defer logger.WarnOnError(func() error { return conn.SetReadDeadline(time.Time{}) }, "Failed to clear read deadline")
 
 		// When handling a handshake, parse the header to make sure we
 		// didn't get a remote side failure.

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -34,7 +35,7 @@ func ParseUeventFile(ueventFilePath string) (Device, error) {
 		return dev, err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {

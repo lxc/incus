@@ -22,6 +22,7 @@ import (
 	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/ws"
@@ -126,7 +127,7 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 			return abort(err)
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		conn := ws.NewWrapper(wsFs)
 
@@ -353,7 +354,7 @@ func blockDiskSizeBytes(blockDiskPath string) (int64, error) {
 			return -1, err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 		fd := int(f.Fd())
 
 		// Retrieve the block device size.

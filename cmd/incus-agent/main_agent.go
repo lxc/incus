@@ -247,7 +247,7 @@ func (c *cmdAgent) writeStatus(status string) error {
 			return err
 		}
 
-		defer vSerial.Close()
+		defer logger.WarnOnError(vSerial.Close, "Failed to close vserial device")
 
 		_, err = vSerial.Write(fmt.Appendf(nil, "%s\n", status))
 		if err != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/operations"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
@@ -266,7 +267,7 @@ func (d *cephfs) Create() error {
 		return fmt.Errorf("Failed to create temporary directory under: %w", err)
 	}
 
-	defer func() { _ = os.RemoveAll(mountPath) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(mountPath) }, "Failed to remove temporary directory")
 
 	err = os.Chmod(mountPath, 0o700)
 	if err != nil {
@@ -344,7 +345,7 @@ func (d *cephfs) Delete(op *operations.Operation) error {
 		return fmt.Errorf("Failed to create temporary directory under: %w", err)
 	}
 
-	defer func() { _ = os.RemoveAll(mountPath) }()
+	defer logger.WarnOnError(func() error { return os.RemoveAll(mountPath) }, "Failed to remove temporary directory")
 
 	err = os.Chmod(mountPath, 0o700)
 	if err != nil {

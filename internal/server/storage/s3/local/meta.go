@@ -9,6 +9,8 @@ import (
 	"io/fs"
 	"os"
 	"time"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // metaSuffix is appended to the data filename to form the metadata.
@@ -90,7 +92,7 @@ func loadOrInferMeta(dataPath string) (*objectMeta, error) {
 		return nil, err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	hasher := md5.New()
 	_, err = io.Copy(hasher, f)

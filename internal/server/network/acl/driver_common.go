@@ -856,7 +856,7 @@ func (d *common) GetLog(clientType request.ClientType) (string, error) {
 		return "", fmt.Errorf("Couldn't open OVN log file: %w", err)
 	}
 
-	defer func() { _ = logFile.Close() }()
+	defer logger.WarnOnError(logFile.Close, "Failed to close log file")
 
 	logEntries := []string{}
 	scanner := bufio.NewScanner(logFile)
@@ -890,7 +890,7 @@ func (d *common) GetLog(clientType request.ClientType) (string, error) {
 				return err
 			}
 
-			defer func() { _ = entries.Close() }()
+			defer logger.WarnOnError(entries.Close, "Failed to close log entries")
 
 			// Prevent concurrent writes to the log entries slice.
 			mu.Lock()

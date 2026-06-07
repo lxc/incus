@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -247,7 +248,7 @@ func getFromShadow(fname string, username string) ([][]int64, error) {
 		return nil, err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -295,7 +296,7 @@ func getFromProc(fname string) ([][]int64, error) {
 		return nil, err
 	}
 
-	defer func() { _ = f.Close() }()
+	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {

@@ -56,7 +56,7 @@ func eventsSocket(d *Daemon, r *http.Request, w http.ResponseWriter) error {
 			return err
 		}
 
-		defer func() { _ = conn.Close() }() // Ensure listener below ends when this function ends.
+		defer logger.WarnOnError(conn.Close, "Failed to close connection") // Ensure listener below ends when this function ends.
 
 		listenerConnection = events.NewWebsocketListenerConnection(conn)
 	} else {
@@ -70,7 +70,7 @@ func eventsSocket(d *Daemon, r *http.Request, w http.ResponseWriter) error {
 			return err
 		}
 
-		defer func() { _ = conn.Close() }() // Ensure listener below ends when this function ends.
+		defer logger.WarnOnError(conn.Close, "Failed to close connection") // Ensure listener below ends when this function ends.
 
 		listenerConnection, err = events.NewStreamListenerConnection(conn)
 		if err != nil {

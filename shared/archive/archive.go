@@ -175,7 +175,7 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 			return err
 		}
 
-		defer func() { _ = f.Close() }()
+		defer logger.WarnOnError(f.Close, "Failed to close file")
 
 		reader = f
 
@@ -234,7 +234,7 @@ func Unpack(file string, path string, blockBackend bool, maxMemory int64, tracke
 		return fmt.Errorf("Error opening directory: %w", err)
 	}
 
-	defer func() { _ = outputDir.Close() }()
+	defer logger.WarnOnError(outputDir.Close, "Failed to close directory")
 
 	var readCloser io.ReadCloser
 	if reader != nil {

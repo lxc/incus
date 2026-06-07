@@ -214,7 +214,7 @@ func (r *syncResponse) Render(w http.ResponseWriter) error {
 		if r.metadata != nil {
 			if r.compress {
 				comp := gzip.NewWriter(w)
-				defer comp.Close()
+				defer logger.WarnOnError(comp.Close, "Failed to close gzip writer")
 
 				_, err := comp.Write([]byte(r.metadata.(string)))
 				if err != nil {
@@ -448,7 +448,7 @@ func (r *fileResponse) Render(w http.ResponseWriter) error {
 				return err
 			}
 
-			defer func() { _ = f.Close() }()
+			defer logger.WarnOnError(f.Close, "Failed to close file")
 
 			fi, err := f.Stat()
 			if err != nil {
@@ -475,7 +475,7 @@ func (r *fileResponse) Render(w http.ResponseWriter) error {
 
 	// Now the complex multipart answer.
 	mw := multipart.NewWriter(w)
-	defer func() { _ = mw.Close() }()
+	defer logger.WarnOnError(mw.Close, "Failed to close multipart writer")
 
 	w.Header().Set("Content-Type", mw.FormDataContentType())
 	w.Header().Set("Transfer-Encoding", "chunked")
@@ -491,7 +491,7 @@ func (r *fileResponse) Render(w http.ResponseWriter) error {
 					return err
 				}
 
-				defer func() { _ = fd.Close() }()
+				defer logger.WarnOnError(fd.Close, "Failed to close file")
 
 				rd = fd
 			}
@@ -654,7 +654,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 		defer r.cleanup()
 	}
 
-	defer func() { _ = r.conn.Close() }()
+	defer logger.WarnOnError(r.conn.Close, "Failed to close connection")
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
@@ -666,7 +666,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 		return api.StatusErrorf(http.StatusInternalServerError, "Failed to hijack connection: %v", err)
 	}
 
-	defer func() { _ = remoteConn.Close() }()
+	defer logger.WarnOnError(remoteConn.Close, "Failed to close remote connection")
 
 	remoteTCP, _ := tcp.ExtractConn(remoteConn)
 	if remoteTCP != nil {
@@ -746,7 +746,7 @@ func (r *pipeResponse) Code() int {
 
 // Render writes the response.
 func (r *pipeResponse) Render(w http.ResponseWriter) error {
-	defer func() { _ = r.reader.Close() }()
+	defer logger.WarnOnError(r.reader.Close, "Failed to close reader")
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.WriteHeader(r.Code())
 

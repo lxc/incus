@@ -315,7 +315,7 @@ JOIN
 		return fmt.Errorf("Failed finding projects with features.networks=true: %w", err)
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	var projectIDs []int64
 	for rows.Next() {
@@ -440,7 +440,7 @@ func updateFromV63(ctx context.Context, tx *sql.Tx) error {
 		return fmt.Errorf("Failed getting projects with features.storage.volumes=true: %w", err)
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	var projectIDs []int64
 
@@ -2122,7 +2122,7 @@ func updateFromV42(ctx context.Context, tx *sql.Tx) error {
 		return fmt.Errorf("Failed running query: %w", err)
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	type dupeRow struct {
 		storagePoolID int64
@@ -2188,7 +2188,7 @@ func updateFromV41(ctx context.Context, tx *sql.Tx) error {
 		return fmt.Errorf("Failed running query: %w", err)
 	}
 
-	defer func() { _ = rows.Close() }()
+	defer logger.WarnOnError(rows.Close, "Failed to close rows")
 
 	type dupeRow struct {
 		networkID  int64

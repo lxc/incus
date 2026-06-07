@@ -1174,7 +1174,7 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 		return false, err
 	}
 
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	netipAddr, ok := netip.AddrFromSlice(address)
 	if !ok {
@@ -1249,7 +1249,7 @@ func pingOverIfaceByName(deadline time.Time, address net.IP, parentInterface str
 		return err
 	}
 
-	defer func() { _ = c.Close() }()
+	defer logger.WarnOnError(c.Close, "Failed to close connection")
 
 	// Honour the caller’s deadline.
 	_ = c.SetDeadline(deadline)

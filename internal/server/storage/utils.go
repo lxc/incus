@@ -725,14 +725,14 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 				return -1, err
 			}
 
-			defer from.Close()
+			defer logger.WarnOnError(from.Close, "Failed to close source file")
 
 			to, err := os.OpenFile(dstPath, unix.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0)
 			if err != nil {
 				return -1, err
 			}
 
-			defer to.Close()
+			defer logger.WarnOnError(to.Close, "Failed to close destination file")
 
 			_, err = util.SafeCopy(to, from)
 			if err != nil {
@@ -805,7 +805,7 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 			return -1, err
 		}
 
-		defer func() { _ = os.RemoveAll(tempDir) }()
+		defer logger.WarnOnError(func() error { return os.RemoveAll(tempDir) }, "Failed to remove temporary directory")
 
 		// Unpack the whole image.
 		err = archive.Unpack(imageFile, tempDir, vol.IsBlockBacked(), maxMemory, tracker)
@@ -1136,7 +1136,7 @@ func InstanceDiskBlockSize(pool Pool, inst instance.Instance, op *operations.Ope
 		return -1, err
 	}
 
-	defer func() { _ = InstanceUnmount(pool, inst, op) }()
+	defer logger.WarnOnError(func() error { return InstanceUnmount(pool, inst, op) }, "Failed to unmount instance")
 
 	if mountInfo.DiskPath == "" {
 		return -1, errors.New("No disk path available from mount")

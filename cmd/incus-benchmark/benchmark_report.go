@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"time"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // Subset of JMeter CSV log format that are required by Jenkins performance
@@ -33,7 +35,7 @@ func (r *CSVReport) load() error {
 		return err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	reader := csv.NewReader(file)
 	for line := 1; err != io.EOF; line++ {
@@ -60,7 +62,7 @@ func (r *CSVReport) write() error {
 		return err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	writer := csv.NewWriter(file)
 	err = writer.WriteAll(r.records)

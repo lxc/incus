@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/shared/archive"
 	"github.com/lxc/incus/v7/shared/ask"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/termios"
@@ -580,14 +581,14 @@ func (c *cmdImageExport) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defer func() { _ = dest.Close() }()
+	defer logger.WarnOnError(dest.Close, "Failed to close file")
 
 	destRootfs, err := os.Create(targetRootfs)
 	if err != nil {
 		return err
 	}
 
-	defer func() { _ = destRootfs.Close() }()
+	defer logger.WarnOnError(destRootfs.Close, "Failed to close file")
 
 	// Prepare the download request
 	progress := cli.ProgressRenderer{
@@ -731,7 +732,7 @@ func (c *cmdImageImport) packImageDir(path string) (string, error) {
 		return "", err
 	}
 
-	defer func() { _ = outFile.Close() }()
+	defer logger.WarnOnError(outFile.Close, "Failed to close file")
 
 	outFileName := outFile.Name()
 	_, err = subprocess.RunCommand("tar", "-C", path, "--numeric-owner", "--restrict", "--force-local", "--xattrs", "-cJf", outFileName, "rootfs", "templates", "metadata.yaml")
@@ -794,7 +795,7 @@ func (c *cmdImageImport) run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			// remove temp file
-			defer func() { _ = os.Remove(imageFile) }()
+			defer logger.WarnOnError(func() error { return os.Remove(imageFile) }, "Failed to remove temporary file")
 		}
 
 		meta, err = os.Open(imageFile)
@@ -802,7 +803,7 @@ func (c *cmdImageImport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer func() { _ = meta.Close() }()
+		defer logger.WarnOnError(meta.Close, "Failed to close file")
 
 		// Open rootfs
 		if hasRootfsFile {
@@ -811,7 +812,7 @@ func (c *cmdImageImport) run(cmd *cobra.Command, args []string) error {
 				return err
 			}
 
-			defer func() { _ = rootfs.Close() }()
+			defer logger.WarnOnError(rootfs.Close, "Failed to close file")
 
 			_, ext, _, err := archive.DetectCompressionFile(rootfs)
 			if err != nil {
@@ -1768,7 +1769,7 @@ func (c *cmdImageGenerateMetadata) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	defer metaFile.Close()
+	defer logger.WarnOnError(metaFile.Close, "Failed to close file")
 
 	// Generate the metadata.
 	timestamp := time.Now().UTC()

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -130,7 +131,7 @@ func parseConfig(path string) ([]string, error) {
 		return nil, err
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close file")
 
 	var config []string
 

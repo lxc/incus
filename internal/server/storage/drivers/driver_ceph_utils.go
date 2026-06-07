@@ -1249,7 +1249,7 @@ func (d *ceph) getRBDVolumeName(vol Volume, snapName string, withPoolName bool) 
 //	rbd export-diff pool1/container_a@snapshot_snap1 --from-snap snapshot_snap0 - | rbd import-diff - pool2/container_a
 //	rbd export-diff pool1/container_a --from-snap snapshot_snap1 - | rbd import-diff - pool2/container_a
 func (d *ceph) sendVolume(conn io.ReadWriteCloser, volumeName string, volumeParentName string, tracker *ioprogress.ProgressTracker) error {
-	defer func() { _ = conn.Close() }()
+	defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 	args := []string{
 		"export-diff",

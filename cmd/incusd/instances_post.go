@@ -780,7 +780,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		return response.InternalError(err)
 	}
 
-	defer func() { _ = os.Remove(backupFile.Name()) }()
+	defer logger.WarnOnError(func() error { return os.Remove(backupFile.Name()) }, "Failed to remove backup file")
 	reverter.Add(func() { _ = backupFile.Close() })
 
 	// Get disk budget for the project if any.
@@ -825,7 +825,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 			return response.InternalError(err)
 		}
 
-		defer func() { _ = os.Remove(tarFile.Name()) }()
+		defer logger.WarnOnError(func() error { return os.Remove(tarFile.Name()) }, "Failed to remove tarball file")
 
 		// Decompress to tarFile temporary file.
 		err = archive.ExtractWithFds(decomArgs[0], decomArgs[1:], nil, nil, tarFile)
@@ -970,7 +970,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	runReverter := reverter.Clone()
 
 	run := func(op *operations.Operation) error {
-		defer func() { _ = backupFile.Close() }()
+		defer logger.WarnOnError(backupFile.Close, "Failed to close backup file")
 		defer runReverter.Fail()
 
 		pool, err := storagePools.LoadByName(s, bInfo.Pool)

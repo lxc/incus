@@ -197,7 +197,7 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 	// Define function to send a block volume.
 	sendBlockVol := func(vol Volume, conn io.ReadWriteCloser) error {
 		// Close when done to indicate to target side we are finished sending this volume.
-		defer func() { _ = conn.Close() }()
+		defer logger.WarnOnError(conn.Close, "Failed to close connection")
 
 		var wrapper *ioprogress.ProgressTracker
 		if volSrcArgs.TrackProgress {
@@ -214,7 +214,7 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 			return fmt.Errorf("Error opening file for reading %q: %w", path, err)
 		}
 
-		defer func() { _ = from.Close() }()
+		defer logger.WarnOnError(from.Close, "Failed to close file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(from)
@@ -343,7 +343,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 			return fmt.Errorf("Error opening file for writing %q: %w", path, err)
 		}
 
-		defer func() { _ = to.Close() }()
+		defer logger.WarnOnError(to.Close, "Failed to close file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(conn)

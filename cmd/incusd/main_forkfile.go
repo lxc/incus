@@ -101,6 +101,8 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 type cmdForkfile struct {
@@ -147,7 +149,7 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-	defer func() { _ = listener.Close() }()
+	defer logger.WarnOnError(listener.Close, "Failed to close listener")
 
 	// Convert the rootfs FD number.
 	rootfsFD, err := strconv.Atoi(args[1])

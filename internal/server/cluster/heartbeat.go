@@ -568,7 +568,7 @@ func HeartbeatNode(taskCtx context.Context, address string, networkCert *localtl
 		return fmt.Errorf("Failed to send heartbeat request: %w", err)
 	}
 
-	defer func() { _ = resp.Body.Close() }()
+	defer logger.WarnOnError(resp.Body.Close, "Failed to close response body")
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("Heartbeat request failed with status: %w", api.StatusErrorf(resp.StatusCode, "%s", resp.Status))

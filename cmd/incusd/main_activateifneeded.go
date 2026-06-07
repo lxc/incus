@@ -106,7 +106,7 @@ func (c *cmdActivateifneeded) run(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	defer func() { _ = sqldb.Close() }()
+	defer logger.WarnOnError(sqldb.Close, "Failed to close database")
 
 	d.db.Cluster, err = db.ForLocalInspectionWithPreparedStmts(sqldb)
 	if err != nil {

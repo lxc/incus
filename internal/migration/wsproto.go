@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	internalIO "github.com/lxc/incus/v7/internal/io"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // ProtoRecv gets a protobuf message from a websocket.
@@ -68,7 +69,7 @@ func ProtoSend(ws *websocket.Conn, msg proto.Message) error {
 		return err
 	}
 
-	defer func() { _ = w.Close() }()
+	defer logger.WarnOnError(w.Close, "Failed to close websocket writer")
 
 	data, err := proto.Marshal(msg)
 	if err != nil {

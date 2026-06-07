@@ -10,6 +10,7 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -114,7 +115,7 @@ func templatesApply(path string) ([]string, error) {
 					return err
 				}
 			}
-			defer func() { _ = w.Close() }()
+			defer logger.WarnOnError(w.Close, "Failed to close file")
 
 			// Do the copy.
 			src, err := os.Open(filePath)
@@ -122,7 +123,7 @@ func templatesApply(path string) ([]string, error) {
 				return err
 			}
 
-			defer func() { _ = src.Close() }()
+			defer logger.WarnOnError(src.Close, "Failed to close source file")
 
 			_, err = util.SafeCopy(w, src)
 			if err != nil {

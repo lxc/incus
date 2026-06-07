@@ -784,7 +784,7 @@ func ueventParseVendorProduct(props map[string]string, subsystem string, devname
 		return "", "", false
 	}
 
-	defer func() { _ = file.Close() }()
+	defer logger.WarnOnError(file.Close, "Failed to close device file")
 
 	vendor, product, err = getHidrawDevInfo(int(file.Fd()))
 	if err != nil {
