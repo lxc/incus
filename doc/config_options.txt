@@ -2661,6 +2661,50 @@ Set this option to `true` to prevent the instance's file system from being UID/G
 When disabling this option, consider enabling {config:option}`instance-security:security.csm`.
 ```
 
+```{config:option} security.selinux.domain instance-security
+:condition: "container or virtual machine"
+:defaultdesc: "auto-detected (`container_init_t` for containers, `qemu_t` for VMs)"
+:liveupdate: "no"
+:shortdesc: "SELinux process domain override"
+:type: "string"
+Override the SELinux process domain for the instance.
+```
+
+```{config:option} security.selinux.label_rootfs instance-security
+:condition: "container"
+:defaultdesc: "`auto`"
+:liveupdate: "no"
+:shortdesc: "SELinux rootfs labeling mode (auto, always, never)"
+:type: "string"
+Control SELinux rootfs labeling behavior.
+The default (`auto`) will label rootfs files if it is required. Labeling will be skipped
+only if `security.selinux.level` is explicitly set for the instance, it is not started for
+the first time and the persisted SELinux context is still valid.
+Setting to `always` will label rootfs files on every start and `never` will never touch any
+file labels in the rootfs.
+```
+
+```{config:option} security.selinux.level instance-security
+:condition: "container or virtual machine"
+:defaultdesc: "auto-generated"
+:liveupdate: "no"
+:shortdesc: "SELinux MCS level override"
+:type: "string"
+Override the SELinux MCS level for the instance.
+This key must only be set on individual instances, never on profiles,
+since using the same MCS level across instances breaks isolation.
+Values set via profiles are ignored.
+```
+
+```{config:option} security.selinux.type instance-security
+:condition: "container or virtual machine"
+:defaultdesc: "auto-detected (`container_file_t` for containers, `qemu_image_t` for VMs)"
+:liveupdate: "no"
+:shortdesc: "SELinux file type override"
+:type: "string"
+Override the SELinux file type used for labeling instance storage.
+```
+
 ```{config:option} security.sev instance-security
 :condition: "virtual machine"
 :defaultdesc: "`false`"
