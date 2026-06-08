@@ -335,7 +335,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//	type: string
 	//	defaultdesc: auto-detected
 	//	liveupdate: no
-	//	condition: container
+	//	condition: container_or_vm
 	//	shortdesc: SELinux process domain override
 	"security.selinux.domain": validate.Optional(validate.IsSELinuxType),
 
@@ -358,7 +358,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//	type: string
 	//	defaultdesc: auto-generated
 	//	liveupdate: no
-	//	condition: container
+	//	condition: container_or_vm
 	//	shortdesc: SELinux MCS level override
 	"security.selinux.level": validate.Optional(validate.IsSELinuxLevel),
 
