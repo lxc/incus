@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -291,6 +292,24 @@ func diskCephfsOptions(clusterName string, userName string, fsName string, fsPat
 	return srcPath, fsOptions, nil
 }
 
+func virtiofsdHasFeature(cmd string, feature string) bool {
+	output, err := subprocess.RunCommand(cmd, "--print-capabilities")
+	if err != nil {
+		return false
+	}
+
+	var caps struct {
+		Features []string `json:"features"`
+	}
+
+	err = json.Unmarshal([]byte(output), &caps)
+	if err != nil {
+		return false
+	}
+
+	return slices.Contains(caps.Features, feature)
+}
+
 // DiskVMVirtiofsdStart starts a new virtiofsd process.
 // If the idmaps slice is supplied then the proxy process is run inside a user namespace using the supplied maps.
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
@@ -406,7 +425,11 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 			args = append(args, fmt.Sprintf("--translate-gid=forbid-guest:%d:%d", lastGID, 4294967295-lastGID))
 		}
 	} else if inst.GuestOS() != "windows" {
-		args = append(args, "--posix-acl")
+		if virtiofsdHasFeature(cmd, "posix-acl-negotiation-mode") {
+			args = append(args, "--posix-acl=auto")
+		} else {
+			args = append(args, "--posix-acl")
+		}
 	}
 
 	proc, err := subprocess.NewProcess(cmd, args, logPath, logPath)
