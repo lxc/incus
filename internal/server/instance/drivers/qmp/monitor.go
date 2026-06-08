@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/lxc/incus/v7/shared/logger"
@@ -343,12 +344,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	}
 
 	// Setup the connection.
-	unixaddr, err := net.ResolveUnixAddr("unix", path)
-	if err != nil {
-		return nil, err
-	}
-
-	uc, err := net.DialUnix("unix", nil, unixaddr)
+	uc, err := dial(path)
 	if err != nil {
 		return nil, err
 	}
@@ -405,6 +401,30 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	monitors[path] = monitor
 
 	return monitor, nil
+}
+
+func dial(path string) (*net.UnixConn, error) {
+	connectPath := path
+
+	// For paths that exceed the kernel's sockaddr_un limit, open the parent directory
+	// as a file descriptor and connect via /proc/self/fd/<dirfd>/<name> to avoid the limit.
+	if len(path) >= 108 {
+		dirfd, err := syscall.Open(filepath.Dir(path), syscall.O_RDONLY|syscall.O_DIRECTORY|syscall.O_CLOEXEC, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() { _ = syscall.Close(dirfd) }()
+
+		connectPath = fmt.Sprintf("/proc/self/fd/%d/%s", dirfd, filepath.Base(path))
+	}
+
+	unixaddr, err := net.ResolveUnixAddr("unix", connectPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return net.DialUnix("unix", nil, unixaddr)
 }
 
 // AgenStarted indicates whether an agent has been detected.

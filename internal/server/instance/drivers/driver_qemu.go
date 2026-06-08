@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 	"unsafe"
 
@@ -1783,8 +1784,27 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		bs.MemoryTopology = memoryTopology
 	}
 
+	// Pre-create the QMP monitor socket so QEMU can accept connections on an already-bound
+	// FD rather than needing to bind to the (potentially long) socket path itself.
+	_ = os.Remove(d.monitorPath())
+	monitorListener, err := bindUnixSocket(d.RunPath(), filepath.Base(d.monitorPath()))
+	if err != nil {
+		op.Done(err)
+		return fmt.Errorf("Failed to create monitor socket: %w", err)
+	}
+
+	monitorFile, err := monitorListener.File()
+	if err != nil {
+		_ = monitorListener.Close()
+		op.Done(err)
+		return fmt.Errorf("Failed to get monitor socket file: %w", err)
+	}
+
+	_ = monitorListener.Close()
+	monitorFD := d.addFileDescriptor(&fdFiles, monitorFile)
+
 	// Generate the QEMU configuration.
-	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, devConfs, &fdFiles)
+	monHooks, err := d.generateQemuConfig(bs, mountInfo, qemuBus, vsockFD, monitorFD, devConfs, &fdFiles)
 	if err != nil {
 		op.Done(err)
 		return err
@@ -2054,6 +2074,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		op.Done(err)
 		return err
 	}
+
+	p.Cwd = d.RunPath()
 
 	// Load the AppArmor profile
 	err = apparmor.InstanceLoad(d.state.OS, d, []string{qemuPath})
@@ -3217,7 +3239,37 @@ func (d *qemu) migrateSockPath() string {
 }
 
 func (d *qemu) spiceCmdlineConfig() string {
-	return fmt.Sprintf("unix=on,disable-ticketing=on,addr=%s", d.spicePath())
+	// QEMU's CWD is set to d.RunPath(), so a relative name is safe and avoids the
+	// sockaddr_un path length limit when the full path exceeds 107 bytes.
+	return fmt.Sprintf("unix=on,disable-ticketing=on,addr=%s", filepath.Base(d.spicePath()))
+}
+
+// bindUnixSocket creates and binds a Unix socket named `name inside directory `dir`.
+// It opens `dir` as a file descriptor and binds via /proc/self/fd/<dirfd>/<name> so that
+// the bind path is always short, no mattter of how long `dir` is.
+func bindUnixSocket(dir string, name string) (*net.UnixListener, error) {
+	dirfd, err := syscall.Open(dir, syscall.O_RDONLY|syscall.O_DIRECTORY|syscall.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = syscall.Close(dirfd) }()
+
+	return net.ListenUnix("unix", &net.UnixAddr{Name: fmt.Sprintf("/proc/self/fd/%d/%s", dirfd, name), Net: "unix"})
+}
+
+// dialUnixAt connects to a Unix socket named `name` inside directory `dir`.
+// It opens `dir` as a file descriptor and connects via /proc/self/fd/<dirfd>/<name> so that
+// the connect path is always short, no matter of how long `dir` is.
+func dialUnixAt(dir string, name string) (net.Conn, error) {
+	dirfd, err := syscall.Open(dir, syscall.O_RDONLY|syscall.O_DIRECTORY|syscall.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = syscall.Close(dirfd) }()
+
+	return net.Dial("unix", fmt.Sprintf("/proc/self/fd/%d/%s", dirfd, name))
 }
 
 // generateConfigShare generates the config share directory that will be exported to the VM via
@@ -3811,7 +3863,7 @@ func (d *qemu) onRTCChange(change int) error {
 }
 
 // generateQemuConfig generates the QEMU configuration.
-func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
+func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, monitorFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
 	isWindows := d.GuestOS() == "windows"
@@ -3882,7 +3934,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	}
 
 	// QMP socket.
-	conf = append(conf, qemuControlSocket(&qemuControlSocketOpts{d.monitorPath()})...)
+	conf = append(conf, qemuControlSocket(&qemuControlSocketOpts{fd: monitorFD})...)
 
 	// Console output.
 	conf = append(conf, qemuConsole()...)
@@ -9069,7 +9121,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
 	if protocol == instance.ConsoleTypeConsole {
 		// Look for existing connections and reset.
-		conn, err := net.Dial("unix", path)
+		conn, err := dialUnixAt(d.RunPath(), filepath.Base(path))
 		if err == nil {
 			_ = d.consoleSwapSocketWithRB()
 			_ = conn.Close()
@@ -9089,7 +9141,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	chDisconnect := make(chan error, 1)
 
 	// Open the console socket.
-	conn, err := net.Dial("unix", path)
+	conn, err := dialUnixAt(d.RunPath(), filepath.Base(path))
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
 			_ = d.consoleSwapSocketWithRB()
@@ -10747,7 +10799,7 @@ func (d *qemu) consoleSwapRBWithSocket() error {
 	}
 
 	// Create the unix socket here, which will be passed via file descriptor to qemu.
-	d.consoleSocket, err = net.ListenUnix("unix", &net.UnixAddr{Name: d.consolePath(), Net: "unix"})
+	d.consoleSocket, err = bindUnixSocket(d.RunPath(), filepath.Base(d.consolePath()))
 	if err != nil {
 		return err
 	}
@@ -11069,18 +11121,13 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 
 	socketPath := d.migrateSockPath()
 
-	addr, err := net.ResolveUnixAddr("unix", socketPath)
-	if err != nil {
-		return nil, "", err
-	}
-
 	// Cleanup any leftover sockets.
 	err = os.Remove(socketPath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, "", fmt.Errorf("Failed to remove stale migration socket %q: %w", socketPath, err)
 	}
 
-	migrationSock, err := net.ListenUnix("unix", addr)
+	migrationSock, err := bindUnixSocket(d.RunPath(), filepath.Base(socketPath))
 	if err != nil {
 		return nil, "", fmt.Errorf("Error connecting to migration socket %q: %w", socketPath, err)
 	}

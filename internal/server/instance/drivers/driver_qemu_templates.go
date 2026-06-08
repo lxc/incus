@@ -3,6 +3,7 @@ package drivers
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/cfg"
@@ -640,7 +641,7 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 }
 
 type qemuControlSocketOpts struct {
-	path string
+	fd int
 }
 
 func qemuControlSocket(opts *qemuControlSocketOpts) []cfg.Section {
@@ -649,7 +650,7 @@ func qemuControlSocket(opts *qemuControlSocketOpts) []cfg.Section {
 		Comment: "Qemu control",
 		Entries: map[string]string{
 			"backend": "socket",
-			"path":    opts.path,
+			"fd":      strconv.Itoa(opts.fd),
 			"server":  "on",
 			"wait":    "off",
 		},

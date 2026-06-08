@@ -707,11 +707,11 @@ func TestQemuConfigTemplates(t *testing.T) {
 			opts     qemuControlSocketOpts
 			expected string
 		}{{
-			qemuControlSocketOpts{"/dev/shm/control-socket"},
+			qemuControlSocketOpts{fd: 5},
 			`# Qemu control
 			[chardev "monitor"]
 			backend = "socket"
-			path = "/dev/shm/control-socket"
+			fd = "5"
 			server = "on"
 			wait = "off"
 
