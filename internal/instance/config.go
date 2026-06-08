@@ -345,7 +345,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//	type: string
 	//	defaultdesc: `auto`
 	//	liveupdate: no
-	//	condition: container_or_vm
+	//	condition: container
 	//	shortdesc: SELinux rootfs labeling mode (auto, always, never)
 	"security.selinux.label_rootfs": validate.Optional(validate.IsOneOf("auto", "always", "never")),
 
