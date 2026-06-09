@@ -22,7 +22,15 @@ type operation struct {
 	handlerLock  sync.Mutex
 	skipListener bool
 
-	chActive chan bool
+	chActive     chan bool
+	chActiveOnce sync.Once
+}
+
+// closeChActive closes the chActive channel exactly once.
+func (op *operation) closeChActive() {
+	op.chActiveOnce.Do(func() {
+		close(op.chActive)
+	})
 }
 
 // AddHandler adds a function to be called whenever an event is received.
@@ -162,6 +170,18 @@ func (op *operation) WaitContext(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
+		// Tear down the listener, cancel the server-side operation and unblock the monitor.
+		op.handlerLock.Lock()
+		if op.listener != nil {
+			op.listener.Disconnect()
+			op.listener = nil
+		}
+
+		op.handlerLock.Unlock()
+
+		_ = op.Cancel()
+		op.closeChActive()
+
 		return ctx.Err()
 	case <-op.chActive:
 	}
@@ -231,14 +251,14 @@ func (op *operation) setupListener() error {
 		if op.StatusCode.IsFinal() {
 			op.listener.Disconnect()
 			op.listener = nil
-			close(op.chActive)
+			op.closeChActive()
 			return
 		}
 	})
 	if err != nil {
 		op.listener.Disconnect()
 		op.listener = nil
-		close(op.chActive)
+		op.closeChActive()
 		close(chReady)
 
 		return err
@@ -266,7 +286,7 @@ func (op *operation) setupListener() error {
 			op.handlerLock.Lock()
 			if op.listener != nil {
 				op.Err = listener.err.Error()
-				close(op.chActive)
+				op.closeChActive()
 			}
 
 			op.handlerLock.Unlock()
@@ -280,7 +300,7 @@ func (op *operation) setupListener() error {
 	if err != nil {
 		op.listener.Disconnect()
 		op.listener = nil
-		close(op.chActive)
+		op.closeChActive()
 		close(chReady)
 
 		return err
@@ -290,7 +310,7 @@ func (op *operation) setupListener() error {
 	if op.StatusCode.IsFinal() {
 		op.listener.Disconnect()
 		op.listener = nil
-		close(op.chActive)
+		op.closeChActive()
 		close(chReady)
 
 		if op.Err != "" {
