@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-08 11:52-0400\n"
-"PO-Revision-Date: 2026-06-06 23:38+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-06-09 19:01+0000\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -6404,9 +6404,8 @@ msgid "NBD access to a block storage volume"
 msgstr "NBD-åtkomst till en blocklagringsvolym"
 
 #: cmd/incus/debug.go:106
-#, fuzzy
 msgid "NBD access to all of an instance's disks"
-msgstr "NBD-åtkomst till en blocklagringsvolym"
+msgstr "NBD-åtkomst till alla en instans diskar"
 
 #: cmd/incus/debug.go:107
 msgid ""
@@ -6416,6 +6415,11 @@ msgid ""
 "server, with each disk reachable as an NBD export named after its Incus\n"
 "device name."
 msgstr ""
+"NBD-åtkomst till alla en instans diskar\n"
+"\n"
+"Detta exponerar alla en körande instans diskar över en lokal NBD-server,\n"
+"där varje disk kan nås som en NBD-export\n"
+" uppkallad efter dess Incus-enhetsnamn."
 
 #: cmd/incus/debug.go:168 cmd/incus/storage_volume.go:2659
 #, c-format
@@ -8146,14 +8150,12 @@ msgid "Set the file's uid on push"
 msgstr "Ställ in filens uid vid push"
 
 #: cmd/incus/file.go:680
-#, fuzzy
 msgid "Set the files' GIDs on push"
-msgstr "Ställ in filens behörigheter vid push"
+msgstr "Ställ in filernas gruppidentifierare (GID) vid push"
 
 #: cmd/incus/file.go:679
-#, fuzzy
 msgid "Set the files' UIDs on push"
-msgstr "Ställ in filens behörigheter vid push"
+msgstr "Ställ in filernas användaridentifierare (UID) vid push"
 
 #: cmd/incus/cluster_group.go:886
 msgid "Set the key as a cluster group property"
@@ -8443,6 +8445,8 @@ msgid ""
 "Show the server's sensitive information (full certificates, private keys and "
 "the API extension list)"
 msgstr ""
+"Visa serverns känsliga information (fullständiga certifikat, privata nycklar "
+"och listan över API-tillägg)"
 
 #: cmd/incus/storage.go:473
 msgid "Show the used and free space in bytes"
@@ -8686,9 +8690,8 @@ msgid "Successfully updated cluster certificates"
 msgstr "Klustercertifikat uppdaterade framgångsrikt"
 
 #: cmd/incus/admin_update_certificate.go:106
-#, fuzzy
 msgid "Successfully updated server certificate"
-msgstr "Klustercertifikat uppdaterade framgångsrikt"
+msgstr "Servercertifikat uppdaterade framgångsrikt"
 
 #: cmd/incus/info.go:223
 #, c-format
@@ -9097,6 +9100,8 @@ msgid ""
 "This command is not supported on clusters, use \"incus cluster update-"
 "certificate\" instead"
 msgstr ""
+"Det här kommandot stöds inte på kluster, använd \"incus cluster update-"
+"certificate\" istället"
 
 #: cmd/incus/webui_windows.go:14
 msgid "This command isn't supported on Windows"
@@ -9379,6 +9384,9 @@ msgid ""
 "Unsetting several keys in one go is only supported for instance "
 "configuration.\n"
 msgstr ""
+"avaktivera instans- eller serverkonfigurations nycklar\n"
+"\n"
+"Att avbryta flera nycklar samtidigt stöds endast för instanskonfiguration.\n"
 
 #: cmd/incus/network_acl.go:531 cmd/incus/network_acl.go:532
 msgid "Unset network ACL configuration keys"
@@ -9463,89 +9471,72 @@ msgstr ""
 "machine\"."
 
 #: cmd/incus/cluster_group.go:965
-#, fuzzy
 msgid "Unset the keys as cluster group properties"
-msgstr "Avmarkera nyckeln som en klustergruppsegenskap"
+msgstr "Inaktivera nycklarna som en klustergruppsegenskap"
 
 #: cmd/incus/cluster.go:595
-#, fuzzy
 msgid "Unset the keys as cluster properties"
-msgstr "Inaktivera nyckeln som en klusteregenskap"
+msgstr "Inaktivera nycklarna som en klusteregenskap"
 
 #: cmd/incus/config.go:822
-#, fuzzy
 msgid "Unset the keys as instance properties"
-msgstr "Avmarkera nyckeln som en instansegenskap"
+msgstr "Inaktivera nycklarna som en instansegenskap"
 
 #: cmd/incus/network_acl.go:535
-#, fuzzy
 msgid "Unset the keys as network ACL properties"
-msgstr "Inaktivera nyckeln som en nätverks-ACL-egenskap"
+msgstr "Inaktivera nycklarna som en nätverks-ACL-egenskap"
 
 #: cmd/incus/network_address_set.go:405
-#, fuzzy
 msgid "Unset the keys as network address set properties"
-msgstr "Avmarkera nyckeln som en egenskap för nätverksadressuppsättning"
+msgstr "Avmarkera nycklarna som en egenskap för nätverksadressuppsättning"
 
 #: cmd/incus/network_forward.go:579
-#, fuzzy
 msgid "Unset the keys as network forward properties"
-msgstr "Avmarkera nyckeln som en nätverksvidarebefordringsegenskap"
+msgstr "Avmarkera nycklarna som en nätverksvidarebefordringsegenskap"
 
 #: cmd/incus/network_integration.go:650
-#, fuzzy
 msgid "Unset the keys as network integration properties"
-msgstr "Avmarkera nyckeln som en nätverksintegrationsegenskap"
+msgstr "Avmarkera nycklarna som en nätverksintegrationsegenskap"
 
 #: cmd/incus/network_load_balancer.go:565
-#, fuzzy
 msgid "Unset the keys as network load balancer properties"
-msgstr "Inaktivera nyckeln som en egenskap för nätverkslastbalanserare"
+msgstr "Inaktivera nycklarna som en egenskap för nätverkslastbalanserare"
 
 #: cmd/incus/network_peer.go:599
-#, fuzzy
 msgid "Unset the keys as network peer properties"
-msgstr "Avmarkera nyckeln som en nätverkspeer-egenskap"
+msgstr "Avmarkera nycklarna som en nätverkspeer-egenskap"
 
 #: cmd/incus/network.go:1587
-#, fuzzy
 msgid "Unset the keys as network properties"
-msgstr "Inaktivera nyckeln som nätverksegenskap"
+msgstr "Inaktivera nycklarna som nätverksegenskap"
 
 #: cmd/incus/network_zone.go:550
-#, fuzzy
 msgid "Unset the keys as network zone properties"
-msgstr "Avmarkera nyckeln som en nätverkszonegenskap"
+msgstr "Avmarkera nycklarna som en nätverkszonegenskap"
 
 #: cmd/incus/network_zone.go:1210
-#, fuzzy
 msgid "Unset the keys as network zone record properties"
-msgstr "Avmarkera nyckeln som en egenskap för nätverkszonens post"
+msgstr "Avmarkera nycklarna som en egenskap för nätverkszonens post"
 
 #: cmd/incus/profile.go:1128
-#, fuzzy
 msgid "Unset the keys as profile properties"
-msgstr "Inaktivera nyckeln som profilegenskap"
+msgstr "Inaktivera nycklarna som profilegenskap"
 
 #: cmd/incus/project.go:852
-#, fuzzy
 msgid "Unset the keys as project properties"
-msgstr "Avmarkera nyckeln som en projektattribut"
+msgstr "Inaktivera nycklarna som en projektattribut"
 
 #: cmd/incus/storage_bucket.go:764
-#, fuzzy
 msgid "Unset the keys as storage bucket properties"
-msgstr "Avmarkera nyckeln som en lagringsbucketegenskap"
+msgstr "Inaktivera nycklarna som en lagringsbucketegenskap"
 
 #: cmd/incus/storage.go:981
-#, fuzzy
 msgid "Unset the keys as storage properties"
-msgstr "Inaktivera nyckeln som lagringsegenskap"
+msgstr "Inaktivera nycklarna som lagringsegenskap"
 
 #: cmd/incus/storage_volume.go:2205
-#, fuzzy
 msgid "Unset the keys as storage volume properties"
-msgstr "Avmarkera nyckeln som en lagringsvolymegenskap"
+msgstr "Inaktivera nycklarna som en lagringsvolymegenskap"
 
 #: cmd/incus/info.go:922
 #, c-format
@@ -9569,9 +9560,8 @@ msgstr ""
 "inmatningsfilerna."
 
 #: cmd/incus/admin_update_certificate.go:30
-#, fuzzy
 msgid "Update the server certificate"
-msgstr "Uppdatera klustercertifikat"
+msgstr "Uppdatera servercertifikatet"
 
 #: cmd/incus/admin_update_certificate.go:31
 msgid ""
@@ -9580,6 +9570,10 @@ msgid ""
 "  This is only for standalone systems, cluster users should use \"incus "
 "cluster update-certificate\" instead\"."
 msgstr ""
+"Uppdatera servercertifikatet\n"
+"\n"
+"  Detta är endast för fristående system, klusteranvändare bör använda "
+"\"incus cluster update-certificate\" istället."
 
 #: cmd/incus/profile.go:276
 msgid "Update the target profile from the source if it already exists"
