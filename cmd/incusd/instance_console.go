@@ -715,7 +715,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 			ClearLog:       false,
 			ReadLog:        true,
 			ReadMax:        0,
-			WriteToLogFile: true,
+			WriteToLogFile: false,
 		}
 
 		// Send a ringbuffer request to the container.
