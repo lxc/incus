@@ -333,14 +333,19 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// Override the SELinux process domain for the instance.
 	// ---
 	//	type: string
-	//	defaultdesc: auto-detected
+	//	defaultdesc: auto-detected (`container_init_t` for containers, `qemu_t` for VMs)
 	//	liveupdate: no
 	//	condition: container or virtual machine
 	//	shortdesc: SELinux process domain override
 	"security.selinux.domain": validate.Optional(validate.IsSELinuxType),
 
 	// gendoc:generate(entity=instance, group=security, key=security.selinux.label_rootfs)
-	// Control automatic SELinux rootfs labeling behavior.
+	// Control SELinux rootfs labeling behavior.
+	// The default (`auto`) will label rootfs files if it is required. Labeling will be skipped
+	// only if `security.selinux.level` is explicitly set for the instance, it is not started for
+	// the first time and the persisted SELinux context is still valid.
+	// Setting to `always` will label rootfs files on every start and `never` will never touch any
+	// file labels in the rootfs.
 	// ---
 	//	type: string
 	//	defaultdesc: `auto`
