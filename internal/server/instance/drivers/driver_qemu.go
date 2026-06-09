@@ -3886,8 +3886,17 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		conf = append(conf, qemuDriveFirmware(&driveFirmwareOpts)...)
 	}
 
-	// QMP socket.
-	conf = append(conf, qemuControlSocket(&qemuControlSocketOpts{d.monitorPath()})...)
+	// QMP socket. Reference it through a short /proc/self/fd path to handle
+	// run paths that exceed the unix socket path limit.
+	monitorDir, err := os.OpenFile(d.RunPath(), unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	monitorDirFD := d.addFileDescriptor(fdFiles, monitorDir)
+	monitorPath := fmt.Sprintf("/proc/self/fd/%d/qemu.monitor", monitorDirFD)
+
+	conf = append(conf, qemuControlSocket(&qemuControlSocketOpts{monitorPath})...)
 
 	// Console output.
 	conf = append(conf, qemuConsole()...)
