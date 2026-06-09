@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-08 11:52-0400\n"
+"POT-Creation-Date: 2026-06-09 17:00-0400\n"
 "PO-Revision-Date: 2026-06-06 23:31+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -1044,7 +1044,7 @@ msgstr "别名已存在：%s"
 msgid "Aliases:"
 msgstr "别名："
 
-#: cmd/incus/cluster.go:1791
+#: cmd/incus/cluster.go:1796
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr "加入集群会丢失所有现有数据，是否继续？"
 
@@ -1086,11 +1086,11 @@ msgstr "架构：%s"
 msgid "Architecture: %v"
 msgstr "架构：%v"
 
-#: cmd/incus/cluster.go:1685
+#: cmd/incus/cluster.go:1690
 msgid "Are you joining an existing cluster?"
 msgstr "您是否正在加入现有集群？"
 
-#: cmd/incus/cluster.go:1525
+#: cmd/incus/cluster.go:1530
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr "您确定要 %s 集群成员 %q 吗？（是/否）[默认值=否]： "
@@ -1353,7 +1353,7 @@ msgstr "无法读取环境文件：%w"
 msgid "Can't read from stdin: %w"
 msgstr "无法从标准输入读取：%w"
 
-#: cmd/incus/remote.go:1314
+#: cmd/incus/remote.go:1334
 msgid "Can't remove the default remote"
 msgstr "无法移除默认远程服务器"
 
@@ -1453,7 +1453,7 @@ msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
 msgstr "证书令牌和服务器 %q 之间的证书指纹不匹配"
 
-#: cmd/incus/cluster.go:1737 cmd/incus/cluster.go:1935
+#: cmd/incus/cluster.go:1742 cmd/incus/cluster.go:1940
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1473,7 +1473,7 @@ msgstr "逻辑机箱（Chassis）"
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr "正在检查守护进程是否已就绪（第 %d 次尝试）"
 
-#: cmd/incus/cluster.go:1840
+#: cmd/incus/cluster.go:1845
 #, c-format
 msgid "Choose %s:"
 msgstr "选择 %s："
@@ -2686,7 +2686,7 @@ msgstr "要设置的环境变量（例如 HOME=/HOME/foo）"
 msgid "Ephemeral instance"
 msgstr "临时实例"
 
-#: cmd/incus/cluster.go:1731 cmd/incus/cluster.go:1929
+#: cmd/incus/cluster.go:1736 cmd/incus/cluster.go:1934
 #, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "连接到现有集群成员 %q 时出错：%v"
@@ -2756,11 +2756,19 @@ msgstr "执行别名扩展时出错：%s\n"
 msgid "Error:"
 msgstr "错误：%v\n"
 
-#: cmd/incus/cluster.go:1462 cmd/incus/cluster.go:1463
+#: cmd/incus/cluster.go:1462
 msgid "Evacuate cluster member"
 msgstr "解散集群成员"
 
-#: cmd/incus/cluster.go:1550
+#: cmd/incus/cluster.go:1463
+msgid ""
+"Evacuate cluster member\n"
+"\n"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
+msgstr ""
+
+#: cmd/incus/cluster.go:1555
 #, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "正在解散集群成员：%s"
@@ -3011,7 +3019,7 @@ msgstr "连接到守护进程失败（第 %d 次尝试）：%v"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr "将令牌操作转换为证书添加令牌失败：%w"
 
-#: cmd/incus/cluster.go:1077 cmd/incus/cluster.go:1771
+#: cmd/incus/cluster.go:1077 cmd/incus/cluster.go:1776
 #, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "将令牌操作转换为加入令牌失败：%w"
@@ -3031,7 +3039,7 @@ msgstr "复制后删除源卷失败：%w"
 msgid "Failed generating SSH host key: %w"
 msgstr "生成 SSH 主机密钥失败：%w"
 
-#: cmd/incus/cluster.go:1877
+#: cmd/incus/cluster.go:1882
 #, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "生成信任证书失败：%w"
@@ -3096,7 +3104,7 @@ msgstr "接受传入连接失败：%w"
 msgid "Failed to add remote"
 msgstr "添加远程服务器失败"
 
-#: cmd/incus/cluster.go:1887
+#: cmd/incus/cluster.go:1892
 #, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "无法将服务器证书添加到集群：%w"
@@ -3137,7 +3145,7 @@ msgstr "无法连接以获取服务器信息：%w"
 msgid "Failed to connect to local daemon: %w"
 msgstr "无法连接到本地守护进程：%w"
 
-#: cmd/incus/cluster.go:1872
+#: cmd/incus/cluster.go:1877
 #, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "无法连接到目标集群节点 %q：%w"
@@ -3192,7 +3200,7 @@ msgstr "获取存储卷备份文件失败：%w"
 msgid "Failed to find project: %w"
 msgstr "找不到项目：%w"
 
-#: cmd/incus/cluster.go:1967 cmd/incus/cluster.go:1972
+#: cmd/incus/cluster.go:1972 cmd/incus/cluster.go:1977
 #, c-format
 msgid "Failed to join cluster: %w"
 msgstr "加入集群失败：%w"
@@ -3265,7 +3273,7 @@ msgstr "呈现配置失败：%w"
 msgid "Failed to request dump: %w"
 msgstr "请求转储失败：%w"
 
-#: cmd/incus/cluster.go:1836
+#: cmd/incus/cluster.go:1841
 #, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "检索集群信息失败：%w"
@@ -3298,12 +3306,12 @@ msgstr "检索网络列表失败：%w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "检索存储池列表失败：%w"
 
-#: cmd/incus/cluster.go:1810
+#: cmd/incus/cluster.go:1815
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "无法与集群建立信任关系：%w"
 
-#: cmd/incus/cluster.go:1542
+#: cmd/incus/cluster.go:1547
 #, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "更新群集成员状态失败：%w"
@@ -3351,11 +3359,11 @@ msgstr ""
 msgid "Follow command-line symbolic links in source path"
 msgstr ""
 
-#: cmd/incus/cluster.go:1465
+#: cmd/incus/cluster.go:1467
 msgid "Force a particular evacuation action"
 msgstr "强制采取特定的解散操作"
 
-#: cmd/incus/cluster.go:1494
+#: cmd/incus/cluster.go:1499
 #, fuzzy
 msgid "Force a particular restoration action"
 msgstr "强制采取特定的解散操作"
@@ -3372,7 +3380,7 @@ msgstr "强制删除项目及其包含的所有内容。"
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "强制删除文件、目录和子目录"
 
-#: cmd/incus/cluster.go:1510
+#: cmd/incus/cluster.go:1515
 msgid "Force evacuation without user confirmation"
 msgstr "未经用户确认的强制解散"
 
@@ -3850,7 +3858,7 @@ msgstr "IP地址"
 msgid "IP addresses:"
 msgstr "IP地址："
 
-#: cmd/incus/remote.go:121 cmd/incus/remote.go:1380
+#: cmd/incus/remote.go:121 cmd/incus/remote.go:1400
 msgid "IP/FQDN/URL"
 msgstr ""
 
@@ -4082,7 +4090,7 @@ msgstr "实例名称是：%s"
 msgid "Instance type"
 msgstr "实例类型"
 
-#: cmd/incus/cluster.go:1668
+#: cmd/incus/cluster.go:1673
 msgid "Invalid IP address or DNS name"
 msgstr "无效的 IP 地址或 DNS 名称"
 
@@ -4122,7 +4130,7 @@ msgstr "无效的证书"
 msgid "Invalid certificate format %q"
 msgstr "无效的证书"
 
-#: cmd/incus/cluster.go:1913
+#: cmd/incus/cluster.go:1918
 #, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "无效的集群加入令牌：%w"
@@ -4156,7 +4164,7 @@ msgstr "无效的格式：%s"
 msgid "Invalid input, please enter a positive number"
 msgstr "无效的输入，请输入正数"
 
-#: cmd/incus/cluster.go:1708
+#: cmd/incus/cluster.go:1713
 #, c-format
 msgid "Invalid join token: %w"
 msgstr "无效的加入令牌：%w"
@@ -4209,7 +4217,7 @@ msgstr ""
 msgid "Join an existing server to a cluster"
 msgstr "您是否正在加入现有集群？"
 
-#: cmd/incus/cluster.go:1699
+#: cmd/incus/cluster.go:1704
 msgid "Joining an existing cluster requires root privileges"
 msgstr "加入现有集群需要 root 权限"
 
@@ -6520,7 +6528,7 @@ msgstr ""
 msgid "Password rejected for %q"
 msgstr ""
 
-#: cmd/incus/cluster.go:1898
+#: cmd/incus/cluster.go:1903
 #, c-format
 msgid "Path %s doesn't exist"
 msgstr ""
@@ -6551,7 +6559,7 @@ msgid ""
 "abort):"
 msgstr ""
 
-#: cmd/incus/cluster.go:1715
+#: cmd/incus/cluster.go:1720
 msgid "Please provide join token:"
 msgstr ""
 
@@ -6924,18 +6932,18 @@ msgstr "正在刷新镜像: %s"
 msgid "Remote %s already exists"
 msgstr "远程 %s 已存在"
 
-#: cmd/incus/remote.go:1222 cmd/incus/remote.go:1302 cmd/incus/remote.go:1366
-#: cmd/incus/remote.go:1415
+#: cmd/incus/remote.go:1222 cmd/incus/remote.go:1322 cmd/incus/remote.go:1386
+#: cmd/incus/remote.go:1435
 #, c-format
 msgid "Remote %s doesn't exist"
 msgstr "远程 %s 不存在"
 
-#: cmd/incus/remote.go:1310
+#: cmd/incus/remote.go:1330
 #, c-format
 msgid "Remote %s is global and cannot be removed"
 msgstr "远程服务器 %s 是全局的，无法移除"
 
-#: cmd/incus/remote.go:1226 cmd/incus/remote.go:1306 cmd/incus/remote.go:1419
+#: cmd/incus/remote.go:1226 cmd/incus/remote.go:1326 cmd/incus/remote.go:1439
 #, c-format
 msgid "Remote %s is static and cannot be modified"
 msgstr "远程 %s 是静态的, 无法修改"
@@ -7043,7 +7051,7 @@ msgstr "从负载均衡器中移除端口"
 msgid "Remove profiles from instances"
 msgstr ""
 
-#: cmd/incus/remote.go:1274 cmd/incus/remote.go:1275
+#: cmd/incus/remote.go:1294 cmd/incus/remote.go:1295
 msgid "Remove remotes"
 msgstr ""
 
@@ -7153,8 +7161,18 @@ msgstr ""
 msgid "Restart instances"
 msgstr ""
 
-#: cmd/incus/cluster.go:1491 cmd/incus/cluster.go:1492
+#: cmd/incus/cluster.go:1493
 msgid "Restore cluster member"
+msgstr ""
+
+#: cmd/incus/cluster.go:1494
+msgid ""
+"Restore cluster member\n"
+"\n"
+"The action flag allows overriding the default behavior of moving and "
+"starting back all instances.\n"
+"The only supported value at the moment is \"skip\" which brings the cluster "
+"member online without relocating any instances."
 msgstr ""
 
 #: cmd/incus/snapshot.go:527
@@ -7174,7 +7192,7 @@ msgstr ""
 msgid "Restore storage volume snapshots"
 msgstr ""
 
-#: cmd/incus/cluster.go:1548
+#: cmd/incus/cluster.go:1553
 #, c-format
 msgid "Restoring cluster member: %s"
 msgstr ""
@@ -7608,7 +7626,7 @@ msgid ""
 "machine\"."
 msgstr ""
 
-#: cmd/incus/remote.go:1386 cmd/incus/remote.go:1387
+#: cmd/incus/remote.go:1406 cmd/incus/remote.go:1407
 msgid "Set the URL(s) for the remote"
 msgstr ""
 
@@ -8192,7 +8210,7 @@ msgstr ""
 msgid "Switch the current project"
 msgstr ""
 
-#: cmd/incus/remote.go:1338 cmd/incus/remote.go:1339
+#: cmd/incus/remote.go:1358 cmd/incus/remote.go:1359
 msgid "Switch the default remote"
 msgstr ""
 
@@ -8716,7 +8734,7 @@ msgstr ""
 msgid "UUID: %v"
 msgstr ""
 
-#: cmd/incus/cluster.go:1746 cmd/incus/cluster.go:1945
+#: cmd/incus/cluster.go:1751 cmd/incus/cluster.go:1950
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 
@@ -9067,7 +9085,7 @@ msgstr ""
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/cluster.go:1797
+#: cmd/incus/cluster.go:1802
 msgid "User aborted configuration"
 msgstr ""
 
@@ -9203,7 +9221,7 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr ""
 
-#: cmd/incus/cluster.go:1674
+#: cmd/incus/cluster.go:1679
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr ""
 
@@ -9215,7 +9233,7 @@ msgstr ""
 msgid "What IPv6 address should be used?"
 msgstr ""
 
-#: cmd/incus/cluster.go:1644
+#: cmd/incus/cluster.go:1649
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 
