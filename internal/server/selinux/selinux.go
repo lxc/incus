@@ -58,7 +58,8 @@ func LabelTree(path string, label string, skipPath string) error {
 
 		// Don't cross filesystem boundaries.
 		var dirStat unix.Stat_t
-		if statErr := unix.Lstat(p, &dirStat); statErr != nil {
+		statErr := unix.Lstat(p, &dirStat)
+		if statErr != nil {
 			return fmt.Errorf("Failed to stat %q: %w", p, statErr)
 		}
 

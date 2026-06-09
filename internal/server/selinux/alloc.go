@@ -68,15 +68,19 @@ func UsedLevels(configs []map[string]string) map[string]struct{} {
 
 	for _, cfg := range configs {
 		// Explicit per-instance override (takes precedence).
-		if lvl := cfg["security.selinux.level"]; lvl != "" {
+		lvl := cfg["security.selinux.level"]
+		if lvl != "" {
 			used[lvl] = struct{}{}
 			continue
 		}
 
 		// Previously persisted context (running or stopped instance).
-		if vc := cfg["volatile.selinux.context"]; vc != "" {
-			if parsed, err := goselinux.NewContext(vc); err == nil {
-				if lvl := parsed["level"]; lvl != "" {
+		vc := cfg["volatile.selinux.context"]
+		if vc != "" {
+			parsed, err := goselinux.NewContext(vc)
+			if err == nil {
+				lvl := parsed["level"]
+				if lvl != "" {
 					used[lvl] = struct{}{}
 				}
 			}

@@ -46,14 +46,16 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 	// Resolve MCS level: explicit override -> cached volatile -> auto-generated.
 	var seLevel string
 
-	if cl := localConfig["security.selinux.level"]; cl != "" {
+	localLvl := localConfig["security.selinux.level"]
+	localCtx := localConfig["volatile.selinux.context"]
+	if localLvl != "" {
 		// Explicit override (user provides full level, e.g. "s0:c100,c200").
-		seLevel = cl
-	} else if vc := localConfig["volatile.selinux.context"]; vc != "" {
+		seLevel = localLvl
+	} else if localCtx != "" {
 		// Reuse level from previously persisted context.
-		ctxCached, err := goselinux.NewContext(vc)
+		ctxCached, err := goselinux.NewContext(localCtx)
 		if err != nil {
-			return "", false, release, fmt.Errorf("Failed to parse cached SELinux context %q: %w", vc, err)
+			return "", false, release, fmt.Errorf("Failed to parse cached SELinux context %q: %w", localCtx, err)
 		}
 
 		seLevel = ctxCached["level"]
@@ -79,7 +81,7 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 	logger.Debug("Resolved SELinux context", logger.Ctx{"context": ctx})
 
 	// Persist when context differs from cached volatile.
-	needsPersist := localConfig["volatile.selinux.context"] != ctx
+	needsPersist := localCtx != ctx
 
 	return ctx, needsPersist, release, nil
 }

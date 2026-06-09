@@ -2055,7 +2055,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	if seCtx := d.localConfig["volatile.selinux.context"]; seCtx != "" {
+	seCtx := d.localConfig["volatile.selinux.context"]
+	if seCtx != "" {
 		forkQemuCmd = append(forkQemuCmd, "secontext="+seCtx)
 	}
 
