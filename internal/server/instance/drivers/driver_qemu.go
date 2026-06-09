@@ -11650,6 +11650,7 @@ func (d *qemu) selinuxEnsureContext() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	defer release()
 
 	if ctx == "" {

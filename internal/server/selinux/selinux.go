@@ -21,6 +21,7 @@ func LabelTree(path string, label string, skipPath string) error {
 	if path == "" {
 		return fmt.Errorf("Path is empty: %q", path)
 	}
+
 	if label == "" {
 		return fmt.Errorf("Label is empty: %q", label)
 	}
@@ -34,6 +35,7 @@ func LabelTree(path string, label string, skipPath string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to stat SELinux label root %q: %w", target, err)
 	}
+
 	rootDev := rootStat.Dev
 
 	logger.Debug("SELinux: Labeling instance path", logger.Ctx{"path": target, "skipPath": skipPath})
@@ -49,6 +51,7 @@ func LabelTree(path string, label string, skipPath string) error {
 				if d.IsDir() {
 					return fs.SkipDir
 				}
+
 				return nil
 			}
 		}
@@ -58,10 +61,12 @@ func LabelTree(path string, label string, skipPath string) error {
 		if statErr := unix.Lstat(p, &dirStat); statErr != nil {
 			return fmt.Errorf("Failed to stat %q: %w", p, statErr)
 		}
+
 		if dirStat.Dev != rootDev {
 			if d.IsDir() {
 				return fs.SkipDir
 			}
+
 			return nil
 		}
 

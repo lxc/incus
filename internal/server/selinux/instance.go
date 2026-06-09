@@ -55,6 +55,7 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 		if err != nil {
 			return "", false, release, fmt.Errorf("Failed to parse cached SELinux context %q: %w", vc, err)
 		}
+
 		seLevel = ctxCached["level"]
 	} else if goselinux.MLSEnabled() {
 		// Allocate new random level.
@@ -67,6 +68,7 @@ func InstanceContext(s *sys.OS, instType instancetype.Type, localConfig map[stri
 		if err != nil {
 			return "", false, release, fmt.Errorf("SELinux: failed to allocate level: %w", err)
 		}
+
 		seLevel = lvl
 	} else {
 		return "", false, release, fmt.Errorf("SELinux MLS not enabled on this system or could not access selinuxfs")

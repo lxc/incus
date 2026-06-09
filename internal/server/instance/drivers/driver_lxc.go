@@ -1956,6 +1956,7 @@ func (d *lxc) selinuxEnsureContext() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	defer release()
 
 	if ctx == "" {
@@ -1999,6 +2000,7 @@ func (d *lxc) selinuxLabelFiles(contextIsNew bool) error {
 		if !contextIsNew && d.localConfig["security.selinux.level"] != "" {
 			skipPath = d.RootfsPath()
 		}
+
 	case "never":
 		skipPath = d.RootfsPath()
 	case "always":
