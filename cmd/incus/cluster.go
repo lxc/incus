@@ -1460,7 +1460,9 @@ func (c *cmdClusterEvacuate) command() *cobra.Command {
 	cmd.Aliases = []string{"evac"}
 	cmd.Use = cli.U("evacuate", cmdClusterEvacuateRestoreUsage...)
 	cmd.Short = i18n.G("Evacuate cluster member")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Evacuate cluster member`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Evacuate cluster member
+
+The action flag allows overriding the default server-side action ("cluster.evacuate" instance configuration option)`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.action.flagAction, "action", "", "", i18n.G(`Force a particular evacuation action`))
 
@@ -1489,7 +1491,10 @@ func (c *cmdClusterRestore) command() *cobra.Command {
 	cmd := c.action.command()
 	cmd.Use = cli.U("restore", cmdClusterEvacuateRestoreUsage...)
 	cmd.Short = i18n.G("Restore cluster member")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Restore cluster member`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Restore cluster member
+
+The action flag allows overriding the default behavior of moving and starting back all instances.
+The only supported value at the moment is "skip" which brings the cluster member online without relocating any instances.`))
 
 	cli.AddStringFlag(cmd.Flags(), &c.action.flagAction, "action", "", "", i18n.G(`Force a particular restoration action`))
 
