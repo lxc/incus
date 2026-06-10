@@ -3673,6 +3673,15 @@
 			"common": {
 				"keys": [
 					{
+						"bgp.ipv4.instances": {
+							"condition": "BGP server",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to advertise a /32 route for the IPv4 address of each running instance",
+							"type": "bool"
+						}
+					},
+					{
 						"bgp.ipv4.nexthop": {
 							"condition": "BGP server",
 							"default": "local address",
@@ -3680,6 +3689,15 @@
 							"scope": "local",
 							"shortdesc": "Override the next-hop for advertised prefixes",
 							"type": "string"
+						}
+					},
+					{
+						"bgp.ipv6.instances": {
+							"condition": "BGP server",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to advertise a /128 route for the IPv6 address of each running instance",
+							"type": "bool"
 						}
 					},
 					{
