@@ -1248,6 +1248,26 @@ func (c *cmdRemoteRename) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Rename the OIDC token file.
+	oldOIDCPath := conf.OIDCTokenPath(remoteName)
+	newOIDCPath := conf.OIDCTokenPath(newRemoteName)
+	if util.PathExists(oldOIDCPath) {
+		err := os.Rename(oldOIDCPath, newOIDCPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Rename the cookie jar.
+	oldCookiesPath := conf.CookiesPath(remoteName)
+	newCookiesPath := conf.CookiesPath(newRemoteName)
+	if util.PathExists(oldCookiesPath) {
+		err := os.Rename(oldCookiesPath, newCookiesPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	rc.Global = false
 	conf.Remotes[newRemoteName] = rc
 	delete(conf.Remotes, remoteName)

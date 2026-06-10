@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -349,12 +349,7 @@ func Connect(path string, serialCharDev string, eventHandler func(name string, d
 	}
 
 	// Setup the connection.
-	unixaddr, err := net.ResolveUnixAddr("unix", path)
-	if err != nil {
-		return nil, err
-	}
-
-	uc, err := net.DialUnix("unix", nil, unixaddr)
+	uc, err := linux.DialUnix(path)
 	if err != nil {
 		return nil, err
 	}

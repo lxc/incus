@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-08 11:52-0400\n"
+"POT-Creation-Date: 2026-06-09 17:00-0400\n"
 "PO-Revision-Date: 2026-06-06 23:33+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -1040,7 +1040,7 @@ msgstr "Alias %s já existe"
 msgid "Aliases:"
 msgstr "Aliases:"
 
-#: cmd/incus/cluster.go:1791
+#: cmd/incus/cluster.go:1796
 msgid "All existing data is lost when joining a cluster, continue?"
 msgstr ""
 
@@ -1084,11 +1084,11 @@ msgstr "Arquitetura: %s"
 msgid "Architecture: %v"
 msgstr "Arquitetura: %v"
 
-#: cmd/incus/cluster.go:1685
+#: cmd/incus/cluster.go:1690
 msgid "Are you joining an existing cluster?"
 msgstr ""
 
-#: cmd/incus/cluster.go:1525
+#: cmd/incus/cluster.go:1530
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
@@ -1361,7 +1361,7 @@ msgstr "Não é possível ler stdin: %s"
 msgid "Can't read from stdin: %w"
 msgstr "Não é possível ler stdin: %s"
 
-#: cmd/incus/remote.go:1314
+#: cmd/incus/remote.go:1334
 msgid "Can't remove the default remote"
 msgstr "Não é possível remover o default remoto"
 
@@ -1463,7 +1463,7 @@ msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
 msgstr ""
 
-#: cmd/incus/cluster.go:1737 cmd/incus/cluster.go:1935
+#: cmd/incus/cluster.go:1742 cmd/incus/cluster.go:1940
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between join token and cluster member %q"
@@ -1483,7 +1483,7 @@ msgstr ""
 msgid "Checking if the daemon is ready (attempt %d)"
 msgstr ""
 
-#: cmd/incus/cluster.go:1840
+#: cmd/incus/cluster.go:1845
 #, c-format
 msgid "Choose %s:"
 msgstr ""
@@ -2724,7 +2724,7 @@ msgstr ""
 msgid "Ephemeral instance"
 msgstr ""
 
-#: cmd/incus/cluster.go:1731 cmd/incus/cluster.go:1929
+#: cmd/incus/cluster.go:1736 cmd/incus/cluster.go:1934
 #, fuzzy, c-format
 msgid "Error connecting to existing cluster member %q: %v"
 msgstr "Nome de membro do cluster"
@@ -2793,12 +2793,20 @@ msgstr ""
 msgid "Error:"
 msgstr ""
 
-#: cmd/incus/cluster.go:1462 cmd/incus/cluster.go:1463
+#: cmd/incus/cluster.go:1462
 #, fuzzy
 msgid "Evacuate cluster member"
 msgstr "Nome de membro do cluster"
 
-#: cmd/incus/cluster.go:1550
+#: cmd/incus/cluster.go:1463
+msgid ""
+"Evacuate cluster member\n"
+"\n"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
+msgstr ""
+
+#: cmd/incus/cluster.go:1555
 #, fuzzy, c-format
 msgid "Evacuating cluster member: %s"
 msgstr "Nome de membro do cluster"
@@ -3018,7 +3026,7 @@ msgstr "Nome de membro do cluster"
 msgid "Failed converting token operation to certificate add token: %w"
 msgstr ""
 
-#: cmd/incus/cluster.go:1077 cmd/incus/cluster.go:1771
+#: cmd/incus/cluster.go:1077 cmd/incus/cluster.go:1776
 #, fuzzy, c-format
 msgid "Failed converting token operation to join token: %w"
 msgstr "Nome de membro do cluster"
@@ -3038,7 +3046,7 @@ msgstr ""
 msgid "Failed generating SSH host key: %w"
 msgstr "Aceitar certificado"
 
-#: cmd/incus/cluster.go:1877
+#: cmd/incus/cluster.go:1882
 #, fuzzy, c-format
 msgid "Failed generating trust certificate: %w"
 msgstr "Aceitar certificado"
@@ -3103,7 +3111,7 @@ msgstr "Aceitar certificado"
 msgid "Failed to add remote"
 msgstr ""
 
-#: cmd/incus/cluster.go:1887
+#: cmd/incus/cluster.go:1892
 #, fuzzy, c-format
 msgid "Failed to add server cert to cluster: %w"
 msgstr "Aceitar certificado"
@@ -3144,7 +3152,7 @@ msgstr "Nome de membro do cluster"
 msgid "Failed to connect to local daemon: %w"
 msgstr "Nome de membro do cluster"
 
-#: cmd/incus/cluster.go:1872
+#: cmd/incus/cluster.go:1877
 #, fuzzy, c-format
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Nome de membro do cluster"
@@ -3199,7 +3207,7 @@ msgstr "Aceitar certificado"
 msgid "Failed to find project: %w"
 msgstr ""
 
-#: cmd/incus/cluster.go:1967 cmd/incus/cluster.go:1972
+#: cmd/incus/cluster.go:1972 cmd/incus/cluster.go:1977
 #, fuzzy, c-format
 msgid "Failed to join cluster: %w"
 msgstr "Nome de membro do cluster"
@@ -3272,7 +3280,7 @@ msgstr "Aceitar certificado"
 msgid "Failed to request dump: %w"
 msgstr "Aceitar certificado"
 
-#: cmd/incus/cluster.go:1836
+#: cmd/incus/cluster.go:1841
 #, fuzzy, c-format
 msgid "Failed to retrieve cluster information: %w"
 msgstr "Aceitar certificado"
@@ -3305,12 +3313,12 @@ msgstr "Aceitar certificado"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Aceitar certificado"
 
-#: cmd/incus/cluster.go:1810
+#: cmd/incus/cluster.go:1815
 #, fuzzy, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "Nome de membro do cluster"
 
-#: cmd/incus/cluster.go:1542
+#: cmd/incus/cluster.go:1547
 #, fuzzy, c-format
 msgid "Failed to update cluster member state: %w"
 msgstr "Nome de membro do cluster"
@@ -3358,11 +3366,11 @@ msgstr ""
 msgid "Follow command-line symbolic links in source path"
 msgstr ""
 
-#: cmd/incus/cluster.go:1465
+#: cmd/incus/cluster.go:1467
 msgid "Force a particular evacuation action"
 msgstr ""
 
-#: cmd/incus/cluster.go:1494
+#: cmd/incus/cluster.go:1499
 msgid "Force a particular restoration action"
 msgstr ""
 
@@ -3378,7 +3386,7 @@ msgstr ""
 msgid "Force deleting files, directories, and subdirectories"
 msgstr ""
 
-#: cmd/incus/cluster.go:1510
+#: cmd/incus/cluster.go:1515
 msgid "Force evacuation without user confirmation"
 msgstr ""
 
@@ -3854,7 +3862,7 @@ msgstr ""
 msgid "IP addresses:"
 msgstr ""
 
-#: cmd/incus/remote.go:121 cmd/incus/remote.go:1380
+#: cmd/incus/remote.go:121 cmd/incus/remote.go:1400
 msgid "IP/FQDN/URL"
 msgstr ""
 
@@ -4089,7 +4097,7 @@ msgstr "Editar arquivos no container"
 msgid "Instance type"
 msgstr ""
 
-#: cmd/incus/cluster.go:1668
+#: cmd/incus/cluster.go:1673
 #, fuzzy
 msgid "Invalid IP address or DNS name"
 msgstr "Editar arquivos no container"
@@ -4130,7 +4138,7 @@ msgstr ""
 msgid "Invalid certificate format %q"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/cluster.go:1913
+#: cmd/incus/cluster.go:1918
 #, fuzzy, c-format
 msgid "Invalid cluster join token: %w"
 msgstr "Versão do cliente: %s\n"
@@ -4164,7 +4172,7 @@ msgstr "Editar arquivos no container"
 msgid "Invalid input, please enter a positive number"
 msgstr ""
 
-#: cmd/incus/cluster.go:1708
+#: cmd/incus/cluster.go:1713
 #, fuzzy, c-format
 msgid "Invalid join token: %w"
 msgstr "Versão do cliente: %s\n"
@@ -4219,7 +4227,7 @@ msgstr "Em cache: %s"
 msgid "Join an existing server to a cluster"
 msgstr ""
 
-#: cmd/incus/cluster.go:1699
+#: cmd/incus/cluster.go:1704
 msgid "Joining an existing cluster requires root privileges"
 msgstr ""
 
@@ -6274,7 +6282,7 @@ msgstr ""
 msgid "Password rejected for %q"
 msgstr ""
 
-#: cmd/incus/cluster.go:1898
+#: cmd/incus/cluster.go:1903
 #, fuzzy, c-format
 msgid "Path %s doesn't exist"
 msgstr "Alias %s não existe"
@@ -6306,7 +6314,7 @@ msgid ""
 "abort):"
 msgstr ""
 
-#: cmd/incus/cluster.go:1715
+#: cmd/incus/cluster.go:1720
 #, fuzzy
 msgid "Please provide join token:"
 msgstr "Nome de membro do cluster"
@@ -6689,18 +6697,18 @@ msgstr ""
 msgid "Remote %s already exists"
 msgstr ""
 
-#: cmd/incus/remote.go:1222 cmd/incus/remote.go:1302 cmd/incus/remote.go:1366
-#: cmd/incus/remote.go:1415
+#: cmd/incus/remote.go:1222 cmd/incus/remote.go:1322 cmd/incus/remote.go:1386
+#: cmd/incus/remote.go:1435
 #, c-format
 msgid "Remote %s doesn't exist"
 msgstr ""
 
-#: cmd/incus/remote.go:1310
+#: cmd/incus/remote.go:1330
 #, c-format
 msgid "Remote %s is global and cannot be removed"
 msgstr ""
 
-#: cmd/incus/remote.go:1226 cmd/incus/remote.go:1306 cmd/incus/remote.go:1419
+#: cmd/incus/remote.go:1226 cmd/incus/remote.go:1326 cmd/incus/remote.go:1439
 #, c-format
 msgid "Remote %s is static and cannot be modified"
 msgstr ""
@@ -6810,7 +6818,7 @@ msgstr "Adicionar perfis aos containers"
 msgid "Remove profiles from instances"
 msgstr "Adicionar perfis aos containers"
 
-#: cmd/incus/remote.go:1274 cmd/incus/remote.go:1275
+#: cmd/incus/remote.go:1294 cmd/incus/remote.go:1295
 msgid "Remove remotes"
 msgstr ""
 
@@ -6931,10 +6939,20 @@ msgstr ""
 msgid "Restart instances"
 msgstr "Editar arquivos no container"
 
-#: cmd/incus/cluster.go:1491 cmd/incus/cluster.go:1492
+#: cmd/incus/cluster.go:1493
 #, fuzzy
 msgid "Restore cluster member"
 msgstr "Nome de membro do cluster"
+
+#: cmd/incus/cluster.go:1494
+msgid ""
+"Restore cluster member\n"
+"\n"
+"The action flag allows overriding the default behavior of moving and "
+"starting back all instances.\n"
+"The only supported value at the moment is \"skip\" which brings the cluster "
+"member online without relocating any instances."
+msgstr ""
 
 #: cmd/incus/snapshot.go:527
 #, fuzzy
@@ -6959,7 +6977,7 @@ msgstr "Apagar nomes alternativos da imagem"
 msgid "Restore storage volume snapshots"
 msgstr ""
 
-#: cmd/incus/cluster.go:1548
+#: cmd/incus/cluster.go:1553
 #, fuzzy, c-format
 msgid "Restoring cluster member: %s"
 msgstr "Nome de membro do cluster"
@@ -7415,7 +7433,7 @@ msgid ""
 "machine\"."
 msgstr ""
 
-#: cmd/incus/remote.go:1386 cmd/incus/remote.go:1387
+#: cmd/incus/remote.go:1406 cmd/incus/remote.go:1407
 msgid "Set the URL(s) for the remote"
 msgstr ""
 
@@ -8039,7 +8057,7 @@ msgstr ""
 msgid "Switch the current project"
 msgstr ""
 
-#: cmd/incus/remote.go:1338 cmd/incus/remote.go:1339
+#: cmd/incus/remote.go:1358 cmd/incus/remote.go:1359
 msgid "Switch the default remote"
 msgstr ""
 
@@ -8568,7 +8586,7 @@ msgstr ""
 msgid "UUID: %v"
 msgstr ""
 
-#: cmd/incus/cluster.go:1746 cmd/incus/cluster.go:1945
+#: cmd/incus/cluster.go:1751 cmd/incus/cluster.go:1950
 #, fuzzy
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr "Nome de membro do cluster"
@@ -8941,7 +8959,7 @@ msgstr ""
 msgid "User ID to run the command as (default 0)"
 msgstr ""
 
-#: cmd/incus/cluster.go:1797
+#: cmd/incus/cluster.go:1802
 #, fuzzy
 msgid "User aborted configuration"
 msgstr "Editar configurações de perfil como YAML"
@@ -9079,7 +9097,7 @@ msgstr ""
 msgid "Web server running at: %s"
 msgstr ""
 
-#: cmd/incus/cluster.go:1674
+#: cmd/incus/cluster.go:1679
 msgid "What IP address or DNS name should be used to reach this server?"
 msgstr ""
 
@@ -9091,7 +9109,7 @@ msgstr ""
 msgid "What IPv6 address should be used?"
 msgstr ""
 
-#: cmd/incus/cluster.go:1644
+#: cmd/incus/cluster.go:1649
 msgid "What member name should be used to identify this server in the cluster?"
 msgstr ""
 
