@@ -74,6 +74,16 @@ func (d *gpuPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		"pci",
 	}
 
+	if instConf.Type() == instancetype.VM || instConf.Type() == instancetype.Any {
+		// gendoc:generate(entity=devices, group=gpu_physical, key=functions)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  shortdesc: Comma-delimited list of additional GPU function numbers (1-7) to include (VM only)
+		optionalFields = append(optionalFields, "functions")
+	}
+
 	if instConf.Type() == instancetype.Container || instConf.Type() == instancetype.Any {
 		// gendoc:generate(entity=devices, group=gpu_physical, key=uid)
 		//
@@ -270,6 +280,7 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 
 	saveData := make(map[string]string)
 	var pciAddress string
+	var includeFunctions string
 
 	for _, gpu := range gpus.Cards {
 		// Skip any cards that are not selected.
@@ -300,6 +311,8 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 		}
 
 		pciAddress = gpu.PCIAddress
+
+		includeFunctions = d.Config()["functions"]
 	}
 
 	if pciAddress == "" {
@@ -331,6 +344,7 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 		[]deviceConfig.RunConfigItem{
 			{Key: "devName", Value: d.name},
 			{Key: "pciSlotName", Value: saveData["last_state.pci.slot.name"]},
+			{Key: "requestedFunctions", Value: includeFunctions},
 		}...)
 
 	err = d.volatileSet(saveData)
