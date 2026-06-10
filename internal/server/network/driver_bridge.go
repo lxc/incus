@@ -194,6 +194,24 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  shortdesc: Override the next-hop for advertised prefixes
 		"bgp.ipv6.nexthop": validate.Optional(validate.IsNetworkAddressV6),
 
+		// gendoc:generate(entity=network_bridge, group=common, key=bgp.ipv4.instances)
+		//
+		// ---
+		//  type: bool
+		//  condition: BGP server
+		//  default: `false`
+		//  shortdesc: Whether to advertise a /32 route for the IPv4 address of each running instance
+		"bgp.ipv4.instances": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_bridge, group=common, key=bgp.ipv6.instances)
+		//
+		// ---
+		//  type: bool
+		//  condition: BGP server
+		//  default: `false`
+		//  shortdesc: Whether to advertise a /128 route for the IPv6 address of each running instance
+		"bgp.ipv6.instances": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=network_bridge, group=common, key=bridge.driver)
 		//
 		// ---
