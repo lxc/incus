@@ -175,10 +175,5 @@ func (c *Config) SaveConfig(path string) error {
 		return fmt.Errorf("Unable to write the configuration: %w", err)
 	}
 
-	err = f.Close()
-	if err != nil {
-		return fmt.Errorf("Unable to close the configuration file: %w", err)
-	}
-
 	return nil
 }
