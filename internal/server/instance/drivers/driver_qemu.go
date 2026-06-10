@@ -1817,7 +1817,13 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	info := DriverStatuses()[instancetype.VM].Info
 	_, spiceSupported := info.Features["spice"]
 	if spiceSupported {
-		qemuArgs = append(qemuArgs, "-spice", d.spiceCmdlineConfig())
+		spiceConfig, err := d.spiceCmdlineConfig(&fdFiles)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		qemuArgs = append(qemuArgs, "-spice", spiceConfig)
 	}
 
 	// If stateful, restore now.
@@ -3221,8 +3227,18 @@ func (d *qemu) migrateSockPath() string {
 	return filepath.Join(d.RunPath(), "migrate.sock")
 }
 
-func (d *qemu) spiceCmdlineConfig() string {
-	return fmt.Sprintf("unix=on,disable-ticketing=on,addr=%s", d.spicePath())
+func (d *qemu) spiceCmdlineConfig(fdFiles *[]*os.File) (string, error) {
+	// Reference the socket through a short /proc/self/fd path to handle
+	// run paths that exceed the unix socket path limit.
+	spiceDir, err := os.OpenFile(d.RunPath(), unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return "", err
+	}
+
+	spiceDirFD := d.addFileDescriptor(fdFiles, spiceDir)
+	spicePath := fmt.Sprintf("/proc/self/fd/%d/qemu.spice", spiceDirFD)
+
+	return fmt.Sprintf("unix=on,disable-ticketing=on,addr=%s", spicePath), nil
 }
 
 // generateConfigShare generates the config share directory that will be exported to the VM via
@@ -9128,7 +9144,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	chDisconnect := make(chan error, 1)
 
 	// Open the console socket.
-	conn, err := net.Dial("unix", path)
+	conn, err := linux.DialUnix(path)
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
 			_ = d.consoleSwapSocketWithRB()
@@ -9137,7 +9153,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 		return nil, nil, fmt.Errorf("Connect to console socket %q: %w", path, err)
 	}
 
-	file, err := conn.(*net.UnixConn).File()
+	file, err := conn.File()
 	if err != nil {
 		if protocol == instance.ConsoleTypeConsole {
 			_ = d.consoleSwapSocketWithRB()
