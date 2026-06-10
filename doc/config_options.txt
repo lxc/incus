@@ -334,6 +334,13 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 <!-- config group devices-gpu_mig end -->
 <!-- config group devices-gpu_physical start -->
+```{config:option} functions devices-gpu_physical
+:required: "no"
+:shortdesc: "Comma-delimited list of additional GPU function numbers (1-7) to include (VM only)"
+:type: "string"
+
+```
+
 ```{config:option} gid devices-gpu_physical
 :default: "0"
 :required: "no"
