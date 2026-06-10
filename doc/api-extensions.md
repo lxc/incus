@@ -3158,3 +3158,12 @@ allow specifying an explicit CPU topology of the form
 This adds a new `GET /1.0/instances/{name}/nbd` endpoint which acts
 similarly to the equivalent storage volume endpoint but allows concurrent
 access to all disks attached to the VM.
+
+## `network_bridge_bgp_instances`
+
+This adds the `bgp.ipv4.instances` and `bgp.ipv6.instances` configuration
+keys to managed bridge networks.
+
+When enabled, Incus advertises a `/32` (IPv4) or `/128` (IPv6) route over
+BGP for each running instance connected to the network, withdrawing it
+again when the instance stops.
