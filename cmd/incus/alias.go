@@ -62,8 +62,13 @@ func (c *cmdAliasAdd) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add new aliases`))
 	cmd.Example = cli.FormatSection("", i18n.G(
 		`incus alias add list "list -c ns46S"
-    Overwrite the "list" command to pass -c ns46S.`,
-	))
+    Overwrite the "list" command to pass -c ns46S.
+
+Incus alias add volume "storage volume @ARGS@"
+    Create a short command for managing volumes
+
+incus alias add cat "exec @ARG1@ -- cat @ARG2@"
+    Create a command for displaying file content of instances`))
 
 	cmd.RunE = c.run
 
