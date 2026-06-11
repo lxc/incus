@@ -356,7 +356,7 @@ func instanceMetadataPut(d *Daemon, r *http.Request) response.Response {
 
 func doInstanceMetadataUpdate(s *state.State, inst instance.Instance, metadata api.ImageMetadata, r *http.Request) response.Response {
 	// Convert YAML.
-	data, err := yaml.Dump(metadata, yaml.V2)
+	data, err := yaml.Dump(metadata, yaml.WithV2Defaults())
 	if err != nil {
 		return response.BadRequest(err)
 	}

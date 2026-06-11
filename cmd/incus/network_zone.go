@@ -278,7 +278,7 @@ func (c *cmdNetworkZoneShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(netZone.UsedBy)
 
-	data, err := yaml.Dump(&netZone, yaml.V2)
+	data, err := yaml.Dump(&netZone, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -650,7 +650,7 @@ func (c *cmdNetworkZoneEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&netZone, yaml.V2)
+	data, err := yaml.Dump(&netZone, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -925,7 +925,7 @@ func (c *cmdNetworkZoneRecordShow) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	data, err := yaml.Dump(&netRecord, yaml.V2)
+	data, err := yaml.Dump(&netRecord, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1319,7 +1319,7 @@ func (c *cmdNetworkZoneRecordEdit) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	data, err := yaml.Dump(netRecord.Writable, yaml.V2)
+	data, err := yaml.Dump(netRecord.Writable, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

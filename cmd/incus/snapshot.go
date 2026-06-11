@@ -629,7 +629,7 @@ func (c *cmdSnapshotShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&snap, yaml.V2)
+	data, err := yaml.Dump(&snap, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

@@ -351,7 +351,7 @@ func (c *cmdClusterGroupEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(group, yaml.V2)
+	data, err := yaml.Dump(group, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -721,7 +721,7 @@ func (c *cmdClusterGroupShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&group, yaml.V2)
+	data, err := yaml.Dump(&group, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

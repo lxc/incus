@@ -280,7 +280,7 @@ func getNodeResources(s *state.State, name string, address string) (*api.Resourc
 	}
 
 	// Cache the data.
-	data, err := yaml.Dump(res, yaml.V2)
+	data, err := yaml.Dump(res, yaml.WithV2Defaults())
 	if err == nil {
 		_ = os.WriteFile(resourcesPath, data, 0o600)
 	}

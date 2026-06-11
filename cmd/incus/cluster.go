@@ -364,7 +364,7 @@ func (c *cmdClusterShow) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render as YAML
-	data, err := yaml.Dump(&member, yaml.V2)
+	data, err := yaml.Dump(&member, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -418,7 +418,7 @@ func (c *cmdClusterInfo) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render as YAML.
-	data, err := yaml.Dump(&member, yaml.V2)
+	data, err := yaml.Dump(&member, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -917,7 +917,7 @@ func (c *cmdClusterEdit) run(cmd *cobra.Command, args []string) error {
 
 	memberWritable := member.Writable()
 
-	data, err := yaml.Dump(&memberWritable, yaml.V2)
+	data, err := yaml.Dump(&memberWritable, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

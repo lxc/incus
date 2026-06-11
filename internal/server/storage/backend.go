@@ -6932,7 +6932,7 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 		return err
 	}
 
-	data, err := yaml.Dump(config, yaml.V2)
+	data, err := yaml.Dump(config, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

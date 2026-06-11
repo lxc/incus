@@ -658,7 +658,7 @@ func (c *cmdStorageVolumeSnapshotShow) run(cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	data, err := yaml.Dump(&vol, yaml.V2)
+	data, err := yaml.Dump(&vol, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

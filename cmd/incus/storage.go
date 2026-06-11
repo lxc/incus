@@ -333,7 +333,7 @@ func (c *cmdStorageEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&pool, yaml.V2)
+	data, err := yaml.Dump(&pool, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -608,12 +608,12 @@ func (c *cmdStorageInfo) run(cmd *cobra.Command, args []string) error {
 		poolinfo[infostring][spaceusedstring] = units.GetByteSizeStringIEC(int64(res.Space.Used), 2)
 	}
 
-	poolinfodata, err := yaml.Dump(poolinfo, yaml.V2)
+	poolinfodata, err := yaml.Dump(poolinfo, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
 
-	poolusedbydata, err := yaml.Dump(poolusedby, yaml.V2)
+	poolusedbydata, err := yaml.Dump(poolusedby, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -931,7 +931,7 @@ func (c *cmdStorageShow) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err := yaml.Dump(&res, yaml.V2)
+		data, err := yaml.Dump(&res, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}
@@ -948,7 +948,7 @@ func (c *cmdStorageShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(pool.UsedBy)
 
-	data, err := yaml.Dump(&pool, yaml.V2)
+	data, err := yaml.Dump(&pool, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

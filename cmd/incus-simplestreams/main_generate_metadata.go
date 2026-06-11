@@ -125,7 +125,7 @@ func (c *cmdGenerateMetadata) run(cmd *cobra.Command, args []string) error {
 	metadata.Properties["description"] = metaDescription
 
 	// Generate YAML.
-	body, err := yaml.Dump(&metadata, yaml.V2)
+	body, err := yaml.Dump(&metadata, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

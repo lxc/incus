@@ -214,7 +214,7 @@ func (c *cmdNetworkACLShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(netACL.UsedBy)
 
-	data, err := yaml.Dump(&netACL, yaml.V2)
+	data, err := yaml.Dump(&netACL, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -647,7 +647,7 @@ func (c *cmdNetworkACLEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&netACL, yaml.V2)
+	data, err := yaml.Dump(&netACL, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

@@ -5608,7 +5608,7 @@ func (d *lxc) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties ma
 
 	defer logger.WarnOnError(func() error { return os.RemoveAll(tempDir) }, "Failed to remove temporary directory")
 
-	data, err := yaml.Dump(&meta, yaml.V2)
+	data, err := yaml.Dump(&meta, yaml.WithV2Defaults())
 	if err != nil {
 		_ = metaTarWriter.Close()
 		if rootfsTarWriter != nil {

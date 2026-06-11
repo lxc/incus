@@ -463,7 +463,7 @@ func (c *cmdImageEdit) run(cmd *cobra.Command, args []string) error {
 	}
 
 	brief := imgInfo.Writable()
-	data, err := yaml.Dump(&brief, yaml.V2)
+	data, err := yaml.Dump(&brief, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1509,7 +1509,7 @@ func (c *cmdImageShow) run(cmd *cobra.Command, args []string) error {
 	}
 
 	properties := info.Writable()
-	data, err := yaml.Dump(&properties, yaml.V2)
+	data, err := yaml.Dump(&properties, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1834,7 +1834,7 @@ func (c *cmdImageGenerateMetadata) run(cmd *cobra.Command, args []string) error 
 	metadata.Properties["description"] = metaDescription
 
 	// Generate YAML.
-	body, err := yaml.Dump(&metadata, yaml.V2)
+	body, err := yaml.Dump(&metadata, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

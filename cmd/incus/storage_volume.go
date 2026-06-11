@@ -1044,7 +1044,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err = yaml.Dump(&snapVol, yaml.V2)
+		data, err = yaml.Dump(&snapVol, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}
@@ -1055,7 +1055,7 @@ func (c *cmdStorageVolumeEdit) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err = yaml.Dump(&vol, yaml.V2)
+		data, err = yaml.Dump(&vol, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}
@@ -2163,7 +2163,7 @@ func (c *cmdStorageVolumeShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(vol.UsedBy)
 
-	data, err := yaml.Dump(&vol, yaml.V2)
+	data, err := yaml.Dump(&vol, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

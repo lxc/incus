@@ -286,7 +286,7 @@ func backupWriteIndex(sourceInst instance.Instance, pool storagePools.Pool, opti
 	}
 
 	// Convert to YAML.
-	indexData, err := yaml.Dump(&indexInfo, yaml.V2)
+	indexData, err := yaml.Dump(&indexInfo, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -619,7 +619,7 @@ func volumeBackupWriteIndex(projectName string, volumeName string, pool storageP
 	}
 
 	// Convert to YAML.
-	indexData, err := yaml.Dump(indexInfo, yaml.V2)
+	indexData, err := yaml.Dump(indexInfo, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -862,7 +862,7 @@ func bucketBackupWriteIndex(projectName string, bucketName string, pool storageP
 	}
 
 	// Convert to YAML.
-	indexData, err := yaml.Dump(indexInfo, yaml.V2)
+	indexData, err := yaml.Dump(indexInfo, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

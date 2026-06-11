@@ -738,7 +738,7 @@ func (c *cmdConfigDeviceShow) run(cmd *cobra.Command, args []string) error {
 		devices = inst.Devices
 	}
 
-	data, err := yaml.Dump(&devices, yaml.V2)
+	data, err := yaml.Dump(&devices, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

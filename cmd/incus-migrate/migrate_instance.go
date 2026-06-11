@@ -336,7 +336,7 @@ func (m *InstanceMigration) render() string {
 		data.Disks[k] = v
 	}
 
-	out, err := yaml.Dump(&data, yaml.V2)
+	out, err := yaml.Dump(&data, yaml.WithV2Defaults())
 	if err != nil {
 		return ""
 	}

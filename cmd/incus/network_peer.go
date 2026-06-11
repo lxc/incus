@@ -278,7 +278,7 @@ func (c *cmdNetworkPeerShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&peer, yaml.V2)
+	data, err := yaml.Dump(&peer, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -708,7 +708,7 @@ func (c *cmdNetworkPeerEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&peer, yaml.V2)
+	data, err := yaml.Dump(&peer, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

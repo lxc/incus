@@ -71,7 +71,7 @@ func devIncusMonitorStream() {
 
 		message["timestamp"] = nil
 
-		msg, err := yaml.Dump(&message, yaml.V2)
+		msg, err := yaml.Dump(&message, yaml.WithV2Defaults())
 		if err != nil {
 			return
 		}
@@ -105,7 +105,7 @@ func devIncusMonitorWebsocket(c http.Client) {
 
 		message["timestamp"] = nil
 
-		msg, err := yaml.Dump(&message, yaml.V2)
+		msg, err := yaml.Dump(&message, yaml.WithV2Defaults())
 		if err != nil {
 			return
 		}

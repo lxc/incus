@@ -550,7 +550,7 @@ func (c *cmdProfileEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&profile, yaml.V2)
+	data, err := yaml.Dump(&profile, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1097,7 +1097,7 @@ func (c *cmdProfileShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&profile, yaml.V2)
+	data, err := yaml.Dump(&profile, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

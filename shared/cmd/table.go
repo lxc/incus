@@ -128,7 +128,7 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 		}
 
 	case TableFormatYAML:
-		out, err := yaml.Dump(raw, yaml.V2)
+		out, err := yaml.Dump(raw, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}

@@ -308,7 +308,7 @@ func (c *cmdConfigTrustEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&cert, yaml.V2)
+	data, err := yaml.Dump(&cert, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -836,7 +836,7 @@ func (c *cmdConfigTrustShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&cert, yaml.V2)
+	data, err := yaml.Dump(&cert, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

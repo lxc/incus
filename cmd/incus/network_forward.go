@@ -284,7 +284,7 @@ func (c *cmdNetworkForwardShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&forward, yaml.V2)
+	data, err := yaml.Dump(&forward, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -704,7 +704,7 @@ func (c *cmdNetworkForwardEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&forward, yaml.V2)
+	data, err := yaml.Dump(&forward, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

@@ -38,7 +38,7 @@ func instanceSaveCache() error {
 		return nil
 	}
 
-	data, err := yaml.Dump(&instanceTypes, yaml.V2)
+	data, err := yaml.Dump(&instanceTypes, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

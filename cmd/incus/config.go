@@ -211,7 +211,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 			inst.ExpandedConfig = nil
 			inst.ExpandedDevices = nil
 
-			data, err = yaml.Dump(&inst, yaml.V2)
+			data, err = yaml.Dump(&inst, yaml.WithV2Defaults())
 			if err != nil {
 				return err
 			}
@@ -227,7 +227,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 			inst.ExpandedConfig = nil
 			inst.ExpandedDevices = nil
 
-			data, err = yaml.Dump(&inst, yaml.V2)
+			data, err = yaml.Dump(&inst, yaml.WithV2Defaults())
 			if err != nil {
 				return err
 			}
@@ -320,7 +320,7 @@ func (c *cmdConfigEdit) run(cmd *cobra.Command, args []string) error {
 	}
 
 	brief := server.Writable()
-	data, err := yaml.Dump(&brief, yaml.V2)
+	data, err := yaml.Dump(&brief, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -742,7 +742,7 @@ func (c *cmdConfigShow) run(cmd *cobra.Command, args []string) error {
 		}
 
 		brief := server.Writable()
-		data, err = yaml.Dump(&brief, yaml.V2)
+		data, err = yaml.Dump(&brief, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}
@@ -785,7 +785,7 @@ func (c *cmdConfigShow) run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		data, err = yaml.Dump(&brief, yaml.V2)
+		data, err = yaml.Dump(&brief, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}
