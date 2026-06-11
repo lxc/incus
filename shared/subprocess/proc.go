@@ -270,7 +270,7 @@ func (p *Process) Reload() error {
 
 // Save will save the given process object to a YAML file. Can be imported at a later point.
 func (p *Process) Save(path string) error {
-	dat, err := yaml.Dump(p, yaml.V2)
+	dat, err := yaml.Dump(p, yaml.WithV2Defaults())
 	if err != nil {
 		return fmt.Errorf("Unable to serialize process struct to YAML: %w", err)
 	}

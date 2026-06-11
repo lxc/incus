@@ -287,7 +287,7 @@ func (c *cmdNetworkLoadBalancerShow) run(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	data, err := yaml.Dump(&loadBalancer, yaml.V2)
+	data, err := yaml.Dump(&loadBalancer, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -684,7 +684,7 @@ func (c *cmdNetworkLoadBalancerEdit) run(cmd *cobra.Command, args []string) erro
 		return err
 	}
 
-	data, err := yaml.Dump(&loadBalancer, yaml.V2)
+	data, err := yaml.Dump(&loadBalancer, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

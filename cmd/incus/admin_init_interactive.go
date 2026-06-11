@@ -83,7 +83,7 @@ func (c *cmdAdminInit) runInteractive(_ *cobra.Command, d incus.InstanceServer, 
 			object = *config
 		}
 
-		out, err := yaml.Dump(object, yaml.V2)
+		out, err := yaml.Dump(object, yaml.WithV2Defaults())
 		if err != nil {
 			return nil, fmt.Errorf(i18n.G("Failed to render the config: %w"), err)
 		}

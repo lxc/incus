@@ -206,7 +206,7 @@ func (c *cmdNetworkAddressSetShow) run(cmd *cobra.Command, args []string) error 
 
 	sort.Strings(addrSet.UsedBy)
 
-	data, err := yaml.Dump(&addrSet, yaml.V2)
+	data, err := yaml.Dump(&addrSet, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -504,7 +504,7 @@ func (c *cmdNetworkAddressSetEdit) run(cmd *cobra.Command, args []string) error 
 		return err
 	}
 
-	data, err := yaml.Dump(&addrSet, yaml.V2)
+	data, err := yaml.Dump(&addrSet, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

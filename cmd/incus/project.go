@@ -373,7 +373,7 @@ func (c *cmdProjectEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&project, yaml.V2)
+	data, err := yaml.Dump(&project, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -918,7 +918,7 @@ func (c *cmdProjectShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&project, yaml.V2)
+	data, err := yaml.Dump(&project, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1031,7 +1031,7 @@ func (c *cmdProjectInfo) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err := yaml.Dump(access, yaml.V2)
+		data, err := yaml.Dump(access, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}

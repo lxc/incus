@@ -184,7 +184,7 @@ func (c *cmdClusterEdit) run(_ *cobra.Command, _ []string) error {
 		config.Members = append(config.Members, member)
 	}
 
-	data, err := yaml.Dump(config, yaml.V2)
+	data, err := yaml.Dump(config, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -337,7 +337,7 @@ func (c *cmdClusterShow) run(_ *cobra.Command, _ []string) error {
 		config.Members = append(config.Members, member)
 	}
 
-	data, err := yaml.Dump(config, yaml.V2)
+	data, err := yaml.Dump(config, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

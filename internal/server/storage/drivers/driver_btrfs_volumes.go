@@ -1674,7 +1674,7 @@ func (d *btrfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, b
 	}
 
 	// Convert to YAML.
-	optimizedHeaderYAML, err := yaml.Dump(&optimizedHeader, yaml.V2)
+	optimizedHeaderYAML, err := yaml.Dump(&optimizedHeader, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

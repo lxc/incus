@@ -183,7 +183,7 @@ func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 
 	defer logger.WarnOnError(file.Close, "Failed to close file")
 
-	data, err := yaml.Dump(&backup, yaml.V2)
+	data, err := yaml.Dump(&backup, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

@@ -244,7 +244,7 @@ func (m *VolumeMigration) render() string {
 		m.sourceFormat,
 	}
 
-	out, err := yaml.Dump(&data, yaml.V2)
+	out, err := yaml.Dump(&data, yaml.WithV2Defaults())
 	if err != nil {
 		return ""
 	}

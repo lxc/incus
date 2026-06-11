@@ -742,7 +742,7 @@ func (c *cmdNetworkEdit) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Only managed networks can be modified"))
 	}
 
-	data, err := yaml.Dump(&network, yaml.V2)
+	data, err := yaml.Dump(&network, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1556,7 +1556,7 @@ func (c *cmdNetworkShow) run(cmd *cobra.Command, args []string) error {
 
 	sort.Strings(network.UsedBy)
 
-	data, err := yaml.Dump(&network, yaml.V2)
+	data, err := yaml.Dump(&network, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

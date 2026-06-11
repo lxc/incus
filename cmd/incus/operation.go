@@ -319,7 +319,7 @@ func (c *cmdOperationShow) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render as YAML
-	data, err := yaml.Dump(&op, yaml.V2)
+	data, err := yaml.Dump(&op, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

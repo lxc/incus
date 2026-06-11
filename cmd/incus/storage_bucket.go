@@ -311,7 +311,7 @@ func (c *cmdStorageBucketEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&bucket, yaml.V2)
+	data, err := yaml.Dump(&bucket, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -733,7 +733,7 @@ func (c *cmdStorageBucketShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&bucket, yaml.V2)
+	data, err := yaml.Dump(&bucket, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1185,7 +1185,7 @@ func (c *cmdStorageBucketKeyEdit) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&bucket, yaml.V2)
+	data, err := yaml.Dump(&bucket, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}
@@ -1273,7 +1273,7 @@ func (c *cmdStorageBucketKeyShow) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	data, err := yaml.Dump(&bucket, yaml.V2)
+	data, err := yaml.Dump(&bucket, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

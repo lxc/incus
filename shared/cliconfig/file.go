@@ -165,7 +165,7 @@ func (c *Config) SaveConfig(path string) error {
 	defer logger.WarnOnError(f.Close, "Failed to close file")
 
 	// Write the new config
-	data, err := yaml.Dump(&conf, yaml.V2)
+	data, err := yaml.Dump(&conf, yaml.WithV2Defaults())
 	if err != nil {
 		return fmt.Errorf("Unable to marshal the configuration: %w", err)
 	}

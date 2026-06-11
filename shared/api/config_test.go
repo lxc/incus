@@ -379,7 +379,7 @@ func TestConfigMap_UnmarshalYAML(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			in, err := yaml.Dump(tc.input, yaml.V2)
+			in, err := yaml.Dump(tc.input, yaml.WithV2Defaults())
 			require.NoError(t, err)
 
 			err = yaml.Load(in, &tc.target)

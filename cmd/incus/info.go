@@ -87,7 +87,7 @@ func (c *cmdInfo) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		data, err := yaml.Dump(access, yaml.V2)
+		data, err := yaml.Dump(access, yaml.WithV2Defaults())
 		if err != nil {
 			return err
 		}
@@ -629,7 +629,7 @@ func (c *cmdInfo) remoteInfo(d incus.InstanceServer) error {
 		out = serverStatus.Filtered()
 	}
 
-	data, err := yaml.Dump(out, yaml.V2)
+	data, err := yaml.Dump(out, yaml.WithV2Defaults())
 	if err != nil {
 		return err
 	}

@@ -88,7 +88,7 @@ func (c *cmdAdminInit) runDump(d incus.InstanceServer) error {
 		config.Projects = append(config.Projects, projectsPost)
 	}
 
-	out, err := yaml.Dump(config, yaml.V2)
+	out, err := yaml.Dump(config, yaml.WithV2Defaults())
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to retrieve current server configuration: %w"), err)
 	}

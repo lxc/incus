@@ -7523,7 +7523,7 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 
 	defer logger.WarnOnError(func() error { return os.RemoveAll(tempDir) }, "Failed to remove temporary directory")
 
-	data, err := yaml.Dump(&meta, yaml.V2)
+	data, err := yaml.Dump(&meta, yaml.WithV2Defaults())
 	if err != nil {
 		_ = metaTarWriter.Close()
 		d.logger.Error("Failed exporting instance", ctxMap)

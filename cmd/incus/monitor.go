@@ -176,7 +176,7 @@ func (c *cmdMonitor) run(cmd *cobra.Command, args []string) error {
 		var render []byte
 		switch c.flagFormat {
 		case "yaml":
-			render, err = yaml.Dump(&rawEvent, yaml.V2)
+			render, err = yaml.Dump(&rawEvent, yaml.WithV2Defaults())
 			if err != nil {
 				chError <- err
 				return
