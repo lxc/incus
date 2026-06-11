@@ -16,7 +16,7 @@ Within the [`incus alias`](incus_alias.md) command, you can use the following su
 Run [`incus alias --help`](incus_alias.md) to see all available subcommands and parameters.
 
 ```{note}
-_Command aliases_ are different from {ref}`_image aliases_ <images>`.
+_Command aliases_ are different from _{ref}`image aliases<images>`_.
 An image alias is an alternative name for an image, usually a shorter name or another common mnemonic for that image.
 
 Image aliases are a server-side concept part of the Incus API whereas command aliases are purely part of the command line tool configuration.
