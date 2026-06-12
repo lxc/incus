@@ -136,6 +136,18 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			entry, _, err := remote.GetImageAliasType(args.Type, fp)
 			if err == nil {
 				fp = entry.Target
+			} else if args.Type != "" {
+				// If no match was found for the requested type, check whether
+				// the other instance type has one to give a more helpful hint.
+				otherType := "virtual-machine"
+				if args.Type == "virtual-machine" {
+					otherType = "container"
+				}
+
+				_, _, otherErr := remote.GetImageAliasType(otherType, fp)
+				if otherErr == nil {
+					return nil, false, fmt.Errorf("The requested image couldn't be found for instance type %q, but one was found for instance type %q", args.Type, otherType)
+				}
 			}
 
 			// Expand partial fingerprints
