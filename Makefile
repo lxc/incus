@@ -404,4 +404,4 @@ dist: doc
 # doc: Show this help
 help:
 	@echo The following targets are supported:
-	@sed -En 's/^#\s*section\(([^)]*)\):\s*(.*)$$/\n\x1b[1m\1:\x1b[0m \2/p;/^\.PHONY:/{N;N;s/^\.PHONY:\s*([^[:space:]]+)\n#\s*doc(:\s*(.*)\n\1:\s*$$|!\s*(.*)\n\1:[^\n]*)/  \1!\3\4/p;s/^\.PHONY:\s*([^[:space:]]+)\s*\n#\s*doc:\s*(.*)\n\1:\s*(.+)$$/  \1!\2 (runs \3)/p}' Makefile | awk -F! '{printf "%-20s%s\n", $$1, $$2}'
+	@sed -En 's/^#\s*section\(([^)]*)\):\s*(.*)$$/\n\x1b[1m\1:\x1b[0m \2/p;/^\.PHONY:/{N;N;s/^\.PHONY:\s*([^[:space:]]+)\n#\s*doc(:\s*(.*)\n\1:\s*$$|!\s*(.*)\n\1:[^\n]*)/  \1!\3\4/p;s/^\.PHONY:\s*([^[:space:]]+)\s*\n#\s*doc:\s*(.*)\n\1:\s*(.+)$$/  \1!\2 (runs \3)/p}' Makefile | awk -F! '{if(NF<2)print$$1;else{s=$$1;if(length(s)%2)s=s" ";while(length(s)<28)s=s" .";print s" "$$2}}'
