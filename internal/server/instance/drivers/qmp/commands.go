@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -1140,34 +1141,68 @@ func (m *Monitor) SEVCapabilities() (AMDSEVCapabilities, error) {
 }
 
 // NBDServerStart starts internal NBD server and returns a connection to it.
-func (m *Monitor) NBDServerStart() (net.Conn, error) {
+func (m *Monitor) NBDServerStart(listenPath string) (net.Conn, error) {
 	var args struct {
 		Addr struct {
-			Data struct {
-				Path     string `json:"path"`
-				Abstract bool   `json:"abstract"`
-			} `json:"data"`
-			Type string `json:"type"`
+			Data map[string]any `json:"data"`
+			Type string         `json:"type"`
 		} `json:"addr"`
 		MaxConnections int `json:"max-connections"`
 	}
 
-	// Create abstract unix listener.
-	listener, err := net.Listen("unix", "")
-	if err != nil {
-		return nil, fmt.Errorf("Failed creating unix listener: %w", err)
+	listenAddress := listenPath
+	if listenAddress == "" {
+		// Create abstract unix listener.
+		listener, err := net.Listen("unix", "")
+		if err != nil {
+			return nil, fmt.Errorf("Failed creating unix listener: %w", err)
+		}
+
+		// Get the random address, and then close the listener, and pass the address for use with nbd-server-start.
+		listenAddress = listener.Addr().String()
+		_ = listener.Close()
+
+		args.Addr.Type = "unix"
+		args.Addr.Data = map[string]any{
+			"path":     strings.TrimPrefix(listenAddress, "@"),
+			"abstract": true,
+		}
+	} else {
+		// QEMU may have dropped privileges, bind the socket ourselves and pass the FD.
+		err := os.Remove(listenPath)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("Failed to remove stale socket %q: %w", listenPath, err)
+		}
+
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: listenPath, Net: "unix"})
+		if err != nil {
+			return nil, fmt.Errorf("Failed creating unix listener: %w", err)
+		}
+
+		listener.SetUnlinkOnClose(false)
+
+		listenerFile, err := listener.File()
+		_ = listener.Close()
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting listener file descriptor: %w", err)
+		}
+
+		defer func() { _ = listenerFile.Close() }()
+
+		err = m.SendFile(listenPath, listenerFile)
+		if err != nil {
+			return nil, fmt.Errorf("Failed sending listener file descriptor: %w", err)
+		}
+
+		args.Addr.Type = "fd"
+		args.Addr.Data = map[string]any{
+			"str": listenPath,
+		}
 	}
 
-	// Get the random address, and then close the listener, and pass the address for use with nbd-server-start.
-	listenAddress := listener.Addr().String()
-	_ = listener.Close()
-
-	args.Addr.Type = "unix"
-	args.Addr.Data.Path = strings.TrimPrefix(listenAddress, "@")
-	args.Addr.Data.Abstract = true
 	args.MaxConnections = 1
 
-	err = m.Run("nbd-server-start", args, nil)
+	err := m.Run("nbd-server-start", args, nil)
 	if err != nil {
 		return nil, err
 	}
