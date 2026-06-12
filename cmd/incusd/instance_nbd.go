@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	incus "github.com/lxc/incus/v7/client"
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/instance"
@@ -12,6 +13,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/response"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // swagger:operation GET /1.0/instances/{name}/nbd instances instance_nbd_get
@@ -24,6 +26,9 @@ import (
 //	This is only available on running virtual machines. For stopped instances, access the disks
 //	individually through the storage volume NBD endpoint.
 //
+//	Passing reuse=1 returns an additional connection to an already running NBD session instead of
+//	starting a new one. The session is terminated when all of its connections are closed.
+//
 //	---
 //	produces:
 //	  - application/json
@@ -34,6 +39,11 @@ import (
 //	    description: Instance name
 //	    type: string
 //	    required: true
+//	  - in: query
+//	    name: reuse
+//	    description: Whether to connect to an already running NBD session
+//	    type: integer
+//	    example: 1
 //	  - in: query
 //	    name: project
 //	    description: Project name
@@ -54,6 +64,7 @@ func instanceNBDHandler(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
 	projectName := request.ProjectParam(r)
+	reuse := util.IsTrue(request.QueryParam(r, "reuse"))
 
 	instName, err := pathVar(r, "name")
 	if err != nil {
@@ -75,7 +86,7 @@ func instanceNBDHandler(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if client != nil {
-		conn, err := client.GetInstanceNBDConn(instName)
+		conn, err := client.GetInstanceNBDConn(instName, incus.InstanceNBDArgs{Reuse: reuse})
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -98,7 +109,7 @@ func instanceNBDHandler(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	conn, disconnect, err := pool.GetInstanceAllDisksNBD(inst)
+	conn, disconnect, err := pool.GetInstanceAllDisksNBD(inst, reuse)
 	if err != nil {
 		return response.SmartError(err)
 	}
