@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-06-11 21:47+0000\n"
+        "POT-Creation-Date: 2026-06-11 22:14-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -4940,13 +4940,13 @@ msgid   "NBD access to a block storage volume"
 msgstr  ""
 
 #: cmd/incus/debug.go:106
-msgid   "NBD access to all of an instance's disks"
+msgid   "NBD access to all of a virtual machine's disks"
 msgstr  ""
 
 #: cmd/incus/debug.go:107
-msgid   "NBD access to all of an instance's disks\n"
+msgid   "NBD access to all of a virtual machine's disks\n"
         "\n"
-        "This exposes all of a running virtual machine's disks over a local NBD\n"
+        "This exposes all the disks of a running virtual machine over a local NBD\n"
         "server, with each disk reachable as an NBD export named after its Incus\n"
         "device name."
 msgstr  ""
