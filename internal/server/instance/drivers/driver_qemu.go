@@ -9129,7 +9129,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
 	if protocol == instance.ConsoleTypeConsole {
 		// Look for existing connections and reset.
-		conn, err := net.Dial("unix", path)
+		conn, err := linux.DialUnix(path)
 		if err == nil {
 			_ = d.consoleSwapSocketWithRB()
 			_ = conn.Close()
@@ -10814,7 +10814,7 @@ func (d *qemu) consoleSwapRBWithSocket() error {
 	}
 
 	// Create the unix socket here, which will be passed via file descriptor to qemu.
-	d.consoleSocket, err = net.ListenUnix("unix", &net.UnixAddr{Name: d.consolePath(), Net: "unix"})
+	d.consoleSocket, err = linux.ListenUnix(d.consolePath())
 	if err != nil {
 		return err
 	}
