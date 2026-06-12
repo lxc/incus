@@ -4613,12 +4613,7 @@ func (d *qemu) addDriveDirConfigVirtiofs(qemuDev map[string]any, agentMounts *[]
 			return errors.New("Virtiofsd isn't running")
 		}
 
-		addr, err := net.ResolveUnixAddr("unix", virtiofsdSockPath)
-		if err != nil {
-			return err
-		}
-
-		virtiofsSock, err := net.DialUnix("unix", nil, addr)
+		virtiofsSock, err := linux.DialUnix(virtiofsdSockPath)
 		if err != nil {
 			return fmt.Errorf("Error connecting to virtiofs socket %q: %w", virtiofsdSockPath, err)
 		}
