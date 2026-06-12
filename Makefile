@@ -245,6 +245,11 @@ doc-serve:
 doc-spellcheck: doc
 	. $(SPHINXENV) ; python3 -m pyspelling -c doc/.sphinx/spellingcheck.yaml
 
+.PHONY: doc-spellcheck-incremental
+# doc: Check spelling errors on the documentation, building the documentation only
+doc-spellcheck-incremental: doc-incremental
+	. $(SPHINXENV) ; python3 -m pyspelling -c doc/.sphinx/spellingcheck.yaml
+
 .PHONY: doc-linkcheck
 # doc: Check broken links on the documentation
 doc-linkcheck: doc-setup
