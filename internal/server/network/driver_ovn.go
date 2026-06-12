@@ -3246,11 +3246,11 @@ func (n *ovn) setup(update bool) error {
 			dnsIPv6 = uplinkNet.dnsIPv6
 		}
 
-		if len(dnsIPv4) == 0 {
+		if len(dnsIPv4) == 0 && routerIntPortIPv4 != nil {
 			dnsIPv4 = []net.IP{routerIntPortIPv4}
 		}
 
-		if len(dnsIPv6) == 0 {
+		if len(dnsIPv6) == 0 && routerIntPortIPv6 != nil {
 			dnsIPv6 = []net.IP{routerIntPortIPv6}
 		}
 	}
