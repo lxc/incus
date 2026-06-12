@@ -465,7 +465,7 @@ func (b *mockBackend) GetInstanceNBD(inst instance.Instance, writable bool) (net
 }
 
 // GetInstanceAllDisksNBD returns a single NBD connection exporting all of the instance's disks.
-func (b *mockBackend) GetInstanceAllDisksNBD(inst instance.Instance) (net.Conn, func(), error) {
+func (b *mockBackend) GetInstanceAllDisksNBD(inst instance.Instance, reuse bool) (net.Conn, func(), error) {
 	return nil, nil, nil
 }
 
