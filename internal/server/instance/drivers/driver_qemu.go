@@ -1037,7 +1037,7 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 
 // receiveMigrationSnapshot handles an incoming disk snapshot during migration.
 func (d *qemu) receiveMigrationSnapshot(monitor *qmp.Monitor, blockExport string, filesystemConn io.ReadWriteCloser) error {
-	nbdConn, err := monitor.NBDServerStart()
+	nbdConn, err := monitor.NBDServerStart("", 1)
 	if err != nil {
 		return fmt.Errorf("Failed starting NBD server: %w", err)
 	}
@@ -11320,7 +11320,7 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 		return nil, nil, fmt.Errorf("Another NBD operation is already in progress for: %s", blocks[0].NodeName)
 	}
 
-	nbdConn, err := monitor.NBDServerStart()
+	nbdConn, err := monitor.NBDServerStart("", 1)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
 	}
@@ -11429,7 +11429,7 @@ func (d *qemu) ConnectNBDAllDisks() (net.Conn, func(), error) {
 	// Export the disks in a stable order.
 	sort.Strings(deviceNames)
 
-	nbdConn, err := monitor.NBDServerStart()
+	nbdConn, err := monitor.NBDServerStart("", 1)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
 	}
