@@ -1141,7 +1141,7 @@ func (m *Monitor) SEVCapabilities() (AMDSEVCapabilities, error) {
 }
 
 // NBDServerStart starts internal NBD server and returns a connection to it.
-func (m *Monitor) NBDServerStart(listenPath string) (net.Conn, error) {
+func (m *Monitor) NBDServerStart(listenPath string, maxConnections int) (net.Conn, error) {
 	var args struct {
 		Addr struct {
 			Data map[string]any `json:"data"`
@@ -1200,7 +1200,7 @@ func (m *Monitor) NBDServerStart(listenPath string) (net.Conn, error) {
 		}
 	}
 
-	args.MaxConnections = 1
+	args.MaxConnections = maxConnections
 
 	err := m.Run("nbd-server-start", args, nil)
 	if err != nil {
