@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-06-11 22:14-0400\n"
+        "POT-Creation-Date: 2026-06-12 00:24-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1628,11 +1628,11 @@ msgstr  ""
 msgid   "Date: %s"
 msgstr  ""
 
-#: cmd/incus/debug.go:26
+#: cmd/incus/debug.go:27
 msgid   "Debug commands"
 msgstr  ""
 
-#: cmd/incus/debug.go:27
+#: cmd/incus/debug.go:28
 msgid   "Debug commands for instances"
 msgstr  ""
 
@@ -2322,7 +2322,7 @@ msgstr  ""
 msgid   "Expiry for the new snapshot (either a time span like `1d 3H` or a date in `2006/01/02 15:04 MST` format)"
 msgstr  ""
 
-#: cmd/incus/debug.go:50
+#: cmd/incus/debug.go:51
 msgid   "Export a virtual machine's memory state"
 msgstr  ""
 
@@ -2360,7 +2360,7 @@ msgstr  ""
 msgid   "Export storage buckets as tarball."
 msgstr  ""
 
-#: cmd/incus/debug.go:51
+#: cmd/incus/debug.go:52
 msgid   "Export the current memory state of a running virtual machine into a dump file.\n"
         "		This can be useful for debugging or analysis purposes."
 msgstr  ""
@@ -2514,7 +2514,7 @@ msgstr  ""
 msgid   "Failed starting sshfs: %w"
 msgstr  ""
 
-#: cmd/incus/debug.go:163 cmd/incus/storage_volume.go:2654 cmd/incus/utils.go:640
+#: cmd/incus/debug.go:171 cmd/incus/storage_volume.go:2654 cmd/incus/utils.go:640
 #, c-format
 msgid   "Failed to accept incoming connection: %w"
 msgstr  ""
@@ -2598,7 +2598,7 @@ msgstr  ""
 msgid   "Failed to delete original instance after copying it: %w"
 msgstr  ""
 
-#: cmd/incus/debug.go:83
+#: cmd/incus/debug.go:84
 #, c-format
 msgid   "Failed to dump instance memory: %w"
 msgstr  ""
@@ -2623,7 +2623,7 @@ msgstr  ""
 msgid   "Failed to join cluster: %w"
 msgstr  ""
 
-#: cmd/incus/debug.go:155 cmd/incus/storage_volume.go:2646 cmd/incus/utils.go:625
+#: cmd/incus/debug.go:156 cmd/incus/storage_volume.go:2646 cmd/incus/utils.go:625
 #, c-format
 msgid   "Failed to listen for connection: %w"
 msgstr  ""
@@ -2869,7 +2869,7 @@ msgstr  ""
 msgid   "Format (table|compact)"
 msgstr  ""
 
-#: cmd/incus/debug.go:61
+#: cmd/incus/debug.go:62
 msgid   "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr  ""
 
@@ -4939,11 +4939,11 @@ msgstr  ""
 msgid   "NBD access to a block storage volume"
 msgstr  ""
 
-#: cmd/incus/debug.go:106
+#: cmd/incus/debug.go:107
 msgid   "NBD access to all of a virtual machine's disks"
 msgstr  ""
 
-#: cmd/incus/debug.go:107
+#: cmd/incus/debug.go:108
 msgid   "NBD access to all of a virtual machine's disks\n"
         "\n"
         "This exposes all the disks of a running virtual machine over a local NBD\n"
@@ -4951,22 +4951,22 @@ msgid   "NBD access to all of a virtual machine's disks\n"
         "device name."
 msgstr  ""
 
-#: cmd/incus/debug.go:168 cmd/incus/storage_volume.go:2659
+#: cmd/incus/debug.go:177 cmd/incus/storage_volume.go:2659
 #, c-format
 msgid   "NBD client connected %q"
 msgstr  ""
 
-#: cmd/incus/debug.go:169 cmd/incus/storage_volume.go:2660
+#: cmd/incus/debug.go:178 cmd/incus/storage_volume.go:2660
 #, c-format
 msgid   "NBD client disconnected %q"
 msgstr  ""
 
-#: cmd/incus/debug.go:174 cmd/incus/storage_volume.go:2665
+#: cmd/incus/debug.go:194 cmd/incus/storage_volume.go:2665
 #, c-format
 msgid   "NBD connection failed: %v"
 msgstr  ""
 
-#: cmd/incus/debug.go:158 cmd/incus/storage_volume.go:2649
+#: cmd/incus/debug.go:159 cmd/incus/storage_volume.go:2649
 #, c-format
 msgid   "NBD listening on %v"
 msgstr  ""
@@ -6843,7 +6843,7 @@ msgstr  ""
 msgid   "Source:"
 msgstr  ""
 
-#: cmd/incus/debug.go:115 cmd/incus/storage_volume.go:2598
+#: cmd/incus/debug.go:116 cmd/incus/storage_volume.go:2598
 msgid   "Specific address to listen on"
 msgstr  ""
 
@@ -8303,7 +8303,7 @@ msgid   "incus custom volume file pull local v1/foo/etc/hosts .\n"
         "   To pull /etc/hosts from the custom volume and write its output to standard output."
 msgstr  ""
 
-#: cmd/incus/debug.go:55
+#: cmd/incus/debug.go:56
 msgid   "incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
         "    Creates an ELF format memory dump of the vm1 instance."
 msgstr  ""

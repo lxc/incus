@@ -9689,9 +9689,14 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 }
 
 // GetInstanceAllDisksNBD returns a single NBD connection exporting all of the instance's disks.
-func (b *backend) GetInstanceAllDisksNBD(inst instance.Instance) (net.Conn, func(), error) {
+func (b *backend) GetInstanceAllDisksNBD(inst instance.Instance, reuse bool) (net.Conn, func(), error) {
 	if !inst.IsRunning() {
 		return nil, nil, errors.New("Exporting all disks over NBD is only available on running instances")
+	}
+
+	// Additional connections don't hold the NBD lock, the initial connection does.
+	if reuse {
+		return inst.ConnectNBDAllDisks(true)
 	}
 
 	unlock, err := nbdOperationLock(inst.Project().Name, inst.Name())
@@ -9704,7 +9709,7 @@ func (b *backend) GetInstanceAllDisksNBD(inst instance.Instance) (net.Conn, func
 
 	reverter.Add(func() { unlock() })
 
-	conn, disconnect, err := inst.ConnectNBDAllDisks()
+	conn, disconnect, err := inst.ConnectNBDAllDisks(false)
 	if err != nil {
 		return nil, nil, err
 	}

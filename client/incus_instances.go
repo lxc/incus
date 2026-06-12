@@ -1724,7 +1724,7 @@ func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, err
 }
 
 // GetInstanceNBDConn returns a connection to the instance's NBD endpoint exposing all of its disks.
-func (r *ProtocolIncus) GetInstanceNBDConn(instanceName string) (net.Conn, error) {
+func (r *ProtocolIncus) GetInstanceNBDConn(instanceName string, args InstanceNBDArgs) (net.Conn, error) {
 	if !r.HasExtension("instance_nbd") {
 		return nil, errors.New(`The server is missing the required "instance_nbd" API extension`)
 	}
@@ -1732,6 +1732,14 @@ func (r *ProtocolIncus) GetInstanceNBDConn(instanceName string) (net.Conn, error
 	apiURL := api.NewURL()
 	apiURL.URL = r.httpBaseURL // Preload the URL with the client base URL.
 	apiURL.Path("1.0", "instances", instanceName, "nbd")
+
+	values := apiURL.Query()
+	if args.Reuse {
+		values.Set("reuse", "1")
+	}
+
+	apiURL.RawQuery = values.Encode()
+
 	r.setURLQueryAttributes(&apiURL.URL)
 
 	return r.rawConn(&apiURL.URL, "nbd")
