@@ -103,11 +103,11 @@ var cmdDebugNBDUsage = u.Usage{u.Instance.Remote()}
 func (c *cmdDebugNBD) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("nbd", cmdDebugNBDUsage...)
-	cmd.Short = i18n.G("NBD access to all of an instance's disks")
+	cmd.Short = i18n.G("NBD access to all of a virtual machine's disks")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`NBD access to all of an instance's disks
+		`NBD access to all of a virtual machine's disks
 
-This exposes all of a running virtual machine's disks over a local NBD
+This exposes all the disks of a running virtual machine over a local NBD
 server, with each disk reachable as an NBD export named after its Incus
 device name.`,
 	))
