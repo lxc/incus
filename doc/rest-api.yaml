@@ -11056,6 +11056,9 @@ paths:
 
                 This is only available on running virtual machines. For stopped instances, access the disks
                 individually through the storage volume NBD endpoint.
+
+                Passing reuse=1 returns an additional connection to an already running NBD session instead of
+                starting a new one. The session is terminated when all of its connections are closed.
             operationId: instance_nbd_get
             parameters:
                 - description: Instance name
@@ -11063,6 +11066,11 @@ paths:
                   name: name
                   required: true
                   type: string
+                - description: Whether to connect to an already running NBD session
+                  example: 1
+                  in: query
+                  name: reuse
+                  type: integer
                 - description: Project name
                   example: default
                   in: query
