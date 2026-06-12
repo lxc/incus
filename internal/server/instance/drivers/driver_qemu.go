@@ -27,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unsafe"
 
@@ -1517,7 +1518,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Cleanup old sockets.
-	for _, socketPath := range []string{d.consolePath(), d.spicePath(), d.monitorPath()} {
+	for _, socketPath := range []string{d.consolePath(), d.spicePath(), d.monitorPath(), d.nbdPath()} {
 		_ = os.Remove(socketPath)
 	}
 
@@ -3221,6 +3222,10 @@ func (d *qemu) consolePath() string {
 
 func (d *qemu) spicePath() string {
 	return filepath.Join(d.RunPath(), "qemu.spice")
+}
+
+func (d *qemu) nbdPath() string {
+	return filepath.Join(d.RunPath(), "qemu.nbd")
 }
 
 func (d *qemu) migrateSockPath() string {
@@ -11381,11 +11386,72 @@ func (d *qemu) ConnectNBD(diskName string, volSize int64, writable bool) (net.Co
 	return nbdConn, cleanup, nil
 }
 
+// nbdSession tracks a running NBD session and its active connections.
+type nbdSession struct {
+	connections int
+	stop        func()
+}
+
+// nbdSessions tracks the active NBD sessions by instance ID.
+var (
+	nbdSessionsMu sync.Mutex
+	nbdSessions   = map[int]*nbdSession{}
+)
+
+// releaseNBDSession drops one connection from the instance's NBD session, stopping the session
+// when no connections are left.
+func (d *qemu) releaseNBDSession() {
+	nbdSessionsMu.Lock()
+	defer nbdSessionsMu.Unlock()
+
+	session := nbdSessions[d.id]
+	if session == nil {
+		return
+	}
+
+	session.connections--
+	if session.connections > 0 {
+		return
+	}
+
+	delete(nbdSessions, d.id)
+	session.stop()
+}
+
 // ConnectNBDAllDisks exports all of the instance's block disks read-only over a single NBD server.
-func (d *qemu) ConnectNBDAllDisks() (net.Conn, func(), error) {
+// When reuse is true, an additional connection to an already running NBD server is returned instead.
+// The NBD server is stopped once all of its connections are closed.
+func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// Connect to an already running NBD server when requested.
+	if reuse {
+		nbdSessionsMu.Lock()
+
+		session := nbdSessions[d.id]
+		if session == nil {
+			nbdSessionsMu.Unlock()
+			return nil, nil, errors.New("No NBD session is currently active")
+		}
+
+		conn, err := net.Dial("unix", d.nbdPath())
+		if err != nil {
+			nbdSessionsMu.Unlock()
+			return nil, nil, fmt.Errorf("Failed connecting to NBD server: %w", err)
+		}
+
+		session.connections++
+		nbdSessionsMu.Unlock()
+
+		cleanup := func() {
+			_ = conn.Close()
+			d.releaseNBDSession()
+		}
+
+		return conn, cleanup, nil
 	}
 
 	// Check for existing NBD block exports to detect if another operation is in progress.
@@ -11429,7 +11495,7 @@ func (d *qemu) ConnectNBDAllDisks() (net.Conn, func(), error) {
 	// Export the disks in a stable order.
 	sort.Strings(deviceNames)
 
-	nbdConn, err := monitor.NBDServerStart("", 1)
+	nbdConn, err := monitor.NBDServerStart(d.nbdPath(), 0)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
 	}
@@ -11443,6 +11509,7 @@ func (d *qemu) ConnectNBDAllDisks() (net.Conn, func(), error) {
 		d.logger.Debug("User requested NBD server stopped")
 		_ = nbdConn.Close()
 		_ = monitor.NBDServerStop()
+		_ = os.Remove(d.nbdPath())
 	})
 
 	type exportTarget struct {
@@ -11518,10 +11585,11 @@ func (d *qemu) ConnectNBDAllDisks() (net.Conn, func(), error) {
 	// back rather than simply removed. Take over cleanup from the reverter.
 	reverter.Success()
 
-	cleanup := func() {
+	stop := func() {
 		d.logger.Debug("User requested NBD server stopped")
 		_ = nbdConn.Close()
 		_ = monitor.NBDServerStop()
+		_ = os.Remove(d.nbdPath())
 
 		for _, commit := range commits {
 			commit()
@@ -11532,12 +11600,17 @@ func (d *qemu) ConnectNBDAllDisks() (net.Conn, func(), error) {
 	for _, target := range targets {
 		err = monitor.NBDBlockExportAdd(target.exportNode, target.deviceName, false, target.bitmaps)
 		if err != nil {
-			cleanup()
+			stop()
 			return nil, nil, fmt.Errorf("Failed adding disk %q to NBD server: %w", target.deviceName, err)
 		}
 	}
 
-	return nbdConn, cleanup, nil
+	// Register the session, it's stopped once its last connection is released.
+	nbdSessionsMu.Lock()
+	nbdSessions[d.id] = &nbdSession{connections: 1, stop: stop}
+	nbdSessionsMu.Unlock()
+
+	return nbdConn, d.releaseNBDSession, nil
 }
 
 // CreateBitmap creates a dirty bitmap.

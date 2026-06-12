@@ -9493,7 +9493,7 @@ func (d *lxc) ConnectNBD(diskName string, volSize int64, writable bool) (net.Con
 }
 
 // ConnectNBDAllDisks exports all disks over NBD. Not supported by containers.
-func (d *lxc) ConnectNBDAllDisks() (net.Conn, func(), error) {
+func (d *lxc) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 	return nil, nil, instance.ErrNotImplemented
 }
 
