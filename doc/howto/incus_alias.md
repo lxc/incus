@@ -16,7 +16,7 @@ Within the [`incus alias`](incus_alias.md) command, you can use the following su
 Run [`incus alias --help`](incus_alias.md) to see all available subcommands and parameters.
 
 ```{note}
-_Command aliases_ are different from {ref}`_image aliases_ <images>`.
+_Command aliases_ are different from _{ref}`image aliases<images>`_.
 An image alias is an alternative name for an image, usually a shorter name or another common mnemonic for that image.
 
 Image aliases are a server-side concept part of the Incus API whereas command aliases are purely part of the command line tool configuration.
@@ -24,40 +24,82 @@ Image aliases are a server-side concept part of the Incus API whereas command al
 
 ## How to add a command alias
 
-To always ask for confirmation when deleting an instance, create an alias for
-[`incus delete`](incus_delete.md) that always runs `incus delete --interactive`.
+To create an alias, run [`incus alias add`](incus_alias_add.md) and provide the alias name and the alias command (enclosed in quotes).
 
-The following command for `incus alias`, will _add_ the command alias with name `delete`,
-and will invoke the same Incus command but with the added `--interactive` flag.
+```
+$ incus alias add my-alias "image list"
+$ incus my-alias
++-------+--------------+--------+----------------------------------------+--------------+-----------+-----------+----------------------+
+| ALIAS | FINGERPRINT  | PUBLIC |              DESCRIPTION               | ARCHITECTURE |   TYPE    |   SIZE    |     UPLOAD DATE      |
++-------+--------------+--------+----------------------------------------+--------------+-----------+-----------+----------------------+
+|       | 3b3bd7f47fca | no     | Debian bookworm amd64 (20260608_05:24) | x86_64       | CONTAINER | 106.22MiB | 2026/06/08 22:01 -03 |
++-------+--------------+--------+----------------------------------------+--------------+-----------+-----------+----------------------+
+```
 
-    incus alias add delete "delete --interactive"
-
-Note that when you now run `incus delete mycontainer` to delete an instance called `myinstance`,
-the Incus command-line client will replace `incus delete` with `incus delete --interactive`
-and will instead execute `incus delete --interactive myinstance`.
-
-When a command alias has the same name as an Incus command, the command alias will mask the Incus command.
-
-You would need to remove first the command alias if you want to run verbatim the Incus command of the same name.
-In addition, when you use a command alias with parameters (in this case, the name of the container),
-the Incus command-line client will place those parameters at the end of
-the aliased command unless they are manually placed elsewhere through the `@ARGS@` string.
-
-Finally, the command in the command alias should be enclosed in quotes.
+When a command alias has the same name as an Incus command, the command alias will mask the Incus command. You would need to remove first the command alias if you want to run verbatim the Incus command of the same name.
 
 ## How to list all command aliases
 
 To see all configured aliases, run [`incus alias list`](incus_alias_list.md).
+
+```
+$ incus alias list
++----------+---------------------------+
+|  ALIAS   |          TARGET           |
++----------+---------------------------+
+| my-alias | image list                |
++----------+---------------------------+
+```
 
 ## How to remove a command alias
 
 To remove an existing command alias, type [`incus alias remove`](incus_alias_remove.md)
 and add the name of that command alias.
 
+```
+$ incus alias remove my-alias
+$ incus alias list
++----------+---------------------------+
+|  ALIAS   |          TARGET           |
++----------+---------------------------+
+```
+
 ## How to rename a command alias
 
 To rename an existing command alias, type [`incus alias rename`](incus_alias_rename.md),
 then add the name of that existing command alias, and finally the name of the new command alias.
+
+```
+$ incus alias rename my-alias my-new-alias
+$ incus alias list
++--------------+---------------------------+
+|    ALIAS     |          TARGET           |
++--------------+---------------------------+
+| my-new-alias | image list                |
++--------------+---------------------------+
+```
+
+## Arguments in aliased commands
+When using command alias with parameters, the Incus command-line client will place those parameters at the end of the aliased command. With the alias `incus alias add del "delete"`, both commands produce the same result.
+
+```
+incus delete c1 --force
+incus del c1 --force
+```
+
+This behavior can be modified by using the special string `@ARGS@`, that will place all arguments in the position it was defined in the alias string. With the alias `incus alias add create-foo "create @ARGS@ foo"`, both commands produce the same result.
+
+```
+incus create images:debian/12 foo
+incus create-foo images:debian/12
+```
+
+It's also possible to define numbered arguments (`@ARG1@`, `@ARG2@`, ...), that will receive arguments in their appearance order and can be placed anywhere in the alias string. With the alias `incus alias add cat "exec @ARG1@ -- cat @ARG2@"`, the following commands are equivalent.
+
+```
+incus exec u1 -- cat /etc/hosts
+incus cat u1 /etc/hosts
+```
 
 ## Built-in `shell` alias
 
@@ -89,14 +131,27 @@ If you try to remove it, there will be an error that the alias does not exist.
 ```
 $ incus alias remove shell
 Error: Alias shell doesn't exist
-$
 ```
 
 If you add a new command alias with the name `shell`, the new command alias will be masking the built-in command alias.
 That is, the Incus command-line client will be using your newly added alias instead and the built-in
 command alias will be hidden. When you remove the newly added alias `shell`, the built-in alias will appear again.
 
-## How to use a command alias to get a non-root shell in an instance
+## Example use cases
+### How to ask confirmation for deleting instances
+To always ask for confirmation when deleting an instance, create an alias for
+[`incus delete`](incus_delete.md) that always runs `incus delete --interactive`.
+
+The following command for `incus alias`, will _add_ the command alias with name `delete`,
+and will invoke the same Incus command but with the added `--interactive` flag.
+
+    incus alias add delete "delete --interactive"
+
+Note that when you now run `incus delete mycontainer` to delete an instance called `myinstance`,
+the Incus command-line client will replace `incus delete` with `incus delete --interactive`
+and will instead execute `incus delete --interactive myinstance`.
+
+### How to use a command alias to get a non-root shell in an instance
 
 Several Incus images have been configured to create a non-root username as shown in the table below.
 
@@ -120,8 +175,7 @@ By using the Incus command aliases, you can also create a command alias to get a
 In this command alias, you specify to `su -l` into the username `debian`.
 
 ```
-$ incus alias add debian 'exec @ARGS@ -- su -l debian'
-$
+incus alias add debian 'exec @ARGS@ -- su -l debian'
 ```
 
 Finally, you can now get a shell into the instance with the following convenient command:
