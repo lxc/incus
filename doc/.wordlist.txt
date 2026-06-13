@@ -193,6 +193,7 @@ NDP
 netmask
 NFS
 NIC
+NIC's
 NICs
 NixOS
 NUMA
