@@ -347,6 +347,14 @@
 			"gpu_physical": {
 				"keys": [
 					{
+						"functions": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Comma-delimited list of additional GPU function numbers (1-7) to include (VM only)",
+							"type": "string"
+						}
+					},
+					{
 						"gid": {
 							"default": "0",
 							"longdesc": "",

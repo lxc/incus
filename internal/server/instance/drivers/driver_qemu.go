@@ -5476,6 +5476,7 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 // addGPUDevConfig adds the qemu config required for adding a GPU device.
 func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []deviceConfig.RunConfigItem) error {
 	var devName, pciSlotName, vgpu string
+	var requestedFunctions []string
 	for _, gpuItem := range gpuConfig {
 		switch gpuItem.Key {
 		case "devName":
@@ -5484,6 +5485,8 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 			pciSlotName = gpuItem.Value
 		case "vgpu":
 			vgpu = gpuItem.Value
+		case "requestedFunctions":
+			requestedFunctions = strings.Split(gpuItem.Value, ",")
 		}
 	}
 
@@ -5537,11 +5540,37 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 		iommuGroupPath = filepath.Join("/sys/bus/pci/devices", pciSlotName, "iommu_group", "devices")
 	}
 
-	if util.PathExists(iommuGroupPath) {
-		// Extract parent slot name by removing any virtual function ID.
-		parts := strings.SplitN(pciSlotName, ".", 2)
-		prefix := parts[0]
+	// Extract parent slot name by removing any virtual function ID.
+	parts := strings.SplitN(pciSlotName, ".", 2)
+	pciSlotPrefix := parts[0]
+	var addedFunctions []string
 
+	addFunction := func(iommuSlotName string) {
+		parts := strings.SplitN(iommuSlotName, ".", 2)
+		if len(parts) == 2 {
+			addedFunctions = append(addedFunctions, parts[1])
+		}
+
+		// Add VF device without VGA mode to qemu config.
+		devBus, devAddr, multi := bus.allocate(fmt.Sprintf("incus_%s", devName))
+		gpuDevPhysicalOpts := qemuGPUDevPhysicalOpts{
+			dev: qemuDevOpts{
+				busName:       bus.name,
+				devBus:        devBus,
+				devAddr:       devAddr,
+				multifunction: multi,
+			},
+			// Generate associated device name by combining main device name and VF ID.
+			devName:     fmt.Sprintf("%s_%s", devName, devAddr),
+			pciSlotName: iommuSlotName,
+			vga:         false,
+			vgpu:        "",
+		}
+
+		*conf = append(*conf, qemuGPUDevPhysical(&gpuDevPhysicalOpts)...)
+	}
+
+	if util.PathExists(iommuGroupPath) {
 		// Iterate the members of the IOMMU group and override any that match the parent slot name prefix.
 		err := filepath.Walk(iommuGroupPath, func(path string, _ os.FileInfo, err error) error {
 			if err != nil {
@@ -5551,24 +5580,8 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 			iommuSlotName := filepath.Base(path) // Virtual function's address is dir name.
 
 			// Match any VFs that are related to the GPU device (but not the GPU device itself).
-			if strings.HasPrefix(iommuSlotName, prefix) && iommuSlotName != pciSlotName {
-				// Add VF device without VGA mode to qemu config.
-				devBus, devAddr, multi := bus.allocate(fmt.Sprintf("incus_%s", devName))
-				gpuDevPhysicalOpts := qemuGPUDevPhysicalOpts{
-					dev: qemuDevOpts{
-						busName:       bus.name,
-						devBus:        devBus,
-						devAddr:       devAddr,
-						multifunction: multi,
-					},
-					// Generate associated device name by combining main device name and VF ID.
-					devName:     fmt.Sprintf("%s_%s", devName, devAddr),
-					pciSlotName: iommuSlotName,
-					vga:         false,
-					vgpu:        "",
-				}
-
-				*conf = append(*conf, qemuGPUDevPhysical(&gpuDevPhysicalOpts)...)
+			if strings.HasPrefix(iommuSlotName, pciSlotPrefix) && iommuSlotName != pciSlotName {
+				addFunction(iommuSlotName)
 			}
 
 			return nil
@@ -5576,6 +5589,22 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 		if err != nil {
 			return err
 		}
+	}
+
+	// Handle any explicitly requested functions.
+	for _, f := range requestedFunctions {
+		functionName := pciSlotPrefix + "." + f
+		if f == "" || slices.Contains(addedFunctions, f) || functionName == pciSlotName {
+			continue
+		}
+
+		// Ensure the index maps to an actual consumer, and error out if we can't find one.
+		consumerPath := filepath.Join("/sys/bus/pci/devices", pciSlotName, "consumer:pci:"+functionName)
+		if !util.PathExists(consumerPath) {
+			return fmt.Errorf("Failed to find consumer path for GPU function %q", f)
+		}
+
+		addFunction(functionName)
 	}
 
 	return nil
