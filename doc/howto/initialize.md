@@ -104,11 +104,8 @@ There is no existing state that might conflict with the specified configuration.
 However, if you are re-configuring an existing Incus installation using the preseed command, the provided YAML configuration might conflict with the existing configuration.
 To avoid such conflicts, the following rules are in place:
 
-- The provided YAML configuration overwrites existing entities.
-  This means that if you are re-configuring an existing entity, you must provide the full configuration for the entity and not just the different keys.
 - If the provided YAML configuration contains entities that do not exist, they are created.
-
-This is the same behavior as for a `PUT` request in the {doc}`../rest-api`.
+- For existing entities, the provided configuration gets merged with the existing entity.
 
 #### Rollback
 
