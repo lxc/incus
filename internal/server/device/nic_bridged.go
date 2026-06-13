@@ -620,10 +620,7 @@ func (d *nicBridged) checkAddressConflict() error {
 	ourNICIPs["ipv4.address"] = net.ParseIP(d.config["ipv4.address"])
 	ourNICIPs["ipv6.address"] = net.ParseIP(d.config["ipv6.address"])
 
-	ourNICMAC, _ := net.ParseMAC(d.config["hwaddr"])
-	if ourNICMAC == nil {
-		ourNICMAC, _ = net.ParseMAC(d.volatileGet()["hwaddr"])
-	}
+	ourNICMAC, _ := net.ParseMAC(d.configOrVolatile("hwaddr"))
 
 	// Check if any instance devices use this network.
 	// Managed bridge networks have a per-server DHCP daemon so perform a node level search.

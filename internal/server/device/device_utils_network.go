@@ -799,11 +799,7 @@ func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[strin
 	}
 
 	// Determine the MAC address to track in the neighbor table.
-	hwaddrStr := config["hwaddr"]
-	if hwaddrStr == "" {
-		hwaddrStr = d.volatileGet()["hwaddr"]
-	}
-
+	hwaddrStr := d.configOrVolatile("hwaddr")
 	if hwaddrStr == "" {
 		return nil
 	}
