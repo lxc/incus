@@ -4613,12 +4613,7 @@ func (d *qemu) addDriveDirConfigVirtiofs(qemuDev map[string]any, agentMounts *[]
 			return errors.New("Virtiofsd isn't running")
 		}
 
-		addr, err := net.ResolveUnixAddr("unix", virtiofsdSockPath)
-		if err != nil {
-			return err
-		}
-
-		virtiofsSock, err := net.DialUnix("unix", nil, addr)
+		virtiofsSock, err := linux.DialUnix(virtiofsdSockPath)
 		if err != nil {
 			return fmt.Errorf("Error connecting to virtiofs socket %q: %w", virtiofsdSockPath, err)
 		}
@@ -9129,7 +9124,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	// When activating the text-based console, swap the backend to be a socket for an interactive connection.
 	if protocol == instance.ConsoleTypeConsole {
 		// Look for existing connections and reset.
-		conn, err := net.Dial("unix", path)
+		conn, err := linux.DialUnix(path)
 		if err == nil {
 			_ = d.consoleSwapSocketWithRB()
 			_ = conn.Close()
@@ -10814,7 +10809,7 @@ func (d *qemu) consoleSwapRBWithSocket() error {
 	}
 
 	// Create the unix socket here, which will be passed via file descriptor to qemu.
-	d.consoleSocket, err = net.ListenUnix("unix", &net.UnixAddr{Name: d.consolePath(), Net: "unix"})
+	d.consoleSocket, err = linux.ListenUnix(d.consolePath())
 	if err != nil {
 		return err
 	}
@@ -11136,15 +11131,30 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 
 	socketPath := d.migrateSockPath()
 
-	addr, err := net.ResolveUnixAddr("unix", socketPath)
-	if err != nil {
-		return nil, "", err
-	}
-
 	// Cleanup any leftover sockets.
 	err = os.Remove(socketPath)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, "", fmt.Errorf("Failed to remove stale migration socket %q: %w", socketPath, err)
+	}
+
+	// Reference the socket through a short /proc path to handle run paths that
+	// exceed the unix socket path limit. The directory is kept open until cleanup
+	// so qemu-nbd can connect through the same reference.
+	runDir, err := os.OpenFile(d.RunPath(), unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, "", err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { _ = runDir.Close() })
+
+	shortSocketPath := fmt.Sprintf("/proc/%d/fd/%d/%s", os.Getpid(), runDir.Fd(), filepath.Base(socketPath))
+
+	addr, err := net.ResolveUnixAddr("unix", shortSocketPath)
+	if err != nil {
+		return nil, "", err
 	}
 
 	migrationSock, err := net.ListenUnix("unix", addr)
@@ -11184,16 +11194,19 @@ func (d *qemu) ExportQcow2Block(diskName string, blockIndex int) (func(), string
 
 	exportBlockName := blockDevs[blockIndex]
 
-	exportDiskPath := fmt.Sprintf("nbd+unix:///%s?socket=%s", exportBlockName, socketPath)
+	exportDiskPath := fmt.Sprintf("nbd+unix:///%s?socket=%s", exportBlockName, shortSocketPath)
 
 	err = monitor.NBDBlockExportAdd(exportBlockName, exportBlockName, false, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("Failed adding disk to NBD server: %w", err)
 	}
 
+	reverter.Success()
+
 	return func() {
 		_ = monitor.NBDServerStop()
 		_ = migrationSock.Close()
+		_ = runDir.Close()
 	}, exportDiskPath, nil
 }
 

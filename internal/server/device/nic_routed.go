@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -703,8 +704,8 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 			// If there is a parent interface, add neighbour proxy entry.
 			if d.effectiveParentName != "" {
 				np := ip.NeighProxy{
-					DevName: d.effectiveParentName,
-					Addr:    net.ParseIP(addrStr),
+					DevName: d.neighProxyDevice(address),
+					Addr:    address,
 				}
 
 				err = np.Add()
@@ -939,9 +940,11 @@ func (d *nicRouted) postStop() error {
 	if d.effectiveParentName != "" {
 		for _, key := range []string{"ipv4.address", "ipv6.address"} {
 			for _, addr := range util.SplitNTrimSpace(d.config[key], ",", -1, true) {
+				address := net.ParseIP(addr)
+
 				neighProxy := &ip.NeighProxy{
-					DevName: d.effectiveParentName,
-					Addr:    net.ParseIP(addr),
+					DevName: d.neighProxyDevice(address),
+					Addr:    address,
 				}
 
 				_ = neighProxy.Delete()
@@ -968,6 +971,51 @@ func (d *nicRouted) postStop() error {
 	}
 
 	return nil
+}
+
+// neighProxyDevice returns the interface on which the address is on-link, preferring the parent.
+func (d *nicRouted) neighProxyDevice(addr net.IP) string {
+	onLink := func(devName string) bool {
+		iface, err := net.InterfaceByName(devName)
+		if err != nil {
+			return false
+		}
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return false
+		}
+
+		for _, ifaceAddr := range addrs {
+			ipNet, ok := ifaceAddr.(*net.IPNet)
+			if ok && ipNet.Contains(addr) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	if onLink(d.effectiveParentName) {
+		return d.effectiveParentName
+	}
+
+	// Look for an upper interface carrying the address's subnet.
+	entries, err := os.ReadDir(fmt.Sprintf("/sys/class/net/%s", d.effectiveParentName))
+	if err == nil {
+		for _, entry := range entries {
+			devName, ok := strings.CutPrefix(entry.Name(), "upper_")
+			if !ok {
+				continue
+			}
+
+			if onLink(devName) {
+				return devName
+			}
+		}
+	}
+
+	return d.effectiveParentName
 }
 
 func (d *nicRouted) ipHostAddress(ipFamily string) net.IP {
