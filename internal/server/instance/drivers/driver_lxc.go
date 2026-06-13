@@ -70,6 +70,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/seccomp"
+	"github.com/lxc/incus/v7/internal/server/selinux"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
@@ -996,15 +997,14 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 	}
 
 	// Setup SELinux.
-	if d.state.OS.SELinuxAvailable && d.state.OS.SELinuxContextInstanceLXC != "" {
-		seContext, err := d.selinuxContext(d.state.OS.SELinuxContextInstanceLXC)
-		if err != nil {
-			return nil, err
-		}
-
-		err = lxcSetConfigItem(cc, "lxc.selinux.context", seContext)
-		if err != nil {
-			return nil, err
+	if d.state.OS.SELinuxEnabled {
+		selinuxContext := d.localConfig["volatile.selinux.context"]
+		if selinuxContext != "" {
+			logger.Debug("Setting SELinux context for container", logger.Ctx{"instance": d.Name(), "context": selinuxContext})
+			err = lxcSetConfigItem(cc, "lxc.selinux.context", selinuxContext)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -1934,6 +1934,89 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 	return idmapType, nextIdmap, nil
 }
 
+// selinuxEnsureContext generates and persists the SELinux context for this instance.
+// Returns true if we need to relabel the rootfs, false if labeling is not required or wanted.
+func (d *lxc) selinuxEnsureContext() (bool, error) {
+	if !d.state.OS.SELinuxEnabled {
+		return false, nil
+	}
+
+	previousCtx := d.localConfig["volatile.selinux.context"]
+
+	allocLevel := func() (string, func(), error) {
+		used, err := d.selinuxCollectUsedLevels()
+		if err != nil {
+			return "", nil, err
+		}
+
+		return selinux.AllocateLevel(used)
+	}
+
+	ctx, needsPersist, release, err := selinux.InstanceContext(d.state.OS, instancetype.Container, d.localConfig, d.expandedConfig, allocLevel)
+	if err != nil {
+		return false, err
+	}
+
+	defer release()
+
+	if ctx == "" {
+		return false, nil
+	}
+
+	if needsPersist {
+		err = d.VolatileSet(map[string]string{"volatile.selinux.context": ctx})
+		if err != nil {
+			return false, fmt.Errorf("Failed to persist SELinux context: %w", err)
+		}
+	}
+
+	// Return true if this is the first time a context was generated.
+	return previousCtx == "", nil
+}
+
+// selinuxLabelFiles applies SELinux file labels to the instance rootfs.
+func (d *lxc) selinuxLabelFiles(contextIsNew bool) error {
+	if !d.state.OS.SELinuxEnabled {
+		return nil
+	}
+
+	ctx := d.localConfig["volatile.selinux.context"]
+	if ctx == "" {
+		return nil
+	}
+
+	skipPath := ""
+
+	rootfsMode := d.expandedConfig["security.selinux.label_rootfs"]
+	if rootfsMode == "" {
+		rootfsMode = "auto"
+	}
+
+	logger.Debug("SELinux label mode", logger.Ctx{"mode": rootfsMode})
+
+	switch rootfsMode {
+	case "auto":
+		// Skip re-labeling if not first start and level is explicitly set.
+		if !contextIsNew && d.localConfig["security.selinux.level"] != "" {
+			skipPath = d.RootfsPath()
+		}
+
+	case "never":
+		skipPath = d.RootfsPath()
+	case "always":
+		// Always relabel on every start.
+	default:
+		return fmt.Errorf("Invalid security.selinux.label_rootfs value: %q", rootfsMode)
+	}
+
+	fileCtx := selinux.InstanceFileContext(ctx, instancetype.Container, d.expandedConfig)
+	if fileCtx == "" {
+		return fmt.Errorf("Failed to derive file context from %q", ctx)
+	}
+
+	return selinux.LabelTree(d.Path(), fileCtx, skipPath)
+}
+
 // Start functions.
 func (d *lxc) startCommon() (string, []func() error, error) {
 	postStartHooks := []func() error{}
@@ -1980,6 +2063,12 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			// Invalidate the idmap cache.
 			d.idmapset = nil
 		}
+	}
+
+	// Ensure SELinux context is generated and persisted.
+	contextIsNew, err := d.selinuxEnsureContext()
+	if err != nil {
+		return "", nil, err
 	}
 
 	// Load the go-lxc struct
@@ -2310,6 +2399,12 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 				}
 			}
 		}
+	}
+
+	// Label rootfs if SELinux context is set and labels are missing.
+	err = d.selinuxLabelFiles(contextIsNew)
+	if err != nil {
+		return "", nil, err
 	}
 
 	// Initialize the credentials directory.
@@ -2884,7 +2979,7 @@ func (d *lxc) Start(stateful bool) error {
 
 	name := project.Instance(d.Project().Name, d.name)
 
-	// Setup minimal environment for forkstart.
+	// Setup minimal environment for forklxc.
 	envDict := map[string]string{
 		"container": "lxc",
 	}
@@ -2918,7 +3013,7 @@ func (d *lxc) Start(stateful bool) error {
 		env,
 		nil,
 		d.state.OS.ExecPath,
-		"forkstart",
+		"forklxc",
 		name,
 		d.state.OS.LxcPath,
 		configPath,

@@ -126,9 +126,9 @@ func main() {
 	forkfileCmd := cmdForkfile{global: &globalCmd}
 	app.AddCommand(forkfileCmd.command())
 
-	// forklimits sub-command
-	forklimitsCmd := cmdForklimits{global: &globalCmd}
-	app.AddCommand(forklimitsCmd.command())
+	// forkqemu sub-command
+	forkqemuCmd := cmdForkqemu{global: &globalCmd}
+	app.AddCommand(forkqemuCmd.command())
 
 	// forkmigrate sub-command
 	forkmigrateCmd := cmdForkmigrate{global: &globalCmd}
@@ -158,9 +158,9 @@ func main() {
 	forkproxyCmd := cmdForkproxy{global: &globalCmd}
 	app.AddCommand(forkproxyCmd.command())
 
-	// forkstart sub-command
-	forkstartCmd := cmdForkstart{global: &globalCmd}
-	app.AddCommand(forkstartCmd.command())
+	// forklxc sub-command
+	forklxcCmd := cmdForklxc{global: &globalCmd}
+	app.AddCommand(forklxcCmd.command())
 
 	// forkuevent sub-command
 	forkueventCmd := cmdForkuevent{global: &globalCmd}

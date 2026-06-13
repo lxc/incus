@@ -178,6 +178,7 @@ MiB
 Mibit
 MicroCeph
 MicroCloud
+MCS
 MII
 MITM
 MTU
