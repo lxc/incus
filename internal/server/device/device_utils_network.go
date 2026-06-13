@@ -413,14 +413,14 @@ func networkNICRouteAdd(routeDev string, viaIPv4 string, viaIPv6 string, routes 
 
 	var parsedViaIPv4, parsedViaIPv6 net.IP
 
-	if viaIPv4 != "" && viaIPv4 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv4) {
 		parsedViaIPv4 = net.ParseIP(viaIPv4)
 		if parsedViaIPv4 == nil || parsedViaIPv4.To4() == nil {
 			return fmt.Errorf("Invalid IPv4 next-hop address %q", viaIPv4)
 		}
 	}
 
-	if viaIPv6 != "" && viaIPv6 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv6) {
 		parsedViaIPv6 = net.ParseIP(viaIPv6)
 		if parsedViaIPv6 == nil || parsedViaIPv6.To4() != nil {
 			return fmt.Errorf("Invalid IPv6 next-hop address %q", viaIPv6)
@@ -491,7 +491,7 @@ func networkNICRouteDelete(routeDev string, viaIPv4 string, viaIPv6 string, rout
 
 	var parsedViaIPv4, parsedViaIPv6 net.IP
 
-	if viaIPv4 != "" && viaIPv4 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv4) {
 		parsedViaIPv4 = net.ParseIP(viaIPv4)
 		if parsedViaIPv4 == nil || parsedViaIPv4.To4() == nil {
 			logger.Errorf("Failed to remove static routes from %q: Invalid IPv4 next-hop address %q", routeDev, viaIPv4)
@@ -499,7 +499,7 @@ func networkNICRouteDelete(routeDev string, viaIPv4 string, viaIPv6 string, rout
 		}
 	}
 
-	if viaIPv6 != "" && viaIPv6 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv6) {
 		parsedViaIPv6 = net.ParseIP(viaIPv6)
 		if parsedViaIPv6 == nil || parsedViaIPv6.To4() != nil {
 			logger.Errorf("Failed to remove static routes from %q: Invalid IPv6 next-hop address %q", routeDev, viaIPv6)
@@ -771,7 +771,7 @@ func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[strin
 
 		// If a static address is configured on the NIC, advertise it directly.
 		staticAddr := config[fmt.Sprintf("ipv%d.address", ipVersion)]
-		if staticAddr != "" && staticAddr != "none" {
+		if !util.IsNoneOrEmpty(staticAddr) {
 			ipAddr := net.ParseIP(staticAddr)
 			if ipAddr == nil {
 				continue
