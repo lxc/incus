@@ -630,10 +630,7 @@ func (d *nicOVN) checkAddressConflict() error {
 		return nil
 	}
 
-	ourNICMAC, _ := net.ParseMAC(d.config["hwaddr"])
-	if ourNICMAC == nil {
-		ourNICMAC, _ = net.ParseMAC(d.volatileGet()["hwaddr"])
-	}
+	ourNICMAC, _ := net.ParseMAC(d.configOrVolatile("hwaddr"))
 
 	// Check if any instance devices use this network.
 	return network.UsedByInstanceDevices(d.state, d.network.Project(), d.network.Name(), d.network.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {

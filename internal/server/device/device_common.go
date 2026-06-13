@@ -55,6 +55,16 @@ func (d *deviceCommon) Config() deviceConfig.Device {
 	return d.config
 }
 
+// configOrVolatile returns a device config value, falling back to the volatile state when unset.
+func (d *deviceCommon) configOrVolatile(key string) string {
+	value := d.config[key]
+	if value == "" {
+		value = d.volatileGet()[key]
+	}
+
+	return value
+}
+
 // Add returns nil error as majority of devices don't need to do any host-side setup.
 func (d *deviceCommon) Add() error {
 	return nil
