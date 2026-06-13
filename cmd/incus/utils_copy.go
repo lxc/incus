@@ -105,7 +105,7 @@ func (p *pullable) statFile(sftpConn *sftp.Client, path string) (os.FileInfo, st
 	// Under a few conditions, return the file the link points to and not the link itself.
 	if p.flagDereference || !p.flagRecursive && !p.flagNoDereference || isSymlink && p.flagFollow || directoryRequested {
 		if errSymlink != nil {
-			return nil, "", err
+			return nil, "", errSymlink
 		}
 
 		return srcStat, normalizedPath, nil
