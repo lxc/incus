@@ -413,14 +413,14 @@ func networkNICRouteAdd(routeDev string, viaIPv4 string, viaIPv6 string, routes 
 
 	var parsedViaIPv4, parsedViaIPv6 net.IP
 
-	if viaIPv4 != "" && viaIPv4 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv4) {
 		parsedViaIPv4 = net.ParseIP(viaIPv4)
 		if parsedViaIPv4 == nil || parsedViaIPv4.To4() == nil {
 			return fmt.Errorf("Invalid IPv4 next-hop address %q", viaIPv4)
 		}
 	}
 
-	if viaIPv6 != "" && viaIPv6 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv6) {
 		parsedViaIPv6 = net.ParseIP(viaIPv6)
 		if parsedViaIPv6 == nil || parsedViaIPv6.To4() != nil {
 			return fmt.Errorf("Invalid IPv6 next-hop address %q", viaIPv6)
@@ -491,7 +491,7 @@ func networkNICRouteDelete(routeDev string, viaIPv4 string, viaIPv6 string, rout
 
 	var parsedViaIPv4, parsedViaIPv6 net.IP
 
-	if viaIPv4 != "" && viaIPv4 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv4) {
 		parsedViaIPv4 = net.ParseIP(viaIPv4)
 		if parsedViaIPv4 == nil || parsedViaIPv4.To4() == nil {
 			logger.Errorf("Failed to remove static routes from %q: Invalid IPv4 next-hop address %q", routeDev, viaIPv4)
@@ -499,7 +499,7 @@ func networkNICRouteDelete(routeDev string, viaIPv4 string, viaIPv6 string, rout
 		}
 	}
 
-	if viaIPv6 != "" && viaIPv6 != "none" {
+	if !util.IsNoneOrEmpty(viaIPv6) {
 		parsedViaIPv6 = net.ParseIP(viaIPv6)
 		if parsedViaIPv6 == nil || parsedViaIPv6.To4() != nil {
 			logger.Errorf("Failed to remove static routes from %q: Invalid IPv6 next-hop address %q", routeDev, viaIPv6)
@@ -721,6 +721,12 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 		}
 	}
 
+	// Advertise the instance's own addresses if enabled on the network.
+	err := bgpAddInstancePrefixes(d, n, config, map[uint]net.IP{4: nexthopV4, 6: nexthopV6}, bgpOwner)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -730,13 +736,185 @@ func bgpRemovePrefix(d *deviceCommon, config map[string]string) error {
 		return nil
 	}
 
-	// Load the network configuration.
-	err := d.state.BGP.RemovePrefixByOwner(fmt.Sprintf("instance_%d_%s", d.inst.ID(), d.name))
+	bgpOwner := fmt.Sprintf("instance_%d_%s", d.inst.ID(), d.name)
+
+	// Stop any background neighbor scan started for the instance before removing its prefixes.
+	bgpStopInstanceScan(bgpOwner)
+
+	// Remove all of the instance's prefixes.
+	err := d.state.BGP.RemovePrefixByOwner(bgpOwner)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+var (
+	bgpInstanceScansMu sync.Mutex
+	bgpInstanceScans   = map[string]context.CancelFunc{}
+)
+
+// bgpAddInstancePrefixes advertises the instance's own addresses over BGP when enabled on the network.
+func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[string]string, nexthops map[uint]net.IP, bgpOwner string) error {
+	// Check which address families have instance advertisement enabled.
+	scanVersions := []uint{}
+	for _, ipVersion := range []uint{4, 6} {
+		if util.IsFalseOrEmpty(n.Config()[fmt.Sprintf("bgp.ipv%d.instances", ipVersion)]) {
+			continue
+		}
+
+		prefixLen := 128
+		if ipVersion == 4 {
+			prefixLen = 32
+		}
+
+		// If a static address is configured on the NIC, advertise it directly.
+		staticAddr := config[fmt.Sprintf("ipv%d.address", ipVersion)]
+		if !util.IsNoneOrEmpty(staticAddr) {
+			ipAddr := net.ParseIP(staticAddr)
+			if ipAddr == nil {
+				continue
+			}
+
+			_, prefix, err := net.ParseCIDR(fmt.Sprintf("%s/%d", ipAddr.String(), prefixLen))
+			if err != nil {
+				return err
+			}
+
+			err = d.state.BGP.AddPrefix(*prefix, nexthops[ipVersion], bgpOwner)
+			if err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		// Otherwise discover the address dynamically from the neighbor table.
+		scanVersions = append(scanVersions, ipVersion)
+	}
+
+	if len(scanVersions) == 0 {
+		return nil
+	}
+
+	// Determine the MAC address to track in the neighbor table.
+	hwaddrStr := d.configOrVolatile("hwaddr")
+	if hwaddrStr == "" {
+		return nil
+	}
+
+	hwAddr, err := net.ParseMAC(hwaddrStr)
+	if err != nil {
+		return err
+	}
+
+	// The managed bridge interface is named after the network.
+	bgpStartInstanceScan(d, n.Name(), hwAddr, nexthops, scanVersions, bgpOwner)
+
+	return nil
+}
+
+// bgpStartInstanceScan advertises the instance's addresses found in the neighbor table, waiting up
+// to 10s for containers and 30s for VMs (which are slower to bring up their network).
+func bgpStartInstanceScan(d *deviceCommon, bridgeName string, hwAddr net.HardwareAddr, nexthops map[uint]net.IP, scanVersions []uint, bgpOwner string) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	scanTimeout := 10 * time.Second
+	if d.inst.Type() == instancetype.VM {
+		scanTimeout = 30 * time.Second
+	}
+
+	// Register the scan, canceling any previous one for the same owner.
+	bgpInstanceScansMu.Lock()
+	oldCancel := bgpInstanceScans[bgpOwner]
+	if oldCancel != nil {
+		oldCancel()
+	}
+
+	bgpInstanceScans[bgpOwner] = cancel
+	bgpInstanceScansMu.Unlock()
+
+	go func() {
+		defer cancel()
+
+		check := func() {
+			neighIPs, err := network.GetNeighbourIPs(bridgeName, hwAddr)
+			if err != nil {
+				return
+			}
+
+			for _, neighIP := range neighIPs {
+				// Skip entries that don't represent a usable address.
+				switch neighIP.State {
+				case ip.NeighbourIPStateFailed, ip.NeighbourIPStateIncomplete, ip.NeighbourIPStateNone:
+					continue
+				}
+
+				if neighIP.Addr.IsLinkLocalUnicast() || neighIP.Addr.IsLinkLocalMulticast() || neighIP.Addr.IsMulticast() || neighIP.Addr.IsUnspecified() || neighIP.Addr.IsLoopback() {
+					continue
+				}
+
+				ipVersion := uint(6)
+				prefixLen := 128
+				if neighIP.Addr.To4() != nil {
+					ipVersion = 4
+					prefixLen = 32
+				}
+
+				if !slices.Contains(scanVersions, ipVersion) {
+					continue
+				}
+
+				_, prefix, err := net.ParseCIDR(fmt.Sprintf("%s/%d", neighIP.Addr.String(), prefixLen))
+				if err != nil {
+					continue
+				}
+
+				bgpInstanceScansMu.Lock()
+				if ctx.Err() == nil {
+					err = d.state.BGP.AddPrefix(*prefix, nexthops[ipVersion], bgpOwner)
+					if err != nil {
+						d.logger.Warn("Failed to advertise instance address over BGP", logger.Ctx{"address": neighIP.Addr.String(), "err": err})
+					}
+				}
+
+				bgpInstanceScansMu.Unlock()
+			}
+		}
+
+		// Check immediately, then on every tick until the timeout expires.
+		check()
+
+		timeout := time.NewTimer(scanTimeout)
+		defer timeout.Stop()
+
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-timeout.C:
+				return
+			case <-ticker.C:
+				check()
+			}
+		}
+	}()
+}
+
+// bgpStopInstanceScan cancels and deregisters any running neighbor scan for the given owner.
+func bgpStopInstanceScan(bgpOwner string) {
+	bgpInstanceScansMu.Lock()
+	cancel := bgpInstanceScans[bgpOwner]
+	if cancel != nil {
+		cancel()
+		delete(bgpInstanceScans, bgpOwner)
+	}
+
+	bgpInstanceScansMu.Unlock()
 }
 
 // networkSRIOVParentVFInfo returns info about an SR-IOV virtual function from the parent NIC.

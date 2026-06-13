@@ -20,6 +20,7 @@ For bridge networks, the following addresses and networks are being advertised:
 - Network `ipv4.nat.address` or `ipv6.nat.address` subnets (if the matching `nat` property is set to `true`)
 - Network forward addresses
 - Addresses or subnets specified in `ipv4.routes.external` or `ipv6.routes.external` on an instance NIC that is connected to the bridge network
+- Individual instance addresses (a `/32` for IPv4 and a `/128` for IPv6) when `bgp.ipv4.instances` or `bgp.ipv6.instances` is enabled on the network
 
 Make sure to add your subnets to the respective configuration options.
 Otherwise, they won't be advertised.
@@ -56,6 +57,21 @@ For bridge networks, you can override the next-hop configuration.
 By default, the next-hop is set to the address used for the BGP session.
 
 To configure a different address, set `bgp.ipv4.nexthop` or `bgp.ipv6.nexthop`.
+
+### Advertise individual instance addresses (`bridge` only)
+
+By default, a bridge network only advertises its own subnets (or NAT addresses).
+If you instead want to advertise a route for each individual instance address (for example to route a shared subnet to the specific server that currently runs an instance), enable `bgp.ipv4.instances` and/or `bgp.ipv6.instances` on the network.
+
+When enabled, Incus advertises a `/32` (IPv4) or `/128` (IPv6) route for each running instance connected to the network and withdraws it when the instance stops:
+
+- If the instance NIC has a static `ipv4.address` or `ipv6.address` set, that address is advertised as soon as the instance starts.
+- Otherwise, Incus looks up the dynamically allocated addresses (DHCPv4, DHCPv6 or SLAAC) tied to the NIC's MAC address in the kernel neighbor table for a short period after the instance starts. This requires the instance to generate some network traffic shortly after booting so that its address becomes visible.
+
+```bash
+incus network set incusbr0 bgp.ipv4.instances=true
+incus network set incusbr0 bgp.ipv6.instances=true
+```
 
 ### Configure BGP peers for OVN networks
 

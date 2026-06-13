@@ -3297,12 +3297,28 @@ User keys can be used in search.
 
 <!-- config group network_bridge-bgp end -->
 <!-- config group network_bridge-common start -->
+```{config:option} bgp.ipv4.instances network_bridge-common
+:condition: "BGP server"
+:default: "`false`"
+:shortdesc: "Whether to advertise a /32 route for the IPv4 address of each running instance"
+:type: "bool"
+
+```
+
 ```{config:option} bgp.ipv4.nexthop network_bridge-common
 :condition: "BGP server"
 :default: "local address"
 :scope: "local"
 :shortdesc: "Override the next-hop for advertised prefixes"
 :type: "string"
+
+```
+
+```{config:option} bgp.ipv6.instances network_bridge-common
+:condition: "BGP server"
+:default: "`false`"
+:shortdesc: "Whether to advertise a /128 route for the IPv6 address of each running instance"
+:type: "bool"
 
 ```
 

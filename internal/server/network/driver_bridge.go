@@ -194,6 +194,24 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  shortdesc: Override the next-hop for advertised prefixes
 		"bgp.ipv6.nexthop": validate.Optional(validate.IsNetworkAddressV6),
 
+		// gendoc:generate(entity=network_bridge, group=common, key=bgp.ipv4.instances)
+		//
+		// ---
+		//  type: bool
+		//  condition: BGP server
+		//  default: `false`
+		//  shortdesc: Whether to advertise a /32 route for the IPv4 address of each running instance
+		"bgp.ipv4.instances": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_bridge, group=common, key=bgp.ipv6.instances)
+		//
+		// ---
+		//  type: bool
+		//  condition: BGP server
+		//  default: `false`
+		//  shortdesc: Whether to advertise a /128 route for the IPv6 address of each running instance
+		"bgp.ipv6.instances": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=network_bridge, group=common, key=bridge.driver)
 		//
 		// ---
@@ -765,12 +783,12 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 			}
 
 			ipv6 := config["ipv6.address"]
-			if ipv6 != "" && ipv6 != "none" && mtu < 1280 {
+			if !util.IsNoneOrEmpty(ipv6) && mtu < 1280 {
 				return errors.New("The minimum MTU for an IPv6 network is 1280")
 			}
 
 			ipv4 := config["ipv4.address"]
-			if ipv4 != "" && ipv4 != "none" && mtu < 68 {
+			if !util.IsNoneOrEmpty(ipv4) && mtu < 68 {
 				return errors.New("The minimum MTU for an IPv4 network is 68")
 			}
 		}
