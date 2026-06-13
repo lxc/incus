@@ -783,12 +783,12 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 			}
 
 			ipv6 := config["ipv6.address"]
-			if ipv6 != "" && ipv6 != "none" && mtu < 1280 {
+			if !util.IsNoneOrEmpty(ipv6) && mtu < 1280 {
 				return errors.New("The minimum MTU for an IPv6 network is 1280")
 			}
 
 			ipv4 := config["ipv4.address"]
-			if ipv4 != "" && ipv4 != "none" && mtu < 68 {
+			if !util.IsNoneOrEmpty(ipv4) && mtu < 68 {
 				return errors.New("The minimum MTU for an IPv4 network is 68")
 			}
 		}

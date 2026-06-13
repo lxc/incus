@@ -3855,7 +3855,7 @@ func (n *ovn) Start() error {
 	reverter.Add(func() { n.setUnavailable() })
 
 	// Check that uplink network is available.
-	if n.config["network"] != "" && n.config["network"] != "none" && !IsAvailable(api.ProjectDefaultName, n.config["network"]) {
+	if !util.IsNoneOrEmpty(n.config["network"]) && !IsAvailable(api.ProjectDefaultName, n.config["network"]) {
 		return fmt.Errorf("Uplink network %q is unavailable", n.config["network"])
 	}
 
@@ -4879,7 +4879,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	// Populate DNS IP variables with any static IPs first before checking if we need to extract dynamic IPs.
 	for _, staticIP := range []string{ipv4, ipv6} {
-		if staticIP == "" || staticIP == "none" {
+		if util.IsNoneOrEmpty(staticIP) {
 			continue
 		}
 
