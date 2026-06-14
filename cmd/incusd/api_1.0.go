@@ -31,6 +31,7 @@ import (
 	"github.com/lxc/incus/v7/shared/revert"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/ws"
 )
 
 var api10Cmd = APIEndpoint{
@@ -838,6 +839,9 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 
 		case "core.https_trusted_proxy":
 			s.Endpoints.NetworkUpdateTrustedProxy(clusterChanged[key])
+
+		case "core.https_allowed_websocket_origin":
+			ws.SetTrustedOrigins(clusterConf.HTTPSAllowedWebsocketOrigin())
 
 		case "core.proxy_http", "core.proxy_https", "core.proxy_ignore_hosts":
 			daemonConfigSetProxy(d, clusterConf)
