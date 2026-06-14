@@ -53,6 +53,10 @@ func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if resp.Body != nil {
+		_ = resp.Body.Close()
+	}
+
 	if resp.StatusCode == http.StatusNotFound {
 		return errors.New(i18n.G("The server doesn't have a web UI installed"))
 	}
