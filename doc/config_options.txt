@@ -1701,7 +1701,7 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 ```{config:option} nat devices-proxy
 :default: "`false`"
 :required: "no"
-:shortdesc: "Whether to optimize proxying via NAT (requires that the instance NIC has a static IP address)"
+:shortdesc: "Whether to optimize proxying via NAT"
 :type: "bool"
 
 ```
