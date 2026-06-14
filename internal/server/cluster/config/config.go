@@ -102,6 +102,21 @@ func (c *Config) HTTPSTrustedProxy() string {
 	return c.m.GetString("core.https_trusted_proxy")
 }
 
+// HTTPSAllowedWebsocketOrigin returns the origins allowed for websocket upgrades.
+func (c *Config) HTTPSAllowedWebsocketOrigin() []string {
+	value := c.m.GetString("core.https_allowed_websocket_origin")
+	if value == "" {
+		return nil
+	}
+
+	origins := strings.Split(value, ",")
+	for i := range origins {
+		origins[i] = strings.TrimSpace(origins[i])
+	}
+
+	return origins
+}
+
 // OfflineThreshold returns the configured heartbeat threshold, i.e. the
 // number of seconds before after which an unresponsive node is considered
 // offline..
@@ -717,6 +732,14 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  shortdesc: Trusted servers to provide the client's address
 	"core.https_trusted_proxy": {},
+
+	// gendoc:generate(entity=server, group=core, key=core.https_allowed_websocket_origin)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Allowed `Origin` values for WebSocket connections
+	"core.https_allowed_websocket_origin": {},
 
 	// gendoc:generate(entity=server, group=core, key=core.proxy_http)
 	// If this option is not specified, the daemon falls back to the `HTTP_PROXY` environment variable (if set).
