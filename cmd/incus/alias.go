@@ -64,7 +64,7 @@ func (c *cmdAliasAdd) command() *cobra.Command {
 		`incus alias add list "list -c ns46S"
     Overwrite the "list" command to pass -c ns46S.
 
-Incus alias add volume "storage volume @ARGS@"
+incus alias add volume "storage volume @ARGS@"
     Create a short command for managing volumes
 
 incus alias add cat "exec @ARG1@ -- cat @ARG2@"
