@@ -41,7 +41,8 @@ In NAT mode, the supported connection types are:
 - `tcp <-> tcp`
 - `udp <-> udp`
 
-When configuring a proxy device with `nat=true`, you must ensure that the target instance has a static IP configured on its NIC device.
+When configuring a proxy device with `nat=true`, the target instance's NIC can either have a static IP configured or rely on a dynamic (DHCP) address.
+When no static IP is set, the wildcard connect address (`0.0.0.0` for IPv4 and `[::]` for IPv6) is used to automatically detect the instance's current address from the bridge's neighbor table and the NAT rules are updated whenever it changes.
 
 ## Specifying IP addresses
 
@@ -57,10 +58,8 @@ When defining IPv6 addresses, use the square bracket notation, for example:
 
 You can specify that the connect address should be the IP of the instance by setting the connect IP to the wildcard address (`0.0.0.0` for IPv4 and `[::]` for IPv6).
 
-```{note}
-The listen address can also use wildcard addresses when using non-NAT mode.
-However, when using NAT mode, you must specify an IP address on the Incus host.
-```
+The listen address can also use wildcard addresses (`0.0.0.0` for IPv4 and `[::]` for IPv6) in both NAT and non-NAT mode.
+In NAT mode a wildcard listen address forwards traffic to the instance regardless of the destination address used on the Incus host.
 
 ## Device options
 
