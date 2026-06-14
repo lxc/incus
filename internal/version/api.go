@@ -545,6 +545,7 @@ var APIExtensions = []string{
 	"instance_limits_cpu_topology",
 	"instance_nbd",
 	"network_bridge_bgp_instances",
+	"core_https_allowed_websocket_origin",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

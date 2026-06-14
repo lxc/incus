@@ -3167,3 +3167,9 @@ keys to managed bridge networks.
 When enabled, Incus advertises a `/32` (IPv4) or `/128` (IPv6) route over
 BGP for each running instance connected to the network, withdrawing it
 again when the instance stops.
+
+## `core_https_allowed_websocket_origin`
+
+This adds a new `core.https_allowed_websocket_origin` server
+configuration key. It can be set to a comma-separate list of allowed
+origins or to the `*` wildcard.
