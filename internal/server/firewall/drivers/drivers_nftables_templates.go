@@ -91,14 +91,14 @@ table {{.family}} {{.namespace}} {
 	chain {{.chainPrefix}}prert{{.chainSeparator}}{{.label}} {
 		type nat hook prerouting priority -100; policy accept;
 		{{ range .dnatRules }}
-		{{.ipFamily}} daddr {{.listenAddress}} {{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat to {{.targetDest}}
+		{{ if .listenAddress }}{{.ipFamily}} daddr {{.listenAddress}} {{ end }}{{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat {{.ipFamily}} to {{.targetDest}}
 		{{ end }}
 	}
 
 	chain {{.chainPrefix}}out{{.chainSeparator}}{{.label}} {
 		type nat hook output priority -100; policy accept;
 		{{ range .dnatRules }}
-		{{.ipFamily}} daddr {{.listenAddress}} {{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat to {{.targetDest}}
+		{{ if .listenAddress }}{{.ipFamily}} daddr {{.listenAddress}} {{ end }}{{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat {{.ipFamily}} to {{.targetDest}}
 		{{ end }}
 	}
 
