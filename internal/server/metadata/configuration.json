@@ -5697,6 +5697,14 @@
 						}
 					},
 					{
+						"core.https_allowed_websocket_origin": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Allowed `Origin` values for WebSocket connections",
+							"type": "string"
+						}
+					},
+					{
 						"core.https_trusted_proxy": {
 							"longdesc": "Specify a comma-separated list of IP addresses of trusted servers that provide the client's address through the proxy connection header.",
 							"scope": "global",
