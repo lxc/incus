@@ -465,7 +465,13 @@ func (d Nftables) InstanceSetupProxyNAT(projectName string, instanceName string,
 		ipFamily = "ip6"
 	}
 
-	listenAddressStr := forward.ListenAddress.String()
+	// A wildcard listen address means traffic to any destination address is forwarded, so the
+	// destination address match is omitted from the generated rules.
+	listenAddressStr := ""
+	if !forward.ListenAddress.IsUnspecified() {
+		listenAddressStr = forward.ListenAddress.String()
+	}
+
 	targetAddressStr := forward.TargetAddress.String()
 
 	// Generate slices of rules to add.
