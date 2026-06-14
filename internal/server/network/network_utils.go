@@ -863,6 +863,43 @@ func GetNeighbourIPs(interfaceName string, hwaddr net.HardwareAddr) ([]ip.Neigh,
 	return neighbours, nil
 }
 
+// GetNeighbourAddresses returns the usable IP addresses found in the neighbour cache for a particular
+// interface and MAC. It skips unresolved entries as well as link-local, multicast, unspecified and
+// loopback addresses. If versions is non-empty, only addresses of the listed IP versions (4 or 6) are
+// returned.
+func GetNeighbourAddresses(interfaceName string, hwaddr net.HardwareAddr, versions []uint) ([]net.IP, error) {
+	neighIPs, err := GetNeighbourIPs(interfaceName, hwaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses := make([]net.IP, 0, len(neighIPs))
+	for _, neighIP := range neighIPs {
+		// Skip entries that don't represent a usable address.
+		switch neighIP.State {
+		case ip.NeighbourIPStateFailed, ip.NeighbourIPStateIncomplete, ip.NeighbourIPStateNone:
+			continue
+		}
+
+		if neighIP.Addr.IsLinkLocalUnicast() || neighIP.Addr.IsLinkLocalMulticast() || neighIP.Addr.IsMulticast() || neighIP.Addr.IsUnspecified() || neighIP.Addr.IsLoopback() {
+			continue
+		}
+
+		ipVersion := uint(6)
+		if neighIP.Addr.To4() != nil {
+			ipVersion = 4
+		}
+
+		if len(versions) > 0 && !slices.Contains(versions, ipVersion) {
+			continue
+		}
+
+		addresses = append(addresses, neighIP.Addr)
+	}
+
+	return addresses, nil
+}
+
 // GetLeaseAddresses returns the lease addresses for a network and hwaddr.
 func GetLeaseAddresses(networkName string, hwaddr string) ([]net.IP, error) {
 	leaseFile := internalUtil.VarPath("networks", networkName, "dnsmasq.leases")
