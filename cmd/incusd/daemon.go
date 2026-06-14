@@ -79,6 +79,7 @@ import (
 	"github.com/lxc/incus/v7/shared/revert"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/ws"
 )
 
 // A Daemon can respond to requests from a shared client.
@@ -1374,6 +1375,7 @@ func (d *Daemon) init() error {
 	authorizationScriptlet := d.globalConfig.AuthorizationScriptlet()
 
 	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
+	ws.SetTrustedOrigins(d.globalConfig.HTTPSAllowedWebsocketOrigin())
 	d.globalConfigMu.Unlock()
 
 	d.loggingController = logging.NewLoggingController(d.internalListener)
