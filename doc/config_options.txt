@@ -5070,6 +5070,13 @@ If enabled, the `Access-Control-Allow-Credentials` HTTP header value is set to `
 
 ```
 
+```{config:option} core.https_allowed_websocket_origin server-core
+:scope: "global"
+:shortdesc: "Allowed `Origin` values for WebSocket connections"
+:type: "string"
+
+```
+
 ```{config:option} core.https_trusted_proxy server-core
 :scope: "global"
 :shortdesc: "Trusted servers to provide the client's address"
