@@ -19,7 +19,7 @@ import (
 )
 
 func (c *Config) handleKeepAlive(remote Remote, name string) (incus.InstanceServer, error) {
-	// Create the socker directory if missing.
+	// Create the socket directory if missing.
 	socketDir := filepath.Join(c.ConfigDir, "keepalive")
 	err := os.Mkdir(socketDir, 0o700)
 	if err != nil && !os.IsExist(err) {
