@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -96,6 +97,10 @@ func (c *cmdRemote) command() *cobra.Command {
 	// Get client token
 	remoteGetClientTokenCmd := cmdRemoteGetClientToken{global: c.global, remote: c}
 	cmd.AddCommand(remoteGetClientTokenCmd.command())
+
+	// Set keepalive timeout
+	remoteSetKeepalive := cmdRemoteSetKeepalive{global: c.global, remote: c}
+	cmd.AddCommand(remoteSetKeepalive.command())
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -1460,6 +1465,65 @@ func (c *cmdRemoteSetURL) run(cmd *cobra.Command, args []string) error {
 
 	remote.Addrs = normalizedAddrs
 	conf.Remotes[remoteName] = remote
+
+	return conf.SaveConfig(c.global.confPath)
+}
+
+// Set keepalive timeout.
+type cmdRemoteSetKeepalive struct {
+	global *cmdGlobal
+	remote *cmdRemote
+}
+
+var cmdRemoteSetKeepaliveUsage = u.Usage{u.Remote, u.KeepaliveTimeout}
+
+func (c *cmdRemoteSetKeepalive) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("set-keepalive", cmdRemoteSetKeepaliveUsage...)
+	cmd.Short = i18n.G("Set a keepalive timeout for a remote")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set a keepalive timeout for a remote`))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus remote set-keepalive my-remote 30
+    Set a keepalive with 30 seconds timeout for my-remote
+
+incus remote set-keepalive my-remote 0
+    Disable keeplive for my-remote`,
+	))
+	cmd.RunE = c.run
+
+	return cmd
+}
+
+func (c *cmdRemoteSetKeepalive) run(cmd *cobra.Command, args []string) error {
+	conf := c.global.conf
+
+	parsed, err := c.global.Parse(cmdRemoteSetKeepaliveUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	remoteName := parsed[0].String
+
+	// Validate keepalive
+	timeoutStr := parsed[1].String
+	timeout, err := strconv.Atoi(timeoutStr)
+	if err != nil {
+		return errors.New(i18n.G("Keepalive timeouts must be positive integers"))
+	}
+
+	if timeout < 0 {
+		return errors.New(i18n.G("Keepalive timeouts must be positive integers"))
+	}
+
+	// Look for the remote
+	rc, ok := conf.Remotes[remoteName]
+	if !ok {
+		return fmt.Errorf(i18n.G("Remote %s doesn't exist"), remoteName)
+	}
+
+	// Update timeout value
+	rc.KeepAlive = timeout
+	conf.Remotes[remoteName] = rc
 
 	return conf.SaveConfig(c.global.confPath)
 }

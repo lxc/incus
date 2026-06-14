@@ -834,6 +834,7 @@ var (
 	Interface          = placeholder{i18n.G("interface")}
 	ListenAddress      = placeholder{i18n.G("listen address")}
 	ListenPort         = placeholder{i18n.G("listen port")}
+	KeepaliveTimeout   = placeholder{i18n.G("keepalive timeout")}
 	Key                = placeholder{i18n.G("key")}
 	KV                 = compound{"=", []Atom{Key, Value}}
 	Member             = placeholder{i18n.G("member")}
