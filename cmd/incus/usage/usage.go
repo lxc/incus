@@ -819,6 +819,7 @@ var (
 	Bucket             = placeholder{i18n.G("bucket")}
 	Client             = placeholder{i18n.G("client")}
 	CommandLine        = list{placeholder{i18n.G("command-line argument")}, 1, " "}
+	Default            = placeholder{i18n.G("default")}
 	Device             = placeholder{i18n.G("device")}
 	Direction          = alternative{[]Atom{verbatim{"ingress"}, verbatim{"egress"}}}
 	Directory          = placeholder{i18n.G("directory")}
