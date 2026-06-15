@@ -271,6 +271,8 @@ jobs:
         if: matrix.go == 'tip'
 
       - name: Install dependencies
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -x
 
@@ -349,13 +351,21 @@ jobs:
           # Reclaim some space
           sudo apt-get clean
 
+          github_api_curl() {
+            curl -sSfL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2026-03-10" \
+              "$@"
+          }
+
           # Download latest release of openfga server.
           mkdir -p "$(go env GOPATH)/bin/"
-          curl -sSfL https://api.github.com/repos/openfga/openfga/releases/latest | jq -r ".assets | .[] | .browser_download_url | select(. | test(\"_linux_$(dpkg --print-architecture).tar.gz$\"))" | xargs -I {} curl -sSfL {} -o openfga.tar.gz
+          github_api_curl https://api.github.com/repos/openfga/openfga/releases/latest | jq -r ".assets | .[] | .browser_download_url | select(. | test(\"_linux_$(dpkg --print-architecture).tar.gz$\"))" | xargs -I {} curl -sSfL {} -o openfga.tar.gz
           tar -xzf openfga.tar.gz -C "$(go env GOPATH)/bin/"
 
           # Download latest release of openfga cli.
-          curl -sSfL https://api.github.com/repos/openfga/cli/releases/latest | jq -r ".assets | .[] | .browser_download_url | select(. | test(\"_linux_$(dpkg --print-architecture).tar.gz$\"))" | xargs -I {} curl -sSfL {} -o fga.tar.gz
+          github_api_curl https://api.github.com/repos/openfga/cli/releases/latest | jq -r ".assets | .[] | .browser_download_url | select(. | test(\"_linux_$(dpkg --print-architecture).tar.gz$\"))" | xargs -I {} curl -sSfL {} -o fga.tar.gz
           tar -xzf fga.tar.gz -C "$(go env GOPATH)/bin/"
 
       - name: Download go dependencies
