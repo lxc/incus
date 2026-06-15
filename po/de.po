@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-13 22:43-0300\n"
+"POT-Creation-Date: 2026-06-25 18:25-0400\n"
 "PO-Revision-Date: 2026-06-15 23:43+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -1122,7 +1122,7 @@ msgstr ""
 "Sind Sie sicher, dass sie das Cluster Mitglied %q %s? (ja/nein) "
 "[default=nein]: "
 
-#: cmd/incus/console.go:444
+#: cmd/incus/console.go:453
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 "Da keines der genannten Programme gefunden werden konnte, finden Sie hier "
@@ -1167,11 +1167,11 @@ msgstr "Storage Volumes zu Profilen hinzufügen"
 msgid "Attach new network interfaces to instances"
 msgstr "Netzwerkschnittstellen (network interfaces) zu Instanzen hinzufügen"
 
-#: cmd/incus/console.go:46
+#: cmd/incus/console.go:47
 msgid "Attach to instance consoles"
 msgstr "Konsole der Instanz öffnen"
 
-#: cmd/incus/console.go:47
+#: cmd/incus/console.go:48
 #, fuzzy
 msgid ""
 "Attach to instance consoles\n"
@@ -1263,8 +1263,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,<Schlüssel>"
-"=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
+"<Schlüssel>=<Wert>: %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:205 cmd/incus/move.go:252
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1420,7 +1420,8 @@ msgstr ""
 #: cmd/incus/config.go:625
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr ""
+"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:74
 msgid "Can't use --auto and --preseed together"
@@ -1438,7 +1439,8 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:78
 msgid "Can't use --minimal and --preseed together"
-msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr ""
+"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/snapshot.go:128 cmd/incus/storage_volume_snapshot.go:132
 msgid "Can't use both --no-expiry and --expiry"
@@ -1470,7 +1472,8 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:436
 msgid "Cannot set --target when source server is not clustered"
-msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr ""
+"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:450
 msgid "Cannot set --volume-only when copying a snapshot"
@@ -2866,7 +2869,7 @@ msgstr "Fehler beim Löschen des Parameters: %v"
 msgid "Error updating template file: %s"
 msgstr "Fehler beim Aktualisieren der Template Datei: %s"
 
-#: cmd/incus/main.go:425
+#: cmd/incus/main.go:429
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr ""
@@ -2885,8 +2888,8 @@ msgstr "Evakuieren eines Clustermitglieds"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action (\"cluster."
-"evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -2945,8 +2948,8 @@ msgstr ""
 "Mitglieds). \n"
 "\n"
 "  Die globale Datenbank teilen sich alle Mitglieder eines Clusters \n"
-"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, usw.). "
-"\n"
+"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, "
+"usw.). \n"
 "\n"
 "  Wenn Sie einen Server ohne Cluster betreiben, gilt dasgleiche, \n"
 "  denn der Server ist dann praktisch ein Cluster mit nur einem Mitglied. \n"
@@ -3234,7 +3237,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed parsing validation response: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/console.go:422
+#: cmd/incus/console.go:431
 #, fuzzy, c-format
 msgid "Failed starting command: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3583,7 +3586,7 @@ msgid ""
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
 
-#: cmd/incus/console.go:55
+#: cmd/incus/console.go:56
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
@@ -4063,7 +4066,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:533
+#: cmd/incus/main.go:582
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4307,6 +4310,11 @@ msgstr ""
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
+#: cmd/incus/default.go:85
+#, fuzzy, c-format
+msgid "Invalid default %q"
+msgstr "Ungültiges Ziel %s"
+
 #: cmd/incus/publish.go:194
 #, fuzzy, c-format
 msgid "Invalid expiration date: %w"
@@ -4371,6 +4379,16 @@ msgstr "Ungültiges Ziel %s"
 #, fuzzy, c-format
 msgid "Invalid type %q"
 msgstr "Ungültiges Ziel %s"
+
+#: cmd/incus/default.go:123
+#, fuzzy, c-format
+msgid "Invalid value %q for console_type"
+msgstr "Ungültiges Ziel %s"
+
+#: cmd/incus/default.go:110
+#, fuzzy, c-format
+msgid "Invalid value %q for list_format"
+msgstr "Ungültige Quelle %s"
 
 #: cmd/incus/info.go:248
 #, fuzzy, c-format
@@ -5012,8 +5030,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5491,6 +5509,11 @@ msgstr "Veröffentliche Abbild"
 msgid "Manage and attach instances to networks"
 msgstr ""
 
+#: cmd/incus/default.go:24 cmd/incus/default.go:25
+#, fuzzy
+msgid "Manage client defaults"
+msgstr "Kein Zertifikat für diese Verbindung"
+
 #: cmd/incus/cluster_group.go:37 cmd/incus/cluster_group.go:38
 #, fuzzy
 msgid "Manage cluster groups"
@@ -5697,8 +5720,8 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
@@ -5832,7 +5855,8 @@ msgstr ""
 
 #: cmd/incus/file.go:497
 msgid "More than one file to download, but target is not a directory"
-msgstr "Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
+msgstr ""
+"Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
 
 #: cmd/incus/storage_volume_file.go:337
 #, fuzzy
@@ -6468,7 +6492,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:493 cmd/incus/remote.go:885
+#: cmd/incus/main.go:542 cmd/incus/remote.go:885
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Administrator Passwort für %s: "
@@ -7190,7 +7214,7 @@ msgstr ""
 msgid "Resume instances"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/console.go:56
+#: cmd/incus/console.go:57
 #, fuzzy
 msgid "Retrieve the instance's console log"
 msgstr "Herunterfahren des Containers erzwingen."
@@ -7423,6 +7447,10 @@ msgstr ""
 
 #: cmd/incus/file.go:922 cmd/incus/storage_volume_file.go:350
 msgid "Set authentication user when using SSH SFTP listener"
+msgstr ""
+
+#: cmd/incus/default.go:57 cmd/incus/default.go:58
+msgid "Set client defaults"
 msgstr ""
 
 #: cmd/incus/config_device.go:569
@@ -7795,6 +7823,10 @@ msgstr ""
 msgid "Show all information messages"
 msgstr ""
 
+#: cmd/incus/default.go:165 cmd/incus/default.go:166
+msgid "Show client defaults"
+msgstr ""
+
 #: cmd/incus/cluster_group.go:693 cmd/incus/cluster_group.go:694
 #, fuzzy
 msgid "Show cluster group configurations"
@@ -7846,7 +7878,7 @@ msgstr "Profil %s erstellt\n"
 msgid "Show instance snapshot configuration"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/main.go:364 cmd/incus/main.go:365
+#: cmd/incus/main.go:368 cmd/incus/main.go:369
 msgid "Show less common commands"
 msgstr ""
 
@@ -8370,7 +8402,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "entfernte Instanz %s existiert bereits"
 
-#: cmd/incus/console.go:135
+#: cmd/incus/console.go:136
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -8401,7 +8433,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:443
+#: cmd/incus/console.go:452
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -8582,7 +8614,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:57
+#: cmd/incus/webui_unix.go:61
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
@@ -8625,7 +8657,7 @@ msgstr ""
 msgid "There is no config key to set on an instance snapshot."
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/main.go:416
+#: cmd/incus/main.go:420
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -8686,11 +8718,11 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
-#: cmd/incus/console.go:237
+#: cmd/incus/console.go:238
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:541
+#: cmd/incus/main.go:590
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -8761,7 +8793,7 @@ msgstr ""
 msgid "Type of certificate"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/console.go:57
+#: cmd/incus/console.go:58
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -8787,7 +8819,7 @@ msgid "UPLOAD DATE"
 msgstr ""
 
 #: cmd/incus/cluster.go:198 cmd/incus/remote.go:1055
-#: cmd/incus/usage/usage.go:865
+#: cmd/incus/usage/usage.go:866
 msgid "URL"
 msgstr ""
 
@@ -8864,7 +8896,7 @@ msgstr "Unbekannter Befehl %s für Abbild"
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:165
+#: cmd/incus/console.go:166
 #, fuzzy, c-format
 msgid "Unknown console type %q"
 msgstr "Unbekannter Befehl %s für Abbild"
@@ -8884,7 +8916,7 @@ msgstr "Unbekannter Befehl %s für Abbild"
 msgid "Unknown key: %s"
 msgstr "Unbekannter Befehl %s für Abbild"
 
-#: cmd/incus/console.go:125
+#: cmd/incus/console.go:126
 #, fuzzy, c-format
 msgid "Unknown output type %q"
 msgstr "Unbekannter Befehl %s für Abbild"
@@ -8903,6 +8935,10 @@ msgstr "Alternatives config Verzeichnis."
 #, fuzzy
 msgid "Unset all profiles on the target instance"
 msgstr "nicht alle Profile der Quelle sind am Ziel vorhanden."
+
+#: cmd/incus/default.go:202 cmd/incus/default.go:203
+msgid "Unset client defaults"
+msgstr ""
 
 #: cmd/incus/config_device.go:765 cmd/incus/config_device.go:766
 #, fuzzy
@@ -9333,7 +9369,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:105
+#: cmd/incus/webui_unix.go:109
 #, c-format
 msgid "Web server running at: %s"
 msgstr ""
@@ -9577,16 +9613,20 @@ msgstr "Fingerabdruck: %s\n"
 msgid "current"
 msgstr ""
 
+#: cmd/incus/usage/usage.go:822
+msgid "default"
+msgstr ""
+
 #: cmd/incus/storage.go:526
 msgid "description"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:822
+#: cmd/incus/usage/usage.go:823
 #, fuzzy
 msgid "device"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/usage/usage.go:824
+#: cmd/incus/usage/usage.go:825
 #, fuzzy
 msgid "directory"
 msgstr "%s ist kein Verzeichnis"
@@ -9595,7 +9635,7 @@ msgstr "%s ist kein Verzeichnis"
 msgid "disabled"
 msgstr ""
 
-#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:825
+#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:826
 msgid "driver"
 msgstr ""
 
@@ -9617,29 +9657,29 @@ msgstr "Fehler: %v\n"
 msgid "expected %s"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:827
+#: cmd/incus/usage/usage.go:828
 msgid "expiry"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:828
+#: cmd/incus/usage/usage.go:829
 #, fuzzy
 msgid "file"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/usage/usage.go:829
+#: cmd/incus/usage/usage.go:830
 msgid "filter"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:830
+#: cmd/incus/usage/usage.go:831
 #, fuzzy
 msgid "fingerprint"
 msgstr "Fingerabdruck: %s\n"
 
-#: cmd/incus/usage/usage.go:831
+#: cmd/incus/usage/usage.go:832
 msgid "group"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:832
+#: cmd/incus/usage/usage.go:833
 msgid "image"
 msgstr ""
 
@@ -9761,8 +9801,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -9874,8 +9914,8 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from config."
-"yaml\n"
+"    Create and start a container named \"c2\" with configuration from "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
@@ -9885,16 +9925,16 @@ msgid ""
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:131
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -9990,8 +10030,8 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 "incus project create p1\n"
 "   Erstellt ein Projekt namens \"p1\"\n"
@@ -10002,10 +10042,10 @@ msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315
@@ -10496,21 +10536,21 @@ msgstr ""
 msgid "info"
 msgstr "Info"
 
-#: cmd/incus/usage/usage.go:833
+#: cmd/incus/usage/usage.go:834
 #, fuzzy
 msgid "instance"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/usage/usage.go:834
+#: cmd/incus/usage/usage.go:835
 #, fuzzy
 msgid "interface"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/usage/usage.go:837
+#: cmd/incus/usage/usage.go:838
 msgid "keepalive timeout"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:838
+#: cmd/incus/usage/usage.go:839
 msgid "key"
 msgstr ""
 
@@ -10518,16 +10558,16 @@ msgstr ""
 msgid "last"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:835
+#: cmd/incus/usage/usage.go:836
 #, fuzzy
 msgid "listen address"
 msgstr "der Name des Ursprung Containers muss angegeben werden"
 
-#: cmd/incus/usage/usage.go:836
+#: cmd/incus/usage/usage.go:837
 msgid "listen port"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:840
+#: cmd/incus/usage/usage.go:841
 msgid "member"
 msgstr ""
 
@@ -10539,12 +10579,12 @@ msgstr "n"
 msgid "name"
 msgstr "Name"
 
-#: cmd/incus/usage/usage.go:841
+#: cmd/incus/usage/usage.go:842
 #, fuzzy
 msgid "network"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/usage/usage.go:842
+#: cmd/incus/usage/usage.go:843
 #, fuzzy
 msgid "network integration"
 msgstr "Profil %s erstellt\n"
@@ -10554,7 +10594,7 @@ msgstr "Profil %s erstellt\n"
 msgid "network or integration"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/usage/usage.go:900
+#: cmd/incus/usage/usage.go:901
 #, fuzzy, c-format
 msgid "new %s name"
 msgstr "Name"
@@ -10563,6 +10603,10 @@ msgstr "Name"
 #: cmd/incus/image.go:1172
 msgid "no"
 msgstr "nein"
+
+#: cmd/incus/default.go:146
+msgid "no_color must be boolean"
+msgstr ""
 
 #: cmd/incus/usage/parse.go:60
 #, c-format
@@ -10578,16 +10622,16 @@ msgstr "ok (j/n/[fingerprint])?"
 msgid "one of %s or %s"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:843
+#: cmd/incus/usage/usage.go:844
 #, fuzzy
 msgid "operation"
 msgstr "Eigenschaften:\n"
 
-#: cmd/incus/usage/usage.go:844
+#: cmd/incus/usage/usage.go:845
 msgid "path"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:845
+#: cmd/incus/usage/usage.go:846
 msgid "peer"
 msgstr ""
 
@@ -10599,11 +10643,11 @@ msgstr ""
 msgid "please use `incus profile`"
 msgstr "bitte nutzen Sie ìncus profile`"
 
-#: cmd/incus/usage/usage.go:846
+#: cmd/incus/usage/usage.go:847
 msgid "pool"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:847
+#: cmd/incus/usage/usage.go:848
 msgid "port"
 msgstr ""
 
@@ -10611,30 +10655,30 @@ msgstr ""
 msgid "preseed.yaml"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:848
+#: cmd/incus/usage/usage.go:849
 #, fuzzy
 msgid "profile"
 msgstr "Profil %s erstellt\n"
 
-#: cmd/incus/usage/usage.go:849
+#: cmd/incus/usage/usage.go:850
 #, fuzzy
 msgid "project"
 msgstr "Alle Projekte"
 
-#: cmd/incus/usage/usage.go:850
+#: cmd/incus/usage/usage.go:851
 #, fuzzy
 msgid "protocol"
 msgstr "Ungültiges Ziel %s"
 
-#: cmd/incus/usage/usage.go:851
+#: cmd/incus/usage/usage.go:852
 msgid "query"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:852
+#: cmd/incus/usage/usage.go:853
 msgid "record"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:853
+#: cmd/incus/usage/usage.go:854
 #, fuzzy
 msgid "remote"
 msgstr ""
@@ -10642,7 +10686,7 @@ msgstr ""
 "\n"
 "lxd %s <Name>\n"
 
-#: cmd/incus/usage/usage.go:857
+#: cmd/incus/usage/usage.go:858
 msgid "role"
 msgstr ""
 
@@ -10650,7 +10694,7 @@ msgstr ""
 msgid "rootfs tarball"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:858
+#: cmd/incus/usage/usage.go:859
 msgid "snapshot"
 msgstr ""
 
@@ -10672,24 +10716,24 @@ msgstr "sshfs mounted %q auf %q"
 msgid "stdin can only be used once, with no other source arguments"
 msgstr "--target kann nicht mit Instanzen verwendet werden"
 
-#: cmd/incus/usage/usage.go:860
+#: cmd/incus/usage/usage.go:861
 msgid "symlink target path"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:861
+#: cmd/incus/usage/usage.go:862
 msgid "tarball"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:906
+#: cmd/incus/usage/usage.go:907
 #, fuzzy, c-format
 msgid "target %s"
 msgstr "<Ziel>"
 
-#: cmd/incus/usage/usage.go:862
+#: cmd/incus/usage/usage.go:863
 msgid "template"
 msgstr ""
 
-#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:863
+#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:864
 msgid "token"
 msgstr ""
 
@@ -10702,7 +10746,7 @@ msgstr ""
 msgid "total space"
 msgstr "Gesamter Speicherplatz"
 
-#: cmd/incus/usage/usage.go:859 cmd/incus/usage/usage.go:864
+#: cmd/incus/usage/usage.go:860 cmd/incus/usage/usage.go:865
 msgid "type"
 msgstr ""
 
@@ -10732,16 +10776,16 @@ msgstr "nicht erreichbar"
 msgid "used by"
 msgstr "wird benutzt von"
 
-#: cmd/incus/usage/usage.go:866
+#: cmd/incus/usage/usage.go:867
 msgid "value"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:867
+#: cmd/incus/usage/usage.go:868
 #, fuzzy
 msgid "volume"
 msgstr "Spalten"
 
-#: cmd/incus/usage/usage.go:868
+#: cmd/incus/usage/usage.go:869
 msgid "warning UUID"
 msgstr ""
 
@@ -10755,7 +10799,7 @@ msgstr "j"
 msgid "yes"
 msgstr "ja"
 
-#: cmd/incus/usage/usage.go:869
+#: cmd/incus/usage/usage.go:870
 msgid "zone"
 msgstr ""
 
@@ -10893,10 +10937,6 @@ msgstr ""
 #, c-format
 #~ msgid "Invalid target %s"
 #~ msgstr "Ungültiges Ziel %s"
-
-#, fuzzy, c-format
-#~ msgid "Invalid volume %s"
-#~ msgstr "Ungültige Quelle %s"
 
 #, fuzzy
 #~ msgid "Missing bucket name"
@@ -12415,8 +12455,8 @@ msgstr ""
 #, fuzzy
 #~ msgid ""
 #~ "incus admin os service edit [<remote>:]<service> < service.yaml\n"
-#~ "    Update an IncusOS service configuration using the content of service."
-#~ "yaml."
+#~ "    Update an IncusOS service configuration using the content of "
+#~ "service.yaml."
 #~ msgstr ""
 #~ "incus storage edit [<remote>:]<pool> < pool.yaml\n"
 #~ "    Automatisches Editieren der Konfiguration des storage pool mit den "
@@ -12493,8 +12533,8 @@ msgstr ""
 
 #, fuzzy
 #~ msgid ""
-#~ "incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < volume."
-#~ "yaml\n"
+#~ "incus storage volume edit [<remote>:]<pool> [<type>/]<volume> < "
+#~ "volume.yaml\n"
 #~ "    Update a storage volume using the content of pool.yaml."
 #~ msgstr ""
 #~ "incus storage edit [<remote>:]<pool> < pool.yaml\n"
@@ -12506,8 +12546,8 @@ msgstr ""
 #~ "\t\tCreate a new custom volume using backup0.tar.gz as the source."
 #~ msgstr ""
 #~ "incus storage volume import default backup0.tar.gz\n"
-#~ "\t\tErstellt ein neues benutzerdefiniertes Volume aus der Datei \"backup0."
-#~ "tar.gz\"."
+#~ "\t\tErstellt ein neues benutzerdefiniertes Volume aus der Datei "
+#~ "\"backup0.tar.gz\"."
 
 #, fuzzy
 #~ msgid "The --mode flag can't be used with --storage or --target-project"
@@ -13407,8 +13447,8 @@ msgstr ""
 #~ "lxc image edit [remote:]<image>\n"
 #~ "    Edit image, either by launching external editor or reading STDIN.\n"
 #~ "    Example: lxc image edit <image> # launch editor\n"
-#~ "             cat image.yaml | lxc image edit <image> # read from image."
-#~ "yml\n"
+#~ "             cat image.yaml | lxc image edit <image> # read from "
+#~ "image.yml\n"
 #~ "\n"
 #~ "Lists the images at specified remote, or local images.\n"
 #~ "Filters are not yet supported.\n"

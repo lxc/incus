@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-13 22:43-0300\n"
+"POT-Creation-Date: 2026-06-25 18:25-0400\n"
 "PO-Revision-Date: 2026-06-15 23:44+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Georgian <https://hosted.weblate.org/projects/incus/cli/ka/>\n"
@@ -840,7 +840,7 @@ msgstr ""
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 
-#: cmd/incus/console.go:444
+#: cmd/incus/console.go:453
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
@@ -876,11 +876,11 @@ msgstr ""
 msgid "Attach new network interfaces to instances"
 msgstr "გაშვებულ ასლებზე ახალი ქსელური ინტერფეისების მიმაგრება"
 
-#: cmd/incus/console.go:46
+#: cmd/incus/console.go:47
 msgid "Attach to instance consoles"
 msgstr "გაშვებული ასლის კონსოლებზე მიმაგრება"
 
-#: cmd/incus/console.go:47
+#: cmd/incus/console.go:48
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -2422,7 +2422,7 @@ msgstr ""
 msgid "Error updating template file: %s"
 msgstr ""
 
-#: cmd/incus/main.go:425
+#: cmd/incus/main.go:429
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr ""
@@ -2439,8 +2439,8 @@ msgstr ""
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action (\"cluster."
-"evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -2723,7 +2723,7 @@ msgstr ""
 msgid "Failed parsing validation response: %w"
 msgstr ""
 
-#: cmd/incus/console.go:422
+#: cmd/incus/console.go:431
 #, c-format
 msgid "Failed starting command: %w"
 msgstr ""
@@ -3071,7 +3071,7 @@ msgid ""
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
 
-#: cmd/incus/console.go:55
+#: cmd/incus/console.go:56
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
@@ -3516,7 +3516,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:533
+#: cmd/incus/main.go:582
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -3748,6 +3748,11 @@ msgstr ""
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr ""
 
+#: cmd/incus/default.go:85
+#, fuzzy, c-format
+msgid "Invalid default %q"
+msgstr "არასწორი არგუმენტი %q"
+
 #: cmd/incus/publish.go:194
 #, c-format
 msgid "Invalid expiration date: %w"
@@ -3808,6 +3813,16 @@ msgstr ""
 #: cmd/incus/file.go:143 cmd/incus/storage_volume_file.go:140
 #, c-format
 msgid "Invalid type %q"
+msgstr ""
+
+#: cmd/incus/default.go:123
+#, c-format
+msgid "Invalid value %q for console_type"
+msgstr ""
+
+#: cmd/incus/default.go:110
+#, c-format
+msgid "Invalid value %q for list_format"
 msgstr ""
 
 #: cmd/incus/info.go:248
@@ -4429,8 +4444,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -4891,6 +4906,11 @@ msgstr ""
 msgid "Manage and attach instances to networks"
 msgstr "გაშვებული ასლების ქსელებთან მიმაგრება და მართვა"
 
+#: cmd/incus/default.go:24 cmd/incus/default.go:25
+#, fuzzy
+msgid "Manage client defaults"
+msgstr "სანდო კლიენტების მართვა"
+
 #: cmd/incus/cluster_group.go:37 cmd/incus/cluster_group.go:38
 msgid "Manage cluster groups"
 msgstr "კლასტერის ჯგუფების მართვა"
@@ -5063,8 +5083,8 @@ msgstr "საცავის ტომების მართვა"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
@@ -5808,7 +5828,7 @@ msgstr "გაგზავნილი პაკეტები"
 msgid "Partitions:"
 msgstr "დანაყოფები:"
 
-#: cmd/incus/main.go:493 cmd/incus/remote.go:885
+#: cmd/incus/main.go:542 cmd/incus/remote.go:885
 #, c-format
 msgid "Password for %s: "
 msgstr "%s-ის პაროლი: "
@@ -6480,7 +6500,7 @@ msgstr ""
 msgid "Resume instances"
 msgstr ""
 
-#: cmd/incus/console.go:56
+#: cmd/incus/console.go:57
 msgid "Retrieve the instance's console log"
 msgstr ""
 
@@ -6693,6 +6713,10 @@ msgstr ""
 
 #: cmd/incus/file.go:922 cmd/incus/storage_volume_file.go:350
 msgid "Set authentication user when using SSH SFTP listener"
+msgstr ""
+
+#: cmd/incus/default.go:57 cmd/incus/default.go:58
+msgid "Set client defaults"
 msgstr ""
 
 #: cmd/incus/config_device.go:569
@@ -7035,6 +7059,10 @@ msgstr ""
 msgid "Show all information messages"
 msgstr ""
 
+#: cmd/incus/default.go:165 cmd/incus/default.go:166
+msgid "Show client defaults"
+msgstr ""
+
 #: cmd/incus/cluster_group.go:693 cmd/incus/cluster_group.go:694
 msgid "Show cluster group configurations"
 msgstr ""
@@ -7079,7 +7107,7 @@ msgstr ""
 msgid "Show instance snapshot configuration"
 msgstr ""
 
-#: cmd/incus/main.go:364 cmd/incus/main.go:365
+#: cmd/incus/main.go:368 cmd/incus/main.go:369
 msgid "Show less common commands"
 msgstr ""
 
@@ -7567,7 +7595,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr ""
 
-#: cmd/incus/console.go:135
+#: cmd/incus/console.go:136
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
@@ -7598,7 +7626,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:443
+#: cmd/incus/console.go:452
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -7777,7 +7805,7 @@ msgid ""
 "The requested storage pool \"%s\" already exists. Please choose another name."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:57
+#: cmd/incus/webui_unix.go:61
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
@@ -7819,7 +7847,7 @@ msgstr ""
 msgid "There is no config key to set on an instance snapshot."
 msgstr ""
 
-#: cmd/incus/main.go:416
+#: cmd/incus/main.go:420
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -7877,11 +7905,11 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
-#: cmd/incus/console.go:237
+#: cmd/incus/console.go:238
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:541
+#: cmd/incus/main.go:590
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -7951,7 +7979,7 @@ msgstr "ტიპი"
 msgid "Type of certificate"
 msgstr "სერტიფიკატის ტიპი"
 
-#: cmd/incus/console.go:57
+#: cmd/incus/console.go:58
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -7977,7 +8005,7 @@ msgid "UPLOAD DATE"
 msgstr ""
 
 #: cmd/incus/cluster.go:198 cmd/incus/remote.go:1055
-#: cmd/incus/usage/usage.go:865
+#: cmd/incus/usage/usage.go:866
 msgid "URL"
 msgstr "URL"
 
@@ -8050,7 +8078,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:165
+#: cmd/incus/console.go:166
 #, c-format
 msgid "Unknown console type %q"
 msgstr "უცნობი კონსოლის ტიპი %q"
@@ -8070,7 +8098,7 @@ msgstr ""
 msgid "Unknown key: %s"
 msgstr "უცნობი გასაღები: %s"
 
-#: cmd/incus/console.go:125
+#: cmd/incus/console.go:126
 #, c-format
 msgid "Unknown output type %q"
 msgstr "უცნობი გამოტანის ტიპი %q"
@@ -8085,6 +8113,10 @@ msgstr ""
 
 #: cmd/incus/move.go:64
 msgid "Unset all profiles on the target instance"
+msgstr ""
+
+#: cmd/incus/default.go:202 cmd/incus/default.go:203
+msgid "Unset client defaults"
 msgstr ""
 
 #: cmd/incus/config_device.go:765 cmd/incus/config_device.go:766
@@ -8484,7 +8516,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:105
+#: cmd/incus/webui_unix.go:109
 #, c-format
 msgid "Web server running at: %s"
 msgstr ""
@@ -8710,15 +8742,19 @@ msgstr "მდგომარეობა"
 msgid "current"
 msgstr "მიმდინარე"
 
+#: cmd/incus/usage/usage.go:822
+msgid "default"
+msgstr ""
+
 #: cmd/incus/storage.go:526
 msgid "description"
 msgstr "აღწერა"
 
-#: cmd/incus/usage/usage.go:822
+#: cmd/incus/usage/usage.go:823
 msgid "device"
 msgstr "მოწყობილობა"
 
-#: cmd/incus/usage/usage.go:824
+#: cmd/incus/usage/usage.go:825
 msgid "directory"
 msgstr "საქაღალდე"
 
@@ -8726,7 +8762,7 @@ msgstr "საქაღალდე"
 msgid "disabled"
 msgstr "გამორთულია"
 
-#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:825
+#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:826
 msgid "driver"
 msgstr ""
 
@@ -8748,27 +8784,27 @@ msgstr "შეცდომა: %v"
 msgid "expected %s"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:827
+#: cmd/incus/usage/usage.go:828
 msgid "expiry"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:828
+#: cmd/incus/usage/usage.go:829
 msgid "file"
 msgstr "ფაილი"
 
-#: cmd/incus/usage/usage.go:829
+#: cmd/incus/usage/usage.go:830
 msgid "filter"
 msgstr "ფილტრი"
 
-#: cmd/incus/usage/usage.go:830
+#: cmd/incus/usage/usage.go:831
 msgid "fingerprint"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:831
+#: cmd/incus/usage/usage.go:832
 msgid "group"
 msgstr "ჯგუფი"
 
-#: cmd/incus/usage/usage.go:832
+#: cmd/incus/usage/usage.go:833
 msgid "image"
 msgstr "გამოსახულება"
 
@@ -8867,8 +8903,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -8976,8 +9012,8 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from config."
-"yaml\n"
+"    Create and start a container named \"c2\" with configuration from "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
@@ -8987,16 +9023,16 @@ msgid ""
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:131
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -9074,16 +9110,16 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315
@@ -9429,19 +9465,19 @@ msgstr ""
 msgid "info"
 msgstr "ინფორმაცია"
 
-#: cmd/incus/usage/usage.go:833
+#: cmd/incus/usage/usage.go:834
 msgid "instance"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:834
+#: cmd/incus/usage/usage.go:835
 msgid "interface"
 msgstr "ინტერფეისი"
 
-#: cmd/incus/usage/usage.go:837
+#: cmd/incus/usage/usage.go:838
 msgid "keepalive timeout"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:838
+#: cmd/incus/usage/usage.go:839
 msgid "key"
 msgstr "გასაღები"
 
@@ -9449,15 +9485,15 @@ msgstr "გასაღები"
 msgid "last"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:835
+#: cmd/incus/usage/usage.go:836
 msgid "listen address"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:836
+#: cmd/incus/usage/usage.go:837
 msgid "listen port"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:840
+#: cmd/incus/usage/usage.go:841
 msgid "member"
 msgstr "წვერი"
 
@@ -9469,11 +9505,11 @@ msgstr "ნანო"
 msgid "name"
 msgstr "სახელი"
 
-#: cmd/incus/usage/usage.go:841
+#: cmd/incus/usage/usage.go:842
 msgid "network"
 msgstr "ქსელი"
 
-#: cmd/incus/usage/usage.go:842
+#: cmd/incus/usage/usage.go:843
 msgid "network integration"
 msgstr ""
 
@@ -9481,7 +9517,7 @@ msgstr ""
 msgid "network or integration"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:900
+#: cmd/incus/usage/usage.go:901
 #, c-format
 msgid "new %s name"
 msgstr ""
@@ -9489,6 +9525,10 @@ msgstr ""
 #: cmd/incus/config_trust.go:481 cmd/incus/image.go:953 cmd/incus/image.go:958
 #: cmd/incus/image.go:1172
 msgid "no"
+msgstr ""
+
+#: cmd/incus/default.go:146
+msgid "no_color must be boolean"
 msgstr ""
 
 #: cmd/incus/usage/parse.go:60
@@ -9505,15 +9545,15 @@ msgstr "დიახ (y/n/[ანაბეჭდი])?"
 msgid "one of %s or %s"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:843
+#: cmd/incus/usage/usage.go:844
 msgid "operation"
 msgstr "ოპერაცია"
 
-#: cmd/incus/usage/usage.go:844
+#: cmd/incus/usage/usage.go:845
 msgid "path"
 msgstr "ბილიკი"
 
-#: cmd/incus/usage/usage.go:845
+#: cmd/incus/usage/usage.go:846
 msgid "peer"
 msgstr ""
 
@@ -9525,11 +9565,11 @@ msgstr ""
 msgid "please use `incus profile`"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:846
+#: cmd/incus/usage/usage.go:847
 msgid "pool"
 msgstr "აუზი"
 
-#: cmd/incus/usage/usage.go:847
+#: cmd/incus/usage/usage.go:848
 msgid "port"
 msgstr "პორტი"
 
@@ -9537,31 +9577,31 @@ msgstr "პორტი"
 msgid "preseed.yaml"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:848
+#: cmd/incus/usage/usage.go:849
 msgid "profile"
 msgstr "პროფილი"
 
-#: cmd/incus/usage/usage.go:849
+#: cmd/incus/usage/usage.go:850
 msgid "project"
 msgstr "პროექტი"
 
-#: cmd/incus/usage/usage.go:850
+#: cmd/incus/usage/usage.go:851
 msgid "protocol"
 msgstr "პროტოკოლი"
 
-#: cmd/incus/usage/usage.go:851
+#: cmd/incus/usage/usage.go:852
 msgid "query"
 msgstr "მოთხოვნა"
 
-#: cmd/incus/usage/usage.go:852
+#: cmd/incus/usage/usage.go:853
 msgid "record"
 msgstr "ჩაწერა"
 
-#: cmd/incus/usage/usage.go:853
+#: cmd/incus/usage/usage.go:854
 msgid "remote"
 msgstr "დაშორებული"
 
-#: cmd/incus/usage/usage.go:857
+#: cmd/incus/usage/usage.go:858
 msgid "role"
 msgstr ""
 
@@ -9569,7 +9609,7 @@ msgstr ""
 msgid "rootfs tarball"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:858
+#: cmd/incus/usage/usage.go:859
 msgid "snapshot"
 msgstr "სწრაფი ასლი"
 
@@ -9590,24 +9630,24 @@ msgstr ""
 msgid "stdin can only be used once, with no other source arguments"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:860
+#: cmd/incus/usage/usage.go:861
 msgid "symlink target path"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:861
+#: cmd/incus/usage/usage.go:862
 msgid "tarball"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:906
+#: cmd/incus/usage/usage.go:907
 #, c-format
 msgid "target %s"
 msgstr "სამიზნე %s"
 
-#: cmd/incus/usage/usage.go:862
+#: cmd/incus/usage/usage.go:863
 msgid "template"
 msgstr "შაბლონი"
 
-#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:863
+#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:864
 msgid "token"
 msgstr "ტოკენი"
 
@@ -9620,7 +9660,7 @@ msgstr ""
 msgid "total space"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:859 cmd/incus/usage/usage.go:864
+#: cmd/incus/usage/usage.go:860 cmd/incus/usage/usage.go:865
 msgid "type"
 msgstr "ტიპი"
 
@@ -9651,15 +9691,15 @@ msgstr ""
 msgid "used by"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:866
+#: cmd/incus/usage/usage.go:867
 msgid "value"
 msgstr "მნიშვნელობა"
 
-#: cmd/incus/usage/usage.go:867
+#: cmd/incus/usage/usage.go:868
 msgid "volume"
 msgstr "საცავი"
 
-#: cmd/incus/usage/usage.go:868
+#: cmd/incus/usage/usage.go:869
 msgid "warning UUID"
 msgstr ""
 
@@ -9673,7 +9713,7 @@ msgstr "წ"
 msgid "yes"
 msgstr "დიახ"
 
-#: cmd/incus/usage/usage.go:869
+#: cmd/incus/usage/usage.go:870
 msgid "zone"
 msgstr "ზონა"
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-13 22:43-0300\n"
+"POT-Creation-Date: 2026-06-25 18:25-0400\n"
 "PO-Revision-Date: 2026-06-15 23:46+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -1005,8 +1005,8 @@ msgstr "Rubriques d’aide additionnelles :"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Propriété de configuration du pool de stockage supplémentaire (<clef>"
-"=<valuer>, rien lorsque terminé) :"
+"Propriété de configuration du pool de stockage supplémentaire "
+"(<clef>=<valuer>, rien lorsque terminé) :"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1116,9 +1116,10 @@ msgstr "Rejoingez-vous un cluster existant ?"
 #: cmd/incus/cluster.go:1530
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
-msgstr "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
+msgstr ""
+"Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
 
-#: cmd/incus/console.go:444
+#: cmd/incus/console.go:453
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Aucun des deux n’a été trouvé ; le socket SPICE se trouve ici :"
 
@@ -1154,11 +1155,11 @@ msgstr "Attacher un nouveau volume de stockage personnalisé à un profil"
 msgid "Attach new network interfaces to instances"
 msgstr "Attacher de nouvelles interfaces aux instances"
 
-#: cmd/incus/console.go:46
+#: cmd/incus/console.go:47
 msgid "Attach to instance consoles"
 msgstr "Connexion aux consoles de l'instance"
 
-#: cmd/incus/console.go:47
+#: cmd/incus/console.go:48
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -1247,8 +1248,8 @@ msgstr "Sauvegardes :"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Impossible de traiter ce remplacement, la syntaxe attendue est <périphérique>"
-",<clef>=<valeur> : %s"
+"Impossible de traiter ce remplacement, la syntaxe attendue est "
+"<périphérique>,<clef>=<valeur> : %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:205 cmd/incus/move.go:252
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -2725,8 +2726,8 @@ msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
-"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, « m "
-"» pour mémoire, ou « d » pour disque) :"
+"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, "
+"« m » pour mémoire, ou « d » pour disque) :"
 
 #: cmd/incus/top.go:263
 msgid "Enter new delay in seconds:"
@@ -2804,7 +2805,7 @@ msgstr "Erreur lors de la suppression de la propriété : %v"
 msgid "Error updating template file: %s"
 msgstr "Erreur de mise à jour du modèle : %s"
 
-#: cmd/incus/main.go:425
+#: cmd/incus/main.go:429
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr "Erreur lors de l’expansion de l'alias : %s\n"
@@ -2821,8 +2822,8 @@ msgstr "Évacuer un membre du cluster"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action (\"cluster."
-"evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -3169,7 +3170,7 @@ msgstr "Échec de l’analyse de la clef d’hôte SSH : %w"
 msgid "Failed parsing validation response: %w"
 msgstr "Échec de l'analyse de la réponse de validation : %w"
 
-#: cmd/incus/console.go:422
+#: cmd/incus/console.go:431
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "Échec de l'exécution de la commande : %w"
@@ -3223,7 +3224,8 @@ msgstr "Échec de la configuration du cluster : %w"
 #: cmd/incus/admin_init.go:107
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr ""
+"Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:102
 #, c-format
@@ -3542,7 +3544,7 @@ msgstr ""
 "\n"
 "Êtes-vous vraiment sûr de vouloir forcer la suppression de %s ? (oui/non) "
 
-#: cmd/incus/console.go:55
+#: cmd/incus/console.go:56
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
@@ -3793,7 +3795,8 @@ msgstr "Obtenir la clé en tant que propriété d'instance"
 
 #: cmd/incus/cluster_group.go:813
 msgid "Get values for cluster group configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
 
 #: cmd/incus/cluster.go:443
 msgid "Get values for cluster member configuration keys"
@@ -3861,7 +3864,8 @@ msgstr "Clé de configuration invalide"
 
 #: cmd/incus/storage_bucket.go:370 cmd/incus/storage_bucket.go:371
 msgid "Get values for storage bucket configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
 
 #: cmd/incus/storage.go:392 cmd/incus/storage.go:393
 msgid "Get values for storage pool configuration keys"
@@ -3888,8 +3892,8 @@ msgstr ""
 "Si le type n’est pas spécifié, Incus considère le type « custom ».\n"
 "Les types reconnus sont « custom », « container » et « virtual-machine ».\n"
 "\n"
-"Pour un instantané, préciser son nom (le type doit être explicitement défini)"
-"."
+"Pour un instantané, préciser son nom (le type doit être explicitement "
+"défini)."
 
 #: cmd/incus/storage_volume.go:2599
 msgid "Get write access to the disk"
@@ -4018,7 +4022,8 @@ msgstr "Identifiant : %v"
 #: cmd/incus/image.go:178
 #, fuzzy
 msgid "If an alias already exists, delete and recreate it"
-msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr ""
+"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/rebuild.go:34
 msgid "If an instance is running, stop it and then rebuild it"
@@ -4035,14 +4040,15 @@ msgstr ""
 
 #: cmd/incus/image.go:703 cmd/incus/publish.go:46
 msgid "If the image alias already exists, delete and create a new one"
-msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr ""
+"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:101 cmd/incus/storage_volume_snapshot.go:98
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "Si l'instantané de l'image existe déjà, le supprimer d'abord puis le recréer"
 
-#: cmd/incus/main.go:533
+#: cmd/incus/main.go:582
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4292,6 +4298,11 @@ msgstr "Clef de configuration « %s » invalide dans « %s »"
 msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "Format de colonne invalide (trop de champs spécifiés) : « %s »"
 
+#: cmd/incus/default.go:85
+#, fuzzy, c-format
+msgid "Invalid default %q"
+msgstr "Format invalide : %q"
+
 #: cmd/incus/publish.go:194
 #, c-format
 msgid "Invalid expiration date: %w"
@@ -4359,6 +4370,16 @@ msgstr "Cible invalide %s"
 #, c-format
 msgid "Invalid type %q"
 msgstr "Type invalide : %q"
+
+#: cmd/incus/default.go:123
+#, fuzzy, c-format
+msgid "Invalid value %q for console_type"
+msgstr "Type de pair invalide"
+
+#: cmd/incus/default.go:110
+#, fuzzy, c-format
+msgid "Invalid value %q for list_format"
+msgstr "Source invalide %s"
 
 #: cmd/incus/info.go:248
 #, c-format
@@ -5255,8 +5276,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5292,8 +5313,8 @@ msgstr ""
 "configuration (par exemple, « volatile.eth0.hwaddr=10:66:6a:.* »).\n"
 "\n"
 "Exemples :\n"
-" – « user.blah=abc » listera toutes les instances dont la propriété libre «"
-" blah » est égale à « abc »,\n"
+" – « user.blah=abc » listera toutes les instances dont la propriété libre "
+"« blah » est égale à « abc »,\n"
 " – « u.blah=abc » aura le même effet,\n"
 " – « security.privileged=true » listera toutes les instances privilégiées,\n"
 " – « s.privileged=true » aura le même effet,\n"
@@ -5338,8 +5359,8 @@ msgstr ""
 "À ces colonnes s’ajoutent des colonnes personnalisées qui peuvent être "
 "définies avec « [config:|devices:]<clef>[:<nom>][:<largeur maximale>] » :\n"
 " – <clef> représente le nom de la clef de configuration de l’instance "
-"(config) ou des périphériques (devices) à afficher (si « config: » et «"
-" devices: » sont omis, « config: » est choisi par défaut),\n"
+"(config) ou des périphériques (devices) à afficher (si « config: » et "
+"« devices: » sont omis, « config: » est choisi par défaut),\n"
 " – <nom> représente le nom de la colonne à afficher (par défaut, le nom de "
 "la clef),\n"
 " – <largeur maximale> est la largeur maximale de la colonne (les résultats "
@@ -5976,6 +5997,11 @@ msgstr "Rendre l’image publique"
 msgid "Manage and attach instances to networks"
 msgstr "Gérer les réseaux et y attacher des instances"
 
+#: cmd/incus/default.go:24 cmd/incus/default.go:25
+#, fuzzy
+msgid "Manage client defaults"
+msgstr "Gérer les clients de confiance"
+
 #: cmd/incus/cluster_group.go:37 cmd/incus/cluster_group.go:38
 msgid "Manage cluster groups"
 msgstr "Gérer les groupes du cluster"
@@ -6164,8 +6190,8 @@ msgstr "Gérer les volumes de stockage"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 "Gérer les volumes de stockage\n"
 "\n"
@@ -6260,8 +6286,8 @@ msgstr "Configuration minimale (non-interactif)"
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
-"Verbosité minimale des journaux (uniquement disponible avec le format «"
-" pretty »)"
+"Verbosité minimale des journaux (uniquement disponible avec le format "
+"« pretty »)"
 
 #: cmd/incus/admin_init_interactive.go:470
 msgid "Minimum size is 1GiB"
@@ -6949,7 +6975,7 @@ msgstr "Paquets émis"
 msgid "Partitions:"
 msgstr "Partitions :"
 
-#: cmd/incus/main.go:493 cmd/incus/remote.go:885
+#: cmd/incus/main.go:542 cmd/incus/remote.go:885
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Mot de passe administrateur pour %s : "
@@ -7353,7 +7379,8 @@ msgstr "Pousser ou récupérer des fichiers récursivement"
 
 #: cmd/incus/storage_volume.go:396
 msgid "Refresh and update the existing storage volume copies"
-msgstr "Rafraîchir et mettre à jour les copies du volume de stockage existantes"
+msgstr ""
+"Rafraîchir et mettre à jour les copies du volume de stockage existantes"
 
 #: cmd/incus/image.go:1391 cmd/incus/image.go:1392
 #, fuzzy
@@ -7421,8 +7448,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
-"Supprimer %s et tout ce qu’il contient (instances, images, volumes, réseaux"
-"…) (oui/non) : "
+"Supprimer %s et tout ce qu’il contient (instances, images, volumes, "
+"réseaux…) (oui/non) : "
 
 #: cmd/incus/cluster_group.go:567
 msgid "Remove a cluster member from a cluster group"
@@ -7661,7 +7688,7 @@ msgstr "Restreindre le certificat à un ou plusieurs projets"
 msgid "Resume instances"
 msgstr "Création du conteneur"
 
-#: cmd/incus/console.go:56
+#: cmd/incus/console.go:57
 #, fuzzy
 msgid "Retrieve the instance's console log"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
@@ -7883,6 +7910,11 @@ msgstr ""
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
+#: cmd/incus/default.go:57 cmd/incus/default.go:58
+#, fuzzy
+msgid "Set client defaults"
+msgstr "par défaut"
+
 #: cmd/incus/config_device.go:569
 #, fuzzy
 msgid "Set device configuration keys"
@@ -8023,7 +8055,8 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:1121 cmd/incus/network_zone.go:1122
 msgid "Set network zone record configuration keys"
-msgstr "Définir des clefs de configuration sur un enregistrement de zone réseau"
+msgstr ""
+"Définir des clefs de configuration sur un enregistrement de zone réseau"
 
 #: cmd/incus/profile.go:986
 #, fuzzy
@@ -8244,6 +8277,11 @@ msgstr ""
 msgid "Show all information messages"
 msgstr ""
 
+#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#, fuzzy
+msgid "Show client defaults"
+msgstr "impossible de supprimer le serveur distant par défaut"
+
 #: cmd/incus/cluster_group.go:693 cmd/incus/cluster_group.go:694
 msgid "Show cluster group configurations"
 msgstr "Afficher la configuration d’un groupe de serveurs"
@@ -8292,7 +8330,7 @@ msgstr "Afficher des informations supplémentaires"
 msgid "Show instance snapshot configuration"
 msgstr "Afficher la configuration étendue"
 
-#: cmd/incus/main.go:364 cmd/incus/main.go:365
+#: cmd/incus/main.go:368 cmd/incus/main.go:369
 #, fuzzy
 msgid "Show less common commands"
 msgstr "Afficher les commandes moins communes"
@@ -8794,7 +8832,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "Le pool de stockage %s existe déjà"
 
-#: cmd/incus/console.go:135
+#: cmd/incus/console.go:136
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 "Le drapeau --show-log n’est supporté que pour les sorties de type « console »"
@@ -8828,7 +8866,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:443
+#: cmd/incus/console.go:452
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -9019,7 +9057,7 @@ msgstr ""
 "Le pool de stockage demandé \"%s\" existe déjà. Veuillez choisir un autre "
 "nom."
 
-#: cmd/incus/webui_unix.go:57
+#: cmd/incus/webui_unix.go:61
 msgid "The server doesn't have a web UI installed"
 msgstr "Le serveur n’a aucune interface web installée"
 
@@ -9049,8 +9087,8 @@ msgstr "Le périphérique spécifié n'est pas un disque (périphérique %s)"
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
 msgstr ""
-"Le disque spécifié ne pointe pas vers le volume de stockage spécifié (trouvé "
-": %s)"
+"Le disque spécifié ne pointe pas vers le volume de stockage spécifié "
+"(trouvé : %s)"
 
 #: cmd/incus/storage_volume.go:792
 #, c-format
@@ -9066,7 +9104,7 @@ msgid "There is no config key to set on an instance snapshot."
 msgstr ""
 "Il n'y a aucune clef de configuration à définir sur un instantané d'instance."
 
-#: cmd/incus/main.go:416
+#: cmd/incus/main.go:420
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -9130,11 +9168,11 @@ msgstr "Pour attacher un réseau à un conteneur, utiliser : lxc network attach"
 msgid "To create a new network, use: incus network create"
 msgstr "Pour créer un réseau, utiliser : lxc network create"
 
-#: cmd/incus/console.go:237
+#: cmd/incus/console.go:238
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "Pour quitter la console, veuillez entrer Ctrl+A, puis Q"
 
-#: cmd/incus/main.go:541
+#: cmd/incus/main.go:590
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -9210,7 +9248,7 @@ msgstr "Type"
 msgid "Type of certificate"
 msgstr "Type de certificat"
 
-#: cmd/incus/console.go:57
+#: cmd/incus/console.go:58
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -9238,7 +9276,7 @@ msgid "UPLOAD DATE"
 msgstr "DATE DE PUBLICATION"
 
 #: cmd/incus/cluster.go:198 cmd/incus/remote.go:1055
-#: cmd/incus/usage/usage.go:865
+#: cmd/incus/usage/usage.go:866
 msgid "URL"
 msgstr "URL"
 
@@ -9313,7 +9351,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:165
+#: cmd/incus/console.go:166
 #, c-format
 msgid "Unknown console type %q"
 msgstr "Type de console inconnu : %q"
@@ -9333,7 +9371,7 @@ msgstr "Option inconnue : --%s"
 msgid "Unknown key: %s"
 msgstr "Clef inconnue : %s"
 
-#: cmd/incus/console.go:125
+#: cmd/incus/console.go:126
 #, c-format
 msgid "Unknown output type %q"
 msgstr "Type de sortie inconnu : %q"
@@ -9350,6 +9388,10 @@ msgstr "Supprimer une clef de configuration d’un membre du cluster"
 #, fuzzy
 msgid "Unset all profiles on the target instance"
 msgstr "tous les profils de la source n'existent pas sur la cible"
+
+#: cmd/incus/default.go:202 cmd/incus/default.go:203
+msgid "Unset client defaults"
+msgstr ""
 
 #: cmd/incus/config_device.go:765 cmd/incus/config_device.go:766
 #, fuzzy
@@ -9770,7 +9812,7 @@ msgid ""
 "they otherwise would."
 msgstr ""
 
-#: cmd/incus/webui_unix.go:105
+#: cmd/incus/webui_unix.go:109
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Le serveur web est disponible sur : %s"
@@ -10010,15 +10052,19 @@ msgstr "condition"
 msgid "current"
 msgstr "courant"
 
+#: cmd/incus/usage/usage.go:822
+msgid "default"
+msgstr "par défaut"
+
 #: cmd/incus/storage.go:526
 msgid "description"
 msgstr "description"
 
-#: cmd/incus/usage/usage.go:822
+#: cmd/incus/usage/usage.go:823
 msgid "device"
 msgstr "périphérique"
 
-#: cmd/incus/usage/usage.go:824
+#: cmd/incus/usage/usage.go:825
 msgid "directory"
 msgstr "répertoire"
 
@@ -10026,7 +10072,7 @@ msgstr "répertoire"
 msgid "disabled"
 msgstr "désactivé"
 
-#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:825
+#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:826
 msgid "driver"
 msgstr "driver"
 
@@ -10048,27 +10094,27 @@ msgstr "erreur : %v"
 msgid "expected %s"
 msgstr "attendu : %s"
 
-#: cmd/incus/usage/usage.go:827
+#: cmd/incus/usage/usage.go:828
 msgid "expiry"
 msgstr "expiration"
 
-#: cmd/incus/usage/usage.go:828
+#: cmd/incus/usage/usage.go:829
 msgid "file"
 msgstr "fichier"
 
-#: cmd/incus/usage/usage.go:829
+#: cmd/incus/usage/usage.go:830
 msgid "filter"
 msgstr "filtre"
 
-#: cmd/incus/usage/usage.go:830
+#: cmd/incus/usage/usage.go:831
 msgid "fingerprint"
 msgstr "empreinte"
 
-#: cmd/incus/usage/usage.go:831
+#: cmd/incus/usage/usage.go:832
 msgid "group"
 msgstr "groupe"
 
-#: cmd/incus/usage/usage.go:832
+#: cmd/incus/usage/usage.go:833
 msgid "image"
 msgstr "image"
 
@@ -10186,8 +10232,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -10300,8 +10346,8 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from config."
-"yaml\n"
+"    Create and start a container named \"c2\" with configuration from "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
@@ -10311,16 +10357,16 @@ msgid ""
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:131
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10353,8 +10399,8 @@ msgid ""
 "incus move <old name> <new name> [--instance-only]\n"
 "    Rename a local instance."
 msgstr ""
-"incus move [<serveur distant>:]<instance source> [<serveur distant> "
-":][<instance cible>] [--instance-only]\n"
+"incus move [<serveur distant>:]<instance source> [<serveur distant> :]"
+"[<instance cible>] [--instance-only]\n"
 "    Déplacer une instance entre deux hôtes, avec renommage si le nom de "
 "destination est différent.\n"
 "\n"
@@ -10420,8 +10466,8 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 "incus profile create p1\n"
 "    Créer un profil nommé « p1 »\n"
@@ -10432,10 +10478,10 @@ msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315
@@ -10815,19 +10861,19 @@ msgstr ""
 msgid "info"
 msgstr "information"
 
-#: cmd/incus/usage/usage.go:833
+#: cmd/incus/usage/usage.go:834
 msgid "instance"
 msgstr "instance"
 
-#: cmd/incus/usage/usage.go:834
+#: cmd/incus/usage/usage.go:835
 msgid "interface"
 msgstr "interface"
 
-#: cmd/incus/usage/usage.go:837
+#: cmd/incus/usage/usage.go:838
 msgid "keepalive timeout"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:838
+#: cmd/incus/usage/usage.go:839
 msgid "key"
 msgstr "clef"
 
@@ -10835,15 +10881,15 @@ msgstr "clef"
 msgid "last"
 msgstr ""
 
-#: cmd/incus/usage/usage.go:835
+#: cmd/incus/usage/usage.go:836
 msgid "listen address"
 msgstr "adresse d’écoute"
 
-#: cmd/incus/usage/usage.go:836
+#: cmd/incus/usage/usage.go:837
 msgid "listen port"
 msgstr "port d’écoute"
 
-#: cmd/incus/usage/usage.go:840
+#: cmd/incus/usage/usage.go:841
 msgid "member"
 msgstr "membre"
 
@@ -10856,11 +10902,11 @@ msgstr "non"
 msgid "name"
 msgstr "nom"
 
-#: cmd/incus/usage/usage.go:841
+#: cmd/incus/usage/usage.go:842
 msgid "network"
 msgstr "réseau"
 
-#: cmd/incus/usage/usage.go:842
+#: cmd/incus/usage/usage.go:843
 msgid "network integration"
 msgstr "intégration réseau"
 
@@ -10869,7 +10915,7 @@ msgstr "intégration réseau"
 msgid "network or integration"
 msgstr "Lister les intégrations réseau"
 
-#: cmd/incus/usage/usage.go:900
+#: cmd/incus/usage/usage.go:901
 #, c-format
 msgid "new %s name"
 msgstr "%s (nouveau nom)"
@@ -10878,6 +10924,10 @@ msgstr "%s (nouveau nom)"
 #: cmd/incus/image.go:1172
 msgid "no"
 msgstr "non"
+
+#: cmd/incus/default.go:146
+msgid "no_color must be boolean"
+msgstr ""
 
 #: cmd/incus/usage/parse.go:60
 #, c-format
@@ -10893,15 +10943,15 @@ msgstr "ok (o/n/[empreinte]) ?"
 msgid "one of %s or %s"
 msgstr "une valeur parmi %s ou %s"
 
-#: cmd/incus/usage/usage.go:843
+#: cmd/incus/usage/usage.go:844
 msgid "operation"
 msgstr "opération"
 
-#: cmd/incus/usage/usage.go:844
+#: cmd/incus/usage/usage.go:845
 msgid "path"
 msgstr "chemin"
 
-#: cmd/incus/usage/usage.go:845
+#: cmd/incus/usage/usage.go:846
 msgid "peer"
 msgstr "pair"
 
@@ -10913,11 +10963,11 @@ msgstr ""
 msgid "please use `incus profile`"
 msgstr "veuillez utiliser `incus profile`"
 
-#: cmd/incus/usage/usage.go:846
+#: cmd/incus/usage/usage.go:847
 msgid "pool"
 msgstr "pool"
 
-#: cmd/incus/usage/usage.go:847
+#: cmd/incus/usage/usage.go:848
 msgid "port"
 msgstr "port"
 
@@ -10925,31 +10975,31 @@ msgstr "port"
 msgid "preseed.yaml"
 msgstr "preseed.yaml"
 
-#: cmd/incus/usage/usage.go:848
+#: cmd/incus/usage/usage.go:849
 msgid "profile"
 msgstr "profil"
 
-#: cmd/incus/usage/usage.go:849
+#: cmd/incus/usage/usage.go:850
 msgid "project"
 msgstr "projet"
 
-#: cmd/incus/usage/usage.go:850
+#: cmd/incus/usage/usage.go:851
 msgid "protocol"
 msgstr "protocole"
 
-#: cmd/incus/usage/usage.go:851
+#: cmd/incus/usage/usage.go:852
 msgid "query"
 msgstr "requête"
 
-#: cmd/incus/usage/usage.go:852
+#: cmd/incus/usage/usage.go:853
 msgid "record"
 msgstr "enregistrement"
 
-#: cmd/incus/usage/usage.go:853
+#: cmd/incus/usage/usage.go:854
 msgid "remote"
 msgstr "serveur distant"
 
-#: cmd/incus/usage/usage.go:857
+#: cmd/incus/usage/usage.go:858
 msgid "role"
 msgstr "rôle"
 
@@ -10957,7 +11007,7 @@ msgstr "rôle"
 msgid "rootfs tarball"
 msgstr "tarball du rootfs"
 
-#: cmd/incus/usage/usage.go:858
+#: cmd/incus/usage/usage.go:859
 msgid "snapshot"
 msgstr "instantané"
 
@@ -10979,24 +11029,24 @@ msgstr "sshfs monté %q sur %q"
 msgid "stdin can only be used once, with no other source arguments"
 msgstr "--all ne peut pas être utilisé avec d’autres arguments"
 
-#: cmd/incus/usage/usage.go:860
+#: cmd/incus/usage/usage.go:861
 msgid "symlink target path"
 msgstr "cible du lien symbolique"
 
-#: cmd/incus/usage/usage.go:861
+#: cmd/incus/usage/usage.go:862
 msgid "tarball"
 msgstr "tarball"
 
-#: cmd/incus/usage/usage.go:906
+#: cmd/incus/usage/usage.go:907
 #, c-format
 msgid "target %s"
 msgstr "%s cible"
 
-#: cmd/incus/usage/usage.go:862
+#: cmd/incus/usage/usage.go:863
 msgid "template"
 msgstr "modèle"
 
-#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:863
+#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:864
 msgid "token"
 msgstr "jeton"
 
@@ -11009,7 +11059,7 @@ msgstr "trop d’arguments ; %s inattendu"
 msgid "total space"
 msgstr "espace total"
 
-#: cmd/incus/usage/usage.go:859 cmd/incus/usage/usage.go:864
+#: cmd/incus/usage/usage.go:860 cmd/incus/usage/usage.go:865
 msgid "type"
 msgstr "type"
 
@@ -11040,15 +11090,15 @@ msgstr "inaccessible"
 msgid "used by"
 msgstr "utilisé par"
 
-#: cmd/incus/usage/usage.go:866
+#: cmd/incus/usage/usage.go:867
 msgid "value"
 msgstr "valeur"
 
-#: cmd/incus/usage/usage.go:867
+#: cmd/incus/usage/usage.go:868
 msgid "volume"
 msgstr "volume"
 
-#: cmd/incus/usage/usage.go:868
+#: cmd/incus/usage/usage.go:869
 msgid "warning UUID"
 msgstr "UUID d’alerte"
 
@@ -11062,7 +11112,7 @@ msgstr "o"
 msgid "yes"
 msgstr "oui"
 
-#: cmd/incus/usage/usage.go:869
+#: cmd/incus/usage/usage.go:870
 msgid "zone"
 msgstr "zone"
 
@@ -11254,10 +11304,6 @@ msgstr "« %s »"
 #, c-format
 #~ msgid "Invalid target %s"
 #~ msgstr "Cible invalide %s"
-
-#, fuzzy, c-format
-#~ msgid "Invalid volume %s"
-#~ msgstr "Source invalide %s"
 
 #~ msgid "Missing bucket name"
 #~ msgstr "Nom du bucket manquant"
@@ -12384,9 +12430,6 @@ msgstr "« %s »"
 #~ msgid "Press enter to start the editor again"
 #~ msgstr "Appuyer sur Entrée pour lancer à nouveau l'éditeur"
 
-#~ msgid "default"
-#~ msgstr "par défaut"
-
 #, fuzzy
 #~ msgid "assign [<remote>:]<instance> <profiles>"
 #~ msgstr "impossible de supprimer le serveur distant par défaut"
@@ -12418,10 +12461,6 @@ msgstr "« %s »"
 #~ "Change l'état d'un ou plusieurs conteneurs à %s.\n"
 #~ "\n"
 #~ "lxc %s [<remote>:]<container> [[<remote>:]<container>...]%s"
-
-#, fuzzy
-#~ msgid "get-default"
-#~ msgstr "par défaut"
 
 #, fuzzy
 #~ msgid "list [<remote>:]<instance>"
@@ -12789,9 +12828,9 @@ msgstr "« %s »"
 #~ "lxc config trust list "
 #~ "[<remote>:]                                           Lister tous les "
 #~ "certificats de confiance.\n"
-#~ "lxc config trust add [<remote>:] <certfile."
-#~ "crt>                             Ajouter certfile.crt aux hôtes de "
-#~ "confiance.\n"
+#~ "lxc config trust add [<remote>:] "
+#~ "<certfile.crt>                             Ajouter certfile.crt aux hôtes "
+#~ "de confiance.\n"
 #~ "lxc config trust remove [<remote>:] [hostname|"
 #~ "fingerprint]                  Supprimer le certificat des hôtes de "
 #~ "confiance.\n"
@@ -12803,8 +12842,8 @@ msgstr "« %s »"
 #~ "share/c1 path=opt\n"
 #~ "\n"
 #~ "Pour positionner une clé de configuration dans la configuration lxc :\n"
-#~ "    lxc config set [<remote>:]<container> raw.lxc 'lxc."
-#~ "aa_allow_incomplete = 1'\n"
+#~ "    lxc config set [<remote>:]<container> raw.lxc "
+#~ "'lxc.aa_allow_incomplete = 1'\n"
 #~ "\n"
 #~ "Pour écouter sur le port 8443 en IPv4 et IPv6 (vous pouvez omettre 8443 "
 #~ "c'est la valeur par défaut) :\n"
@@ -12994,8 +13033,8 @@ msgstr "« %s »"
 #~ "lxc image edit [<remote>:]<image>\n"
 #~ "    Edit image, either by launching external editor or reading STDIN.\n"
 #~ "    Example: lxc image edit <image> # launch editor\n"
-#~ "             cat image.yaml | lxc image edit <image> # read from image."
-#~ "yaml\n"
+#~ "             cat image.yaml | lxc image edit <image> # read from "
+#~ "image.yaml\n"
 #~ "\n"
 #~ "lxc image alias create [<remote>:]<alias> <fingerprint>\n"
 #~ "    Create a new alias for an existing image.\n"
@@ -13085,8 +13124,8 @@ msgstr "« %s »"
 #~ "    Éditer l'image, soit en lançant un éditeur externe ou en lisant "
 #~ "STDIN.\n"
 #~ "    Exemple : lxc image edit <image> # lance l'éditeur\n"
-#~ "              cat image.yaml | lxc image edit <image> # lit depuis image."
-#~ "yaml\n"
+#~ "              cat image.yaml | lxc image edit <image> # lit depuis "
+#~ "image.yaml\n"
 #~ "\n"
 #~ "lxc image alias create [<remote>:]<alias> <fingerprint>\n"
 #~ "    Créer un nouvel alias pour une image existante.\n"
@@ -13677,8 +13716,8 @@ msgstr "« %s »"
 #~ "  f - Base Image Fingerprint (short)\n"
 #~ "  F - Base Image Fingerprint (long)\n"
 #~ "\n"
-#~ "Custom columns are defined with \"[config:|devices:]key[:name][:"
-#~ "maxWidth]\":\n"
+#~ "Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+#~ "\":\n"
 #~ "  KEY: The (extended) config or devices key to display. If [config:|"
 #~ "devices:] is omitted then it defaults to config key.\n"
 #~ "  NAME: Name to display in the column header.\n"
@@ -13744,8 +13783,8 @@ msgstr "« %s »"
 #~ "Colonnes en mode rapide : nsacPt\n"
 #~ "\n"
 #~ "Exemple :\n"
-#~ "    lxc list -c n,volatile.base_image:\\BASE IMAGE\\:0,s46,volatile.eth0."
-#~ "hwaddr:MAC"
+#~ "    lxc list -c n,volatile.base_image:\\BASE "
+#~ "IMAGE\\:0,s46,volatile.eth0.hwaddr:MAC"
 
 #~ msgid "Failed to generate 'lxc.%s.1': %v"
 #~ msgstr "Échec lors de la génération de 'lxc.%s.1': %v"
