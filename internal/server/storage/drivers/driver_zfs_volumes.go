@@ -576,6 +576,70 @@ func (d *zfs) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 	return postHook, cleanup, nil
 }
 
+func (d *zfs) receiveFromZfsSender(vol Volume, sender *exec.Cmd) error {
+	var receiver *exec.Cmd
+	if vol.ContentType() == ContentTypeBlock || d.isBlockBacked(vol) {
+		receiver = exec.Command("zfs", "receive", d.dataset(vol, false))
+	} else {
+		receiver = exec.Command("zfs", "receive", "-x", "mountpoint", d.dataset(vol, false))
+	}
+
+	// Configure the pipes.
+	receiver.Stdin, _ = sender.StdoutPipe()
+	receiver.Stdout = os.Stdout
+
+	var recvStderr bytes.Buffer
+	receiver.Stderr = &recvStderr
+
+	var sendStderr bytes.Buffer
+	sender.Stderr = &sendStderr
+
+	// Run the transfer.
+	err := receiver.Start()
+	if err != nil {
+		return fmt.Errorf("Failed starting ZFS receive: %w", err)
+	}
+
+	err = sender.Start()
+	if err != nil {
+		_ = receiver.Process.Kill()
+		return fmt.Errorf("Failed starting ZFS send: %w", err)
+	}
+
+	senderErr := make(chan error)
+	go func() {
+		err := sender.Wait()
+		if err != nil {
+			_ = receiver.Process.Kill()
+
+			// This removes any newlines in the error message.
+			msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
+
+			senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
+			return
+		}
+
+		senderErr <- nil
+	}()
+
+	err = receiver.Wait()
+	if err != nil {
+		_ = sender.Process.Kill()
+
+		// This removes any newlines in the error message.
+		msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
+
+		return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
+	}
+
+	err = <-senderErr
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateVolumeFromCopy provides same-pool volume copying functionality.
 func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool, allowInconsistent bool, op *operations.Operation) error {
 	var err error
@@ -682,12 +746,6 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 
 		// Send/receive the snapshot.
 		var sender *exec.Cmd
-		var receiver *exec.Cmd
-		if vol.ContentType() == ContentTypeBlock || d.isBlockBacked(vol) {
-			receiver = exec.Command("zfs", "receive", d.dataset(vol, false))
-		} else {
-			receiver = exec.Command("zfs", "receive", "-x", "mountpoint", d.dataset(vol, false))
-		}
 
 		// Handle transferring snapshots.
 		if len(snapshots) > 0 {
@@ -738,55 +796,7 @@ func (d *zfs) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 			}
 		}
 
-		// Configure the pipes.
-		receiver.Stdin, _ = sender.StdoutPipe()
-		receiver.Stdout = os.Stdout
-
-		var recvStderr bytes.Buffer
-		receiver.Stderr = &recvStderr
-
-		var sendStderr bytes.Buffer
-		sender.Stderr = &sendStderr
-
-		// Run the transfer.
-		err := receiver.Start()
-		if err != nil {
-			return fmt.Errorf("Failed starting ZFS receive: %w", err)
-		}
-
-		err = sender.Start()
-		if err != nil {
-			_ = receiver.Process.Kill()
-			return fmt.Errorf("Failed starting ZFS send: %w", err)
-		}
-
-		senderErr := make(chan error)
-		go func() {
-			err := sender.Wait()
-			if err != nil {
-				_ = receiver.Process.Kill()
-
-				// This removes any newlines in the error message.
-				msg := strings.ReplaceAll(strings.TrimSpace(sendStderr.String()), "\n", " ")
-
-				senderErr <- fmt.Errorf("Failed ZFS send: %w (%s)", err, msg)
-				return
-			}
-
-			senderErr <- nil
-		}()
-
-		err = receiver.Wait()
-		if err != nil {
-			_ = sender.Process.Kill()
-
-			// This removes any newlines in the error message.
-			msg := strings.ReplaceAll(strings.TrimSpace(recvStderr.String()), "\n", " ")
-
-			return fmt.Errorf("Failed ZFS receive: %w (%s)", err, msg)
-		}
-
-		err = <-senderErr
+		err := d.receiveFromZfsSender(vol, sender)
 		if err != nil {
 			return err
 		}
