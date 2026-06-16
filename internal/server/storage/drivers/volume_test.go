@@ -63,6 +63,21 @@ func Test_Volume_ConfigSizeFromSource(t *testing.T) {
 			size:   "20GiB",
 		},
 		{
+			// Check an image volume target grows to the source image size when its specified size
+			// is smaller, rather than erroring (the cached image volume must hold the full image).
+			vol:    Volume{driver: &nonBlockBackedDriver, volType: VolumeTypeImage, config: map[string]string{"size": "5GiB"}},
+			srcVol: Volume{volType: VolumeTypeImage, config: map[string]string{"volatile.rootfs.size": "10GiB"}},
+			err:    nil,
+			size:   "10GiB",
+		},
+		{
+			// Same as above but the smaller size comes from the pool's volume.size setting.
+			vol:    Volume{driver: &nonBlockBackedDriver, volType: VolumeTypeImage, poolConfig: map[string]string{"volume.size": "5GiB"}},
+			srcVol: Volume{volType: VolumeTypeImage, config: map[string]string{"volatile.rootfs.size": "10GiB"}},
+			err:    nil,
+			size:   "10GiB",
+		},
+		{
 			// Check returned size is empty when the container volume/pool doesn't specify a size and
 			// the pool is not block backed and the volume is container & fs.
 			vol:    Volume{driver: &nonBlockBackedDriver, volType: VolumeTypeContainer, contentType: ContentTypeFS, config: map[string]string{}},
