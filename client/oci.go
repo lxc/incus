@@ -3,6 +3,8 @@ package incus
 import (
 	"errors"
 	"net/http"
+
+	"github.com/lxc/incus/v7/internal/oci"
 )
 
 // ProtocolOCI implements an OCI registry API client.
@@ -18,7 +20,19 @@ type ProtocolOCI struct {
 	// Error tracking for images.
 	errors map[string]error
 
+	// Lazily-initialized registry client (caches auth tokens across calls).
+	registry *oci.Registry
+
 	tempPath string
+}
+
+// getRegistry returns the registry client, creating it on first use.
+func (r *ProtocolOCI) getRegistry() *oci.Registry {
+	if r.registry == nil {
+		r.registry = oci.NewRegistry(r.httpHost, r.http, r.httpUserAgent)
+	}
+
+	return r.registry
 }
 
 // Disconnect is a no-op for OCI.

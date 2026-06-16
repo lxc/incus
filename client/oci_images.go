@@ -417,22 +417,26 @@ func (r *ProtocolOCI) GetImageAlias(name string) (*api.ImageAliasesEntry, string
 		name = fmt.Sprintf("%s@%s", imageWithoutTag, hash)
 	}
 
-	// Get the image information from skopeo.
-	stdout, err := r.runSkopeo("inspect", name, "--no-tags")
+	// Get the image information directly from the registry.
+	img, err := r.getRegistry().Inspect(name)
 	if err != nil {
-		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "stdout": stdout, "stderr": err})
+		logger.Debug("Error getting image alias", logger.Ctx{"name": name, "err": err})
 		r.errors[name] = err
 
 		return nil, "", err
 	}
 
-	// Parse the image info.
-	var info ociInfo
-	err = json.Unmarshal([]byte(stdout), &info)
-	if err != nil {
-		r.errors[name] = err
+	info := ociInfo{
+		Name:         img.Name,
+		Architecture: img.Architecture,
+		Created:      img.Created,
+	}
 
-		return nil, "", err
+	for _, layer := range img.Layers {
+		info.Layers = append(info.Layers, layer.Digest)
+		info.LayersData = append(info.LayersData, struct {
+			Size int64 `json:"Size"`
+		}{Size: layer.Size})
 	}
 
 	info.Alias = name
