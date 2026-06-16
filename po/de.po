@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-13 22:43-0300\n"
-"PO-Revision-Date: 2026-06-06 23:36+0000\n"
-"Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
-"org>\n"
+"PO-Revision-Date: 2026-06-15 23:43+0000\n"
+"Last-Translator: Dklfajsjfi49wefklsf32 "
+"<nlincus@users.noreply.hosted.weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/incus/cli/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.6\n"
+"X-Generator: Weblate 2026.7.dev0\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -1263,8 +1263,8 @@ msgstr "Sicherungen:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
-"<Schlüssel>=<Wert>: %s"
+"Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,<Schlüssel>"
+"=<Wert>: %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:205 cmd/incus/move.go:252
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1420,8 +1420,7 @@ msgstr ""
 #: cmd/incus/config.go:625
 #, c-format
 msgid "Can't unset key '%s', it's not currently set"
-msgstr ""
-"Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
+msgstr "Kann Schlüssel '%s' nicht zurücksetzen, da er derzeit nicht gesetzt ist"
 
 #: cmd/incus/admin_init.go:74
 msgid "Can't use --auto and --preseed together"
@@ -1439,8 +1438,7 @@ msgstr "Die Option --minimal und --auto können nicht zusammen genutzt werden"
 
 #: cmd/incus/admin_init.go:78
 msgid "Can't use --minimal and --preseed together"
-msgstr ""
-"Die Option --minimal und --preseed können nicht zusammen genutzt werden"
+msgstr "Die Option --minimal und --preseed können nicht zusammen genutzt werden"
 
 #: cmd/incus/snapshot.go:128 cmd/incus/storage_volume_snapshot.go:132
 msgid "Can't use both --no-expiry and --expiry"
@@ -1472,8 +1470,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:436
 msgid "Cannot set --target when source server is not clustered"
-msgstr ""
-"\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
+msgstr "\"Kann --target nicht setzen, wenn der Quellserver nicht im Cluster ist"
 
 #: cmd/incus/storage_volume.go:450
 msgid "Cannot set --volume-only when copying a snapshot"
@@ -2948,8 +2945,8 @@ msgstr ""
 "Mitglieds). \n"
 "\n"
 "  Die globale Datenbank teilen sich alle Mitglieder eines Clusters \n"
-"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, "
-"usw.). \n"
+"  und sie enthält Cluster-spezifische Daten (z.b. Profile, Container, usw.). "
+"\n"
 "\n"
 "  Wenn Sie einen Server ohne Cluster betreiben, gilt dasgleiche, \n"
 "  denn der Server ist dann praktisch ein Cluster mit nur einem Mitglied. \n"
@@ -5835,8 +5832,7 @@ msgstr ""
 
 #: cmd/incus/file.go:497
 msgid "More than one file to download, but target is not a directory"
-msgstr ""
-"Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
+msgstr "Mehr als eine Datei herunterzuladen, aber das Ziel ist kein Verzeichnis"
 
 #: cmd/incus/storage_volume_file.go:337
 #, fuzzy
@@ -9949,8 +9945,8 @@ msgstr ""
 "   Erstellt ein Projekt namens \"p1\"\n"
 "\n"
 "incus project create p1 < config.yaml\n"
-"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei \"config."
-"yaml\""
+"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei "
+"\"config.yaml\""
 
 #: cmd/incus/network_address_set.go:233
 #, fuzzy
@@ -10001,8 +9997,8 @@ msgstr ""
 "   Erstellt ein Projekt namens \"p1\"\n"
 "\n"
 "incus project create p1 < config.yaml\n"
-"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei \"config."
-"yaml\""
+"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei "
+"\"config.yaml\""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
@@ -10057,8 +10053,8 @@ msgstr ""
 "   Erstellt ein Projekt namens \"p1\"\n"
 "\n"
 "incus project create p1 < config.yaml\n"
-"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei \"config."
-"yaml\""
+"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei "
+"\"config.yaml\""
 
 #: cmd/incus/network_zone.go:1027
 #, fuzzy
@@ -10073,8 +10069,8 @@ msgstr ""
 "   Erstellt ein Projekt namens \"p1\"\n"
 "\n"
 "incus project create p1 < config.yaml\n"
-"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei \"config."
-"yaml\""
+"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei "
+"\"config.yaml\""
 
 #: cmd/incus/operation.go:296
 #, fuzzy
@@ -10164,8 +10160,8 @@ msgstr ""
 "   Erstellt ein Projekt namens \"p1\"\n"
 "\n"
 "incus project create p1 < config.yaml\n"
-"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei \"config."
-"yaml\""
+"    Erstellt ein Projekt namens \"p1\" mit der Konfigurationsdatei "
+"\"config.yaml\""
 
 #: cmd/incus/project.go:305
 msgid ""
@@ -10290,8 +10286,8 @@ msgstr ""
 "\n"
 "incus storage bucket key create p1 b01 k1 < config.yaml\n"
 "\tErzeugt einen Schlüssel genannt \"k1\" für einen storage bucket \"b01\" im "
-"pool \"p1\" unter Nutzung der Konfigurationsdetails aus der Datei \"config."
-"yaml\"."
+"pool \"p1\" unter Nutzung der Konfigurationsdetails aus der Datei "
+"\"config.yaml\"."
 
 #: cmd/incus/storage_bucket.go:1244
 msgid ""
@@ -10354,8 +10350,8 @@ msgstr ""
 "\n"
 "incus storage volume snapshot create default v1 snap0 < config.yaml\n"
 "       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
-"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei \"config."
-"yaml\"."
+"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei "
+"\"config.yaml\"."
 
 #: cmd/incus/storage_volume.go:946
 #, fuzzy
@@ -10373,8 +10369,8 @@ msgstr ""
 "\n"
 "incus storage volume snapshot create default v1 snap0 < config.yaml\n"
 "       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
-"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei \"config."
-"yaml\"."
+"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei "
+"\"config.yaml\"."
 
 #: cmd/incus/storage_volume_file.go:98
 msgid ""
@@ -10477,8 +10473,8 @@ msgstr ""
 "\n"
 "incus storage volume snapshot create default v1 snap0 < config.yaml\n"
 "       Erstellt einen Snapshot von \"v1\" im pool \"default\" mit dem Namen "
-"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei \"config."
-"yaml\"."
+"\"snap0\" mit den Konfigurationsdetails aus der angegebenen Datei "
+"\"config.yaml\"."
 
 #: cmd/incus/storage_volume.go:2198
 msgid ""
