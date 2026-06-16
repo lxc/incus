@@ -1678,13 +1678,19 @@ func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, err
 
 	r.addClientHeaders(req)
 
+	// Add the default port if missing as the raw dialers don't apply it.
+	addr := apiURL.Host
+	if apiURL.Port() == "" {
+		addr = net.JoinHostPort(apiURL.Hostname(), "443")
+	}
+
 	// Establish the connection.
 	var conn net.Conn
 
 	if httpTransport.TLSClientConfig != nil {
-		conn, err = httpTransport.DialTLSContext(context.Background(), "tcp", apiURL.Host)
+		conn, err = httpTransport.DialTLSContext(context.Background(), "tcp", addr)
 	} else {
-		conn, err = httpTransport.DialContext(context.Background(), "tcp", apiURL.Host)
+		conn, err = httpTransport.DialContext(context.Background(), "tcp", addr)
 	}
 
 	if err != nil {
