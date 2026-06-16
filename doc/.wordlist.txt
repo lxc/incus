@@ -109,6 +109,7 @@ GIDs
 Github
 Golang
 goroutines
+GPG
 GPUs
 Grafana
 HAProxy
