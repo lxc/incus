@@ -323,7 +323,7 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 
 	// Parse the token.
 	token, tokenParts, err := jwtParser.ParseUnverified(tokenString, &jwt.RegisteredClaims{})
-	if err != nil || len(tokenParts) < 2 {
+	if err != nil || len(tokenParts) != 3 {
 		return false, "", nil
 	}
 
@@ -359,16 +359,15 @@ func CheckJwtToken(r *http.Request, trustedCerts map[string]x509.Certificate) (b
 		return false, "", nil
 	}
 
-	// Verify token signature.
-	tokenSigningString, err := token.SigningString()
-	if err != nil {
-		return false, "", nil
-	}
-
+	// Verify token signature against the original signing input.
+	// Re-serializing the parsed claims would reorder or drop fields and
+	// yield a different string than the one that was actually signed.
 	tokenSignature, err := base64.RawURLEncoding.DecodeString(tokenParts[2])
 	if err != nil {
 		return false, "", nil
 	}
+
+	tokenSigningString := tokenParts[0] + "." + tokenParts[1]
 
 	err = token.Method.Verify(tokenSigningString, tokenSignature, tokenCert.PublicKey)
 	if err != nil {
