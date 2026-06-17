@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-13 22:43-0300\n"
-"PO-Revision-Date: 2026-06-15 23:44+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-06-17 01:01+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -4336,7 +4336,7 @@ msgstr "Manter a imagem atualizada após a cópia inicial"
 
 #: cmd/incus/remote.go:1511 cmd/incus/remote.go:1515
 msgid "Keepalive timeouts must be positive integers"
-msgstr ""
+msgstr "Os tempos limite de manter vivo têm de ser inteiros positivos"
 
 #: cmd/incus/info.go:701
 msgid "Kernel Version"
@@ -7933,7 +7933,7 @@ msgstr "Define as chaves de configuração de um membro do agrupamento"
 
 #: cmd/incus/remote.go:1483 cmd/incus/remote.go:1484
 msgid "Set a keepalive timeout for a remote"
-msgstr ""
+msgstr "Definir um tempo limite de manter vivo para um remoto"
 
 #: cmd/incus/file.go:922 cmd/incus/storage_volume_file.go:350
 msgid "Set authentication user when using SSH SFTP listener"
@@ -10250,6 +10250,14 @@ msgid ""
 "incus alias add cat \"exec @ARG1@ -- cat @ARG2@\"\n"
 "    Create a command for displaying file content of instances"
 msgstr ""
+"incus alias add list \"list -c ns46S\"\n"
+"    Sobrepõe o comando \"list\" para passar -c ns46S.\n"
+"\n"
+"incus alias add volume \"storage volume @ARGS@\"\n"
+"    Cria um comando curto para gestão de volumes\n"
+"\n"
+"incus alias add cat \"exec @ARG1@ -- cat @ARG2@\"\n"
+"    Cria um comando para mostrar conteúdo de ficheiro de instâncias"
 
 #: cmd/incus/alias.go:230
 msgid ""
@@ -10909,6 +10917,11 @@ msgid ""
 "incus remote set-keepalive my-remote 0\n"
 "    Disable keeplive for my-remote"
 msgstr ""
+"incus remote set-keepalive my-remote 30\n"
+"    Define um tempo limite de manter vivo de 30 segundos para o my-remote\n"
+"\n"
+"incus remote set-keepalive my-remote 0\n"
+"    Desativa o manter vivo para o my-remote"
 
 #: cmd/incus/snapshot.go:92
 msgid ""
@@ -11274,7 +11287,7 @@ msgstr "Interface"
 
 #: cmd/incus/usage/usage.go:837
 msgid "keepalive timeout"
-msgstr ""
+msgstr "tempo limite de manter vivo"
 
 #: cmd/incus/usage/usage.go:838
 msgid "key"
