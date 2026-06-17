@@ -690,9 +690,19 @@ func (v Volume) ConfigSizeFromSource(srcVol Volume) (string, error) {
 			return volSize, err
 		}
 
-		// The volume/pool specified size is smaller than image minimum size. We must not continue as
-		// these specified sizes provide protection against unpacking a massive image and filling the pool.
 		if volSizeBytes < imgSizeBytes {
+			// The shared cached image volume must be large enough to hold the image. Grow it to
+			// the image size rather than failing, so instances with a sufficciently sized root
+			// disk can be created even when the pool's volume.size is smaller than the image.
+			// Instance volumes keep the strict check below (their root disk size is honored
+			// separately).
+			if v.volType == VolumeTypeImage {
+				return srcVol.config["volatile.rootfs.size"], nil
+			}
+
+			// The volume/pool specified size is smaller than image minimum size. We must not
+			// continue as these specified sizes provide protection against unpacking a massive
+			// image and filling the pool.
 			return "", fmt.Errorf("Source image size (%d) exceeds specified volume size (%d)", imgSizeBytes, volSizeBytes)
 		}
 
