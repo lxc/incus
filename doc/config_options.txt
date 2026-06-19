@@ -6191,6 +6191,14 @@ Note that the claim must be contained in the access token.
 
 <!-- config group storage_truenas-common end -->
 <!-- config group storage_volume_btrfs-common start -->
+```{config:option} btrfs.compression storage_volume_btrfs-common
+:condition: "appropriate driver"
+:default: "same as `volume.btrfs.compression`"
+:shortdesc: "Compression algorithm to set on the volume, mapping to the Btrfs `compression` property (for example `zstd`, `lzo`, `zlib` or `none`)"
+:type: "string"
+
+```
+
 ```{config:option} initial.gid storage_volume_btrfs-common
 :condition: "custom volume with content type `filesystem`"
 :default: "same as `volume.initial.gid` or `0`"
