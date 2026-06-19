@@ -3173,3 +3173,9 @@ again when the instance stops.
 This adds a new `core.https_allowed_websocket_origin` server
 configuration key. It can be set to a comma-separate list of allowed
 origins or to the `*` wildcard.
+
+## `storage_btrfs_compression`
+
+This adds a new `btrfs.compression` storage volume configuration key for
+the `btrfs` driver. It maps to the Btrfs `compression` property and takes
+the same values (for example `zstd`, `lzo`, `zlib` or `none`).
