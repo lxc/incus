@@ -48,8 +48,9 @@ Therefore, you should never use VMs with Btrfs storage pools.
 
 If you really need to use VMs with Btrfs storage pools, set the instance root disk's [`size.state`](devices-disk) property to twice the size of the root disk's size.
 This configuration allows all blocks in the disk image file to be rewritten without reaching the qgroup quota.
-The [`btrfs.mount_options=compress-force`](storage-btrfs-pool-config) storage pool option can also avoid this scenario, because a side effect of enabling compression is to reduce the maximum extent size such that block rewrites don't cause as much storage to be double-tracked.
-However, this is a storage pool option, and it therefore affects all volumes on the pool.
+The per-volume `btrfs.compression` option can also help with this quota issue, as enabling compression reduces the maximum extent size so that block rewrites don't cause as much storage to be double-tracked.
+It does however prevent Incus from disabling copy-on-write on the volume, since the two are mutually exclusive.
+Set `btrfs.compression=none` to keep copy-on-write disabled.
 ```
 
 ## Configuration options
