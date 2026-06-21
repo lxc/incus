@@ -2555,6 +2555,13 @@ ff02::2 ip6-allrouters
 			return "", nil, err
 		}
 	} else {
+		// OCI specific configuration keys aren't valid on regular containers.
+		for key, value := range d.expandedConfig {
+			if value != "" && strings.HasPrefix(key, "oci.") {
+				return "", nil, fmt.Errorf("%q is only supported on OCI containers", key)
+			}
+		}
+
 		// Clear OCI config key if present.
 		if d.expandedConfig["volatile.container.oci"] != "" {
 			volatileSet["volatile.container.oci"] = ""
