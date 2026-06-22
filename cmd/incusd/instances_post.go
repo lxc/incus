@@ -17,6 +17,7 @@ import (
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	internalIO "github.com/lxc/incus/v7/internal/io"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/backup"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -1226,6 +1227,20 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 	target := request.QueryParam(r, "target")
 	if !s.ServerClustered && target != "" {
 		return response.BadRequest(errors.New("Target only allowed when clustered"))
+	}
+
+	// For a copy, check that the caller is allowed to view the source instance before any of its details are loaded.
+	if req.Source.Type == "copy" && req.Source.Source != "" {
+		sourceProject := req.Source.Project
+		if sourceProject == "" {
+			sourceProject = targetProjectName
+		}
+
+		sourceName, _, _ := api.GetParentAndSnapshotName(req.Source.Source)
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectInstance(sourceProject, sourceName), auth.EntitlementCanView)
+		if err != nil {
+			return response.SmartError(err)
+		}
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
