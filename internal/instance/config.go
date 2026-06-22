@@ -713,7 +713,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  type: string
 	//  liveupdate: no
 	//  condition: OCI container
-	//  shortdesc: OCI container entry point
+	//  shortdesc: Entry point
 	"oci.entrypoint": validate.IsAny,
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.cwd)
@@ -722,7 +722,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  type: string
 	//  liveupdate: no
 	//  condition: OCI container
-	//  shortdesc: OCI container working directory
+	//  shortdesc: Working directory
 	"oci.cwd": validate.Optional(validate.IsAbsFilePath),
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.gid)
@@ -731,7 +731,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  type: string
 	//  liveupdate: no
 	//  condition: OCI container
-	//  shortdesc: OCI container GID
+	//  shortdesc: Process GID
 	"oci.gid": validate.Optional(validate.IsUint32),
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.uid)
@@ -740,7 +740,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  type: string
 	//  liveupdate: no
 	//  condition: OCI container
-	//  shortdesc: OCI container UID
+	//  shortdesc: Process UID
 	"oci.uid": validate.Optional(validate.IsUint32),
 
 	// Caller is responsible for full validation of any raw.* value.
