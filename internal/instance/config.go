@@ -743,6 +743,33 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Process UID
 	"oci.uid": validate.Optional(validate.IsUint32),
 
+	// gendoc:generate(entity=instance, group=oci, key=oci.dns.nameservers)
+	// Comma-separated list of name server addresses for the initial `resolv.conf`.
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: OCI container
+	//  shortdesc: DNS name servers
+	"oci.dns.nameservers": validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
+
+	// gendoc:generate(entity=instance, group=oci, key=oci.dns.domain)
+	// Domain name for the initial `resolv.conf`.
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: OCI container
+	//  shortdesc: DNS domain
+	"oci.dns.domain": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=oci, key=oci.dns.search)
+	// Comma-separated list of search domains for the initial `resolv.conf`.
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: OCI container
+	//  shortdesc: DNS search domains
+	"oci.dns.search": validate.IsAny,
+
 	// Caller is responsible for full validation of any raw.* value.
 
 	// gendoc:generate(entity=instance, group=raw, key=raw.lxc)
