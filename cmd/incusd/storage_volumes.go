@@ -934,6 +934,25 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 
 		return doVolumeCreateOrCopy(s, r, request.ProjectParam(r), projectName, poolName, &req)
 	case "copy":
+		// Check that the caller is allowed to view the source volume.
+		srcProjectName := projectName
+		if req.Source.Project != "" {
+			srcProjectName, err = project.StorageVolumeProject(s.DB.Cluster, req.Source.Project, db.StoragePoolVolumeTypeCustom)
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+
+		srcPoolName := req.Source.Pool
+		if srcPoolName == "" {
+			srcPoolName = poolName
+		}
+
+		err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectStorageVolume(srcProjectName, srcPoolName, db.StoragePoolVolumeTypeNameCustom, req.Source.Name, req.Source.Location), auth.EntitlementCanView)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		if dbVolume != nil {
 			return doCustomVolumeRefresh(s, r, request.ProjectParam(r), projectName, poolName, &req)
 		}
