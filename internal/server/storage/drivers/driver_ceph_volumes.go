@@ -1121,10 +1121,21 @@ func (d *ceph) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, o
 		return nil
 	}
 
-	// Block image volumes cannot be resized because they have a readonly snapshot that doesn't get
-	// updated when the volume's size is changed, and this is what instances are created from.
-	// During initial volume fill allowUnsafeResize is enabled because snapshot hasn't been taken yet.
+	// Image volumes carry a readonly snapshot (the clone source for instances) that doesn't get
+	// updated when the volume's size is changed, so they cannot be resized in place.
+	// During initial volume fill allowUnsafeResize is enabled because the snapshot hasn't been taken
+	// yet. Otherwise: a cached image is only ever a clone source and instances are sized independently
+	// after cloning, so a request to *grow* the image is unnecessary and treated as a no-op. This is
+	// important because the image is also intentionally shrunk to its minimal content size after
+	// unpacking, so the size policy will routinely ask to grow it; regenerating instead would delete
+	// the readonly snapshot and race with concurrent clones during parallel instance creation. A
+	// request to *shrink* the image (e.g. the pool's volume.size was lowered) is reported as
+	// unsupported so EnsureImage regenerates the image at the smaller size.
 	if !allowUnsafeResize && vol.volType == VolumeTypeImage {
+		if sizeBytes > oldSizeBytes {
+			return nil
+		}
+
 		return ErrNotSupported
 	}
 
