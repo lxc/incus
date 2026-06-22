@@ -608,6 +608,16 @@ func IsUUID(value string) error {
 	return nil
 }
 
+// IsSHA256 validates whether a value is a SHA-256 hash in hex form.
+func IsSHA256(value string) error {
+	match, _ := regexp.MatchString(`^[0-9a-f]{64}$`, value)
+	if !match {
+		return errors.New("Invalid SHA-256 hash")
+	}
+
+	return nil
+}
+
 // IsPCIAddress validates whether a value is a PCI address.
 func IsPCIAddress(value string) error {
 	match, _ := regexp.MatchString(`^(?:[0-9a-fA-F]{4}:)?[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F]$`, value)
