@@ -6998,6 +6998,15 @@
 			"common": {
 				"keys": [
 					{
+						"btrfs.compression": {
+							"condition": "appropriate driver",
+							"default": "same as `volume.btrfs.compression`",
+							"longdesc": "",
+							"shortdesc": "Compression algorithm to set on the volume, mapping to the Btrfs `compression` property (for example `zstd`, `lzo`, `zlib` or `none`)",
+							"type": "string"
+						}
+					},
+					{
 						"initial.gid": {
 							"condition": "custom volume with content type `filesystem`",
 							"default": "same as `volume.initial.gid` or `0`",

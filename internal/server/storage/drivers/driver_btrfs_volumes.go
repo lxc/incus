@@ -33,6 +33,7 @@ import (
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
 )
 
 // CreateVolume creates an empty volume and can optionally fill it by executing the supplied filler function.
@@ -54,6 +55,16 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		_ = os.Remove(volPath)
 	})
 
+	// Apply the per-volume compression property if set, so that the files created inside the
+	// subvolume (including the root disk file for block volumes) inherit it.
+	compression := vol.ExpandedConfig("btrfs.compression")
+	if compression != "" {
+		_, err = subprocess.RunCommand("btrfs", "property", "set", volPath, "compression", compression)
+		if err != nil {
+			return fmt.Errorf("Failed setting compression on %q: %w", volPath, err)
+		}
+	}
+
 	// Create sparse loopback file if volume is block.
 	rootBlockPath := ""
 	if IsContentBlock(vol.contentType) {
@@ -71,6 +82,14 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 
 		mountOptions := strings.Split(d.getMountOptions(), ",")
 
+		// Work out whether the volume ends up compressed. The "btrfs.compression" property takes
+		// precedence over the pool's mount options, so "none" disables compression for this volume
+		// even on a compressed pool, and any other value enables it.
+		compressed := strings.Contains(mountinfo[len(mountinfo)-1], "compress")
+		if compression != "" {
+			compressed = compression != "none" && compression != "no"
+		}
+
 		// Enable nodatacow on the parent directory so that when the root disk file is created the setting
 		// is inherited and random writes don't cause fragmentation and old extents to be kept.
 		// BTRFS extents are immutable so when blocks are written they end up in new extents and the old
@@ -81,8 +100,10 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		// in order to track the difference between original and snapshot. This will increase the size of
 		// data being referenced.
 		//
-		// An exception is made for when compression is enabled on the underlying storage.
-		if !slices.Contains(mountOptions, "datacow") && !strings.Contains(mountinfo[len(mountinfo)-1], "compress") {
+		// nodatacow and compression are mutually exclusive, so this is skipped when the volume is
+		// compressed. Setting "btrfs.compression=none" disables compression for the volume and so
+		// allows nodatacow to be applied on a pool that is otherwise compressed.
+		if !slices.Contains(mountOptions, "datacow") && !compressed {
 			_, err = subprocess.RunCommand("chattr", "+C", volPath)
 			if err != nil {
 				return fmt.Errorf("Failed setting nodatacow on %q: %w", volPath, err)
@@ -1002,6 +1023,14 @@ func (d *btrfs) HasVolume(vol Volume) (bool, error) {
 
 // ValidateVolume validates the supplied volume config.
 func (d *btrfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
+	// gendoc:generate(entity=storage_volume_btrfs, group=common, key=btrfs.compression)
+	//
+	// ---
+	//  type: string
+	//  condition: appropriate driver
+	//  default: same as `volume.btrfs.compression`
+	//  shortdesc: Compression algorithm to set on the volume, mapping to the Btrfs `compression` property (for example `zstd`, `lzo`, `zlib` or `none`)
+
 	// gendoc:generate(entity=storage_volume_btrfs, group=common, key=initial.gid)
 	//
 	// ---
@@ -1098,7 +1127,18 @@ func (d *btrfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	//  default: same as `volume.size`
 	//  shortdesc: Size/quota of the storage bucket
 
-	return d.validateVolume(vol, nil, removeUnknownKeys)
+	rules := map[string]func(value string) error{
+		"btrfs.compression": validate.Optional(func(value string) error {
+			algo, _, _ := strings.Cut(value, ":")
+			if !slices.Contains([]string{"none", "no", "zlib", "lzo", "zstd"}, algo) {
+				return fmt.Errorf("Unsupported compression algorithm %q", value)
+			}
+
+			return nil
+		}),
+	}
+
+	return d.validateVolume(vol, rules, removeUnknownKeys)
 }
 
 // UpdateVolume applies config changes to the volume.
@@ -1108,6 +1148,16 @@ func (d *btrfs) UpdateVolume(vol Volume, changedConfig map[string]string) error 
 		err := d.SetVolumeQuota(vol, newSize, false, nil)
 		if err != nil {
 			return err
+		}
+	}
+
+	// Apply a changed compression property to the volume. This affects newly written data; the
+	// existing contents keep whatever compression they were written with.
+	compression, compressionChanged := changedConfig["btrfs.compression"]
+	if compressionChanged && compression != "" {
+		_, err := subprocess.RunCommand("btrfs", "property", "set", vol.MountPath(), "compression", compression)
+		if err != nil {
+			return fmt.Errorf("Failed setting compression on %q: %w", vol.MountPath(), err)
 		}
 	}
 
