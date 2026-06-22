@@ -609,6 +609,12 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 			return -1, err
 		}
 
+		// Reject a rootfs symlink which could redirect writes to the host filesystem.
+		rootfsInfo, err := os.Lstat(rootfsPath)
+		if err == nil && !rootfsInfo.IsDir() {
+			return -1, fmt.Errorf("Image rootfs isn't a regular directory: %s", imageFile)
+		}
+
 		// Check for separate root file.
 		if util.PathExists(imageRootfsFile) {
 			err = os.MkdirAll(rootfsPath, 0o755)
@@ -623,7 +629,8 @@ func ImageUnpack(imageFile string, vol drivers.Volume, destBlockFile string, sys
 		}
 
 		// Check that the container image unpack has resulted in a rootfs dir.
-		if !util.PathExists(rootfsPath) {
+		rootfsInfo, err = os.Lstat(rootfsPath)
+		if err != nil || !rootfsInfo.IsDir() {
 			return -1, fmt.Errorf("Image is missing a rootfs: %s", imageFile)
 		}
 
