@@ -748,6 +748,12 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
+			// Reject a symlink which could redirect writes to the host filesystem.
+			execOutputInfo, err := os.Lstat(execOutputDir)
+			if err != nil || !execOutputInfo.IsDir() {
+				return errors.New("Exec output directory isn't a regular directory")
+			}
+
 			// Prepare stdout and stderr recording.
 			stdout, err = os.OpenFile(filepath.Join(execOutputDir, fmt.Sprintf("exec_%s.stdout", op.ID())), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o666)
 			if err != nil {
