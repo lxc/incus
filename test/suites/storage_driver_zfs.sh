@@ -88,6 +88,20 @@ do_zfs_encryption() {
     zfs get -H -o name,property,value keystatus "$zpool_name" | grep -Eq "$zpool_name\s+keystatus\s+available"
     INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage list -f csv -c nDs | grep -q "zpool_encrypted,zfs,CREATED"
 
+    # Regression test for copying non-clone datasets with snapshots inside an
+    # encrypted ZFS pool. This used to receive a raw replication stream, creating
+    # a new encryption root with an unavailable key and making the final mount fail.
+    INCUS_DIR="${INCUS_STORAGE_DIR}" ensure_import_testimage
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage create zfs-encryption-dir dir
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus init testimage zfs-encryption-dir-source -s zfs-encryption-dir
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus copy zfs-encryption-dir-source zfs-encryption-copy-source -s zpool_encrypted
+    [ "$(zfs get -H -o value origin "$zpool_name/containers/zfs-encryption-copy-source")" = "-" ]
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus snapshot create zfs-encryption-copy-source snap0
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus copy zfs-encryption-copy-source zfs-encryption-copy-target
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus info zfs-encryption-copy-target | grep -q "snap0"
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus delete -f zfs-encryption-dir-source zfs-encryption-copy-source zfs-encryption-copy-target
+    INCUS_DIR="${INCUS_STORAGE_DIR}" incus storage delete zfs-encryption-dir
+
     # Shut down Incus to force the pool to get exported.
     shutdown_incus "${INCUS_STORAGE_DIR}"
 
