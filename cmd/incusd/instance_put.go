@@ -237,6 +237,23 @@ func instanceSnapRestore(s *state.State, projectName string, name string, snap s
 
 	source.SetOperation(op)
 
+	// Ensure restoring the snapshot's config doesn't violate project restrictions.
+	profiles := make([]string, 0, len(source.Profiles()))
+	for _, profile := range source.Profiles() {
+		profiles = append(profiles, profile.Name)
+	}
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return projecthelpers.AllowInstanceUpdate(tx, projectName, name, api.InstancePut{
+			Config:   source.LocalConfig(),
+			Devices:  source.LocalDevices().CloneNative(),
+			Profiles: profiles,
+		}, inst.LocalConfig())
+	})
+	if err != nil {
+		return err
+	}
+
 	// Generate a new `volatile.uuid.generation` to differentiate this instance restored from a snapshot from the original instance.
 	source.LocalConfig()["volatile.uuid.generation"] = uuid.New().String()
 
