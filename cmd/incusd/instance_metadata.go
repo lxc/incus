@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -468,18 +469,26 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 
 	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, c, nil) }, "Failed to unmount instance")
 
+	// Confine all template access to the instance directory.
+	root, err := os.OpenRoot(c.Path())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close instance root")
+
 	// Look at the request
 	templateName := r.FormValue("path")
 	if templateName == "" {
 		templates := []string{}
-		if !util.PathExists(filepath.Join(c.Path(), "templates")) {
-			return response.SyncResponse(true, templates)
-		}
 
 		// List templates
-		templatesPath := filepath.Join(c.Path(), "templates")
-		entries, err := os.ReadDir(templatesPath)
+		entries, err := fs.ReadDir(root.FS(), "templates")
 		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return response.SyncResponse(true, templates)
+			}
+
 			return response.InternalError(err)
 		}
 
@@ -493,19 +502,19 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 	}
 
 	// Check if the template exists
-	templatePath, err := getContainerTemplatePath(c, templateName)
+	templatePath, err := getContainerTemplatePath(templateName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	if !util.PathExists(templatePath) {
-		return response.NotFound(fmt.Errorf("Template %q not found", templateName))
-	}
-
 	// Create a temporary file with the template content (since the container
 	// storage might not be available when the file is read from FileResponse)
-	template, err := os.Open(templatePath)
+	template, err := root.Open(templatePath)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return response.NotFound(fmt.Errorf("Template %q not found", templateName))
+		}
+
 		return response.SmartError(err)
 	}
 
@@ -620,27 +629,33 @@ func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response
 
 	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, c, nil) }, "Failed to unmount instance")
 
+	// Confine all template access to the instance directory.
+	root, err := os.OpenRoot(c.Path())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close instance root")
+
 	// Look at the request
 	templateName := r.FormValue("path")
 	if templateName == "" {
 		return response.BadRequest(errors.New("missing path argument"))
 	}
 
-	if !util.PathExists(filepath.Join(c.Path(), "templates")) {
-		err := os.MkdirAll(filepath.Join(c.Path(), "templates"), 0o711)
-		if err != nil {
-			return response.SmartError(err)
-		}
+	err = root.Mkdir("templates", 0o711)
+	if err != nil && !errors.Is(err, fs.ErrExist) {
+		return response.SmartError(err)
 	}
 
 	// Check if the template already exists
-	templatePath, err := getContainerTemplatePath(c, templateName)
+	templatePath, err := getContainerTemplatePath(templateName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	// Write the new template
-	template, err := os.OpenFile(templatePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	template, err := root.OpenFile(templatePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -739,24 +754,32 @@ func instanceMetadataTemplatesDelete(d *Daemon, r *http.Request) response.Respon
 
 	defer logger.WarnOnError(func() error { return storagePools.InstanceUnmount(pool, c, nil) }, "Failed to unmount instance")
 
+	// Confine all template access to the instance directory.
+	root, err := os.OpenRoot(c.Path())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close instance root")
+
 	// Look at the request
 	templateName := r.FormValue("path")
 	if templateName == "" {
 		return response.BadRequest(errors.New("missing path argument"))
 	}
 
-	templatePath, err := getContainerTemplatePath(c, templateName)
+	templatePath, err := getContainerTemplatePath(templateName)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	if !util.PathExists(templatePath) {
-		return response.NotFound(fmt.Errorf("Template %q not found", templateName))
-	}
-
 	// Delete the template
-	err = os.Remove(templatePath)
+	err = root.Remove(templatePath)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return response.NotFound(fmt.Errorf("Template %q not found", templateName))
+		}
+
 		return response.InternalError(err)
 	}
 
@@ -765,11 +788,11 @@ func instanceMetadataTemplatesDelete(d *Daemon, r *http.Request) response.Respon
 	return response.EmptySyncResponse
 }
 
-// Return the full path of a container template.
-func getContainerTemplatePath(c instance.Instance, filename string) (string, error) {
+// Return the template path relative to the instance root.
+func getContainerTemplatePath(filename string) (string, error) {
 	if strings.Contains(filename, "/") {
 		return "", errors.New("Invalid template filename")
 	}
 
-	return filepath.Join(c.Path(), "templates", filename), nil
+	return filepath.Join("templates", filename), nil
 }
