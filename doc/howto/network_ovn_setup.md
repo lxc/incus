@@ -156,7 +156,7 @@ In addition, you can add any number of servers to the Incus cluster that run onl
 1. Still on the first machine, configure Incus to be able to communicate with the OVN DB cluster.
    To do so, find the value for `ovn-northd-nb-db` in `/etc/default/ovn-central` and provide it to Incus with the following command:
 
-       incus config set network.ovn.northbound_connection <ovn-northd-nb-db>
+       incus config set network.ovn.northbound_connection=<ovn-northd-nb-db>
 
 1. Finally, create the actual OVN network (on the first machine):
 

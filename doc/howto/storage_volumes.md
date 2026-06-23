@@ -100,11 +100,11 @@ To do so, you must set the corresponding {ref}`server configuration <server-opti
 
 - To use a custom volume to store the backup tarballs:
 
-      incus config set storage.backups_volume <pool_name>/<volume_name>
+      incus config set storage.backups_volume=<pool_name>/<volume_name>
 
 - To use a custom volume to store the image tarballs:
 
-      incus config set storage.images_volume <pool_name>/<volume_name>
+      incus config set storage.images_volume=<pool_name>/<volume_name>
 
 (storage-configure-volume)=
 ## Configure storage volume settings

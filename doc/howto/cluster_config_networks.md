@@ -46,7 +46,7 @@ To do so, you must specify different addresses for {config:option}`server-cluste
 1. After joining your members, set the `core.https_address` configuration to the address for the REST API.
    For example:
 
-       incus config set core.https_address 0.0.0.0:8443
+       incus config set core.https_address=0.0.0.0:8443
 
    ```{note}
    `core.https_address` is specific to the cluster member, so you can use different addresses on different members.

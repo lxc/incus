@@ -10,16 +10,16 @@ In the {ref}`server` option tables, options that apply to the cluster are marked
 
 You can configure a server option with the following command:
 
-    incus config set <key> <value>
+    incus config set <key>=<value>
 
 For example, to allow remote access to the Incus server on port 8443, enter the following command:
 
-    incus config set core.https_address :8443
+    incus config set core.https_address=:8443
 
 In a cluster setup, to configure a server option for a cluster member only, add the `--target` flag.
 For example, to configure where to store image tarballs on a specific cluster member, enter a command similar to the following:
 
-    incus config set storage.images_volume my-pool/my-volume --target member02
+    incus config set storage.images_volume=my-pool/my-volume --target member02
 
 ## Display the server configuration
 

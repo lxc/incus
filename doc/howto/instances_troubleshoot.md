@@ -50,12 +50,12 @@ As this is an unprivileged container, `systemd` does not have the ability to do 
 So you can see the environment before anything is changed, and you can explicitly change the init system in a container using the `raw.lxc` configuration parameter.
 This is equivalent to setting `init=/bin/bash` on the Linux kernel command line.
 
-    incus config set systemd raw.lxc 'lxc.init.cmd = /bin/bash'
+    incus config set systemd raw.lxc='lxc.init.cmd = /bin/bash'
 
 Here is what it looks like:
 
 ```{terminal}
-:input: incus config set systemd raw.lxc 'lxc.init.cmd = /bin/bash'
+:input: incus config set systemd raw.lxc='lxc.init.cmd = /bin/bash'
 
 :input: incus start systemd
 :input: incus console --show-log systemd
