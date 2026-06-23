@@ -15,6 +15,36 @@ jobs:
     - name: Check that all commits are signed-off
       uses: KineticCafe/actions-dco@v3.1.0
 
+  llm-commit-policy:
+    permissions:
+      contents: none
+    name: LLM commit policy
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+
+    - name: Check LLM commit policy
+      run: |
+        set -eu
+
+        # Inspired by https://github.com/yaml/go-yaml/pull/340
+        agents="(aider|anthropic|claude|codex|copilot|devin|gemini|grok|openai)"
+
+        commits=$(git rev-list ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+        for commit in $commits; do
+            if git log -n 1 "$commit" | tr '[:upper:]' '[:lower:]' | grep -qE "(author|assisted-by|co-authored-by|signed-off-by):.*$agents"; then
+                echo "Error: The following commit appears to violate this repo's LLM/AI contribution policy:"
+                echo ""
+                git log -n 1 "$commit"
+
+                exit 1
+            fi
+        done
+
   target-branch:
     permissions:
       contents: none
