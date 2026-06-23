@@ -32,7 +32,7 @@ To see state and usage information for a cluster member, run the following comma
 To configure your cluster, use [`incus config`](incus_config.md).
 For example:
 
-    incus config set cluster.max_voters 5
+    incus config set cluster.max_voters=5
 
 Keep in mind that some {ref}`server configuration options <server>` are global and others are local.
 You can configure the global options on any cluster member, and the changes are propagated to the other cluster members through the distributed database.

@@ -8,7 +8,7 @@ To do so, set the {config:option}`server-core:core.https_address` server configu
 
 For example, to allow access to the Incus server on port `8443`, enter the following command:
 
-    incus config set core.https_address :8443
+    incus config set core.https_address=:8443
 
 To allow access through a specific IP address, use `ip addr` to find an available address and then set it.
 For example:
@@ -36,7 +36,7 @@ For example:
        valid_lft forever preferred_lft forever
     inet6 fd42:f4ab:4399:e6eb::1/64 scope global
        valid_lft forever preferred_lft forever
-:input: incus config set core.https_address 10.68.216.12
+:input: incus config set core.https_address=10.68.216.12
 ```
 
 All remote clients can then connect to Incus and access any image that is marked for public use.
