@@ -129,6 +129,33 @@ func (d *deviceCommon) generateHostName(prefix string, hwaddr string) (string, e
 	return network.RandomDevName(prefix), nil
 }
 
+// generateAndPersistHostName sets and persists saveData["host_name"] before the interface is
+// created, so an unclean shutdown can't leak an interface whose name was never recorded.
+// Any stale interface of that name from a previous such event is removed for reuse.
+func (d *deviceCommon) generateAndPersistHostName(saveData map[string]string, prefix string) error {
+	if saveData["host_name"] == "" {
+		var err error
+		saveData["host_name"], err = d.generateHostName(prefix, d.config["hwaddr"])
+		if err != nil {
+			return err
+		}
+	}
+
+	err := d.volatileSet(map[string]string{"host_name": saveData["host_name"]})
+	if err != nil {
+		return err
+	}
+
+	if network.InterfaceExists(saveData["host_name"]) {
+		err = network.InterfaceRemove(saveData["host_name"])
+		if err != nil {
+			return fmt.Errorf("Failed to remove stale interface %q: %w", saveData["host_name"], err)
+		}
+	}
+
+	return nil
+}
+
 // setNICLink sets the link status (connected/disconnected) for the given NIC.
 func (d *deviceCommon) setNICLink() error {
 	runConf := deviceConfig.RunConfig{}

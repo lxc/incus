@@ -940,11 +940,9 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		default:
 			// Create veth pair and configure the peer end with custom hwaddr and mtu if supplied.
 			if d.inst.Type() == instancetype.Container {
-				if saveData["host_name"] == "" {
-					saveData["host_name"], err = d.generateHostName("veth", d.config["hwaddr"])
-					if err != nil {
-						return nil, err
-					}
+				err = d.generateAndPersistHostName(saveData, "veth")
+				if err != nil {
+					return nil, err
 				}
 
 				integrationBridgeNICName = saveData["host_name"]
@@ -953,11 +951,9 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 					return nil, err
 				}
 			} else if d.inst.Type() == instancetype.VM {
-				if saveData["host_name"] == "" {
-					saveData["host_name"], err = d.generateHostName("tap", d.config["hwaddr"])
-					if err != nil {
-						return nil, err
-					}
+				err = d.generateAndPersistHostName(saveData, "tap")
+				if err != nil {
+					return nil, err
 				}
 
 				integrationBridgeNICName = saveData["host_name"]
