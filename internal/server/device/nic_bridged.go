@@ -896,7 +896,8 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Check if hairpin mode needs to be enabled.
-	if nativeBridge && d.network != nil {
+	// IncusOS doesn't load br_netfilter as it breaks routed proxy traffic, so skip the hairpin handling there.
+	if nativeBridge && d.network != nil && d.state.OS.IncusOS == nil {
 		brNetfilterEnabled := false
 		for _, ipVersion := range []uint{4, 6} {
 			if network.BridgeNetfilterEnabled(ipVersion) == nil {
