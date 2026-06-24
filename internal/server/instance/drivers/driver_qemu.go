@@ -3923,7 +3923,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	conf = append(conf, qemuConsole()...)
 
 	// VM core info (memory dump).
-	if !slices.Contains([]int{osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN, osarch.ARCH_64BIT_S390_BIG_ENDIAN}, d.architecture) {
+	if !util.IsTrue(d.expandedConfig["security.sev"]) && !slices.Contains([]int{osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN, osarch.ARCH_64BIT_S390_BIG_ENDIAN}, d.architecture) {
 		conf = append(conf, qemuCoreInfo()...)
 	}
 
