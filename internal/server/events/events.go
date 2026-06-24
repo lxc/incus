@@ -144,10 +144,6 @@ func (s *Server) Inject(event api.Event, eventSource EventSource) {
 		if !s.debug && logEntry.Level == "debug" {
 			return
 		}
-
-		if !s.debug && !s.verbose && logEntry.Level == "info" {
-			return
-		}
 	}
 
 	err := s.broadcast(event, eventSource)
