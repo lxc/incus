@@ -93,7 +93,7 @@ To do so, create the instance with [`incus init`](incus_create.md) instead of [`
 
 ### YAML format for `cloud-init` configuration
 
-The `cloud-init` options require YAML's [literal style format](https://yaml.org/spec/1.2.2/#812-literal-style).
+The `cloud-init` options require YAML's [literal style format](https://spec.yaml.io/main/spec/1.2.2/#812-literal-style).
 You use a pipe symbol (`|`) to indicate that all indented text after the pipe should be passed to `cloud-init` as a single string, with new lines and indentation preserved.
 
 The `vendor-data` and `user-data` options usually start with `#cloud-config`.
