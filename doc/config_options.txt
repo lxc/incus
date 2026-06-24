@@ -508,7 +508,14 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv4.address devices-nic_bridged
 :managed: "no"
-:shortdesc: "An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)"
+:shortdesc: "An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.gateway devices-nic_bridged
+:managed: "no"
+:shortdesc: "IPv4 default gateway to statically configure inside an OCI container"
 :type: "string"
 
 ```
@@ -529,7 +536,14 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv6.address devices-nic_bridged
 :managed: "no"
-:shortdesc: "An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set)"
+:shortdesc: "An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.gateway devices-nic_bridged
+:managed: "no"
+:shortdesc: "IPv6 default gateway to statically configure inside an OCI container"
 :type: "string"
 
 ```
@@ -946,7 +960,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv4.address devices-nic_ovn
 :managed: "no"
-:shortdesc: "An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation"
+:shortdesc: "An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation (or a CIDR value to statically configure the address inside an OCI container)"
 :type: "string"
 
 ```
@@ -954,6 +968,13 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```{config:option} ipv4.address.external devices-nic_ovn
 :managed: "no"
 :shortdesc: "Select a specific external address (typically from a network forward)"
+:type: "string"
+
+```
+
+```{config:option} ipv4.gateway devices-nic_ovn
+:managed: "no"
+:shortdesc: "IPv4 default gateway to statically configure inside an OCI container"
 :type: "string"
 
 ```
@@ -974,7 +995,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv6.address devices-nic_ovn
 :managed: "no"
-:shortdesc: "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation"
+:shortdesc: "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation (or a CIDR value to statically configure the address inside an OCI container)"
 :type: "string"
 
 ```
@@ -982,6 +1003,13 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```{config:option} ipv6.address.external devices-nic_ovn
 :managed: "no"
 :shortdesc: "Select a specific external address (typically from a network forward)"
+:type: "string"
+
+```
+
+```{config:option} ipv6.gateway devices-nic_ovn
+:managed: "no"
+:shortdesc: "IPv6 default gateway to statically configure inside an OCI container"
 :type: "string"
 
 ```
@@ -2205,15 +2233,39 @@ The specified version expression is used to set `libnvidia-container NVIDIA_REQU
 ```{config:option} oci.cwd instance-oci
 :condition: "OCI container"
 :liveupdate: "no"
-:shortdesc: "OCI container working directory"
+:shortdesc: "Working directory"
 :type: "string"
 Override the working directory of an OCI container.
+```
+
+```{config:option} oci.dns.domain instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "DNS domain"
+:type: "string"
+Domain name for the initial `resolv.conf`.
+```
+
+```{config:option} oci.dns.nameservers instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "DNS name servers"
+:type: "string"
+Comma-separated list of name server addresses for the initial `resolv.conf`.
+```
+
+```{config:option} oci.dns.search instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "DNS search domains"
+:type: "string"
+Comma-separated list of search domains for the initial `resolv.conf`.
 ```
 
 ```{config:option} oci.entrypoint instance-oci
 :condition: "OCI container"
 :liveupdate: "no"
-:shortdesc: "OCI container entry point"
+:shortdesc: "Entry point"
 :type: "string"
 Override the entry point of an OCI container.
 ```
@@ -2221,7 +2273,7 @@ Override the entry point of an OCI container.
 ```{config:option} oci.gid instance-oci
 :condition: "OCI container"
 :liveupdate: "no"
-:shortdesc: "OCI container GID"
+:shortdesc: "Process GID"
 :type: "string"
 Override the GID of the process run in an OCI container.
 ```
@@ -2229,7 +2281,7 @@ Override the GID of the process run in an OCI container.
 ```{config:option} oci.uid instance-oci
 :condition: "OCI container"
 :liveupdate: "no"
-:shortdesc: "OCI container UID"
+:shortdesc: "Process UID"
 :type: "string"
 Override the UID of the process run in an OCI container.
 ```
