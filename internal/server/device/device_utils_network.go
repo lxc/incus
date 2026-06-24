@@ -667,6 +667,24 @@ func networkValidGateway(value string) error {
 	return fmt.Errorf("Invalid gateway: %s", value)
 }
 
+// networkValidGatewayV4 validates an IPv4 gateway that may also be set to "none" or "auto".
+func networkValidGatewayV4(value string) error {
+	if slices.Contains([]string{"", "none", "auto"}, value) {
+		return nil
+	}
+
+	return validate.IsNetworkAddressV4(value)
+}
+
+// networkValidGatewayV6 validates an IPv6 gateway that may also be set to "none" or "auto".
+func networkValidGatewayV6(value string) error {
+	if slices.Contains([]string{"", "none", "auto"}, value) {
+		return nil
+	}
+
+	return validate.IsNetworkAddressV6(value)
+}
+
 // bgpAddPrefix adds external routes to the BGP server.
 func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) error {
 	// BGP is only valid when tied to a managed network.

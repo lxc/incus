@@ -169,7 +169,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)
+		//  shortdesc: An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)
 		"ipv4.address",
 
 		// gendoc:generate(entity=devices, group=nic_bridged, key=ipv6.address)
@@ -177,8 +177,24 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set)
+		//  shortdesc: An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)
 		"ipv6.address",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=ipv4.gateway)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: IPv4 default gateway to statically configure inside an OCI container
+		"ipv4.gateway",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=ipv6.gateway)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: IPv6 default gateway to statically configure inside an OCI container
+		"ipv6.gateway",
 
 		// gendoc:generate(entity=devices, group=nic_bridged, key=ipv4.routes)
 		//
@@ -348,7 +364,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 
 		netConfig := n.Config()
 
-		if d.config["ipv4.address"] != "" {
+		if d.config["ipv4.address"] != "" && !strings.Contains(d.config["ipv4.address"], "/") {
 			dhcpv4Subnet := n.DHCPv4Subnet()
 
 			// Check that DHCPv4 is enabled on parent network (needed to use static assigned IPs) when
@@ -383,7 +399,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			}
 		}
 
-		if d.config["ipv6.address"] != "" {
+		if d.config["ipv6.address"] != "" && !strings.Contains(d.config["ipv6.address"], "/") {
 			dhcpv6Subnet := n.DHCPv6Subnet()
 
 			// Check that DHCPv6 is enabled on parent network (needed to use static assigned IPs) when
@@ -584,10 +600,14 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		return nil
 	}
 
-	// Add bridge specific ipv4/ipv6 validation rules
+	// Add bridge specific ipv4/ipv6 validation rules (CIDR allowed for OCI static config).
 	rules["ipv4.address"] = func(value string) error {
 		if util.IsNoneOrEmpty(value) {
 			return nil
+		}
+
+		if strings.Contains(value, "/") {
+			return validate.IsNetworkAddressCIDRV4(value)
 		}
 
 		return validate.IsNetworkAddressV4(value)
@@ -598,8 +618,15 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			return nil
 		}
 
+		if strings.Contains(value, "/") {
+			return validate.IsNetworkAddressCIDRV6(value)
+		}
+
 		return validate.IsNetworkAddressV6(value)
 	}
+
+	rules["ipv4.gateway"] = networkValidGatewayV4
+	rules["ipv6.gateway"] = networkValidGatewayV6
 
 	// Now run normal validation.
 	err := d.config.Validate(rules)
@@ -751,6 +778,11 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
+	err = nicCheckOCIStaticNetwork(d.inst, d.config)
+	if err != nil {
+		return nil, err
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -808,7 +840,7 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 	routes = append(routes, util.SplitNTrimSpace(d.config["ipv6.routes"], ",", -1, true)...)
 	routes = append(routes, util.SplitNTrimSpace(d.config["ipv4.routes.external"], ",", -1, true)...)
 	routes = append(routes, util.SplitNTrimSpace(d.config["ipv6.routes.external"], ",", -1, true)...)
-	err = networkNICRouteAdd(d.config["parent"], d.config["ipv4.address"], d.config["ipv6.address"], routes...)
+	err = networkNICRouteAdd(d.config["parent"], nicAddressIP(d.config["ipv4.address"]), nicAddressIP(d.config["ipv6.address"]), routes...)
 	if err != nil {
 		return nil, err
 	}
@@ -932,6 +964,9 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 		{Key: "hwaddr", Value: d.config["hwaddr"]},
 		{Key: "connected", Value: d.config["connected"]},
 	}
+
+	// Apply any static address and gateway configuration for OCI containers.
+	runConf.NetworkInterface = append(runConf.NetworkInterface, nicOCIStaticNetworkConfig(d.inst, d.config)...)
 
 	if d.config["io.bus"] == "usb" {
 		runConf.UseUSBBus = true
@@ -1202,6 +1237,15 @@ func (d *nicBridged) rebuildDnsmasqEntry() error {
 	}
 
 	if ipv6Address == "none" {
+		ipv6Address = ""
+	}
+
+	// Static in-instance addresses (CIDR form) are configured inside the container, not via DHCP.
+	if strings.Contains(ipv4Address, "/") {
+		ipv4Address = ""
+	}
+
+	if strings.Contains(ipv6Address, "/") {
 		ipv6Address = ""
 	}
 
