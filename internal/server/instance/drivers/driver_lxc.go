@@ -2522,14 +2522,47 @@ ff02::2 ip6-allrouters
 			return "", nil, err
 		}
 
-		f, err := os.OpenFile(filepath.Join(d.Path(), "network", "resolv.conf"), os.O_RDWR|os.O_CREATE, 0o644)
+		// Generate the initial resolv.conf from the DNS settings (extended later over DHCP).
+		var resolvConf strings.Builder
+		for _, ns := range util.SplitNTrimSpace(d.expandedConfig["oci.dns.nameservers"], ",", -1, true) {
+			fmt.Fprintf(&resolvConf, "nameserver %s\n", ns)
+		}
+
+		if d.expandedConfig["oci.dns.search"] != "" {
+			fmt.Fprintf(&resolvConf, "search %s\n", strings.Join(util.SplitNTrimSpace(d.expandedConfig["oci.dns.search"], ",", -1, true), " "))
+		}
+
+		if d.expandedConfig["oci.dns.domain"] != "" {
+			fmt.Fprintf(&resolvConf, "domain %s\n", d.expandedConfig["oci.dns.domain"])
+		}
+
+		err = os.WriteFile(filepath.Join(d.Path(), "network", "resolv.conf"), []byte(resolvConf.String()), 0o644)
 		if err != nil {
 			return "", nil, err
 		}
 
-		f.Close()
-
 		err = lxcSetConfigItem(cc, "lxc.mount.entry", fmt.Sprintf("%s etc/resolv.conf none bind,create=file", filepath.Join(d.Path(), "network", "resolv.conf")))
+		if err != nil {
+			return "", nil, err
+		}
+
+		// Record interface/family combinations the DHCP client should skip (static or disabled).
+		var dhcpSkip strings.Builder
+		for _, dev := range d.expandedDevices.Sorted() {
+			if dev.Config["type"] != "nic" || dev.Config["name"] == "" {
+				continue
+			}
+
+			if dev.Config["ipv4.address"] == "none" || strings.Contains(dev.Config["ipv4.address"], "/") {
+				fmt.Fprintf(&dhcpSkip, "%s ipv4\n", dev.Config["name"])
+			}
+
+			if dev.Config["ipv6.address"] == "none" || strings.Contains(dev.Config["ipv6.address"], "/") {
+				fmt.Fprintf(&dhcpSkip, "%s ipv6\n", dev.Config["name"])
+			}
+		}
+
+		err = os.WriteFile(filepath.Join(d.Path(), "network", "dhcp.skip"), []byte(dhcpSkip.String()), 0o644)
 		if err != nil {
 			return "", nil, err
 		}
