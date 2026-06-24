@@ -216,7 +216,7 @@ func (d *btrfs) Create() error {
 				}
 			}
 
-			if strings.HasPrefix(cleanSource, daemonDir) {
+			if cleanSource == daemonDir || strings.HasPrefix(cleanSource, daemonDir+"/") {
 				if cleanSource != GetPoolMountPath(d.name) {
 					return fmt.Errorf("Only allowed source path under %q is %q", internalUtil.VarPath(), GetPoolMountPath(d.name))
 				}
