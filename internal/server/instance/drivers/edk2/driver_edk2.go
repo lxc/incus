@@ -33,6 +33,9 @@ const (
 
 	// CSM is a firmware with the UEFI Compatibility Support Module enabled to boot BIOS-only operating systems.
 	CSM
+
+	// SEV is a firmware build compatible with AMD SEV memory encryption.
+	SEV
 )
 
 var architectureInstallations = map[int][]Installation{
@@ -66,6 +69,10 @@ var architectureInstallations = map[int][]Installation{
 				{Code: "OVMF_CODE.2MB.CSM.fd", Vars: "OVMF_VARS.2MB.CSM.fd"},
 				{Code: "OVMF_CODE.CSM.fd", Vars: "OVMF_VARS.CSM.fd"},
 				{Code: "OVMF_CODE.csm.fd", Vars: "OVMF_VARS.fd"},
+			},
+			SEV: {
+				{Code: "OVMF.amdsev.fd", Vars: "OVMF_VARS_4M.fd"},
+				{Code: "OVMF.amdsev.fd", Vars: "OVMF_VARS.fd"},
 			},
 		},
 	}, {
