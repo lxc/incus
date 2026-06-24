@@ -591,6 +591,18 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		// Create the database entry
 		return tx.CreateImage(ctx, args.ProjectName, info.Fingerprint, info.Filename, info.Size, info.Public, info.AutoUpdate, info.Architecture, info.CreatedAt, info.ExpiresAt, info.Properties, info.Type, nil)
 	})
+	if err != nil && api.StatusErrorCheck(err, http.StatusConflict) {
+		// Another cluster member created the record concurrently, reuse it and just register this member.
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			_, info, err = tx.GetImage(ctx, info.Fingerprint, cluster.ImageFilter{Project: &args.ProjectName})
+			if err != nil {
+				return err
+			}
+
+			return tx.AddImageToLocalNode(ctx, args.ProjectName, info.Fingerprint)
+		})
+	}
+
 	if err != nil {
 		return nil, false, fmt.Errorf("Failed creating image record: %w", err)
 	}
