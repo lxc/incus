@@ -550,7 +550,15 @@
 						"ipv4.address": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set)",
+							"shortdesc": "An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.gateway": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "IPv4 default gateway to statically configure inside an OCI container",
 							"type": "string"
 						}
 					},
@@ -574,7 +582,15 @@
 						"ipv6.address": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set)",
+							"shortdesc": "An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.gateway": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "IPv6 default gateway to statically configure inside an OCI container",
 							"type": "string"
 						}
 					},
@@ -1053,7 +1069,7 @@
 						"ipv4.address": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation",
+							"shortdesc": "An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation (or a CIDR value to statically configure the address inside an OCI container)",
 							"type": "string"
 						}
 					},
@@ -1062,6 +1078,14 @@
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Select a specific external address (typically from a network forward)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv4.gateway": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "IPv4 default gateway to statically configure inside an OCI container",
 							"type": "string"
 						}
 					},
@@ -1085,7 +1109,7 @@
 						"ipv6.address": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation",
+							"shortdesc": "An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation (or a CIDR value to statically configure the address inside an OCI container)",
 							"type": "string"
 						}
 					},
@@ -1094,6 +1118,14 @@
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "Select a specific external address (typically from a network forward)",
+							"type": "string"
+						}
+					},
+					{
+						"ipv6.gateway": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "IPv6 default gateway to statically configure inside an OCI container",
 							"type": "string"
 						}
 					},
@@ -2490,7 +2522,34 @@
 							"condition": "OCI container",
 							"liveupdate": "no",
 							"longdesc": "Override the working directory of an OCI container.",
-							"shortdesc": "OCI container working directory",
+							"shortdesc": "Working directory",
+							"type": "string"
+						}
+					},
+					{
+						"oci.dns.domain": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Domain name for the initial `resolv.conf`.",
+							"shortdesc": "DNS domain",
+							"type": "string"
+						}
+					},
+					{
+						"oci.dns.nameservers": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Comma-separated list of name server addresses for the initial `resolv.conf`.",
+							"shortdesc": "DNS name servers",
+							"type": "string"
+						}
+					},
+					{
+						"oci.dns.search": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Comma-separated list of search domains for the initial `resolv.conf`.",
+							"shortdesc": "DNS search domains",
 							"type": "string"
 						}
 					},
@@ -2499,7 +2558,7 @@
 							"condition": "OCI container",
 							"liveupdate": "no",
 							"longdesc": "Override the entry point of an OCI container.",
-							"shortdesc": "OCI container entry point",
+							"shortdesc": "Entry point",
 							"type": "string"
 						}
 					},
@@ -2508,7 +2567,7 @@
 							"condition": "OCI container",
 							"liveupdate": "no",
 							"longdesc": "Override the GID of the process run in an OCI container.",
-							"shortdesc": "OCI container GID",
+							"shortdesc": "Process GID",
 							"type": "string"
 						}
 					},
@@ -2517,7 +2576,7 @@
 							"condition": "OCI container",
 							"liveupdate": "no",
 							"longdesc": "Override the UID of the process run in an OCI container.",
-							"shortdesc": "OCI container UID",
+							"shortdesc": "Process UID",
 							"type": "string"
 						}
 					}
