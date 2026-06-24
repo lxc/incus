@@ -2496,6 +2496,31 @@ func (d *qemu) architectureSupportsUEFI(arch int) bool {
 	return slices.Contains([]int{osarch.ARCH_64BIT_INTEL_X86, osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN}, arch)
 }
 
+// firmwarePairs returns the candidate firmware pairs for the instance based on its configuration.
+// When AMD SEV is enabled, a SEV-capable firmware is preferred but falls back to the regular firmware
+// (GENERIC, SECUREBOOT or CSM) if no SEV build is available.
+func (d *qemu) firmwarePairs() ([]edk2.FirmwarePair, error) {
+	if util.IsTrue(d.expandedConfig["security.sev"]) {
+		firmwares, err := edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SEV)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(firmwares) > 0 {
+			return firmwares, nil
+		}
+	}
+
+	switch {
+	case util.IsTrue(d.expandedConfig["security.csm"]):
+		return edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
+	case util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]):
+		return edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
+	default:
+		return edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
+	}
+}
+
 func (d *qemu) setupNvram() error {
 	var err error
 
@@ -2515,21 +2540,9 @@ func (d *qemu) setupNvram() error {
 	}
 
 	// Determine expected firmware.
-	if util.IsTrue(d.expandedConfig["security.csm"]) {
-		firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
-		if err != nil {
-			return err
-		}
-	} else if util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-		firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
-		if err != nil {
-			return err
-		}
-	} else {
-		firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
-		if err != nil {
-			return err
-		}
+	firmwares, err = d.firmwarePairs()
+	if err != nil {
+		return err
 	}
 
 	// Find the template file.
@@ -3869,22 +3882,9 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		}
 
 		// Determine expected firmware.
-		var firmwares []edk2.FirmwarePair
-		if util.IsTrue(d.expandedConfig["security.csm"]) {
-			firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.CSM)
-			if err != nil {
-				return nil, err
-			}
-		} else if util.IsTrueOrEmpty(d.expandedConfig["security.secureboot"]) {
-			firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.SECUREBOOT)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			firmwares, err = edk2.GetArchitectureFirmwarePairsForUsage(d.architecture, edk2.GENERIC)
-			if err != nil {
-				return nil, err
-			}
+		firmwares, err := d.firmwarePairs()
+		if err != nil {
+			return nil, err
 		}
 
 		var efiCode string
