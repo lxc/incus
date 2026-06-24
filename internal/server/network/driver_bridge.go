@@ -2848,7 +2848,8 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 	}
 
 	// Check if hairpin mode needs to be enabled on active NIC bridge ports.
-	if n.config["bridge.driver"] != "openvswitch" {
+	// IncusOS doesn't load br_netfilter as it breaks routed proxy traffic, so skip the hairpin handling there.
+	if n.config["bridge.driver"] != "openvswitch" && n.state.OS.IncusOS == nil {
 		brNetfilterEnabled := false
 		for _, ipVersion := range []uint{4, 6} {
 			if BridgeNetfilterEnabled(ipVersion) == nil {
@@ -3248,7 +3249,8 @@ func (n *bridge) forwardSetupFirewall() error {
 		fwForwards = append(fwForwards, n.forwardConvertToFirewallForwards(listenAddressNet.IP, net.ParseIP(forward.Config["target_address"]), portMaps)...)
 	}
 
-	if len(forwards) > 0 {
+	// IncusOS doesn't load br_netfilter as it breaks routed proxy traffic, so skip the warning there.
+	if len(forwards) > 0 && n.state.OS.IncusOS == nil {
 		// Check if br_netfilter is enabled to, and warn if not.
 		brNetfilterWarning := false
 		for ipVersion := range ipVersions {

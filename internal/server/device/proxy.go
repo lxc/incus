@@ -554,33 +554,37 @@ func (d *proxy) setupNAT() error {
 	// Override the host part of the connectAddr.Addr to the chosen connect IP.
 	connectAddr.Address = connectIP.String()
 
-	err = network.BridgeNetfilterEnabled(ipVersion)
-	if err != nil {
-		msg := fmt.Sprintf("IPv%d bridge netfilter not enabled. Instances using the bridge will not be able to connect to the proxy listen IP", ipVersion)
-		d.logger.Warn(msg, logger.Ctx{"err": err})
-		err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpsertWarningLocalNode(ctx, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
-		})
+	// IncusOS doesn't load br_netfilter as it breaks routed proxy traffic, so skip the related
+	// hairpin handling and warning there.
+	if d.state.OS.IncusOS == nil {
+		err = network.BridgeNetfilterEnabled(ipVersion)
 		if err != nil {
-			logger.Warn("Failed to create warning", logger.Ctx{"err": err})
-		}
-	} else {
-		err = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
-		if err != nil {
-			logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
-		}
+			msg := fmt.Sprintf("IPv%d bridge netfilter not enabled. Instances using the bridge will not be able to connect to the proxy listen IP", ipVersion)
+			d.logger.Warn(msg, logger.Ctx{"err": err})
+			err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.UpsertWarningLocalNode(ctx, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
+			})
+			if err != nil {
+				logger.Warn("Failed to create warning", logger.Ctx{"err": err})
+			}
+		} else {
+			err = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
+			if err != nil {
+				logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
+			}
 
-		if hostName == "" {
-			return errors.New("Proxy cannot find bridge port host_name to enable hairpin mode")
-		}
+			if hostName == "" {
+				return errors.New("Proxy cannot find bridge port host_name to enable hairpin mode")
+			}
 
-		// br_netfilter is enabled, so we need to enable hairpin mode on instance's bridge port otherwise
-		// the instances on the bridge will not be able to connect to the proxy device's listen IP and the
-		// NAT rule added by the firewall below to allow instance <-> instance traffic will also not work.
-		link := &ip.Link{Name: hostName}
-		err = link.BridgeLinkSetHairpin(true)
-		if err != nil {
-			return fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", hostName, err)
+			// br_netfilter is enabled, so we need to enable hairpin mode on instance's bridge port otherwise
+			// the instances on the bridge will not be able to connect to the proxy device's listen IP and the
+			// NAT rule added by the firewall below to allow instance <-> instance traffic will also not work.
+			link := &ip.Link{Name: hostName}
+			err = link.BridgeLinkSetHairpin(true)
+			if err != nil {
+				return fmt.Errorf("Error enabling hairpin mode on bridge port %q: %w", hostName, err)
+			}
 		}
 	}
 
