@@ -1053,15 +1053,15 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 		var syncSnapshots []*migration.Snapshot
 
 		// Get the GUIDs of all target snapshots.
-		for _, snapVol := range snapshots {
-			guid, err := d.getDatasetProperty(d.dataset(snapVol, false), "guid")
-			if err != nil {
-				return err
-			}
+		guids, err := d.getSnapshotGUIDs(d.dataset(vol, false))
+		if err != nil {
+			return err
+		}
 
+		for _, snapVol := range snapshots {
 			_, snapName, _ := api.GetParentAndSnapshotName(snapVol.name)
 
-			respSnapshots = append(respSnapshots, ZFSDataset{Name: snapName, GUID: guid})
+			respSnapshots = append(respSnapshots, ZFSDataset{Name: snapName, GUID: guids[d.dataset(snapVol, false)]})
 		}
 
 		if volumeOnly {
