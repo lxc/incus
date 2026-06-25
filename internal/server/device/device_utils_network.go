@@ -756,8 +756,8 @@ func bgpRemovePrefix(d *deviceCommon, config map[string]string) error {
 
 	bgpOwner := fmt.Sprintf("instance_%d_%s", d.inst.ID(), d.name)
 
-	// Stop any background neighbour scan started for the instance before removing its prefixes.
-	stopInstanceNeighbourScan(bgpOwner)
+	// Stop any background neighbor scan started for the instance before removing its prefixes.
+	stopInstanceNeighborScan(bgpOwner)
 
 	// Remove all of the instance's prefixes.
 	err := d.state.BGP.RemovePrefixByOwner(bgpOwner)
@@ -769,39 +769,39 @@ func bgpRemovePrefix(d *deviceCommon, config map[string]string) error {
 }
 
 var (
-	instanceNeighbourScansMu sync.Mutex
-	instanceNeighbourScans   = map[string]context.CancelFunc{}
+	instanceNeighborScansMu sync.Mutex
+	instanceNeighborScans   = map[string]context.CancelFunc{}
 )
 
-// startInstanceNeighbourScan periodically detects an instance's usable addresses (of the requested IP
-// versions) from the bridge's neighbour table and invokes onUpdate with them whenever any are found.
-// The scan runs in the background until stopInstanceNeighbourScan is called for the same owner, or
+// startInstanceNeighborScan periodically detects an instance's usable addresses (of the requested IP
+// versions) from the bridge's neighbor table and invokes onUpdate with them whenever any are found.
+// The scan runs in the background until stopInstanceNeighborScan is called for the same owner, or
 // until timeout elapses if non-zero. onUpdate is only called when at least one address is found and is
-// serialized with stopInstanceNeighbourScan so it won't run once the scan has been canceled.
-func startInstanceNeighbourScan(owner string, bridgeName string, hwAddr net.HardwareAddr, versions []uint, interval time.Duration, timeout time.Duration, onUpdate func(addrs []net.IP)) {
+// serialized with stopInstanceNeighborScan so it won't run once the scan has been canceled.
+func startInstanceNeighborScan(owner string, bridgeName string, hwAddr net.HardwareAddr, versions []uint, interval time.Duration, timeout time.Duration, onUpdate func(addrs []net.IP)) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Register the scan, canceling any previous one for the same owner.
-	instanceNeighbourScansMu.Lock()
-	oldCancel := instanceNeighbourScans[owner]
+	instanceNeighborScansMu.Lock()
+	oldCancel := instanceNeighborScans[owner]
 	if oldCancel != nil {
 		oldCancel()
 	}
 
-	instanceNeighbourScans[owner] = cancel
-	instanceNeighbourScansMu.Unlock()
+	instanceNeighborScans[owner] = cancel
+	instanceNeighborScansMu.Unlock()
 
 	go func() {
 		defer cancel()
 
 		check := func() {
-			addrs, err := network.GetNeighbourAddresses(bridgeName, hwAddr, versions)
+			addrs, err := network.GetNeighborAddresses(bridgeName, hwAddr, versions)
 			if err != nil || len(addrs) == 0 {
 				return
 			}
 
-			instanceNeighbourScansMu.Lock()
-			defer instanceNeighbourScansMu.Unlock()
+			instanceNeighborScansMu.Lock()
+			defer instanceNeighborScansMu.Unlock()
 
 			// Bail out if the scan was canceled while detecting the addresses.
 			if ctx.Err() != nil {
@@ -837,16 +837,16 @@ func startInstanceNeighbourScan(owner string, bridgeName string, hwAddr net.Hard
 	}()
 }
 
-// stopInstanceNeighbourScan cancels and deregisters any running neighbour scan for the given owner.
-func stopInstanceNeighbourScan(owner string) {
-	instanceNeighbourScansMu.Lock()
-	cancel := instanceNeighbourScans[owner]
+// stopInstanceNeighborScan cancels and deregisters any running neighbor scan for the given owner.
+func stopInstanceNeighborScan(owner string) {
+	instanceNeighborScansMu.Lock()
+	cancel := instanceNeighborScans[owner]
 	if cancel != nil {
 		cancel()
-		delete(instanceNeighbourScans, owner)
+		delete(instanceNeighborScans, owner)
 	}
 
-	instanceNeighbourScansMu.Unlock()
+	instanceNeighborScansMu.Unlock()
 }
 
 // bgpAddInstancePrefixes advertises the instance's own addresses over BGP when enabled on the network.
@@ -909,7 +909,7 @@ func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[strin
 	return nil
 }
 
-// bgpStartInstanceScan advertises the instance's addresses found in the neighbour table, waiting up
+// bgpStartInstanceScan advertises the instance's addresses found in the neighbor table, waiting up
 // to 10s for containers and 30s for VMs (which are slower to bring up their network).
 func bgpStartInstanceScan(d *deviceCommon, bridgeName string, hwAddr net.HardwareAddr, nexthops map[uint]net.IP, scanVersions []uint, bgpOwner string) {
 	scanTimeout := 10 * time.Second
@@ -917,7 +917,7 @@ func bgpStartInstanceScan(d *deviceCommon, bridgeName string, hwAddr net.Hardwar
 		scanTimeout = 30 * time.Second
 	}
 
-	startInstanceNeighbourScan(bgpOwner, bridgeName, hwAddr, scanVersions, time.Second, scanTimeout, func(addrs []net.IP) {
+	startInstanceNeighborScan(bgpOwner, bridgeName, hwAddr, scanVersions, time.Second, scanTimeout, func(addrs []net.IP) {
 		for _, addr := range addrs {
 			ipVersion := uint(6)
 			prefixLen := 128
@@ -1336,7 +1336,7 @@ func networkSRIOVSetupContainerVFNIC(hostName string, macPattern string, config 
 	return nil
 }
 
-// isIPAvailable checks if address responds to ARP/NDP neighbour probe on the parentInterface.
+// isIPAvailable checks if address responds to ARP/NDP neighbor probe on the parentInterface.
 // Returns true if IP is in use.
 func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) (bool, error) {
 	deadline, ok := ctx.Deadline()
@@ -1386,12 +1386,12 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 		return false, err
 	}
 
-	neighbourSolicitationMessage := &ndp.NeighborSolicitation{
+	neighborSolicitationMessage := &ndp.NeighborSolicitation{
 		TargetAddress: netipAddr,
 	}
 
 	_ = conn.SetDeadline(deadline)
-	err = conn.WriteTo(neighbourSolicitationMessage, nil, solicitedNodeMulticast)
+	err = conn.WriteTo(neighborSolicitationMessage, nil, solicitedNodeMulticast)
 	if err != nil {
 		return false, err
 	}
@@ -1407,8 +1407,8 @@ func isIPAvailable(ctx context.Context, address net.IP, parentInterface string) 
 		return false, err
 	}
 
-	neighbourAdvertisement, ok := msg.(*ndp.NeighborAdvertisement)
-	if ok && neighbourAdvertisement.TargetAddress == netipAddr {
+	neighborAdvertisement, ok := msg.(*ndp.NeighborAdvertisement)
+	if ok && neighborAdvertisement.TargetAddress == netipAddr {
 		return true, nil
 	}
 

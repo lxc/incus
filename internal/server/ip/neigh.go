@@ -8,73 +8,73 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// NeighbourIPState can be { NeighbourIPStatePermanent | NeighbourIPStateNoARP | NeighbourIPStateReachable | NeighbourIPStateStale | NeighbourIPStateNone | NeighbourIPStateIncomplete | NeighbourIPStateDelay | NeighbourIPStateProbe | NeighbourIPStateFailed }.
-type NeighbourIPState int
+// NeighborIPState can be { NeighborIPStatePermanent | NeighborIPStateNoARP | NeighborIPStateReachable | NeighborIPStateStale | NeighborIPStateNone | NeighborIPStateIncomplete | NeighborIPStateDelay | NeighborIPStateProbe | NeighborIPStateFailed }.
+type NeighborIPState int
 
 const (
-	// NeighbourIPStatePermanent the neighbour entry is valid forever and can be only be removed administratively.
-	NeighbourIPStatePermanent NeighbourIPState = unix.NUD_PERMANENT
+	// NeighborIPStatePermanent the neighbor entry is valid forever and can be only be removed administratively.
+	NeighborIPStatePermanent NeighborIPState = unix.NUD_PERMANENT
 
-	// NeighbourIPStateNoARP the neighbour entry is valid. No attempts to validate this entry will be made but it can
+	// NeighborIPStateNoARP the neighbor entry is valid. No attempts to validate this entry will be made but it can
 	// be removed when its lifetime expires.
-	NeighbourIPStateNoARP NeighbourIPState = unix.NUD_NOARP
+	NeighborIPStateNoARP NeighborIPState = unix.NUD_NOARP
 
-	// NeighbourIPStateReachable the neighbour entry is valid until the reachability timeout expires.
-	NeighbourIPStateReachable NeighbourIPState = unix.NUD_REACHABLE
+	// NeighborIPStateReachable the neighbor entry is valid until the reachability timeout expires.
+	NeighborIPStateReachable NeighborIPState = unix.NUD_REACHABLE
 
-	// NeighbourIPStateStale the neighbour entry is valid but suspicious.
-	NeighbourIPStateStale NeighbourIPState = unix.NUD_STALE
+	// NeighborIPStateStale the neighbor entry is valid but suspicious.
+	NeighborIPStateStale NeighborIPState = unix.NUD_STALE
 
-	// NeighbourIPStateNone this is a pseudo state used when initially creating a neighbour entry or after trying to
+	// NeighborIPStateNone this is a pseudo state used when initially creating a neighbor entry or after trying to
 	// remove it before it becomes free to do so.
-	NeighbourIPStateNone NeighbourIPState = unix.NUD_NONE
+	NeighborIPStateNone NeighborIPState = unix.NUD_NONE
 
-	// NeighbourIPStateIncomplete the neighbour entry has not (yet) been validated/resolved.
-	NeighbourIPStateIncomplete NeighbourIPState = unix.NUD_INCOMPLETE
+	// NeighborIPStateIncomplete the neighbor entry has not (yet) been validated/resolved.
+	NeighborIPStateIncomplete NeighborIPState = unix.NUD_INCOMPLETE
 
-	// NeighbourIPStateDelay neighbor entry validation is currently delayed.
-	NeighbourIPStateDelay NeighbourIPState = unix.NUD_DELAY
+	// NeighborIPStateDelay neighbor entry validation is currently delayed.
+	NeighborIPStateDelay NeighborIPState = unix.NUD_DELAY
 
-	// NeighbourIPStateProbe neighbor is being probed.
-	NeighbourIPStateProbe NeighbourIPState = unix.NUD_PROBE
+	// NeighborIPStateProbe neighbor is being probed.
+	NeighborIPStateProbe NeighborIPState = unix.NUD_PROBE
 
-	// NeighbourIPStateFailed max number of probes exceeded without success, neighbor validation has ultimately failed.
-	NeighbourIPStateFailed NeighbourIPState = unix.NUD_FAILED
+	// NeighborIPStateFailed max number of probes exceeded without success, neighbor validation has ultimately failed.
+	NeighborIPStateFailed NeighborIPState = unix.NUD_FAILED
 )
 
-// Neigh represents arguments for neighbour manipulation.
+// Neigh represents arguments for neighbor manipulation.
 type Neigh struct {
 	DevName string
 	Addr    net.IP
 	MAC     net.HardwareAddr
-	State   NeighbourIPState
+	State   NeighborIPState
 }
 
-// Show list neighbour entries filtered by DevName and optionally MAC address.
+// Show list neighbor entries filtered by DevName and optionally MAC address.
 func (n *Neigh) Show() ([]Neigh, error) {
 	link, err := linkByName(n.DevName)
 	if err != nil {
 		return nil, err
 	}
 
-	netlinkNeighbours, err := netlink.NeighList(link.Attrs().Index, netlink.FAMILY_ALL)
+	netlinkNeighbors, err := netlink.NeighList(link.Attrs().Index, netlink.FAMILY_ALL)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get neighbours for link %q: %w", n.DevName, err)
+		return nil, fmt.Errorf("Failed to get neighbors for link %q: %w", n.DevName, err)
 	}
 
-	neighbours := make([]Neigh, 0, len(netlinkNeighbours))
+	neighbors := make([]Neigh, 0, len(netlinkNeighbors))
 
-	for _, neighbour := range netlinkNeighbours {
-		if neighbour.HardwareAddr.String() != n.MAC.String() {
+	for _, neighbor := range netlinkNeighbors {
+		if neighbor.HardwareAddr.String() != n.MAC.String() {
 			continue
 		}
 
-		neighbours = append(neighbours, Neigh{
-			Addr:  neighbour.IP,
-			MAC:   neighbour.HardwareAddr,
-			State: NeighbourIPState(neighbour.State),
+		neighbors = append(neighbors, Neigh{
+			Addr:  neighbor.IP,
+			MAC:   neighbor.HardwareAddr,
+			State: NeighborIPState(neighbor.State),
 		})
 	}
 
-	return neighbours, nil
+	return neighbors, nil
 }

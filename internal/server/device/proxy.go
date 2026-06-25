@@ -539,7 +539,7 @@ func (d *proxy) setupNAT() error {
 			}
 		} else if nicType == "bridged" && connectWildcard && dynamicNICName == "" {
 			// No static IP defined on a bridged NIC. Remember it as a candidate for dynamic
-			// (DHCP) address detection from the neighbour table (ARP/NDP).
+			// (DHCP) address detection from the neighbor table (ARP/NDP).
 			dynamicNICName = devName
 			dynamicNICConfig = devConfig
 		}
@@ -600,7 +600,7 @@ func (d *proxy) setupNAT() error {
 	}
 
 	// For a dynamically addressed NIC, start a background monitor that detects the instance's
-	// address from the neighbour table and (re)applies the NAT rule whenever it changes.
+	// address from the neighbor table and (re)applies the NAT rule whenever it changes.
 	if dynamic {
 		bridgeName := dynamicNICConfig["network"]
 		if bridgeName == "" {
@@ -642,12 +642,12 @@ func (d *proxy) applyNAT(listenAddr *deviceConfig.ProxyAddress, connectAddr *dev
 	return d.state.Firewall.InstanceSetupProxyNAT(d.inst.Project().Name, d.inst.Name(), d.name, &addressForward)
 }
 
-// startNATMonitor runs a background neighbour scan that applies the proxy NAT rules once the
+// startNATMonitor runs a background neighbor scan that applies the proxy NAT rules once the
 // instance's dynamic address is detected and re-applies them whenever the address changes.
 func (d *proxy) startNATMonitor(bridgeName string, hwAddr net.HardwareAddr, ipVersion uint, listenAddr *deviceConfig.ProxyAddress, connectAddr *deviceConfig.ProxyAddress) {
 	var lastIP net.IP
 
-	startInstanceNeighbourScan(d.natMonitorOwner(), bridgeName, hwAddr, []uint{ipVersion}, 5*time.Second, 0, func(addrs []net.IP) {
+	startInstanceNeighborScan(d.natMonitorOwner(), bridgeName, hwAddr, []uint{ipVersion}, 5*time.Second, 0, func(addrs []net.IP) {
 		connectIP := addrs[0]
 		if connectIP.Equal(lastIP) {
 			return
@@ -665,7 +665,7 @@ func (d *proxy) startNATMonitor(bridgeName string, hwAddr net.HardwareAddr, ipVe
 
 // stopNATMonitor cancels and deregisters any running NAT monitor for the device.
 func (d *proxy) stopNATMonitor() {
-	stopInstanceNeighbourScan(d.natMonitorOwner())
+	stopInstanceNeighborScan(d.natMonitorOwner())
 }
 
 func (d *proxy) setupProxyProcInfo() (*proxyProcInfo, error) {
