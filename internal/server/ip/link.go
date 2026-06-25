@@ -281,6 +281,44 @@ func (l *Link) SetVfVlan(vf string, vlan string) error {
 	}, vfInt, vlanInt)
 }
 
+// SetVfNodeGUID changes the Infiniband node GUID for the specified vf.
+func (l *Link) SetVfNodeGUID(vf string, guid string) error {
+	vfInt, err := strconv.Atoi(vf)
+	if err != nil {
+		return err
+	}
+
+	nodeGUID, err := net.ParseMAC(guid)
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkSetVfNodeGUID(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, vfInt, nodeGUID)
+}
+
+// SetVfPortGUID changes the Infiniband port GUID for the specified vf.
+func (l *Link) SetVfPortGUID(vf string, guid string) error {
+	vfInt, err := strconv.Atoi(vf)
+	if err != nil {
+		return err
+	}
+
+	portGUID, err := net.ParseMAC(guid)
+	if err != nil {
+		return err
+	}
+
+	return netlink.LinkSetVfPortGUID(&netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{
+			Name: l.Name,
+		},
+	}, vfInt, portGUID)
+}
+
 // SetVfSpoofchk turns packet spoof checking on or off for the specified VF.
 func (l *Link) SetVfSpoofchk(vf string, on bool) error {
 	vfInt, err := strconv.Atoi(vf)
