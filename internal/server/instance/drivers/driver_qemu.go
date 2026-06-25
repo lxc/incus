@@ -84,6 +84,7 @@ import (
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/osinfo"
 	"github.com/lxc/incus/v7/shared/resources"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
@@ -382,7 +383,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 	}
 
 	// Only Linux and Windows support VirtIO vsock.
-	if slices.Contains([]string{"darwin", "freebsd"}, d.GuestOS()) {
+	if slices.Contains([]osinfo.OSType{osinfo.FreeBSD, osinfo.MacOS}, d.GuestOS()) {
 		// Get known network details.
 		networks, err := d.getNetworkState()
 		if err != nil {
@@ -1998,9 +1999,9 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// This needs to happen close to creating the full qemu cmd or the time might drift in between.
 	adjustment := d.getStartupRTCAdjustment()
 
-	if d.GuestOS() == "windows" || adjustment != 0 {
+	if d.GuestOS() == osinfo.Windows || adjustment != 0 {
 		base := time.Now().Add(adjustment)
-		if d.GuestOS() == "windows" {
+		if d.GuestOS() == osinfo.Windows {
 			// set base to localtime on windows.
 			base = base.Local()
 		} else {
@@ -3274,17 +3275,17 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 	}
 
 	guestOS := d.GuestOS()
-	if guestOS == "unknown" {
-		guestOS = "linux"
+	if guestOS == osinfo.UnknownOS {
+		guestOS = osinfo.Linux
 	}
 
 	// Windows doesn't handle shares.
-	if guestOS != "windows" {
+	if guestOS != osinfo.Windows {
 		// Add the VM agent loader.
 		agentSrcPath, _ := exec.LookPath("incus-agent")
 		if util.PathExists(os.Getenv("INCUS_AGENT_PATH")) {
 			// Install incus-agent script (loads from agent share).
-			agentFile, err := incusAgentLoader.ReadFile("agent-loader/incus-agent-" + guestOS)
+			agentFile, err := incusAgentLoader.ReadFile("agent-loader/incus-agent-" + string(guestOS))
 			if err != nil {
 				return err
 			}
@@ -3387,7 +3388,7 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 
 	// OS-specific configuration.
 	switch guestOS {
-	case "freebsd":
+	case osinfo.FreeBSD:
 		// rc.d service.
 		err = os.MkdirAll(filepath.Join(configDrivePath, "rc.d"), 0o500)
 		if err != nil {
@@ -3429,7 +3430,7 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 			return err
 		}
 
-	case "linux":
+	case osinfo.Linux:
 		// Systemd units.
 		err = os.MkdirAll(filepath.Join(configDrivePath, "systemd"), 0o500)
 		if err != nil {
@@ -3489,7 +3490,7 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 			return err
 		}
 
-	case "macos":
+	case osinfo.MacOS:
 		// Launchd daemons.
 		err = os.MkdirAll(filepath.Join(configDrivePath, "launchd"), 0o500)
 		if err != nil {
@@ -3531,7 +3532,7 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 			return err
 		}
 
-	case "windows":
+	case osinfo.Windows:
 		// Setup script for incus-agent that is executed by Service Control Manager (SCM). Since by
 		// default Windows cannot run a PowerShell script as a service without the help of a third
 		// party, a bat file is used to then execute the PowerShell script doing the job.
@@ -3596,7 +3597,7 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 	}
 
 	// Only Linux guests support dynamic NIC configuration.
-	if guestOS == "linux" {
+	if guestOS == osinfo.Linux {
 		// Clear NICConfigDir to ensure that no leftover configuration is erroneously applied by the agent.
 		nicConfigPath := filepath.Join(configDrivePath, deviceConfig.NICConfigDir)
 		_ = os.RemoveAll(nicConfigPath)
@@ -3853,8 +3854,11 @@ func (d *qemu) onRTCChange(change int) error {
 func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
-	isWindows := d.GuestOS() == "windows"
+	isWindows := d.GuestOS() == osinfo.Windows
 	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), bs.MachineType})
+
+	// Set OS Specific qemu args.
+	conf = append(conf, d.osVersionSpecificOptions()...)
 
 	err := d.addCPUMemoryConfig(&conf, bs)
 	if err != nil {
@@ -6950,7 +6954,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 	if curSizeMB == newSizeMB {
 		return nil
 	} else if baseSizeMB < newSizeMB {
-		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) || d.GuestOS() == "freebsd" {
+		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) || d.GuestOS() == osinfo.FreeBSD {
 			return fmt.Errorf("Memory hotplug feature is disabled")
 		}
 
@@ -10940,31 +10944,10 @@ func (d *qemu) CanLiveMigrate() bool {
 }
 
 // GuestOS returns the guest OS. In this driver, we consider anything unknown to be Linux.
-func (d *qemu) GuestOS() string {
-	imageOS := strings.ToLower(d.expandedConfig["image.os"])
-	matches := func(names ...string) bool {
-		for _, name := range names {
-			if strings.Contains(imageOS, name) {
-				return true
-			}
-		}
+func (d *qemu) GuestOS() osinfo.OSType {
+	osType, _ := osinfo.DetermineOS(strings.ToLower(d.expandedConfig["image.os"]))
 
-		return false
-	}
-
-	if matches("windows") {
-		return "windows"
-	}
-
-	if matches("darwin", "macos", "mac os") {
-		return "macos"
-	}
-
-	if matches("freebsd", "opnsense", "pfsense") {
-		return "freebsd"
-	}
-
-	return "unknown"
+	return osType
 }
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.

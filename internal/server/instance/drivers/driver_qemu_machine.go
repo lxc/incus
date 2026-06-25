@@ -13,9 +13,11 @@ import (
 	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/instance/drivers/cfg"
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/osinfo"
 	"github.com/lxc/incus/v7/shared/resources"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
@@ -289,6 +291,11 @@ func (d *qemu) cpuType(bs *qemuBootState) (string, error) {
 		cpuExtensions = append(cpuExtensions, "migratable=no", "+invtsc")
 	}
 
+	// Some older OSes will kernel panic with SMAP enabled, so explicitly disable it if we detect those versions.
+	osType, distro, version := osinfo.DetermineOSDetails(d.expandedConfig["image.os"], d.expandedConfig["image.release"])
+	_, _, disableFlags := osinfo.GetOSQemuCompatibility(osType, distro, version)
+	cpuExtensions = append(cpuExtensions, disableFlags...)
+
 	if len(cpuExtensions) > 0 {
 		cpuType += "," + strings.Join(cpuExtensions, ",")
 	}
@@ -324,7 +331,7 @@ func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {
 	limitsMemoryHotplug := d.expandedConfig["limits.memory.hotplug"]
 	memoryHotplugEnabled := !util.IsFalse(limitsMemoryHotplug)
 
-	if d.GuestOS() == "freebsd" {
+	if d.GuestOS() == osinfo.FreeBSD {
 		memoryHotplugEnabled = false
 
 		// We handle the empty value a bit differently here, as FreeBSD doesn’t have memory hotplug.
@@ -398,4 +405,52 @@ func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {
 	memInfo.Max = maxMemoryBytes
 
 	return memInfo, nil
+}
+
+func (d *qemu) osVersionSpecificOptions() []cfg.Section {
+	imageOS := d.expandedConfig["image.os"]
+	imageRelease := d.expandedConfig["image.release"]
+
+	osType, distro, version := osinfo.DetermineOSDetails(imageOS, imageRelease)
+
+	supportsVioSCSI, supportsModernVioNet, _ := osinfo.GetOSQemuCompatibility(osType, distro, version)
+
+	var conf []cfg.Section
+	if !supportsModernVioNet {
+		conf = append(conf, cfg.Section{
+			Name: "global",
+			Entries: map[string]string{
+				"driver":   "virtio-net-pci",
+				"property": "disable-legacy",
+				"value":    "off",
+			},
+		})
+	}
+
+	if !supportsVioSCSI {
+		conf = append(conf, cfg.Section{
+			Name: "global",
+			Entries: map[string]string{
+				"driver":   "virtio-blk-pci",
+				"property": "disable-legacy",
+				"value":    "off",
+			},
+		})
+	}
+
+	if osType == osinfo.Windows {
+		versionCode, _ := osinfo.MapWindowsVersionToAbbrev(version)
+		if versionCode == "2k3" || versionCode == "xp" {
+			conf = append(conf, cfg.Section{
+				Name: "global",
+				Entries: map[string]string{
+					"driver":   "q35-pcihost",
+					"property": "x-pci-hole64-fix",
+					"value":    "off",
+				},
+			})
+		}
+	}
+
+	return conf
 }
