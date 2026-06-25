@@ -449,10 +449,26 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} node_guid devices-infiniband
+:defaultdesc: "kernel assigned"
+:required: "no"
+:shortdesc: "The node GUID to assign to the virtual function (8 bytes of hex separated by colons)"
+:type: "string"
+
+```
+
 ```{config:option} parent devices-infiniband
 :defaultdesc: "kernel assigned"
 :required: "no"
 :shortdesc: "The name of the interface inside the instance"
+:type: "string"
+
+```
+
+```{config:option} port_guid devices-infiniband
+:defaultdesc: "kernel assigned"
+:required: "no"
+:shortdesc: "The port GUID to assign to the virtual function (8 bytes of hex separated by colons)"
 :type: "string"
 
 ```
