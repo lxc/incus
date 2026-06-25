@@ -3032,6 +3032,46 @@
 						}
 					},
 					{
+						"security.selinux.domain": {
+							"condition": "container or virtual machine",
+							"defaultdesc": "auto-detected (`container_init_t` for containers, `qemu_t` for VMs)",
+							"liveupdate": "no",
+							"longdesc": "Override the SELinux process domain for the instance.",
+							"shortdesc": "SELinux process domain override",
+							"type": "string"
+						}
+					},
+					{
+						"security.selinux.label_rootfs": {
+							"condition": "container",
+							"defaultdesc": "`auto`",
+							"liveupdate": "no",
+							"longdesc": "Control SELinux rootfs labeling behavior.\nThe default (`auto`) will label rootfs files if it is required. Labeling will be skipped\nonly if `security.selinux.level` is explicitly set for the instance, it is not started for\nthe first time and the persisted SELinux context is still valid.\nSetting to `always` will label rootfs files on every start and `never` will never touch any\nfile labels in the rootfs.",
+							"shortdesc": "SELinux rootfs labeling mode (auto, always, never)",
+							"type": "string"
+						}
+					},
+					{
+						"security.selinux.level": {
+							"condition": "container or virtual machine",
+							"defaultdesc": "auto-generated",
+							"liveupdate": "no",
+							"longdesc": "Override the SELinux MCS level for the instance.\nThis key must only be set on individual instances, never on profiles,\nsince using the same MCS level across instances breaks isolation.\nValues set via profiles are ignored.",
+							"shortdesc": "SELinux MCS level override",
+							"type": "string"
+						}
+					},
+					{
+						"security.selinux.type": {
+							"condition": "container or virtual machine",
+							"defaultdesc": "auto-detected (`container_file_t` for containers, `qemu_image_t` for VMs)",
+							"liveupdate": "no",
+							"longdesc": "Override the SELinux file type used for labeling instance storage.",
+							"shortdesc": "SELinux file type override",
+							"type": "string"
+						}
+					},
+					{
 						"security.sev": {
 							"condition": "virtual machine",
 							"defaultdesc": "`false`",
