@@ -3205,3 +3205,21 @@ This adds two new configuration keys, `node_guid` and `port_guid`, to
 When set, the matching GUID of the allocated virtual function is changed
 to the provided value when the instance starts and restored to its
 original value when the instance stops.
+
+## `instance_selinux`
+
+This adds per-instance SELinux integration for containers and virtual
+machines, with automatic MCS level allocation for isolation between
+instances on the same host.
+
+The following instance configuration keys are added:
+
+* `security.selinux.domain`: Override the SELinux process domain.
+* `security.selinux.type`: Override the SELinux file type used for the
+  instance storage.
+* `security.selinux.level`: Override the SELinux MCS level.
+* `security.selinux.label_rootfs`: Control rootfs labeling behavior
+  (`auto`, `always` or `never`).
+
+The computed context is persisted in the `volatile.selinux.context` key so
+that MCS ranges stay stable across restarts.
