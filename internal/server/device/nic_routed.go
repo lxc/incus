@@ -374,9 +374,9 @@ func (d *nicRouted) validateEnvironment() error {
 				return fmt.Errorf("Routed mode requires sysctl net.ipv6.conf.%s.forwarding=1", "all")
 			}
 
-			// net.ipv6.conf.all.proxy_ndp=1 is needed otherwise unicast neighbour solicitations are .
-			// rejected This causes periodic latency spikes every 15-20s as the neighbour has to resort
-			// to using multicast NDP resolution and expires the previous neighbour entry.
+			// net.ipv6.conf.all.proxy_ndp=1 is needed otherwise unicast neighbor solicitations are .
+			// rejected This causes periodic latency spikes every 15-20s as the neighbor has to resort
+			// to using multicast NDP resolution and expires the previous neighbor entry.
 			ipv6ProxyNdpPath := fmt.Sprintf("net/ipv6/conf/%s/proxy_ndp", "all")
 			sysctlVal, err = localUtil.SysctlGet(ipv6ProxyNdpPath)
 			if err != nil {
@@ -438,7 +438,7 @@ func (d *nicRouted) validateEnvironment() error {
 	return nil
 }
 
-// checkIPAvailability checks using ARP and NDP neighbour probes whether any of the NIC's IPs are already in use.
+// checkIPAvailability checks using ARP and NDP neighbor probes whether any of the NIC's IPs are already in use.
 func (d *nicRouted) checkIPAvailability(parent string) error {
 	var addresses []net.IP
 
@@ -606,7 +606,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 		if len(addresses) > 0 {
 			// Add gateway IPs to the host end of the veth pair. This ensures that liveness detection
 			// of the gateways inside the instance work and ensure that traffic doesn't periodically
-			// halt whilst ARP/NDP is re-detected (which is what happens with just neighbour proxies).
+			// halt whilst ARP/NDP is re-detected (which is what happens with just neighbor proxies).
 			addr := &ip.Addr{
 				DevName: saveData["host_name"],
 				Address: &net.IPNet{
@@ -651,7 +651,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 
 		tables := getTables()
 
-		// Perform per-address host-side configuration (static routes and neighbour proxy entries).
+		// Perform per-address host-side configuration (static routes and neighbor proxy entries).
 		for _, addrStr := range addresses {
 			// Apply host-side static routes to main routing table or VRF.
 
@@ -697,7 +697,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 				}
 			}
 
-			// If there is a parent interface, add neighbour proxy entry.
+			// If there is a parent interface, add neighbor proxy entry.
 			if d.effectiveParentName != "" {
 				np := ip.NeighProxy{
 					DevName: d.neighProxyDevice(address),
@@ -706,7 +706,7 @@ func (d *nicRouted) Start() (*deviceConfig.RunConfig, error) {
 
 				err = np.Add()
 				if err != nil {
-					return nil, fmt.Errorf("Failed adding neighbour proxy %q to %q: %w", np.Addr.String(), np.DevName, err)
+					return nil, fmt.Errorf("Failed adding neighbor proxy %q to %q: %w", np.Addr.String(), np.DevName, err)
 				}
 
 				reverter.Add(func() { _ = np.Delete() })
@@ -932,7 +932,7 @@ func (d *nicRouted) postStop() error {
 		}
 	}
 
-	// Delete IP neighbour proxy entries on the parent.
+	// Delete IP neighbor proxy entries on the parent.
 	if d.effectiveParentName != "" {
 		for _, key := range []string{"ipv4.address", "ipv6.address"} {
 			for _, addr := range util.SplitNTrimSpace(d.config[key], ",", -1, true) {

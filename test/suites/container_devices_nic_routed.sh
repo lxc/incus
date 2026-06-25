@@ -121,7 +121,7 @@ test_container_devices_nic_routed() {
     # Check IP is assigned and doesn't have a broadcast address set.
     incus exec "${ctName}" -- ip a | grep "inet 192.0.2.1${ipRand}/32 scope global eth0"
 
-    # Check neighbour proxy entries added to parent interface.
+    # Check neighbor proxy entries added to parent interface.
     ip neigh show proxy dev "${ctName}" | grep "192.0.2.1${ipRand}"
     ip neigh show proxy dev "${ctName}" | grep "2001:db8::1${ipRand}"
 
@@ -140,7 +140,7 @@ test_container_devices_nic_routed() {
 
     incus stop "${ctName}" --force
 
-    # Check neighbour proxy entries removed from parent interface.
+    # Check neighbor proxy entries removed from parent interface.
     ! ip neigh show proxy dev "${ctName}" | grep "192.0.2.1${ipRand}" || false
     ! ip neigh show proxy dev "${ctName}" | grep "2001:db8::1${ipRand}" || false
 

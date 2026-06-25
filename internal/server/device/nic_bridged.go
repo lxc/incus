@@ -2072,16 +2072,16 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 		}
 	}
 
-	// Get IP addresses from IP neighbour cache if present.
-	neighIPs, err := network.GetNeighbourIPs(d.config["parent"], hwAddr)
+	// Get IP addresses from IP neighbor cache if present.
+	neighIPs, err := network.GetNeighborIPs(d.config["parent"], hwAddr)
 	if err == nil {
-		validStates := []ip.NeighbourIPState{
-			ip.NeighbourIPStatePermanent,
-			ip.NeighbourIPStateNoARP,
-			ip.NeighbourIPStateReachable,
+		validStates := []ip.NeighborIPState{
+			ip.NeighborIPStatePermanent,
+			ip.NeighborIPStateNoARP,
+			ip.NeighborIPStateReachable,
 		}
 
-		// Add any valid-state neighbour IP entries first.
+		// Add any valid-state neighbor IP entries first.
 		for _, neighIP := range neighIPs {
 			if slices.Contains(validStates, neighIP.State) {
 				ipStore(neighIP.Addr)
@@ -2090,7 +2090,7 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 
 		// Add any non-failed-state entries.
 		for _, neighIP := range neighIPs {
-			if neighIP.State != ip.NeighbourIPStateFailed && !slices.Contains(validStates, neighIP.State) {
+			if neighIP.State != ip.NeighborIPStateFailed && !slices.Contains(validStates, neighIP.State) {
 				ipStore(neighIP.Addr)
 			}
 		}

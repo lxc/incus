@@ -399,7 +399,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 
 			// Perform host-side address configuration.
 			if mode == ipvlanModeL3S {
-				// Apply host-side static routes to main routing table to allow neighbour proxy.
+				// Apply host-side static routes to main routing table to allow neighbor proxy.
 				r := ip.Route{
 					DevName: "lo",
 					Route:   addr,
@@ -432,7 +432,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 					reverter.Add(func() { _ = r.Delete() })
 				}
 
-				// Add neighbour proxy entries on the host for l3s mode.
+				// Add neighbor proxy entries on the host for l3s mode.
 				np := ip.NeighProxy{
 					DevName: parentName,
 					Addr:    addr.IP,
@@ -440,7 +440,7 @@ func (d *nicIPVLAN) Start() (*deviceConfig.RunConfig, error) {
 
 				err = np.Add()
 				if err != nil {
-					return nil, fmt.Errorf("Failed adding neighbour proxy %q to %q: %w", np.Addr.String(), np.DevName, err)
+					return nil, fmt.Errorf("Failed adding neighbor proxy %q to %q: %w", np.Addr.String(), np.DevName, err)
 				}
 
 				reverter.Add(func() { _ = np.Delete() })
@@ -568,7 +568,7 @@ func (d *nicIPVLAN) postStop() error {
 				continue
 			}
 
-			// Remove static routes and neighbour proxy rules to instance IPs from main routing table.
+			// Remove static routes and neighbor proxy rules to instance IPs from main routing table.
 			if mode == ipvlanModeL3S {
 				r := ip.Route{
 					DevName: "lo",

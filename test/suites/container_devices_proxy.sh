@@ -233,7 +233,7 @@ container_devices_proxy_tcp() {
     incus delete -f nattest
 
     # Dynamic connect address detection. The NIC has no static IP set in Incus, so the
-    # connect address must be detected from the bridge's neighbour table (ARP/NDP).
+    # connect address must be detected from the bridge's neighbor table (ARP/NDP).
     incus launch testimage dhcptest -n inct$$
 
     # Wait for the instance to be ready for exec.
@@ -248,7 +248,7 @@ container_devices_proxy_tcp() {
     incus exec dhcptest -- ip link set eth0 up
     incus exec dhcptest -- ip address add "${dhcp_v4}/24" dev eth0
 
-    # Populate the host neighbour table so the address can be detected.
+    # Populate the host neighbor table so the address can be detected.
     ping -c1 -W1 "${dhcp_v4}" || true
 
     incus config device add dhcptest dynNAT proxy listen="tcp:127.0.0.1:1234" connect="tcp:0.0.0.0:1234" bind=host nat=true

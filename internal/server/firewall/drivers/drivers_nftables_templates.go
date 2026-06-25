@@ -182,7 +182,7 @@ table {{.family}} {{.namespace}} {
 
 // nftablesInstanceBridgeFilter defines the rules needed for MAC, IPv4 and IPv6 bridge security filtering.
 // To prevent instances from using IPs that are different from their assigned IPs we use ARP and NDP filtering
-// to prevent neighbour advertisements that are not allowed. However in order for DHCPv4 & DHCPv6 to work back to
+// to prevent neighbor advertisements that are not allowed. However in order for DHCPv4 & DHCPv6 to work back to
 // the Incus host we need to allow DHCPv4 inbound and for IPv6 we need to allow IPv6 Router Solicitation and DHPCv6.
 // Nftables doesn't support the equivalent of "arp saddr" and "arp saddr ether" at this time so in order to filter
 // NDP advertisements that come from the genuine Ethernet MAC address but have a spoofed NDP source MAC/IP address
