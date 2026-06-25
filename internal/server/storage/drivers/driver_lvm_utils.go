@@ -392,11 +392,33 @@ func (d *lvm) roundedSizeBytesString(size string) (int64, error) {
 	return sizeBytes, nil
 }
 
+// volumeBackingSizeBytes returns the size in bytes that the backing logical volume needs to be
+// to store the volume's content for the given size. For qcow2 block volumes the qcow2 metadata
+// overhead is added so a fully-allocated image always fits within the logical volume.
+func (d *lvm) volumeBackingSizeBytes(vol Volume, size string) (int64, error) {
+	sizeBytes, err := d.roundedSizeBytesString(size)
+	if err != nil {
+		return 0, err
+	}
+
+	if sizeBytes > 0 && IsQcow2Block(vol) {
+		sizeBytes, err = Qcow2MeasureFullyAllocated(sizeBytes)
+		if err != nil {
+			return 0, err
+		}
+
+		// LVM tools require sizes in multiples of 512 bytes.
+		sizeBytes = RoundAbove(512, sizeBytes)
+	}
+
+	return sizeBytes, nil
+}
+
 // createLogicalVolume creates a logical volume.
 func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeThinLv bool) error {
 	var err error
 
-	lvSizeBytes, err := d.roundedSizeBytesString(vol.ConfigSize())
+	lvSizeBytes, err := d.volumeBackingSizeBytes(vol, vol.ConfigSize())
 	if err != nil {
 		return err
 	}

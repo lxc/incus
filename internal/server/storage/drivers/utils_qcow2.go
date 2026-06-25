@@ -78,6 +78,26 @@ func Qcow2Create(path string, backingPath string, size int64) error {
 	return nil
 }
 
+// Qcow2MeasureFullyAllocated returns the host size in bytes needed to hold a fully-allocated
+// qcow2 image of the given virtual size, including the qcow2 metadata overhead.
+func Qcow2MeasureFullyAllocated(virtualSizeBytes int64) (int64, error) {
+	out, err := subprocess.RunCommand("qemu-img", "measure", "--output=json", "-O", "qcow2", "--size", fmt.Sprintf("%d", virtualSizeBytes))
+	if err != nil {
+		return 0, err
+	}
+
+	var measure struct {
+		FullyAllocated int64 `json:"fully-allocated"`
+	}
+
+	err = json.Unmarshal([]byte(out), &measure)
+	if err != nil {
+		return 0, fmt.Errorf("Failed unmarshalling qcow2 measure output: %w", err)
+	}
+
+	return measure.FullyAllocated, nil
+}
+
 // Qcow2Resize resizes a qcow2-formatted image.
 func Qcow2Resize(path string, newSize int64) error {
 	args := []string{
