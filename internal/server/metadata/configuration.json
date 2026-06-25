@@ -3963,7 +3963,7 @@
 							"condition": "IPv4 address",
 							"default": "`before`",
 							"longdesc": "",
-							"shortdesc": "Whether to add the required NAT rules before or after any pre-existing rules",
+							"shortdesc": "Whether to add the required NAT rules before or after any pre-existing rules (no effect with the `nftables` firewall driver)",
 							"type": "string"
 						}
 					},
@@ -4071,7 +4071,7 @@
 							"condition": "IPv6 address",
 							"default": "`before`",
 							"longdesc": "",
-							"shortdesc": "Whether to add the required NAT rules before or after any pre-existing rules",
+							"shortdesc": "Whether to add the required NAT rules before or after any pre-existing rules (no effect with the `nftables` firewall driver)",
 							"type": "string"
 						}
 					},
