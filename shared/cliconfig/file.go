@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 
 	"go.yaml.in/yaml/v4"
 
@@ -13,27 +14,80 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-func getConfigPaths() (string, string, error) {
-	// Figure out the config directory and config path
-	var configDir string
+func getConfigDir() (string, error) {
+	// Honor an explicit override.
 	if os.Getenv("INCUS_CONF") != "" {
-		configDir = os.Getenv("INCUS_CONF")
-	} else if os.Getenv("HOME") != "" && util.PathExists(os.Getenv("HOME")) {
-		configDir = filepath.Join(os.Getenv("HOME"), ".config", "incus")
-	} else {
+		return os.Getenv("INCUS_CONF"), nil
+	}
+
+	// Use the platform-specific user configuration directory.
+	// (~/.config on Linux, ~/Library/Application Support on macOS, %AppData% on Windows)
+	baseDir, err := os.UserConfigDir()
+	if err != nil || baseDir == "" {
+		// Fall back to the current user's home directory.
 		usr, err := user.Current()
 		if err != nil {
-			return "", "", err
+			return "", err
 		}
 
-		if util.PathExists(usr.HomeDir) {
-			configDir = filepath.Join(usr.HomeDir, ".config", "incus")
+		if usr.HomeDir == "" {
+			return "", nil
 		}
+
+		baseDir = filepath.Join(usr.HomeDir, ".config")
+	}
+
+	return filepath.Join(baseDir, "incus"), nil
+}
+
+// migrateConfigDir moves the configuration from the legacy ~/.config/incus
+// location to the platform-specific directory on first use.
+func migrateConfigDir(configDir string) {
+	// Nothing to migrate if the target already exists or an override is set.
+	if util.PathExists(configDir) || os.Getenv("INCUS_CONF") != "" {
+		return
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return
+	}
+
+	legacyDir := filepath.Join(home, ".config", "incus")
+	if legacyDir == configDir || !util.PathExists(legacyDir) {
+		return
+	}
+
+	// Make sure the parent of the target exists, then move the data over.
+	err = os.MkdirAll(filepath.Dir(configDir), 0o700)
+	if err != nil {
+		return
+	}
+
+	err = os.Rename(legacyDir, configDir)
+	if err != nil {
+		return
+	}
+
+	// On macOS, leave a symlink at the legacy location as ~/.config is
+	// commonly used by CLI tools and users may expect to find it there.
+	if runtime.GOOS == "darwin" {
+		_ = os.Symlink(configDir, legacyDir)
+	}
+}
+
+func getConfigPaths() (string, string, error) {
+	configDir, err := getConfigDir()
+	if err != nil {
+		return "", "", err
 	}
 
 	if configDir == "" {
 		return "", "", nil
 	}
+
+	// Migrate any configuration from the legacy location.
+	migrateConfigDir(configDir)
 
 	configPath := os.ExpandEnv(filepath.Join(configDir, "config.yml"))
 
