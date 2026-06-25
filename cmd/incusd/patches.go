@@ -100,6 +100,7 @@ var patches = []patch{
 	{name: "auth_openfga_volume_files", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "btrfs_config_volume_subvolume_names", stage: patchPostNetworks, run: patchBtrfsSubvolumeNames},
 	{name: "linstor_tune_rs_discard_granularity", stage: patchPostDaemonStorage, run: patchLinstorDiscardGranularity},
+	{name: "storage_lvmcluster_qcow2_overhead", stage: patchPostDaemonStorage, run: patchGenericStorage},
 }
 
 type patchRun func(name string, d *Daemon) error

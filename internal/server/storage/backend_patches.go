@@ -22,7 +22,9 @@ var earlyPatches = map[string]func(b *backend) error{
 	"storage_prefix_bucket_names_with_project": patchBucketNames,
 }
 
-var latePatches = map[string]func(b *backend) error{}
+var latePatches = map[string]func(b *backend) error{
+	"storage_lvmcluster_qcow2_overhead": patchLvmclusterQcow2Overhead,
+}
 
 // Patches start here.
 
@@ -212,6 +214,65 @@ func patchBucketNames(b *backend) error {
 		err := b.driver.RenameVolume(v, newVolumeName, nil)
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+// patchLvmclusterQcow2Overhead grows the backing logical volume of existing lvmcluster qcow2
+// block volumes so that a fully-allocated qcow2 image fits within the volume. Earlier versions
+// sized the LV to the qcow2 virtual size, leaving no room for qcow2 metadata.
+func patchLvmclusterQcow2Overhead(b *backend) error {
+	// Only applies to lvmcluster pools (which store block volumes as qcow2).
+	if b.driver.Info().Name != "lvmcluster" {
+		return nil
+	}
+
+	volTypeCustom := db.StoragePoolVolumeTypeCustom
+	volTypeVM := db.StoragePoolVolumeTypeVM
+
+	var dbVols []*db.StorageVolume
+
+	err := b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		dbVols, err = tx.GetStoragePoolVolumes(ctx, b.ID(), false, db.StorageVolumeFilter{Type: &volTypeCustom}, db.StorageVolumeFilter{Type: &volTypeVM})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Failed getting storage volumes: %w", err)
+	}
+
+	for _, dbVol := range dbVols {
+		// Only handle volumes located on this node.
+		if b.state.ServerName != "" && dbVol.Location != b.state.ServerName {
+			continue
+		}
+
+		// Only qcow2 block volumes are affected.
+		if dbVol.ContentType != db.StoragePoolVolumeContentTypeNameBlock || dbVol.Config["block.type"] != drivers.BlockVolumeTypeQcow2 {
+			continue
+		}
+
+		var volType drivers.VolumeType
+		switch dbVol.Type {
+		case db.StoragePoolVolumeTypeNameVM:
+			volType = drivers.VolumeTypeVM
+		case db.StoragePoolVolumeTypeNameCustom:
+			volType = drivers.VolumeTypeCustom
+		default:
+			continue
+		}
+
+		volStorageName := project.StorageVolume(dbVol.Project, dbVol.Name)
+		vol := b.GetVolume(volType, drivers.ContentTypeBlock, volStorageName, dbVol.Config)
+
+		// Resize the backing LV to the qcow2 fully-allocated size, leaving the qcow2 virtual size
+		// untouched. Unsafe resize is used as we are only growing the container, not the guest disk.
+		err = b.driver.SetVolumeQuota(vol, vol.ConfigSize(), true, nil)
+		if err != nil {
+			return fmt.Errorf("Failed resizing volume %q in project %q: %w", dbVol.Name, dbVol.Project, err)
 		}
 	}
 
