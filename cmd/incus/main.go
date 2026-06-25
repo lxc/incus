@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"os/user"
-	"path"
+	"path/filepath"
 	"slices"
 
 	"github.com/kballard/go-shellquote"
@@ -438,6 +438,59 @@ If you already added a remote server, make it the default with "incus remote swi
 	}
 }
 
+func getCachePath() (string, error) {
+	// Honor an explicit override.
+	if os.Getenv("INCUS_CACHE") != "" {
+		return os.Getenv("INCUS_CACHE"), nil
+	}
+
+	// Use the platform-specific user cache directory.
+	// (~/.cache on Linux, ~/Library/Caches on macOS, %LocalAppData% on Windows)
+	baseDir, err := os.UserCacheDir()
+	if err != nil || baseDir == "" {
+		// Fall back to the current user's home directory.
+		currentUser, err := user.Current()
+		if err != nil {
+			return "", err
+		}
+
+		if currentUser.HomeDir == "" {
+			return "", nil
+		}
+
+		baseDir = filepath.Join(currentUser.HomeDir, ".cache")
+	}
+
+	return filepath.Join(baseDir, "incus"), nil
+}
+
+// migrateCacheDir moves the cache from the legacy ~/.cache/incus location to
+// the platform-specific directory on first use.
+func migrateCacheDir(cacheDir string) {
+	// Nothing to migrate if the target already exists or an override is set.
+	if util.PathExists(cacheDir) || os.Getenv("INCUS_CACHE") != "" {
+		return
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		return
+	}
+
+	legacyDir := filepath.Join(home, ".cache", "incus")
+	if legacyDir == cacheDir || !util.PathExists(legacyDir) {
+		return
+	}
+
+	// Make sure the parent of the target exists, then move the data over.
+	err = os.MkdirAll(filepath.Dir(cacheDir), 0o700)
+	if err != nil {
+		return
+	}
+
+	_ = os.Rename(legacyDir, cacheDir)
+}
+
 func (c *cmdGlobal) preRun(cmd *cobra.Command, _ []string) error {
 	var err error
 
@@ -447,23 +500,15 @@ func (c *cmdGlobal) preRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Figure out a potential cache path.
-	var cachePath string
-	if os.Getenv("INCUS_CACHE") != "" {
-		cachePath = os.Getenv("INCUS_CACHE")
-	} else if os.Getenv("HOME") != "" && util.PathExists(os.Getenv("HOME")) {
-		cachePath = path.Join(os.Getenv("HOME"), ".cache", "incus")
-	} else {
-		currentUser, err := user.Current()
-		if err != nil {
-			return err
-		}
-
-		if util.PathExists(currentUser.HomeDir) {
-			cachePath = path.Join(currentUser.HomeDir, ".cache", "incus")
-		}
+	cachePath, err := getCachePath()
+	if err != nil {
+		return err
 	}
 
 	if cachePath != "" {
+		// Migrate any cache from the legacy location.
+		migrateCacheDir(cachePath)
+
 		err := os.MkdirAll(cachePath, 0o700)
 		if err != nil && !os.IsExist(err) {
 			cachePath = ""
