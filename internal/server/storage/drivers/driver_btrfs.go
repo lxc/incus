@@ -357,7 +357,7 @@ func (d *btrfs) Validate(config map[string]string) error {
 		"btrfs.create_options": validate.IsAny,
 	}
 
-	return d.validatePool(config, rules, nil)
+	return d.validatePool(config, rules, d.commonVolumeRules())
 }
 
 // Update applies any driver changes required from a configuration change.
