@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net"
 	"os"
 	"os/exec"
@@ -329,7 +330,15 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 			return err
 		}
 
-		defer logger.WarnOnError(func() error { return os.Remove(path.Name()) }, "Failed to remove temporary file")
+		// The socket file is usually already removed by listener.Close(), so ignore not-exist errors.
+		defer logger.WarnOnError(func() error {
+			err := os.Remove(path.Name())
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
+
+			return err
+		}, "Failed to remove temporary file")
 
 		socket = fmt.Sprintf("spice+unix://%s", path.Name())
 	} else {

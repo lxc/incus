@@ -794,20 +794,18 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 
 	// Create veth pair and configure the peer end with custom hwaddr and mtu if supplied.
 	if d.inst.Type() == instancetype.Container {
-		if saveData["host_name"] == "" {
-			saveData["host_name"], err = d.generateHostName("veth", d.config["hwaddr"])
-			if err != nil {
-				return nil, err
-			}
+		err = d.generateAndPersistHostName(saveData, "veth")
+		if err != nil {
+			return nil, err
 		}
+
 		peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config)
 	} else if d.inst.Type() == instancetype.VM {
-		if saveData["host_name"] == "" {
-			saveData["host_name"], err = d.generateHostName("tap", d.config["hwaddr"])
-			if err != nil {
-				return nil, err
-			}
+		err = d.generateAndPersistHostName(saveData, "tap")
+		if err != nil {
+			return nil, err
 		}
+
 		peerName = saveData["host_name"] // VMs use the host_name to link to the TAP FD.
 		mtu, err = networkCreateTap(saveData["host_name"], d.config)
 	}
@@ -898,7 +896,8 @@ func (d *nicBridged) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	// Check if hairpin mode needs to be enabled.
-	if nativeBridge && d.network != nil {
+	// IncusOS doesn't load br_netfilter as it breaks routed proxy traffic, so skip the hairpin handling there.
+	if nativeBridge && d.network != nil && d.state.OS.IncusOS == nil {
 		brNetfilterEnabled := false
 		for _, ipVersion := range []uint{4, 6} {
 			if network.BridgeNetfilterEnabled(ipVersion) == nil {

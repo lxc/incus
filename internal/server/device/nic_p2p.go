@@ -196,20 +196,16 @@ func (d *nicP2P) Start() (*deviceConfig.RunConfig, error) {
 
 	// Create veth pair and configure the peer end with custom hwaddr and mtu if supplied.
 	if d.inst.Type() == instancetype.Container {
-		if saveData["host_name"] == "" {
-			saveData["host_name"], err = d.generateHostName("veth", d.config["hwaddr"])
-			if err != nil {
-				return nil, err
-			}
+		err = d.generateAndPersistHostName(saveData, "veth")
+		if err != nil {
+			return nil, err
 		}
 
 		peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config)
 	} else if d.inst.Type() == instancetype.VM {
-		if saveData["host_name"] == "" {
-			saveData["host_name"], err = d.generateHostName("tap", d.config["hwaddr"])
-			if err != nil {
-				return nil, err
-			}
+		err = d.generateAndPersistHostName(saveData, "tap")
+		if err != nil {
+			return nil, err
 		}
 
 		peerName = saveData["host_name"] // VMs use the host_name to link to the TAP FD.

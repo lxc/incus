@@ -902,6 +902,11 @@ func (c *ClusterTx) CreateImage(ctx context.Context, project string, fp string, 
 	stmt := `INSERT INTO images (project_id, fingerprint, filename, size, public, auto_update, architecture, creation_date, expiry_date, upload_date, type) VALUES ((SELECT id FROM projects WHERE name = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	result, err := c.tx.ExecContext(ctx, stmt, imageProject, fp, fname, sz, publicInt, autoUpdateInt, arch, createdAt, expiresAt, time.Now().UTC(), imageType)
 	if err != nil {
+		// Another cluster member may have created the same record concurrently.
+		if strings.HasPrefix(err.Error(), "UNIQUE constraint failed:") {
+			return api.StatusErrorf(http.StatusConflict, "Image record already exists")
+		}
+
 		return fmt.Errorf("Failed saving main image record: %w", err)
 	}
 
