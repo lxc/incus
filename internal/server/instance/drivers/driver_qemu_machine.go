@@ -16,6 +16,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/osinfo"
 	"github.com/lxc/incus/v7/shared/resources"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
@@ -324,7 +325,7 @@ func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {
 	limitsMemoryHotplug := d.expandedConfig["limits.memory.hotplug"]
 	memoryHotplugEnabled := !util.IsFalse(limitsMemoryHotplug)
 
-	if d.GuestOS() == "freebsd" {
+	if d.GuestOS() == osinfo.FreeBSD {
 		memoryHotplugEnabled = false
 
 		// We handle the empty value a bit differently here, as FreeBSD doesn’t have memory hotplug.

@@ -21,6 +21,7 @@ import (
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
 	"github.com/lxc/incus/v7/shared/idmap"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/osinfo"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
@@ -424,7 +425,7 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 		if lastGID < 4294967295 {
 			args = append(args, fmt.Sprintf("--translate-gid=forbid-guest:%d:%d", lastGID, 4294967295-lastGID))
 		}
-	} else if inst.GuestOS() != "windows" {
+	} else if inst.GuestOS() != osinfo.Windows {
 		if virtiofsdHasFeature(cmd, "posix-acl-negotiation-mode") {
 			args = append(args, "--posix-acl=auto")
 		} else {
