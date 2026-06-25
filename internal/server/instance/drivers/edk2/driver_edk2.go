@@ -10,6 +10,7 @@ import (
 )
 
 // FirmwarePair represents a combination of firmware code (Code) and storage (Vars).
+// A unified firmware image (e.g. AMD SEV) carries its own variable store and has an empty Vars.
 type FirmwarePair struct {
 	Code string
 	Vars string
@@ -71,8 +72,7 @@ var architectureInstallations = map[int][]Installation{
 				{Code: "OVMF_CODE.csm.fd", Vars: "OVMF_VARS.fd"},
 			},
 			SEV: {
-				{Code: "OVMF.amdsev.fd", Vars: "OVMF_VARS_4M.fd"},
-				{Code: "OVMF.amdsev.fd", Vars: "OVMF_VARS.fd"},
+				{Code: "OVMF.amdsev.fd"},
 			},
 		},
 	}, {
@@ -210,9 +210,17 @@ func GetArchitectureFirmwarePairsForUsage(hostArch int, usage FirmwareUsage) ([]
 
 				for _, firmwarePair := range usage {
 					codePath := filepath.Join(searchPath, firmwarePair.Code)
-					varsPath := filepath.Join(searchPath, firmwarePair.Vars)
-					if !util.PathExists(codePath) || !util.PathExists(varsPath) {
+					if !util.PathExists(codePath) {
 						continue
+					}
+
+					// Unified firmware images have no separate vars store.
+					var varsPath string
+					if firmwarePair.Vars != "" {
+						varsPath = filepath.Join(searchPath, firmwarePair.Vars)
+						if !util.PathExists(varsPath) {
+							continue
+						}
 					}
 
 					firmwares = append(firmwares, FirmwarePair{

@@ -680,7 +680,7 @@ type qemuDriveFirmwareOpts struct {
 }
 
 func qemuDriveFirmware(opts *qemuDriveFirmwareOpts) []cfg.Section {
-	return []cfg.Section{{
+	sections := []cfg.Section{{
 		Name:    "drive",
 		Comment: "Firmware (read only)",
 		Entries: map[string]string{
@@ -690,16 +690,23 @@ func qemuDriveFirmware(opts *qemuDriveFirmwareOpts) []cfg.Section {
 			"unit":     "0",
 			"readonly": "on",
 		},
-	}, {
-		Name:    "drive",
-		Comment: "Firmware settings (writable)",
-		Entries: map[string]string{
-			"file":   opts.nvramPath,
-			"if":     "pflash",
-			"format": "raw",
-			"unit":   "1",
-		},
 	}}
+
+	// Unified firmware images (e.g. AMD SEV) carry their own variable store and have no writable drive.
+	if opts.nvramPath != "" {
+		sections = append(sections, cfg.Section{
+			Name:    "drive",
+			Comment: "Firmware settings (writable)",
+			Entries: map[string]string{
+				"file":   opts.nvramPath,
+				"if":     "pflash",
+				"format": "raw",
+				"unit":   "1",
+			},
+		})
+	}
+
+	return sections
 }
 
 type qemuHostDriveOpts struct {
