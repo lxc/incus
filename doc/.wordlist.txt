@@ -112,6 +112,7 @@ goroutines
 GPG
 GPUs
 Grafana
+GUID
 HAProxy
 hardcoded
 HDDs
