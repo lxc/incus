@@ -1029,16 +1029,29 @@ func (d *btrfs) HasVolume(vol Volume) (bool, error) {
 	return genericVFSHasVolume(vol)
 }
 
+// commonVolumeRules returns validation rules which are common for pool and volume.
+func (d *btrfs) commonVolumeRules() map[string]func(value string) error {
+	return map[string]func(value string) error{
+		// gendoc:generate(entity=storage_volume_btrfs, group=common, key=btrfs.compression)
+		//
+		// ---
+		//  type: string
+		//  condition: appropriate driver
+		//  default: same as `volume.btrfs.compression`
+		//  shortdesc: Compression algorithm to set on the volume, mapping to the Btrfs `compression` property (for example `zstd`, `lzo`, `zlib` or `none`)
+		"btrfs.compression": validate.Optional(func(value string) error {
+			algo, _, _ := strings.Cut(value, ":")
+			if !slices.Contains([]string{"none", "no", "zlib", "lzo", "zstd"}, algo) {
+				return fmt.Errorf("Unsupported compression algorithm %q", value)
+			}
+
+			return nil
+		}),
+	}
+}
+
 // ValidateVolume validates the supplied volume config.
 func (d *btrfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
-	// gendoc:generate(entity=storage_volume_btrfs, group=common, key=btrfs.compression)
-	//
-	// ---
-	//  type: string
-	//  condition: appropriate driver
-	//  default: same as `volume.btrfs.compression`
-	//  shortdesc: Compression algorithm to set on the volume, mapping to the Btrfs `compression` property (for example `zstd`, `lzo`, `zlib` or `none`)
-
 	// gendoc:generate(entity=storage_volume_btrfs, group=common, key=initial.gid)
 	//
 	// ---
@@ -1135,18 +1148,7 @@ func (d *btrfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	//  default: same as `volume.size`
 	//  shortdesc: Size/quota of the storage bucket
 
-	rules := map[string]func(value string) error{
-		"btrfs.compression": validate.Optional(func(value string) error {
-			algo, _, _ := strings.Cut(value, ":")
-			if !slices.Contains([]string{"none", "no", "zlib", "lzo", "zstd"}, algo) {
-				return fmt.Errorf("Unsupported compression algorithm %q", value)
-			}
-
-			return nil
-		}),
-	}
-
-	return d.validateVolume(vol, rules, removeUnknownKeys)
+	return d.validateVolume(vol, d.commonVolumeRules(), removeUnknownKeys)
 }
 
 // UpdateVolume applies config changes to the volume.
