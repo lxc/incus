@@ -27,10 +27,9 @@ func (d networkServerErrorLogWriter) Write(p []byte) (int, error) {
 
 func (d networkServerErrorLogWriter) stripLog(p []byte) string {
 	// Strip the beginning of the log until we reach "http:".
-	for len(p) > 5 && string(p[0:5]) != "http:" {
-		p = bytes.TrimLeftFunc(p, func(r rune) bool {
-			return r != 'h'
-		})
+	idx := bytes.Index(p, []byte("http:"))
+	if idx > 0 {
+		p = p[idx:]
 	}
 
 	// Strip the newline from the end.
