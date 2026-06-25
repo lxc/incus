@@ -72,6 +72,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/scriptlet"
 	scriptletLoad "github.com/lxc/incus/v7/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v7/internal/server/selinux"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
@@ -2041,23 +2042,34 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
-	// Run the qemu command via forklimits so we can selectively increase ulimits.
-	forkLimitsCmd := []string{
-		"forklimits",
+	// Run the qemu command via forkqemu so we can selectively increase ulimits.
+	forkQemuCmd := []string{
+		"forkqemu",
 	}
 
 	if !d.state.OS.RunningInUserNS {
 		// Required for PCI passthrough.
-		forkLimitsCmd = append(forkLimitsCmd, "limit=memlock:unlimited:unlimited")
+		forkQemuCmd = append(forkQemuCmd, "limit=memlock:unlimited:unlimited")
 	}
 
 	for i := range fdFiles {
 		// Pass through any file descriptors as 3+i (as first 3 file descriptors are taken as standard).
-		forkLimitsCmd = append(forkLimitsCmd, fmt.Sprintf("fd=%d", 3+i))
+		forkQemuCmd = append(forkQemuCmd, fmt.Sprintf("fd=%d", 3+i))
+	}
+
+	// Ensure SELinux context is generated and persisted.
+	contextIsNew, err := d.selinuxEnsureContext()
+	if err != nil {
+		return err
+	}
+
+	seCtx := d.localConfig["volatile.selinux.context"]
+	if seCtx != "" {
+		forkQemuCmd = append(forkQemuCmd, "secontext="+seCtx)
 	}
 
 	// Log the QEMU command line.
-	fullCmd := append(forkLimitsCmd, "--", qemuPath)
+	fullCmd := append(forkQemuCmd, "--", qemuPath)
 	fullCmd = append(fullCmd, d.cmdArgs...)
 	d.logger.Debug("Starting QEMU", logger.Ctx{"command": fullCmd})
 
@@ -2248,6 +2260,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			op.Done(err)
 			return err
 		}
+	}
+
+	// Label rootfs if SELinux context is set and labels are missing.
+	err = d.selinuxLabelFiles(contextIsNew)
+	if err != nil {
+		return err
 	}
 
 	// Start the VM.
@@ -11732,4 +11750,68 @@ func (d *qemu) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) 
 	}
 
 	return nil, fmt.Errorf("Requested device not found")
+}
+
+// selinuxEnsureContext generates and persists the SELinux context for this instance.
+func (d *qemu) selinuxEnsureContext() (bool, error) {
+	if !d.state.OS.SELinuxEnabled {
+		return false, nil
+	}
+
+	previousCtx := d.localConfig["volatile.selinux.context"]
+
+	allocLevel := func() (string, func(), error) {
+		used, err := d.selinuxCollectUsedLevels()
+		if err != nil {
+			return "", nil, err
+		}
+
+		return selinux.AllocateLevel(used)
+	}
+
+	ctx, needsPersist, release, err := selinux.InstanceContext(d.state.OS, instancetype.VM, d.localConfig, d.expandedConfig, allocLevel)
+	if err != nil {
+		return false, err
+	}
+
+	defer release()
+
+	if ctx == "" {
+		return false, nil
+	}
+
+	if needsPersist {
+		err = d.VolatileSet(map[string]string{"volatile.selinux.context": ctx})
+		if err != nil {
+			return false, fmt.Errorf("Failed to persist SELinux context: %w", err)
+		}
+	}
+
+	// Return true if this is the first time a context was generated.
+	return previousCtx == "", nil
+}
+
+// selinuxLabelFiles applies SELinux file labels to the VM instance directory.
+func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
+	if !d.state.OS.SELinuxEnabled {
+		return nil
+	}
+
+	ctx := d.localConfig["volatile.selinux.context"]
+	if ctx == "" {
+		return nil
+	}
+
+	if !contextIsNew {
+		if d.localConfig["security.selinux.level"] != "" {
+			return nil
+		}
+	}
+
+	fileCtx := selinux.InstanceFileContext(ctx, instancetype.VM, d.expandedConfig)
+	if fileCtx == "" {
+		return fmt.Errorf("Failed to derive file context from %q", ctx)
+	}
+
+	return selinux.LabelTree(d.Path(), fileCtx, "")
 }
