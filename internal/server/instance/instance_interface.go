@@ -23,6 +23,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/idmap"
 	"github.com/lxc/incus/v7/shared/ioprogress"
+	"github.com/lxc/incus/v7/shared/osinfo"
 )
 
 // HookStart hook used when instance has started.
@@ -156,7 +157,7 @@ type Instance interface {
 	Description() string
 	CreationDate() time.Time
 	LastUsedDate() time.Time
-	GuestOS() string
+	GuestOS() osinfo.OSType
 
 	Profiles() []api.Profile
 	InitPID() int

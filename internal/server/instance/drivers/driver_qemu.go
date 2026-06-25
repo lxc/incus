@@ -84,6 +84,7 @@ import (
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/osinfo"
 	"github.com/lxc/incus/v7/shared/resources"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
@@ -10968,31 +10969,10 @@ func (d *qemu) CanLiveMigrate() bool {
 }
 
 // GuestOS returns the guest OS. In this driver, we consider anything unknown to be Linux.
-func (d *qemu) GuestOS() string {
-	imageOS := strings.ToLower(d.expandedConfig["image.os"])
-	matches := func(names ...string) bool {
-		for _, name := range names {
-			if strings.Contains(imageOS, name) {
-				return true
-			}
-		}
+func (d *qemu) GuestOS() osinfo.OSType {
+	osType, _ := osinfo.DetermineOS(strings.ToLower(d.expandedConfig["image.os"]))
 
-		return false
-	}
-
-	if matches("windows") {
-		return "windows"
-	}
-
-	if matches("darwin", "macos", "mac os") {
-		return "macos"
-	}
-
-	if matches("freebsd", "opnsense", "pfsense") {
-		return "freebsd"
-	}
-
-	return "unknown"
+	return osType
 }
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance.

@@ -80,6 +80,7 @@ import (
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/osinfo"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/termios"
@@ -9508,8 +9509,8 @@ func (d *lxc) setupCredentials(update bool) error {
 }
 
 // GuestOS returns the guest OS. For containers, we can safely assume Linux.
-func (d *lxc) GuestOS() string {
-	return "linux"
+func (d *lxc) GuestOS() osinfo.OSType {
+	return osinfo.Linux
 }
 
 // CreateQcow2Snapshot creates a qcow2 snapshot for a running instance. Not supported by containers.
