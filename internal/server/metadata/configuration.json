@@ -481,11 +481,29 @@
 						}
 					},
 					{
+						"node_guid": {
+							"defaultdesc": "kernel assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The node GUID to assign to the virtual function (8 bytes of hex separated by colons)",
+							"type": "string"
+						}
+					},
+					{
 						"parent": {
 							"defaultdesc": "kernel assigned",
 							"longdesc": "",
 							"required": "no",
 							"shortdesc": "The name of the interface inside the instance",
+							"type": "string"
+						}
+					},
+					{
+						"port_guid": {
+							"defaultdesc": "kernel assigned",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The port GUID to assign to the virtual function (8 bytes of hex separated by colons)",
 							"type": "string"
 						}
 					}

@@ -32,6 +32,24 @@ func (d *infinibandSRIOV) validateConfig(instConf instance.ConfigReader, partial
 		"name",
 		"mtu",
 		"hwaddr",
+
+		// gendoc:generate(entity=devices, group=infiniband, key=node_guid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  defaultdesc: kernel assigned
+		//  shortdesc: The node GUID to assign to the virtual function (8 bytes of hex separated by colons)
+		"node_guid",
+
+		// gendoc:generate(entity=devices, group=infiniband, key=port_guid)
+		//
+		// ---
+		//  type: string
+		//  required: no
+		//  defaultdesc: kernel assigned
+		//  shortdesc: The port GUID to assign to the virtual function (8 bytes of hex separated by colons)
+		"port_guid",
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
@@ -41,6 +59,22 @@ func (d *infinibandSRIOV) validateConfig(instConf instance.ConfigReader, partial
 		}
 
 		return infinibandValidMAC(value)
+	}
+
+	rules["node_guid"] = func(value string) error {
+		if value == "" {
+			return nil
+		}
+
+		return infinibandValidGUID(value)
+	}
+
+	rules["port_guid"] = func(value string) error {
+		if value == "" {
+			return nil
+		}
+
+		return infinibandValidGUID(value)
 	}
 
 	err := d.config.Validate(rules)
@@ -131,6 +165,26 @@ func (d *infinibandSRIOV) startContainer() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
+	// Set the GUIDs.
+	if d.config["node_guid"] != "" || d.config["port_guid"] != "" {
+		vfID, err := infinibandVFID(d.config["parent"], saveData["host_name"])
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find the virtual function ID for %q: %w", saveData["host_name"], err)
+		}
+
+		if vfID < 0 {
+			return nil, fmt.Errorf("Couldn't find %q as a virtual function of %q", saveData["host_name"], d.config["parent"])
+		}
+
+		// Record the VF ID so the GUIDs can be cleared on stop.
+		saveData["last_state.vf.id"] = strconv.Itoa(vfID)
+
+		err = infinibandSetVFGUIDs(d.config["parent"], vfID, d.config["node_guid"], d.config["port_guid"])
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	runConf := deviceConfig.RunConfig{}
 
 	// Configure runConf with infiniband setup instructions.
@@ -205,6 +259,17 @@ func (d *infinibandSRIOV) startVM() (*deviceConfig.RunConfig, error) {
 		return nil, errors.New("All virtual functions on parent device are already in use")
 	}
 
+	// Set the GUIDs before the VF is bound to vfio-pci for passthrough.
+	if d.config["node_guid"] != "" || d.config["port_guid"] != "" {
+		// Record the VF ID so the GUIDs can be cleared on stop.
+		saveData["last_state.vf.id"] = strconv.Itoa(vfID)
+
+		err = infinibandSetVFGUIDs(d.config["parent"], vfID, d.config["node_guid"], d.config["port_guid"])
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	vfPCIDev, err := d.setupSriovParent(parentPCIAddress, vfID, saveData)
 	if err != nil {
 		return nil, err
@@ -276,6 +341,7 @@ func (d *infinibandSRIOV) postStop() error {
 			"host_name":                "",
 			"last_state.hwaddr":        "",
 			"last_state.mtu":           "",
+			"last_state.vf.id":         "",
 			"last_state.pci.slot.name": "",
 			"last_state.pci.driver":    "",
 			"last_state.pci.parent":    "",
@@ -297,6 +363,12 @@ func (d *infinibandSRIOV) postStop() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	// Clear the GUIDs.
+	err := infinibandRestoreVFGUIDs(d.config["parent"], d.config["node_guid"], d.config["port_guid"], v)
+	if err != nil {
+		return err
 	}
 
 	// Unbind from vfio-pci and bind back to host driver.
