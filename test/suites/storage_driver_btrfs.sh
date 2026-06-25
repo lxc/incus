@@ -20,6 +20,27 @@ test_storage_driver_btrfs() {
         incus storage create "incustest-$(basename "${INCUS_DIR}")-pool1" btrfs
         incus storage create "incustest-$(basename "${INCUS_DIR}")-pool2" btrfs
 
+        # btrfs.compression: "none" applies nodatacow to block volumes, a real
+        # algorithm compresses instead, and it is accepted as a pool-wide
+        # volume default.
+        compPool="incustest-$(basename "${INCUS_DIR}")-pool1"
+        compPath="${INCUS_DIR}/storage-pools/${compPool}/custom"
+
+        incus storage volume create "${compPool}" vol-nocow --type=block size=32MiB btrfs.compression=none
+        lsattr -d "${compPath}/default_vol-nocow" | awk '{print $1}' | grep -q "C"
+
+        incus storage volume create "${compPool}" vol-zstd --type=block size=32MiB btrfs.compression=zstd
+        lsattr -d "${compPath}/default_vol-zstd" | awk '{print $1}' | grep -q "c"
+
+        incus storage set "${compPool}" volume.btrfs.compression=none
+        incus storage volume create "${compPool}" vol-default --type=block size=32MiB
+        lsattr -d "${compPath}/default_vol-default" | awk '{print $1}' | grep -q "C"
+        incus storage unset "${compPool}" volume.btrfs.compression
+
+        incus storage volume delete "${compPool}" vol-nocow
+        incus storage volume delete "${compPool}" vol-zstd
+        incus storage volume delete "${compPool}" vol-default
+
         # Set default storage pool for image import.
         incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")-pool1"
 

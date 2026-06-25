@@ -56,9 +56,13 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 	})
 
 	// Apply the per-volume compression property if set, so that the files created inside the
-	// subvolume (including the root disk file for block volumes) inherit it.
+	// subvolume (including the root disk file for block volumes) inherit it. For block volumes
+	// "none" is applied as nodatacow below, which also disables compression; setting the
+	// nocompress property would leave an inode flag that the chattr +C is rejected on, so it is
+	// skipped here.
 	compression := vol.ExpandedConfig("btrfs.compression")
-	if compression != "" {
+	compressionNone := compression == "none" || compression == "no"
+	if compression != "" && (!compressionNone || !IsContentBlock(vol.contentType)) {
 		_, err = subprocess.RunCommand("btrfs", "property", "set", volPath, "compression", compression)
 		if err != nil {
 			return fmt.Errorf("Failed setting compression on %q: %w", volPath, err)
@@ -87,7 +91,7 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		// even on a compressed pool, and any other value enables it.
 		compressed := strings.Contains(mountinfo[len(mountinfo)-1], "compress")
 		if compression != "" {
-			compressed = compression != "none" && compression != "no"
+			compressed = !compressionNone
 		}
 
 		// Enable nodatacow on the parent directory so that when the root disk file is created the setting
@@ -102,8 +106,12 @@ func (d *btrfs) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Op
 		//
 		// nodatacow and compression are mutually exclusive, so this is skipped when the volume is
 		// compressed. Setting "btrfs.compression=none" disables compression for the volume and so
-		// allows nodatacow to be applied on a pool that is otherwise compressed.
+		// allows nodatacow to be applied on a pool that is otherwise compressed. A compression flag
+		// inherited from the parent subvolume is cleared first, as the chattr +C is rejected on an
+		// inode that still carries it.
 		if !slices.Contains(mountOptions, "datacow") && !compressed {
+			_, _ = subprocess.RunCommand("chattr", "-c", volPath)
+
 			_, err = subprocess.RunCommand("chattr", "+C", volPath)
 			if err != nil {
 				return fmt.Errorf("Failed setting nodatacow on %q: %w", volPath, err)
@@ -1021,16 +1029,29 @@ func (d *btrfs) HasVolume(vol Volume) (bool, error) {
 	return genericVFSHasVolume(vol)
 }
 
+// commonVolumeRules returns validation rules which are common for pool and volume.
+func (d *btrfs) commonVolumeRules() map[string]func(value string) error {
+	return map[string]func(value string) error{
+		// gendoc:generate(entity=storage_volume_btrfs, group=common, key=btrfs.compression)
+		//
+		// ---
+		//  type: string
+		//  condition: appropriate driver
+		//  default: same as `volume.btrfs.compression`
+		//  shortdesc: Compression algorithm to set on the volume, mapping to the Btrfs `compression` property (for example `zstd`, `lzo`, `zlib` or `none`)
+		"btrfs.compression": validate.Optional(func(value string) error {
+			algo, _, _ := strings.Cut(value, ":")
+			if !slices.Contains([]string{"none", "no", "zlib", "lzo", "zstd"}, algo) {
+				return fmt.Errorf("Unsupported compression algorithm %q", value)
+			}
+
+			return nil
+		}),
+	}
+}
+
 // ValidateVolume validates the supplied volume config.
 func (d *btrfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
-	// gendoc:generate(entity=storage_volume_btrfs, group=common, key=btrfs.compression)
-	//
-	// ---
-	//  type: string
-	//  condition: appropriate driver
-	//  default: same as `volume.btrfs.compression`
-	//  shortdesc: Compression algorithm to set on the volume, mapping to the Btrfs `compression` property (for example `zstd`, `lzo`, `zlib` or `none`)
-
 	// gendoc:generate(entity=storage_volume_btrfs, group=common, key=initial.gid)
 	//
 	// ---
@@ -1127,18 +1148,7 @@ func (d *btrfs) ValidateVolume(vol Volume, removeUnknownKeys bool) error {
 	//  default: same as `volume.size`
 	//  shortdesc: Size/quota of the storage bucket
 
-	rules := map[string]func(value string) error{
-		"btrfs.compression": validate.Optional(func(value string) error {
-			algo, _, _ := strings.Cut(value, ":")
-			if !slices.Contains([]string{"none", "no", "zlib", "lzo", "zstd"}, algo) {
-				return fmt.Errorf("Unsupported compression algorithm %q", value)
-			}
-
-			return nil
-		}),
-	}
-
-	return d.validateVolume(vol, rules, removeUnknownKeys)
+	return d.validateVolume(vol, d.commonVolumeRules(), removeUnknownKeys)
 }
 
 // UpdateVolume applies config changes to the volume.
