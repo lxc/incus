@@ -3,9 +3,11 @@ package device
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/network/acl"
@@ -118,6 +120,73 @@ func nicHasAutoGateway(value string) bool {
 	}
 
 	return false
+}
+
+// nicAddressIP returns the IP portion of an address that may be in CIDR form.
+func nicAddressIP(value string) string {
+	addr, _, found := strings.Cut(value, "/")
+	if !found {
+		return value
+	}
+
+	return addr
+}
+
+// nicCheckOCIStaticNetwork ensures that static OCI network configuration isn't used outside of OCI containers.
+func nicCheckOCIStaticNetwork(inst instance.Instance, config map[string]string) error {
+	if instanceIsOCI(inst) {
+		return nil
+	}
+
+	for _, key := range []string{"ipv4.gateway", "ipv6.gateway"} {
+		if !util.IsNoneOrEmpty(config[key]) {
+			return fmt.Errorf("%q is only supported on OCI containers", key)
+		}
+	}
+
+	for _, key := range []string{"ipv4.address", "ipv6.address"} {
+		if strings.Contains(config[key], "/") {
+			return fmt.Errorf("A CIDR value for %q is only supported on OCI containers", key)
+		}
+	}
+
+	return nil
+}
+
+// nicOCIStaticNetworkConfig returns the LXC config items for an OCI NIC's static address and gateway (nil if not OCI).
+func nicOCIStaticNetworkConfig(inst instance.Instance, config map[string]string) []deviceConfig.RunConfigItem {
+	if !instanceIsOCI(inst) {
+		return nil
+	}
+
+	var items []deviceConfig.RunConfigItem
+
+	if strings.Contains(config["ipv4.address"], "/") {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv4.address", Value: config["ipv4.address"]})
+	}
+
+	if !util.IsNoneOrEmpty(config["ipv4.gateway"]) {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv4.gateway", Value: config["ipv4.gateway"]})
+	}
+
+	if strings.Contains(config["ipv6.address"], "/") {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv6.address", Value: config["ipv6.address"]})
+	}
+
+	if !util.IsNoneOrEmpty(config["ipv6.gateway"]) {
+		items = append(items, deviceConfig.RunConfigItem{Key: "ipv6.gateway", Value: config["ipv6.gateway"]})
+	}
+
+	return items
+}
+
+// nicNormalizedAddressConfig returns a copy of the config with CIDR addresses reduced to plain IPs.
+func nicNormalizedAddressConfig(config deviceConfig.Device) deviceConfig.Device {
+	normalized := maps.Clone(config)
+	normalized["ipv4.address"] = nicAddressIP(config["ipv4.address"])
+	normalized["ipv6.address"] = nicAddressIP(config["ipv6.address"])
+
+	return normalized
 }
 
 // nicCheckNamesUnique checks that all the NICs in the instConf's expanded devices have a unique (or unset) name.

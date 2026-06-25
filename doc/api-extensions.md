@@ -3179,3 +3179,20 @@ origins or to the `*` wildcard.
 This adds a new `btrfs.compression` storage volume configuration key for
 the `btrfs` driver. It maps to the Btrfs `compression` property and takes
 the same values (for example `zstd`, `lzo`, `zlib` or `none`).
+
+## `oci_network_config`
+
+This allows for static network configuration of OCI application containers.
+
+The NIC `ipv4.address` and `ipv6.address` keys can now be set to a CIDR
+value to statically configure the address inside the container and the new
+`ipv4.gateway` and `ipv6.gateway` keys can be used to set the default
+gateway. Setting either address to `none` prevents any configuration for
+that address family and stops the built-in DHCP client from running on it.
+
+For DNS, the `oci.dns.nameservers`, `oci.dns.domain` and `oci.dns.search`
+instance configuration keys can be used to set the initial content of the
+container's `resolv.conf`, which is then extended with any value received
+over DHCP.
+
+All of those keys are only valid for OCI containers.

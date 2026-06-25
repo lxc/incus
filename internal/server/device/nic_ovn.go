@@ -140,7 +140,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
+		//  shortdesc: An IPv4 address to assign to the instance through DHCP, `none` can be used to disable IP allocation (or a CIDR value to statically configure the address inside an OCI container)
 		"ipv4.address",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.address)
@@ -148,8 +148,24 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation
+		//  shortdesc: An IPv6 address to assign to the instance through DHCP, `none` can be used to disable IP allocation (or a CIDR value to statically configure the address inside an OCI container)
 		"ipv6.address",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.gateway)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: IPv4 default gateway to statically configure inside an OCI container
+		"ipv4.gateway",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.gateway)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: IPv6 default gateway to statically configure inside an OCI container
+		"ipv6.gateway",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.address.external)
 		//
@@ -387,14 +403,17 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 			return fmt.Errorf("Invalid network ipv4.address: %w", err)
 		}
 
+		// The address can be in CIDR form for OCI static configuration; validate the IP part.
+		deviceIP := net.ParseIP(nicAddressIP(d.config["ipv4.address"]))
+
 		// Check the static IP supplied is valid for the linked network. It should be part of the
 		// network's subnet, but not necessarily part of the dynamic allocation ranges.
-		if !dhcpalloc.DHCPValidIP(subnet, nil, net.ParseIP(d.config["ipv4.address"])) {
+		if !dhcpalloc.DHCPValidIP(subnet, nil, deviceIP) {
 			return fmt.Errorf("Device IP address %q not within network %q subnet", d.config["ipv4.address"], d.config["network"])
 		}
 
 		// IP should not be the same as the parent managed network address.
-		if ipAddr.Equal(net.ParseIP(d.config["ipv4.address"])) {
+		if ipAddr.Equal(deviceIP) {
 			return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv4.address"], d.config["parent"])
 		}
 	}
@@ -410,14 +429,17 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 			return fmt.Errorf("Invalid network ipv6.address: %w", err)
 		}
 
+		// The address can be in CIDR form for OCI static configuration; validate the IP part.
+		deviceIP := net.ParseIP(nicAddressIP(d.config["ipv6.address"]))
+
 		// Check the static IP supplied is valid for the linked network. It should be part of the
 		// network's subnet, but not necessarily part of the dynamic allocation ranges.
-		if !dhcpalloc.DHCPValidIP(subnet, nil, net.ParseIP(d.config["ipv6.address"])) {
+		if !dhcpalloc.DHCPValidIP(subnet, nil, deviceIP) {
 			return fmt.Errorf("Device IP address %q not within network %q subnet", d.config["ipv6.address"], d.config["network"])
 		}
 
 		// IP should not be the same as the parent managed network address.
-		if ipAddr.Equal(net.ParseIP(d.config["ipv6.address"])) {
+		if ipAddr.Equal(deviceIP) {
 			return fmt.Errorf("IP address %q is assigned to parent managed network device %q", d.config["ipv6.address"], d.config["parent"])
 		}
 	}
@@ -480,9 +502,14 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
 
 	// Override ipv4.address and ipv6.address to allow none value.
+	// A CIDR value is allowed for static address configuration inside OCI containers.
 	rules["ipv4.address"] = validate.Optional(func(value string) error {
 		if value == "none" {
 			return nil
+		}
+
+		if strings.Contains(value, "/") {
+			return validate.IsNetworkAddressCIDRV4(value)
 		}
 
 		return validate.IsNetworkAddressV4(value)
@@ -493,8 +520,15 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 			return nil
 		}
 
+		if strings.Contains(value, "/") {
+			return validate.IsNetworkAddressCIDRV6(value)
+		}
+
 		return validate.IsNetworkAddressV6(value)
 	})
+
+	rules["ipv4.gateway"] = networkValidGatewayV4
+	rules["ipv6.gateway"] = networkValidGatewayV6
 
 	// Validate the external address against the list of network forwards.
 	isNetworkForward := func(value string) error {
@@ -739,8 +773,16 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		return nil, err
 	}
 
+	err = nicCheckOCIStaticNetwork(d.inst, d.config)
+	if err != nil {
+		return nil, err
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
+
+	// Configure the OVN port with the plain address; CIDR addresses are set inside the OCI container.
+	portConfig := nicNormalizedAddressConfig(d.config)
 
 	saveData := make(map[string]string)
 	saveData["host_name"] = d.config["host_name"]
@@ -950,7 +992,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
 		DNSName:      d.inst.Name(),
 		DeviceName:   d.name,
-		DeviceConfig: d.config,
+		DeviceConfig: portConfig,
 		UplinkConfig: uplinkConfig,
 		LastStateIPs: lastStateIPs, // Pass in volatile last state IPs for use with sticky DHCPv4 hint.
 	}, nil)
@@ -976,7 +1018,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		_ = d.network.InstanceDevicePortStop("", &network.OVNInstanceNICStopOpts{
 			InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
 			DeviceName:   d.name,
-			DeviceConfig: d.config,
+			DeviceConfig: portConfig,
 		})
 	})
 
@@ -1073,6 +1115,9 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				runConf.NetworkInterface,
 				deviceConfig.RunConfigItem{Key: "hwaddr", Value: d.config["hwaddr"]},
 			)
+
+			// Apply any static address and gateway configuration for OCI containers.
+			runConf.NetworkInterface = append(runConf.NetworkInterface, nicOCIStaticNetworkConfig(d.inst, d.config)...)
 		}
 
 		if d.config["io.bus"] == "usb" {

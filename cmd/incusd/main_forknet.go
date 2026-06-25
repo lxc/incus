@@ -223,6 +223,11 @@ type cmdForknet struct {
 	dhcpv4Leases    map[string]*nclient4.Lease
 	dhcpv6Leases    map[string]*dhcpv6.Message
 	instNetworkPath string
+
+	// Initial DNS configuration parsed from the pre-existing resolv.conf.
+	initialNameservers []string
+	initialSearch      []string
+	initialDomain      string
 }
 
 func (c *cmdForknet) command() *cobra.Command {
@@ -279,6 +284,12 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 
 	hostname := strings.TrimSpace(string(bb))
 
+	// Parse any pre-existing resolv.conf so its values are preserved alongside DHCP provided ones.
+	c.parseInitialResolvConf()
+
+	// Load the list of interface/family combinations to skip (statically configured).
+	dhcpSkip := c.loadDHCPSkip(l)
+
 	// Create PID file.
 	err = os.WriteFile(filepath.Join(c.instNetworkPath, "dhcp.pid"), []byte(fmt.Sprintf("%d", os.Getpid())), 0o644)
 	if err != nil {
@@ -324,8 +335,19 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 	errorChannel := make(chan error, len(names)*2)
 
 	// Launch DHCP clients for each iface.
+	launched := 0
 	for _, iface := range names {
 		l := l.WithField("interface", iface).Logger
+
+		runV4 := !dhcpSkip[iface]["ipv4"]
+		runV6 := !dhcpSkip[iface]["ipv6"]
+
+		// Skip interfaces that are fully statically configured.
+		if !runV4 && !runV6 {
+			l.Info("skipping dhcp on statically configured interface")
+			continue
+		}
+
 		l.Info("running dhcp on interface")
 
 		link := &ip.Link{
@@ -340,13 +362,20 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 			continue
 		}
 
-		go c.dhcpRunV4(errorChannel, iface, hostname, l)
-		go c.dhcpRunV6(errorChannel, iface, hostname, duid, l)
+		if runV4 {
+			go c.dhcpRunV4(errorChannel, iface, hostname, l)
+			launched++
+		}
+
+		if runV6 {
+			go c.dhcpRunV6(errorChannel, iface, hostname, duid, l)
+			launched++
+		}
 	}
 
-	// Wait for all goroutines to return (2 per interface).
+	// Wait for all launched goroutines to return.
 	var finalErr error
-	for i := 0; i < len(names)*2; i++ {
+	for i := 0; i < launched; i++ {
 		err := <-errorChannel
 		if err != nil {
 			l.WithError(err).Error("DHCP client failed")
@@ -861,10 +890,74 @@ func (c *cmdForknet) loadOrCreateDUID(ifaces []net.Interface) (dhcpv6.DUID, erro
 	return duid, nil
 }
 
+// parseInitialResolvConf records any pre-existing resolv.conf values for merging with DHCP ones.
+func (c *cmdForknet) parseInitialResolvConf() {
+	content, err := os.ReadFile(filepath.Join(c.instNetworkPath, "resolv.conf"))
+	if err != nil {
+		return
+	}
+
+	for _, line := range strings.Split(string(content), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		switch fields[0] {
+		case "nameserver":
+			c.initialNameservers = append(c.initialNameservers, fields[1])
+		case "search":
+			c.initialSearch = append(c.initialSearch, fields[1:]...)
+		case "domain":
+			c.initialDomain = fields[1]
+		}
+	}
+}
+
+// loadDHCPSkip reads the interface/family combinations to skip (statically configured).
+func (c *cmdForknet) loadDHCPSkip(l *logrus.Logger) map[string]map[string]bool {
+	skip := map[string]map[string]bool{}
+
+	content, err := os.ReadFile(filepath.Join(c.instNetworkPath, "dhcp.skip"))
+	if err != nil {
+		if !os.IsNotExist(err) {
+			l.WithError(err).Warning("Unable to read dhcp.skip file")
+		}
+
+		return skip
+	}
+
+	for _, line := range strings.Split(string(content), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			continue
+		}
+
+		if skip[fields[0]] == nil {
+			skip[fields[0]] = map[string]bool{}
+		}
+
+		skip[fields[0]][fields[1]] = true
+	}
+
+	return skip
+}
+
 func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 	nameservers := map[string]struct{}{}
 	searchLabels := []string{}
 	domainNames := []string{}
+
+	// Seed with the values parsed from the initial resolv.conf.
+	for _, ns := range c.initialNameservers {
+		nameservers[ns] = struct{}{}
+	}
+
+	searchLabels = append(searchLabels, c.initialSearch...)
+
+	if c.initialDomain != "" {
+		domainNames = append(domainNames, c.initialDomain)
+	}
 
 	c.applyDNSMu.Lock()
 
