@@ -3570,7 +3570,7 @@ User keys can be used in search.
 ```{config:option} ipv4.nat.order network_bridge-common
 :condition: "IPv4 address"
 :default: "`before`"
-:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules"
+:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules (no effect with the `nftables` firewall driver)"
 :type: "string"
 
 ```
@@ -3666,7 +3666,7 @@ User keys can be used in search.
 ```{config:option} ipv6.nat.order network_bridge-common
 :condition: "IPv6 address"
 :default: "`before`"
-:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules"
+:shortdesc: "Whether to add the required NAT rules before or after any pre-existing rules (no effect with the `nftables` firewall driver)"
 :type: "string"
 
 ```
