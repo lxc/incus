@@ -22,16 +22,6 @@ container_devices_proxy_validation() {
         false
     fi
 
-    # Check using wildcard addresses isn't allowed in NAT mode.
-    if incus config device add proxyTester proxyDev proxy "listen=tcp:0.0.0.0:$HOST_TCP_PORT" connect=tcp:0.0.0.0:4321 nat=true; then
-        echo "Proxy device shouldn't allow wildcard IPv4 listen addresses in NAT mode"
-        false
-    fi
-    if incus config device add proxyTester proxyDev proxy "listen=tcp:[::]:$HOST_TCP_PORT" connect=tcp:0.0.0.0:4321 nat=true; then
-        echo "Proxy device shouldn't allow wildcard IPv6 listen addresses in NAT mode"
-        false
-    fi
-
     # Check using mixing IP versions in listen/connect addresses isn't allowed in NAT mode.
     if incus config device add proxyTester proxyDev proxy "listen=tcp:127.0.0.1:$HOST_TCP_PORT" "connect=tcp:[::]:4321" nat=true; then
         echo "Proxy device shouldn't allow mixing IP address versions in NAT mode"
@@ -218,12 +208,59 @@ container_devices_proxy_tcp() {
 
     incus config device remove nattest validNAT
 
+    # Wildcard listen address (no destination address match in the generated rules).
+    incus config device add nattest validNAT proxy listen="tcp:0.0.0.0:1234" connect="tcp:${v4_addr}:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "daddr")" -eq 0 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    # Wildcard connect address with a static IP picks the NIC's IP as the target.
+    incus config device add nattest validNAT proxy listen="tcp:127.0.0.1:1234" connect="tcp:0.0.0.0:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
     # This won't enable NAT
     incus config device add nattest invalidNAT proxy listen="tcp:127.0.0.1:1234" connect="udp:${v4_addr}:1234" bind=host
     ! nft -nn list chain inet incus prert.nattest.invalidNAT || false
     ! nft -nn list chain inet incus out.nattest.invalidNAT || false
 
     incus delete -f nattest
+
+    # Dynamic connect address detection. The NIC has no static IP set in Incus, so the
+    # connect address must be detected from the bridge's neighbor table (ARP/NDP).
+    incus launch testimage dhcptest -n inct$$
+
+    # Wait for the instance to be ready for exec.
+    for _ in $(seq 30); do
+        incus exec dhcptest -- true 2>/dev/null && break
+        sleep 1
+    done
+
+    # The busybox image doesn't run a DHCP client out of the box, so assign an address
+    # manually inside the instance to stand in for a dynamically obtained one.
+    dhcp_v4="$(incus network get inct$$ ipv4.address | cut -d/ -f1)50"
+    incus exec dhcptest -- ip link set eth0 up
+    incus exec dhcptest -- ip address add "${dhcp_v4}/24" dev eth0
+
+    # Populate the host neighbor table so the address can be detected.
+    ping -c1 -W1 "${dhcp_v4}" || true
+
+    incus config device add dhcptest dynNAT proxy listen="tcp:127.0.0.1:1234" connect="tcp:0.0.0.0:1234" bind=host nat=true
+    for _ in $(seq 30); do
+        nft -nn list chain inet incus prert.dhcptest.dynNAT 2>/dev/null | grep -q "dnat ip to ${dhcp_v4}:1234" && break
+        ping -c1 -W1 "${dhcp_v4}" || true
+        sleep 1
+    done
+    [ "$(nft -nn list chain inet incus prert.dhcptest.dynNAT | grep -c "ip daddr 127.0.0.1 tcp dport 1234 dnat ip to ${dhcp_v4}:1234")" -eq 1 ]
+
+    incus delete -f dhcptest
+    ! nft -nn list chain inet incus prert.dhcptest.dynNAT || false
     ! nft -nn list chain inet incus prert.nattest.validNAT || false
     ! nft -nn list chain inet incus out.nattest.validNAT || false
 

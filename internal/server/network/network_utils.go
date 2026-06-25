@@ -848,19 +848,56 @@ func GetHostDevice(parent string, vlan string) string {
 	return defaultVlan
 }
 
-// GetNeighbourIPs returns the IP addresses in the neighbour cache for a particular interface and MAC.
-func GetNeighbourIPs(interfaceName string, hwaddr net.HardwareAddr) ([]ip.Neigh, error) {
+// GetNeighborIPs returns the IP addresses in the neighbor cache for a particular interface and MAC.
+func GetNeighborIPs(interfaceName string, hwaddr net.HardwareAddr) ([]ip.Neigh, error) {
 	if hwaddr == nil {
 		return nil, nil
 	}
 
 	neigh := &ip.Neigh{DevName: interfaceName, MAC: hwaddr}
-	neighbours, err := neigh.Show()
+	neighbors, err := neigh.Show()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get IP neighbours for interface %q: %w", interfaceName, err)
+		return nil, fmt.Errorf("Failed to get IP neighbors for interface %q: %w", interfaceName, err)
 	}
 
-	return neighbours, nil
+	return neighbors, nil
+}
+
+// GetNeighborAddresses returns the usable IP addresses found in the neighbor cache for a particular
+// interface and MAC. It skips unresolved entries as well as link-local, multicast, unspecified and
+// loopback addresses. If versions is non-empty, only addresses of the listed IP versions (4 or 6) are
+// returned.
+func GetNeighborAddresses(interfaceName string, hwaddr net.HardwareAddr, versions []uint) ([]net.IP, error) {
+	neighIPs, err := GetNeighborIPs(interfaceName, hwaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	addresses := make([]net.IP, 0, len(neighIPs))
+	for _, neighIP := range neighIPs {
+		// Skip entries that don't represent a usable address.
+		switch neighIP.State {
+		case ip.NeighborIPStateFailed, ip.NeighborIPStateIncomplete, ip.NeighborIPStateNone:
+			continue
+		}
+
+		if neighIP.Addr.IsLinkLocalUnicast() || neighIP.Addr.IsLinkLocalMulticast() || neighIP.Addr.IsMulticast() || neighIP.Addr.IsUnspecified() || neighIP.Addr.IsLoopback() {
+			continue
+		}
+
+		ipVersion := uint(6)
+		if neighIP.Addr.To4() != nil {
+			ipVersion = 4
+		}
+
+		if len(versions) > 0 && !slices.Contains(versions, ipVersion) {
+			continue
+		}
+
+		addresses = append(addresses, neighIP.Addr)
+	}
+
+	return addresses, nil
 }
 
 // GetLeaseAddresses returns the lease addresses for a network and hwaddr.

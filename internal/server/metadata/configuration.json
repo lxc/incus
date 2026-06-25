@@ -1922,7 +1922,7 @@
 							"default": "`false`",
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "Whether to optimize proxying via NAT (requires that the instance NIC has a static IP address)",
+							"shortdesc": "Whether to optimize proxying via NAT",
 							"type": "bool"
 						}
 					},

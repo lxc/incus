@@ -8,13 +8,13 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// NeighProxy represents arguments for neighbour proxy manipulation.
+// NeighProxy represents arguments for neighbor proxy manipulation.
 type NeighProxy struct {
 	DevName string
 	Addr    net.IP
 }
 
-// Show list neighbour proxy entries.
+// Show list neighbor proxy entries.
 func (n *NeighProxy) Show() ([]NeighProxy, error) {
 	link, err := linkByName(n.DevName)
 	if err != nil {
@@ -23,7 +23,7 @@ func (n *NeighProxy) Show() ([]NeighProxy, error) {
 
 	list, err := netlink.NeighProxyList(link.Attrs().Index, netlink.FAMILY_ALL)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get neighbour proxies for link %q: %w", n.DevName, err)
+		return nil, fmt.Errorf("Failed to get neighbor proxies for link %q: %w", n.DevName, err)
 	}
 
 	entries := make([]NeighProxy, 0, len(list))
@@ -52,7 +52,7 @@ func (n *NeighProxy) netlinkNeigh() (*netlink.Neigh, error) {
 	}, nil
 }
 
-// Add a neighbour proxy entry.
+// Add a neighbor proxy entry.
 func (n *NeighProxy) Add() error {
 	neigh, err := n.netlinkNeigh()
 	if err != nil {
@@ -61,13 +61,13 @@ func (n *NeighProxy) Add() error {
 
 	err = netlink.NeighAdd(neigh)
 	if err != nil {
-		return fmt.Errorf("Failed to add neighbour proxy %v: %w", neigh, err)
+		return fmt.Errorf("Failed to add neighbor proxy %v: %w", neigh, err)
 	}
 
 	return nil
 }
 
-// Delete a neighbour proxy entry.
+// Delete a neighbor proxy entry.
 func (n *NeighProxy) Delete() error {
 	neigh, err := n.netlinkNeigh()
 	if err != nil {
@@ -76,7 +76,7 @@ func (n *NeighProxy) Delete() error {
 
 	err = netlink.NeighDel(neigh)
 	if err != nil {
-		return fmt.Errorf("Failed to delete neighbour proxy %v: %w", neigh, err)
+		return fmt.Errorf("Failed to delete neighbor proxy %v: %w", neigh, err)
 	}
 
 	return nil
