@@ -517,6 +517,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		return errors.New(`Root disk entry must have a "pool" property set`)
 	}
 
+	if d.config["pool"] != "" && slices.Contains([]string{diskSourceCloudInit, diskSourceAgent}, d.config["source"]) {
+		return fmt.Errorf(`Disk entry with source %q cannot have a "pool" property set`, d.config["source"])
+	}
+
 	if d.config["size"] != "" && d.config["path"] != "/" && d.config["source"] != diskSourceTmpfs && d.config["source"] != diskSourceTmpfsOverlay {
 		return errors.New("Only root or tmpfs disks can have a size quota")
 	}
