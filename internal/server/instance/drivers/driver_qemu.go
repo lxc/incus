@@ -2546,10 +2546,27 @@ func (d *qemu) setupNvram() error {
 		return err
 	}
 
+	// Unified firmware images (e.g. AMD SEV) carry their own variable store and need no NVRAM.
+	needsNvram := false
+	for _, firmware := range firmwares {
+		if firmware.Vars != "" {
+			needsNvram = true
+			break
+		}
+	}
+
+	if !needsNvram {
+		return nil
+	}
+
 	// Find the template file.
 	var efiVarsPath string
 	var efiVarsName string
 	for _, firmware := range firmwares {
+		if firmware.Vars == "" {
+			continue
+		}
+
 		varsPath, err := filepath.EvalSymlinks(firmware.Vars)
 		if err != nil {
 			continue
@@ -3878,13 +3895,6 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	if slices.Contains(rawOptions, "-bios") || slices.Contains(rawOptions, "-kernel") {
 		d.logger.Warn("Starting VM without default firmware (-bios or -kernel in raw.qemu)")
 	} else if d.architectureSupportsUEFI(d.architecture) {
-		// Open the UEFI NVRAM file and pass it via file descriptor to QEMU.
-		// This is so the QEMU process can still read/write the file after it has dropped its user privs.
-		nvRAMFile, err := os.Open(d.nvramPath())
-		if err != nil {
-			return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
-		}
-
 		// Determine expected firmware.
 		firmwares, err := d.firmwarePairs()
 		if err != nil {
@@ -3892,8 +3902,16 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		}
 
 		var efiCode string
+		unified := false
 		for _, firmware := range firmwares {
-			if util.PathExists(filepath.Join(d.Path(), filepath.Base(firmware.Vars))) {
+			if firmware.Vars == "" {
+				// Unified firmware image (e.g. AMD SEV) with no separate vars store.
+				if util.PathExists(firmware.Code) {
+					efiCode = firmware.Code
+					unified = true
+					break
+				}
+			} else if util.PathExists(filepath.Join(d.Path(), filepath.Base(firmware.Vars))) {
 				efiCode = firmware.Code
 				break
 			}
@@ -3904,8 +3922,18 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		}
 
 		driveFirmwareOpts := qemuDriveFirmwareOpts{
-			roPath:    efiCode,
-			nvramPath: fmt.Sprintf("/dev/fd/%d", d.addFileDescriptor(fdFiles, nvRAMFile)),
+			roPath: efiCode,
+		}
+
+		if !unified {
+			// Open the UEFI NVRAM file and pass it via file descriptor to QEMU.
+			// This is so the QEMU process can still read/write the file after it has dropped its user privs.
+			nvRAMFile, err := os.Open(d.nvramPath())
+			if err != nil {
+				return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+			}
+
+			driveFirmwareOpts.nvramPath = fmt.Sprintf("/dev/fd/%d", d.addFileDescriptor(fdFiles, nvRAMFile))
 		}
 
 		conf = append(conf, qemuDriveFirmware(&driveFirmwareOpts)...)

@@ -758,6 +758,15 @@ func TestQemuConfigTemplates(t *testing.T) {
 			format = "raw"
 			if = "pflash"
 			unit = "1"`,
+		}, {
+			qemuDriveFirmwareOpts{"/tmp/ovmf.amdsev.fd", ""},
+			`# Firmware (read only)
+			[drive]
+			file = "/tmp/ovmf.amdsev.fd"
+			format = "raw"
+			if = "pflash"
+			readonly = "on"
+			unit = "0"`,
 		}}
 		for _, tc := range testCases {
 			runTest(tc.expected, qemuDriveFirmware(&tc.opts))
