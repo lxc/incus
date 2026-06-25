@@ -1484,7 +1484,25 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 			// Finally attempt to mount the volume that needs mounting.
 			err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
 			if err != nil {
-				return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
+				// If the config subvolume is somehow missing, create an empty one.
+				_, snapName, _ := api.GetParentAndSnapshotName(snapVol.name)
+				subvolName := fmt.Sprintf("%s-%s", Qcow2ConfigVolumeBase, snapName)
+
+				created, createErr := d.qcow2CreateMissingConfigSubvolume(volDevPath, subvolName)
+				if createErr != nil {
+					return fmt.Errorf("Failed to create missing config subvolume for LVM snapshot volume: %w", createErr)
+				}
+
+				if !created {
+					return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
+				}
+
+				d.logger.Warn("Created missing config subvolume for snapshot", logger.Ctx{"volName": snapVol.name, "subvol": subvolName})
+
+				err = TryMount(volDevPath, mountPath, mountVol.ConfigBlockFilesystem(), mountFlags|unix.MS_RDONLY, mountOptions)
+				if err != nil {
+					return fmt.Errorf("Failed to mount LVM snapshot volume: %w", err)
+				}
 			}
 
 			d.logger.Debug("Mounted logical volume snapshot", logger.Ctx{"dev": volPath, "path": mountPath, "options": mountOptions})
@@ -1578,6 +1596,43 @@ func (d *lvm) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) erro
 	snapVol.MountRefCountIncrement() // From here on it is up to caller to call UnmountVolumeSnapshot() when done.
 	reverter.Success()
 	return nil
+}
+
+// qcow2CreateMissingConfigSubvolume creates an empty subvolume in the btrfs config filesystem if it's missing.
+// It returns true if the subvolume was created.
+func (d *lvm) qcow2CreateMissingConfigSubvolume(devPath string, subvolName string) (bool, error) {
+	tmpMountPath, err := os.MkdirTemp("", "incus_config_")
+	if err != nil {
+		return false, err
+	}
+
+	defer func() { _ = os.RemoveAll(tmpMountPath) }()
+
+	err = TryMount(devPath, tmpMountPath, "btrfs", 0, "")
+	if err != nil {
+		return false, err
+	}
+
+	defer func() { _ = TryUnmount(tmpMountPath, 0) }()
+
+	path := filepath.Join(tmpMountPath, subvolName)
+
+	// Nothing to do if the subvolume already exists.
+	if util.PathExists(path) {
+		return false, nil
+	}
+
+	_, err = subprocess.RunCommand("btrfs", "subvolume", "create", path)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = subprocess.RunCommand("btrfs", "filesystem", "sync", tmpMountPath)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // UnmountVolumeSnapshot removes the read-only mount placed on top of a snapshot.
