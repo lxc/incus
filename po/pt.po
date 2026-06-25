@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-25 18:25-0400\n"
-"PO-Revision-Date: 2026-06-17 01:01+0000\n"
+"PO-Revision-Date: 2026-06-25 23:48+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -4254,9 +4254,9 @@ msgstr ""
 "Formato de coluna de chave de configuração inválido (demasiados campos): '%s'"
 
 #: cmd/incus/default.go:85
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid default %q"
-msgstr "Formato inválido %q"
+msgstr "Predefinição inválida %q"
 
 #: cmd/incus/publish.go:194
 #, c-format
@@ -4324,14 +4324,14 @@ msgid "Invalid type %q"
 msgstr "Tipo inválido %q"
 
 #: cmd/incus/default.go:123
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid value %q for console_type"
-msgstr "Tipo de peer inválido"
+msgstr "Valor %q inválido para tipo de consola"
 
 #: cmd/incus/default.go:110
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid value %q for list_format"
-msgstr "Volume inválido %s"
+msgstr "Valor %q inválido para formato de lista"
 
 #: cmd/incus/info.go:248
 #, c-format
@@ -6065,9 +6065,8 @@ msgid "Manage and attach instances to networks"
 msgstr "Gerir e anexar instâncias a redes"
 
 #: cmd/incus/default.go:24 cmd/incus/default.go:25
-#, fuzzy
 msgid "Manage client defaults"
-msgstr "Gerir clientes de confiança"
+msgstr "Gerir predefinições dos clientes"
 
 #: cmd/incus/cluster_group.go:37 cmd/incus/cluster_group.go:38
 msgid "Manage cluster groups"
@@ -7964,7 +7963,7 @@ msgstr "Define a autenticação do utilizador quando se usa escuta SSH SFTP"
 
 #: cmd/incus/default.go:57 cmd/incus/default.go:58
 msgid "Set client defaults"
-msgstr ""
+msgstr "Definir predefinições dos clientes"
 
 #: cmd/incus/config_device.go:569
 msgid "Set device configuration keys"
@@ -8390,9 +8389,8 @@ msgid "Show all information messages"
 msgstr "Mostra todas as mensagens de informação"
 
 #: cmd/incus/default.go:165 cmd/incus/default.go:166
-#, fuzzy
 msgid "Show client defaults"
-msgstr "Mostra o remoto predefinido"
+msgstr "Mostrar predefinições dos clientes"
 
 #: cmd/incus/cluster_group.go:693 cmd/incus/cluster_group.go:694
 msgid "Show cluster group configurations"
@@ -9528,7 +9526,7 @@ msgstr "Retira definições de todos os perfis na instância alvo"
 
 #: cmd/incus/default.go:202 cmd/incus/default.go:203
 msgid "Unset client defaults"
-msgstr ""
+msgstr "Desconfigurar predefinições dos clientes"
 
 #: cmd/incus/config_device.go:765 cmd/incus/config_device.go:766
 msgid "Unset device configuration keys"
@@ -10219,7 +10217,7 @@ msgstr "atual"
 
 #: cmd/incus/usage/usage.go:822
 msgid "default"
-msgstr ""
+msgstr "predefinição"
 
 #: cmd/incus/storage.go:526
 msgid "description"
@@ -11385,7 +11383,7 @@ msgstr "não"
 
 #: cmd/incus/default.go:146
 msgid "no_color must be boolean"
-msgstr ""
+msgstr "no_color tem de ser booleano"
 
 #: cmd/incus/usage/parse.go:60
 #, c-format
