@@ -634,7 +634,7 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 		return nil
 	}
 
-	sizeBytes, err := d.roundedSizeBytesString(size)
+	sizeBytes, err := d.volumeBackingSizeBytes(vol, size)
 	if err != nil {
 		return err
 	}
