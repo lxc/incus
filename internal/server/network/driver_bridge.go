@@ -296,7 +296,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  type: string
 		//  condition: IPv4 address
 		//  default: `before`
-		//  shortdesc: Whether to add the required NAT rules before or after any pre-existing rules
+		//  shortdesc: Whether to add the required NAT rules before or after any pre-existing rules (no effect with the `nftables` firewall driver)
 		"ipv4.nat.order": validate.Optional(validate.IsOneOf("before", "after")),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv4.nat.address)
@@ -425,7 +425,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  type: string
 		//  condition: IPv6 address
 		//  default: `before`
-		//  shortdesc: Whether to add the required NAT rules before or after any pre-existing rules
+		//  shortdesc: Whether to add the required NAT rules before or after any pre-existing rules (no effect with the `nftables` firewall driver)
 		"ipv6.nat.order": validate.Optional(validate.IsOneOf("before", "after")),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv6.nat.address)
