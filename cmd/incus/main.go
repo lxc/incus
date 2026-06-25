@@ -214,6 +214,10 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	copyCmd := cmdCopy{global: &globalCmd}
 	app.AddCommand(copyCmd.command())
 
+	// default sub-command
+	defaultCmd := cmdDefault{global: &globalCmd}
+	app.AddCommand(defaultCmd.command())
+
 	// delete sub-command
 	deleteCmd := cmdDelete{global: &globalCmd}
 	app.AddCommand(deleteCmd.command())

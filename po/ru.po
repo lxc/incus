@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-13 22:43-0300\n"
+"POT-Creation-Date: 2026-06-25 18:25-0400\n"
 "PO-Revision-Date: 2026-06-17 01:01+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -1113,10 +1113,10 @@ msgstr "Вы присоединяетесь к существующему кла
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
-"Вы уверены, что хотите совершить действие %s над участником кластера %q? да"
-"(yes)/нет(no) [по умолчанию=no]: "
+"Вы уверены, что хотите совершить действие %s над участником кластера %q? "
+"да(yes)/нет(no) [по умолчанию=no]: "
 
-#: cmd/incus/console.go:444
+#: cmd/incus/console.go:453
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 "Поскольку ни того, ни другого найти не удалось, сокет для протокола SPICE "
@@ -1154,11 +1154,11 @@ msgstr "Присоединение новых пользовательских �
 msgid "Attach new network interfaces to instances"
 msgstr "Подключение новых сетевых интерфейсов к экземплярам"
 
-#: cmd/incus/console.go:46
+#: cmd/incus/console.go:47
 msgid "Attach to instance consoles"
 msgstr "Подключение к консолям экземпляра"
 
-#: cmd/incus/console.go:47
+#: cmd/incus/console.go:48
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -1246,8 +1246,8 @@ msgstr "Резервные копии:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Неверный синтаксис переопределения устройства, ожидается <устройство>"
-",<параметр>=<значение>: %s"
+"Неверный синтаксис переопределения устройства, ожидается <устройство>,"
+"<параметр>=<значение>: %s"
 
 #: cmd/incus/copy.go:138 cmd/incus/create.go:205 cmd/incus/move.go:252
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1454,7 +1454,8 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:450
 msgid "Cannot set --volume-only when copying a snapshot"
-msgstr "Невозможно применить --volume-only при копировании моментального снимка"
+msgstr ""
+"Невозможно применить --volume-only при копировании моментального снимка"
 
 #: cmd/incus/network_acl.go:899
 #, c-format
@@ -2440,7 +2441,8 @@ msgstr "Показать профили из всех проектов"
 
 #: cmd/incus/top.go:45
 msgid "Display resource usage info per instance"
-msgstr "Отображение информации об использовании ресурсов для каждого экземпляра"
+msgstr ""
+"Отображение информации об использовании ресурсов для каждого экземпляра"
 
 #: cmd/incus/storage_bucket.go:466
 msgid "Display storage pool buckets from all projects"
@@ -2812,7 +2814,7 @@ msgstr "Ошибка при сбросе свойства: %v"
 msgid "Error updating template file: %s"
 msgstr "Ошибка обновления шаблона файла: %s"
 
-#: cmd/incus/main.go:425
+#: cmd/incus/main.go:429
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr "Ошибка при выполнении расширения псевдонима: %s\n"
@@ -2829,8 +2831,8 @@ msgstr "Эвакуировать участника кластера"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action (\"cluster."
-"evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
 "Эвакуация участника кластера\n"
 "\n"
@@ -3175,7 +3177,7 @@ msgstr "Не удалось распознать формат SSH-ключа х�
 msgid "Failed parsing validation response: %w"
 msgstr "Не удалось распознать ответ проверки: %w"
 
-#: cmd/incus/console.go:422
+#: cmd/incus/console.go:431
 #, c-format
 msgid "Failed starting command: %w"
 msgstr "Не удалось запустить команду: %w"
@@ -3541,10 +3543,10 @@ msgstr ""
 "строя, был переустановлен\n"
 "или по какой-либо другой причине больше никогда не заработает.\n"
 "\n"
-"Вы действительно уверены, что хотите принудительно удалить %s? да(yes)/нет"
-"(no): "
+"Вы действительно уверены, что хотите принудительно удалить %s? да(yes)/"
+"нет(no): "
 
-#: cmd/incus/console.go:55
+#: cmd/incus/console.go:56
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
@@ -4035,7 +4037,7 @@ msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 "Если имя моментального снимка уже существует, удалить его и создать новый"
 
-#: cmd/incus/main.go:533
+#: cmd/incus/main.go:582
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4279,6 +4281,11 @@ msgstr ""
 "Недопустимый параметр конфигурации формата столбца (слишком много полей): "
 "'%s'"
 
+#: cmd/incus/default.go:85
+#, fuzzy, c-format
+msgid "Invalid default %q"
+msgstr "Недопустимый формат %q"
+
 #: cmd/incus/publish.go:194
 #, c-format
 msgid "Invalid expiration date: %w"
@@ -4346,6 +4353,16 @@ msgstr "Предоставлен недопустимый тип сортиро�
 #, c-format
 msgid "Invalid type %q"
 msgstr "Недопустимый тип %q"
+
+#: cmd/incus/default.go:123
+#, fuzzy, c-format
+msgid "Invalid value %q for console_type"
+msgstr "недопустимый тип точки обмена трафиком"
+
+#: cmd/incus/default.go:110
+#, fuzzy, c-format
+msgid "Invalid value %q for list_format"
+msgstr "Имя контейнера: %s"
 
 #: cmd/incus/info.go:248
 #, c-format
@@ -5273,8 +5290,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5357,15 +5374,15 @@ msgstr ""
 "  f - Отпечаток базового образа (краткий)\n"
 "  F - Отпечаток базового образа (длинный)\n"
 "\n"
-"Пользовательские столбцы определяются с помощью "
-"\"[config:|devices:]key[:name][:maxWidth]\":\n"
+"Пользовательские столбцы определяются с помощью \"[config:|"
+"devices:]key[:name][:maxWidth]\":\n"
 "  KEY: (расширенный) ключ конфигурации или устройств для отображения. Если "
 "[config:|devices:] опущено,\n"
 "     по умолчанию используется ключ конфигурации.\n"
 "  NAME: Название для отображения в заголовке столбца.\n"
 "    По умолчанию используется ключ, если не указан или пуст.\n"
-"  MAXWIDTH: Максимальная ширина столбца (более длинные результаты обрезаются)"
-".\n"
+"  MAXWIDTH: Максимальная ширина столбца (более длинные результаты "
+"обрезаются).\n"
 "    По умолчанию -1 (неограниченная). Используйте 0, чтобы ограничить размер "
 "до размера заголовка столбца."
 
@@ -6037,6 +6054,11 @@ msgstr "Опубликовать этот образ"
 msgid "Manage and attach instances to networks"
 msgstr "Управление экземплярами и их подключение к сетям"
 
+#: cmd/incus/default.go:24 cmd/incus/default.go:25
+#, fuzzy
+msgid "Manage client defaults"
+msgstr "Управление доверенными клиентами"
+
 #: cmd/incus/cluster_group.go:37 cmd/incus/cluster_group.go:38
 msgid "Manage cluster groups"
 msgstr "Управлять кластерными группами"
@@ -6225,8 +6247,8 @@ msgstr "Управление томами хранения"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 "Управление томами хранения\n"
 "\n"
@@ -6456,7 +6478,8 @@ msgstr ""
 
 #: cmd/incus/image.go:727
 msgid "Must run as root to import from directory"
-msgstr "Для импорта из директории необходимо запустить программу с правами root"
+msgstr ""
+"Для импорта из директории необходимо запустить программу с правами root"
 
 #: cmd/incus/cluster.go:197 cmd/incus/cluster.go:1149
 #: cmd/incus/cluster_group.go:467 cmd/incus/config_trust.go:416
@@ -7021,7 +7044,7 @@ msgstr "Пакетов отправлено"
 msgid "Partitions:"
 msgstr "Разделы:"
 
-#: cmd/incus/main.go:493 cmd/incus/remote.go:885
+#: cmd/incus/main.go:542 cmd/incus/remote.go:885
 #, c-format
 msgid "Password for %s: "
 msgstr "Пароль для %s: "
@@ -7657,7 +7680,8 @@ msgstr "Обработка: %s (%s)"
 
 #: cmd/incus/cluster.go:1039 cmd/incus/cluster.go:1040
 msgid "Request a join token for adding a cluster member"
-msgstr "Запросить токен присоединения для добавления нового участника в кластер"
+msgstr ""
+"Запросить токен присоединения для добавления нового участника в кластер"
 
 #: cmd/incus/delete.go:41 cmd/incus/snapshot.go:233
 msgid "Require user confirmation"
@@ -7720,13 +7744,14 @@ msgstr "Восстановление участника кластера: %s"
 
 #: cmd/incus/config_trust.go:101 cmd/incus/config_trust.go:178
 msgid "Restrict the certificate to one or more projects"
-msgstr "Ограничьте права доступа по сертификату одним или несколькими проектами"
+msgstr ""
+"Ограничьте права доступа по сертификату одним или несколькими проектами"
 
 #: cmd/incus/action.go:81 cmd/incus/action.go:82
 msgid "Resume instances"
 msgstr "Возобновить экземпляры"
 
-#: cmd/incus/console.go:56
+#: cmd/incus/console.go:57
 msgid "Retrieve the instance's console log"
 msgstr "Получить журнал консоли экземпляра"
 
@@ -7940,6 +7965,10 @@ msgstr "Задать время ожидания для удаленного с�
 #: cmd/incus/file.go:922 cmd/incus/storage_volume_file.go:350
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr "Задать пользователя для аутентификации при использовании SSH SFTP"
+
+#: cmd/incus/default.go:57 cmd/incus/default.go:58
+msgid "Set client defaults"
+msgstr ""
 
 #: cmd/incus/config_device.go:569
 msgid "Set device configuration keys"
@@ -8360,7 +8389,8 @@ msgstr "Настроить хранилище на основе устройст
 
 #: cmd/incus/admin_init.go:60
 msgid "Setup loop based storage with SIZE in GiB"
-msgstr "Настроить хранилища на основе loop устройства с указанием размера в ГиБ"
+msgstr ""
+"Настроить хранилища на основе loop устройства с указанием размера в ГиБ"
 
 #: cmd/incus/main.go:175
 msgid "Show all debug messages"
@@ -8369,6 +8399,11 @@ msgstr "Показать все отладочные сообщения"
 #: cmd/incus/main.go:176
 msgid "Show all information messages"
 msgstr "Показать все информационные сообщения"
+
+#: cmd/incus/default.go:165 cmd/incus/default.go:166
+#, fuzzy
+msgid "Show client defaults"
+msgstr "Показать дистанционный сервер по умолчанию"
 
 #: cmd/incus/cluster_group.go:693 cmd/incus/cluster_group.go:694
 msgid "Show cluster group configurations"
@@ -8414,7 +8449,7 @@ msgstr "Показать информацию об экземпляре или �
 msgid "Show instance snapshot configuration"
 msgstr "Показать конфигурацию моментального снимка экземпляра"
 
-#: cmd/incus/main.go:364 cmd/incus/main.go:365
+#: cmd/incus/main.go:368 cmd/incus/main.go:369
 msgid "Show less common commands"
 msgstr "Показать менее распространенные команды"
 
@@ -8622,7 +8657,8 @@ msgstr "Сделать моментальный снимок тома хране
 
 #: cmd/incus/storage_volume.go:2028
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr "Моментальные снимки только для чтения и их конфигурацию нельзя изменить"
+msgstr ""
+"Моментальные снимки только для чтения и их конфигурацию нельзя изменить"
 
 #: cmd/incus/info.go:818 cmd/incus/storage_volume.go:1386
 msgid "Snapshots:"
@@ -8929,7 +8965,7 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "Пул хранения %s уже существует"
 
-#: cmd/incus/console.go:135
+#: cmd/incus/console.go:136
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "Флаг --show-log поддерживается только типом вывода \"console\""
 
@@ -8976,7 +9012,7 @@ msgstr ""
 "\n"
 "Вы можете вызвать её через \"incusd cluster\"."
 
-#: cmd/incus/console.go:443
+#: cmd/incus/console.go:452
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -9000,8 +9036,8 @@ msgstr "Были найдены следующие неизвестные том
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
-"Экземпляр %s в настоящее время запущен, сначала остановите его или "
-"передайте --force"
+"Экземпляр %s в настоящее время запущен, сначала остановите его или передайте "
+"--force"
 
 #: cmd/incus/publish.go:90
 msgid ""
@@ -9167,7 +9203,7 @@ msgstr ""
 "Запрошенный пул хранения «%s» уже существует. Пожалуйста, выберите другое "
 "название."
 
-#: cmd/incus/webui_unix.go:57
+#: cmd/incus/webui_unix.go:61
 msgid "The server doesn't have a web UI installed"
 msgstr "На сервере не установлен веб интерфейс"
 
@@ -9211,7 +9247,7 @@ msgstr ""
 "Конфигурационного параметра для установки на моментальный снимок экземпляра "
 "нет."
 
-#: cmd/incus/main.go:416
+#: cmd/incus/main.go:420
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -9280,11 +9316,11 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr "Для создания новой сети используйте команду: incus network create"
 
-#: cmd/incus/console.go:237
+#: cmd/incus/console.go:238
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr "Чтобы отсоединиться от консоли, нажмите: <ctrl>+a q"
 
-#: cmd/incus/main.go:541
+#: cmd/incus/main.go:590
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -9359,7 +9395,7 @@ msgstr "Тип"
 msgid "Type of certificate"
 msgstr "Тип сертификата"
 
-#: cmd/incus/console.go:57
+#: cmd/incus/console.go:58
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -9387,7 +9423,7 @@ msgid "UPLOAD DATE"
 msgstr "ДАТА ВЫГРУЗКИ"
 
 #: cmd/incus/cluster.go:198 cmd/incus/remote.go:1055
-#: cmd/incus/usage/usage.go:865
+#: cmd/incus/usage/usage.go:866
 msgid "URL"
 msgstr "URL"
 
@@ -9462,7 +9498,7 @@ msgstr "Неизвестный тип канала связи для клиен�
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "Неизвестный сокращенный символ столбца '%c' в '%s'"
 
-#: cmd/incus/console.go:165
+#: cmd/incus/console.go:166
 #, c-format
 msgid "Unknown console type %q"
 msgstr "Неизвестный тип консоли %q"
@@ -9482,7 +9518,7 @@ msgstr "Неизвестный флаг --%s"
 msgid "Unknown key: %s"
 msgstr "Неизвестный параметр: %s"
 
-#: cmd/incus/console.go:125
+#: cmd/incus/console.go:126
 #, c-format
 msgid "Unknown output type %q"
 msgstr "Неизвестный тип вывода %q"
@@ -9498,6 +9534,10 @@ msgstr "Убрать параметры конфигурации участни�
 #: cmd/incus/move.go:64
 msgid "Unset all profiles on the target instance"
 msgstr "Убрать все профили с целевого экземпляра"
+
+#: cmd/incus/default.go:202 cmd/incus/default.go:203
+msgid "Unset client defaults"
+msgstr ""
 
 #: cmd/incus/config_device.go:765 cmd/incus/config_device.go:766
 msgid "Unset device configuration keys"
@@ -9936,7 +9976,7 @@ msgstr ""
 "привилегий, чем\n"
 "в обычном случае."
 
-#: cmd/incus/webui_unix.go:105
+#: cmd/incus/webui_unix.go:109
 #, c-format
 msgid "Web server running at: %s"
 msgstr "Веб-сервер работает по адресу: %s"
@@ -10023,7 +10063,8 @@ msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:616
 msgid "Would you like stale cached images to be updated automatically?"
-msgstr "Хотите, чтобы устаревшие кэшированные образы автоматически обновлялись?"
+msgstr ""
+"Хотите, чтобы устаревшие кэшированные образы автоматически обновлялись?"
 
 #: cmd/incus/admin_init_interactive.go:562
 msgid "Would you like the server to be available over the network?"
@@ -10183,15 +10224,19 @@ msgstr "условие"
 msgid "current"
 msgstr "используемый"
 
+#: cmd/incus/usage/usage.go:822
+msgid "default"
+msgstr ""
+
 #: cmd/incus/storage.go:526
 msgid "description"
 msgstr "описание"
 
-#: cmd/incus/usage/usage.go:822
+#: cmd/incus/usage/usage.go:823
 msgid "device"
 msgstr "устройство"
 
-#: cmd/incus/usage/usage.go:824
+#: cmd/incus/usage/usage.go:825
 msgid "directory"
 msgstr "директория"
 
@@ -10199,7 +10244,7 @@ msgstr "директория"
 msgid "disabled"
 msgstr "отключено"
 
-#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:825
+#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:826
 msgid "driver"
 msgstr "драйвер"
 
@@ -10221,27 +10266,27 @@ msgstr "ошибка: %v"
 msgid "expected %s"
 msgstr "ожидалось %s"
 
-#: cmd/incus/usage/usage.go:827
+#: cmd/incus/usage/usage.go:828
 msgid "expiry"
 msgstr "хранить до"
 
-#: cmd/incus/usage/usage.go:828
+#: cmd/incus/usage/usage.go:829
 msgid "file"
 msgstr "файл"
 
-#: cmd/incus/usage/usage.go:829
+#: cmd/incus/usage/usage.go:830
 msgid "filter"
 msgstr "фильтр"
 
-#: cmd/incus/usage/usage.go:830
+#: cmd/incus/usage/usage.go:831
 msgid "fingerprint"
 msgstr "отпечаток"
 
-#: cmd/incus/usage/usage.go:831
+#: cmd/incus/usage/usage.go:832
 msgid "group"
 msgstr "группа"
 
-#: cmd/incus/usage/usage.go:832
+#: cmd/incus/usage/usage.go:833
 msgid "image"
 msgstr "образ"
 
@@ -10389,8 +10434,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 "incus create images:debian/12 u1\n"
@@ -10564,8 +10609,8 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from config."
-"yaml\n"
+"    Create and start a container named \"c2\" with configuration from "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
@@ -10575,8 +10620,8 @@ msgid ""
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
@@ -10600,8 +10645,8 @@ msgstr ""
 
 #: cmd/incus/list.go:131
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10731,8 +10776,8 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 "incus network integration create o1 ovn\n"
 "    Создать сетевую интеграцию o1 типа ovn\n"
@@ -10742,10 +10787,10 @@ msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 "incus network integration edit <сетевая интеграция> < network-"
 "integration.yaml\n"
@@ -11293,19 +11338,19 @@ msgstr ""
 msgid "info"
 msgstr "информация"
 
-#: cmd/incus/usage/usage.go:833
+#: cmd/incus/usage/usage.go:834
 msgid "instance"
 msgstr "экземпляр"
 
-#: cmd/incus/usage/usage.go:834
+#: cmd/incus/usage/usage.go:835
 msgid "interface"
 msgstr "интерфейс"
 
-#: cmd/incus/usage/usage.go:837
+#: cmd/incus/usage/usage.go:838
 msgid "keepalive timeout"
 msgstr "Время ожидания активности"
 
-#: cmd/incus/usage/usage.go:838
+#: cmd/incus/usage/usage.go:839
 msgid "key"
 msgstr "параметр"
 
@@ -11313,15 +11358,15 @@ msgstr "параметр"
 msgid "last"
 msgstr "недавний"
 
-#: cmd/incus/usage/usage.go:835
+#: cmd/incus/usage/usage.go:836
 msgid "listen address"
 msgstr "адрес для подключений"
 
-#: cmd/incus/usage/usage.go:836
+#: cmd/incus/usage/usage.go:837
 msgid "listen port"
 msgstr "Порт для подключений"
 
-#: cmd/incus/usage/usage.go:840
+#: cmd/incus/usage/usage.go:841
 msgid "member"
 msgstr "участник"
 
@@ -11333,11 +11378,11 @@ msgstr "нет (n)"
 msgid "name"
 msgstr "название"
 
-#: cmd/incus/usage/usage.go:841
+#: cmd/incus/usage/usage.go:842
 msgid "network"
 msgstr "сеть"
 
-#: cmd/incus/usage/usage.go:842
+#: cmd/incus/usage/usage.go:843
 msgid "network integration"
 msgstr "сетевая интеграция"
 
@@ -11345,7 +11390,7 @@ msgstr "сетевая интеграция"
 msgid "network or integration"
 msgstr "сеть или сетевая интеграция"
 
-#: cmd/incus/usage/usage.go:900
+#: cmd/incus/usage/usage.go:901
 #, c-format
 msgid "new %s name"
 msgstr "новое название %s"
@@ -11354,6 +11399,10 @@ msgstr "новое название %s"
 #: cmd/incus/image.go:1172
 msgid "no"
 msgstr "нет"
+
+#: cmd/incus/default.go:146
+msgid "no_color must be boolean"
+msgstr ""
 
 #: cmd/incus/usage/parse.go:60
 #, c-format
@@ -11369,15 +11418,15 @@ msgstr "принять y(да)/n(нет)/[отпечаток]?"
 msgid "one of %s or %s"
 msgstr "%s или %s"
 
-#: cmd/incus/usage/usage.go:843
+#: cmd/incus/usage/usage.go:844
 msgid "operation"
 msgstr "операция"
 
-#: cmd/incus/usage/usage.go:844
+#: cmd/incus/usage/usage.go:845
 msgid "path"
 msgstr "путь"
 
-#: cmd/incus/usage/usage.go:845
+#: cmd/incus/usage/usage.go:846
 msgid "peer"
 msgstr "точка обмена трафиком"
 
@@ -11389,11 +11438,11 @@ msgstr "Пожалуйста, используйте синтаксис «<па�
 msgid "please use `incus profile`"
 msgstr "пожалуйста, используйте `incus profile`"
 
-#: cmd/incus/usage/usage.go:846
+#: cmd/incus/usage/usage.go:847
 msgid "pool"
 msgstr "пул"
 
-#: cmd/incus/usage/usage.go:847
+#: cmd/incus/usage/usage.go:848
 msgid "port"
 msgstr "порт"
 
@@ -11401,31 +11450,31 @@ msgstr "порт"
 msgid "preseed.yaml"
 msgstr "preseed.yaml"
 
-#: cmd/incus/usage/usage.go:848
+#: cmd/incus/usage/usage.go:849
 msgid "profile"
 msgstr "профиль"
 
-#: cmd/incus/usage/usage.go:849
+#: cmd/incus/usage/usage.go:850
 msgid "project"
 msgstr "проект"
 
-#: cmd/incus/usage/usage.go:850
+#: cmd/incus/usage/usage.go:851
 msgid "protocol"
 msgstr "протокол"
 
-#: cmd/incus/usage/usage.go:851
+#: cmd/incus/usage/usage.go:852
 msgid "query"
 msgstr "запрос"
 
-#: cmd/incus/usage/usage.go:852
+#: cmd/incus/usage/usage.go:853
 msgid "record"
 msgstr "запись"
 
-#: cmd/incus/usage/usage.go:853
+#: cmd/incus/usage/usage.go:854
 msgid "remote"
 msgstr "сервер"
 
-#: cmd/incus/usage/usage.go:857
+#: cmd/incus/usage/usage.go:858
 msgid "role"
 msgstr "роль"
 
@@ -11433,7 +11482,7 @@ msgstr "роль"
 msgid "rootfs tarball"
 msgstr "архив корневой ФС"
 
-#: cmd/incus/usage/usage.go:858
+#: cmd/incus/usage/usage.go:859
 msgid "snapshot"
 msgstr "моментальный снимок"
 
@@ -11456,24 +11505,24 @@ msgstr ""
 "Функция stdin может быть использована только один раз, без каких-либо других "
 "аргументов источника"
 
-#: cmd/incus/usage/usage.go:860
+#: cmd/incus/usage/usage.go:861
 msgid "symlink target path"
 msgstr "Целевой путь символической ссылки"
 
-#: cmd/incus/usage/usage.go:861
+#: cmd/incus/usage/usage.go:862
 msgid "tarball"
 msgstr "архив"
 
-#: cmd/incus/usage/usage.go:906
+#: cmd/incus/usage/usage.go:907
 #, c-format
 msgid "target %s"
 msgstr "цель %s"
 
-#: cmd/incus/usage/usage.go:862
+#: cmd/incus/usage/usage.go:863
 msgid "template"
 msgstr "шаблон"
 
-#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:863
+#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:864
 msgid "token"
 msgstr "токен"
 
@@ -11486,7 +11535,7 @@ msgstr "Слишком много аргументов; неожиданный %
 msgid "total space"
 msgstr "итого пространства"
 
-#: cmd/incus/usage/usage.go:859 cmd/incus/usage/usage.go:864
+#: cmd/incus/usage/usage.go:860 cmd/incus/usage/usage.go:865
 msgid "type"
 msgstr "тип"
 
@@ -11516,15 +11565,15 @@ msgstr "недостижим"
 msgid "used by"
 msgstr "используется в"
 
-#: cmd/incus/usage/usage.go:866
+#: cmd/incus/usage/usage.go:867
 msgid "value"
 msgstr "значение"
 
-#: cmd/incus/usage/usage.go:867
+#: cmd/incus/usage/usage.go:868
 msgid "volume"
 msgstr "Том"
 
-#: cmd/incus/usage/usage.go:868
+#: cmd/incus/usage/usage.go:869
 msgid "warning UUID"
 msgstr "UUID предупреждения"
 
@@ -11538,7 +11587,7 @@ msgstr "да (y)"
 msgid "yes"
 msgstr "да"
 
-#: cmd/incus/usage/usage.go:869
+#: cmd/incus/usage/usage.go:870
 msgid "zone"
 msgstr "DNS зона"
 
@@ -11686,10 +11735,6 @@ msgstr "“%s”"
 
 #, fuzzy
 #~ msgid "Invalid snapshot name"
-#~ msgstr "Имя контейнера: %s"
-
-#, fuzzy, c-format
-#~ msgid "Invalid volume %s"
 #~ msgstr "Имя контейнера: %s"
 
 #, fuzzy
