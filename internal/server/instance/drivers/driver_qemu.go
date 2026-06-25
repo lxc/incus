@@ -3874,6 +3874,9 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	isWindows := d.GuestOS() == osinfo.Windows
 	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), bs.MachineType})
 
+	// Set OS Specific qemu args.
+	conf = append(conf, d.osVersionSpecificOptions()...)
+
 	err := d.addCPUMemoryConfig(&conf, bs)
 	if err != nil {
 		return nil, err
