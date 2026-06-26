@@ -835,6 +835,14 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 
 	// Update information in the backup.yaml file.
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
+		// Reject a rootfs symlink which could redirect access to the host filesystem.
+		if volType == drivers.VolumeTypeContainer {
+			rootfsInfo, err := os.Lstat(filepath.Join(mountPath, "rootfs"))
+			if err == nil && !rootfsInfo.IsDir() {
+				return errors.New("Backup rootfs isn't a regular directory")
+			}
+		}
+
 		return backup.UpdateInstanceConfig(b.state.DB.Cluster, srcBackup, mountPath)
 	}, op)
 	if err != nil {

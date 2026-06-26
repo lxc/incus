@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
 )
 
 // imageDownloadArgs used with imageDownload.
@@ -342,6 +343,15 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 	}
 
 	logger.Info("Downloading image", ctxMap)
+
+	// For the direct protocol the fingerprint is caller-controlled, so validate
+	// it to avoid path traversal when used as a file name.
+	if protocol == "direct" {
+		err = validate.IsSHA256(fp)
+		if err != nil {
+			return nil, false, errors.New("Invalid image fingerprint")
+		}
+	}
 
 	// Cleanup any leftover from a past attempt
 	destDir := internalUtil.VarPath("images")
