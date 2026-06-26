@@ -98,6 +98,10 @@ type common struct {
 	status      string
 	managed     bool
 	nodes       map[int64]db.NetworkNode
+
+	// bgpAnnounceCheck, when set, gates whether this cluster member currently exports
+	// the network's BGP prefixes. Nil means always announce.
+	bgpAnnounceCheck func() (bool, error)
 }
 
 // init initialize internal variables.
@@ -771,15 +775,35 @@ func (n *common) bgpNextHopAddress(ipVersion uint) net.IP {
 	return nextHopAddr
 }
 
+// bgpShouldAnnouncePrefixes reports whether this cluster member should currently export
+// the network's BGP prefixes. Defaults to true.
+func (n *common) bgpShouldAnnouncePrefixes() (bool, error) {
+	if n.bgpAnnounceCheck == nil {
+		return true, nil
+	}
+
+	return n.bgpAnnounceCheck()
+}
+
 // bgpSetupPrefixes refreshes the prefix list for the network.
 func (n *common) bgpSetupPrefixes(oldConfig map[string]string) error {
-	// Clear existing prefixes.
 	bgpOwner := fmt.Sprintf("network_%d", n.id)
-	if oldConfig != nil {
+
+	announce, err := n.bgpShouldAnnouncePrefixes()
+	if err != nil {
+		return err
+	}
+
+	// Clear existing prefixes when reconfiguring, or whenever this member must not announce.
+	if oldConfig != nil || !announce {
 		err := n.state.BGP.RemovePrefixByOwner(bgpOwner)
 		if err != nil {
 			return err
 		}
+	}
+
+	if !announce {
+		return nil
 	}
 
 	// Add the new prefixes.
@@ -1067,9 +1091,21 @@ func (n *common) ForwardDelete(listenAddress string, clientType request.ClientTy
 
 // forwardBGPSetupPrefixes exports external forward addresses as prefixes.
 func (n *common) forwardBGPSetupPrefixes() error {
+	bgpOwner := fmt.Sprintf("network_%d_forward", n.id)
+
+	announce, err := n.bgpShouldAnnouncePrefixes()
+	if err != nil {
+		return err
+	}
+
+	// If this member must not announce, withdraw any existing prefixes and stop.
+	if !announce {
+		return n.state.BGP.RemovePrefixByOwner(bgpOwner)
+	}
+
 	var fwdListenAddresses map[int64]string
 
-	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Retrieve network forwards before clearing existing prefixes, and separate them by IP family.
@@ -1109,10 +1145,6 @@ func (n *common) forwardBGPSetupPrefixes() error {
 			fwdListenAddressesByFamily[4] = append(fwdListenAddressesByFamily[4], fwdListenAddress)
 		}
 	}
-
-	// Use forward specific owner string (different from the network prefixes) so that these can be reapplied
-	// independently of the network's own prefixes.
-	bgpOwner := fmt.Sprintf("network_%d_forward", n.id)
 
 	// Clear existing address forward prefixes for network.
 	err = n.state.BGP.RemovePrefixByOwner(bgpOwner)

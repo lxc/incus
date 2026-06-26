@@ -87,3 +87,14 @@ Set the following configuration options on the uplink network:
 
 Once the uplink network is configured, downstream OVN networks will get their external subnets and addresses announced over BGP.
 The next-hop is set to the address of the OVN router on the uplink network.
+
+### Announce OVN networks only from the active gateway
+
+By default, every cluster member announces an OVN network's prefixes, all using the OVN router's uplink address as the next-hop.
+This relies on the uplink network being a shared layer 2 segment between cluster members, so that the next-hop stays reachable wherever the active OVN gateway runs.
+
+To avoid that layer 2 requirement, set `bgp.ovn.active_chassis_only=true` on the OVN network.
+When enabled, only the cluster member currently hosting the active OVN gateway chassis announces the network's prefixes (network subnets, address forwards, and load balancers).
+On failover, the gaining member starts announcing and the losing member withdraws its prefixes automatically.
+
+This allows each cluster member to use an independent (layer 3 only) uplink: configure a local transit bridge with the same subnet on every member, and let a local routing daemon re-advertise the announced prefixes towards the fabric with next-hop-self.

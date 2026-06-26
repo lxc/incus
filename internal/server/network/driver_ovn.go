@@ -135,7 +135,46 @@ func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Ne
 		n.ovnsb = ovnsb
 	}
 
-	return n.common.init(s, id, projectName, netInfo, netNodes)
+	err := n.common.init(s, id, projectName, netInfo, netNodes)
+	if err != nil {
+		return err
+	}
+
+	// Restrict BGP announcements to the active gateway chassis when requested.
+	n.bgpAnnounceCheck = n.bgpShouldAnnounce
+
+	return nil
+}
+
+// bgpShouldAnnounce reports whether the local member is the active gateway chassis for this
+// network and should therefore export its BGP prefixes. When bgp.ovn.active_chassis_only is
+// disabled (the default) all members announce and this always returns true.
+func (n *ovn) bgpShouldAnnounce() (bool, error) {
+	// Isolated networks have no uplink, so they never participate in BGP.
+	if n.config["network"] == "none" {
+		return false, nil
+	}
+
+	if util.IsFalseOrEmpty(n.config["bgp.ovn.active_chassis_only"]) {
+		return true, nil
+	}
+
+	chassisName, err := n.getActiveChassisName()
+	if err != nil {
+		return false, err
+	}
+
+	return n.isLocalChassis(chassisName), nil
+}
+
+// isLocalChassis reports whether the given OVN chassis name refers to the local cluster member,
+// matching either the cluster member name or the OS hostname.
+func (n *ovn) isLocalChassis(chassisName string) bool {
+	if chassisName == "" {
+		return false
+	}
+
+	return chassisName == n.state.ServerName || chassisName == n.state.OS.Hostname
 }
 
 // DBType returns the network type DB ID.
@@ -746,6 +785,15 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		//  default: `false`
 		//  condition: `security.acls`
 		"security.acls.default.egress.logged": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=bgp.ovn.active_chassis_only)
+		//
+		// ---
+		//  type: bool
+		//  condition: BGP server
+		//  default: `false`
+		//  shortdesc: Only announce the network's BGP prefixes from the cluster member hosting the active OVN gateway
+		"bgp.ovn.active_chassis_only": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=user.*)
 		//
@@ -3945,6 +3993,11 @@ func (n *ovn) Start() error {
 					return
 				}
 
+				announce, err := n.bgpShouldAnnounce()
+				if err != nil {
+					return
+				}
+
 				for _, lb := range lbs {
 					// Check for status of all backends on this load-balancer.
 					online, err := n.ovnsb.CheckLoadBalancerOnline(context.TODO(), lb)
@@ -3993,8 +4046,8 @@ func (n *ovn) Start() error {
 						return
 					}
 
-					// Update the BGP state.
-					if online {
+					// Update the BGP state. Only the active gateway chassis announces (when enabled).
+					if online && announce {
 						err = n.state.BGP.AddPrefix(*ipRouteSubnet, nextHopAddr, bgpOwner)
 						if err != nil {
 							return
@@ -4013,6 +4066,23 @@ func (n *ovn) Start() error {
 				}
 
 				err := n.updateTunnels(n.config, []string{}, true)
+				if err != nil {
+					return
+				}
+
+				// The active gateway chassis just changed; refresh BGP prefixes so the gaining
+				// member starts announcing and the losing member withdraws.
+				err = n.bgpSetupPrefixes(nil)
+				if err != nil {
+					return
+				}
+
+				err = n.forwardBGPSetupPrefixes()
+				if err != nil {
+					return
+				}
+
+				err = n.loadBalancerBGPSetupPrefixes()
 				if err != nil {
 					return
 				}
@@ -8255,6 +8325,15 @@ func (n *ovn) loadBalancerBGPSetupPrefixes() error {
 		return err
 	}
 
+	announce, err := n.bgpShouldAnnounce()
+	if err != nil {
+		return err
+	}
+
+	if !announce {
+		return nil
+	}
+
 	// Add the new prefixes.
 	for _, ipVersion := range []uint{4, 6} {
 		nextHopAddr := n.bgpNextHopAddress(ipVersion)
@@ -8377,7 +8456,7 @@ func (n *ovn) updateTunnels(newConfig map[string]string, changedKeys []string, r
 		return err
 	}
 
-	if chassisName == n.state.ServerName || chassisName == n.state.OS.Hostname {
+	if n.isLocalChassis(chassisName) {
 		err := n.deleteTunnels(changedKeys, true, reinitialize)
 		if err != nil {
 			return err

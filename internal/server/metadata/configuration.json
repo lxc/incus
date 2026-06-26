@@ -4487,6 +4487,15 @@
 			"common": {
 				"keys": [
 					{
+						"bgp.ovn.active_chassis_only": {
+							"condition": "BGP server",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Only announce the network's BGP prefixes from the cluster member hosting the active OVN gateway",
+							"type": "bool"
+						}
+					},
+					{
 						"bridge.external_interfaces": {
 							"longdesc": "",
 							"scope": "local",

@@ -4012,6 +4012,14 @@ User keys can be used in search.
 
 <!-- config group network_macvlan-common end -->
 <!-- config group network_ovn-common start -->
+```{config:option} bgp.ovn.active_chassis_only network_ovn-common
+:condition: "BGP server"
+:default: "`false`"
+:shortdesc: "Only announce the network's BGP prefixes from the cluster member hosting the active OVN gateway"
+:type: "bool"
+
+```
+
 ```{config:option} bridge.external_interfaces network_ovn-common
 :scope: "local"
 :shortdesc: "Comma-separated list of unconfigured network interfaces to include in the bridge"
