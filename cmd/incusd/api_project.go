@@ -1660,7 +1660,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// Possible values are `unprivileged`, `isolated`, and `allow`.
 		//
 		// - When set to `unprivileged`, this option prevents setting {config:option}`instance-security:security.privileged` to `true`.
-		// - When set to `isolated`, this option prevents setting {config:option}`instance-security:security.privileged` and {config:option}`instance-security:security.idmap.isolated` to `false`.
+		// - When set to `isolated`, this option prevents setting {config:option}`instance-security:security.privileged` to `true` and {config:option}`instance-security:security.idmap.isolated` to `false`.
 		// - When set to `allow`, there is no restriction.
 		// ---
 		//  type: string
