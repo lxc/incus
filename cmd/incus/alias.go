@@ -68,7 +68,8 @@ incus alias add volume "storage volume @ARGS@"
     Create a short command for managing volumes
 
 incus alias add cat "exec @ARG1@ -- cat @ARG2@"
-    Create a command for displaying file content of instances`))
+    Create a command for displaying file content of instances`,
+	))
 
 	cmd.RunE = c.run
 
