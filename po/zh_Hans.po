@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-25 18:25-0400\n"
+"POT-Creation-Date: 2026-06-25 21:26-0400\n"
 "PO-Revision-Date: 2026-06-15 23:47+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -804,7 +804,7 @@ msgstr "地址"
 msgid "ADDRESSES"
 msgstr "地址"
 
-#: cmd/incus/alias.go:154 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
+#: cmd/incus/alias.go:155 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
 msgid "ALIAS"
 msgstr "别名"
 
@@ -1020,12 +1020,12 @@ msgstr "管理员访问密钥：%s"
 msgid "Admin secret key: %s"
 msgstr "管理员私密密钥：%s"
 
-#: cmd/incus/alias.go:91 cmd/incus/alias.go:205
+#: cmd/incus/alias.go:92 cmd/incus/alias.go:206
 #, c-format
 msgid "Alias %s already exists"
 msgstr "别名 %s 已存在"
 
-#: cmd/incus/alias.go:199 cmd/incus/alias.go:254
+#: cmd/incus/alias.go:200 cmd/incus/alias.go:255
 #, c-format
 msgid "Alias %s doesn't exist"
 msgstr "别名 %s 不存在"
@@ -3464,7 +3464,7 @@ msgstr ""
 "格式化（csv|json|table|yaml|compact），使用后缀“,noheader”可禁用表头，需要时"
 "可使用“,header”启用表头，例如 csv,header"
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:117 cmd/incus/cluster.go:173
+#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143
@@ -4359,7 +4359,7 @@ msgstr ""
 msgid "List address sets across all projects"
 msgstr "列出所有项目中的地址"
 
-#: cmd/incus/alias.go:115 cmd/incus/alias.go:116
+#: cmd/incus/alias.go:116 cmd/incus/alias.go:117
 msgid "List aliases"
 msgstr "列出别名"
 
@@ -7022,7 +7022,7 @@ msgstr "移除一条网络区域记录条目"
 msgid "Remove addresses from a network address set"
 msgstr "从转发中移除端口"
 
-#: cmd/incus/alias.go:228 cmd/incus/alias.go:229
+#: cmd/incus/alias.go:229 cmd/incus/alias.go:230
 msgid "Remove aliases"
 msgstr "移除别名"
 
@@ -7103,7 +7103,7 @@ msgstr ""
 msgid "Rename a cluster member"
 msgstr ""
 
-#: cmd/incus/alias.go:173 cmd/incus/alias.go:174 cmd/incus/image_alias.go:363
+#: cmd/incus/alias.go:174 cmd/incus/alias.go:175 cmd/incus/image_alias.go:363
 #: cmd/incus/image_alias.go:364
 msgid "Rename aliases"
 msgstr ""
@@ -8261,7 +8261,7 @@ msgstr ""
 msgid "TAKEN AT"
 msgstr ""
 
-#: cmd/incus/alias.go:155
+#: cmd/incus/alias.go:156
 msgid "TARGET"
 msgstr ""
 
@@ -9568,13 +9568,13 @@ msgid ""
 "    Create a command for displaying file content of instances"
 msgstr ""
 
-#: cmd/incus/alias.go:230
+#: cmd/incus/alias.go:231
 msgid ""
 "incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
 msgstr ""
 
-#: cmd/incus/alias.go:175
+#: cmd/incus/alias.go:176
 msgid ""
 "incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."

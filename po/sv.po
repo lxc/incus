@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-06-25 18:25-0400\n"
+"POT-Creation-Date: 2026-06-25 21:26-0400\n"
 "PO-Revision-Date: 2026-06-17 01:01+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -806,7 +806,7 @@ msgstr "ADRESS"
 msgid "ADDRESSES"
 msgstr "ADRESSER"
 
-#: cmd/incus/alias.go:154 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
+#: cmd/incus/alias.go:155 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
 msgid "ALIAS"
 msgstr "ALIAS"
 
@@ -1030,12 +1030,12 @@ msgstr "Administratörsåtkomstnyckel: %s"
 msgid "Admin secret key: %s"
 msgstr "Administratörens hemliga nyckel: %s"
 
-#: cmd/incus/alias.go:91 cmd/incus/alias.go:205
+#: cmd/incus/alias.go:92 cmd/incus/alias.go:206
 #, c-format
 msgid "Alias %s already exists"
 msgstr "Alias %s finns redan"
 
-#: cmd/incus/alias.go:199 cmd/incus/alias.go:254
+#: cmd/incus/alias.go:200 cmd/incus/alias.go:255
 #, c-format
 msgid "Alias %s doesn't exist"
 msgstr "Alias %s finns inte"
@@ -3532,7 +3532,7 @@ msgstr ""
 "för att inaktivera rubriker och \",header\" för att aktivera dem om så "
 "önskas, t.ex. csv,header"
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:117 cmd/incus/cluster.go:173
+#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143
@@ -4450,7 +4450,7 @@ msgstr ""
 msgid "List address sets across all projects"
 msgstr "Lista adressuppsättningar för alla projekt"
 
-#: cmd/incus/alias.go:115 cmd/incus/alias.go:116
+#: cmd/incus/alias.go:116 cmd/incus/alias.go:117
 msgid "List aliases"
 msgstr "Lista alias"
 
@@ -7452,7 +7452,7 @@ msgstr "Ta bort en nätverkszonpost"
 msgid "Remove addresses from a network address set"
 msgstr "Ta bort adresser från en nätverksadressuppsättning"
 
-#: cmd/incus/alias.go:228 cmd/incus/alias.go:229
+#: cmd/incus/alias.go:229 cmd/incus/alias.go:230
 msgid "Remove aliases"
 msgstr "Ta bort alias"
 
@@ -7530,7 +7530,7 @@ msgstr "Byt namn på en klustergrupp"
 msgid "Rename a cluster member"
 msgstr "Byt namn på en klustermedlem"
 
-#: cmd/incus/alias.go:173 cmd/incus/alias.go:174 cmd/incus/image_alias.go:363
+#: cmd/incus/alias.go:174 cmd/incus/alias.go:175 cmd/incus/image_alias.go:363
 #: cmd/incus/image_alias.go:364
 msgid "Rename aliases"
 msgstr "Byt namn på alias"
@@ -8796,7 +8796,7 @@ msgstr "System:"
 msgid "TAKEN AT"
 msgstr "TAGET VID"
 
-#: cmd/incus/alias.go:155
+#: cmd/incus/alias.go:156
 msgid "TARGET"
 msgstr "MÅL"
 
@@ -10191,7 +10191,7 @@ msgstr ""
 "incus alias add cat \"exec @ARG1@ -- cat @ARG2@\"\n"
 "    Skapa ett kommando för att visa filinnehåll för instanser"
 
-#: cmd/incus/alias.go:230
+#: cmd/incus/alias.go:231
 msgid ""
 "incus alias remove my-list\n"
 "    Remove the \"my-list\" alias."
@@ -10199,7 +10199,7 @@ msgstr ""
 "incus alias remove min-lista\n"
 "     Ta bort aliaset \"min-lista\"."
 
-#: cmd/incus/alias.go:175
+#: cmd/incus/alias.go:176
 msgid ""
 "incus alias rename list my-list\n"
 "    Rename existing alias \"list\" to \"my-list\"."

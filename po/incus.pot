@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-06-25 18:25-0400\n"
+        "POT-Creation-Date: 2026-06-25 21:26-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -514,7 +514,7 @@ msgstr  ""
 msgid   "ADDRESSES"
 msgstr  ""
 
-#: cmd/incus/alias.go:154 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
+#: cmd/incus/alias.go:155 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
 msgid   "ALIAS"
 msgstr  ""
 
@@ -704,12 +704,12 @@ msgstr  ""
 msgid   "Admin secret key: %s"
 msgstr  ""
 
-#: cmd/incus/alias.go:91 cmd/incus/alias.go:205
+#: cmd/incus/alias.go:92 cmd/incus/alias.go:206
 #, c-format
 msgid   "Alias %s already exists"
 msgstr  ""
 
-#: cmd/incus/alias.go:199 cmd/incus/alias.go:254
+#: cmd/incus/alias.go:200 cmd/incus/alias.go:255
 #, c-format
 msgid   "Alias %s doesn't exist"
 msgstr  ""
@@ -2849,7 +2849,7 @@ msgstr  ""
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:117 cmd/incus/cluster.go:173 cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272 cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588 cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143 cmd/incus/network.go:1055 cmd/incus/network.go:1252 cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:65 cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121 cmd/incus/network_zone.go:822 cmd/incus/operation.go:150 cmd/incus/profile.go:705 cmd/incus/project.go:523 cmd/incus/project.go:1000 cmd/incus/remote.go:1040 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667 cmd/incus/storage_bucket.go:465 cmd/incus/storage_bucket.go:861 cmd/incus/storage_volume.go:1520 cmd/incus/storage_volume_snapshot.go:341 cmd/incus/warning.go:99
+#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173 cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272 cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588 cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143 cmd/incus/network.go:1055 cmd/incus/network.go:1252 cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:65 cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121 cmd/incus/network_zone.go:822 cmd/incus/operation.go:150 cmd/incus/profile.go:705 cmd/incus/project.go:523 cmd/incus/project.go:1000 cmd/incus/remote.go:1040 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667 cmd/incus/storage_bucket.go:465 cmd/incus/storage_bucket.go:861 cmd/incus/storage_volume.go:1520 cmd/incus/storage_volume_snapshot.go:341 cmd/incus/warning.go:99
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr  ""
 
@@ -3666,7 +3666,7 @@ msgstr  ""
 msgid   "List address sets across all projects"
 msgstr  ""
 
-#: cmd/incus/alias.go:115 cmd/incus/alias.go:116
+#: cmd/incus/alias.go:116 cmd/incus/alias.go:117
 msgid   "List aliases"
 msgstr  ""
 
@@ -5903,7 +5903,7 @@ msgstr  ""
 msgid   "Remove addresses from a network address set"
 msgstr  ""
 
-#: cmd/incus/alias.go:228 cmd/incus/alias.go:229
+#: cmd/incus/alias.go:229 cmd/incus/alias.go:230
 msgid   "Remove aliases"
 msgstr  ""
 
@@ -5980,7 +5980,7 @@ msgstr  ""
 msgid   "Rename a cluster member"
 msgstr  ""
 
-#: cmd/incus/alias.go:173 cmd/incus/alias.go:174 cmd/incus/image_alias.go:363 cmd/incus/image_alias.go:364
+#: cmd/incus/alias.go:174 cmd/incus/alias.go:175 cmd/incus/image_alias.go:363 cmd/incus/image_alias.go:364
 msgid   "Rename aliases"
 msgstr  ""
 
@@ -7078,7 +7078,7 @@ msgstr  ""
 msgid   "TAKEN AT"
 msgstr  ""
 
-#: cmd/incus/alias.go:155
+#: cmd/incus/alias.go:156
 msgid   "TARGET"
 msgstr  ""
 
@@ -8264,12 +8264,12 @@ msgid   "incus alias add list \"list -c ns46S\"\n"
         "    Create a command for displaying file content of instances"
 msgstr  ""
 
-#: cmd/incus/alias.go:230
+#: cmd/incus/alias.go:231
 msgid   "incus alias remove my-list\n"
         "    Remove the \"my-list\" alias."
 msgstr  ""
 
-#: cmd/incus/alias.go:175
+#: cmd/incus/alias.go:176
 msgid   "incus alias rename list my-list\n"
         "    Rename existing alias \"list\" to \"my-list\"."
 msgstr  ""
