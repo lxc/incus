@@ -51,11 +51,7 @@ type lvm struct {
 func (d *lvm) load() error {
 	// Register the patches.
 	d.patches = map[string]func() error{
-		"storage_lvm_skipactivation":                         d.patchStorageSkipActivation,
-		"storage_missing_snapshot_records":                   nil,
-		"storage_delete_old_snapshot_records":                nil,
-		"storage_zfs_drop_block_volume_filesystem_extension": nil,
-		"storage_prefix_bucket_names_with_project":           nil,
+		"storage_lvm_skipactivation": d.patchStorageSkipActivation,
 	}
 
 	// Done if previously loaded.

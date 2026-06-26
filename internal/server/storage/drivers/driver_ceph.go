@@ -33,15 +33,6 @@ type ceph struct {
 
 // load is used to run one-time action per-driver rather than per-pool.
 func (d *ceph) load() error {
-	// Register the patches.
-	d.patches = map[string]func() error{
-		"storage_lvm_skipactivation":                         nil,
-		"storage_missing_snapshot_records":                   nil,
-		"storage_delete_old_snapshot_records":                nil,
-		"storage_zfs_drop_block_volume_filesystem_extension": nil,
-		"storage_prefix_bucket_names_with_project":           nil,
-	}
-
 	// Done if previously loaded.
 	if cephLoaded {
 		return nil
