@@ -15,7 +15,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/lxc/incus/v7/internal/server/project"
-	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
@@ -98,8 +97,6 @@ func (d Nftables) nftParseRuleset() ([]nftGenericItem, error) {
 		return nil, err
 	}
 
-	defer logger.WarnOnError(cmd.Wait, "Failed to wait for command")
-
 	// This only extracts certain generic parts of the ruleset, see man libnftables-json for more info.
 	v := &struct {
 		Nftables []map[string]nftGenericItem `json:"nftables"`
@@ -107,6 +104,7 @@ func (d Nftables) nftParseRuleset() ([]nftGenericItem, error) {
 
 	err = json.NewDecoder(stdout).Decode(v)
 	if err != nil {
+		_ = cmd.Wait()
 		return nil, err
 	}
 
