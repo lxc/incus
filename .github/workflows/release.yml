@@ -11,9 +11,96 @@ permissions:
   attestations: write
 
 jobs:
+  version:
+    name: Format version
+    runs-on: ubuntu-latest
+    outputs:
+      display: ${{ steps.version.outputs.display }}
+      full: ${{ steps.version.outputs.full }}
+    steps:
+      - name: Format version
+        id: version
+        run: |
+          raw="${GITHUB_REF_NAME#v}"
+          IFS='.' read -r major minor patch <<< "$raw"
+          echo "full=${major}.${minor}.${patch}" >> $GITHUB_OUTPUT
+          if [ "${patch}" = "0" ]; then
+            echo "display=${major}.${minor}" >> $GITHUB_OUTPUT
+          else
+            echo "display=${major}.${minor}.${patch}" >> $GITHUB_OUTPUT
+          fi
+
+  build-msi:
+    name: Build Windows installer
+    runs-on: windows-latest
+    needs: version
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      # Pinned to v5, the last release before WiX v6/v7 moved to the Open
+      # Source Maintenance Fee license requiring EULA acceptance.
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Add WiX extensions
+        shell: pwsh
+        run: wix extension add -g WixToolset.UI.wixext/5.0.2
+
+      - name: Build installers
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.full }}
+        run: bash .github/packaging/windows/build.sh
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-windows
+          path: installers/*.msi
+          if-no-files-found: error
+
+  build-pkg:
+    name: Build macOS installer
+    runs-on: macos-latest
+    needs: version
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Build installer
+        env:
+          VERSION: ${{ needs.version.outputs.full }}
+        run: bash .github/packaging/macos/build.sh
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-macos
+          path: installers/*.pkg
+          if-no-files-found: error
+
   goreleaser:
     name: Release
     runs-on: ubuntu-latest
+    needs: [version, build-msi, build-pkg]
 
     steps:
       - name: Checkout
@@ -29,16 +116,12 @@ jobs:
       - name: Install syft
         uses: anchore/sbom-action/download-syft@v0
 
-      - name: Format version
-        id: version
-        run: |
-          raw="${GITHUB_REF_NAME#v}"
-          IFS='.' read -r major minor patch <<< "$raw"
-          if [ "${patch}" = "0" ]; then
-            echo "value=${major}.${minor}" >> $GITHUB_OUTPUT
-          else
-            echo "value=${major}.${minor}.${patch}" >> $GITHUB_OUTPUT
-          fi
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          path: installers
+          merge-multiple: true
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
@@ -48,9 +131,16 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INCUS_VERSION: ${{ steps.version.outputs.value }}
+          INCUS_VERSION: ${{ needs.version.outputs.display }}
 
       - name: Handle attestation
         uses: actions/attest@v4
         with:
           subject-checksums: ./dist/checksums.txt
+
+      - name: Handle installer attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            installers/*.msi
+            installers/*.pkg

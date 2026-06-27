@@ -2,6 +2,7 @@
 po/*.mo
 po/*.po~
 incus-*.tar.xz
+installers
 .vagrant
 *~
 tags
