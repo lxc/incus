@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/shared/api"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 type cmdCopy struct {
@@ -84,6 +85,43 @@ The pull transfer mode is the default as it is compatible with all server versio
 	}
 
 	return cmd
+}
+
+// applyStoragePool sets the storage pool on the root disk and any dependent
+// disk device, unless their pool was explicitly overridden via --device.
+func applyStoragePool(devices map[string]map[string]string, deviceOverrides map[string]map[string]string, pool string) {
+	if pool == "" {
+		return
+	}
+
+	rootDiskDeviceKey, _, _ := instance.GetRootDiskDevice(devices)
+
+	for devName, dev := range devices {
+		if dev["type"] != "disk" {
+			continue
+		}
+
+		// Only override the root disk and dependent disk devices.
+		if devName != rootDiskDeviceKey && util.IsFalseOrEmpty(dev["dependent"]) {
+			continue
+		}
+
+		// Don't override devices with an explicit pool override.
+		if deviceOverrides[devName]["pool"] != "" {
+			continue
+		}
+
+		dev["pool"] = pool
+	}
+
+	// Create a root disk device if the instance doesn't have one.
+	if rootDiskDeviceKey == "" {
+		devices["root"] = map[string]string{
+			"type": "disk",
+			"path": "/",
+			"pool": pool,
+		}
+	}
 }
 
 // copyOrMove runs the post-parsing command logic.
@@ -206,17 +244,7 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 			entry.Ephemeral = false
 		}
 
-		rootDiskDeviceKey, _, _ := instance.GetRootDiskDevice(entry.Devices)
-
-		if rootDiskDeviceKey != "" && pool != "" {
-			entry.Devices[rootDiskDeviceKey]["pool"] = pool
-		} else if pool != "" {
-			entry.Devices["root"] = map[string]string{
-				"type": "disk",
-				"path": "/",
-				"pool": pool,
-			}
-		}
+		applyStoragePool(entry.Devices, deviceMap, pool)
 
 		if entry.Config != nil {
 			// Strip the last_state.power key in all cases
@@ -298,16 +326,7 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 			entry.Ephemeral = false
 		}
 
-		rootDiskDeviceKey, _, _ := instance.GetRootDiskDevice(entry.Devices)
-		if rootDiskDeviceKey != "" && pool != "" {
-			entry.Devices[rootDiskDeviceKey]["pool"] = pool
-		} else if pool != "" {
-			entry.Devices["root"] = map[string]string{
-				"type": "disk",
-				"path": "/",
-				"pool": pool,
-			}
-		}
+		applyStoragePool(entry.Devices, deviceMap, pool)
 
 		// Strip the volatile keys if requested
 		if !keepVolatile {
