@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-25 21:26-0400\n"
-"PO-Revision-Date: 2026-06-15 23:51+0000\n"
-"Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
+"PO-Revision-Date: 2026-06-27 14:01+0000\n"
+"Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -811,7 +811,7 @@ msgstr "ALIASES"
 
 #: cmd/incus/query.go:32
 msgid "API path"
-msgstr ""
+msgstr "API パス"
 
 #: cmd/incus/list.go:792
 msgid "APP"
@@ -1403,7 +1403,7 @@ msgstr "--no-expiry と --expiry は同時に使えません"
 
 #: cmd/incus/remote.go:484
 msgid "Cannot mix HTTPS and Unix URLs"
-msgstr ""
+msgstr "HTTPS と UNIX URL を同時に使えません"
 
 #: cmd/incus/create.go:314
 #, c-format
@@ -2790,6 +2790,10 @@ msgid ""
 "The action flag allows overriding the default server-side action "
 "(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
+"クラスターメンバーの待避\n"
+"\n"
+"アクションフラグを使用すると、デフォルトのサーバーサイドのアクションを上書き"
+"できます（インスタンス設定オプション \"cluster.evacuate\"）"
 
 #: cmd/incus/cluster.go:1555
 #, c-format
@@ -2921,6 +2925,8 @@ msgid ""
 "Expiry for the new snapshot (either a time span like `1d 3H` or a date in "
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
+"新しいスナップショットの有効期限（`1d 3H` のような期間指定もしくは `2006/01/"
+"02 15:04 MST` 形式の日時）"
 
 #: cmd/incus/debug.go:51
 msgid "Export a virtual machine's memory state"
@@ -3918,7 +3924,7 @@ msgstr "IP アドレス:"
 
 #: cmd/incus/remote.go:126 cmd/incus/remote.go:1405
 msgid "IP/FQDN/URL"
-msgstr ""
+msgstr "IP/FQDN/URL"
 
 #: cmd/incus/list.go:464 cmd/incus/network.go:1084
 msgid "IPV4"
@@ -4329,7 +4335,7 @@ msgstr "最初にコピーした後も常にイメージを最新の状態に保
 
 #: cmd/incus/remote.go:1511 cmd/incus/remote.go:1515
 msgid "Keepalive timeouts must be positive integers"
-msgstr ""
+msgstr "Keepalive タイムアウトは正の整数である必要があります"
 
 #: cmd/incus/info.go:701
 msgid "Kernel Version"
@@ -6570,6 +6576,11 @@ msgid ""
 "server, with each disk reachable as an NBD export named after its Incus\n"
 "device name."
 msgstr ""
+"仮想マシンの全ディスクへの NBD アクセス\n"
+"\n"
+"これにより、実行中の仮想マシンのすべてのディスクが、ローカルの NBD サーバー経"
+"由で公開されます。各ディスクには Incus のデバイス名に基づいた名前の NBD "
+"エクスポートとしてアクセスできるようになります。"
 
 #: cmd/incus/debug.go:177 cmd/incus/storage_volume.go:2659
 #, fuzzy, c-format
@@ -8033,7 +8044,7 @@ msgstr "クラスターメンバーの設定を行います"
 
 #: cmd/incus/remote.go:1483 cmd/incus/remote.go:1484
 msgid "Set a keepalive timeout for a remote"
-msgstr ""
+msgstr "リモートの Keepalive タイムアウトを設定します"
 
 #: cmd/incus/file.go:922 cmd/incus/storage_volume_file.go:350
 msgid "Set authentication user when using SSH SFTP listener"
@@ -8689,7 +8700,7 @@ msgstr "ストレージプールで利用可能なリソースを表示します
 msgid ""
 "Show the server's sensitive information (full certificates, private keys and "
 "the API extension list)"
-msgstr ""
+msgstr "サーバーの機密情報を表示する（完全な証明書、秘密鍵、API 拡張機能リスト）"
 
 #: cmd/incus/storage.go:473
 msgid "Show the used and free space in bytes"
@@ -9362,6 +9373,8 @@ msgid ""
 "This command is not supported on clusters, use \"incus cluster update-"
 "certificate\" instead"
 msgstr ""
+"このコマンドはクラスターではサポートされていません。代わりに \"incus cluster "
+"update-certificate\" を使用してください"
 
 #: cmd/incus/webui_windows.go:14
 #, fuzzy
