@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="Incus"
+           Manufacturer="Linux Containers"
+           Version="$(var.Version)"
+           UpgradeCode="7E2B5C1D-4A3F-4B8E-9C6D-1F0A2B3C4D5E"
+           Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Incus is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="Incus">
+        <Directory Id="BINFOLDER" Name="bin" />
+      </Directory>
+    </StandardDirectory>
+
+    <ComponentGroup Id="ProductComponents" Directory="BINFOLDER">
+      <Component Id="IncusExe" Guid="*">
+        <File Id="IncusExe" Name="incus.exe" Source="$(var.BinPath)" KeyPath="yes" />
+        <Environment Id="UpdatePath" Name="PATH" Value="[BINFOLDER]"
+                     Permanent="no" Part="last" Action="set" System="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
+  </Package>
+</Wix>

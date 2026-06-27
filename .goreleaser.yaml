@@ -162,6 +162,9 @@ release:
     owner: lxc
     name: incus
   name_template: "Incus {{ .Env.INCUS_VERSION }}"
+  extra_files:
+    - glob: ./installers/*.msi
+    - glob: ./installers/*.pkg
 
 sboms:
   - id: archive
