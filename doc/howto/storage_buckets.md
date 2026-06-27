@@ -11,7 +11,7 @@ This is the address that you can then use to access the buckets through the S3 p
 To configure the S3 address, set the {config:option}`server-core:core.storage_buckets_address` server configuration option.
 For example:
 
-    incus config set core.storage_buckets_address :8555
+    incus config set core.storage_buckets_address=:8555
 
 ## Manage storage buckets
 

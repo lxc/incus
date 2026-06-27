@@ -87,11 +87,11 @@ To do so, set the {config:option}`instance-snapshots:snapshots.schedule` instanc
 
 For example, to configure daily snapshots, use the following command:
 
-    incus config set <instance_name> snapshots.schedule @daily
+    incus config set <instance_name> snapshots.schedule=@daily
 
 To configure taking a snapshot every day at 6 am, use the following command:
 
-    incus config set <instance_name> snapshots.schedule "0 6 * * *"
+    incus config set <instance_name> snapshots.schedule="0 6 * * *"
 
 When scheduling regular snapshots, consider setting an automatic expiry ({config:option}`instance-snapshots:snapshots.expiry`) and a naming pattern for snapshots ({config:option}`instance-snapshots:snapshots.pattern`).
 You should also configure whether you want to take snapshots of instances that are not running ({config:option}`instance-snapshots:snapshots.schedule.stopped`).
