@@ -506,12 +506,13 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			}
 		} else {
 			// Check that static IPs are only specified with IP filtering when using an unmanaged
-			// parent bridge.
+			// parent bridge. A CIDR address is configured inside the instance rather than through
+			// DHCP, so it's allowed regardless.
 			if util.IsTrue(d.config["security.ipv4_filtering"]) {
 				if d.config["ipv4.address"] == "" {
 					return errors.New("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
 				}
-			} else if d.config["ipv4.address"] != "" {
+			} else if d.config["ipv4.address"] != "" && !strings.Contains(d.config["ipv4.address"], "/") {
 				// Static IP cannot be used with unmanaged parent.
 				return errors.New("Cannot use manually specified ipv4.address when using unmanaged parent bridge")
 			}
@@ -520,7 +521,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 				if d.config["ipv6.address"] == "" {
 					return errors.New("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
 				}
-			} else if d.config["ipv6.address"] != "" {
+			} else if d.config["ipv6.address"] != "" && !strings.Contains(d.config["ipv6.address"], "/") {
 				// Static IP cannot be used with unmanaged parent.
 				return errors.New("Cannot use manually specified ipv6.address when using unmanaged parent bridge")
 			}
