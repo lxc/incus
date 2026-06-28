@@ -212,6 +212,23 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  shortdesc: Whether to advertise a /128 route for the IPv6 address of each running instance
 		"bgp.ipv6.instances": validate.Optional(validate.IsBool),
 
+		// gendoc:generate(entity=network_bridge, group=ovn, key=ovn.dynamic_routing)
+		//
+		// ---
+		//  type: bool
+		//  condition: standard mode
+		//  default: `false`
+		//  shortdesc: Have downstream OVN networks export their prefixes into a host VRF on the active gateway chassis
+		"ovn.dynamic_routing": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_bridge, group=ovn, key=ovn.dynamic_routing.vrf.id)
+		//
+		// ---
+		//  type: integer
+		//  condition: `ovn.dynamic_routing`
+		//  shortdesc: Routing table ID of the pre-created host VRF OVN exports into (required when `ovn.dynamic_routing` is enabled)
+		"ovn.dynamic_routing.vrf.id": validate.Optional(validate.IsUint32),
+
 		// gendoc:generate(entity=network_bridge, group=common, key=bridge.driver)
 		//
 		// ---
@@ -766,6 +783,11 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 	}
 
 	// Perform composite key checks after per-key validation.
+
+	// Require explicit VRF id
+	if util.IsTrue(config["ovn.dynamic_routing"]) && config["ovn.dynamic_routing.vrf.id"] == "" {
+		return errors.New("ovn.dynamic_routing requires ovn.dynamic_routing.vrf.id to be set")
+	}
 
 	// Validate DNS zone names.
 	err = n.validateZoneNames(config)

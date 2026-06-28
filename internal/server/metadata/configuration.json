@@ -4296,6 +4296,27 @@
 						}
 					}
 				]
+			},
+			"ovn": {
+				"keys": [
+					{
+						"ovn.dynamic_routing": {
+							"condition": "standard mode",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Have downstream OVN networks export their prefixes into a host VRF on the active gateway chassis",
+							"type": "bool"
+						}
+					},
+					{
+						"ovn.dynamic_routing.vrf.id": {
+							"condition": "`ovn.dynamic_routing`",
+							"longdesc": "",
+							"shortdesc": "Routing table ID of the pre-created host VRF OVN exports into (required when `ovn.dynamic_routing` is enabled)",
+							"type": "integer"
+						}
+					}
+				]
 			}
 		},
 		"network_forward": {
@@ -5015,6 +5036,23 @@
 			},
 			"ovn": {
 				"keys": [
+					{
+						"ovn.dynamic_routing": {
+							"condition": "standard mode",
+							"defaultdesc": "`false`",
+							"longdesc": "",
+							"shortdesc": "Have downstream OVN networks export their prefixes into a host VRF on the active gateway chassis",
+							"type": "bool"
+						}
+					},
+					{
+						"ovn.dynamic_routing.vrf.id": {
+							"condition": "`ovn.dynamic_routing`",
+							"longdesc": "",
+							"shortdesc": "Routing table ID of the pre-created host VRF OVN exports into (required when `ovn.dynamic_routing` is enabled)",
+							"type": "integer"
+						}
+					},
 					{
 						"ovn.ingress_mode": {
 							"condition": "standard mode",
