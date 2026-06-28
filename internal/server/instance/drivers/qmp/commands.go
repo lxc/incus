@@ -1838,12 +1838,39 @@ func (m *Monitor) DumpGuestMemory(path string, format string) error {
 
 	args.Protocol = "fd:" + path
 	args.Format = format
+	args.Detach = true
 
 	var queryResp struct {
 		Return struct{} `json:"return"`
 	}
 
-	return m.Run("dump-guest-memory", args, &queryResp)
+	err := m.Run("dump-guest-memory", args, &queryResp)
+	if err != nil {
+		return err
+	}
+
+	// Wait for completion.
+	for {
+		var resp struct {
+			Return struct {
+				Status string `json:"status"`
+			} `json:"return"`
+		}
+
+		err := m.Run("query-dump", nil, &resp)
+		if err != nil {
+			return err
+		}
+
+		switch resp.Return.Status {
+		case "completed":
+			return nil
+		case "failed":
+			return errors.New("Guest memory dump failed")
+		}
+
+		time.Sleep(1 * time.Second)
+	}
 }
 
 // SetNICLink sets the link status of the given device.
