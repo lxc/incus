@@ -15,6 +15,7 @@ The following types of GPUs can be added using the `gputype` device option:
 - [`mdev`](gpu-mdev) (VM only): Creates and passes a virtual GPU through into the instance.
 - [`mig`](gpu-mig) (container only): Creates and passes a MIG (Multi-Instance GPU) through into the instance.
 - [`sriov`](gpu-sriov) (VM only): Passes a virtual function of an SR-IOV-enabled GPU into the instance.
+- [`native-context`](gpu-native-context) (VM only): Gives the VM GPU acceleration through `virtio-gpu` DRM native context, without passing the GPU through.
 
 The available device options depend on the GPU type and are listed in the tables in the following sections.
 
@@ -100,4 +101,33 @@ GPU devices of type `sriov` have the following device options:
 ```{include} ../config_options.txt
     :start-after: <!-- config group devices-gpu_sriov start -->
     :end-before: <!-- config group devices-gpu_sriov end -->
+```
+
+(gpu-native-context)=
+## `gputype`: `native-context`
+
+```{note}
+The `native-context` GPU type is supported only for VMs.
+It does not support hotplugging.
+```
+
+A `native-context` GPU device gives the VM GPU acceleration through `virtio-gpu` DRM native context.
+The host GPU is not passed through or rebound to `vfio-pci`; it stays owned by the host and is shared with the guest, so the host can keep using it at the same time.
+
+This requires QEMU 11.0.0 or newer and `virglrenderer` on the host built with DRM native context support.
+DRM native context was introduced in `virglrenderer` 1.0.0, but the version needed in practice depends on the GPU and kernel (for example, AMD support became usable around 1.1 and Intel around 1.3).
+It also needs a host GPU and guest driver that support DRM native context, and a guest with a matching `virtio-gpu` DRM driver.
+
+The selector options below are optional.
+If a GPU is selected, its DRM render node is used as the render node for the QEMU `egl-headless` display.
+If no GPU is selected, QEMU uses its default render node.
+
+### Device options
+
+GPU devices of type `native-context` have the following device options:
+
+% Include content from [config_options.txt](../config_options.txt)
+```{include} ../config_options.txt
+    :start-after: <!-- config group devices-gpu_native_context start -->
+    :end-before: <!-- config group devices-gpu_native_context end -->
 ```
