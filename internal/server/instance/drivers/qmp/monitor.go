@@ -262,6 +262,11 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 
 	out, err := m.qmp.run(request, id)
 	if err != nil {
+		// Keep the monitor cached on timeout so retries fail fast.
+		if errors.Is(err, ErrMonitorTimeout) {
+			return err
+		}
+
 		// Confirm the daemon didn't die.
 		errPing := m.ping()
 		if errPing != nil {

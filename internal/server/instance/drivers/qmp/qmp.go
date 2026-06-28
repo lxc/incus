@@ -265,6 +265,29 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 	replies.Clear()
 }
 
+// defaultCommandTimeout is how long we wait for a QMP reply before giving up.
+const defaultCommandTimeout = 100 * time.Millisecond
+
+// commandTimeouts overrides defaultCommandTimeout for synchronous slow commands.
+var commandTimeouts = map[string]time.Duration{
+	"screendump": 10 * time.Second,
+}
+
+// commandName extracts the command name from a marshalled QMP request.
+func commandName(command []byte) string {
+	var req struct {
+		Execute          string `json:"execute"`
+		ExecuteOutOfBand string `json:"exec-oob"`
+	}
+
+	_ = json.Unmarshal(command, &req)
+	if req.Execute != "" {
+		return req.Execute
+	}
+
+	return req.ExecuteOutOfBand
+}
+
 // run executes the given QAPI command against a domain's QEMU instance.
 func (qmp *qemuMachineProtocol) run(command []byte, id uint32) ([]byte, error) {
 	// Just call RunWithFile with no file
@@ -318,8 +341,23 @@ func (qmp *qemuMachineProtocol) runWithFile(command []byte, file *os.File, id ui
 		return nil, err
 	}
 
-	// Wait for a response or error to our command
-	res := <-repCh
+	// Pick the timeout for this command.
+	cmd := commandName(command)
+	timeout := defaultCommandTimeout
+	override, ok := commandTimeouts[cmd]
+	if ok {
+		timeout = override
+	}
+
+	// Wait for a response, error or timeout.
+	var res rawResponse
+	select {
+	case res = <-repCh:
+	case <-time.After(timeout):
+		qmp.replies.Delete(id)
+		return nil, fmt.Errorf("%w: %q after %s", ErrMonitorTimeout, cmd, timeout)
+	}
+
 	if res.err != nil {
 		return nil, res.err
 	}
