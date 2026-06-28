@@ -3256,3 +3256,12 @@ upgrade.
 
 ## `network_allocations_network`
 Adds the `network` field to the network allocations API response.
+
+## `gpu_native_context`
+
+This adds a new `native-context` `gputype` for `gpu` devices on virtual machines.
+Instead of passing through a PCI device, it gives the VM an accelerated `virtio-gpu`
+that uses DRM native context, so the guest's own driver drives the host GPU
+directly, with graphics and video acceleration. One host GPU can be shared by several
+VMs and the host keeps using it. The `blob.size` device option sets the
+host-visible blob window (default 2GiB). Requires QEMU 11.0.0 or newer.
