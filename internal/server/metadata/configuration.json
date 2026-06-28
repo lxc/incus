@@ -344,6 +344,51 @@
 					}
 				]
 			},
+			"gpu_native_context": {
+				"keys": [
+					{
+						"blob.size": {
+							"default": "2GiB",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "Size of the host-visible blob memory window for the `virtio-gpu` device",
+							"type": "string"
+						}
+					},
+					{
+						"id": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The DRM card ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"pci": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The PCI address of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"productid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The product ID of the GPU device",
+							"type": "string"
+						}
+					},
+					{
+						"vendorid": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "The vendor ID of the GPU device",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"gpu_physical": {
 				"keys": [
 					{
