@@ -1846,6 +1846,19 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		qemuArgs = append(qemuArgs, "-spice", spiceConfig)
 	}
 
+	// When a GPU is using virtio-gpu DRM native context, the guest needs a host-backed
+	// GL display. Switch the default headless setup to egl-headless and point it at the
+	// resolved render node (if any) so rendering is offloaded to the host GPU.
+	nativeContext, rendernode, _ := d.gpuNativeContextConfig(devConfs)
+	if nativeContext {
+		display := "egl-headless,gl=on"
+		if rendernode != "" {
+			display += fmt.Sprintf(",rendernode=%s", rendernode)
+		}
+
+		qemuArgs = append(qemuArgs, "-display", display)
+	}
+
 	// If stateful, restore now.
 	if stateful {
 		if d.stateful {
@@ -3902,6 +3915,50 @@ func (d *qemu) onRTCChange(change int) error {
 	return nil
 }
 
+// gpuNativeContextConfig scans the device run configs for a virtio-gpu DRM native
+// context GPU. It returns whether one is present, its resolved host DRM render node
+// (which may be empty, meaning QEMU should use its default render node), and the
+// host-visible blob window size in bytes for the device's hostmem property.
+func (d *qemu) gpuNativeContextConfig(devConfs []*deviceConfig.RunConfig) (bool, string, string) {
+	enabled := false
+	rendernode := ""
+	hostmem := ""
+
+	for _, runConf := range devConfs {
+		isNativeContext := false
+		devRenderNode := ""
+		devHostmem := ""
+
+		for _, item := range runConf.GPUDevice {
+			switch item.Key {
+			case "gpuType":
+				if item.Value == "native-context" {
+					isNativeContext = true
+				}
+
+			case "rendernode":
+				devRenderNode = item.Value
+
+			case "hostmem":
+				devHostmem = item.Value
+			}
+		}
+
+		if isNativeContext {
+			enabled = true
+			if devRenderNode != "" {
+				rendernode = devRenderNode
+			}
+
+			if devHostmem != "" {
+				hostmem = devHostmem
+			}
+		}
+	}
+
+	return enabled, rendernode, hostmem
+}
+
 // generateQemuConfig generates the QEMU configuration.
 func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
@@ -4213,6 +4270,22 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		devBus, devAddr, multi = bus.allocate(busFunctionGroupNone)
 	}
 
+	// When any attached GPU device requests virtio-gpu DRM native context, the default
+	// emulated GPU is switched to a GL-capable device with blob and native context
+	// enabled rather than a plain virtio-gpu. This requires a recent QEMU.
+	nativeContext, _, hostmem := d.gpuNativeContextConfig(devConfs)
+	if nativeContext {
+		qemuVer, err := d.version()
+		if err != nil {
+			return nil, fmt.Errorf("GPU native context requires a known QEMU version: %w", err)
+		}
+
+		qemuVer11, _ := version.NewDottedVersion("11.0.0")
+		if qemuVer.Compare(qemuVer11) < 0 {
+			return nil, fmt.Errorf("GPU native context requires QEMU 11.0.0 or newer (have %s)", qemuVer.String())
+		}
+	}
+
 	gpuOpts := qemuGpuOpts{
 		dev: qemuDevOpts{
 			busName:       bus.name,
@@ -4220,8 +4293,10 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 			devAddr:       devAddr,
 			multifunction: multi,
 		},
-		architecture: d.Architecture(),
-		virtioVGA:    virtioVGA,
+		architecture:  d.Architecture(),
+		virtioVGA:     virtioVGA,
+		nativeContext: nativeContext,
+		hostmem:       hostmem,
 	}
 
 	conf = append(conf, qemuGPU(&gpuOpts)...)
@@ -5645,7 +5720,7 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 
 // addGPUDevConfig adds the qemu config required for adding a GPU device.
 func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []deviceConfig.RunConfigItem) error {
-	var devName, pciSlotName, vgpu string
+	var devName, pciSlotName, vgpu, gpuType string
 	for _, gpuItem := range gpuConfig {
 		switch gpuItem.Key {
 		case "devName":
@@ -5654,7 +5729,16 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 			pciSlotName = gpuItem.Value
 		case "vgpu":
 			vgpu = gpuItem.Value
+		case "gpuType":
+			gpuType = gpuItem.Value
 		}
+	}
+
+	// A native-context GPU is not passed through as a PCI device. It is realized by the
+	// default virtio-gpu device (configured for GL/blob/native-context in generateQemuConfig)
+	// together with QEMU's egl-headless display, so there is nothing to add here.
+	if gpuType == "native-context" {
+		return nil
 	}
 
 	vgaMode := func() bool {
