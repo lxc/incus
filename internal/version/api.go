@@ -554,6 +554,7 @@ var APIExtensions = []string{
 	"projects_restricted_virtual_machines_nesting",
 	"authorization_config",
 	"network_allocations_network",
+	"gpu_native_context",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
