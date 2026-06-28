@@ -1,0 +1,93 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+      - stable-*
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.architecture }})
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture:
+          - amd64
+          - arm64
+    runs-on:
+      - self-hosted
+      - lxc-incus-build
+      - arch-${{ matrix.architecture }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            autoconf \
+            automake \
+            curl \
+            git \
+            libacl1-dev \
+            libcap-dev \
+            libdbus-1-dev \
+            liblz4-dev \
+            libseccomp-dev \
+            libselinux-dev \
+            libsqlite3-dev \
+            libtool \
+            libudev-dev \
+            libuv1-dev \
+            lxc-dev \
+            make \
+            pkg-config \
+            zip
+
+      - name: Download go dependencies
+        run: |
+          go mod download
+
+      - name: Build cowsql and raft
+        run: |
+          set -x
+          make deps
+
+          raft_path="$(go env GOPATH)/deps/raft"
+          cowsql_path="$(go env GOPATH)/deps/cowsql"
+          {
+            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
+            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
+            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
+            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+          } >> "$GITHUB_ENV"
+
+      - name: Build incusd and incus
+        run: |
+          make
+
+      - name: Collect binaries
+        run: |
+          mkdir -p build
+          cp "$(go env GOPATH)/bin/incusd" build/
+          cp "$(go env GOPATH)/bin/incus" build/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: build.${{ matrix.architecture }}
+          path: build/
