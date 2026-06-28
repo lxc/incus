@@ -22,6 +22,7 @@ func gpuValidationRules(requiredFields []string, optionalFields []string) map[st
 		"mig.ci":    validate.IsUint8,
 		"mig.uuid":  gpuValidMigUUID,
 		"mdev":      validate.IsAny,
+		"blob.size": validate.Optional(validate.IsSize),
 	}
 
 	validators := map[string]func(value string) error{}
