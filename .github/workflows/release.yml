@@ -64,7 +64,7 @@ jobs:
         run: bash .github/packaging/windows/build.sh
 
       - name: Upload installers
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installers-windows
           path: installers/*.msi
@@ -91,7 +91,7 @@ jobs:
         run: bash .github/packaging/macos/build.sh
 
       - name: Upload installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installers-macos
           path: installers/*.pkg
