@@ -367,7 +367,7 @@ func IsNetworkAddressV4(value string) error {
 }
 
 // IsNetworkAddressCIDRV4 validates an IPv4 address string in CIDR format.
-func IsNetworkAddressCIDRV4(value string) error {
+func IsNetworkAddressCIDRV4(value string, allowSingle bool) error {
 	ip, subnet, err := net.ParseCIDR(value)
 	if err != nil {
 		return err
@@ -375,6 +375,12 @@ func IsNetworkAddressCIDRV4(value string) error {
 
 	if ip.To4() == nil {
 		return fmt.Errorf("Not an IPv4 address %q", value)
+	}
+
+	subnetSize, _ := subnet.Mask.Size()
+	if allowSingle && subnetSize == 32 {
+		// Single addresses are allowed through.
+		return nil
 	}
 
 	if ip.String() == subnet.IP.String() {
@@ -430,7 +436,7 @@ func IsNetworkAddressV6(value string) error {
 }
 
 // IsNetworkAddressCIDRV6 validates an IPv6 address string in CIDR format.
-func IsNetworkAddressCIDRV6(value string) error {
+func IsNetworkAddressCIDRV6(value string, allowSingle bool) error {
 	ip, subnet, err := net.ParseCIDR(value)
 	if err != nil {
 		return err
@@ -438,6 +444,12 @@ func IsNetworkAddressCIDRV6(value string) error {
 
 	if ip.To4() != nil {
 		return fmt.Errorf("Not an IPv6 address %q", value)
+	}
+
+	subnetSize, _ := subnet.Mask.Size()
+	if allowSingle && subnetSize == 128 {
+		// Single addresses are allowed through.
+		return nil
 	}
 
 	if ip.String() == subnet.IP.String() {

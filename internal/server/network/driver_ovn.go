@@ -510,7 +510,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 				return nil
 			}
 
-			return validate.IsNetworkAddressCIDRV4(value)
+			return validate.IsNetworkAddressCIDRV4(value, true)
 		}),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.dhcp)
@@ -578,7 +578,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 				return nil
 			}
 
-			return validate.IsNetworkAddressCIDRV6(value)
+			return validate.IsNetworkAddressCIDRV6(value, true)
 		}),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.dhcp)
