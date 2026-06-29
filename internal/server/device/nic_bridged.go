@@ -608,7 +608,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		}
 
 		if strings.Contains(value, "/") {
-			return validate.IsNetworkAddressCIDRV4(value)
+			return validate.IsNetworkAddressCIDRV4(value, true)
 		}
 
 		return validate.IsNetworkAddressV4(value)
@@ -620,7 +620,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		}
 
 		if strings.Contains(value, "/") {
-			return validate.IsNetworkAddressCIDRV6(value)
+			return validate.IsNetworkAddressCIDRV6(value, true)
 		}
 
 		return validate.IsNetworkAddressV6(value)

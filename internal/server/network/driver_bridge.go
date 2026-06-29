@@ -269,7 +269,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 				return nil
 			}
 
-			return validate.IsNetworkAddressCIDRV4(value)
+			return validate.IsNetworkAddressCIDRV4(value, false)
 		}),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv4.firewall)
@@ -398,7 +398,7 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 				return nil
 			}
 
-			return validate.Or(validate.IsNetworkAddressCIDRV6, validate.IsNetworkV6)(value)
+			return validate.Or(func(value string) error { return validate.IsNetworkAddressCIDRV6(value, false) }, validate.IsNetworkV6)(value)
 		}),
 
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv6.firewall)
