@@ -1875,28 +1875,22 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 
 		if d.inst.Type() == instancetype.VM {
-			var diskLimits *deviceConfig.DiskLimits
-			runConf.Mounts = []deviceConfig.MountEntryItem{}
-			if d.config["limits.read"] != "" || d.config["limits.write"] != "" || d.config["limits.max"] != "" {
-				// Parse the limits into usable values.
-				readBps, readIops, writeBps, writeIops, err := d.parseLimit(d.config)
-				if err != nil {
-					return err
-				}
+			// Parse the limits into usable values (zero when unset, which clears any existing throttle).
+			readBps, readIops, writeBps, writeIops, err := d.parseLimit(d.config)
+			if err != nil {
+				return err
+			}
 
-				// Apply the limits to a minimal mount entry.
-				diskLimits = &deviceConfig.DiskLimits{
+			// Always apply the limits so unsetting the config keys resets the throttle.
+			runConf.Mounts = []deviceConfig.MountEntryItem{{
+				DevName: d.name,
+				Limits: &deviceConfig.DiskLimits{
 					ReadBytes:  readBps,
 					ReadIOps:   readIops,
 					WriteBytes: writeBps,
 					WriteIOps:  writeIops,
-				}
-
-				runConf.Mounts = append(runConf.Mounts, deviceConfig.MountEntryItem{
-					DevName: d.name,
-					Limits:  diskLimits,
-				})
-			}
+				},
+			}}
 		}
 
 		err := d.inst.DeviceEventHandler(&runConf)
