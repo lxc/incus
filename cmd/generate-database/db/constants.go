@@ -9,4 +9,5 @@ var Imports = []string{
 	"fmt",
 	"strings",
 	"github.com/mattn/go-sqlite3",
+	"github.com/google/uuid",
 }
