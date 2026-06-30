@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-25 21:26-0400\n"
-"PO-Revision-Date: 2026-06-27 14:01+0000\n"
+"PO-Revision-Date: 2026-07-01 14:01+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -7787,6 +7787,12 @@ msgid ""
 "The only supported value at the moment is \"skip\" which brings the cluster "
 "member online without relocating any instances."
 msgstr ""
+"クラスターメンバーのリストア\n"
+"\n"
+"アクションフラグを使うと、すべてのインスタンスを移動し、再起動するという"
+"デフォルトの動作を上書きできます。\n"
+"現時点でサポートされている値は \"skip\" のみです。この値を指定すると、"
+"インスタンスを移動することなく、クラスターメンバーがオンラインになります。"
 
 #: cmd/incus/snapshot.go:527
 #, fuzzy
@@ -9652,7 +9658,7 @@ msgstr "移動先のインスタンスのすべてのプロファイルを削除
 
 #: cmd/incus/default.go:202 cmd/incus/default.go:203
 msgid "Unset client defaults"
-msgstr ""
+msgstr "クライアントのデフォルト設定を削除する"
 
 #: cmd/incus/config_device.go:765 cmd/incus/config_device.go:766
 msgid "Unset device configuration keys"
@@ -9673,6 +9679,9 @@ msgid ""
 "Unsetting several keys in one go is only supported for instance "
 "configuration.\n"
 msgstr ""
+"インスタンスまたはサーバーのキーの設定を削除する\n"
+"\n"
+"複数のキーの設定を削除できるのは、インスタンスの設定の場合のみです。\n"
 
 #: cmd/incus/network_acl.go:531 cmd/incus/network_acl.go:532
 msgid "Unset network ACL configuration keys"
@@ -9875,6 +9884,10 @@ msgid ""
 "  This is only for standalone systems, cluster users should use \"incus "
 "cluster update-certificate\" instead\"."
 msgstr ""
+"サーバー証明書を更新します\n"
+"\n"
+"  このコマンドはスタンドアロンシステム専用です。クラスターの場合は \"incus "
+"cluster update-certificate\" を使用してください。"
 
 #: cmd/incus/profile.go:276
 #, fuzzy
@@ -10178,6 +10191,11 @@ msgid ""
 "\n"
 "This is only allowed for custom volumes that have no snapshots."
 msgstr ""
+"基となるストレージボリュームを消去し、同じ構成で空のボリュームとして再作成し"
+"ます。\n"
+"\n"
+"この操作は、スナップショットが存在しないカスタムボリュームのときのみ可能です"
+"。"
 
 #: cmd/incus/admin_init_interactive.go:68
 msgid "Would you like a YAML \"init\" preseed to be printed?"
