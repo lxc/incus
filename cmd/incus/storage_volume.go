@@ -2506,7 +2506,8 @@ func (c *cmdStorageVolumeImport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer logger.WarnOnError(file.Close, "Failed to close file")
+		// The HTTP transport closes the request body, so only warn on unexpected errors.
+		defer logger.WarnOnErrorExcept(file.Close, []error{os.ErrClosed}, "Failed to close file")
 	}
 
 	fstat, err := file.Stat()
