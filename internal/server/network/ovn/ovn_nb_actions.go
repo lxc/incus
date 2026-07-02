@@ -136,6 +136,7 @@ type OVNSwitchPortOpts struct {
 	Location     string             // Optional, use to indicate the name of the server this port is bound to.
 	RouterPort   OVNRouterPort      // Optional, the name of the associated logical router port.
 	Promiscuous  bool               // Optional, controls whether to allow unknown traffic on the port.
+	Enabled      *bool              // Optional, if set controls the administrative state of the port.
 }
 
 // OVNACLRule represents an ACL rule that can be added to a logical switch or port group.
@@ -1874,6 +1875,10 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 
 		if opts.Location != "" {
 			logicalSwitchPort.ExternalIDs[ovnExtIDIncusLocation] = opts.Location
+		}
+
+		if opts.Enabled != nil {
+			logicalSwitchPort.Enabled = opts.Enabled
 		}
 	}
 
