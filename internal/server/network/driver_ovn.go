@@ -4637,6 +4637,75 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 	return nil
 }
 
+// instanceDevicePortOpts derives the logical switch port options for an instance NIC device.
+func (n *ovn) instanceDevicePortOpts(instanceUUID string, deviceName string, devConfig deviceConfig.Device, ipv4 string, ipv6 string, enabled bool, location string) (*networkOVN.OVNSwitchPortOpts, error) {
+	mac, err := net.ParseMAC(devConfig["hwaddr"])
+	if err != nil {
+		return nil, err
+	}
+
+	dhcpv4Subnet := n.DHCPv4Subnet()
+	dhcpv6Subnet := n.DHCPv6Subnet()
+	var dhcpV4UUID, dhcpV6UUID networkOVN.OVNDHCPOptionsUUID
+
+	if dhcpv4Subnet != nil || dhcpv6Subnet != nil {
+		dhcpV4UUID, dhcpV6UUID, err = n.getDhcpOptionUUIDs()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if dhcpv4Subnet != nil && dhcpV4UUID == "" {
+		return nil, fmt.Errorf("Could not find DHCPv4 options for instance port for subnet %q", dhcpv4Subnet.String())
+	}
+
+	if dhcpv6Subnet != nil {
+		if dhcpV6UUID == "" {
+			return nil, fmt.Errorf("Could not find DHCPv6 options for instance port for subnet %q", dhcpv6Subnet.String())
+		}
+
+		// If port isn't going to have fully dynamic IPs allocated by OVN, and instead only static
+		// IPv4 addresses have been added, then add an EUI64 static IPv6 address so that the switch
+		// port has an IPv6 address that will be used to generate a DNS record. This works around a
+		// limitation in OVN that prevents us requesting dynamic IPv6 address allocation when
+		// static IPv4 allocation is used.
+		if ipv4 != "" && ipv6 == "" {
+			eui64IP, err := eui64.ParseMAC(dhcpv6Subnet.IP, mac)
+			if err != nil {
+				return nil, fmt.Errorf("Failed generating EUI64 for instance port %q: %w", mac.String(), err)
+			}
+
+			// Add EUI64 as the IPv6 address.
+			ipv6 = eui64IP.String()
+		}
+	}
+
+	var nestedPortParentName networkOVN.OVNSwitchPort
+	var nestedPortVLAN uint16
+	if devConfig["nested"] != "" {
+		nestedPortParentName = n.getInstanceDevicePortName(instanceUUID, devConfig["nested"])
+		nestedPortVLANInt64, err := strconv.ParseUint(devConfig["vlan"], 10, 16)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid VLAN ID %q: %w", devConfig["vlan"], err)
+		}
+
+		nestedPortVLAN = uint16(nestedPortVLANInt64)
+	}
+
+	return &networkOVN.OVNSwitchPortOpts{
+		DHCPv4OptsID: dhcpV4UUID,
+		DHCPv6OptsID: dhcpV6UUID,
+		MAC:          mac,
+		IPV4:         ipv4,
+		IPV6:         ipv6,
+		Parent:       nestedPortParentName,
+		VLAN:         nestedPortVLAN,
+		Location:     location,
+		Promiscuous:  util.IsTrue(devConfig["security.promiscuous"]),
+		Enabled:      &enabled,
+	}, nil
+}
+
 // InstanceDevicePortAdd adds empty DNS record (to indicate port has been added) and any DHCP reservations for
 // instance device port.
 func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error {
@@ -4723,11 +4792,6 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		return "", nil, errors.New("Instance UUID is required")
 	}
 
-	mac, err := net.ParseMAC(opts.DeviceConfig["hwaddr"])
-	if err != nil {
-		return "", nil, err
-	}
-
 	ipv4 := opts.DeviceConfig["ipv4.address"]
 	ipv6 := opts.DeviceConfig["ipv6.address"]
 
@@ -4735,6 +4799,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed parsing NIC device routes: %w", err)
 	}
+
+	instancePortName := n.getInstanceDevicePortName(opts.InstanceUUID, opts.DeviceName)
 
 	reverter := revert.New()
 	defer reverter.Fail()
@@ -4749,19 +4815,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	dhcpv4Subnet := n.DHCPv4Subnet()
 	dhcpv6Subnet := n.DHCPv6Subnet()
-	var dhcpV4UUID, dhcpV6UUID networkOVN.OVNDHCPOptionsUUID
 
-	if dhcpv4Subnet != nil || dhcpv6Subnet != nil {
-		dhcpV4UUID, dhcpV6UUID, err = n.getDhcpOptionUUIDs()
-		if err != nil {
-			return "", nil, err
-		}
-	}
 	if dhcpv4Subnet != nil {
-		if dhcpV4UUID == "" {
-			return "", nil, fmt.Errorf("Could not find DHCPv4 options for instance port for subnet %q", dhcpv4Subnet.String())
-		}
-
 		// If using dynamic IPv4, look for previously used sticky IPs from the NIC's last state.
 		var dhcpV4StickyIP net.IP
 		if opts.DeviceConfig["ipv4.address"] == "" {
@@ -4800,56 +4855,20 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		}
 	}
 
-	if dhcpv6Subnet != nil {
-		if dhcpV6UUID == "" {
-			return "", nil, fmt.Errorf("Could not find DHCPv6 options for instance port for subnet %q", dhcpv6Subnet.String())
-		}
-
-		// If port isn't going to have fully dynamic IPs allocated by OVN, and instead only static
-		// IPv4 addresses have been added, then add an EUI64 static IPv6 address so that the switch
-		// port has an IPv6 address that will be used to generate a DNS record. This works around a
-		// limitation in OVN that prevents us requesting dynamic IPv6 address allocation when
-		// static IPv4 allocation is used.
-		if ipv4 != "" && ipv6 == "" {
-			eui64IP, err := eui64.ParseMAC(dhcpv6Subnet.IP, mac)
-			if err != nil {
-				return "", nil, fmt.Errorf("Failed generating EUI64 for instance port %q: %w", mac.String(), err)
-			}
-
-			// Add EUI64 as the IPv6 address.
-			ipv6 = eui64IP.String()
-		}
+	portOpts, err := n.instanceDevicePortOpts(opts.InstanceUUID, opts.DeviceName, opts.DeviceConfig, ipv4, ipv6, true, n.state.ServerName)
+	if err != nil {
+		return "", nil, err
 	}
 
-	instancePortName := n.getInstanceDevicePortName(opts.InstanceUUID, opts.DeviceName)
-
-	var nestedPortParentName networkOVN.OVNSwitchPort
-	var nestedPortVLAN uint16
-	if opts.DeviceConfig["nested"] != "" {
-		nestedPortParentName = n.getInstanceDevicePortName(opts.InstanceUUID, opts.DeviceConfig["nested"])
-		nestedPortVLANInt64, err := strconv.ParseUint(opts.DeviceConfig["vlan"], 10, 16)
-		if err != nil {
-			return "", nil, fmt.Errorf("Invalid VLAN ID %q: %w", opts.DeviceConfig["vlan"], err)
-		}
-
-		nestedPortVLAN = uint16(nestedPortVLANInt64)
-	}
+	// Pick up any address override from the port options (such as the EUI64 IPv6 address).
+	ipv4 = portOpts.IPV4
+	ipv6 = portOpts.IPV6
 
 	// Add port with mayExist set to true, so that if instance port exists, we don't fail and continue below
 	// to configure the port as needed. This is required in case the OVN northbound database was unavailable
 	// when the instance NIC was stopped and was unable to remove the port on last stop, which would otherwise
 	// prevent future NIC starts.
-	err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName, &networkOVN.OVNSwitchPortOpts{
-		DHCPv4OptsID: dhcpV4UUID,
-		DHCPv6OptsID: dhcpV6UUID,
-		MAC:          mac,
-		IPV4:         ipv4,
-		IPV6:         ipv6,
-		Parent:       nestedPortParentName,
-		VLAN:         nestedPortVLAN,
-		Location:     n.state.ServerName,
-		Promiscuous:  util.IsTrue(opts.DeviceConfig["security.promiscuous"]),
-	}, true)
+	err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName, portOpts, true)
 	if err != nil {
 		return "", nil, err
 	}
