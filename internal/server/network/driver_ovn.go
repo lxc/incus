@@ -4784,7 +4784,7 @@ func (n *ovn) forwardHasDefaultTarget(listenAddress string) (bool, error) {
 	return hasDefaultTarget, nil
 }
 
-// InstanceDevicePortStart sets up an instance device port to the internal logical switch.
+// InstanceDevicePortStart sets up and enables an instance device port on the internal logical switch.
 // Accepts a list of ACLs being removed from the NIC device (if called as part of a NIC update).
 // Returns the logical switch port name and a list of IPs that were allocated to the port for DNS.
 func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACLsRemove []string) (networkOVN.OVNSwitchPort, []net.IP, error) {
@@ -4805,6 +4805,14 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	reverter := revert.New()
 	defer reverter.Fail()
 
+	// Check if the persistent port already exists (may be missing after an upgrade or database restore).
+	existingPortUUID, err := n.ovnnb.GetLogicalSwitchPortUUID(context.TODO(), instancePortName)
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+		return "", nil, err
+	}
+
+	portExists := existingPortUUID != ""
+
 	// Get existing DHCPv4 static reservations.
 	// This is used for both checking sticky DHCPv4 allocation availability and for ensuring static DHCP
 	// reservations exist.
@@ -4816,7 +4824,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	dhcpv4Subnet := n.DHCPv4Subnet()
 	dhcpv6Subnet := n.DHCPv6Subnet()
 
-	if dhcpv4Subnet != nil {
+	// Sticky IPs are only needed when re-creating the port as an existing port keeps its allocation.
+	if dhcpv4Subnet != nil && !portExists {
 		// If using dynamic IPv4, look for previously used sticky IPs from the NIC's last state.
 		var dhcpV4StickyIP net.IP
 		if opts.DeviceConfig["ipv4.address"] == "" {
@@ -4864,17 +4873,18 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	ipv4 = portOpts.IPV4
 	ipv6 = portOpts.IPV6
 
-	// Add port with mayExist set to true, so that if instance port exists, we don't fail and continue below
-	// to configure the port as needed. This is required in case the OVN northbound database was unavailable
-	// when the instance NIC was stopped and was unable to remove the port on last stop, which would otherwise
-	// prevent future NIC starts.
+	// Create the port if missing, otherwise update its configuration, and enable it.
 	err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName, portOpts, true)
 	if err != nil {
 		return "", nil, err
 	}
 
 	reverter.Add(func() {
-		_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName)
+		if portExists {
+			_ = n.ovnnb.UpdateLogicalSwitchPortEnabled(context.TODO(), instancePortName, false)
+		} else {
+			_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName)
+		}
 	})
 
 	// Add DNS records for port's IPs, and retrieve the IP addresses used.
@@ -5343,6 +5353,21 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 			directionalPortGroups := acl.OVNACLDirectionalPortGroups(aclID)
 			directionalPortGroups.AddToChangeSet(portUUID, removeChangeSet)
+		}
+	}
+
+	// Remove the persistent port from any port group no longer requested above.
+	currentPortGroups, err := n.ovnnb.GetPortGroupsByPort(context.TODO(), portUUID)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed getting port groups for instance NIC port: %w", err)
+	}
+
+	for _, portGroup := range currentPortGroups {
+		_, foundAdd := addChangeSet[portGroup]
+		_, foundRemove := removeChangeSet[portGroup]
+		if !foundAdd && !foundRemove {
+			acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, portGroup)
+			n.logger.Debug("Scheduled logical port for port group removal", logger.Ctx{"portGroup": portGroup, "port": instancePortName})
 		}
 	}
 
