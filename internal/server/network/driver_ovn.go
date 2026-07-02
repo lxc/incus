@@ -4706,9 +4706,13 @@ func (n *ovn) instanceDevicePortOpts(instanceUUID string, deviceName string, dev
 	}, nil
 }
 
-// InstanceDevicePortAdd adds empty DNS record (to indicate port has been added) and any DHCP reservations for
-// instance device port.
+// InstanceDevicePortAdd creates the disabled logical switch port, empty DNS record and any DHCP
+// reservations for an instance device port.
 func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error {
+	if instanceUUID == "" {
+		return errors.New("Instance UUID is required")
+	}
+
 	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
 
 	reverter := revert.New()
@@ -4741,6 +4745,21 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devC
 			}
 		}
 	}
+
+	// Create the logical switch port in disabled state.
+	portOpts, err := n.instanceDevicePortOpts(instanceUUID, deviceName, devConfig, devConfig["ipv4.address"], devConfig["ipv6.address"], false, "")
+	if err != nil {
+		return err
+	}
+
+	err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName, portOpts, true)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() {
+		_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName)
+	})
 
 	reverter.Success()
 	return nil
