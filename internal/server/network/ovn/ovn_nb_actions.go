@@ -3056,9 +3056,22 @@ func (o *NB) UpdatePortGroupACLRules(ctx context.Context, portGroupName OVNPortG
 	return nil
 }
 
-// AddLogicalSwitchQoSRules applies a set of rules to the specified logical switch port.
-func (o *NB) AddLogicalSwitchQoSRules(ctx context.Context, switchName OVNSwitch, switchPortName OVNSwitchPort, qosRules ...OVNQoSRule) error {
+// SetLogicalSwitchQoSRules replaces the set of QoS rules assigned to the specified logical switch port.
+func (o *NB) SetLogicalSwitchQoSRules(ctx context.Context, switchName OVNSwitch, switchPortName OVNSwitchPort, qosRules ...OVNQoSRule) error {
 	var operations []ovsdb.Operation
+
+	// Remove any existing rules for the port.
+	removeQoSRuleUUIDs, err := o.logicalSwitchPortQoSRules(ctx, switchPortName)
+	if err != nil {
+		return err
+	}
+
+	deleteOps, err := o.qosRuleDeleteOperations(ctx, "logical_switch", string(switchName), removeQoSRuleUUIDs)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
 
 	// Add new rules.
 	externalIDs := map[string]string{

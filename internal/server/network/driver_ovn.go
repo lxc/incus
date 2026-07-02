@@ -5421,7 +5421,7 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		rules = append(rules, ingressRule)
 	}
 
-	err = n.ovnnb.AddLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), instancePortName, rules...)
+	err = n.ovnnb.SetLogicalSwitchQoSRules(context.TODO(), n.getIntSwitchName(), instancePortName, rules...)
 	if err != nil {
 		return "", nil, err
 	}
