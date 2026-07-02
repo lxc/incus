@@ -1735,6 +1735,36 @@ func (o *NB) GetLogicalSwitchPorts(ctx context.Context, switchName OVNSwitch) (m
 	return ports, nil
 }
 
+// GetLogicalSwitchActivePorts returns a map of enabled logical switch ports (name and UUID) for a switch.
+func (o *NB) GetLogicalSwitchActivePorts(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort]OVNSwitchPortUUID, error) {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return nil, err
+	}
+
+	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(logicalSwitch.Ports))
+	for _, portUUID := range logicalSwitch.Ports {
+		// Get the logical switch port.
+		lsp := ovnNB.LogicalSwitchPort{
+			UUID: portUUID,
+		}
+
+		err := o.get(ctx, &lsp)
+		if err != nil {
+			return nil, err
+		}
+
+		if lsp.Enabled != nil && !*lsp.Enabled {
+			continue
+		}
+
+		ports[OVNSwitchPort(lsp.Name)] = OVNSwitchPortUUID(lsp.UUID)
+	}
+
+	return ports, nil
+}
+
 // GetLogicalSwitchIPs returns a list of IPs associated to each port connected to switch.
 func (o *NB) GetLogicalSwitchIPs(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort][]net.IP, error) {
 	lsps := []ovnNB.LogicalSwitchPort{}
