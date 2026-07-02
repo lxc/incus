@@ -5511,7 +5511,7 @@ func (n *ovn) InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]n
 	return devIPs, nil
 }
 
-// InstanceDevicePortStop deletes an instance device port from the internal logical switch.
+// InstanceDevicePortStop disables an instance device port and removes its routes and NAT rules.
 func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort, opts *OVNInstanceNICStopOpts) error {
 	// Decide whether to use OVS provided OVN port name or internally derived OVN port name.
 	instancePortName := ovsExternalOVNPort
@@ -5530,12 +5530,12 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		return fmt.Errorf("Failed getting instance switch port options: %w", err)
 	}
 
-	// Don't delete logical switch port if already active on another chassis (i.e during live cluster move).
+	// Don't disable logical switch port if already active on another chassis (i.e during live cluster move).
 	if portLocation != "" && portLocation != n.state.ServerName {
 		return nil
 	}
 
-	n.logger.Debug("Deleting instance port", logger.Ctx{"port": instancePortName, "source": source})
+	n.logger.Debug("Disabling instance port", logger.Ctx{"port": instancePortName, "source": source})
 
 	internalRoutes, externalRoutes, err := n.instanceDevicePortRoutesParse(opts.DeviceConfig)
 	if err != nil {
@@ -5557,38 +5557,14 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	}
 
 	// Get DNS records.
-	dnsUUID, _, dnsIPs, err := n.ovnnb.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
+	_, _, dnsIPs, err := n.ovnnb.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
 	if err != nil {
 		return err
 	}
 
-	portUUID, err := n.ovnnb.GetLogicalSwitchPortUUID(context.TODO(), instancePortName)
-	if err != nil {
-		return fmt.Errorf("Failed getting logical port UUID for port group removal: %w", err)
-	}
-
-	if portUUID != "" {
-		portGroups, err := n.ovnnb.GetPortGroupsByPort(context.TODO(), portUUID)
-		if err != nil {
-			return fmt.Errorf("Failed getting port groups for instance NIC port: %w", err)
-		}
-
-		if len(portGroups) > 0 {
-			removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
-			for _, pg := range portGroups {
-				acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, pg)
-			}
-
-			err = n.ovnnb.UpdatePortGroupMembers(context.TODO(), map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}, removeChangeSet)
-			if err != nil {
-				return fmt.Errorf("Failed removing instance NIC port from port groups: %w", err)
-			}
-		}
-	}
-
-	// Cleanup logical switch port and associated config.
-	err = n.ovnnb.CleanupLogicalSwitchPort(context.TODO(), instancePortName, n.getIntSwitchName(), acl.OVNIntSwitchPortGroupName(n.ID()), dnsUUID)
-	if err != nil {
+	// Disable the logical switch port.
+	err = n.ovnnb.UpdateLogicalSwitchPortEnabled(context.TODO(), instancePortName, false)
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 		return err
 	}
 
@@ -5691,9 +5667,7 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	return nil
 }
 
-// InstanceDevicePortRemove unregisters the NIC device in the OVN database by removing the DNS entry that should
-// have been created during InstanceDevicePortAdd(). If the DNS record exists at remove time then this indicates
-// the NIC device was successfully added and this function also clears any DHCP reservations for the NIC's IPs.
+// InstanceDevicePortRemove deletes an instance device port and all its associated OVN config.
 func (n *ovn) InstanceDevicePortRemove(instanceUUID string, devName string, devConfig deviceConfig.Device, hasDuplicate bool) error {
 	instancePortName := n.getInstanceDevicePortName(instanceUUID, devName)
 
@@ -5731,17 +5705,41 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, devName string, devC
 		}
 	}
 
-	// Remove DNS record if exists.
+	// Remove the port from any port groups it is a member of.
+	portUUID, err := n.ovnnb.GetLogicalSwitchPortUUID(context.TODO(), instancePortName)
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+		return fmt.Errorf("Failed getting logical port UUID for port group removal: %w", err)
+	}
+
+	if portUUID != "" {
+		portGroups, err := n.ovnnb.GetPortGroupsByPort(context.TODO(), portUUID)
+		if err != nil {
+			return fmt.Errorf("Failed getting port groups for instance NIC port: %w", err)
+		}
+
+		if len(portGroups) > 0 {
+			removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
+			for _, pg := range portGroups {
+				acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, pg)
+			}
+
+			err = n.ovnnb.UpdatePortGroupMembers(context.TODO(), map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}, removeChangeSet)
+			if err != nil {
+				return fmt.Errorf("Failed removing instance NIC port from port groups: %w", err)
+			}
+		}
+	}
+
+	// Get DNS records.
 	dnsUUID, _, _, err := n.ovnnb.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
 	if err != nil {
 		return err
 	}
 
-	if dnsUUID != "" {
-		err = n.ovnnb.DeleteLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), dnsUUID, true)
-		if err != nil {
-			return fmt.Errorf("Failed deleting DNS record: %w", err)
-		}
+	// Cleanup logical switch port and associated config.
+	err = n.ovnnb.CleanupLogicalSwitchPort(context.TODO(), instancePortName, n.getIntSwitchName(), acl.OVNIntSwitchPortGroupName(n.ID()), dnsUUID)
+	if err != nil {
+		return err
 	}
 
 	reverter.Success()
