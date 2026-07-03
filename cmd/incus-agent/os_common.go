@@ -27,11 +27,6 @@ var (
 	osGuestAPISupport  = false
 )
 
-func osLoadModules() error {
-	// No OS drivers to load by default.
-	return nil
-}
-
 func osGetCPUMetrics(d *Daemon) ([]metrics.CPUMetrics, error) {
 	cpuTimes, err := cpu.Times(true)
 	if err != nil {
