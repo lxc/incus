@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -122,8 +123,10 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 	// Load the kernel driver.
 	err = osLoadModules()
 	if err != nil {
-		return err
+		logger.Error("Failed to check for agent server compatibility", logger.Ctx{"error": err})
 	}
+
+	canStartServer := err == nil
 
 	d := newDaemon(c.global.flagLogDebug, c.global.flagLogVerbose, c.global.flagSecretsLocation)
 
@@ -138,32 +141,34 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 		c.mountHostShares()
 	}
 
-	// Start the server.
-	err = startHTTPServer(d, c.global.flagLogDebug)
-	if err != nil {
-		return fmt.Errorf("Failed to start HTTP server: %w", err)
-	}
-
-	// Check whether we should start the DevIncus server in the early setup. This way, /dev/incus/sock
-	// will be available for any systemd services starting after the agent.
-	if util.PathExists("agent.conf") {
-		f, err := os.Open("agent.conf")
+	if canStartServer {
+		// Start the server.
+		err = startHTTPServer(d, c.global.flagLogDebug)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to start HTTP server: %w", err)
 		}
 
-		err = setConnectionInfo(d, f)
-		if err != nil {
-			_ = f.Close()
-			return err
-		}
-
-		_ = f.Close()
-
-		if d.DevIncusEnabled {
-			err = startDevIncusServer(d)
+		// Check whether we should start the DevIncus server in the early setup. This way, /dev/incus/sock
+		// will be available for any systemd services starting after the agent.
+		if util.PathExists("agent.conf") {
+			f, err := os.Open("agent.conf")
 			if err != nil {
 				return err
+			}
+
+			err = setConnectionInfo(d, f)
+			if err != nil {
+				_ = f.Close()
+				return err
+			}
+
+			_ = f.Close()
+
+			if d.DevIncusEnabled {
+				err = startDevIncusServer(d)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
