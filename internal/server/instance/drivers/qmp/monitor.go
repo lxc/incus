@@ -22,7 +22,7 @@ var (
 )
 
 // RingbufSize is the size of the agent serial ringbuffer in bytes.
-var RingbufSize = 16
+var RingbufSize = 1024 * 16
 
 // EventAgentStarted is the event sent once the agent has started.
 var EventAgentStarted = "AGENT-STARTED"
