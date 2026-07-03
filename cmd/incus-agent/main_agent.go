@@ -214,8 +214,24 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 // startStatusNotifier sends status of agent to vserial ring buffer every 10s or when context is done.
 // Returns a function that can be used to update the running status to STOPPED in the ring buffer.
 func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan struct{}) context.CancelFunc {
+	msgWithState := func(status string) []string {
+		msg := []string{status}
+
+		// If there's no server running, send state data through the ring-buffer.
+		_, ok := servers["http"]
+		if !ok {
+			b, err := json.Marshal(renderState())
+			if err == nil {
+				logger.Error("Including VM state in status message")
+				msg = append(msg, string(b))
+			}
+		}
+
+		return msg
+	}
+
 	// Write initial started status.
-	_ = c.writeStatus("STARTED")
+	_ = c.writeStatus(msgWithState("STARTED")...)
 
 	wg := sync.WaitGroup{}
 	exitCtx, exit := context.WithCancel(ctx) // Allows manual synchronous cancellation via cancel function.
@@ -233,7 +249,7 @@ func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan s
 			case <-chConnected:
 				_ = c.writeStatus("CONNECTED") // Indicate we were able to connect.
 			case <-ticker.C:
-				_ = c.writeStatus("STARTED") // Re-populate status periodically in case the daemon restarts.
+				_ = c.writeStatus(msgWithState("STARTED")...) // Re-populate status periodically in case the daemon restarts.
 			case <-exitCtx.Done():
 				_ = c.writeStatus("STOPPED") // Indicate we are stopping and exit go routine.
 				return
@@ -245,7 +261,7 @@ func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan s
 }
 
 // writeStatus writes a status code to the vserial ring buffer used to detect agent status on host.
-func (c *cmdAgent) writeStatus(status string) error {
+func (c *cmdAgent) writeStatus(status ...string) error {
 	if util.PathExists(osVioSerialPath) {
 		vSerial, err := os.OpenFile(osVioSerialPath, os.O_RDWR, 0o600)
 		if err != nil {
@@ -254,7 +270,7 @@ func (c *cmdAgent) writeStatus(status string) error {
 
 		defer logger.WarnOnError(vSerial.Close, "Failed to close vserial device")
 
-		_, err = vSerial.Write(fmt.Appendf(nil, "%s\n", status))
+		_, err = vSerial.Write([]byte(strings.Join(status, "\n") + "\n"))
 		if err != nil {
 			return err
 		}
