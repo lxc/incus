@@ -3884,6 +3884,48 @@ func (b *backend) UnmountInstanceSnapshot(inst instance.Instance, op *operations
 	return err
 }
 
+// waitImageCloneSourceReady blocks until the optimized image volume's clone source is ready to be cloned from.
+func (b *backend) waitImageCloneSourceReady(imgVol drivers.Volume) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Minute)
+	defer cancel()
+
+	for {
+		// Only drivers that build a separate clone source (a protected readonly snapshot) after
+		// unpacking are affected by this race and implement the readiness check. For all other drivers
+		// the clone source is the image volume itself, so there is nothing to wait for.
+		ready, err := b.driver.IsImageCloneSourceReady(imgVol)
+		if err != nil {
+			return err
+		}
+
+		if ready {
+			return nil
+		}
+
+		// Detect creator abort/revert so we fail fast instead of blocking until the timeout: if
+		// the base image volume or its cluster DB row has disappeared, the creating member gave up.
+		exists, err := b.driver.HasVolume(imgVol)
+		if err != nil {
+			return err
+		}
+
+		dbVol, err := VolumeDBGet(b, api.ProjectDefaultName, imgVol.Name(), drivers.VolumeTypeImage)
+		if err != nil && !response.IsNotFoundError(err) {
+			return err
+		}
+
+		if !exists || dbVol == nil {
+			return fmt.Errorf("Image %q clone source is unavailable because its creation was aborted on another cluster member; please retry", imgVol.Name())
+		}
+
+		select {
+		case <-time.After(1 * time.Second):
+		case <-ctx.Done():
+			return fmt.Errorf("Timed out waiting for image %q clone source to become ready: %w", imgVol.Name(), ctx.Err())
+		}
+	}
+}
+
 // EnsureImage creates an optimized volume of the image if supported by the storage pool driver and the volume
 // doesn't already exist. If the volume already exists then it is checked to ensure it matches the pools current
 // volume settings ("volume.size" and "block.filesystem" if applicable). If not the optimized volume is removed
@@ -3992,6 +4034,18 @@ func (b *backend) EnsureImage(fingerprint string, op *operations.Operation) erro
 
 	if volExists {
 		if imgDBVol != nil {
+			// The image volume (and its cluster DB row) can become visible to other cluster
+			// members on a shared pool before the creating member has finished unpacking and
+			// preparing the clone source (e.g. a protected readonly snapshot). Wait for the clone
+			// source to be ready before inspecting/resizing or returning, so we neither race the
+			// in-progress creation nor return a volume that cannot yet be cloned from.
+			if b.driver.Info().Remote {
+				err = b.waitImageCloneSourceReady(imgVol)
+				if err != nil {
+					return err
+				}
+			}
+
 			// Work out what size the image volume should be as if we were creating from scratch.
 			// This takes into account the existing volume's "volatile.rootfs.size" setting if set so
 			// as to avoid trying to shrink a larger image volume back to the default size when it is
