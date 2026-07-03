@@ -809,6 +809,32 @@ func (d *ceph) HasVolume(vol Volume) (bool, error) {
 	return d.hasVolume(d.getRBDVolumeName(vol, "", false))
 }
 
+// IsImageCloneSourceReady reports whether the image volume's clone source is ready to be cloned
+// from. Instances are created by cloning the image volume's protected "readonly" snapshot (see
+// CreateVolumeFromCopy), which is only created and protected at the very end of CreateVolume, after
+// the (potentially slow) image unpack. On a shared pool a different cluster member may still be
+// unpacking the image, so the base volume existing is not sufficcient: the readonly snapshot must
+// also exist and be protected before a clone can succeed.
+func (d *ceph) IsImageCloneSourceReady(vol Volume) (bool, error) {
+	ready, err := d.rbdSnapshotIsProtected(vol, "readonly")
+	if err != nil || !ready {
+		return false, err
+	}
+
+	// For VM block images the associated filesystem config volume carries its own readonly
+	// snapshot that is used as the clone source for the config volume, so it must be ready too.
+	if vol.IsVMBlock() {
+		fsVol := vol.NewVMBlockFilesystemVolume()
+
+		fsReady, err := d.rbdSnapshotIsProtected(fsVol, "readonly")
+		if err != nil || !fsReady {
+			return false, err
+		}
+	}
+
+	return true, nil
+}
+
 // FillVolumeConfig populate volume with default config.
 func (d *ceph) FillVolumeConfig(vol Volume) error {
 	// Copy volume.* configuration options from pool.
