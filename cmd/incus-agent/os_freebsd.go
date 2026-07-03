@@ -25,6 +25,11 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+func osLoadModules() error {
+	// No OS drivers to load by default.
+	return nil
+}
+
 // isMountPoint returns true if path is a mount point.
 func isMountPoint(path string) bool {
 	// Get the stat details.
