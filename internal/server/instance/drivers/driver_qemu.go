@@ -447,7 +447,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 		return nil, err
 	}
 
-	if !monitor.AgenStarted() {
+	if !monitor.AgenStarted() || monitor.GetInstanceState() != nil {
 		return nil, errQemuAgentOffline
 	}
 
@@ -9477,8 +9477,15 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 		if err != nil {
 			if !errors.Is(err, errQemuAgentOffline) {
 				d.logger.Warn("Could not get VM state from agent", logger.Ctx{"err": err})
+			} else {
+				monitor, err := d.qmpConnect()
+				if err == nil && monitor.AgenStarted() {
+					agentStatus = monitor.GetInstanceState()
+				}
 			}
-		} else {
+		}
+
+		if agentStatus != nil {
 			status = agentStatus
 		}
 	}
