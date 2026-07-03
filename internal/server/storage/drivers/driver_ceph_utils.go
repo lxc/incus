@@ -391,6 +391,46 @@ func (d *ceph) rbdUnprotectVolumeSnapshot(vol Volume, snapshotName string) error
 	return nil
 }
 
+// rbdSnapshotIsProtected reports whether the named snapshot of the given volume exists and is
+// protected. Both conditions are required before the snapshot can be used as a clone source by
+// rbdCreateClone. A non-existent snapshot (or volume) is reported as (false, nil).
+func (d *ceph) rbdSnapshotIsProtected(vol Volume, snapshotName string) (bool, error) {
+	snapInfo := struct {
+		Protected string `json:"protected"`
+	}{}
+
+	jsonInfo, err := subprocess.RunCommand(
+		"rbd",
+		"info",
+		"--format", "json",
+		"--id", d.config["ceph.user.name"],
+		"--cluster", d.config["ceph.cluster_name"],
+		"--pool", d.config["ceph.osd.pool_name"],
+		d.getRBDVolumeName(vol, snapshotName, false),
+	)
+	if err != nil {
+		var runErr subprocess.RunError
+		if errors.As(err, &runErr) {
+			var exitError *exec.ExitError
+			if errors.As(runErr.Unwrap(), &exitError) {
+				if exitError.ExitCode() == 2 {
+					// ENOENT: the volume or the snapshot doesn't exist yet.
+					return false, nil
+				}
+			}
+		}
+
+		return false, err
+	}
+
+	err = json.Unmarshal([]byte(jsonInfo), &snapInfo)
+	if err != nil {
+		return false, err
+	}
+
+	return snapInfo.Protected == "true", nil
+}
+
 // rbdCreateClone creates a clone from a protected RBD snapshot.
 func (d *ceph) rbdCreateClone(sourceVol Volume, sourceSnapshotName string, targetVol Volume) error {
 	cmd := []string{
