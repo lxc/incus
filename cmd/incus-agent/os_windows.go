@@ -129,11 +129,14 @@ func (m *incusAgentService) Execute(args []string, r <-chan svc.ChangeRequest, c
 	d := newDaemon(m.agentCmd.global.flagLogDebug, m.agentCmd.global.flagLogVerbose, m.agentCmd.global.flagSecretsLocation)
 
 	// Start the server.
-	err := startHTTPServer(d, m.agentCmd.global.flagLogDebug)
-	if err != nil {
-		changes <- svc.Status{State: svc.StopPending}
-		elog.Error(1, fmt.Sprintf("Failed to start HTTP server: %s", err))
-		return
+	err := osLoadModules()
+	if err == nil {
+		err := startHTTPServer(d, m.agentCmd.global.flagLogDebug)
+		if err != nil {
+			changes <- svc.Status{State: svc.StopPending}
+			elog.Error(1, fmt.Sprintf("Failed to start HTTP server: %s", err))
+			return
+		}
 	}
 
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
