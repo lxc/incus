@@ -193,14 +193,14 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 			return err
 		}
 
-		defer logger.WarnOnError(src.Close, "Failed to close source file")
+		defer logger.WarnOnErrorExcept(src.Close, []error{os.ErrClosed}, "Failed to close source file")
 
 		dst, err := os.Create(target)
 		if err != nil {
 			return err
 		}
 
-		defer logger.WarnOnError(dst.Close, "Failed to close target file")
+		defer logger.WarnOnErrorExcept(dst.Close, []error{os.ErrClosed}, "Failed to close target file")
 
 		err = os.Chmod(target, fInfo.Mode())
 		if err != nil {
