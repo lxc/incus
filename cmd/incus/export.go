@@ -162,7 +162,7 @@ func (c *cmdExport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer logger.WarnOnError(target.Close, "Failed to close target file")
+		defer logger.WarnOnErrorExcept(target.Close, []error{os.ErrClosed}, "Failed to close target file")
 	}
 
 	// Prepare the download request.
