@@ -7,7 +7,7 @@ Changing this configuration file manually may leave the CLI in an inconsistent s
 ```
 
 ## The configuration file
-By default, the Incus CLI will use the `$HOME/.config/incus/config.yml`, but it can also use an arbitrary file provided by the `INCUS_CONF` environment variable.
+By default, the Incus CLI will use the `$HOME/.config/incus/config.yml`, but it can also use the `config.yml` in an arbitrary directory provided by the `INCUS_CONF` environment variable.
 
 If the file or its path don't exist, it will use the default:
 
