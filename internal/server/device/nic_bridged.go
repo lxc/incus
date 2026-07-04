@@ -185,7 +185,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: IPv4 default gateway to statically configure inside an OCI container
+		//  shortdesc: IPv4 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)
 		"ipv4.gateway",
 
 		// gendoc:generate(entity=devices, group=nic_bridged, key=ipv6.gateway)
@@ -193,7 +193,7 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: IPv6 default gateway to statically configure inside an OCI container
+		//  shortdesc: IPv6 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)
 		"ipv6.gateway",
 
 		// gendoc:generate(entity=devices, group=nic_bridged, key=ipv4.routes)
