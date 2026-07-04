@@ -576,7 +576,7 @@
 						"ipv4.gateway": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "IPv4 default gateway to statically configure inside an OCI container",
+							"shortdesc": "IPv4 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)",
 							"type": "string"
 						}
 					},
@@ -608,7 +608,7 @@
 						"ipv6.gateway": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "IPv6 default gateway to statically configure inside an OCI container",
+							"shortdesc": "IPv6 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)",
 							"type": "string"
 						}
 					},
@@ -1103,7 +1103,7 @@
 						"ipv4.gateway": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "IPv4 default gateway to statically configure inside an OCI container",
+							"shortdesc": "IPv4 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)",
 							"type": "string"
 						}
 					},
@@ -1143,7 +1143,7 @@
 						"ipv6.gateway": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "IPv6 default gateway to statically configure inside an OCI container",
+							"shortdesc": "IPv6 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)",
 							"type": "string"
 						}
 					},

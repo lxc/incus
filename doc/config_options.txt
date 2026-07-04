@@ -531,7 +531,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv4.gateway devices-nic_bridged
 :managed: "no"
-:shortdesc: "IPv4 default gateway to statically configure inside an OCI container"
+:shortdesc: "IPv4 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)"
 :type: "string"
 
 ```
@@ -559,7 +559,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv6.gateway devices-nic_bridged
 :managed: "no"
-:shortdesc: "IPv6 default gateway to statically configure inside an OCI container"
+:shortdesc: "IPv6 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)"
 :type: "string"
 
 ```
@@ -990,7 +990,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv4.gateway devices-nic_ovn
 :managed: "no"
-:shortdesc: "IPv4 default gateway to statically configure inside an OCI container"
+:shortdesc: "IPv4 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)"
 :type: "string"
 
 ```
@@ -1025,7 +1025,7 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```{config:option} ipv6.gateway devices-nic_ovn
 :managed: "no"
-:shortdesc: "IPv6 default gateway to statically configure inside an OCI container"
+:shortdesc: "IPv6 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)"
 :type: "string"
 
 ```
