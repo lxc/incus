@@ -93,8 +93,10 @@ import (
 // OCINetworkInterface is the expected network configuration for an OCI container interface.
 // It is consumed by the forknet dhcp process through the container's interfaces.json file.
 type OCINetworkInterface struct {
-	DHCP4 bool `json:"dhcp4"`
-	DHCP6 bool `json:"dhcp6"`
+	DHCP4  bool `json:"dhcp4"`
+	DHCP6  bool `json:"dhcp6"`
+	Route4 bool `json:"route4"`
+	Route6 bool `json:"route6"`
 }
 
 // Helper functions.
@@ -2657,8 +2659,10 @@ ff02::2 ip6-allrouters
 			}
 
 			ifaces[dev.Config["name"]] = OCINetworkInterface{
-				DHCP4: dev.Config["ipv4.address"] != "none" && !strings.Contains(dev.Config["ipv4.address"], "/"),
-				DHCP6: dev.Config["ipv6.address"] != "none" && !strings.Contains(dev.Config["ipv6.address"], "/"),
+				DHCP4:  dev.Config["ipv4.address"] != "none" && !strings.Contains(dev.Config["ipv4.address"], "/"),
+				DHCP6:  dev.Config["ipv6.address"] != "none" && !strings.Contains(dev.Config["ipv6.address"], "/"),
+				Route4: dev.Config["ipv4.gateway"] != "none",
+				Route6: dev.Config["ipv6.gateway"] != "none",
 			}
 		}
 
