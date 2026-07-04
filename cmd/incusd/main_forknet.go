@@ -344,7 +344,15 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 		// Get the expected interface configuration, defaulting to a fully dynamic one.
 		config, ok := ifaceConfigs[iface]
 		if !ok {
-			config = instanceDrivers.OCINetworkInterface{DHCP4: true, DHCP6: true}
+			config = instanceDrivers.OCINetworkInterface{DHCP4: true, DHCP6: true, Route4: true, Route6: true}
+		}
+
+		// Prevent router advertisements from providing a default gateway.
+		if !config.Route6 {
+			err := c.disableIPv6Gateway(iface)
+			if err != nil {
+				l.WithError(err).Warning("Couldn't disable the IPv6 default gateway")
+			}
 		}
 
 		// Skip interfaces that are fully statically configured.
@@ -368,7 +376,7 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 		}
 
 		if config.DHCP4 {
-			go c.dhcpRunV4(errorChannel, iface, hostname, l)
+			go c.dhcpRunV4(errorChannel, iface, hostname, config, l)
 			launched++
 		}
 
@@ -439,7 +447,7 @@ func newDHCPv4Conn(iface string) (net.PacketConn, net.HardwareAddr, error) {
 	return nclient4.NewBroadcastUDPConn(conn, &net.UDPAddr{Port: nclient4.ClientPort}), ifc.HardwareAddr, nil
 }
 
-func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname string, l *logrus.Logger) {
+func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname string, config instanceDrivers.OCINetworkInterface, l *logrus.Logger) {
 	var client *nclient4.Client
 
 	// Try to open a raw socket with a kernel-level BPF filter attached.
@@ -504,7 +512,7 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 		return
 	}
 
-	if lease.Offer.YourIPAddr == nil || lease.Offer.YourIPAddr.Equal(net.IPv4zero) || lease.Offer.SubnetMask() == nil || len(lease.Offer.Router()) != 1 {
+	if lease.Offer.YourIPAddr == nil || lease.Offer.YourIPAddr.Equal(net.IPv4zero) || lease.Offer.SubnetMask() == nil || (config.Route4 && len(lease.Offer.Router()) != 1) {
 		l.Error("Giving up on DHCPv4, lease didn't contain required fields")
 		errorChannel <- errors.New("Giving up on DHCPv4, lease didn't contain required fields")
 		return
@@ -540,6 +548,18 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 
 	if lease.Offer.Options.Has(dhcpv4.OptionClasslessStaticRoute) {
 		for _, staticRoute := range lease.Offer.ClasslessStaticRoute() {
+			// Skip any default route when the gateway is disabled.
+			if !config.Route4 {
+				if staticRoute.Dest == nil {
+					continue
+				}
+
+				ones, _ := staticRoute.Dest.Mask.Size()
+				if ones == 0 {
+					continue
+				}
+			}
+
 			route := &ip.Route{
 				DevName: iface,
 				Route:   staticRoute.Dest,
@@ -560,7 +580,9 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 	} else {
 		gws := lease.Offer.Router()
 
-		if len(gws) == 0 || gws[0] == nil || gws[0].IsUnspecified() {
+		if !config.Route4 {
+			l.WithField("interface", iface).Info("Default gateway disabled on interface; skipping default route")
+		} else if len(gws) == 0 || gws[0] == nil || gws[0].IsUnspecified() {
 			l.WithField("interface", iface).Info("No default gateway provided by DHCPv4; skipping default route")
 		} else {
 			err := c.installDefaultRouteV4(iface, gws[0])
@@ -1052,6 +1074,38 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 		_, err = fmt.Fprintf(f, "domain %s\n", domainNames[0])
 		if err != nil {
 			l.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// disableIPv6Gateway prevents router advertisements from providing a default gateway on the interface.
+func (c *cmdForknet) disableIPv6Gateway(iface string) error {
+	// Don't accept default routes from router advertisements.
+	err := os.WriteFile(filepath.Join("/proc/sys/net/ipv6/conf", iface, "accept_ra_defrtr"), []byte("0"), 0o644)
+	if err != nil {
+		return err
+	}
+
+	// Remove any existing default route on the interface.
+	routes, err := (&ip.Route{
+		DevName: iface,
+		Family:  ip.FamilyV6,
+		Table:   "main",
+	}).List()
+	if err != nil {
+		return err
+	}
+
+	for _, route := range routes {
+		if route.Route != nil {
+			continue
+		}
+
+		err = route.Delete()
+		if err != nil {
 			return err
 		}
 	}
