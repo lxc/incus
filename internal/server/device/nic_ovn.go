@@ -156,7 +156,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: IPv4 default gateway to statically configure inside an OCI container
+		//  shortdesc: IPv4 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)
 		"ipv4.gateway",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv6.gateway)
@@ -164,7 +164,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		// ---
 		//  type: string
 		//  managed: no
-		//  shortdesc: IPv6 default gateway to statically configure inside an OCI container
+		//  shortdesc: IPv6 default gateway to statically configure inside an OCI container (`none` to prevent a default gateway from being applied)
 		"ipv6.gateway",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=ipv4.address.external)
