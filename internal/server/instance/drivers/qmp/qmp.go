@@ -266,7 +266,7 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 }
 
 // defaultCommandTimeout is how long we wait for a QMP reply before giving up.
-const defaultCommandTimeout = 100 * time.Millisecond
+const defaultCommandTimeout = 500 * time.Millisecond
 
 // blockCommandTimeout is used for block commands that do blocking storage I/O.
 const blockCommandTimeout = 5 * time.Second
@@ -288,6 +288,7 @@ var commandTimeouts = map[string]time.Duration{
 	"blockdev-mirror":           blockCommandTimeout,
 	"blockdev-snapshot":         blockCommandTimeout,
 	"change-backing-file":       blockCommandTimeout,
+	"query-block-jobs":          blockCommandTimeout,
 	"nbd-server-start":          blockCommandTimeout,
 	"nbd-server-stop":           blockCommandTimeout,
 	"transaction":               blockCommandTimeout,
@@ -299,6 +300,7 @@ var commandTimeouts = map[string]time.Duration{
 	"object-add":                heavyCommandTimeout,
 	"stop":                      heavyCommandTimeout,
 	"system_reset":              heavyCommandTimeout,
+	"query-migrate":             5 * time.Second,
 	"screendump":                10 * time.Second,
 }
 
