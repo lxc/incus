@@ -90,6 +90,13 @@ import (
 	"github.com/lxc/incus/v7/shared/ws"
 )
 
+// OCINetworkInterface is the expected network configuration for an OCI container interface.
+// It is consumed by the forknet dhcp process through the container's interfaces.json file.
+type OCINetworkInterface struct {
+	DHCP4 bool `json:"dhcp4"`
+	DHCP6 bool `json:"dhcp6"`
+}
+
 // Helper functions.
 func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	if c == nil {
@@ -2642,23 +2649,25 @@ ff02::2 ip6-allrouters
 			return "", nil, err
 		}
 
-		// Record interface/family combinations the DHCP client should skip (static or disabled).
-		var dhcpSkip strings.Builder
+		// Record the expected network configuration for each interface.
+		ifaces := map[string]OCINetworkInterface{}
 		for _, dev := range d.expandedDevices.Sorted() {
 			if dev.Config["type"] != "nic" || dev.Config["name"] == "" {
 				continue
 			}
 
-			if dev.Config["ipv4.address"] == "none" || strings.Contains(dev.Config["ipv4.address"], "/") {
-				fmt.Fprintf(&dhcpSkip, "%s ipv4\n", dev.Config["name"])
-			}
-
-			if dev.Config["ipv6.address"] == "none" || strings.Contains(dev.Config["ipv6.address"], "/") {
-				fmt.Fprintf(&dhcpSkip, "%s ipv6\n", dev.Config["name"])
+			ifaces[dev.Config["name"]] = OCINetworkInterface{
+				DHCP4: dev.Config["ipv4.address"] != "none" && !strings.Contains(dev.Config["ipv4.address"], "/"),
+				DHCP6: dev.Config["ipv6.address"] != "none" && !strings.Contains(dev.Config["ipv6.address"], "/"),
 			}
 		}
 
-		err = os.WriteFile(filepath.Join(d.Path(), "network", "dhcp.skip"), []byte(dhcpSkip.String()), 0o644)
+		ifacesData, err := json.Marshal(ifaces)
+		if err != nil {
+			return "", nil, err
+		}
+
+		err = os.WriteFile(filepath.Join(d.Path(), "network", "interfaces.json"), ifacesData, 0o644)
 		if err != nil {
 			return "", nil, err
 		}
