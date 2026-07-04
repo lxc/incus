@@ -1481,6 +1481,10 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 				Limits:  diskLimits,
 			}
 
+			if strings.HasSuffix(fields[1], ".iso") {
+				mount.FSType = "iso9660"
+			}
+
 			err := d.setBus(&mount)
 			if err != nil {
 				return nil, err
@@ -1552,8 +1556,17 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 						clusterName = storageDrivers.CephDefaultUser
 					}
 
+					driverContentType, err := storagePools.VolumeDBContentTypeToContentType(contentType)
+					if err != nil {
+						return nil, err
+					}
+
+					volStorageName := project.StorageVolume(storageProjectName, volName)
+					vol := d.pool.GetVolume(storageDrivers.VolumeTypeCustom, driverContentType, volStorageName, dbVolume.Config)
+					rbdImageName := storageDrivers.CephGetRBDImageName(vol, "", false)
+
 					mount := deviceConfig.MountEntryItem{
-						DevPath: DiskGetRBDFormat(clusterName, userName, poolName, d.config["source"]),
+						DevPath: DiskGetRBDFormat(clusterName, userName, poolName, rbdImageName),
 						DevName: d.name,
 						Opts:    opts,
 						Limits:  diskLimits,
