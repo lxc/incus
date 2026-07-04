@@ -187,6 +187,7 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -209,6 +210,7 @@ import (
 	"golang.org/x/net/bpf"
 	"golang.org/x/sys/unix"
 
+	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/ip"
 	_ "github.com/lxc/incus/v7/shared/cgo" // Used by cgo
 	"github.com/lxc/incus/v7/shared/logger"
@@ -287,8 +289,8 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 	// Parse any pre-existing resolv.conf so its values are preserved alongside DHCP provided ones.
 	c.parseInitialResolvConf()
 
-	// Load the list of interface/family combinations to skip (statically configured).
-	dhcpSkip := c.loadDHCPSkip(l)
+	// Load the expected per-interface network configuration.
+	ifaceConfigs := c.loadInterfaces(l)
 
 	// Create PID file.
 	err = os.WriteFile(filepath.Join(c.instNetworkPath, "dhcp.pid"), []byte(fmt.Sprintf("%d", os.Getpid())), 0o644)
@@ -339,11 +341,14 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 	for _, iface := range names {
 		l := l.WithField("interface", iface).Logger
 
-		runV4 := !dhcpSkip[iface]["ipv4"]
-		runV6 := !dhcpSkip[iface]["ipv6"]
+		// Get the expected interface configuration, defaulting to a fully dynamic one.
+		config, ok := ifaceConfigs[iface]
+		if !ok {
+			config = instanceDrivers.OCINetworkInterface{DHCP4: true, DHCP6: true}
+		}
 
 		// Skip interfaces that are fully statically configured.
-		if !runV4 && !runV6 {
+		if !config.DHCP4 && !config.DHCP6 {
 			l.Info("skipping dhcp on statically configured interface")
 			continue
 		}
@@ -362,12 +367,12 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 			continue
 		}
 
-		if runV4 {
+		if config.DHCP4 {
 			go c.dhcpRunV4(errorChannel, iface, hostname, l)
 			launched++
 		}
 
-		if runV6 {
+		if config.DHCP6 {
 			go c.dhcpRunV6(errorChannel, iface, hostname, duid, l)
 			launched++
 		}
@@ -914,33 +919,27 @@ func (c *cmdForknet) parseInitialResolvConf() {
 	}
 }
 
-// loadDHCPSkip reads the interface/family combinations to skip (statically configured).
-func (c *cmdForknet) loadDHCPSkip(l *logrus.Logger) map[string]map[string]bool {
-	skip := map[string]map[string]bool{}
+// loadInterfaces reads the expected per-interface network configuration.
+func (c *cmdForknet) loadInterfaces(l *logrus.Logger) map[string]instanceDrivers.OCINetworkInterface {
+	ifaces := map[string]instanceDrivers.OCINetworkInterface{}
 
-	content, err := os.ReadFile(filepath.Join(c.instNetworkPath, "dhcp.skip"))
+	content, err := os.ReadFile(filepath.Join(c.instNetworkPath, "interfaces.json"))
 	if err != nil {
 		if !os.IsNotExist(err) {
-			l.WithError(err).Warning("Unable to read dhcp.skip file")
+			l.WithError(err).Warning("Unable to read interfaces.json file")
 		}
 
-		return skip
+		return ifaces
 	}
 
-	for _, line := range strings.Split(string(content), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) != 2 {
-			continue
-		}
+	err = json.Unmarshal(content, &ifaces)
+	if err != nil {
+		l.WithError(err).Warning("Unable to parse interfaces.json file")
 
-		if skip[fields[0]] == nil {
-			skip[fields[0]] = map[string]bool{}
-		}
-
-		skip[fields[0]][fields[1]] = true
+		return map[string]instanceDrivers.OCINetworkInterface{}
 	}
 
-	return skip
+	return ifaces
 }
 
 func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
