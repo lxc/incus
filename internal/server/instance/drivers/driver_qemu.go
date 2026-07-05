@@ -4416,7 +4416,7 @@ func (d *qemu) writeQemuConfigFile(configPath string) error {
 // getCPUOpts retrieves configuration options for virtualized CPUs and memory.
 func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCPUOpts, error) {
 	cpuOpts := qemuCPUOpts{
-		architecture: d.architectureName,
+		architecture: d.architecture,
 	}
 
 	hostNodes := []uint64{}
@@ -4521,7 +4521,11 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 
 	// Determine per-node memory limit.
 	memSizeMB := memSizeBytes / 1024 / 1024
-	nodeMemory := int64(memSizeMB / int64(len(hostNodes)))
+	nodeMemory := memSizeMB
+	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 {
+		nodeMemory = memSizeMB / int64(len(hostNodes))
+	}
+
 	cpuOpts.memory = nodeMemory
 
 	return &cpuOpts, nil
@@ -7036,8 +7040,8 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 			memSlots := map[string]int64{}
 			memSlotsKeys := []string{}
 			for _, memDev := range memDevs {
-				// Skip base memory node.
-				if memDev.ID == "mem0" {
+				// Skip base memory objects.
+				if memDev.ID == "mem0" || memDev.ID == qemuDefaultRAMObject(d.architecture) {
 					continue
 				}
 
