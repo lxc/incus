@@ -1,7 +1,9 @@
 package s3
 
 import (
+	"bytes"
 	"context"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -29,14 +31,20 @@ type TransferManager struct {
 	s3URL     *url.URL
 	accessKey string
 	secretKey string
+
+	// serverCert is the certificate expected from the S3 endpoint.
+	// When set, it's pinned during the TLS handshake, otherwise verification is skipped.
+	serverCert *x509.Certificate
 }
 
 // NewTransferManager instantiates a new TransferManager struct.
-func NewTransferManager(s3URL *url.URL, accessKey string, secretKey string) TransferManager {
+// When serverCert is set, the endpoint's certificate is pinned against it.
+func NewTransferManager(s3URL *url.URL, accessKey string, secretKey string, serverCert *x509.Certificate) TransferManager {
 	return TransferManager{
-		s3URL:     s3URL,
-		accessKey: accessKey,
-		secretKey: secretKey,
+		s3URL:      s3URL,
+		accessKey:  accessKey,
+		secretKey:  secretKey,
+		serverCert: serverCert,
 	}
 }
 
@@ -174,7 +182,7 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 func (t TransferManager) getS3Client() (*s3.Client, error) {
 	httpClient := &http.Client{}
 	if t.isSecureEndpoint() {
-		httpClient.Transport = getTransport()
+		httpClient.Transport = getTransport(t.serverCert)
 	}
 
 	cfg := aws.Config{
@@ -209,12 +217,27 @@ func (t TransferManager) isSecureEndpoint() bool {
 	return t.s3URL.Scheme == "https"
 }
 
-func getTransport() *http.Transport {
+func getTransport(serverCert *x509.Certificate) *http.Transport {
 	// Get a basic TLS configuration.
 	tlsConfig := localtls.InitTLSConfig()
 
-	// Skip verification as we're connecting to ourselves on a self-signed certificate.
+	// The endpoint uses a self-signed certificate with no usable server name, so the
+	// default chain validation is disabled and the certificate is pinned instead when known.
 	tlsConfig.InsecureSkipVerify = true
+
+	if serverCert != nil {
+		tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+			if len(rawCerts) < 1 {
+				return errors.New("Missing server certificate")
+			}
+
+			if !bytes.Equal(rawCerts[0], serverCert.Raw) {
+				return errors.New("Server certificate doesn't match expected certificate")
+			}
+
+			return nil
+		}
+	}
 
 	return &http.Transport{
 		MaxIdleConns:       10,
