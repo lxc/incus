@@ -37,6 +37,7 @@ import (
 	"github.com/lxc/incus/v6/shared/api"
 	"github.com/lxc/incus/v6/shared/logger"
 	localtls "github.com/lxc/incus/v6/shared/tls"
+	"github.com/lxc/incus/v6/shared/util"
 )
 
 var certificatesCmd = APIEndpoint{
@@ -345,7 +346,7 @@ func clusterMemberJoinTokenValid(s *state.State, r *http.Request, projectName st
 			continue
 		}
 
-		if opServerName == joinToken.ServerName && opSecret == joinToken.Secret {
+		if opServerName == joinToken.ServerName && util.CompareSecret(opSecret, joinToken.Secret) {
 			foundOp = op
 			break
 		}
@@ -401,7 +402,7 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 			continue
 		}
 
-		if opSecret == addToken.Secret {
+		if util.CompareSecret(opSecret, addToken.Secret) {
 			foundOp = op
 			break
 		}
