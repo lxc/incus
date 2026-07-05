@@ -58,6 +58,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			accel = "kvm"
 			gic-version = "max"
 			graphics = "off"
+			memory-backend = "mach-virt.ram"
 			type = "virt"
 			usb = "off"
 
@@ -70,6 +71,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			accel = "kvm"
 			cap-large-decr = "off"
 			graphics = "off"
+			memory-backend = "ppc_spapr.ram"
 			type = "pseries"
 			usb = "off"
 
@@ -81,6 +83,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			[machine]
 			accel = "kvm"
 			graphics = "off"
+			memory-backend = "s390.ram"
 			type = "s390-ccw-virtio"
 			usb = "off"
 
@@ -444,7 +447,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			expected string
 		}{{
 			qemuCPUOpts{
-				architecture:     "x86_64",
+				architecture:     osarch.ARCH_64BIT_INTEL_X86,
 				cpuCount:         8,
 				cpuSockets:       1,
 				cpuCores:         4,
@@ -473,7 +476,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			type = "node"`,
 		}, {
 			qemuCPUOpts{
-				architecture: "x86_64",
+				architecture: osarch.ARCH_64BIT_INTEL_X86,
 				cpuCount:     2,
 				cpuSockets:   1,
 				cpuCores:     2,
@@ -546,7 +549,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			type = "cpu"`,
 		}, {
 			qemuCPUOpts{
-				architecture: "x86_64",
+				architecture: osarch.ARCH_64BIT_INTEL_X86,
 				cpuCount:     2,
 				cpuSockets:   1,
 				cpuCores:     2,
@@ -607,7 +610,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			type = "cpu"`,
 		}, {
 			qemuCPUOpts{
-				architecture: "x86_64",
+				architecture: osarch.ARCH_64BIT_INTEL_X86,
 				cpuCount:     4,
 				cpuSockets:   1,
 				cpuCores:     4,
@@ -676,7 +679,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			type = "cpu"`,
 		}, {
 			qemuCPUOpts{
-				architecture: "arm64",
+				architecture: osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN,
 				cpuCount:     4,
 				cpuSockets:   1,
 				cpuCores:     4,
@@ -695,7 +698,38 @@ func TestQemuConfigTemplates(t *testing.T) {
 			cores = "4"
 			cpus = "4"
 			sockets = "1"
-			threads = "1"`,
+			threads = "1"
+
+			[object "mach-virt.ram"]
+			discard-data = "on"
+			mem-path = "/hugepages"
+			prealloc = "on"
+			qom-type = "memory-backend-file"
+			share = "on"
+			size = "12000M"`,
+		}, {
+			qemuCPUOpts{
+				architecture:    osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN,
+				cpuCount:        2,
+				cpuSockets:      1,
+				cpuCores:        2,
+				cpuThreads:      1,
+				memory:          4096,
+				memoryHostNodes: []int64{0},
+			},
+			`# CPU
+			[smp-opts]
+			cores = "2"
+			cpus = "2"
+			sockets = "1"
+			threads = "1"
+
+			[object "mach-virt.ram"]
+			host-nodes.0 = "0"
+			policy = "bind"
+			qom-type = "memory-backend-memfd"
+			share = "on"
+			size = "4096M"`,
 		}}
 		for _, tc := range testCases {
 			runTest(tc.expected, qemuCPU(&tc.opts, true))
