@@ -960,7 +960,7 @@ func operationWaitGet(d *Daemon, r *http.Request) response.Response {
 	// First check if the query is for a local operation from this node
 	op, err := operations.OperationGetInternal(id)
 	if err == nil {
-		if secret != "" && op.Metadata()["secret"] != secret {
+		if secret != "" && !util.CompareSecret(op.Metadata()["secret"], secret) {
 			return response.Forbidden(nil)
 		}
 
