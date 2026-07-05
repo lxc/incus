@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"crypto/rand"
+	"crypto/x509"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -4902,6 +4903,16 @@ func (b *backend) GetBucketURL(bucketName string) *url.URL {
 	return b.driver.GetBucketURL(bucketName)
 }
 
+// bucketServerCert returns the certificate to pin for the local storage buckets
+// endpoint. It returns nil for remote drivers whose certificate isn't known.
+func (b *backend) bucketServerCert() (*x509.Certificate, error) {
+	if b.Driver().Info().Remote {
+		return nil, nil
+	}
+
+	return b.state.Endpoints.NetworkCert().PublicKeyX509()
+}
+
 // CreateCustomVolume creates an empty custom volume.
 func (b *backend) CreateCustomVolume(projectName string, volName string, desc string, config map[string]string, contentType drivers.ContentType, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": volName, "desc": desc, "config": config, "contentType": contentType})
@@ -7944,7 +7955,12 @@ func (b *backend) BackupBucket(projectName string, bucketName string, tarWriter 
 		return errors.New("The server is lacking a storage buckets listener address")
 	}
 
-	transferManager := s3.NewTransferManager(bucketURL, backupKey.AccessKey, backupKey.SecretKey)
+	serverCert, err := b.bucketServerCert()
+	if err != nil {
+		return err
+	}
+
+	transferManager := s3.NewTransferManager(bucketURL, backupKey.AccessKey, backupKey.SecretKey, serverCert)
 
 	err = transferManager.DownloadAllFiles(bucket.Name, tarWriter)
 	if err != nil {
@@ -8017,7 +8033,12 @@ func (b *backend) CreateBucketFromBackup(srcBackup backup.Info, srcData io.ReadS
 		return errors.New("The server is lacking a storage buckets listener address")
 	}
 
-	transferManager := s3.NewTransferManager(bucketURL, backupKey.AccessKey, backupKey.SecretKey)
+	serverCert, err := b.bucketServerCert()
+	if err != nil {
+		return err
+	}
+
+	transferManager := s3.NewTransferManager(bucketURL, backupKey.AccessKey, backupKey.SecretKey, serverCert)
 	err = transferManager.UploadAllFiles(srcBackup.Name, srcData)
 	if err != nil {
 		return err
