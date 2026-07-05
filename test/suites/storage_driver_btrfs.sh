@@ -47,6 +47,12 @@ test_storage_driver_btrfs() {
         # Import image into default storage pool.
         ensure_import_testimage
 
+        # btrfs.compression set on an instance is honored even when the root volume
+        # is created from an optimized image snapshot rather than a fresh volume.
+        incus init testimage c-comp-none -d root,initial.btrfs.compression=none
+        btrfs property get "${INCUS_DIR}/storage-pools/${compPool}/containers/c-comp-none" compression | grep -q "compression=none"
+        incus delete c-comp-none
+
         # Create first container in pool1 with subvolumes.
         incus launch testimage c1pool1 -s "incustest-$(basename "${INCUS_DIR}")-pool1"
 
