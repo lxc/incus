@@ -186,7 +186,8 @@ func getTableData(ctx context.Context, tx *sql.Tx, table string) ([]string, erro
 				values[j] = v
 
 			case []byte:
-				values[j] = fmt.Sprintf("'%s'", string(v))
+				// Use SQLite's hex blob literal so binary data can't break out of the statement.
+				values[j] = fmt.Sprintf("X'%x'", v)
 			case time.Time:
 				// Try and match the sqlite3 .dump output format.
 				format := "2006-01-02 15:04:05"
