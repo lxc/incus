@@ -3035,7 +3035,7 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 			continue
 		}
 
-		if opSecret == secret {
+		if util.CompareSecret(opSecret, secret) {
 			// Check if the operation is currently running (we allow access while expired).
 			if op.Status == api.Running.String() {
 				// Token is single-use, so cancel it now.

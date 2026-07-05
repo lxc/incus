@@ -1,11 +1,23 @@
 package util
 
 import (
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
+
+// CompareSecret compares an expected secret (typically read from operation metadata
+// as an untyped value) against a provided one in constant time.
+func CompareSecret(expected any, provided string) bool {
+	s, ok := expected.(string)
+	if !ok {
+		return false
+	}
+
+	return subtle.ConstantTimeCompare([]byte(s), []byte(provided)) == 1
+}
 
 // ParseUint32Range parses a uint32 range in the form "number" or "start-end".
 // Returns the start number and the size of the range.
