@@ -259,6 +259,9 @@ func (s *consoleWs) doConsole() error {
 			conn := s.conns[-1]
 			s.connsLock.Unlock()
 
+			// Bound control message size to avoid unbounded reads.
+			conn.SetReadLimit(ws.ControlMessageMaxSize)
+
 			_, r, err := conn.NextReader()
 			if err != nil {
 				logger.Debugf("Got error getting next reader: %v", err)
