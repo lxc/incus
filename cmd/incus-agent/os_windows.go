@@ -22,6 +22,7 @@ import (
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
+	"golang.org/x/sys/windows/svc/mgr"
 
 	"github.com/lxc/incus/v7/internal/ports"
 	"github.com/lxc/incus/v7/internal/server/metrics"
@@ -36,6 +37,62 @@ var (
 	osAgentConfigPath      = "C:\\Program Files\\Incus-Agent\\incus-agent.yml"
 	osVioSerialPath        = `\\.\org.linuxcontainers.incus`
 )
+
+// Check for the VirtioSocketWSP service for vsock support.
+func osLoadModules() error {
+	m, err := mgr.Connect()
+	if err != nil {
+		return err
+	}
+
+	defer m.Disconnect()
+
+	viosockSvc := "VirtioSocketWSP"
+	s, err := m.OpenService(viosockSvc)
+	if err != nil {
+		return err
+	}
+
+	defer s.Close()
+
+	tryStart := func() (bool, error) {
+		status, err := s.Query()
+		if err != nil {
+			return false, err
+		}
+
+		if status.State == svc.Stopped {
+			err = s.Start()
+			if err != nil {
+				return false, err
+			}
+		}
+
+		return status.State == svc.Running, nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
+	defer cancel()
+
+	// Try for 5s to start the service.
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("Unable to start viosock service: %w", ctx.Err())
+		default:
+			running, err := tryStart()
+			if err != nil {
+				return err
+			}
+
+			if running {
+				return nil
+			}
+
+			time.Sleep(time.Second)
+		}
+	}
+}
 
 func osGetListener(port int64) (net.Listener, error) {
 	const CIDAny uint32 = 4294967295 // Equivalent to VMADDR_CID_ANY.
@@ -72,11 +129,14 @@ func (m *incusAgentService) Execute(args []string, r <-chan svc.ChangeRequest, c
 	d := newDaemon(m.agentCmd.global.flagLogDebug, m.agentCmd.global.flagLogVerbose, m.agentCmd.global.flagSecretsLocation)
 
 	// Start the server.
-	err := startHTTPServer(d, m.agentCmd.global.flagLogDebug)
-	if err != nil {
-		changes <- svc.Status{State: svc.StopPending}
-		elog.Error(1, fmt.Sprintf("Failed to start HTTP server: %s", err))
-		return
+	err := osLoadModules()
+	if err == nil {
+		err := startHTTPServer(d, m.agentCmd.global.flagLogDebug)
+		if err != nil {
+			changes <- svc.Status{State: svc.StopPending}
+			elog.Error(1, fmt.Sprintf("Failed to start HTTP server: %s", err))
+			return
+		}
 	}
 
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}

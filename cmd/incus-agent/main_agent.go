@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -122,8 +123,10 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 	// Load the kernel driver.
 	err = osLoadModules()
 	if err != nil {
-		return err
+		logger.Error("Failed to check for agent server compatibility", logger.Ctx{"error": err})
 	}
+
+	canStartServer := err == nil
 
 	d := newDaemon(c.global.flagLogDebug, c.global.flagLogVerbose, c.global.flagSecretsLocation)
 
@@ -138,32 +141,34 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 		c.mountHostShares()
 	}
 
-	// Start the server.
-	err = startHTTPServer(d, c.global.flagLogDebug)
-	if err != nil {
-		return fmt.Errorf("Failed to start HTTP server: %w", err)
-	}
-
-	// Check whether we should start the DevIncus server in the early setup. This way, /dev/incus/sock
-	// will be available for any systemd services starting after the agent.
-	if util.PathExists("agent.conf") {
-		f, err := os.Open("agent.conf")
+	if canStartServer {
+		// Start the server.
+		err = startHTTPServer(d, c.global.flagLogDebug)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to start HTTP server: %w", err)
 		}
 
-		err = setConnectionInfo(d, f)
-		if err != nil {
-			_ = f.Close()
-			return err
-		}
-
-		_ = f.Close()
-
-		if d.DevIncusEnabled {
-			err = startDevIncusServer(d)
+		// Check whether we should start the DevIncus server in the early setup. This way, /dev/incus/sock
+		// will be available for any systemd services starting after the agent.
+		if util.PathExists("agent.conf") {
+			f, err := os.Open("agent.conf")
 			if err != nil {
 				return err
+			}
+
+			err = setConnectionInfo(d, f)
+			if err != nil {
+				_ = f.Close()
+				return err
+			}
+
+			_ = f.Close()
+
+			if d.DevIncusEnabled {
+				err = startDevIncusServer(d)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -209,8 +214,24 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 // startStatusNotifier sends status of agent to vserial ring buffer every 10s or when context is done.
 // Returns a function that can be used to update the running status to STOPPED in the ring buffer.
 func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan struct{}) context.CancelFunc {
+	msgWithState := func(status string) []string {
+		msg := []string{status}
+
+		// If there's no server running, send state data through the ring-buffer.
+		_, ok := servers["http"]
+		if !ok {
+			b, err := json.Marshal(renderState())
+			if err == nil {
+				logger.Error("Including VM state in status message")
+				msg = append(msg, string(b))
+			}
+		}
+
+		return msg
+	}
+
 	// Write initial started status.
-	_ = c.writeStatus("STARTED")
+	_ = c.writeStatus(msgWithState("STARTED")...)
 
 	wg := sync.WaitGroup{}
 	exitCtx, exit := context.WithCancel(ctx) // Allows manual synchronous cancellation via cancel function.
@@ -228,7 +249,7 @@ func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan s
 			case <-chConnected:
 				_ = c.writeStatus("CONNECTED") // Indicate we were able to connect.
 			case <-ticker.C:
-				_ = c.writeStatus("STARTED") // Re-populate status periodically in case the daemon restarts.
+				_ = c.writeStatus(msgWithState("STARTED")...) // Re-populate status periodically in case the daemon restarts.
 			case <-exitCtx.Done():
 				_ = c.writeStatus("STOPPED") // Indicate we are stopping and exit go routine.
 				return
@@ -240,7 +261,7 @@ func (c *cmdAgent) startStatusNotifier(ctx context.Context, chConnected <-chan s
 }
 
 // writeStatus writes a status code to the vserial ring buffer used to detect agent status on host.
-func (c *cmdAgent) writeStatus(status string) error {
+func (c *cmdAgent) writeStatus(status ...string) error {
 	if util.PathExists(osVioSerialPath) {
 		vSerial, err := os.OpenFile(osVioSerialPath, os.O_RDWR, 0o600)
 		if err != nil {
@@ -249,7 +270,7 @@ func (c *cmdAgent) writeStatus(status string) error {
 
 		defer logger.WarnOnError(vSerial.Close, "Failed to close vserial device")
 
-		_, err = vSerial.Write(fmt.Appendf(nil, "%s\n", status))
+		_, err = vSerial.Write([]byte(strings.Join(status, "\n") + "\n"))
 		if err != nil {
 			return err
 		}

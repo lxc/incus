@@ -22,6 +22,11 @@ import (
 	"github.com/lxc/incus/v7/shared/subprocess"
 )
 
+func osLoadModules() error {
+	// No OS drivers to load by default.
+	return nil
+}
+
 func osMountShared(src string, dst string, fstype string, opts []string) error {
 	if fstype != "9p" {
 		return errors.New("Only 9p shares are supported on Darwin")

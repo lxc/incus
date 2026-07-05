@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/lxc/incus/v7/internal/linux"
+	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -22,7 +23,7 @@ var (
 )
 
 // RingbufSize is the size of the agent serial ringbuffer in bytes.
-var RingbufSize = 16
+var RingbufSize = 1024 * 16
 
 // EventAgentStarted is the event sent once the agent has started.
 var EventAgentStarted = "AGENT-STARTED"
@@ -83,6 +84,7 @@ type Monitor struct {
 	detachDisk     func(name string) error
 	eventMap       map[string]chan Event
 	eventMapLock   sync.Mutex
+	instanceState  *api.InstanceState
 }
 
 // TransactionAction represents a single action within a QMP transaction.
@@ -115,7 +117,21 @@ func (m *Monitor) start() error {
 		// Extract the last entry.
 		entries := strings.Split(resp.Return, "\n")
 		if len(entries) > 1 {
-			m.processAgentStatus(entries[len(entries)-2])
+			status := entries[len(entries)-2]
+			var instanceState *api.InstanceState
+			if len(entries) > 2 {
+				var s api.InstanceState
+				err := json.Unmarshal([]byte(status), &s)
+
+				if err == nil && s.Pid == 1 {
+					instanceState = &s
+				}
+
+				status = entries[len(entries)-3]
+			}
+
+			m.SetInstanceState(instanceState)
+			m.processAgentStatus(status)
 		}
 	}
 
@@ -445,6 +461,22 @@ func (m *Monitor) Wait() (chan struct{}, error) {
 	}
 
 	return m.chDisconnect, nil
+}
+
+// GetInstanceState fetches the recorded instance state.
+func (m *Monitor) GetInstanceState() *api.InstanceState {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	return m.instanceState
+}
+
+// SetInstanceState updates the recorded instance state.
+func (m *Monitor) SetInstanceState(s *api.InstanceState) {
+	m.stateMu.Lock()
+	defer m.stateMu.Unlock()
+
+	m.instanceState = s
 }
 
 // SetInitialized enables or disables the on disconnect event.
