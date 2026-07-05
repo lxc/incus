@@ -130,7 +130,7 @@ func New(inst instance.Instance, s *state.State, name string, conf deviceConfig.
 	// may still want to use the device (such as when stopping or removing) even if
 	// the config validation has failed.
 
-	err = validate.IsDeviceName(name)
+	err = validate.IsAPIName(name, false)
 	if err != nil {
 		return dev, err
 	}
@@ -147,7 +147,7 @@ func New(inst instance.Instance, s *state.State, name string, conf deviceConfig.
 // blown instance to allow profile devices to be validated too.
 // Note: The supplied config may be modified during validation to enrich. If this is not desired, supply a copy.
 func Validate(instConfig instance.ConfigReader, s *state.State, name string, conf deviceConfig.Device, partialValidation bool) error {
-	err := validate.IsDeviceName(name)
+	err := validate.IsAPIName(name, false)
 	if err != nil {
 		return err
 	}
