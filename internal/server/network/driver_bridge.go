@@ -719,6 +719,14 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 	// defaultdesc: -
 	// shortdesc: Peer address (IPv4 or IPv6) for use by `ovn` downstream networks
 
+	// gendoc:generate(entity=network_bridge, group=bgp, key=bgp.peers.NAME.interface)
+	//
+	// ---
+	// type: string
+	// condition: BGP server
+	// defaultdesc: -
+	// shortdesc: Interface name for BGP unnumbered peering (alternative to the peer address)
+
 	// gendoc:generate(entity=network_bridge, group=bgp, key=bgp.peers.NAME.asn)
 	//
 	// ---
