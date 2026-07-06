@@ -2025,3 +2025,10 @@ func (d *lvm) Qcow2DeletionCleanup(snapVol Volume, childName string) error {
 
 	return nil
 }
+
+// IsImageCloneSourceReady checks if the image clone source is ready if clustered LVM is used.
+func (d *lvm) IsImageCloneSourceReady(vol Volume) (bool, error) {
+	// TODO: Further implementation required
+	// This will only be hit, if using clustered lvm
+	return true, nil
+}
