@@ -157,9 +157,17 @@ func (s *Server) handleBucket(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// ListObjectsV2 (and a few other listings keyed off query parameters).
-		_, ok := r.URL.Query()["uploads"]
+		q := r.URL.Query()
+
+		_, ok := q["uploads"]
 		if ok {
 			s.listMultipartUploads(w, r)
+			return
+		}
+
+		_, ok = q["versioning"]
+		if ok {
+			s.getBucketVersioning(w)
 			return
 		}
 
@@ -174,6 +182,17 @@ func (s *Server) handleBucket(w http.ResponseWriter, r *http.Request) {
 			Message: "Bucket lifecycle is managed by the Incus API.",
 		}).Response(w)
 	}
+}
+
+// getBucketVersioning stubs the bucket-level ?versioning sub-resource.
+// Versioning is never enabled, so return an empty configuration.
+func (s *Server) getBucketVersioning(w http.ResponseWriter) {
+	const body = `<?xml version="1.0" encoding="UTF-8"?>` +
+		`<VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"></VersioningConfiguration>`
+
+	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(body))
 }
 
 func (s *Server) handleObject(w http.ResponseWriter, r *http.Request, objectKey string) {
