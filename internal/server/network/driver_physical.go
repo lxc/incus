@@ -197,6 +197,14 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 	// defaultdesc: -
 	// shortdesc: Peer address (IPv4 or IPv6) for use by `ovn` downstream networks
 
+	// gendoc:generate(entity=network_physical, group=bgp, key=bgp.peers.NAME.interface)
+	//
+	// ---
+	// type: string
+	// condition: BGP server
+	// defaultdesc: -
+	// shortdesc: Interface name for BGP unnumbered peering (alternative to the peer address)
+
 	// gendoc:generate(entity=network_physical, group=bgp, key=bgp.peers.NAME.asn)
 	//
 	// ---
