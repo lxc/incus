@@ -3777,6 +3777,15 @@
 						}
 					},
 					{
+						"bgp.peers.NAME.interface": {
+							"condition": "BGP server",
+							"defaultdesc": "-",
+							"longdesc": "",
+							"shortdesc": "Interface name for BGP unnumbered peering (alternative to the peer address)",
+							"type": "string"
+						}
+					},
+					{
 						"bgp.peers.NAME.password": {
 							"condition": "BGP server",
 							"defaultdesc": "- (no password)",
@@ -4854,6 +4863,15 @@
 							"longdesc": "",
 							"shortdesc": "Peer session hold time (in seconds; optional)",
 							"type": "integer"
+						}
+					},
+					{
+						"bgp.peers.NAME.interface": {
+							"condition": "BGP server",
+							"defaultdesc": "-",
+							"longdesc": "",
+							"shortdesc": "Interface name for BGP unnumbered peering (alternative to the peer address)",
+							"type": "string"
 						}
 					},
 					{
