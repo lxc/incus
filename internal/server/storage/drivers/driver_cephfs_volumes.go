@@ -704,3 +704,9 @@ func (d *cephfs) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op
 
 	return nil
 }
+
+// IsImageCloneSourceReady checks if the image clone source is ready.
+func (d *cephfs) IsImageCloneSourceReady(vol Volume) (bool, error) {
+	// TODO: Further implementation required
+	return true, nil
+}
