@@ -81,9 +81,18 @@ Therefore, you must configure BGP peers on the uplink network that contain the i
 Set the following configuration options on the uplink network:
 
 - `bgp.peers.<name>.address` - the peer address to be used by the downstream networks
+- `bgp.peers.<name>.interface` - the interface to use for BGP unnumbered peering (alternative to the peer address)
 - `bgp.peers.<name>.asn` - the {abbr}`ASN (Autonomous System Number)` for the local server
 - `bgp.peers.<name>.password` - an optional password for the peer session
 - `bgp.peers.<name>.holdtime` - an optional hold time for the peer session (in seconds)
+
+### Use BGP unnumbered
+
+Instead of configuring a peer address, you can set `bgp.peers.<name>.interface` to establish the session using BGP unnumbered.
+In that mode, the peer's IPv6 link-local address is automatically discovered on the given interface and used for the session, with IPv4 routes exchanged over it using the extended next-hop capability.
+
+This removes the need to assign a global address to each host for BGP peering, which is particularly useful in larger clusters.
+It requires the upstream router to also support BGP unnumbered and to be directly connected on that interface.
 
 Once the uplink network is configured, downstream OVN networks will get their external subnets and addresses announced over BGP.
 The next-hop is set to the address of the OVN router on the uplink network.
