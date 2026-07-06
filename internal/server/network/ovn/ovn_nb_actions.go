@@ -136,6 +136,7 @@ type OVNSwitchPortOpts struct {
 	Location     string             // Optional, use to indicate the name of the server this port is bound to.
 	RouterPort   OVNRouterPort      // Optional, the name of the associated logical router port.
 	Promiscuous  bool               // Optional, controls whether to allow unknown traffic on the port.
+	Enabled      *bool              // Optional, if set controls the administrative state of the port.
 }
 
 // OVNACLRule represents an ACL rule that can be added to a logical switch or port group.
@@ -1734,6 +1735,36 @@ func (o *NB) GetLogicalSwitchPorts(ctx context.Context, switchName OVNSwitch) (m
 	return ports, nil
 }
 
+// GetLogicalSwitchActivePorts returns a map of enabled logical switch ports (name and UUID) for a switch.
+func (o *NB) GetLogicalSwitchActivePorts(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort]OVNSwitchPortUUID, error) {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return nil, err
+	}
+
+	ports := make(map[OVNSwitchPort]OVNSwitchPortUUID, len(logicalSwitch.Ports))
+	for _, portUUID := range logicalSwitch.Ports {
+		// Get the logical switch port.
+		lsp := ovnNB.LogicalSwitchPort{
+			UUID: portUUID,
+		}
+
+		err := o.get(ctx, &lsp)
+		if err != nil {
+			return nil, err
+		}
+
+		if lsp.Enabled != nil && !*lsp.Enabled {
+			continue
+		}
+
+		ports[OVNSwitchPort(lsp.Name)] = OVNSwitchPortUUID(lsp.UUID)
+	}
+
+	return ports, nil
+}
+
 // GetLogicalSwitchIPs returns a list of IPs associated to each port connected to switch.
 func (o *NB) GetLogicalSwitchIPs(ctx context.Context, switchName OVNSwitch) (map[OVNSwitchPort][]net.IP, error) {
 	lsps := []ovnNB.LogicalSwitchPort{}
@@ -1874,6 +1905,10 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 
 		if opts.Location != "" {
 			logicalSwitchPort.ExternalIDs[ovnExtIDIncusLocation] = opts.Location
+		}
+
+		if opts.Enabled != nil {
+			logicalSwitchPort.Enabled = opts.Enabled
 		}
 	}
 
@@ -2074,6 +2109,40 @@ func (o *NB) UpdateLogicalSwitchPortOptions(ctx context.Context, portName OVNSwi
 	}
 
 	maps.Copy(lsp.Options, options)
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateLogicalSwitchPortEnabled sets the administrative state of a logical switch port.
+func (o *NB) UpdateLogicalSwitchPortEnabled(ctx context.Context, portName OVNSwitchPort, enabled bool) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	lsp.Enabled = &enabled
 
 	// Update the record.
 	operations, err := o.client.Where(&lsp).Update(&lsp)
@@ -2987,9 +3056,22 @@ func (o *NB) UpdatePortGroupACLRules(ctx context.Context, portGroupName OVNPortG
 	return nil
 }
 
-// AddLogicalSwitchQoSRules applies a set of rules to the specified logical switch port.
-func (o *NB) AddLogicalSwitchQoSRules(ctx context.Context, switchName OVNSwitch, switchPortName OVNSwitchPort, qosRules ...OVNQoSRule) error {
+// SetLogicalSwitchQoSRules replaces the set of QoS rules assigned to the specified logical switch port.
+func (o *NB) SetLogicalSwitchQoSRules(ctx context.Context, switchName OVNSwitch, switchPortName OVNSwitchPort, qosRules ...OVNQoSRule) error {
 	var operations []ovsdb.Operation
+
+	// Remove any existing rules for the port.
+	removeQoSRuleUUIDs, err := o.logicalSwitchPortQoSRules(ctx, switchPortName)
+	if err != nil {
+		return err
+	}
+
+	deleteOps, err := o.qosRuleDeleteOperations(ctx, "logical_switch", string(switchName), removeQoSRuleUUIDs)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, deleteOps...)
 
 	// Add new rules.
 	externalIDs := map[string]string{
