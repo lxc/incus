@@ -43,10 +43,20 @@ type path struct {
 
 type peer struct {
 	address  net.IP
+	iface    string
 	asn      uint32
 	password string
 	holdtime uint64
 	count    int
+}
+
+// peerKey returns the map key for a peer (its address or interface name).
+func peerKey(address net.IP, iface string) string {
+	if address != nil {
+		return address.String()
+	}
+
+	return iface
 }
 
 // NewServer returns a new server instance.
@@ -136,7 +146,7 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 	// Add existing peers.
 	s.peers = map[string]peer{}
 	for _, peer := range oldPeers {
-		err := s.addPeer(peer.address, peer.asn, peer.password, peer.holdtime)
+		err := s.addPeer(peer.address, peer.iface, peer.asn, peer.password, peer.holdtime)
 		if err != nil {
 			return err
 		}
@@ -163,7 +173,7 @@ func (s *Server) stop() error {
 
 	// Remove all the peers.
 	for _, peer := range s.peers {
-		err := s.removePeer(peer.address)
+		err := s.removePeer(peer.address, peer.iface)
 		if err != nil {
 			return err
 		}
@@ -462,40 +472,50 @@ func (s *Server) removePrefixByUUID(pathUUID string) error {
 }
 
 // AddPeer adds a new BGP peer.
-func (s *Server) AddPeer(address net.IP, asn uint32, password string, holdTime uint64) error {
+func (s *Server) AddPeer(address net.IP, iface string, asn uint32, password string, holdTime uint64) error {
 	// Locking.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.addPeer(address, asn, password, holdTime)
+	return s.addPeer(address, iface, asn, password, holdTime)
 }
 
-func (s *Server) addPeer(address net.IP, asn uint32, password string, holdTime uint64) error {
+func (s *Server) addPeer(address net.IP, iface string, asn uint32, password string, holdTime uint64) error {
+	peerName := peerKey(address, iface)
+
 	// Look for an existing peer.
-	bgpPeer, bgpPeerExists := s.peers[address.String()]
+	bgpPeer, bgpPeerExists := s.peers[peerName]
 	if bgpPeerExists {
 		if bgpPeer.asn != asn {
-			return fmt.Errorf("Peer %q already used but with differing ASN (%d vs %d)", address, asn, bgpPeer.asn)
+			return fmt.Errorf("Peer %q already used but with differing ASN (%d vs %d)", peerName, asn, bgpPeer.asn)
 		}
 
 		if bgpPeer.password != password {
-			return fmt.Errorf("Peer %q already used but with a different password", address)
+			return fmt.Errorf("Peer %q already used but with a different password", peerName)
 		}
 
 		// Reuse the existing entry.
 		bgpPeer.count++
-		s.peers[address.String()] = bgpPeer
+		s.peers[peerName] = bgpPeer
 		return nil
+	}
+
+	// Setup the peer configuration (unnumbered peers use the interface name).
+	conf := &bgpAPI.PeerConf{
+		PeerAsn:      asn,
+		AuthPassword: password,
+	}
+
+	if address != nil {
+		conf.NeighborAddress = address.String()
+	} else {
+		conf.NeighborInterface = iface
 	}
 
 	// Setup the configuration.
 	n := &bgpAPI.Peer{
 		// Peer information.
-		Conf: &bgpAPI.PeerConf{
-			NeighborAddress: address.String(),
-			PeerAsn:         uint32(asn),
-			AuthPassword:    password,
-		},
+		Conf: conf,
 
 		// Allow for 120s offline before route removal.
 		GracefulRestart: &bgpAPI.GracefulRestart{
@@ -555,10 +575,11 @@ func (s *Server) addPeer(address net.IP, asn uint32, password string, holdTime u
 	// Add the peer to the list.
 	if bgpPeerExists {
 		bgpPeer.count++
-		s.peers[address.String()] = bgpPeer
+		s.peers[peerName] = bgpPeer
 	} else {
-		s.peers[address.String()] = peer{
+		s.peers[peerName] = peer{
 			address:  address,
+			iface:    iface,
 			asn:      asn,
 			password: password,
 			holdtime: holdTime,
@@ -570,24 +591,33 @@ func (s *Server) addPeer(address net.IP, asn uint32, password string, holdTime u
 }
 
 // RemovePeer removes a prefix from the BGP server.
-func (s *Server) RemovePeer(address net.IP) error {
+func (s *Server) RemovePeer(address net.IP, iface string) error {
 	// Locking.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.removePeer(address)
+	return s.removePeer(address, iface)
 }
 
-func (s *Server) removePeer(address net.IP) error {
+func (s *Server) removePeer(address net.IP, iface string) error {
+	peerName := peerKey(address, iface)
+
 	// Find the peer.
-	bgpPeer, bgpPeerExists := s.peers[address.String()]
+	bgpPeer, bgpPeerExists := s.peers[peerName]
 	if !bgpPeerExists {
 		return ErrPeerNotFound
 	}
 
 	// Remove the peer from the BGP server.
 	if s.bgp != nil && bgpPeer.count == 1 {
-		err := s.bgp.DeletePeer(context.Background(), &bgpAPI.DeletePeerRequest{Address: address.String()})
+		req := &bgpAPI.DeletePeerRequest{}
+		if address != nil {
+			req.Address = address.String()
+		} else {
+			req.Interface = iface
+		}
+
+		err := s.bgp.DeletePeer(context.Background(), req)
 		if err != nil {
 			return err
 		}
@@ -596,11 +626,11 @@ func (s *Server) removePeer(address net.IP) error {
 	// Update peer list.
 	if bgpPeer.count == 1 {
 		// Delete the peer.
-		delete(s.peers, address.String())
+		delete(s.peers, peerName)
 	} else {
 		// Decrease refcount.
 		bgpPeer.count--
-		s.peers[address.String()] = bgpPeer
+		s.peers[peerName] = bgpPeer
 	}
 
 	return nil
