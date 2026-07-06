@@ -550,6 +550,7 @@ var APIExtensions = []string{
 	"oci_network_config",
 	"infiniband_sriov_guid",
 	"instance_selinux",
+	"network_bgp_peer_interface",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
