@@ -223,3 +223,9 @@ func (d *mock) RestoreVolume(vol Volume, snapshotName string, op *operations.Ope
 func (d *mock) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *operations.Operation) error {
 	return nil
 }
+
+// IsImageCloneSourceReady checks if the image clone source is ready.
+func (d *mock) IsImageCloneSourceReady(vol Volume) (bool, error) {
+	// To not have unnecessary wait loops, we always pretend that the source is ready.
+	return true, nil
+}

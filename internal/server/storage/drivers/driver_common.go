@@ -606,3 +606,8 @@ func (d *common) Qcow2DeletionCleanup(vol Volume, childName string) error {
 func (d *common) ActivateTask(vol Volume, task func(devPath string, op *operations.Operation) error, op *operations.Operation) error {
 	return ErrNotSupported
 }
+
+// IsImageCloneSourceReady checks if the image clone source is ready.
+func (d *common) IsImageCloneSourceReady(vol Volume) (bool, error) {
+	return false, ErrNotSupported
+}
