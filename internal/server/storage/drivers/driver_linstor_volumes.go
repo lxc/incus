@@ -1410,3 +1410,9 @@ func (d *linstor) BackupVolume(vol Volume, writer instancewriter.InstanceWriter,
 func (d *linstor) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData io.ReadSeeker, basePrefix string, op *operations.Operation) (VolumePostHook, revert.Hook, error) {
 	return genericVFSBackupUnpack(d, d.state.OS, vol, srcBackup.Snapshots, srcData, basePrefix, op)
 }
+
+// IsImageCloneSourceReady checks if the image clone source is ready.
+func (d *linstor) IsImageCloneSourceReady(vol Volume) (bool, error) {
+	// TODO: Further implementation required
+	return true, nil
+}
