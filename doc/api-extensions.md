@@ -3223,3 +3223,12 @@ The following instance configuration keys are added:
 
 The computed context is persisted in the `volatile.selinux.context` key so
 that MCS ranges stay stable across restarts.
+
+## `network_bgp_peer_interface`
+
+This adds a new `bgp.peers.NAME.interface` configuration key to `bridge`
+and `physical` networks as an alternative to `bgp.peers.NAME.address`.
+
+When set, the BGP session is established over the given interface using
+BGP unnumbered (the peer's IPv6 link-local address is discovered
+automatically and IPv4 routes are exchanged using extended next-hop).
