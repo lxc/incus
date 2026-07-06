@@ -3399,6 +3399,14 @@ User keys can be used in search.
 
 ```
 
+```{config:option} bgp.peers.NAME.interface network_bridge-bgp
+:condition: "BGP server"
+:defaultdesc: "-"
+:shortdesc: "Interface name for BGP unnumbered peering (alternative to the peer address)"
+:type: "string"
+
+```
+
 ```{config:option} bgp.peers.NAME.password network_bridge-bgp
 :condition: "BGP server"
 :defaultdesc: "- (no password)"
@@ -4332,6 +4340,14 @@ User keys can be used in search.
 :defaultdesc: "`180`"
 :shortdesc: "Peer session hold time (in seconds; optional)"
 :type: "integer"
+
+```
+
+```{config:option} bgp.peers.NAME.interface network_physical-bgp
+:condition: "BGP server"
+:defaultdesc: "-"
+:shortdesc: "Interface name for BGP unnumbered peering (alternative to the peer address)"
+:type: "string"
 
 ```
 
