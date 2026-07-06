@@ -24,11 +24,12 @@ type DebugInfoPrefix struct {
 
 // DebugInfoPeer exposes details on a single BGP peer.
 type DebugInfoPeer struct {
-	Address  string `json:"address" yaml:"address"`
-	ASN      uint32 `json:"asn" yaml:"asn"`
-	Password string `json:"password" yaml:"password"`
-	Count    int    `json:"count" yaml:"count"`
-	HoldTime uint64 `json:"holdtime" yaml:"holdtime"`
+	Address   string `json:"address" yaml:"address"`
+	Interface string `json:"interface" yaml:"interface"`
+	ASN       uint32 `json:"asn" yaml:"asn"`
+	Password  string `json:"password" yaml:"password"`
+	Count     int    `json:"count" yaml:"count"`
+	HoldTime  uint64 `json:"holdtime" yaml:"holdtime"`
 }
 
 // Debug returns a dump of the current configuration.
@@ -53,7 +54,11 @@ func (s *Server) debug() DebugInfo {
 	debug.Peers = []DebugInfoPeer{}
 	for _, peer := range s.peers {
 		entry := DebugInfoPeer{}
-		entry.Address = peer.address.String()
+		if peer.address != nil {
+			entry.Address = peer.address.String()
+		}
+
+		entry.Interface = peer.iface
 		entry.ASN = peer.asn
 		entry.Password = peer.password
 		entry.Count = peer.count
