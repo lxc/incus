@@ -5,6 +5,7 @@ package main
 
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <sched.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -63,10 +64,12 @@ static void forkdonetdetach(char *file) {
 }
 
 int forknet_dhcp_logfile = -1;
+int forknet_dhcp_readyfd = -1;
 
 static void forkdonetdhcp(char *logfilestr) {
 	char *pidstr;
 	char path[PATH_MAX];
+	int pipefd[2];
 	pid_t pid;
 
 	pidstr = getenv("LXC_PID");
@@ -89,6 +92,12 @@ static void forkdonetdhcp(char *logfilestr) {
 		fprintf(stderr, "Execution will continue but log output will be lost after daemonize\n");
 	}
 
+	// Setup a pipe to wait for the initial network configuration.
+	if (pipe(pipefd) < 0) {
+		fprintf(stderr, "%s - Failed to create pipe\n", strerror(errno));
+		_exit(EXIT_FAILURE);
+	}
+
 	// Run in the background.
 	pid = fork();
 	if (pid < 0) {
@@ -98,8 +107,19 @@ static void forkdonetdhcp(char *logfilestr) {
 	}
 
 	if (pid > 0) {
+		struct pollfd pfd = {0};
+
+		// Wait up to 5s for the initial network configuration.
+		close(pipefd[1]);
+		pfd.fd = pipefd[0];
+		pfd.events = POLLIN;
+		(void)poll(&pfd, 1, 5000);
+
 		_exit(EXIT_SUCCESS);
 	}
+
+	close(pipefd[0]);
+	forknet_dhcp_readyfd = pipefd[1];
 
 	if (!freopen("/dev/null", "r", stdin)) {
 		fprintf(stderr, "Failed to reconfigure stdin: %s\n", strerror(errno));
@@ -278,6 +298,20 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 		l.SetOutput(io.Discard)
 	}
 
+	// Prepare to signal the parent that the initial configuration is complete.
+	var readyFile *os.File
+	if C.forknet_dhcp_readyfd >= 0 {
+		readyFile = os.NewFile(uintptr(C.forknet_dhcp_readyfd), "incus-dhcp-ready")
+	}
+
+	notifyReady := sync.OnceFunc(func() {
+		if readyFile != nil {
+			_ = readyFile.Close()
+		}
+	})
+
+	defer notifyReady()
+
 	// Read the hostname.
 	bb, err := os.ReadFile(filepath.Join(c.instNetworkPath, "hostname"))
 	if err != nil {
@@ -337,6 +371,7 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 	errorChannel := make(chan error, len(names)*2)
 
 	// Launch DHCP clients for each iface.
+	readyWg := sync.WaitGroup{}
 	launched := 0
 	for _, iface := range names {
 		l := l.WithField("interface", iface).Logger
@@ -376,15 +411,23 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 		}
 
 		if config.DHCP4 {
-			go c.dhcpRunV4(errorChannel, iface, hostname, config, l)
+			readyWg.Add(1)
+			go c.dhcpRunV4(errorChannel, sync.OnceFunc(readyWg.Done), iface, hostname, config, l)
 			launched++
 		}
 
 		if config.DHCP6 {
-			go c.dhcpRunV6(errorChannel, iface, hostname, duid, l)
+			readyWg.Add(1)
+			go c.dhcpRunV6(errorChannel, sync.OnceFunc(readyWg.Done), iface, hostname, duid, l)
 			launched++
 		}
 	}
+
+	// Notify the parent once all interfaces have completed their initial configuration.
+	go func() {
+		readyWg.Wait()
+		notifyReady()
+	}()
 
 	// Wait for all launched goroutines to return.
 	var finalErr error
@@ -447,8 +490,10 @@ func newDHCPv4Conn(iface string) (net.PacketConn, net.HardwareAddr, error) {
 	return nclient4.NewBroadcastUDPConn(conn, &net.UDPAddr{Port: nclient4.ClientPort}), ifc.HardwareAddr, nil
 }
 
-func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname string, config instanceDrivers.OCINetworkInterface, l *logrus.Logger) {
+func (c *cmdForknet) dhcpRunV4(errorChannel chan error, ready func(), iface string, hostname string, config instanceDrivers.OCINetworkInterface, l *logrus.Logger) {
 	var client *nclient4.Client
+
+	defer ready()
 
 	// Try to open a raw socket with a kernel-level BPF filter attached.
 	conn, hwAddr, err := newDHCPv4Conn(iface)
@@ -594,6 +639,9 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 		}
 	}
 
+	// Initial configuration is complete.
+	ready()
+
 	// Handle DHCP renewal.
 	for {
 		// Calculate the renewal time.
@@ -644,7 +692,9 @@ func (c *cmdForknet) dhcpRunV4(errorChannel chan error, iface string, hostname s
 	}
 }
 
-func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname string, duid dhcpv6.DUID, l *logrus.Logger) {
+func (c *cmdForknet) dhcpRunV6(errorChannel chan error, ready func(), iface string, hostname string, duid dhcpv6.DUID, l *logrus.Logger) {
+	defer ready()
+
 	// Wait a couple of seconds for IPv6 link-local.
 	time.Sleep(2 * time.Second)
 
@@ -781,6 +831,9 @@ func (c *cmdForknet) dhcpRunV6(errorChannel chan error, iface string, hostname s
 			return
 		}
 	}
+
+	// Initial configuration is complete.
+	ready()
 
 	// Handle DHCP Renewal.
 	for {
