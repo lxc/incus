@@ -2167,3 +2167,9 @@ func (d *truenas) FillVolumeConfig(vol Volume) error {
 
 	return nil
 }
+
+// IsImageCloneSourceReady checks if the image clone source is ready.
+func (d *truenas) IsImageCloneSourceReady(vol Volume) (bool, error) {
+	// TODO: Further implementation required
+	return true, nil
+}
