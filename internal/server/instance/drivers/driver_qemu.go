@@ -1769,6 +1769,23 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 
 		bs.CPUTopology = cpuTopology
+	} else if !bs.CPUTopology.Explicit {
+		// Re-compute the topology if the current configuration uses CPU pinning.
+		// The pins are host-specific so may have changed, but the topology must keep the same shape.
+		cpuTopology, err := d.cpuTopology()
+		if err != nil {
+			return err
+		}
+
+		if cpuTopology.VCPUs != nil {
+			if cpuTopology.Sockets != bs.CPUTopology.Sockets || cpuTopology.Cores != bs.CPUTopology.Cores || cpuTopology.Threads != bs.CPUTopology.Threads {
+				err = errors.New("Current CPU topology doesn't match the topology the instance was started with")
+				op.Done(err)
+				return err
+			}
+
+			bs.CPUTopology = cpuTopology
+		}
 	}
 
 	if bs.CPUType == "" {
