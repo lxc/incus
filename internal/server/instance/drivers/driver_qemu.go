@@ -10379,7 +10379,11 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 	if hostArch == osarch.ARCH_64BIT_INTEL_X86 {
 		model, err := monitor.QueryCPUModel("kvm64")
 		if err != nil {
-			return nil, err
+			// Fallback to qemu64 if kvm64 is missing (RHEL).
+			model, err = monitor.QueryCPUModel("qemu64")
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		cpuFlags := map[string]bool{}
