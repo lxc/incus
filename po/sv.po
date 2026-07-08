@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-06-25 21:26-0400\n"
-"PO-Revision-Date: 2026-06-17 01:01+0000\n"
+"PO-Revision-Date: 2026-07-08 14:01+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.7.dev0\n"
+"X-Generator: Weblate 2026.7.1.dev0\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -4234,9 +4234,9 @@ msgid "Invalid config key column format (too many fields): '%s'"
 msgstr "Ogiltigt format för konfigurationsnyckelkolumn (för många fält): '%s'"
 
 #: cmd/incus/default.go:85
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid default %q"
-msgstr "Ogiltigt format %q"
+msgstr "Ogiltigt standardvärde %q"
 
 #: cmd/incus/publish.go:194
 #, c-format
@@ -4304,14 +4304,14 @@ msgid "Invalid type %q"
 msgstr "Ogiltig typ %q"
 
 #: cmd/incus/default.go:123
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid value %q for console_type"
-msgstr "Ogiltig peer-typ"
+msgstr "Ogiltigt värde %q för console_type"
 
 #: cmd/incus/default.go:110
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid value %q for list_format"
-msgstr "Ogiltig volym %s"
+msgstr "Ogiltigt värde %q för list_format"
 
 #: cmd/incus/info.go:248
 #, c-format
@@ -5995,9 +5995,8 @@ msgid "Manage and attach instances to networks"
 msgstr "Hantera och anslut instanser till nätverk"
 
 #: cmd/incus/default.go:24 cmd/incus/default.go:25
-#, fuzzy
 msgid "Manage client defaults"
-msgstr "Hantera betrodda kunder"
+msgstr "Hantera klientstandardvärden"
 
 #: cmd/incus/cluster_group.go:37 cmd/incus/cluster_group.go:38
 msgid "Manage cluster groups"
@@ -7882,7 +7881,7 @@ msgstr "Ställ in autentiseringsanvändare vid användning av SSH SFTP-lyssnare"
 
 #: cmd/incus/default.go:57 cmd/incus/default.go:58
 msgid "Set client defaults"
-msgstr ""
+msgstr "Ange klientstandardvärden"
 
 #: cmd/incus/config_device.go:569
 msgid "Set device configuration keys"
@@ -8306,9 +8305,8 @@ msgid "Show all information messages"
 msgstr "Visa alla informationsmeddelanden"
 
 #: cmd/incus/default.go:165 cmd/incus/default.go:166
-#, fuzzy
 msgid "Show client defaults"
-msgstr "Visa standardfjärrkontrollen"
+msgstr "Visa klientstandardvärden"
 
 #: cmd/incus/cluster_group.go:693 cmd/incus/cluster_group.go:694
 msgid "Show cluster group configurations"
@@ -9432,7 +9430,7 @@ msgstr "Inaktivera alla profiler på målinstansen"
 
 #: cmd/incus/default.go:202 cmd/incus/default.go:203
 msgid "Unset client defaults"
-msgstr ""
+msgstr "Återställ klientens standardinställningar"
 
 #: cmd/incus/config_device.go:765 cmd/incus/config_device.go:766
 msgid "Unset device configuration keys"
@@ -10107,7 +10105,7 @@ msgstr "nuvarande"
 
 #: cmd/incus/usage/usage.go:822
 msgid "default"
-msgstr ""
+msgstr "standard"
 
 #: cmd/incus/storage.go:526
 msgid "description"
@@ -11270,7 +11268,7 @@ msgstr "nej"
 
 #: cmd/incus/default.go:146
 msgid "no_color must be boolean"
-msgstr ""
+msgstr "no_color måste vara ett booleskt värde"
 
 #: cmd/incus/usage/parse.go:60
 #, c-format
