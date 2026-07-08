@@ -282,6 +282,11 @@ func (d *qemu) cpuType(bs *qemuBootState) (string, error) {
 		}
 	}
 
+	// Turn off nested virtualization when security.nesting is disabled.
+	if d.architecture == osarch.ARCH_64BIT_INTEL_X86 && util.IsFalse(d.expandedConfig["security.nesting"]) {
+		cpuExtensions = append(cpuExtensions, "-svm", "-vmx")
+	}
+
 	// Get the feature flags.
 	info := DriverStatuses()[instancetype.VM].Info
 	_, nested := info.Features["nested"]
