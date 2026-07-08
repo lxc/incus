@@ -2690,12 +2690,12 @@ If specified, the idmap used for this instance is unique among instances that ha
 ```
 
 ```{config:option} security.nesting instance-security
-:condition: "container"
-:defaultdesc: "`false`"
-:liveupdate: "yes"
-:shortdesc: "Whether to support running Incus (nested) inside the instance"
+:defaultdesc: "`false` (containers), `true` (VMs)"
+:liveupdate: "yes (containers only)"
+:shortdesc: "Whether to allow nesting inside of the instance"
 :type: "bool"
-
+For containers, this controls whether Incus (nested) can be run inside of the instance.
+For virtual machines, setting this to `false` disables nested virtualization (turns off the `svm` and `vmx` CPU flags).
 ```
 
 ```{config:option} security.privileged instance-security
@@ -4907,6 +4907,14 @@ If this option is not set, all storage pools are accessible.
 :type: "string"
 Possible values are `allow` or `block`.
 When set to `allow`, low-level VM options like {config:option}`instance-raw:raw.qemu`, `volatile.*`, etc. can be used.
+```
+
+```{config:option} restricted.virtual-machines.nesting project-restricted
+:defaultdesc: "`allow`"
+:shortdesc: "Whether to prevent using nested virtualization"
+:type: "string"
+Possible values are `allow` or `block`.
+When set to `block`, {config:option}`instance-security:security.nesting` must be set to `false` on all virtual machines, turning off nested virtualization.
 ```
 
 <!-- config group project-restricted end -->
