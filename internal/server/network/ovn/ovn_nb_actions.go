@@ -331,7 +331,7 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 	case "snat":
 		logicalIP = intNet.String()
 		externalIP = extIP.String()
-	case "dnat_and_snat":
+	case "dnat", "dnat_and_snat":
 		logicalIP = intIP.String()
 		externalIP = extIP.String()
 	default:
