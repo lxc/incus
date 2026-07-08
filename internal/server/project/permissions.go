@@ -584,6 +584,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 	allowContainerLowLevel := false
 	allowVMLowLevel := false
+	blockVMNesting := false
 	var allowedIDMapHostUIDs, allowedIDMapHostGIDs []idmap.Entry
 
 	for i := range allRestrictions {
@@ -643,6 +644,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		case "restricted.virtual-machines.lowlevel":
 			if restrictionValue == "allow" {
 				allowVMLowLevel = true
+			}
+
+		case "restricted.virtual-machines.nesting":
+			if restrictionValue == "block" {
+				blockVMNesting = true
 			}
 
 		case "restricted.devices.unix-char":
@@ -816,6 +822,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		isContainerOrProfile := instType == instancetype.Container || instType == instancetype.Any
 		isVMOrProfile := instType == instancetype.VM || instType == instancetype.Any
 
+		// VM nesting is on by default, so when blocked, require it to be explicitly disabled.
+		if blockVMNesting && instType == instancetype.VM && !util.IsFalse(config["security.nesting"]) {
+			return fmt.Errorf(`Virtual machine nesting is forbidden on %s %q of project %q ("security.nesting" must be set to "false")`, entityTypeLabel, entityName, project.Name)
+		}
+
 		for key, value := range config {
 			if ((isContainerOrProfile && !allowContainerLowLevel) || (isVMOrProfile && !allowVMLowLevel)) && key == "raw.idmap" {
 				// If the low-level raw.idmap is used check whether the raw.idmap host IDs
@@ -954,6 +965,7 @@ var allRestrictions = map[string]string{
 	"restricted.containers.lowlevel":       "block",
 	"restricted.containers.privilege":      "unprivileged",
 	"restricted.virtual-machines.lowlevel": "block",
+	"restricted.virtual-machines.nesting":  "allow",
 	"restricted.devices.unix-char":         "block",
 	"restricted.devices.unix-block":        "block",
 	"restricted.devices.unix-hotplug":      "block",
