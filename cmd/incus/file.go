@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -148,7 +149,7 @@ func (c *cmdFileCreate) run(cmd *cobra.Command, args []string) error {
 			return errors.New(i18n.G(`Symlink target path can only be used for type "symlink"`))
 		}
 
-		symlinkTargetPath = filepath.Clean(symlinkTargetPath)
+		symlinkTargetPath = path.Clean(symlinkTargetPath)
 	}
 
 	if isDir {
@@ -194,7 +195,7 @@ func (c *cmdFileCreate) run(cmd *cobra.Command, args []string) error {
 
 	// Create needed paths if requested
 	if c.file.flagMkdir {
-		err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), nil, int64(uid), int64(gid))
+		err = sftpRecursiveMkdir(sftpConn, path.Dir(targetPath), nil, int64(uid), int64(gid))
 		if err != nil {
 			return err
 		}
@@ -307,7 +308,7 @@ func (c *cmdFileDelete) run(cmd *cobra.Command, args []string) error {
 		err := func() error {
 			d := p.RemoteServer
 			instanceName := p.RemoteObject.List[0].String
-			path, _ := normalizePath(p.RemoteObject.List[1].String)
+			filePath, _ := normalizePath(p.RemoteObject.List[1].String)
 			instanceID := p.RemoteName + ":" + instanceName
 
 			sftpConn, ok := sftpClients[instanceID]
@@ -321,7 +322,7 @@ func (c *cmdFileDelete) run(cmd *cobra.Command, args []string) error {
 			}
 
 			if c.flagForce {
-				err = sftpConn.RemoveAll(path)
+				err = sftpConn.RemoveAll(filePath)
 				if err != nil {
 					return err
 				}
@@ -329,7 +330,7 @@ func (c *cmdFileDelete) run(cmd *cobra.Command, args []string) error {
 				return nil
 			}
 
-			return sftpConn.Remove(path)
+			return sftpConn.Remove(filePath)
 		}()
 		if err != nil {
 			errs = append(errs, err)
@@ -387,7 +388,7 @@ func (c *cmdFileEdit) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create temp file
-	f, err := os.CreateTemp("", fmt.Sprintf("incus_file_edit_*%s", filepath.Ext(fileName)))
+	f, err := os.CreateTemp("", fmt.Sprintf("incus_file_edit_*%s", path.Ext(fileName)))
 	if err != nil {
 		return fmt.Errorf(i18n.G("Unable to create a temporary file: %v"), err)
 	}
@@ -524,7 +525,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 		err := func() error {
 			d := p.RemoteServer
 			instanceName := p.RemoteObject.List[0].String
-			path := p.RemoteObject.List[1].String
+			filePath := p.RemoteObject.List[1].String
 			instanceID := p.RemoteName + ":" + instanceName
 
 			sftpConn, ok := sftpClients[instanceID]
@@ -537,20 +538,20 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 				sftpClients[instanceID] = sftpConn
 			}
 
-			srcInfo, normalizedPath, err := c.puller.statFile(sftpConn, path)
+			srcInfo, normalizedPath, err := c.puller.statFile(sftpConn, filePath)
 			if err != nil {
 				return err
 			}
 
 			// Recursively copy directories.
 			if srcInfo.IsDir() {
-				return sftpRecursivePullFile(sftpConn, srcInfo, path, normalizedPath, target, c.global.flagQuiet, c.puller.flagDereference, len(parsedFiles) > 1 || util.PathExists(target))
+				return sftpRecursivePullFile(sftpConn, srcInfo, filePath, normalizedPath, target, c.global.flagQuiet, c.puller.flagDereference, len(parsedFiles) > 1 || util.PathExists(target))
 			}
 
 			// Determine the target path.
 			var targetPath string
 			if targetIsDir {
-				targetPath = filepath.Join(target, filepath.Base(normalizedPath))
+				targetPath = filepath.Join(target, path.Base(normalizedPath))
 			} else {
 				targetPath = target
 			}
@@ -749,7 +750,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 	canProcessStdin := len(srcFiles) == 1
 
 	// Push the files
-	for _, path := range srcFiles {
+	for _, srcPath := range srcFiles {
 		err := func() error {
 			var f *os.File
 			var linkTarget string
@@ -760,7 +761,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 				Mode: mode,
 			}
 
-			if isStdin(path) {
+			if isStdin(srcPath) {
 				if !canProcessStdin {
 					return errors.New(i18n.G("stdin can only be used once, with no other source arguments"))
 				}
@@ -772,23 +773,23 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 				canProcessStdin = false
 				f = os.Stdin
 			} else {
-				srcInfo, wPath, err := c.pusher.statFile(path)
+				srcInfo, wPath, err := c.pusher.statFile(srcPath)
 				if err != nil {
 					return err
 				}
 
 				// Recursively copy directories.
 				if srcInfo.IsDir() {
-					return sftpRecursivePushFile(sftpConn, wPath, path, target, args, c.global.flagQuiet, c.pusher.flagDereference, len(srcFiles) > 1 || targetExists)
+					return sftpRecursivePushFile(sftpConn, wPath, srcPath, target, args, c.global.flagQuiet, c.pusher.flagDereference, len(srcFiles) > 1 || targetExists)
 				}
 
 				if srcInfo.Mode()&os.ModeSymlink != 0 {
-					linkTarget, err = os.Readlink(path)
+					linkTarget, err = os.Readlink(srcPath)
 					if err != nil {
 						return err
 					}
 				} else {
-					f, err = os.Open(path)
+					f, err = os.Open(srcPath)
 					if err != nil {
 						return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), f, err)
 					}
@@ -815,7 +816,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 			// Determine the target path.
 			var targetPath string
 			if targetIsDir {
-				targetPath = filepath.Join(target, filepath.Base(path))
+				targetPath = path.Join(target, filepath.Base(srcPath))
 			} else {
 				targetPath = target
 			}
@@ -823,7 +824,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 			// Create needed paths if requested
 			if c.file.flagMkdir {
 				mode := os.FileMode(DirMode)
-				err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(args.UID), int64(args.GID))
+				err = sftpRecursiveMkdir(sftpConn, path.Dir(targetPath), &mode, int64(args.UID), int64(args.GID))
 				if err != nil {
 					return err
 				}
@@ -839,7 +840,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 
 			// Transfer the files.
 			progress := cli.ProgressRenderer{
-				Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), path, targetPath),
+				Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), srcPath, targetPath),
 				Quiet:  c.global.flagQuiet,
 			}
 
@@ -861,7 +862,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 				}, f)
 			}
 
-			logger.Infof("Pushing %s to %s (%s)", path, targetPath, args.Type)
+			logger.Infof("Pushing %s to %s (%s)", srcPath, targetPath, args.Type)
 			err = sftpCreateFile(sftpConn, targetPath, args, true)
 			progress.Done("")
 			return err
