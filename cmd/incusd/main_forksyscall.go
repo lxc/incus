@@ -151,9 +151,10 @@ static bool acquire_final_creds(pid_t pid, uid_t uid, gid_t gid, uid_t fsuid, gi
 static void mknod_emulate(void)
 {
 	__do_close int target_dir_fd = -EBADF, pidfd = -EBADF, ns_fd = -EBADF;
-	char *target = NULL, *target_dir = NULL;
+	char *target = NULL, *target_dir = NULL, *target_base = NULL;
 	int ret;
 	char path[PATH_MAX];
+	char base_path[PATH_MAX];
 	mode_t mode;
 	dev_t dev;
 	pid_t pid;
@@ -179,7 +180,12 @@ static void mknod_emulate(void)
 		_exit(EXIT_FAILURE);
 	}
 
-	snprintf(path, sizeof(path), "%s", target);
+	ret = snprintf(path, sizeof(path), "%s", target);
+	if (ret < 0 || (size_t)ret >= sizeof(path)) {
+		fprintf(stderr, "%d", ENAMETOOLONG);
+		_exit(EXIT_FAILURE);
+	}
+
 	target_dir = dirname(path);
 	target_dir_fd = open(target_dir, O_PATH | O_RDONLY | O_CLOEXEC | O_DIRECTORY);
 	if (target_dir_fd < 0) {
@@ -203,9 +209,16 @@ static void mknod_emulate(void)
 		_exit(EXIT_FAILURE);
 	}
 
-	// basename() can modify its argument so accessing target_host is
-	// invalid from now on.
-	ret = mknodat(target_dir_fd, target, mode, dev);
+	// The target path may be relative to the process' cwd, so create the
+	// node by name relative to the already opened parent directory.
+	ret = snprintf(base_path, sizeof(base_path), "%s", target);
+	if (ret < 0 || (size_t)ret >= sizeof(base_path)) {
+		fprintf(stderr, "%d", ENAMETOOLONG);
+		_exit(EXIT_FAILURE);
+	}
+
+	target_base = basename(base_path);
+	ret = mknodat(target_dir_fd, target_base, mode, dev);
 	if (ret) {
 		if (errno == EPERM)
 			fprintf(stderr, "%d", ENOMEDIUM);

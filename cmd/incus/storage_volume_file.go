@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -134,7 +135,7 @@ func (c *cmdStorageVolumeFileCreate) run(cmd *cobra.Command, args []string) erro
 	volName := parsed[1].List[0].String
 	targetPath, isDir := normalizePath(parsed[1].List[1].String)
 	isSymlink := !parsed[2].Skipped
-	symlinkTargetPath := filepath.Clean(parsed[2].String)
+	symlinkTargetPath := path.Clean(parsed[2].String)
 
 	if !slices.Contains([]string{"file", "symlink", "directory"}, c.flagType) {
 		return fmt.Errorf(i18n.G("Invalid type %q"), c.flagType)
@@ -187,7 +188,7 @@ func (c *cmdStorageVolumeFileCreate) run(cmd *cobra.Command, args []string) erro
 
 	// Create needed paths if requested
 	if c.storageVolumeFile.flagMkdir {
-		err := sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), nil, int64(uid), int64(gid))
+		err := sftpRecursiveMkdir(sftpConn, path.Dir(targetPath), nil, int64(uid), int64(gid))
 		if err != nil {
 			return err
 		}
@@ -466,7 +467,7 @@ func (c *cmdStorageVolumeFileEdit) run(cmd *cobra.Command, args []string) error 
 	}
 
 	// Create temp file
-	f, err := os.CreateTemp("", fmt.Sprintf("incus_file_edit_*%s", filepath.Ext(fPath)))
+	f, err := os.CreateTemp("", fmt.Sprintf("incus_file_edit_*%s", path.Ext(fPath)))
 	if err != nil {
 		return fmt.Errorf(i18n.G("Unable to create a temporary file: %v"), err)
 	}
@@ -609,7 +610,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 
 	var targetPath string
 	if targetIsDir {
-		targetPath = filepath.Join(target, filepath.Base(normalizedPath))
+		targetPath = filepath.Join(target, path.Base(normalizedPath))
 	} else {
 		targetPath = target
 	}
@@ -847,7 +848,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	// Determine the target path.
 	var targetPath string
 	if targetIsDir {
-		targetPath = filepath.Join(target, filepath.Base(srcFile))
+		targetPath = path.Join(target, filepath.Base(srcFile))
 	} else {
 		targetPath = target
 	}
@@ -855,7 +856,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	// Create needed paths if requested
 	if c.storageVolumeFile.flagMkdir {
 		mode := os.FileMode(DirMode)
-		err = sftpRecursiveMkdir(sftpConn, filepath.Dir(targetPath), &mode, int64(args.UID), int64(args.GID))
+		err = sftpRecursiveMkdir(sftpConn, path.Dir(targetPath), &mode, int64(args.UID), int64(args.GID))
 		if err != nil {
 			return err
 		}
