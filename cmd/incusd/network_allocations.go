@@ -156,6 +156,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 				}
 
 				result = append(result, api.NetworkAllocations{
+					Network: networkName,
 					Address: ipNet.String(),
 					UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName).Project(projectName).String(),
 					Type:    "network",
@@ -176,6 +177,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 					}
 
 					result = append(result, api.NetworkAllocations{
+						Network: networkName,
 						Address: cidrAddr,
 						UsedBy:  api.NewURL().Path(version.APIVersion, "instances", lease.Hostname).Project(projectName).String(),
 						Type:    "instance",
@@ -221,6 +223,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 				result = append(
 					result,
 					api.NetworkAllocations{
+						Network: networkName,
 						Address: cidrAddr,
 						UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName, "forwards", forward.ListenAddress).Project(projectName).String(),
 						Type:    "network-forward",
@@ -254,6 +257,7 @@ func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {
 				result = append(
 					result,
 					api.NetworkAllocations{
+						Network: networkName,
 						Address: cidrAddr,
 						UsedBy:  api.NewURL().Path(version.APIVersion, "networks", networkName, "load-balancers", loadBalancer.ListenAddress).Project(projectName).String(),
 						Type:    "network-load-balancer",
