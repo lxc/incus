@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
+	"path"
 	"reflect"
 	"slices"
 	"sort"
@@ -336,8 +336,8 @@ func unsetKey(s settable, cmd *cobra.Command, parsed []*u.Parsed) error {
 	return s.set(cmd, parsed)
 }
 
-func readEnvironmentFile(path string) (map[string]string, error) {
-	content, err := os.ReadFile(path)
+func readEnvironmentFile(p string) (map[string]string, error) {
+	content, err := os.ReadFile(p)
 	if err != nil {
 		return nil, fmt.Errorf(i18n.G("Can't read from environment file: %w"), err)
 	}
@@ -743,18 +743,19 @@ func formatRemote(conf *config.Config, p *u.Parsed) string {
 }
 
 // normalizePath normalizes a path and return whether it looks like a directory.
-func normalizePath(path string) (string, bool) {
-	// On Windows, the SFTP server expects the file path to start with `/`.
-	path = "/" + path
-	return filepath.Clean(path), strings.HasSuffix(path, "/")
+func normalizePath(p string) (string, bool) {
+	// The SFTP server expects a `/` separated path starting with `/`, so use
+	// the slash-only "path" logic regardless of the client platform.
+	p = "/" + p
+	return path.Clean(p), strings.HasSuffix(p, "/")
 }
 
 // isStdin returns whether the provided path looks like stdin.
-func isStdin(path string) bool {
-	return slices.Contains([]string{"-", "/dev/stdin", "/dev/fd/0"}, path)
+func isStdin(p string) bool {
+	return slices.Contains([]string{"-", "/dev/stdin", "/dev/fd/0"}, p)
 }
 
 // isStdout returns whether the provided path looks like stdout.
-func isStdout(path string) bool {
-	return slices.Contains([]string{"-", "/dev/stdout", "/dev/fd/1"}, path)
+func isStdout(p string) bool {
+	return slices.Contains([]string{"-", "/dev/stdout", "/dev/fd/1"}, p)
 }
