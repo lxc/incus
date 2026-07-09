@@ -3239,3 +3239,17 @@ This adds a new `restricted.virtual-machines.nesting` project configuration key.
 
 When set to `block`, all virtual machines in the project must have
 `security.nesting` set to `false`, turning off nested virtualization.
+
+## `authorization_config`
+
+This moves the authorization configuration keys under a general
+`authorization.*` namespace.
+
+The following server configuration keys replace the former `openfga.*` keys:
+
+* `authorization.openfga.api.url`: URL of the OpenFGA server
+* `authorization.openfga.api.token`: API token of the OpenFGA server
+* `authorization.openfga.store.id`: ID of the OpenFGA permission store
+
+Existing `openfga.*` values are automatically migrated to the new keys on
+upgrade.

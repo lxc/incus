@@ -552,6 +552,7 @@ var APIExtensions = []string{
 	"instance_selinux",
 	"network_bgp_peer_interface",
 	"projects_restricted_virtual_machines_nesting",
+	"authorization_config",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
