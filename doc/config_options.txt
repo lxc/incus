@@ -5045,6 +5045,36 @@ DNS resolvers to use for performing (recursive) `CNAME` resolving and apex domai
 ```
 
 <!-- config group server-acme end -->
+<!-- config group server-authorization start -->
+```{config:option} authorization.openfga.api.token server-authorization
+:scope: "global"
+:shortdesc: "API token of the OpenFGA server"
+:type: "string"
+
+```
+
+```{config:option} authorization.openfga.api.url server-authorization
+:scope: "global"
+:shortdesc: "URL of the OpenFGA server"
+:type: "string"
+
+```
+
+```{config:option} authorization.openfga.store.id server-authorization
+:scope: "global"
+:shortdesc: "ID of the OpenFGA permission store"
+:type: "string"
+
+```
+
+```{config:option} authorization.scriptlet server-authorization
+:scope: "global"
+:shortdesc: "Authorization scriptlet"
+:type: "string"
+When using scriptlet-based authorization, this option stores the scriptlet.
+```
+
+<!-- config group server-authorization end -->
 <!-- config group server-cluster start -->
 ```{config:option} cluster.healing_threshold server-cluster
 :defaultdesc: "`0`"
@@ -5512,13 +5542,6 @@ The events can be any combination of `lifecycle`, `logging`, and `network-acl`.
 
 <!-- config group server-loki end -->
 <!-- config group server-miscellaneous start -->
-```{config:option} authorization.scriptlet server-miscellaneous
-:scope: "global"
-:shortdesc: "Authorization scriptlet"
-:type: "string"
-When using scriptlet-based authorization, this option stores the scriptlet.
-```
-
 ```{config:option} backups.compression_algorithm server-miscellaneous
 :defaultdesc: "`gzip`"
 :scope: "global"
@@ -5734,29 +5757,6 @@ Note that the claim must be contained in the access token.
 ```
 
 <!-- config group server-oidc end -->
-<!-- config group server-openfga start -->
-```{config:option} openfga.api.token server-openfga
-:scope: "global"
-:shortdesc: "API token of the OpenFGA server"
-:type: "string"
-
-```
-
-```{config:option} openfga.api.url server-openfga
-:scope: "global"
-:shortdesc: "URL of the OpenFGA server"
-:type: "string"
-
-```
-
-```{config:option} openfga.store.id server-openfga
-:scope: "global"
-:shortdesc: "ID of the OpenFGA permission store"
-:type: "string"
-
-```
-
-<!-- config group server-openfga end -->
 <!-- config group storage_btrfs-common start -->
 ```{config:option} btrfs.create_options storage_btrfs-common
 :default: "-"

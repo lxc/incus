@@ -5653,6 +5653,42 @@
 					}
 				]
 			},
+			"authorization": {
+				"keys": [
+					{
+						"authorization.openfga.api.token": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "API token of the OpenFGA server",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.openfga.api.url": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "URL of the OpenFGA server",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.openfga.store.id": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "ID of the OpenFGA permission store",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.scriptlet": {
+							"longdesc": "When using scriptlet-based authorization, this option stores the scriptlet.",
+							"scope": "global",
+							"shortdesc": "Authorization scriptlet",
+							"type": "string"
+						}
+					}
+				]
+			},
 			"cluster": {
 				"keys": [
 					{
@@ -6182,14 +6218,6 @@
 			"miscellaneous": {
 				"keys": [
 					{
-						"authorization.scriptlet": {
-							"longdesc": "When using scriptlet-based authorization, this option stores the scriptlet.",
-							"scope": "global",
-							"shortdesc": "Authorization scriptlet",
-							"type": "string"
-						}
-					},
-					{
 						"backups.compression_algorithm": {
 							"defaultdesc": "`gzip`",
 							"longdesc": "Possible values are `bzip2`, `gzip`, `lz4`, `lzma`, `xz`, `zstd` or `none`.",
@@ -6412,34 +6440,6 @@
 							"longdesc": "",
 							"scope": "global",
 							"shortdesc": "Comma separated list of OpenID Connect scopes",
-							"type": "string"
-						}
-					}
-				]
-			},
-			"openfga": {
-				"keys": [
-					{
-						"openfga.api.token": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "API token of the OpenFGA server",
-							"type": "string"
-						}
-					},
-					{
-						"openfga.api.url": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "URL of the OpenFGA server",
-							"type": "string"
-						}
-					},
-					{
-						"openfga.store.id": {
-							"longdesc": "",
-							"scope": "global",
-							"shortdesc": "ID of the OpenFGA permission store",
 							"type": "string"
 						}
 					}
