@@ -13,7 +13,7 @@ The following options are available:
 - {ref}`server-options-logging`
 - {ref}`server-options-misc`
 - {ref}`server-options-oidc`
-- {ref}`server-options-openfga`
+- {ref}`server-options-authorization`
 
 See {ref}`server-configure` for instructions on how to set the configuration options.
 
@@ -55,15 +55,15 @@ The following server options configure external user authentication through {ref
     :end-before: <!-- config group server-oidc end -->
 ```
 
-(server-options-openfga)=
-## OpenFGA configuration
+(server-options-authorization)=
+## Authorization configuration
 
-The following server options configure external user authorization through {ref}`authorization-openfga`:
+The following server options configure user {ref}`authorization`, either through {ref}`authorization-openfga` or a {ref}`authorization-scriptlet`:
 
 % Include content from [config_options.txt](config_options.txt)
 ```{include} config_options.txt
-    :start-after: <!-- config group server-openfga start -->
-    :end-before: <!-- config group server-openfga end -->
+    :start-after: <!-- config group server-authorization start -->
+    :end-before: <!-- config group server-authorization end -->
 ```
 
 (server-options-cluster)=

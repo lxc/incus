@@ -348,7 +348,7 @@ func (c *Config) ClusterHealingThreshold() time.Duration {
 
 // OpenFGA returns all OpenFGA settings need to interact with an OpenFGA server.
 func (c *Config) OpenFGA() (apiURL string, apiToken string, storeID string) {
-	return c.m.GetString("openfga.api.url"), c.m.GetString("openfga.api.token"), c.m.GetString("openfga.store.id")
+	return c.m.GetString("authorization.openfga.api.url"), c.m.GetString("authorization.openfga.api.token"), c.m.GetString("authorization.openfga.store.id")
 }
 
 // NetworkHWAddrPattern returns the MAC address pattern used in the cluster.
@@ -564,7 +564,31 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Port and interface for HTTP server (used by HTTP-01)
 	"acme.http.port": {Default: ":80", Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
-	// gendoc:generate(entity=server, group=miscellaneous, key=authorization.scriptlet)
+	// gendoc:generate(entity=server, group=authorization, key=authorization.openfga.api.token)
+	//
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: API token of the OpenFGA server
+	"authorization.openfga.api.token": {},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.openfga.api.url)
+	//
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: URL of the OpenFGA server
+	"authorization.openfga.api.url": {},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.openfga.store.id)
+	//
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: ID of the OpenFGA permission store
+	"authorization.openfga.store.id": {},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.scriptlet)
 	// When using scriptlet-based authorization, this option stores the scriptlet.
 	// ---
 	//  type: string
@@ -984,30 +1008,6 @@ var ConfigSchema = config.Schema{
 	// defaultdesc: `10:66:6a:xx:xx:xx`
 	// shortdesc: MAC address template
 	"network.hwaddr_pattern": {Default: "10:66:6a:xx:xx:xx", Validator: validate.Optional(validate.IsMACPattern)},
-
-	// gendoc:generate(entity=server, group=openfga, key=openfga.api.token)
-	//
-	// ---
-	// type: string
-	// scope: global
-	// shortdesc: API token of the OpenFGA server
-	"openfga.api.token": {},
-
-	// gendoc:generate(entity=server, group=openfga, key=openfga.api.url)
-	//
-	// ---
-	// type: string
-	// scope: global
-	// shortdesc: URL of the OpenFGA server
-	"openfga.api.url": {},
-
-	// gendoc:generate(entity=server, group=openfga, key=openfga.store.id)
-	//
-	// ---
-	// type: string
-	// scope: global
-	// shortdesc: ID of the OpenFGA permission store
-	"openfga.store.id": {},
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.client.id)
 	//
