@@ -101,6 +101,7 @@ var patches = []patch{
 	{name: "btrfs_config_volume_subvolume_names", stage: patchPostNetworks, run: patchBtrfsSubvolumeNames},
 	{name: "linstor_tune_rs_discard_granularity", stage: patchPostDaemonStorage, run: patchLinstorDiscardGranularity},
 	{name: "storage_lvmcluster_qcow2_overhead", stage: patchPostDaemonStorage, run: patchGenericStorage},
+	{name: "authorization_openfga_config_keys", stage: patchPreDaemonStorage, run: patchAuthorizationOpenFGAConfigKeys},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1832,6 +1833,55 @@ func patchLinstorDiscardGranularity(_ string, d *Daemon) error {
 	}
 
 	return nil
+}
+
+// patchAuthorizationOpenFGAConfigKeys migrates the OpenFGA server configuration
+// keys from the legacy `openfga.*` names to the general `authorization.openfga.*`
+// namespace. Existing values are copied over and the old keys are removed so
+// that OpenFGA authorization keeps working seamlessly across the upgrade.
+func patchAuthorizationOpenFGAConfigKeys(_ string, d *Daemon) error {
+	// Mapping of the legacy key to its replacement under authorization.*.
+	renamedKeys := map[string]string{
+		"openfga.api.url":   "authorization.openfga.api.url",
+		"openfga.api.token": "authorization.openfga.api.token",
+		"openfga.store.id":  "authorization.openfga.store.id",
+	}
+
+	return d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Read the raw cluster config, bypassing schema validation so that the
+		// now-removed legacy keys are still visible.
+		config, err := tx.Config(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed getting cluster config: %w", err)
+		}
+
+		changes := map[string]string{}
+		for oldKey, newKey := range renamedKeys {
+			value, ok := config[oldKey]
+			if !ok {
+				continue
+			}
+
+			// Only carry over the value if the new key hasn't already been set.
+			if value != "" && config[newKey] == "" {
+				changes[newKey] = value
+			}
+
+			// Clear the legacy key (an empty value deletes it).
+			changes[oldKey] = ""
+		}
+
+		if len(changes) == 0 {
+			return nil
+		}
+
+		err = tx.UpdateClusterConfig(changes)
+		if err != nil {
+			return fmt.Errorf("Failed updating cluster config: %w", err)
+		}
+
+		return nil
+	})
 }
 
 // Patches end here

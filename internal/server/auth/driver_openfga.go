@@ -42,34 +42,34 @@ func (f *FGA) configure(opts Opts) error {
 		return errors.New("Missing OpenFGA config")
 	}
 
-	val, ok := opts.config["openfga.api.token"]
+	val, ok := opts.config["authorization.openfga.api.token"]
 	if !ok || val == nil {
 		return errors.New("Missing OpenFGA API token")
 	}
 
 	f.apiToken, ok = val.(string)
 	if !ok {
-		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "openfga.api.token", val)
+		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.api.token", val)
 	}
 
-	val, ok = opts.config["openfga.api.url"]
+	val, ok = opts.config["authorization.openfga.api.url"]
 	if !ok || val == nil {
 		return errors.New("Missing OpenFGA API URL")
 	}
 
 	f.apiURL, ok = val.(string)
 	if !ok {
-		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "openfga.api.url", val)
+		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.api.url", val)
 	}
 
-	val, ok = opts.config["openfga.store.id"]
+	val, ok = opts.config["authorization.openfga.store.id"]
 	if !ok || val == nil {
 		return errors.New("Missing OpenFGA store ID")
 	}
 
 	f.storeID, ok = val.(string)
 	if !ok {
-		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "openfga.store.id", val)
+		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.store.id", val)
 	}
 
 	return nil

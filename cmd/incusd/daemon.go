@@ -1911,9 +1911,9 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 	}
 
 	config := map[string]any{
-		"openfga.api.url":   apiURL,
-		"openfga.api.token": apiToken,
-		"openfga.store.id":  storeID,
+		"authorization.openfga.api.url":   apiURL,
+		"authorization.openfga.api.token": apiToken,
+		"authorization.openfga.store.id":  storeID,
 	}
 
 	reverter := revert.New()

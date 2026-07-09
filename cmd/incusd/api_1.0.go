@@ -861,7 +861,7 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		case "oidc.issuer", "oidc.client.id", "oidc.audience", "oidc.claim", "oidc.scopes":
 			oidcChanged = true
 
-		case "openfga.api.url", "openfga.api.token", "openfga.store.id":
+		case "authorization.openfga.api.url", "authorization.openfga.api.token", "authorization.openfga.store.id":
 			openFGAChanged = true
 
 		case "storage.linstor.controller_connection", "storage.linstor.ca_cert", "storage.linstor.client_cert", "storage.linstor.client_key":
