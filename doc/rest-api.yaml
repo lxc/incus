@@ -3261,6 +3261,13 @@ definitions:
                 description: Whether the entity comes from a network that performs egress source NAT
                 type: boolean
                 x-go-name: NAT
+            network:
+                description: |-
+                    Name of the network
+
+                    API extension: network_allocations_network
+                type: string
+                x-go-name: Network
             type:
                 description: Type of the entity consuming the network address
                 type: string
