@@ -3232,3 +3232,10 @@ and `physical` networks as an alternative to `bgp.peers.NAME.address`.
 When set, the BGP session is established over the given interface using
 BGP unnumbered (the peer's IPv6 link-local address is discovered
 automatically and IPv4 routes are exchanged using extended next-hop).
+
+## `projects_restricted_virtual_machines_nesting`
+
+This adds a new `restricted.virtual-machines.nesting` project configuration key.
+
+When set to `block`, all virtual machines in the project must have
+`security.nesting` set to `false`, turning off nested virtualization.

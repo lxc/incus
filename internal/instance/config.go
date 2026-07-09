@@ -310,6 +310,16 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Whether `/dev/incus` is present in the instance
 	"security.guestapi": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(entity=instance, group=security, key=security.nesting)
+	// For containers, this controls whether Incus (nested) can be run inside of the instance.
+	// For virtual machines, setting this to `false` disables nested virtualization (turns off the `svm` and `vmx` CPU flags).
+	// ---
+	//  type: bool
+	//  defaultdesc: `false` (containers), `true` (VMs)
+	//  liveupdate: yes (containers only)
+	//  shortdesc: Whether to allow nesting inside of the instance
+	"security.nesting": validate.Optional(validate.IsBool),
+
 	// gendoc:generate(entity=instance, group=security, key=security.protection.delete)
 	//
 	// ---
@@ -934,16 +944,6 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  condition: unprivileged container
 	//  shortdesc: The size of the idmap to use
 	"security.idmap.size": validate.Optional(validate.IsUint32),
-
-	// gendoc:generate(entity=instance, group=security, key=security.nesting)
-	//
-	// ---
-	//  type: bool
-	//  defaultdesc: `false`
-	//  liveupdate: yes
-	//  condition: container
-	//  shortdesc: Whether to support running Incus (nested) inside the instance
-	"security.nesting": validate.Optional(validate.IsBool),
 
 	// gendoc:generate(entity=instance, group=security, key=security.privileged)
 	//

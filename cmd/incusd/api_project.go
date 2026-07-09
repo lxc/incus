@@ -1677,6 +1677,15 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		//  shortdesc: Whether to prevent using low-level VM options
 		"restricted.virtual-machines.lowlevel": isEitherAllowOrBlock,
 
+		// gendoc:generate(entity=project, group=restricted, key=restricted.virtual-machines.nesting)
+		// Possible values are `allow` or `block`.
+		// When set to `block`, {config:option}`instance-security:security.nesting` must be set to `false` on all virtual machines, turning off nested virtualization.
+		// ---
+		//  type: string
+		//  defaultdesc: `allow`
+		//  shortdesc: Whether to prevent using nested virtualization
+		"restricted.virtual-machines.nesting": isEitherAllowOrBlock,
+
 		// gendoc:generate(entity=project, group=restricted, key=restricted.devices.unix-char)
 		// Possible values are `allow` or `block`.
 		// ---
