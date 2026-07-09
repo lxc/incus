@@ -33,7 +33,7 @@ For example, it can be used to restrict user access to a single instance.
 To use OpenFGA for authorization, you must configure and run an OpenFGA server yourself.
 Incus will connect to the OpenFGA server, write the {ref}`openfga-model`, and query this server for authorization for all subsequent requests.
 
-To enable this authorization method in Incus, set the [`openfga.*`](server-options-openfga) server configuration options.
+To enable this authorization method in Incus, set the [`authorization.openfga.*`](server-options-authorization) server configuration options.
 All options must be set in order to enable OpenFGA. Though, you do not have to create the authorization-model yourself, Incus will generate it including the initial tuple to allow only authenticated users: `server:incus#authenticated@user:*`.
 
 (openfga-model)=
