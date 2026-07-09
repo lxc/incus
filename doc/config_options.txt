@@ -2545,6 +2545,8 @@ The default value of 0 means no adjustment to the Out Of Memory score.
 When set to `true` or `false`, it controls whether the container is likely to get some of
 its memory swapped by the kernel. Alternatively, it can be set to a bytes value which will
 then allow the container to make use of additional memory through swap.
+
+Support for this is limited on cgroup2 systems due to lack of swap priority control.
 ```
 
 ```{config:option} limits.memory.swap.priority instance-resource-limits
@@ -2555,6 +2557,8 @@ then allow the container to make use of additional memory through swap.
 :type: "integer"
 Specify an integer between 0 and 10.
 The higher the value, the less likely the instance is to be swapped to disk.
+
+This currently doesn't have any effect on cgroup2 systems.
 ```
 
 ```{config:option} limits.processes instance-resource-limits

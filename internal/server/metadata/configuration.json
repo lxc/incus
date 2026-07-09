@@ -2830,7 +2830,7 @@
 							"condition": "container",
 							"defaultdesc": "`true`",
 							"liveupdate": "yes",
-							"longdesc": "When set to `true` or `false`, it controls whether the container is likely to get some of\nits memory swapped by the kernel. Alternatively, it can be set to a bytes value which will\nthen allow the container to make use of additional memory through swap.",
+							"longdesc": "When set to `true` or `false`, it controls whether the container is likely to get some of\nits memory swapped by the kernel. Alternatively, it can be set to a bytes value which will\nthen allow the container to make use of additional memory through swap.\n\nSupport for this is limited on cgroup2 systems due to lack of swap priority control.",
 							"shortdesc": "Control swap usage by the instance",
 							"type": "string"
 						}
@@ -2840,7 +2840,7 @@
 							"condition": "container",
 							"defaultdesc": "`10` (maximum)",
 							"liveupdate": "yes",
-							"longdesc": "Specify an integer between 0 and 10.\nThe higher the value, the less likely the instance is to be swapped to disk.",
+							"longdesc": "Specify an integer between 0 and 10.\nThe higher the value, the less likely the instance is to be swapped to disk.\n\nThis currently doesn't have any effect on cgroup2 systems.",
 							"shortdesc": "Prevents the instance from being swapped to disk",
 							"type": "integer"
 						}
