@@ -655,6 +655,8 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// When set to `true` or `false`, it controls whether the container is likely to get some of
 	// its memory swapped by the kernel. Alternatively, it can be set to a bytes value which will
 	// then allow the container to make use of additional memory through swap.
+	//
+	// Support for this is limited on cgroup2 systems due to lack of swap priority control.
 	// ---
 	//  type: string
 	//  defaultdesc: `true`
@@ -666,6 +668,8 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.swap.priority)
 	// Specify an integer between 0 and 10.
 	// The higher the value, the less likely the instance is to be swapped to disk.
+	//
+	// This currently doesn't have any effect on cgroup2 systems.
 	// ---
 	//  type: integer
 	//  defaultdesc: `10` (maximum)
