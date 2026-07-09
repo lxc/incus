@@ -25,9 +25,9 @@ test_openfga() {
     OPENFGA_STORE_ID="$(fga store create --name "test" | jq -r '.store.id')"
 
     # Configure OpenFGA in Incus.
-    incus config set openfga.api.url "$(fga_address)"
-    incus config set openfga.api.token "$(fga_token)"
-    incus config set openfga.store.id "${OPENFGA_STORE_ID}"
+    incus config set authorization.openfga.api.url "$(fga_address)"
+    incus config set authorization.openfga.api.token "$(fga_token)"
+    incus config set authorization.openfga.store.id "${OPENFGA_STORE_ID}"
 
     # Wait for initial connection to OpenFGA.
     sleep 1s
@@ -98,9 +98,9 @@ test_openfga() {
     kill_oidc
     incus config unset oidc.issuer
     incus config unset oidc.client.id
-    incus config unset openfga.api.url
-    incus config unset openfga.api.token
-    incus config unset openfga.store.id
+    incus config unset authorization.openfga.api.url
+    incus config unset authorization.openfga.api.token
+    incus config unset authorization.openfga.store.id
     incus remote remove oidc-openfga
 
     shutdown_openfga
