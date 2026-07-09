@@ -279,8 +279,8 @@ var handlers = []devIncusHandler{
 func hoistReq(f func(*Daemon, instance.Instance, http.ResponseWriter, *http.Request) response.Response, d *Daemon) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn := ucred.GetConnFromContext(r.Context())
-		cred, ok := pidMapper.m[conn.(*net.UnixConn)]
-		if !ok {
+		cred := pidMapper.GetConnUcred(conn.(*net.UnixConn))
+		if cred == nil {
 			http.Error(w, errPIDNotInContainer.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -352,6 +352,14 @@ var pidMapper = ConnPidMapper{m: map[*net.UnixConn]*unix.Ucred{}}
 type ConnPidMapper struct {
 	m     map[*net.UnixConn]*unix.Ucred
 	mLock sync.Mutex
+}
+
+// GetConnUcred returns the credentials for the provided connection, if any.
+func (m *ConnPidMapper) GetConnUcred(conn *net.UnixConn) *unix.Ucred {
+	m.mLock.Lock()
+	defer m.mLock.Unlock()
+
+	return m.m[conn]
 }
 
 func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState) {
