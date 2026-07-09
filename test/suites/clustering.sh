@@ -3904,9 +3904,9 @@ test_clustering_openfga() {
     OPENFGA_STORE_ID="$(fga store create --name "test" | jq -r '.store.id')"
 
     # Configure OpenFGA using the oidc-openfga remote.
-    INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: openfga.api.url "$(fga_address)"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: openfga.api.token "$(fga_token)"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: openfga.store.id "${OPENFGA_STORE_ID}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: authorization.openfga.api.url "$(fga_address)"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: authorization.openfga.api.token "$(fga_token)"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus config set oidc-openfga: authorization.openfga.store.id "${OPENFGA_STORE_ID}"
     sleep 1
 
     # Add a newline at the end of each line. YAML as weird rules..

@@ -32,9 +32,9 @@ shutdown_openfga() {
         return
     fi
 
-    incus config unset openfga.api.url
-    incus config unset openfga.api.token
-    incus config unset openfga.store.id
+    incus config unset authorization.openfga.api.url
+    incus config unset authorization.openfga.api.token
+    incus config unset authorization.openfga.store.id
 
     pid="$(cat "${TEST_DIR}/openfga/pid")"
     kill "${pid}"
