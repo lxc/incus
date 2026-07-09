@@ -180,7 +180,12 @@ static void mknod_emulate(void)
 		_exit(EXIT_FAILURE);
 	}
 
-	snprintf(path, sizeof(path), "%s", target);
+	ret = snprintf(path, sizeof(path), "%s", target);
+	if (ret < 0 || (size_t)ret >= sizeof(path)) {
+		fprintf(stderr, "%d", ENAMETOOLONG);
+		_exit(EXIT_FAILURE);
+	}
+
 	target_dir = dirname(path);
 	target_dir_fd = open(target_dir, O_PATH | O_RDONLY | O_CLOEXEC | O_DIRECTORY);
 	if (target_dir_fd < 0) {
@@ -206,7 +211,12 @@ static void mknod_emulate(void)
 
 	// The target path may be relative to the process' cwd, so create the
 	// node by name relative to the already opened parent directory.
-	snprintf(base_path, sizeof(base_path), "%s", target);
+	ret = snprintf(base_path, sizeof(base_path), "%s", target);
+	if (ret < 0 || (size_t)ret >= sizeof(base_path)) {
+		fprintf(stderr, "%d", ENAMETOOLONG);
+		_exit(EXIT_FAILURE);
+	}
+
 	target_base = basename(base_path);
 	ret = mknodat(target_dir_fd, target_base, mode, dev);
 	if (ret) {
