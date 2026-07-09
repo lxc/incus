@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -718,7 +719,7 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 			if hasReadonlySnapshot {
 				// Unprotect snapshot.
 				err := d.rbdUnprotectVolumeSnapshot(vol, "readonly")
-				if err != nil {
+				if err != nil && !isRBDNotFoundExitError(err) {
 					return err
 				}
 			}
@@ -733,13 +734,13 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 				"purge",
 				d.getRBDVolumeName(vol, "", false),
 			)
-			if err != nil {
+			if err != nil && !isRBDNotFoundExitError(err) {
 				return err
 			}
 
 			// Delete image.
 			err = d.rbdDeleteVolume(vol)
-			if err != nil {
+			if err != nil && !isRBDNotFoundExitError(err) {
 				return err
 			}
 		}
@@ -750,12 +751,13 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 			return err
 		}
 
-		// If the volume is a clone, lock its parent image volume so concurrent deletions of
-		// sibling clones can't race the cleanup of the shared image snapshot.
+		// If the volume is a clone, lock its parent volume so concurrent deletions of sibling
+		// clones can't race the cleanup of the shared parent snapshot (this applies not only to
+		// image parents, but also to non-image volumes used as the source of a lightweight copy).
 		parent, err := d.rbdGetVolumeParent(vol)
 		if err == nil {
 			parentVol, _, err := d.parseParent(parent)
-			if err == nil && parentVol.volType == VolumeTypeImage {
+			if err == nil {
 				unlock, err := locking.Lock(context.TODO(), OperationLockName("DeleteVolume", d.name, parentVol.volType, parentVol.contentType, parentVol.name))
 				if err != nil {
 					return err
@@ -1519,6 +1521,10 @@ func (d *ceph) RenameVolume(vol Volume, newVolName string, op *operations.Operat
 
 		err := d.rbdRenameVolume(vol, newVolName)
 		if err != nil {
+			if isRBDNotFoundExitError(err) {
+				return api.StatusErrorf(http.StatusNotFound, "Ceph RBD volume not found")
+			}
+
 			return err
 		}
 
@@ -2046,6 +2052,10 @@ func (d *ceph) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *
 
 	err := d.rbdRenameVolumeSnapshot(parentVol, oldSnapOnlyName, newSnapOnlyName)
 	if err != nil {
+		if isRBDNotFoundExitError(err) {
+			return api.StatusErrorf(http.StatusNotFound, "Ceph RBD volume snapshot not found")
+		}
+
 		return err
 	}
 
