@@ -142,7 +142,7 @@ ifneq "$(INCUS_OFFLINE)" ""
 	exit 1
 endif
 	$(GO) get -t -v -u ./...
-	$(GO) mod tidy --go=1.25.10
+	$(GO) mod tidy --go=1.25.11
 	$(GO) get toolchain@none
 
 	@echo "Dependencies updated"
