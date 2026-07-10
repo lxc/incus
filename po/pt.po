@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-07-09 22:01-0400\n"
-"PO-Revision-Date: 2026-06-25 23:48+0000\n"
+"PO-Revision-Date: 2026-07-11 04:01+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.7.dev0\n"
+"X-Generator: Weblate 2026.7.1.dev0\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -4213,9 +4213,9 @@ msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Esquema de URL inválido \"%s\" em \"%s\""
 
 #: cmd/incus/network_allocations.go:226
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid address %q for network %q: %w"
-msgstr "Falhou ao carregar rede %q:%w"
+msgstr "Endereço inválido %q para rede %q:%w"
 
 #: cmd/incus/main_aliases.go:147 cmd/incus/main_aliases.go:189
 #, c-format
@@ -4324,9 +4324,9 @@ msgid "Invalid sorting type provided"
 msgstr "Tipo de ordenação inválido fornecido"
 
 #: cmd/incus/network_allocations.go:214
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid subnet %q for network %q: %w"
-msgstr "Valor %q inválido para formato de lista"
+msgstr "Sub-rede %q inválida para rede %q: %w"
 
 #: cmd/incus/file.go:144 cmd/incus/storage_volume_file.go:141
 #, c-format
@@ -6563,9 +6563,8 @@ msgid "NBD listening on %v"
 msgstr "NBD a escutar em %v"
 
 #: cmd/incus/network_allocations.go:235
-#, fuzzy
 msgid "NETWORK"
-msgstr "REDES"
+msgstr "REDE"
 
 #: cmd/incus/project.go:552
 msgid "NETWORK ZONES"
@@ -7891,7 +7890,7 @@ msgstr "STP"
 
 #: cmd/incus/network_allocations.go:235
 msgid "SUBNET"
-msgstr ""
+msgstr "SUB-REDE"
 
 #: cmd/incus/admin_recover.go:167
 msgid "Scanning for unknown volumes..."
@@ -8401,7 +8400,7 @@ msgstr "Configura armazenamento baseado em loop com TAMANHO em GiB"
 
 #: cmd/incus/network_allocations.go:64
 msgid "Show a summary of used IP ranges per subnet"
-msgstr ""
+msgstr "Mostra um sumário das gamas de IP usadas por sub-rede"
 
 #: cmd/incus/main.go:175
 msgid "Show all debug messages"
@@ -8981,9 +8980,8 @@ msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "A bandeira --show-log só é suportada pelo tipo de saída 'console'"
 
 #: cmd/incus/network_allocations.go:162
-#, fuzzy
 msgid "The --summary flag cannot be used with custom columns (-c)"
-msgstr "--target não pode ser usado com instâncias"
+msgstr "A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
 
 #: cmd/incus/admin_init_interactive.go:524
 msgid "The LVM thin provisioning tools couldn't be found on the system"
@@ -9455,9 +9453,8 @@ msgid "USB devices:"
 msgstr "Dispositivos USB:"
 
 #: cmd/incus/network_allocations.go:235
-#, fuzzy
 msgid "USED"
-msgstr "USADO POR"
+msgstr "USADO"
 
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:164
 #: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:86
