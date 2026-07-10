@@ -3253,3 +3253,6 @@ The following server configuration keys replace the former `openfga.*` keys:
 
 Existing `openfga.*` values are automatically migrated to the new keys on
 upgrade.
+
+## `network_allocations_network`
+Adds the `network` field to the network allocations API response.

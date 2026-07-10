@@ -22,4 +22,9 @@ type NetworkAllocations struct {
 
 	// Name of the entity consuming the network address
 	UsedBy string `json:"used_by" yaml:"used_by"`
+
+	// Name of the network
+	//
+	// API extension: network_allocations_network
+	Network string `json:"network" yaml:"network"`
 }
