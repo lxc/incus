@@ -148,7 +148,7 @@ var devIncusEventsGet = devIncusHandler{"/1.0/events", func(d *Daemon, c instanc
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, "internal server error"), c.Type() == instancetype.VM)
 		}
 
-		defer logger.WarnOnError(conn.Close, "Failed to close connection") // Ensure listener below ends when this function ends.
+		defer logger.WarnOnErrorExcept(conn.Close, []error{net.ErrClosed}, "Failed to close connection") // Ensure listener below ends when this function ends.
 
 		listenerConnection = events.NewWebsocketListenerConnection(conn)
 
@@ -164,7 +164,7 @@ var devIncusEventsGet = devIncusHandler{"/1.0/events", func(d *Daemon, c instanc
 			return response.DevIncusErrorResponse(api.StatusErrorf(http.StatusInternalServerError, "internal server error"), c.Type() == instancetype.VM)
 		}
 
-		defer logger.WarnOnError(conn.Close, "Failed to close connection") // Ensure listener below ends when this function ends.
+		defer logger.WarnOnErrorExcept(conn.Close, []error{net.ErrClosed}, "Failed to close connection") // Ensure listener below ends when this function ends.
 
 		listenerConnection, err = events.NewStreamListenerConnection(conn)
 		if err != nil {
