@@ -205,6 +205,30 @@ func IsListOf(validator func(value string) error) func(value string) error {
 	}
 }
 
+// IsUniqueListOf returns a validator for a comma separated list of values with no duplicates.
+func IsUniqueListOf(validator func(value string) error) func(value string) error {
+	return func(value string) error {
+		list := strings.Split(value, ",")
+		seen := make(map[string]struct{}, len(list))
+		for _, v := range list {
+			v = strings.TrimSpace(v)
+			err := validator(v)
+			if err != nil {
+				return fmt.Errorf("Item %q: %w", v, err)
+			}
+
+			_, ok := seen[v]
+			if ok {
+				return fmt.Errorf("Duplicate item %q", v)
+			}
+
+			seen[v] = struct{}{}
+		}
+
+		return nil
+	}
+}
+
 // IsNotEmpty requires a non-empty string.
 func IsNotEmpty(value string) error {
 	if value == "" {
