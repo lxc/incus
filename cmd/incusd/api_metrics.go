@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/state"
+	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 )
@@ -104,6 +105,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	metricSet := metrics.NewMetricSet(nil)
 
 	var projectNames []string
+	var poolNames []string
 	var intMetrics *metrics.MetricSet
 
 	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -123,6 +125,14 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
+		// Get the storage pool names.
+		var err error
+
+		poolNames, err = tx.GetCreatedStoragePoolNames(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pools: %w", err)
+		}
+
 		// Add internal metrics.
 		intMetrics = internalMetrics(ctx, s, tx)
 
@@ -130,6 +140,25 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 	})
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Add storage pool metrics (outside of the transaction as it loads the pools).
+	for _, poolName := range poolNames {
+		pool, err := storagePools.LoadByName(s, poolName)
+		if err != nil {
+			logger.Warn("Failed loading storage pool", logger.Ctx{"pool": poolName, "err": err})
+			continue
+		}
+
+		res, err := pool.GetResources()
+		if err != nil {
+			logger.Warn("Failed getting storage pool resources", logger.Ctx{"pool": poolName, "err": err})
+			continue
+		}
+
+		labels := map[string]string{"pool": poolName, "driver": pool.Driver().Info().Name}
+		intMetrics.AddSamples(metrics.StoragePoolUsedBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Used)})
+		intMetrics.AddSamples(metrics.StoragePoolTotalBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Total)})
 	}
 
 	// invalidProjectFilters returns project filters which are either not in cache or have expired.
