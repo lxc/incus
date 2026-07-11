@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/lxc/incus/v7/internal/linux"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v7/internal/server/device/pci"
 	"github.com/lxc/incus/v7/internal/server/instance"
@@ -129,18 +130,17 @@ func (d *gpuNativeContext) Start() (*deviceConfig.RunConfig, error) {
 func (d *gpuNativeContext) startVM() (*deviceConfig.RunConfig, error) {
 	runConf := deviceConfig.RunConfig{}
 
-	// Render node path to hand to QEMU's egl-headless display. Left empty when no GPU is
-	// selected, in which case QEMU/egl-headless falls back to its default render node.
+	// Render node path to hand to QEMU's egl-headless display.
 	rendernode := ""
 
-	// Only resolve a render node when the user actually selected a card. Any of the
+	gpus, err := resources.GetGPU()
+	if err != nil {
+		return nil, err
+	}
+
+	// Only match on selectors when the user actually selected a card. Any of the
 	// standard GPU selector keys may be used to pick which host GPU to accelerate with.
 	if d.config["id"] != "" || d.config["pci"] != "" || d.config["vendorid"] != "" || d.config["productid"] != "" {
-		gpus, err := resources.GetGPU()
-		if err != nil {
-			return nil, err
-		}
-
 		for _, gpu := range gpus.Cards {
 			// Skip any cards that are not selected.
 			if !gpuSelected(d.Config(), gpu) {
@@ -160,6 +160,35 @@ func (d *gpuNativeContext) startVM() (*deviceConfig.RunConfig, error) {
 
 		if rendernode == "" {
 			return nil, errors.New("Failed to detect requested GPU device")
+		}
+	} else {
+		// With no card selected, default to the host GPU with the lowest render node
+		// so the node is known ahead of time and can be made accessible to QEMU.
+		for _, gpu := range gpus.Cards {
+			if gpu.DRM == nil || gpu.DRM.RenderName == "" {
+				continue
+			}
+
+			node := filepath.Join(gpuDRIDevPath, gpu.DRM.RenderName)
+			if rendernode == "" || node < rendernode {
+				rendernode = node
+			}
+		}
+
+		if rendernode == "" {
+			return nil, errors.New("Failed to find a GPU with a DRM render node")
+		}
+	}
+
+	// QEMU runs as an unprivileged user and virglrenderer only opens the render node
+	// once the guest starts using the GPU, well after privileges were dropped. Grant
+	// that user access through a POSIX ACL on the node. The entry is left in place on
+	// stop: it only covers the Incus unprivileged user and AppArmor keeps VMs without
+	// a native context GPU away from the node.
+	if d.state.OS.UnprivUser != "" {
+		err = linux.GrantPosixACLUser(rendernode, d.state.OS.UnprivUID, 0o6)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to grant %q access to %q: %w", d.state.OS.UnprivUser, rendernode, err)
 		}
 	}
 
