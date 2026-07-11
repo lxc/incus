@@ -840,9 +840,23 @@ func (v Volume) FileSFTPConn(s *state.State) (net.Conn, error) {
 		return nil, err
 	}
 
+	// Record the socket file identity so cleanup doesn't remove a newer socket.
+	forkfileInfo, err := os.Stat(forkfilePath)
+	if err != nil {
+		_ = forkfileListener.Close()
+		return nil, err
+	}
+
+	removeForkfileSocket := func() {
+		info, err := os.Stat(forkfilePath)
+		if err == nil && os.SameFile(info, forkfileInfo) {
+			_ = os.Remove(forkfilePath)
+		}
+	}
+
 	reverter.Add(func() {
 		_ = forkfileListener.Close()
-		_ = os.Remove(forkfilePath)
+		removeForkfileSocket()
 	})
 
 	// Spawn forkfile in a Go routine.
@@ -944,7 +958,7 @@ func (v Volume) FileSFTPConn(s *state.State) (net.Conn, error) {
 			// thinking a listener is available while other deferred calls are being processed.
 			defer func() {
 				_ = forkfileListener.Close()
-				_ = os.Remove(forkfilePath)
+				removeForkfileSocket()
 				_ = os.Remove(pidFile)
 			}()
 
