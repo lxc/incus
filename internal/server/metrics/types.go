@@ -109,7 +109,11 @@ const (
 	ProjectLimit
 	// ProjectUsage represents the current project resource usage.
 	ProjectUsage
-	// GoGoroutines represents the number of goroutines that currently exist..
+	// StoragePoolUsedBytes represents the used space in bytes on a storage pool.
+	StoragePoolUsedBytes
+	// StoragePoolTotalBytes represents the total space in bytes on a storage pool.
+	StoragePoolTotalBytes
+	// GoGoroutines represents the number of goroutines that currently exist.
 	GoGoroutines
 	// GoAllocBytes represents the number of bytes allocated and still in use.
 	GoAllocBytes
@@ -225,6 +229,8 @@ var MetricNames = map[MetricType]string{
 	ProjectLimit:                "incus_project_limit",
 	ProjectResourcesTotal:       "incus_project_resources_total",
 	ProjectUsage:                "incus_project_usage",
+	StoragePoolUsedBytes:        "incus_storage_pool_used_bytes",
+	StoragePoolTotalBytes:       "incus_storage_pool_total_bytes",
 	TimeSeconds:                 "incus_time_seconds",
 	UptimeSeconds:               "incus_uptime_seconds",
 	WarningsTotal:               "incus_warnings_total",
@@ -298,6 +304,8 @@ var MetricHeaders = map[MetricType]string{
 	ProjectLimit:                "# HELP incus_project_limit Current project resource limit.",
 	ProjectResourcesTotal:       "# HELP incus_project_resources_total Current resource count in a project.",
 	ProjectUsage:                "# HELP incus_project_usage Current project resource usage.",
+	StoragePoolUsedBytes:        "# HELP incus_storage_pool_used_bytes The used space in bytes on a storage pool.",
+	StoragePoolTotalBytes:       "# HELP incus_storage_pool_total_bytes The total space in bytes on a storage pool.",
 	TimeSeconds:                 "# HELP incus_time_seconds The current unix epoch.",
 	UptimeSeconds:               "# HELP incus_uptime_seconds The daemon uptime in seconds.",
 	WarningsTotal:               "# HELP incus_warnings_total The number of active warnings.",
