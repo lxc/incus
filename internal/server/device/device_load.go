@@ -68,6 +68,8 @@ func newByType(s *state.State, projectName string, conf deviceConfig.Device) (de
 			dev = &gpuMdev{}
 		case "sriov":
 			dev = &gpuSRIOV{}
+		case "native-context":
+			dev = &gpuNativeContext{}
 		default:
 			dev = &gpuPhysical{}
 		}

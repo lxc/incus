@@ -48,10 +48,26 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 {{- end }}
   /usr/share/qemu/**                        kr,
   /usr/share/seabios/**                     kr,
-  /etc/nsswitch.conf         r,
-  /etc/passwd                r,
-  /etc/group                 r,
+  /etc/nsswitch.conf                        r,
+  /etc/passwd                               r,
+  /etc/group                                r,
   @{PROC}/version                           r,
+
+{{- if .gpuNativeContext }}
+  # Extra entries needed for virtio-gpu DRM native context
+  /dev/dri/                                 r,
+  /dev/dri/**                               rw,
+
+  deny capability sys_admin,
+  deny /var/lib/incus/.cache/               wklx,
+  /usr/share/drirc.d/                       r,
+  /usr/share/drirc.d/**                     r,
+  /usr/share/glvnd/egl_vendor.d/            r,
+  /usr/share/glvnd/egl_vendor.d/**          r,
+  /usr/share/libdrm/**                      r,
+  /etc/glvnd/egl_vendor.d/                  r,
+  /etc/glvnd/egl_vendor.d/**                r,
+{{- end }}
 
   # Extra config paths
 {{- range $index, $element := .extra_config }}

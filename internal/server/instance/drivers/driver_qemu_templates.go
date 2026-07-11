@@ -472,15 +472,25 @@ func qemuVsock(opts *qemuVsockOpts) []cfg.Section {
 }
 
 type qemuGpuOpts struct {
-	dev          qemuDevOpts
-	architecture int
-	virtioVGA    bool
+	dev           qemuDevOpts
+	architecture  int
+	virtioVGA     bool
+	nativeContext bool
+	hostmem       string
 }
 
 func qemuGPU(opts *qemuGpuOpts) []cfg.Section {
 	var pciName string
 
-	if opts.architecture == osarch.ARCH_64BIT_INTEL_X86 && opts.virtioVGA {
+	if opts.nativeContext {
+		// DRM native context forwards the guest's native GPU driver context to the
+		// host, so the default emulated GPU must be a GL-capable virtio-gpu device.
+		if opts.architecture == osarch.ARCH_64BIT_INTEL_X86 {
+			pciName = "virtio-vga-gl"
+		} else {
+			pciName = "virtio-gpu-gl-pci"
+		}
+	} else if opts.architecture == osarch.ARCH_64BIT_INTEL_X86 && opts.virtioVGA {
 		pciName = "virtio-vga"
 	} else {
 		pciName = "virtio-gpu-pci"
@@ -492,10 +502,22 @@ func qemuGPU(opts *qemuGpuOpts) []cfg.Section {
 		ccwName: "virtio-gpu-ccw",
 	}
 
+	entries := qemuDeviceEntries(&entriesOpts)
+
+	if opts.nativeContext {
+		// blob=on lets the guest map host GPU buffers directly (required for native
+		// context), drm_native_context=on turns the feature on, and hostmem reserves
+		// the host-visible blob window exposed through the device's PCI BAR. The size
+		// is set from the device's blob.size option, resolved to a byte count.
+		entries["blob"] = "on"
+		entries["drm_native_context"] = "on"
+		entries["hostmem"] = opts.hostmem
+	}
+
 	return []cfg.Section{{
 		Name:    `device "qemu_gpu"`,
 		Comment: "GPU",
-		Entries: qemuDeviceEntries(&entriesOpts),
+		Entries: entries,
 	}}
 }
 

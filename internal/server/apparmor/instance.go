@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/edk2"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/project"
@@ -26,6 +27,7 @@ type instance interface {
 	Name() string
 	ID() int
 	ExpandedConfig() map[string]string
+	ExpandedDevices() deviceConfig.Devices
 	Type() instancetype.Type
 	LogPath() string
 	RunPath() string
@@ -267,20 +269,31 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			}
 		}
 
+		// Detect whether any GPU device uses virtio-gpu DRM native context, which
+		// needs the QEMU process to access the host DRM render nodes directly.
+		gpuNativeContext := false
+		for _, dev := range inst.ExpandedDevices() {
+			if dev["type"] == "gpu" && dev["gputype"] == "native-context" {
+				gpuNativeContext = true
+				break
+			}
+		}
+
 		err = qemuProfileTpl.Execute(sb, map[string]any{
-			"devicesPath":    inst.DevicesPath(),
-			"exePath":        execPath,
-			"extra_config":   extraConfig,
-			"extra_binaries": extraBinaries,
-			"libraryPath":    strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
-			"logPath":        logPath,
-			"runPath":        inst.RunPath(),
-			"id":             inst.ID(),
-			"name":           InstanceProfileName(inst),
-			"path":           path,
-			"raw":            rawContent.String(),
-			"edk2Paths":      edk2Paths,
-			"agentPath":      agentPath,
+			"devicesPath":      inst.DevicesPath(),
+			"gpuNativeContext": gpuNativeContext,
+			"exePath":          execPath,
+			"extra_config":     extraConfig,
+			"extra_binaries":   extraBinaries,
+			"libraryPath":      strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
+			"logPath":          logPath,
+			"runPath":          inst.RunPath(),
+			"id":               inst.ID(),
+			"name":             InstanceProfileName(inst),
+			"path":             path,
+			"raw":              rawContent.String(),
+			"edk2Paths":        edk2Paths,
+			"agentPath":        agentPath,
 		})
 		if err != nil {
 			return "", err
