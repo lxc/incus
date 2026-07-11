@@ -48,9 +48,9 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
 {{- end }}
   /usr/share/qemu/**                        kr,
   /usr/share/seabios/**                     kr,
-  /etc/nsswitch.conf         r,
-  /etc/passwd                r,
-  /etc/group                 r,
+  /etc/nsswitch.conf                        r,
+  /etc/passwd                               r,
+  /etc/group                                r,
   @{PROC}/version                           r,
 
   # Extra config paths
