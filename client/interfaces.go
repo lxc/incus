@@ -138,6 +138,8 @@ type InstanceServer interface {
 
 	GetInstanceNBDConn(instanceName string, args InstanceNBDArgs) (net.Conn, error)
 
+	GetInstancePortForwardConn(instanceName string, forward api.InstancePortForwardPost) (net.Conn, error)
+
 	GetInstanceSnapshotNames(instanceName string) (names []string, err error)
 	GetInstanceSnapshots(instanceName string) (snapshots []api.InstanceSnapshot, err error)
 	GetInstanceSnapshot(instanceName string, name string) (snapshot *api.InstanceSnapshot, ETag string, err error)

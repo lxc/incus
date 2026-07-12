@@ -1661,7 +1661,7 @@ func (r *ProtocolIncus) DeleteInstanceFile(instanceName string, filePath string)
 }
 
 // rawConn connects to the apiURL, upgrades to the requested protocol and returns it.
-func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, error) {
+func (r *ProtocolIncus) rawConn(method string, apiURL *url.URL, protocol string, data any) (net.Conn, error) {
 	// Get the HTTP transport.
 	httpTransport, err := r.getUnderlyingHTTPTransport()
 	if err != nil {
@@ -1669,7 +1669,7 @@ func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, err
 	}
 
 	req := &http.Request{
-		Method:     http.MethodGet,
+		Method:     method,
 		URL:        apiURL,
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
@@ -1680,6 +1680,18 @@ func (r *ProtocolIncus) rawConn(apiURL *url.URL, protocol string) (net.Conn, err
 
 	req.Header["Upgrade"] = []string{protocol}
 	req.Header["Connection"] = []string{"Upgrade"}
+
+	// Add the request body.
+	if data != nil {
+		body, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Body = io.NopCloser(bytes.NewReader(body))
+		req.ContentLength = int64(len(body))
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	r.addClientHeaders(req)
 
@@ -1753,7 +1765,21 @@ func (r *ProtocolIncus) GetInstanceNBDConn(instanceName string, args InstanceNBD
 
 	r.setURLQueryAttributes(&apiURL.URL)
 
-	return r.rawConn(&apiURL.URL, "nbd")
+	return r.rawConn(http.MethodGet, &apiURL.URL, "nbd", nil)
+}
+
+// GetInstancePortForwardConn returns a connection to the given address and TCP port inside of the instance.
+func (r *ProtocolIncus) GetInstancePortForwardConn(instanceName string, forward api.InstancePortForwardPost) (net.Conn, error) {
+	if !r.HasExtension("instance_port_forward") {
+		return nil, errors.New(`The server is missing the required "instance_port_forward" API extension`)
+	}
+
+	apiURL := api.NewURL()
+	apiURL.URL = r.httpBaseURL // Preload the URL with the client base URL.
+	apiURL.Path("1.0", "instances", instanceName, "port-forward")
+	r.setURLQueryAttributes(&apiURL.URL)
+
+	return r.rawConn(http.MethodPost, &apiURL.URL, "tcp", forward)
 }
 
 // GetInstanceFileSFTPConn returns a connection to the instance's SFTP endpoint.
@@ -1763,7 +1789,7 @@ func (r *ProtocolIncus) GetInstanceFileSFTPConn(instanceName string) (net.Conn, 
 	apiURL.Path("1.0", "instances", instanceName, "sftp")
 	r.setURLQueryAttributes(&apiURL.URL)
 
-	return r.rawConn(&apiURL.URL, "sftp")
+	return r.rawConn(http.MethodGet, &apiURL.URL, "sftp", nil)
 }
 
 // GetInstanceFileSFTP returns an SFTP connection to the instance.
