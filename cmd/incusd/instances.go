@@ -80,6 +80,13 @@ var instanceNBDCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: instanceNBDHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanConnectNBD, "name")},
 }
 
+var instancePortForwardCmd = APIEndpoint{
+	Name: "instancePortForward",
+	Path: "instances/{name}/port-forward",
+
+	Post: APIEndpointAction{Handler: instancePortForwardHandler, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanConnectTCP, "name")},
+}
+
 var instanceFileCmd = APIEndpoint{
 	Name: "instanceFile",
 	Path: "instances/{name}/files",
