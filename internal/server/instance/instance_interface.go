@@ -131,6 +131,9 @@ type Instance interface {
 	FileSFTPConn() (net.Conn, error)
 	FileSFTP() (*sftp.Client, error)
 
+	// Network connectivity.
+	PortForwardConn(address string, port int) (net.Conn, error)
+
 	// Console - Allocate and run a console tty or a spice Unix socket.
 	Console(protocol string) (*os.File, chan error, error)
 	Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (Cmd, error)
