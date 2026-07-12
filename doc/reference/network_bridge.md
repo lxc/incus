@@ -10,6 +10,7 @@ Incus bridges can leverage underlying native Linux bridges and Open vSwitch.
 The `bridge` network type allows to create an L2 bridge that connects the instances that use it together into a single network L2 segment.
 Bridges created by Incus are managed, which means that in addition to creating the bridge interface itself, Incus also sets up a local `dnsmasq` process to provide DHCP, IPv6 route announcements and DNS services to the network.
 By default, it also performs NAT for the bridge.
+Note that when NAT is enabled (`ipv4.nat`/`ipv6.nat`), traffic between managed bridge networks on the same server isn't NATed as it's routed directly between the bridges, preserving the original source address.
 
 See {ref}`network-bridge-firewall` for instructions on how to configure your firewall to work with Incus bridge networks.
 

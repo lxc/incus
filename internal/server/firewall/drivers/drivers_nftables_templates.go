@@ -31,6 +31,9 @@ chain pstrt{{.chainSeparator}}{{.networkName}} {
 	type nat hook postrouting priority 100; policy accept;
 
 	{{ range $ipFamily, $config := .rules }}
+	{{ range $config.ExcludeInterfaces }}
+	{{$ipFamily}} saddr {{$config.Subnet}} oifname "{{.}}" accept
+	{{ end }}
 	{{ if $config.SNATAddress }}
 	{{$ipFamily}} saddr {{$config.Subnet}} {{$ipFamily}} daddr != {{$config.Subnet}} snat {{$config.SNATAddress}}
 	{{ else }}
