@@ -33,6 +33,7 @@ var api10 = []APIEndpoint{
 	operationCmd,
 	operationWebsocket,
 	operationWait,
+	portForwardCmd,
 	sftpCmd,
 	stateCmd,
 }
