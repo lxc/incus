@@ -1190,6 +1190,16 @@ func (d *zfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWriteCl
 
 	// Rollback to the latest identical snapshot if performing a refresh.
 	if volTargetArgs.Refresh {
+		// Temporarily remove the quota from the volume as the rollback and incremental
+		// receives below may otherwise be refused for lack of space. The quota is
+		// re-applied once the transfer has completed.
+		if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
+			err = d.setDatasetProperties(d.dataset(vol, false), "quota=none", "refquota=none")
+			if err != nil {
+				return err
+			}
+		}
+
 		snapshots, err = vol.Snapshots(op)
 		if err != nil {
 			return err
@@ -1400,6 +1410,25 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 		return d.CreateVolumeFromCopy(vol, srcVol, len(srcSnapshots) > 0, false, op)
 	}
 
+	// Temporarily remove the quota from the target volume as the rollbacks and incremental
+	// receives below may otherwise be refused for lack of space.
+	quotaCleared := vol.contentType == ContentTypeFS && !d.isBlockBacked(vol)
+	if quotaCleared {
+		err = d.setDatasetProperties(d.dataset(vol, false), "quota=none", "refquota=none")
+		if err != nil {
+			return err
+		}
+	}
+
+	// restoreQuota re-applies the quota using the source size as that's what the volume now holds.
+	restoreQuota := func() error {
+		if !quotaCleared {
+			return nil
+		}
+
+		return d.SetVolumeQuota(vol, srcVol.ConfigSize(), false, op)
+	}
+
 	transfer := func(src Volume, target Volume, origin Volume) error {
 		var sender *exec.Cmd
 
@@ -1509,7 +1538,13 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 			// refresh instead.
 			if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
 				d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-				return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+
+				err = genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+				if err != nil {
+					return err
+				}
+
+				return restoreQuota()
 			}
 
 			return fmt.Errorf("Failed to transfer snapshot %q: %w", snap.name, err)
@@ -1526,7 +1561,13 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 				// refresh instead.
 				if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
 					d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-					return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+
+					err = genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+					if err != nil {
+						return err
+					}
+
+					return restoreQuota()
 				}
 
 				return fmt.Errorf("Failed to transfer snapshot %q: %w", snap.name, err)
@@ -1555,7 +1596,13 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 		// refresh instead.
 		if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
 			d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-			return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+
+			err = genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+			if err != nil {
+				return err
+			}
+
+			return restoreQuota()
 		}
 
 		return fmt.Errorf("Failed to transfer main volume: %w", err)
@@ -1572,7 +1619,13 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 			// refresh instead.
 			if errors.Is(err, ErrSnapshotDoesNotMatchIncrementalSource) {
 				d.logger.Debug("Unable to perform an optimized refresh, doing a generic refresh", logger.Ctx{"err": err})
-				return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+
+				err = genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+				if err != nil {
+					return err
+				}
+
+				return restoreQuota()
 			}
 
 			return fmt.Errorf("Failed to transfer main volume: %w", err)
@@ -1602,7 +1655,7 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 		return err
 	}
 
-	return nil
+	return restoreQuota()
 }
 
 // DeleteVolume deletes a volume of the storage device. If any snapshots of the volume remain then
