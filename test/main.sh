@@ -362,6 +362,7 @@ run_standalone_container() {
     run_test test_filemanip "file manipulations"
     run_test test_idmap "id mapping"
     run_test test_lxc_to_incus "LXC to Incus"
+    run_test test_port_forward "port forward"
     run_test test_property "container property"
 }
 
