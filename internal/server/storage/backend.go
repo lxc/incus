@@ -1643,6 +1643,12 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 	srcVolStorageName := project.Instance(src.Project().Name, src.Name())
 	srcVol := b.GetVolume(volType, contentType, srcVolStorageName, srcConfig.Volume.Config)
 
+	// Apply the source instance's root disk overrides so the driver knows the effective source size.
+	err = b.applyInstanceRootDiskOverrides(src, &srcVol)
+	if err != nil {
+		return err
+	}
+
 	// Get source snapshot volume constructs.
 	srcSnapVols := make([]drivers.Volume, 0, len(srcConfig.VolumeSnapshots))
 	snapshotNames := make([]string, 0, len(srcConfig.VolumeSnapshots))
