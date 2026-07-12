@@ -12,9 +12,10 @@ type FeatureOpts struct {
 
 // SNATOpts specify how SNAT rules are setup.
 type SNATOpts struct {
-	Append      bool       // Append rules (has no effect if driver doesn't support it).
-	Subnet      *net.IPNet // Subnet of source network used to identify candidate traffic.
-	SNATAddress net.IP     // SNAT IP address to use. If nil then MASQUERADE is used.
+	Append            bool       // Append rules (has no effect if driver doesn't support it).
+	Subnet            *net.IPNet // Subnet of source network used to identify candidate traffic.
+	SNATAddress       net.IP     // SNAT IP address to use. If nil then MASQUERADE is used.
+	ExcludeInterfaces []string   // Outbound interfaces to exclude from NAT.
 }
 
 // Opts for setting up the firewall.

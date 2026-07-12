@@ -21,6 +21,7 @@ type Firewall interface {
 	Compat() (bool, error)
 
 	NetworkSetup(networkName string, opts drivers.Opts) error
+	NetworkSetupOutboundNAT(networkName string, SNATV4 *drivers.SNATOpts, SNATV6 *drivers.SNATOpts) error
 	NetworkClear(networkName string, removeChains bool, ipVersions []uint) error
 	NetworkApplyACLRules(networkName string, rules []drivers.ACLRule) error
 	NetworkApplyForwards(networkName string, rules []drivers.AddressForward) error

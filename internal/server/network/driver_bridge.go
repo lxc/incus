@@ -997,6 +997,43 @@ func (n *bridge) Start() error {
 	return nil
 }
 
+// bridgeSNATOpts returns the outbound NAT configuration of a bridge network based on its config.
+func bridgeSNATOpts(config map[string]string, excludeInterfaces []string) (*firewallDrivers.SNATOpts, *firewallDrivers.SNATOpts) {
+	var snatV4, snatV6 *firewallDrivers.SNATOpts
+
+	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+		if !util.IsTrue(config[fmt.Sprintf("%s.nat", keyPrefix)]) {
+			continue
+		}
+
+		_, subnet, err := net.ParseCIDR(config[fmt.Sprintf("%s.address", keyPrefix)])
+		if err != nil {
+			continue
+		}
+
+		// If a SNAT source address is specified, use that, otherwise default to MASQUERADE mode.
+		var srcIP net.IP
+		if config[fmt.Sprintf("%s.nat.address", keyPrefix)] != "" {
+			srcIP = net.ParseIP(config[fmt.Sprintf("%s.nat.address", keyPrefix)])
+		}
+
+		opts := &firewallDrivers.SNATOpts{
+			SNATAddress:       srcIP,
+			Subnet:            subnet,
+			ExcludeInterfaces: excludeInterfaces,
+			Append:            config[fmt.Sprintf("%s.nat.order", keyPrefix)] == "after",
+		}
+
+		if keyPrefix == "ipv4" {
+			snatV4 = opts
+		} else {
+			snatV6 = opts
+		}
+	}
+
+	return snatV4, snatV6
+}
+
 // setup restarts the network.
 func (n *bridge) setup(oldConfig map[string]string) error {
 	// If we are in mock mode, just no-op.
@@ -2038,9 +2075,75 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		fwOpts.AddressSet = true
 	}
 
+	// Get the list of managed bridge networks, traffic between those isn't NAT-ed.
+	var projectNetworks map[string]map[int64]api.Network
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		projectNetworks, err = tx.GetCreatedNetworks(ctx)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("Failed to load all networks: %w", err)
+	}
+
+	bridgeConfigs := map[string]map[string]string{}
+	bridgeNames := []string{}
+	for _, networks := range projectNetworks {
+		for _, netInfo := range networks {
+			if netInfo.Type != "bridge" {
+				continue
+			}
+
+			bridgeNames = append(bridgeNames, netInfo.Name)
+			bridgeConfigs[netInfo.Name] = netInfo.Config
+		}
+	}
+
+	slices.Sort(bridgeNames)
+	bridgeNames = slices.Compact(bridgeNames)
+
+	// otherBridges returns the bridge interface names other than the provided one.
+	otherBridges := func(name string) []string {
+		names := make([]string, 0, len(bridgeNames))
+		for _, bridgeName := range bridgeNames {
+			if bridgeName != name {
+				names = append(names, bridgeName)
+			}
+		}
+
+		return names
+	}
+
+	// When NAT is enabled, exclude traffic leaving through the other managed bridge networks
+	// as those are reachable directly through local routing.
+	if fwOpts.SNATV4 != nil {
+		fwOpts.SNATV4.ExcludeInterfaces = otherBridges(n.name)
+	}
+
+	if fwOpts.SNATV6 != nil {
+		fwOpts.SNATV6.ExcludeInterfaces = otherBridges(n.name)
+	}
+
 	err = n.state.Firewall.NetworkSetup(n.name, fwOpts)
 	if err != nil {
 		return fmt.Errorf("Failed to setup firewall: %w", err)
+	}
+
+	// Refresh the NAT rules of the other local bridge networks so their exclusion list stays current.
+	for _, bridgeName := range otherBridges(n.name) {
+		if !InterfaceExists(bridgeName) {
+			continue
+		}
+
+		snatV4, snatV6 := bridgeSNATOpts(bridgeConfigs[bridgeName], otherBridges(bridgeName))
+		if snatV4 == nil && snatV6 == nil {
+			continue
+		}
+
+		err = n.state.Firewall.NetworkSetupOutboundNAT(bridgeName, snatV4, snatV6)
+		if err != nil {
+			n.logger.Warn("Failed to refresh NAT rules of bridge network", logger.Ctx{"network": bridgeName, "err": err})
+		}
 	}
 
 	// Setup named sets for nft firewall.

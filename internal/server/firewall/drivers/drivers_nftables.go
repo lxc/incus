@@ -170,10 +170,10 @@ func (d Nftables) networkSetupForwardingPolicy(networkName string, ip4Allow *boo
 	return nil
 }
 
-// networkSetupOutboundNAT configures outbound NAT.
+// NetworkSetupOutboundNAT configures outbound NAT.
 // If srcIP is non-nil then SNAT is used with the specified address, otherwise MASQUERADE mode is used.
 // Append mode is always on and so the append argument is ignored.
-func (d Nftables) networkSetupOutboundNAT(networkName string, SNATV4 *SNATOpts, SNATV6 *SNATOpts) error {
+func (d Nftables) NetworkSetupOutboundNAT(networkName string, SNATV4 *SNATOpts, SNATV6 *SNATOpts) error {
 	rules := make(map[string]*SNATOpts)
 
 	tplFields := map[string]any{
@@ -263,7 +263,7 @@ func (d Nftables) NetworkSetup(networkName string, opts Opts) error {
 	}
 
 	if opts.SNATV4 != nil || opts.SNATV6 != nil {
-		err := d.networkSetupOutboundNAT(networkName, opts.SNATV4, opts.SNATV6)
+		err := d.NetworkSetupOutboundNAT(networkName, opts.SNATV4, opts.SNATV6)
 		if err != nil {
 			return err
 		}
