@@ -86,6 +86,9 @@ const (
 	// EntitlementCanAccessConsole is the entitlement to access the console.
 	EntitlementCanAccessConsole Entitlement = "can_access_console"
 
+	// EntitlementCanConnectTCP is the entitlement to connect to TCP ports inside the instance.
+	EntitlementCanConnectTCP Entitlement = "can_connect_tcp"
+
 	// EntitlementCanExec is the entitlement to execute commands.
 	EntitlementCanExec Entitlement = "can_exec"
 
