@@ -3265,3 +3265,17 @@ that uses DRM native context, so the guest's own driver drives the host GPU
 directly, with graphics and video acceleration. One host GPU can be shared by several
 VMs and the host keeps using it. The `blob.size` device option sets the
 host-visible blob window (default 2GiB). Requires QEMU 11.0.0 or newer.
+
+## `instance_port_forward`
+
+This adds a new `POST /1.0/instances/NAME/port-forward` API endpoint which
+upgrades the connection to a raw TCP connection to the specified address
+and port inside of the instance.
+
+For containers, the connection is established directly by the server from
+within the container's network namespace. For virtual machines, the request
+is forwarded to the `incus-agent` which then handles the connection, this
+is controlled by the new `port-forward` agent feature.
+
+A matching `incus port-forward` command is added to the client, providing
+a local TCP listener which forwards every connection to the instance.

@@ -555,6 +555,7 @@ var APIExtensions = []string{
 	"authorization_config",
 	"network_allocations_network",
 	"gpu_native_context",
+	"instance_port_forward",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
