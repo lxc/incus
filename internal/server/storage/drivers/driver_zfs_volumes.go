@@ -1426,8 +1426,13 @@ func (d *zfs) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 			return nil
 		}
 
+		quotaCleared = false
+
 		return d.SetVolumeQuota(vol, srcVol.ConfigSize(), false, op)
 	}
+
+	// Make sure the quota is restored on error too.
+	defer logger.WarnOnError(restoreQuota, "Failed to restore volume quota", logger.Ctx{"volume": vol.Name()})
 
 	transfer := func(src Volume, target Volume, origin Volume) error {
 		var sender *exec.Cmd
