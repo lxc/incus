@@ -16,45 +16,45 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-type cmdDebug struct {
+type cmdLowLevel struct {
 	global *cmdGlobal
 }
 
-func (c *cmdDebug) command() *cobra.Command {
+func (c *cmdLowLevel) command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Hidden = true
-	cmd.Use = cli.U("debug")
-	cmd.Short = i18n.G("Debug commands")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Debug commands for instances`))
+	cmd.Use = cli.U("low-level")
+	cmd.Aliases = []string{"debug"}
+	cmd.Short = i18n.G("Low-level commands")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Low-level commands for instances`))
 
-	debugAttachCmd := cmdDebugMemory{global: c.global, debug: c}
-	cmd.AddCommand(debugAttachCmd.command())
+	lowLevelAttachCmd := cmdLowLevelMemory{global: c.global, lowLevel: c}
+	cmd.AddCommand(lowLevelAttachCmd.command())
 
-	debugNBDCmd := cmdDebugNBD{global: c.global, debug: c}
-	cmd.AddCommand(debugNBDCmd.command())
+	lowLevelNBDCmd := cmdLowLevelNBD{global: c.global, lowLevel: c}
+	cmd.AddCommand(lowLevelNBDCmd.command())
 
 	return cmd
 }
 
-type cmdDebugMemory struct {
-	global *cmdGlobal
-	debug  *cmdDebug
+type cmdLowLevelMemory struct {
+	global   *cmdGlobal
+	lowLevel *cmdLowLevel
 
 	flagFormat string
 }
 
-var cmdDebugMemoryUsage = u.Usage{u.Instance.Remote(), u.Target(u.File)}
+var cmdLowLevelMemoryUsage = u.Usage{u.Instance.Remote(), u.Target(u.File)}
 
-func (c *cmdDebugMemory) command() *cobra.Command {
+func (c *cmdLowLevelMemory) command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("dump-memory", cmdDebugMemoryUsage...)
+	cmd.Use = cli.U("dump-memory", cmdLowLevelMemoryUsage...)
 	cmd.Short = i18n.G("Export a virtual machine's memory state")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`Export the current memory state of a running virtual machine into a dump file.
 		This can be useful for debugging or analysis purposes.`,
 	))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus debug dump-memory vm1 memory-dump.elf --format=elf
+		`incus low-level dump-memory vm1 memory-dump.elf --format=elf
     Creates an ELF format memory dump of the vm1 instance.`,
 	))
 
@@ -64,8 +64,8 @@ func (c *cmdDebugMemory) command() *cobra.Command {
 	return cmd
 }
 
-func (c *cmdDebugMemory) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.global.Parse(cmdDebugMemoryUsage, cmd, args)
+func (c *cmdLowLevelMemory) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelMemoryUsage, cmd, args)
 	if err != nil {
 		return err
 	}
@@ -92,18 +92,18 @@ func (c *cmdDebugMemory) run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type cmdDebugNBD struct {
-	global *cmdGlobal
-	debug  *cmdDebug
+type cmdLowLevelNBD struct {
+	global   *cmdGlobal
+	lowLevel *cmdLowLevel
 
 	flagAddress string
 }
 
-var cmdDebugNBDUsage = u.Usage{u.Instance.Remote()}
+var cmdLowLevelNBDUsage = u.Usage{u.Instance.Remote()}
 
-func (c *cmdDebugNBD) command() *cobra.Command {
+func (c *cmdLowLevelNBD) command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("nbd", cmdDebugNBDUsage...)
+	cmd.Use = cli.U("nbd", cmdLowLevelNBDUsage...)
 	cmd.Short = i18n.G("NBD access to all of a virtual machine's disks")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
 		`NBD access to all of a virtual machine's disks
@@ -129,8 +129,8 @@ device name.`,
 	return cmd
 }
 
-func (c *cmdDebugNBD) run(cmd *cobra.Command, args []string) error {
-	parsed, err := c.global.Parse(cmdDebugNBDUsage, cmd, args)
+func (c *cmdLowLevelNBD) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelNBDUsage, cmd, args)
 	if err != nil {
 		return err
 	}
