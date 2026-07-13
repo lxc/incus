@@ -1178,7 +1178,11 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	if n.LocalStatus() != api.NetworkStatusPending {
+	// Also run the driver deletion for locally pending OVN networks on the client-facing request,
+	// as their cluster-wide state would otherwise be leaked once the DB record is removed below.
+	// Local-only drivers are still skipped as their deletion could touch host interfaces that were
+	// never created by the daemon.
+	if n.LocalStatus() != api.NetworkStatusPending || (clientType == clusterRequest.ClientTypeNormal && n.Type() == "ovn") {
 		err = n.Delete(clientType)
 		if err != nil {
 			return response.InternalError(err)
