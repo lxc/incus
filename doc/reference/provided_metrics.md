@@ -169,7 +169,7 @@ The following internal metrics are provided:
   - Number of bytes obtained from system
 * - `incus_operations_total`
   - Number of running operations
-* - `incus_storage_pool_total_bytes{pool="<pool>",driver="<driver>"}`
+* - `incus_storage_pool_size_bytes{pool="<pool>",driver="<driver>"}`
   - Total space of the storage pool (in bytes)
 * - `incus_storage_pool_used_bytes{pool="<pool>",driver="<driver>"}`
   - Used space of the storage pool (in bytes)
