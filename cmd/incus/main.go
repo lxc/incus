@@ -350,9 +350,9 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	webuiCmd := cmdWebui{global: &globalCmd}
 	app.AddCommand(webuiCmd.command())
 
-	// debug sub-command
-	debugCmd := cmdDebug{global: &globalCmd}
-	app.AddCommand(debugCmd.command())
+	// low-level sub-command
+	lowLevelCmd := cmdLowLevel{global: &globalCmd}
+	app.AddCommand(lowLevelCmd.command())
 
 	// wait sub-command
 	waitCmd := cmdWait{global: &globalCmd}
