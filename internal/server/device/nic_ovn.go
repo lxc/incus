@@ -1290,7 +1290,7 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 	}
 
 	var ovsExternalOVNPort string
-	if d.config["nested"] == "" {
+	if d.config["nested"] == "" && vswitch != nil {
 		ovsExternalOVNPort, err = vswitch.GetInterfaceAssociatedOVNSwitchPort(context.TODO(), d.config["host_name"])
 		if err != nil {
 			d.logger.Warn("Could not find OVN Switch port associated to OVS interface", logger.Ctx{"interface": d.config["host_name"]})
@@ -1309,7 +1309,7 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 	// Do this early on during the stop process to prevent any future error from leaving the OVS port present
 	// as if the instance is being migrated, this can cause port conflicts in OVN if the instance comes up on
 	// another host later.
-	if integrationBridgeNICName != "" {
+	if integrationBridgeNICName != "" && vswitch != nil {
 		integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
 
 		// Detach host-side end of veth pair from OVS integration bridge.
@@ -1320,15 +1320,21 @@ func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
-	instanceUUID := d.inst.LocalConfig()["volatile.uuid"]
-	err = d.network.InstanceDevicePortStop(ovn.OVNSwitchPort(ovsExternalOVNPort), &network.OVNInstanceNICStopOpts{
-		InstanceUUID: instanceUUID,
-		DeviceName:   d.name,
-		DeviceConfig: nicNormalizedAddressConfig(d.config),
-	})
-	if err != nil {
-		// Don't fail here as we still want the postStop hook to run to clean up the local veth pair.
-		d.logger.Error("Failed to remove OVN device port", logger.Ctx{"err": err})
+	// The network is nil when the device config failed validation (e.g. network still pending).
+	// Don't fail here either, so that the postStop hook still runs to clean up the local veth pair.
+	if d.network != nil {
+		instanceUUID := d.inst.LocalConfig()["volatile.uuid"]
+		err = d.network.InstanceDevicePortStop(ovn.OVNSwitchPort(ovsExternalOVNPort), &network.OVNInstanceNICStopOpts{
+			InstanceUUID: instanceUUID,
+			DeviceName:   d.name,
+			DeviceConfig: nicNormalizedAddressConfig(d.config),
+		})
+		if err != nil {
+			// Don't fail here as we still want the postStop hook to run to clean up the local veth pair.
+			d.logger.Error("Failed to remove OVN device port", logger.Ctx{"err": err})
+		}
+	} else {
+		d.logger.Error("Skipping OVN device port removal, network could not be loaded", logger.Ctx{"network": d.config["network"]})
 	}
 
 	// Remove BGP announcements.
@@ -1422,6 +1428,11 @@ func (d *nicOVN) postStop() error {
 
 // Remove is run when the device is removed from the instance or the instance is deleted.
 func (d *nicOVN) Remove(cleanupDependencies bool) error {
+	// The network is nil when the device config failed validation (e.g. network still pending).
+	if d.network == nil {
+		return fmt.Errorf("Failed removing OVN port for NIC %q: network %q could not be loaded", d.name, d.config["network"])
+	}
+
 	// Check for port groups that will become unused (and need deleting) as this NIC is deleted.
 	securityACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
 	if len(securityACLs) > 0 {
