@@ -3673,9 +3673,10 @@ func (n *ovn) deleteChassisGroupEntry() error {
 func (n *ovn) Delete(clientType request.ClientType) error {
 	n.logger.Debug("Delete", logger.Ctx{"clientType": clientType})
 
+	// Don't fail on stop errors as that would prevent the northbound database cleanup below.
 	err := n.Stop()
 	if err != nil {
-		return err
+		n.logger.Warn("Failed stopping network during delete, continuing with deletion", logger.Ctx{"err": err})
 	}
 
 	if clientType == request.ClientTypeNormal {
