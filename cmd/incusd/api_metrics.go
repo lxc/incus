@@ -158,7 +158,7 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 
 		labels := map[string]string{"pool": poolName, "driver": pool.Driver().Info().Name}
 		intMetrics.AddSamples(metrics.StoragePoolUsedBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Used)})
-		intMetrics.AddSamples(metrics.StoragePoolTotalBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Total)})
+		intMetrics.AddSamples(metrics.StoragePoolSizeBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Total)})
 	}
 
 	// invalidProjectFilters returns project filters which are either not in cache or have expired.
