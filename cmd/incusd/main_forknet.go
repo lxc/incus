@@ -63,6 +63,16 @@ static void forkdonetdetach(char *file) {
 	// Jump back to Go for the rest
 }
 
+static void forkdonetconnect(char *file) {
+	// Attach to the network namespace.
+	if (dosetns_file(file, "net") < 0) {
+		fprintf(stderr, "Failed setns to container network namespace: %s\n", strerror(errno));
+		_exit(1);
+	}
+
+	// Jump back to Go for the rest
+}
+
 int forknet_dhcp_logfile = -1;
 int forknet_dhcp_readyfd = -1;
 
@@ -201,6 +211,8 @@ void forknet(void)
 
 	if (strcmp(command, "detach") == 0)
 		forkdonetdetach(cur);
+	else if (strcmp(command, "connect") == 0)
+		forkdonetconnect(cur);
 }
 */
 import "C"
@@ -230,6 +242,7 @@ import (
 	"golang.org/x/net/bpf"
 	"golang.org/x/sys/unix"
 
+	"github.com/lxc/incus/v7/internal/netutils"
 	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/ip"
 	_ "github.com/lxc/incus/v7/shared/cgo" // Used by cgo
@@ -278,6 +291,13 @@ func (c *cmdForknet) command() *cobra.Command {
 	cmdDHCP.Args = cobra.ExactArgs(2)
 	cmdDHCP.RunE = c.runDHCP
 	cmd.AddCommand(cmdDHCP)
+
+	// connect
+	cmdConnect := &cobra.Command{}
+	cmdConnect.Use = "connect <netns file> <address> <port>"
+	cmdConnect.Args = cobra.ExactArgs(3)
+	cmdConnect.RunE = c.runConnect
+	cmd.AddCommand(cmdConnect)
 
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
@@ -1305,6 +1325,38 @@ func (c *cmdForknet) runDetach(_ *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (c *cmdForknet) runConnect(_ *cobra.Command, args []string) error {
+	addr := net.JoinHostPort(args[1], args[2])
+
+	// Establish the connection (we're inside the instance's network namespace).
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("Failed connecting to %q: %w", addr, err)
+	}
+
+	defer func() { _ = conn.Close() }()
+
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		return fmt.Errorf("Unexpected connection type %T", conn)
+	}
+
+	file, err := tcpConn.File()
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = file.Close() }()
+
+	// Pass the connection to the daemon.
+	err = netutils.AbstractUnixSendFd(3, int(file.Fd()))
+	if err != nil {
+		return fmt.Errorf("Failed passing the connection to the daemon: %w", err)
 	}
 
 	return nil

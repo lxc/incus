@@ -9357,6 +9357,92 @@ func (d *qemu) FileSFTP() (*sftp.Client, error) {
 	return client, nil
 }
 
+// PortForwardConn connects to the given address and TCP port inside of the instance through the agent.
+func (d *qemu) PortForwardConn(address string, port int) (net.Conn, error) {
+	// VMs, unlike containers, cannot forward connections if not running and using the agent.
+	if !d.IsRunning() {
+		return nil, errors.New("Instance is not running")
+	}
+
+	// Connect to the agent.
+	client, err := d.getAgentClient()
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the HTTP transport.
+	httpTransport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("Agent client transport is not an *http.Transport")
+	}
+
+	// Send the upgrade request.
+	u, err := url.Parse("https://custom.socket/1.0/port-forward")
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := json.Marshal(api.InstancePortForwardPost{Address: address, Port: port})
+	if err != nil {
+		return nil, err
+	}
+
+	req := &http.Request{
+		Method:        http.MethodPost,
+		URL:           u,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Header:        make(http.Header),
+		Host:          u.Host,
+		Body:          io.NopCloser(bytes.NewReader(body)),
+		ContentLength: int64(len(body)),
+	}
+
+	req.Header["Upgrade"] = []string{"tcp"}
+	req.Header["Connection"] = []string{"Upgrade"}
+	req.Header.Set("Content-Type", "application/json")
+
+	conn, err := httpTransport.DialContext(context.Background(), "tcp", "8443")
+	if err != nil {
+		return nil, err
+	}
+
+	tlsConn := tls.Client(conn, httpTransport.TLSClientConfig)
+	err = tlsConn.Handshake()
+	if err != nil {
+		return nil, err
+	}
+
+	err = req.Write(tlsConn)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.ReadResponse(bufio.NewReader(tlsConn), req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusSwitchingProtocols {
+		// Try to surface the agent error.
+		apiResp := api.Response{}
+
+		err = json.NewDecoder(resp.Body).Decode(&apiResp)
+		if err == nil && apiResp.Error != "" {
+			return nil, errors.New(apiResp.Error)
+		}
+
+		return nil, fmt.Errorf("Dialing failed: expected status code 101 got %d", resp.StatusCode)
+	}
+
+	if resp.Header.Get("Upgrade") != "tcp" {
+		return nil, errors.New("Missing or unexpected Upgrade header in response")
+	}
+
+	return tlsConn, nil
+}
+
 // Console gets access to the instance's console.
 func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	var path string

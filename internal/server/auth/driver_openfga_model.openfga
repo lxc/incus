@@ -35,6 +35,7 @@ type instance
     define can_access_files: [user, group#member] or user
     define can_connect_nbd: [user, group#member] or user
     define can_connect_sftp: [user, group#member] or user
+    define can_connect_tcp: [user, group#member] or user
     define can_edit: operator
     define can_exec: [user, group#member] or user
     define can_manage_backups: [user, group#member] or operator

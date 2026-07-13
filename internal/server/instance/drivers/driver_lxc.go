@@ -7903,6 +7903,58 @@ func (d *lxc) FileSFTP() (*sftp.Client, error) {
 	return client, nil
 }
 
+// PortForwardConn connects to the given address and TCP port from within the instance's network namespace.
+func (d *lxc) PortForwardConn(address string, port int) (net.Conn, error) {
+	if !d.IsRunning() {
+		return nil, errors.New("Instance is not running")
+	}
+
+	// Create a socket pair to pass the connection around.
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	parentFile := os.NewFile(uintptr(fds[0]), "forknet-parent")
+	defer func() { _ = parentFile.Close() }()
+
+	childFile := os.NewFile(uintptr(fds[1]), "forknet-child")
+	defer func() { _ = childFile.Close() }()
+
+	// Spawn forknet to establish the connection from within the network namespace.
+	var stderr bytes.Buffer
+
+	forknet := exec.Cmd{
+		Path:       d.state.OS.ExecPath,
+		Args:       []string{d.state.OS.ExecPath, "forknet", "connect", "--", fmt.Sprintf("/proc/%d/ns/net", d.InitPID()), address, strconv.Itoa(port)},
+		ExtraFiles: []*os.File{childFile},
+		Stderr:     &stderr,
+	}
+
+	err = forknet.Run()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to run forknet connect: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+
+	// Close our copy of the child end so the receive below can't block forever.
+	_ = childFile.Close()
+
+	// Retrieve the connection from forknet.
+	file, err := netutils.AbstractUnixReceiveFd(int(parentFile.Fd()), netutils.UnixFdsAcceptExact)
+	if err != nil {
+		return nil, fmt.Errorf("Failed getting the connection: %w", err)
+	}
+
+	defer func() { _ = file.Close() }()
+
+	conn, err := net.FileConn(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
 // stopForkFile attempts to send SIGTERM (if force is true) or SIGINT to forkfile then waits for it to exit.
 func (d *lxc) stopForkfile(force bool) {
 	// Make sure that when the function exits, no forkfile is running by acquiring the lock (which indicates

@@ -1330,7 +1330,7 @@ func (r *ProtocolIncus) GetStoragePoolVolumeBlockNBDConn(pool string, volType st
 
 	r.setURLQueryAttributes(&u.URL)
 
-	return r.rawConn(&u.URL, "nbd")
+	return r.rawConn(http.MethodGet, &u.URL, "nbd", nil)
 }
 
 // GetStoragePoolVolumeFileSFTPConn returns a connection to the volume's SFTP endpoint.
@@ -1344,7 +1344,7 @@ func (r *ProtocolIncus) GetStoragePoolVolumeFileSFTPConn(pool string, volType st
 	u.Path("1.0", "storage-pools", pool, "volumes", volType, volName, "sftp")
 	r.setURLQueryAttributes(&u.URL)
 
-	return r.rawConn(&u.URL, "sftp")
+	return r.rawConn(http.MethodGet, &u.URL, "sftp", nil)
 }
 
 // GetStoragePoolVolumeFileSFTP returns an SFTP connection to the volume.

@@ -278,6 +278,10 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	pauseCmd := cmdPause{global: &globalCmd}
 	app.AddCommand(pauseCmd.command())
 
+	// port-forward sub-command
+	portForwardCmd := cmdPortForward{global: &globalCmd}
+	app.AddCommand(portForwardCmd.command())
+
 	// publish sub-command
 	publishCmd := cmdPublish{global: &globalCmd}
 	app.AddCommand(publishCmd.command())

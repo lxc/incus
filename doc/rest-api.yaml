@@ -2049,6 +2049,22 @@ definitions:
         title: InstanceFull is a combination of Instance, InstanceBackup, InstanceState and InstanceSnapshot.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
+    InstancePortForwardPost:
+        properties:
+            address:
+                description: Address to connect to inside of the instance
+                example: 127.0.0.1
+                type: string
+                x-go-name: Address
+            port:
+                description: TCP port to connect to inside of the instance
+                example: 80
+                format: int64
+                type: integer
+                x-go-name: Port
+        title: InstancePortForwardPost represents an instance port forwarding request.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
     InstancePost:
         properties:
             Config:
@@ -11308,6 +11324,53 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get an NBD connection for all of the instance's disks
+            tags:
+                - instances
+    /1.0/instances/{name}/port-forward:
+        post:
+            consumes:
+                - application/json
+            description: |-
+                Upgrades the request to a raw TCP connection to the given address and port inside of the instance.
+
+                For containers, the connection is established directly by the server from within the
+                container's network namespace. For virtual machines, the request is forwarded to the
+                agent which then handles the connection.
+
+                This is only available on running instances.
+            operationId: instance_port_forward_post
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Port forwarding request
+                  in: body
+                  name: port-forward
+                  required: true
+                  schema:
+                    $ref: '#/definitions/InstancePortForwardPost'
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "101":
+                    description: Switching protocols to TCP
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Connect to a TCP port inside the instance
             tags:
                 - instances
     /1.0/instances/{name}/rebuild:
