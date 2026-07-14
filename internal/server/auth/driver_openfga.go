@@ -22,11 +22,12 @@ import (
 // FGA represents an OpenFGA authorizer.
 type FGA struct {
 	commonAuthorizer
-	tls *TLS
+	certificates *certificate.Cache
 
-	apiURL   string
-	apiToken string
-	storeID  string
+	apiURL        string
+	apiToken      string
+	storeID       string
+	tlsIdentifier string
 
 	onlineMu sync.Mutex
 	online   bool
@@ -72,11 +73,25 @@ func (f *FGA) configure(opts Opts) error {
 		return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.store.id", val)
 	}
 
+	// TLS clients mapping to an OpenFGA user (defaults to "name").
+	f.tlsIdentifier = "name"
+	val, ok = opts.config["authorization.openfga.tls.identifier"]
+	if ok && val != nil {
+		identifier, ok := val.(string)
+		if !ok {
+			return fmt.Errorf("Expected a string for configuration key %q, got: %T", "authorization.openfga.tls.identifier", val)
+		}
+
+		if identifier != "" {
+			f.tlsIdentifier = identifier
+		}
+	}
+
 	return nil
 }
 
 func (f *FGA) load(ctx context.Context, certificateCache *certificate.Cache, opts Opts) error {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	_, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	err := f.configure(opts)
@@ -84,11 +99,7 @@ func (f *FGA) load(ctx context.Context, certificateCache *certificate.Cache, opt
 		return err
 	}
 
-	f.tls = &TLS{}
-	err = f.tls.load(ctx, certificateCache, opts)
-	if err != nil {
-		return err
-	}
+	f.certificates = certificateCache
 
 	conf := client.ClientConfiguration{
 		ApiUrl:  f.apiURL,
@@ -262,6 +273,20 @@ func (f *FGA) connect(ctx context.Context, certificateCache *certificate.Cache, 
 	return nil
 }
 
+// userForRequest returns the OpenFGA user identifier for a request.
+func (f *FGA) userForRequest(details *requestDetails) string {
+	username := details.username()
+
+	if details.authenticationProtocol() == api.AuthenticationMethodTLS && f.tlsIdentifier == "name" && f.certificates != nil {
+		cert := f.certificates.GetAPICertificate(username)
+		if cert != nil && cert.Name != "" {
+			return cert.Name
+		}
+	}
+
+	return username
+}
+
 // CheckPermission returns an error if the user does not have the given Entitlement on the given Object.
 func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Object, entitlement Entitlement) error {
 	logCtx := logger.Ctx{"object": object, "entitlement": entitlement, "url": r.URL.String(), "method": r.Method}
@@ -277,11 +302,6 @@ func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return nil
 	}
 
-	// Use the TLS driver if the user authenticated with TLS.
-	if details.authenticationProtocol() == api.AuthenticationMethodTLS {
-		return f.tls.CheckPermission(ctx, r, object, entitlement)
-	}
-
 	// If offline, return a clear error to the user.
 	f.onlineMu.Lock()
 	defer f.onlineMu.Unlock()
@@ -289,7 +309,7 @@ func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
 	}
 
-	username := details.username()
+	username := f.userForRequest(details)
 	logCtx["username"] = username
 	logCtx["protocol"] = details.Protocol
 
@@ -331,12 +351,7 @@ func (f *FGA) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 		return allowFunc(true), nil
 	}
 
-	// Use the TLS driver if the user authenticated with TLS.
-	if details.authenticationProtocol() == api.AuthenticationMethodTLS {
-		return f.tls.GetPermissionChecker(ctx, r, entitlement, objectType)
-	}
-
-	username := details.username()
+	username := f.userForRequest(details)
 	logCtx["username"] = username
 	logCtx["protocol"] = details.Protocol
 

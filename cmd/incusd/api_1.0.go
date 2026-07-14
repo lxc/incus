@@ -813,7 +813,9 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	bgpChanged := false
 	dnsChanged := false
 	oidcChanged := false
-	openFGAChanged := false
+	authorizationChanged := false
+	openfgaChanged := false
+	authorizationScriptletChanged := false
 	ovnChanged := false
 	linstorChanged := false
 	ovsChanged := false
@@ -862,8 +864,16 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		case "oidc.issuer", "oidc.client.id", "oidc.audience", "oidc.claim", "oidc.scopes":
 			oidcChanged = true
 
-		case "authorization.openfga.api.url", "authorization.openfga.api.token", "authorization.openfga.store.id":
-			openFGAChanged = true
+		case "authorization.openfga.api.url", "authorization.openfga.api.token", "authorization.openfga.store.id", "authorization.openfga.tls.identifier":
+			authorizationChanged = true
+			openfgaChanged = true
+
+		case "authorization.scriptlet":
+			authorizationChanged = true
+			authorizationScriptletChanged = true
+
+		case "authorization.client.default", "authorization.client.unix", "authorization.client.tls", "authorization.client.tls-restricted", "authorization.client.oidc":
+			authorizationChanged = true
 
 		case "storage.linstor.controller_connection", "storage.linstor.ca_cert", "storage.linstor.client_cert", "storage.linstor.client_key":
 			linstorChanged = true
@@ -1017,9 +1027,18 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
-	if openFGAChanged {
-		openfgaAPIURL, openfgaAPIToken, openfgaStoreID := d.globalConfig.OpenFGA()
-		err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID)
+	if authorizationChanged {
+		// Reload only the optional drivers whose config changed.
+		var reload []string
+		if openfgaChanged {
+			reload = append(reload, auth.DriverOpenFGA)
+		}
+
+		if authorizationScriptletChanged {
+			reload = append(reload, auth.DriverScriptlet)
+		}
+
+		err := d.setupAuthorization(reload...)
 		if err != nil {
 			return err
 		}
@@ -1059,15 +1078,6 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		err := scriptletLoad.InstancePlacementSet(value)
 		if err != nil {
 			return fmt.Errorf("Failed saving instance placement scriptlet: %w", err)
-		}
-	}
-
-	// Setup the authorization scriptlet.
-	value, ok = clusterChanged["authorization.scriptlet"]
-	if ok {
-		err := d.setupAuthorizationScriptlet(value)
-		if err != nil {
-			return err
 		}
 	}
 

@@ -76,7 +76,6 @@ import (
 	"github.com/lxc/incus/v7/shared/cancel"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/proxy"
-	"github.com/lxc/incus/v7/shared/revert"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/ws"
@@ -155,7 +154,8 @@ type Daemon struct {
 	loggingController *logging.Controller
 
 	// Authorization.
-	authorizer auth.Authorizer
+	authorizer   *auth.Router
+	authorizerMu sync.Mutex
 
 	// Syslog listener cancel function.
 	syslogSocketCancel context.CancelFunc
@@ -735,6 +735,14 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpo
 			ctx := context.WithValue(r.Context(), request.CtxUsername, username)
 			ctx = context.WithValue(ctx, request.CtxProtocol, protocol)
 
+			// Flag requests made by the root user over the local unix socket.
+			if protocol == "unix" {
+				cred, err := ucred.GetCredFromContext(r.Context())
+				if err == nil && cred.Uid == uint32(0) {
+					ctx = context.WithValue(ctx, request.CtxUnixIsRoot, true)
+				}
+			}
+
 			// Add forwarded requestor data.
 			if protocol == "cluster" {
 				// Add authentication/authorization context data.
@@ -951,8 +959,8 @@ func (d *Daemon) init() error {
 
 	var dbWarnings []dbCluster.Warning
 
-	// Set default authorizer.
-	d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+	// Set up the authorization router.
+	d.authorizer, err = auth.NewRouter(d.shutdownCtx, logger.Log, d.clientCerts)
 	if err != nil {
 		return err
 	}
@@ -1370,9 +1378,7 @@ func (d *Daemon) init() error {
 	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
 	oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim := d.globalConfig.OIDCServer()
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
-	openfgaAPIURL, openfgaAPIToken, openfgaStoreID := d.globalConfig.OpenFGA()
 	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
-	authorizationScriptlet := d.globalConfig.AuthorizationScriptlet()
 
 	d.endpoints.NetworkUpdateTrustedProxy(d.globalConfig.HTTPSTrustedProxy())
 	ws.SetTrustedOrigins(d.globalConfig.HTTPSAllowedWebsocketOrigin())
@@ -1400,20 +1406,10 @@ func (d *Daemon) init() error {
 		}
 	}
 
-	// Setup OpenFGA authorization.
-	if openfgaAPIURL != "" && openfgaStoreID != "" && openfgaAPIToken != "" {
-		err = d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID)
-		if err != nil {
-			return fmt.Errorf("Failed to configure OpenFGA: %w", err)
-		}
-	}
-
-	// Setup the authorization scriptlet.
-	if authorizationScriptlet != "" {
-		err = d.setupAuthorizationScriptlet(authorizationScriptlet)
-		if err != nil {
-			return err
-		}
+	// Setup authorization, loading every optional driver.
+	err = d.setupAuthorization(auth.DriverOpenFGA, auth.DriverScriptlet)
+	if err != nil {
+		return fmt.Errorf("Failed to configure authorization: %w", err)
 	}
 
 	// Setup BGP listener.
@@ -1889,40 +1885,83 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	return err
 }
 
-// Setup OpenFGA.
-func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) error {
-	var err error
+// setupAuthorization builds the authorization router from the current global configuration.
+func (d *Daemon) setupAuthorization(reload ...string) error {
+	d.authorizerMu.Lock()
+	defer d.authorizerMu.Unlock()
 
-	if d.authorizer != nil {
-		err := d.authorizer.StopService(d.shutdownCtx)
-		if err != nil {
-			logger.Error("Failed to stop authorizer service", logger.Ctx{"error": err})
+	optional := map[string]auth.Authorizer{}
+
+	// Carry over the optional drivers we are not reloading from the running router.
+	for _, name := range []string{auth.DriverOpenFGA, auth.DriverScriptlet} {
+		if slices.Contains(reload, name) {
+			continue
+		}
+
+		authDriver := d.authorizer.LoadedDriver(name)
+		if authDriver != nil {
+			optional[name] = authDriver
 		}
 	}
 
-	if apiURL == "" || apiToken == "" || storeID == "" {
-		// Reset to default authorizer.
-		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
+	if slices.Contains(reload, auth.DriverOpenFGA) {
+		openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaTLSIdentifier := d.globalConfig.OpenFGA()
+
+		// Stop the previously loaded OpenFGA driver if loaded.
+		previousOpenFGA := d.authorizer.LoadedDriver(auth.DriverOpenFGA)
+		if previousOpenFGA != nil {
+			err := previousOpenFGA.StopService(d.shutdownCtx)
+			if err != nil {
+				logger.Error("Failed to stop OpenFGA authorizer service", logger.Ctx{"error": err})
+			}
+		}
+
+		if openfgaAPIURL != "" && openfgaStoreID != "" && openfgaAPIToken != "" {
+			openfgaDriver, err := d.setupOpenFGA(openfgaAPIURL, openfgaAPIToken, openfgaStoreID, openfgaTLSIdentifier)
+			if err != nil {
+				return err
+			}
+
+			optional[auth.DriverOpenFGA] = openfgaDriver
+		}
+	}
+
+	if slices.Contains(reload, auth.DriverScriptlet) {
+		scriptletDriver, err := d.setupAuthorizationScriptlet(d.globalConfig.AuthorizationScriptlet())
 		if err != nil {
 			return err
 		}
 
-		return nil
+		if scriptletDriver != nil {
+			optional[auth.DriverScriptlet] = scriptletDriver
+		}
 	}
 
+	return d.authorizer.Configure(d.globalConfig.AuthorizationClientRoutes(), optional)
+}
+
+// setupAuthorizationScriptlet loads scriptlet driver.
+func (d *Daemon) setupAuthorizationScriptlet(scriptlet string) (auth.Authorizer, error) {
+	err := scriptletLoad.AuthorizationSet(scriptlet)
+	if err != nil {
+		return nil, fmt.Errorf("Failed saving authorization scriptlet: %w", err)
+	}
+
+	if scriptlet == "" {
+		return nil, nil
+	}
+
+	return auth.LoadAuthorizer(d.shutdownCtx, auth.DriverScriptlet, logger.Log, d.clientCerts)
+}
+
+// setupOpenFGA loads the OpenFGA authorization driver.
+func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, tlsIdentifier string) (auth.Authorizer, error) {
 	config := map[string]any{
-		"authorization.openfga.api.url":   apiURL,
-		"authorization.openfga.api.token": apiToken,
-		"authorization.openfga.store.id":  storeID,
+		"authorization.openfga.api.url":        apiURL,
+		"authorization.openfga.api.token":      apiToken,
+		"authorization.openfga.store.id":       storeID,
+		"authorization.openfga.tls.identifier": tlsIdentifier,
 	}
-
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	reverter.Add(func() {
-		// Reset to default authorizer.
-		d.authorizer, _ = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
-	})
 
 	// Build the list of resources to update the model.
 	refreshResources := func() (*auth.Resources, error) {
@@ -2168,47 +2207,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string) er
 		return &resources, nil
 	}
 
-	openfgaAuthorizer, err := auth.LoadAuthorizer(d.shutdownCtx, auth.DriverOpenFGA, logger.Log, d.clientCerts, auth.WithConfig(config), auth.WithResourcesFunc(refreshResources))
-	if err != nil {
-		return err
-	}
-
-	d.authorizer = openfgaAuthorizer
-
-	reverter.Success()
-	return nil
-}
-
-// Setup authorization scriptlet.
-func (d *Daemon) setupAuthorizationScriptlet(scriptlet string) error {
-	err := scriptletLoad.AuthorizationSet(scriptlet)
-	if err != nil {
-		return fmt.Errorf("Failed saving authorization scriptlet: %w", err)
-	}
-
-	if scriptlet == "" {
-		// Reset to default authorizer.
-		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverTLS, logger.Log, d.clientCerts)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	// Fail if not using the default tls or scriptlet authorizer.
-	switch d.authorizer.(type) {
-	case *auth.TLS, *auth.Scriptlet:
-		d.authorizer, err = auth.LoadAuthorizer(d.shutdownCtx, auth.DriverScriptlet, logger.Log, d.clientCerts)
-		if err != nil {
-			return err
-		}
-
-	default:
-		return errors.New("Attempting to setup scriptlet authorization while another authorizer is already set")
-	}
-
-	return nil
+	return auth.LoadAuthorizer(d.shutdownCtx, auth.DriverOpenFGA, logger.Log, d.clientCerts, auth.WithConfig(config), auth.WithResourcesFunc(refreshResources))
 }
 
 // Syslog listener.
