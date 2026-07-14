@@ -3522,6 +3522,46 @@ func (d *lxc) Rebuild(img *api.Image, op *operations.Operation) error {
 	return d.rebuildCommon(d, img, op)
 }
 
+// stopDHCPClient kills the forknet dhcp process if any and waits for it to
+// exit so the container's cgroup can be fully cleaned up.
+func (d *lxc) stopDHCPClient() {
+	pidPath := filepath.Join(d.Path(), "network", "dhcp.pid")
+
+	dhcpPIDStr, err := os.ReadFile(pidPath)
+	if err != nil {
+		return
+	}
+
+	dhcpPID, err := strconv.Atoi(strings.TrimSpace(string(dhcpPIDStr)))
+	if err != nil {
+		return
+	}
+
+	pidFd, err := linux.PidFdOpen(dhcpPID, 0)
+	if err != nil {
+		return
+	}
+
+	defer func() { _ = pidFd.Close() }()
+
+	// Guard against PID reuse.
+	cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", dhcpPID))
+	if err != nil || (!strings.HasPrefix(string(cmdline), "[incus dhcp]") && !strings.Contains(string(cmdline), "forknet\x00dhcp")) {
+		return
+	}
+
+	err = linux.PidfdSendSignal(int(pidFd.Fd()), int(unix.SIGTERM), 0)
+	if err != nil {
+		return
+	}
+
+	// Wait for the process to exit.
+	fds := []unix.PollFd{{Fd: int32(pidFd.Fd()), Events: unix.POLLIN}}
+	_, _ = unix.Poll(fds, 5000)
+
+	_ = os.Remove(pidPath)
+}
+
 // onStopNS is triggered by LXC's stop hook once a container is shutdown but before the container's
 // namespaces have been closed. The netns path of the stopped container is provided.
 func (d *lxc) onStopNS(args map[string]string) error {
@@ -3539,6 +3579,9 @@ func (d *lxc) onStopNS(args map[string]string) error {
 	if err != nil {
 		return err
 	}
+
+	// Stop the DHCP client if any.
+	d.stopDHCPClient()
 
 	// Clean up devices.
 	d.cleanupDevices(false, netns)
@@ -3597,16 +3640,8 @@ func (d *lxc) onStop(args map[string]string) error {
 		// Clean up devices.
 		d.cleanupDevices(false, "")
 
-		// Stop DHCP client if any.
-		if util.PathExists(filepath.Join(d.Path(), "network", "dhcp.pid")) {
-			dhcpPIDStr, err := os.ReadFile(filepath.Join(d.Path(), "network", "dhcp.pid"))
-			if err == nil {
-				dhcpPID, err := strconv.Atoi(strings.TrimSpace(string(dhcpPIDStr)))
-				if err == nil {
-					_ = unix.Kill(dhcpPID, unix.SIGTERM)
-				}
-			}
-		}
+		// Stop the DHCP client if it's somehow still around.
+		d.stopDHCPClient()
 
 		// Remove directory ownership (to avoid issue if uidmap is reused)
 		err := os.Chown(d.Path(), 0, 0)
