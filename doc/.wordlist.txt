@@ -180,6 +180,7 @@ MiB
 Mibit
 MicroCeph
 MicroCloud
+misconfigured
 MCS
 MII
 MITM
