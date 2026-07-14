@@ -20,6 +20,12 @@ const (
 
 	// DriverScriptlet provides scriptlet-based authorization. It is compatible with any authentication method.
 	DriverScriptlet string = "scriptlet"
+
+	// DriverAllow is a terminal driver that unconditionally allows every request.
+	DriverAllow string = "allow"
+
+	// DriverDeny is a terminal driver that unconditionally denies every request.
+	DriverDeny string = "deny"
 )
 
 // ErrUnknownDriver is the "Unknown driver" error.
@@ -29,6 +35,8 @@ var authorizers = map[string]func() authorizer{
 	DriverTLS:       func() authorizer { return &TLS{} },
 	DriverOpenFGA:   func() authorizer { return &FGA{} },
 	DriverScriptlet: func() authorizer { return &Scriptlet{} },
+	DriverAllow:     func() authorizer { return &allowDenyAuthorizer{allowed: true} },
+	DriverDeny:      func() authorizer { return &allowDenyAuthorizer{allowed: false} },
 }
 
 type authorizer interface {
