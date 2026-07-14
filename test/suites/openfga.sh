@@ -25,9 +25,10 @@ test_openfga() {
     OPENFGA_STORE_ID="$(fga store create --name "test" | jq -r '.store.id')"
 
     # Configure OpenFGA in Incus.
-    incus config set authorization.openfga.api.url "$(fga_address)"
-    incus config set authorization.openfga.api.token "$(fga_token)"
-    incus config set authorization.openfga.store.id "${OPENFGA_STORE_ID}"
+    incus config set "authorization.openfga.api.url=$(fga_address)"
+    incus config set "authorization.openfga.api.token=$(fga_token)"
+    incus config set "authorization.openfga.store.id=${OPENFGA_STORE_ID}"
+    incus config set "authorization.client.oidc=openfga"
 
     # Wait for initial connection to OpenFGA.
     sleep 1s
