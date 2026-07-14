@@ -5096,6 +5096,46 @@ DNS resolvers to use for performing (recursive) `CNAME` resolving and apex domai
 
 <!-- config group server-acme end -->
 <!-- config group server-authorization start -->
+```{config:option} authorization.client.default server-authorization
+:scope: "global"
+:shortdesc: "Authorization driver for clients without a more specific class route"
+:type: "string"
+Routes clients that do not match a more specific class to an authorization driver.
+Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+```
+
+```{config:option} authorization.client.oidc server-authorization
+:scope: "global"
+:shortdesc: "Authorization driver for OIDC-authenticated clients"
+:type: "string"
+Routes OIDC-authenticated clients to an authorization driver.
+Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+```
+
+```{config:option} authorization.client.tls server-authorization
+:scope: "global"
+:shortdesc: "Authorization driver for unrestricted TLS clients"
+:type: "string"
+Routes clients using an unrestricted client certificate to an authorization driver.
+Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+```
+
+```{config:option} authorization.client.tls-restricted server-authorization
+:scope: "global"
+:shortdesc: "Authorization driver for restricted TLS clients"
+:type: "string"
+Routes clients using a restricted (project-scoped) client certificate to an authorization driver.
+Possible values are `allow`, `deny`, `tls`, `openfga` and `scriptlet`.
+```
+
+```{config:option} authorization.client.unix server-authorization
+:scope: "global"
+:shortdesc: "Authorization driver for local (`unix` socket) clients"
+:type: "string"
+Routes local clients connecting over the `unix` socket to an authorization driver.
+Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+```
+
 ```{config:option} authorization.openfga.api.token server-authorization
 :scope: "global"
 :shortdesc: "API token of the OpenFGA server"
@@ -5115,6 +5155,15 @@ DNS resolvers to use for performing (recursive) `CNAME` resolving and apex domai
 :shortdesc: "ID of the OpenFGA permission store"
 :type: "string"
 
+```
+
+```{config:option} authorization.openfga.tls.identifier server-authorization
+:defaultdesc: "`name`"
+:scope: "global"
+:shortdesc: "Certificate attribute used as the OpenFGA user for TLS clients"
+:type: "string"
+When a TLS client is authorized by OpenFGA, this selects the certificate
+attribute used as the OpenFGA user: `fingerprint` or `name`.
 ```
 
 ```{config:option} authorization.scriptlet server-authorization
