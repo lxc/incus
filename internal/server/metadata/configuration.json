@@ -5715,6 +5715,46 @@
 			"authorization": {
 				"keys": [
 					{
+						"authorization.client.default": {
+							"longdesc": "Routes clients that do not match a more specific class to an authorization driver.\nPossible values are `allow`, `deny`, `openfga` and `scriptlet`.",
+							"scope": "global",
+							"shortdesc": "Authorization driver for clients without a more specific class route",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.client.oidc": {
+							"longdesc": "Routes OIDC-authenticated clients to an authorization driver.\nPossible values are `allow`, `deny`, `openfga` and `scriptlet`.",
+							"scope": "global",
+							"shortdesc": "Authorization driver for OIDC-authenticated clients",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.client.tls": {
+							"longdesc": "Routes clients using an unrestricted client certificate to an authorization driver.\nPossible values are `allow`, `deny`, `openfga` and `scriptlet`.",
+							"scope": "global",
+							"shortdesc": "Authorization driver for unrestricted TLS clients",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.client.tls-restricted": {
+							"longdesc": "Routes clients using a restricted (project-scoped) client certificate to an authorization driver.\nPossible values are `allow`, `deny`, `tls`, `openfga` and `scriptlet`.",
+							"scope": "global",
+							"shortdesc": "Authorization driver for restricted TLS clients",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.client.unix": {
+							"longdesc": "Routes local clients connecting over the `unix` socket to an authorization driver.\nPossible values are `allow`, `deny`, `openfga` and `scriptlet`.",
+							"scope": "global",
+							"shortdesc": "Authorization driver for local (`unix` socket) clients",
+							"type": "string"
+						}
+					},
+					{
 						"authorization.openfga.api.token": {
 							"longdesc": "",
 							"scope": "global",
@@ -5735,6 +5775,15 @@
 							"longdesc": "",
 							"scope": "global",
 							"shortdesc": "ID of the OpenFGA permission store",
+							"type": "string"
+						}
+					},
+					{
+						"authorization.openfga.tls.identifier": {
+							"defaultdesc": "`name`",
+							"longdesc": "When a TLS client is authorized by OpenFGA, this selects the certificate\nattribute used as the OpenFGA user: `fingerprint` or `name`.",
+							"scope": "global",
+							"shortdesc": "Certificate attribute used as the OpenFGA user for TLS clients",
 							"type": "string"
 						}
 					},
