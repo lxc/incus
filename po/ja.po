@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-07-09 22:01-0400\n"
-"PO-Revision-Date: 2026-07-13 13:37+0000\n"
+"PO-Revision-Date: 2026-07-14 14:01+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 2026.7.1.dev0\n"
+"X-Generator: Weblate 2026.8.dev0\n"
 
 #: cmd/incus/info.go:441
 msgid "  Chassis:"
@@ -983,7 +983,6 @@ msgid "Add rules to an ACL"
 msgstr "ACLにルールを追加します"
 
 #: cmd/incus/color/color.go:44
-#, fuzzy
 msgid "Additional Help Topics:"
 msgstr "追加ヘルプトピック:"
 
