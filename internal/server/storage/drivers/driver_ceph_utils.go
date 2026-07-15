@@ -1686,3 +1686,15 @@ func (d *ceph) resizeVolume(vol Volume, sizeBytes int64, allowShrink bool) error
 
 	return err
 }
+
+func (d *ceph) flattenImage(ctx context.Context, targetVol string) error {
+	_, err := subprocess.RunCommandContext(
+		ctx,
+		"rbd",
+		"--id", d.config["ceph.user.name"],
+		"--cluster", d.config["ceph.cluster_name"],
+		"flatten",
+		targetVol,
+	)
+	return err
+}
