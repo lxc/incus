@@ -2573,7 +2573,7 @@ func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
 	}
 
 	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
-		ip := net.ParseIP(nicConfig["ipv4.address"])
+		ip := net.ParseIP(nicAddressIP(nicConfig["ipv4.address"]))
 		if ip != nil {
 			if !ipInRanges(ip, dhcpReserveIPv4s) {
 				dhcpReserveIPv4s = append(dhcpReserveIPv4s, iprange.Range{Start: ip})
@@ -7239,7 +7239,7 @@ func (n *ovn) Leases(projectName string, clientType request.ClientType) ([]api.N
 		// Add the leases.
 		for _, ip := range devIPs {
 			leaseType := "dynamic"
-			if nicConfig["ipv4.address"] == ip.String() || nicConfig["ipv6.address"] == ip.String() {
+			if nicAddressIP(nicConfig["ipv4.address"]) == ip.String() || nicAddressIP(nicConfig["ipv6.address"]) == ip.String() {
 				leaseType = "static"
 			}
 

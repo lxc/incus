@@ -81,6 +81,16 @@ func MACDevName(mac net.HardwareAddr) string {
 	return fmt.Sprintf("inc%s", devName[2:])
 }
 
+// nicAddressIP returns the IP portion of a NIC address that may be in CIDR form.
+func nicAddressIP(value string) string {
+	addr, _, found := strings.Cut(value, "/")
+	if !found {
+		return value
+	}
+
+	return addr
+}
+
 // UsedByInstanceDevices looks for instance NIC devices using the network and runs the supplied usageFunc for each.
 // Accepts optional filter arguments to specify a subset of instances.
 func UsedByInstanceDevices(s *state.State, networkProjectName string, networkName string, networkType string, usageFunc func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error, filters ...cluster.InstanceFilter) error {
@@ -480,6 +490,13 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 			d, err = inst.FillNetworkDevice(deviceName, d)
 			if err != nil {
 				continue
+			}
+
+			// Treat "none" and static in-instance (CIDR) addresses as not set for DHCP purposes.
+			for _, key := range []string{"ipv4.address", "ipv6.address"} {
+				if d[key] == "none" || strings.Contains(d[key], "/") {
+					d[key] = ""
+				}
 			}
 
 			// Add the new host entries.
