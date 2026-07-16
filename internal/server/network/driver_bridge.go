@@ -3465,7 +3465,7 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 			}
 
 			// Add the lease.
-			nicIP4 := net.ParseIP(nicConfig["ipv4.address"])
+			nicIP4 := net.ParseIP(nicAddressIP(nicConfig["ipv4.address"]))
 			if nicIP4 != nil {
 				leases = append(leases, api.NetworkLease{
 					Hostname: inst.Name,
@@ -3476,7 +3476,7 @@ func (n *bridge) Leases(projectName string, clientType request.ClientType) ([]ap
 				})
 			}
 
-			nicIP6 := net.ParseIP(nicConfig["ipv6.address"])
+			nicIP6 := net.ParseIP(nicAddressIP(nicConfig["ipv6.address"]))
 			if nicIP6 != nil {
 				leases = append(leases, api.NetworkLease{
 					Hostname: inst.Name,

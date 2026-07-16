@@ -118,8 +118,19 @@ func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey strin
 
 		conn, err := tlsDial(network, addr, transport.TLSClientConfig, false)
 		if err != nil {
-			// We may have gotten redirected to a non-Incus machine
-			return tlsDial(network, addr, transport.TLSClientConfig, true)
+			// On certificate verification failure, we may have gotten redirected to a
+			// non-Incus machine, retry with the dialed address as the server name.
+			var certVerifyErr *tls.CertificateVerificationError
+			hostnameErr := x509.HostnameError{}
+			if errors.As(err, &certVerifyErr) || errors.As(err, &hostnameErr) {
+				conn, retryErr := tlsDial(network, addr, transport.TLSClientConfig, true)
+				if retryErr == nil {
+					return conn, nil
+				}
+			}
+
+			// Return the initial error as the retry error may be misleading.
+			return nil, err
 		}
 
 		return conn, nil
