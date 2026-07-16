@@ -64,14 +64,17 @@ func RFC3493Dialer(ctx context.Context, network string, address string) (net.Con
 	// Sort addresses with IPv6 first per RFC 8305
 	addrs = sortAddressesByFamily(addrs)
 
-	// If the context doesn't have a deadline, add one
+	// Wrap the context so that returning cancels any dials still in flight.
 	_, hasDeadline := ctx.Deadline()
 
-	if !hasDeadline {
-		var cancel context.CancelFunc
+	var cancel context.CancelFunc
+	if hasDeadline {
+		ctx, cancel = context.WithCancel(ctx)
+	} else {
 		ctx, cancel = context.WithTimeout(ctx, happyEyeballsTimeout)
-		defer cancel()
 	}
+
+	defer cancel()
 
 	type dialResult struct {
 		conn net.Conn
@@ -82,10 +85,24 @@ func RFC3493Dialer(ctx context.Context, network string, address string) (net.Con
 	results := make(chan dialResult, len(addrs))
 	var pendingDials int
 
+	// closeRemaining discards the results of any dials still pending.
+	closeRemaining := func(pending int) {
+		go func() {
+			for range pending {
+				result := <-results
+				if result.conn != nil {
+					_ = result.conn.Close()
+				}
+			}
+		}()
+	}
+
 	// Use a dialer with the context for proper cancellation
 	dialer := &net.Dialer{
 		Timeout: 10 * time.Second,
 	}
+
+	var errs []error
 
 	// Start connection attempts with staggered delays per RFC 8305
 	for i, addr := range addrs {
@@ -96,14 +113,16 @@ func RFC3493Dialer(ctx context.Context, network string, address string) (net.Con
 			case result := <-results:
 				pendingDials--
 				if result.err == nil {
+					closeRemaining(pendingDials)
 					return configureConnection(result.conn)
 				}
-				// Put the error result back for later collection
-				results <- result
-				pendingDials++
+
+				// On failure, start the next attempt immediately
+				errs = append(errs, result.err)
 			case <-time.After(happyEyeballsDelay):
 				// Timeout elapsed, start next connection attempt
 			case <-ctx.Done():
+				closeRemaining(pendingDials)
 				return nil, fmt.Errorf("%s: %s (context cancelled)", connectErrorPrefix, address)
 			}
 		}
@@ -116,37 +135,23 @@ func RFC3493Dialer(ctx context.Context, network string, address string) (net.Con
 		}(addr)
 	}
 
-	// Collect results
-	var errs []error
-	var connections []net.Conn
-
+	// Wait for the first successful connection, abandoning the others
 	for pendingDials > 0 {
 		select {
 		case result := <-results:
 			pendingDials--
 			if result.err != nil {
 				errs = append(errs, result.err)
-			} else {
-				connections = append(connections, result.conn)
+				continue
 			}
+
+			closeRemaining(pendingDials)
+			return configureConnection(result.conn)
 
 		case <-ctx.Done():
-			// Close any connections we've established
-			for _, conn := range connections {
-				_ = conn.Close()
-			}
-
+			closeRemaining(pendingDials)
 			return nil, fmt.Errorf("%s: %s (context cancelled)", connectErrorPrefix, address)
 		}
-	}
-
-	// Return the first successful connection, close the rest
-	if len(connections) > 0 {
-		for i := 1; i < len(connections); i++ {
-			_ = connections[i].Close()
-		}
-
-		return configureConnection(connections[0])
 	}
 
 	return nil, fmt.Errorf("%s: %s (%v)", connectErrorPrefix, address, errs)
