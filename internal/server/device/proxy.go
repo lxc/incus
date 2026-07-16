@@ -530,12 +530,14 @@ func (d *proxy) setupNAT() error {
 		// instance's network traffic. If the wildcard address is supplied as the connect host then the
 		// first bridged NIC which has a static IP address defined is selected as the connect host IP.
 		if ipVersion == 4 && devConfig["ipv4.address"] != "" {
-			if connectAddr.Address == devConfig["ipv4.address"] || connectWildcard {
-				connectIP = net.ParseIP(devConfig["ipv4.address"])
+			nicIP := nicAddressIP(devConfig["ipv4.address"])
+			if connectAddr.Address == nicIP || connectWildcard {
+				connectIP = net.ParseIP(nicIP)
 			}
 		} else if ipVersion == 6 && devConfig["ipv6.address"] != "" {
-			if connectAddr.Address == devConfig["ipv6.address"] || connectWildcard {
-				connectIP = net.ParseIP(devConfig["ipv6.address"])
+			nicIP := nicAddressIP(devConfig["ipv6.address"])
+			if connectAddr.Address == nicIP || connectWildcard {
+				connectIP = net.ParseIP(nicIP)
 			}
 		} else if nicType == "bridged" && connectWildcard && dynamicNICName == "" {
 			// No static IP defined on a bridged NIC. Remember it as a candidate for dynamic
