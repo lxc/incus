@@ -140,7 +140,7 @@ func (d *common) Description() string {
 	return d.description
 }
 
-// IsEphemeral returns whether the instanc is ephemeral or not.
+// IsEphemeral returns whether the instance is ephemeral or not.
 func (d *common) IsEphemeral() bool {
 	return d.ephemeral
 }
