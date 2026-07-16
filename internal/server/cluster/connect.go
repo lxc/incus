@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -147,6 +148,12 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 	// whether it is exclusively attached to remote instance, and if so then we need to forward the request to
 	// the node whereit is currently used. This avoids conflicting with another member when using it locally.
 	if errors.Is(err, db.ErrNoClusterMember) {
+		// Instance volumes are named after their instance, so resolve the owning instance directly.
+		if volumeType == db.StoragePoolVolumeTypeContainer || volumeType == db.StoragePoolVolumeTypeVM {
+			instName := strings.SplitN(volumeName, "/", 2)[0]
+			return ConnectIfInstanceIsRemote(s, projectName, instName, r)
+		}
+
 		// GetStoragePoolVolume returns a volume with an empty Location field for remote drivers.
 		var dbVolume *db.StorageVolume
 		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
