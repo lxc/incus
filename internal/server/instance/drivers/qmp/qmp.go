@@ -288,6 +288,7 @@ var commandTimeouts = map[string]time.Duration{
 	"blockdev-mirror":           blockCommandTimeout,
 	"blockdev-snapshot":         blockCommandTimeout,
 	"change-backing-file":       blockCommandTimeout,
+	"job-dismiss":               blockCommandTimeout,
 	"query-block-jobs":          blockCommandTimeout,
 	"nbd-server-start":          blockCommandTimeout,
 	"nbd-server-stop":           blockCommandTimeout,
