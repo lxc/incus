@@ -217,6 +217,13 @@ func (s *Server) completeMultipartUpload(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
+	// Fail conditional writes early, before the parts are assembled.
+	s3Err := checkWritePreconditions(r, dataPath)
+	if s3Err != nil {
+		s3Err.Response(w)
+		return
+	}
+
 	err = os.MkdirAll(filepath.Dir(dataPath), 0o700)
 	if err != nil {
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
@@ -258,6 +265,17 @@ func (s *Server) completeMultipartUpload(w http.ResponseWriter, r *http.Request,
 	if err != nil {
 		_ = os.Remove(tmp)
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		return
+	}
+
+	// Re-evaluate the preconditions and publish the object atomically.
+	objectWriteMu.Lock()
+	defer objectWriteMu.Unlock()
+
+	s3Err = checkWritePreconditions(r, dataPath)
+	if s3Err != nil {
+		_ = os.Remove(tmp)
+		s3Err.Response(w)
 		return
 	}
 
