@@ -171,13 +171,18 @@ func LoadConfig(path string) (*Config, error) {
 		}
 	}
 
+	if c.DefaultRemote == "" {
+		c.DefaultRemote = DefaultConfig().DefaultRemote
+	}
+
+	// Keep track of the on-disk default remote.
+	c.fileDefaultRemote = c.DefaultRemote
+
 	// If the environment specifies a remote this takes priority over what
 	// is defined in the configuration
 	envDefaultRemote := os.Getenv("INCUS_REMOTE")
 	if len(envDefaultRemote) > 0 {
 		c.DefaultRemote = envDefaultRemote
-	} else if c.DefaultRemote == "" {
-		c.DefaultRemote = DefaultConfig().DefaultRemote
 	}
 
 	return c, nil
@@ -196,6 +201,15 @@ func (c *Config) SaveConfig(path string) error {
 	for k, v := range c.Remotes {
 		if v.Global {
 			delete(conf.Remotes, k)
+		}
+	}
+
+	// Don't persist a default remote that came from the environment.
+	envDefaultRemote := os.Getenv("INCUS_REMOTE")
+	if envDefaultRemote != "" && conf.DefaultRemote == envDefaultRemote && c.fileDefaultRemote != "" {
+		_, ok := c.Remotes[c.fileDefaultRemote]
+		if ok {
+			conf.DefaultRemote = c.fileDefaultRemote
 		}
 	}
 
