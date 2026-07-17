@@ -194,7 +194,13 @@ func storagePoolVolumeTypeBitmapsGet(d *Daemon, r *http.Request) response.Respon
 		return response.BadRequest(fmt.Errorf("Unsupported storage volume type %q", volumeTypeName))
 	}
 
-	resp := forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
+	// Forward if needed.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
 	if resp != nil {
 		return resp
 	}
@@ -338,7 +344,13 @@ func storagePoolVolumeTypeBitmapsPost(d *Daemon, r *http.Request) response.Respo
 		return response.BadRequest(fmt.Errorf("Unsupported storage volume type %q", volumeTypeName))
 	}
 
-	resp := forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
+	// Forward if needed.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
 	if resp != nil {
 		return resp
 	}
@@ -493,7 +505,13 @@ func storagePoolVolumeTypeBitmapGet(d *Daemon, r *http.Request) response.Respons
 		return response.BadRequest(fmt.Errorf("Unsupported storage volume type %q", volumeTypeName))
 	}
 
-	resp := forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
+	// Forward if needed.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
 	if resp != nil {
 		return resp
 	}
@@ -634,7 +652,13 @@ func storagePoolVolumeTypeBitmapDelete(d *Daemon, r *http.Request) response.Resp
 		return response.BadRequest(fmt.Errorf("Unsupported storage volume type %q", volumeTypeName))
 	}
 
-	resp := forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
+	// Forward if needed.
+	resp := forwardedResponseIfTargetIsRemote(s, r)
+	if resp != nil {
+		return resp
+	}
+
+	resp = forwardedResponseIfVolumeIsRemote(s, r, poolName, projectName, volumeName, volumeDBType)
 	if resp != nil {
 		return resp
 	}
