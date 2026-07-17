@@ -40,6 +40,10 @@ type Config struct {
 	// ProjectOverride allows overriding the default project
 	ProjectOverride string `yaml:"-"`
 
+	// fileDefaultRemote is the default remote as read from the config file,
+	// used to avoid persisting an environment override on save.
+	fileDefaultRemote string
+
 	// OIDC tokens
 	oidcTokens map[string]*oidc.Tokens[*oidc.IDTokenClaims]
 
@@ -48,6 +52,12 @@ type Config struct {
 
 	// Mutex to control concurrent access.
 	mu sync.Mutex
+}
+
+// SetDefaultRemote sets the default remote for both the running client and the on-disk configuration.
+func (c *Config) SetDefaultRemote(name string) {
+	c.DefaultRemote = name
+	c.fileDefaultRemote = name
 }
 
 // GlobalConfigPath returns a joined path of the global configuration directory and passed arguments.
