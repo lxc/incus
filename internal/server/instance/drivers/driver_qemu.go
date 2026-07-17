@@ -479,7 +479,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	s := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange, qmp.EventBlockJobCompleted, qmp.EventBlockJobError}, event) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -592,11 +592,6 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 			if err != nil {
 				d.logger.Error("Failed to apply rtc change", logger.Ctx{"offset": val, "err": err})
 			}
-
-		case qmp.EventBlockJobCompleted, qmp.EventBlockJobError:
-			monitor, _ := d.qmpConnect()
-			monitor.PushEvent(event, data)
-			monitor.CleanupEventChannel(data["device"].(string))
 		}
 	}
 }
@@ -8296,6 +8291,43 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 	return snapshotDiskName, blockDevName, removeOverlay, nil
 }
 
+// mergeEphemeralSnapshot merges an ephemeral snapshot back into its base disk and removes it.
+// On merge failure the overlay is kept attached as it still holds the guest's writes.
+func (d *qemu) mergeEphemeralSnapshot(monitor *qmp.Monitor, overlayNode string) error {
+	// Resume guest (this is needed as it will prevent merging the snapshot if paused).
+	err := monitor.Start()
+	if err != nil {
+		d.logger.Warn("Failed resuming instance", logger.Ctx{"err": err})
+	}
+
+	// Merge the snapshot back into the source disk so we don't lose writes,
+	// retrying as failures can be transient.
+	for i := range 3 {
+		if i > 0 {
+			time.Sleep(time.Second)
+		}
+
+		err = monitor.BlockCommit(overlayNode, "", "")
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		// Keep the overlay attached, removing it would discard the guest's writes.
+		d.logger.Error("Failed merging temporary storage snapshot, guest writes remain in the overlay", logger.Ctx{"overlay": overlayNode, "err": err})
+		return fmt.Errorf("Failed merging temporary storage snapshot %q: %w", overlayNode, err)
+	}
+
+	err = monitor.RemoveBlockDevice(overlayNode)
+	if err != nil {
+		d.logger.Error("Failed removing temporary snapshot disk device", logger.Ctx{"err": err})
+		return err
+	}
+
+	return nil
+}
+
 // createEphemeralSnapshot creates a temporary snapshot of the disk that is intended for short-lived operations.
 func (d *qemu) createEphemeralSnapshot(diskName string, diskSize int64) (func(), error) {
 	monitor, err := d.qmpConnect()
@@ -8316,22 +8348,7 @@ func (d *qemu) createEphemeralSnapshot(diskName string, diskSize int64) (func(),
 	}
 
 	cleanup := func() {
-		// Resume guest (this is needed as it will prevent merging the snapshot if paused).
-		err = monitor.Start()
-		if err != nil {
-			d.logger.Warn("Failed resuming instance", logger.Ctx{"err": err})
-		}
-
-		// Try and merge snapshot back to the source disk on failure so we don't lose writes.
-		err = monitor.BlockCommit(snapshotDiskName, "", "")
-		if err != nil {
-			d.logger.Error("Failed merging temporary storage snapshot", logger.Ctx{"err": err})
-		}
-
-		err = monitor.RemoveBlockDevice(snapshotDiskName)
-		if err != nil {
-			d.logger.Error("Failed removing temporary snapshot disk device", logger.Ctx{"err": err})
-		}
+		_ = d.mergeEphemeralSnapshot(monitor, snapshotDiskName)
 	}
 
 	return cleanup, nil
@@ -11838,6 +11855,21 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 	// Export the disks in a stable order.
 	sort.Strings(deviceNames)
 
+	// Recover any overlay left behind by a previously failed teardown so the
+	// disks can be snapshotted and exported again.
+	for _, devName := range deviceNames {
+		overlayNode := ephemeralSnapshotName(d.blockNodeName(linux.PathNameEncode(devName)))
+		_, ok := nodeSet[overlayNode]
+		if !ok {
+			continue
+		}
+
+		err = d.mergeEphemeralSnapshot(monitor, overlayNode)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Failed recovering disk %q from an earlier failed snapshot merge: %w", devName, err)
+		}
+	}
+
 	nbdConn, err := monitor.NBDServerStart(d.nbdPath(), 0)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Failed starting NBD server: %w", err)
@@ -11851,7 +11883,12 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 	reverter.Add(func() {
 		d.logger.Debug("User requested NBD server stopped")
 		_ = nbdConn.Close()
-		_ = monitor.NBDServerStop()
+
+		err := monitor.NBDServerStop()
+		if err != nil {
+			d.logger.Error("Failed stopping NBD server", logger.Ctx{"err": err})
+		}
+
 		_ = os.Remove(d.nbdPath())
 	})
 
@@ -11863,7 +11900,7 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 
 	targets := make([]exportTarget, 0, len(deviceNames))
 	snapshots := make([]qmp.BlockDevSnapshotTarget, 0, len(deviceNames))
-	commits := make([]func(), 0, len(deviceNames))
+	overlays := make([]string, 0, len(deviceNames))
 
 	// Prepare an overlay for each disk so the guest keeps running while we export a frozen view.
 	for _, devName := range deviceNames {
@@ -11897,25 +11934,7 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 
 		snapshots = append(snapshots, qmp.BlockDevSnapshotTarget{Node: baseNode, Overlay: overlayNode})
 		targets = append(targets, exportTarget{deviceName: devName, exportNode: baseNode, bitmaps: bitmapNames})
-
-		commits = append(commits, func() {
-			// Resume guest (this is needed as it will prevent merging the snapshot if paused).
-			err := monitor.Start()
-			if err != nil {
-				d.logger.Warn("Failed resuming instance", logger.Ctx{"err": err})
-			}
-
-			// Try and merge snapshot back to the source disk so we don't lose writes.
-			err = monitor.BlockCommit(overlayNode, "", "")
-			if err != nil {
-				d.logger.Error("Failed merging temporary storage snapshot", logger.Ctx{"err": err})
-			}
-
-			err = monitor.RemoveBlockDevice(overlayNode)
-			if err != nil {
-				d.logger.Error("Failed removing temporary snapshot disk device", logger.Ctx{"err": err})
-			}
-		})
+		overlays = append(overlays, overlayNode)
 	}
 
 	// Create all overlays atomically so the exported disks share a consistent point in time.
@@ -11931,11 +11950,16 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 	stop := func() {
 		d.logger.Debug("User requested NBD server stopped")
 		_ = nbdConn.Close()
-		_ = monitor.NBDServerStop()
+
+		err := monitor.NBDServerStop()
+		if err != nil {
+			d.logger.Error("Failed stopping NBD server", logger.Ctx{"err": err})
+		}
+
 		_ = os.Remove(d.nbdPath())
 
-		for _, commit := range commits {
-			commit()
+		for _, overlayNode := range overlays {
+			_ = d.mergeEphemeralSnapshot(monitor, overlayNode)
 		}
 	}
 
