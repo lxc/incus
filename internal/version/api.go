@@ -558,6 +558,7 @@ var APIExtensions = []string{
 	"instance_port_forward",
 	"unix_block_limits",
 	"authorization_client_routing",
+	"instance_nvram",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
