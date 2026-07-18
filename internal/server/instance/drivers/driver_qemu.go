@@ -12205,6 +12205,15 @@ func (d *qemu) GetNVRAM() (*uefi.Store, error) {
 		}
 
 		defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
+
+		_, err = os.Stat(d.nvramPath())
+		if errors.Is(err, os.ErrNotExist) {
+			// The NVRAM hasn’t been initialized yet.
+			err = d.setupNvram()
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	nvRAM, err := os.ReadFile(d.nvramPath())
