@@ -57,7 +57,7 @@ func tlsHTTPClient(client *http.Client, tlsClientCert string, tlsClientKey strin
 			}
 
 			// Setup TLS
-			if resetName {
+			if resetName || config.ServerName == "" {
 				hostName, _, err := net.SplitHostPort(addr)
 				if err != nil {
 					hostName = addr

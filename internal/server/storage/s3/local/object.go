@@ -14,11 +14,49 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/server/storage/s3"
 	"github.com/lxc/incus/v7/shared/logger"
 )
+
+// objectWriteMu serializes conditional write checks with object publication so
+// that If-Match/If-None-Match evaluation and the rename are atomic.
+var objectWriteMu sync.Mutex
+
+// checkWritePreconditions evaluates the If-Match and If-None-Match headers of a
+// conditional write against the object's current state.
+// It returns nil when the write may proceed.
+func checkWritePreconditions(r *http.Request, dataPath string) *s3.Error {
+	ifMatch := r.Header.Get("If-Match")
+	ifNoneMatch := r.Header.Get("If-None-Match")
+	if ifMatch == "" && ifNoneMatch == "" {
+		return nil
+	}
+
+	// S3 only supports "*" (fail if the object exists) for If-None-Match on writes.
+	if ifNoneMatch != "" && ifNoneMatch != "*" {
+		return &s3.Error{Code: s3.ErrorCodeNotImplemented, Message: "If-None-Match only supports *."}
+	}
+
+	meta, err := loadOrInferMeta(dataPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return &s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}
+	}
+
+	exists := err == nil
+
+	if ifNoneMatch == "*" && exists {
+		return &s3.Error{Code: s3.ErrorCodePreconditionFailed, Message: "Object already exists."}
+	}
+
+	if ifMatch != "" && (!exists || strings.Trim(ifMatch, `"`) != meta.ETag) {
+		return &s3.Error{Code: s3.ErrorCodePreconditionFailed, Message: "Object ETag doesn't match."}
+	}
+
+	return nil
+}
 
 func (s *Server) objectPath(key string) (string, error) {
 	if key == "" || strings.HasPrefix(key, "/") {
@@ -123,6 +161,13 @@ func (s *Server) putObject(w http.ResponseWriter, r *http.Request, key string) {
 		return
 	}
 
+	// Fail conditional writes early, before the body is transferred.
+	s3Err := checkWritePreconditions(r, dataPath)
+	if s3Err != nil {
+		s3Err.Response(w)
+		return
+	}
+
 	err = os.MkdirAll(filepath.Dir(dataPath), 0o700)
 	if err != nil {
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
@@ -147,6 +192,17 @@ func (s *Server) putObject(w http.ResponseWriter, r *http.Request, key string) {
 		}
 
 		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: msg.Error()}).Response(w)
+		return
+	}
+
+	// Re-evaluate the preconditions and publish the object atomically.
+	objectWriteMu.Lock()
+	defer objectWriteMu.Unlock()
+
+	s3Err = checkWritePreconditions(r, dataPath)
+	if s3Err != nil {
+		_ = os.Remove(tmp)
+		s3Err.Response(w)
 		return
 	}
 

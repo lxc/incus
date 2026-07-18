@@ -18,11 +18,19 @@ const ErrorCodeInvalidAccessKeyID = "InvalidAccessKeyId"
 // ErrorInvalidRequest means there was an invalid request.
 const ErrorInvalidRequest = "InvalidRequest"
 
+// ErrorCodePreconditionFailed means a conditional request precondition wasn't met.
+const ErrorCodePreconditionFailed = "PreconditionFailed"
+
+// ErrorCodeNotImplemented means the requested functionality isn't implemented.
+const ErrorCodeNotImplemented = "NotImplemented"
+
 var errorHTTPStatusCodes = map[string]int{
 	ErrorCodeNoSuchBucket:       http.StatusNotFound,
 	ErrorCodeInternalError:      http.StatusInternalServerError,
 	ErrorCodeInvalidAccessKeyID: http.StatusForbidden,
 	ErrorInvalidRequest:         http.StatusBadRequest,
+	ErrorCodePreconditionFailed: http.StatusPreconditionFailed,
+	ErrorCodeNotImplemented:     http.StatusNotImplemented,
 }
 
 // Error S3 error response.
