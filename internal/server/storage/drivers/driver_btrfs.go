@@ -184,6 +184,18 @@ func (d *btrfs) Create() error {
 		}
 	} else if d.config["source"] != "" {
 		hostPath := d.config["source"]
+		cleanSource := filepath.Clean(hostPath)
+		daemonDir := internalUtil.VarPath()
+
+		// Restrict source paths under the daemon directory to the pool's own mount path.
+		// Anything else gets bind-mounted over the daemon directory layout on pool mount,
+		// aliasing paths like the image cache into the pool.
+		if cleanSource == daemonDir || strings.HasPrefix(cleanSource, daemonDir+"/") {
+			if cleanSource != GetPoolMountPath(d.name) {
+				return fmt.Errorf("Only allowed source path under %q is %q", internalUtil.VarPath(), GetPoolMountPath(d.name))
+			}
+		}
+
 		if d.isSubvolume(hostPath) {
 			// Existing btrfs subvolume.
 			hasSubvolumes, err := d.hasSubvolumes(hostPath)
@@ -197,9 +209,6 @@ func (d *btrfs) Create() error {
 			}
 		} else {
 			// New btrfs subvolume on existing btrfs filesystem.
-			cleanSource := filepath.Clean(hostPath)
-			daemonDir := internalUtil.VarPath()
-
 			if util.PathExists(hostPath) {
 				hostPathFS, _ := linux.DetectFilesystem(hostPath)
 				if hostPathFS != "btrfs" {
@@ -207,11 +216,7 @@ func (d *btrfs) Create() error {
 				}
 			}
 
-			if cleanSource == daemonDir || strings.HasPrefix(cleanSource, daemonDir+"/") {
-				if cleanSource != GetPoolMountPath(d.name) {
-					return fmt.Errorf("Only allowed source path under %q is %q", internalUtil.VarPath(), GetPoolMountPath(d.name))
-				}
-
+			if cleanSource == GetPoolMountPath(d.name) {
 				storagePoolDirFS, _ := linux.DetectFilesystem(internalUtil.VarPath("storage-pools"))
 				if storagePoolDirFS != "btrfs" {
 					return fmt.Errorf("Provided path does not reside on a btrfs filesystem (detected %s)", storagePoolDirFS)
