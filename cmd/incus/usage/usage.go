@@ -865,6 +865,7 @@ var (
 	Type               = placeholder{i18n.G("type")}
 	URL                = placeholder{i18n.G("URL")}
 	Value              = placeholder{i18n.G("value")}
+	Variable           = placeholder{i18n.G("variable")}
 	Volume             = placeholder{i18n.G("volume")}
 	WarningUUID        = placeholder{i18n.G("warning UUID")}
 	Zone               = placeholder{i18n.G("zone")}
