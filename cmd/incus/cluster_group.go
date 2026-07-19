@@ -94,7 +94,7 @@ type cmdClusterGroupAssign struct {
 	cluster *cmdCluster
 }
 
-var cmdClusterGroupAssignUsage = u.Usage{u.Member.Remote(), u.Group.List(1, ",")}
+var cmdClusterGroupAssignUsage = u.Usage{u.Member.Remote(), u.Group.List(1)}
 
 func (c *cmdClusterGroupAssign) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -105,7 +105,7 @@ func (c *cmdClusterGroupAssign) command() *cobra.Command {
 		`Assign sets of groups to cluster members`,
 	))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus cluster group assign foo default,bar
+		`incus cluster group assign foo default bar
     Set the groups for "foo" to "default" and "bar".
 
 incus cluster group assign foo default
