@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-09 22:01-0400\n"
+"POT-Creation-Date: 2026-07-19 01:35+0000\n"
 "PO-Revision-Date: 2026-07-13 05:45+0000\n"
 "Last-Translator: Alberto Donato <ack@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/incus/cli/it/>\n"
@@ -804,7 +804,7 @@ msgstr ""
 msgid "ACL"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:87
+#: cmd/incus/network_allocations.go:88
 msgid "ADDRESS"
 msgstr ""
 
@@ -1092,7 +1092,7 @@ msgstr ""
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
 
-#: cmd/incus/console.go:453
+#: cmd/incus/console.go:459
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 
@@ -1131,11 +1131,11 @@ msgstr "Creazione del container in corso"
 msgid "Attach new network interfaces to instances"
 msgstr ""
 
-#: cmd/incus/console.go:47
+#: cmd/incus/console.go:48
 msgid "Attach to instance consoles"
 msgstr ""
 
-#: cmd/incus/console.go:48
+#: cmd/incus/console.go:49
 msgid ""
 "Attach to instance consoles\n"
 "\n"
@@ -1591,7 +1591,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:142 cmd/incus/network.go:1054
-#: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:73
+#: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:74
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
 #: cmd/incus/network_zone.go:123 cmd/incus/operation.go:152
@@ -1684,6 +1684,11 @@ msgstr ""
 #, c-format
 msgid "Connecting to the daemon (attempt %d)"
 msgstr ""
+
+#: cmd/incus/port_forward.go:137
+#, fuzzy, c-format
+msgid "Connection to the instance failed: %v"
+msgstr "errore di processamento degli alias %s\n"
 
 #: cmd/incus/storage_volume.go:600
 msgid "Content type, block or filesystem"
@@ -2623,7 +2628,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:521 cmd/incus/network.go:1101
-#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:98
+#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:99
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
 #: cmd/incus/network_zone.go:159 cmd/incus/operation.go:184
@@ -2736,7 +2741,7 @@ msgstr ""
 msgid "Error updating template file: %s"
 msgstr ""
 
-#: cmd/incus/main.go:429
+#: cmd/incus/main.go:433
 #, c-format
 msgid "Error while executing alias expansion: %s\n"
 msgstr ""
@@ -3045,7 +3050,7 @@ msgstr "Accetta certificato"
 msgid "Failed parsing validation response: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/console.go:431
+#: cmd/incus/console.go:437
 #, fuzzy, c-format
 msgid "Failed starting command: %w"
 msgstr "Accetta certificato"
@@ -3055,8 +3060,8 @@ msgstr "Accetta certificato"
 msgid "Failed starting sshfs: %w"
 msgstr "Accetta certificato"
 
-#: cmd/incus/debug.go:171 cmd/incus/storage_volume.go:2655
-#: cmd/incus/utils.go:640
+#: cmd/incus/debug.go:171 cmd/incus/port_forward.go:128
+#: cmd/incus/storage_volume.go:2655 cmd/incus/utils.go:640
 #, fuzzy, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Accetta certificato"
@@ -3166,8 +3171,8 @@ msgstr ""
 msgid "Failed to join cluster: %w"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/debug.go:156 cmd/incus/storage_volume.go:2647
-#: cmd/incus/utils.go:625
+#: cmd/incus/debug.go:156 cmd/incus/port_forward.go:114
+#: cmd/incus/storage_volume.go:2647 cmd/incus/utils.go:625
 #, fuzzy, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Accetta certificato"
@@ -3394,7 +3399,7 @@ msgid ""
 "Are you really sure you want to force removing %s? (yes/no): "
 msgstr ""
 
-#: cmd/incus/console.go:56
+#: cmd/incus/console.go:57
 msgid ""
 "Forces a connection to the console, even if there is already an active "
 "session"
@@ -3415,7 +3420,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143
 #: cmd/incus/network.go:1055 cmd/incus/network.go:1252
-#: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:70
+#: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:71
 #: cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416
 #: cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117
 #: cmd/incus/network_zone.go:121 cmd/incus/network_zone.go:822
@@ -3450,8 +3455,29 @@ msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
 
+#: cmd/incus/port_forward.go:30
+msgid "Forward a local TCP port to the instance"
+msgstr ""
+
+#: cmd/incus/port_forward.go:31
+msgid ""
+"Forward a local TCP port to the instance\n"
+"\n"
+"This runs a local TCP listener and forwards every connection made to it\n"
+"to the given address and port inside of the instance.\n"
+"\n"
+"Both ports can be prefixed with an address to use (\"ADDRESS:PORT\"),\n"
+"defaulting to 127.0.0.1 otherwise. IPv6 addresses must be wrapped in\n"
+"square brackets (e.g. \"[::1]:80\")."
+msgstr ""
+
 #: cmd/incus/network.go:966
 msgid "Forward delay"
+msgstr ""
+
+#: cmd/incus/port_forward.go:117
+#, c-format
+msgid "Forwarding %v to %s port %d on %s"
 msgstr ""
 
 #: cmd/incus/main_aliases.go:151
@@ -3859,7 +3885,7 @@ msgstr ""
 msgid "If the snapshot name already exists, delete and create a new one"
 msgstr ""
 
-#: cmd/incus/main.go:582
+#: cmd/incus/main.go:586
 msgid ""
 "If this is your first time running Incus on this machine, you should also "
 "run: incus admin init"
@@ -4060,7 +4086,7 @@ msgstr "Proprietà errata: %s"
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr ""
 
-#: cmd/incus/network_allocations.go:226
+#: cmd/incus/network_allocations.go:230
 #, fuzzy, c-format
 msgid "Invalid address %q for network %q: %w"
 msgstr "Accetta certificato"
@@ -4155,6 +4181,11 @@ msgstr ""
 msgid "Invalid peer type"
 msgstr "Proprietà errata: %s"
 
+#: cmd/incus/port_forward.go:79
+#, fuzzy, c-format
+msgid "Invalid port %q"
+msgstr "Proprietà errata: %s"
+
 #: cmd/incus/remote.go:463
 #, fuzzy, c-format
 msgid "Invalid protocol: %s"
@@ -4170,7 +4201,7 @@ msgstr "Proprietà errata: %s"
 msgid "Invalid sorting type provided"
 msgstr "Proprietà errata: %s"
 
-#: cmd/incus/network_allocations.go:214
+#: cmd/incus/network_allocations.go:216
 #, fuzzy, c-format
 msgid "Invalid subnet %q for network %q: %w"
 msgstr "Proprietà errata: %s"
@@ -4839,11 +4870,11 @@ msgstr ""
 msgid "List network ACLs across all projects"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/network_allocations.go:41
+#: cmd/incus/network_allocations.go:42
 msgid "List network allocations in use"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:42
+#: cmd/incus/network_allocations.go:43
 msgid ""
 "List network allocations in use\n"
 "Default column layout: uatnm\n"
@@ -5218,7 +5249,7 @@ msgstr "Creazione del container in corso"
 msgid "Lower devices"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/network.go:1277 cmd/incus/network_allocations.go:90
+#: cmd/incus/network.go:1277 cmd/incus/network_allocations.go:91
 msgid "MAC ADDRESS"
 msgstr ""
 
@@ -5713,7 +5744,7 @@ msgstr ""
 msgid "NAME"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:89
+#: cmd/incus/network_allocations.go:90
 msgid "NAT"
 msgstr ""
 
@@ -5756,7 +5787,7 @@ msgstr ""
 msgid "NBD listening on %v"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:235
+#: cmd/incus/network_allocations.go:239
 msgid "NETWORK"
 msgstr ""
 
@@ -6248,7 +6279,7 @@ msgstr ""
 msgid "Partitions:"
 msgstr ""
 
-#: cmd/incus/main.go:542 cmd/incus/remote.go:885
+#: cmd/incus/main.go:546 cmd/incus/remote.go:885
 #, fuzzy, c-format
 msgid "Password for %s: "
 msgstr "Password amministratore per %s: "
@@ -6948,7 +6979,7 @@ msgstr ""
 msgid "Resume instances"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/console.go:57
+#: cmd/incus/console.go:58
 msgid "Retrieve the instance's console log"
 msgstr ""
 
@@ -6988,7 +7019,7 @@ msgstr ""
 msgid "Run a local API proxy for the remote"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:71
+#: cmd/incus/network_allocations.go:72
 msgid "Run again a specific project"
 msgstr ""
 
@@ -6996,7 +7027,7 @@ msgstr ""
 msgid "Run against all instances"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:72
+#: cmd/incus/network_allocations.go:73
 #, fuzzy
 msgid "Run against all projects"
 msgstr "Creazione del container in corso"
@@ -7080,7 +7111,7 @@ msgstr ""
 msgid "STP"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:235
+#: cmd/incus/network_allocations.go:239
 msgid "SUBNET"
 msgstr ""
 
@@ -7523,7 +7554,7 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:64
+#: cmd/incus/network_allocations.go:65
 msgid "Show a summary of used IP ranges per subnet"
 msgstr ""
 
@@ -7585,7 +7616,7 @@ msgstr ""
 msgid "Show instance snapshot configuration"
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/main.go:368 cmd/incus/main.go:369
+#: cmd/incus/main.go:372 cmd/incus/main.go:373
 msgid "Show less common commands"
 msgstr ""
 
@@ -8039,7 +8070,7 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:417 cmd/incus/image.go:1114
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:483 cmd/incus/network.go:1082
-#: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:88
+#: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:89
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
 #: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1621
 #: cmd/incus/warning.go:216
@@ -8094,11 +8125,11 @@ msgstr ""
 msgid "The %s storage pool already exists"
 msgstr "La periferica esiste già"
 
-#: cmd/incus/console.go:136
+#: cmd/incus/console.go:137
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr ""
 
-#: cmd/incus/network_allocations.go:162
+#: cmd/incus/network_allocations.go:163
 msgid "The --summary flag cannot be used with custom columns (-c)"
 msgstr ""
 
@@ -8129,7 +8160,7 @@ msgid ""
 "You can invoke it through \"incusd cluster\"."
 msgstr ""
 
-#: cmd/incus/console.go:452
+#: cmd/incus/console.go:458
 msgid ""
 "The client automatically uses either spicy or remote-viewer when present."
 msgstr ""
@@ -8352,7 +8383,7 @@ msgstr ""
 msgid "There is no config key to set on an instance snapshot."
 msgstr "Il nome del container è: %s"
 
-#: cmd/incus/main.go:420
+#: cmd/incus/main.go:424
 msgid ""
 "This client hasn't been configured to use a remote server yet.\n"
 "As your platform can't run native Linux instances, you must connect to a "
@@ -8411,11 +8442,11 @@ msgstr ""
 msgid "To create a new network, use: incus network create"
 msgstr ""
 
-#: cmd/incus/console.go:238
+#: cmd/incus/console.go:239
 msgid "To detach from the console, press: <ctrl>+a q"
 msgstr ""
 
-#: cmd/incus/main.go:590
+#: cmd/incus/main.go:594
 #, c-format
 msgid ""
 "To start your first container, try: incus launch images:%s\n"
@@ -8486,7 +8517,7 @@ msgstr ""
 msgid "Type of certificate"
 msgstr "Accetta certificato"
 
-#: cmd/incus/console.go:58
+#: cmd/incus/console.go:59
 msgid ""
 "Type of connection to establish: 'console' for serial console, 'vga' for "
 "SPICE graphical output"
@@ -8530,12 +8561,12 @@ msgstr "Creazione del container in corso"
 msgid "USB devices:"
 msgstr "Creazione del container in corso"
 
-#: cmd/incus/network_allocations.go:235
+#: cmd/incus/network_allocations.go:239
 msgid "USED"
 msgstr ""
 
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:164
-#: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:86
+#: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:87
 #: cmd/incus/network_integration.go:435 cmd/incus/network_zone.go:147
 #: cmd/incus/profile.go:733 cmd/incus/project.go:554 cmd/incus/storage.go:694
 #: cmd/incus/storage_volume.go:1625
@@ -8580,7 +8611,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:539 cmd/incus/network.go:1107
-#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:104
+#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:105
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
 #: cmd/incus/network_zone.go:165 cmd/incus/operation.go:190
@@ -8593,7 +8624,7 @@ msgstr ""
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr ""
 
-#: cmd/incus/console.go:166
+#: cmd/incus/console.go:167
 #, c-format
 msgid "Unknown console type %q"
 msgstr ""
@@ -8613,7 +8644,7 @@ msgstr ""
 msgid "Unknown key: %s"
 msgstr ""
 
-#: cmd/incus/console.go:126
+#: cmd/incus/console.go:127
 #, c-format
 msgid "Unknown output type %q"
 msgstr ""
@@ -9387,7 +9418,7 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:107
 msgid ""
-"incus cluster group assign foo default,bar\n"
+"incus cluster group assign foo default bar\n"
 "    Set the groups for \"foo\" to \"default\" and \"bar\".\n"
 "\n"
 "incus cluster group assign foo default\n"
@@ -9719,9 +9750,19 @@ msgid ""
 "    Show details on that operation UUID"
 msgstr ""
 
+#: cmd/incus/port_forward.go:41
+msgid ""
+"incus port-forward c1 80 8080\n"
+"    Forward local port 8080 to port 80 inside of the instance.\n"
+"\n"
+"incus port-forward c1 10.0.3.1:443 0.0.0.0:8443\n"
+"    Forward port 8443 on all local addresses to 10.0.3.1:443 inside of the "
+"instance."
+msgstr ""
+
 #: cmd/incus/profile.go:187
 msgid ""
-"incus profile assign foo default,bar\n"
+"incus profile assign foo default bar\n"
 "    Set the profiles for \"foo\" to \"default\" and \"bar\".\n"
 "\n"
 "incus profile assign foo default\n"
