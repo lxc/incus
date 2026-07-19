@@ -15,3 +15,8 @@ var zoneTemplate = template.Must(template.New("zoneTemplate").Parse(`
 {{- end}}
 {{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 120 60 86400 30
 `))
+
+// DNS SOA record template.
+var soaTemplate = template.Must(template.New("soaTemplate").Parse(`
+{{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 120 60 86400 30
+`))
