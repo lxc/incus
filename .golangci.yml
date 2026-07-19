@@ -79,6 +79,10 @@ linters:
         text: "avoid meaningless package names"
       - path: internal/server/util/
         text: "avoid meaningless package names"
+      - path: shared/uefi/guid.go
+        linters:
+          - revive
+        text: '^(var-naming|exported):'
     paths:
       - third_party$
       - builtin$
