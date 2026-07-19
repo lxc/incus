@@ -658,15 +658,13 @@ func (d *zone) SOA() (*strings.Builder, error) {
 		contact = strings.TrimSuffix(strings.TrimSpace(contact), ".")
 	}
 
-	// Template the zone file.
+	// Template the SOA record.
 	sb := &strings.Builder{}
-	err := zoneTemplate.Execute(sb, map[string]any{
-		"primary":     primary,
-		"contact":     contact,
-		"nameservers": nameservers,
-		"zone":        d.info.Name,
-		"serial":      time.Now().Unix(),
-		"records":     map[string]string{},
+	err := soaTemplate.Execute(sb, map[string]any{
+		"primary": primary,
+		"contact": contact,
+		"zone":    d.info.Name,
+		"serial":  time.Now().Unix(),
 	})
 	if err != nil {
 		return nil, err
