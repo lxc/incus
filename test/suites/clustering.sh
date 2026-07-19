@@ -3478,7 +3478,7 @@ test_clustering_groups() {
     incus cluster group remove cluster:node3 foobar
 
     # Add second node to new group. Node2 will now belong to both groups.
-    incus cluster group assign cluster:node2 default,foobar
+    incus cluster group assign cluster:node2 default foobar
     [ "$(incus query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "default"; .)')" = "true" ]
     [ "$(incus query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "foobar"; .)')" = "true" ]
 
@@ -3497,7 +3497,7 @@ test_clustering_groups() {
     [ "$(incus query cluster:/1.0/cluster/members/node2 | jq 'any(.groups[] == "blah"; .)')" = "true" ]
 
     incus cluster group create cluster:foobar2
-    incus cluster group assign cluster:node3 default,foobar2
+    incus cluster group assign cluster:node3 default foobar2
 
     # Create a new group "newgroup"
     incus cluster group create cluster:newgroup

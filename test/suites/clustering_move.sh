@@ -33,13 +33,13 @@ test_clustering_move() {
 
     # Preparation
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group create foobar1
-    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group assign node1 foobar1,default
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group assign node1 foobar1 default
 
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group create foobar2
-    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group assign node2 foobar2,default
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group assign node2 foobar2 default
 
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group create foobar3
-    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group assign node3 foobar3,default
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster group assign node3 foobar3 default
 
     INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c1 --target node1
     INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c2 --target node2
