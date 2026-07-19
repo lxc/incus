@@ -792,6 +792,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	var f *os.File
 	var linkTarget string
 	var size int64
+	usePercentage := true
 	args := incus.InstanceFileArgs{
 		UID:  int64(c.storageVolumeFile.flagUID),
 		GID:  int64(c.storageVolumeFile.flagGID),
@@ -804,6 +805,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		}
 
 		f = os.Stdin
+		usePercentage = false
 	} else {
 		srcInfo, wPath, err := c.pusher.statFile(srcFile)
 		if err != nil {
@@ -885,10 +887,12 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 			ReadCloser: f,
 			Tracker: &ioprogress.ProgressTracker{
 				Length: size,
-				Handler: func(percent int64, speed int64) {
-					progress.UpdateProgress(ioprogress.ProgressData{
-						Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2)),
-					})
+				Handler: func(v int64, speed int64) {
+					if usePercentage {
+						progress.UpdateProgress(ioprogress.ProgressData{Text: fmt.Sprintf("%d%% (%s/s)", v, units.GetByteSizeString(speed, 2))})
+					} else {
+						progress.UpdateProgress(ioprogress.ProgressData{Text: fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(v, 2), units.GetByteSizeString(speed, 2))})
+					}
 				},
 			},
 		}, f)
