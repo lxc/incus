@@ -174,7 +174,7 @@ type cmdProfileAssign struct {
 	flagNoProfiles bool
 }
 
-var cmdProfileAssignUsage = u.Usage{u.Instance.Remote(), u.Either(u.Profile.List(1, ","), u.Flag("no-profiles"))}
+var cmdProfileAssignUsage = u.Usage{u.Instance.Remote(), u.Either(u.Profile.List(1), u.Flag("no-profiles"))}
 
 func (c *cmdProfileAssign) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -185,7 +185,7 @@ func (c *cmdProfileAssign) command() *cobra.Command {
 		`Assign sets of profiles to instances`,
 	))
 	cmd.Example = cli.FormatSection("", i18n.G(
-		`incus profile assign foo default,bar
+		`incus profile assign foo default bar
     Set the profiles for "foo" to "default" and "bar".
 
 incus profile assign foo default
