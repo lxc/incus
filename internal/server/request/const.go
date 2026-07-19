@@ -20,6 +20,9 @@ const (
 	// CtxProtocol is the protocol field in request context.
 	CtxProtocol CtxKey = "protocol"
 
+	// CtxUnixIsRoot reports whether the request was made by the root user over the local unix socket.
+	CtxUnixIsRoot CtxKey = "unix_is_root"
+
 	// CtxForwardedAddress is the forwarded address field in request context.
 	CtxForwardedAddress CtxKey = "forwarded_address"
 
