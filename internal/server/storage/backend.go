@@ -9881,7 +9881,13 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 
 	cmd := exec.Command("qemu-nbd", fmt.Sprintf("--socket=%s", socketPath))
 
-	errCh := make(chan string)
+	// Share the qemu-nbd process safely between the worker and this goroutine.
+	var procMu sync.Mutex
+	var proc *os.Process
+	aborted := false
+
+	// Buffered so the worker never blocks if the request gave up.
+	errCh := make(chan string, 1)
 
 	go func() {
 		err := b.Driver().ActivateTask(vol, func(devPath string, op *operations.Operation) error {
@@ -9903,9 +9909,24 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 
 			cmd.Args = append(cmd.Args, volDiskPath)
 
-			err = cmd.Run()
+			procMu.Lock()
+			if aborted {
+				procMu.Unlock()
+				return errors.New("Request timed out before qemu-nbd could be started")
+			}
+
+			err = cmd.Start()
 			if err != nil {
+				procMu.Unlock()
 				return fmt.Errorf("Failed to start qemu-nbd: %w", err)
+			}
+
+			proc = cmd.Process
+			procMu.Unlock()
+
+			err = cmd.Wait()
+			if err != nil {
+				return fmt.Errorf("Failed when running qemu-nbd: %w", err)
 			}
 
 			return nil
@@ -9916,6 +9937,19 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 		}
 	}()
 
+	// killNBD aborts the worker and kills qemu-nbd if it was started.
+	killNBD := func() {
+		procMu.Lock()
+		defer procMu.Unlock()
+
+		aborted = true
+		if proc != nil {
+			_ = proc.Kill()
+		}
+
+		_ = os.Remove(socketPath)
+	}
+
 	// Wait for qemu-nbd.
 	timeout := time.After(2 * time.Second)
 	tick := time.Tick(50 * time.Millisecond)
@@ -9924,8 +9958,8 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 	for {
 		select {
 		case <-timeout:
-			_ = cmd.Process.Kill()
-			return nil, nil, fmt.Errorf("Timeout waiting for qemu-nbd socket")
+			killNBD()
+			return nil, nil, errors.New("Timeout waiting for qemu-nbd socket")
 		case <-tick:
 			_, err := os.Stat(socketPath)
 			if err == nil {
@@ -9944,14 +9978,21 @@ func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error
 	b.logger.Debug("Dial NBD server (offline mode)", logger.Ctx{"socketPath": socketPath})
 	nbdConn, err := net.Dial("unix", socketPath)
 	if err != nil {
-		_ = cmd.Process.Kill()
+		killNBD()
 		return nil, nil, fmt.Errorf("Failed to connect to NBD socket: %w", err)
 	}
 
 	disconnect := func() {
 		b.logger.Debug("User requested NBD server stopped")
 		_ = nbdConn.Close()
-		_ = cmd.Process.Signal(syscall.SIGTERM)
+
+		procMu.Lock()
+		defer procMu.Unlock()
+
+		if proc != nil {
+			_ = proc.Signal(syscall.SIGTERM)
+		}
+
 		_ = os.Remove(socketPath)
 	}
 
