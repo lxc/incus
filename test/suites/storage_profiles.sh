@@ -106,7 +106,7 @@ test_storage_profiles() {
         # Check that we cannot assign conflicting profiles to a container that
         # relies on another profiles root disk device.
         incus launch testimage cOnDefault
-        ! incus profile assign cOnDefault default,testDup,testNoDup || false
+        ! incus profile assign cOnDefault default testDup testNoDup || false
 
         # Verify that we can create a container with two profiles that specify the
         # same root disk device.
@@ -123,7 +123,7 @@ test_storage_profiles() {
         for i in $(seq 1 3); do
             ! incus config device remove c"${i}" root || false
             # Must fail.
-            ! incus profile assign c"${i}" testDup,testNoDup || false
+            ! incus profile assign c"${i}" testDup testNoDup || false
         done
 
         incus delete -f cNonConflictingProfiles

@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-07-12 11:48-0400\n"
+        "POT-Creation-Date: 2026-07-19 01:35+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -777,7 +777,7 @@ msgstr  ""
 msgid   "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr  ""
 
-#: cmd/incus/console.go:453
+#: cmd/incus/console.go:459
 msgid   "As neither could be found, the raw SPICE socket can be found at:"
 msgstr  ""
 
@@ -813,11 +813,11 @@ msgstr  ""
 msgid   "Attach new network interfaces to instances"
 msgstr  ""
 
-#: cmd/incus/console.go:47
+#: cmd/incus/console.go:48
 msgid   "Attach to instance consoles"
 msgstr  ""
 
-#: cmd/incus/console.go:48
+#: cmd/incus/console.go:49
 msgid   "Attach to instance consoles\n"
         "\n"
         "This command allows you to interact with the boot console of an instance\n"
@@ -2509,7 +2509,7 @@ msgstr  ""
 msgid   "Failed parsing validation response: %w"
 msgstr  ""
 
-#: cmd/incus/console.go:431
+#: cmd/incus/console.go:437
 #, c-format
 msgid   "Failed starting command: %w"
 msgstr  ""
@@ -2842,7 +2842,7 @@ msgid   "Forcefully removing a server from the cluster should only be done as a 
         "Are you really sure you want to force removing %s? (yes/no): "
 msgstr  ""
 
-#: cmd/incus/console.go:56
+#: cmd/incus/console.go:57
 msgid   "Forces a connection to the console, even if there is already an active session"
 msgstr  ""
 
@@ -6142,7 +6142,7 @@ msgstr  ""
 msgid   "Resume instances"
 msgstr  ""
 
-#: cmd/incus/console.go:57
+#: cmd/incus/console.go:58
 msgid   "Retrieve the instance's console log"
 msgstr  ""
 
@@ -7186,7 +7186,7 @@ msgstr  ""
 msgid   "The %s storage pool already exists"
 msgstr  ""
 
-#: cmd/incus/console.go:136
+#: cmd/incus/console.go:137
 msgid   "The --show-log flag is only supported for by 'console' output type"
 msgstr  ""
 
@@ -7214,7 +7214,7 @@ msgid   "The \"cluster\" subcommand requires access to internal server data.\n"
         "You can invoke it through \"incusd cluster\"."
 msgstr  ""
 
-#: cmd/incus/console.go:452
+#: cmd/incus/console.go:458
 msgid   "The client automatically uses either spicy or remote-viewer when present."
 msgstr  ""
 
@@ -7476,7 +7476,7 @@ msgstr  ""
 msgid   "To create a new network, use: incus network create"
 msgstr  ""
 
-#: cmd/incus/console.go:238
+#: cmd/incus/console.go:239
 msgid   "To detach from the console, press: <ctrl>+a q"
 msgstr  ""
 
@@ -7545,7 +7545,7 @@ msgstr  ""
 msgid   "Type of certificate"
 msgstr  ""
 
-#: cmd/incus/console.go:58
+#: cmd/incus/console.go:59
 msgid   "Type of connection to establish: 'console' for serial console, 'vga' for SPICE graphical output"
 msgstr  ""
 
@@ -7627,7 +7627,7 @@ msgstr  ""
 msgid   "Unknown column shorthand char '%c' in '%s'"
 msgstr  ""
 
-#: cmd/incus/console.go:166
+#: cmd/incus/console.go:167
 #, c-format
 msgid   "Unknown console type %q"
 msgstr  ""
@@ -7647,7 +7647,7 @@ msgstr  ""
 msgid   "Unknown key: %s"
 msgstr  ""
 
-#: cmd/incus/console.go:126
+#: cmd/incus/console.go:127
 #, c-format
 msgid   "Unknown output type %q"
 msgstr  ""
@@ -8340,7 +8340,7 @@ msgid   "incus cluster edit <cluster member> < member.yaml\n"
 msgstr  ""
 
 #: cmd/incus/cluster_group.go:107
-msgid   "incus cluster group assign foo default,bar\n"
+msgid   "incus cluster group assign foo default bar\n"
         "    Set the groups for \"foo\" to \"default\" and \"bar\".\n"
         "\n"
         "incus cluster group assign foo default\n"
@@ -8623,7 +8623,7 @@ msgid   "incus port-forward c1 80 8080\n"
 msgstr  ""
 
 #: cmd/incus/profile.go:187
-msgid   "incus profile assign foo default,bar\n"
+msgid   "incus profile assign foo default bar\n"
         "    Set the profiles for \"foo\" to \"default\" and \"bar\".\n"
         "\n"
         "incus profile assign foo default\n"

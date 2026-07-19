@@ -139,7 +139,7 @@ test_config_profiles() {
     # check that various profile application mechanisms work
     incus profile create one
     incus profile create two
-    incus profile assign foo one,two
+    incus profile assign foo one two
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "one two" ]
     incus profile assign foo --no-profiles
     [ "$(incus list -f json foo | jq -r '.[0].profiles | join(" ")')" = "" ]
@@ -174,7 +174,7 @@ test_config_profiles() {
 
     incus profile set unconfined raw.lxc "lxc.apparmor.profile=unconfined"
 
-    incus profile assign foo onenic,unconfined
+    incus profile assign foo onenic unconfined
 
     # test profile rename
     incus profile create foo
@@ -262,7 +262,7 @@ test_config_profiles() {
     incus delete foo
 
     incus init testimage foo -s "incustest-$(basename "${INCUS_DIR}")"
-    incus profile assign foo onenic,unconfined
+    incus profile assign foo onenic unconfined
     incus start foo
 
     if [ -e /sys/module/apparmor ]; then
