@@ -59,8 +59,9 @@ func TryLock(lockName string) (UnlockFunc, chan struct{}) {
 			locksMutex.Lock()
 			doneCh, ok := locks[lockName]
 
-			// Load our existing operation.
-			if ok {
+			// Load our existing operation, skipping release if the entry
+			// now belongs to another operation (repeated unlock call).
+			if ok && doneCh == waitCh {
 				// Close the channel to indicate to other waiting users
 				// they can now try again to create a new operation.
 				close(doneCh)
