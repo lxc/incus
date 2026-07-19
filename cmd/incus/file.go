@@ -748,6 +748,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 
 	var errs []error
 	canProcessStdin := len(srcFiles) == 1
+	usePercentage := true
 
 	// Push the files
 	for _, srcPath := range srcFiles {
@@ -771,6 +772,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 				}
 
 				canProcessStdin = false
+				usePercentage = false
 				f = os.Stdin
 			} else {
 				srcInfo, wPath, err := c.pusher.statFile(srcPath)
@@ -853,10 +855,12 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 					ReadCloser: f,
 					Tracker: &ioprogress.ProgressTracker{
 						Length: size,
-						Handler: func(percent int64, speed int64) {
-							progress.UpdateProgress(ioprogress.ProgressData{
-								Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2)),
-							})
+						Handler: func(v int64, speed int64) {
+							if usePercentage {
+								progress.UpdateProgress(ioprogress.ProgressData{Text: fmt.Sprintf("%d%% (%s/s)", v, units.GetByteSizeString(speed, 2))})
+							} else {
+								progress.UpdateProgress(ioprogress.ProgressData{Text: fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(v, 2), units.GetByteSizeString(speed, 2))})
+							}
 						},
 					},
 				}, f)
