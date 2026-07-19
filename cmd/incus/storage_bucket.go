@@ -1510,8 +1510,10 @@ func (c *cmdStorageBucketImport) run(cmd *cobra.Command, args []string) error {
 	}
 
 	var file *os.File
+	usePercentage := true
 	if isStdin(backupFile) {
 		file = os.Stdin
+		usePercentage = false
 	} else {
 		file, err = os.Open(backupFile)
 		if err != nil {
@@ -1537,8 +1539,12 @@ func (c *cmdStorageBucketImport) run(cmd *cobra.Command, args []string) error {
 			ReadCloser: file,
 			Tracker: &ioprogress.ProgressTracker{
 				Length: fstat.Size(),
-				Handler: func(percent int64, speed int64) {
-					progress.UpdateProgress(ioprogress.ProgressData{Text: fmt.Sprintf("%d%% (%s/s)", percent, units.GetByteSizeString(speed, 2))})
+				Handler: func(v int64, speed int64) {
+					if usePercentage {
+						progress.UpdateProgress(ioprogress.ProgressData{Text: fmt.Sprintf("%d%% (%s/s)", v, units.GetByteSizeString(speed, 2))})
+					} else {
+						progress.UpdateProgress(ioprogress.ProgressData{Text: fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(v, 2), units.GetByteSizeString(speed, 2))})
+					}
 				},
 			},
 		},
