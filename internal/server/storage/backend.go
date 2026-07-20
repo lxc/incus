@@ -9742,11 +9742,26 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 		return nil, nil, err
 	}
 
-	defer unlock()
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	reverter.Add(func() { unlock() })
 
 	if !inst.IsRunning() {
 		b.logger.Debug("NBD connection (offline mode)")
-		return b.connectOfflineNBD(vol)
+		conn, disconnect, err := b.connectOfflineNBD(vol)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		cleanup := func() {
+			disconnect()
+			unlock()
+		}
+
+		reverter.Success()
+
+		return conn, cleanup, nil
 	}
 
 	var volSize int64
@@ -9777,6 +9792,8 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 		disconnect()
 		unlock()
 	}
+
+	reverter.Success()
 
 	return conn, cleanup, nil
 }
