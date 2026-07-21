@@ -110,6 +110,20 @@ func (d *unixCommon) validateConfig(instConf instance.ConfigReader, partialValid
 		//  shortdesc: Whether this device is required to start the instance
 		"required": validate.Optional(validate.IsBool),
 
+		// gendoc:generate(entity=devices, group=unix-char-block, key=limits.read)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: I/O limit in byte/s or IOPS for read operations
+		"limits.read": validate.IsAny,
+
+		// gendoc:generate(entity=devices, group=unix-char-block, key=limits.write)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: I/O limit in byte/s or IOPS for write operations
+		"limits.write": validate.IsAny,
+
 		// gendoc:generate(entity=devices, group=unix-char-block, key=uid)
 		//
 		// ---
@@ -126,6 +140,15 @@ func (d *unixCommon) validateConfig(instConf instance.ConfigReader, partialValid
 
 	if d.config["source"] == "" && d.config["path"] == "" {
 		return errors.New("Unix device entry is missing the required \"source\" or \"path\" property")
+	}
+
+	if d.config["type"] != "unix-block" && (d.config["limits.read"] != "" || d.config["limits.write"] != "") {
+		return errors.New("I/O limits are only supported for unix-block devices")
+	}
+
+	err = unixBlockLimitValidate(d.config)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -188,13 +211,23 @@ func (d *unixCommon) Register() error {
 				return nil, err
 			}
 
+			err = unixBlockLimitApply(&runConf, devPath, devConfig)
+			if err != nil {
+				return nil, err
+			}
+
 		case "remove":
 			// Skip if host side instance device file doesn't exist.
 			if !util.PathExists(devPath) {
 				return nil, nil
 			}
 
-			err := unixDeviceRemove(devicesPath, "unix", deviceName, relativeDestPath, &runConf)
+			err := unixBlockLimitClear(&runConf, devPath, devConfig)
+			if err != nil {
+				return nil, err
+			}
+
+			err = unixDeviceRemove(devicesPath, "unix", deviceName, relativeDestPath, &runConf)
 			if err != nil {
 				return nil, err
 			}
@@ -230,6 +263,7 @@ func (d *unixCommon) Start() (*deviceConfig.RunConfig, error) {
 	srcPath := unixDeviceSourcePath(d.config)
 
 	// If device file already exists on system, proceed to add it whether its required or not.
+	created := false
 	dType, _, _, err := unixDeviceAttributes(srcPath)
 	if err == nil {
 		// Ensure device type matches what the device config is expecting.
@@ -241,6 +275,8 @@ func (d *unixCommon) Start() (*deviceConfig.RunConfig, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		created = true
 	} else {
 		// If the device file doesn't exist on the system, but major & minor numbers have
 		// been provided in the config then we can go ahead and create the device anyway.
@@ -249,9 +285,18 @@ func (d *unixCommon) Start() (*deviceConfig.RunConfig, error) {
 			if err != nil {
 				return nil, err
 			}
+
+			created = true
 		} else if d.isRequired() {
 			// If the file is missing and the device is required then we cannot proceed.
 			return nil, errors.New("The required device path doesn't exist and the major and minor settings are not specified")
+		}
+	}
+
+	if created {
+		err = unixBlockLimitApply(&runConf, unixBlockDevicePath(d.inst.DevicesPath(), d.name, d.config), d.config)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -268,6 +313,11 @@ func (d *unixCommon) Stop() (*deviceConfig.RunConfig, error) {
 
 	runConf := deviceConfig.RunConfig{
 		PostHooks: []func() error{d.postStop},
+	}
+
+	err = unixBlockLimitClear(&runConf, unixBlockDevicePath(d.inst.DevicesPath(), d.name, d.config), d.config)
+	if err != nil {
+		return nil, err
 	}
 
 	err = unixDeviceRemove(d.inst.DevicesPath(), "unix", d.name, "", &runConf)
