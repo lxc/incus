@@ -1364,7 +1364,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 	var diskLimits *deviceConfig.DiskLimits
 	if d.config["limits.read"] != "" || d.config["limits.write"] != "" || d.config["limits.max"] != "" {
 		// Parse the limits into usable values.
-		readBps, readIops, writeBps, writeIops, err := d.parseLimit(d.config)
+		readBps, readIops, writeBps, writeIops, err := diskParseLimits(d.config)
 		if err != nil {
 			return nil, err
 		}
@@ -1889,7 +1889,7 @@ func (d *disk) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 
 		if d.inst.Type() == instancetype.VM {
 			// Parse the limits into usable values (zero when unset, which clears any existing throttle).
-			readBps, readIops, writeBps, writeIops, err := d.parseLimit(d.config)
+			readBps, readIops, writeBps, writeIops, err := diskParseLimits(d.config)
 			if err != nil {
 				return err
 			}
@@ -2830,7 +2830,7 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 		}
 
 		// Parse the user input
-		readBps, readIops, writeBps, writeIops, err := d.parseLimit(dev)
+		readBps, readIops, writeBps, writeIops, err := diskParseLimits(dev)
 		if err != nil {
 			return nil, err
 		}
@@ -2942,8 +2942,8 @@ func (d *disk) getDiskLimits() (map[string]diskBlockLimit, error) {
 	return result, nil
 }
 
-// parseLimit parses the disk configuration for its I/O limits and returns the I/O bytes/iops limits.
-func (d *disk) parseLimit(dev deviceConfig.Device) (int64, int64, int64, int64, error) {
+// diskParseLimits parses a device configuration for its I/O limits and returns the I/O bytes/iops limits.
+func diskParseLimits(dev deviceConfig.Device) (int64, int64, int64, int64, error) {
 	readSpeed := dev["limits.read"]
 	writeSpeed := dev["limits.write"]
 
