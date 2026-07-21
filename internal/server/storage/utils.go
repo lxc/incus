@@ -1149,6 +1149,28 @@ func InstanceDiskBlockSize(pool Pool, inst instance.Instance, op *operations.Ope
 		return -1, errors.New("No disk path available from mount")
 	}
 
+	volType, err := InstanceTypeToVolumeType(inst.Type())
+	if err != nil {
+		return -1, err
+	}
+
+	dbVol, err := VolumeDBGet(pool, inst.Project().Name, inst.Name(), volType)
+	if err != nil {
+		return -1, err
+	}
+
+	vol := pool.GetVolume(volType, InstanceContentType(inst), project.Instance(inst.Project().Name, inst.Name()), dbVol.Config)
+
+	// For qcow2 volumes, use the virtual size as the device is larger to hold the qcow2 metadata.
+	if drivers.IsQcow2Block(vol) {
+		imgInfo, err := drivers.Qcow2Info(mountInfo.DiskPath)
+		if err != nil {
+			return -1, err
+		}
+
+		return int64(imgInfo.VirtualSize), nil
+	}
+
 	blockDiskSize, err := drivers.BlockDiskSizeBytes(mountInfo.DiskPath)
 	if err != nil {
 		return -1, fmt.Errorf("Error getting block disk size %q: %w", mountInfo.DiskPath, err)
