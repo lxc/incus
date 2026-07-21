@@ -11478,6 +11478,47 @@ paths:
             tags:
                 - instances
     /1.0/instances/{name}/nvram/{guid}/{var}:
+        delete:
+            description: Only supported for VMs.
+            operationId: instance_nvram_guid_var_delete
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Variable GUID
+                  example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+                  in: path
+                  name: guid
+                  required: true
+                  type: string
+                - description: Variable name
+                  example: BootOrder
+                  in: path
+                  name: var
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Delete the NVRAM variable
+            tags:
+                - instances
         get:
             description: |-
                 If the `Accept` header is set to `application/octet-stream`, the raw binary value of the variable
