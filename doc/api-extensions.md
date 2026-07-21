@@ -3279,3 +3279,9 @@ is controlled by the new `port-forward` agent feature.
 
 A matching `incus port-forward` command is added to the client, providing
 a local TCP listener which forwards every connection to the instance.
+
+## `unix_block_limits`
+
+This adds the `limits.read` and `limits.write` configuration keys to
+`unix-block` devices. These behave similarly to their `disk` device
+equivalents, accepting either a byte/s value or an IOPS value.
