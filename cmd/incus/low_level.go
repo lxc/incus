@@ -254,6 +254,10 @@ func (c *cmdLowLevelNVRAM) command() *cobra.Command {
 	lowLevelNVRAMListCmd := cmdLowLevelNVRAMList{global: c.global}
 	cmd.AddCommand(lowLevelNVRAMListCmd.command())
 
+	// Unset.
+	lowLevelNVRAMUnsetCmd := cmdLowLevelNVRAMUnset{global: c.global}
+	cmd.AddCommand(lowLevelNVRAMUnsetCmd.command())
+
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706.
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
@@ -533,4 +537,58 @@ func (c *cmdLowLevelNVRAMList) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, uefiVars)
+}
+
+// Unset.
+type cmdLowLevelNVRAMUnset struct {
+	global *cmdGlobal
+}
+
+var cmdLowLevelNVRAMUnsetUsage = u.Usage{u.Instance.Remote(), u.Variable}
+
+func (c *cmdLowLevelNVRAMUnset) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("unset", cmdLowLevelNVRAMUnsetUsage...)
+	cmd.Short = i18n.G("Unset UEFI variables")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G("Unset UEFI variables"))
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelNVRAMUnset) run(cmd *cobra.Command, args []string) error {
+	// We deliberately only accept a single deletion at a time because we don’t want to give users
+	// the impression that they are hitting any kind of optimized path. Deleting 100 variables leads
+	// to 100 full NVRAM rewrites.
+	parsed, err := c.global.Parse(cmdLowLevelNVRAMUnsetUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	guid, varName, err := nvramGuessVar(parsed[1].String)
+	if err != nil {
+		return err
+	}
+
+	// Delete the UEFI variable.
+	err = d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		return err
+	}
+
+	if !c.global.flagQuiet {
+		fmt.Printf(i18n.G("UEFI variable %s:%s deleted on %s")+"\n", guid, varName, formatRemote(c.global.conf, parsed[0]))
+	}
+
+	return nil
 }
