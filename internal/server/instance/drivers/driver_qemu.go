@@ -12223,3 +12223,36 @@ func (d *qemu) GetNVRAM() (*uefi.Store, error) {
 
 	return uefi.ParseNVRAM(nvRAM)
 }
+
+// SetNVRAM sets the NVRAM.
+func (d *qemu) SetNVRAM(store *uefi.Store) error {
+	// Mount the instance's config volume.
+	_, err := d.mount()
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
+
+	_, err = os.Stat(d.nvramPath())
+	if errors.Is(err, os.ErrNotExist) {
+		// The NVRAM hasn’t been initialized yet.
+		err = d.setupNvram()
+		if err != nil {
+			return err
+		}
+	}
+
+	f, err := os.Create(d.nvramPath())
+	if err != nil {
+		return fmt.Errorf("Failed opening NVRAM file: %w", err)
+	}
+
+	b, err := store.Bytes()
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(b)
+	return err
+}

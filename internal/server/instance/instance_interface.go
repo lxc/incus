@@ -228,6 +228,7 @@ type VM interface {
 	ConsoleScreenshot(screenshotFile *os.File) error
 	DumpGuestMemory(w *os.File, format string) error
 	GetNVRAM() (*uefi.Store, error)
+	SetNVRAM(store *uefi.Store) error
 }
 
 // CriuMigrationArgs arguments for CRIU migration.
