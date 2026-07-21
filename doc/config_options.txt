@@ -1803,6 +1803,18 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```
 
+```{config:option} limits.read devices-unix-char-block
+:shortdesc: "I/O limit in byte/s or IOPS for read operations"
+:type: "string"
+
+```
+
+```{config:option} limits.write devices-unix-char-block
+:shortdesc: "I/O limit in byte/s or IOPS for write operations"
+:type: "string"
+
+```
+
 ```{config:option} major devices-unix-char-block
 :default: "device on host"
 :shortdesc: "Device major number"
