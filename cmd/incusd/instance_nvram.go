@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"maps"
 	"net/http"
 	"slices"
@@ -18,44 +19,44 @@ import (
 	"github.com/lxc/incus/v7/shared/uefi"
 )
 
-func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) (*uefi.Store, response.Response) {
+func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) (*uefi.Store, instance.VM, response.Response) {
 	s := d.State()
 
 	if internalInstance.IsSnapshot(name) {
-		return nil, response.BadRequest(errors.New("Invalid instance name"))
+		return nil, nil, response.BadRequest(errors.New("Invalid instance name"))
 	}
 
 	// Redirect to correct server if needed.
 	resp, err := forwardedResponseIfInstanceIsRemote(s, r, projectName, name)
 	if err != nil {
-		return nil, response.SmartError(err)
+		return nil, nil, response.SmartError(err)
 	}
 
 	if resp != nil {
-		return nil, resp
+		return nil, nil, resp
 	}
 
 	// Load the instance.
 	inst, err := instance.LoadByProjectAndName(s, projectName, name)
 	if err != nil {
-		return nil, response.SmartError(err)
+		return nil, nil, response.SmartError(err)
 	}
 
 	if inst.Type() != instancetype.VM {
-		return nil, response.BadRequest(errors.New("NVRAM operations are only supported for virtual machines"))
+		return nil, nil, response.BadRequest(errors.New("NVRAM operations are only supported for virtual machines"))
 	}
 
 	v, ok := inst.(instance.VM)
 	if !ok {
-		return nil, response.InternalError(errors.New("Failed to cast inst to VM"))
+		return nil, nil, response.InternalError(errors.New("Failed to cast inst to VM"))
 	}
 
 	store, err := v.GetNVRAM()
 	if err != nil {
-		return nil, response.SmartError(err)
+		return nil, nil, response.SmartError(err)
 	}
 
-	return store, nil
+	return store, v, nil
 }
 
 // swagger:operation GET /1.0/instances/{name}/nvram instances instance_nvram_get
@@ -257,7 +258,7 @@ func instanceNVRAMGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	store, resp := getNVRAMStore(d, r, projectName, name)
+	store, _, resp := getNVRAMStore(d, r, projectName, name)
 	if resp != nil {
 		return resp
 	}
@@ -443,7 +444,7 @@ func instanceNVRAMGUIDGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	store, resp := getNVRAMStore(d, r, projectName, name)
+	store, _, resp := getNVRAMStore(d, r, projectName, name)
 	if resp != nil {
 		return resp
 	}
@@ -555,7 +556,7 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	store, resp := getNVRAMStore(d, r, projectName, name)
+	store, _, resp := getNVRAMStore(d, r, projectName, name)
 	if resp != nil {
 		return resp
 	}
@@ -576,4 +577,91 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 
 	_ = uefi.Dissect(v, guid, varName)
 	return response.SyncResponse(true, v)
+}
+
+// swagger:operation DELETE /1.0/instances/{name}/nvram/{guid}/{var} instances instance_nvram_guid_var_delete
+//
+//	Delete the NVRAM variable
+//
+//	Only supported for VMs.
+//
+//	---
+//	produces:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: path
+//	    name: guid
+//	    description: Variable GUID
+//	    type: string
+//	    required: true
+//	    example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+//	  - in: path
+//	    name: var
+//	    description: Variable name
+//	    type: string
+//	    example: BootOrder
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	guid, err := pathVar(r, "guid")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	varName, err := pathVar(r, "var")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	store, inst, resp := getNVRAMStore(d, r, projectName, name)
+	if resp != nil {
+		return resp
+	}
+
+	if inst.IsRunning() {
+		return response.BadRequest(fmt.Errorf("UEFI variables cannot be deleted on running VMs"))
+	}
+
+	vars, ok := store.Vars[guid]
+	if !ok {
+		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "GUID not found"))
+	}
+
+	_, ok = vars[varName]
+	if !ok {
+		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "Variable not found"))
+	}
+
+	delete(store.Vars[guid], varName)
+	err = inst.SetNVRAM(store)
+	if err != nil {
+		response.SmartError(err)
+	}
+
+	return response.EmptySyncResponse
 }
