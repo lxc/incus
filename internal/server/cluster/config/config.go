@@ -240,6 +240,17 @@ func (c *Config) AuthorizationScriptlet() string {
 	return c.m.GetString("authorization.scriptlet")
 }
 
+// AuthorizationClientRoutes returns the explicit per-client-class authorization routing configuration.
+func (c *Config) AuthorizationClientRoutes() map[string]string {
+	return map[string]string{
+		"default":        c.m.GetString("authorization.client.default"),
+		"unix":           c.m.GetString("authorization.client.unix"),
+		"tls":            c.m.GetString("authorization.client.tls"),
+		"tls-restricted": c.m.GetString("authorization.client.tls-restricted"),
+		"oidc":           c.m.GetString("authorization.client.oidc"),
+	}
+}
+
 // InstancesLXCFSPerInstance returns whether LXCFS should be run on a per-instance basis.
 func (c *Config) InstancesLXCFSPerInstance() bool {
 	return c.m.GetBool("instances.lxcfs.per_instance")
@@ -347,8 +358,8 @@ func (c *Config) ClusterHealingThreshold() time.Duration {
 }
 
 // OpenFGA returns all OpenFGA settings need to interact with an OpenFGA server.
-func (c *Config) OpenFGA() (apiURL string, apiToken string, storeID string) {
-	return c.m.GetString("authorization.openfga.api.url"), c.m.GetString("authorization.openfga.api.token"), c.m.GetString("authorization.openfga.store.id")
+func (c *Config) OpenFGA() (apiURL string, apiToken string, storeID string, tlsIdentifier string) {
+	return c.m.GetString("authorization.openfga.api.url"), c.m.GetString("authorization.openfga.api.token"), c.m.GetString("authorization.openfga.store.id"), c.m.GetString("authorization.openfga.tls.identifier")
 }
 
 // NetworkHWAddrPattern returns the MAC address pattern used in the cluster.
@@ -564,6 +575,51 @@ var ConfigSchema = config.Schema{
 	//  shortdesc: Port and interface for HTTP server (used by HTTP-01)
 	"acme.http.port": {Default: ":80", Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
 
+	// gendoc:generate(entity=server, group=authorization, key=authorization.client.default)
+	// Routes clients that do not match a more specific class to an authorization driver.
+	// Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: Authorization driver for clients without a more specific class route
+	"authorization.client.default": {Validator: validate.Optional(validate.IsOneOf("allow", "deny", "openfga", "scriptlet"))},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.client.oidc)
+	// Routes OIDC-authenticated clients to an authorization driver.
+	// Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: Authorization driver for OIDC-authenticated clients
+	"authorization.client.oidc": {Validator: validate.Optional(validate.IsOneOf("allow", "deny", "openfga", "scriptlet"))},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.client.tls)
+	// Routes clients using an unrestricted client certificate to an authorization driver.
+	// Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: Authorization driver for unrestricted TLS clients
+	"authorization.client.tls": {Validator: validate.Optional(validate.IsOneOf("allow", "deny", "openfga", "scriptlet"))},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.client.tls-restricted)
+	// Routes clients using a restricted (project-scoped) client certificate to an authorization driver.
+	// Possible values are `allow`, `deny`, `tls`, `openfga` and `scriptlet`.
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: Authorization driver for restricted TLS clients
+	"authorization.client.tls-restricted": {Validator: validate.Optional(validate.IsOneOf("allow", "deny", "tls", "openfga", "scriptlet"))},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.client.unix)
+	// Routes local clients connecting over the `unix` socket to an authorization driver.
+	// Possible values are `allow`, `deny`, `openfga` and `scriptlet`.
+	// ---
+	// type: string
+	// scope: global
+	// shortdesc: Authorization driver for local (`unix` socket) clients
+	"authorization.client.unix": {Validator: validate.Optional(validate.IsOneOf("allow", "deny", "openfga", "scriptlet"))},
+
 	// gendoc:generate(entity=server, group=authorization, key=authorization.openfga.api.token)
 	//
 	// ---
@@ -587,6 +643,16 @@ var ConfigSchema = config.Schema{
 	// scope: global
 	// shortdesc: ID of the OpenFGA permission store
 	"authorization.openfga.store.id": {},
+
+	// gendoc:generate(entity=server, group=authorization, key=authorization.openfga.tls.identifier)
+	// When a TLS client is authorized by OpenFGA, this selects the certificate
+	// attribute used as the OpenFGA user: `fingerprint` or `name`.
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: `name`
+	//  shortdesc: Certificate attribute used as the OpenFGA user for TLS clients
+	"authorization.openfga.tls.identifier": {Default: "name", Validator: validate.Optional(validate.IsOneOf("fingerprint", "name"))},
 
 	// gendoc:generate(entity=server, group=authorization, key=authorization.scriptlet)
 	// When using scriptlet-based authorization, this option stores the scriptlet.

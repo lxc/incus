@@ -557,6 +557,7 @@ var APIExtensions = []string{
 	"gpu_native_context",
 	"instance_port_forward",
 	"unix_block_limits",
+	"authorization_client_routing",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

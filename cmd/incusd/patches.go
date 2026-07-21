@@ -15,6 +15,7 @@ import (
 	linstorClient "github.com/LINBIT/golinstor/client"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/backup"
 	"github.com/lxc/incus/v7/internal/server/certificate"
 	"github.com/lxc/incus/v7/internal/server/cluster"
@@ -102,6 +103,7 @@ var patches = []patch{
 	{name: "linstor_tune_rs_discard_granularity", stage: patchPostDaemonStorage, run: patchLinstorDiscardGranularity},
 	{name: "storage_lvmcluster_qcow2_overhead", stage: patchPostDaemonStorage, run: patchGenericStorage},
 	{name: "authorization_openfga_config_keys", stage: patchPreDaemonStorage, run: patchAuthorizationOpenFGAConfigKeys},
+	{name: "authorization_client_routes_from_driver", stage: patchPreDaemonStorage, run: patchAuthorizationClientRoutesFromDriver},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1873,6 +1875,49 @@ func patchAuthorizationOpenFGAConfigKeys(_ string, d *Daemon) error {
 
 		if len(changes) == 0 {
 			return nil
+		}
+
+		err = tx.UpdateClusterConfig(changes)
+		if err != nil {
+			return fmt.Errorf("Failed updating cluster config: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// patchAuthorizationClientRoutesFromDriver seeds authorization.client.* config
+// from the current authorizer class, so an upgrade keeps enforcing the same driver.
+func patchAuthorizationClientRoutesFromDriver(_ string, d *Daemon) error {
+	return d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		config, err := tx.Config(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed getting cluster config: %w", err)
+		}
+
+		// If any explicit route is already set, the routing table has been
+		// configured directly; leave it untouched.
+		for _, class := range []string{"default", "unix", "tls", "tls-restricted", "oidc"} {
+			if config["authorization.client."+class] != "" {
+				return nil
+			}
+		}
+
+		// Determine the implicitly selected driver, matching the legacy startup
+		// precedence: scriptlet over OpenFGA over the default (TLS) driver.
+		var changes map[string]string
+		switch {
+		case config["authorization.scriptlet"] != "":
+			changes = map[string]string{
+				"authorization.client.tls":            auth.DriverScriptlet,
+				"authorization.client.tls-restricted": auth.DriverScriptlet,
+				"authorization.client.oidc":           auth.DriverScriptlet,
+			}
+
+		case config["authorization.openfga.api.url"] != "" && config["authorization.openfga.api.token"] != "" && config["authorization.openfga.store.id"] != "":
+			changes = map[string]string{
+				"authorization.client.oidc": auth.DriverOpenFGA,
+			}
 		}
 
 		err = tx.UpdateClusterConfig(changes)
