@@ -2013,13 +2013,16 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		reverter.Add(func() { cleanupDependentVols() })
 	}
 
+	isRemoteClusterMove := args.ClusterMoveSourceName != "" && b.driver.Info().Remote
+
 	// Now that we got the source details, validate against the instance limits.
 	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
 	if err != nil {
 		return err
 	}
 
-	if rootDiskConf["size"] != "" {
+	// Skip the size check on remote cluster moves as the volume is used in place.
+	if rootDiskConf["size"] != "" && !isRemoteClusterMove {
 		rootDiskConfBytes, err := units.ParseByteSizeString(rootDiskConf["size"])
 		if err != nil {
 			return err
@@ -2089,8 +2092,6 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 	if args.Refresh && !volExists {
 		return errors.New("Cannot refresh volume, doesn't exist on migration target storage")
 	}
-
-	isRemoteClusterMove := args.ClusterMoveSourceName != "" && b.driver.Info().Remote
 
 	if !args.Refresh {
 		if volExists {
