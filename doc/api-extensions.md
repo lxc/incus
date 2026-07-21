@@ -3285,3 +3285,29 @@ a local TCP listener which forwards every connection to the instance.
 This adds the `limits.read` and `limits.write` configuration keys to
 `unix-block` devices. These behave similarly to their `disk` device
 equivalents, accepting either a byte/s value or an IOPS value.
+
+## `authorization_client_routing`
+
+This allows loading multiple authorization drivers at once and routing each
+request to one of them based on the authentication class of the client.
+
+The following server configuration keys are added:
+
+* `authorization.client.default`: driver for clients without a more specific class route
+* `authorization.client.unix`: driver for local (`unix` socket) clients
+* `authorization.client.tls`: driver for unrestricted TLS clients
+* `authorization.client.tls-restricted`: driver for restricted (project-scoped) TLS clients
+* `authorization.client.oidc`: driver for OIDC-authenticated clients
+
+Each key accepts one of `allow`, `deny`, `openfga` or `scriptlet`. A per-class
+key falls back to `authorization.client.default` when unset.
+
+`authorization.client.tls-restricted` additionally accepts `tls`, as the TLS
+authorization method exists to enforce the per-certificate project restrictions
+that only apply to restricted certificates.
+
+The following server configuration key is also added:
+
+* `authorization.openfga.tls.identifier`: certificate attribute (`fingerprint`
+  or `name`) used as the OpenFGA user when a TLS client is authorized by
+  OpenFGA (defaults to `name`).
