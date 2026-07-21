@@ -2042,6 +2042,20 @@
 						}
 					},
 					{
+						"limits.read": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in byte/s or IOPS for read operations",
+							"type": "string"
+						}
+					},
+					{
+						"limits.write": {
+							"longdesc": "",
+							"shortdesc": "I/O limit in byte/s or IOPS for write operations",
+							"type": "string"
+						}
+					},
+					{
 						"major": {
 							"default": "device on host",
 							"longdesc": "",
