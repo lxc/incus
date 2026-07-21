@@ -62,9 +62,19 @@ This option is supported for the `btrfs` driver, the `lvm` driver, the `zfs` dri
 
 Incus can create a loop file on your main drive and have the selected storage driver use that.
 This method is functionally similar to using a disk or partition, but it uses a large file on your main drive instead.
-This means that every write must go through the storage driver and your main drive's file system, which leads to decreased performance.
 
 The loop files reside in `/var/lib/incus/disks/`.
+
+```{note}
+Every write must go through the storage driver and your main drive's
+file system, which leads to decreased performance.
+
+When the host file system is also copy-on-write (`btrfs` or `zfs`),
+every commit inside the loop file has to be committed again by the host
+file system, so synchronous write workloads can issue several times the
+physical writes they would on a dedicated disk or partition. On SSDs,
+this costs endurance, not just throughput.
+```
 
 Loop files usually cannot be shrunk.
 They will grow up to the configured limit, but deleting instances or images will not cause the file to shrink.
