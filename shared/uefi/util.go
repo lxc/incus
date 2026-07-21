@@ -83,6 +83,34 @@ func parseAttributes(rawAttributes uint32) []string {
 	return attributes
 }
 
+// dumpAttributes packs a list of UEFI variable attributes.
+func dumpAttributes(attributes []string) uint32 {
+	var rawAttributes uint32
+
+	for _, attribute := range attributes {
+		switch attribute {
+		case "NON_VOLATILE":
+			rawAttributes = rawAttributes | 0x0000_0001
+		case "BOOTSERVICE_ACCESS":
+			rawAttributes = rawAttributes | 0x0000_0002
+		case "RUNTIME_ACCESS":
+			rawAttributes = rawAttributes | 0x0000_0004
+		case "HARDWARE_ERROR_RECORD":
+			rawAttributes = rawAttributes | 0x0000_0008
+		case "AUTHENTICATED_WRITE_ACCESS":
+			rawAttributes = rawAttributes | 0x0000_0010
+		case "TIME_BASED_AUTHENTICATED_WRITE_ACCESS":
+			rawAttributes = rawAttributes | 0x0000_0020
+		case "APPEND_WRITE":
+			rawAttributes = rawAttributes | 0x0000_0040
+		case "ENHANCED_AUTHENTICATED_ACCESS":
+			rawAttributes = rawAttributes | 0x0000_0080
+		}
+	}
+
+	return rawAttributes
+}
+
 // parseSigType parses signature GUIDs and formats them.
 func parseSigType(sigType string) (string, error) {
 	switch sigType {

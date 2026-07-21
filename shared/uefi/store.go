@@ -248,3 +248,189 @@ func ParseNVRAM(data []byte) (*Store, error) {
 
 	return s, nil
 }
+
+// Bytes writes a binary OVMF NVRAM store.
+func (s *Store) Bytes() ([]byte, error) {
+	w := newWriter()
+	err := w.write([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeGUID(EfiSystemNvDataFvGuid)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU64(s.length)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeZ8("_FVH")
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU32(s.attrs)
+	if err != nil {
+		return nil, err
+	}
+
+	hlenPos := w.size()
+	err = w.writeU16(0) // Header length to fill later.
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU16(0) // Header checksum to fill later.
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU16(0) // Extension header.
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU8(0) // Reserved.
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU8(2) // Revision.
+	if err != nil {
+		return nil, err
+	}
+
+	for _, b := range s.blockMap {
+		err = w.writeU32(b.Count)
+		if err != nil {
+			return nil, err
+		}
+
+		err = w.writeU32(b.Size)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = w.writeU32(0)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU32(0)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU16At(uint16(w.size()), hlenPos)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU16At(-csum16(w.data), hlenPos+2)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeGUID(EfiAuthenticatedVariableGuid)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU32(s.varSize)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.write([]byte{0x5a, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
+	if err != nil {
+		return nil, err
+	}
+
+	for guid, vars := range s.Vars {
+		for name, v := range vars {
+			err = w.writeU16(0x55aa)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeU8(0x3f)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeU8(0)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeU32(dumpAttributes(v.Attributes))
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeU64(0)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeTimestamp(v.Timestamp)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeU32(0)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeU32(uint32(len(name)*2 + 2))
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeU32(uint32(len(v.Binary)))
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeGUID(guid)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.writeZn16(name)
+			if err != nil {
+				return nil, err
+			}
+
+			err = w.write(v.Binary)
+			if err != nil {
+				return nil, err
+			}
+
+			for w.size()%4 != 0 {
+				err = w.writeU8(0)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	if uint64(w.size()) > s.length {
+		return nil, fmt.Errorf("Variables require %d bytes but store length is %d", w.size(), s.length)
+	}
+
+	for uint64(w.size()) < s.length {
+		err = w.writeU8(0xff)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return w.data, nil
+}
