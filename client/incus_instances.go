@@ -3397,3 +3397,23 @@ func (r *ProtocolIncus) GetInstanceNVRAMGUIDVar(name string, guid string, varNam
 
 	return v, err
 }
+
+// DeleteInstanceNVRAMGUIDVar sets interpreted OVMF variables on an instance.
+func (r *ProtocolIncus) DeleteInstanceNVRAMGUIDVar(name string, guid string, varName string) error {
+	if !r.HasExtension("instance_nvram") {
+		return errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return err
+	}
+
+	// Send the request
+	_, _, err = r.query("DELETE", fmt.Sprintf("%s/%s/nvram/%s/%s", path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName)), nil, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
