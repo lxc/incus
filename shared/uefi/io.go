@@ -2,7 +2,9 @@ package uefi
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 	"unicode/utf16"
 )
@@ -407,4 +409,149 @@ func (r *reader) readTimestamp() (*time.Time, error) {
 
 	t := time.Date(int(year), time.Month(month), int(day), int(hour), int(minute), int(second), 0, time.UTC)
 	return &t, nil
+}
+
+// writer is a wrapper to help writing OVMF files.
+type writer struct {
+	data []byte
+}
+
+// newWriter returns a writer.
+func newWriter() *writer {
+	return &writer{}
+}
+
+// size returns the writer’s size.
+func (w *writer) size() int {
+	return len(w.data)
+}
+
+// write writes raw bytes.
+func (w *writer) write(b []byte) error {
+	w.data = append(w.data, b...)
+	return nil
+}
+
+// writeU8 writes an 8-bit unsigned integer.
+func (w *writer) writeU8(v uint8) error {
+	w.data = append(w.data, v)
+	return nil
+}
+
+// writeU16 writes a 16-bit unsigned integer.
+func (w *writer) writeU16(v uint16) error {
+	b := make([]byte, 2)
+	binary.LittleEndian.PutUint16(b, v)
+	w.data = append(w.data, b...)
+	return nil
+}
+
+// writeU16At writes a 16-bit unsigned integer at the given position.
+func (w *writer) writeU16At(v uint16, pos int) error {
+	binary.LittleEndian.PutUint16(w.data[pos:], v)
+	return nil
+}
+
+// writeU32 writes a 32-bit unsigned integer.
+func (w *writer) writeU32(v uint32) error {
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, v)
+	w.data = append(w.data, b...)
+	return nil
+}
+
+// writeU64 writes a 64-bit unsigned integer.
+func (w *writer) writeU64(v uint64) error {
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(b, v)
+	w.data = append(w.data, b...)
+	return nil
+}
+
+// writeGUID reads a GUID.
+func (w *writer) writeGUID(guid string) error {
+	b, err := hex.DecodeString(strings.ReplaceAll(guid, "-", ""))
+	if err != nil {
+		return err
+	}
+
+	w.data = append(append(w.data, b[3], b[2], b[1], b[0], b[5], b[4], b[7], b[6]), b[8:]...)
+	return nil
+}
+
+// writeZ8 writes an ASCII/UTF8 string.
+func (w *writer) writeZ8(s string, n ...int) error {
+	size := len(s)
+	if len(n) > 0 {
+		size = n[0]
+	}
+
+	b := make([]byte, size)
+	copy(b, s)
+	w.data = append(w.data, b...)
+	return nil
+}
+
+// writeZ16 writes an UTF16 string.
+func (w *writer) writeZ16(s string, n ...int) error {
+	size := len(s) * 2
+	if len(n) > 0 {
+		size = n[0] * 2
+	}
+
+	b := make([]byte, size)
+	for i, c := range utf16.Encode([]rune(s)) {
+		b[i*2] = byte(c)
+		b[i*2+1] = byte(c >> 8)
+	}
+
+	w.data = append(w.data, b...)
+	return nil
+}
+
+// writeZ16 writes a NUL-terminated UTF16 string.
+func (w *writer) writeZn16(s string, n ...int) error {
+	return w.writeZ16(s + "\x00")
+}
+
+// writeTimestamp writes an EFI time. We consider times to be expressed in UTC and ignore
+// nanoseconds, because all our call sites do so. This function returns a nil time if all the read
+// bytes are 0.
+func (w *writer) writeTimestamp(t *time.Time) error {
+	if t == nil {
+		return w.write([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	}
+
+	err := w.writeU16(uint16(t.Year()))
+	if err != nil {
+		return err
+	}
+
+	err = w.writeU8(uint8(t.Month()))
+	if err != nil {
+		return err
+	}
+
+	err = w.writeU8(uint8(t.Day()))
+	if err != nil {
+		return err
+	}
+
+	err = w.writeU8(uint8(t.Hour()))
+	if err != nil {
+		return err
+	}
+
+	err = w.writeU8(uint8(t.Minute()))
+	if err != nil {
+		return err
+	}
+
+	err = w.writeU8(uint8(t.Second()))
+	if err != nil {
+		return err
+	}
+
+	// Pad1+Nanosecond+TimeZone+Daylight+Pad2.
+	return w.write([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0})
 }
