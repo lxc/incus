@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-22 20:27-0400\n"
+"POT-Creation-Date: 2026-07-22 20:28-0400\n"
 "PO-Revision-Date: 2026-07-13 05:43+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -689,16 +689,16 @@ msgstr ""
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' is geen ondersteund bestandstype"
 
-#: cmd/incus/low_level.go:468
+#: cmd/incus/low_level.go:472
 msgid "(binary data)"
 msgstr ""
 
-#: cmd/incus/low_level.go:473
+#: cmd/incus/low_level.go:477
 #, c-format
 msgid "(error: %w)"
 msgstr ""
 
-#: cmd/incus/low_level.go:460
+#: cmd/incus/low_level.go:464
 msgid "(no timestamp)"
 msgstr ""
 
@@ -859,7 +859,7 @@ msgstr ""
 msgid "ARCHITECTURE"
 msgstr "ARCHITECTUUR"
 
-#: cmd/incus/low_level.go:408
+#: cmd/incus/low_level.go:412
 msgid "ATTRIBUTES"
 msgstr ""
 
@@ -1635,7 +1635,7 @@ msgstr "Clustering aan"
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:142
-#: cmd/incus/low_level.go:390 cmd/incus/network.go:1054
+#: cmd/incus/low_level.go:394 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:74
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
@@ -2629,7 +2629,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:521
-#: cmd/incus/low_level.go:422 cmd/incus/network.go:1101
+#: cmd/incus/low_level.go:426 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:99
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
@@ -3162,12 +3162,12 @@ msgstr ""
 msgid "Failed to find project: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:350 cmd/incus/low_level.go:359
+#: cmd/incus/low_level.go:354 cmd/incus/low_level.go:363
 #, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:492
+#: cmd/incus/low_level.go:496
 #, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr ""
@@ -3424,7 +3424,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143
-#: cmd/incus/low_level.go:389 cmd/incus/network.go:1055
+#: cmd/incus/low_level.go:393 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:71 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
@@ -3519,11 +3519,11 @@ msgstr ""
 msgid "GPUs:"
 msgstr ""
 
-#: cmd/incus/low_level.go:379 cmd/incus/low_level.go:409
+#: cmd/incus/low_level.go:383 cmd/incus/low_level.go:413
 msgid "GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:410
+#: cmd/incus/low_level.go:414
 msgid "GUID NAME"
 msgstr ""
 
@@ -3657,11 +3657,11 @@ msgstr ""
 msgid "Get the key as an instance property"
 msgstr ""
 
-#: cmd/incus/low_level.go:319
+#: cmd/incus/low_level.go:323
 msgid "Get the raw binary variable value"
 msgstr ""
 
-#: cmd/incus/low_level.go:315 cmd/incus/low_level.go:316
+#: cmd/incus/low_level.go:319 cmd/incus/low_level.go:320
 msgid "Get values for UEFI variables"
 msgstr ""
 
@@ -3821,7 +3821,7 @@ msgstr ""
 msgid "INSTANCE NAME"
 msgstr ""
 
-#: cmd/incus/low_level.go:414
+#: cmd/incus/low_level.go:418
 msgid "INTERPRETED VALUE"
 msgstr ""
 
@@ -4069,7 +4069,7 @@ msgstr ""
 msgid "Instance type"
 msgstr ""
 
-#: cmd/incus/low_level.go:498
+#: cmd/incus/low_level.go:502
 #, c-format
 msgid "Invalid GUID: %s"
 msgstr ""
@@ -4335,7 +4335,7 @@ msgid ""
 "  L - Location of the DHCP Lease (e.g. its cluster member)"
 msgstr ""
 
-#: cmd/incus/low_level.go:385 cmd/incus/low_level.go:386
+#: cmd/incus/low_level.go:389 cmd/incus/low_level.go:390
 msgid "List UEFI GUIDs and variables"
 msgstr ""
 
@@ -6576,7 +6576,7 @@ msgstr ""
 msgid "Query virtual machine images"
 msgstr ""
 
-#: cmd/incus/low_level.go:412
+#: cmd/incus/low_level.go:416
 msgid "RAW VALUE"
 msgstr ""
 
@@ -7980,7 +7980,7 @@ msgstr ""
 msgid "TARGET"
 msgstr ""
 
-#: cmd/incus/low_level.go:413
+#: cmd/incus/low_level.go:417
 msgid "TIMESTAMP"
 msgstr ""
 
@@ -8450,6 +8450,11 @@ msgstr ""
 msgid "Type: %s"
 msgstr ""
 
+#: cmd/incus/low_level.go:590
+#, c-format
+msgid "UEFI variable %s:%s deleted on %s"
+msgstr ""
+
 #: cmd/incus/project.go:1055
 msgid "UNLIMITED"
 msgstr ""
@@ -8523,7 +8528,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:539
-#: cmd/incus/low_level.go:428 cmd/incus/network.go:1107
+#: cmd/incus/low_level.go:432 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:105
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
@@ -8560,6 +8565,10 @@ msgstr ""
 #: cmd/incus/console.go:127
 #, c-format
 msgid "Unknown output type %q"
+msgstr ""
+
+#: cmd/incus/low_level.go:552 cmd/incus/low_level.go:553
+msgid "Unset UEFI variables"
 msgstr ""
 
 #: cmd/incus/cluster_group.go:962
@@ -8868,7 +8877,7 @@ msgstr ""
 msgid "User aborted delete operation"
 msgstr ""
 
-#: cmd/incus/low_level.go:411
+#: cmd/incus/low_level.go:415
 msgid "VARIABLE NAME"
 msgstr ""
 
