@@ -135,6 +135,13 @@ func nicAddressIP(value string) string {
 // nicCheckOCIStaticNetwork ensures that static OCI network configuration isn't used outside of OCI containers.
 func nicCheckOCIStaticNetwork(inst instance.Instance, config map[string]string) error {
 	if instanceIsOCI(inst) {
+		// A gateway can only be configured alongside a static (CIDR) address.
+		for _, key := range []string{"ipv4", "ipv6"} {
+			if !util.IsNoneOrEmpty(config[key+".gateway"]) && !strings.Contains(config[key+".address"], "/") {
+				return fmt.Errorf("%q requires %q to be set to a CIDR value", key+".gateway", key+".address")
+			}
+		}
+
 		return nil
 	}
 
