@@ -9750,7 +9750,7 @@ func (b *backend) GetInstanceNBD(inst instance.Instance, writable bool) (net.Con
 
 	if !inst.IsRunning() {
 		b.logger.Debug("NBD connection (offline mode)")
-		conn, disconnect, err := b.connectOfflineNBD(vol)
+		conn, disconnect, err := b.connectOfflineNBD(vol, writable)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -9856,7 +9856,7 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 	if err != nil {
 		if errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
 			b.logger.Debug("NBD connection (offline mode)")
-			return b.connectOfflineNBD(vol)
+			return b.connectOfflineNBD(vol, writable)
 		}
 
 		return nil, nil, err
@@ -9864,7 +9864,7 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 
 	if !inst.IsRunning() {
 		b.logger.Debug("NBD connection (offline mode)")
-		return b.connectOfflineNBD(vol)
+		return b.connectOfflineNBD(vol, writable)
 	}
 
 	if writable && inst.IsRunning() {
@@ -9894,10 +9894,13 @@ func (b *backend) GetCustomVolumeNBD(projectName string, volName string, writabl
 }
 
 // connectOfflineNBD spawns qemu-nbd for the given volume.
-func (b *backend) connectOfflineNBD(vol drivers.Volume) (net.Conn, func(), error) {
+func (b *backend) connectOfflineNBD(vol drivers.Volume, writable bool) (net.Conn, func(), error) {
 	socketPath := filepath.Join(internalUtil.RunPath(fmt.Sprintf("%s-nbd.sock", vol.Name())))
 
 	cmd := exec.Command("qemu-nbd", fmt.Sprintf("--socket=%s", socketPath))
+	if !writable {
+		cmd.Args = append(cmd.Args, "--read-only")
+	}
 
 	// Share the qemu-nbd process safely between the worker and this goroutine.
 	var procMu sync.Mutex
