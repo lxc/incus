@@ -313,7 +313,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		// ---
 		//  type: string
 		//  required: no
-		//  shortdesc: I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
+		//  shortdesc: I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) and/or in IOPS (must be suffixed with `iops`), comma separated when specifying both - see also {ref}`storage-configure-IO`
 		"limits.read": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=limits.write)
@@ -321,7 +321,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		// ---
 		//  type: string
 		//  required: no
-		//  shortdesc: I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`
+		//  shortdesc: I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) and/or in IOPS (must be suffixed with `iops`), comma separated when specifying both - see also {ref}`storage-configure-IO`
 		"limits.write": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=limits.max)
@@ -329,7 +329,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		// ---
 		//  type: string
 		//  required: no
-		//  shortdesc: I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)
+		//  shortdesc: I/O limit in byte/s and/or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)
 		"limits.max": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=disk, key=size)
@@ -2953,7 +2953,7 @@ func diskParseLimits(dev deviceConfig.Device) (int64, int64, int64, int64, error
 		writeSpeed = dev["limits.max"]
 	}
 
-	// parseValue parses a single value to either a B/s limit or iops limit.
+	// parseValue parses a comma separated list of B/s and iops limits.
 	parseValue := func(value string) (int64, int64, error) {
 		var err error
 
@@ -2964,16 +2964,33 @@ func diskParseLimits(dev deviceConfig.Device) (int64, int64, int64, int64, error
 			return bps, iops, nil
 		}
 
-		before, ok := strings.CutSuffix(value, "iops")
-		if ok {
-			iops, err = strconv.ParseInt(before, 10, 64)
-			if err != nil {
-				return -1, -1, err
-			}
-		} else {
-			bps, err = units.ParseByteSizeString(value)
-			if err != nil {
-				return -1, -1, err
+		hasBps := false
+		hasIops := false
+
+		for _, field := range util.SplitNTrimSpace(value, ",", -1, true) {
+			before, ok := strings.CutSuffix(field, "iops")
+			if ok {
+				if hasIops {
+					return -1, -1, fmt.Errorf("More than one IOPS limit in %q", value)
+				}
+
+				hasIops = true
+
+				iops, err = strconv.ParseInt(before, 10, 64)
+				if err != nil {
+					return -1, -1, err
+				}
+			} else {
+				if hasBps {
+					return -1, -1, fmt.Errorf("More than one byte/s limit in %q", value)
+				}
+
+				hasBps = true
+
+				bps, err = units.ParseByteSizeString(field)
+				if err != nil {
+					return -1, -1, err
+				}
 			}
 		}
 

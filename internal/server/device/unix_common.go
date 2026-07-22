@@ -114,14 +114,14 @@ func (d *unixCommon) validateConfig(instConf instance.ConfigReader, partialValid
 		//
 		// ---
 		//  type: string
-		//  shortdesc: I/O limit in byte/s or IOPS for read operations
+		//  shortdesc: I/O limit in byte/s and/or IOPS (comma separated) for read operations
 		"limits.read": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=unix-char-block, key=limits.write)
 		//
 		// ---
 		//  type: string
-		//  shortdesc: I/O limit in byte/s or IOPS for write operations
+		//  shortdesc: I/O limit in byte/s and/or IOPS (comma separated) for write operations
 		"limits.write": validate.IsAny,
 
 		// gendoc:generate(entity=devices, group=unix-char-block, key=uid)
