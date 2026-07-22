@@ -75,6 +75,7 @@ See {ref}`disk device <devices-disk>` for all available device options.
 
 When you attach a storage volume to an instance as a {ref}`disk device <devices-disk>`, you can configure I/O limits for it.
 To do so, set the `limits.read`, `limits.write` or `limits.max` properties to the corresponding limits.
+Each limit can be specified in byte/s and/or in IOPS (suffixed with `iops`), comma separated when specifying both (for example, `limits.read=30MiB,1000iops`).
 See the {ref}`devices-disk` reference for more information.
 
 The limits are applied through the Linux `blkio` cgroup controller, which makes it possible to restrict I/O at the disk level (but nothing finer grained than that).
