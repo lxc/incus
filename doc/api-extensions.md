@@ -3320,3 +3320,9 @@ This adds new endpoints to manage virtual machines’ UEFI variables:
 * `GET /1.0/instances/{name}/nvram/{guid}`, to get UEFI variables under the given GUID
 * `GET /1.0/instances/{name}/nvram/{guid}/{var}`, to get specific UEFI variables
 * `DELETE /1.0/instances/{name}/nvram/{guid}/{var}`, to delete specific UEFI variables
+
+## `disk_io_limits_combined`
+
+This makes it possible to set both a byte/s limit and an IOPS limit at the
+same time in the I/O limit keys of `disk` and `unix-block` devices by using
+a comma separated list of values (for example, `limits.read=30MiB,1000iops`).
