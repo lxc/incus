@@ -406,6 +406,27 @@ func (m *ConnPidMapper) ConnStateHandler(conn net.Conn, connState http.ConnState
 
 var errPIDNotInContainer = errors.New("pid not in container?")
 
+func loadContainerForMonitorName(name string, s *state.State) (instance.Container, error) {
+	projectName := api.ProjectDefaultName
+	if strings.Contains(name, "_") {
+		fields := strings.SplitN(name, "_", 2)
+		projectName = fields[0]
+		name = fields[1]
+	}
+
+	inst, err := instance.LoadByProjectAndName(s, projectName, name)
+	if err != nil {
+		return nil, err
+	}
+
+	c, ok := inst.(instance.Container)
+	if !ok {
+		return nil, errors.New("Instance is not container type")
+	}
+
+	return c, nil
+}
+
 func findContainerForPid(pid int32, s *state.State) (instance.Container, error) {
 	/*
 	 * Try and figure out which container a pid is in. There is probably a
@@ -442,28 +463,19 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 			parts := strings.Split(string(cmdline), " ")
 			name := strings.TrimSuffix(parts[len(parts)-1], "\x00")
 
-			projectName := api.ProjectDefaultName
-			if strings.Contains(name, "_") {
-				fields := strings.SplitN(name, "_", 2)
-				projectName = fields[0]
-				name = fields[1]
-			}
+			return loadContainerForMonitorName(name, s)
+		}
 
-			inst, err := instance.LoadByProjectAndName(s, projectName, name)
-			if err != nil {
-				return nil, err
-			}
+		// In containerized deployments the monitor's cmdline can be empty, fall back to its cgroup path.
+		cgroup, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", pid))
+		if err == nil {
+			_, name, found := strings.Cut(string(cgroup), "/lxc.monitor.")
+			if found {
+				name, _, _ = strings.Cut(name, "\n")
+				name, _, _ = strings.Cut(name, "/")
 
-			if inst.Type() != instancetype.Container {
-				return nil, errors.New("Instance is not container type")
+				return loadContainerForMonitorName(name, s)
 			}
-
-			c, ok := inst.(instance.Container)
-			if !ok {
-				return nil, errors.New("Instance is not container type")
-			}
-
-			return c, nil
 		}
 
 		re, err := regexp.Compile(`^PPid:\s+([0-9]+)$`)
