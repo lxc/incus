@@ -125,7 +125,7 @@
 						"limits.max": {
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)",
+							"shortdesc": "I/O limit in byte/s and/or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)",
 							"type": "string"
 						}
 					},
@@ -133,7 +133,7 @@
 						"limits.read": {
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`",
+							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) and/or in IOPS (must be suffixed with `iops`), comma separated when specifying both - see also {ref}`storage-configure-IO`",
 							"type": "string"
 						}
 					},
@@ -141,7 +141,7 @@
 						"limits.write": {
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`",
+							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) and/or in IOPS (must be suffixed with `iops`), comma separated when specifying both - see also {ref}`storage-configure-IO`",
 							"type": "string"
 						}
 					},
@@ -2044,14 +2044,14 @@
 					{
 						"limits.read": {
 							"longdesc": "",
-							"shortdesc": "I/O limit in byte/s or IOPS for read operations",
+							"shortdesc": "I/O limit in byte/s and/or IOPS (comma separated) for read operations",
 							"type": "string"
 						}
 					},
 					{
 						"limits.write": {
 							"longdesc": "",
-							"shortdesc": "I/O limit in byte/s or IOPS for write operations",
+							"shortdesc": "I/O limit in byte/s and/or IOPS (comma separated) for write operations",
 							"type": "string"
 						}
 					},

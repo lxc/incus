@@ -139,21 +139,21 @@ For file systems (shared directories or custom volumes), this is one of:
 
 ```{config:option} limits.max devices-disk
 :required: "no"
-:shortdesc: "I/O limit in byte/s or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)"
+:shortdesc: "I/O limit in byte/s and/or IOPS for both read and write (same as setting both `limits.read` and `limits.write`)"
 :type: "string"
 
 ```
 
 ```{config:option} limits.read devices-disk
 :required: "no"
-:shortdesc: "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`"
+:shortdesc: "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) and/or in IOPS (must be suffixed with `iops`), comma separated when specifying both - see also {ref}`storage-configure-IO`"
 :type: "string"
 
 ```
 
 ```{config:option} limits.write devices-disk
 :required: "no"
-:shortdesc: "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) or in IOPS (must be suffixed with `iops`) - see also {ref}`storage-configure-IO`"
+:shortdesc: "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) and/or in IOPS (must be suffixed with `iops`), comma separated when specifying both - see also {ref}`storage-configure-IO`"
 :type: "string"
 
 ```
@@ -1804,13 +1804,13 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 ```
 
 ```{config:option} limits.read devices-unix-char-block
-:shortdesc: "I/O limit in byte/s or IOPS for read operations"
+:shortdesc: "I/O limit in byte/s and/or IOPS (comma separated) for read operations"
 :type: "string"
 
 ```
 
 ```{config:option} limits.write devices-unix-char-block
-:shortdesc: "I/O limit in byte/s or IOPS for write operations"
+:shortdesc: "I/O limit in byte/s and/or IOPS (comma separated) for write operations"
 :type: "string"
 
 ```
