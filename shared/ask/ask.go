@@ -114,24 +114,30 @@ func (a *Asker) AskString(question string, defaultAnswer string, validate func(s
 }
 
 // AskPassword asks the user to enter a password.
-func (a *Asker) AskPassword(question string) string {
+func (a *Asker) AskPassword(question string) (string, error) {
 	for {
 		fmt.Print(question)
 
-		pwd, _ := term.ReadPassword(0)
+		pwd, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			return "", err
+		}
 		fmt.Println("")
 		inFirst := string(pwd)
 		inFirst = strings.TrimSuffix(inFirst, "\n")
 
 		fmt.Print("Again: ")
-		pwd, _ = term.ReadPassword(0)
+		pwd, err = term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			return "", err
+		}
 		fmt.Println("")
 		inSecond := string(pwd)
 		inSecond = strings.TrimSuffix(inSecond, "\n")
 
 		// refuse empty password or if password inputs do not match
 		if len(inFirst) > 0 && inFirst == inSecond {
-			return inFirst
+			return inFirst, nil
 		}
 
 		invalidInput()
@@ -141,16 +147,19 @@ func (a *Asker) AskPassword(question string) string {
 // AskPasswordOnce asks the user to enter a password.
 //
 // It's the same as AskPassword, but it won't ask to enter it again.
-func (a *Asker) AskPasswordOnce(question string) string {
+func (a *Asker) AskPasswordOnce(question string) (string, error) {
 	for {
 		fmt.Print(question)
-		pwd, _ := term.ReadPassword(0)
+		pwd, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			return "", err
+		}
 		fmt.Println("")
 
 		// refuse empty password
 		spwd := string(pwd)
 		if len(spwd) > 0 {
-			return spwd
+			return spwd, nil
 		}
 
 		invalidInput()
