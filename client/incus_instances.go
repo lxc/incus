@@ -3282,3 +3282,138 @@ func (r *ProtocolIncus) CreateInstanceBitmap(name string, bitmap api.StorageVolu
 
 	return nil
 }
+
+func (r *ProtocolIncus) getInstanceNVRAM(name string, guid string, varName string, accept string) (*http.Response, error) {
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return nil, err
+	}
+
+	// Prepare the HTTP request
+	requestURL := fmt.Sprintf("%s/1.0%s/%s/nvram/%s/%s", r.httpBaseURL.String(), path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName))
+
+	requestURL, err = r.setQueryAttributes(requestURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", accept)
+
+	// Send the request
+	resp, err := r.DoHTTP(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the return value for a cleaner error
+	if resp.StatusCode != http.StatusOK {
+		_, _, err := incusParseResponse(resp)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return resp, nil
+}
+
+// GetInstanceNVRAM gets OVMF variables from an instance.
+func (r *ProtocolIncus) GetInstanceNVRAM(name string) (map[string]map[string]*api.InstanceNVRAMVariable, error) {
+	if !r.HasExtension("instance_nvram") {
+		return nil, errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	vars := map[string]map[string]*api.InstanceNVRAMVariable{}
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the raw value.
+	_, err = r.queryStruct("GET", fmt.Sprintf("%s/%s/nvram?recursion=2", path, url.PathEscape(name)), nil, "", &vars)
+	if err != nil {
+		return nil, err
+	}
+
+	return vars, err
+}
+
+// GetInstanceNVRAMGUID gets namespaced OVMF variables from an instance.
+func (r *ProtocolIncus) GetInstanceNVRAMGUID(name string, guid string) (map[string]*api.InstanceNVRAMVariable, error) {
+	if !r.HasExtension("instance_nvram") {
+		return nil, errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	vars := map[string]*api.InstanceNVRAMVariable{}
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the raw value.
+	_, err = r.queryStruct("GET", fmt.Sprintf("%s/%s/nvram/%s?recursion=1", path, url.PathEscape(name), url.PathEscape(guid)), nil, "", &vars)
+	if err != nil {
+		return nil, err
+	}
+
+	return vars, err
+}
+
+// GetRawInstanceNVRAMGUIDVar gets raw OVMF variables from an instance.
+func (r *ProtocolIncus) GetRawInstanceNVRAMGUIDVar(name string, guid string, varName string) ([]byte, error) {
+	if !r.HasExtension("instance_nvram") {
+		return nil, errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	resp, err := r.getInstanceNVRAM(name, guid, varName, "application/octet-stream")
+	if err != nil {
+		return nil, err
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
+// GetInstanceNVRAMGUIDVar gets interpreted OVMF variables from an instance.
+func (r *ProtocolIncus) GetInstanceNVRAMGUIDVar(name string, guid string, varName string) (*api.InstanceNVRAMVariable, error) {
+	if !r.HasExtension("instance_nvram") {
+		return nil, errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	var v *api.InstanceNVRAMVariable
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the raw value.
+	_, err = r.queryStruct("GET", fmt.Sprintf("%s/%s/nvram/%s/%s?recursion=1", path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName)), nil, "", &v)
+	if err != nil {
+		return nil, err
+	}
+
+	return v, err
+}
+
+// DeleteInstanceNVRAMGUIDVar sets interpreted OVMF variables on an instance.
+func (r *ProtocolIncus) DeleteInstanceNVRAMGUIDVar(name string, guid string, varName string) error {
+	if !r.HasExtension("instance_nvram") {
+		return errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return err
+	}
+
+	// Send the request
+	_, _, err = r.query("DELETE", fmt.Sprintf("%s/%s/nvram/%s/%s", path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName)), nil, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

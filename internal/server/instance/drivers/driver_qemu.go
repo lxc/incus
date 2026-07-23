@@ -90,6 +90,7 @@ import (
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	localtls "github.com/lxc/incus/v7/shared/tls"
+	"github.com/lxc/incus/v7/shared/uefi"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -12192,4 +12193,66 @@ func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.M
 
 	reverter.Success()
 	return dataDev, nil
+}
+
+// GetNVRAM gets the NVRAM.
+func (d *qemu) GetNVRAM() (*uefi.Store, error) {
+	if !d.IsRunning() {
+		// Mount the instance's config volume.
+		_, err := d.mount()
+		if err != nil {
+			return nil, err
+		}
+
+		defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
+
+		_, err = os.Stat(d.nvramPath())
+		if errors.Is(err, os.ErrNotExist) {
+			// The NVRAM hasn’t been initialized yet.
+			err = d.setupNvram()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	nvRAM, err := os.ReadFile(d.nvramPath())
+	if err != nil {
+		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+	}
+
+	return uefi.ParseNVRAM(nvRAM)
+}
+
+// SetNVRAM sets the NVRAM.
+func (d *qemu) SetNVRAM(store *uefi.Store) error {
+	// Mount the instance's config volume.
+	_, err := d.mount()
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
+
+	_, err = os.Stat(d.nvramPath())
+	if errors.Is(err, os.ErrNotExist) {
+		// The NVRAM hasn’t been initialized yet.
+		err = d.setupNvram()
+		if err != nil {
+			return err
+		}
+	}
+
+	f, err := os.Create(d.nvramPath())
+	if err != nil {
+		return fmt.Errorf("Failed opening NVRAM file: %w", err)
+	}
+
+	b, err := store.Bytes()
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(b)
+	return err
 }

@@ -202,6 +202,28 @@ var instanceDebugRepairCmd = APIEndpoint{
 	Post: APIEndpointAction{Handler: instanceDebugRepairPost, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
+var instanceNVRAMCmd = APIEndpoint{
+	Name: "instanceNVRAM",
+	Path: "instances/{name}/nvram",
+
+	Get: APIEndpointAction{Handler: instanceNVRAMGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+}
+
+var instanceNVRAMGUIDCmd = APIEndpoint{
+	Name: "instanceNVRAM",
+	Path: "instances/{name}/nvram/{guid}",
+
+	Get: APIEndpointAction{Handler: instanceNVRAMGUIDGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+}
+
+var instanceNVRAMGuidVarCmd = APIEndpoint{
+	Name: "instanceNVRAM",
+	Path: "instances/{name}/nvram/{guid}/{var}",
+
+	Delete: APIEndpointAction{Handler: instanceNVRAMGUIDVarDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
+	Get:    APIEndpointAction{Handler: instanceNVRAMGUIDVarGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+}
+
 type instanceAutostartList []instance.Instance
 
 func (slice instanceAutostartList) Len() int {

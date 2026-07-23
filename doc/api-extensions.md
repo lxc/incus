@@ -3311,3 +3311,12 @@ The following server configuration key is also added:
 * `authorization.openfga.tls.identifier`: certificate attribute (`fingerprint`
   or `name`) used as the OpenFGA user when a TLS client is authorized by
   OpenFGA (defaults to `name`).
+
+## `instance_nvram`
+
+This adds new endpoints to manage virtual machines’ UEFI variables:
+
+* `GET /1.0/instances/{name}/nvram`, to get all UEFI variables
+* `GET /1.0/instances/{name}/nvram/{guid}`, to get UEFI variables under the given GUID
+* `GET /1.0/instances/{name}/nvram/{guid}/{var}`, to get specific UEFI variables
+* `DELETE /1.0/instances/{name}/nvram/{guid}/{var}`, to delete specific UEFI variables

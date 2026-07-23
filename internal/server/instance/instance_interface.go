@@ -24,6 +24,7 @@ import (
 	"github.com/lxc/incus/v7/shared/idmap"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/osinfo"
+	"github.com/lxc/incus/v7/shared/uefi"
 )
 
 // HookStart hook used when instance has started.
@@ -226,6 +227,8 @@ type VM interface {
 	ConsoleLog() (string, error)
 	ConsoleScreenshot(screenshotFile *os.File) error
 	DumpGuestMemory(w *os.File, format string) error
+	GetNVRAM() (*uefi.Store, error)
+	SetNVRAM(store *uefi.Store) error
 }
 
 // CriuMigrationArgs arguments for CRIU migration.

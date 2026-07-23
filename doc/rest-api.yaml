@@ -2049,6 +2049,32 @@ definitions:
         title: InstanceFull is a combination of Instance, InstanceBackup, InstanceState and InstanceSnapshot.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
+    InstanceNVRAMVariable:
+        properties:
+            attributes:
+                description: Variable attributes.
+                items:
+                    type: string
+                type: array
+                x-go-name: Attributes
+            binary:
+                description: Binary data.
+                items:
+                    format: uint8
+                    type: integer
+                type: array
+                x-go-name: Binary
+            data:
+                description: Dissected data.
+                x-go-name: Data
+            timestamp:
+                description: Authenticated variable timestamp.
+                format: date-time
+                type: string
+                x-go-name: Timestamp
+        title: InstanceNVRAMVariable represents a UEFI variable.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
     InstancePortForwardPost:
         properties:
             address:
@@ -11324,6 +11350,420 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get an NBD connection for all of the instance's disks
+            tags:
+                - instances
+    /1.0/instances/{name}/nvram:
+        get:
+            description: |-
+                Returns a list of NVRAM variable GUIDs (URLs).
+
+                Only supported for VMs.
+            operationId: instance_nvram_get
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of endpoints
+                                example: |-
+                                    [
+                                      "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c",
+                                      "/1.0/instances/foo/nvram/d9bee56e-75dc-49d9-b4d7-b534210f637a",
+                                    ]
+                                items:
+                                    type: string
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the NVRAM variable GUIDs
+            tags:
+                - instances
+    /1.0/instances/{name}/nvram/{guid}:
+        get:
+            description: |-
+                Returns a map of variable names (URLs).
+
+                Only supported for VMs.
+            operationId: instance_nvram_guid_get
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: GUID
+                  in: path
+                  name: guid
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of endpoints
+                                example: |-
+                                    [
+                                      "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000",
+                                      "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder"
+                                    ]
+                                items:
+                                    type: string
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the NVRAM variable names under the given GUID
+            tags:
+                - instances
+    /1.0/instances/{name}/nvram/{guid}/{var}:
+        delete:
+            description: Only supported for VMs.
+            operationId: instance_nvram_guid_var_delete
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Variable GUID
+                  example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+                  in: path
+                  name: guid
+                  required: true
+                  type: string
+                - description: Variable name
+                  example: BootOrder
+                  in: path
+                  name: var
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Delete the NVRAM variable
+            tags:
+                - instances
+        get:
+            description: |-
+                If the `Accept` header is set to `application/octet-stream`, the raw binary value of the variable
+                is returned.
+
+                Only supported for VMs.
+            operationId: instance_nvram_guid_var_get
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Variable GUID
+                  example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+                  in: path
+                  name: guid
+                  required: true
+                  type: string
+                - description: Variable name
+                  example: BootOrder
+                  in: path
+                  name: var
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+                - application/octet-stream
+            responses:
+                "200":
+                    description: NVRAM variable
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/InstanceNVRAMVariable'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the NVRAM variable
+            tags:
+                - instances
+    /1.0/instances/{name}/nvram/{guid}?recursion=1:
+        get:
+            description: |-
+                Returns a map of NVRAM variable GUIDs and their dissected values.
+
+                Only supported for VMs.
+            operationId: instance_nvram_guid_get_recursion1
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: GUID
+                  in: path
+                  name: guid
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: NVRAM variables
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                additionalProperties:
+                                    $ref: '#/definitions/InstanceNVRAMVariable'
+                                description: Namespaced UEFI variables
+                                type: object
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the NVRAM variables under the given GUID
+            tags:
+                - instances
+    /1.0/instances/{name}/nvram?recursion=1:
+        get:
+            description: |-
+                Returns a map of NVRAM variable GUIDs and their associated names (URLs).
+
+                Only supported for VMs.
+            operationId: instance_nvram_get_recursion1
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                additionalProperties:
+                                    description: List of endpoints
+                                    items:
+                                        type: string
+                                    type: array
+                                description: UEFI variables
+                                example: |-
+                                    {
+                                      "8be4df61-93ca-11d2-aa0d-00e098032b8c": [
+                                        "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000",
+                                        "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder"
+                                      ]
+                                    }
+                                type: object
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the NVRAM variable GUIDs and names
+            tags:
+                - instances
+    /1.0/instances/{name}/nvram?recursion=2:
+        get:
+            description: |-
+                Returns a map of NVRAM variable GUIDs and their dissected values.
+
+                Only supported for VMs.
+            operationId: instance_nvram_get_recursion2
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: NVRAM variables
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                additionalProperties:
+                                    additionalProperties:
+                                        $ref: '#/definitions/InstanceNVRAMVariable'
+                                    description: Namespaced UEFI variables
+                                    type: object
+                                description: UEFI variables
+                                type: object
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the NVRAM variables
             tags:
                 - instances
     /1.0/instances/{name}/port-forward:
