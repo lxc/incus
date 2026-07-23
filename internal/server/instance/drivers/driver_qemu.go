@@ -2078,6 +2078,18 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		forkQemuCmd = append(forkQemuCmd, "limit=memlock:unlimited:unlimited")
 	}
 
+	// On systems with heterogeneous CPU types, confine QEMU startup to a single
+	// type as KVM vCPU initialization fails when scheduled across types.
+	startupCPUs := d.startupCPUSet(bs.CPUTopology)
+	if len(startupCPUs) > 0 {
+		cpus := make([]string, 0, len(startupCPUs))
+		for _, id := range startupCPUs {
+			cpus = append(cpus, strconv.FormatInt(id, 10))
+		}
+
+		forkQemuCmd = append(forkQemuCmd, "cpus="+strings.Join(cpus, ","))
+	}
+
 	for i := range fdFiles {
 		// Pass through any file descriptors as 3+i (as first 3 file descriptors are taken as standard).
 		forkQemuCmd = append(forkQemuCmd, fmt.Sprintf("fd=%d", 3+i))
@@ -2223,6 +2235,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		err = d.setCoreSched(pids)
 		if err != nil {
 			err = fmt.Errorf("Failed to allocate new core scheduling domain for vCPU threads: %w", err)
+			op.Done(err)
+			return err
+		}
+	}
+
+	// After a constrained startup, let the non-vCPU threads spread across the system again.
+	if len(startupCPUs) > 0 {
+		err = d.resetSupportThreadsAffinity(monitor, pid)
+		if err != nil {
 			op.Done(err)
 			return err
 		}
@@ -11020,6 +11041,47 @@ func (d *qemu) setCPUs(monitor *qmp.Monitor, count int) error {
 	err = d.postCPUHotplug(monitor)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// resetSupportThreadsAffinity resets the CPU affinity of all non-vCPU QEMU threads,
+// releasing them from the confinement applied during startup.
+func (d *qemu) resetSupportThreadsAffinity(monitor *qmp.Monitor, pid int) error {
+	// Get the vCPU PID list.
+	vcpuPIDs, err := monitor.GetCPUs()
+	if err != nil {
+		return err
+	}
+
+	// Use our own affinity as the reset target.
+	set := unix.CPUSet{}
+	err = unix.SchedGetaffinity(0, &set)
+	if err != nil {
+		return err
+	}
+
+	// Reset every non-vCPU thread.
+	entries, err := os.ReadDir(fmt.Sprintf("/proc/%d/task", pid))
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		tid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue
+		}
+
+		if slices.Contains(vcpuPIDs, tid) {
+			continue
+		}
+
+		err = unix.SchedSetaffinity(tid, &set)
+		if err != nil && !errors.Is(err, unix.ESRCH) {
+			return err
+		}
 	}
 
 	return nil
