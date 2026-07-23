@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-07-23 10:50-0400\n"
-"PO-Revision-Date: 2026-07-23 08:32+0000\n"
+"PO-Revision-Date: 2026-07-24 23:01+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1543,9 +1543,9 @@ msgid "Client version: %s\n"
 msgstr "Versão de cliente: %s\n"
 
 #: cmd/incus/info.go:346
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster %d"
-msgstr "agrupamento"
+msgstr "Agrupamento %d"
 
 #: cmd/incus/cluster_group.go:236
 #, c-format
