@@ -122,6 +122,7 @@ func (a *Asker) AskPassword(question string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		fmt.Println("")
 		inFirst := string(pwd)
 		inFirst = strings.TrimSuffix(inFirst, "\n")
@@ -131,6 +132,7 @@ func (a *Asker) AskPassword(question string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		fmt.Println("")
 		inSecond := string(pwd)
 		inSecond = strings.TrimSuffix(inSecond, "\n")
@@ -154,6 +156,7 @@ func (a *Asker) AskPasswordOnce(question string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		fmt.Println("")
 
 		// refuse empty password
