@@ -328,13 +328,29 @@ func (c *cmdInfo) renderCPU(cpu api.ResourcesCPUSocket, prefix string) {
 		}
 	}
 
-	fmt.Print(prefix + i18n.G("Cores:") + "\n")
+	// Only mention clusters when there is more than one.
+	clusters := map[uint64]bool{}
 	for _, core := range cpu.Cores {
-		fmt.Printf(prefix+"  - "+i18n.G("Core %d")+"\n", core.Core)
-		fmt.Printf(prefix+"    "+i18n.G("Frequency: %vMhz")+"\n", core.Frequency)
-		fmt.Print(prefix + "    " + i18n.G("Threads:") + "\n")
+		clusters[core.Cluster] = true
+	}
+
+	// Group the cores per cluster when relevant.
+	coreIndent := ""
+	if len(clusters) > 1 {
+		coreIndent = "  "
+	}
+
+	fmt.Print(prefix + i18n.G("Cores:") + "\n")
+	for i, core := range cpu.Cores {
+		if len(clusters) > 1 && (i == 0 || core.Cluster != cpu.Cores[i-1].Cluster) {
+			fmt.Printf(prefix+"  - "+i18n.G("Cluster %d")+"\n", core.Cluster)
+		}
+
+		fmt.Printf(prefix+coreIndent+"  - "+i18n.G("Core %d")+"\n", core.Core)
+		fmt.Printf(prefix+coreIndent+"    "+i18n.G("Frequency: %vMhz")+"\n", core.Frequency)
+		fmt.Print(prefix + coreIndent + "    " + i18n.G("Threads:") + "\n")
 		for _, thread := range core.Threads {
-			fmt.Printf(prefix+"      - "+i18n.G("%d (id: %d, online: %v, NUMA node: %v)")+"\n", thread.Thread, thread.ID, thread.Online, thread.NUMANode)
+			fmt.Printf(prefix+coreIndent+"      - "+i18n.G("%d (id: %d, online: %v, NUMA node: %v)")+"\n", thread.Thread, thread.ID, thread.Online, thread.NUMANode)
 		}
 	}
 
