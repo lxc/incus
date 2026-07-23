@@ -560,6 +560,7 @@ var APIExtensions = []string{
 	"authorization_client_routing",
 	"instance_nvram",
 	"disk_io_limits_combined",
+	"resources_cpu_cluster",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

@@ -3326,3 +3326,9 @@ This adds new endpoints to manage virtual machines’ UEFI variables:
 This makes it possible to set both a byte/s limit and an IOPS limit at the
 same time in the I/O limit keys of `disk` and `unix-block` devices by using
 a comma separated list of values (for example, `limits.read=30MiB,1000iops`).
+
+## `resources_cpu_cluster`
+
+Adds a `cluster` field to CPU core entries in the resources API, telling
+apart cores with identical identifiers on systems where core identifiers
+are only unique within a CPU cluster (ARM big.LITTLE).
