@@ -651,6 +651,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 		src          string
 		dest         string
 		receivedUUID string
+		snapshot     bool
 	}
 
 	// copyOps represents copy operations which need to take place once *all* subvolumes have been
@@ -702,6 +703,7 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 				src:          subVolRecvPath,
 				dest:         subVolTargetPath,
 				receivedUUID: UUID,
+				snapshot:     snapName != "",
 			})
 		}
 
@@ -773,15 +775,16 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 			return err
 		}
 
-		// This sets the "Received UUID" field on the subvolume.
-		// When making the received subvolume read-write before moving it to its final location,
-		// this information is lost (by design). However, this causes issues when performing
-		// incremental streams (error: "cannot find parent subvolume").
-		// Setting the "Received UUID" field to the value of the received subvolume (before making
-		// it rw) solves this issue.
-		err = setReceivedUUID(op.dest, op.receivedUUID)
-		if err != nil {
-			return fmt.Errorf("Failed setting received UUID: %w", err)
+		// Restore the "Received UUID" field which was cleared when making the subvolume
+		// read-write, as it's needed to resolve parents of incremental streams during
+		// optimized refresh (error: "cannot find parent subvolume").
+		// Only snapshots are ever used as such parents, so leave the main volume cleared
+		// to avoid ending up with a read-write subvolume holding a received UUID.
+		if op.snapshot {
+			err = setReceivedUUID(op.dest, op.receivedUUID)
+			if err != nil {
+				return fmt.Errorf("Failed setting received UUID: %w", err)
+			}
 		}
 	}
 
