@@ -6436,9 +6436,21 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 						Function:     "migration",
 					}
 
-					// Do the final CRIU dump. This is needs no special handling if
-					// pre-dumps are used or not.
-					dumpSuccess <- d.migrate(&criuMigrationArgs)
+					// Do the final CRIU dump.
+					err := d.migrate(&criuMigrationArgs)
+					if err != nil && criuMigrationArgs.PreDumpDir != "" && d.IsRunning() {
+						d.logger.Warn("Incremental final CRIU dump failed, retrying without a parent", logger.Ctx{"err": err})
+						removeErr := os.RemoveAll(filepath.Join(checkpointDir, criuMigrationArgs.DumpDir))
+						if removeErr != nil {
+							dumpSuccess <- errors.Join(err, fmt.Errorf("Failed removing incomplete final CRIU dump: %w", removeErr))
+							return
+						}
+
+						criuMigrationArgs.PreDumpDir = ""
+						err = d.migrate(&criuMigrationArgs)
+					}
+
+					dumpSuccess <- err
 					_ = os.RemoveAll(checkpointDir)
 				}()
 
