@@ -286,6 +286,11 @@ func GetCPU() (*api.ResourcesCPU, error) {
 			return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "topology", "die_id"), err)
 		}
 
+		cpuCluster, err := readInt(filepath.Join(entryPath, "topology", "cluster_id"))
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "topology", "cluster_id"), err)
+		}
+
 		// Handle missing architecture support.
 		if cpuSocket == -1 {
 			cpuSocket = 0
@@ -297,6 +302,11 @@ func GetCPU() (*api.ResourcesCPU, error) {
 
 		if cpuDie == -1 {
 			cpuDie = 0
+		}
+
+		// The kernel reports 65535 when clusters aren't enumerated.
+		if cpuCluster == -1 || cpuCluster == 65535 {
+			cpuCluster = 0
 		}
 
 		// Grab socket data if needed
@@ -446,14 +456,31 @@ func GetCPU() (*api.ResourcesCPU, error) {
 			cpuCores[cpuSocket] = map[string]*api.ResourcesCPUCore{}
 		}
 
-		// Grab core data if needed
-		coreIndex := fmt.Sprintf("%d_%d", cpuDie, cpuCore)
+		// Grab core data if needed.
+		// Use the kernel's thread siblings list to group threads into cores as core_id
+		// isn't unique on ARM big.LITTLE systems where it restarts in every cluster.
+		coreIndex := ""
+		for _, name := range []string{"thread_siblings_list", "core_cpus_list"} {
+			value, err := os.ReadFile(filepath.Join(entryPath, "topology", name))
+			if err == nil {
+				coreIndex = strings.TrimSpace(string(value))
+				break
+			}
+		}
+
+		if coreIndex == "" {
+			coreIndex = fmt.Sprintf("%d_%d", cpuDie, cpuCore)
+		}
+
 		resCore, ok := cpuCores[cpuSocket][coreIndex]
 		if !ok {
 			resCore = &api.ResourcesCPUCore{}
 
 			// Core number
 			resCore.Core = uint64(cpuCore)
+
+			// Cluster number
+			resCore.Cluster = uint64(cpuCluster)
 
 			// Die number
 			resCore.Die = uint64(cpuDie)
@@ -526,7 +553,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 		coreFrequencyCount := uint64(0)
 
 		// Add the cores.
-		cores := map[int64]api.ResourcesCPUCore{}
+		cores := make([]api.ResourcesCPUCore, 0, len(cpuCores[int64(socket.Socket)]))
 
 		for _, core := range cpuCores[int64(socket.Socket)] {
 			if core.Frequency > 0 {
@@ -534,19 +561,30 @@ func GetCPU() (*api.ResourcesCPU, error) {
 				coreFrequencyCount++
 			}
 
-			cores[int64(core.Core)] = *core
+			cores = append(cores, *core)
 		}
 
-		for _, k := range sortedMapKeys(cores) {
-			socket.Cores = append(socket.Cores, cores[k])
-		}
+		// Sort by cluster and core, with the first thread ID as tie-break
+		// for identical identifiers on kernels without cluster support.
+		sort.SliceStable(cores, func(i int, j int) bool {
+			if cores[i].Cluster != cores[j].Cluster {
+				return cores[i].Cluster < cores[j].Cluster
+			}
+
+			if cores[i].Core != cores[j].Core {
+				return cores[i].Core < cores[j].Core
+			}
+
+			return cores[i].Threads[0].ID < cores[j].Threads[0].ID
+		})
+
+		socket.Cores = append(socket.Cores, cores...)
 
 		// Record average frequency
 		if coreFrequencyCount > 0 {
 			socket.Frequency = coreFrequency / coreFrequencyCount
 		}
 
-		sort.SliceStable(socket.Cores, func(i int, j int) bool { return socket.Cores[i].Core < socket.Cores[j].Core })
 		cpu.Sockets = append(cpu.Sockets, *socket)
 	}
 
