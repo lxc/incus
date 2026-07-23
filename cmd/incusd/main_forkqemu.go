@@ -27,7 +27,7 @@ type cmdForkqemu struct {
 func (c *cmdForkqemu) command() *cobra.Command {
 	// Main subcommand
 	cmd := &cobra.Command{}
-	cmd.Use = "forkqemu [fd=<number>...] [limit=<name>:<softlimit>:<hardlimit>...] [secontext=<user>:<role>:<type>[:<level>]] -- <command> [<arg>...]"
+	cmd.Use = "forkqemu [fd=<number>...] [limit=<name>:<softlimit>:<hardlimit>...] [cpus=<number>[,<number>...]] [secontext=<user>:<role>:<type>[:<level>]] -- <command> [<arg>...]"
 	cmd.Short = "Execute a QEMU process with optional file descriptors, limits and SELinux context"
 
 	cmd.Long = `Description:
@@ -37,9 +37,10 @@ func (c *cmdForkqemu) command() *cobra.Command {
 
   This internal command is used to spawn a command with limits set. It can also pass through one or more file descriptors
   specified by fd=n arguments.
-  These are passed through in the order they are specified. If a secontext=... argument is
-  given, SetExecLabel(3) is invoked just before the final exec(2) so the new
-  process transitions into the requested SELinux domain.`
+  These are passed through in the order they are specified. If a cpus=... argument is
+  given, the process CPU affinity is restricted to those CPUs before exec(2).
+  If a secontext=... argument is given, SetExecLabel(3) is invoked just before
+  the final exec(2) so the new process transitions into the requested SELinux domain.`
 	cmd.RunE = c.run
 	cmd.Hidden = true
 
@@ -68,6 +69,7 @@ func (c *cmdForkqemu) run(cmd *cobra.Command, _ []string) error {
 
 	var limits []limit
 	var fds []uintptr
+	var affinity *unix.CPUSet
 	var seCtx string
 	var cmdParts []string
 
@@ -79,6 +81,19 @@ func (c *cmdForkqemu) run(cmd *cobra.Command, _ []string) error {
 				soft: matches[2],
 				hard: matches[3],
 			})
+		} else if strings.HasPrefix(arg, "cpus=") {
+			set := unix.CPUSet{}
+			for _, entry := range strings.Split(strings.TrimPrefix(arg, "cpus="), ",") {
+				cpuNum, err := strconv.Atoi(entry)
+				if err != nil {
+					_ = cmd.Help()
+					return errors.New("Invalid CPU number")
+				}
+
+				set.Set(cpuNum)
+			}
+
+			affinity = &set
 		} else if strings.HasPrefix(arg, "fd=") {
 			fdParts := strings.SplitN(arg, "=", 2)
 			fdNum, err := strconv.Atoi(fdParts[1])
@@ -149,6 +164,14 @@ func (c *cmdForkqemu) run(cmd *cobra.Command, _ []string) error {
 	if len(cmdParts) == 0 {
 		_ = cmd.Help()
 		return errors.New("Missing required command argument")
+	}
+
+	// Apply the CPU affinity so all QEMU threads inherit it.
+	if affinity != nil {
+		err := unix.SchedSetaffinity(0, affinity)
+		if err != nil {
+			return fmt.Errorf("Failed to set CPU affinity: %w", err)
+		}
 	}
 
 	// Clear the cloexec flag on the file descriptors we are passing through.
