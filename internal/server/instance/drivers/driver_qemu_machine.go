@@ -87,14 +87,17 @@ func (d *qemu) cpuTopology() (*qemuCPUTopology, error) {
 
 	// Match tracking.
 	vcpus := map[uint64]uint64{}
-	sockets := map[uint64][]uint64{}
-	cores := map[uint64][]uint64{}
+	sockets := map[uint64][]string{}
+	cores := map[string][]uint64{}
 	numaNodes := map[uint64][]uint64{}
 
 	// Go through the physical CPUs looking for matches.
 	i := uint64(0)
 	for _, cpu := range cpus.Sockets {
 		for _, core := range cpu.Cores {
+			// Core identifiers may only be unique within a cluster.
+			coreKey := fmt.Sprintf("%d_%d", core.Cluster, core.Core)
+
 			for _, thread := range core.Threads {
 				for _, pin := range pins {
 					if thread.ID == int64(pin) {
@@ -104,25 +107,25 @@ func (d *qemu) cpuTopology() (*qemuCPUTopology, error) {
 						// Track cores per socket.
 						_, ok := sockets[cpu.Socket]
 						if !ok {
-							sockets[cpu.Socket] = []uint64{}
+							sockets[cpu.Socket] = []string{}
 						}
 
-						if !slices.Contains(sockets[cpu.Socket], core.Core) {
-							sockets[cpu.Socket] = append(sockets[cpu.Socket], core.Core)
+						if !slices.Contains(sockets[cpu.Socket], coreKey) {
+							sockets[cpu.Socket] = append(sockets[cpu.Socket], coreKey)
 						}
 
 						// Track threads per core.
-						_, ok = cores[core.Core]
+						_, ok = cores[coreKey]
 						if !ok {
-							cores[core.Core] = []uint64{}
+							cores[coreKey] = []uint64{}
 						}
 
-						if !slices.Contains(cores[core.Core], thread.Thread) {
-							cores[core.Core] = append(cores[core.Core], thread.Thread)
+						if !slices.Contains(cores[coreKey], thread.Thread) {
+							cores[coreKey] = append(cores[coreKey], thread.Thread)
 						}
 
 						// Record NUMA node for thread.
-						_, ok = cores[core.Core]
+						_, ok = numaNodes[thread.NUMANode]
 						if !ok {
 							numaNodes[thread.NUMANode] = []uint64{}
 						}
