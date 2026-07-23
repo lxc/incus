@@ -154,6 +154,12 @@ type ResourcesCPUCore struct {
 	// Example: 0
 	Core uint64 `json:"core" yaml:"core"`
 
+	// What cluster the core is a part of (core identifiers may only be unique within a cluster)
+	// Example: 0
+	//
+	// API extension: resources_cpu_cluster
+	Cluster uint64 `json:"cluster" yaml:"cluster"`
+
 	// What die the CPU is a part of (for chiplet designs)
 	// Example: 0
 	//
