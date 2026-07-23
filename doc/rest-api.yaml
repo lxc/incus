@@ -4635,6 +4635,15 @@ definitions:
     ResourcesCPUCore:
         description: ResourcesCPUCore represents a CPU core on the system
         properties:
+            cluster:
+                description: |-
+                    What cluster the core is a part of (core identifiers may only be unique within a cluster)
+
+                    API extension: resources_cpu_cluster
+                example: 0
+                format: uint64
+                type: integer
+                x-go-name: Cluster
             core:
                 description: Core identifier within the socket
                 example: 0
