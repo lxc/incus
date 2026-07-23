@@ -1702,6 +1702,26 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		if err != nil {
 			return err
 		}
+
+		// Refresh any dependent custom volumes attached to the instance.
+		newDevices := inst.LocalDevices()
+		err = src.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+			// Load the pool for the disk.
+			diskPool, err := LoadByName(b.state, newDevices[dev.Name]["pool"])
+			if err != nil {
+				return fmt.Errorf("Failed loading storage pool: %w", err)
+			}
+
+			err = diskPool.RefreshCustomVolume(inst.Project().Name, src.Project().Name, newDevices[dev.Name]["source"], "", nil, dev.Config["pool"], dev.Config["source"], snapshots, false, op)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
 	} else {
 		// We are copying volumes between storage pools so use migration system as it will
 		// be able to negotiate a common transfer method between pool types.
@@ -1722,6 +1742,28 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 			if err != nil {
 				return fmt.Errorf("Failed getting source disk size: %w", err)
 			}
+		}
+
+		newDevices := inst.LocalDevices().CloneNative()
+		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, inst.Project().Name, snapshots, newDevices, false)
+		if err != nil {
+			err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
+			return err
+		}
+
+		volumesWithTypes, err := DependentVolumesMatchMigrationType(b.state, dependentVolumesOffer, snapshots, newDevices, false)
+		if err != nil {
+			err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
+			return err
+		}
+
+		srcDependentVolumes := []localMigration.DependentVolumeArgs{}
+		dstDependentVolumes := []localMigration.DependentVolumeArgs{}
+		for _, volWithType := range volumesWithTypes {
+			srcDependentVolumes = append(srcDependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], nil))
+
+			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[*volWithType.Volume.DeviceName])
+			dstDependentVolumes = append(dstDependentVolumes, vol)
 		}
 
 		migrationSnapshots, err := VolumeSnapshotsToMigrationSnapshots(srcConfig.VolumeSnapshots, src.Project().Name, srcPool, contentType, volType, src.Name())
@@ -1752,6 +1794,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				Info:               &localMigration.Info{Config: srcConfig},
 				VolumeOnly:         !snapshots,
 				StorageMove:        true,
+				DependentVolumes:   srcDependentVolumes,
 			}, op)
 		})
 
@@ -1766,6 +1809,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				TrackProgress:      false, // Do not use a progress tracker on receiver.
 				VolumeOnly:         !snapshots,
 				StoragePool:        srcPool.Name(),
+				DependentVolumes:   dstDependentVolumes,
 			}, op)
 		})
 
@@ -5404,7 +5448,8 @@ func (b *backend) MigrateCustomVolume(projectName string, conn io.ReadWriteClose
 		return errors.New("Volume config is required")
 	}
 
-	if len(args.Snapshots) != len(args.Info.Config.VolumeSnapshots) {
+	// When refreshing, the number of snapshots in args can differ, as not every snapshot is sent.
+	if !args.Refresh && len(args.Snapshots) != len(args.Info.Config.VolumeSnapshots) {
 		return fmt.Errorf("Requested snapshots count (%d) doesn't match volume snapshot config count (%d)", len(args.Snapshots), len(args.Info.Config.VolumeSnapshots))
 	}
 
@@ -9650,7 +9695,15 @@ func (b *backend) migrateDependentVolumes(inst instance.Instance, conn io.ReadWr
 		snapshotNames := []string{}
 		if !args.VolumeOnly {
 			for _, snap := range dependentVol.Snapshots {
-				snapshotNames = append(snapshotNames, *snap.Name)
+				// During a refresh only the new snapshots should be transferred. The root
+				// volume's args.Snapshots list has already been reduced to the snapshots the
+				// target is missing, and dependent volume snapshots share the same names, so
+				// use it as the source of truth and skip snapshots that aren't in it.
+				if args.Refresh && !slices.Contains(args.Snapshots, snap.GetName()) {
+					continue
+				}
+
+				snapshotNames = append(snapshotNames, snap.GetName())
 			}
 		}
 
@@ -9662,6 +9715,7 @@ func (b *backend) migrateDependentVolumes(inst instance.Instance, conn io.ReadWr
 			ContentType:        dependentVol.ContentType,
 			Info:               &localMigration.Info{Config: diskConfig},
 			VolumeOnly:         args.VolumeOnly,
+			Refresh:            args.Refresh,
 			Snapshots:          snapshotNames,
 		}
 
@@ -9676,6 +9730,10 @@ func (b *backend) migrateDependentVolumes(inst instance.Instance, conn io.ReadWr
 
 // createDependentVolumesFromMigration creates dependent volumes from a migration.
 func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, conn io.ReadWriteCloser, args localMigration.VolumeTargetArgs, info *localMigration.Info, op *operations.Operation) (func(), error) {
+	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "args": fmt.Sprintf("%+v", args)})
+	l.Debug("createDependentVolumesFromMigration started")
+	defer l.Debug("createDependentVolumesFromMigration finished")
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -9699,7 +9757,27 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 			return nil, fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
-		b.logger.Debug("createDependentVolumesFromMigration", logger.Ctx{"name": dependentVol.Name, "type": dependentVol.MigrationType, "size": dependentVol.VolumeSize})
+		b.logger.Debug("Creating dependent volume from migration", logger.Ctx{"name": dependentVol.Name, "type": dependentVol.MigrationType, "size": dependentVol.VolumeSize})
+
+		// During a refresh only the new snapshots should be received. The root volume's
+		// args.Snapshots list has already been reduced to the snapshots the target is
+		// missing, and dependent volume snapshots share the same names, so use it as the
+		// source of truth and drop any dependent volume snapshots that aren't in it.
+		snapshots := dependentVol.Snapshots
+		if args.Refresh {
+			rootSnapshotNames := make([]string, 0, len(args.Snapshots))
+			for _, snap := range args.Snapshots {
+				rootSnapshotNames = append(rootSnapshotNames, snap.GetName())
+			}
+
+			snapshots = make([]*migration.Snapshot, 0, len(dependentVol.Snapshots))
+			for _, snap := range dependentVol.Snapshots {
+				if slices.Contains(rootSnapshotNames, snap.GetName()) {
+					snapshots = append(snapshots, snap)
+				}
+			}
+		}
+
 		volumeArgs := localMigration.VolumeTargetArgs{
 			IndexHeaderVersion: localMigration.IndexHeaderVersion,
 			Name:               dependentVol.Name,
@@ -9707,8 +9785,9 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 			TrackProgress:      true,
 			ContentType:        dependentVol.ContentType,
 			VolumeOnly:         args.VolumeOnly,
+			Refresh:            args.Refresh,
 			Config:             info.Config.DependentVolumes[idx].Volume.Config,
-			Snapshots:          dependentVol.Snapshots,
+			Snapshots:          snapshots,
 			VolumeSize:         dependentVol.VolumeSize,
 		}
 
