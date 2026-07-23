@@ -543,7 +543,7 @@ func (c *cmdGlobal) preRun(cmd *cobra.Command, _ []string) error {
 	// Setup password helper
 	if termios.IsTerminal(getStdinFd()) {
 		c.conf.PromptPassword = func(filename string) (string, error) {
-			return c.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename)), nil
+			return c.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), filename))
 		}
 	}
 

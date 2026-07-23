@@ -882,7 +882,7 @@ func (c *cmdRemoteGetClientCertificate) run(cmd *cobra.Command, args []string) e
 			}
 
 			// Get a password.
-			password := c.global.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), targetFile))
+			password, err := c.global.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), targetFile))
 			if err != nil {
 				return err
 			}
