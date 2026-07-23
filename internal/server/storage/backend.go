@@ -2234,7 +2234,7 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 		}
 	}
 
-	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || args.ClusterMoveSourceName == "" || args.StoragePool != "") {
+	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 && inst.Type() == instancetype.VM && (!b.driver.Info().Remote || args.ClusterMoveSourceName == "" || args.StoragePool != "") {
 		err = b.qcow2CreateVolumeFromMigration(vol, inst.Project().Name, conn, args, &preFiller, op)
 		if err != nil {
 			return err
@@ -5564,7 +5564,7 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 		}
 	}
 
-	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 && (!b.driver.Info().Remote || args.ClusterMoveSourceName == "" || args.StoragePool != "") {
+	if b.driver.Info().TargetFormat == drivers.BlockVolumeTypeQcow2 && vol.ContentType() == drivers.ContentTypeBlock && (!b.driver.Info().Remote || args.ClusterMoveSourceName == "" || args.StoragePool != "") {
 		err = b.qcow2CreateVolumeFromMigration(vol, projectName, conn, args, nil, op)
 		if err != nil {
 			return err
