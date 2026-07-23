@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -85,14 +87,17 @@ func (d *qemu) cpuTopology() (*qemuCPUTopology, error) {
 
 	// Match tracking.
 	vcpus := map[uint64]uint64{}
-	sockets := map[uint64][]uint64{}
-	cores := map[uint64][]uint64{}
+	sockets := map[uint64][]string{}
+	cores := map[string][]uint64{}
 	numaNodes := map[uint64][]uint64{}
 
 	// Go through the physical CPUs looking for matches.
 	i := uint64(0)
 	for _, cpu := range cpus.Sockets {
 		for _, core := range cpu.Cores {
+			// Core identifiers may only be unique within a cluster.
+			coreKey := fmt.Sprintf("%d_%d", core.Cluster, core.Core)
+
 			for _, thread := range core.Threads {
 				for _, pin := range pins {
 					if thread.ID == int64(pin) {
@@ -102,25 +107,25 @@ func (d *qemu) cpuTopology() (*qemuCPUTopology, error) {
 						// Track cores per socket.
 						_, ok := sockets[cpu.Socket]
 						if !ok {
-							sockets[cpu.Socket] = []uint64{}
+							sockets[cpu.Socket] = []string{}
 						}
 
-						if !slices.Contains(sockets[cpu.Socket], core.Core) {
-							sockets[cpu.Socket] = append(sockets[cpu.Socket], core.Core)
+						if !slices.Contains(sockets[cpu.Socket], coreKey) {
+							sockets[cpu.Socket] = append(sockets[cpu.Socket], coreKey)
 						}
 
 						// Track threads per core.
-						_, ok = cores[core.Core]
+						_, ok = cores[coreKey]
 						if !ok {
-							cores[core.Core] = []uint64{}
+							cores[coreKey] = []uint64{}
 						}
 
-						if !slices.Contains(cores[core.Core], thread.Thread) {
-							cores[core.Core] = append(cores[core.Core], thread.Thread)
+						if !slices.Contains(cores[coreKey], thread.Thread) {
+							cores[coreKey] = append(cores[coreKey], thread.Thread)
 						}
 
 						// Record NUMA node for thread.
-						_, ok = cores[core.Core]
+						_, ok = numaNodes[thread.NUMANode]
 						if !ok {
 							numaNodes[thread.NUMANode] = []uint64{}
 						}
@@ -194,6 +199,112 @@ func (d *qemu) cpuTopology() (*qemuCPUTopology, error) {
 	topology.Nodes = numaNodes
 
 	return topology, nil
+}
+
+// startupCPUSet returns the host CPUs to confine QEMU to during startup.
+// On systems with heterogeneous CPU types (ARM big.LITTLE), KVM vCPU initialization
+// fails if the thread gets scheduled across CPU types, so QEMU must start on a
+// single type. Returns nil on homogeneous systems where no confinement is needed.
+func (d *qemu) startupCPUSet(topology *qemuCPUTopology) []int64 {
+	// Get the list of online CPUs.
+	online, err := os.ReadFile("/sys/devices/system/cpu/online")
+	if err != nil {
+		return nil
+	}
+
+	cpuIDs, err := resources.ParseCpuset(strings.TrimSpace(string(online)))
+	if err != nil {
+		return nil
+	}
+
+	// Group the CPUs by type.
+	keys := []string{}
+	groups := map[string][]int64{}
+	for _, id := range cpuIDs {
+		cpuPath := fmt.Sprintf("/sys/devices/system/cpu/cpu%d", id)
+
+		// Only ARM exposes the MIDR register, other architectures don't have the problem.
+		midr, err := os.ReadFile(filepath.Join(cpuPath, "regs/identification/midr_el1"))
+		if err != nil {
+			return nil
+		}
+
+		key := strings.TrimSpace(string(midr))
+
+		// Include the cache geometry as identical parts may still differ.
+		caches, _ := filepath.Glob(filepath.Join(cpuPath, "cache/index[0-9]*"))
+		slices.Sort(caches)
+		for _, cache := range caches {
+			for _, field := range []string{"level", "type", "coherency_line_size", "ways_of_associativity", "number_of_sets"} {
+				value, _ := os.ReadFile(filepath.Join(cache, field))
+				key += "/" + strings.TrimSpace(string(value))
+			}
+		}
+
+		if groups[key] == nil {
+			keys = append(keys, key)
+		}
+
+		groups[key] = append(groups[key], id)
+	}
+
+	// Nothing to do on homogeneous systems.
+	if len(groups) <= 1 {
+		return nil
+	}
+
+	// When pinned, use the largest same-type subset of the pinned CPUs.
+	if topology != nil && topology.VCPUs != nil {
+		pins := map[int64]bool{}
+		for _, pin := range topology.VCPUs {
+			pins[int64(pin)] = true
+		}
+
+		var best []int64
+		for _, key := range keys {
+			matches := []int64{}
+			for _, id := range groups[key] {
+				if pins[id] {
+					matches = append(matches, id)
+				}
+			}
+
+			if len(matches) > len(best) {
+				best = matches
+			}
+		}
+
+		return best
+	}
+
+	// When not pinned, use the CPU type with the highest total compute capacity.
+	var best []int64
+	var bestCapacity int64
+	for _, key := range keys {
+		var capacity int64
+		for _, id := range groups[key] {
+			value, err := os.ReadFile(fmt.Sprintf("/sys/devices/system/cpu/cpu%d/cpu_capacity", id))
+			if err != nil {
+				capacity += 1024
+				continue
+			}
+
+			parsed, err := strconv.ParseInt(strings.TrimSpace(string(value)), 10, 64)
+			if err != nil {
+				capacity += 1024
+				continue
+			}
+
+			capacity += parsed
+		}
+
+		if capacity > bestCapacity {
+			best = groups[key]
+			bestCapacity = capacity
+		}
+	}
+
+	return best
 }
 
 // cpuType generates the QEMU cpu flag based on the CPU topology, guest OS and host system.
