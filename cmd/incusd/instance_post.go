@@ -635,6 +635,15 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		targetInstInfo.Profiles = req.Profiles
 	}
 
+	// Enforce project restrictions against the overridden config, as the migration
+	// request can otherwise set restricted keys (e.g. security.privileged, raw.lxc).
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowInstanceUpdate(tx, inst.Project().Name, inst.Name(), targetInstInfo.Writable(), inst.LocalConfig())
+	})
+	if err != nil {
+		return err
+	}
+
 	// Handle storage pool override.
 	if req.Pool != "" {
 		err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
