@@ -728,6 +728,69 @@ func (b *backend) CreateInstance(inst instance.Instance, op *operations.Operatio
 	return nil
 }
 
+// stripMetadataLinks removes any symlink in the instance's metadata area (everything but the guest
+// rootfs) and returns the removed paths. Removing rather than just reporting neutralizes links that
+// reach the volume via a path (e.g. snapshot restore) that cannot be cleanly reverted.
+func stripMetadataLinks(instPath string) ([]string, error) {
+	rootfsPath := filepath.Join(instPath, "rootfs")
+
+	var removed []string
+
+	err := filepath.WalkDir(instPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Don't descend into the guest's own root filesystem.
+		if path == rootfsPath && d.IsDir() {
+			return filepath.SkipDir
+		}
+
+		if d.Type()&fs.ModeSymlink != 0 {
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+
+			removed = append(removed, path)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return removed, nil
+}
+
+// stripInstanceMetadataLinks mounts the instance, strips disallowed metadata symlinks and errors if any were found.
+func (b *backend) stripInstanceMetadataLinks(inst instance.Instance, op *operations.Operation) error {
+	volType, err := InstanceTypeToVolumeType(inst.Type())
+	if err != nil {
+		return err
+	}
+
+	_, err = b.MountInstance(inst, op)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = b.UnmountInstance(inst, op) }()
+
+	removed, err := stripMetadataLinks(drivers.GetVolumeMountPath(b.name, volType, project.Instance(inst.Project().Name, inst.Name())))
+	if err != nil {
+		return err
+	}
+
+	if len(removed) > 0 {
+		b.logger.Warn("Removed disallowed symlinks from instance metadata", logger.Ctx{"instance": inst.Name(), "project": inst.Project().Name, "paths": removed})
+		return fmt.Errorf("Instance metadata contained disallowed symlinks: %v", removed)
+	}
+
+	return nil
+}
+
 // CreateInstanceFromBackup restores a backup file onto the storage device. Because the backup file
 // is unpacked and restored onto the storage device before the instance is created in the database
 // it is necessary to return two functions; a post hook that can be run once the instance has been
@@ -789,6 +852,16 @@ func (b *backend) CreateInstanceFromBackup(srcBackup backup.Info, srcData io.Rea
 
 	if revertHook != nil {
 		importRevert.Add(revertHook)
+	}
+
+	// Strip unsafe symlinks before any host-side use of the metadata area.
+	removed, err := stripMetadataLinks(vol.MountPath())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(removed) > 0 {
+		return nil, nil, fmt.Errorf("Backup metadata contained disallowed symlinks: %v", removed)
 	}
 
 	err = b.ensureInstanceSymlink(instanceType, srcBackup.Project, srcBackup.Name, vol.MountPath())
@@ -1231,6 +1304,12 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		if err != nil {
 			return err
 		}
+	}
+
+	// Strip unsafe symlinks, including any hidden in a copied-from snapshot.
+	err = b.stripInstanceMetadataLinks(inst, op)
+	if err != nil {
+		return err
 	}
 
 	reverter.Success()
@@ -1718,6 +1797,12 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		return err
 	}
 
+	// Strip unsafe symlinks materialized from the refresh source.
+	err = b.stripInstanceMetadataLinks(inst, op)
+	if err != nil {
+		return err
+	}
+
 	reverter.Success()
 	return nil
 }
@@ -1889,6 +1974,12 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 	}
 
 	err = b.ensureInstanceSymlink(inst.Type(), inst.Project().Name, inst.Name(), vol.MountPath())
+	if err != nil {
+		return err
+	}
+
+	// Strip unsafe symlinks introduced by the image.
+	err = b.stripInstanceMetadataLinks(inst, op)
 	if err != nil {
 		return err
 	}
@@ -2179,6 +2270,14 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 
 	if len(args.Snapshots) > 0 {
 		err = b.ensureInstanceSnapshotSymlink(inst.Type(), inst.Project().Name, inst.Name())
+		if err != nil {
+			return err
+		}
+	}
+
+	// Strip unsafe symlinks from migrated data, skipping intra-cluster moves (no new data, may not be locally mountable).
+	if !isRemoteClusterMove {
+		err = b.stripInstanceMetadataLinks(inst, op)
 		if err != nil {
 			return err
 		}
@@ -3398,13 +3497,20 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 }
 
 // RestoreInstanceSnapshot restores an instance snapshot.
-func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) error {
+func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) (err error) {
 	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "src": src.Name()})
 	l.Debug("RestoreInstanceSnapshot started")
 	defer l.Debug("RestoreInstanceSnapshot finished")
 
 	reverter := revert.New()
 	defer reverter.Fail()
+
+	// Strip unsafe symlinks from restored content on all success paths (a snapshot may hide them and restore can't be reverted).
+	defer func() {
+		if err == nil {
+			err = b.stripInstanceMetadataLinks(inst, op)
+		}
+	}()
 
 	if inst.Type() != src.Type() {
 		return errors.New("Instance types must match")
