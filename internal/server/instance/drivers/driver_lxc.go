@@ -7327,7 +7327,7 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 		_, migrateErr = subprocess.RunCommand(
 			d.state.OS.ExecPath,
 			"forkmigrate",
-			d.name,
+			project.Instance(d.Project().Name, d.Name()),
 			d.state.OS.LxcPath,
 			configPath,
 			finalStateDir,
