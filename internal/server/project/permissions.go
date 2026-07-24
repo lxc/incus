@@ -318,6 +318,19 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 		return errors.New("Restricted projects aren't allowed to use pull mode migration")
 	}
 
+	// Restricted projects can't override low-level volume options that are passed to
+	// filesystem tooling running as root; they may only use the pool's configured default.
+	if util.IsTrue(info.Project.Config["restricted"]) {
+		_, pool, _, err := tx.GetStoragePool(context.Background(), poolName)
+		if err != nil {
+			return err
+		}
+
+		if req.Config["block.create_options"] != "" && req.Config["block.create_options"] != pool.Config["volume.block.create_options"] {
+			return errors.New(`Storage volume option "block.create_options" cannot be set in a restricted project`)
+		}
+	}
+
 	// Add the volume being created.
 	info.Volumes = append(info.Volumes, db.StorageVolumeArgs{
 		Name:     req.Name,
