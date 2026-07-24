@@ -21,6 +21,7 @@ import (
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
 	"github.com/lxc/incus/v7/internal/server/instance"
+	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/locking"
@@ -312,6 +313,23 @@ func instanceRebuildFromEmpty(inst instance.Instance, op *operations.Operation) 
 	return nil
 }
 
+// instanceDropImageMetadata removes a VM's metadata image directory, invalidating
+// any dirty bitmaps inherited from another instance or from a backup.
+func instanceDropImageMetadata(pool storagePools.Pool, inst instance.Instance, op *operations.Operation) error {
+	if inst.Type() != instancetype.VM {
+		return nil
+	}
+
+	_, err := pool.MountInstance(inst, op)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = pool.UnmountInstance(inst, op) }()
+
+	return os.RemoveAll(instanceDrivers.ImageMetadataDir(inst.Path()))
+}
+
 // instanceCreateAsCopyOpts options for copying an instance.
 type instanceCreateAsCopyOpts struct {
 	sourceInstance       instance.Instance // Source instance.
@@ -522,6 +540,12 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 				return nil, err
 			}
 		}
+	}
+
+	// Drop any metadata image inherited from the source instance.
+	err = instanceDropImageMetadata(pool, inst, op)
+	if err != nil {
+		return nil, err
 	}
 
 	err = inst.UpdateBackupFile()
