@@ -888,6 +888,19 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		bInfo.Name = instanceName
 	}
 
+	// Validate the instance and snapshot names to avoid path traversal when used as path segments.
+	err = instance.ValidName(bInfo.Name, false)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	for _, snapName := range bInfo.Snapshots {
+		err = instance.ValidName(bInfo.Name+internalInstance.SnapshotDelimiter+snapName, true)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+	}
+
 	// Override config.
 	configMap := map[string]string{}
 	if config != "" {
