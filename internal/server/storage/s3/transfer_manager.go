@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"crypto/x509"
@@ -162,6 +163,11 @@ func (t TransferManager) UploadAllFiles(bucketName string, srcData io.ReadSeeker
 		// Skip anything that's not in the bucket itself.
 		if !strings.HasPrefix(hdr.Name, "backup/bucket/") {
 			continue
+		}
+
+		// Buckets are plain object stores with no use for links; reject them.
+		if hdr.Typeflag == tar.TypeSymlink || hdr.Typeflag == tar.TypeLink {
+			return fmt.Errorf("Bucket backup contains disallowed link %q", hdr.Name)
 		}
 
 		fileName := strings.TrimPrefix(hdr.Name, "backup/bucket/")
