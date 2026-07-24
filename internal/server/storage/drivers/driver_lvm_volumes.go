@@ -1163,7 +1163,10 @@ func (d *lvm) RenameVolume(vol Volume, newVolName string, op *operations.Operati
 				return err
 			}
 
-			releaseSnap, _ := d.acquireExclusive(snapVol)
+			releaseSnap, err := d.acquireExclusive(snapVol)
+			if err != nil {
+				return err
+			}
 
 			err = d.renameLogicalVolume(snapVolPath, newSnapVolPath)
 			if err != nil {
@@ -1323,7 +1326,11 @@ func (d *lvm) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 
 			// acquireExclusive is called on the parent volume to obtain a release function
 			// that switches the volume back to shared mode.
-			releaseParent, _ := d.acquireExclusive(parentVol)
+			releaseParent, err := d.acquireExclusive(parentVol)
+			if err != nil {
+				return
+			}
+
 			releaseParent()
 		})
 
@@ -1340,7 +1347,11 @@ func (d *lvm) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) err
 		}
 
 		reverter.Add(func() {
-			releaseParent, _ := d.acquireExclusive(parentVol)
+			releaseParent, err := d.acquireExclusive(parentVol)
+			if err != nil {
+				return
+			}
+
 			_ = d.removeLogicalVolume(parentVolPath)
 			releaseParent()
 		})
