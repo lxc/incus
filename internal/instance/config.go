@@ -18,6 +18,15 @@ func IsUserConfig(key string) bool {
 	return strings.HasPrefix(key, "user.")
 }
 
+// isNvidiaConfigValue rejects line breaks that would allow injecting arbitrary directives into the generated LXC configuration.
+func isNvidiaConfigValue(value string) error {
+	if strings.ContainsAny(value, "\r\n") {
+		return errors.New("NVIDIA configuration values cannot contain line breaks")
+	}
+
+	return nil
+}
+
 // ConfigVolatilePrefix indicates the prefix used for volatile config keys.
 const ConfigVolatilePrefix = "volatile."
 
@@ -755,7 +764,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: What driver capabilities the instance needs
-	"nvidia.driver.capabilities": validate.IsAny,
+	"nvidia.driver.capabilities": isNvidiaConfigValue,
 
 	// gendoc:generate(entity=instance, group=nvidia, key=nvidia.require.cuda)
 	// The specified version expression is used to set `libnvidia-container NVIDIA_REQUIRE_CUDA`.
@@ -764,7 +773,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Required CUDA version
-	"nvidia.require.cuda": validate.IsAny,
+	"nvidia.require.cuda": isNvidiaConfigValue,
 
 	// gendoc:generate(entity=instance, group=nvidia, key=nvidia.require.driver)
 	// The specified version expression is used to set `libnvidia-container NVIDIA_REQUIRE_DRIVER`.
@@ -773,7 +782,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: container
 	//  shortdesc: Required driver version
-	"nvidia.require.driver": validate.IsAny,
+	"nvidia.require.driver": isNvidiaConfigValue,
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.entrypoint)
 	// Override the entry point of an OCI container.
