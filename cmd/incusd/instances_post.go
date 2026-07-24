@@ -584,6 +584,15 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 		req.Devices[key] = value
 	}
 
+	// Re-check project restrictions against the fully merged config, as the source
+	// instance's config and devices (including restricted keys) are only merged in above.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowInstanceCreation(tx, targetProject, *req)
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	if req.Stateful {
 		sourceName, _, _ := api.GetParentAndSnapshotName(source.Name())
 		if sourceName != req.Name {
