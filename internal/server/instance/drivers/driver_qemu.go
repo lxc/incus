@@ -4648,9 +4648,14 @@ func (d *qemu) addFileDescriptor(fdFiles *[]*os.File, file *os.File) int {
 	return 2 + len(*fdFiles) // Use 2+fdFiles count, as first user file descriptor is 3.
 }
 
+// ImageMetadataDir returns the metadata image directory for the given instance path.
+func ImageMetadataDir(instancePath string) string {
+	return filepath.Join(instancePath, "image_metadata")
+}
+
 // imageMetadataDir returns the instance's metadata image directory.
 func (d *qemu) imageMetadataDir() string {
-	return filepath.Join(d.Path(), "image_metadata")
+	return ImageMetadataDir(d.Path())
 }
 
 // imageMetadataPath returns the instance's image metadata file path.
@@ -4684,13 +4689,28 @@ func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, stri
 
 	// If we already have metadata image, then just use it
 	if util.PathExists(qcow2Path) {
-		isQcow2, err := d.isQCOW2(qcow2Path)
+		imgInfo, err := storageDrivers.Qcow2Info(qcow2Path)
 		if err != nil {
 			return "", "", err
 		}
 
-		if !isQcow2 {
+		if imgInfo.Format != storageDrivers.BlockVolumeTypeQcow2 {
 			return "", "", fmt.Errorf("Existing metadata image %q is not qcow2", qcow2Path)
+		}
+
+		// Get size of disk block device.
+		blockDiskSize, err := storageDrivers.BlockDiskSizeBytes(rawPath)
+		if err != nil {
+			return "", "", fmt.Errorf("Error getting block device size %q: %w", rawPath, err)
+		}
+
+		// Keep the metadata image in sync with the disk size as the volume
+		// may have been resized while the instance was stopped.
+		if int64(imgInfo.VirtualSize) != blockDiskSize {
+			err = d.resizeMetadataImage(qcow2Path, rawPath, blockDiskSize, int64(imgInfo.VirtualSize))
+			if err != nil {
+				return "", "", err
+			}
 		}
 
 		return qcow2Path, rawPath, nil
@@ -4732,6 +4752,40 @@ func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, stri
 	// /dev/fdset/<x> path and send rawPath as an FD.
 
 	return qcow2Path, rawPath, nil
+}
+
+// resizeMetadataImage resizes the qcow2 metadata image to match the raw disk size.
+// The data-file has to be overridden as the one recorded in the image no longer exists.
+func (d *qemu) resizeMetadataImage(qcow2Path string, rawPath string, newSize int64, oldSize int64) error {
+	fInfo, err := os.Stat(rawPath)
+	if err != nil {
+		return err
+	}
+
+	rawDriver := "file"
+	if linux.IsBlockdev(fInfo.Mode()) {
+		rawDriver = "host_device"
+	}
+
+	escape := func(s string) string {
+		return strings.ReplaceAll(s, ",", ",,")
+	}
+
+	args := []string{"resize"}
+	if newSize < oldSize {
+		args = append(args, "--shrink")
+	} else {
+		args = append(args, "--preallocation=metadata")
+	}
+
+	args = append(args, "--image-opts", fmt.Sprintf("driver=qcow2,file.filename=%s,data-file.driver=%s,data-file.filename=%s", escape(qcow2Path), rawDriver, escape(rawPath)), fmt.Sprintf("%d", newSize))
+
+	_, err = subprocess.RunCommand("qemu-img", args...)
+	if err != nil {
+		return fmt.Errorf("Failed resizing qcow2 metadata image %q: %w", qcow2Path, err)
+	}
+
+	return nil
 }
 
 // addRootDriveConfig adds the qemu config required for adding the root drive.
@@ -7840,10 +7894,21 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 
 	fPath := fmt.Sprintf("%s/rootfs.img", tmpPath)
 
+	// On some storage drivers (lvmcluster), the volume holds a qcow2 container rather than raw data.
+	srcFormat := "raw"
+	isQcow2, err := d.isQCOW2(mountInfo.DiskPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed checking disk format: %w", err)
+	}
+
+	if isQcow2 {
+		srcFormat = storageDrivers.BlockVolumeTypeQcow2
+	}
+
 	// Convert to qcow2 image.
 	cmd := []string{
 		"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
-		"qemu-img", "convert", "-p", "-f", "raw", "-O", "qcow2",
+		"qemu-img", "convert", "-p", "-f", srcFormat, "-O", "qcow2",
 	}
 
 	if rootfsWriter != nil {

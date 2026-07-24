@@ -413,7 +413,37 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 			return nodes[0].Name
 		}
 
-		objectName, err := auth.ObjectFromRequest(r, objectType, expandProject, expandFingerprint, expandVolumeLocation, muxVars...)
+		// Expansion function for bucket location.
+		expandBucketLocation := func(projectName string, poolName string, bucketName string) string {
+			// The location field is only relevant in clusters.
+			if !d.serverClustered {
+				return ""
+			}
+
+			var bucket *db.StorageBucket
+
+			// Get the bucket record.
+			err := d.db.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+				poolID, err := tx.GetStoragePoolID(ctx, poolName)
+				if err != nil {
+					return err
+				}
+
+				bucket, err = tx.GetStoragePoolBucket(ctx, poolID, projectName, false, bucketName)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+			if err != nil {
+				return ""
+			}
+
+			return bucket.Location
+		}
+
+		objectName, err := auth.ObjectFromRequest(r, objectType, expandProject, expandFingerprint, expandVolumeLocation, expandBucketLocation, muxVars...)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
 		}
