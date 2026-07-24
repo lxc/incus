@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -439,8 +440,16 @@ func instanceExecOutputsGet(d *Daemon, r *http.Request) response.Response {
 
 	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
 
+	// Confine access to the exec output directory to avoid following symlinks.
+	root, err := os.OpenRoot(inst.ExecOutputPath())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close exec output root")
+
 	// Read exec record-output files
-	dents, err := os.ReadDir(inst.ExecOutputPath())
+	dents, err := fs.ReadDir(root.FS(), ".")
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -554,13 +563,40 @@ func instanceExecOutputGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	reverter.Add(func() { _ = pool.UnmountInstance(inst, nil) })
+
+	// Confine access to the exec output directory to avoid following symlinks.
+	root, err := os.OpenRoot(inst.ExecOutputPath())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	reverter.Add(func() { _ = root.Close() })
+
+	f, err := root.Open(file)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return response.NotFound(fmt.Errorf("Exec record-output file %q not found", file))
+		}
+
+		return response.SmartError(err)
+	}
+
+	reverter.Add(func() { _ = f.Close() })
+
+	fi, err := f.Stat()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	cleanup := reverter.Clone()
 	reverter.Success()
 
 	ent := response.FileResponseEntry{
-		Path:     filepath.Join(inst.ExecOutputPath(), file),
-		Filename: file,
-		Cleanup:  cleanup.Fail,
+		File:         f,
+		FileSize:     fi.Size(),
+		FileModified: fi.ModTime(),
+		Filename:     file,
+		Cleanup:      cleanup.Fail,
 	}
 
 	s.Events.SendLifecycle(projectName, lifecycle.InstanceLogRetrieved.Event(file, inst, request.CreateRequestor(r), nil))
@@ -657,7 +693,15 @@ func instanceExecOutputDelete(d *Daemon, r *http.Request) response.Response {
 
 	defer logger.WarnOnError(func() error { return pool.UnmountInstance(inst, nil) }, "Failed to unmount instance")
 
-	err = os.Remove(filepath.Join(inst.ExecOutputPath(), file))
+	// Confine access to the exec output directory to avoid following symlinks.
+	root, err := os.OpenRoot(inst.ExecOutputPath())
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer logger.WarnOnError(root.Close, "Failed to close exec output root")
+
+	err = root.Remove(file)
 	if err != nil {
 		return response.SmartError(err)
 	}
