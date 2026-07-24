@@ -2207,6 +2207,7 @@ func (srv *Server) HandleMountSyscall(c Instance, siov *Iovec) int {
 	}
 
 	if err != nil {
+		ctx["err"] = err
 		ctx["syscall_continue"] = "true"
 		C.seccomp_notify_update_response(siov.resp, 0, C.uint32_t(seccompUserNotifFlagContinue))
 		return 0
