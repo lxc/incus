@@ -567,7 +567,7 @@ func (d *lvm) acquireExclusive(vol Volume) (func(), error) {
 	lvmActivation.Lock()
 	defer lvmActivation.Unlock()
 
-	_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "--ignoreactivationskip", volDevPath)
+	_, err := subprocess.TryRunCommand("lvchange", "--activate", "ey", "-y", "--ignoreactivationskip", volDevPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to acquire exclusive lock on LVM logical volume %q: %w", volDevPath, err)
 	}
