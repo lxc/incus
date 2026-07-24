@@ -7894,10 +7894,21 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 
 	fPath := fmt.Sprintf("%s/rootfs.img", tmpPath)
 
+	// On some storage drivers (lvmcluster), the volume holds a qcow2 container rather than raw data.
+	srcFormat := "raw"
+	isQcow2, err := d.isQCOW2(mountInfo.DiskPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed checking disk format: %w", err)
+	}
+
+	if isQcow2 {
+		srcFormat = storageDrivers.BlockVolumeTypeQcow2
+	}
+
 	// Convert to qcow2 image.
 	cmd := []string{
 		"nice", "-n19", // Run with low priority to reduce CPU impact on other processes.
-		"qemu-img", "convert", "-p", "-f", "raw", "-O", "qcow2",
+		"qemu-img", "convert", "-p", "-f", srcFormat, "-O", "qcow2",
 	}
 
 	if rootfsWriter != nil {
