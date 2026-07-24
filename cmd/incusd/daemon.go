@@ -366,7 +366,7 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 				projectName = project.NetworkZoneProjectFromRecord(p)
 			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}, objectType) {
 				projectName = project.ImageProjectFromRecord(p)
-			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL}, objectType) {
+			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL, auth.ObjectTypeNetworkAddressSet}, objectType) {
 				projectName = project.NetworkProjectFromRecord(p)
 			}
 
