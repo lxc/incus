@@ -2589,6 +2589,54 @@ func (n *ovn) getDHCPv4Reservations() ([]iprange.Range, error) {
 	return dhcpReserveIPv4s, nil
 }
 
+// setupDynamicRouting configures (or clears) OVN-native dynamic routing on the logical router
+// based on the uplink network's ovn.dynamic_routing.* config. The keys live on the uplink so a
+// single VRF id applies to every OVN network sharing that uplink. When enabled, OVN syncs the
+// router's connected prefixes, load-balancer/forward VIPs and (for NATed networks) SNAT addresses
+// into a host VRF on the active gateway chassis, using the router's external uplink IPs as
+// next-hops. The host VRF must already exist on the members, OVN only adds routes into it.
+func (n *ovn) setupDynamicRouting(uplinkConfig map[string]string, routerExtPortIPv4 net.IP, routerExtPortIPv6 net.IP) error {
+	// Managed keys default to empty (delete) so disabling the feature clears prior state.
+	routerOpts := map[string]string{
+		"dynamic-routing":                   "",
+		"dynamic-routing-redistribute":      "",
+		"dynamic-routing-vrf-id":            "",
+		"dynamic-routing-v4-prefix-nexthop": "",
+		"dynamic-routing-v6-prefix-nexthop": "",
+	}
+
+	if util.IsTrue(uplinkConfig["ovn.dynamic_routing"]) {
+		routerOpts["dynamic-routing"] = "true"
+
+		// Always redistribute connected and lb. Redistribute nat only when enabled.
+		redistribute := []string{"connected", "lb"}
+		if util.IsTrue(n.config["ipv4.nat"]) || util.IsTrue(n.config["ipv6.nat"]) {
+			redistribute = append(redistribute, "nat")
+		}
+
+		routerOpts["dynamic-routing-redistribute"] = strings.Join(redistribute, ",")
+
+		if routerExtPortIPv4 != nil {
+			routerOpts["dynamic-routing-v4-prefix-nexthop"] = routerExtPortIPv4.String()
+		}
+
+		if routerExtPortIPv6 != nil {
+			routerOpts["dynamic-routing-v6-prefix-nexthop"] = routerExtPortIPv6.String()
+		}
+
+		if uplinkConfig["ovn.dynamic_routing.vrf.id"] != "" {
+			routerOpts["dynamic-routing-vrf-id"] = uplinkConfig["ovn.dynamic_routing.vrf.id"]
+		}
+	}
+
+	err := n.ovnnb.UpdateLogicalRouterOptions(context.TODO(), n.getRouterName(), routerOpts)
+	if err != nil {
+		return fmt.Errorf("Failed configuring dynamic routing on router: %w", err)
+	}
+
+	return nil
+}
+
 func (n *ovn) setup(update bool) error {
 	// If we are in mock mode, just no-op.
 	if n.state.OS.MockMode {
@@ -2782,6 +2830,18 @@ func (n *ovn) setup(update bool) error {
 			})
 		}
 
+		// Load the uplink network.
+		// We have an external router port, so the network must have an uplink.
+		uplinkNetworkObj, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
+		if err != nil {
+			return fmt.Errorf("Failed loading uplink network %q: %w", n.config["network"], err)
+		}
+
+		err = n.setupDynamicRouting(uplinkNetworkObj.Config(), routerExtPortIPv4, routerExtPortIPv6)
+		if err != nil {
+			return err
+		}
+
 		// Create external switch port and link to router port.
 		err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName(), nil, update)
 		if err != nil {
@@ -2862,12 +2922,6 @@ func (n *ovn) setup(update bool) error {
 
 		// Check if uplink network states its gateway mac for static MAC binding.
 		if uplinkNet != nil && n.config["network"] != "none" {
-			// Load the uplink network.
-			uplinkNetworkObj, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
-			if err != nil {
-				return fmt.Errorf("Failed loading uplink network %q: %w", n.config["network"], err)
-			}
-
 			uplinkConfig := uplinkNetworkObj.Config()
 
 			// Handle IPv4 MAC.
@@ -5945,7 +5999,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 		break // Only run setup once per notification (all changes will be applied).
 	}
 
-	watchedKeys := []string{"dns.nameservers", "ipv4.gateway", "ipv6.gateway", "ipv4.gateway.hwaddr", "ipv6.gateway.hwaddr"}
+	watchedKeys := []string{"dns.nameservers", "ipv4.gateway", "ipv6.gateway", "ipv4.gateway.hwaddr", "ipv6.gateway.hwaddr", "ovn.dynamic_routing", "ovn.dynamic_routing.vrf.id"}
 	for _, k := range append(watchedKeys, uplinkKeys...) {
 		if !slices.Contains(changedKeys, k) {
 			continue

@@ -3922,6 +3922,23 @@ User keys can be used in search.
 ```
 
 <!-- config group network_bridge-common end -->
+<!-- config group network_bridge-ovn start -->
+```{config:option} ovn.dynamic_routing network_bridge-ovn
+:condition: "standard mode"
+:default: "`false`"
+:shortdesc: "Have downstream OVN networks export their prefixes into a host VRF on the active gateway chassis"
+:type: "bool"
+
+```
+
+```{config:option} ovn.dynamic_routing.vrf.id network_bridge-ovn
+:condition: "`ovn.dynamic_routing`"
+:shortdesc: "Routing table ID of the pre-created host VRF OVN exports into (required when `ovn.dynamic_routing` is enabled)"
+:type: "integer"
+
+```
+
+<!-- config group network_bridge-ovn end -->
 <!-- config group network_forward-common start -->
 ```{config:option} target_address network_forward-common
 :shortdesc: "Default target address for anything not covered through a port definition"
@@ -4537,6 +4554,21 @@ User keys can be used in search.
 
 <!-- config group network_physical-ipv6 end -->
 <!-- config group network_physical-ovn start -->
+```{config:option} ovn.dynamic_routing network_physical-ovn
+:condition: "standard mode"
+:defaultdesc: "`false`"
+:shortdesc: "Have downstream OVN networks export their prefixes into a host VRF on the active gateway chassis"
+:type: "bool"
+
+```
+
+```{config:option} ovn.dynamic_routing.vrf.id network_physical-ovn
+:condition: "`ovn.dynamic_routing`"
+:shortdesc: "Routing table ID of the pre-created host VRF OVN exports into (required when `ovn.dynamic_routing` is enabled)"
+:type: "integer"
+
+```
+
 ```{config:option} ovn.ingress_mode network_physical-ovn
 :condition: "standard mode"
 :defaultdesc: "`l2proxy`"
