@@ -1043,6 +1043,12 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 			}
 		}
 
+		// Drop any metadata image from the backup as its bitmaps may not match the restored disk content.
+		err = instanceDropImageMetadata(pool, inst, op)
+		if err != nil {
+			return err
+		}
+
 		// And wrap up validation by running a check on all snapshots too.
 		snaps, err := inst.Snapshots()
 		if err != nil {

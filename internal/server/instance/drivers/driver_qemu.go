@@ -4648,9 +4648,14 @@ func (d *qemu) addFileDescriptor(fdFiles *[]*os.File, file *os.File) int {
 	return 2 + len(*fdFiles) // Use 2+fdFiles count, as first user file descriptor is 3.
 }
 
+// ImageMetadataDir returns the metadata image directory for the given instance path.
+func ImageMetadataDir(instancePath string) string {
+	return filepath.Join(instancePath, "image_metadata")
+}
+
 // imageMetadataDir returns the instance's metadata image directory.
 func (d *qemu) imageMetadataDir() string {
-	return filepath.Join(d.Path(), "image_metadata")
+	return ImageMetadataDir(d.Path())
 }
 
 // imageMetadataPath returns the instance's image metadata file path.
