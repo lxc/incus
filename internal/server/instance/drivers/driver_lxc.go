@@ -164,6 +164,32 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	return nil
 }
 
+// lxcEncodeCmd encodes a command for lxc.init.cmd/lxc.execute.cmd, whose
+// parser only supports whole-word quoting with no escape sequences.
+func lxcEncodeCmd(args []string) (string, error) {
+	words := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg != "" && !strings.ContainsAny(arg, " \t\n\v\f\r") && !strings.HasPrefix(arg, "'") && !strings.HasPrefix(arg, "\"") {
+			words = append(words, arg)
+			continue
+		}
+
+		if !strings.Contains(arg, "\"") {
+			words = append(words, "\""+arg+"\"")
+			continue
+		}
+
+		if !strings.Contains(arg, "'") {
+			words = append(words, "'"+arg+"'")
+			continue
+		}
+
+		return "", fmt.Errorf("Unable to encode command argument: %q", arg)
+	}
+
+	return strings.Join(words, " "), nil
+}
+
 func lxcStatusCode(lxcState liblxc.State) api.StatusCode {
 	return map[int]api.StatusCode{
 		1: api.Stopped,
@@ -2489,12 +2515,11 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			}
 		}
 
-		// Compute the entrypoint string.
-		initCmd := shellquote.Join(entrypoint...)
-
-		// As we feed this to execve and not to a real shell, un-escape some sequences.
-		initCmd = strings.ReplaceAll(initCmd, "\\(", "(")
-		initCmd = strings.ReplaceAll(initCmd, "\\)", ")")
+		// Compute the entrypoint string using LXC's own quoting rules.
+		initCmd, err := lxcEncodeCmd(entrypoint)
+		if err != nil {
+			return "", nil, err
+		}
 
 		if len(entrypoint) > 0 && slices.Contains([]string{"/init", "/sbin/init", "/s6-init", "/usr/bin/init"}, entrypoint[0]) {
 			// For regular init systems, call them directly as PID1.
