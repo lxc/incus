@@ -6896,9 +6896,17 @@ func (b *backend) UpdateInstanceBackupFile(inst instance.Instance, snapshots boo
 
 	// Update pool information in the backup.yaml file.
 	err = vol.MountTask(func(mountPath string, op *operations.Operation) error {
+		// Confine the write to the instance directory to avoid following image-planted symlinks.
+		root, err := os.OpenRoot(inst.Path())
+		if err != nil {
+			return err
+		}
+
+		defer func() { _ = root.Close() }()
+
 		// Write the YAML
 		path := filepath.Join(inst.Path(), "backup.yaml")
-		f, err := os.Create(path)
+		f, err := root.OpenFile("backup.yaml", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o400)
 		if err != nil {
 			return fmt.Errorf("Failed to create file %q: %w", path, err)
 		}
