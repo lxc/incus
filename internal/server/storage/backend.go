@@ -747,6 +747,23 @@ func stripMetadataLinks(instPath string) ([]string, error) {
 		}
 
 		if d.Type()&fs.ModeSymlink != 0 {
+			relPath, err := filepath.Rel(instPath, path)
+			if err != nil {
+				return err
+			}
+
+			// Allow the links Incus itself maintains.
+			if relPath == "qemu.nvram" || relPath == "config/lxd-agent" {
+				target, err := os.Readlink(path)
+				if err != nil {
+					return err
+				}
+
+				if !strings.Contains(target, "/") && target != "." && target != ".." {
+					return nil
+				}
+			}
+
 			err = os.Remove(path)
 			if err != nil {
 				return err
