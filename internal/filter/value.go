@@ -18,8 +18,12 @@ func DotPrefixMatch(short string, full string) bool {
 		return false
 	}
 
-	for i := range fullMembs {
-		if !strings.HasPrefix(fullMembs[i], shortMembs[i]) {
+	if !strings.HasPrefix(fullMembs[0], shortMembs[0]) {
+		return false
+	}
+
+	for i := 1; i < len(fullMembs); i++ {
+		if fullMembs[i] != shortMembs[i] {
 			return false
 		}
 	}
