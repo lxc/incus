@@ -15,6 +15,12 @@ func TestDotPrefixMatch(t *testing.T) {
 	pass = pass && filter.DotPrefixMatch("s.privileged", "security.privileged")
 	pass = pass && filter.DotPrefixMatch("u.blah", "user.blah")
 
+	// Only the namespace may be abbreviated.
+	pass = pass && filter.DotPrefixMatch("u.foo.bar", "user.foo.bar")
+	pass = pass && !filter.DotPrefixMatch("user.f.bar", "user.foo.bar")
+	pass = pass && !filter.DotPrefixMatch("user.fo", "user.foo")
+	pass = pass && !filter.DotPrefixMatch("s.priv", "security.privileged")
+
 	if !pass {
 		t.Error("failed prefix matching")
 	}
