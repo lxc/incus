@@ -1,7 +1,9 @@
 package filter
 
 import (
+	"maps"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/v7/shared/api"
@@ -45,9 +47,16 @@ func ValueOf(obj any, field string) any {
 				m = mm
 			}
 
-			for k, v := range m {
+			// Prefer an exact key match.
+			v, ok := m[field]
+			if ok {
+				return v
+			}
+
+			// Fall back to prefix matching, in sorted order for determinism.
+			for _, k := range slices.Sorted(maps.Keys(m)) {
 				if DotPrefixMatch(field, k) {
-					return v
+					return m[k]
 				}
 			}
 

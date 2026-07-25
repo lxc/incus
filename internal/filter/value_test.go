@@ -34,6 +34,8 @@ func TestValueOf_Instance(t *testing.T) {
 		Name:      "c1",
 		ExpandedConfig: map[string]string{
 			"image.os": "BusyBox",
+			"user.fo":  "abc",
+			"user.foo": "def",
 		},
 		ExpandedDevices: map[string]map[string]string{
 			"root": {
@@ -52,6 +54,8 @@ func TestValueOf_Instance(t *testing.T) {
 	cases["name"] = "c1"
 	cases["expanded_config.image.os"] = "BusyBox"
 	cases["expanded_config.im.os"] = "BusyBox"
+	cases["expanded_config.user.fo"] = "abc"
+	cases["expanded_config.user.foo"] = "def"
 	cases["expanded_devices.root.pool"] = "default"
 	cases["status"] = "Running"
 	cases["stateful"] = false
