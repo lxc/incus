@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-23 10:50-0400\n"
+"POT-Creation-Date: 2026-07-26 09:13-0400\n"
 "PO-Revision-Date: 2026-07-24 23:01+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -818,7 +818,7 @@ msgstr ""
 msgid "ACL"
 msgstr "ACL"
 
-#: cmd/incus/network_allocations.go:88
+#: cmd/incus/network_allocations.go:89
 msgid "ADDRESS"
 msgstr "ENDEREÇO"
 
@@ -1647,7 +1647,7 @@ msgstr "Ativado o agrupamento"
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:142
 #: cmd/incus/low_level.go:394 cmd/incus/network.go:1054
-#: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:74
+#: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
 #: cmd/incus/network_zone.go:123 cmd/incus/operation.go:152
@@ -2691,7 +2691,7 @@ msgstr "Edita configurações de confiança como YAML"
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:521
 #: cmd/incus/low_level.go:426 cmd/incus/network.go:1101
-#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:99
+#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
 #: cmd/incus/network_zone.go:159 cmd/incus/operation.go:184
@@ -3589,7 +3589,7 @@ msgstr ""
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143
 #: cmd/incus/low_level.go:393 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
-#: cmd/incus/network_allocations.go:71 cmd/incus/network_forward.go:121
+#: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
 #: cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121
 #: cmd/incus/network_zone.go:822 cmd/incus/operation.go:150
@@ -4300,7 +4300,7 @@ msgstr "URL inválido %q: %w"
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Esquema de URL inválido \"%s\" em \"%s\""
 
-#: cmd/incus/network_allocations.go:230
+#: cmd/incus/network_allocations.go:236
 #, c-format
 msgid "Invalid address %q for network %q: %w"
 msgstr "Endereço inválido %q para rede %q:%w"
@@ -4416,7 +4416,7 @@ msgstr "Tipo de ordenação inválido"
 msgid "Invalid sorting type provided"
 msgstr "Tipo de ordenação inválido fornecido"
 
-#: cmd/incus/network_allocations.go:216
+#: cmd/incus/network_allocations.go:222
 #, c-format
 msgid "Invalid subnet %q for network %q: %w"
 msgstr "Sub-rede %q inválida para rede %q: %w"
@@ -5495,6 +5495,7 @@ msgid "List network allocations in use"
 msgstr "Lista alocações de rede em uso"
 
 #: cmd/incus/network_allocations.go:43
+#, fuzzy
 msgid ""
 "List network allocations in use\n"
 "Default column layout: uatnm\n"
@@ -5514,6 +5515,7 @@ msgid ""
 "  a - Address\n"
 "  t - Type\n"
 "  n - NAT\n"
+"  N - Network\n"
 "  m - Mac Address"
 msgstr ""
 "Lista alocações de rede em uso\n"
@@ -6103,7 +6105,7 @@ msgstr "Dispositivo baixo"
 msgid "Lower devices"
 msgstr "Dispositivos baixos"
 
-#: cmd/incus/network.go:1277 cmd/incus/network_allocations.go:91
+#: cmd/incus/network.go:1277 cmd/incus/network_allocations.go:93
 msgid "MAC ADDRESS"
 msgstr "ENDEREÇO MAC"
 
@@ -6623,7 +6625,7 @@ msgstr "Tem de correr como root para importar do diretório"
 msgid "NAME"
 msgstr "NOME"
 
-#: cmd/incus/network_allocations.go:90
+#: cmd/incus/network_allocations.go:92
 msgid "NAT"
 msgstr "NAT"
 
@@ -6671,7 +6673,7 @@ msgstr "Ligação NBD falhou: %v"
 msgid "NBD listening on %v"
 msgstr "NBD a escutar em %v"
 
-#: cmd/incus/network_allocations.go:239
+#: cmd/incus/network_allocations.go:90 cmd/incus/network_allocations.go:245
 msgid "NETWORK"
 msgstr "REDE"
 
@@ -7911,7 +7913,7 @@ msgstr "Corre o proxy API local"
 msgid "Run a local API proxy for the remote"
 msgstr "Corre o proxy API local para o remoto"
 
-#: cmd/incus/network_allocations.go:72
+#: cmd/incus/network_allocations.go:73
 msgid "Run again a specific project"
 msgstr "Corre de novo um projeto específico"
 
@@ -7919,7 +7921,7 @@ msgstr "Corre de novo um projeto específico"
 msgid "Run against all instances"
 msgstr "Corre contra todas as instâncias"
 
-#: cmd/incus/network_allocations.go:73
+#: cmd/incus/network_allocations.go:74
 msgid "Run against all projects"
 msgstr "Corre contra todos os projetos"
 
@@ -8001,7 +8003,7 @@ msgstr "VOLUMES DE ARMAZENAMENTO"
 msgid "STP"
 msgstr "STP"
 
-#: cmd/incus/network_allocations.go:239
+#: cmd/incus/network_allocations.go:245
 msgid "SUBNET"
 msgstr "SUB-REDE"
 
@@ -8511,7 +8513,7 @@ msgstr "Configura armazenamento baseado em dispositivo usando DEVICE"
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr "Configura armazenamento baseado em loop com TAMANHO em GiB"
 
-#: cmd/incus/network_allocations.go:65
+#: cmd/incus/network_allocations.go:66
 msgid "Show a summary of used IP ranges per subnet"
 msgstr "Mostra um sumário das gamas de IP usadas por sub-rede"
 
@@ -9029,7 +9031,7 @@ msgstr "TESTEMUNHO"
 
 #: cmd/incus/config_trust.go:417 cmd/incus/image.go:1114
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:483 cmd/incus/network.go:1082
-#: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:89
+#: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
 #: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1621
 #: cmd/incus/warning.go:216
@@ -9096,7 +9098,7 @@ msgstr "O pool de armazenamento %s já existe"
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "A bandeira --show-log só é suportada pelo tipo de saída 'console'"
 
-#: cmd/incus/network_allocations.go:163
+#: cmd/incus/network_allocations.go:169
 msgid "The --summary flag cannot be used with custom columns (-c)"
 msgstr ""
 "A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
@@ -9575,12 +9577,12 @@ msgstr "Dispositivo USB:"
 msgid "USB devices:"
 msgstr "Dispositivos USB:"
 
-#: cmd/incus/network_allocations.go:239
+#: cmd/incus/network_allocations.go:245
 msgid "USED"
 msgstr "USADO"
 
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:164
-#: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:87
+#: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:88
 #: cmd/incus/network_integration.go:435 cmd/incus/network_zone.go:147
 #: cmd/incus/profile.go:733 cmd/incus/project.go:554 cmd/incus/storage.go:694
 #: cmd/incus/storage_volume.go:1625
@@ -9626,7 +9628,7 @@ msgstr "Tipo de canal desconhecido para cliente %q: %s"
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:539
 #: cmd/incus/low_level.go:432 cmd/incus/network.go:1107
-#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:105
+#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
 #: cmd/incus/network_zone.go:165 cmd/incus/operation.go:190
