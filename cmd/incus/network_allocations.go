@@ -59,6 +59,7 @@ Pre-defined column shorthand chars:
   a - Address
   t - Type
   n - NAT
+  N - Network
   m - Mac Address`,
 	))
 
@@ -80,12 +81,13 @@ Pre-defined column shorthand chars:
 	return cmd
 }
 
-const defaultNetworkAllocationColumns = "uatnm"
+const defaultNetworkAllocationColumns = "uaNtnm"
 
 func (c *cmdNetworkListAllocations) parseColumns() ([]networkAllocationColumn, error) {
 	columnsShorthandMap := map[rune]networkAllocationColumn{
 		'u': {i18n.G("USED BY"), c.usedByColumnData},
 		'a': {i18n.G("ADDRESS"), c.addressColumnData},
+		'N': {i18n.G("NETWORK"), c.networkColumnData},
 		't': {i18n.G("TYPE"), c.typeColumnData},
 		'n': {i18n.G("NAT"), c.natColumnData},
 		'm': {i18n.G("MAC ADDRESS"), c.macAddressColumnData},
@@ -118,6 +120,10 @@ func (c *cmdNetworkListAllocations) usedByColumnData(alloc api.NetworkAllocation
 
 func (c *cmdNetworkListAllocations) addressColumnData(alloc api.NetworkAllocations) string {
 	return alloc.Address
+}
+
+func (c *cmdNetworkListAllocations) networkColumnData(alloc api.NetworkAllocations) string {
+	return alloc.Network
 }
 
 func (c *cmdNetworkListAllocations) typeColumnData(alloc api.NetworkAllocations) string {
