@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-23 10:50-0400\n"
+"POT-Creation-Date: 2026-07-26 09:13-0400\n"
 "PO-Revision-Date: 2026-07-14 14:01+0000\n"
 "Last-Translator: KATOH Yasufumi <karma@jazz.email.ne.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -813,7 +813,7 @@ msgstr ""
 msgid "ACL"
 msgstr "ACL"
 
-#: cmd/incus/network_allocations.go:88
+#: cmd/incus/network_allocations.go:89
 msgid "ADDRESS"
 msgstr "ADDRESS"
 
@@ -1634,7 +1634,7 @@ msgstr "クラスタリングが有効になりました"
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:142
 #: cmd/incus/low_level.go:394 cmd/incus/network.go:1054
-#: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:74
+#: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
 #: cmd/incus/network_zone.go:123 cmd/incus/operation.go:152
@@ -2673,7 +2673,7 @@ msgstr "信頼済みクライアント設定をYAMLで編集します"
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:521
 #: cmd/incus/low_level.go:426 cmd/incus/network.go:1101
-#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:99
+#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
 #: cmd/incus/network_zone.go:159 cmd/incus/operation.go:184
@@ -3557,7 +3557,7 @@ msgstr ""
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:143
 #: cmd/incus/low_level.go:393 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
-#: cmd/incus/network_allocations.go:71 cmd/incus/network_forward.go:121
+#: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
 #: cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121
 #: cmd/incus/network_zone.go:822 cmd/incus/operation.go:150
@@ -4278,7 +4278,7 @@ msgstr "不正なフォーマット %q"
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "不正な URL スキーム \"%s\" (\"%s\" 内)"
 
-#: cmd/incus/network_allocations.go:230
+#: cmd/incus/network_allocations.go:236
 #, fuzzy, c-format
 msgid "Invalid address %q for network %q: %w"
 msgstr "ネットワーク %q の取得に失敗しました: %w"
@@ -4397,7 +4397,7 @@ msgstr "不正な送り先 %s"
 msgid "Invalid sorting type provided"
 msgstr "不正な送り先 %s"
 
-#: cmd/incus/network_allocations.go:216
+#: cmd/incus/network_allocations.go:222
 #, fuzzy, c-format
 msgid "Invalid subnet %q for network %q: %w"
 msgstr "不正なソース %s"
@@ -5533,6 +5533,7 @@ msgid ""
 "  a - Address\n"
 "  t - Type\n"
 "  n - NAT\n"
+"  N - Network\n"
 "  m - Mac Address"
 msgstr ""
 "イメージをリスト表示します\n"
@@ -6145,7 +6146,7 @@ msgstr "Lower device"
 msgid "Lower devices"
 msgstr "Lower devices"
 
-#: cmd/incus/network.go:1277 cmd/incus/network_allocations.go:91
+#: cmd/incus/network.go:1277 cmd/incus/network_allocations.go:93
 msgid "MAC ADDRESS"
 msgstr "MAC ADDRESS"
 
@@ -6675,7 +6676,7 @@ msgstr "ディレクトリからのインポートは root で実行する必要
 msgid "NAME"
 msgstr "NAME"
 
-#: cmd/incus/network_allocations.go:90
+#: cmd/incus/network_allocations.go:92
 msgid "NAT"
 msgstr "NAT"
 
@@ -6723,7 +6724,7 @@ msgstr "NBD接続が失敗しました: %v"
 msgid "NBD listening on %v"
 msgstr "SSH SFTP は %v でリッスンしています"
 
-#: cmd/incus/network_allocations.go:239
+#: cmd/incus/network_allocations.go:90 cmd/incus/network_allocations.go:245
 #, fuzzy
 msgid "NETWORK"
 msgstr "NETWORKS"
@@ -7999,7 +8000,7 @@ msgstr "ローカルの API プロキシーを実行します"
 msgid "Run a local API proxy for the remote"
 msgstr "リモート接続用のローカルの API プロキシーを実行します"
 
-#: cmd/incus/network_allocations.go:72
+#: cmd/incus/network_allocations.go:73
 msgid "Run again a specific project"
 msgstr "特定のプロジェクトを再実行します"
 
@@ -8007,7 +8008,7 @@ msgstr "特定のプロジェクトを再実行します"
 msgid "Run against all instances"
 msgstr "すべてのインスタンスに対してコマンドを実行します"
 
-#: cmd/incus/network_allocations.go:73
+#: cmd/incus/network_allocations.go:74
 #, fuzzy
 msgid "Run against all projects"
 msgstr "すべてのインスタンスに対してコマンドを実行します"
@@ -8092,7 +8093,7 @@ msgstr "STORAGE VOLUMES"
 msgid "STP"
 msgstr "STP"
 
-#: cmd/incus/network_allocations.go:239
+#: cmd/incus/network_allocations.go:245
 #, fuzzy
 msgid "SUBNET"
 msgstr "SUBNET"
@@ -8626,7 +8627,7 @@ msgstr "DEVICE を使ってストレージベースのデバイスをセット�
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr "サイズ GiB で loop ベースのストレージをセットアップします"
 
-#: cmd/incus/network_allocations.go:65
+#: cmd/incus/network_allocations.go:66
 msgid "Show a summary of used IP ranges per subnet"
 msgstr ""
 
@@ -9150,7 +9151,7 @@ msgstr "TOKEN"
 
 #: cmd/incus/config_trust.go:417 cmd/incus/image.go:1114
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:483 cmd/incus/network.go:1082
-#: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:89
+#: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
 #: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1621
 #: cmd/incus/warning.go:216
@@ -9218,7 +9219,7 @@ msgstr "デバイスはすでに存在します"
 msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "--show-log フラグは 'console' アウトプットタイプの時だけ使えます"
 
-#: cmd/incus/network_allocations.go:163
+#: cmd/incus/network_allocations.go:169
 #, fuzzy
 msgid "The --summary flag cannot be used with custom columns (-c)"
 msgstr "--mode と --storage は同時に指定できません"
@@ -9714,13 +9715,13 @@ msgstr "device"
 msgid "USB devices:"
 msgstr "上位デバイス"
 
-#: cmd/incus/network_allocations.go:239
+#: cmd/incus/network_allocations.go:245
 #, fuzzy
 msgid "USED"
 msgstr "USED BY"
 
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:164
-#: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:87
+#: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:88
 #: cmd/incus/network_integration.go:435 cmd/incus/network_zone.go:147
 #: cmd/incus/profile.go:733 cmd/incus/project.go:554 cmd/incus/storage.go:694
 #: cmd/incus/storage_volume.go:1625
@@ -9765,7 +9766,7 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:539
 #: cmd/incus/low_level.go:432 cmd/incus/network.go:1107
-#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:105
+#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
 #: cmd/incus/network_zone.go:165 cmd/incus/operation.go:190
