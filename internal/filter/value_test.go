@@ -15,6 +15,12 @@ func TestDotPrefixMatch(t *testing.T) {
 	pass = pass && filter.DotPrefixMatch("s.privileged", "security.privileged")
 	pass = pass && filter.DotPrefixMatch("u.blah", "user.blah")
 
+	// Only the namespace may be abbreviated.
+	pass = pass && filter.DotPrefixMatch("u.foo.bar", "user.foo.bar")
+	pass = pass && !filter.DotPrefixMatch("user.f.bar", "user.foo.bar")
+	pass = pass && !filter.DotPrefixMatch("user.bla", "user.blah")
+	pass = pass && !filter.DotPrefixMatch("s.priv", "security.privileged")
+
 	if !pass {
 		t.Error("failed prefix matching")
 	}
@@ -33,7 +39,9 @@ func TestValueOf_Instance(t *testing.T) {
 		CreatedAt: date,
 		Name:      "c1",
 		ExpandedConfig: map[string]string{
-			"image.os": "BusyBox",
+			"image.os":  "BusyBox",
+			"user.bla":  "abc",
+			"user.blah": "def",
 		},
 		ExpandedDevices: map[string]map[string]string{
 			"root": {
@@ -52,6 +60,8 @@ func TestValueOf_Instance(t *testing.T) {
 	cases["name"] = "c1"
 	cases["expanded_config.image.os"] = "BusyBox"
 	cases["expanded_config.im.os"] = "BusyBox"
+	cases["expanded_config.user.bla"] = "abc"
+	cases["expanded_config.user.blah"] = "def"
 	cases["expanded_devices.root.pool"] = "default"
 	cases["status"] = "Running"
 	cases["stateful"] = false
