@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Check that all commits are signed-off
-      uses: KineticCafe/actions-dco@v3.1.0
+      uses: KineticCafe/actions-dco@v3.2.0
 
   llm-commit-policy:
     permissions:
