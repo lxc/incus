@@ -1192,7 +1192,10 @@ func (d *lxc) initLXC(config bool) (*liblxc.Container, error) {
 				if util.IsTrueOrEmpty(memorySwap) || util.IsFalse(memorySwap) {
 					err = cg.SetMemorySwapLimit(0)
 					if err != nil {
-						return nil, err
+						// Ignore missing swap accounting unless explicitly configured.
+						if memorySwap != "" || !errors.Is(err, cgroup.ErrControllerMissing) {
+							return nil, err
+						}
 					}
 				} else {
 					// Additional memory as swap.
@@ -5332,7 +5335,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 				// Store the old values for revert
 				oldMemswLimit := int64(-1)
-				if cgroup.Supports(cgroup.Memory) {
+				if cgroup.Supports(cgroup.MemorySwap) {
 					oldMemswLimit, err = cg.GetMemorySwapLimit()
 					if err != nil {
 						oldMemswLimit = -1
@@ -5363,7 +5366,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 				}
 
 				// Reset everything
-				if cgroup.Supports(cgroup.Memory) {
+				if cgroup.Supports(cgroup.MemorySwap) {
 					err = cg.SetMemorySwapLimit(-1)
 					if err != nil {
 						revertMemory()
@@ -5398,26 +5401,27 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						return err
 					}
 
-					if cgroup.Supports(cgroup.Memory) {
-						if util.IsTrueOrEmpty(memorySwap) || util.IsFalse(memorySwap) {
-							err = cg.SetMemorySwapLimit(0)
-							if err != nil {
+					if util.IsTrueOrEmpty(memorySwap) || util.IsFalse(memorySwap) {
+						err = cg.SetMemorySwapLimit(0)
+						if err != nil {
+							// Ignore missing swap accounting unless explicitly configured.
+							if memorySwap != "" || !errors.Is(err, cgroup.ErrControllerMissing) {
 								revertMemory()
 								return err
 							}
-						} else {
-							// Additional memory as swap.
-							swapInt, err := units.ParseByteSizeString(memorySwap)
-							if err != nil {
-								revertMemory()
-								return err
-							}
+						}
+					} else {
+						// Additional memory as swap.
+						swapInt, err := units.ParseByteSizeString(memorySwap)
+						if err != nil {
+							revertMemory()
+							return err
+						}
 
-							err = cg.SetMemorySwapLimit(swapInt)
-							if err != nil {
-								revertMemory()
-								return err
-							}
+						err = cg.SetMemorySwapLimit(swapInt)
+						if err != nil {
+							revertMemory()
+							return err
 						}
 					}
 				}
@@ -5441,8 +5445,11 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 						// Maximum priority (10) should be default swappiness (60).
 						err = cg.SetMemorySwappiness(int64(70 - priority))
-						if err != nil && !errors.Is(err, cgroup.ErrControllerMissing) {
-							return err
+						if err != nil {
+							// Ignore missing swappiness support unless explicitly configured.
+							if memorySwapPriority != "" || !errors.Is(err, cgroup.ErrControllerMissing) {
+								return err
+							}
 						}
 					}
 				}
@@ -9370,7 +9377,7 @@ func (d *lxc) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, error
 	out.AddSamples(metrics.MemoryOOMKillsTotal, metrics.Sample{Value: float64(oomKills)})
 
 	// Handle swap.
-	if cgroup.Supports(cgroup.Memory) {
+	if cgroup.Supports(cgroup.MemorySwap) {
 		swapUsage, err := cg.GetMemorySwapUsage()
 		if err != nil {
 			d.logger.Warn("Failed to get swap usage", logger.Ctx{"err": err})
