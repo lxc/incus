@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-07-26 09:13-0400\n"
-"PO-Revision-Date: 2026-07-13 05:50+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-07-28 13:01+0000\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.7.1.dev0\n"
+"X-Generator: Weblate 2026.8.dev0\n"
 
 #: cmd/incus/info.go:457
 msgid "  Chassis:"
@@ -676,17 +676,16 @@ msgstr "'%s' är inte en filtyp som stöds"
 
 #: cmd/incus/low_level.go:472
 msgid "(binary data)"
-msgstr ""
+msgstr "(binär data)"
 
 #: cmd/incus/low_level.go:477
-#, fuzzy, c-format
+#, c-format
 msgid "(error: %w)"
-msgstr "fel: %v"
+msgstr "(fel: %w)"
 
 #: cmd/incus/low_level.go:464
-#, fuzzy
 msgid "(no timestamp)"
-msgstr "Tidsstämplar:"
+msgstr "(ingen tidsstämpel)"
 
 #: cmd/incus/usage/parse.go:244
 #, c-format
@@ -842,7 +841,7 @@ msgstr "ARKITEKTUR"
 
 #: cmd/incus/low_level.go:412
 msgid "ATTRIBUTES"
-msgstr ""
+msgstr "ATTRIBUTE"
 
 #: cmd/incus/remote.go:1057
 msgid "AUTH TYPE"
@@ -1533,9 +1532,9 @@ msgid "Client version: %s\n"
 msgstr "Klientversion: %s\n"
 
 #: cmd/incus/info.go:346
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster %d"
-msgstr "kluster"
+msgstr "Kluster %d"
 
 #: cmd/incus/cluster_group.go:236
 #, c-format
@@ -1741,9 +1740,9 @@ msgid "Connecting to the daemon (attempt %d)"
 msgstr "Ansluter till daemon (försök %d)"
 
 #: cmd/incus/port_forward.go:137
-#, fuzzy, c-format
+#, c-format
 msgid "Connection to the instance failed: %v"
-msgstr "Stopp av instans %s misslyckades: %s"
+msgstr "Anslutningen till instansen misslyckades: %v"
 
 #: cmd/incus/storage_volume.go:600
 msgid "Content type, block or filesystem"
@@ -3279,14 +3278,14 @@ msgid "Failed to find project: %w"
 msgstr "Projektet kunde inte hittas: %w"
 
 #: cmd/incus/low_level.go:354 cmd/incus/low_level.go:363
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get instance UEFI variable: %w"
-msgstr "Misslyckades med att dumpa instansminnet: %w"
+msgstr "Det gick inte att hämta instansens UEFI-variabel: %w"
 
 #: cmd/incus/low_level.go:496
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get instance UEFI variables: %w"
-msgstr "Misslyckades med att dumpa instansminnet: %w"
+msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
 
 #: cmd/incus/cluster.go:1972 cmd/incus/cluster.go:1977
 #, c-format
@@ -3611,7 +3610,7 @@ msgstr ""
 
 #: cmd/incus/port_forward.go:30
 msgid "Forward a local TCP port to the instance"
-msgstr ""
+msgstr "Vidarebefordra en lokal TCP-port till instansen"
 
 #: cmd/incus/port_forward.go:31
 msgid ""
@@ -3624,6 +3623,16 @@ msgid ""
 "defaulting to 127.0.0.1 otherwise. IPv6 addresses must be wrapped in\n"
 "square brackets (e.g. \"[::1]:80\")."
 msgstr ""
+"Vidarebefordra en lokal TCP-port till instansen\n"
+"\n"
+"Detta startar en lokal TCP-lyssnare och vidarebefordrar alla anslutningar "
+"till den\n"
+"till den angivna adressen och porten inuti instansen.\n"
+"\n"
+"Båda portarna kan förses med en adress (\"ADRESS:PORT\");\n"
+"om ingen anges används 127.0.0.1 som standard. IPv6-adresser måste omslutas "
+"av\n"
+"hakparenteser (t.ex. \"[::1]:80\")."
 
 #: cmd/incus/network.go:966
 msgid "Forward delay"
@@ -3632,7 +3641,7 @@ msgstr "Framåtfördröjning"
 #: cmd/incus/port_forward.go:117
 #, c-format
 msgid "Forwarding %v to %s port %d on %s"
-msgstr ""
+msgstr "Vidarebefordrar %v till %s port %d på %s"
 
 #: cmd/incus/main_aliases.go:151
 #, c-format
@@ -3669,12 +3678,11 @@ msgstr "Grafikkort:"
 
 #: cmd/incus/low_level.go:383 cmd/incus/low_level.go:413
 msgid "GUID"
-msgstr ""
+msgstr "GUID"
 
 #: cmd/incus/low_level.go:414
-#, fuzzy
 msgid "GUID NAME"
-msgstr "NAMN"
+msgstr "GUID-NAMN"
 
 #: cmd/incus/remote.go:926
 msgid "Generate a client token derived from the client certificate"
@@ -3823,11 +3831,11 @@ msgstr "Hämta nyckeln som en instansegenskap"
 
 #: cmd/incus/low_level.go:323
 msgid "Get the raw binary variable value"
-msgstr ""
+msgstr "Hämta det råa binära variabelvärdet"
 
 #: cmd/incus/low_level.go:319 cmd/incus/low_level.go:320
 msgid "Get values for UEFI variables"
-msgstr ""
+msgstr "Hämta värden för UEFI-variabler"
 
 #: cmd/incus/cluster_group.go:813
 msgid "Get values for cluster group configuration keys"
@@ -3995,7 +4003,7 @@ msgstr "INSTANSNAMN"
 
 #: cmd/incus/low_level.go:418
 msgid "INTERPRETED VALUE"
-msgstr ""
+msgstr "TOLKAT VÄRDE"
 
 #: cmd/incus/info.go:385
 #, c-format
@@ -4254,9 +4262,9 @@ msgid "Instance type"
 msgstr "Instans typ"
 
 #: cmd/incus/low_level.go:502
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid GUID: %s"
-msgstr "Ogiltig sökväg %s"
+msgstr "Ogiltigt GUID: %s"
 
 #: cmd/incus/cluster.go:1673
 msgid "Invalid IP address or DNS name"
@@ -4274,9 +4282,9 @@ msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Ogiltigt URL-schema \"%s\" i \"%s\""
 
 #: cmd/incus/network_allocations.go:236
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid address %q for network %q: %w"
-msgstr "Misslyckades med att läsa in nätverket %q: %w"
+msgstr "Ogiltig adress %q för nätverk %q: %w"
 
 #: cmd/incus/main_aliases.go:147 cmd/incus/main_aliases.go:189
 #, c-format
@@ -4371,9 +4379,9 @@ msgid "Invalid peer type"
 msgstr "Ogiltig peer-typ"
 
 #: cmd/incus/port_forward.go:79
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid port %q"
-msgstr "Ogiltigt format %q"
+msgstr "Ogiltig port %q"
 
 #: cmd/incus/remote.go:463
 #, c-format
@@ -4389,9 +4397,9 @@ msgid "Invalid sorting type provided"
 msgstr "Ogiltig sorteringstyp angiven"
 
 #: cmd/incus/network_allocations.go:222
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid subnet %q for network %q: %w"
-msgstr "Ogiltigt värde %q för list_format"
+msgstr "Ogiltigt delnät %q för nätverk %q: %w"
 
 #: cmd/incus/file.go:144 cmd/incus/storage_volume_file.go:141
 #, c-format
@@ -4543,7 +4551,7 @@ msgstr ""
 
 #: cmd/incus/low_level.go:389 cmd/incus/low_level.go:390
 msgid "List UEFI GUIDs and variables"
-msgstr ""
+msgstr "Lista UEFI-GUID:er och -variabler"
 
 #: cmd/incus/network_address_set.go:101
 msgid "List address sets across all projects"
@@ -5436,7 +5444,6 @@ msgid "List network allocations in use"
 msgstr "Lista nätverkstilldelningar som används"
 
 #: cmd/incus/network_allocations.go:43
-#, fuzzy
 msgid ""
 "List network allocations in use\n"
 "Default column layout: uatnm\n"
@@ -5477,6 +5484,7 @@ msgstr ""
 "  a - Adress\n"
 "  t - Typ\n"
 "  n - NAT\n"
+"  N – Nätverk\n"
 "  m - Mac-adress"
 
 #: cmd/incus/network_integration.go:393
@@ -6012,14 +6020,12 @@ msgid "Low-level cluster administration commands"
 msgstr "Kommandon för administration av låg nivåkluster"
 
 #: cmd/incus/low_level.go:33
-#, fuzzy
 msgid "Low-level commands"
-msgstr "Felsökningskommandon"
+msgstr "Lågnivåkommandon"
 
 #: cmd/incus/low_level.go:34
-#, fuzzy
 msgid "Low-level commands for instances"
-msgstr "Felsökningskommandon för instanser"
+msgstr "Lågnivåkommandon för instanser"
 
 #: cmd/incus/network.go:976
 msgid "Lower device"
@@ -6102,9 +6108,8 @@ msgid "Make the image public"
 msgstr "Gör den här bilden offentlig"
 
 #: cmd/incus/low_level.go:246 cmd/incus/low_level.go:247
-#, fuzzy
 msgid "Manage NVRAM on virtual machines"
-msgstr "Skapa en virtuell maskin"
+msgstr "Hantera NVRAM på virtuella datorer"
 
 #: cmd/incus/network.go:41 cmd/incus/network.go:42
 msgid "Manage and attach instances to networks"
@@ -6593,7 +6598,6 @@ msgid "NBD listening on %v"
 msgstr "NBD lyssnar på %v"
 
 #: cmd/incus/network_allocations.go:90 cmd/incus/network_allocations.go:245
-#, fuzzy
 msgid "NETWORK"
 msgstr "NÄTVERK"
 
@@ -7417,7 +7421,7 @@ msgstr "Fråga virtuella maskinavbildningar"
 
 #: cmd/incus/low_level.go:416
 msgid "RAW VALUE"
-msgstr ""
+msgstr "RÅVÄRDE"
 
 #: cmd/incus/project.go:1083
 msgid "RESOURCE"
@@ -7919,7 +7923,7 @@ msgstr "STP"
 
 #: cmd/incus/network_allocations.go:245
 msgid "SUBNET"
-msgstr ""
+msgstr "Subnät"
 
 #: cmd/incus/admin_recover.go:167
 msgid "Scanning for unknown volumes..."
@@ -8427,7 +8431,7 @@ msgstr "Konfigurera loopbaserad lagring med STORLEK i GiB"
 
 #: cmd/incus/network_allocations.go:66
 msgid "Show a summary of used IP ranges per subnet"
-msgstr ""
+msgstr "Visa en sammanfattning av använda IP-intervall per subnät"
 
 #: cmd/incus/main.go:175
 msgid "Show all debug messages"
@@ -8933,7 +8937,7 @@ msgstr "MÅL"
 
 #: cmd/incus/low_level.go:417
 msgid "TIMESTAMP"
-msgstr ""
+msgstr "TIDSSTÄMPEL"
 
 #: cmd/incus/cluster.go:1150 cmd/incus/config_trust.go:605
 msgid "TOKEN"
@@ -9008,9 +9012,9 @@ msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "Flaggan --show-log stöds endast för utdatatypen 'console'"
 
 #: cmd/incus/network_allocations.go:169
-#, fuzzy
 msgid "The --summary flag cannot be used with custom columns (-c)"
-msgstr "--target kan inte användas med instanser"
+msgstr ""
+"Flaggan --summary kan inte användas tillsammans med anpassade kolumner (-c)"
 
 #: cmd/incus/admin_init_interactive.go:524
 msgid "The LVM thin provisioning tools couldn't be found on the system"
@@ -9452,7 +9456,7 @@ msgstr "Typ: %s"
 #: cmd/incus/low_level.go:590
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
-msgstr ""
+msgstr "UEFI-variabel %s:%s borttagen den %s"
 
 #: cmd/incus/project.go:1055
 msgid "UNLIMITED"
@@ -9480,9 +9484,8 @@ msgid "USB devices:"
 msgstr "USB-enheter:"
 
 #: cmd/incus/network_allocations.go:245
-#, fuzzy
 msgid "USED"
-msgstr "ANVÄNDS AV"
+msgstr "ANVÄND"
 
 #: cmd/incus/network.go:1087 cmd/incus/network_acl.go:164
 #: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:88
@@ -9571,7 +9574,7 @@ msgstr "Okänd utdatatyp %q"
 
 #: cmd/incus/low_level.go:552 cmd/incus/low_level.go:553
 msgid "Unset UEFI variables"
-msgstr ""
+msgstr "Ta bort UEFI-variabler"
 
 #: cmd/incus/cluster_group.go:962
 msgid "Unset a cluster group's configuration keys"
@@ -9873,9 +9876,8 @@ msgid "User aborted delete operation"
 msgstr "Användaren avbröt raderingsåtgärden"
 
 #: cmd/incus/low_level.go:415
-#, fuzzy
 msgid "VARIABLE NAME"
-msgstr "FILNAMN"
+msgstr "VARIABELNAMN"
 
 #: cmd/incus/info.go:158 cmd/incus/info.go:267
 #, c-format
@@ -10376,7 +10378,6 @@ msgstr ""
 "    Uppdatera en klustermedlem med hjälp av innehållet i member.yaml"
 
 #: cmd/incus/cluster_group.go:107
-#, fuzzy
 msgid ""
 "incus cluster group assign foo default bar\n"
 "    Set the groups for \"foo\" to \"default\" and \"bar\".\n"
@@ -10384,7 +10385,7 @@ msgid ""
 "incus cluster group assign foo default\n"
 "    Reset \"foo\" to only using the \"default\" cluster group."
 msgstr ""
-"incus cluster group assign foo default,bar\n"
+"incus cluster group assign foo default bar\n"
 "     Ställ in grupperna för \"foo\" till \"default\" och \"bar\".\n"
 "\n"
 "incus cluster group assign foo default\n"
@@ -10701,12 +10702,11 @@ msgstr ""
 "instanser med deras körningsstatus och användarkommentar."
 
 #: cmd/incus/low_level.go:65
-#, fuzzy
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
 msgstr ""
-"incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
+"incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Skapar en minnesdump i ELF-format av vm1-instansen."
 
 #: cmd/incus/monitor.go:43
@@ -10925,9 +10925,14 @@ msgid ""
 "    Forward port 8443 on all local addresses to 10.0.3.1:443 inside of the "
 "instance."
 msgstr ""
+"incus port-forward c1 80 8080\n"
+"    Vidarebefordra lokal port 8080 till port 80 inuti instansen.\n"
+"\n"
+"incus port-forward c1 10.0.3.1:443 0.0.0.0:8443\n"
+"    Vidarebefordra port 8443 på alla lokala adresser till 10.0.3.1:443 inuti "
+"instansen."
 
 #: cmd/incus/profile.go:187
-#, fuzzy
 msgid ""
 "incus profile assign foo default bar\n"
 "    Set the profiles for \"foo\" to \"default\" and \"bar\".\n"
@@ -10938,7 +10943,7 @@ msgid ""
 "incus profile assign foo --no-profiles\n"
 "    Remove all profile assigned to \"foo\""
 msgstr ""
-"incus profile assign foo default,bar\n"
+"incus profile assign foo default bar\n"
 "    Ställ in profilerna för \"foo\" till \"default\" och \"bar\".\n"
 "\n"
 "incus profile assign foo default\n"
@@ -11609,9 +11614,8 @@ msgid "value"
 msgstr "värde"
 
 #: cmd/incus/usage/usage.go:868
-#, fuzzy
 msgid "variable"
-msgstr "inaktiverad"
+msgstr "variabel"
 
 #: cmd/incus/usage/usage.go:869
 msgid "volume"
