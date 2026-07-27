@@ -185,6 +185,10 @@ the ACME client that Incus uses behind the scenes.
 For `HTTP-01`, Incus will cause `lego` to temporarily listen on port `80` so the the HTTP challenge can go through.
 If your Incus server sits behind a reverse proxy, you'll need that reverse proxy to redirect HTTP traffic to HTTPS.
 
+For ACME services that require External Account Binding (EAB), set both
+{config:option}`server-acme:acme.eab.kid` and {config:option}`server-acme:acme.eab.hmac`
+to the values provided by your ACME service.
+
 ## Failure scenarios
 
 In the following scenarios, authentication is expected to fail.
