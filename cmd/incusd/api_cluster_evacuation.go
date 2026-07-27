@@ -108,9 +108,6 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 	})
 }
 
-// evacuateHostShutdownDefaultTimeout default timeout (in seconds) for waiting for clean shutdown to complete.
-const evacuateHostShutdownDefaultTimeout = 30
-
 func evacuateStopInstance(inst instance.Instance, action string) error {
 	l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
@@ -130,23 +127,10 @@ func evacuateStopInstance(inst instance.Instance, action string) error {
 		}
 
 	default:
-		// Get the shutdown timeout for the instance.
-		timeout := inst.ExpandedConfig()["boot.host_shutdown_timeout"]
-		val, err := strconv.Atoi(timeout)
+		// Clean shutdown, falling back to a forced stop.
+		err := instanceShutdownOrForceStop(inst)
 		if err != nil {
-			val = evacuateHostShutdownDefaultTimeout
-		}
-
-		// Start with a clean shutdown.
-		err = inst.Shutdown(time.Duration(val) * time.Second)
-		if err != nil {
-			l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
-
-			// Fallback to forced stop.
-			err = inst.Stop(false)
-			if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
-				return fmt.Errorf("Failed to stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
-			}
+			return err
 		}
 	}
 
