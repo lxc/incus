@@ -32,6 +32,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	apiScriptlet "github.com/lxc/incus/v7/shared/api/scriptlet"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/util"
 )
 
@@ -233,12 +234,18 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Instance snapshots cannot be moved on their own"))
 	}
 
+	if req.Refresh && req.Live {
+		return response.BadRequest(errors.New("Refresh migration can't be used with a stateful migration"))
+	}
+
 	// Checks for running instances.
 	if inst.IsRunning() {
 		if req.Pool != "" || req.Project != "" || target != "" {
-			// Stateless migrations need the instance stopped.
-			if !req.Live {
-				return response.BadRequest(errors.New("Instance must be stopped to be moved statelessly"))
+			if !req.Live && req.Refresh {
+				err := nearLiveMigrationSupported(s, inst, req, target)
+				if err != nil {
+					return response.BadRequest(err)
+				}
 			}
 
 			// Storage pool changes require a target flag.
@@ -904,6 +911,40 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return fmt.Errorf("Failed getting source instance snapshots: %w", err)
 		}
 
+		// A requested stateless move of a running container is performed as a near-live migration.
+		nearLiveRestart := false
+		nearLiveReverter := revert.New()
+		defer nearLiveReverter.Fail()
+
+		if req.Refresh && !req.Live && inst.IsRunning() {
+			err := nearLiveMigrationSupported(s, inst, req, targetMemberInfo.Name)
+			if err != nil {
+				return err
+			}
+
+			// On shared storage there is nothing to pre-copy.
+			if !sourcePool.Driver().Info().Remote {
+				return migrateInstanceNearLive(ctx, s, inst, target, targetInstInfo, progressHandler)
+			}
+
+			err = instanceShutdownOrForceStop(inst)
+			if err != nil {
+				return err
+			}
+
+			nearLiveRestart = true
+
+			nearLiveReverter.Add(func() {
+				err := inst.Start(false)
+				if err != nil {
+					logger.Error("Failed restarting instance after failed near-live migration", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+				}
+			})
+
+			// Prevent target instance start at this moment.
+			delete(targetInstInfo.Config, "volatile.last_state.power")
+		}
+
 		// Setup a new migration source.
 		sourceMigration, err := newMigrationSource(inst, req.Live, false, req.AllowInconsistent, inst.Name(), req.Pool, req.Devices, nil)
 		if err != nil {
@@ -1054,6 +1095,9 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return err
 		}
 
+		// The instance now belongs to the target member, so restarting the source is no longer the right thing to do on failure.
+		nearLiveReverter.Success()
+
 		// Cleanup instance paths on source member if using remote shared storage
 		// and there was no storage pool change.
 		if sourcePool.Driver().Info().Remote && req.Pool == "" {
@@ -1085,6 +1129,18 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		err = cleanupDependentDisks(s, inst, req.Devices, op)
 		if err != nil {
 			return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
+		}
+
+		// Start the target instance for a near-live migration onto shared storage.
+		if nearLiveRestart {
+			startOp, err := target.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "start"}, "")
+			if err == nil {
+				err = startOp.Wait()
+			}
+
+			if err != nil {
+				return fmt.Errorf("Failed starting instance on target member: %w", err)
+			}
 		}
 	}
 
