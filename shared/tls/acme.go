@@ -33,8 +33,15 @@ func CertificateNeedsUpdate(domain string, cert *x509.Certificate, threshold tim
 }
 
 // RunACMEChallenge runs an ACME challenge to fetch updated certificates with `lego`.
-func RunACMEChallenge(ctx context.Context, dir, caURL, domain, email, challengeType, provider, port, proxy string, resolvers, environment []string) ([]byte, []byte, error) {
+func RunACMEChallenge(ctx context.Context, dir, caURL, domain, email, challengeType, provider, port, proxy, eabKid, eabHmac string, resolvers, environment []string) ([]byte, []byte, error) {
 	env := os.Environ()
+
+	// Pass External Account Binding details through environment variables as
+	// those are handled identically by both lego v4 and v5 and keep the HMAC
+	// key off the command line.
+	if eabKid != "" && eabHmac != "" {
+		env = append(env, "LEGO_EAB=true", "LEGO_EAB_KID="+eabKid, "LEGO_EAB_HMAC="+eabHmac)
+	}
 
 	// Detect the installed lego command line interface as it changed in lego v5.
 	//
