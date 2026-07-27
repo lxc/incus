@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/warningtype"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 var cgControllers = map[string]bool{}
@@ -37,6 +38,9 @@ const (
 	// Memory resource control.
 	Memory
 
+	// MemorySwap resource control.
+	MemorySwap
+
 	// Pids resource control.
 	Pids
 )
@@ -54,6 +58,8 @@ func Supports(resource Resource) bool {
 		return cgControllers["io"]
 	case Memory:
 		return cgControllers["memory"]
+	case MemorySwap:
+		return cgControllers["memory.swap"]
 	case Pids:
 		return cgControllers["pids"]
 	}
@@ -97,6 +103,11 @@ func Warnings() []cluster.Warning {
 		warnings = append(warnings, cluster.Warning{
 			TypeCode:    warningtype.MissingCGroupMemoryController,
 			LastMessage: "memory limits will be ignored",
+		})
+	} else if !Supports(MemorySwap) {
+		warnings = append(warnings, cluster.Warning{
+			TypeCode:    warningtype.MissingCGroupMemorySwapAccounting,
+			LastMessage: "swap limits will be ignored",
 		})
 	}
 
@@ -156,5 +167,15 @@ func Init() {
 		}
 
 		_ = controllers.Close()
+
+		// Check for swap accounting support (can be disabled through kernel arguments).
+		if cgControllers["memory"] {
+			for _, path := range []string{filepath.Join(cgPath, fields[2]), filepath.Join(cgPath, "init.scope")} {
+				if util.PathExists(filepath.Join(path, "memory.swap.current")) {
+					cgControllers["memory.swap"] = true
+					break
+				}
+			}
+		}
 	}
 }
