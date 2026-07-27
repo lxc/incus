@@ -921,6 +921,15 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			return err
 		}
 
+		// Re-establish the cluster listener in case it was sharing the network listener.
+		clusterAddress := nodeConfig.ClusterAddress()
+		if clusterAddress != "" {
+			err := s.Endpoints.ClusterUpdateAddress(clusterAddress)
+			if err != nil {
+				return err
+			}
+		}
+
 		s.Endpoints.NetworkUpdateTrustedProxy(clusterConf.HTTPSTrustedProxy())
 	}
 
