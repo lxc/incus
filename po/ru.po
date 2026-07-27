@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-07-26 09:13-0400\n"
-"PO-Revision-Date: 2026-07-13 05:45+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-07-28 13:01+0000\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Weblate 2026.7.1.dev0\n"
+"X-Generator: Weblate 2026.8.dev0\n"
 
 #: cmd/incus/info.go:457
 msgid "  Chassis:"
@@ -676,17 +676,16 @@ msgstr "'%s' неподдерживаемый тип файла"
 
 #: cmd/incus/low_level.go:472
 msgid "(binary data)"
-msgstr ""
+msgstr "(двоичные данные)"
 
 #: cmd/incus/low_level.go:477
-#, fuzzy, c-format
+#, c-format
 msgid "(error: %w)"
-msgstr "ошибка: %v"
+msgstr "(ошибка: %w)"
 
 #: cmd/incus/low_level.go:464
-#, fuzzy
 msgid "(no timestamp)"
-msgstr "Временные метки:"
+msgstr "(нет отметки времени)"
 
 #: cmd/incus/usage/parse.go:244
 #, c-format
@@ -849,7 +848,7 @@ msgstr "АРХИТЕКТУРА"
 
 #: cmd/incus/low_level.go:412
 msgid "ATTRIBUTES"
-msgstr ""
+msgstr "ПАРАМЕТРЫ"
 
 #: cmd/incus/remote.go:1057
 msgid "AUTH TYPE"
@@ -1548,9 +1547,9 @@ msgid "Client version: %s\n"
 msgstr "Версия клиента: %s\n"
 
 #: cmd/incus/info.go:346
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster %d"
-msgstr "кластер"
+msgstr "Кластер %d"
 
 #: cmd/incus/cluster_group.go:236
 #, c-format
@@ -1761,9 +1760,9 @@ msgid "Connecting to the daemon (attempt %d)"
 msgstr "Подключение к демону (попытка %d)"
 
 #: cmd/incus/port_forward.go:137
-#, fuzzy, c-format
+#, c-format
 msgid "Connection to the instance failed: %v"
-msgstr "Остановка экземпляра %s не удалась: %s"
+msgstr "Не удалось подключиться к экземпляру : %v"
 
 #: cmd/incus/storage_volume.go:600
 msgid "Content type, block or filesystem"
@@ -3316,14 +3315,14 @@ msgid "Failed to find project: %w"
 msgstr "Проект не найден: %w"
 
 #: cmd/incus/low_level.go:354 cmd/incus/low_level.go:363
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get instance UEFI variable: %w"
-msgstr "Не удалось скопировать память экземпляра: %w"
+msgstr "Не удалось получить переменную UEFI экземпляра: %w"
 
 #: cmd/incus/low_level.go:496
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get instance UEFI variables: %w"
-msgstr "Не удалось скопировать память экземпляра: %w"
+msgstr "Не удалось получить переменные UEFI экземпляра: %w"
 
 #: cmd/incus/cluster.go:1972 cmd/incus/cluster.go:1977
 #, c-format
@@ -3647,7 +3646,7 @@ msgstr ""
 
 #: cmd/incus/port_forward.go:30
 msgid "Forward a local TCP port to the instance"
-msgstr ""
+msgstr "Перенаправить локальный TCP порт в экземпляр"
 
 #: cmd/incus/port_forward.go:31
 msgid ""
@@ -3660,6 +3659,17 @@ msgid ""
 "defaulting to 127.0.0.1 otherwise. IPv6 addresses must be wrapped in\n"
 "square brackets (e.g. \"[::1]:80\")."
 msgstr ""
+"Перенаправление локального TCP-порта в экземпляр\n"
+"\n"
+"Эта команда запускает локальный TCP-прокси и перенаправляет все поступающие "
+"на него соединения\n"
+"на указанный адрес и порт внутри экземпляра.\n"
+"\n"
+"Перед номером любого из портов можно указать адрес (в формате «ADDRESS:PORT»)"
+";\n"
+"если адрес не указан, по умолчанию используется 127.0.0.1. Адреса IPv6 "
+"необходимо заключать\n"
+"в квадратные скобки (например, «[::1]:80»)."
 
 #: cmd/incus/network.go:966
 msgid "Forward delay"
@@ -3668,7 +3678,7 @@ msgstr "Задержка перенаправления"
 #: cmd/incus/port_forward.go:117
 #, c-format
 msgid "Forwarding %v to %s port %d on %s"
-msgstr ""
+msgstr "Перенаправление %v на %s, порт %d, на %s"
 
 #: cmd/incus/main_aliases.go:151
 #, c-format
@@ -3707,12 +3717,11 @@ msgstr "графические процессоры:"
 
 #: cmd/incus/low_level.go:383 cmd/incus/low_level.go:413
 msgid "GUID"
-msgstr ""
+msgstr "GUID идентификатор"
 
 #: cmd/incus/low_level.go:414
-#, fuzzy
 msgid "GUID NAME"
-msgstr "НАЗВАНИЕ"
+msgstr "НАЗВАНИЕ GUID ИДЕНТИФИКАТОРА"
 
 #: cmd/incus/remote.go:926
 msgid "Generate a client token derived from the client certificate"
@@ -3862,11 +3871,11 @@ msgstr "Получить параметр свойства экземпляра"
 
 #: cmd/incus/low_level.go:323
 msgid "Get the raw binary variable value"
-msgstr ""
+msgstr "Получить значение переменной в сыром двоичном виде"
 
 #: cmd/incus/low_level.go:319 cmd/incus/low_level.go:320
 msgid "Get values for UEFI variables"
-msgstr ""
+msgstr "Получить значения для переменных UEFI"
 
 #: cmd/incus/cluster_group.go:813
 msgid "Get values for cluster group configuration keys"
@@ -4040,7 +4049,7 @@ msgstr "НАЗВАНИЕ ЭКЗЕМПЛЯРА"
 
 #: cmd/incus/low_level.go:418
 msgid "INTERPRETED VALUE"
-msgstr ""
+msgstr "ГОТОВОЕ ЗНАЧЕНИЕ"
 
 #: cmd/incus/info.go:385
 #, c-format
@@ -4300,9 +4309,9 @@ msgid "Instance type"
 msgstr "Тип экземпляра"
 
 #: cmd/incus/low_level.go:502
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid GUID: %s"
-msgstr "Недопустимый формат: %s"
+msgstr "Недопустимый GUID: %s"
 
 #: cmd/incus/cluster.go:1673
 msgid "Invalid IP address or DNS name"
@@ -4320,9 +4329,9 @@ msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Недопустимая схема URL \"%s\" в \"%s\""
 
 #: cmd/incus/network_allocations.go:236
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid address %q for network %q: %w"
-msgstr "Сбой загрузки сети %q: %w"
+msgstr "Недопустимый адрес %q для сети %q: %w"
 
 #: cmd/incus/main_aliases.go:147 cmd/incus/main_aliases.go:189
 #, c-format
@@ -4422,9 +4431,9 @@ msgid "Invalid peer type"
 msgstr "недопустимый тип точки обмена трафиком"
 
 #: cmd/incus/port_forward.go:79
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid port %q"
-msgstr "Недопустимый формат %q"
+msgstr "Недопустимый порт %q"
 
 #: cmd/incus/remote.go:463
 #, c-format
@@ -4440,9 +4449,9 @@ msgid "Invalid sorting type provided"
 msgstr "Предоставлен недопустимый тип сортировки"
 
 #: cmd/incus/network_allocations.go:222
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid subnet %q for network %q: %w"
-msgstr "Недопустимое значение %q для list_format"
+msgstr "Недопустимая подсеть %q для сети %q: %w"
 
 #: cmd/incus/file.go:144 cmd/incus/storage_volume_file.go:141
 #, c-format
@@ -4596,7 +4605,7 @@ msgstr ""
 
 #: cmd/incus/low_level.go:389 cmd/incus/low_level.go:390
 msgid "List UEFI GUIDs and variables"
-msgstr ""
+msgstr "Вывести список GUID и переменных UEFI"
 
 #: cmd/incus/network_address_set.go:101
 msgid "List address sets across all projects"
@@ -5494,7 +5503,6 @@ msgid "List network allocations in use"
 msgstr "Вывести используемые сетевые адреса"
 
 #: cmd/incus/network_allocations.go:43
-#, fuzzy
 msgid ""
 "List network allocations in use\n"
 "Default column layout: uatnm\n"
@@ -5535,6 +5543,7 @@ msgstr ""
 "  a - Адрес\n"
 "  t - Тип\n"
 "  n - Сетевая трансляция адресов (NAT)\n"
+"  N - Сеть\n"
 "  m - MAC-адрес"
 
 #: cmd/incus/network_integration.go:393
@@ -6072,14 +6081,12 @@ msgid "Low-level cluster administration commands"
 msgstr "Низкоуровневые команды администрирования кластера"
 
 #: cmd/incus/low_level.go:33
-#, fuzzy
 msgid "Low-level commands"
-msgstr "Команды отладки"
+msgstr "Низкоуровневые команды"
 
 #: cmd/incus/low_level.go:34
-#, fuzzy
 msgid "Low-level commands for instances"
-msgstr "Команды отладки для экземпляров"
+msgstr "Низкоуровневые команды для экземпляров"
 
 #: cmd/incus/network.go:976
 msgid "Lower device"
@@ -6162,9 +6169,8 @@ msgid "Make the image public"
 msgstr "Опубликовать этот образ"
 
 #: cmd/incus/low_level.go:246 cmd/incus/low_level.go:247
-#, fuzzy
 msgid "Manage NVRAM on virtual machines"
-msgstr "Создать виртуальную машину"
+msgstr "Управлять NVRAM виртуальных машин"
 
 #: cmd/incus/network.go:41 cmd/incus/network.go:42
 msgid "Manage and attach instances to networks"
@@ -6657,9 +6663,8 @@ msgid "NBD listening on %v"
 msgstr "NBD работает на %v"
 
 #: cmd/incus/network_allocations.go:90 cmd/incus/network_allocations.go:245
-#, fuzzy
 msgid "NETWORK"
-msgstr "СЕТИ"
+msgstr "СЕТЬ"
 
 #: cmd/incus/project.go:552
 msgid "NETWORK ZONES"
@@ -7497,7 +7502,7 @@ msgstr "Запрос образов виртуальных машин"
 
 #: cmd/incus/low_level.go:416
 msgid "RAW VALUE"
-msgstr ""
+msgstr "СЫРОЕ ЗНАЧЕНИЕ"
 
 #: cmd/incus/project.go:1083
 msgid "RESOURCE"
@@ -8005,7 +8010,7 @@ msgstr "SPANNING TREE PROTOCOL"
 
 #: cmd/incus/network_allocations.go:245
 msgid "SUBNET"
-msgstr ""
+msgstr "ПОДСЕТЬ"
 
 #: cmd/incus/admin_recover.go:167
 msgid "Scanning for unknown volumes..."
@@ -8523,6 +8528,8 @@ msgstr ""
 #: cmd/incus/network_allocations.go:66
 msgid "Show a summary of used IP ranges per subnet"
 msgstr ""
+"Показать сводную информацию об используемых диапазонах IP-адресов для каждой "
+"подсети"
 
 #: cmd/incus/main.go:175
 msgid "Show all debug messages"
@@ -9029,7 +9036,7 @@ msgstr "ЦЕЛЬ"
 
 #: cmd/incus/low_level.go:417
 msgid "TIMESTAMP"
-msgstr ""
+msgstr "ВРЕМЯ"
 
 #: cmd/incus/cluster.go:1150 cmd/incus/config_trust.go:605
 msgid "TOKEN"
@@ -9105,9 +9112,8 @@ msgid "The --show-log flag is only supported for by 'console' output type"
 msgstr "Флаг --show-log поддерживается только типом вывода \"console\""
 
 #: cmd/incus/network_allocations.go:169
-#, fuzzy
 msgid "The --summary flag cannot be used with custom columns (-c)"
-msgstr "--target не может использоваться с экземплярами"
+msgstr "Флаг --summary нельзя использовать с пользовательскими столбцами (-c)"
 
 #: cmd/incus/admin_init_interactive.go:524
 msgid "The LVM thin provisioning tools couldn't be found on the system"
@@ -9557,7 +9563,7 @@ msgstr "Тип: %s"
 #: cmd/incus/low_level.go:590
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
-msgstr ""
+msgstr "Переменная UEFI %s:%s удалена на %s"
 
 #: cmd/incus/project.go:1055
 msgid "UNLIMITED"
@@ -9585,7 +9591,6 @@ msgid "USB devices:"
 msgstr "USB-устройства:"
 
 #: cmd/incus/network_allocations.go:245
-#, fuzzy
 msgid "USED"
 msgstr "ИСПОЛЬЗУЕТСЯ"
 
@@ -9676,7 +9681,7 @@ msgstr "Неизвестный тип вывода %q"
 
 #: cmd/incus/low_level.go:552 cmd/incus/low_level.go:553
 msgid "Unset UEFI variables"
-msgstr ""
+msgstr "Убрать переменные UEFI"
 
 #: cmd/incus/cluster_group.go:962
 msgid "Unset a cluster group's configuration keys"
@@ -9981,9 +9986,8 @@ msgid "User aborted delete operation"
 msgstr "Пользователь прервал операцию удаления"
 
 #: cmd/incus/low_level.go:415
-#, fuzzy
 msgid "VARIABLE NAME"
-msgstr "ИМЯ ФАЙЛА"
+msgstr "НАЗВАНИЕ ПЕРЕМЕННОЙ"
 
 #: cmd/incus/info.go:158 cmd/incus/info.go:267
 #, c-format
@@ -10495,7 +10499,6 @@ msgstr ""
 "    Обновить участника кластера, используя содержимое файла member.yaml"
 
 #: cmd/incus/cluster_group.go:107
-#, fuzzy
 msgid ""
 "incus cluster group assign foo default bar\n"
 "    Set the groups for \"foo\" to \"default\" and \"bar\".\n"
@@ -10503,7 +10506,7 @@ msgid ""
 "incus cluster group assign foo default\n"
 "    Reset \"foo\" to only using the \"default\" cluster group."
 msgstr ""
-"incus cluster group assign foo default,bar\n"
+"incus cluster group assign foo default bar\n"
 "    Задать кластерные группы для \"foo\" на \"default\" и \"bar\".\n"
 "\n"
 "incus cluster group assign foo default\n"
@@ -10823,12 +10826,11 @@ msgstr ""
 "пользователя."
 
 #: cmd/incus/low_level.go:65
-#, fuzzy
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
 msgstr ""
-"incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
+"incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Создать дамп памяти экземпляра vm1 в формате ELF."
 
 #: cmd/incus/monitor.go:43
@@ -11049,9 +11051,14 @@ msgid ""
 "    Forward port 8443 on all local addresses to 10.0.3.1:443 inside of the "
 "instance."
 msgstr ""
+"incus port-forward c1 80 8080\n"
+"    Перенаправить локальный порт 8080 на порт 80 внутри экземпляра.\n"
+"\n"
+"incus port-forward c1 10.0.3.1:443 0.0.0.0:8443\n"
+"    Перенаправить порт 8443 на всех локальных адресах на адрес 10.0.3.1:443 "
+"внутри экземпляра."
 
 #: cmd/incus/profile.go:187
-#, fuzzy
 msgid ""
 "incus profile assign foo default bar\n"
 "    Set the profiles for \"foo\" to \"default\" and \"bar\".\n"
@@ -11062,11 +11069,11 @@ msgid ""
 "incus profile assign foo --no-profiles\n"
 "    Remove all profile assigned to \"foo\""
 msgstr ""
-"incus profile assign foo default,bar\n"
+"incus profile assign foo default bar\n"
 "    Задать профили для \"foo\" в \"default\" и \"bar\".\n"
 "\n"
 "incus profile assign foo default\n"
-"    Настроить \"foo\" на  использование только профиля \"default\".\n"
+"    Настроить \"foo\" на использование только профиля \"default\".\n"
 "\n"
 "incus profile assign foo --no-profiles\n"
 "    Удалить все привязки профилей для \"foo\""
@@ -11743,9 +11750,8 @@ msgid "value"
 msgstr "значение"
 
 #: cmd/incus/usage/usage.go:868
-#, fuzzy
 msgid "variable"
-msgstr "отключено"
+msgstr "переменная"
 
 #: cmd/incus/usage/usage.go:869
 msgid "volume"
