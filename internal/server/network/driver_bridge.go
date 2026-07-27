@@ -941,6 +941,14 @@ func (n *bridge) Delete(clientType request.ClientType) error {
 		return err
 	}
 
+	// Refresh the remaining bridge networks so they drop this one from their NAT exclusion lists.
+	bridgeNames, bridgeConfigs, err := n.managedBridges()
+	if err != nil {
+		n.logger.Warn("Failed to load the bridge networks, skipping NAT rules refresh", logger.Ctx{"err": err})
+	} else {
+		n.refreshBridgesNAT(otherBridges(bridgeNames, n.name), bridgeConfigs, "")
+	}
+
 	return n.delete(clientType)
 }
 
@@ -1032,6 +1040,70 @@ func bridgeSNATOpts(config map[string]string, excludeInterfaces []string) (*fire
 	}
 
 	return snatV4, snatV6
+}
+
+// managedBridges returns the sorted names and configs of all created managed bridge networks.
+func (n *bridge) managedBridges() ([]string, map[string]map[string]string, error) {
+	var projectNetworks map[string]map[int64]api.Network
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		projectNetworks, err = tx.GetCreatedNetworks(ctx)
+		return err
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to load all networks: %w", err)
+	}
+
+	bridgeConfigs := map[string]map[string]string{}
+	bridgeNames := []string{}
+	for _, networks := range projectNetworks {
+		for _, netInfo := range networks {
+			if netInfo.Type != "bridge" {
+				continue
+			}
+
+			bridgeNames = append(bridgeNames, netInfo.Name)
+			bridgeConfigs[netInfo.Name] = netInfo.Config
+		}
+	}
+
+	slices.Sort(bridgeNames)
+	bridgeNames = slices.Compact(bridgeNames)
+
+	return bridgeNames, bridgeConfigs, nil
+}
+
+// otherBridges returns the entries of bridgeNames other than the provided one.
+func otherBridges(bridgeNames []string, name string) []string {
+	names := make([]string, 0, len(bridgeNames))
+	for _, bridgeName := range bridgeNames {
+		if bridgeName != name {
+			names = append(names, bridgeName)
+		}
+	}
+
+	return names
+}
+
+// refreshBridgesNAT refreshes the outbound NAT rules of the bridge networks in bridgeNames so their exclusion lists match that set.
+// skipRefresh names a network to leave alone, it is still used when building the other networks' exclusion lists.
+func (n *bridge) refreshBridgesNAT(bridgeNames []string, bridgeConfigs map[string]map[string]string, skipRefresh string) {
+	for _, bridgeName := range bridgeNames {
+		if bridgeName == skipRefresh || !InterfaceExists(bridgeName) {
+			continue
+		}
+
+		snatV4, snatV6 := bridgeSNATOpts(bridgeConfigs[bridgeName], otherBridges(bridgeNames, bridgeName))
+		if snatV4 == nil && snatV6 == nil {
+			continue
+		}
+
+		err := n.state.Firewall.NetworkSetupOutboundNAT(bridgeName, snatV4, snatV6)
+		if err != nil {
+			n.logger.Warn("Failed to refresh NAT rules of bridge network", logger.Ctx{"network": bridgeName, "err": err})
+		}
+	}
 }
 
 // setup restarts the network.
@@ -2076,52 +2148,19 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Get the list of managed bridge networks, traffic between those isn't NAT-ed.
-	var projectNetworks map[string]map[int64]api.Network
-
-	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		projectNetworks, err = tx.GetCreatedNetworks(ctx)
-		return err
-	})
+	bridgeNames, bridgeConfigs, err := n.managedBridges()
 	if err != nil {
-		return fmt.Errorf("Failed to load all networks: %w", err)
-	}
-
-	bridgeConfigs := map[string]map[string]string{}
-	bridgeNames := []string{}
-	for _, networks := range projectNetworks {
-		for _, netInfo := range networks {
-			if netInfo.Type != "bridge" {
-				continue
-			}
-
-			bridgeNames = append(bridgeNames, netInfo.Name)
-			bridgeConfigs[netInfo.Name] = netInfo.Config
-		}
-	}
-
-	slices.Sort(bridgeNames)
-	bridgeNames = slices.Compact(bridgeNames)
-
-	// otherBridges returns the bridge interface names other than the provided one.
-	otherBridges := func(name string) []string {
-		names := make([]string, 0, len(bridgeNames))
-		for _, bridgeName := range bridgeNames {
-			if bridgeName != name {
-				names = append(names, bridgeName)
-			}
-		}
-
-		return names
+		return err
 	}
 
 	// When NAT is enabled, exclude traffic leaving through the other managed bridge networks
 	// as those are reachable directly through local routing.
 	if fwOpts.SNATV4 != nil {
-		fwOpts.SNATV4.ExcludeInterfaces = otherBridges(n.name)
+		fwOpts.SNATV4.ExcludeInterfaces = otherBridges(bridgeNames, n.name)
 	}
 
 	if fwOpts.SNATV6 != nil {
-		fwOpts.SNATV6.ExcludeInterfaces = otherBridges(n.name)
+		fwOpts.SNATV6.ExcludeInterfaces = otherBridges(bridgeNames, n.name)
 	}
 
 	err = n.state.Firewall.NetworkSetup(n.name, fwOpts)
@@ -2130,21 +2169,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 	}
 
 	// Refresh the NAT rules of the other local bridge networks so their exclusion list stays current.
-	for _, bridgeName := range otherBridges(n.name) {
-		if !InterfaceExists(bridgeName) {
-			continue
-		}
-
-		snatV4, snatV6 := bridgeSNATOpts(bridgeConfigs[bridgeName], otherBridges(bridgeName))
-		if snatV4 == nil && snatV6 == nil {
-			continue
-		}
-
-		err = n.state.Firewall.NetworkSetupOutboundNAT(bridgeName, snatV4, snatV6)
-		if err != nil {
-			n.logger.Warn("Failed to refresh NAT rules of bridge network", logger.Ctx{"network": bridgeName, "err": err})
-		}
-	}
+	n.refreshBridgesNAT(bridgeNames, bridgeConfigs, n.name)
 
 	// Setup named sets for nft firewall.
 	// We apply all available address sets to avoid missing some.
