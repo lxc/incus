@@ -1797,7 +1797,7 @@ func (srv *Server) HandleSysinfoSyscall(c Instance, siov *Iovec) int {
 	instMetrics.Freeram = instMetrics.Totalram - uint64(memoryUsage) - instMetrics.Bufferram
 
 	// Get instance swap info.
-	if cgroup.Supports(cgroup.Memory) {
+	if cgroup.Supports(cgroup.MemorySwap) {
 		swapLimit, err := cg.GetMemorySwapLimit()
 		if err != nil {
 			l.Warn("Failed getting swap limit", logger.Ctx{"err": err})

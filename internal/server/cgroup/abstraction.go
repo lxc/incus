@@ -153,7 +153,7 @@ func (cg *CGroup) GetProcessesUsage() (int64, error) {
 
 // SetMemorySwapLimit sets the hard limit for swap.
 func (cg *CGroup) SetMemorySwapLimit(limit int64) error {
-	if !cgControllers["memory"] {
+	if !cgControllers["memory.swap"] {
 		return ErrControllerMissing
 	}
 
@@ -314,7 +314,7 @@ func (cg *CGroup) SetMemorySwappiness(limit int64) error {
 
 // GetMemorySwapLimit returns the hard limit on swap usage.
 func (cg *CGroup) GetMemorySwapLimit() (int64, error) {
-	if !cgControllers["memory"] {
+	if !cgControllers["memory.swap"] {
 		return -1, ErrControllerMissing
 	}
 
@@ -337,7 +337,7 @@ func (cg *CGroup) GetMemorySwapLimit() (int64, error) {
 
 // GetMemorySwapUsage return current usage of swap.
 func (cg *CGroup) GetMemorySwapUsage() (int64, error) {
-	if !cgControllers["memory"] {
+	if !cgControllers["memory.swap"] {
 		return -1, ErrControllerMissing
 	}
 
