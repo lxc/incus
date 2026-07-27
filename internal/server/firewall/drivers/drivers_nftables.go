@@ -262,6 +262,18 @@ func (d Nftables) NetworkSetup(networkName string, opts Opts) error {
 		}
 	}
 
+	// Add the network to the managed bridges set, traffic between those isn't NAT-ed.
+	tplFields := map[string]any{
+		"namespace":   nftablesNamespace,
+		"family":      "inet",
+		"networkName": networkName,
+	}
+
+	err := d.applyNftConfig(nftablesNetBridgesSet, tplFields)
+	if err != nil {
+		return fmt.Errorf("Failed adding network %q to the managed bridges set: %w", networkName, err)
+	}
+
 	if opts.SNATV4 != nil || opts.SNATV6 != nil {
 		err := d.NetworkSetupOutboundNAT(networkName, opts.SNATV4, opts.SNATV6)
 		if err != nil {
@@ -319,6 +331,10 @@ func (d Nftables) NetworkClear(networkName string, _ bool, _ []uint) error {
 	if err != nil {
 		return fmt.Errorf("Failed clearing nftables rules for network %q: %w", networkName, err)
 	}
+
+	// Remove the network from the managed bridges set.
+	// This will fail if the set doesn't exist or the network was never added to it.
+	_, _ = subprocess.RunCommand("nft", "delete", "element", "inet", nftablesNamespace, "bridges", fmt.Sprintf("{ %q }", networkName))
 
 	// Attempt to delete our address sets.
 	// This will fail so long as there are still rules referencing them (other networks).

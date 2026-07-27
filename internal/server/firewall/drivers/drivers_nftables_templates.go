@@ -26,14 +26,23 @@ chain fwd{{.chainSeparator}}{{.networkName}} {
 }
 `))
 
+var nftablesNetBridgesSet = template.Must(template.New("nftablesNetBridgesSet").Parse(`
+set bridges {
+	type ifname
+	elements = { "{{.networkName}}" }
+}
+`))
+
 var nftablesNetOutboundNAT = template.Must(template.New("nftablesNetOutboundNAT").Parse(`
+set bridges {
+	type ifname
+}
+
 chain pstrt{{.chainSeparator}}{{.networkName}} {
 	type nat hook postrouting priority 100; policy accept;
 
 	{{ range $ipFamily, $config := .rules }}
-	{{ range $config.ExcludeInterfaces }}
-	{{$ipFamily}} saddr {{$config.Subnet}} oifname "{{.}}" accept
-	{{ end }}
+	{{$ipFamily}} saddr {{$config.Subnet}} oifname @bridges accept
 	{{ if $config.SNATAddress }}
 	{{$ipFamily}} saddr {{$config.Subnet}} {{$ipFamily}} daddr != {{$config.Subnet}} snat {{$config.SNATAddress}}
 	{{ else }}
