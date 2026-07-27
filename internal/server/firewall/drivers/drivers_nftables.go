@@ -194,7 +194,13 @@ func (d Nftables) NetworkSetupOutboundNAT(networkName string, SNATV4 *SNATOpts, 
 
 	tplFields["rules"] = rules
 
-	err := d.applyNftConfig(nftablesNetOutboundNAT, tplFields)
+	config := &strings.Builder{}
+	err := nftablesNetOutboundNAT.Execute(config, tplFields)
+	if err != nil {
+		return fmt.Errorf("Failed running %q template: %w", nftablesNetOutboundNAT.Name(), err)
+	}
+
+	err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
 	if err != nil {
 		return fmt.Errorf("Failed adding outbound NAT rules for network %q (%s): %w", networkName, tplFields["family"], err)
 	}
