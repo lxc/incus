@@ -21,6 +21,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/warningtype"
 	"github.com/lxc/incus/v7/internal/server/instance"
+	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/state"
@@ -605,4 +606,27 @@ func instancesShutdown(instances []instance.Instance) {
 
 	wg.Wait()
 	close(instShutdownCh)
+}
+
+// instanceShutdownDefaultTimeout is the default timeout (in seconds) to wait for a clean shutdown.
+const instanceShutdownDefaultTimeout = 30
+
+// instanceShutdownOrForceStop cleanly shuts the instance down, falling back to a forced stop if that fails.
+func instanceShutdownOrForceStop(inst instance.Instance) error {
+	val, err := strconv.Atoi(inst.ExpandedConfig()["boot.host_shutdown_timeout"])
+	if err != nil {
+		val = instanceShutdownDefaultTimeout
+	}
+
+	err = inst.Shutdown(time.Duration(val) * time.Second)
+	if err != nil {
+		logger.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+
+		err = inst.Stop(false)
+		if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
+			return fmt.Errorf("Failed to stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
+		}
+	}
+
+	return nil
 }
