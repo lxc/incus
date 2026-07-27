@@ -3332,3 +3332,11 @@ a comma separated list of values (for example, `limits.read=30MiB,1000iops`).
 Adds a `cluster` field to CPU core entries in the resources API, telling
 apart cores with identical identifiers on systems where core identifiers
 are only unique within a CPU cluster (ARM big.LITTLE).
+
+## `acme_eab`
+
+Adds support for ACME External Account Binding (EAB) through two new
+server configuration keys:
+
+* `acme.eab.kid`
+* `acme.eab.hmac`
