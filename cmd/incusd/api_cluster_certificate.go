@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -121,6 +122,10 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 			return err
 		}
 
+		// Check whether the private key is unchanged.
+		_, keyErr := tls.X509KeyPair([]byte(req.ClusterCertificate), keyBytes)
+		sameKey := keyErr == nil
+
 		oldReq := api.ClusterCertificatePut{
 			ClusterCertificate:    string(oldCertBytes),
 			ClusterCertificateKey: string(keyBytes),
@@ -142,6 +147,20 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 
 		localClusterAddress := s.LocalConfig.ClusterAddress()
 
+		// Refuse to replace the private key if any member is offline as it would be
+		// unable to communicate with the cluster once back online.
+		if !sameKey {
+			for _, member := range members {
+				if member.Address == localClusterAddress {
+					continue
+				}
+
+				if member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+					return fmt.Errorf("Cannot update cluster certificate with a new private key while member %q is offline", member.Name)
+				}
+			}
+		}
+
 		reverter.Add(func() {
 			// If distributing the new certificate fails, store the certificate. This new file will
 			// be considered when running the auto renewal again.
@@ -162,6 +181,17 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 			member := members[i]
 
 			if member.Address == localClusterAddress {
+				continue
+			}
+
+			// Skip offline members, they will catch up with the new certificate on startup.
+			if member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+				logger.Warn("Skipping offline cluster member during certificate update", logger.Ctx{"name": member.Name, "address": member.Address})
+
+				_ = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.UpsertWarning(ctx, member.Name, "", -1, -1, warningtype.UnableToUpdateClusterCertificate, "Member was offline during cluster certificate update")
+				})
+
 				continue
 			}
 

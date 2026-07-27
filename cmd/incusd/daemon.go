@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"database/sql"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -1677,6 +1679,12 @@ func (d *Daemon) init() error {
 }
 
 func (d *Daemon) startClusterTasks() {
+	// Get an updated cluster certificate if needed.
+	err := d.clusterSyncCertificate()
+	if err != nil {
+		logger.Warn("Failed to sync cluster certificate", logger.Ctx{"err": err})
+	}
+
 	// Add initial event listeners from global database members.
 	// Run asynchronously so that connecting to remote members doesn't delay starting up other cluster tasks.
 	go cluster.EventsUpdateListeners(d.State(), nil, d.events.Inject)
@@ -2689,4 +2697,67 @@ func (d *Daemon) getLinstor() (*linstor.Client, error) {
 	}
 
 	return d.linstor, nil
+}
+
+// clusterSyncCertificate retrieves the cluster certificate from the leader and applies it
+// locally if it's a newer certificate for our existing private key. This catches up members
+// which were offline during a cluster certificate renewal.
+func (d *Daemon) clusterSyncCertificate() error {
+	// Skip if we're the leader.
+	leaderAddress, err := d.gateway.LeaderAddress()
+	if err != nil {
+		return err
+	}
+
+	if leaderAddress == d.localConfig.ClusterAddress() {
+		return nil
+	}
+
+	// Retrieve the leader's certificate.
+	leaderCert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", leaderAddress), version.UserAgent)
+	if err != nil {
+		return fmt.Errorf("Failed to retrieve cluster certificate from leader: %w", err)
+	}
+
+	leaderCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: leaderCert.Raw})
+
+	// Skip if the leader certificate doesn't match our private key (full cluster renewal).
+	networkCert := d.endpoints.NetworkCert()
+
+	_, err = tls.X509KeyPair(leaderCertPEM, networkCert.PrivateKey())
+	if err != nil {
+		return nil
+	}
+
+	// Skip if the leader certificate isn't newer than ours.
+	localCert, err := networkCert.PublicKeyX509()
+	if err != nil {
+		return err
+	}
+
+	if !leaderCert.NotBefore.After(localCert.NotBefore) {
+		return nil
+	}
+
+	// Write the new certificate to disk.
+	err = internalUtil.WriteCert(d.os.VarDir, "cluster", leaderCertPEM, networkCert.PrivateKey(), nil)
+	if err != nil {
+		return err
+	}
+
+	// Apply the new certificate.
+	newCert, err := internalUtil.LoadClusterCert(d.os.VarDir)
+	if err != nil {
+		return err
+	}
+
+	d.endpoints.NetworkUpdateCert(newCert)
+	d.gateway.NetworkUpdateCert(newCert)
+
+	// Resolve warning of this type.
+	_ = warnings.ResolveWarningsByLocalNodeAndType(d.db.Cluster, warningtype.UnableToUpdateClusterCertificate)
+
+	logger.Info("Updated cluster certificate from leader")
+
+	return nil
 }
