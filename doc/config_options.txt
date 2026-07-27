@@ -5055,6 +5055,20 @@ Possible values are `DNS-01` and `HTTP-01`.
 
 ```
 
+```{config:option} acme.eab.hmac server-acme
+:scope: "global"
+:shortdesc: "HMAC key for External Account Binding"
+:type: "string"
+
+```
+
+```{config:option} acme.eab.kid server-acme
+:scope: "global"
+:shortdesc: "Key identifier for External Account Binding"
+:type: "string"
+
+```
+
 ```{config:option} acme.email server-acme
 :scope: "global"
 :shortdesc: "Email address used for the account registration"
