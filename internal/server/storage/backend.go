@@ -8985,7 +8985,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 	_, volName := project.StorageVolumeParts(vol.Name())
 
 	inst, diskName, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, volName, volumeDbType)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
 		return err
 	}
 
@@ -9175,7 +9175,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 	_, volName := project.StorageVolumeParts(vol.Name())
 
 	inst, _, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, volName, volumeDbType)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
 		return err
 	}
 
