@@ -116,6 +116,8 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //      $ref: "#/responses/Forbidden"
 //    "404":
 //      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -181,6 +183,8 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //      $ref: "#/responses/Forbidden"
 //    "404":
 //      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -239,6 +243,8 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceNVRAMGet(d *Daemon, r *http.Request) response.Response {
@@ -360,6 +366,8 @@ func instanceNVRAMGet(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/Forbidden"
 //    "404":
 //      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -420,6 +428,8 @@ func instanceNVRAMGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceNVRAMGUIDGet(d *Daemon, r *http.Request) response.Response {
@@ -537,6 +547,8 @@ func instanceNVRAMGUIDGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
@@ -619,6 +631,8 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {

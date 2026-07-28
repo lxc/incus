@@ -103,6 +103,10 @@ var storagePoolVolumeSnapshotTypeCmd = APIEndpoint{
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Response {
@@ -366,8 +370,14 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //                "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap0",
 //                "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap1"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -430,8 +440,14 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //	          description: List of storage volume snapshots
 //	          items:
 //	            $ref: "#/definitions/StorageVolumeSnapshot"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Response {
@@ -610,6 +626,10 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Response {
@@ -773,8 +793,14 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/StorageVolumeSnapshot"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeSnapshotTypeGet(d *Daemon, r *http.Request) response.Response {
@@ -923,6 +949,10 @@ func storagePoolVolumeSnapshotTypeGet(d *Daemon, r *http.Request) response.Respo
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -1078,6 +1108,10 @@ func storagePoolVolumeSnapshotTypePut(d *Daemon, r *http.Request) response.Respo
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -1266,6 +1300,10 @@ func doStoragePoolVolumeSnapshotUpdate(s *state.State, r *http.Request, poolName
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeSnapshotTypeDelete(d *Daemon, r *http.Request) response.Response {

@@ -105,6 +105,14 @@ func filterWarnings(warnings []api.Warning, clauses *filter.ClauseSet) ([]api.Wa
 //                "/1.0/warnings/39c61a48-cc17-40ae-8248-4f7b4cadedf4",
 //                "/1.0/warnings/951779a5-2820-4d96-b01e-88fe820e5310"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -147,6 +155,14 @@ func filterWarnings(warnings []api.Warning, clauses *filter.ClauseSet) ([]api.Wa
 //	          description: List of warnings
 //	          items:
 //	            $ref: "#/definitions/Warning"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func warningsGet(d *Daemon, r *http.Request) response.Response {
@@ -262,8 +278,14 @@ func warningsGet(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/Warning"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func warningGet(d *Daemon, r *http.Request) response.Response {
@@ -325,6 +347,10 @@ func warningGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func warningPatch(d *Daemon, r *http.Request) response.Response {
@@ -361,6 +387,10 @@ func warningPatch(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func warningPut(d *Daemon, r *http.Request) response.Response {
@@ -428,6 +458,14 @@ func warningPut(d *Daemon, r *http.Request) response.Response {
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func warningDelete(d *Daemon, r *http.Request) response.Response {

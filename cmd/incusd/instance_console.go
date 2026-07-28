@@ -471,6 +471,10 @@ func (s *consoleWs) cancel(*operations.Operation) error {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
@@ -658,6 +662,8 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
@@ -828,6 +834,8 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceConsoleLogDelete(d *Daemon, r *http.Request) response.Response {

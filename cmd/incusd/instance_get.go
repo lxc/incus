@@ -53,8 +53,14 @@ import (
 //            example: 200
 //          metadata:
 //            $ref: "#/definitions/Instance"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -101,8 +107,14 @@ import (
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/InstanceFull"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceGet(d *Daemon, r *http.Request) response.Response {

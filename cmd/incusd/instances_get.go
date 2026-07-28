@@ -79,8 +79,14 @@ import (
 //                "/1.0/instances/foo",
 //                "/1.0/instances/bar"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -132,8 +138,14 @@ import (
 //            description: List of instances
 //            items:
 //              $ref: "#/definitions/Instance"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -189,8 +201,14 @@ import (
 //            description: List of instances
 //            items:
 //              $ref: "#/definitions/InstanceFull"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 

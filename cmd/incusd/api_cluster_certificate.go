@@ -59,6 +59,10 @@ var clusterCertificateCmd = APIEndpoint{
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterCertificatePut(d *Daemon, r *http.Request) response.Response {

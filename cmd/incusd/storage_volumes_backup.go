@@ -115,8 +115,14 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //                "/1.0/storage-pools/local/volumes/custom/foo/backups/backup0",
 //                "/1.0/storage-pools/local/volumes/custom/foo/backups/backup1"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -179,8 +185,14 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //	          description: List of storage volume backups
 //	          items:
 //	            $ref: "#/definitions/StorageVolumeBackup"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.Response {
@@ -331,6 +343,10 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response.Response {
@@ -641,8 +657,14 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/StorageVolumeBackup"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeCustomBackupGet(d *Daemon, r *http.Request) response.Response {
@@ -763,6 +785,10 @@ func storagePoolVolumeTypeCustomBackupGet(d *Daemon, r *http.Request) response.R
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.Response {
@@ -911,6 +937,10 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeCustomBackupDelete(d *Daemon, r *http.Request) response.Response {
@@ -1039,8 +1069,14 @@ func storagePoolVolumeTypeCustomBackupDelete(d *Daemon, r *http.Request) respons
 //	responses:
 //	  "200":
 //	    description: Raw backup data
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeCustomBackupExportGet(d *Daemon, r *http.Request) response.Response {

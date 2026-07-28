@@ -1147,6 +1147,10 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instancesPost(d *Daemon, r *http.Request) response.Response {
