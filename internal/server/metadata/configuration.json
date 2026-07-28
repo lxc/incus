@@ -5667,6 +5667,22 @@
 						}
 					},
 					{
+						"acme.eab.hmac": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "HMAC key for External Account Binding",
+							"type": "string"
+						}
+					},
+					{
+						"acme.eab.kid": {
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Key identifier for External Account Binding",
+							"type": "string"
+						}
+					},
+					{
 						"acme.email": {
 							"longdesc": "",
 							"scope": "global",

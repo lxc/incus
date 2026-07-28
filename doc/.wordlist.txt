@@ -80,6 +80,7 @@ EB
 Ebit
 eBPF
 ECDHE
+EAB
 ECDSA
 ECMP
 EDK
@@ -117,6 +118,7 @@ HAProxy
 hardcoded
 HDDs
 Hellman
+HMAC
 Homebrew
 hostname
 hotplug

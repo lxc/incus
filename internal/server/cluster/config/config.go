@@ -284,6 +284,11 @@ func (c *Config) ACME() (string, string, string, bool, string) {
 	return c.m.GetString("acme.domain"), c.m.GetString("acme.email"), c.m.GetString("acme.ca_url"), c.m.GetBool("acme.agree_tos"), c.m.GetString("acme.challenge")
 }
 
+// ACMEEAB returns the External Account Binding settings for ACME.
+func (c *Config) ACMEEAB() (string, string) {
+	return c.m.GetString("acme.eab.kid"), c.m.GetString("acme.eab.hmac")
+}
+
 // ACMEDNS returns all ACME DNS settings needed for DNS-01 challenge.
 func (c *Config) ACMEDNS() (string, []string, []string) {
 	var environment []string
@@ -520,6 +525,22 @@ var ConfigSchema = config.Schema{
 	//  scope: global
 	//  shortdesc: Email address used for the account registration
 	"acme.email": {},
+
+	// gendoc:generate(entity=server, group=acme, key=acme.eab.kid)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: Key identifier for External Account Binding
+	"acme.eab.kid": {},
+
+	// gendoc:generate(entity=server, group=acme, key=acme.eab.hmac)
+	//
+	// ---
+	//  type: string
+	//  scope: global
+	//  shortdesc: HMAC key for External Account Binding
+	"acme.eab.hmac": {},
 
 	// gendoc:generate(entity=server, group=acme, key=acme.agree_tos)
 	//

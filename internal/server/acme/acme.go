@@ -88,6 +88,7 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 
 	port := s.GlobalConfig.ACMEHTTP()
 	provider, environment, resolvers := s.GlobalConfig.ACMEDNS()
+	eabKid, eabHmac := s.GlobalConfig.ACMEEAB()
 	proxy := s.GlobalConfig.ProxyHTTPS()
 
 	tmpDir, err := os.MkdirTemp("", "lego")
@@ -102,7 +103,7 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 		}
 	}()
 
-	certBytes, keyBytes, err := incustls.RunACMEChallenge(context.TODO(), tmpDir, caURL, domain, email, challengeType, provider, port, proxy, resolvers, environment)
+	certBytes, keyBytes, err := incustls.RunACMEChallenge(context.TODO(), tmpDir, caURL, domain, email, challengeType, provider, port, proxy, eabKid, eabHmac, resolvers, environment)
 	if err != nil {
 		return nil, err
 	}

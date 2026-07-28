@@ -561,6 +561,7 @@ var APIExtensions = []string{
 	"instance_nvram",
 	"disk_io_limits_combined",
 	"resources_cpu_cluster",
+	"acme_eab",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
