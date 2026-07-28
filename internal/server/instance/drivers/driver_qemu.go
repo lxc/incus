@@ -3467,6 +3467,14 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 		instanceMeta["ephemeral"] = "false"
 	}
 
+	// Open the output directory as an os.Root so all template writes stay confined to it.
+	outputRoot, err := os.OpenRoot(path)
+	if err != nil {
+		return fmt.Errorf("Failed to open template output path: %w", err)
+	}
+
+	defer logger.WarnOnError(outputRoot.Close, "Failed to close template output path")
+
 	// Go through the templates.
 	for tplPath, tpl := range metadata.Templates {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
@@ -3503,7 +3511,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 			}
 
 			// Create the file itself.
-			w, err = os.Create(filepath.Join(path, fmt.Sprintf("%s.out", tpl.Template)))
+			w, err = outputRoot.Create(fmt.Sprintf("%s.out", tpl.Template))
 			if err != nil {
 				return err
 			}
