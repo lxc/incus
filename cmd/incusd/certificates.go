@@ -495,6 +495,8 @@ func certificateTokenValid(s *state.State, r *http.Request, addToken *api.Certif
 //	responses:
 //	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
+//	  "202":
+//	    $ref: "#/responses/Operation"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":

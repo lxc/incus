@@ -304,8 +304,8 @@ func storagePoolVolumeTypeBitmapsGet(d *Daemon, r *http.Request) response.Respon
 //	    schema:
 //	      $ref: "#/definitions/StorageVolumeBitmapsPost"
 //	responses:
-//	  "202":
-//	    $ref: "#/responses/Operation"
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
@@ -607,8 +607,8 @@ func storagePoolVolumeTypeBitmapGet(d *Daemon, r *http.Request) response.Respons
 //	    type: string
 //	    example: server01
 //	responses:
-//	  "202":
-//	    $ref: "#/responses/Operation"
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
