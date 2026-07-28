@@ -1355,6 +1355,17 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 		return errors.New("Instance is not compatible with deviceManager interface")
 	}
 
+	// The root disk device can't be detached from a running instance, so reject any change
+	// that would require it to be removed and re-created.
+	if instanceRunning {
+		for name, devConfig := range removeDevices {
+			_, recreated := addDevices[name]
+			if recreated && internalInstance.IsRootDiskDevice(devConfig) {
+				return fmt.Errorf("Cannot apply changes to root disk device %q while the instance is running", name)
+			}
+		}
+	}
+
 	// Remove devices in reverse order to how they were added.
 	for _, entry := range removeDevices.Reversed() {
 		l := d.logger.AddContext(logger.Ctx{"device": entry.Name, "userRequested": userRequested})
