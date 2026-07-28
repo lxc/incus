@@ -29,6 +29,9 @@ type instanceType struct {
 
 	// Amount of memory in GiB
 	Memory float32 `yaml:"mem"`
+
+	// Amount of local disk in bytes
+	Disk int64 `yaml:"disk"`
 }
 
 var instanceTypes map[string]map[string]*instanceType
@@ -169,9 +172,9 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 		return nil
 	}
 
-	// Get the list of instance type sources
-	sources := map[string]string{}
-	err := downloadParse(".yaml", &sources)
+	// Get the list of clouds
+	clouds := map[string]map[string]string{}
+	err := downloadParse("clouds.yaml", &clouds)
 	if err != nil {
 		if !errors.Is(err, ctx.Err()) {
 			logger.Warnf("Failed to update instance types: %v", err)
@@ -182,9 +185,9 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 
 	// Parse the individual files
 	newInstanceTypes := map[string]map[string]*instanceType{}
-	for name, filename := range sources {
+	for name := range clouds {
 		types := map[string]*instanceType{}
-		err = downloadParse(filename, &types)
+		err = downloadParse(fmt.Sprintf("%s.yaml", name), &types)
 		if err != nil {
 			logger.Warnf("Failed to update instance types: %v", err)
 			return err
@@ -206,7 +209,7 @@ func instanceRefreshTypes(ctx context.Context, s *state.State) error {
 	return nil
 }
 
-func instanceParseType(value string) (map[string]string, error) {
+func instanceParseType(value string) (map[string]string, int64, error) {
 	sourceName := ""
 	sourceType := ""
 	fields := strings.SplitN(value, ":", 2)
@@ -225,7 +228,7 @@ func instanceParseType(value string) (map[string]string, error) {
 			_, ok := types[sourceType]
 			if ok {
 				if sourceName != "" {
-					return nil, fmt.Errorf("Ambiguous instance type provided: %s", value)
+					return nil, 0, fmt.Errorf("Ambiguous instance type provided: %s", value)
 				}
 
 				sourceName = name
@@ -241,13 +244,13 @@ func instanceParseType(value string) (map[string]string, error) {
 			newLimits := instanceType{}
 			fields := strings.Split(value, "-")
 			for _, field := range fields {
-				if len(field) < 2 || (field[0] != 'c' && field[0] != 'm') {
-					return nil, fmt.Errorf("Provided instance type doesn't exist: %s", value)
+				if len(field) < 2 || (field[0] != 'c' && field[0] != 'm' && field[0] != 'd') {
+					return nil, 0, fmt.Errorf("Provided instance type doesn't exist: %s", value)
 				}
 
 				floatValue, err := strconv.ParseFloat(field[1:], 32)
 				if err != nil {
-					return nil, fmt.Errorf("Bad custom instance type: %s", value)
+					return nil, 0, fmt.Errorf("Bad custom instance type: %s", value)
 				}
 
 				switch field[0] {
@@ -255,6 +258,8 @@ func instanceParseType(value string) (map[string]string, error) {
 					newLimits.CPU = float32(floatValue)
 				case 'm':
 					newLimits.Memory = float32(floatValue)
+				case 'd':
+					newLimits.Disk = int64(floatValue * 1024 * 1024 * 1024)
 				}
 			}
 
@@ -262,7 +267,7 @@ func instanceParseType(value string) (map[string]string, error) {
 		}
 
 		if limits == nil {
-			return nil, fmt.Errorf("Provided instance type doesn't exist: %s", value)
+			return nil, 0, fmt.Errorf("Provided instance type doesn't exist: %s", value)
 		}
 	}
 	out := map[string]string{}
@@ -288,5 +293,5 @@ func instanceParseType(value string) (map[string]string, error) {
 		out["limits.memory"] = fmt.Sprintf("%dMiB", rawLimit)
 	}
 
-	return out, nil
+	return out, limits.Disk, nil
 }
