@@ -1468,8 +1468,11 @@ func DependentVolumesMatchMigrationType(s *state.State, migrationDependentVolume
 // needs to be migrated for this instance. Returns false if migration
 // can be skipped (e.g., on shared storage within the same cluster).
 func ShouldMigrateDependentVolume(s *state.State, poolName string, volumeName string, overrides map[string]string, clusterMove bool) (bool, error) {
-	if overrides != nil && ((overrides["source"] != "" && volumeName != overrides["source"]) || (overrides["pool"] != "" && poolName != overrides["pool"])) {
-		return true, nil
+	if overrides != nil {
+		overrideVolName, _ := internalInstance.SplitVolumeSource(overrides["source"])
+		if (overrides["source"] != "" && volumeName != overrideVolName) || (overrides["pool"] != "" && poolName != overrides["pool"]) {
+			return true, nil
+		}
 	}
 
 	diskPool, err := LoadByName(s, poolName)
@@ -1575,7 +1578,8 @@ func DevicesMapFromBackupConfig(config *backupConfig.Config) map[string]map[stri
 			devicesMap[dev["pool"]] = map[string]string{}
 		}
 
-		devicesMap[dev["pool"]][dev["source"]] = devName
+		volName, _ := internalInstance.SplitVolumeSource(dev["source"])
+		devicesMap[dev["pool"]][volName] = devName
 	}
 
 	return devicesMap
