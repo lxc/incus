@@ -329,7 +329,7 @@ func projectUsedBy(ctx context.Context, tx *db.ClusterTx, project *cluster.Proje
 //	    schema:
 //	      $ref: "#/definitions/ProjectsPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"

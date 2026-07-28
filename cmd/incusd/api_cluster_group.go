@@ -64,7 +64,7 @@ var clusterGroupCmd = APIEndpoint{
 //	    schema:
 //	      $ref: "#/definitions/ClusterGroupsPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
@@ -390,7 +390,7 @@ func clusterGroupGet(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/ClusterGroupPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"

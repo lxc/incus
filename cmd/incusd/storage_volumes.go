@@ -1252,6 +1252,8 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 //	    schema:
 //	      $ref: "#/definitions/StorageVolumePost"
 //	responses:
+//	  "201":
+//	    $ref: "#/responses/EmptySyncResponse"
 //	  "202":
 //	    $ref: "#/responses/Operation"
 //	  "400":

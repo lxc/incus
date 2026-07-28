@@ -629,7 +629,7 @@ func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, 
 //	    schema:
 //	      $ref: "#/definitions/StorageBucketsPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: '#/definitions/StorageBucketKey'
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
@@ -1184,7 +1184,7 @@ func storagePoolBucketKeysGet(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/StorageBucketKeysPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: '#/definitions/StorageBucketKey'
 //	  "400":
 //	    $ref: "#/responses/BadRequest"

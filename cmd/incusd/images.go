@@ -3465,7 +3465,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/ImageAliasesPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
@@ -4106,7 +4106,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/ImageAliasesEntryPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"

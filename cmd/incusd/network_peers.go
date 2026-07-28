@@ -305,7 +305,7 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/NetworkPeersPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "202":
 //	    $ref: "#/responses/EmptySyncResponse"
