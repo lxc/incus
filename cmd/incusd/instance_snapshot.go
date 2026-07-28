@@ -442,6 +442,8 @@ func instanceSnapshotHandler(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "412":
+//	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func snapshotPatch(s *state.State, r *http.Request, snapInst instance.Instance) response.Response {
@@ -489,6 +491,8 @@ func snapshotPatch(s *state.State, r *http.Request, snapInst instance.Instance) 
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "412":
+//	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) response.Response {
