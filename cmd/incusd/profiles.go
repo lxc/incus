@@ -102,8 +102,14 @@ var profileCmd = APIEndpoint{
 //                "/1.0/profiles/default",
 //                "/1.0/profiles/foo"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -156,8 +162,14 @@ var profileCmd = APIEndpoint{
 //            description: List of profiles
 //            items:
 //              $ref: "#/definitions/Profile"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -320,6 +332,10 @@ func profileUsedBy(ctx context.Context, tx *db.ClusterTx, profile dbCluster.Prof
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func profilesPost(d *Daemon, r *http.Request) response.Response {
@@ -449,8 +465,14 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/Profile"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func profileGet(d *Daemon, r *http.Request) response.Response {
@@ -541,6 +563,10 @@ func profileGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -661,6 +687,10 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -795,6 +825,10 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func profilePost(d *Daemon, r *http.Request) response.Response {
@@ -888,6 +922,10 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func profileDelete(d *Daemon, r *http.Request) response.Response {

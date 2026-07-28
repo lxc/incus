@@ -94,8 +94,14 @@ var storagePoolVolumeTypeBitmapCmd = APIEndpoint{
 //	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0",
 //	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1"
 //	            ]
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 
@@ -158,8 +164,14 @@ var storagePoolVolumeTypeBitmapCmd = APIEndpoint{
 //	          description: List of storage volume bitmaps
 //	          items:
 //	            $ref: "#/definitions/StorageVolumeBitmap"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeBitmapsGet(d *Daemon, r *http.Request) response.Response {
@@ -310,6 +322,10 @@ func storagePoolVolumeTypeBitmapsGet(d *Daemon, r *http.Request) response.Respon
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeBitmapsPost(d *Daemon, r *http.Request) response.Response {
@@ -464,8 +480,14 @@ func storagePoolVolumeTypeBitmapsPost(d *Daemon, r *http.Request) response.Respo
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/StorageVolumeBitmap"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeBitmapGet(d *Daemon, r *http.Request) response.Response {
@@ -613,6 +635,10 @@ func storagePoolVolumeTypeBitmapGet(d *Daemon, r *http.Request) response.Respons
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolVolumeTypeBitmapDelete(d *Daemon, r *http.Request) response.Response {

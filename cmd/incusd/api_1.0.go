@@ -183,6 +183,14 @@ var api10 = []APIEndpoint{
 //            example: 200
 //          metadata:
 //            $ref: "#/definitions/ServerUntrusted"
+//    "400":
+//      $ref: "#/responses/BadRequest"
+//    "403":
+//      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -227,6 +235,14 @@ var api10 = []APIEndpoint{
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/Server"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func api10Get(d *Daemon, r *http.Request) response.Response {
@@ -443,6 +459,10 @@ func api10Get(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -539,6 +559,10 @@ func api10Put(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":

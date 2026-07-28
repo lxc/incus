@@ -285,6 +285,10 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationsPost(d *Daemon, r *http.Request) response.Response {
@@ -382,6 +386,10 @@ func networkIntegrationsPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
@@ -495,8 +503,14 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/NetworkIntegration"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
@@ -626,6 +640,10 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "412":
 //      $ref: "#/responses/PreconditionFailed"
 //    "500":
@@ -661,6 +679,10 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -827,6 +849,10 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {

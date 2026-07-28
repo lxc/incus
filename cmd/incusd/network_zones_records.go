@@ -90,8 +90,14 @@ var networkZoneRecordCmd = APIEndpoint{
 //                "/1.0/network-zones/example.net/records/foo",
 //                "/1.0/network-zones/example.net/records/bar"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -144,8 +150,14 @@ var networkZoneRecordCmd = APIEndpoint{
 //            description: List of network zone records
 //            items:
 //              $ref: "#/definitions/NetworkZoneRecord"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -248,6 +260,10 @@ func networkZoneRecordsGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkZoneRecordsPost(d *Daemon, r *http.Request) response.Response {
@@ -320,6 +336,10 @@ func networkZoneRecordsPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkZoneRecordDelete(d *Daemon, r *http.Request) response.Response {
@@ -403,8 +423,14 @@ func networkZoneRecordDelete(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/NetworkZoneRecord"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkZoneRecordGet(d *Daemon, r *http.Request) response.Response {
@@ -480,6 +506,10 @@ func networkZoneRecordGet(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "412":
 //      $ref: "#/responses/PreconditionFailed"
 //    "500":
@@ -525,6 +555,10 @@ func networkZoneRecordGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":

@@ -106,8 +106,14 @@ var clusterNodeStateCmd = APIEndpoint{
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/Cluster"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterGet(d *Daemon, r *http.Request) response.Response {
@@ -254,6 +260,10 @@ func clusterGetMemberConfig(ctx context.Context, clusterDB *db.Cluster) ([]api.C
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -1156,8 +1166,14 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //                "/1.0/cluster/members/server01",
 //                "/1.0/cluster/members/server02"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -1200,8 +1216,14 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //	          description: List of cluster members
 //	          items:
 //	            $ref: "#/definitions/ClusterMember"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
@@ -1339,6 +1361,10 @@ var clusterNodesPostMu sync.Mutex // Used to prevent races when creating cluster
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
@@ -1564,8 +1590,14 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/ClusterMember"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodeGet(d *Daemon, r *http.Request) response.Response {
@@ -1669,6 +1701,10 @@ func clusterNodeGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -1707,6 +1743,10 @@ func clusterNodePatch(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -2025,6 +2065,10 @@ func clusterValidateConfig(config map[string]string) error {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodePost(d *Daemon, r *http.Request) response.Response {
@@ -2098,6 +2142,10 @@ func clusterNodePost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
@@ -2948,8 +2996,14 @@ func internalClusterRaftNodeDelete(d *Daemon, r *http.Request) response.Response
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/ClusterMemberState"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodeStateGet(d *Daemon, r *http.Request) response.Response {
@@ -3004,6 +3058,10 @@ func clusterNodeStateGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func clusterNodeStatePost(d *Daemon, r *http.Request) response.Response {

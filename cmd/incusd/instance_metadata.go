@@ -67,8 +67,14 @@ import (
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/ImageMetadata"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
@@ -179,6 +185,10 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -299,6 +309,10 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -425,6 +439,8 @@ func doInstanceMetadataUpdate(s *state.State, inst instance.Instance, metadata a
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response {
@@ -585,6 +601,8 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response {
@@ -709,6 +727,8 @@ func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceMetadataTemplatesDelete(d *Daemon, r *http.Request) response.Response {

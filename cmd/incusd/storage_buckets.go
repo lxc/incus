@@ -126,8 +126,14 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 //                "/1.0/storage-pools/default/buckets/foo",
 //                "/1.0/storage-pools/default/buckets/bar",
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -185,8 +191,14 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 //            description: List of storage pool buckets
 //            items:
 //              $ref: "#/definitions/StorageBucket"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -244,8 +256,14 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 //            description: List of storage pool buckets
 //            items:
 //              $ref: "#/definitions/StorageBucketFull"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -437,8 +455,14 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/StorageBucket"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 
@@ -488,8 +512,14 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/StorageBucketFull"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
@@ -637,6 +667,10 @@ func getBucketFull(ctx context.Context, s *state.State, pool storagePools.Pool, 
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
@@ -766,6 +800,10 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "412":
 //      $ref: "#/responses/PreconditionFailed"
 //    "500":
@@ -816,6 +854,10 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -925,6 +967,10 @@ func storagePoolBucketPut(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketDelete(d *Daemon, r *http.Request) response.Response {
@@ -1021,8 +1067,14 @@ func storagePoolBucketDelete(d *Daemon, r *http.Request) response.Response {
 //                "/1.0/storage-pools/default/buckets/foo/keys/my-read-only-key",
 //                "/1.0/storage-pools/default/buckets/bar/keys/admin",
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -1075,8 +1127,14 @@ func storagePoolBucketDelete(d *Daemon, r *http.Request) response.Response {
 //	          description: List of storage pool bucket keys
 //	          items:
 //	            $ref: "#/definitions/StorageBucketKey"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketKeysGet(d *Daemon, r *http.Request) response.Response {
@@ -1192,6 +1250,10 @@ func storagePoolBucketKeysGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketKeysPost(d *Daemon, r *http.Request) response.Response {
@@ -1282,6 +1344,10 @@ func storagePoolBucketKeysPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketKeyDelete(d *Daemon, r *http.Request) response.Response {
@@ -1378,8 +1444,14 @@ func storagePoolBucketKeyDelete(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/StorageBucketKey"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketKeyGet(d *Daemon, r *http.Request) response.Response {
@@ -1493,6 +1565,10 @@ func storagePoolBucketKeyGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":

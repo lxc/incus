@@ -179,6 +179,8 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storageVolumeFileGet(s *state.State, vol storageDrivers.Volume, volumeProjectName string, path string, r *http.Request) response.Response {
@@ -260,6 +262,8 @@ func storageVolumeFileGet(s *state.State, vol storageDrivers.Volume, volumeProje
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storageVolumeFileHead(s *state.State, vol storageDrivers.Volume, volumeProjectName string, path string, _ *http.Request) response.Response {
@@ -355,6 +359,8 @@ func storageVolumeFileHead(s *state.State, vol storageDrivers.Volume, volumeProj
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storageVolumeFilePost(s *state.State, vol storageDrivers.Volume, volumeProjectName string, path string, r *http.Request) response.Response {
@@ -420,6 +426,8 @@ func storageVolumeFilePost(s *state.State, vol storageDrivers.Volume, volumeProj
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storageVolumeFileDelete(s *state.State, vol storageDrivers.Volume, volumeProjectName string, path string, r *http.Request) response.Response {

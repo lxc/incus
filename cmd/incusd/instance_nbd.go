@@ -54,10 +54,12 @@ import (
 //	    description: Switching protocols to NBD
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
-//	  "404":
-//	    $ref: "#/responses/NotFound"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceNBDHandler(d *Daemon, r *http.Request) response.Response {
