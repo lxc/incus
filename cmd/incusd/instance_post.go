@@ -1090,11 +1090,14 @@ func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrid
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
 		// If new disk was created than delete source volume.
 		override, ok := deviceOverrides[dev.Name]
 		if ok {
-			if (override["source"] != "" && override["source"] != dev.Config["source"]) || (override["pool"] != "" && override["pool"] != dev.Config["pool"]) {
-				_ = diskPool.DeleteCustomVolume(inst.Project().Name, dev.Config["source"], op)
+			overrideVolName, _ := internalInstance.SplitVolumeSource(override["source"])
+			if (override["source"] != "" && overrideVolName != volName) || (override["pool"] != "" && override["pool"] != dev.Config["pool"]) {
+				_ = diskPool.DeleteCustomVolume(inst.Project().Name, volName, op)
 			}
 		}
 
@@ -1103,7 +1106,7 @@ func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrid
 			return nil
 		}
 
-		_ = diskPool.DeleteCustomVolume(inst.Project().Name, dev.Config["source"], op)
+		_ = diskPool.DeleteCustomVolume(inst.Project().Name, volName, op)
 
 		return nil
 	})
