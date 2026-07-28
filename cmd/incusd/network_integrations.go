@@ -821,7 +821,7 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/NetworkIntegrationPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
@@ -872,9 +872,10 @@ func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Emit the lifecycle event.
-	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.NetworkIntegrationDeleted.Event(req.Name, request.CreateRequestor(r), logger.Ctx{"old_name": integrationName}))
+	lc := lifecycle.NetworkIntegrationRenamed.Event(req.Name, request.CreateRequestor(r), logger.Ctx{"old_name": integrationName})
+	s.Events.SendLifecycle(api.ProjectDefaultName, lc)
 
-	return response.EmptySyncResponse
+	return response.SyncResponseLocation(true, nil, lc.Source)
 }
 
 // networkIntegrationValidate validates the configuration keys/values for network integration.
