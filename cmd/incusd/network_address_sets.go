@@ -269,7 +269,7 @@ func networkAddressSetsGet(d *Daemon, r *http.Request) response.Response {
 //      schema:
 //        $ref: "#/definitions/NetworkAddressSetsPost"
 //  responses:
-//    "200":
+//    "201":
 //      $ref: "#/responses/EmptySyncResponse"
 //    "400":
 //      $ref: "#/responses/BadRequest"
@@ -619,7 +619,7 @@ func networkAddressSetPut(d *Daemon, r *http.Request) response.Response {
 //      schema:
 //        $ref: "#/definitions/NetworkAddressSetPost"
 //  responses:
-//    "200":
+//    "201":
 //      $ref: "#/responses/EmptySyncResponse"
 //    "400":
 //      $ref: "#/responses/BadRequest"

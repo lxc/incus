@@ -314,7 +314,7 @@ func profileUsedBy(ctx context.Context, tx *db.ClusterTx, profile dbCluster.Prof
 //	    schema:
 //	      $ref: "#/definitions/ProfilesPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
@@ -789,7 +789,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/ProfilePost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
