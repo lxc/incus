@@ -7675,7 +7675,8 @@ func (d *qemu) delete(force bool, cleanupDependencies bool) error {
 						return fmt.Errorf("Failed loading storage pool: %w", err)
 					}
 
-					err = diskPool.DeleteCustomVolume(d.Project().Name, dev.Config["source"], nil)
+					volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+					err = diskPool.DeleteCustomVolume(d.Project().Name, volName, nil)
 					if err != nil {
 						return err
 					}
