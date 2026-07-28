@@ -3136,6 +3136,11 @@ func (d *qemu) deviceStop(dev device.Device, instanceRunning bool, _ string) err
 		return errors.New("Device cannot be stopped when instance is running")
 	}
 
+	// The root disk device can't be hot-unplugged.
+	if instanceRunning && internalInstance.IsRootDiskDevice(configCopy) {
+		return errors.New("Root disk device cannot be detached from a running instance")
+	}
+
 	runConf, err := dev.Stop()
 	if err != nil {
 		return err
