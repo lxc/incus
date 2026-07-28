@@ -58,8 +58,14 @@ var storagePoolResourcesCmd = APIEndpoint{
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/Resources"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func api10ResourcesGet(d *Daemon, r *http.Request) response.Response {
@@ -121,8 +127,14 @@ func api10ResourcesGet(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/ResourcesStoragePool"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolResourcesGet(d *Daemon, r *http.Request) response.Response {

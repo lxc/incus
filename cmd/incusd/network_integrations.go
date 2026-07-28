@@ -279,12 +279,16 @@ func networkIntegrationsGet(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/NetworkIntegrationsPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationsPost(d *Daemon, r *http.Request) response.Response {
@@ -382,6 +386,10 @@ func networkIntegrationsPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
@@ -495,8 +503,14 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/NetworkIntegration"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
@@ -626,6 +640,10 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "412":
 //      $ref: "#/responses/PreconditionFailed"
 //    "500":
@@ -661,6 +679,10 @@ func networkIntegrationGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "412":
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
@@ -821,12 +843,16 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 //	    schema:
 //	      $ref: "#/definitions/NetworkIntegrationPost"
 //	responses:
-//	  "200":
+//	  "201":
 //	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {
@@ -872,9 +898,10 @@ func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Emit the lifecycle event.
-	s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.NetworkIntegrationDeleted.Event(req.Name, request.CreateRequestor(r), logger.Ctx{"old_name": integrationName}))
+	lc := lifecycle.NetworkIntegrationRenamed.Event(req.Name, request.CreateRequestor(r), logger.Ctx{"old_name": integrationName})
+	s.Events.SendLifecycle(api.ProjectDefaultName, lc)
 
-	return response.EmptySyncResponse
+	return response.SyncResponseLocation(true, nil, lc.Source)
 }
 
 // networkIntegrationValidate validates the configuration keys/values for network integration.

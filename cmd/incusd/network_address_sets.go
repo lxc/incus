@@ -97,8 +97,14 @@ var networkAddressSetCmd = APIEndpoint{
 //               "/1.0/network-address-sets/foo",
 //               "/1.0/network-address-sets/bar"
 //             ]
+//   "400":
+//     $ref: "#/responses/BadRequest"
 //   "403":
 //     $ref: "#/responses/Forbidden"
+//   "404":
+//     $ref: "#/responses/NotFound"
+//   "409":
+//     $ref: "#/responses/Conflict"
 //   "500":
 //     $ref: "#/responses/InternalServerError"
 
@@ -130,7 +136,6 @@ var networkAddressSetCmd = APIEndpoint{
 //     example: default
 //
 // responses:
-//
 //  "200":
 //    description: API endpoints
 //    schema:
@@ -154,8 +159,14 @@ var networkAddressSetCmd = APIEndpoint{
 //          description: List of network address sets
 //          items:
 //            $ref: "#/definitions/NetworkAddressSet"
+//  "400":
+//    $ref: "#/responses/BadRequest"
 //  "403":
 //    $ref: "#/responses/Forbidden"
+//  "404":
+//    $ref: "#/responses/NotFound"
+//  "409":
+//    $ref: "#/responses/Conflict"
 //  "500":
 //    $ref: "#/responses/InternalServerError"
 
@@ -269,12 +280,16 @@ func networkAddressSetsGet(d *Daemon, r *http.Request) response.Response {
 //      schema:
 //        $ref: "#/definitions/NetworkAddressSetsPost"
 //  responses:
-//    "200":
+//    "201":
 //      $ref: "#/responses/EmptySyncResponse"
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -347,6 +362,10 @@ func networkAddressSetsPost(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -424,8 +443,14 @@ func networkAddressSetDelete(d *Daemon, r *http.Request) response.Response {
 //            example: 200
 //          metadata:
 //            $ref: "#/definitions/NetworkAddressSet"
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -491,6 +516,10 @@ func networkAddressSetGet(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "412":
 //      $ref: "#/responses/PreconditionFailed"
 //    "500":
@@ -531,6 +560,10 @@ func networkAddressSetGet(d *Daemon, r *http.Request) response.Response {
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "412":
 //      $ref: "#/responses/PreconditionFailed"
 //    "500":
@@ -619,12 +652,16 @@ func networkAddressSetPut(d *Daemon, r *http.Request) response.Response {
 //      schema:
 //        $ref: "#/definitions/NetworkAddressSetPost"
 //  responses:
-//    "200":
+//    "201":
 //      $ref: "#/responses/EmptySyncResponse"
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 

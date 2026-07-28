@@ -68,8 +68,14 @@ var networkAllocationsCmd = APIEndpoint{
 //	          description: List of network allocations used by a consuming entity
 //	          items:
 //	            $ref: "#/definitions/NetworkAllocations"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func networkAllocationsGet(d *Daemon, r *http.Request) response.Response {

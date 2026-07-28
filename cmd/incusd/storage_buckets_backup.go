@@ -110,8 +110,14 @@ var storagePoolBucketBackupsExportCmd = APIEndpoint{
 //                "/1.0/storage-pools/local/buckets/foo/backups/backup0",
 //                "/1.0/storage-pools/local/buckets/foo/backups/backup1"
 //              ]
+//    "400":
+//      $ref: "#/responses/BadRequest"
 //    "403":
 //      $ref: "#/responses/Forbidden"
+//    "404":
+//      $ref: "#/responses/NotFound"
+//    "409":
+//      $ref: "#/responses/Conflict"
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
@@ -169,8 +175,14 @@ var storagePoolBucketBackupsExportCmd = APIEndpoint{
 //	          description: List of storage bucket backups
 //	          items:
 //	            $ref: "#/definitions/StorageBucketBackup"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
@@ -300,6 +312,10 @@ func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response {
@@ -547,8 +563,14 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 //	          example: 200
 //	        metadata:
 //	          $ref: "#/definitions/StorageBucketBackup"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
@@ -648,6 +670,10 @@ func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
@@ -775,6 +801,10 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response {
@@ -882,8 +912,14 @@ func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response
 //	responses:
 //	  "200":
 //	    description: Raw backup data
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Response {

@@ -196,7 +196,7 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 //	    description: Retrieve instances from all projects
 //	    type: boolean
 //	responses:
-//	  "200":
+//	  "101":
 //	    description: Websocket message (JSON)
 //	    schema:
 //	      $ref: "#/definitions/Event"

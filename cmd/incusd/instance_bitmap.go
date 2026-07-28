@@ -44,12 +44,16 @@ import (
 //	    schema:
 //	      $ref: "#/definitions/StorageVolumeBitmapsPost"
 //	responses:
-//	  "202":
-//	    $ref: "#/responses/Operation"
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceBitmapsPost(d *Daemon, r *http.Request) response.Response {

@@ -151,6 +151,8 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceFileGet(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
@@ -223,6 +225,8 @@ func instanceFileGet(s *state.State, inst instance.Instance, path string, r *htt
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceFileHead(_ *state.State, inst instance.Instance, path string, _ *http.Request) response.Response {
@@ -309,6 +313,8 @@ func instanceFileHead(_ *state.State, inst instance.Instance, path string, _ *ht
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceFilePost(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
@@ -365,6 +371,8 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 //	    $ref: "#/responses/Forbidden"
 //	  "404":
 //	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
 func instanceFileDelete(s *state.State, inst instance.Instance, path string, r *http.Request) response.Response {
