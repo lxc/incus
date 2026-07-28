@@ -44,8 +44,8 @@ import (
 //	    schema:
 //	      $ref: "#/definitions/StorageVolumeBitmapsPost"
 //	responses:
-//	  "202":
-//	    $ref: "#/responses/Operation"
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":

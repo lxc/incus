@@ -47,8 +47,6 @@ import (
 //	    schema:
 //	      $ref: "#/definitions/InstanceRebuildPost"
 //	responses:
-//	  "200":
-//	    $ref: "#/responses/EmptySyncResponse"
 //	  "202":
 //	    $ref: "#/responses/Operation"
 //	  "400":

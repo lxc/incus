@@ -1094,7 +1094,7 @@ func (r *operationWebSocket) Code() int {
 //      type: string
 //      example: random-string
 //  responses:
-//    "200":
+//    "101":
 //      description: Websocket operation messages (dependent on operation)
 //    "403":
 //      $ref: "#/responses/Forbidden"
@@ -1125,7 +1125,7 @@ func (r *operationWebSocket) Code() int {
 //	    type: string
 //	    example: random-string
 //	responses:
-//	  "200":
+//	  "101":
 //	    description: Websocket operation messages (dependent on operation)
 //	  "403":
 //	    $ref: "#/responses/Forbidden"

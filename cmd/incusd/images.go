@@ -1063,8 +1063,8 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //      schema:
 //        $ref: "#/definitions/ImagesPost"
 //  responses:
-//    "200":
-//      $ref: "#/responses/EmptySyncResponse"
+//    "202":
+//      $ref: "#/responses/Operation"
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
