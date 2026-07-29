@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-29 22:38-0400\n"
+"POT-Creation-Date: 2026-07-29 22:51-0400\n"
 "PO-Revision-Date: 2026-07-13 05:48+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -106,6 +106,15 @@ msgstr ""
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\""
+
+#: cmd/incus/low_level.go:346
+#, fuzzy
+msgid ""
+"### This is a YAML representation of the UEFI variable.\n"
+"### Any line starting with a '# will be ignored."
+msgstr ""
+"### 这是集群成员的 YAML 表示形式。\n"
+"### 任何以“#”开头的行都会被忽略。"
 
 #: cmd/incus/config_trust.go:272
 msgid ""
@@ -671,16 +680,16 @@ msgstr ""
 msgid "'%s' isn't a supported file type"
 msgstr "“%s”不是受支持的文件类型"
 
-#: cmd/incus/low_level.go:472
+#: cmd/incus/low_level.go:608
 msgid "(binary data)"
 msgstr ""
 
-#: cmd/incus/low_level.go:477
+#: cmd/incus/low_level.go:613
 #, c-format
 msgid "(error: %w)"
 msgstr ""
 
-#: cmd/incus/low_level.go:464
+#: cmd/incus/low_level.go:600
 msgid "(no timestamp)"
 msgstr ""
 
@@ -716,6 +725,11 @@ msgstr "- 端口 %d（%s）"
 #, fuzzy
 msgid "--all cannot be used together with other arguments"
 msgstr "--target 不能与实例一起使用"
+
+#: cmd/incus/low_level.go:741
+#, fuzzy
+msgid "--attributes cannot be used without --raw"
+msgstr "--no-profiles 不能与 --refresh 一起使用"
 
 #: cmd/incus/action.go:246
 msgid "--console can't be used while forcing instance shutdown"
@@ -789,6 +803,11 @@ msgstr "--target 只能与集群一起使用"
 msgid "--target cannot be used with instances"
 msgstr "--target 不能与实例一起使用"
 
+#: cmd/incus/low_level.go:745
+#, fuzzy
+msgid "--timestamp cannot be used without --raw"
+msgstr "--no-profiles 不能与 --refresh 一起使用"
+
 #: cmd/incus/admin_sql.go:128
 #, c-format
 msgid "=> Query %d:"
@@ -837,7 +856,7 @@ msgstr "应用"
 msgid "ARCHITECTURE"
 msgstr "架构"
 
-#: cmd/incus/low_level.go:412
+#: cmd/incus/low_level.go:548
 msgid "ATTRIBUTES"
 msgstr ""
 
@@ -1618,7 +1637,7 @@ msgstr "已启用集群"
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:394 cmd/incus/network.go:1054
+#: cmd/incus/low_level.go:530 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
@@ -2560,6 +2579,11 @@ msgstr "编辑存储卷中的文件"
 msgid "Edit image properties"
 msgstr "编辑镜像属性"
 
+#: cmd/incus/low_level.go:328 cmd/incus/low_level.go:329
+#, fuzzy
+msgid "Edit instance UEFI variables"
+msgstr "转储实例内存失败：%w"
+
 #: cmd/incus/config_template.go:177 cmd/incus/config_template.go:178
 msgid "Edit instance file templates"
 msgstr "编辑实例文件模板"
@@ -2655,7 +2679,7 @@ msgstr "将信任配置编辑为 YAML"
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:426 cmd/incus/network.go:1101
+#: cmd/incus/low_level.go:562 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
@@ -2920,7 +2944,7 @@ msgid ""
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
 
-#: cmd/incus/low_level.go:60
+#: cmd/incus/low_level.go:63
 msgid "Export a virtual machine's memory state"
 msgstr "导出虚拟机内存状态"
 
@@ -2963,7 +2987,7 @@ msgstr "导出存储桶"
 msgid "Export storage buckets as tarball."
 msgstr "将存储桶导出为 tar 包。"
 
-#: cmd/incus/low_level.go:61
+#: cmd/incus/low_level.go:64
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3125,7 +3149,7 @@ msgstr "启动命令失败：%w"
 msgid "Failed starting sshfs: %w"
 msgstr "启动 sshfs 失败：%w"
 
-#: cmd/incus/low_level.go:180 cmd/incus/port_forward.go:128
+#: cmd/incus/low_level.go:183 cmd/incus/port_forward.go:128
 #: cmd/incus/storage_volume.go:2661 cmd/incus/utils.go:640
 #, c-format
 msgid "Failed to accept incoming connection: %w"
@@ -3211,7 +3235,7 @@ msgstr "创建存储卷备份失败：%w"
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "复制后删除原始实例失败：%w"
 
-#: cmd/incus/low_level.go:93
+#: cmd/incus/low_level.go:96
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "转储实例内存失败：%w"
@@ -3231,12 +3255,12 @@ msgstr "获取存储卷备份文件失败：%w"
 msgid "Failed to find project: %w"
 msgstr "找不到项目：%w"
 
-#: cmd/incus/low_level.go:354 cmd/incus/low_level.go:363
+#: cmd/incus/low_level.go:490 cmd/incus/low_level.go:499
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr "转储实例内存失败：%w"
 
-#: cmd/incus/low_level.go:496
+#: cmd/incus/low_level.go:632
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr "转储实例内存失败：%w"
@@ -3246,7 +3270,7 @@ msgstr "转储实例内存失败：%w"
 msgid "Failed to join cluster: %w"
 msgstr "加入集群失败：%w"
 
-#: cmd/incus/low_level.go:165 cmd/incus/port_forward.go:114
+#: cmd/incus/low_level.go:168 cmd/incus/port_forward.go:114
 #: cmd/incus/storage_volume.go:2653 cmd/incus/utils.go:625
 #, c-format
 msgid "Failed to listen for connection: %w"
@@ -3277,6 +3301,11 @@ msgstr "解析转储响应失败：%w"
 #, fuzzy, c-format
 msgid "Failed to parse the preseed: %w"
 msgstr "解析 preseed 失败：%w"
+
+#: cmd/incus/low_level.go:751
+#, fuzzy, c-format
+msgid "Failed to parse variable %s:%s: %w"
+msgstr "解析服务器失败：%w"
 
 #: cmd/incus/admin_init_preseed.go:30
 #, fuzzy, c-format
@@ -3346,6 +3375,16 @@ msgstr "检索网络列表失败：%w"
 #, c-format
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "检索存储池列表失败：%w"
+
+#: cmd/incus/low_level.go:421
+#, fuzzy, c-format
+msgid "Failed to set UEFI variable %s:%s: %s"
+msgstr "转储实例内存失败：%w"
+
+#: cmd/incus/low_level.go:759
+#, fuzzy, c-format
+msgid "Failed to set UEFI variable %s:%s: %w"
+msgstr "转储实例内存失败：%w"
 
 #: cmd/incus/cluster.go:1815
 #, c-format
@@ -3509,7 +3548,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:393 cmd/incus/network.go:1055
+#: cmd/incus/low_level.go:529 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
@@ -3545,7 +3584,7 @@ msgstr "格式化（table|compact）"
 msgid "Format (table|compact)"
 msgstr "格式化（table|compact）"
 
-#: cmd/incus/low_level.go:71
+#: cmd/incus/low_level.go:74
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr "内存转储格式（如 elf、win-dmp、kdump-zlib、kdump-raw-zlib 等）"
@@ -3608,11 +3647,11 @@ msgstr "GPU："
 msgid "GPUs:"
 msgstr "GPU："
 
-#: cmd/incus/low_level.go:383 cmd/incus/low_level.go:413
+#: cmd/incus/low_level.go:519 cmd/incus/low_level.go:549
 msgid "GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:414
+#: cmd/incus/low_level.go:550
 msgid "GUID NAME"
 msgstr ""
 
@@ -3750,11 +3789,11 @@ msgstr "获取作为存储卷属性的密钥"
 msgid "Get the key as an instance property"
 msgstr "获取作为实例属性的密钥"
 
-#: cmd/incus/low_level.go:323
+#: cmd/incus/low_level.go:459
 msgid "Get the raw binary variable value"
 msgstr ""
 
-#: cmd/incus/low_level.go:319 cmd/incus/low_level.go:320
+#: cmd/incus/low_level.go:455 cmd/incus/low_level.go:456
 msgid "Get values for UEFI variables"
 msgstr ""
 
@@ -3920,7 +3959,7 @@ msgstr ""
 msgid "INSTANCE NAME"
 msgstr "实例名称"
 
-#: cmd/incus/low_level.go:418
+#: cmd/incus/low_level.go:554
 msgid "INTERPRETED VALUE"
 msgstr ""
 
@@ -4125,6 +4164,11 @@ msgstr "包含不常用的命令"
 msgid "Incus - Command line client"
 msgstr "Incus - 命令行客户端"
 
+#: cmd/incus/low_level.go:394
+#, c-format
+msgid "Incus does not know how to dissect %s:%s"
+msgstr ""
+
 #: cmd/incus/info.go:245
 msgid "Infiniband:"
 msgstr "Infiniband："
@@ -4173,7 +4217,7 @@ msgstr "实例名称是：%s"
 msgid "Instance type"
 msgstr "实例类型"
 
-#: cmd/incus/low_level.go:502
+#: cmd/incus/low_level.go:638
 #, fuzzy, c-format
 msgid "Invalid GUID: %s"
 msgstr "无效的路径 %s"
@@ -4458,7 +4502,7 @@ msgstr ""
 "  t - 类型\n"
 "  L - DHCP 租约位置（例如其集群成员）"
 
-#: cmd/incus/low_level.go:389 cmd/incus/low_level.go:390
+#: cmd/incus/low_level.go:525 cmd/incus/low_level.go:526
 msgid "List UEFI GUIDs and variables"
 msgstr ""
 
@@ -5641,12 +5685,12 @@ msgstr ""
 msgid "Low-level cluster administration commands"
 msgstr ""
 
-#: cmd/incus/low_level.go:33
+#: cmd/incus/low_level.go:36
 #, fuzzy
 msgid "Low-level commands"
 msgstr "调试命令"
 
-#: cmd/incus/low_level.go:34
+#: cmd/incus/low_level.go:37
 #, fuzzy
 msgid "Low-level commands for instances"
 msgstr "实例的调试命令"
@@ -5731,7 +5775,7 @@ msgstr ""
 msgid "Make the image public"
 msgstr ""
 
-#: cmd/incus/low_level.go:246 cmd/incus/low_level.go:247
+#: cmd/incus/low_level.go:249 cmd/incus/low_level.go:250
 #, fuzzy
 msgid "Manage NVRAM on virtual machines"
 msgstr "创建虚拟机"
@@ -6145,12 +6189,12 @@ msgstr ""
 msgid "NBD access to a block storage volume"
 msgstr "删除自定义存储卷"
 
-#: cmd/incus/low_level.go:116
+#: cmd/incus/low_level.go:119
 #, fuzzy
 msgid "NBD access to all of a virtual machine's disks"
 msgstr "删除自定义存储卷"
 
-#: cmd/incus/low_level.go:117
+#: cmd/incus/low_level.go:120
 msgid ""
 "NBD access to all of a virtual machine's disks\n"
 "\n"
@@ -6159,22 +6203,22 @@ msgid ""
 "device name."
 msgstr ""
 
-#: cmd/incus/low_level.go:186 cmd/incus/storage_volume.go:2666
+#: cmd/incus/low_level.go:189 cmd/incus/storage_volume.go:2666
 #, c-format
 msgid "NBD client connected %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:187 cmd/incus/storage_volume.go:2667
+#: cmd/incus/low_level.go:190 cmd/incus/storage_volume.go:2667
 #, fuzzy, c-format
 msgid "NBD client disconnected %q"
 msgstr "实例已断开连接"
 
-#: cmd/incus/low_level.go:203 cmd/incus/storage_volume.go:2672
+#: cmd/incus/low_level.go:206 cmd/incus/storage_volume.go:2672
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/low_level.go:168 cmd/incus/storage_volume.go:2656
+#: cmd/incus/low_level.go:171 cmd/incus/storage_volume.go:2656
 #, c-format
 msgid "NBD listening on %v"
 msgstr ""
@@ -6773,12 +6817,12 @@ msgstr ""
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
 #: cmd/incus/config_trust.go:333 cmd/incus/image.go:488
-#: cmd/incus/network.go:767 cmd/incus/network_acl.go:672
-#: cmd/incus/network_address_set.go:526 cmd/incus/network_forward.go:730
-#: cmd/incus/network_integration.go:298 cmd/incus/network_load_balancer.go:710
-#: cmd/incus/network_peer.go:733 cmd/incus/network_zone.go:675
-#: cmd/incus/network_zone.go:1344 cmd/incus/profile.go:575
-#: cmd/incus/project.go:398 cmd/incus/storage.go:358
+#: cmd/incus/low_level.go:422 cmd/incus/network.go:767
+#: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
+#: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
+#: cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733
+#: cmd/incus/network_zone.go:675 cmd/incus/network_zone.go:1344
+#: cmd/incus/profile.go:575 cmd/incus/project.go:398 cmd/incus/storage.go:358
 #: cmd/incus/storage_bucket.go:336 cmd/incus/storage_bucket.go:1210
 #: cmd/incus/storage_volume.go:1082 cmd/incus/storage_volume.go:1114
 msgid "Press enter to open the editor again or ctrl+c to abort change"
@@ -6996,7 +7040,7 @@ msgstr "查询路径必须以 / 开头"
 msgid "Query virtual machine images"
 msgstr "查询虚拟机镜像"
 
-#: cmd/incus/low_level.go:416
+#: cmd/incus/low_level.go:552
 msgid "RAW VALUE"
 msgstr ""
 
@@ -7908,6 +7952,26 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
+#: cmd/incus/low_level.go:698
+msgid "Set the raw binary variable value"
+msgstr ""
+
+#: cmd/incus/low_level.go:696
+msgid "Set the variable attributes (requires `--raw`)"
+msgstr ""
+
+#: cmd/incus/low_level.go:697
+msgid "Set the variable timestamp (requires `--raw`)"
+msgstr ""
+
+#: cmd/incus/low_level.go:692
+msgid "Set values for UEFI variables"
+msgstr ""
+
+#: cmd/incus/low_level.go:693
+msgid "Set values for UEFI variables."
+msgstr ""
+
 #: cmd/incus/file.go:925 cmd/incus/storage_volume_file.go:349
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
@@ -8209,7 +8273,7 @@ msgstr ""
 msgid "Source:"
 msgstr ""
 
-#: cmd/incus/low_level.go:125 cmd/incus/storage_volume.go:2605
+#: cmd/incus/low_level.go:128 cmd/incus/storage_volume.go:2605
 msgid "Specific address to listen on"
 msgstr ""
 
@@ -8414,7 +8478,7 @@ msgstr ""
 msgid "TARGET"
 msgstr ""
 
-#: cmd/incus/low_level.go:417
+#: cmd/incus/low_level.go:553
 msgid "TIMESTAMP"
 msgstr ""
 
@@ -8885,7 +8949,7 @@ msgstr ""
 msgid "Type: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:590
+#: cmd/incus/low_level.go:814
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr ""
@@ -8963,7 +9027,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:432 cmd/incus/network.go:1107
+#: cmd/incus/low_level.go:568 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
@@ -9002,7 +9066,7 @@ msgstr ""
 msgid "Unknown output type %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:552 cmd/incus/low_level.go:553
+#: cmd/incus/low_level.go:776 cmd/incus/low_level.go:777
 msgid "Unset UEFI variables"
 msgstr ""
 
@@ -9305,7 +9369,7 @@ msgstr ""
 msgid "User aborted delete operation"
 msgstr ""
 
-#: cmd/incus/low_level.go:415
+#: cmd/incus/low_level.go:551
 #, fuzzy
 msgid "VARIABLE NAME"
 msgstr "文件名"
@@ -9964,7 +10028,7 @@ msgid ""
 "  List instances with their running state and user comment."
 msgstr ""
 
-#: cmd/incus/low_level.go:65
+#: cmd/incus/low_level.go:68
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
@@ -10775,10 +10839,6 @@ msgstr ""
 #, c-format
 #~ msgid "Failed to connect to cluster member: %w"
 #~ msgstr "无法连接到集群成员：%w"
-
-#, c-format
-#~ msgid "Failed to parse servers: %w"
-#~ msgstr "解析服务器失败：%w"
 
 #~ msgid "Filtering isn't supported yet"
 #~ msgstr "尚不支持筛选"
