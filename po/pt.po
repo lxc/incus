@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-26 09:13-0400\n"
+"POT-Creation-Date: 2026-07-29 19:46-0400\n"
 "PO-Revision-Date: 2026-07-26 17:31+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -4154,7 +4154,7 @@ msgstr "Imagem importada com impressão digital: %s"
 msgid "Image refreshed successfully!"
 msgstr "Imagem refrescada com sucesso!"
 
-#: cmd/incus/action.go:161 cmd/incus/launch.go:48
+#: cmd/incus/action.go:161 cmd/incus/launch.go:49
 msgid "Immediately attach to the console"
 msgstr "Anexar imediatamente à consola"
 
@@ -5526,8 +5526,8 @@ msgstr ""
 "quais atributos de alocações de rede são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -8827,7 +8827,7 @@ msgstr "Inicia instâncias"
 msgid "Started: %s"
 msgstr "Iniciado: %s"
 
-#: cmd/incus/launch.go:108
+#: cmd/incus/launch.go:109
 #, c-format
 msgid "Starting %s"
 msgstr "A iniciar %s"
@@ -9515,7 +9515,7 @@ msgstr "Política de transmissão"
 msgid "Trust token for %s: "
 msgstr "Testemunho de confiança para %s: "
 
-#: cmd/incus/action.go:306 cmd/incus/launch.go:141
+#: cmd/incus/action.go:306 cmd/incus/launch.go:142
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr "Tente `incus info --show-log %s%s` para mais informação"
@@ -10746,6 +10746,7 @@ msgstr ""
 "    Para informação do servidor."
 
 #: cmd/incus/launch.go:28
+#, fuzzy
 msgid ""
 "incus launch images:debian/12 c1\n"
 "    Create and start a container named \"c1\"\n"
@@ -10757,6 +10758,8 @@ msgid ""
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
+"    Find the list of supported instance types here: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
