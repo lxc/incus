@@ -347,6 +347,11 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 			dstServer = dstServer.UseTarget(c.flagTarget)
 		}
 
+		// A stateless move of a running container is performed as a near-live migration.
+		if srcServer.HasExtension("container_incremental_copy") && dstServer.HasExtension("container_incremental_copy") && move && !stateful && c.flagRefresh && !instanceOnly && entry.StatusCode == api.Running && entry.Type == "container" {
+			return c.nearLiveMoveInstance(srcServer, dstServer, srcInstanceName, dstInstanceName, entry, &args)
+		}
+
 		op, err = dstServer.CopyInstance(srcServer, *entry, &args)
 		if err != nil {
 			return err
