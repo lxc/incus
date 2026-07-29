@@ -222,6 +222,7 @@ var instanceNVRAMGuidVarCmd = APIEndpoint{
 
 	Delete: APIEndpointAction{Handler: instanceNVRAMGUIDVarDelete, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 	Get:    APIEndpointAction{Handler: instanceNVRAMGUIDVarGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Put:    APIEndpointAction{Handler: instanceNVRAMGUIDVarPut, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
 type instanceAutostartList []instance.Instance
