@@ -106,7 +106,7 @@ To launch a container with this instance type, enter the following command:
 
     incus launch images:debian/12 my-instance --type t2.micro
 
-The list of supported clouds and instance types can be found at [`https://github.com/dustinkirkland/instance-type`](https://github.com/dustinkirkland/instance-type).
+The list of supported clouds and instance types can be found at [`https://images.linuxcontainers.org/meta/instance-types/`](https://images.linuxcontainers.org/meta/instance-types/).
 
 ### Launch a VM that boots from an ISO
 
