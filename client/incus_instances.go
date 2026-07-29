@@ -3378,24 +3378,24 @@ func (r *ProtocolIncus) GetRawInstanceNVRAMGUIDVar(name string, guid string, var
 }
 
 // GetInstanceNVRAMGUIDVar gets interpreted OVMF variables from an instance.
-func (r *ProtocolIncus) GetInstanceNVRAMGUIDVar(name string, guid string, varName string) (*api.InstanceNVRAMVariable, error) {
+func (r *ProtocolIncus) GetInstanceNVRAMGUIDVar(name string, guid string, varName string) (*api.InstanceNVRAMVariable, string, error) {
 	if !r.HasExtension("instance_nvram") {
-		return nil, errors.New(`The server is missing the required "instance_nvram" API extension`)
+		return nil, "", errors.New(`The server is missing the required "instance_nvram" API extension`)
 	}
 
 	var v *api.InstanceNVRAMVariable
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	// Fetch the raw value.
-	_, err = r.queryStruct("GET", fmt.Sprintf("%s/%s/nvram/%s/%s?recursion=1", path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName)), nil, "", &v)
+	etag, err := r.queryStruct("GET", fmt.Sprintf("%s/%s/nvram/%s/%s?recursion=1", path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName)), nil, "", &v)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return v, err
+	return v, etag, err
 }
 
 // DeleteInstanceNVRAMGUIDVar sets interpreted OVMF variables on an instance.
