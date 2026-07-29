@@ -61,3 +61,17 @@ func renderRaw(atom Atom) string {
 func quote(s string) string {
 	return fmt.Sprintf(i18n.G("“%s”"), s)
 }
+
+// AsSingleton returns a parsed atom corresponding to how the given parsed atom would have been
+// parsed in a list atom.
+func AsSingleton(p *Parsed) *Parsed {
+	return &Parsed{
+		source:     p.source.List(1),
+		String:     p.String,
+		List:       []*Parsed{p},
+		StringList: []string{p.String},
+		err:        p.err,
+		Skipped:    p.Skipped,
+		BranchID:   p.BranchID,
+	}
+}
