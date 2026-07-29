@@ -127,6 +127,26 @@ var guidAliases = map[string]string{
 	"bmharddrivebootvariable":              BmHardDriveBootVariableGuid,
 }
 
+var guidSigs = map[string]string{
+	EfiCertPkcs7Guid:         "pkcs7",
+	EfiCertRsa2048Guid:       "rsa2048",
+	EfiCertRsa2048Sha1Guid:   "rsa2048-sha1",
+	EfiCertRsa2048Sha256Guid: "rsa2048-sha256",
+	EfiCertSha1Guid:          "sha1",
+	EfiCertSha224Guid:        "sha224",
+	EfiCertSha256Guid:        "sha256",
+	EfiCertSha384Guid:        "sha384",
+	EfiCertSha512Guid:        "sha512",
+	EfiCertSm3Guid:           "sm3",
+	EfiCertX509Guid:          "x509",
+	EfiCertX509Sha256Guid:    "x509-sha256",
+	EfiCertX509Sha384Guid:    "x509-sha384",
+	EfiCertX509Sha512Guid:    "x509-sha512",
+	EfiCertX509Sm3Guid:       "x509-sm3",
+}
+
+var sigGUIDs = make(map[string]string, len(guidSigs))
+
 // normalizeGUIDName transforms a GUID name into something easier for us to handle and more
 // forgiving to the users.
 func normalizeGUIDName(s string) string {
@@ -141,6 +161,10 @@ func normalizeGUIDName(s string) string {
 func init() {
 	for g, name := range guidNames {
 		guidAliases[normalizeGUIDName(name)] = g
+	}
+
+	for g, sigType := range guidSigs {
+		sigGUIDs[sigType] = g
 	}
 }
 

@@ -10,6 +10,9 @@ import (
 // errUnexpectedData is a very generic error returned whenever something fails if the parser.
 var errUnexpectedData = errors.New("Unexpected data")
 
+// errNotImplemented is an error returned whenever part of a dissector is not implemented.
+var errNotImplemented = errors.New("Not implemented")
+
 // formatGUID formats a GUID.
 func formatGUID(guid []byte) string {
 	return fmt.Sprintf("%08x-%04x-%04x-%x-%x", binary.LittleEndian.Uint32(guid[0:4]), binary.LittleEndian.Uint16(guid[4:6]), binary.LittleEndian.Uint16(guid[6:8]), guid[8:10], guid[10:16])
@@ -44,8 +47,8 @@ func formatIP6(ip6 []byte, port ...uint16) string {
 	return fmt.Sprintf("%s:%d", ip, p)
 }
 
-// parseAttributes parses UEFI variable attributes and formats them.
-func parseAttributes(rawAttributes uint32) []string {
+// ParseAttributes parses UEFI variable attributes and formats them.
+func ParseAttributes(rawAttributes uint32) []string {
 	attributes := []string{}
 
 	if rawAttributes&0x0000_0001 != 0 {
@@ -109,44 +112,6 @@ func dumpAttributes(attributes []string) uint32 {
 	}
 
 	return rawAttributes
-}
-
-// parseSigType parses signature GUIDs and formats them.
-func parseSigType(sigType string) (string, error) {
-	switch sigType {
-	case EfiCertPkcs7Guid:
-		return "pkcs7", nil
-	case EfiCertRsa2048Guid:
-		return "rsa2048", nil
-	case EfiCertRsa2048Sha1Guid:
-		return "rsa2048-sha1", nil
-	case EfiCertRsa2048Sha256Guid:
-		return "rsa2048-sha256", nil
-	case EfiCertSha1Guid:
-		return "sha1", nil
-	case EfiCertSha224Guid:
-		return "sha224", nil
-	case EfiCertSha256Guid:
-		return "sha256", nil
-	case EfiCertSha384Guid:
-		return "sha384", nil
-	case EfiCertSha512Guid:
-		return "sha512", nil
-	case EfiCertSm3Guid:
-		return "sm3", nil
-	case EfiCertX509Guid:
-		return "x509", nil
-	case EfiCertX509Sha256Guid:
-		return "x509-sha256", nil
-	case EfiCertX509Sha384Guid:
-		return "x509-sha384", nil
-	case EfiCertX509Sha512Guid:
-		return "x509-sha512", nil
-	case EfiCertX509Sm3Guid:
-		return "x509-sm3", nil
-	default:
-		return "", errUnexpectedData
-	}
 }
 
 // csum16 computes a 16-bit checksum.
