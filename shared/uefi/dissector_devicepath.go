@@ -1,12 +1,13 @@
 package uefi
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
-// WrapDP wraps a device path dissector.
+// wrapDP wraps a device path dissector.
 func wrapDP(f func(*reader, uint8) (string, error)) func(uint8, []byte) (string, error) {
 	return func(subtype uint8, b []byte) (string, error) {
 		r := newReader(b)
@@ -1353,16 +1354,22 @@ func devicePaths(b []byte) ([][]string, error) {
 	return paths, nil
 }
 
-// devicePaths dissects a device path structure.
-func devicePath(b []byte) ([]string, error) {
-	paths, err := devicePaths(b)
-	if err != nil {
-		return nil, err
-	}
+// devicePath dissects a device path structure.
+// TODO: Implement variable formatting.
+var devicePath = dissector{
+	dissect: func(b []byte) (any, error) {
+		paths, err := devicePaths(b)
+		if err != nil {
+			return nil, err
+		}
 
-	if len(paths) != 1 {
-		return nil, errUnexpectedData
-	}
+		if len(paths) != 1 {
+			return nil, errUnexpectedData
+		}
 
-	return paths[0], nil
+		return paths[0], nil
+	},
+	format: func(json.RawMessage) ([]byte, error) {
+		return nil, errNotImplemented
+	},
 }
