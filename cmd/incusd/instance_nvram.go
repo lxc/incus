@@ -587,8 +587,14 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 		return response.DevIncusResponse(http.StatusOK, string(v.Binary), "raw", false)
 	}
 
+	etag := []any{
+		v.Binary,
+		v.Attributes,
+		v.Timestamp,
+	}
+
 	_ = uefi.Dissect(v, guid, varName)
-	return response.SyncResponse(true, v)
+	return response.SyncResponseETag(true, v, etag)
 }
 
 // swagger:operation DELETE /1.0/instances/{name}/nvram/{guid}/{var} instances instance_nvram_guid_var_delete
