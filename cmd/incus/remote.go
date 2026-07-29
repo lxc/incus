@@ -151,7 +151,7 @@ The remote name can be ignored if a single target is provided.
 	cli.AddStringFlag(cmd.Flags(), &c.flagAuthType, "auth-type", "", "", i18n.G("Server authentication type (tls or oidc)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagPublic, "public", i18n.G("Public image server"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagProject, "project", "", "", i18n.G("Project to use for the remote"))
-	cli.AddIntFlag(cmd.Flags(), &c.flagKeepAlive, "keepalive", 0, i18n.G("Maintain remote connection for faster commands"))
+	cli.AddIntFlag(cmd.Flags(), &c.flagKeepAlive, "keepalive", i18n.G("Maintain remote connection for faster commands"), 0)
 	cli.AddStringFlag(cmd.Flags(), &c.flagCredHelper, "credentials-helper", "", "", i18n.G("Binary helper for retrieving credentials"))
 
 	return cmd

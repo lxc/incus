@@ -34,7 +34,7 @@ func (c *cmdAdminWaitready) command() *cobra.Command {
   is done with early start tasks like re-starting previously started
   containers.`))
 	cmd.RunE = c.run
-	cli.AddIntFlag(cmd.Flags(), &c.flagTimeout, "timeout|t", 0, "Number of seconds to wait before giving up")
+	cli.AddIntFlag(cmd.Flags(), &c.flagTimeout, "timeout|t", "Number of seconds to wait before giving up", 0)
 
 	return cmd
 }

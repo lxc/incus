@@ -110,8 +110,8 @@ incus file create --type=symlink foo/bar baz
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Force creating files or directories"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", -1, i18n.G("Set the file's gid on create"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", -1, i18n.G("Set the file's uid on create"))
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", i18n.G("Set the file's gid on create"), -1)
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", i18n.G("Set the file's uid on create"), -1)
 	cli.AddStringFlag(cmd.Flags(), &c.file.flagMode, "mode", "", "", i18n.G("Set the file's perms on create"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type|t", "file", "", i18n.G("The type to create (file, symlink, or directory)"))
 
@@ -677,8 +677,8 @@ echo "Hello world" | incus file push - foo/root/test
 	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", -1, i18n.G("Set the files' UIDs on push"))
-	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", -1, i18n.G("Set the files' GIDs on push"))
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", i18n.G("Set the files' UIDs on push"), -1)
+	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", i18n.G("Set the files' GIDs on push"), -1)
 	cli.AddStringFlag(cmd.Flags(), &c.file.flagMode, "mode", "", "", i18n.G("Set the file's perms on push (in recursive mode, only sets the target directory's permissions)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))
