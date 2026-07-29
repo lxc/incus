@@ -358,7 +358,7 @@ func (c *cmdLowLevelNVRAMGet) run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	v, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to get instance UEFI variable: %w"), err)
 	}
