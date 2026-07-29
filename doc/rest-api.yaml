@@ -2075,6 +2075,25 @@ definitions:
         title: InstanceNVRAMVariable represents a UEFI variable.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
+    InstanceNVRAMVariablePut:
+        properties:
+            attributes:
+                description: Variable attributes.
+                items:
+                    type: string
+                type: array
+                x-go-name: Attributes
+            data:
+                description: Dissected data.
+                x-go-name: Data
+            timestamp:
+                description: Authenticated variable timestamp.
+                format: date-time
+                type: string
+                x-go-name: Timestamp
+        title: InstanceNVRAMVariablePut represents the modifiable fields of a UEFI variable.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
     InstancePortForwardPost:
         properties:
             address:
@@ -12032,6 +12051,70 @@ paths:
                 "500":
                     $ref: '#/responses/InternalServerError'
             summary: Get the NVRAM variable
+            tags:
+                - instances
+        put:
+            consumes:
+                - application/json
+                - application/octet-stream
+            description: |-
+                If the `Content-Type` header is set to `application/octet-stream`, this sets the raw binary
+                value of the variable.
+
+                Only supported for VMs.
+            operationId: instance_nvram_guid_var_put
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Variable GUID
+                  example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+                  in: path
+                  name: guid
+                  required: true
+                  type: string
+                - description: Variable name
+                  example: BootOrder
+                  in: path
+                  name: var
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Raw UEFI variable attributes to set
+                  in: header
+                  name: X-Incus-attributes
+                  schema:
+                    type: integer
+                - description: Raw UEFI variable UNIX timestamp (in seconds) to set
+                  in: header
+                  name: X-Incus-timestamp
+                  schema:
+                    type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "201":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "409":
+                    $ref: '#/responses/Conflict'
+                "412":
+                    $ref: '#/responses/PreconditionFailed'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Update the NVRAM variable
             tags:
                 - instances
     /1.0/instances/{name}/nvram/{guid}?recursion=1:
