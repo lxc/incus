@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -253,6 +254,10 @@ func (c *cmdLowLevelNVRAM) command() *cobra.Command {
 	// List.
 	lowLevelNVRAMListCmd := cmdLowLevelNVRAMList{global: c.global}
 	cmd.AddCommand(lowLevelNVRAMListCmd.command())
+
+	// Set.
+	lowLevelNVRAMSetCmd := cmdLowLevelNVRAMSet{global: c.global}
+	cmd.AddCommand(lowLevelNVRAMSetCmd.command())
 
 	// Unset.
 	lowLevelNVRAMUnsetCmd := cmdLowLevelNVRAMUnset{global: c.global}
@@ -537,6 +542,94 @@ func (c *cmdLowLevelNVRAMList) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, uefiVars)
+}
+
+// Set.
+type cmdLowLevelNVRAMSet struct {
+	global *cmdGlobal
+
+	flagAttributes uint32
+	flagTimestamp  int64
+	flagRaw        bool
+}
+
+var cmdLowLevelNVRAMSetUsage = u.Usage{u.Instance.Remote(), u.MakeKV(u.Variable, u.Value)}
+
+func (c *cmdLowLevelNVRAMSet) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("set", cmdLowLevelNVRAMSetUsage...)
+	cmd.Short = i18n.G("Set values for UEFI variables")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set values for UEFI variables.`))
+
+	cmd.RunE = c.run
+	cli.AddUint32Flag(cmd.Flags(), &c.flagAttributes, "attributes", i18n.G("Set the variable attributes (requires `--raw`)"), 7)
+	cli.AddInt64Flag(cmd.Flags(), &c.flagTimestamp, "timestamp", i18n.G("Set the variable timestamp (requires `--raw`)"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRaw, "raw", i18n.G("Set the raw binary variable value"))
+
+	// completion for instance.
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
+	// We deliberately only accept a single definition at a time because we don’t want to give users
+	// the impression that they are hitting any kind of optimized path. Setting 100 variables leads to
+	// 100 full NVRAM rewrites.
+	parsed, err := c.global.Parse(cmdLowLevelNVRAMSetUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	keys, err := kvToMap(u.AsSingleton(parsed[1]))
+	if err != nil {
+		return err
+	}
+
+	var errs []error
+
+	for k, v := range keys {
+		guid, varName, err := nvramGuessVar(k)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		if c.flagRaw {
+			err = d.UpdateRawInstanceNVRAMGUIDVar(instanceName, guid, varName, []byte(v), c.flagAttributes, c.flagTimestamp)
+		} else {
+			if cmd.Flags().Changed("attributes") {
+				return errors.New(i18n.G("--attributes cannot be used without --raw"))
+			}
+
+			if cmd.Flags().Changed("timestamp") {
+				return errors.New(i18n.G("--timestamp cannot be used without --raw"))
+			}
+
+			data := api.InstanceNVRAMVariablePut{}
+			err = yaml.Load([]byte(v), &data)
+			if err != nil {
+				errs = append(errs, fmt.Errorf(i18n.G("Failed to parse variable %s:%s: %w"), guid, varName, err))
+				continue
+			}
+
+			err = d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, data, "")
+		}
+
+		if err != nil {
+			errs = append(errs, fmt.Errorf(i18n.G("Failed to set UEFI variable %s:%s: %w"), guid, varName, err))
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // Unset.

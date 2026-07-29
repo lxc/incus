@@ -64,3 +64,11 @@ func AddUint64Flag(flags *pflag.FlagSet, flag *uint64, name string, usage string
 	// backticks is a way to solve that.
 	flags.Uint64VarP(flag, name, shorthand, 0, "``"+usage)
 }
+
+// AddInt64Flag adds an `int64` flag to the given flag set.
+func AddInt64Flag(flags *pflag.FlagSet, flag *int64, name string, usage string) {
+	name, shorthand, _ := strings.Cut(name, "|")
+	// Cobra handles value hints and backticks in a way that doesn’t suit us. Prepending two
+	// backticks is a way to solve that.
+	flags.Int64VarP(flag, name, shorthand, 0, "``"+usage)
+}
