@@ -71,7 +71,7 @@ func (r *sftpServe) Render(w http.ResponseWriter) error {
 	}
 
 	// Start sftp server.
-	server, err := sftp.NewServer(conn, sftp.WithAllocator(), sftp.WithServerWorkingDirectory(osBaseWorkingDirectory))
+	server, err := sftp.NewServer(conn, sftp.WithAllocator(), sftp.WithServerWorkingDirectory(osBaseWorkingDirectory), sftp.WithMaxTxPacket(128*1024))
 	if err != nil {
 		return nil
 	}
