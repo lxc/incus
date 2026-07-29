@@ -231,7 +231,8 @@ func ParseNVRAM(data []byte) (*Store, error) {
 		}
 
 		if state == 0x3f {
-			v := api.InstanceNVRAMVariable{Attributes: parseAttributes(rawAttributes), Binary: data, Timestamp: timestamp}
+			varPut := api.InstanceNVRAMVariablePut{Attributes: parseAttributes(rawAttributes), Timestamp: timestamp}
+			v := api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: varPut, Binary: data}
 			_, ok := s.Vars[guid]
 			if !ok {
 				s.Vars[guid] = make(map[string]*api.InstanceNVRAMVariable)
