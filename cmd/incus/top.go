@@ -67,7 +67,7 @@ Column shorthand chars:
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Display instances from all projects"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultTopColumns, "", i18n.G("Columns"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G("Format (table|compact)"))
-	cli.AddIntFlag(cmd.Flags(), &c.flagRefresh, "refresh", 10, i18n.G("Configure the refresh delay in seconds"))
+	cli.AddIntFlag(cmd.Flags(), &c.flagRefresh, "refresh", i18n.G("Configure the refresh delay in seconds"), 10)
 
 	cmd.RunE = c.run
 	return cmd
