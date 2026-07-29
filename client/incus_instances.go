@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -3411,6 +3412,70 @@ func (r *ProtocolIncus) DeleteInstanceNVRAMGUIDVar(name string, guid string, var
 
 	// Send the request
 	_, _, err = r.query("DELETE", fmt.Sprintf("%s/%s/nvram/%s/%s", path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName)), nil, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateRawInstanceNVRAMGUIDVar sets raw OVMF variables on an instance.
+func (r *ProtocolIncus) UpdateRawInstanceNVRAMGUIDVar(name string, guid string, varName string, data []byte, attributes uint32, timestamp int64) error {
+	if !r.HasExtension("instance_nvram") {
+		return errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return err
+	}
+
+	// Prepare the HTTP request
+	requestURL := fmt.Sprintf("%s/1.0%s/%s/nvram/%s/%s", r.httpBaseURL.String(), path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName))
+	requestURL, err = r.setQueryAttributes(requestURL)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("PUT", requestURL, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("X-Incus-attributes", strconv.FormatUint(uint64(attributes), 10))
+	if timestamp != 0 {
+		req.Header.Set("X-Incus-timestamp", strconv.FormatInt(timestamp, 10))
+	}
+
+	// Send the request
+	resp, err := r.DoHTTP(req)
+	if err != nil {
+		return err
+	}
+
+	// Handle errors
+	_, _, err = incusParseResponse(resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateInstanceNVRAMGUIDVar sets interpreted OVMF variables on an instance.
+func (r *ProtocolIncus) UpdateInstanceNVRAMGUIDVar(name string, guid string, varName string, data api.InstanceNVRAMVariablePut, ETag string) error {
+	if !r.HasExtension("instance_nvram") {
+		return errors.New(`The server is missing the required "instance_nvram" API extension`)
+	}
+
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return err
+	}
+
+	// Send the request
+	_, _, err = r.query("PUT", fmt.Sprintf("%s/%s/nvram/%s/%s", path, url.PathEscape(name), url.PathEscape(guid), url.PathEscape(varName)), data, ETag)
 	if err != nil {
 		return err
 	}
