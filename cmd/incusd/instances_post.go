@@ -561,7 +561,9 @@ func validateDependentVolumes(source instance.Instance, req *api.InstancesPost) 
 		}
 
 		// Check if the source was overridden.
-		if oldDevice["source"] == newDevice["source"] {
+		oldVolName, _ := internalInstance.SplitVolumeSource(oldDevice["source"])
+		newVolName, _ := internalInstance.SplitVolumeSource(newDevice["source"])
+		if oldVolName == newVolName {
 			return fmt.Errorf("Device source name should be different during copy for dependent disk: %s", key)
 		}
 	}

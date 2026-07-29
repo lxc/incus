@@ -1259,8 +1259,9 @@ func (m *Monitor) NBDServerStop() error {
 	return nil
 }
 
-// NBDBlockExportAdd exports a writable device via the NBD server.
-func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, exportName string, writable bool, bitmapNames []string) error {
+// NBDBlockExportAdd adds a block export to the NBD server. Bitmaps are looked up on
+// bitmapNode, which defaults to the exported node when empty.
+func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, exportName string, writable bool, bitmapNode string, bitmapNames []string) error {
 	var args struct {
 		ID       string `json:"id"`
 		Type     string `json:"type"`
@@ -1279,12 +1280,16 @@ func (m *Monitor) NBDBlockExportAdd(deviceNodeName string, exportName string, wr
 	args.Name = exportName
 	args.Writable = writable
 
+	if bitmapNode == "" {
+		bitmapNode = deviceNodeName
+	}
+
 	for _, b := range bitmapNames {
 		args.Bitmaps = append(args.Bitmaps, struct {
 			Node string `json:"node"`
 			Name string `json:"name"`
 		}{
-			Node: deviceNodeName,
+			Node: bitmapNode,
 			Name: b,
 		})
 	}
@@ -1403,25 +1408,27 @@ func (m *Monitor) BlockDevSnapshot(deviceNodeName string, snapshotNodeName strin
 	return nil
 }
 
-// BlockDevSnapshotTarget describes a single blockdev-snapshot action.
-type BlockDevSnapshotTarget struct {
-	Node    string `json:"node"`
-	Overlay string `json:"overlay"`
+// BlockDevBackupTarget describes a single blockdev-backup action.
+type BlockDevBackupTarget struct {
+	Device string `json:"device"`
+	Target string `json:"target"`
+	Sync   string `json:"sync"`
+	JobID  string `json:"job-id"`
 }
 
-// BlockDevSnapshotTransaction atomically creates the given device snapshots in a single
-// transaction so that all overlays are taken at the same point in time.
-func (m *Monitor) BlockDevSnapshotTransaction(snapshots []BlockDevSnapshotTarget) error {
+// BlockDevBackupTransaction atomically starts the given blockdev-backup jobs in a single
+// transaction so that all targets share the same point in time.
+func (m *Monitor) BlockDevBackupTransaction(backups []BlockDevBackupTarget) error {
 	type action struct {
-		Type string                 `json:"type"`
-		Data BlockDevSnapshotTarget `json:"data"`
+		Type string               `json:"type"`
+		Data BlockDevBackupTarget `json:"data"`
 	}
 
-	actions := make([]action, 0, len(snapshots))
-	for _, snapshot := range snapshots {
+	actions := make([]action, 0, len(backups))
+	for _, backup := range backups {
 		actions = append(actions, action{
-			Type: "blockdev-snapshot",
-			Data: snapshot,
+			Type: "blockdev-backup",
+			Data: backup,
 		})
 	}
 
@@ -1625,6 +1632,21 @@ func (m *Monitor) BlockJobCancel(deviceNodeName string) error {
 	args.Device = deviceNodeName
 
 	err := m.Run("block-job-cancel", args, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// BlockJobCancelWait cancels an ongoing block job and waits until it is gone.
+func (m *Monitor) BlockJobCancelWait(jobID string) error {
+	err := m.BlockJobCancel(jobID)
+	if err != nil {
+		return err
+	}
+
+	_, err = m.blockJobWait(jobID, false, true)
 	if err != nil {
 		return err
 	}

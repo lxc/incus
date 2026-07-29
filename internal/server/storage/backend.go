@@ -1262,7 +1262,9 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			err = diskPool.CreateCustomVolumeFromCopy(inst.Project().Name, src.Project().Name, newDevices[dev.Name]["source"], "", nil, dev.Config["pool"], dev.Config["source"], snapshots, op)
+			newVolName, _ := internalInstance.SplitVolumeSource(newDevices[dev.Name]["source"])
+			srcVolName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+			err = diskPool.CreateCustomVolumeFromCopy(inst.Project().Name, src.Project().Name, newVolName, "", nil, dev.Config["pool"], srcVolName, snapshots, op)
 			if err != nil {
 				return err
 			}
@@ -1808,7 +1810,9 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			err = diskPool.RefreshCustomVolume(inst.Project().Name, src.Project().Name, newDevices[dev.Name]["source"], "", nil, dev.Config["pool"], dev.Config["source"], snapshots, false, op)
+			newVolName, _ := internalInstance.SplitVolumeSource(newDevices[dev.Name]["source"])
+			srcVolName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+			err = diskPool.RefreshCustomVolume(inst.Project().Name, src.Project().Name, newVolName, "", nil, dev.Config["pool"], srcVolName, snapshots, false, op)
 			if err != nil {
 				return err
 			}
@@ -3020,7 +3024,8 @@ func (b *backend) BackupInstance(inst instance.Instance, tarWriter *instancewrit
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			err = diskPool.BackupCustomVolume(inst.Project().Name, dev.Config["source"], tarWriter, filepath.Join(backup.DefaultBackupPrefix, dev.Name), optimized, snapshots, op)
+			volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+			err = diskPool.BackupCustomVolume(inst.Project().Name, volName, tarWriter, filepath.Join(backup.DefaultBackupPrefix, dev.Name), optimized, snapshots, op)
 			if err != nil {
 				return err
 			}
@@ -3465,14 +3470,16 @@ func (b *backend) CreateInstanceSnapshot(inst instance.Instance, src instance.In
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
 		_, snapshotName, _ := api.GetParentAndSnapshotName(inst.Name())
-		err = diskPool.CreateCustomVolumeSnapshot(inst.Project().Name, dev.Config["source"], snapshotName, time.Time{}, inst.IsStateful(), op)
+		err = diskPool.CreateCustomVolumeSnapshot(inst.Project().Name, volName, snapshotName, time.Time{}, inst.IsStateful(), op)
 		if err != nil {
-			return fmt.Errorf("Failed to create device snapshot for volume %q: %w", dev.Config["source"], err)
+			return fmt.Errorf("Failed to create device snapshot for volume %q: %w", volName, err)
 		}
 
 		reverter.Add(func() {
-			_ = diskPool.DeleteCustomVolumeSnapshot(inst.Project().Name, fmt.Sprintf("%s/%s", dev.Config["source"], snapshotName), nil)
+			_ = diskPool.DeleteCustomVolumeSnapshot(inst.Project().Name, fmt.Sprintf("%s/%s", volName, snapshotName), nil)
 		})
 
 		return nil
@@ -3682,9 +3689,10 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
-		err = diskPool.DeleteCustomVolumeSnapshot(inst.Project().Name, fmt.Sprintf("%s/%s", dev.Config["source"], snapName), op)
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+		err = diskPool.DeleteCustomVolumeSnapshot(inst.Project().Name, fmt.Sprintf("%s/%s", volName, snapName), op)
 		if err != nil {
-			return fmt.Errorf("Failed to delete snapshot for volume %q: %w", dev.Config["source"], err)
+			return fmt.Errorf("Failed to delete snapshot for volume %q: %w", volName, err)
 		}
 
 		return nil
@@ -3886,7 +3894,8 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 			return fmt.Errorf("Failed loading storage pool: %w", err)
 		}
 
-		err = diskPool.RestoreCustomVolume(inst.Project().Name, dev.Config["source"], snapshotName, op)
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+		err = diskPool.RestoreCustomVolume(inst.Project().Name, volName, snapshotName, op)
 		if err != nil {
 			return err
 		}
@@ -7084,7 +7093,8 @@ func (b *backend) GenerateInstanceBackupConfig(inst instance.Instance, snapshots
 				return fmt.Errorf("Failed loading storage pool: %w", err)
 			}
 
-			diskConfig, err := diskPool.GenerateCustomVolumeBackupConfig(inst.Project().Name, dev.Config["source"], snapshots, op)
+			volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+			diskConfig, err := diskPool.GenerateCustomVolumeBackupConfig(inst.Project().Name, volName, snapshots, op)
 			if err != nil {
 				return err
 			}
@@ -8975,7 +8985,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 	_, volName := project.StorageVolumeParts(vol.Name())
 
 	inst, diskName, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, volName, volumeDbType)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
 		return err
 	}
 
@@ -9165,7 +9175,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 	_, volName := project.StorageVolumeParts(vol.Name())
 
 	inst, _, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, volName, volumeDbType)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
 		return err
 	}
 
@@ -9735,7 +9745,8 @@ func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcDat
 			continue
 		}
 
-		devKey := fmt.Sprintf("%s/%s", dev["pool"], dev["source"])
+		volName, _ := internalInstance.SplitVolumeSource(dev["source"])
+		devKey := fmt.Sprintf("%s/%s", dev["pool"], volName)
 		devicesMap[devKey] = devName
 	}
 
