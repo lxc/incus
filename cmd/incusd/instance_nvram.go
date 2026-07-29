@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"maps"
 	"net/http"
 	"slices"
@@ -664,7 +663,7 @@ func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if inst.IsRunning() {
-		return response.BadRequest(fmt.Errorf("UEFI variables cannot be deleted on running VMs"))
+		return response.BadRequest(errors.New("UEFI variables cannot be deleted on running VMs"))
 	}
 
 	vars, ok := store.Vars[guid]
@@ -680,7 +679,7 @@ func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {
 	delete(store.Vars[guid], varName)
 	err = inst.SetNVRAM(store)
 	if err != nil {
-		response.SmartError(err)
+		return response.SmartError(err)
 	}
 
 	return response.EmptySyncResponse
