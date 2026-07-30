@@ -1,34 +1,20 @@
 package linux
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-
-	"github.com/lxc/incus/v7/shared/logger"
+	"syscall"
 )
+
+// See PROC_USER_INIT_INO in include/uapi/linux/nsfs.h.
+const procUserInitIno = 0xEFFFFFFD
 
 // RunningInUserNS returns true if the current process is running inside a user namespace.
 func RunningInUserNS() bool {
-	file, err := os.Open("/proc/self/uid_map")
+	var st syscall.Stat_t
+
+	err := syscall.Stat("/proc/self/ns/user", &st)
 	if err != nil {
 		return false
 	}
 
-	defer logger.WarnOnError(file.Close, "Failed to close file")
-
-	buf := bufio.NewReader(file)
-	l, _, err := buf.ReadLine()
-	if err != nil {
-		return false
-	}
-
-	line := string(l)
-	var a, b, c int64
-	_, _ = fmt.Sscanf(line, "%d %d %d", &a, &b, &c)
-	if a == 0 && b == 0 && c == 4294967295 {
-		return false
-	}
-
-	return true
+	return st.Ino != procUserInitIno
 }
