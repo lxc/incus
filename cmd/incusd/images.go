@@ -133,7 +133,12 @@ var imagePublishLock sync.Mutex
 var imageTaskMu sync.Mutex
 
 func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
-	reproducible := []string{"gzip"}
+	// Compressors with reproducible output and the flags needed for it.
+	reproducible := map[string][]string{
+		"gzip": {"-n"},
+		"pigz": {"-n", "-m"},
+	}
+
 	var cmd *exec.Cmd
 
 	// Parse the command.
@@ -183,8 +188,9 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 			args = append(args, fields[1:]...)
 		}
 
-		if slices.Contains(reproducible, fields[0]) {
-			args = append(args, "-n")
+		flags, ok := reproducible[fields[0]]
+		if ok {
+			args = append(args, flags...)
 		}
 
 		cmd := exec.Command(fields[0], args...)
