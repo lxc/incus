@@ -681,6 +681,14 @@ func GetInstanceDevices(ctx context.Context, db tx, instanceID int, filters ...D
 		_err = mapErr(_err, "Instance")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, DeviceFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{instanceID}
+	}
+
 	instanceDevices, err := GetDevices(ctx, db, "instances", "instance", filters...)
 	if err != nil {
 		return nil, err
@@ -705,6 +713,14 @@ func GetInstanceConfig(ctx context.Context, db tx, instanceID int, filters ...Co
 	defer func() {
 		_err = mapErr(_err, "Instance")
 	}()
+
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{instanceID}
+	}
 
 	instanceConfig, err := GetConfig(ctx, db, "instances", "instance", filters...)
 	if err != nil {

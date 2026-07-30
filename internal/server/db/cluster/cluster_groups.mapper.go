@@ -181,6 +181,14 @@ func GetClusterGroupConfig(ctx context.Context, db tx, clusterGroupID int, filte
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{clusterGroupID}
+	}
+
 	clusterGroupConfig, err := GetConfig(ctx, db, "cluster_groups", "cluster_group", filters...)
 	if err != nil {
 		return nil, err

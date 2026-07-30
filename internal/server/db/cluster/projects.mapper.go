@@ -212,6 +212,14 @@ func GetProjectConfig(ctx context.Context, db tx, projectID int, filters ...Conf
 		_err = mapErr(_err, "Project")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{projectID}
+	}
+
 	projectConfig, err := GetConfig(ctx, db, "projects", "project", filters...)
 	if err != nil {
 		return nil, err
