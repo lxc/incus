@@ -36,6 +36,9 @@ func (c *cmdLowLevel) command() *cobra.Command {
 	cmd.Short = i18n.G("Low-level commands")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Low-level commands for instances`))
 
+	lowLevelBitmapsCmd := cmdLowLevelBitmaps{global: c.global}
+	cmd.AddCommand(lowLevelBitmapsCmd.command())
+
 	lowLevelAttachCmd := cmdLowLevelMemory{global: c.global, lowLevel: c}
 	cmd.AddCommand(lowLevelAttachCmd.command())
 
@@ -45,7 +48,141 @@ func (c *cmdLowLevel) command() *cobra.Command {
 	lowLevelNVRAMCmd := cmdLowLevelNVRAM{global: c.global}
 	cmd.AddCommand(lowLevelNVRAMCmd.command())
 
+	lowLevelRepairCmd := cmdLowLevelRepair{global: c.global}
+	cmd.AddCommand(lowLevelRepairCmd.command())
+
 	return cmd
+}
+
+type cmdLowLevelBitmaps struct {
+	global *cmdGlobal
+}
+
+func (c *cmdLowLevelBitmaps) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("bitmaps")
+	cmd.Short = i18n.G("Manage dirty bitmaps on virtual machines")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage dirty bitmaps on virtual machines`))
+
+	// Create.
+	lowLevelBitmapsCreateCmd := cmdLowLevelBitmapsCreate{global: c.global}
+	cmd.AddCommand(lowLevelBitmapsCreateCmd.command())
+
+	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706.
+	cmd.Args = cobra.NoArgs
+	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
+	return cmd
+}
+
+// Create.
+type cmdLowLevelBitmapsCreate struct {
+	global *cmdGlobal
+
+	flagGranularity int
+	flagPersistent  bool
+	flagDisabled    bool
+}
+
+var cmdLowLevelBitmapsCreateUsage = u.Usage{u.Instance.Remote(), u.NewName(u.Placeholder(i18n.G("bitmap")))}
+
+func (c *cmdLowLevelBitmapsCreate) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("create", cmdLowLevelBitmapsCreateUsage...)
+	cmd.Short = i18n.G("Create a dirty bitmap on a virtual machine")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Create a dirty bitmap on all the disks of a running virtual machine`,
+	))
+
+	cmd.RunE = c.run
+	cli.AddIntFlag(cmd.Flags(), &c.flagGranularity, "granularity", i18n.G("Granularity of the dirty bitmap in bytes"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagPersistent, "persistent", i18n.G("Store the bitmap on disk"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagDisabled, "disabled", i18n.G("Create the bitmap in the disabled state"))
+
+	// completion for instance.
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelBitmapsCreate) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelBitmapsCreateUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+
+	bitmap := api.StorageVolumeBitmapsPost{
+		Name:        parsed[1].String,
+		Granularity: c.flagGranularity,
+		Persistent:  c.flagPersistent,
+		Disabled:    c.flagDisabled,
+	}
+
+	err = d.CreateInstanceBitmap(instanceName, bitmap)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to create bitmap: %w"), err)
+	}
+
+	return nil
+}
+
+type cmdLowLevelRepair struct {
+	global *cmdGlobal
+}
+
+var cmdLowLevelRepairUsage = u.Usage{u.Instance.Remote(), u.Placeholder(i18n.G("action"))}
+
+func (c *cmdLowLevelRepair) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("repair", cmdLowLevelRepairUsage...)
+	cmd.Short = i18n.G("Run a repair action on an instance")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Run a low-level repair action on an instance.
+
+Supported actions:
+  rebuild-config-volume    Rebuild the config volume of a stopped QCOW2 backed virtual machine`,
+	))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return []string{"rebuild-config-volume"}, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelRepair) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelRepairUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+
+	err = d.RepairInstance(instanceName, api.InstanceDebugRepairPost{Action: parsed[1].String})
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to repair instance: %w"), err)
+	}
+
+	return nil
 }
 
 type cmdLowLevelMemory struct {
