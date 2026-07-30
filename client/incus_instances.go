@@ -3385,17 +3385,27 @@ func (r *ProtocolIncus) GetInstanceNVRAMGUID(name string, guid string) (map[stri
 }
 
 // GetRawInstanceNVRAMGUIDVar gets raw OVMF variables from an instance.
-func (r *ProtocolIncus) GetRawInstanceNVRAMGUIDVar(name string, guid string, varName string) ([]byte, error) {
+func (r *ProtocolIncus) GetRawInstanceNVRAMGUIDVar(name string, guid string, varName string) ([]byte, uint32, error) {
 	if !r.HasExtension("instance_nvram") {
-		return nil, errors.New(`The server is missing the required "instance_nvram" API extension`)
+		return nil, 0, errors.New(`The server is missing the required "instance_nvram" API extension`)
 	}
 
 	resp, err := r.getInstanceNVRAM(name, guid, varName, "application/octet-stream")
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return io.ReadAll(resp.Body)
+	attributes, err := strconv.ParseUint(resp.Header.Get("X-Incus-attributes"), 10, 32)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return data, uint32(attributes), err
 }
 
 // GetInstanceNVRAMGUIDVar gets interpreted OVMF variables from an instance.
