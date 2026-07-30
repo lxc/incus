@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -242,7 +243,9 @@ func (d *ceph) rbdUnmapVolume(vol Volume, unmapUntilEINVAL bool) error {
 	ourDeactivate := false
 
 again:
-	_, err := subprocess.RunCommand(
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	_, err := subprocess.RunCommandContext(
+		ctx,
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
@@ -250,7 +253,12 @@ again:
 		"unmap",
 		rbdVol,
 	)
+	cancel()
 	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return fmt.Errorf("Timed out unmapping RBD volume %q", rbdVol)
+		}
+
 		var runError subprocess.RunError
 		if errors.As(err, &runError) {
 			var exitError *exec.ExitError
