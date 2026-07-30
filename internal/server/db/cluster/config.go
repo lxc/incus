@@ -26,6 +26,7 @@ type Config struct {
 
 // ConfigFilter specifies potential query parameter fields.
 type ConfigFilter struct {
-	Key   *string
-	Value *string
+	ReferenceID []int
+	Key         *string
+	Value       *string
 }

@@ -34,9 +34,10 @@ type Device struct {
 
 // DeviceFilter specifies potential query parameter fields.
 type DeviceFilter struct {
-	Name   *string
-	Type   *DeviceType
-	Config *ConfigFilter
+	ReferenceID []int
+	Name        *string
+	Type        *DeviceType
+	Config      *ConfigFilter
 }
 
 // Supported device types.
