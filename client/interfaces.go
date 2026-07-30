@@ -420,6 +420,7 @@ type InstanceServer interface {
 	// Storage volume bitmaps manipulations functions ("storage_volume_nbd" API extension)
 	GetStorageVolumeBitmapNames(pool string, volumeType string, volumeName string) ([]string, error)
 	GetStorageVolumeBitmaps(pool string, volumeType string, volumeName string) ([]api.StorageVolumeBitmap, error)
+	GetStorageVolumeBitmap(pool string, volumeType string, volumeName string, bitmapName string) (bitmap *api.StorageVolumeBitmap, err error)
 	CreateStorageVolumeBitmap(pool string, volumeType string, volumeName string, bitmap api.StorageVolumeBitmapsPost) error
 	DeleteStorageVolumeBitmap(pool string, volumeType string, volumeName string, bitmapName string) error
 

@@ -1566,6 +1566,26 @@ func (r *ProtocolIncus) GetStorageVolumeBitmaps(pool string, volumeType string, 
 	return bitmaps, nil
 }
 
+// GetStorageVolumeBitmap returns information about a volume bitmap.
+func (r *ProtocolIncus) GetStorageVolumeBitmap(pool string, volumeType string, volumeName string, bitmapName string) (*api.StorageVolumeBitmap, error) {
+	if !r.HasExtension("storage_volume_nbd") {
+		return nil, errors.New("The server is missing the required \"storage_volume_nbd\" API extension")
+	}
+
+	bitmap := api.StorageVolumeBitmap{}
+
+	path := fmt.Sprintf(
+		"/storage-pools/%s/volumes/%s/%s/bitmaps/%s",
+		url.PathEscape(pool), url.PathEscape(volumeType), url.PathEscape(volumeName), url.PathEscape(bitmapName),
+	)
+	_, err := r.queryStruct("GET", path, nil, "", &bitmap)
+	if err != nil {
+		return nil, err
+	}
+
+	return &bitmap, nil
+}
+
 // CreateStorageVolumeBitmap creates a new volume bitmap.
 func (r *ProtocolIncus) CreateStorageVolumeBitmap(pool string, volumeType string, volumeName string, bitmap api.StorageVolumeBitmapsPost) error {
 	if !r.HasExtension("storage_volume_nbd") {
