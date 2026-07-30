@@ -147,7 +147,7 @@ func instanceDebugMemoryGet(d *Daemon, r *http.Request) response.Response {
 	})
 }
 
-// swagger:operation GET /1.0/instances/{name}/debug/repair instances instance_debug_repair_post
+// swagger:operation POST /1.0/instances/{name}/debug/repair instances instance_debug_repair_post
 //
 //	Trigger a repair action on the instance.
 //

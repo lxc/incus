@@ -10949,7 +10949,7 @@ paths:
             tags:
                 - instances
     /1.0/instances/{name}/debug/repair:
-        get:
+        post:
             description: Runs an internal repair action on the instance.
             operationId: instance_debug_repair_post
             parameters:
