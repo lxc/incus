@@ -194,6 +194,10 @@ func OperationCreate(s *state.State, projectName string, opClass OperationClass,
 
 	err = registerDBOperation(&op, opType)
 	if err != nil {
+		operationsLock.Lock()
+		delete(operations, op.id)
+		operationsLock.Unlock()
+
 		return nil, err
 	}
 
