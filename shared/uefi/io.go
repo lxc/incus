@@ -426,9 +426,29 @@ func (w *writer) size() int {
 	return len(w.data)
 }
 
+// skip skips bytes.
+func (w *writer) skip(n int) error {
+	if n < 0 {
+		return errUnexpectedData
+	}
+
+	return w.write(make([]byte, n))
+}
+
 // write writes raw bytes.
 func (w *writer) write(b []byte) error {
 	w.data = append(w.data, b...)
+	return nil
+}
+
+// writeB8 writes an 8-bit boolean.
+func (w *writer) writeB8(v bool) error {
+	var b byte
+	if v {
+		b = 1
+	}
+
+	w.data = append(w.data, b)
 	return nil
 }
 
@@ -460,6 +480,12 @@ func (w *writer) writeU32(v uint32) error {
 	return nil
 }
 
+// writeU32At writes a 32-bit unsigned integer at the given position.
+func (w *writer) writeU32At(v uint32, pos int) error {
+	binary.LittleEndian.PutUint32(w.data[pos:], v)
+	return nil
+}
+
 // writeU64 writes a 64-bit unsigned integer.
 func (w *writer) writeU64(v uint64) error {
 	b := make([]byte, 8)
@@ -468,7 +494,7 @@ func (w *writer) writeU64(v uint64) error {
 	return nil
 }
 
-// writeGUID reads a GUID.
+// writeGUID writes a GUID.
 func (w *writer) writeGUID(guid string) error {
 	b, err := hex.DecodeString(strings.ReplaceAll(guid, "-", ""))
 	if err != nil {
@@ -483,6 +509,10 @@ func (w *writer) writeGUID(guid string) error {
 func (w *writer) writeZ8(s string, n ...int) error {
 	size := len(s)
 	if len(n) > 0 {
+		if n[0] < size {
+			return fmt.Errorf("UTF8 string %q cannot fit in %d bytes", s, n[0])
+		}
+
 		size = n[0]
 	}
 
@@ -492,14 +522,14 @@ func (w *writer) writeZ8(s string, n ...int) error {
 	return nil
 }
 
-// writeZ16 writes an UTF16 string.
-func (w *writer) writeZ16(s string, n ...int) error {
-	size := len(s) * 2
-	if len(n) > 0 {
-		size = n[0] * 2
-	}
+// writeZn8 writes a NUL-terminated ASCII/UTF8 string.
+func (w *writer) writeZn8(s string, n ...int) error {
+	return w.writeZ8(s+"\x00", n...)
+}
 
-	b := make([]byte, size)
+// writeZ16 writes an UTF16 string.
+func (w *writer) writeZ16(s string) error {
+	b := make([]byte, len(s)*2)
 	for i, c := range utf16.Encode([]rune(s)) {
 		b[i*2] = byte(c)
 		b[i*2+1] = byte(c >> 8)
@@ -510,7 +540,7 @@ func (w *writer) writeZ16(s string, n ...int) error {
 }
 
 // writeZ16 writes a NUL-terminated UTF16 string.
-func (w *writer) writeZn16(s string, n ...int) error {
+func (w *writer) writeZn16(s string) error {
 	return w.writeZ16(s + "\x00")
 }
 

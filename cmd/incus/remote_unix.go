@@ -44,7 +44,7 @@ func (c *cmdRemoteProxy) command() *cobra.Command {
 
 	cmd.RunE = c.run
 
-	cli.AddIntFlag(cmd.Flags(), &c.flagTimeout, "timeout", 0, i18n.G("Proxy timeout (exits when no connections)"))
+	cli.AddIntFlag(cmd.Flags(), &c.flagTimeout, "timeout", i18n.G("Proxy timeout (exits when no connections)"), 0)
 
 	return cmd
 }

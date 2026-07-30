@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-29 22:38-0400\n"
+"POT-Creation-Date: 2026-07-29 22:51-0400\n"
 "PO-Revision-Date: 2026-07-13 05:46+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -112,6 +112,15 @@ msgstr ""
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\""
+
+#: cmd/incus/low_level.go:346
+#, fuzzy
+msgid ""
+"### This is a YAML representation of the UEFI variable.\n"
+"### Any line starting with a '# will be ignored."
+msgstr ""
+"### Dies ist eine yaml-Repräsentation des Cluster-Mitglieds.\n"
+"### Jede mit '# beginnende Zeile wird ignoriert."
 
 #: cmd/incus/config_trust.go:272
 msgid ""
@@ -672,16 +681,16 @@ msgstr ""
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' ist kein unterstützter Dateityp"
 
-#: cmd/incus/low_level.go:472
+#: cmd/incus/low_level.go:608
 msgid "(binary data)"
 msgstr ""
 
-#: cmd/incus/low_level.go:477
+#: cmd/incus/low_level.go:613
 #, fuzzy, c-format
 msgid "(error: %w)"
 msgstr "Fehler: %v\n"
 
-#: cmd/incus/low_level.go:464
+#: cmd/incus/low_level.go:600
 #, fuzzy
 msgid "(no timestamp)"
 msgstr "Zeitstempel:\n"
@@ -718,6 +727,11 @@ msgstr "- Port %d (%s)"
 #, fuzzy
 msgid "--all cannot be used together with other arguments"
 msgstr "--target kann nicht mit Instanzen verwendet werden"
+
+#: cmd/incus/low_level.go:741
+#, fuzzy
+msgid "--attributes cannot be used without --raw"
+msgstr "--refresh kann nur mit Containern verwendet werden"
 
 #: cmd/incus/action.go:246
 #, fuzzy
@@ -799,6 +813,11 @@ msgstr "--target kann nur mit Clustern verwendet werden"
 msgid "--target cannot be used with instances"
 msgstr "--target kann nicht mit Instanzen verwendet werden"
 
+#: cmd/incus/low_level.go:745
+#, fuzzy
+msgid "--timestamp cannot be used without --raw"
+msgstr "--refresh kann nur mit Containern verwendet werden"
+
 #: cmd/incus/admin_sql.go:128
 #, c-format
 msgid "=> Query %d:"
@@ -847,7 +866,7 @@ msgstr "APP"
 msgid "ARCHITECTURE"
 msgstr "ARCHITEKTUR"
 
-#: cmd/incus/low_level.go:412
+#: cmd/incus/low_level.go:548
 msgid "ATTRIBUTES"
 msgstr ""
 
@@ -1681,7 +1700,7 @@ msgstr "Clustering aktiviert"
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:394 cmd/incus/network.go:1054
+#: cmd/incus/low_level.go:530 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
@@ -2677,6 +2696,11 @@ msgstr "Kein Zertifikat für diese Verbindung"
 msgid "Edit image properties"
 msgstr ""
 
+#: cmd/incus/low_level.go:328 cmd/incus/low_level.go:329
+#, fuzzy
+msgid "Edit instance UEFI variables"
+msgstr "kann nicht zum selben Container Namen kopieren"
+
 #: cmd/incus/config_template.go:177 cmd/incus/config_template.go:178
 #, fuzzy
 msgid "Edit instance file templates"
@@ -2781,7 +2805,7 @@ msgstr "Alternatives config Verzeichnis."
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:426 cmd/incus/network.go:1101
+#: cmd/incus/low_level.go:562 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
@@ -3067,7 +3091,7 @@ msgid ""
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
 
-#: cmd/incus/low_level.go:60
+#: cmd/incus/low_level.go:63
 #, fuzzy
 msgid "Export a virtual machine's memory state"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -3116,7 +3140,7 @@ msgstr "Storage Buckets exportieren"
 msgid "Export storage buckets as tarball."
 msgstr "Storage Buckets als Dateien (.tar) exportieren."
 
-#: cmd/incus/low_level.go:61
+#: cmd/incus/low_level.go:64
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3278,7 +3302,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed starting sshfs: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/low_level.go:180 cmd/incus/port_forward.go:128
+#: cmd/incus/low_level.go:183 cmd/incus/port_forward.go:128
 #: cmd/incus/storage_volume.go:2661 cmd/incus/utils.go:640
 #, fuzzy, c-format
 msgid "Failed to accept incoming connection: %w"
@@ -3364,7 +3388,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/low_level.go:93
+#: cmd/incus/low_level.go:96
 #, fuzzy, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -3384,12 +3408,12 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to find project: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:354 cmd/incus/low_level.go:363
+#: cmd/incus/low_level.go:490 cmd/incus/low_level.go:499
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/low_level.go:496
+#: cmd/incus/low_level.go:632
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -3399,7 +3423,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Failed to join cluster: %w"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/low_level.go:165 cmd/incus/port_forward.go:114
+#: cmd/incus/low_level.go:168 cmd/incus/port_forward.go:114
 #: cmd/incus/storage_volume.go:2653 cmd/incus/utils.go:625
 #, fuzzy, c-format
 msgid "Failed to listen for connection: %w"
@@ -3429,6 +3453,11 @@ msgstr "Akzeptiere Zertifikat"
 #: cmd/incus/admin_init_preseed.go:39
 #, fuzzy, c-format
 msgid "Failed to parse the preseed: %w"
+msgstr "Akzeptiere Zertifikat"
+
+#: cmd/incus/low_level.go:751
+#, fuzzy, c-format
+msgid "Failed to parse variable %s:%s: %w"
 msgstr "Akzeptiere Zertifikat"
 
 #: cmd/incus/admin_init_preseed.go:30
@@ -3499,6 +3528,16 @@ msgstr "Akzeptiere Zertifikat"
 #, fuzzy, c-format
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Akzeptiere Zertifikat"
+
+#: cmd/incus/low_level.go:421
+#, fuzzy, c-format
+msgid "Failed to set UEFI variable %s:%s: %s"
+msgstr "kann nicht zum selben Container Namen kopieren"
+
+#: cmd/incus/low_level.go:759
+#, fuzzy, c-format
+msgid "Failed to set UEFI variable %s:%s: %w"
+msgstr "kann nicht zum selben Container Namen kopieren"
 
 #: cmd/incus/cluster.go:1815
 #, fuzzy, c-format
@@ -3647,7 +3686,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:393 cmd/incus/network.go:1055
+#: cmd/incus/low_level.go:529 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
@@ -3679,7 +3718,7 @@ msgstr ""
 msgid "Format (table|compact)"
 msgstr ""
 
-#: cmd/incus/low_level.go:71
+#: cmd/incus/low_level.go:74
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
@@ -3742,11 +3781,11 @@ msgstr ""
 msgid "GPUs:"
 msgstr ""
 
-#: cmd/incus/low_level.go:383 cmd/incus/low_level.go:413
+#: cmd/incus/low_level.go:519 cmd/incus/low_level.go:549
 msgid "GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:414
+#: cmd/incus/low_level.go:550
 msgid "GUID NAME"
 msgstr ""
 
@@ -3894,11 +3933,11 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 msgid "Get the key as an instance property"
 msgstr ""
 
-#: cmd/incus/low_level.go:323
+#: cmd/incus/low_level.go:459
 msgid "Get the raw binary variable value"
 msgstr ""
 
-#: cmd/incus/low_level.go:319 cmd/incus/low_level.go:320
+#: cmd/incus/low_level.go:455 cmd/incus/low_level.go:456
 msgid "Get values for UEFI variables"
 msgstr ""
 
@@ -4074,7 +4113,7 @@ msgstr ""
 msgid "INSTANCE NAME"
 msgstr ""
 
-#: cmd/incus/low_level.go:418
+#: cmd/incus/low_level.go:554
 msgid "INTERPRETED VALUE"
 msgstr ""
 
@@ -4286,6 +4325,11 @@ msgstr ""
 msgid "Incus - Command line client"
 msgstr ""
 
+#: cmd/incus/low_level.go:394
+#, c-format
+msgid "Incus does not know how to dissect %s:%s"
+msgstr ""
+
 #: cmd/incus/info.go:245
 msgid "Infiniband:"
 msgstr ""
@@ -4336,7 +4380,7 @@ msgstr "'/' ist kein gültiges Zeichen im Namen eines Sicherungspunktes\n"
 msgid "Instance type"
 msgstr ""
 
-#: cmd/incus/low_level.go:502
+#: cmd/incus/low_level.go:638
 #, fuzzy, c-format
 msgid "Invalid GUID: %s"
 msgstr "Ungültiges Ziel %s"
@@ -4613,7 +4657,7 @@ msgid ""
 "  L - Location of the DHCP Lease (e.g. its cluster member)"
 msgstr ""
 
-#: cmd/incus/low_level.go:389 cmd/incus/low_level.go:390
+#: cmd/incus/low_level.go:525 cmd/incus/low_level.go:526
 msgid "List UEFI GUIDs and variables"
 msgstr ""
 
@@ -5526,11 +5570,11 @@ msgstr ""
 msgid "Low-level cluster administration commands"
 msgstr ""
 
-#: cmd/incus/low_level.go:33
+#: cmd/incus/low_level.go:36
 msgid "Low-level commands"
 msgstr ""
 
-#: cmd/incus/low_level.go:34
+#: cmd/incus/low_level.go:37
 #, fuzzy
 msgid "Low-level commands for instances"
 msgstr "Befehle in einer Instanz ausführen"
@@ -5623,7 +5667,7 @@ msgstr "Veröffentliche Abbild"
 msgid "Make the image public"
 msgstr "Veröffentliche Abbild"
 
-#: cmd/incus/low_level.go:246 cmd/incus/low_level.go:247
+#: cmd/incus/low_level.go:249 cmd/incus/low_level.go:250
 #, fuzzy
 msgid "Manage NVRAM on virtual machines"
 msgstr "kann nicht zum selben Container Namen kopieren"
@@ -6078,12 +6122,12 @@ msgstr ""
 msgid "NBD access to a block storage volume"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/low_level.go:116
+#: cmd/incus/low_level.go:119
 #, fuzzy
 msgid "NBD access to all of a virtual machine's disks"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/low_level.go:117
+#: cmd/incus/low_level.go:120
 msgid ""
 "NBD access to all of a virtual machine's disks\n"
 "\n"
@@ -6092,22 +6136,22 @@ msgid ""
 "device name."
 msgstr ""
 
-#: cmd/incus/low_level.go:186 cmd/incus/storage_volume.go:2666
+#: cmd/incus/low_level.go:189 cmd/incus/storage_volume.go:2666
 #, fuzzy, c-format
 msgid "NBD client connected %q"
 msgstr "Entferntes Administrator Passwort"
 
-#: cmd/incus/low_level.go:187 cmd/incus/storage_volume.go:2667
+#: cmd/incus/low_level.go:190 cmd/incus/storage_volume.go:2667
 #, fuzzy, c-format
 msgid "NBD client disconnected %q"
 msgstr "Entferntes Administrator Passwort"
 
-#: cmd/incus/low_level.go:203 cmd/incus/storage_volume.go:2672
+#: cmd/incus/low_level.go:206 cmd/incus/storage_volume.go:2672
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/low_level.go:168 cmd/incus/storage_volume.go:2656
+#: cmd/incus/low_level.go:171 cmd/incus/storage_volume.go:2656
 #, c-format
 msgid "NBD listening on %v"
 msgstr ""
@@ -6728,12 +6772,12 @@ msgstr ""
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
 #: cmd/incus/config_trust.go:333 cmd/incus/image.go:488
-#: cmd/incus/network.go:767 cmd/incus/network_acl.go:672
-#: cmd/incus/network_address_set.go:526 cmd/incus/network_forward.go:730
-#: cmd/incus/network_integration.go:298 cmd/incus/network_load_balancer.go:710
-#: cmd/incus/network_peer.go:733 cmd/incus/network_zone.go:675
-#: cmd/incus/network_zone.go:1344 cmd/incus/profile.go:575
-#: cmd/incus/project.go:398 cmd/incus/storage.go:358
+#: cmd/incus/low_level.go:422 cmd/incus/network.go:767
+#: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
+#: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
+#: cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733
+#: cmd/incus/network_zone.go:675 cmd/incus/network_zone.go:1344
+#: cmd/incus/profile.go:575 cmd/incus/project.go:398 cmd/incus/storage.go:358
 #: cmd/incus/storage_bucket.go:336 cmd/incus/storage_bucket.go:1210
 #: cmd/incus/storage_volume.go:1082 cmd/incus/storage_volume.go:1114
 msgid "Press enter to open the editor again or ctrl+c to abort change"
@@ -6962,7 +7006,7 @@ msgstr ""
 msgid "Query virtual machine images"
 msgstr ""
 
-#: cmd/incus/low_level.go:416
+#: cmd/incus/low_level.go:552
 msgid "RAW VALUE"
 msgstr ""
 
@@ -7942,6 +7986,26 @@ msgstr "Anhalten des Containers fehlgeschlagen!"
 msgid "Set the key as an instance property"
 msgstr ""
 
+#: cmd/incus/low_level.go:698
+msgid "Set the raw binary variable value"
+msgstr ""
+
+#: cmd/incus/low_level.go:696
+msgid "Set the variable attributes (requires `--raw`)"
+msgstr ""
+
+#: cmd/incus/low_level.go:697
+msgid "Set the variable timestamp (requires `--raw`)"
+msgstr ""
+
+#: cmd/incus/low_level.go:692
+msgid "Set values for UEFI variables"
+msgstr ""
+
+#: cmd/incus/low_level.go:693
+msgid "Set values for UEFI variables."
+msgstr ""
+
 #: cmd/incus/file.go:925 cmd/incus/storage_volume_file.go:349
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
@@ -8272,7 +8336,7 @@ msgstr ""
 msgid "Source:"
 msgstr ""
 
-#: cmd/incus/low_level.go:125 cmd/incus/storage_volume.go:2605
+#: cmd/incus/low_level.go:128 cmd/incus/storage_volume.go:2605
 msgid "Specific address to listen on"
 msgstr ""
 
@@ -8489,7 +8553,7 @@ msgstr ""
 msgid "TARGET"
 msgstr ""
 
-#: cmd/incus/low_level.go:417
+#: cmd/incus/low_level.go:553
 msgid "TIMESTAMP"
 msgstr ""
 
@@ -8967,7 +9031,7 @@ msgstr ""
 msgid "Type: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:590
+#: cmd/incus/low_level.go:814
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr ""
@@ -9049,7 +9113,7 @@ msgstr "Unbekannter Befehl %s für Abbild"
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:432 cmd/incus/network.go:1107
+#: cmd/incus/low_level.go:568 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
@@ -9088,7 +9152,7 @@ msgstr "Unbekannter Befehl %s für Abbild"
 msgid "Unknown output type %q"
 msgstr "Unbekannter Befehl %s für Abbild"
 
-#: cmd/incus/low_level.go:552 cmd/incus/low_level.go:553
+#: cmd/incus/low_level.go:776 cmd/incus/low_level.go:777
 msgid "Unset UEFI variables"
 msgstr ""
 
@@ -9413,7 +9477,7 @@ msgstr "Profil %s erstellt\n"
 msgid "User aborted delete operation"
 msgstr ""
 
-#: cmd/incus/low_level.go:415
+#: cmd/incus/low_level.go:551
 #, fuzzy
 msgid "VARIABLE NAME"
 msgstr "DATEINAME"
@@ -10118,7 +10182,7 @@ msgid ""
 "  List instances with their running state and user comment."
 msgstr ""
 
-#: cmd/incus/low_level.go:65
+#: cmd/incus/low_level.go:68
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
@@ -11088,10 +11152,6 @@ msgstr ""
 #, fuzzy, c-format
 #~ msgid "Failed to connect to cluster member: %w"
 #~ msgstr "kann nicht zum selben Container Namen kopieren"
-
-#, fuzzy, c-format
-#~ msgid "Failed to parse servers: %w"
-#~ msgstr "Akzeptiere Zertifikat"
 
 #, fuzzy
 #~ msgid "Filtering isn't supported yet"

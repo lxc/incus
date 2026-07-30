@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-29 22:38-0400\n"
+"POT-Creation-Date: 2026-07-29 22:51-0400\n"
 "PO-Revision-Date: 2026-07-28 13:01+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -105,6 +105,15 @@ msgstr ""
 "### used_by: []\n"
 "### config:\n"
 "###   size: \"61203283968\""
+
+#: cmd/incus/low_level.go:346
+#, fuzzy
+msgid ""
+"### This is a YAML representation of the UEFI variable.\n"
+"### Any line starting with a '# will be ignored."
+msgstr ""
+"### Detta är en YAML-representation av klustermedlemmen.\n"
+"### Alla rader som börjar med ett '# ignoreras."
 
 #: cmd/incus/config_trust.go:272
 msgid ""
@@ -674,16 +683,16 @@ msgstr "%s %s syntax är föråldrad; %s\n"
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' är inte en filtyp som stöds"
 
-#: cmd/incus/low_level.go:472
+#: cmd/incus/low_level.go:608
 msgid "(binary data)"
 msgstr "(binär data)"
 
-#: cmd/incus/low_level.go:477
+#: cmd/incus/low_level.go:613
 #, c-format
 msgid "(error: %w)"
 msgstr "(fel: %w)"
 
-#: cmd/incus/low_level.go:464
+#: cmd/incus/low_level.go:600
 msgid "(no timestamp)"
 msgstr "(ingen tidsstämpel)"
 
@@ -718,6 +727,11 @@ msgstr "- Port %d (%s)"
 #: cmd/incus/warning.go:362
 msgid "--all cannot be used together with other arguments"
 msgstr "--all kan inte användas tillsammans med andra argument"
+
+#: cmd/incus/low_level.go:741
+#, fuzzy
+msgid "--attributes cannot be used without --raw"
+msgstr "--no-profiles kan inte användas tillsammans med --refresh"
 
 #: cmd/incus/action.go:246
 msgid "--console can't be used while forcing instance shutdown"
@@ -790,6 +804,11 @@ msgstr "--target kan endast användas med kluster"
 msgid "--target cannot be used with instances"
 msgstr "--target kan inte användas med instanser"
 
+#: cmd/incus/low_level.go:745
+#, fuzzy
+msgid "--timestamp cannot be used without --raw"
+msgstr "--no-profiles kan inte användas tillsammans med --refresh"
+
 #: cmd/incus/admin_sql.go:128
 #, c-format
 msgid "=> Query %d:"
@@ -839,7 +858,7 @@ msgstr "APP"
 msgid "ARCHITECTURE"
 msgstr "ARKITEKTUR"
 
-#: cmd/incus/low_level.go:412
+#: cmd/incus/low_level.go:548
 msgid "ATTRIBUTES"
 msgstr "ATTRIBUTE"
 
@@ -1640,7 +1659,7 @@ msgstr "Klustering aktiverad"
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:394 cmd/incus/network.go:1054
+#: cmd/incus/low_level.go:530 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
@@ -2589,6 +2608,11 @@ msgstr "Redigera filer i lagringsvolymer"
 msgid "Edit image properties"
 msgstr "Redigera avbildsegenskaper"
 
+#: cmd/incus/low_level.go:328 cmd/incus/low_level.go:329
+#, fuzzy
+msgid "Edit instance UEFI variables"
+msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
+
 #: cmd/incus/config_template.go:177 cmd/incus/config_template.go:178
 msgid "Edit instance file templates"
 msgstr "Redigera instansfilmallar"
@@ -2684,7 +2708,7 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:426 cmd/incus/network.go:1101
+#: cmd/incus/low_level.go:562 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
@@ -2974,7 +2998,7 @@ msgstr ""
 "Utgångsdatum för den nya ögonblicksbilden (antingen ett tidsintervall som "
 "`1d 3H` eller ett datum i formatet `2006/01/02 15:04 MST`)"
 
-#: cmd/incus/low_level.go:60
+#: cmd/incus/low_level.go:63
 msgid "Export a virtual machine's memory state"
 msgstr "Exportera en virtuell maskins minnestillstånd"
 
@@ -3016,7 +3040,7 @@ msgstr "Exportera lagringsbehållare"
 msgid "Export storage buckets as tarball."
 msgstr "Exportera lagringsbuckets som tarball."
 
-#: cmd/incus/low_level.go:61
+#: cmd/incus/low_level.go:64
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3180,7 +3204,7 @@ msgstr "Startkommandot misslyckades: %w"
 msgid "Failed starting sshfs: %w"
 msgstr "Misslyckades med att starta sshfs: %w"
 
-#: cmd/incus/low_level.go:180 cmd/incus/port_forward.go:128
+#: cmd/incus/low_level.go:183 cmd/incus/port_forward.go:128
 #: cmd/incus/storage_volume.go:2661 cmd/incus/utils.go:640
 #, c-format
 msgid "Failed to accept incoming connection: %w"
@@ -3267,7 +3291,7 @@ msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
 "Det gick inte att ta bort den ursprungliga instansen efter kopieringen: %w"
 
-#: cmd/incus/low_level.go:93
+#: cmd/incus/low_level.go:96
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
@@ -3287,12 +3311,12 @@ msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
 msgid "Failed to find project: %w"
 msgstr "Projektet kunde inte hittas: %w"
 
-#: cmd/incus/low_level.go:354 cmd/incus/low_level.go:363
+#: cmd/incus/low_level.go:490 cmd/incus/low_level.go:499
 #, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr "Det gick inte att hämta instansens UEFI-variabel: %w"
 
-#: cmd/incus/low_level.go:496
+#: cmd/incus/low_level.go:632
 #, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
@@ -3302,7 +3326,7 @@ msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
 msgid "Failed to join cluster: %w"
 msgstr "Det gick inte att ansluta till klustret: %w"
 
-#: cmd/incus/low_level.go:165 cmd/incus/port_forward.go:114
+#: cmd/incus/low_level.go:168 cmd/incus/port_forward.go:114
 #: cmd/incus/storage_volume.go:2653 cmd/incus/utils.go:625
 #, c-format
 msgid "Failed to listen for connection: %w"
@@ -3333,6 +3357,11 @@ msgstr "Det gick inte att analysera dumpningssvaret: %w"
 #, c-format
 msgid "Failed to parse the preseed: %w"
 msgstr "Det gick inte att analysera förinställningen: %w"
+
+#: cmd/incus/low_level.go:751
+#, fuzzy, c-format
+msgid "Failed to parse variable %s:%s: %w"
+msgstr "Det gick inte att analysera servrarna: %w"
 
 #: cmd/incus/admin_init_preseed.go:30
 #, c-format
@@ -3404,6 +3433,16 @@ msgstr "Det gick inte att hämta listan över nätverk: %w"
 #, c-format
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Det gick inte att hämta listan över lagringspooler: %w"
+
+#: cmd/incus/low_level.go:421
+#, fuzzy, c-format
+msgid "Failed to set UEFI variable %s:%s: %s"
+msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
+
+#: cmd/incus/low_level.go:759
+#, fuzzy, c-format
+msgid "Failed to set UEFI variable %s:%s: %w"
+msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
 
 #: cmd/incus/cluster.go:1815
 #, c-format
@@ -3577,7 +3616,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:393 cmd/incus/network.go:1055
+#: cmd/incus/low_level.go:529 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
@@ -3612,7 +3651,7 @@ msgstr "Format (pem|pfx)"
 msgid "Format (table|compact)"
 msgstr "Format (tabell|kompakt)"
 
-#: cmd/incus/low_level.go:71
+#: cmd/incus/low_level.go:74
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
@@ -3686,11 +3725,11 @@ msgstr "GPU:"
 msgid "GPUs:"
 msgstr "Grafikkort:"
 
-#: cmd/incus/low_level.go:383 cmd/incus/low_level.go:413
+#: cmd/incus/low_level.go:519 cmd/incus/low_level.go:549
 msgid "GUID"
 msgstr "GUID"
 
-#: cmd/incus/low_level.go:414
+#: cmd/incus/low_level.go:550
 msgid "GUID NAME"
 msgstr "GUID-NAMN"
 
@@ -3839,11 +3878,11 @@ msgstr "Hämta nyckeln som en lagringsvolymegenskap"
 msgid "Get the key as an instance property"
 msgstr "Hämta nyckeln som en instansegenskap"
 
-#: cmd/incus/low_level.go:323
+#: cmd/incus/low_level.go:459
 msgid "Get the raw binary variable value"
 msgstr "Hämta det råa binära variabelvärdet"
 
-#: cmd/incus/low_level.go:319 cmd/incus/low_level.go:320
+#: cmd/incus/low_level.go:455 cmd/incus/low_level.go:456
 msgid "Get values for UEFI variables"
 msgstr "Hämta värden för UEFI-variabler"
 
@@ -4011,7 +4050,7 @@ msgstr "AVBILDNINGAR"
 msgid "INSTANCE NAME"
 msgstr "INSTANSNAMN"
 
-#: cmd/incus/low_level.go:418
+#: cmd/incus/low_level.go:554
 msgid "INTERPRETED VALUE"
 msgstr "TOLKAT VÄRDE"
 
@@ -4223,6 +4262,11 @@ msgstr "Inkludera mindre vanliga kommandon"
 msgid "Incus - Command line client"
 msgstr "Incus - Kommandoradsklient"
 
+#: cmd/incus/low_level.go:394
+#, c-format
+msgid "Incus does not know how to dissect %s:%s"
+msgstr ""
+
 #: cmd/incus/info.go:245
 msgid "Infiniband:"
 msgstr "Infiniband:"
@@ -4271,7 +4315,7 @@ msgstr "Namnet på instansens ögonblicksbild är: %s"
 msgid "Instance type"
 msgstr "Instans typ"
 
-#: cmd/incus/low_level.go:502
+#: cmd/incus/low_level.go:638
 #, c-format
 msgid "Invalid GUID: %s"
 msgstr "Ogiltigt GUID: %s"
@@ -4559,7 +4603,7 @@ msgstr ""
 "  t - Typ\n"
 "   L - Plats för DHCP-lån (t.ex. dess klustermedlem)"
 
-#: cmd/incus/low_level.go:389 cmd/incus/low_level.go:390
+#: cmd/incus/low_level.go:525 cmd/incus/low_level.go:526
 msgid "List UEFI GUIDs and variables"
 msgstr "Lista UEFI-GUID:er och -variabler"
 
@@ -6030,11 +6074,11 @@ msgstr ""
 msgid "Low-level cluster administration commands"
 msgstr "Kommandon för administration av låg nivåkluster"
 
-#: cmd/incus/low_level.go:33
+#: cmd/incus/low_level.go:36
 msgid "Low-level commands"
 msgstr "Lågnivåkommandon"
 
-#: cmd/incus/low_level.go:34
+#: cmd/incus/low_level.go:37
 msgid "Low-level commands for instances"
 msgstr "Lågnivåkommandon för instanser"
 
@@ -6118,7 +6162,7 @@ msgstr "Gör avbildningen publik"
 msgid "Make the image public"
 msgstr "Gör den här bilden offentlig"
 
-#: cmd/incus/low_level.go:246 cmd/incus/low_level.go:247
+#: cmd/incus/low_level.go:249 cmd/incus/low_level.go:250
 msgid "Manage NVRAM on virtual machines"
 msgstr "Hantera NVRAM på virtuella datorer"
 
@@ -6570,11 +6614,11 @@ msgstr "NAT"
 msgid "NBD access to a block storage volume"
 msgstr "NBD-åtkomst till en blocklagringsvolym"
 
-#: cmd/incus/low_level.go:116
+#: cmd/incus/low_level.go:119
 msgid "NBD access to all of a virtual machine's disks"
 msgstr "NBD-åtkomst till alla diskar på en virtuell maskin"
 
-#: cmd/incus/low_level.go:117
+#: cmd/incus/low_level.go:120
 msgid ""
 "NBD access to all of a virtual machine's disks\n"
 "\n"
@@ -6588,22 +6632,22 @@ msgstr ""
 " NBD-server, där varje disk kan nås som en NBD-export uppkallad efter \n"
 "dess Incus-enhetsnamn."
 
-#: cmd/incus/low_level.go:186 cmd/incus/storage_volume.go:2666
+#: cmd/incus/low_level.go:189 cmd/incus/storage_volume.go:2666
 #, c-format
 msgid "NBD client connected %q"
 msgstr "NBD-klient ansluten %q"
 
-#: cmd/incus/low_level.go:187 cmd/incus/storage_volume.go:2667
+#: cmd/incus/low_level.go:190 cmd/incus/storage_volume.go:2667
 #, c-format
 msgid "NBD client disconnected %q"
 msgstr "NBD-klienten frånkopplad %q"
 
-#: cmd/incus/low_level.go:203 cmd/incus/storage_volume.go:2672
+#: cmd/incus/low_level.go:206 cmd/incus/storage_volume.go:2672
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr "NBD-anslutning misslyckades: %v"
 
-#: cmd/incus/low_level.go:168 cmd/incus/storage_volume.go:2656
+#: cmd/incus/low_level.go:171 cmd/incus/storage_volume.go:2656
 #, c-format
 msgid "NBD listening on %v"
 msgstr "NBD lyssnar på %v"
@@ -7207,12 +7251,12 @@ msgstr "Tryck på Ctrl+C för att avsluta"
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
 #: cmd/incus/config_trust.go:333 cmd/incus/image.go:488
-#: cmd/incus/network.go:767 cmd/incus/network_acl.go:672
-#: cmd/incus/network_address_set.go:526 cmd/incus/network_forward.go:730
-#: cmd/incus/network_integration.go:298 cmd/incus/network_load_balancer.go:710
-#: cmd/incus/network_peer.go:733 cmd/incus/network_zone.go:675
-#: cmd/incus/network_zone.go:1344 cmd/incus/profile.go:575
-#: cmd/incus/project.go:398 cmd/incus/storage.go:358
+#: cmd/incus/low_level.go:422 cmd/incus/network.go:767
+#: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
+#: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
+#: cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733
+#: cmd/incus/network_zone.go:675 cmd/incus/network_zone.go:1344
+#: cmd/incus/profile.go:575 cmd/incus/project.go:398 cmd/incus/storage.go:358
 #: cmd/incus/storage_bucket.go:336 cmd/incus/storage_bucket.go:1210
 #: cmd/incus/storage_volume.go:1082 cmd/incus/storage_volume.go:1114
 msgid "Press enter to open the editor again or ctrl+c to abort change"
@@ -7430,7 +7474,7 @@ msgstr "Sökvägen måste börja med /"
 msgid "Query virtual machine images"
 msgstr "Fråga virtuella maskinavbildningar"
 
-#: cmd/incus/low_level.go:416
+#: cmd/incus/low_level.go:552
 msgid "RAW VALUE"
 msgstr "RÅVÄRDE"
 
@@ -8432,6 +8476,29 @@ msgstr "Ställ in nyckeln som en lagringsvolymegenskap"
 msgid "Set the key as an instance property"
 msgstr "Ställ in nyckeln som en instansegenskap"
 
+#: cmd/incus/low_level.go:698
+#, fuzzy
+msgid "Set the raw binary variable value"
+msgstr "Hämta det råa binära variabelvärdet"
+
+#: cmd/incus/low_level.go:696
+msgid "Set the variable attributes (requires `--raw`)"
+msgstr ""
+
+#: cmd/incus/low_level.go:697
+msgid "Set the variable timestamp (requires `--raw`)"
+msgstr ""
+
+#: cmd/incus/low_level.go:692
+#, fuzzy
+msgid "Set values for UEFI variables"
+msgstr "Hämta värden för UEFI-variabler"
+
+#: cmd/incus/low_level.go:693
+#, fuzzy
+msgid "Set values for UEFI variables."
+msgstr "Hämta värden för UEFI-variabler"
+
 #: cmd/incus/file.go:925 cmd/incus/storage_volume_file.go:349
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr "Konfigurera SSH SFTP-lyssnare på adress:port istället för att montera"
@@ -8749,7 +8816,7 @@ msgstr ""
 msgid "Source:"
 msgstr "Källa:"
 
-#: cmd/incus/low_level.go:125 cmd/incus/storage_volume.go:2605
+#: cmd/incus/low_level.go:128 cmd/incus/storage_volume.go:2605
 msgid "Specific address to listen on"
 msgstr "Specifik adress att lyssna på"
 
@@ -8955,7 +9022,7 @@ msgstr "TAGET VID"
 msgid "TARGET"
 msgstr "MÅL"
 
-#: cmd/incus/low_level.go:417
+#: cmd/incus/low_level.go:553
 msgid "TIMESTAMP"
 msgstr "TIDSSTÄMPEL"
 
@@ -9473,7 +9540,7 @@ msgstr "Typ av nätverkspeern (lokal eller fjärrstyrd)"
 msgid "Type: %s"
 msgstr "Typ: %s"
 
-#: cmd/incus/low_level.go:590
+#: cmd/incus/low_level.go:814
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr "UEFI-variabel %s:%s borttagen den %s"
@@ -9553,7 +9620,7 @@ msgstr "Okänd kanaltyp för klient %q: %s"
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:432 cmd/incus/network.go:1107
+#: cmd/incus/low_level.go:568 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
@@ -9592,7 +9659,7 @@ msgstr "Okänd nyckel: %s"
 msgid "Unknown output type %q"
 msgstr "Okänd utdatatyp %q"
 
-#: cmd/incus/low_level.go:552 cmd/incus/low_level.go:553
+#: cmd/incus/low_level.go:776 cmd/incus/low_level.go:777
 msgid "Unset UEFI variables"
 msgstr "Ta bort UEFI-variabler"
 
@@ -9895,7 +9962,7 @@ msgstr "Användaren avbröt konfigurationen"
 msgid "User aborted delete operation"
 msgstr "Användaren avbröt raderingsåtgärden"
 
-#: cmd/incus/low_level.go:415
+#: cmd/incus/low_level.go:551
 msgid "VARIABLE NAME"
 msgstr "VARIABELNAMN"
 
@@ -10724,7 +10791,7 @@ msgstr ""
 "list -c ns,user.comment:comment Lista\n"
 "instanser med deras körningsstatus och användarkommentar."
 
-#: cmd/incus/low_level.go:65
+#: cmd/incus/low_level.go:68
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
@@ -11817,10 +11884,6 @@ msgstr "“%s”"
 #, c-format
 #~ msgid "Failed to connect to cluster member: %w"
 #~ msgstr "Det gick inte att ansluta till klustermedlem: %w"
-
-#, c-format
-#~ msgid "Failed to parse servers: %w"
-#~ msgstr "Det gick inte att analysera servrarna: %w"
 
 #~ msgid "Filtering isn't supported yet"
 #~ msgstr "Filtrering stöds ännu inte"

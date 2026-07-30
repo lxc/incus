@@ -106,8 +106,8 @@ incus file create --type=symlink foo bar/baz qux
 
 	cli.AddBoolFlag(cmd.Flags(), &c.storageVolumeFile.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Force creating files or directories"))
-	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagGID, "gid", -1, i18n.G("Set the file's gid on create"))
-	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagUID, "uid", -1, i18n.G("Set the file's uid on create"))
+	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagGID, "gid", i18n.G("Set the file's gid on create"), -1)
+	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagUID, "uid", i18n.G("Set the file's uid on create"), -1)
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolumeFile.flagMode, "mode", "", "", i18n.G("Set the file's perms on create"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type|t", "file", "", i18n.G("The type to create (file, symlink, or directory)"))
 
@@ -725,8 +725,8 @@ echo "Hello world" | incus storage volume file push - local v1 test
 	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.storageVolumeFile.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
-	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagUID, "uid", -1, i18n.G("Set the file's uid on push"))
-	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagGID, "gid", -1, i18n.G("Set the file's gid on push"))
+	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagUID, "uid", i18n.G("Set the file's uid on push"), -1)
+	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagGID, "gid", i18n.G("Set the file's gid on push"), -1)
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolumeFile.flagMode, "mode", "", "", i18n.G("Set the file's perms on push"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))

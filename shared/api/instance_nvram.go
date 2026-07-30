@@ -5,15 +5,12 @@ import (
 	"time"
 )
 
-// InstanceNVRAMVariable represents a UEFI variable.
+// InstanceNVRAMVariablePut represents the modifiable fields of a UEFI variable.
 //
 // swagger:model
 //
 // API extension: instance_nvram.
-type InstanceNVRAMVariable struct {
-	// Binary data.
-	Binary []byte `json:"binary"`
-
+type InstanceNVRAMVariablePut struct {
 	// Dissected data.
 	Data any `json:"data,omitempty"`
 
@@ -22,6 +19,18 @@ type InstanceNVRAMVariable struct {
 
 	// Authenticated variable timestamp.
 	Timestamp *time.Time `json:"timestamp,omitempty"`
+}
+
+// InstanceNVRAMVariable represents a UEFI variable.
+//
+// swagger:model
+//
+// API extension: instance_nvram.
+type InstanceNVRAMVariable struct {
+	InstanceNVRAMVariablePut
+
+	// Binary data.
+	Binary []byte `json:"binary"`
 }
 
 // MarshalYAML marshals binary variable data to base64.

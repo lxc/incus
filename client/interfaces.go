@@ -181,8 +181,10 @@ type InstanceServer interface {
 	GetInstanceNVRAM(name string) (vars map[string]map[string]*api.InstanceNVRAMVariable, err error)
 	GetInstanceNVRAMGUID(name string, guid string) (vars map[string]*api.InstanceNVRAMVariable, err error)
 	GetRawInstanceNVRAMGUIDVar(name string, guid string, varName string) (resp []byte, err error)
-	GetInstanceNVRAMGUIDVar(name string, guid string, varName string) (resp *api.InstanceNVRAMVariable, err error)
+	GetInstanceNVRAMGUIDVar(name string, guid string, varName string) (resp *api.InstanceNVRAMVariable, ETag string, err error)
 	DeleteInstanceNVRAMGUIDVar(name string, guid string, varName string) error
+	UpdateRawInstanceNVRAMGUIDVar(name string, guid string, varName string, data []byte, attributes uint32, timestamp int64) error
+	UpdateInstanceNVRAMGUIDVar(name string, guid string, varName string, data api.InstanceNVRAMVariablePut, ETag string) error
 
 	// Event handling functions
 	GetEvents() (listener *EventListener, err error)

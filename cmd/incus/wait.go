@@ -44,8 +44,8 @@ Supported Conditions:
 
 	cmd.RunE = c.run
 
-	cli.AddIntFlag(cmd.Flags(), &c.flagInterval, "interval", 5, i18n.G("Polling interval (in seconds)"))
-	cli.AddIntFlag(cmd.Flags(), &c.flagTimeOut, "timeout", -1, i18n.G("Maximum wait time"))
+	cli.AddIntFlag(cmd.Flags(), &c.flagInterval, "interval", i18n.G("Polling interval (in seconds)"), 5)
+	cli.AddIntFlag(cmd.Flags(), &c.flagTimeOut, "timeout", i18n.G("Maximum wait time"), -1)
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {

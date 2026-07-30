@@ -3320,6 +3320,7 @@ This adds new endpoints to manage virtual machines’ UEFI variables:
 * `GET /1.0/instances/{name}/nvram/{guid}`, to get UEFI variables under the given GUID
 * `GET /1.0/instances/{name}/nvram/{guid}/{var}`, to get specific UEFI variables
 * `DELETE /1.0/instances/{name}/nvram/{guid}/{var}`, to delete specific UEFI variables
+* `PUT /1.0/instances/{name}/nvram/{guid}/{var}`, to set/update specific UEFI variables
 
 ## `disk_io_limits_combined`
 

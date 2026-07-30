@@ -58,6 +58,7 @@ var scanCodes = map[uint16]string{
 }
 
 // keyboard dissects keyboard data.
+// TODO: Implement variable formatting.
 var keyboard = wrap(func(r *reader) (any, error) {
 	keyData, err := r.readU32()
 	if err != nil {
