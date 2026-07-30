@@ -84,14 +84,14 @@ func (i *Instance) ToAPI(ctx context.Context, tx *sql.Tx, instanceDevices map[in
 	}
 
 	if profileConfigs == nil {
-		profileConfigs, err = GetAllProfileConfigs(ctx, tx)
+		profileConfigs, err = GetReferencedProfileConfigs(ctx, tx, profiles)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if profileDevices == nil {
-		profileDevices, err = GetAllProfileDevices(ctx, tx)
+		profileDevices, err = GetReferencedProfileDevices(ctx, tx, profiles)
 		if err != nil {
 			return nil, err
 		}
