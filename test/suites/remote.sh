@@ -371,3 +371,47 @@ test_remote_usage() {
     # Cleanup the image from the original remote
     incus image delete testimage
 }
+
+test_list_all_remotes() {
+    ensure_import_testimage
+    # shellcheck disable=2153
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    # Spawn a second daemon and add it as a remote.
+    # shellcheck disable=2039,3043
+    local INCUS2_DIR INCUS2_ADDR
+    INCUS2_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS2_DIR}"
+    spawn_incus "${INCUS2_DIR}" true
+    INCUS2_ADDR=$(cat "${INCUS2_DIR}/incus.addr")
+
+    token="$(INCUS_DIR=${INCUS2_DIR} incus config trust add foo -q)"
+    incus_remote remote add incus2 "${INCUS2_ADDR}" --accept-certificate --token "${token}"
+
+    # Create an instance on each remote.
+    incus_remote init localhost:testimage localhost:c1
+    incus_remote init localhost:testimage incus2:c2
+
+    # Both instances show up with their remote.
+    incus_remote list --all-remotes | grep -q "REMOTE"
+    incus_remote list --all-remotes -f csv -c Rn | grep -q "^localhost,c1$"
+    incus_remote list --all-remotes -f csv -c Rn | grep -q "^incus2,c2$"
+
+    # Custom columns don't get the remote column added.
+    ! incus_remote list --all-remotes -c ns | grep -q "REMOTE" || false
+
+    # JSON output includes the remote name.
+    [ "$(incus_remote list --all-remotes -f json | jq -r '.[] | select(.name == "c2") | .remote')" = "incus2" ]
+
+    # Combining with --all-projects.
+    incus_remote list --all-remotes --all-projects | grep -q "PROJECT"
+
+    # A remote can't be specified together with --all-remotes.
+    ! incus_remote list localhost: --all-remotes || false
+
+    # Cleanup.
+    incus_remote delete localhost:c1
+    incus_remote delete incus2:c2
+    incus_remote remote remove incus2
+    kill_incus "${INCUS2_DIR}"
+}
