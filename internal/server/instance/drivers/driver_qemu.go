@@ -8102,6 +8102,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 			if !remoteClusterMove || storageMove {
 				snapSize, err := storagePools.CalculateVolumeSnapshotSize(d.Project().Name, pool, contentType, storageDrivers.VolumeTypeVM, d.Name(), srcConfig.Snapshots[i].Name)
 				if err != nil {
+					op.Done(err)
 					return err
 				}
 
