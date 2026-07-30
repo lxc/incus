@@ -754,15 +754,21 @@ func (d Nftables) aclRuleToNftRules(hostNameQuoted string, rule ACLRule) ([]stri
 // applyNftConfig loads the specified config template and then applies it to the common template before sending to
 // the nft command to be atomically applied to the system.
 func (d Nftables) applyNftConfig(tpl *template.Template, tplFields map[string]any) error {
+	// Clone the common table template so concurrent callers don't share parse trees.
+	tables, err := nftablesCommonTable.Clone()
+	if err != nil {
+		return fmt.Errorf("Failed cloning common table template: %w", err)
+	}
+
 	// Load the specified template into the common template's parse tree under the nftableContentTemplate
 	// name so that the nftableContentTemplate template can use it with the generic name.
-	_, err := nftablesCommonTable.AddParseTree(nftablesContentTemplate, tpl.Tree)
+	_, err = tables.AddParseTree(nftablesContentTemplate, tpl.Tree)
 	if err != nil {
 		return fmt.Errorf("Failed loading %q template: %w", tpl.Name(), err)
 	}
 
 	config := &strings.Builder{}
-	err = nftablesCommonTable.Execute(config, tplFields)
+	err = tables.Execute(config, tplFields)
 	if err != nil {
 		return fmt.Errorf("Failed running %q template: %w", tpl.Name(), err)
 	}
