@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/exec"
+	"strconv"
 
 	"github.com/lxc/incus/v7/shared/logger"
 )
@@ -43,6 +45,12 @@ func DetectCompressionFile(f io.Reader) ([]string, string, []string, error) {
 	case n >= 2 && bytes.Equal(header[0:2], []byte{'B', 'Z'}):
 		return []string{"-jxf"}, ".tar.bz2", []string{"bzip2", "-d"}, nil
 	case n >= 2 && bytes.Equal(header[0:2], []byte{0x1f, 0x8b}):
+		// Prefer pigz when available.
+		_, err := exec.LookPath("pigz")
+		if err == nil {
+			return []string{"-Ipigz", "-xf"}, ".tar.gz", []string{"pigz", "-d", "-p", strconv.Itoa(CompressionThreads())}, nil
+		}
+
 		return []string{"-zxf"}, ".tar.gz", []string{"gzip", "-d"}, nil
 	case n >= 5 && (bytes.Equal(header[1:5], []byte{'7', 'z', 'X', 'Z'}) && header[0] == 0xFD):
 		return []string{"-Jxf"}, ".tar.xz", []string{"xz", "-d"}, nil

@@ -1,7 +1,6 @@
 package incus
 
 import (
-	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
@@ -17,7 +16,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/klauspost/pgzip"
+
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/archive"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
@@ -248,7 +250,12 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		}
 	}
 
-	compressWrite := gzip.NewWriter(pipeWrite)
+	compressWrite := pgzip.NewWriter(pipeWrite)
+	err = compressWrite.SetConcurrency(1<<20, archive.CompressionThreads())
+	if err != nil {
+		return nil, err
+	}
+
 	metadataProcess := subprocess.NewProcessWithFds("tar", []string{"-cf", "-", "-C", filepath.Join(ociPath, "image"), "config.json", "metadata.yaml"}, nil, compressWrite, os.Stderr)
 	err = metadataProcess.Start(ctx)
 	if err != nil {
@@ -257,8 +264,8 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	go func() {
 		_, _ = metadataProcess.Wait(ctx)
-		compressWrite.Close()
-		pipeWrite.Close()
+		_ = compressWrite.Close()
+		_ = pipeWrite.Close()
 	}()
 
 	size, err := util.SafeCopy(req.MetaFile, pipeRead)
@@ -284,7 +291,12 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		}
 	}
 
-	compressWrite = gzip.NewWriter(pipeWrite)
+	compressWrite = pgzip.NewWriter(pipeWrite)
+	err = compressWrite.SetConcurrency(1<<20, archive.CompressionThreads())
+	if err != nil {
+		return nil, err
+	}
+
 	rootfsProcess := subprocess.NewProcessWithFds("tar", []string{"-cf", "-", "-C", filepath.Join(ociPath, "image", "rootfs"), "."}, nil, compressWrite, nil)
 	err = rootfsProcess.Start(ctx)
 	if err != nil {
@@ -293,8 +305,8 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 
 	go func() {
 		_, _ = rootfsProcess.Wait(ctx)
-		compressWrite.Close()
-		pipeWrite.Close()
+		_ = compressWrite.Close()
+		_ = pipeWrite.Close()
 	}()
 
 	size, err = util.SafeCopy(req.RootfsFile, pipeRead)
