@@ -41,11 +41,18 @@ type devIncusResponse struct {
 	content     any
 	code        int
 	contentType string
+	headers     map[string]string
 }
 
 // Render writes the response to the provided http.ResponseWriter.
 func (r *devIncusResponse) Render(w http.ResponseWriter) error {
 	var err error
+
+	if r.headers != nil {
+		for h, v := range r.headers {
+			w.Header().Set(h, v)
+		}
+	}
 
 	if r.code != http.StatusOK {
 		http.Error(w, fmt.Sprintf("%s", r.content), r.code)
@@ -105,6 +112,15 @@ func DevIncusResponse(code int, content any, contentType string, rawResponse boo
 	}
 
 	return &devIncusResponse{content: content, code: code, contentType: contentType}
+}
+
+// DevIncusResponseHeaders returns a new devIncusResponse with headers.
+func DevIncusResponseHeaders(code int, content any, contentType string, rawResponse bool, headers map[string]string) Response {
+	if rawResponse {
+		return SyncResponseHeaders(true, content, headers)
+	}
+
+	return &devIncusResponse{content: content, code: code, contentType: contentType, headers: headers}
 }
 
 // Sync response.
