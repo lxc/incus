@@ -172,3 +172,23 @@ func GetAllProfileConfigs(ctx context.Context, tx *sql.Tx) (map[int]map[string]s
 func GetAllProfileDevices(ctx context.Context, tx *sql.Tx) (map[int][]Device, error) {
 	return GetDevices(ctx, tx, "profiles", "profile")
 }
+
+// GetReferencedProfileConfigs returns a map of the given profiles' configurations, keyed by database ID.
+func GetReferencedProfileConfigs(ctx context.Context, tx *sql.Tx, profiles []Profile) (map[int]map[string]string, error) {
+	profileIDs := make([]int, 0, len(profiles))
+	for _, profile := range profiles {
+		profileIDs = append(profileIDs, profile.ID)
+	}
+
+	return GetConfig(ctx, tx, "profiles", "profile", ConfigFilter{ReferenceID: profileIDs})
+}
+
+// GetReferencedProfileDevices returns a map of the given profiles' devices, keyed by database ID.
+func GetReferencedProfileDevices(ctx context.Context, tx *sql.Tx, profiles []Profile) (map[int][]Device, error) {
+	profileIDs := make([]int, 0, len(profiles))
+	for _, profile := range profiles {
+		profileIDs = append(profileIDs, profile.ID)
+	}
+
+	return GetDevices(ctx, tx, "profiles", "profile", DeviceFilter{ReferenceID: profileIDs})
+}

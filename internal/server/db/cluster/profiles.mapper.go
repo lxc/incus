@@ -332,6 +332,14 @@ func GetProfileDevices(ctx context.Context, db tx, profileID int, filters ...Dev
 		_err = mapErr(_err, "Profile")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, DeviceFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{profileID}
+	}
+
 	profileDevices, err := GetDevices(ctx, db, "profiles", "profile", filters...)
 	if err != nil {
 		return nil, err
@@ -356,6 +364,14 @@ func GetProfileConfig(ctx context.Context, db tx, profileID int, filters ...Conf
 	defer func() {
 		_err = mapErr(_err, "Profile")
 	}()
+
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{profileID}
+	}
 
 	profileConfig, err := GetConfig(ctx, db, "profiles", "profile", filters...)
 	if err != nil {

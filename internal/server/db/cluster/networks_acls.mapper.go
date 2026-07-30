@@ -304,6 +304,14 @@ func GetNetworkACLConfig(ctx context.Context, db tx, networkACLID int, filters .
 		_err = mapErr(_err, "NetworkACL")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{networkACLID}
+	}
+
 	networkACLConfig, err := GetConfig(ctx, db, "networks_acls", "network_acl", filters...)
 	if err != nil {
 		return nil, err

@@ -212,6 +212,14 @@ func GetNetworkIntegrationConfig(ctx context.Context, db tx, networkIntegrationI
 		_err = mapErr(_err, "Network_integration")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{networkIntegrationID}
+	}
+
 	networkIntegrationConfig, err := GetConfig(ctx, db, "networks_integrations", "network_integration", filters...)
 	if err != nil {
 		return nil, err

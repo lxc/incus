@@ -1398,12 +1398,12 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 		return nil, fmt.Errorf("Fetch profiles from database: %w", err)
 	}
 
-	dbProfileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
+	dbProfileConfigs, err := cluster.GetReferencedProfileConfigs(ctx, tx.Tx(), dbProfiles)
 	if err != nil {
 		return nil, fmt.Errorf("Fetch profile configs from database: %w", err)
 	}
 
-	dbProfileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
+	dbProfileDevices, err := cluster.GetReferencedProfileDevices(ctx, tx.Tx(), dbProfiles)
 	if err != nil {
 		return nil, fmt.Errorf("Fetch profile devices from database: %w", err)
 	}
@@ -1423,7 +1423,12 @@ func fetchProject(tx *db.ClusterTx, projectName string, skipIfNoLimits bool) (*p
 		return nil, fmt.Errorf("Fetch project instances from database: %w", err)
 	}
 
-	dbInstanceDevices, err := cluster.GetAllInstanceDevices(ctx, tx.Tx())
+	dbInstanceIDs := make([]int, 0, len(dbInstances))
+	for _, dbInstance := range dbInstances {
+		dbInstanceIDs = append(dbInstanceIDs, dbInstance.ID)
+	}
+
+	dbInstanceDevices, err := cluster.GetDevices(ctx, tx.Tx(), "instances", "instance", cluster.DeviceFilter{ReferenceID: dbInstanceIDs})
 	if err != nil {
 		return nil, fmt.Errorf("Fetch instance devices from database: %w", err)
 	}

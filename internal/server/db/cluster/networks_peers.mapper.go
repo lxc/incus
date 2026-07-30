@@ -394,6 +394,14 @@ func GetNetworkPeerConfig(ctx context.Context, db tx, networkPeerID int, filters
 		_err = mapErr(_err, "Network_peer")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{networkPeerID}
+	}
+
 	networkPeerConfig, err := GetConfig(ctx, db, "networks_peers", "network_peer", filters...)
 	if err != nil {
 		return nil, err

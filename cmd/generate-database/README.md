@@ -196,6 +196,11 @@ including a comma separated list to `references=<OtherEntity>` in the code gener
 A struct that contains a field named `ReferenceID` will be parsed this way.
 `generate-database` will use this struct to generate more abstract SQL statements and functions of the form `<parent_table>_<this_table>`.
 
+The associated `Filter` struct may include a `ReferenceID []int` field.
+This generates an `IN` clause matching on the parent column, with the integer values inlined into the query to avoid query parameter count limits.
+A nil slice leaves the filter unset while an empty (non-nil) slice matches nothing.
+When the field is present, the generated per-parent helpers and nested reference fetches are automatically scoped to the relevant parent IDs rather than fetching the whole table.
+
 Real world invocation of these statements and functions should be done through an `EntityTable` `method` call with the tag `references=<ThisStruct>`. This `EntityTable` will replace the `<parent_table>` above.
 
 Example:

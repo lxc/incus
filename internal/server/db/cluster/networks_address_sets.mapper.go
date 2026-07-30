@@ -344,6 +344,14 @@ func GetNetworkAddressSetConfig(ctx context.Context, db tx, networkAddressSetID 
 		_err = mapErr(_err, "Network_address_set")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{networkAddressSetID}
+	}
+
 	networkAddressSetConfig, err := GetConfig(ctx, db, "networks_address_sets", "network_address_set", filters...)
 	if err != nil {
 		return nil, err

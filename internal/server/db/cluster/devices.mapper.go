@@ -105,6 +105,19 @@ func GetDevices(ctx context.Context, db tx, parentTablePrefix string, parentColu
 		}
 
 		entries := []string{}
+		if filter.ReferenceID != nil {
+			values := make([]string, 0, len(filter.ReferenceID))
+			for _, v := range filter.ReferenceID {
+				values = append(values, fmt.Sprintf("%d", v))
+			}
+
+			if len(values) == 0 {
+				values = append(values, "NULL")
+			}
+
+			entries = append(entries, fmt.Sprintf("%s_id IN (%s)", parentColumnPrefix, strings.Join(values, ",")))
+		}
+
 		if filter.Name != nil {
 			entries = append(entries, "name = ?")
 			args = append(args, filter.Name)
@@ -133,7 +146,7 @@ func GetDevices(ctx context.Context, db tx, parentTablePrefix string, parentColu
 	for _, f := range filters {
 		filter := f.Config
 		if filter != nil {
-			if filter.Key == nil && filter.Value == nil {
+			if filter.ReferenceID == nil && filter.Key == nil && filter.Value == nil {
 				return nil, fmt.Errorf("Cannot filter on empty ConfigFilter")
 			}
 
@@ -141,9 +154,27 @@ func GetDevices(ctx context.Context, db tx, parentTablePrefix string, parentColu
 		}
 	}
 
-	config, err := GetConfig(ctx, db, parentTablePrefix+"_devices", parentColumnPrefix+"_device", configFilters...)
-	if err != nil {
-		return nil, err
+	config := map[int]map[string]string{}
+	if len(objects) > 0 {
+		if len(filters) > 0 {
+			referenceIDs := make([]int, 0, len(objects))
+			for _, object := range objects {
+				referenceIDs = append(referenceIDs, object.ID)
+			}
+
+			if len(configFilters) == 0 {
+				configFilters = append(configFilters, ConfigFilter{})
+			}
+
+			for i := range configFilters {
+				configFilters[i].ReferenceID = referenceIDs
+			}
+		}
+
+		config, err = GetConfig(ctx, db, parentTablePrefix+"_devices", parentColumnPrefix+"_device", configFilters...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for i := range objects {

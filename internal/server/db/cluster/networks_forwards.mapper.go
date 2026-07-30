@@ -223,6 +223,14 @@ func GetNetworkForwardConfig(ctx context.Context, db tx, networkForwardID int, f
 		_err = mapErr(_err, "Network_forward")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{networkForwardID}
+	}
+
 	networkForwardConfig, err := GetConfig(ctx, db, "networks_forwards", "network_forward", filters...)
 	if err != nil {
 		return nil, err

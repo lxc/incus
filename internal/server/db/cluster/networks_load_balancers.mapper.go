@@ -232,6 +232,14 @@ func GetNetworkLoadBalancerConfig(ctx context.Context, db tx, networkLoadBalance
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{networkLoadBalancerID}
+	}
+
 	networkLoadBalancerConfig, err := GetConfig(ctx, db, "networks_load_balancers", "network_load_balancer", filters...)
 	if err != nil {
 		return nil, err

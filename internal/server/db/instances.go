@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"sort"
 	"strings"
@@ -293,71 +294,32 @@ func (c *ClusterTx) InstanceList(ctx context.Context, instanceFunc func(inst Ins
 func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, instanceArgs *map[int]InstanceArgs) error {
 	instances := *instanceArgs
 
-	// Don't use query parameters for the IN statement to workaround an issue in Cowsql (apparently)
-	// that means that >255 query parameters causes partial result sets. See #10705
-	// This is safe as the inputs are ints.
-	var q strings.Builder
-
+	parentTablePrefix := "instances"
+	parentColumnPrefix := "instance"
 	if snapshotsMode {
-		q.WriteString(`SELECT
-			instance_snapshot_id,
-			key,
-			value
-		FROM instances_snapshots_config
-		WHERE instance_snapshot_id IN (`)
-	} else {
-		q.WriteString(`SELECT
-			instance_id,
-			key,
-			value
-		FROM instances_config
-		WHERE instance_id IN (`)
+		parentTablePrefix = "instances_snapshots"
+		parentColumnPrefix = "instance_snapshot"
 	}
 
-	q.Grow(len(instances) * 2) // We know the minimum length of the separators and integers.
-
-	first := true
+	instanceIDs := make([]int, 0, len(instances))
 	for instanceID := range instances {
-		if !first {
-			q.WriteString(",")
-		}
-
-		first = false
-
-		fmt.Fprintf(&q, "%d", instanceID)
+		instanceIDs = append(instanceIDs, instanceID)
 	}
 
-	q.WriteString(`)`)
+	sort.Ints(instanceIDs)
 
-	return query.Scan(ctx, c.Tx(), q.String(), func(scan func(dest ...any) error) error {
-		var instanceID int
-		var key, value string
+	configs, err := cluster.GetConfig(ctx, c.Tx(), parentTablePrefix, parentColumnPrefix, cluster.ConfigFilter{ReferenceID: instanceIDs})
+	if err != nil {
+		return err
+	}
 
-		err := scan(&instanceID, &key, &value)
-		if err != nil {
-			return err
-		}
+	for instanceID, config := range configs {
+		inst := instances[instanceID]
+		inst.Config = config
+		instances[instanceID] = inst
+	}
 
-		_, found := instances[instanceID]
-		if !found {
-			return fmt.Errorf("Failed loading instance config, referenced instance %d not loaded", instanceID)
-		}
-
-		if instances[instanceID].Config == nil {
-			inst := instances[instanceID]
-			inst.Config = make(map[string]string)
-			instances[instanceID] = inst
-		}
-
-		_, found = instances[instanceID].Config[key]
-		if found {
-			return fmt.Errorf("Duplicate config row found for key %q for instance ID %d", key, instanceID)
-		}
-
-		instances[instanceID].Config[key] = value
-
-		return nil
-	})
+	return nil
 }
 
 // instanceDevicesFill loads the device config for all instances specified in a single query and then updates
@@ -365,89 +327,38 @@ func (c *ClusterTx) instanceConfigFill(ctx context.Context, snapshotsMode bool, 
 func (c *ClusterTx) instanceDevicesFill(ctx context.Context, snapshotsMode bool, instanceArgs *map[int]InstanceArgs) error {
 	instances := *instanceArgs
 
-	// Don't use query parameters for the IN statement to workaround an issue in Cowsql (apparently)
-	// that means that >255 query parameters causes partial result sets. See #10705
-	// This is safe as the inputs are ints.
-	var q strings.Builder
-
+	parentTablePrefix := "instances"
+	parentColumnPrefix := "instance"
 	if snapshotsMode {
-		q.WriteString(`
-		SELECT
-			instances_snapshots_devices.instance_snapshot_id AS instance_snapshot_id,
-			instances_snapshots_devices.name AS device_name,
-			instances_snapshots_devices.type AS device_type,
-			instances_snapshots_devices_config.key,
-			instances_snapshots_devices_config.value
-		FROM instances_snapshots_devices_config
-		JOIN instances_snapshots_devices ON instances_snapshots_devices.id = instances_snapshots_devices_config.instance_snapshot_device_id
-		WHERE instances_snapshots_devices.instance_snapshot_id IN (`)
-	} else {
-		q.WriteString(`
-		SELECT
-			instances_devices.instance_id AS instance_id,
-			instances_devices.name AS device_name,
-			instances_devices.type AS device_type,
-			instances_devices_config.key,
-			instances_devices_config.value
-		FROM instances_devices_config
-		JOIN instances_devices ON instances_devices.id = instances_devices_config.instance_device_id
-		WHERE instances_devices.instance_id IN (`)
+		parentTablePrefix = "instances_snapshots"
+		parentColumnPrefix = "instance_snapshot"
 	}
 
-	q.Grow(len(instances) * 2) // We know the minimum length of the separators and integers.
-
-	first := true
+	instanceIDs := make([]int, 0, len(instances))
 	for instanceID := range instances {
-		if !first {
-			q.WriteString(",")
-		}
-
-		first = false
-
-		fmt.Fprintf(&q, "%d", instanceID)
+		instanceIDs = append(instanceIDs, instanceID)
 	}
 
-	q.WriteString(`)`)
+	sort.Ints(instanceIDs)
 
-	return query.Scan(ctx, c.Tx(), q.String(), func(scan func(dest ...any) error) error {
-		var instanceID int
-		var deviceType cluster.DeviceType
-		var deviceName, key, value string
+	devices, err := cluster.GetDevices(ctx, c.Tx(), parentTablePrefix, parentColumnPrefix, cluster.DeviceFilter{ReferenceID: instanceIDs})
+	if err != nil {
+		return err
+	}
 
-		err := scan(&instanceID, &deviceName, &deviceType, &key, &value)
-		if err != nil {
-			return err
+	for instanceID, instanceDevices := range devices {
+		inst := instances[instanceID]
+		inst.Devices = make(deviceConfig.Devices, len(instanceDevices))
+		for _, device := range instanceDevices {
+			newDevice := deviceConfig.Device{"type": device.Type.String()}
+			maps.Copy(newDevice, device.Config)
+			inst.Devices[device.Name] = newDevice
 		}
 
-		_, found := instances[instanceID]
-		if !found {
-			return fmt.Errorf("Failed loading instance device, referenced instance %d not loaded", instanceID)
-		}
+		instances[instanceID] = inst
+	}
 
-		if instances[instanceID].Devices == nil {
-			inst := instances[instanceID]
-			inst.Devices = make(deviceConfig.Devices)
-			instances[instanceID] = inst
-		}
-
-		_, found = instances[instanceID].Devices[deviceName]
-		if !found {
-			instances[instanceID].Devices[deviceName] = deviceConfig.Device{
-				"type": deviceType.String(), // Map instances_devices type to config field.
-			}
-		}
-
-		_, found = instances[instanceID].Devices[deviceName][key]
-		if found && key != "type" {
-			// For legacy reasons the type value is in both the instances_devices and
-			// instances_devices_config tables. We use the one from the instances_devices.
-			return fmt.Errorf("Duplicate device row found for device %q key %q for instance ID %d", deviceName, key, instanceID)
-		}
-
-		instances[instanceID].Devices[deviceName][key] = value
-
-		return nil
-	})
+	return nil
 }
 
 // instanceProfiles loads the profile IDs to apply to an instance (in the application order) for all
@@ -520,36 +431,41 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 		return err
 	}
 
-	// Get all profiles.
-	profiles, err := cluster.GetProfiles(context.TODO(), c.Tx())
-	if err != nil {
-		return fmt.Errorf("Failed loading profiles: %w", err)
-	}
-
-	// Get all the profile configs.
-	profileConfigs, err := cluster.GetAllProfileConfigs(context.TODO(), c.Tx())
-	if err != nil {
-		return fmt.Errorf("Failed loading profile configs: %w", err)
-	}
-
-	// Get all the profile devices.
-	profileDevices, err := cluster.GetAllProfileDevices(context.TODO(), c.Tx())
-	if err != nil {
-		return fmt.Errorf("Failed loading profile devices: %w", err)
-	}
-
-	// Populate profilesByID map entry for referenced profiles.
-	// This way we only call ToAPI() on the profiles actually referenced by the instances in
-	// the list, which can reduce the number of queries run.
-	for _, profile := range profiles {
-		_, ok := profilesByID[profile.ID]
-		if !ok {
-			continue
+	if len(profilesByID) > 0 {
+		// Get all profiles.
+		profiles, err := cluster.GetProfiles(ctx, c.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading profiles: %w", err)
 		}
 
-		profilesByID[profile.ID], err = profile.ToAPI(context.TODO(), c.tx, profileConfigs, profileDevices)
+		// Only keep the profiles that are actually referenced by the instances in the list.
+		referencedProfiles := make([]cluster.Profile, 0, len(profilesByID))
+		for _, profile := range profiles {
+			_, ok := profilesByID[profile.ID]
+			if !ok {
+				continue
+			}
+
+			referencedProfiles = append(referencedProfiles, profile)
+		}
+
+		// Get the configs of the referenced profiles.
+		profileConfigs, err := cluster.GetReferencedProfileConfigs(ctx, c.Tx(), referencedProfiles)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed loading profile configs: %w", err)
+		}
+
+		// Get the devices of the referenced profiles.
+		profileDevices, err := cluster.GetReferencedProfileDevices(ctx, c.Tx(), referencedProfiles)
+		if err != nil {
+			return fmt.Errorf("Failed loading profile devices: %w", err)
+		}
+
+		for _, profile := range referencedProfiles {
+			profilesByID[profile.ID], err = profile.ToAPI(ctx, c.tx, profileConfigs, profileDevices)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

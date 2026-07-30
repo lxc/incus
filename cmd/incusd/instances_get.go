@@ -522,7 +522,7 @@ func doInstancesGetFromNode(projects []string, node string, allProjects bool, ne
 	}
 
 	timeout := time.After(30 * time.Second)
-	done := make(chan struct{})
+	done := make(chan struct{}, 1)
 
 	var containers []api.Instance
 	var err error
@@ -571,7 +571,7 @@ func doInstancesFullGetFromNode(projects []string, node string, allProjects bool
 	}
 
 	timeout := time.After(30 * time.Second)
-	done := make(chan struct{})
+	done := make(chan struct{}, 1)
 
 	var instances []api.InstanceFull
 	var err error
