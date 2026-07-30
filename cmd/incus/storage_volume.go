@@ -78,6 +78,10 @@ Unless specified through a prefix, all volume operations affect "custom" (user c
 	storageVolumeAttachProfileCmd := cmdStorageVolumeAttachProfile{global: c.global, storage: c.storage, storageVolume: c}
 	cmd.AddCommand(storageVolumeAttachProfileCmd.command())
 
+	// Bitmap
+	storageVolumeBitmapCmd := cmdStorageVolumeBitmap{global: c.global, storage: c.storage, storageVolume: c}
+	cmd.AddCommand(storageVolumeBitmapCmd.command())
+
 	// Copy
 	storageVolumeCopyCmd := cmdStorageVolumeCopy{global: c.global, storage: c.storage, storageVolume: c}
 	cmd.AddCommand(storageVolumeCopyCmd.command())

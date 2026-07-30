@@ -1268,6 +1268,31 @@ func (g *cmdGlobal) cmpStoragePoolVolumeProfiles(poolName string, volumeName str
 	return results, cobra.ShellCompDirectiveNoFileComp
 }
 
+func (g *cmdGlobal) cmpStoragePoolVolumeBitmaps(poolName string, volumeName string) ([]string, cobra.ShellCompDirective) {
+	// Parse remote
+	resources, err := g.parseServers(poolName)
+	if err != nil || len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	resource := resources[0]
+	client := resource.server
+
+	pool := poolName
+	if strings.Contains(poolName, ":") {
+		pool = strings.Split(poolName, ":")[1]
+	}
+
+	volName, volType := parseVolume("custom", volumeName)
+
+	bitmaps, err := client.GetStorageVolumeBitmapNames(pool, volType, volName)
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return bitmaps, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpStoragePoolVolumeSnapshots(poolName string, volumeName string) ([]string, cobra.ShellCompDirective) {
 	// Parse remote
 	resources, err := g.parseServers(poolName)
