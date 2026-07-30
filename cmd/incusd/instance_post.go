@@ -367,12 +367,12 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 						return err
 					}
 
-					dbProfileConfigs, err := dbCluster.GetAllProfileConfigs(ctx, tx.Tx())
+					dbProfileConfigs, err := dbCluster.GetReferencedProfileConfigs(ctx, tx.Tx(), dbProfiles)
 					if err != nil {
 						return err
 					}
 
-					dbProfileDevices, err := dbCluster.GetAllProfileDevices(ctx, tx.Tx())
+					dbProfileDevices, err := dbCluster.GetReferencedProfileDevices(ctx, tx.Tx(), dbProfiles)
 					if err != nil {
 						return err
 					}
@@ -735,12 +735,12 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 					return err
 				}
 
-				profileConfigs, err := dbCluster.GetAllProfileConfigs(ctx, tx.Tx())
+				profileConfigs, err := dbCluster.GetReferencedProfileConfigs(ctx, tx.Tx(), rawProfiles)
 				if err != nil {
 					return err
 				}
 
-				profileDevices, err := dbCluster.GetAllProfileDevices(ctx, tx.Tx())
+				profileDevices, err := dbCluster.GetReferencedProfileDevices(ctx, tx.Tx(), rawProfiles)
 				if err != nil {
 					return err
 				}

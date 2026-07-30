@@ -142,12 +142,12 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			profileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
+			profileConfigs, err := cluster.GetReferencedProfileConfigs(ctx, tx.Tx(), profiles)
 			if err != nil {
 				return err
 			}
 
-			profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
+			profileDevices, err := cluster.GetReferencedProfileDevices(ctx, tx.Tx(), profiles)
 			if err != nil {
 				return err
 			}
