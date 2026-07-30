@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-07-30 05:58-0400\n"
-"PO-Revision-Date: 2026-07-30 20:55+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-07-30 22:48+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -1245,7 +1245,7 @@ msgstr "IMAGEM BASE"
 
 #: cmd/incus/storage_volume_bitmap.go:276
 msgid "BUSY"
-msgstr ""
+msgstr "OCUPADO"
 
 #: cmd/incus/network_load_balancer.go:825
 msgid "Backend description"
@@ -1297,9 +1297,9 @@ msgid "Binary helper for retrieving credentials"
 msgstr "Ajudante binário para recuperar credenciais"
 
 #: cmd/incus/storage_volume_bitmap.go:189
-#, fuzzy, c-format
+#, c-format
 msgid "Bitmap %s deleted from volume %s"
-msgstr "Instantâneo de volume de armazenamento %s apagado de %s"
+msgstr "Mapa de bits %s apagado do volume %s"
 
 #: cmd/incus/network.go:950
 msgid "Bond:"
@@ -1962,18 +1962,18 @@ msgid "Create a cluster group"
 msgstr "Criar um grupo de agrupamento"
 
 #: cmd/incus/storage_volume_bitmap.go:72 cmd/incus/storage_volume_bitmap.go:73
-#, fuzzy
 msgid "Create a dirty bitmap on a storage volume"
-msgstr "Cria novos volumes de armazenamento personalizados"
+msgstr "Criar um mapa de bits sujo num volume de armazenamento"
 
 #: cmd/incus/low_level.go:91
-#, fuzzy
 msgid "Create a dirty bitmap on a virtual machine"
-msgstr "Criar uma máquina virtual"
+msgstr "Criar um mapa de bits sujo numa máquina virtual"
 
 #: cmd/incus/low_level.go:92
 msgid "Create a dirty bitmap on all the disks of a running virtual machine"
 msgstr ""
+"Criar um mapa de bits sujo em todos os discos de uma máquina virtual em "
+"execução"
 
 #: cmd/incus/admin_init_interactive.go:385
 #, c-format
@@ -2106,9 +2106,8 @@ msgid "Create storage pools"
 msgstr "Criar pools de armazenamento"
 
 #: cmd/incus/low_level.go:99 cmd/incus/storage_volume_bitmap.go:78
-#, fuzzy
 msgid "Create the bitmap in the disabled state"
-msgstr "Cria novos modelos de ficheiro de instância"
+msgstr "Criar o mapa de bits em estado de desativado"
 
 #: cmd/incus/storage_volume.go:190
 msgid "Create the custom storage volume if it doesn't already exist"
@@ -2162,7 +2161,7 @@ msgstr "DESCRIÇÃO"
 
 #: cmd/incus/storage_volume_bitmap.go:273
 msgid "DIRTY BYTES"
-msgstr ""
+msgstr "BYTES SUJOS"
 
 #: cmd/incus/top.go:87
 msgid "DISK"
@@ -2310,9 +2309,8 @@ msgstr "Apaga pools de armazenamento"
 
 #: cmd/incus/storage_volume_bitmap.go:141
 #: cmd/incus/storage_volume_bitmap.go:142
-#, fuzzy
 msgid "Delete storage volume dirty bitmaps"
-msgstr "Apaga instantâneos de volume de armazenamento"
+msgstr "Apaga mapas de bits sujos do volume de armazenamento"
 
 #: cmd/incus/storage_volume_snapshot.go:244
 #: cmd/incus/storage_volume_snapshot.go:245
@@ -3337,9 +3335,9 @@ msgid "Failed to create backup: %v"
 msgstr "Falhou ao criar salvaguarda: %v"
 
 #: cmd/incus/low_level.go:131 cmd/incus/storage_volume_bitmap.go:121
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create bitmap: %w"
-msgstr "Falhou ao criar salvaguarda: %v"
+msgstr "Falhou ao criar mapa de bits: %w"
 
 #: cmd/incus/remote.go:320
 #, c-format
@@ -3352,9 +3350,9 @@ msgid "Failed to create storage volume backup: %w"
 msgstr "Falhou ao criar salvaguarda de volume de armazenamento: %w"
 
 #: cmd/incus/storage_volume_bitmap.go:185
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete bitmap: %w"
-msgstr "Falhou ao pedir despejo: %w"
+msgstr "Falhou ao apagar mapa de bits: %w"
 
 #: cmd/incus/move.go:199
 #, c-format
@@ -3383,9 +3381,9 @@ msgid "Failed to find project: %w"
 msgstr "Falhou ao encontrar projeto: %w"
 
 #: cmd/incus/storage_volume_bitmap.go:406
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get bitmap: %w"
-msgstr "Falhou ao pedir despejo: %w"
+msgstr "Falhou ao obter mapa de bits: %w"
 
 #: cmd/incus/low_level.go:628 cmd/incus/low_level.go:637
 #, c-format
@@ -3403,9 +3401,9 @@ msgid "Failed to join cluster: %w"
 msgstr "Falhou ao juntar a agrupamento: %w"
 
 #: cmd/incus/storage_volume_bitmap.go:320
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to list bitmaps: %w"
-msgstr "Falhou ao pedir despejo: %w"
+msgstr "Falhou ao listar mapa de bits: %w"
 
 #: cmd/incus/low_level.go:306 cmd/incus/port_forward.go:114
 #: cmd/incus/storage_volume.go:2657 cmd/incus/utils.go:625
@@ -3476,9 +3474,9 @@ msgid "Failed to render the config: %w"
 msgstr "Falhou ao renderizar a configuração: %w"
 
 #: cmd/incus/low_level.go:183
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to repair instance: %w"
-msgstr "Falhou ao despejar memória de instância: %w"
+msgstr "Falhou ao reparar instância: %w"
 
 #: cmd/incus/admin_sql.go:97
 #, c-format
@@ -3809,7 +3807,7 @@ msgstr "GPUs:"
 
 #: cmd/incus/storage_volume_bitmap.go:274
 msgid "GRANULARITY"
-msgstr ""
+msgstr "GRANULARIDADE"
 
 #: cmd/incus/low_level.go:657 cmd/incus/low_level.go:687
 msgid "GUID"
@@ -4077,7 +4075,7 @@ msgstr "Bandeiras Globais:"
 
 #: cmd/incus/low_level.go:97 cmd/incus/storage_volume_bitmap.go:76
 msgid "Granularity of the dirty bitmap in bytes"
-msgstr ""
+msgstr "Granularidade do mapa de bits em bytes"
 
 #: cmd/incus/exec.go:70
 msgid "Group ID to run the command as (default 0)"
@@ -4139,7 +4137,7 @@ msgstr "IMAGENS"
 
 #: cmd/incus/storage_volume_bitmap.go:278
 msgid "INCONSISTENT"
-msgstr ""
+msgstr "INCONSISTENTE"
 
 #: cmd/incus/top.go:84
 msgid "INSTANCE NAME"
@@ -5444,7 +5442,7 @@ msgid "List instances"
 msgstr "Lista instâncias"
 
 #: cmd/incus/list.go:67
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "List instances\n"
 "\n"
@@ -5593,6 +5591,7 @@ msgstr ""
 "  N - Numero de processos\n"
 "  p - PID do processo de iniciação da instância\n"
 "  P - Perfis\n"
+"  R - Nome remoto\n"
 "  s - Estado\n"
 "  S - Numero de instantâneos\n"
 "  t - Tipo (persistente ou efêmero)\n"
@@ -5922,12 +5921,10 @@ msgstr ""
 "  L - Localização do bucket de armazenamento (ex. seu membro do agrupamento)"
 
 #: cmd/incus/storage_volume_bitmap.go:214
-#, fuzzy
 msgid "List storage volume dirty bitmaps"
-msgstr "Lista volumes de armazenamento"
+msgstr "Lista mapas de bits sujos do volume de armazenamento"
 
 #: cmd/incus/storage_volume_bitmap.go:215
-#, fuzzy
 msgid ""
 "List storage volume dirty bitmaps\n"
 "\n"
@@ -5954,8 +5951,12 @@ msgstr ""
 "\n"
 "\tCaracteres curtos da coluna:\n"
 "\t\tn - Nome\n"
-"\t\tT - Tomado Em\n"
-"\t\tE - Validade"
+"\t\tc - Número de bytes sujos\n"
+"\t\tg - Granularidade\n"
+"\t\tr - A gravar\n"
+"\t\tb - Ocupado\n"
+"\t\tp - Persistente\n"
+"\t\ti - Inconsistente"
 
 #: cmd/incus/storage_volume_snapshot.go:323
 #: cmd/incus/storage_volume_snapshot.go:324
@@ -6373,9 +6374,8 @@ msgid "Manage devices"
 msgstr "Gerir dispositivos"
 
 #: cmd/incus/low_level.go:64 cmd/incus/low_level.go:65
-#, fuzzy
 msgid "Manage dirty bitmaps on virtual machines"
-msgstr "Gerir NVRAM em máquinas virtuais"
+msgstr "Gerir mapas de bits sujos em máquinas virtuais"
 
 #: cmd/incus/storage_volume_file.go:46 cmd/incus/storage_volume_file.go:47
 msgid "Manage files in custom volumes"
@@ -6536,9 +6536,8 @@ msgid "Manage storage pools and volumes"
 msgstr "Gerir pools e volumes de armazenamento"
 
 #: cmd/incus/storage_volume_bitmap.go:28 cmd/incus/storage_volume_bitmap.go:29
-#, fuzzy
 msgid "Manage storage volume dirty bitmaps"
-msgstr "Gerir volumes de armazenamento"
+msgstr "Gerir mapas de bits sujos de volumes de armazenamento"
 
 #: cmd/incus/storage_volume_snapshot.go:35
 #: cmd/incus/storage_volume_snapshot.go:36
@@ -7293,7 +7292,7 @@ msgstr "PEER"
 
 #: cmd/incus/storage_volume_bitmap.go:277
 msgid "PERSISTENT"
-msgstr ""
+msgstr "PERSISTENTE"
 
 #: cmd/incus/list.go:550
 msgid "PID"
@@ -7682,7 +7681,7 @@ msgstr "VALOR CRU"
 
 #: cmd/incus/storage_volume_bitmap.go:275
 msgid "RECORDING"
-msgstr ""
+msgstr "A GRAVAR"
 
 #: cmd/incus/list.go:552
 msgid "REMOTE"
@@ -8108,11 +8107,16 @@ msgid ""
 "backed virtual machine\n"
 "  rebuild-nvram            Rebuild the virtual machine's UEFI NVRAM"
 msgstr ""
+"Correr uma ação de reparação de baixo nível numa instância.\n"
+"\n"
+"Ações suportadas:\n"
+"  rebuild-config-volume    Reconstrói o volume de configuração de uma "
+"máquina virtual apoiada QCOW2 parada\n"
+"  rebuild-nvram            Reconstrói a UEFI NVRAM da máquina virtual"
 
 #: cmd/incus/low_level.go:146
-#, fuzzy
 msgid "Run a repair action on an instance"
-msgstr "Corre contra todas as instâncias"
+msgstr "Correr uma ação de reparação numa instância"
 
 #: cmd/incus/network_allocations.go:73
 msgid "Run again a specific project"
@@ -8893,9 +8897,8 @@ msgstr ""
 
 #: cmd/incus/storage_volume_bitmap.go:362
 #: cmd/incus/storage_volume_bitmap.go:363
-#, fuzzy
 msgid "Show storage volume dirty bitmap information"
-msgstr "Mostra informações de estado de volume de armazenamento"
+msgstr "Mostrar informações de mapa de bits sujo de volume de armazenamento"
 
 #: cmd/incus/storage_volume_snapshot.go:615
 msgid "Show storage volume snapshhot configurations"
@@ -9198,9 +9201,8 @@ msgid "Storage volume snapshot %s deleted from %s"
 msgstr "Instantâneo de volume de armazenamento %s apagado de %s"
 
 #: cmd/incus/low_level.go:98 cmd/incus/storage_volume_bitmap.go:77
-#, fuzzy
 msgid "Store the bitmap on disk"
-msgstr "Armazena o estado da instância"
+msgstr "Armazenar o mapa de bits em disco"
 
 #: cmd/incus/action.go:155
 msgid "Store the instance state"
@@ -10543,9 +10545,8 @@ msgid "Zone description"
 msgstr "Descrição da zona"
 
 #: cmd/incus/low_level.go:141
-#, fuzzy
 msgid "action"
-msgstr "Ação"
+msgstr "ação"
 
 #: cmd/incus/usage/usage.go:814
 msgid "address"
@@ -10575,7 +10576,7 @@ msgstr "ficheiro de salvaguarda"
 #: cmd/incus/storage_volume_bitmap.go:135
 #: cmd/incus/storage_volume_bitmap.go:357
 msgid "bitmap"
-msgstr ""
+msgstr "mapa de bits"
 
 #: cmd/incus/usage/usage.go:819
 msgid "bucket"
@@ -10991,7 +10992,6 @@ msgstr ""
 "    Para informação do servidor."
 
 #: cmd/incus/launch.go:28
-#, fuzzy
 msgid ""
 "incus launch images:debian/12 c1\n"
 "    Create and start a container named \"c1\"\n"
@@ -11025,6 +11025,8 @@ msgstr ""
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Cria e arranca contentor com nome \"c3\" usando o mesmo tamanho que um "
 "AWS t2.micro (1 vCPU, 1GiB de RAM)\n"
+"    Encontre a lista de tipos de instância suportados aqui: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Cria e arranca uma máquina virtual com nome \"v1\" com 4 vCPUs e 4GiB de "
