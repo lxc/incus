@@ -247,6 +247,14 @@ func GetInstanceSnapshotDevices(ctx context.Context, db tx, instanceSnapshotID i
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, DeviceFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{instanceSnapshotID}
+	}
+
 	instanceSnapshotDevices, err := GetDevices(ctx, db, "instances_snapshots", "instance_snapshot", filters...)
 	if err != nil {
 		return nil, err
@@ -271,6 +279,14 @@ func GetInstanceSnapshotConfig(ctx context.Context, db tx, instanceSnapshotID in
 	defer func() {
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
+
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{instanceSnapshotID}
+	}
 
 	instanceSnapshotConfig, err := GetConfig(ctx, db, "instances_snapshots", "instance_snapshot", filters...)
 	if err != nil {

@@ -280,6 +280,14 @@ func GetNetworkZoneConfig(ctx context.Context, db tx, networkZoneID int, filters
 		_err = mapErr(_err, "NetworkZone")
 	}()
 
+	if len(filters) == 0 {
+		filters = append(filters, ConfigFilter{})
+	}
+
+	for i := range filters {
+		filters[i].ReferenceID = []int{networkZoneID}
+	}
+
 	networkZoneConfig, err := GetConfig(ctx, db, "networks_zones", "network_zone", filters...)
 	if err != nil {
 		return nil, err

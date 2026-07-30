@@ -105,6 +105,19 @@ func GetConfig(ctx context.Context, db dbtx, parentTablePrefix string, parentCol
 		}
 
 		entries := []string{}
+		if filter.ReferenceID != nil {
+			values := make([]string, 0, len(filter.ReferenceID))
+			for _, v := range filter.ReferenceID {
+				values = append(values, fmt.Sprintf("%d", v))
+			}
+
+			if len(values) == 0 {
+				values = append(values, "NULL")
+			}
+
+			entries = append(entries, fmt.Sprintf("%s_id IN (%s)", parentColumnPrefix, strings.Join(values, ",")))
+		}
+
 		if filter.Key != nil {
 			entries = append(entries, "key = ?")
 			args = append(args, filter.Key)
