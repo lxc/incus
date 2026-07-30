@@ -587,7 +587,12 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	if r.Header.Get("Accept") == "application/octet-stream" {
-		return response.DevIncusResponse(http.StatusOK, string(v.Binary), "raw", false)
+		attributes := map[string]string{"X-Incus-attributes": strconv.FormatUint(uint64(uefi.DumpAttributes(v.Attributes)), 10)}
+		if v.Timestamp != nil {
+			attributes["X-Incus-timestamp"] = strconv.FormatInt(v.Timestamp.Unix(), 10)
+		}
+
+		return response.DevIncusResponseHeaders(http.StatusOK, string(v.Binary), "raw", false, attributes)
 	}
 
 	etag := []any{
