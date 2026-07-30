@@ -52,14 +52,14 @@ func ConfigToInstanceDBArgs(s *state.State, c *config.Config, projectName string
 				return err
 			}
 
-			// Get all the profile configs.
-			profileConfigs, err := cluster.GetAllProfileConfigs(ctx, tx.Tx())
+			// Get the profile configs.
+			profileConfigs, err := cluster.GetReferencedProfileConfigs(ctx, tx.Tx(), profiles)
 			if err != nil {
 				return err
 			}
 
-			// Get all the profile devices.
-			profileDevices, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
+			// Get the profile devices.
+			profileDevices, err := cluster.GetReferencedProfileDevices(ctx, tx.Tx(), profiles)
 			if err != nil {
 				return err
 			}
