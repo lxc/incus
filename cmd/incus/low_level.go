@@ -48,6 +48,9 @@ func (c *cmdLowLevel) command() *cobra.Command {
 	lowLevelNVRAMCmd := cmdLowLevelNVRAM{global: c.global}
 	cmd.AddCommand(lowLevelNVRAMCmd.command())
 
+	lowLevelRepairCmd := cmdLowLevelRepair{global: c.global}
+	cmd.AddCommand(lowLevelRepairCmd.command())
+
 	return cmd
 }
 
@@ -126,6 +129,57 @@ func (c *cmdLowLevelBitmapsCreate) run(cmd *cobra.Command, args []string) error 
 	err = d.CreateInstanceBitmap(instanceName, bitmap)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to create bitmap: %w"), err)
+	}
+
+	return nil
+}
+
+type cmdLowLevelRepair struct {
+	global *cmdGlobal
+}
+
+var cmdLowLevelRepairUsage = u.Usage{u.Instance.Remote(), u.Placeholder(i18n.G("action"))}
+
+func (c *cmdLowLevelRepair) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("repair", cmdLowLevelRepairUsage...)
+	cmd.Short = i18n.G("Run a repair action on an instance")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Run a low-level repair action on an instance.
+
+Supported actions:
+  rebuild-config-volume    Rebuild the config volume of a stopped QCOW2 backed virtual machine`,
+	))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return []string{"rebuild-config-volume"}, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelRepair) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelRepairUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+
+	err = d.RepairInstance(instanceName, api.InstanceDebugRepairPost{Action: parsed[1].String})
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to repair instance: %w"), err)
 	}
 
 	return nil
