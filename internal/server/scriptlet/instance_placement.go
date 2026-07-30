@@ -213,7 +213,12 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 				}
 			}
 
-			objectDevices, err := dbCluster.GetAllInstanceDevices(ctx, tx.Tx())
+			objectIDs := make([]int, 0, len(objects))
+			for _, obj := range objects {
+				objectIDs = append(objectIDs, obj.ID)
+			}
+
+			objectDevices, err := dbCluster.GetDevices(ctx, tx.Tx(), "instances", "instance", dbCluster.DeviceFilter{ReferenceID: objectIDs})
 			if err != nil {
 				return err
 			}
