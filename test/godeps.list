@@ -1,7 +1,9 @@
 github.com/apex/log
 github.com/gorilla/websocket
+github.com/klauspost/pgzip
 github.com/lxc/incus/v7/client
 github.com/lxc/incus/v7/shared/api
+github.com/lxc/incus/v7/shared/archive
 github.com/lxc/incus/v7/shared/cancel
 github.com/lxc/incus/v7/shared/ioprogress
 github.com/lxc/incus/v7/shared/logger
