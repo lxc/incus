@@ -229,6 +229,7 @@ type VM interface {
 	DumpGuestMemory(w *os.File, format string) error
 	GetNVRAM() (*uefi.Store, error)
 	SetNVRAM(store *uefi.Store) error
+	ResetNVRAM() error
 }
 
 // CriuMigrationArgs arguments for CRIU migration.

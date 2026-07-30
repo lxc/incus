@@ -12438,3 +12438,15 @@ func (d *qemu) SetNVRAM(store *uefi.Store) error {
 	_, err = f.Write(b)
 	return err
 }
+
+// ResetNVRAM resets the NVRAM.
+func (d *qemu) ResetNVRAM() error {
+	// Mount the instance's config volume.
+	_, err := d.mount()
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
+	return d.setupNvram()
+}
