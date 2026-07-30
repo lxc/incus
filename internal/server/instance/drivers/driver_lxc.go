@@ -6567,6 +6567,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 			volSourceArgs.FinalSync = true
 			volSourceArgs.Snapshots = nil
 			volSourceArgs.Info.Config.VolumeSnapshots = nil
+			volSourceArgs.DependentVolumes = nil
 
 			err = pool.MigrateInstance(d, filesystemConn, volSourceArgs, d.op)
 			if err != nil {
