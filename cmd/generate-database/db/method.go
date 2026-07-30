@@ -5,6 +5,7 @@ package db
 import (
 	"fmt"
 	"go/types"
+	"slices"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -329,6 +330,29 @@ func (m *Method) getMany(buf *file.Buffer) error {
 				continue
 			}
 
+			if filter.Name == "ReferenceID" {
+				if filter.Type.Name != "[]int" {
+					return fmt.Errorf("ReferenceID filter for entity %q must be of type []int", m.entity)
+				}
+
+				// Filter on the parent column, inlining the integer values to avoid
+				// query parameter count limits. An empty (non-nil) list matches nothing.
+				buf.L("if filter.%s != nil {", filter.Name)
+				buf.L("values := make([]string, 0, len(filter.%s))", filter.Name)
+				buf.L("for _, v := range filter.%s {", filter.Name)
+				buf.L("values = append(values, fmt.Sprintf(\"%%d\", v))")
+				buf.L("}")
+				buf.N()
+				buf.L("if len(values) == 0 {")
+				buf.L("values = append(values, \"NULL\")")
+				buf.L("}")
+				buf.N()
+				buf.L("entries = append(entries, fmt.Sprintf(\"%%s_id IN (%%s)\", parentColumnPrefix, strings.Join(values, \",\")))")
+				buf.L("}")
+				buf.N()
+				continue
+			}
+
 			buf.L("if filter.%s != nil {", filter.Name)
 			buf.L("entries = append(entries, \"%s = ?\")", lex.SnakeCase(filter.Name))
 			buf.L("args = append(args, filter.%s)", filter.Name)
@@ -533,13 +557,46 @@ func (m *Method) getMany(buf *file.Buffer) error {
 			buf.L("}")
 			buf.L("}")
 			buf.N()
+
+			scopeByParent := slices.Contains(FieldNames(refMapping.Filters), "ReferenceID") && mapping.FieldByName("ID") != nil
+			if scopeByParent {
+				// Restrict the reference fetch to the retrieved objects when filtered.
+				buf.L("%s := map[int]map[string]string{}", refSlice)
+				buf.L("if len(objects) > 0 {")
+				buf.L("if len(filters) > 0 {")
+				buf.L("referenceIDs := make([]int, 0, len(objects))")
+				buf.L("for _, object := range objects {")
+				buf.L("referenceIDs = append(referenceIDs, object.ID)")
+				buf.L("}")
+				buf.N()
+				buf.L("if len(%sFilters) == 0 {", refVar)
+				buf.L("%sFilters = append(%sFilters, %s{})", refVar, refVar, entityFilter(refStruct))
+				buf.L("}")
+				buf.N()
+				buf.L("for i := range %sFilters {", refVar)
+				buf.L("%sFilters[i].ReferenceID = referenceIDs", refVar)
+				buf.L("}")
+				buf.L("}")
+				buf.N()
+			}
+
+			assign := ":="
+			if scopeByParent {
+				assign = "="
+			}
+
 			if mapping.Type == ReferenceTable {
 				// A reference table should let its child reference know about its parent.
-				buf.L("%s, err := Get%s(ctx, db, parentTablePrefix+\"_%s\", parentColumnPrefix+\"_%s\", %sFilters...)", refSlice, lex.Plural(refStruct), lex.Plural(m.entity), m.entity, refVar)
-				m.ifErrNotNil(buf, true, "nil", "err")
+				buf.L("%s, err %s Get%s(ctx, db, parentTablePrefix+\"_%s\", parentColumnPrefix+\"_%s\", %sFilters...)", refSlice, assign, lex.Plural(refStruct), lex.Plural(m.entity), m.entity, refVar)
+				m.ifErrNotNil(buf, !scopeByParent, "nil", "err")
 			} else {
-				buf.L("%s, err := Get%s(ctx, db, \"%s\", %sFilters...)", refSlice, lex.Plural(refStruct), m.entity, refVar)
-				m.ifErrNotNil(buf, true, "nil", "err")
+				buf.L("%s, err %s Get%s(ctx, db, \"%s\", %sFilters...)", refSlice, assign, lex.Plural(refStruct), m.entity, refVar)
+				m.ifErrNotNil(buf, !scopeByParent, "nil", "err")
+			}
+
+			if scopeByParent {
+				buf.L("}")
+				buf.N()
 			}
 
 			buf.L("for i := range objects {")
@@ -620,6 +677,18 @@ func (m *Method) getRefs(buf *file.Buffer, parentTable string, refMapping *Mappi
 	refList := lex.Plural(refVar)
 	refParent := lex.CamelCase(m.entity)
 	refParentList := refParent + lex.PascalCase(refList)
+
+	if slices.Contains(FieldNames(refMapping.Filters), "ReferenceID") {
+		// Restrict the fetch to the parent object.
+		buf.L("if len(filters) == 0 {")
+		buf.L("filters = append(filters, %s{})", entityFilter(refStruct))
+		buf.L("}")
+		buf.N()
+		buf.L("for i := range filters {")
+		buf.L("filters[i].ReferenceID = []int{%sID}", refParent)
+		buf.L("}")
+		buf.N()
+	}
 
 	switch refMapping.Type {
 	case ReferenceTable:
