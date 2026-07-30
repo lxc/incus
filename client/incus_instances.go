@@ -3284,6 +3284,26 @@ func (r *ProtocolIncus) CreateInstanceBitmap(name string, bitmap api.StorageVolu
 	return nil
 }
 
+// RepairInstance requests that Incus runs a low-level repair action on the instance.
+func (r *ProtocolIncus) RepairInstance(name string, repair api.InstanceDebugRepairPost) error {
+	if !r.HasExtension("instances_debug_repair") {
+		return errors.New("The server is missing the required \"instances_debug_repair\" API extension")
+	}
+
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeAny)
+	if err != nil {
+		return err
+	}
+
+	// Send the request
+	_, _, err = r.query("POST", fmt.Sprintf("%s/%s/debug/repair", path, url.PathEscape(name)), repair, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *ProtocolIncus) getInstanceNVRAM(name string, guid string, varName string, accept string) (*http.Response, error) {
 	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
 	if err != nil {
