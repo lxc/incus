@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-26 09:13-0400\n"
+"POT-Creation-Date: 2026-07-29 19:46-0400\n"
 "PO-Revision-Date: 2026-07-28 13:01+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -3665,8 +3665,8 @@ msgstr ""
 "на него соединения\n"
 "на указанный адрес и порт внутри экземпляра.\n"
 "\n"
-"Перед номером любого из портов можно указать адрес (в формате «ADDRESS:PORT»)"
-";\n"
+"Перед номером любого из портов можно указать адрес (в формате "
+"«ADDRESS:PORT»);\n"
 "если адрес не указан, по умолчанию используется 127.0.0.1. Адреса IPv6 "
 "необходимо заключать\n"
 "в квадратные скобки (например, «[::1]:80»)."
@@ -4182,7 +4182,7 @@ msgstr "Импортирован образ с отпечатком: %s"
 msgid "Image refreshed successfully!"
 msgstr "Образ успешно обновлен!"
 
-#: cmd/incus/action.go:161 cmd/incus/launch.go:48
+#: cmd/incus/action.go:161 cmd/incus/launch.go:49
 msgid "Immediately attach to the console"
 msgstr "Немедленно подключиться к консоли"
 
@@ -8841,7 +8841,7 @@ msgstr "Запустить экземпляры"
 msgid "Started: %s"
 msgstr "Запущен: %s"
 
-#: cmd/incus/launch.go:108
+#: cmd/incus/launch.go:109
 #, c-format
 msgid "Starting %s"
 msgstr "Запуск %s"
@@ -9526,7 +9526,7 @@ msgstr "Политика передачи"
 msgid "Trust token for %s: "
 msgstr "Доверенный токен для %s: "
 
-#: cmd/incus/action.go:306 cmd/incus/launch.go:141
+#: cmd/incus/action.go:306 cmd/incus/launch.go:142
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr ""
@@ -10760,6 +10760,7 @@ msgstr ""
 "    Информация о сервере."
 
 #: cmd/incus/launch.go:28
+#, fuzzy
 msgid ""
 "incus launch images:debian/12 c1\n"
 "    Create and start a container named \"c1\"\n"
@@ -10771,6 +10772,8 @@ msgid ""
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
+"    Find the list of supported instance types here: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "

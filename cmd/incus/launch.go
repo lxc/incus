@@ -34,6 +34,7 @@ incus launch images:debian/12 c2 < config.yaml
 
 incus launch images:debian/12 c3 -t aws:t2.micro
     Create and start a container named "c3" using the same size as an AWS t2.micro (1 vCPU, 1GiB of RAM)
+    Find the list of supported instance types here: https://images.linuxcontainers.org/meta/instance-types/
 
 incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB
     Create and start a virtual machine named "v1" with 4 vCPUs and 4GiB of RAM

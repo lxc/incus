@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-26 09:13-0400\n"
+"POT-Creation-Date: 2026-07-29 19:46-0400\n"
 "PO-Revision-Date: 2026-07-13 05:47+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -4181,7 +4181,7 @@ msgstr "Image importée avec l'empreinte : %s"
 msgid "Image refreshed successfully!"
 msgstr "Image rafraîchie avec succès !"
 
-#: cmd/incus/action.go:161 cmd/incus/launch.go:48
+#: cmd/incus/action.go:161 cmd/incus/launch.go:49
 #, fuzzy
 msgid "Immediately attach to the console"
 msgstr "Forcer l'arrêt du conteneur (seulement pour stop)"
@@ -8708,7 +8708,7 @@ msgstr "Création du conteneur"
 msgid "Started: %s"
 msgstr "État : %s"
 
-#: cmd/incus/launch.go:108
+#: cmd/incus/launch.go:109
 #, c-format
 msgid "Starting %s"
 msgstr "Démarrage de %s"
@@ -9376,7 +9376,7 @@ msgstr ""
 msgid "Trust token for %s: "
 msgstr "Mot de passe administrateur pour %s : "
 
-#: cmd/incus/action.go:306 cmd/incus/launch.go:141
+#: cmd/incus/action.go:306 cmd/incus/launch.go:142
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr "`incus info --show-log %s%s` peut afficher plus d’informations"
@@ -10507,6 +10507,8 @@ msgid ""
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
+"    Find the list of supported instance types here: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
