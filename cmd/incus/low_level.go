@@ -148,7 +148,8 @@ func (c *cmdLowLevelRepair) command() *cobra.Command {
 		`Run a low-level repair action on an instance.
 
 Supported actions:
-  rebuild-config-volume    Rebuild the config volume of a stopped QCOW2 backed virtual machine`,
+  rebuild-config-volume    Rebuild the config volume of a stopped QCOW2 backed virtual machine
+  rebuild-nvram            Rebuild the virtual machine's UEFI NVRAM`,
 	))
 
 	cmd.RunE = c.run

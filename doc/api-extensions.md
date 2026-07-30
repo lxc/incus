@@ -3322,6 +3322,8 @@ This adds new endpoints to manage virtual machines’ UEFI variables:
 * `DELETE /1.0/instances/{name}/nvram/{guid}/{var}`, to delete specific UEFI variables
 * `PUT /1.0/instances/{name}/nvram/{guid}/{var}`, to set/update specific UEFI variables
 
+It also adds `rebuild-nvram` as an instance debug action.
+
 ## `disk_io_limits_combined`
 
 This makes it possible to set both a byte/s limit and an IOPS limit at the

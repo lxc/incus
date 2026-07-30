@@ -216,7 +216,7 @@ func instanceDebugRepairPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Validate the repair action.
-	if !slices.Contains([]string{"rebuild-config-volume"}, req.Action) {
+	if !slices.Contains([]string{"rebuild-config-volume", "rebuild-nvram"}, req.Action) {
 		return response.BadRequest(fmt.Errorf("Invalid repair action %q", req.Action))
 	}
 
@@ -233,6 +233,37 @@ func instanceDebugRepairPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			return response.SmartError(err)
 		}
+
+	case "rebuild-nvram":
+		return instanceDebugRepairRebuildNVRAM(s, inst)
+	}
+
+	return response.EmptySyncResponse
+}
+
+func instanceDebugRepairRebuildNVRAM(s *state.State, inst instance.Instance) response.Response {
+	// Initial validatoin.
+	if inst.Type() != instancetype.VM {
+		return response.BadRequest(errors.New("NVRAM operations are only supported for virtual machines"))
+	}
+
+	v, ok := inst.(instance.VM)
+	if !ok {
+		return response.InternalError(errors.New("Failed to cast inst to VM"))
+	}
+
+	if inst.IsRunning() {
+		return response.BadRequest(errors.New("UEFI variables cannot be modified on running VMs"))
+	}
+
+	// Actually reset the NVRAM.
+	err := v.ResetNVRAM()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	return response.EmptySyncResponse

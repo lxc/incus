@@ -70,7 +70,7 @@ var api10 = []APIEndpoint{
 	instanceNBDCmd,
 	instanceNVRAMCmd,
 	instanceNVRAMGUIDCmd,
-	instanceNVRAMGuidVarCmd,
+	instanceNVRAMGUIDVarCmd,
 	instancePortForwardCmd,
 	instanceRebuildCmd,
 	instanceSFTPCmd,
