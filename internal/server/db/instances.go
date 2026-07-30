@@ -520,36 +520,41 @@ func (c *ClusterTx) instanceProfilesFill(ctx context.Context, snapshotsMode bool
 		return err
 	}
 
-	// Get all profiles.
-	profiles, err := cluster.GetProfiles(context.TODO(), c.Tx())
-	if err != nil {
-		return fmt.Errorf("Failed loading profiles: %w", err)
-	}
-
-	// Get all the profile configs.
-	profileConfigs, err := cluster.GetAllProfileConfigs(context.TODO(), c.Tx())
-	if err != nil {
-		return fmt.Errorf("Failed loading profile configs: %w", err)
-	}
-
-	// Get all the profile devices.
-	profileDevices, err := cluster.GetAllProfileDevices(context.TODO(), c.Tx())
-	if err != nil {
-		return fmt.Errorf("Failed loading profile devices: %w", err)
-	}
-
-	// Populate profilesByID map entry for referenced profiles.
-	// This way we only call ToAPI() on the profiles actually referenced by the instances in
-	// the list, which can reduce the number of queries run.
-	for _, profile := range profiles {
-		_, ok := profilesByID[profile.ID]
-		if !ok {
-			continue
+	if len(profilesByID) > 0 {
+		// Get all profiles.
+		profiles, err := cluster.GetProfiles(ctx, c.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading profiles: %w", err)
 		}
 
-		profilesByID[profile.ID], err = profile.ToAPI(context.TODO(), c.tx, profileConfigs, profileDevices)
+		// Only keep the profiles that are actually referenced by the instances in the list.
+		referencedProfiles := make([]cluster.Profile, 0, len(profilesByID))
+		for _, profile := range profiles {
+			_, ok := profilesByID[profile.ID]
+			if !ok {
+				continue
+			}
+
+			referencedProfiles = append(referencedProfiles, profile)
+		}
+
+		// Get the configs of the referenced profiles.
+		profileConfigs, err := cluster.GetReferencedProfileConfigs(ctx, c.Tx(), referencedProfiles)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed loading profile configs: %w", err)
+		}
+
+		// Get the devices of the referenced profiles.
+		profileDevices, err := cluster.GetReferencedProfileDevices(ctx, c.Tx(), referencedProfiles)
+		if err != nil {
+			return fmt.Errorf("Failed loading profile devices: %w", err)
+		}
+
+		for _, profile := range referencedProfiles {
+			profilesByID[profile.ID], err = profile.ToAPI(ctx, c.tx, profileConfigs, profileDevices)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
