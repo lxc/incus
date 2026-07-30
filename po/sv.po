@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-29 22:51-0400\n"
+"POT-Creation-Date: 2026-07-30 01:35-0400\n"
 "PO-Revision-Date: 2026-07-28 13:01+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -82,7 +82,7 @@ msgstr ""
 "###   source: default\n"
 "###   zfs.pool_name: default"
 
-#: cmd/incus/storage_volume.go:973
+#: cmd/incus/storage_volume.go:977
 msgid ""
 "### This is a YAML representation of a storage volume.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -106,7 +106,7 @@ msgstr ""
 "### config:\n"
 "###   size: \"61203283968\""
 
-#: cmd/incus/low_level.go:346
+#: cmd/incus/low_level.go:483
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the UEFI variable.\n"
@@ -683,16 +683,16 @@ msgstr "%s %s syntax är föråldrad; %s\n"
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' är inte en filtyp som stöds"
 
-#: cmd/incus/low_level.go:608
+#: cmd/incus/low_level.go:745
 msgid "(binary data)"
 msgstr "(binär data)"
 
-#: cmd/incus/low_level.go:613
+#: cmd/incus/low_level.go:750
 #, c-format
 msgid "(error: %w)"
 msgstr "(fel: %w)"
 
-#: cmd/incus/low_level.go:600
+#: cmd/incus/low_level.go:737
 msgid "(no timestamp)"
 msgstr "(ingen tidsstämpel)"
 
@@ -728,7 +728,7 @@ msgstr "- Port %d (%s)"
 msgid "--all cannot be used together with other arguments"
 msgstr "--all kan inte användas tillsammans med andra argument"
 
-#: cmd/incus/low_level.go:741
+#: cmd/incus/low_level.go:878
 #, fuzzy
 msgid "--attributes cannot be used without --raw"
 msgstr "--no-profiles kan inte användas tillsammans med --refresh"
@@ -804,7 +804,7 @@ msgstr "--target kan endast användas med kluster"
 msgid "--target cannot be used with instances"
 msgstr "--target kan inte användas med instanser"
 
-#: cmd/incus/low_level.go:745
+#: cmd/incus/low_level.go:882
 #, fuzzy
 msgid "--timestamp cannot be used without --raw"
 msgstr "--no-profiles kan inte användas tillsammans med --refresh"
@@ -858,7 +858,7 @@ msgstr "APP"
 msgid "ARCHITECTURE"
 msgstr "ARKITEKTUR"
 
-#: cmd/incus/low_level.go:548
+#: cmd/incus/low_level.go:685
 msgid "ATTRIBUTES"
 msgstr "ATTRIBUTE"
 
@@ -1101,7 +1101,7 @@ msgstr ""
 msgid "All profiles removed from %s"
 msgstr "Alla profiler borttagna från %s"
 
-#: cmd/incus/storage_volume.go:1493 cmd/incus/storage_volume_snapshot.go:328
+#: cmd/incus/storage_volume.go:1497 cmd/incus/storage_volume_snapshot.go:328
 msgid "All projects"
 msgstr "Alla projekt"
 
@@ -1168,11 +1168,11 @@ msgstr "Anslut nätverksgränssnitt till instanser"
 msgid "Attach network interfaces to profiles"
 msgstr "Koppla nätverksgränssnitt till profiler"
 
-#: cmd/incus/storage_volume.go:181 cmd/incus/storage_volume.go:182
+#: cmd/incus/storage_volume.go:185 cmd/incus/storage_volume.go:186
 msgid "Attach new custom storage volumes to instances"
 msgstr "Koppla nya anpassade lagringsvolymer till instanser"
 
-#: cmd/incus/storage_volume.go:299 cmd/incus/storage_volume.go:300
+#: cmd/incus/storage_volume.go:303 cmd/incus/storage_volume.go:304
 msgid "Attach new custom storage volumes to profiles"
 msgstr "Koppla nya anpassade lagringsvolymer till profiler"
 
@@ -1236,6 +1236,10 @@ msgstr "Genomsnitt: %.2f %.2f %.2f"
 msgid "BASE IMAGE"
 msgstr "BASBILD"
 
+#: cmd/incus/storage_volume_bitmap.go:276
+msgid "BUSY"
+msgstr ""
+
 #: cmd/incus/network_load_balancer.go:825
 msgid "Backend description"
 msgstr "Beskrivning av backend"
@@ -1254,17 +1258,17 @@ msgstr "Säkerhetskopiering av instans: %s"
 msgid "Backing up storage bucket: %s"
 msgstr "Säkerhetskopiering av lagringsutrymme: %s"
 
-#: cmd/incus/storage_volume.go:2339
+#: cmd/incus/storage_volume.go:2343
 #, c-format
 msgid "Backing up storage volume: %s"
 msgstr "Säkerhetskopiering av lagringsvolym: %s"
 
 #: cmd/incus/export.go:210 cmd/incus/storage_bucket.go:1466
-#: cmd/incus/storage_volume.go:2443
+#: cmd/incus/storage_volume.go:2447
 msgid "Backup exported successfully!"
 msgstr "Säkerhetskopian exporterades utan problem!"
 
-#: cmd/incus/info.go:881 cmd/incus/storage_volume.go:1422
+#: cmd/incus/info.go:881 cmd/incus/storage_volume.go:1426
 msgid "Backups:"
 msgstr "Säkerhetskopior:"
 
@@ -1284,6 +1288,11 @@ msgstr "Felaktigt nyckel=värde-par: %q"
 #: cmd/incus/remote.go:155
 msgid "Binary helper for retrieving credentials"
 msgstr "Binär hjälpfunktion för hämtning av inloggningsuppgifter"
+
+#: cmd/incus/storage_volume_bitmap.go:189
+#, fuzzy, c-format
+msgid "Bitmap %s deleted from volume %s"
+msgstr "Lagringsvolymsögonblicksbild %s raderad från %s"
 
 #: cmd/incus/network.go:950
 msgid "Bond:"
@@ -1327,7 +1336,7 @@ msgstr "AVBRYTNINGSBAR"
 msgid "COMMON NAME"
 msgstr "ALLMÄNT NAMN"
 
-#: cmd/incus/storage_volume.go:1624
+#: cmd/incus/storage_volume.go:1628
 msgid "CONTENT-TYPE"
 msgstr "INNEHÅLLSTYP"
 
@@ -1421,7 +1430,7 @@ msgstr "Kan inte ange --project med --all-projects"
 msgid "Can't specify a remote with --all-remotes"
 msgstr "Kan inte ange --project med --all-projects"
 
-#: cmd/incus/list.go:607 cmd/incus/storage_volume.go:1634
+#: cmd/incus/list.go:607 cmd/incus/storage_volume.go:1638
 #: cmd/incus/warning.go:225
 msgid "Can't specify column L when not clustered"
 msgstr "Kan inte ange kolumn L när den inte är klustrad"
@@ -1467,18 +1476,18 @@ msgstr ""
 msgid "Cannot read the stdin twice"
 msgstr "Kan inte läsa stdin två gånger"
 
-#: cmd/incus/storage_volume.go:470
+#: cmd/incus/storage_volume.go:474
 msgid ""
 "Cannot set --destination-target when destination server is not clustered"
 msgstr ""
 "Kan inte ställa in --destination-target när destinationsservern inte är "
 "klustrad"
 
-#: cmd/incus/storage_volume.go:436
+#: cmd/incus/storage_volume.go:440
 msgid "Cannot set --target when source server is not clustered"
 msgstr "Kan inte ställa in --target när källservern inte är klustrad"
 
-#: cmd/incus/storage_volume.go:450
+#: cmd/incus/storage_volume.go:454
 msgid "Cannot set --volume-only when copying a snapshot"
 msgstr "Kan inte ställa in --volume-only när du kopierar en ögonblicksbild"
 
@@ -1636,13 +1645,16 @@ msgstr "Klustermedlem %s borttagen från grupp %s"
 #: cmd/incus/storage_bucket.go:988 cmd/incus/storage_bucket.go:1078
 #: cmd/incus/storage_bucket.go:1127 cmd/incus/storage_bucket.go:1249
 #: cmd/incus/storage_bucket.go:1309 cmd/incus/storage_bucket.go:1490
-#: cmd/incus/storage_volume.go:392 cmd/incus/storage_volume.go:599
-#: cmd/incus/storage_volume.go:694 cmd/incus/storage_volume.go:954
-#: cmd/incus/storage_volume.go:1166 cmd/incus/storage_volume.go:1284
-#: cmd/incus/storage_volume.go:1732 cmd/incus/storage_volume.go:1796
-#: cmd/incus/storage_volume.go:1880 cmd/incus/storage_volume.go:1964
-#: cmd/incus/storage_volume.go:2114 cmd/incus/storage_volume.go:2204
-#: cmd/incus/storage_volume.go:2260 cmd/incus/storage_volume.go:2468
+#: cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:603
+#: cmd/incus/storage_volume.go:698 cmd/incus/storage_volume.go:958
+#: cmd/incus/storage_volume.go:1170 cmd/incus/storage_volume.go:1288
+#: cmd/incus/storage_volume.go:1736 cmd/incus/storage_volume.go:1800
+#: cmd/incus/storage_volume.go:1884 cmd/incus/storage_volume.go:1968
+#: cmd/incus/storage_volume.go:2118 cmd/incus/storage_volume.go:2208
+#: cmd/incus/storage_volume.go:2264 cmd/incus/storage_volume.go:2472
+#: cmd/incus/storage_volume_bitmap.go:79 cmd/incus/storage_volume_bitmap.go:144
+#: cmd/incus/storage_volume_bitmap.go:234
+#: cmd/incus/storage_volume_bitmap.go:365
 #: cmd/incus/storage_volume_snapshot.go:99
 #: cmd/incus/storage_volume_snapshot.go:247
 #: cmd/incus/storage_volume_snapshot.go:484
@@ -1659,7 +1671,7 @@ msgstr "Klustering aktiverad"
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:530 cmd/incus/network.go:1054
+#: cmd/incus/low_level.go:667 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
@@ -1667,8 +1679,9 @@ msgstr "Klustering aktiverad"
 #: cmd/incus/profile.go:704 cmd/incus/project.go:522 cmd/incus/remote.go:1041
 #: cmd/incus/snapshot.go:344 cmd/incus/storage.go:666
 #: cmd/incus/storage_bucket.go:467 cmd/incus/storage_bucket.go:863
-#: cmd/incus/storage_volume.go:1492 cmd/incus/storage_volume_snapshot.go:327
-#: cmd/incus/top.go:68 cmd/incus/warning.go:98
+#: cmd/incus/storage_volume.go:1496 cmd/incus/storage_volume_bitmap.go:232
+#: cmd/incus/storage_volume_snapshot.go:327 cmd/incus/top.go:68
+#: cmd/incus/warning.go:98
 msgid "Columns"
 msgstr "Kolumner"
 
@@ -1702,7 +1715,7 @@ msgstr "Komprimeringsalgoritm som ska användas (`none` för okomprimerad)"
 msgid "Compression algorithm to use (none for uncompressed)"
 msgstr "Komprimeringsalgoritm som ska användas (ingen för okomprimerat)"
 
-#: cmd/incus/storage_volume.go:2259
+#: cmd/incus/storage_volume.go:2263
 msgid ""
 "Compression algorithm to use (none for uncompressed, ignored for ISO storage "
 "volumes)"
@@ -1741,7 +1754,7 @@ msgstr "Konfigurationsflaggan ska ha formatet NYCKEL=VÄRDE"
 #: cmd/incus/network_zone.go:1343 cmd/incus/profile.go:574
 #: cmd/incus/project.go:397 cmd/incus/storage.go:357
 #: cmd/incus/storage_bucket.go:335 cmd/incus/storage_bucket.go:1209
-#: cmd/incus/storage_volume.go:1081 cmd/incus/storage_volume.go:1113
+#: cmd/incus/storage_volume.go:1085 cmd/incus/storage_volume.go:1117
 #, c-format
 msgid "Config parsing error: %s"
 msgstr "Konfigurationsanalysfel: %s"
@@ -1768,11 +1781,11 @@ msgstr "Ansluter till daemon (försök %d)"
 msgid "Connection to the instance failed: %v"
 msgstr "Anslutningen till instansen misslyckades: %v"
 
-#: cmd/incus/storage_volume.go:600
+#: cmd/incus/storage_volume.go:604
 msgid "Content type, block or filesystem"
 msgstr "Innehållstyp, block eller filsystem"
 
-#: cmd/incus/storage_volume.go:1362
+#: cmd/incus/storage_volume.go:1366
 #, c-format
 msgid "Content type: %s"
 msgstr "Innehållstyp: %s"
@@ -1790,7 +1803,7 @@ msgstr "Kopiera en tillståndsberoende instans tillståndsfri"
 msgid "Copy aliases from source"
 msgstr "Kopiera alias från källan"
 
-#: cmd/incus/storage_volume.go:388 cmd/incus/storage_volume.go:389
+#: cmd/incus/storage_volume.go:392 cmd/incus/storage_volume.go:393
 msgid "Copy custom storage volumes"
 msgstr "Kopiera anpassade lagringsvolymer"
 
@@ -1855,12 +1868,12 @@ msgstr "Kopiera profiler"
 msgid "Copy the instance without its snapshots"
 msgstr "Kopiera instansen utan dess ögonblicksbilder"
 
-#: cmd/incus/storage_volume.go:394
+#: cmd/incus/storage_volume.go:398
 msgid "Copy the volume without its snapshots"
 msgstr "Kopiera volymen utan dess ögonblicksbilder"
 
 #: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70
-#: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:395
+#: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr "Kopiera till ett annat projekt än källan"
 
@@ -1873,7 +1886,7 @@ msgstr "Kopiera virtuella maskinbilder"
 msgid "Copying the image: %s"
 msgstr "Kopiera bilden: %s"
 
-#: cmd/incus/storage_volume.go:485
+#: cmd/incus/storage_volume.go:489
 #, c-format
 msgid "Copying the storage volume: %s"
 msgstr "Kopiering av lagringsvolymen: %s"
@@ -1939,6 +1952,20 @@ msgstr "Kunde inte statfs %s: %w"
 #: cmd/incus/cluster_group.go:173 cmd/incus/cluster_group.go:174
 msgid "Create a cluster group"
 msgstr "Skapa en klustergrupp"
+
+#: cmd/incus/storage_volume_bitmap.go:72 cmd/incus/storage_volume_bitmap.go:73
+#, fuzzy
+msgid "Create a dirty bitmap on a storage volume"
+msgstr "Skapa nya anpassade lagringsvolymer"
+
+#: cmd/incus/low_level.go:91
+#, fuzzy
+msgid "Create a dirty bitmap on a virtual machine"
+msgstr "Skapa en virtuell maskin"
+
+#: cmd/incus/low_level.go:92
+msgid "Create a dirty bitmap on all the disks of a running virtual machine"
+msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:385
 #, c-format
@@ -2016,7 +2043,7 @@ msgstr "Skapa nätverksintegrationer"
 msgid "Create new custom storage buckets"
 msgstr "Skapa nya anpassade lagringsfack"
 
-#: cmd/incus/storage_volume.go:591 cmd/incus/storage_volume.go:592
+#: cmd/incus/storage_volume.go:595 cmd/incus/storage_volume.go:596
 msgid "Create new custom storage volumes"
 msgstr "Skapa nya anpassade lagringsvolymer"
 
@@ -2069,7 +2096,12 @@ msgstr "Skapa projekt"
 msgid "Create storage pools"
 msgstr "Skapa lagringspooler"
 
-#: cmd/incus/storage_volume.go:186
+#: cmd/incus/low_level.go:99 cmd/incus/storage_volume_bitmap.go:78
+#, fuzzy
+msgid "Create the bitmap in the disabled state"
+msgstr "Skapa nya instansfilmallar"
+
+#: cmd/incus/storage_volume.go:190
 msgid "Create the custom storage volume if it doesn't already exist"
 msgstr "Skapa den anpassade lagringsvolymer om den inte redan finns"
 
@@ -2078,7 +2110,7 @@ msgid "Create the instance with no profiles applied"
 msgstr "Skapa instansen utan att tillämpa några profiler"
 
 #: cmd/incus/image.go:981 cmd/incus/info.go:700
-#: cmd/incus/storage_volume.go:1376
+#: cmd/incus/storage_volume.go:1380
 #, c-format
 msgid "Created: %s"
 msgstr "Skapad: %s"
@@ -2115,9 +2147,13 @@ msgstr "STANDARDMÅLADRESS"
 #: cmd/incus/network_zone.go:146 cmd/incus/network_zone.go:875
 #: cmd/incus/operation.go:169 cmd/incus/profile.go:732 cmd/incus/project.go:553
 #: cmd/incus/storage.go:692 cmd/incus/storage_bucket.go:484
-#: cmd/incus/storage_bucket.go:879 cmd/incus/storage_volume.go:1623
+#: cmd/incus/storage_bucket.go:879 cmd/incus/storage_volume.go:1627
 msgid "DESCRIPTION"
 msgstr "BESKRIVNING"
+
+#: cmd/incus/storage_volume_bitmap.go:273
+msgid "DIRTY BYTES"
+msgstr ""
 
 #: cmd/incus/top.go:87
 msgid "DISK"
@@ -2174,7 +2210,7 @@ msgstr "Ta bort bakgrundsoperationer (försöker avbryta)"
 msgid "Delete cluster groups"
 msgstr "Ta bort klustergrupper"
 
-#: cmd/incus/storage_volume.go:691 cmd/incus/storage_volume.go:692
+#: cmd/incus/storage_volume.go:695 cmd/incus/storage_volume.go:696
 msgid "Delete custom storage volumes"
 msgstr "Ta bort anpassade lagringsvolymer"
 
@@ -2263,6 +2299,12 @@ msgstr "Ta bort lagringsutrymmen"
 msgid "Delete storage pools"
 msgstr "Ta bort lagringspooler"
 
+#: cmd/incus/storage_volume_bitmap.go:141
+#: cmd/incus/storage_volume_bitmap.go:142
+#, fuzzy
+msgid "Delete storage volume dirty bitmaps"
+msgstr "Ta bort ögonblicksbilder av lagringsvolymer"
+
 #: cmd/incus/storage_volume_snapshot.go:244
 #: cmd/incus/storage_volume_snapshot.go:245
 msgid "Delete storage volume snapshots"
@@ -2272,7 +2314,7 @@ msgstr "Ta bort ögonblicksbilder av lagringsvolymer"
 msgid "Delete warnings"
 msgstr "Ta bort varningar"
 
-#: cmd/incus/storage_volume.go:1408
+#: cmd/incus/storage_volume.go:1412
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -2280,20 +2322,20 @@ msgstr "Beskrivning"
 msgid "Description:"
 msgstr "Beskrivning:"
 
-#: cmd/incus/info.go:671 cmd/incus/storage_volume.go:1349
+#: cmd/incus/info.go:671 cmd/incus/storage_volume.go:1353
 #, c-format
 msgid "Description: %s"
 msgstr "Beskrivning: %s"
 
-#: cmd/incus/storage_volume.go:393 cmd/incus/storage_volume.go:1733
+#: cmd/incus/storage_volume.go:397 cmd/incus/storage_volume.go:1737
 msgid "Destination cluster member name"
 msgstr "Destinationsklustermedlemsnamn"
 
-#: cmd/incus/storage_volume.go:753 cmd/incus/storage_volume.go:754
+#: cmd/incus/storage_volume.go:757 cmd/incus/storage_volume.go:758
 msgid "Detach custom storage volumes from instances"
 msgstr "Koppla bort anpassade lagringsvolymer från instanser"
 
-#: cmd/incus/storage_volume.go:868 cmd/incus/storage_volume.go:869
+#: cmd/incus/storage_volume.go:872 cmd/incus/storage_volume.go:873
 msgid "Detach custom storage volumes from profiles"
 msgstr "Koppla bort anpassade lagringsvolymer från profiler"
 
@@ -2559,7 +2601,7 @@ msgstr ""
 "Under inkrementell kopiering, exkludera källsnapshots som är äldre än den "
 "senaste målsnapshoten"
 
-#: cmd/incus/storage_volume.go:397
+#: cmd/incus/storage_volume.go:401
 msgid ""
 "During refresh, exclude source snapshots earlier than latest target snapshot"
 msgstr ""
@@ -2608,7 +2650,7 @@ msgstr "Redigera filer i lagringsvolymer"
 msgid "Edit image properties"
 msgstr "Redigera avbildsegenskaper"
 
-#: cmd/incus/low_level.go:328 cmd/incus/low_level.go:329
+#: cmd/incus/low_level.go:465 cmd/incus/low_level.go:466
 #, fuzzy
 msgid "Edit instance UEFI variables"
 msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
@@ -2682,11 +2724,11 @@ msgstr "Redigera lagringsbucketnyckel som YAML"
 msgid "Edit storage pool configurations as YAML"
 msgstr "Redigera lagringspoolkonfigurationer som YAML"
 
-#: cmd/incus/storage_volume.go:939
+#: cmd/incus/storage_volume.go:943
 msgid "Edit storage volume configurations as YAML"
 msgstr "Redigera lagringsvolymkonfigurationer som YAML"
 
-#: cmd/incus/storage_volume.go:940
+#: cmd/incus/storage_volume.go:944
 msgid ""
 "Edit storage volume configurations as YAML\n"
 "\n"
@@ -2708,7 +2750,7 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:562 cmd/incus/network.go:1101
+#: cmd/incus/low_level.go:699 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
@@ -2716,8 +2758,9 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/profile.go:748 cmd/incus/project.go:563 cmd/incus/remote.go:1068
 #: cmd/incus/snapshot.go:378 cmd/incus/storage.go:704
 #: cmd/incus/storage_bucket.go:501 cmd/incus/storage_bucket.go:888
-#: cmd/incus/storage_volume.go:1651 cmd/incus/storage_volume_snapshot.go:431
-#: cmd/incus/top.go:96 cmd/incus/warning.go:236
+#: cmd/incus/storage_volume.go:1655 cmd/incus/storage_volume_bitmap.go:286
+#: cmd/incus/storage_volume_snapshot.go:431 cmd/incus/top.go:96
+#: cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
@@ -2803,8 +2846,8 @@ msgstr "Fel vid hämtning av alias: %w"
 #: cmd/incus/network_load_balancer.go:526 cmd/incus/network_peer.go:562
 #: cmd/incus/network_zone.go:513 cmd/incus/network_zone.go:1173
 #: cmd/incus/profile.go:1039 cmd/incus/project.go:815 cmd/incus/storage.go:852
-#: cmd/incus/storage_bucket.go:668 cmd/incus/storage_volume.go:2016
-#: cmd/incus/storage_volume.go:2059
+#: cmd/incus/storage_bucket.go:668 cmd/incus/storage_volume.go:2020
+#: cmd/incus/storage_volume.go:2063
 #, c-format
 msgid "Error setting properties: %v"
 msgstr "Fel vid inställning av egenskaper: %v"
@@ -2825,8 +2868,8 @@ msgstr "Fel vid avaktivering av egenskaper: %v"
 #: cmd/incus/network_load_balancer.go:520 cmd/incus/network_peer.go:556
 #: cmd/incus/network_zone.go:507 cmd/incus/network_zone.go:1167
 #: cmd/incus/profile.go:1033 cmd/incus/project.go:809 cmd/incus/storage.go:846
-#: cmd/incus/storage_bucket.go:662 cmd/incus/storage_volume.go:2010
-#: cmd/incus/storage_volume.go:2053
+#: cmd/incus/storage_bucket.go:662 cmd/incus/storage_volume.go:2014
+#: cmd/incus/storage_volume.go:2057
 #, c-format
 msgid "Error unsetting property: %v"
 msgstr "Fel vid borttagning av egenskap: %v"
@@ -2976,8 +3019,8 @@ msgstr ""
 msgid "Expected a struct, got a %v"
 msgstr "Förväntade mig en struktur, fick en %v"
 
-#: cmd/incus/info.go:867 cmd/incus/info.go:918 cmd/incus/storage_volume.go:1409
-#: cmd/incus/storage_volume.go:1459
+#: cmd/incus/info.go:867 cmd/incus/info.go:918 cmd/incus/storage_volume.go:1413
+#: cmd/incus/storage_volume.go:1463
 msgid "Expires at"
 msgstr "Går ut den"
 
@@ -2998,7 +3041,7 @@ msgstr ""
 "Utgångsdatum för den nya ögonblicksbilden (antingen ett tidsintervall som "
 "`1d 3H` eller ett datum i formatet `2006/01/02 15:04 MST`)"
 
-#: cmd/incus/low_level.go:63
+#: cmd/incus/low_level.go:200
 msgid "Export a virtual machine's memory state"
 msgstr "Exportera en virtuell maskins minnestillstånd"
 
@@ -3016,11 +3059,11 @@ msgstr ""
 "\n"
 "Utdatamålet är valfritt och är som standard inställt på arbetskatalogen."
 
-#: cmd/incus/storage_volume.go:2254
+#: cmd/incus/storage_volume.go:2258
 msgid "Export custom storage volumes"
 msgstr "Exportera anpassade lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:2255
+#: cmd/incus/storage_volume.go:2259
 msgid "Export custom storage volumes."
 msgstr "Exportera anpassade lagringsvolymer."
 
@@ -3040,7 +3083,7 @@ msgstr "Exportera lagringsbehållare"
 msgid "Export storage buckets as tarball."
 msgstr "Exportera lagringsbuckets som tarball."
 
-#: cmd/incus/low_level.go:64
+#: cmd/incus/low_level.go:201
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3050,7 +3093,7 @@ msgstr ""
 "dumpfil.\n"
 "\t\tDetta kan vara användbart för felsökning eller analys."
 
-#: cmd/incus/storage_volume.go:2257
+#: cmd/incus/storage_volume.go:2261
 msgid ""
 "Export the volume without its snapshots (ignored for ISO storage volumes)"
 msgstr ""
@@ -3062,7 +3105,7 @@ msgstr ""
 msgid "Exporting backup of storage bucket: %s"
 msgstr "Exportera säkerhetskopia av lagringsfack: %s"
 
-#: cmd/incus/export.go:170 cmd/incus/storage_volume.go:2403
+#: cmd/incus/export.go:170 cmd/incus/storage_volume.go:2407
 #, c-format
 msgid "Exporting the backup: %s"
 msgstr "Exportera säkerhetskopian: %s"
@@ -3139,7 +3182,7 @@ msgstr "Konvertering av token-operation till join-token misslyckades: %w"
 msgid "Failed deleting instance %s in project %q: %w"
 msgstr "Misslyckades att ta bort instans %s i projekt %q: %w"
 
-#: cmd/incus/storage_volume.go:558
+#: cmd/incus/storage_volume.go:562
 #, c-format
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Misslyckades med att ta bort källvolymen efter kopiering: %w"
@@ -3204,8 +3247,8 @@ msgstr "Startkommandot misslyckades: %w"
 msgid "Failed starting sshfs: %w"
 msgstr "Misslyckades med att starta sshfs: %w"
 
-#: cmd/incus/low_level.go:183 cmd/incus/port_forward.go:128
-#: cmd/incus/storage_volume.go:2661 cmd/incus/utils.go:640
+#: cmd/incus/low_level.go:320 cmd/incus/port_forward.go:128
+#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:640
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Det gick inte att acceptera inkommande anslutning: %w"
@@ -3230,7 +3273,7 @@ msgid "Failed to check if the daemon is ready (attempt %d): %v"
 msgstr "Det gick inte att kontrollera om daemonen är redo (försök %d): %v"
 
 #: cmd/incus/export.go:207 cmd/incus/storage_bucket.go:1463
-#: cmd/incus/storage_volume.go:2440
+#: cmd/incus/storage_volume.go:2444
 #, c-format
 msgid "Failed to close export file: %w"
 msgstr "Det gick inte att stänga exportfilen: %w"
@@ -3275,15 +3318,25 @@ msgstr "Det gick inte att skapa alias %s: %w"
 msgid "Failed to create backup: %v"
 msgstr "Det gick inte att skapa säkerhetskopia: %v"
 
+#: cmd/incus/low_level.go:131 cmd/incus/storage_volume_bitmap.go:121
+#, fuzzy, c-format
+msgid "Failed to create bitmap: %w"
+msgstr "Det gick inte att skapa säkerhetskopia: %v"
+
 #: cmd/incus/remote.go:320
 #, c-format
 msgid "Failed to create certificate: %w"
 msgstr "Det gick inte att skapa certifikatet: %w"
 
-#: cmd/incus/storage_volume.go:2334
+#: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid "Failed to create storage volume backup: %w"
 msgstr "Det gick inte att skapa säkerhetskopia av lagringsvolym: %w"
+
+#: cmd/incus/storage_volume_bitmap.go:185
+#, fuzzy, c-format
+msgid "Failed to delete bitmap: %w"
+msgstr "Misslyckades med att begära dump: %w"
 
 #: cmd/incus/move.go:199
 #, c-format
@@ -3291,7 +3344,7 @@ msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
 "Det gick inte att ta bort den ursprungliga instansen efter kopieringen: %w"
 
-#: cmd/incus/low_level.go:96
+#: cmd/incus/low_level.go:233
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
@@ -3301,7 +3354,7 @@ msgstr "Misslyckades med att dumpa instansminnet: %w"
 msgid "Failed to fetch storage bucket backup: %w"
 msgstr "Det gick inte att hämta säkerhetskopian av lagringsbucket: %w"
 
-#: cmd/incus/storage_volume.go:2417
+#: cmd/incus/storage_volume.go:2421
 #, c-format
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
@@ -3311,12 +3364,17 @@ msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
 msgid "Failed to find project: %w"
 msgstr "Projektet kunde inte hittas: %w"
 
-#: cmd/incus/low_level.go:490 cmd/incus/low_level.go:499
+#: cmd/incus/storage_volume_bitmap.go:406
+#, fuzzy, c-format
+msgid "Failed to get bitmap: %w"
+msgstr "Misslyckades med att begära dump: %w"
+
+#: cmd/incus/low_level.go:627 cmd/incus/low_level.go:636
 #, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr "Det gick inte att hämta instansens UEFI-variabel: %w"
 
-#: cmd/incus/low_level.go:632
+#: cmd/incus/low_level.go:769
 #, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
@@ -3326,8 +3384,13 @@ msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
 msgid "Failed to join cluster: %w"
 msgstr "Det gick inte att ansluta till klustret: %w"
 
-#: cmd/incus/low_level.go:168 cmd/incus/port_forward.go:114
-#: cmd/incus/storage_volume.go:2653 cmd/incus/utils.go:625
+#: cmd/incus/storage_volume_bitmap.go:320
+#, fuzzy, c-format
+msgid "Failed to list bitmaps: %w"
+msgstr "Misslyckades med att begära dump: %w"
+
+#: cmd/incus/low_level.go:305 cmd/incus/port_forward.go:114
+#: cmd/incus/storage_volume.go:2657 cmd/incus/utils.go:625
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Misslyckades med att lyssna efter anslutning: %w"
@@ -3358,7 +3421,7 @@ msgstr "Det gick inte att analysera dumpningssvaret: %w"
 msgid "Failed to parse the preseed: %w"
 msgstr "Det gick inte att analysera förinställningen: %w"
 
-#: cmd/incus/low_level.go:751
+#: cmd/incus/low_level.go:888
 #, fuzzy, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr "Det gick inte att analysera servrarna: %w"
@@ -3384,7 +3447,7 @@ msgid "Failed to remove alias %s: %w"
 msgstr "Det gick inte att ta bort alias %s: %w"
 
 #: cmd/incus/export.go:201 cmd/incus/storage_bucket.go:1457
-#: cmd/incus/storage_volume.go:2434
+#: cmd/incus/storage_volume.go:2438
 #, c-format
 msgid "Failed to rename export file: %w"
 msgstr "Det gick inte att byta namn på exportfilen: %w"
@@ -3393,6 +3456,11 @@ msgstr "Det gick inte att byta namn på exportfilen: %w"
 #, c-format
 msgid "Failed to render the config: %w"
 msgstr "Det gick inte att rendera konfigurationen: %w"
+
+#: cmd/incus/low_level.go:182
+#, fuzzy, c-format
+msgid "Failed to repair instance: %w"
+msgstr "Misslyckades med att dumpa instansminnet: %w"
 
 #: cmd/incus/admin_sql.go:97
 #, c-format
@@ -3434,12 +3502,12 @@ msgstr "Det gick inte att hämta listan över nätverk: %w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Det gick inte att hämta listan över lagringspooler: %w"
 
-#: cmd/incus/low_level.go:421
+#: cmd/incus/low_level.go:558
 #, fuzzy, c-format
 msgid "Failed to set UEFI variable %s:%s: %s"
 msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
 
-#: cmd/incus/low_level.go:759
+#: cmd/incus/low_level.go:896
 #, fuzzy, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
 msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
@@ -3522,7 +3590,7 @@ msgid "Force evacuation without user confirmation"
 msgstr "Tvinga evakuering utan användarens bekräftelse"
 
 #: cmd/incus/export.go:56 cmd/incus/storage_bucket.go:1310
-#: cmd/incus/storage_volume.go:2261
+#: cmd/incus/storage_volume.go:2265
 msgid "Force overwriting existing backup file"
 msgstr "Tvinga överskrivning av befintlig säkerhetskopia"
 
@@ -3616,7 +3684,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:529 cmd/incus/network.go:1055
+#: cmd/incus/low_level.go:666 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
@@ -3625,8 +3693,8 @@ msgstr ""
 #: cmd/incus/profile.go:705 cmd/incus/project.go:523 cmd/incus/project.go:1000
 #: cmd/incus/remote.go:1040 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667
 #: cmd/incus/storage_bucket.go:465 cmd/incus/storage_bucket.go:861
-#: cmd/incus/storage_volume.go:1520 cmd/incus/storage_volume_snapshot.go:341
-#: cmd/incus/warning.go:99
+#: cmd/incus/storage_volume.go:1524 cmd/incus/storage_volume_bitmap.go:233
+#: cmd/incus/storage_volume_snapshot.go:341 cmd/incus/warning.go:99
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
@@ -3651,7 +3719,7 @@ msgstr "Format (pem|pfx)"
 msgid "Format (table|compact)"
 msgstr "Format (tabell|kompakt)"
 
-#: cmd/incus/low_level.go:74
+#: cmd/incus/low_level.go:211
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
@@ -3725,11 +3793,15 @@ msgstr "GPU:"
 msgid "GPUs:"
 msgstr "Grafikkort:"
 
-#: cmd/incus/low_level.go:519 cmd/incus/low_level.go:549
+#: cmd/incus/storage_volume_bitmap.go:274
+msgid "GRANULARITY"
+msgstr ""
+
+#: cmd/incus/low_level.go:656 cmd/incus/low_level.go:686
 msgid "GUID"
 msgstr "GUID"
 
-#: cmd/incus/low_level.go:550
+#: cmd/incus/low_level.go:687
 msgid "GUID NAME"
 msgstr "GUID-NAMN"
 
@@ -3870,7 +3942,7 @@ msgstr "Hämta nyckeln som en lagringsbucketegenskap"
 msgid "Get the key as a storage property"
 msgstr "Hämta nyckeln som en lagringsegenskap"
 
-#: cmd/incus/storage_volume.go:1167
+#: cmd/incus/storage_volume.go:1171
 msgid "Get the key as a storage volume property"
 msgstr "Hämta nyckeln som en lagringsvolymegenskap"
 
@@ -3878,11 +3950,11 @@ msgstr "Hämta nyckeln som en lagringsvolymegenskap"
 msgid "Get the key as an instance property"
 msgstr "Hämta nyckeln som en instansegenskap"
 
-#: cmd/incus/low_level.go:459
+#: cmd/incus/low_level.go:596
 msgid "Get the raw binary variable value"
 msgstr "Hämta det råa binära variabelvärdet"
 
-#: cmd/incus/low_level.go:455 cmd/incus/low_level.go:456
+#: cmd/incus/low_level.go:592 cmd/incus/low_level.go:593
 msgid "Get values for UEFI variables"
 msgstr "Hämta värden för UEFI-variabler"
 
@@ -3951,11 +4023,11 @@ msgstr "Hämta värden för konfigurationsnycklar för lagringsbucket"
 msgid "Get values for storage pool configuration keys"
 msgstr "Hämta värden för konfigurationsnycklar för lagringspool"
 
-#: cmd/incus/storage_volume.go:1149
+#: cmd/incus/storage_volume.go:1153
 msgid "Get values for storage volume configuration keys"
 msgstr "Hämta värden för konfigurationsnycklar för lagringsvolym"
 
-#: cmd/incus/storage_volume.go:1150
+#: cmd/incus/storage_volume.go:1154
 msgid ""
 "Get values for storage volume configuration keys\n"
 "\n"
@@ -3975,11 +4047,11 @@ msgstr ""
 "lägger du till snapshotnamnet (endast om typen är custom, container eller "
 "virtual-machine)."
 
-#: cmd/incus/storage_volume.go:2606
+#: cmd/incus/storage_volume.go:2610
 msgid "Get write access to the disk"
 msgstr "Få skrivåtkomst till disken"
 
-#: cmd/incus/storage_volume.go:458
+#: cmd/incus/storage_volume.go:462
 #, c-format
 msgid "Given target %q does not match source volume location %q"
 msgstr "Eftersom målet %q inte matchar källvolymens plats %q"
@@ -3987,6 +4059,10 @@ msgstr "Eftersom målet %q inte matchar källvolymens plats %q"
 #: cmd/incus/color/color.go:43
 msgid "Global Flags:"
 msgstr "Globala flaggor:"
+
+#: cmd/incus/low_level.go:97 cmd/incus/storage_volume_bitmap.go:76
+msgid "Granularity of the dirty bitmap in bytes"
+msgstr ""
 
 #: cmd/incus/exec.go:70
 msgid "Group ID to run the command as (default 0)"
@@ -4046,11 +4122,15 @@ msgstr "ID: %s"
 msgid "IMAGES"
 msgstr "AVBILDNINGAR"
 
+#: cmd/incus/storage_volume_bitmap.go:278
+msgid "INCONSISTENT"
+msgstr ""
+
 #: cmd/incus/top.go:84
 msgid "INSTANCE NAME"
 msgstr "INSTANSNAMN"
 
-#: cmd/incus/low_level.go:554
+#: cmd/incus/low_level.go:691
 msgid "INTERPRETED VALUE"
 msgstr "TOLKAT VÄRDE"
 
@@ -4197,11 +4277,11 @@ msgstr ""
 msgid "Import backups of storage buckets."
 msgstr "Importera säkerhetskopior av lagringsutrymmen."
 
-#: cmd/incus/storage_volume.go:2461
+#: cmd/incus/storage_volume.go:2465
 msgid "Import custom storage volumes"
 msgstr "Importera anpassade lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:2462
+#: cmd/incus/storage_volume.go:2466
 msgid "Import custom storage volumes."
 msgstr "Importera anpassade lagringsvolymer."
 
@@ -4227,11 +4307,11 @@ msgstr "Importera instansbackuper"
 msgid "Import storage bucket"
 msgstr "Importera lagringsbehållare"
 
-#: cmd/incus/storage_volume.go:2530
+#: cmd/incus/storage_volume.go:2534
 msgid "Import type needs to be \"backup\" or \"iso\""
 msgstr "Importtypen måste vara \"backup\" eller \"iso\""
 
-#: cmd/incus/storage_volume.go:2470
+#: cmd/incus/storage_volume.go:2474
 msgid "Import type, backup or iso (default \"backup\")"
 msgstr "Importtyp, säkerhetskopia eller iso (standard \"säkerhetskopia\")"
 
@@ -4240,7 +4320,7 @@ msgstr "Importtyp, säkerhetskopia eller iso (standard \"säkerhetskopia\")"
 msgid "Importing bucket: %s"
 msgstr "Importerar bucket: %s"
 
-#: cmd/incus/storage_volume.go:2539
+#: cmd/incus/storage_volume.go:2543
 #, c-format
 msgid "Importing custom volume: %s"
 msgstr "Importera anpassad volym: %s"
@@ -4262,7 +4342,7 @@ msgstr "Inkludera mindre vanliga kommandon"
 msgid "Incus - Command line client"
 msgstr "Incus - Kommandoradsklient"
 
-#: cmd/incus/low_level.go:394
+#: cmd/incus/low_level.go:531
 #, c-format
 msgid "Incus does not know how to dissect %s:%s"
 msgstr ""
@@ -4315,7 +4395,7 @@ msgstr "Namnet på instansens ögonblicksbild är: %s"
 msgid "Instance type"
 msgstr "Instans typ"
 
-#: cmd/incus/low_level.go:638
+#: cmd/incus/low_level.go:775
 #, c-format
 msgid "Invalid GUID: %s"
 msgstr "Ogiltigt GUID: %s"
@@ -4325,7 +4405,7 @@ msgid "Invalid IP address or DNS name"
 msgstr "Ogiltig IP-adress eller DNS-namn"
 
 #: cmd/incus/export.go:134 cmd/incus/storage_bucket.go:1390
-#: cmd/incus/storage_volume.go:2367
+#: cmd/incus/storage_volume.go:2371
 #, c-format
 msgid "Invalid URL %q: %w"
 msgstr "Ogiltig URL %q: %w"
@@ -4346,7 +4426,7 @@ msgid "Invalid argument %q"
 msgstr "Ogiltigt argument %q"
 
 #: cmd/incus/export.go:139 cmd/incus/storage_bucket.go:1395
-#: cmd/incus/storage_volume.go:2372
+#: cmd/incus/storage_volume.go:2376
 #, c-format
 msgid "Invalid backup name segment in path %q: %w"
 msgstr "Ogiltigt segment för säkerhetskopieringsnamn i sökvägen %q: %w"
@@ -4518,7 +4598,7 @@ msgstr "Lyssna på adress"
 #: cmd/incus/list.go:588 cmd/incus/network.go:1280
 #: cmd/incus/network_forward.go:147 cmd/incus/network_load_balancer.go:153
 #: cmd/incus/operation.go:173 cmd/incus/storage_bucket.go:485
-#: cmd/incus/storage_volume.go:1630 cmd/incus/warning.go:221
+#: cmd/incus/storage_volume.go:1634 cmd/incus/warning.go:221
 msgid "LOCATION"
 msgstr "PLATS"
 
@@ -4603,7 +4683,7 @@ msgstr ""
 "  t - Typ\n"
 "   L - Plats för DHCP-lån (t.ex. dess klustermedlem)"
 
-#: cmd/incus/low_level.go:525 cmd/incus/low_level.go:526
+#: cmd/incus/low_level.go:662 cmd/incus/low_level.go:663
 msgid "List UEFI GUIDs and variables"
 msgstr "Lista UEFI-GUID:er och -variabler"
 
@@ -5784,6 +5864,41 @@ msgstr ""
 "  d – Beskrivning\n"
 "  L – Lagringsbehållarens plats (t.ex. dess klustermedlem)"
 
+#: cmd/incus/storage_volume_bitmap.go:214
+#, fuzzy
+msgid "List storage volume dirty bitmaps"
+msgstr "Lista lagringsvolymer"
+
+#: cmd/incus/storage_volume_bitmap.go:215
+#, fuzzy
+msgid ""
+"List storage volume dirty bitmaps\n"
+"\n"
+"\tThe -c option takes a (optionally comma-separated) list of arguments\n"
+"\tthat control which bitmap attributes to output when displaying in\n"
+"\ttable or csv format.\n"
+"\n"
+"\tColumn shorthand chars:\n"
+"\t\tn - Name\n"
+"\t\tc - Number of dirty bytes\n"
+"\t\tg - Granularity\n"
+"\t\tr - Recording\n"
+"\t\tb - Busy\n"
+"\t\tp - Persistent\n"
+"\t\ti - Inconsistent"
+msgstr ""
+"Lista över ögonblicksbilder för lagringsvolymer\n"
+"\n"
+"\tFlaggan -c tar en lista (valfritt kommaseparerad) med argument som\n"
+"\tstyr vilka ögonblicksbilder attribut som ska visas när de visas i tabell- "
+"eller\n"
+"\tcsv-format.\n"
+"\n"
+"\tFörkortningar för kolumner:\n"
+"\t\tn - Namn\n"
+"\t\tT - Tagen vid\n"
+"\t\tE - Utgångsdatum"
+
 #: cmd/incus/storage_volume_snapshot.go:323
 #: cmd/incus/storage_volume_snapshot.go:324
 msgid "List storage volume snapshots"
@@ -5814,11 +5929,11 @@ msgstr ""
 "\t\tT - Tagen vid\n"
 "\t\tE - Utgångsdatum"
 
-#: cmd/incus/storage_volume.go:1489
+#: cmd/incus/storage_volume.go:1493
 msgid "List storage volumes"
 msgstr "Lista lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:1494
+#: cmd/incus/storage_volume.go:1498
 msgid ""
 "List storage volumes\n"
 "\n"
@@ -6033,7 +6148,7 @@ msgstr "Beskrivning av lastbalanserare"
 msgid "Load:"
 msgstr "Belastning:"
 
-#: cmd/incus/info.go:692 cmd/incus/storage_volume.go:1365
+#: cmd/incus/info.go:692 cmd/incus/storage_volume.go:1369
 #, c-format
 msgid "Location: %s"
 msgstr "Plats: %s"
@@ -6162,7 +6277,7 @@ msgstr "Gör avbildningen publik"
 msgid "Make the image public"
 msgstr "Gör den här bilden offentlig"
 
-#: cmd/incus/low_level.go:249 cmd/incus/low_level.go:250
+#: cmd/incus/low_level.go:386 cmd/incus/low_level.go:387
 msgid "Manage NVRAM on virtual machines"
 msgstr "Hantera NVRAM på virtuella datorer"
 
@@ -6193,6 +6308,11 @@ msgstr "Hantera kommandoalias"
 #: cmd/incus/config_device.go:35 cmd/incus/config_device.go:36
 msgid "Manage devices"
 msgstr "Hantera enheter"
+
+#: cmd/incus/low_level.go:64 cmd/incus/low_level.go:65
+#, fuzzy
+msgid "Manage dirty bitmaps on virtual machines"
+msgstr "Hantera NVRAM på virtuella datorer"
 
 #: cmd/incus/storage_volume_file.go:46 cmd/incus/storage_volume_file.go:47
 msgid "Manage files in custom volumes"
@@ -6351,6 +6471,11 @@ msgstr "Hantera lagringsbuckets."
 msgid "Manage storage pools and volumes"
 msgstr "Hantera lagringspooler och volymer"
 
+#: cmd/incus/storage_volume_bitmap.go:28 cmd/incus/storage_volume_bitmap.go:29
+#, fuzzy
+msgid "Manage storage volume dirty bitmaps"
+msgstr "Hantera lagringsvolymer"
+
 #: cmd/incus/storage_volume_snapshot.go:35
 #: cmd/incus/storage_volume_snapshot.go:36
 msgid "Manage storage volume snapshots"
@@ -6499,7 +6624,7 @@ msgstr ""
 "\n"
 "Som standard lyssnar övervakaren på alla meddelandetyper."
 
-#: cmd/incus/network.go:549 cmd/incus/storage_volume.go:808
+#: cmd/incus/network.go:549 cmd/incus/storage_volume.go:812
 msgid "More than one device matches, specify the device name"
 msgstr "Fler än en enhet matchar, ange enhetens namn"
 
@@ -6531,7 +6656,7 @@ msgstr ""
 "Montera filer från instanser.\n"
 "Om ingen målsökväg anges, starta en SSH SFTP-lyssnare istället."
 
-#: cmd/incus/storage_volume.go:1726 cmd/incus/storage_volume.go:1727
+#: cmd/incus/storage_volume.go:1730 cmd/incus/storage_volume.go:1731
 msgid "Move custom storage volumes between pools"
 msgstr "Flytta anpassade lagringsvolymer mellan pooler"
 
@@ -6571,11 +6696,11 @@ msgstr ""
 msgid "Move the instance without its snapshots"
 msgstr "Flytta instansen utan dess ögonblicksbilder"
 
-#: cmd/incus/storage_volume.go:1734
+#: cmd/incus/storage_volume.go:1738
 msgid "Move to a project different from the source"
 msgstr "Flytta till ett annat projekt än källan"
 
-#: cmd/incus/storage_volume.go:489
+#: cmd/incus/storage_volume.go:493
 #, c-format
 msgid "Moving the storage volume: %s"
 msgstr "Flytta lagringsvolymen: %s"
@@ -6602,7 +6727,8 @@ msgstr "Måste köras som root för att importera från katalogen"
 #: cmd/incus/project.go:546 cmd/incus/project.go:675 cmd/incus/remote.go:1054
 #: cmd/incus/snapshot.go:367 cmd/incus/storage.go:690
 #: cmd/incus/storage_bucket.go:483 cmd/incus/storage_bucket.go:878
-#: cmd/incus/storage_volume.go:1622 cmd/incus/storage_volume_snapshot.go:421
+#: cmd/incus/storage_volume.go:1626 cmd/incus/storage_volume_bitmap.go:272
+#: cmd/incus/storage_volume_snapshot.go:421
 msgid "NAME"
 msgstr "NAMN"
 
@@ -6610,15 +6736,15 @@ msgstr "NAMN"
 msgid "NAT"
 msgstr "NAT"
 
-#: cmd/incus/storage_volume.go:2600 cmd/incus/storage_volume.go:2601
+#: cmd/incus/storage_volume.go:2604 cmd/incus/storage_volume.go:2605
 msgid "NBD access to a block storage volume"
 msgstr "NBD-åtkomst till en blocklagringsvolym"
 
-#: cmd/incus/low_level.go:119
+#: cmd/incus/low_level.go:256
 msgid "NBD access to all of a virtual machine's disks"
 msgstr "NBD-åtkomst till alla diskar på en virtuell maskin"
 
-#: cmd/incus/low_level.go:120
+#: cmd/incus/low_level.go:257
 msgid ""
 "NBD access to all of a virtual machine's disks\n"
 "\n"
@@ -6632,22 +6758,22 @@ msgstr ""
 " NBD-server, där varje disk kan nås som en NBD-export uppkallad efter \n"
 "dess Incus-enhetsnamn."
 
-#: cmd/incus/low_level.go:189 cmd/incus/storage_volume.go:2666
+#: cmd/incus/low_level.go:326 cmd/incus/storage_volume.go:2670
 #, c-format
 msgid "NBD client connected %q"
 msgstr "NBD-klient ansluten %q"
 
-#: cmd/incus/low_level.go:190 cmd/incus/storage_volume.go:2667
+#: cmd/incus/low_level.go:327 cmd/incus/storage_volume.go:2671
 #, c-format
 msgid "NBD client disconnected %q"
 msgstr "NBD-klienten frånkopplad %q"
 
-#: cmd/incus/low_level.go:206 cmd/incus/storage_volume.go:2672
+#: cmd/incus/low_level.go:343 cmd/incus/storage_volume.go:2676
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr "NBD-anslutning misslyckades: %v"
 
-#: cmd/incus/low_level.go:171 cmd/incus/storage_volume.go:2656
+#: cmd/incus/low_level.go:308 cmd/incus/storage_volume.go:2660
 #, c-format
 msgid "NBD listening on %v"
 msgstr "NBD lyssnar på %v"
@@ -6681,6 +6807,7 @@ msgstr "NICar:"
 #: cmd/incus/project.go:584 cmd/incus/project.go:593 cmd/incus/project.go:602
 #: cmd/incus/project.go:611 cmd/incus/project.go:620 cmd/incus/project.go:629
 #: cmd/incus/remote.go:1127 cmd/incus/remote.go:1136 cmd/incus/remote.go:1145
+#: cmd/incus/storage_volume_bitmap.go:267
 msgid "NO"
 msgstr "NEJ"
 
@@ -6703,8 +6830,8 @@ msgstr "Information om NVIDIA:"
 msgid "NVRM Version: %v"
 msgstr "NVRM-version: %v"
 
-#: cmd/incus/info.go:865 cmd/incus/info.go:916 cmd/incus/storage_volume.go:1407
-#: cmd/incus/storage_volume.go:1457
+#: cmd/incus/info.go:865 cmd/incus/info.go:916 cmd/incus/storage_volume.go:1411
+#: cmd/incus/storage_volume.go:1461
 msgid "Name"
 msgstr "Namn"
 
@@ -6765,7 +6892,7 @@ msgid "Name of the storage pool:"
 msgstr "Namn på lagringspoolen:"
 
 #: cmd/incus/info.go:670 cmd/incus/network.go:918
-#: cmd/incus/storage_volume.go:1347
+#: cmd/incus/storage_volume.go:1351
 #, c-format
 msgid "Name: %s"
 msgstr "Namn: %s"
@@ -6966,7 +7093,7 @@ msgstr "Ingen klusteranslutningstoken för medlem %s på fjärrplats: %s"
 msgid "No device found for this network"
 msgstr "Ingen enhet hittades för detta nätverk"
 
-#: cmd/incus/storage_volume.go:817
+#: cmd/incus/storage_volume.go:821
 msgid "No device found for this storage volume"
 msgstr "Ingen enhet hittades för denna lagringsvolym"
 
@@ -7028,7 +7155,7 @@ msgid "One or more provided address isn't currently in the set"
 msgstr ""
 "En eller flera angivna adresser finns för närvarande inte i uppsättningen"
 
-#: cmd/incus/storage_volume.go:1826
+#: cmd/incus/storage_volume.go:1830
 msgid "Only \"custom\" volumes can be rebuilt"
 msgstr "Endast \"anpassade\" volymer kan återskapas"
 
@@ -7063,7 +7190,7 @@ msgstr "Operativsystem:"
 msgid "Operation %s deleted"
 msgstr "Operation %s raderad"
 
-#: cmd/incus/info.go:920 cmd/incus/storage_volume.go:1461
+#: cmd/incus/info.go:920 cmd/incus/storage_volume.go:1465
 msgid "Optimized Storage"
 msgstr "Optimerad lagring"
 
@@ -7093,6 +7220,10 @@ msgstr "PCI-enheter:"
 msgid "PEER"
 msgstr "PEER"
 
+#: cmd/incus/storage_volume_bitmap.go:277
+msgid "PERSISTENT"
+msgstr ""
+
 #: cmd/incus/list.go:550
 msgid "PID"
 msgstr "PID"
@@ -7117,7 +7248,7 @@ msgstr "PROFILER"
 #: cmd/incus/image.go:1107 cmd/incus/list.go:542 cmd/incus/network.go:1080
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:144 cmd/incus/profile.go:731
-#: cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1641
+#: cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1645
 #: cmd/incus/top.go:83 cmd/incus/warning.go:213
 msgid "PROJECT"
 msgstr "PROJEKT"
@@ -7251,14 +7382,14 @@ msgstr "Tryck på Ctrl+C för att avsluta"
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
 #: cmd/incus/config_trust.go:333 cmd/incus/image.go:488
-#: cmd/incus/low_level.go:422 cmd/incus/network.go:767
+#: cmd/incus/low_level.go:559 cmd/incus/network.go:767
 #: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
 #: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
 #: cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733
 #: cmd/incus/network_zone.go:675 cmd/incus/network_zone.go:1344
 #: cmd/incus/profile.go:575 cmd/incus/project.go:398 cmd/incus/storage.go:358
 #: cmd/incus/storage_bucket.go:336 cmd/incus/storage_bucket.go:1210
-#: cmd/incus/storage_volume.go:1082 cmd/incus/storage_volume.go:1114
+#: cmd/incus/storage_volume.go:1086 cmd/incus/storage_volume.go:1118
 msgid "Press enter to open the editor again or ctrl+c to abort change"
 msgstr ""
 "Tryck på Enter för att öppna redigeraren igen eller Ctrl+C för att avbryta "
@@ -7474,9 +7605,13 @@ msgstr "Sökvägen måste börja med /"
 msgid "Query virtual machine images"
 msgstr "Fråga virtuella maskinavbildningar"
 
-#: cmd/incus/low_level.go:552
+#: cmd/incus/low_level.go:689
 msgid "RAW VALUE"
 msgstr "RÅVÄRDE"
+
+#: cmd/incus/storage_volume_bitmap.go:275
+msgid "RECORDING"
+msgstr ""
 
 #: cmd/incus/list.go:552
 msgid "REMOTE"
@@ -7507,7 +7642,7 @@ msgstr "Skrivskyddad: %v"
 msgid "Rebuild as an empty instance"
 msgstr "Återuppbygg som en tom instans"
 
-#: cmd/incus/storage_volume.go:1789
+#: cmd/incus/storage_volume.go:1793
 msgid "Rebuild custom storage volumes"
 msgstr "återskapa anpassade lagringsvolymer"
 
@@ -7553,7 +7688,7 @@ msgstr ""
 msgid "Recursively transfer files"
 msgstr "Överför filer rekursivt"
 
-#: cmd/incus/storage_volume.go:396
+#: cmd/incus/storage_volume.go:400
 msgid "Refresh and update the existing storage volume copies"
 msgstr "Uppdatera och uppdatera befintliga kopior av lagringsvolymer"
 
@@ -7722,7 +7857,7 @@ msgstr "Byt namn på en klustermedlem"
 msgid "Rename aliases"
 msgstr "Byt namn på alias"
 
-#: cmd/incus/storage_volume.go:1877 cmd/incus/storage_volume.go:1878
+#: cmd/incus/storage_volume.go:1881 cmd/incus/storage_volume.go:1882
 msgid "Rename custom storage volumes"
 msgstr "Byt namn på anpassade lagringsvolymer"
 
@@ -7767,7 +7902,7 @@ msgstr "Byt namn på fjärrkontroller"
 msgid "Rename storage volume snapshots"
 msgstr "Byt namn på snapshots av lagringsvolymer"
 
-#: cmd/incus/storage_volume.go:1912
+#: cmd/incus/storage_volume.go:1916
 #, c-format
 msgid "Renamed storage volume from \"%s\" to \"%s\""
 msgstr "Bytte namn på lagringsvolym från \"%s\" till \"%s\""
@@ -7889,6 +8024,20 @@ msgstr "Kör en lokal API-proxy"
 #: cmd/incus/remote_unix.go:41
 msgid "Run a local API proxy for the remote"
 msgstr "Kör en lokal API-proxy för fjärrkontrollen"
+
+#: cmd/incus/low_level.go:147
+msgid ""
+"Run a low-level repair action on an instance.\n"
+"\n"
+"Supported actions:\n"
+"  rebuild-config-volume    Rebuild the config volume of a stopped QCOW2 "
+"backed virtual machine"
+msgstr ""
+
+#: cmd/incus/low_level.go:146
+#, fuzzy
+msgid "Run a repair action on an instance"
+msgstr "Kör mot alla instanser"
 
 #: cmd/incus/network_allocations.go:73
 msgid "Run again a specific project"
@@ -8337,11 +8486,11 @@ msgstr ""
 "in med:\n"
 "    incus storage set [<fjärr>:]<pool> <nyckel> <värde>"
 
-#: cmd/incus/storage_volume.go:1946
+#: cmd/incus/storage_volume.go:1950
 msgid "Set storage volume configuration keys"
 msgstr "Ställ in konfigurationsnycklar för lagringsvolym"
 
-#: cmd/incus/storage_volume.go:1947
+#: cmd/incus/storage_volume.go:1951
 msgid ""
 "Set storage volume configuration keys\n"
 "\n"
@@ -8468,7 +8617,7 @@ msgstr "Ställ in nyckeln som en lagringsbucketegenskap"
 msgid "Set the key as a storage property"
 msgstr "Ställ in nyckeln som en lagringsegenskap"
 
-#: cmd/incus/storage_volume.go:1965
+#: cmd/incus/storage_volume.go:1969
 msgid "Set the key as a storage volume property"
 msgstr "Ställ in nyckeln som en lagringsvolymegenskap"
 
@@ -8476,25 +8625,25 @@ msgstr "Ställ in nyckeln som en lagringsvolymegenskap"
 msgid "Set the key as an instance property"
 msgstr "Ställ in nyckeln som en instansegenskap"
 
-#: cmd/incus/low_level.go:698
+#: cmd/incus/low_level.go:835
 #, fuzzy
 msgid "Set the raw binary variable value"
 msgstr "Hämta det råa binära variabelvärdet"
 
-#: cmd/incus/low_level.go:696
+#: cmd/incus/low_level.go:833
 msgid "Set the variable attributes (requires `--raw`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:697
+#: cmd/incus/low_level.go:834
 msgid "Set the variable timestamp (requires `--raw`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:692
+#: cmd/incus/low_level.go:829
 #, fuzzy
 msgid "Set values for UEFI variables"
 msgstr "Hämta värden för UEFI-variabler"
 
-#: cmd/incus/low_level.go:693
+#: cmd/incus/low_level.go:830
 #, fuzzy
 msgid "Set values for UEFI variables."
 msgstr "Hämta värden för UEFI-variabler"
@@ -8644,11 +8793,11 @@ msgstr "Visa konfigurationer för lagringsbucketnycklar"
 msgid "Show storage pool configurations and resources"
 msgstr "Visa lagringspoolkonfigurationer och resurser"
 
-#: cmd/incus/storage_volume.go:2096
+#: cmd/incus/storage_volume.go:2100
 msgid "Show storage volume configurations"
 msgstr "Visa konfigurationer för lagringsvolym"
 
-#: cmd/incus/storage_volume.go:2097
+#: cmd/incus/storage_volume.go:2101
 msgid ""
 "Show storage volume configurations\n"
 "\n"
@@ -8668,6 +8817,12 @@ msgstr ""
 "lägger du till ögonblicksbildens namn (endast om typen är anpassad, "
 "container eller virtuell maskin)."
 
+#: cmd/incus/storage_volume_bitmap.go:362
+#: cmd/incus/storage_volume_bitmap.go:363
+#, fuzzy
+msgid "Show storage volume dirty bitmap information"
+msgstr "Visa information om lagringsvolymens status"
+
 #: cmd/incus/storage_volume_snapshot.go:615
 msgid "Show storage volume snapshhot configurations"
 msgstr "Visa konfigurationer för lagringsvolymsöversikt"
@@ -8676,11 +8831,11 @@ msgstr "Visa konfigurationer för lagringsvolymsöversikt"
 msgid "Show storage volume snapshot configurations"
 msgstr "Visa konfigurationer för ögonblicksbilder av lagringsvolym"
 
-#: cmd/incus/storage_volume.go:1271
+#: cmd/incus/storage_volume.go:1275
 msgid "Show storage volume state information"
 msgstr "Visa information om lagringsvolymens status"
 
-#: cmd/incus/storage_volume.go:1272
+#: cmd/incus/storage_volume.go:1276
 msgid ""
 "Show storage volume state information\n"
 "\n"
@@ -8782,11 +8937,11 @@ msgstr "Översiktsbeskrivning"
 msgid "Snapshot storage volumes"
 msgstr "Lagringsvolymer för ögonblicksbilder"
 
-#: cmd/incus/storage_volume.go:2028
+#: cmd/incus/storage_volume.go:2032
 msgid "Snapshots are read-only and can't have their configuration changed"
 msgstr "Snapshots är skrivskyddade och deras konfiguration kan inte ändras"
 
-#: cmd/incus/info.go:834 cmd/incus/storage_volume.go:1386
+#: cmd/incus/info.go:834 cmd/incus/storage_volume.go:1390
 msgid "Snapshots:"
 msgstr "Ögonblicksbilder:"
 
@@ -8816,7 +8971,7 @@ msgstr ""
 msgid "Source:"
 msgstr "Källa:"
 
-#: cmd/incus/low_level.go:128 cmd/incus/storage_volume.go:2605
+#: cmd/incus/low_level.go:265 cmd/incus/storage_volume.go:2609
 msgid "Specific address to listen on"
 msgstr "Specifik adress att lyssna på"
 
@@ -8940,26 +9095,26 @@ msgstr "Lagringspoolens namn"
 msgid "Storage pool to use or create"
 msgstr "Lagringspool att använda eller skapa"
 
-#: cmd/incus/storage_volume.go:672
+#: cmd/incus/storage_volume.go:676
 #, c-format
 msgid "Storage volume %s created"
 msgstr "Lagringsvolym %s skapad"
 
-#: cmd/incus/storage_volume.go:735
+#: cmd/incus/storage_volume.go:739
 #, c-format
 msgid "Storage volume %s deleted"
 msgstr "Lagringsvolym %s raderad"
 
-#: cmd/incus/storage_volume.go:1859
+#: cmd/incus/storage_volume.go:1863
 #, c-format
 msgid "Storage volume %s rebuilt"
 msgstr "Lagringsvolym %s återskapat"
 
-#: cmd/incus/storage_volume.go:486
+#: cmd/incus/storage_volume.go:490
 msgid "Storage volume copied successfully!"
 msgstr "Lagringsvolymen har kopierats!"
 
-#: cmd/incus/storage_volume.go:490
+#: cmd/incus/storage_volume.go:494
 msgid "Storage volume moved successfully!"
 msgstr "Lagringsvolymen har flyttats utan problem!"
 
@@ -8967,6 +9122,11 @@ msgstr "Lagringsvolymen har flyttats utan problem!"
 #, c-format
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "Lagringsvolymsögonblicksbild %s raderad från %s"
+
+#: cmd/incus/low_level.go:98 cmd/incus/storage_volume_bitmap.go:77
+#, fuzzy
+msgid "Store the bitmap on disk"
+msgstr "Lagra instansens tillstånd"
 
 #: cmd/incus/action.go:155
 msgid "Store the instance state"
@@ -9022,7 +9182,7 @@ msgstr "TAGET VID"
 msgid "TARGET"
 msgstr "MÅL"
 
-#: cmd/incus/low_level.go:553
+#: cmd/incus/low_level.go:690
 msgid "TIMESTAMP"
 msgstr "TIDSSTÄMPEL"
 
@@ -9034,12 +9194,12 @@ msgstr "TOKEN"
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:555 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
-#: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1621
+#: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1625
 #: cmd/incus/warning.go:216
 msgid "TYPE"
 msgstr "TYP"
 
-#: cmd/incus/info.go:866 cmd/incus/info.go:917 cmd/incus/storage_volume.go:1458
+#: cmd/incus/info.go:866 cmd/incus/info.go:917 cmd/incus/storage_volume.go:1462
 msgid "Taken at"
 msgstr "Taget vid"
 
@@ -9048,7 +9208,7 @@ msgid "Target isn't a cluster"
 msgstr "Målet är inte ett kluster"
 
 #: cmd/incus/export.go:77 cmd/incus/storage_bucket.go:1339
-#: cmd/incus/storage_volume.go:2314
+#: cmd/incus/storage_volume.go:2318
 #, c-format
 msgid "Target path %q already exists"
 msgstr "Målvägen %q finns redan"
@@ -9280,12 +9440,12 @@ msgstr "Egenskapen %q finns inte i lagringsbucket %q: %v"
 msgid "The property %q does not exist on the storage pool %q: %v"
 msgstr "Egenskapen %q finns inte i lagringspoolen %q: %v"
 
-#: cmd/incus/storage_volume.go:1245
+#: cmd/incus/storage_volume.go:1249
 #, c-format
 msgid "The property %q does not exist on the storage pool volume %q: %v"
 msgstr "Egenskapen %q finns inte på lagringspoolvolymen %q: %v"
 
-#: cmd/incus/storage_volume.go:1217
+#: cmd/incus/storage_volume.go:1221
 #, c-format
 msgid ""
 "The property %q does not exist on the storage pool volume snapshot %s/%s: %v"
@@ -9349,19 +9509,19 @@ msgstr ""
 msgid "The specified device is not a NIC (%s device)"
 msgstr "Den angivna enheten är inte ett nätverkskort (%s-enhet)"
 
-#: cmd/incus/storage_volume.go:788
+#: cmd/incus/storage_volume.go:792
 #, c-format
 msgid "The specified device is not a disk (%s device)"
 msgstr "Den angivna enheten är inte en disk (%s-enhet)"
 
-#: cmd/incus/storage_volume.go:796
+#: cmd/incus/storage_volume.go:800
 #, c-format
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
 msgstr ""
 "Den angivna disken pekar inte på den angivna lagringsvolymen (hittade %s)"
 
-#: cmd/incus/storage_volume.go:792
+#: cmd/incus/storage_volume.go:796
 #, c-format
 msgid "The specified disk is not in the given pool (found %s)"
 msgstr "Den angivna disken finns inte i den givna poolen (hittade %s)"
@@ -9464,7 +9624,7 @@ msgid "To use --target, the destination remote must be a cluster"
 msgstr ""
 "För att kunna använda --target måste fjärrdestinationen vara ett kluster"
 
-#: cmd/incus/storage_volume.go:1371
+#: cmd/incus/storage_volume.go:1375
 #, c-format
 msgid "Total: %s"
 msgstr "Totalt: %s"
@@ -9480,12 +9640,12 @@ msgstr "Totalt: %v"
 msgid "Transceiver type: %s"
 msgstr "Transceivertyp: %s"
 
-#: cmd/incus/storage_volume.go:1731
+#: cmd/incus/storage_volume.go:1735
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr "Överföringsläge, ett av pull (standard), push eller relay"
 
 #: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66
-#: cmd/incus/storage_volume.go:391
+#: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
 msgstr "Överföringsläge. Drag, tryck eller relä"
 
@@ -9535,12 +9695,12 @@ msgstr "Typ av nätverkspeern (lokal eller fjärrstyrd)"
 
 #: cmd/incus/image.go:976 cmd/incus/info.go:291 cmd/incus/info.go:452
 #: cmd/incus/info.go:463 cmd/incus/info.go:687 cmd/incus/network.go:926
-#: cmd/incus/storage_volume.go:1356
+#: cmd/incus/storage_volume.go:1360
 #, c-format
 msgid "Type: %s"
 msgstr "Typ: %s"
 
-#: cmd/incus/low_level.go:814
+#: cmd/incus/low_level.go:951
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr "UEFI-variabel %s:%s borttagen den %s"
@@ -9558,7 +9718,7 @@ msgstr "UPPLADDNINGSDATUM"
 msgid "URL"
 msgstr "URL"
 
-#: cmd/incus/project.go:1085 cmd/incus/storage_volume.go:1626
+#: cmd/incus/project.go:1085 cmd/incus/storage_volume.go:1630
 msgid "USAGE"
 msgstr "ANVÄNDNING"
 
@@ -9578,7 +9738,7 @@ msgstr "ANVÄND"
 #: cmd/incus/network_address_set.go:157 cmd/incus/network_allocations.go:88
 #: cmd/incus/network_integration.go:435 cmd/incus/network_zone.go:147
 #: cmd/incus/profile.go:733 cmd/incus/project.go:554 cmd/incus/storage.go:694
-#: cmd/incus/storage_volume.go:1625
+#: cmd/incus/storage_volume.go:1629
 msgid "USED BY"
 msgstr "ANVÄNDS AV"
 
@@ -9620,7 +9780,7 @@ msgstr "Okänd kanaltyp för klient %q: %s"
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:568 cmd/incus/network.go:1107
+#: cmd/incus/low_level.go:705 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
@@ -9628,8 +9788,9 @@ msgstr "Okänd kanaltyp för klient %q: %s"
 #: cmd/incus/profile.go:754 cmd/incus/project.go:569 cmd/incus/remote.go:1074
 #: cmd/incus/snapshot.go:384 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:507 cmd/incus/storage_bucket.go:894
-#: cmd/incus/storage_volume.go:1657 cmd/incus/storage_volume_snapshot.go:437
-#: cmd/incus/top.go:102 cmd/incus/warning.go:242
+#: cmd/incus/storage_volume.go:1661 cmd/incus/storage_volume_bitmap.go:292
+#: cmd/incus/storage_volume_snapshot.go:437 cmd/incus/top.go:102
+#: cmd/incus/warning.go:242
 #, c-format
 msgid "Unknown column shorthand char '%c' in '%s'"
 msgstr "Okänd kolumnförkortning char '%c' i '%s'"
@@ -9659,7 +9820,7 @@ msgstr "Okänd nyckel: %s"
 msgid "Unknown output type %q"
 msgstr "Okänd utdatatyp %q"
 
-#: cmd/incus/low_level.go:776 cmd/incus/low_level.go:777
+#: cmd/incus/low_level.go:913 cmd/incus/low_level.go:914
 msgid "Unset UEFI variables"
 msgstr "Ta bort UEFI-variabler"
 
@@ -9766,11 +9927,11 @@ msgstr "Konfigurationsnycklar för lagringsbucket som inte är inställda"
 msgid "Unset storage pool configuration keys"
 msgstr "Konfigurationsnycklar för lagringspool som inte är inställda"
 
-#: cmd/incus/storage_volume.go:2191
+#: cmd/incus/storage_volume.go:2195
 msgid "Unset storage volume configuration keys"
 msgstr "Konfigurationsnycklar för lagringsvolym som inte är inställda"
 
-#: cmd/incus/storage_volume.go:2192
+#: cmd/incus/storage_volume.go:2196
 msgid ""
 "Unset storage volume configuration keys\n"
 "\n"
@@ -9848,7 +10009,7 @@ msgstr "Inaktivera nycklarna som en lagringsbucketegenskap"
 msgid "Unset the keys as storage properties"
 msgstr "Inaktivera nycklarna som lagringsegenskap"
 
-#: cmd/incus/storage_volume.go:2205
+#: cmd/incus/storage_volume.go:2209
 msgid "Unset the keys as storage volume properties"
 msgstr "Inaktivera nycklarna som en lagringsvolymegenskap"
 
@@ -9911,7 +10072,7 @@ msgstr "Övre enheter"
 msgid "Usage:"
 msgstr "Användande:"
 
-#: cmd/incus/storage_volume.go:1369
+#: cmd/incus/storage_volume.go:1373
 #, c-format
 msgid "Usage: %s"
 msgstr "Användning: %s"
@@ -9931,7 +10092,7 @@ msgstr ""
 "Använd lagringsdrivrutinens optimerade format (kan endast återställas på en "
 "liknande pool)"
 
-#: cmd/incus/storage_volume.go:2258
+#: cmd/incus/storage_volume.go:2262
 msgid ""
 "Use storage driver optimized format (can only be restored on a similar pool, "
 "ignored for ISO storage volumes)"
@@ -9962,7 +10123,7 @@ msgstr "Användaren avbröt konfigurationen"
 msgid "User aborted delete operation"
 msgstr "Användaren avbröt raderingsåtgärden"
 
-#: cmd/incus/low_level.go:551
+#: cmd/incus/low_level.go:688
 msgid "VARIABLE NAME"
 msgstr "VARIABELNAMN"
 
@@ -10019,11 +10180,11 @@ msgstr "Version: %s"
 msgid "Version: %v"
 msgstr "Version: %v"
 
-#: cmd/incus/storage_volume.go:1460
+#: cmd/incus/storage_volume.go:1464
 msgid "Volume Only"
 msgstr "Endast volym"
 
-#: cmd/incus/storage_volume.go:601
+#: cmd/incus/storage_volume.go:605
 msgid "Volume description"
 msgstr "Volymbeskrivning"
 
@@ -10179,7 +10340,7 @@ msgid ""
 msgstr ""
 "Rensa instansens rotdisk och initiera om med en ny image (eller tom volym)."
 
-#: cmd/incus/storage_volume.go:1790
+#: cmd/incus/storage_volume.go:1794
 msgid ""
 "Wipe the underlying storage volume and re-create it as empty using the same "
 "configuration.\n"
@@ -10260,6 +10421,7 @@ msgstr "Vill du använda klustring?"
 #: cmd/incus/project.go:586 cmd/incus/project.go:595 cmd/incus/project.go:604
 #: cmd/incus/project.go:613 cmd/incus/project.go:622 cmd/incus/project.go:631
 #: cmd/incus/remote.go:1129 cmd/incus/remote.go:1138 cmd/incus/remote.go:1147
+#: cmd/incus/storage_volume_bitmap.go:264
 msgid "YES"
 msgstr "JA"
 
@@ -10282,6 +10444,11 @@ msgstr "Du måste ange ett namn på målinstansen"
 #: cmd/incus/network_zone.go:383
 msgid "Zone description"
 msgstr "Zonbeskrivning"
+
+#: cmd/incus/low_level.go:141
+#, fuzzy
+msgid "action"
+msgstr "Åtgärden"
 
 #: cmd/incus/usage/usage.go:814
 msgid "address"
@@ -10306,6 +10473,12 @@ msgstr "backend"
 #: cmd/incus/usage/usage.go:818
 msgid "backup file"
 msgstr "backup-fil"
+
+#: cmd/incus/low_level.go:86 cmd/incus/storage_volume_bitmap.go:66
+#: cmd/incus/storage_volume_bitmap.go:135
+#: cmd/incus/storage_volume_bitmap.go:357
+msgid "bitmap"
+msgstr ""
 
 #: cmd/incus/usage/usage.go:819
 msgid "bucket"
@@ -10791,7 +10964,7 @@ msgstr ""
 "list -c ns,user.comment:comment Lista\n"
 "instanser med deras körningsstatus och användarkommentar."
 
-#: cmd/incus/low_level.go:68
+#: cmd/incus/low_level.go:205
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
@@ -11258,7 +11431,7 @@ msgstr ""
 "incus storage edit [<fjärr>:]<pool> < pool.yaml\n"
 "    Uppdatera en lagringspool med innehållet i pool.yaml."
 
-#: cmd/incus/storage_volume.go:593
+#: cmd/incus/storage_volume.go:597
 msgid ""
 "incus storage volume create default foo\n"
 "    Create custom storage volume \"foo\" in pool \"default\"\n"
@@ -11274,7 +11447,7 @@ msgstr ""
 "anpassad lagringsvolym \"foo\" i pool \"default\" med konfiguration från "
 "config.yaml"
 
-#: cmd/incus/storage_volume.go:946
+#: cmd/incus/storage_volume.go:950
 msgid ""
 "incus storage volume edit default container/c1\n"
 "    Edit container storage volume \"c1\" in pool \"default\"\n"
@@ -11339,7 +11512,7 @@ msgstr ""
 "att läsa \"Hello world\" från standardinmatningen och skriva det till test i "
 "volymen \"v1\"."
 
-#: cmd/incus/storage_volume.go:1158
+#: cmd/incus/storage_volume.go:1162
 msgid ""
 "incus storage volume get default data size\n"
 "    Returns the size of a custom volume \"data\" in pool \"default\"\n"
@@ -11355,7 +11528,7 @@ msgstr ""
 "Returnerar utgångsperioden för en snapshot för en virtuell maskin \"data\" i "
 "poolen \"default\""
 
-#: cmd/incus/storage_volume.go:2463
+#: cmd/incus/storage_volume.go:2467
 msgid ""
 "incus storage volume import default backup0.tar.gz\n"
 "    Create a new custom volume using backup0.tar.gz as the source\n"
@@ -11371,7 +11544,7 @@ msgstr ""
 "anpassad volym som lagrar some-installer.iso för användning som CD-ROM-"
 "avbildning"
 
-#: cmd/incus/storage_volume.go:1278
+#: cmd/incus/storage_volume.go:1282
 msgid ""
 "incus storage volume info default foo\n"
 "    Returns state information for a custom volume \"foo\" in pool "
@@ -11388,7 +11561,7 @@ msgstr ""
 "Returnerar statusinformation för den virtuella maskinen \"v1\" i poolen "
 "\"default\""
 
-#: cmd/incus/storage_volume.go:1956
+#: cmd/incus/storage_volume.go:1960
 msgid ""
 "incus storage volume set default data size=1GiB\n"
 "    Sets the size of a custom volume \"data\" in pool \"default\" to 1 GiB\n"
@@ -11406,7 +11579,7 @@ msgstr ""
 "Ställer in utgångsperioden för en ögonblicksbild för en virtuell maskin "
 "\"data\" i poolen \"default\" till sju dagar"
 
-#: cmd/incus/storage_volume.go:2105
+#: cmd/incus/storage_volume.go:2109
 msgid ""
 "incus storage volume show default foo\n"
 "    Will show the properties of custom volume \"foo\" in pool \"default\"\n"
@@ -11445,7 +11618,7 @@ msgstr ""
 "Skapa en snapshot av \"foo\" i poolen \"default\" med namnet \"snap0\" med "
 "konfigurationen från \"config.yaml\""
 
-#: cmd/incus/storage_volume.go:2198
+#: cmd/incus/storage_volume.go:2202
 msgid ""
 "incus storage volume unset default foo size\n"
 "    Removes the size/quota of custom volume \"foo\" in pool \"default\"\n"
