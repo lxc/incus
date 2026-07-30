@@ -3,7 +3,6 @@ package drivers
 import (
 	"bufio"
 	"bytes"
-	"compress/gzip"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -35,6 +34,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/kballard/go-shellquote"
+	"github.com/klauspost/pgzip"
 	"github.com/mdlayher/vsock"
 	"github.com/pkg/sftp"
 	"go.yaml.in/yaml/v4"
@@ -82,6 +82,7 @@ import (
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	agentAPI "github.com/lxc/incus/v7/shared/api/agent"
+	"github.com/lxc/incus/v7/shared/archive"
 	"github.com/lxc/incus/v7/shared/ioprogress"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
@@ -1158,7 +1159,7 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 
 		defer logger.WarnOnError(stateFile.Close, "Failed to close state file")
 
-		uncompressedState, err := gzip.NewReader(stateFile)
+		uncompressedState, err := pgzip.NewReaderN(stateFile, 1<<20, archive.CompressionThreads())
 		if err != nil {
 			return fmt.Errorf("Failed opening state gzip reader: %w", err)
 		}
@@ -1226,7 +1227,12 @@ func (d *qemu) saveState(monitor *qmp.Monitor) error {
 
 	defer logger.WarnOnError(stateFile.Close, "Failed to close state file")
 
-	compressedState, err := gzip.NewWriterLevel(stateFile, gzip.BestSpeed)
+	compressedState, err := pgzip.NewWriterLevel(stateFile, pgzip.BestSpeed)
+	if err != nil {
+		return err
+	}
+
+	err = compressedState.SetConcurrency(1<<20, archive.CompressionThreads())
 	if err != nil {
 		return err
 	}
