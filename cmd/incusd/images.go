@@ -188,6 +188,15 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 			args = append(args, fields[1:]...)
 		}
 
+		// Prefer pigz over gzip when available.
+		if fields[0] == "gzip" {
+			_, err := exec.LookPath("pigz")
+			if err == nil {
+				fields[0] = "pigz"
+				args = append(args, "-p", strconv.Itoa(archive.CompressionThreads()))
+			}
+		}
+
 		flags, ok := reproducible[fields[0]]
 		if ok {
 			args = append(args, flags...)
