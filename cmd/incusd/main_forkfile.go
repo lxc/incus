@@ -237,7 +237,7 @@ func (c *cmdForkfile) run(_ *cobra.Command, args []string) error {
 			mu.Unlock()
 
 			// Spawn the server.
-			server, err := sftp.NewServer(conn, sftp.WithAllocator())
+			server, err := sftp.NewServer(conn, sftp.WithAllocator(), sftp.WithMaxTxPacket(128*1024))
 			if err != nil {
 				return
 			}
