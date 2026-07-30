@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"reflect"
@@ -34,6 +35,13 @@ type column struct {
 
 type columnData func(api.InstanceFull) string
 
+// instanceWithRemote associates an instance with its remote for JSON/YAML output.
+type instanceWithRemote struct {
+	api.InstanceFull `yaml:",inline"`
+
+	Remote string `json:"remote" yaml:"remote"`
+}
+
 type cmdList struct {
 	global *cmdGlobal
 
@@ -41,7 +49,10 @@ type cmdList struct {
 	flagFast        bool
 	flagFormat      string
 	flagAllProjects bool
+	flagAllRemotes  bool
 	rawFormat       bool
+
+	currentRemote string
 
 	shorthandFilters map[string]func(*api.Instance, *api.InstanceState, string) bool
 }
@@ -110,6 +121,7 @@ Pre-defined column shorthand chars:
   N - Number of Processes
   p - PID of the instance's init process
   P - Profiles
+  R - Remote name
   s - State
   S - Number of snapshots
   t - Type (persistent or ephemeral)
@@ -143,6 +155,7 @@ incus list -c ns,user.comment:comment
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagFast, "fast", i18n.G("Fast mode (same as --columns=nsacPt)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Display instances from all projects"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagAllRemotes, "all-remotes", i18n.G("Display instances from all remotes"))
 
 	cmd.PreRunE = func(cmd *cobra.Command, _ []string) error {
 		return cli.ValidateFlagFormatForListOutput(cmd.Flag("format").Value.String())
@@ -212,7 +225,8 @@ func (c *cmdList) evaluateShorthandFilter(key string, value string, inst *api.In
 	return matched
 }
 
-func (c *cmdList) listInstances(d incus.InstanceServer, instances []api.Instance, filters []string, columns []column) error {
+// fetchInstancesData retrieves any state and snapshot data needed by the columns.
+func (c *cmdList) fetchInstancesData(d incus.InstanceServer, instances []api.Instance, columns []column) []api.InstanceFull {
 	threads := min(len(instances), 10)
 
 	// Shortcut when needing state and snapshot info.
@@ -261,7 +275,7 @@ func (c *cmdList) listInstances(d incus.InstanceServer, instances []api.Instance
 		close(cInfoQueue)
 		cInfoWg.Wait()
 
-		return c.showInstances(cInfo, filters, columns)
+		return cInfo
 	}
 
 	cStates := map[string]*api.InstanceState{}
@@ -359,37 +373,51 @@ func (c *cmdList) listInstances(d incus.InstanceServer, instances []api.Instance
 		data[i].Snapshots = cSnapshots[instances[i].Name]
 	}
 
-	return c.showInstances(data, filters, columns)
+	return data
 }
 
-func (c *cmdList) showInstances(instances []api.InstanceFull, filters []string, columns []column) error {
-	// Generate the table data
-	data := [][]string{}
-	instancesFiltered := []api.InstanceFull{}
+// getInstances retrieves the instances from the given server along with any data needed by the columns.
+func (c *cmdList) getInstances(d incus.InstanceServer, filters []string, needsData bool, columns []column) ([]api.InstanceFull, []string, error) {
+	serverFilters, clientFilters := getServerSupportedFilters(filters, []string{"ipv4", "ipv6"}, true)
 
-	for _, inst := range instances {
-		if !c.shouldShow(filters, &inst.Instance, inst.State) {
-			continue
+	if needsData && d.HasExtension("container_full") {
+		// Using the GetInstancesFull shortcut
+		var instances []api.InstanceFull
+		var err error
+
+		serverFilters = prepareInstanceServerFilters(serverFilters, api.InstanceFull{})
+
+		if c.flagAllProjects {
+			instances, err = d.GetInstancesFullAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
+		} else {
+			instances, err = d.GetInstancesFullWithFilter(api.InstanceTypeAny, serverFilters)
 		}
 
-		instancesFiltered = append(instancesFiltered, inst)
-
-		col := []string{}
-		for _, column := range columns {
-			col = append(col, column.Data(inst))
+		if err != nil {
+			return nil, nil, err
 		}
 
-		data = append(data, col)
+		return instances, clientFilters, nil
 	}
 
-	sort.Sort(cli.SortColumnsNaturally(data))
+	// Get the list of instances
+	var instances []api.Instance
+	var err error
 
-	headers := []string{}
-	for _, column := range columns {
-		headers = append(headers, column.Name)
+	serverFilters = prepareInstanceServerFilters(serverFilters, api.Instance{})
+
+	if c.flagAllProjects {
+		instances, err = d.GetInstancesAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
+	} else {
+		instances, err = d.GetInstancesWithFilter(api.InstanceTypeAny, serverFilters)
 	}
 
-	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, instancesFiltered)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Fetch any remaining data
+	return c.fetchInstancesData(d, instances, columns), clientFilters, nil
 }
 
 func (c *cmdList) run(cmd *cobra.Command, args []string) error {
@@ -405,6 +433,10 @@ func (c *cmdList) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("Can't specify --project with --all-projects"))
 	}
 
+	if c.flagAllRemotes && !parsed[0].Skipped {
+		return errors.New(i18n.G("Can't specify a remote with --all-remotes"))
+	}
+
 	// Check for raw unit formatting.
 	formatFields := strings.SplitN(c.flagFormat, ",", 2)
 	if len(formatFields) == 2 {
@@ -415,48 +447,87 @@ func (c *cmdList) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get the list of columns
-	columns, needsData, err := c.parseColumns(d.IsClustered())
+	columns, needsData, err := c.parseColumns(c.flagAllRemotes || d.IsClustered())
 	if err != nil {
 		return err
 	}
 
-	if needsData && d.HasExtension("container_full") {
-		// Using the GetInstancesFull shortcut
-		var instances []api.InstanceFull
+	// Get the list of servers to query.
+	servers := map[string]incus.InstanceServer{parsed[0].RemoteName: d}
+	if c.flagAllRemotes {
+		servers = map[string]incus.InstanceServer{}
 
-		serverFilters, clientFilters := getServerSupportedFilters(filters, []string{"ipv4", "ipv6"}, true)
-		serverFilters = prepareInstanceServerFilters(serverFilters, api.InstanceFull{})
+		for name, remote := range c.global.conf.Remotes {
+			if remote.Public || remote.Protocol != "incus" {
+				continue
+			}
 
-		if c.flagAllProjects {
-			instances, err = d.GetInstancesFullAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
-		} else {
-			instances, err = d.GetInstancesFullWithFilter(api.InstanceTypeAny, serverFilters)
+			if name == parsed[0].RemoteName {
+				servers[name] = d
+				continue
+			}
+
+			server, err := c.global.conf.GetInstanceServer(name)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, i18n.G("Skipping remote %q: %v")+"\n", name, err)
+				continue
+			}
+
+			servers[name] = server
 		}
+	}
 
+	// Generate the table data
+	data := [][]string{}
+	instancesFiltered := []api.InstanceFull{}
+	remoteInstancesFiltered := []instanceWithRemote{}
+
+	for _, name := range slices.Sorted(maps.Keys(servers)) {
+		instances, clientFilters, err := c.getInstances(servers[name], filters, needsData, columns)
 		if err != nil {
-			return err
+			if !c.flagAllRemotes {
+				return err
+			}
+
+			fmt.Fprintf(os.Stderr, i18n.G("Skipping remote %q: %v")+"\n", name, err)
+			continue
 		}
 
-		return c.showInstances(instances, clientFilters, columns)
+		c.currentRemote = name
+
+		for _, inst := range instances {
+			if !c.shouldShow(clientFilters, &inst.Instance, inst.State) {
+				continue
+			}
+
+			if c.flagAllRemotes {
+				remoteInstancesFiltered = append(remoteInstancesFiltered, instanceWithRemote{InstanceFull: inst, Remote: name})
+			} else {
+				instancesFiltered = append(instancesFiltered, inst)
+			}
+
+			col := []string{}
+			for _, column := range columns {
+				col = append(col, column.Data(inst))
+			}
+
+			data = append(data, col)
+		}
 	}
 
-	// Get the list of instances
-	var instances []api.Instance
-	serverFilters, clientFilters := getServerSupportedFilters(filters, []string{"ipv4", "ipv6"}, true)
-	serverFilters = prepareInstanceServerFilters(serverFilters, api.Instance{})
+	sort.Sort(cli.SortColumnsNaturally(data))
 
-	if c.flagAllProjects {
-		instances, err = d.GetInstancesAllProjectsWithFilter(api.InstanceTypeAny, serverFilters)
-	} else {
-		instances, err = d.GetInstancesWithFilter(api.InstanceTypeAny, serverFilters)
+	headers := []string{}
+	for _, column := range columns {
+		headers = append(headers, column.Name)
 	}
 
-	if err != nil {
-		return err
+	// Render the table
+	if c.flagAllRemotes {
+		return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, remoteInstancesFiltered)
 	}
 
-	// Fetch any remaining data and render the table
-	return c.listInstances(d, instances, clientFilters, columns)
+	return cli.RenderTable(os.Stdout, c.flagFormat, headers, data, instancesFiltered)
 }
 
 func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
@@ -478,6 +549,7 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 		'N': {i18n.G("PROCESSES"), c.numberOfProcessesColumnData, true, false},
 		'p': {i18n.G("PID"), c.pidColumnData, true, false},
 		'P': {i18n.G("PROFILES"), c.profilesColumnData, false, false},
+		'R': {i18n.G("REMOTE"), c.remoteColumnData, false, false},
 		'S': {i18n.G("SNAPSHOTS"), c.numberSnapshotsColumnData, false, true},
 		's': {i18n.G("STATE"), c.statusColumnData, false, false},
 		't': {i18n.G("TYPE"), c.typeColumnData, false, false},
@@ -504,6 +576,11 @@ func (c *cmdList) parseColumns(clustered bool) ([]column, bool, error) {
 		} else {
 			c.flagColumns = "nsacPt"
 		}
+	}
+
+	// Add remote column if --all-remotes is used with a default column layout.
+	if c.flagAllRemotes && slices.Contains([]string{defaultColumns, defaultColumnsAllProjects, "nsacPt", "ensacPt"}, c.flagColumns) {
+		c.flagColumns = "R" + c.flagColumns
 	}
 
 	if clustered {
@@ -726,6 +803,10 @@ func (c *cmdList) ip6ColumnData(cInfo api.InstanceFull) string {
 
 func (c *cmdList) projectColumnData(cInfo api.InstanceFull) string {
 	return cInfo.Project
+}
+
+func (c *cmdList) remoteColumnData(_ api.InstanceFull) string {
+	return c.currentRemote
 }
 
 func (c *cmdList) memoryUsageColumnData(cInfo api.InstanceFull) string {

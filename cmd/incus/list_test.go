@@ -84,7 +84,7 @@ func TestShouldShow(t *testing.T) {
 
 // Used by TestColumns and TestInvalidColumns.
 const (
-	shorthand = "46abcdDefFlmMnNpPsStuUL"
+	shorthand = "46abcdDefFlmMnNpPRsStuUL"
 	alphanum  = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 )
 
@@ -280,4 +280,14 @@ func TestPrepareInstanceServerFilters(t *testing.T) {
 
 	result := prepareInstanceServerFilters(filters, api.InstanceFull{})
 	assert.Equal(t, []string{"name=(^foo$|^foo.*)", "expanded_config.user.a=blah", "name=v1", "status=running"}, result)
+}
+
+func TestRemoteColumn(t *testing.T) {
+	list := cmdList{flagColumns: "nR", currentRemote: "some-remote"}
+
+	columns, _, err := list.parseColumns(true)
+	assert.NoError(t, err)
+	assert.Len(t, columns, 2)
+	assert.Equal(t, "REMOTE", columns[1].Name)
+	assert.Equal(t, "some-remote", columns[1].Data(api.InstanceFull{}))
 }
