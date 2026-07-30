@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-30 01:35-0400\n"
+"POT-Creation-Date: 2026-07-30 05:58-0400\n"
 "PO-Revision-Date: 2026-07-13 05:42+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/incus/cli/ta/>\n"
@@ -74,7 +74,7 @@ msgid ""
 "###   size: \"61203283968\""
 msgstr ""
 
-#: cmd/incus/low_level.go:483
+#: cmd/incus/low_level.go:484
 msgid ""
 "### This is a YAML representation of the UEFI variable.\n"
 "### Any line starting with a '# will be ignored."
@@ -422,16 +422,16 @@ msgstr ""
 msgid "'%s' isn't a supported file type"
 msgstr ""
 
-#: cmd/incus/low_level.go:745
+#: cmd/incus/low_level.go:746
 msgid "(binary data)"
 msgstr ""
 
-#: cmd/incus/low_level.go:750
+#: cmd/incus/low_level.go:751
 #, c-format
 msgid "(error: %w)"
 msgstr ""
 
-#: cmd/incus/low_level.go:737
+#: cmd/incus/low_level.go:738
 msgid "(no timestamp)"
 msgstr ""
 
@@ -467,7 +467,7 @@ msgstr ""
 msgid "--all cannot be used together with other arguments"
 msgstr ""
 
-#: cmd/incus/low_level.go:878
+#: cmd/incus/low_level.go:879
 msgid "--attributes cannot be used without --raw"
 msgstr ""
 
@@ -541,7 +541,7 @@ msgstr ""
 msgid "--target cannot be used with instances"
 msgstr ""
 
-#: cmd/incus/low_level.go:882
+#: cmd/incus/low_level.go:883
 msgid "--timestamp cannot be used without --raw"
 msgstr ""
 
@@ -592,7 +592,7 @@ msgstr ""
 msgid "ARCHITECTURE"
 msgstr ""
 
-#: cmd/incus/low_level.go:685
+#: cmd/incus/low_level.go:686
 msgid "ATTRIBUTES"
 msgstr ""
 
@@ -1362,7 +1362,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:667 cmd/incus/network.go:1054
+#: cmd/incus/low_level.go:668 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
@@ -2277,7 +2277,7 @@ msgstr ""
 msgid "Edit image properties"
 msgstr ""
 
-#: cmd/incus/low_level.go:465 cmd/incus/low_level.go:466
+#: cmd/incus/low_level.go:466 cmd/incus/low_level.go:467
 msgid "Edit instance UEFI variables"
 msgstr ""
 
@@ -2371,7 +2371,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:699 cmd/incus/network.go:1101
+#: cmd/incus/low_level.go:700 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
@@ -2599,7 +2599,7 @@ msgid ""
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
 
-#: cmd/incus/low_level.go:200
+#: cmd/incus/low_level.go:201
 msgid "Export a virtual machine's memory state"
 msgstr ""
 
@@ -2638,7 +2638,7 @@ msgstr ""
 msgid "Export storage buckets as tarball."
 msgstr ""
 
-#: cmd/incus/low_level.go:201
+#: cmd/incus/low_level.go:202
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -2797,7 +2797,7 @@ msgstr ""
 msgid "Failed starting sshfs: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:320 cmd/incus/port_forward.go:128
+#: cmd/incus/low_level.go:321 cmd/incus/port_forward.go:128
 #: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:640
 #, c-format
 msgid "Failed to accept incoming connection: %w"
@@ -2893,7 +2893,7 @@ msgstr ""
 msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:233
+#: cmd/incus/low_level.go:234
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr ""
@@ -2918,12 +2918,12 @@ msgstr ""
 msgid "Failed to get bitmap: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:627 cmd/incus/low_level.go:636
+#: cmd/incus/low_level.go:628 cmd/incus/low_level.go:637
 #, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:769
+#: cmd/incus/low_level.go:770
 #, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr ""
@@ -2938,7 +2938,7 @@ msgstr ""
 msgid "Failed to list bitmaps: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:305 cmd/incus/port_forward.go:114
+#: cmd/incus/low_level.go:306 cmd/incus/port_forward.go:114
 #: cmd/incus/storage_volume.go:2657 cmd/incus/utils.go:625
 #, c-format
 msgid "Failed to listen for connection: %w"
@@ -2970,7 +2970,7 @@ msgstr ""
 msgid "Failed to parse the preseed: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:888
+#: cmd/incus/low_level.go:889
 #, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr ""
@@ -3006,7 +3006,7 @@ msgstr ""
 msgid "Failed to render the config: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:182
+#: cmd/incus/low_level.go:183
 #, c-format
 msgid "Failed to repair instance: %w"
 msgstr ""
@@ -3049,12 +3049,12 @@ msgstr ""
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:558
+#: cmd/incus/low_level.go:559
 #, c-format
 msgid "Failed to set UEFI variable %s:%s: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:896
+#: cmd/incus/low_level.go:897
 #, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
 msgstr ""
@@ -3205,7 +3205,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:666 cmd/incus/network.go:1055
+#: cmd/incus/low_level.go:667 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
@@ -3237,7 +3237,7 @@ msgstr ""
 msgid "Format (table|compact)"
 msgstr ""
 
-#: cmd/incus/low_level.go:211
+#: cmd/incus/low_level.go:212
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
@@ -3304,11 +3304,11 @@ msgstr ""
 msgid "GRANULARITY"
 msgstr ""
 
-#: cmd/incus/low_level.go:656 cmd/incus/low_level.go:686
+#: cmd/incus/low_level.go:657 cmd/incus/low_level.go:687
 msgid "GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:687
+#: cmd/incus/low_level.go:688
 msgid "GUID NAME"
 msgstr ""
 
@@ -3441,11 +3441,11 @@ msgstr ""
 msgid "Get the key as an instance property"
 msgstr ""
 
-#: cmd/incus/low_level.go:596
+#: cmd/incus/low_level.go:597
 msgid "Get the raw binary variable value"
 msgstr ""
 
-#: cmd/incus/low_level.go:592 cmd/incus/low_level.go:593
+#: cmd/incus/low_level.go:593 cmd/incus/low_level.go:594
 msgid "Get values for UEFI variables"
 msgstr ""
 
@@ -3613,7 +3613,7 @@ msgstr ""
 msgid "INSTANCE NAME"
 msgstr ""
 
-#: cmd/incus/low_level.go:691
+#: cmd/incus/low_level.go:692
 msgid "INTERPRETED VALUE"
 msgstr ""
 
@@ -3813,7 +3813,7 @@ msgstr ""
 msgid "Incus - Command line client"
 msgstr ""
 
-#: cmd/incus/low_level.go:531
+#: cmd/incus/low_level.go:532
 #, c-format
 msgid "Incus does not know how to dissect %s:%s"
 msgstr ""
@@ -3866,7 +3866,7 @@ msgstr ""
 msgid "Instance type"
 msgstr ""
 
-#: cmd/incus/low_level.go:775
+#: cmd/incus/low_level.go:776
 #, c-format
 msgid "Invalid GUID: %s"
 msgstr ""
@@ -4131,7 +4131,7 @@ msgid ""
 "  L - Location of the DHCP Lease (e.g. its cluster member)"
 msgstr ""
 
-#: cmd/incus/low_level.go:662 cmd/incus/low_level.go:663
+#: cmd/incus/low_level.go:663 cmd/incus/low_level.go:664
 msgid "List UEFI GUIDs and variables"
 msgstr ""
 
@@ -5131,7 +5131,7 @@ msgstr ""
 msgid "Make the image public"
 msgstr ""
 
-#: cmd/incus/low_level.go:386 cmd/incus/low_level.go:387
+#: cmd/incus/low_level.go:387 cmd/incus/low_level.go:388
 msgid "Manage NVRAM on virtual machines"
 msgstr ""
 
@@ -5549,11 +5549,11 @@ msgstr ""
 msgid "NBD access to a block storage volume"
 msgstr ""
 
-#: cmd/incus/low_level.go:256
+#: cmd/incus/low_level.go:257
 msgid "NBD access to all of a virtual machine's disks"
 msgstr ""
 
-#: cmd/incus/low_level.go:257
+#: cmd/incus/low_level.go:258
 msgid ""
 "NBD access to all of a virtual machine's disks\n"
 "\n"
@@ -5562,22 +5562,22 @@ msgid ""
 "device name."
 msgstr ""
 
-#: cmd/incus/low_level.go:326 cmd/incus/storage_volume.go:2670
+#: cmd/incus/low_level.go:327 cmd/incus/storage_volume.go:2670
 #, c-format
 msgid "NBD client connected %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:327 cmd/incus/storage_volume.go:2671
+#: cmd/incus/low_level.go:328 cmd/incus/storage_volume.go:2671
 #, c-format
 msgid "NBD client disconnected %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:343 cmd/incus/storage_volume.go:2676
+#: cmd/incus/low_level.go:344 cmd/incus/storage_volume.go:2676
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/low_level.go:308 cmd/incus/storage_volume.go:2660
+#: cmd/incus/low_level.go:309 cmd/incus/storage_volume.go:2660
 #, c-format
 msgid "NBD listening on %v"
 msgstr ""
@@ -6179,7 +6179,7 @@ msgstr ""
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
 #: cmd/incus/config_trust.go:333 cmd/incus/image.go:488
-#: cmd/incus/low_level.go:559 cmd/incus/network.go:767
+#: cmd/incus/low_level.go:560 cmd/incus/network.go:767
 #: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
 #: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
 #: cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733
@@ -6399,7 +6399,7 @@ msgstr ""
 msgid "Query virtual machine images"
 msgstr ""
 
-#: cmd/incus/low_level.go:689
+#: cmd/incus/low_level.go:690
 msgid "RAW VALUE"
 msgstr ""
 
@@ -6802,7 +6802,8 @@ msgid ""
 "\n"
 "Supported actions:\n"
 "  rebuild-config-volume    Rebuild the config volume of a stopped QCOW2 "
-"backed virtual machine"
+"backed virtual machine\n"
+"  rebuild-nvram            Rebuild the virtual machine's UEFI NVRAM"
 msgstr ""
 
 #: cmd/incus/low_level.go:146
@@ -7313,23 +7314,23 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/low_level.go:835
+#: cmd/incus/low_level.go:836
 msgid "Set the raw binary variable value"
 msgstr ""
 
-#: cmd/incus/low_level.go:833
+#: cmd/incus/low_level.go:834
 msgid "Set the variable attributes (requires `--raw`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:834
+#: cmd/incus/low_level.go:835
 msgid "Set the variable timestamp (requires `--raw`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:829
+#: cmd/incus/low_level.go:830
 msgid "Set values for UEFI variables"
 msgstr ""
 
-#: cmd/incus/low_level.go:830
+#: cmd/incus/low_level.go:831
 msgid "Set values for UEFI variables."
 msgstr ""
 
@@ -7638,7 +7639,7 @@ msgstr ""
 msgid "Source:"
 msgstr ""
 
-#: cmd/incus/low_level.go:265 cmd/incus/storage_volume.go:2609
+#: cmd/incus/low_level.go:266 cmd/incus/storage_volume.go:2609
 msgid "Specific address to listen on"
 msgstr ""
 
@@ -7847,7 +7848,7 @@ msgstr ""
 msgid "TARGET"
 msgstr ""
 
-#: cmd/incus/low_level.go:690
+#: cmd/incus/low_level.go:691
 msgid "TIMESTAMP"
 msgstr ""
 
@@ -8315,7 +8316,7 @@ msgstr ""
 msgid "Type: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:951
+#: cmd/incus/low_level.go:952
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr ""
@@ -8393,7 +8394,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:705 cmd/incus/network.go:1107
+#: cmd/incus/low_level.go:706 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
@@ -8433,7 +8434,7 @@ msgstr ""
 msgid "Unknown output type %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:913 cmd/incus/low_level.go:914
+#: cmd/incus/low_level.go:914 cmd/incus/low_level.go:915
 msgid "Unset UEFI variables"
 msgstr ""
 
@@ -8716,7 +8717,7 @@ msgstr ""
 msgid "User aborted delete operation"
 msgstr ""
 
-#: cmd/incus/low_level.go:688
+#: cmd/incus/low_level.go:689
 msgid "VARIABLE NAME"
 msgstr ""
 
@@ -9376,7 +9377,7 @@ msgid ""
 "  List instances with their running state and user comment."
 msgstr ""
 
-#: cmd/incus/low_level.go:205
+#: cmd/incus/low_level.go:206
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Creates an ELF format memory dump of the vm1 instance."
