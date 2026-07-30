@@ -709,6 +709,15 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 		req.Devices[key] = value
 	}
 
+	// Re-check project restrictions against the fully merged config, as the source
+	// instance's config and devices (including restricted keys) are only merged in above.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowInstanceCreation(tx, targetProject, *req)
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	if req.Stateful {
 		sourceName, _, _ := api.GetParentAndSnapshotName(source.Name())
 		if sourceName != req.Name {
@@ -886,6 +895,19 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	// Override instance name.
 	if instanceName != "" {
 		bInfo.Name = instanceName
+	}
+
+	// Validate the instance and snapshot names to avoid path traversal when used as path segments.
+	err = instance.ValidName(bInfo.Name, false)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	for _, snapName := range bInfo.Snapshots {
+		err = instance.ValidName(bInfo.Name+internalInstance.SnapshotDelimiter+snapName, true)
+		if err != nil {
+			return response.BadRequest(err)
+		}
 	}
 
 	// Override config.

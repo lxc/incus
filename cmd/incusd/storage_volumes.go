@@ -2770,6 +2770,12 @@ func createStoragePoolVolumeFromISO(s *state.State, r *http.Request, requestProj
 		return response.BadRequest(errors.New("Missing volume name"))
 	}
 
+	// Validate the volume name to avoid path traversal when used as a path segment.
+	err := validate.IsAPIName(volName, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid volume name: %w", err))
+	}
+
 	// Create isos directory if needed.
 	if !util.PathExists(internalUtil.VarPath("isos")) {
 		err := os.MkdirAll(internalUtil.VarPath("isos"), 0o644)
@@ -2935,6 +2941,19 @@ func createStoragePoolVolumeFromBackup(s *state.State, r *http.Request, requestP
 	// Override volume name.
 	if volName != "" {
 		bInfo.Name = volName
+	}
+
+	// Validate the volume and snapshot names to avoid path traversal when used as path segments.
+	err = validate.IsAPIName(bInfo.Name, false)
+	if err != nil {
+		return response.BadRequest(fmt.Errorf("Invalid volume name: %w", err))
+	}
+
+	for _, snapName := range bInfo.Snapshots {
+		err = validate.IsAPIName(snapName, false)
+		if err != nil {
+			return response.BadRequest(fmt.Errorf("Invalid snapshot name: %w", err))
+		}
 	}
 
 	logger.Debug("Backup file info loaded", logger.Ctx{

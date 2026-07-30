@@ -326,9 +326,15 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 		}
 
 		// Expansion function to deal with project inheritance.
+		var expandProjectErr error
 		expandProject := func(projectName string) string {
 			// Object types that aren't part of projects.
 			if slices.Contains([]auth.ObjectType{auth.ObjectTypeUser, auth.ObjectTypeServer, auth.ObjectTypeCertificate, auth.ObjectTypeStoragePool, auth.ObjectTypeNetworkIntegration}, objectType) {
+				return projectName
+			}
+
+			// Object types that are always addressed in the requested project.
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeProject, auth.ObjectTypeInstance}, objectType) {
 				return projectName
 			}
 
@@ -352,24 +358,26 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 			}
 
 			if objectType == auth.ObjectTypeProfile {
-				projectName = project.ProfileProjectFromRecord(p)
+				return project.ProfileProjectFromRecord(p)
 			} else if objectType == auth.ObjectTypeStorageBucket {
-				projectName = project.StorageBucketProjectFromRecord(p)
+				return project.StorageBucketProjectFromRecord(p)
 			} else if objectType == auth.ObjectTypeStorageVolume {
 				dbVolType, err := storagePools.VolumeTypeNameToDBType(muxVars[1])
 				if err != nil {
 					return projectName
 				}
 
-				projectName = project.StorageVolumeProjectFromRecord(p, dbVolType)
+				return project.StorageVolumeProjectFromRecord(p, dbVolType)
 			} else if objectType == auth.ObjectTypeNetworkZone {
-				projectName = project.NetworkZoneProjectFromRecord(p)
+				return project.NetworkZoneProjectFromRecord(p)
 			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}, objectType) {
-				projectName = project.ImageProjectFromRecord(p)
-			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL}, objectType) {
-				projectName = project.NetworkProjectFromRecord(p)
+				return project.ImageProjectFromRecord(p)
+			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL, auth.ObjectTypeNetworkAddressSet}, objectType) {
+				return project.NetworkProjectFromRecord(p)
 			}
 
+			// Fail closed rather than defaulting to the requested project, which could bypass confinement.
+			expandProjectErr = fmt.Errorf("No project expansion defined for object type %q", objectType)
 			return projectName
 		}
 
@@ -448,6 +456,10 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 		objectName, err := auth.ObjectFromRequest(r, objectType, expandProject, expandFingerprint, expandVolumeLocation, expandBucketLocation, muxVars...)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed to create authentication object: %w", err))
+		}
+
+		if expandProjectErr != nil {
+			return response.InternalError(fmt.Errorf("Failed to expand project for authorization: %w", expandProjectErr))
 		}
 
 		s := d.State()

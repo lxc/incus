@@ -3777,6 +3777,14 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 		instanceMeta["ephemeral"] = "false"
 	}
 
+	// Open the output directory as an os.Root so all template writes stay confined to it.
+	outputRoot, err := os.OpenRoot(path)
+	if err != nil {
+		return fmt.Errorf("Failed to open template output path: %w", err)
+	}
+
+	defer logger.WarnOnError(outputRoot.Close, "Failed to close template output path")
+
 	// Go through the templates.
 	for tplPath, tpl := range metadata.Templates {
 		err = func(tplPath string, tpl *api.ImageMetadataTemplate) error {
@@ -3789,8 +3797,31 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 				return nil
 			}
 
+			// Perform some early security checks on the template itself.
+			if filepath.Base(tpl.Template) != tpl.Template {
+				return errors.New("Template path is attempting to read outside of template directory")
+			}
+
+			tplDirStat, err := os.Lstat(d.TemplatesPath())
+			if err != nil {
+				return fmt.Errorf("Couldn't access template directory: %w", err)
+			}
+
+			if !tplDirStat.IsDir() {
+				return errors.New("Template directory isn't a regular directory")
+			}
+
+			tplFileStat, err := os.Lstat(filepath.Join(d.TemplatesPath(), tpl.Template))
+			if err != nil {
+				return fmt.Errorf("Couldn't access template file: %w", err)
+			}
+
+			if tplFileStat.Mode()&os.ModeSymlink == os.ModeSymlink {
+				return errors.New("Template file is a symlink")
+			}
+
 			// Create the file itself.
-			w, err = os.Create(filepath.Join(path, fmt.Sprintf("%s.out", tpl.Template)))
+			w, err = outputRoot.Create(fmt.Sprintf("%s.out", tpl.Template))
 			if err != nil {
 				return err
 			}

@@ -318,6 +318,19 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 		return errors.New("Restricted projects aren't allowed to use pull mode migration")
 	}
 
+	// Restricted projects can't override low-level volume options that are passed to
+	// filesystem tooling running as root; they may only use the pool's configured default.
+	if util.IsTrue(info.Project.Config["restricted"]) {
+		_, pool, _, err := tx.GetStoragePool(context.Background(), poolName)
+		if err != nil {
+			return err
+		}
+
+		if req.Config["block.create_options"] != "" && req.Config["block.create_options"] != pool.Config["volume.block.create_options"] {
+			return errors.New(`Storage volume option "block.create_options" cannot be set in a restricted project`)
+		}
+	}
+
 	// Add the volume being created.
 	info.Volumes = append(info.Volumes, db.StorageVolumeArgs{
 		Name:     req.Name,
@@ -585,6 +598,7 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 	allowContainerLowLevel := false
 	allowVMLowLevel := false
 	blockVMNesting := false
+	requireIsolated := false
 	var allowedIDMapHostUIDs, allowedIDMapHostGIDs []idmap.Entry
 
 	for i := range allRestrictions {
@@ -632,6 +646,8 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 
 				return nil
 			}
+
+			requireIsolated = restrictionValue == "isolated"
 
 			containerConfigChecks["security.idmap.isolated"] = func(instanceValue string) error {
 				if restrictionValue == "isolated" && util.IsFalseOrEmpty(instanceValue) {
@@ -825,6 +841,11 @@ func checkRestrictions(project api.Project, instances []api.Instance, profiles [
 		// VM nesting is on by default, so when blocked, require it to be explicitly disabled.
 		if blockVMNesting && instType == instancetype.VM && !util.IsFalse(config["security.nesting"]) {
 			return fmt.Errorf(`Virtual machine nesting is forbidden on %s %q of project %q ("security.nesting" must be set to "false")`, entityTypeLabel, entityName, project.Name)
+		}
+
+		// Non-isolation is the default, so when isolation is required, the container must explicitly enable it.
+		if requireIsolated && instType == instancetype.Container && util.IsFalseOrEmpty(config["security.idmap.isolated"]) {
+			return fmt.Errorf(`Non-isolated containers are forbidden on %s %q of project %q ("security.idmap.isolated" must be set to "true")`, entityTypeLabel, entityName, project.Name)
 		}
 
 		for key, value := range config {

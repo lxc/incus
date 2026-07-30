@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"time"
 
@@ -344,13 +345,12 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 	logger.Info("Downloading image", ctxMap)
 
-	// For the direct protocol the fingerprint is caller-controlled, so validate
-	// it to avoid path traversal when used as a file name.
-	if protocol == "direct" {
-		err = validate.IsSHA256(fp)
-		if err != nil {
-			return nil, false, errors.New("Invalid image fingerprint")
-		}
+	// The fingerprint is used as a file name, so reject anything that isn't a
+	// partial or full hex fingerprint to avoid path traversal. It's re-validated
+	// as a full SHA-256 once expanded from the remote below.
+	match, _ := regexp.MatchString("^[0-9a-f]{1,64}$", fp)
+	if !match {
+		return nil, false, errors.New("Invalid image fingerprint")
 	}
 
 	// Cleanup any leftover from a past attempt
@@ -619,6 +619,13 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 
 	// Image is in the DB now, don't wipe on-disk files on failure
 	failure = false
+
+	// Re-validate the fingerprint as it may have been updated from the remote
+	// server's response, and it is used as a file name below.
+	err = validate.IsSHA256(fp)
+	if err != nil {
+		return nil, false, errors.New("Invalid image fingerprint")
+	}
 
 	// Check if the image path changed (private images)
 	newDestName := filepath.Join(destDir, fp)
