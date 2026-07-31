@@ -64,7 +64,8 @@ type cmdLowLevelBitmaps struct {
 
 func (c *cmdLowLevelBitmaps) command() *cobra.Command {
 	cmd := &cobra.Command{}
-	cmd.Use = cli.U("bitmaps")
+	cmd.Use = cli.U("bitmap")
+	cmd.Aliases = []string{"bitmaps"}
 	cmd.Short = i18n.G("Manage dirty bitmaps on virtual machines")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage dirty bitmaps on virtual machines`))
 
