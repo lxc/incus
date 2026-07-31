@@ -359,20 +359,30 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 
 			if objectType == auth.ObjectTypeProfile {
 				return project.ProfileProjectFromRecord(p)
-			} else if objectType == auth.ObjectTypeStorageBucket {
+			}
+
+			if objectType == auth.ObjectTypeStorageBucket {
 				return project.StorageBucketProjectFromRecord(p)
-			} else if objectType == auth.ObjectTypeStorageVolume {
+			}
+
+			if objectType == auth.ObjectTypeStorageVolume {
 				dbVolType, err := storagePools.VolumeTypeNameToDBType(muxVars[1])
 				if err != nil {
 					return projectName
 				}
 
 				return project.StorageVolumeProjectFromRecord(p, dbVolType)
-			} else if objectType == auth.ObjectTypeNetworkZone {
+			}
+
+			if objectType == auth.ObjectTypeNetworkZone {
 				return project.NetworkZoneProjectFromRecord(p)
-			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}, objectType) {
+			}
+
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeImage, auth.ObjectTypeImageAlias}, objectType) {
 				return project.ImageProjectFromRecord(p)
-			} else if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL, auth.ObjectTypeNetworkAddressSet}, objectType) {
+			}
+
+			if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL, auth.ObjectTypeNetworkAddressSet}, objectType) {
 				return project.NetworkProjectFromRecord(p)
 			}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	bgpAPI "github.com/osrg/gobgp/v4/api"
 	bgpAPIutil "github.com/osrg/gobgp/v4/pkg/apiutil"
+	bgpConfig "github.com/osrg/gobgp/v4/pkg/config/oc"
 	bgpPacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 	bgpServer "github.com/osrg/gobgp/v4/pkg/server"
 
@@ -566,6 +567,16 @@ func (s *Server) addPeer(address net.IP, iface string, asn uint32, password stri
 
 	// Add the peer.
 	if s.bgp != nil {
+		// The API path doesn't resolve unnumbered peers, do it ourselves.
+		if address == nil {
+			neighborAddress, err := bgpConfig.GetIPv6LinkLocalNeighborAddress(iface)
+			if err != nil {
+				return err
+			}
+
+			n.State = &bgpAPI.PeerState{NeighborAddress: neighborAddress}
+		}
+
 		err := s.bgp.AddPeer(context.Background(), &bgpAPI.AddPeerRequest{Peer: n})
 		if err != nil {
 			return err
