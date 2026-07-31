@@ -2170,6 +2170,14 @@ definitions:
                 example: foo
                 type: string
                 x-go-name: Project
+            refresh:
+                description: |-
+                    Whether to transfer a running instance incrementally
+
+                    API extension: instance_refresh_migration
+                example: false
+                type: boolean
+                x-go-name: Refresh
             target:
                 $ref: '#/definitions/InstancePostTarget'
         title: InstancePost represents the fields required to rename/move an instance.
