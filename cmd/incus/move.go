@@ -123,6 +123,10 @@ func (c *cmdMove) run(cmd *cobra.Command, args []string) error {
 			return errors.New(i18n.G("Can't override configuration or profiles in local rename"))
 		}
 
+		if c.flagRefresh {
+			return errors.New(i18n.G("Can't perform an incremental transfer in local rename"))
+		}
+
 		// Instance rename
 		op, err := srcServer.RenameInstance(srcInstanceName, api.InstancePost{Name: dstInstanceName})
 		if err != nil {
@@ -222,6 +226,11 @@ func (c *cmdMove) moveInstance(src *u.Parsed, dst *u.Parsed, stateful bool) erro
 		return errors.New(i18n.G("--target can only be used with clusters"))
 	}
 
+	// Validate server support for incremental transfers.
+	if c.flagRefresh && !srcServer.HasExtension("instance_refresh_migration") {
+		return errors.New(i18n.G("The server doesn't implement incremental instance transfers"))
+	}
+
 	// Set the target if specified.
 	if c.flagTarget != "" {
 		srcServer = srcServer.UseTarget(c.flagTarget)
@@ -235,6 +244,7 @@ func (c *cmdMove) moveInstance(src *u.Parsed, dst *u.Parsed, stateful bool) erro
 		Pool:         c.flagStorage,
 		Project:      c.flagTargetProject,
 		Live:         stateful,
+		Refresh:      c.flagRefresh,
 	}
 
 	// Override profiles.
