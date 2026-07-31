@@ -29,8 +29,8 @@ These {spellexception}`datasets` can be of different types:
 The `zfs` driver in Incus uses {spellexception}`ZFS filesystems` and ZFS volumes for images and custom storage volumes, and ZFS snapshots and clones to create instances from images and for instance and custom volume snapshots.
 By default, Incus enables compression when creating a ZFS pool.
 
-Incus assumes that it has full control over the ZFS pool and {spellexception}`dataset`.
-Therefore, you should never maintain any {spellexception}`datasets` or file system entities that are not owned by Incus in a ZFS pool or {spellexception}`dataset`, because Incus might delete them.
+Incus assumes that it has full control over what you gave it when creating the storage pool, be it a ZFS pool or a {spellexception}`dataset`.
+Therefore, you should never try to maintain any children {spellexception}`datasets` or file system entities, because Incus might delete them.
 
 Due to the way copy-on-write works in ZFS, parent {spellexception}`ZFS filesystems` can't be removed until all children are gone.
 As a result, Incus automatically renames any objects that are removed but still referenced.
