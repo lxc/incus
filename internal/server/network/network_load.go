@@ -76,6 +76,52 @@ func LoadByName(s *state.State, projectName string, name string) (Network, error
 	return n, nil
 }
 
+// LoadAllCreated loads all created networks across all projects using a single database transaction.
+// Networks that fail to instantiate are present in the returned map with a nil value so that callers
+// can handle them individually through LoadByName.
+func LoadAllCreated(ctx context.Context, s *state.State) (map[ProjectNetwork]Network, error) {
+	var networksInfo map[string]map[int64]db.NetworkInfo
+
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		networksInfo, err = tx.GetCreatedNetworksInfo(ctx)
+
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	networks := make(map[ProjectNetwork]Network)
+
+	for projectName, projectNetworks := range networksInfo {
+		for networkID, netInfo := range projectNetworks {
+			pn := ProjectNetwork{
+				ProjectName: projectName,
+				NetworkName: netInfo.Info.Name,
+			}
+
+			driverFunc, ok := drivers[netInfo.Info.Type]
+			if !ok {
+				networks[pn] = nil
+				continue
+			}
+
+			n := driverFunc()
+			err = n.init(s, networkID, projectName, netInfo.Info, netInfo.Nodes)
+			if err != nil {
+				networks[pn] = nil
+				continue
+			}
+
+			networks[pn] = n
+		}
+	}
+
+	return networks, nil
+}
+
 // PatchPreCheck checks if there are any unavailable networks.
 func PatchPreCheck() error {
 	unavailableNetworksMu.Lock()
