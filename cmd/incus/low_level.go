@@ -2,11 +2,15 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -582,7 +586,7 @@ func (c *cmdLowLevelNVRAMEdit) run(cmd *cobra.Command, args []string) error {
 type cmdLowLevelNVRAMGet struct {
 	global *cmdGlobal
 
-	flagRaw bool
+	flagFormat string
 }
 
 var cmdLowLevelNVRAMGetUsage = u.Usage{u.Instance.Remote(), u.Variable}
@@ -594,7 +598,7 @@ func (c *cmdLowLevelNVRAMGet) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Get values for UEFI variables`))
 
 	cmd.RunE = c.run
-	cli.AddBoolFlag(cmd.Flags(), &c.flagRaw, "raw", i18n.G("Get the raw binary variable value"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", "yaml", "", i18n.G("Format (base64|binary|efivarfs|hex|json|yaml)"))
 
 	// completion for instance.
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -622,14 +626,30 @@ func (c *cmdLowLevelNVRAMGet) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if c.flagRaw {
-		resp, err := d.GetRawInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if slices.Contains([]string{"base64", "binary", "efivarfs", "hex"}, c.flagFormat) {
+		data, attributes, err := d.GetRawInstanceNVRAMGUIDVar(instanceName, guid, varName)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Failed to get instance UEFI variable: %w"), err)
 		}
 
-		fmt.Print(string(resp))
+		switch c.flagFormat {
+		case "base64":
+			fmt.Print(base64.StdEncoding.EncodeToString(data))
+		case "binary":
+			fmt.Print(string(data))
+		case "efivarfs":
+			attrs := make([]byte, 4)
+			binary.LittleEndian.PutUint32(attrs, attributes)
+			fmt.Print(string(append(attrs, data...)))
+		case "hex":
+			fmt.Print(hex.EncodeToString(data))
+		}
+
 		return nil
+	}
+
+	if !slices.Contains([]string{"json", "yaml"}, c.flagFormat) {
+		return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
 	}
 
 	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
@@ -637,12 +657,19 @@ func (c *cmdLowLevelNVRAMGet) run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(i18n.G("Failed to get instance UEFI variable: %w"), err)
 	}
 
-	data, err := yaml.Dump(v, yaml.WithV2Defaults())
+	var data []byte
+	switch c.flagFormat {
+	case "json":
+		data, err = json.Marshal(v)
+	case "yaml":
+		data, err = yaml.Dump(v, yaml.WithV2Defaults())
+	}
+
 	if err != nil {
 		return err
 	}
 
-	print(string(data))
+	fmt.Print(string(data))
 	return nil
 }
 
@@ -818,8 +845,8 @@ type cmdLowLevelNVRAMSet struct {
 	global *cmdGlobal
 
 	flagAttributes uint32
+	flagFormat     string
 	flagTimestamp  int64
-	flagRaw        bool
 }
 
 var cmdLowLevelNVRAMSetUsage = u.Usage{u.Instance.Remote(), u.MakeKV(u.Variable, u.Value)}
@@ -831,9 +858,9 @@ func (c *cmdLowLevelNVRAMSet) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Set values for UEFI variables.`))
 
 	cmd.RunE = c.run
-	cli.AddUint32Flag(cmd.Flags(), &c.flagAttributes, "attributes", i18n.G("Set the variable attributes (requires `--raw`)"), 7)
-	cli.AddInt64Flag(cmd.Flags(), &c.flagTimestamp, "timestamp", i18n.G("Set the variable timestamp (requires `--raw`)"))
-	cli.AddBoolFlag(cmd.Flags(), &c.flagRaw, "raw", i18n.G("Set the raw binary variable value"))
+	cli.AddUint32Flag(cmd.Flags(), &c.flagAttributes, "attributes", i18n.G("Set the variable attributes (requires `--format=base64|binary|hex`)"), 7)
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", "yaml", "", i18n.G("Format (base64|binary|efivarfs|hex|json|yaml)"))
+	cli.AddInt64Flag(cmd.Flags(), &c.flagTimestamp, "timestamp", i18n.G("Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"))
 
 	// completion for instance.
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -872,19 +899,57 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		if c.flagRaw {
-			err = d.UpdateRawInstanceNVRAMGUIDVar(instanceName, guid, varName, []byte(v), c.flagAttributes, c.flagTimestamp)
+		if slices.Contains([]string{"base64", "binary", "efivarfs", "hex"}, c.flagFormat) {
+			attributes := c.flagAttributes
+			var data []byte
+			switch c.flagFormat {
+			case "base64":
+				data, err = base64.StdEncoding.DecodeString(v)
+				if err != nil {
+					return err
+				}
+
+			case "binary":
+				data = []byte(v)
+			case "efivarfs":
+				if cmd.Flags().Changed("attributes") {
+					return fmt.Errorf(i18n.G("--attributes cannot be used with --format=%s"), "efivarfs")
+				}
+
+				if len(v) < 4 {
+					return errors.New(i18n.G("Unexpected input size"))
+				}
+
+				b := []byte(v)
+				attributes = binary.LittleEndian.Uint32(b[:4])
+				data = b[4:]
+			case "hex":
+				data, err = hex.DecodeString(v)
+				if err != nil {
+					return err
+				}
+			}
+
+			err = d.UpdateRawInstanceNVRAMGUIDVar(instanceName, guid, varName, data, attributes, c.flagTimestamp)
 		} else {
 			if cmd.Flags().Changed("attributes") {
-				return errors.New(i18n.G("--attributes cannot be used without --raw"))
+				return fmt.Errorf(i18n.G("--attributes cannot be used with --format=%s"), c.flagFormat)
 			}
 
 			if cmd.Flags().Changed("timestamp") {
-				return errors.New(i18n.G("--timestamp cannot be used without --raw"))
+				return fmt.Errorf(i18n.G("--timestamp cannot be used with --format=%s"), c.flagFormat)
 			}
 
 			data := api.InstanceNVRAMVariablePut{}
-			err = yaml.Load([]byte(v), &data)
+			switch c.flagFormat {
+			case "json":
+				err = json.Unmarshal([]byte(v), &data)
+			case "yaml":
+				err = yaml.Load([]byte(v), &data)
+			default:
+				return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
+			}
+
 			if err != nil {
 				errs = append(errs, fmt.Errorf(i18n.G("Failed to parse variable %s:%s: %w"), guid, varName, err))
 				continue

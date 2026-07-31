@@ -368,7 +368,7 @@ func (s *Store) Bytes() ([]byte, error) {
 				return nil, err
 			}
 
-			err = w.writeU32(dumpAttributes(v.Attributes))
+			err = w.writeU32(DumpAttributes(v.Attributes))
 			if err != nil {
 				return nil, err
 			}

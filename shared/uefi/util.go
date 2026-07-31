@@ -86,8 +86,8 @@ func ParseAttributes(rawAttributes uint32) []string {
 	return attributes
 }
 
-// dumpAttributes packs a list of UEFI variable attributes.
-func dumpAttributes(attributes []string) uint32 {
+// DumpAttributes packs a list of UEFI variable attributes.
+func DumpAttributes(attributes []string) uint32 {
 	var rawAttributes uint32
 
 	for _, attribute := range attributes {
