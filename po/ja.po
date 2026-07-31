@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-30 19:09-0400\n"
+"POT-Creation-Date: 2026-07-31 05:12-0400\n"
 "PO-Revision-Date: 2026-04-21 03:05+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -106,7 +106,7 @@ msgstr ""
 "### config:\n"
 "###   size: \"61203283968\""
 
-#: cmd/incus/low_level.go:488
+#: cmd/incus/low_level.go:489
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the UEFI variable.\n"
@@ -667,16 +667,16 @@ msgstr ""
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' はサポートされないタイプのファイルです"
 
-#: cmd/incus/low_level.go:773
+#: cmd/incus/low_level.go:774
 msgid "(binary data)"
 msgstr ""
 
-#: cmd/incus/low_level.go:778
+#: cmd/incus/low_level.go:779
 #, fuzzy, c-format
 msgid "(error: %w)"
 msgstr "エラー: %v"
 
-#: cmd/incus/low_level.go:765
+#: cmd/incus/low_level.go:766
 #, fuzzy
 msgid "(no timestamp)"
 msgstr "タイムスタンプ:"
@@ -714,7 +714,7 @@ msgstr "- ポート %d（%s）"
 msgid "--all cannot be used together with other arguments"
 msgstr "--target はインスタンスでは使えません"
 
-#: cmd/incus/low_level.go:916 cmd/incus/low_level.go:936
+#: cmd/incus/low_level.go:917 cmd/incus/low_level.go:937
 #, fuzzy, c-format
 msgid "--attributes cannot be used with --format=%s"
 msgstr "--no-profiles と --refresh は同時に指定できません"
@@ -791,7 +791,7 @@ msgstr "--target はクラスターでのみ使えます"
 msgid "--target cannot be used with instances"
 msgstr "--target はインスタンスでは使えません"
 
-#: cmd/incus/low_level.go:940
+#: cmd/incus/low_level.go:941
 #, fuzzy, c-format
 msgid "--timestamp cannot be used with --format=%s"
 msgstr "--no-profiles と --refresh は同時に指定できません"
@@ -843,7 +843,7 @@ msgstr "APP"
 msgid "ARCHITECTURE"
 msgstr "ARCHITECTURE"
 
-#: cmd/incus/low_level.go:713
+#: cmd/incus/low_level.go:714
 msgid "ATTRIBUTES"
 msgstr ""
 
@@ -1651,7 +1651,7 @@ msgstr "クラスタリングが有効になりました"
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
 #: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:695 cmd/incus/network.go:1054
+#: cmd/incus/low_level.go:696 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
@@ -1935,12 +1935,12 @@ msgstr "クラスターグループを作成します"
 msgid "Create a dirty bitmap on a storage volume"
 msgstr "新たにカスタムストレージボリュームを作成します"
 
-#: cmd/incus/low_level.go:95
+#: cmd/incus/low_level.go:96
 #, fuzzy
 msgid "Create a dirty bitmap on a virtual machine"
 msgstr "仮想マシンを作成します"
 
-#: cmd/incus/low_level.go:96
+#: cmd/incus/low_level.go:97
 msgid "Create a dirty bitmap on all the disks of a running virtual machine"
 msgstr ""
 
@@ -2073,7 +2073,7 @@ msgstr "プロジェクトを作成します"
 msgid "Create storage pools"
 msgstr "ストレージプールを作成します"
 
-#: cmd/incus/low_level.go:103 cmd/incus/storage_volume_bitmap.go:78
+#: cmd/incus/low_level.go:104 cmd/incus/storage_volume_bitmap.go:78
 #, fuzzy
 msgid "Create the bitmap in the disabled state"
 msgstr "新たにインスタンスのファイルテンプレートを作成します"
@@ -2630,7 +2630,7 @@ msgstr "ストレージボリューム内のファイルを編集します"
 msgid "Edit image properties"
 msgstr "イメージのプロパティを編集します"
 
-#: cmd/incus/low_level.go:470 cmd/incus/low_level.go:471
+#: cmd/incus/low_level.go:471 cmd/incus/low_level.go:472
 #, fuzzy
 msgid "Edit instance UEFI variables"
 msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
@@ -2730,7 +2730,7 @@ msgstr "信頼済みクライアント設定をYAMLで編集します"
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
 #: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:727 cmd/incus/network.go:1101
+#: cmd/incus/low_level.go:728 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
@@ -3007,7 +3007,7 @@ msgid ""
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
 
-#: cmd/incus/low_level.go:205
+#: cmd/incus/low_level.go:206
 msgid "Export a virtual machine's memory state"
 msgstr "仮想マシンのメモリ状態をエクスポートします"
 
@@ -3049,7 +3049,7 @@ msgstr "ストレージバケットをエクスポートします"
 msgid "Export storage buckets as tarball."
 msgstr "ストレージバケットを tarball 形式でエクスポートします。"
 
-#: cmd/incus/low_level.go:206
+#: cmd/incus/low_level.go:207
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3213,7 +3213,7 @@ msgstr "コマンドの実行に失敗しました: %w"
 msgid "Failed starting sshfs: %w"
 msgstr "sshfs の起動に失敗しました: %w"
 
-#: cmd/incus/low_level.go:325 cmd/incus/port_forward.go:128
+#: cmd/incus/low_level.go:326 cmd/incus/port_forward.go:128
 #: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:640
 #, c-format
 msgid "Failed to accept incoming connection: %w"
@@ -3284,7 +3284,7 @@ msgstr "エイリアス %s の作成に失敗しました: %w"
 msgid "Failed to create backup: %v"
 msgstr "バックアップの作成に失敗しました: %v"
 
-#: cmd/incus/low_level.go:135 cmd/incus/storage_volume_bitmap.go:121
+#: cmd/incus/low_level.go:136 cmd/incus/storage_volume_bitmap.go:121
 #, fuzzy, c-format
 msgid "Failed to create bitmap: %w"
 msgstr "バックアップの作成に失敗しました: %v"
@@ -3309,7 +3309,7 @@ msgstr "ダンプのリクエストに失敗しました: %w"
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "移動元のインスタンスをコピーしたあとの削除に失敗しました: %w"
 
-#: cmd/incus/low_level.go:238
+#: cmd/incus/low_level.go:239
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
@@ -3334,12 +3334,12 @@ msgstr "プロジェクトが見つけられませんでした: %w"
 msgid "Failed to get bitmap: %w"
 msgstr "ダンプのリクエストに失敗しました: %w"
 
-#: cmd/incus/low_level.go:632 cmd/incus/low_level.go:657
+#: cmd/incus/low_level.go:633 cmd/incus/low_level.go:658
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
 
-#: cmd/incus/low_level.go:797
+#: cmd/incus/low_level.go:798
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
@@ -3354,7 +3354,7 @@ msgstr "クラスターへの join に失敗しました: %w"
 msgid "Failed to list bitmaps: %w"
 msgstr "ダンプのリクエストに失敗しました: %w"
 
-#: cmd/incus/low_level.go:310 cmd/incus/port_forward.go:114
+#: cmd/incus/low_level.go:311 cmd/incus/port_forward.go:114
 #: cmd/incus/storage_volume.go:2657 cmd/incus/utils.go:625
 #, c-format
 msgid "Failed to listen for connection: %w"
@@ -3386,7 +3386,7 @@ msgstr "ダンプレスポンスの読み取りに失敗しました: %w"
 msgid "Failed to parse the preseed: %w"
 msgstr "事前に与える構成ファイルのパースに失敗しました: %w"
 
-#: cmd/incus/low_level.go:954
+#: cmd/incus/low_level.go:955
 #, fuzzy, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr "サーバーの読み取りに失敗しました: %w"
@@ -3422,7 +3422,7 @@ msgstr "エクスポートファイルのリネームに失敗しました: %w"
 msgid "Failed to render the config: %w"
 msgstr "設定のレンダリングに失敗しました: %w"
 
-#: cmd/incus/low_level.go:187
+#: cmd/incus/low_level.go:188
 #, fuzzy, c-format
 msgid "Failed to repair instance: %w"
 msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
@@ -3466,12 +3466,12 @@ msgstr "ネットワークのリストの取得に失敗しました: %w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "ストレージプールのリストの取得に失敗しました: %w"
 
-#: cmd/incus/low_level.go:563
+#: cmd/incus/low_level.go:564
 #, fuzzy, c-format
 msgid "Failed to set UEFI variable %s:%s: %s"
 msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
 
-#: cmd/incus/low_level.go:962
+#: cmd/incus/low_level.go:963
 #, fuzzy, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
 msgstr "インスタンスのメモリーのダンプに失敗しました: %w"
@@ -3625,7 +3625,7 @@ msgid ""
 msgstr ""
 "すでにアクティブなセッションがある場合でも、コンソールへの接続を強制します"
 
-#: cmd/incus/low_level.go:601 cmd/incus/low_level.go:862
+#: cmd/incus/low_level.go:602 cmd/incus/low_level.go:863
 msgid "Format (base64|binary|efivarfs|hex|json|yaml)"
 msgstr ""
 
@@ -3646,7 +3646,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:694 cmd/incus/network.go:1055
+#: cmd/incus/low_level.go:695 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
 #: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
@@ -3681,7 +3681,7 @@ msgstr "フォーマット (pem|pfx)"
 msgid "Format (table|compact)"
 msgstr "フォーマット (table|compact)"
 
-#: cmd/incus/low_level.go:216
+#: cmd/incus/low_level.go:217
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
@@ -3750,11 +3750,11 @@ msgstr "GPUs:"
 msgid "GRANULARITY"
 msgstr ""
 
-#: cmd/incus/low_level.go:684 cmd/incus/low_level.go:714
+#: cmd/incus/low_level.go:685 cmd/incus/low_level.go:715
 msgid "GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:715
+#: cmd/incus/low_level.go:716
 #, fuzzy
 msgid "GUID NAME"
 msgstr "NAME"
@@ -3892,7 +3892,7 @@ msgstr "ストレージボリュームのプロパティからキーに対する
 msgid "Get the key as an instance property"
 msgstr "key をインスタンスプロパティとして取得します"
 
-#: cmd/incus/low_level.go:597 cmd/incus/low_level.go:598
+#: cmd/incus/low_level.go:598 cmd/incus/low_level.go:599
 msgid "Get values for UEFI variables"
 msgstr ""
 
@@ -3995,7 +3995,7 @@ msgstr "指定したコピー先 %q がコピー元のボリュームの場所 %
 msgid "Global Flags:"
 msgstr ""
 
-#: cmd/incus/low_level.go:101 cmd/incus/storage_volume_bitmap.go:76
+#: cmd/incus/low_level.go:102 cmd/incus/storage_volume_bitmap.go:76
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
@@ -4066,7 +4066,7 @@ msgstr ""
 msgid "INSTANCE NAME"
 msgstr "インスタンス名"
 
-#: cmd/incus/low_level.go:719
+#: cmd/incus/low_level.go:720
 msgid "INTERPRETED VALUE"
 msgstr ""
 
@@ -4290,7 +4290,7 @@ msgstr "全てのコマンドを表示します (主なコマンドだけでは�
 msgid "Incus - Command line client"
 msgstr "LXD - コマンドラインクライアント"
 
-#: cmd/incus/low_level.go:536
+#: cmd/incus/low_level.go:537
 #, c-format
 msgid "Incus does not know how to dissect %s:%s"
 msgstr ""
@@ -4344,7 +4344,7 @@ msgstr "インスタンス名: %s"
 msgid "Instance type"
 msgstr "インスタンスタイプ"
 
-#: cmd/incus/low_level.go:803
+#: cmd/incus/low_level.go:804
 #, fuzzy, c-format
 msgid "Invalid GUID: %s"
 msgstr "不正なパス %s"
@@ -4426,7 +4426,7 @@ msgstr "不正なインスタンス名: %s"
 msgid "Invalid format %q"
 msgstr "不正なフォーマット %s"
 
-#: cmd/incus/low_level.go:652 cmd/incus/low_level.go:950
+#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:951
 #: cmd/incus/monitor.go:74
 #, c-format
 msgid "Invalid format: %s"
@@ -4646,7 +4646,7 @@ msgstr ""
 "    u - アップロード日\n"
 "    t - タイプ"
 
-#: cmd/incus/low_level.go:690 cmd/incus/low_level.go:691
+#: cmd/incus/low_level.go:691 cmd/incus/low_level.go:692
 msgid "List UEFI GUIDs and variables"
 msgstr ""
 
@@ -6356,7 +6356,7 @@ msgstr "イメージを public にする"
 msgid "Make the image public"
 msgstr "イメージを public にする"
 
-#: cmd/incus/low_level.go:391 cmd/incus/low_level.go:392
+#: cmd/incus/low_level.go:392 cmd/incus/low_level.go:393
 #, fuzzy
 msgid "Manage NVRAM on virtual machines"
 msgstr "仮想マシンを作成します"
@@ -6390,7 +6390,7 @@ msgstr "コマンドのエイリアスを管理します"
 msgid "Manage devices"
 msgstr "デバイスを管理します"
 
-#: cmd/incus/low_level.go:68 cmd/incus/low_level.go:69
+#: cmd/incus/low_level.go:69 cmd/incus/low_level.go:70
 #, fuzzy
 msgid "Manage dirty bitmaps on virtual machines"
 msgstr "仮想マシンを作成します"
@@ -6827,12 +6827,12 @@ msgstr "NAT"
 msgid "NBD access to a block storage volume"
 msgstr "カスタムストレージボリュームを削除します"
 
-#: cmd/incus/low_level.go:261
+#: cmd/incus/low_level.go:262
 #, fuzzy
 msgid "NBD access to all of a virtual machine's disks"
 msgstr "カスタムストレージボリュームを削除します"
 
-#: cmd/incus/low_level.go:262
+#: cmd/incus/low_level.go:263
 msgid ""
 "NBD access to all of a virtual machine's disks\n"
 "\n"
@@ -6841,22 +6841,22 @@ msgid ""
 "device name."
 msgstr ""
 
-#: cmd/incus/low_level.go:331 cmd/incus/storage_volume.go:2670
+#: cmd/incus/low_level.go:332 cmd/incus/storage_volume.go:2670
 #, fuzzy, c-format
 msgid "NBD client connected %q"
 msgstr "SSH クライアントが %q に接続されました"
 
-#: cmd/incus/low_level.go:332 cmd/incus/storage_volume.go:2671
+#: cmd/incus/low_level.go:333 cmd/incus/storage_volume.go:2671
 #, fuzzy, c-format
 msgid "NBD client disconnected %q"
 msgstr "SSH クライアントが切断されました %q"
 
-#: cmd/incus/low_level.go:348 cmd/incus/storage_volume.go:2676
+#: cmd/incus/low_level.go:349 cmd/incus/storage_volume.go:2676
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/low_level.go:313 cmd/incus/storage_volume.go:2660
+#: cmd/incus/low_level.go:314 cmd/incus/storage_volume.go:2660
 #, fuzzy, c-format
 msgid "NBD listening on %v"
 msgstr "SSH SFTP は %v でリッスンしています"
@@ -7488,7 +7488,7 @@ msgstr "終了するには ctrl+c を押してください"
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
 #: cmd/incus/config_trust.go:333 cmd/incus/image.go:488
-#: cmd/incus/low_level.go:564 cmd/incus/network.go:767
+#: cmd/incus/low_level.go:565 cmd/incus/network.go:767
 #: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
 #: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
 #: cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733
@@ -7715,7 +7715,7 @@ msgstr "query のパスは / で始める必要があります"
 msgid "Query virtual machine images"
 msgstr "仮想マシンイメージを対象にします"
 
-#: cmd/incus/low_level.go:717
+#: cmd/incus/low_level.go:718
 msgid "RAW VALUE"
 msgstr ""
 
@@ -8143,7 +8143,7 @@ msgstr "ローカルの API プロキシーを実行します"
 msgid "Run a local API proxy for the remote"
 msgstr "リモート接続用のローカルの API プロキシーを実行します"
 
-#: cmd/incus/low_level.go:151
+#: cmd/incus/low_level.go:152
 msgid ""
 "Run a low-level repair action on an instance.\n"
 "\n"
@@ -8153,7 +8153,7 @@ msgid ""
 "  rebuild-nvram            Rebuild the virtual machine's UEFI NVRAM"
 msgstr ""
 
-#: cmd/incus/low_level.go:150
+#: cmd/incus/low_level.go:151
 #, fuzzy
 msgid "Run a repair action on an instance"
 msgstr "すべてのインスタンスに対してコマンドを実行します"
@@ -8768,20 +8768,20 @@ msgstr "新しいストレージボリュームをプロファイルに追加し
 msgid "Set the key as an instance property"
 msgstr "インスタンスプロパティとして設定します"
 
-#: cmd/incus/low_level.go:861
+#: cmd/incus/low_level.go:862
 msgid "Set the variable attributes (requires `--format=base64|binary|hex`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:863
+#: cmd/incus/low_level.go:864
 msgid ""
 "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:857
+#: cmd/incus/low_level.go:858
 msgid "Set values for UEFI variables"
 msgstr ""
 
-#: cmd/incus/low_level.go:858
+#: cmd/incus/low_level.go:859
 msgid "Set values for UEFI variables."
 msgstr ""
 
@@ -9112,7 +9112,7 @@ msgstr ""
 msgid "Source:"
 msgstr "取得元:"
 
-#: cmd/incus/low_level.go:270 cmd/incus/storage_volume.go:2609
+#: cmd/incus/low_level.go:271 cmd/incus/storage_volume.go:2609
 msgid "Specific address to listen on"
 msgstr ""
 
@@ -9265,7 +9265,7 @@ msgstr "ストレージボリュームの移動が成功しました!"
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "ストレージボリューム %s を削除しました"
 
-#: cmd/incus/low_level.go:102 cmd/incus/storage_volume_bitmap.go:77
+#: cmd/incus/low_level.go:103 cmd/incus/storage_volume_bitmap.go:77
 #, fuzzy
 msgid "Store the bitmap on disk"
 msgstr "インスタンスの状態を保存します"
@@ -9326,7 +9326,7 @@ msgstr "TAKEN AT"
 msgid "TARGET"
 msgstr "TARGET"
 
-#: cmd/incus/low_level.go:718
+#: cmd/incus/low_level.go:719
 msgid "TIMESTAMP"
 msgstr ""
 
@@ -9863,7 +9863,7 @@ msgstr "ピアのタイプ（localまたはremote）"
 msgid "Type: %s"
 msgstr "タイプ: %s"
 
-#: cmd/incus/low_level.go:1017
+#: cmd/incus/low_level.go:1018
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr ""
@@ -9931,7 +9931,7 @@ msgstr "テンポラリファイルを作成できません: %v"
 msgid "Unavailable remote server"
 msgstr "リモートサーバーが利用できません"
 
-#: cmd/incus/low_level.go:920
+#: cmd/incus/low_level.go:921
 #, fuzzy
 msgid "Unexpected input size"
 msgstr "リンクを検出: %v"
@@ -9950,7 +9950,7 @@ msgstr "クライアント %q の未知のチャンネルタイプ: %s"
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:733 cmd/incus/network.go:1107
+#: cmd/incus/low_level.go:734 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
@@ -9990,7 +9990,7 @@ msgstr "未知の設定: %s"
 msgid "Unknown output type %q"
 msgstr "未知の出力タイプ: %q"
 
-#: cmd/incus/low_level.go:979 cmd/incus/low_level.go:980
+#: cmd/incus/low_level.go:980 cmd/incus/low_level.go:981
 msgid "Unset UEFI variables"
 msgstr ""
 
@@ -10308,7 +10308,7 @@ msgstr "ユーザが削除操作を中断しました"
 msgid "User aborted delete operation"
 msgstr "ユーザが削除操作を中断しました"
 
-#: cmd/incus/low_level.go:716
+#: cmd/incus/low_level.go:717
 #, fuzzy
 msgid "VARIABLE NAME"
 msgstr "FILENAME"
@@ -10633,7 +10633,7 @@ msgstr "コピー元のインスタンス名を指定してください"
 msgid "Zone description"
 msgstr "説明"
 
-#: cmd/incus/low_level.go:145
+#: cmd/incus/low_level.go:146
 #, fuzzy
 msgid "action"
 msgstr "説明"
@@ -10666,7 +10666,7 @@ msgstr ""
 msgid "backup file"
 msgstr ""
 
-#: cmd/incus/low_level.go:90 cmd/incus/storage_volume_bitmap.go:66
+#: cmd/incus/low_level.go:91 cmd/incus/storage_volume_bitmap.go:66
 #: cmd/incus/storage_volume_bitmap.go:135
 #: cmd/incus/storage_volume_bitmap.go:357
 msgid "bitmap"
@@ -11139,7 +11139,7 @@ msgstr ""
 "lxc list -c ns,user.comment:comment\n"
 "  実行状態とユーザコメントとともにインスタンスを一覧表示します。"
 
-#: cmd/incus/low_level.go:210
+#: cmd/incus/low_level.go:211
 #, fuzzy
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"

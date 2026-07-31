@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-07-30 19:09-0400\n"
+        "POT-Creation-Date: 2026-07-31 05:12-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -69,7 +69,7 @@ msgid   "### This is a YAML representation of a storage volume.\n"
         "###   size: \"61203283968\""
 msgstr  ""
 
-#: cmd/incus/low_level.go:488
+#: cmd/incus/low_level.go:489
 msgid   "### This is a YAML representation of the UEFI variable.\n"
         "### Any line starting with a '# will be ignored."
 msgstr  ""
@@ -394,16 +394,16 @@ msgstr  ""
 msgid   "'%s' isn't a supported file type"
 msgstr  ""
 
-#: cmd/incus/low_level.go:773
+#: cmd/incus/low_level.go:774
 msgid   "(binary data)"
 msgstr  ""
 
-#: cmd/incus/low_level.go:778
+#: cmd/incus/low_level.go:779
 #, c-format
 msgid   "(error: %w)"
 msgstr  ""
 
-#: cmd/incus/low_level.go:765
+#: cmd/incus/low_level.go:766
 msgid   "(no timestamp)"
 msgstr  ""
 
@@ -439,7 +439,7 @@ msgstr  ""
 msgid   "--all cannot be used together with other arguments"
 msgstr  ""
 
-#: cmd/incus/low_level.go:916 cmd/incus/low_level.go:936
+#: cmd/incus/low_level.go:917 cmd/incus/low_level.go:937
 #, c-format
 msgid   "--attributes cannot be used with --format=%s"
 msgstr  ""
@@ -512,7 +512,7 @@ msgstr  ""
 msgid   "--target cannot be used with instances"
 msgstr  ""
 
-#: cmd/incus/low_level.go:940
+#: cmd/incus/low_level.go:941
 #, c-format
 msgid   "--timestamp cannot be used with --format=%s"
 msgstr  ""
@@ -562,7 +562,7 @@ msgstr  ""
 msgid   "ARCHITECTURE"
 msgstr  ""
 
-#: cmd/incus/low_level.go:713
+#: cmd/incus/low_level.go:714
 msgid   "ATTRIBUTES"
 msgstr  ""
 
@@ -1268,7 +1268,7 @@ msgstr  ""
 msgid   "Clustering enabled"
 msgstr  ""
 
-#: cmd/incus/cluster.go:172 cmd/incus/cluster.go:1130 cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402 cmd/incus/config_trust.go:589 cmd/incus/image.go:1077 cmd/incus/image_alias.go:211 cmd/incus/list.go:154 cmd/incus/low_level.go:695 cmd/incus/network.go:1054 cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75 cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417 cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118 cmd/incus/network_zone.go:123 cmd/incus/operation.go:152 cmd/incus/profile.go:704 cmd/incus/project.go:522 cmd/incus/remote.go:1041 cmd/incus/snapshot.go:344 cmd/incus/storage.go:666 cmd/incus/storage_bucket.go:467 cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1496 cmd/incus/storage_volume_bitmap.go:232 cmd/incus/storage_volume_snapshot.go:327 cmd/incus/top.go:68 cmd/incus/warning.go:98
+#: cmd/incus/cluster.go:172 cmd/incus/cluster.go:1130 cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402 cmd/incus/config_trust.go:589 cmd/incus/image.go:1077 cmd/incus/image_alias.go:211 cmd/incus/list.go:154 cmd/incus/low_level.go:696 cmd/incus/network.go:1054 cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75 cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417 cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118 cmd/incus/network_zone.go:123 cmd/incus/operation.go:152 cmd/incus/profile.go:704 cmd/incus/project.go:522 cmd/incus/remote.go:1041 cmd/incus/snapshot.go:344 cmd/incus/storage.go:666 cmd/incus/storage_bucket.go:467 cmd/incus/storage_bucket.go:863 cmd/incus/storage_volume.go:1496 cmd/incus/storage_volume_bitmap.go:232 cmd/incus/storage_volume_snapshot.go:327 cmd/incus/top.go:68 cmd/incus/warning.go:98
 msgid   "Columns"
 msgstr  ""
 
@@ -1495,11 +1495,11 @@ msgstr  ""
 msgid   "Create a dirty bitmap on a storage volume"
 msgstr  ""
 
-#: cmd/incus/low_level.go:95
+#: cmd/incus/low_level.go:96
 msgid   "Create a dirty bitmap on a virtual machine"
 msgstr  ""
 
-#: cmd/incus/low_level.go:96
+#: cmd/incus/low_level.go:97
 msgid   "Create a dirty bitmap on all the disks of a running virtual machine"
 msgstr  ""
 
@@ -1624,7 +1624,7 @@ msgstr  ""
 msgid   "Create storage pools"
 msgstr  ""
 
-#: cmd/incus/low_level.go:103 cmd/incus/storage_volume_bitmap.go:78
+#: cmd/incus/low_level.go:104 cmd/incus/storage_volume_bitmap.go:78
 msgid   "Create the bitmap in the disabled state"
 msgstr  ""
 
@@ -2125,7 +2125,7 @@ msgstr  ""
 msgid   "Edit image properties"
 msgstr  ""
 
-#: cmd/incus/low_level.go:470 cmd/incus/low_level.go:471
+#: cmd/incus/low_level.go:471 cmd/incus/low_level.go:472
 msgid   "Edit instance UEFI variables"
 msgstr  ""
 
@@ -2212,7 +2212,7 @@ msgstr  ""
 msgid   "Edit trust configurations as YAML"
 msgstr  ""
 
-#: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1159 cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432 cmd/incus/config_trust.go:614 cmd/incus/image.go:1124 cmd/incus/image_alias.go:260 cmd/incus/list.go:598 cmd/incus/low_level.go:727 cmd/incus/network.go:1101 cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101 cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443 cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151 cmd/incus/network_zone.go:159 cmd/incus/operation.go:184 cmd/incus/profile.go:748 cmd/incus/project.go:563 cmd/incus/remote.go:1068 cmd/incus/snapshot.go:378 cmd/incus/storage.go:704 cmd/incus/storage_bucket.go:501 cmd/incus/storage_bucket.go:888 cmd/incus/storage_volume.go:1655 cmd/incus/storage_volume_bitmap.go:286 cmd/incus/storage_volume_snapshot.go:431 cmd/incus/top.go:96 cmd/incus/warning.go:236
+#: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1159 cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432 cmd/incus/config_trust.go:614 cmd/incus/image.go:1124 cmd/incus/image_alias.go:260 cmd/incus/list.go:598 cmd/incus/low_level.go:728 cmd/incus/network.go:1101 cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101 cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443 cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151 cmd/incus/network_zone.go:159 cmd/incus/operation.go:184 cmd/incus/profile.go:748 cmd/incus/project.go:563 cmd/incus/remote.go:1068 cmd/incus/snapshot.go:378 cmd/incus/storage.go:704 cmd/incus/storage_bucket.go:501 cmd/incus/storage_bucket.go:888 cmd/incus/storage_volume.go:1655 cmd/incus/storage_volume_bitmap.go:286 cmd/incus/storage_volume_snapshot.go:431 cmd/incus/top.go:96 cmd/incus/warning.go:236
 #, c-format
 msgid   "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr  ""
@@ -2401,7 +2401,7 @@ msgstr  ""
 msgid   "Expiry for the new snapshot (either a time span like `1d 3H` or a date in `2006/01/02 15:04 MST` format)"
 msgstr  ""
 
-#: cmd/incus/low_level.go:205
+#: cmd/incus/low_level.go:206
 msgid   "Export a virtual machine's memory state"
 msgstr  ""
 
@@ -2439,7 +2439,7 @@ msgstr  ""
 msgid   "Export storage buckets as tarball."
 msgstr  ""
 
-#: cmd/incus/low_level.go:206
+#: cmd/incus/low_level.go:207
 msgid   "Export the current memory state of a running virtual machine into a dump file.\n"
         "		This can be useful for debugging or analysis purposes."
 msgstr  ""
@@ -2593,7 +2593,7 @@ msgstr  ""
 msgid   "Failed starting sshfs: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:325 cmd/incus/port_forward.go:128 cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:640
+#: cmd/incus/low_level.go:326 cmd/incus/port_forward.go:128 cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:640
 #, c-format
 msgid   "Failed to accept incoming connection: %w"
 msgstr  ""
@@ -2662,7 +2662,7 @@ msgstr  ""
 msgid   "Failed to create backup: %v"
 msgstr  ""
 
-#: cmd/incus/low_level.go:135 cmd/incus/storage_volume_bitmap.go:121
+#: cmd/incus/low_level.go:136 cmd/incus/storage_volume_bitmap.go:121
 #, c-format
 msgid   "Failed to create bitmap: %w"
 msgstr  ""
@@ -2687,7 +2687,7 @@ msgstr  ""
 msgid   "Failed to delete original instance after copying it: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:238
+#: cmd/incus/low_level.go:239
 #, c-format
 msgid   "Failed to dump instance memory: %w"
 msgstr  ""
@@ -2712,12 +2712,12 @@ msgstr  ""
 msgid   "Failed to get bitmap: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:632 cmd/incus/low_level.go:657
+#: cmd/incus/low_level.go:633 cmd/incus/low_level.go:658
 #, c-format
 msgid   "Failed to get instance UEFI variable: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:797
+#: cmd/incus/low_level.go:798
 #, c-format
 msgid   "Failed to get instance UEFI variables: %w"
 msgstr  ""
@@ -2732,7 +2732,7 @@ msgstr  ""
 msgid   "Failed to list bitmaps: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:310 cmd/incus/port_forward.go:114 cmd/incus/storage_volume.go:2657 cmd/incus/utils.go:625
+#: cmd/incus/low_level.go:311 cmd/incus/port_forward.go:114 cmd/incus/storage_volume.go:2657 cmd/incus/utils.go:625
 #, c-format
 msgid   "Failed to listen for connection: %w"
 msgstr  ""
@@ -2762,7 +2762,7 @@ msgstr  ""
 msgid   "Failed to parse the preseed: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:954
+#: cmd/incus/low_level.go:955
 #, c-format
 msgid   "Failed to parse variable %s:%s: %w"
 msgstr  ""
@@ -2797,7 +2797,7 @@ msgstr  ""
 msgid   "Failed to render the config: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:187
+#: cmd/incus/low_level.go:188
 #, c-format
 msgid   "Failed to repair instance: %w"
 msgstr  ""
@@ -2837,12 +2837,12 @@ msgstr  ""
 msgid   "Failed to retrieve list of storage pools: %w"
 msgstr  ""
 
-#: cmd/incus/low_level.go:563
+#: cmd/incus/low_level.go:564
 #, c-format
 msgid   "Failed to set UEFI variable %s:%s: %s"
 msgstr  ""
 
-#: cmd/incus/low_level.go:962
+#: cmd/incus/low_level.go:963
 #, c-format
 msgid   "Failed to set UEFI variable %s:%s: %w"
 msgstr  ""
@@ -2970,7 +2970,7 @@ msgstr  ""
 msgid   "Forces a connection to the console, even if there is already an active session"
 msgstr  ""
 
-#: cmd/incus/low_level.go:601 cmd/incus/low_level.go:862
+#: cmd/incus/low_level.go:602 cmd/incus/low_level.go:863
 msgid   "Format (base64|binary|efivarfs|hex|json|yaml)"
 msgstr  ""
 
@@ -2982,7 +2982,7 @@ msgstr  ""
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr  ""
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173 cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272 cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588 cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155 cmd/incus/low_level.go:694 cmd/incus/network.go:1055 cmd/incus/network.go:1252 cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121 cmd/incus/network_zone.go:822 cmd/incus/operation.go:150 cmd/incus/profile.go:705 cmd/incus/project.go:523 cmd/incus/project.go:1000 cmd/incus/remote.go:1040 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667 cmd/incus/storage_bucket.go:465 cmd/incus/storage_bucket.go:861 cmd/incus/storage_volume.go:1524 cmd/incus/storage_volume_bitmap.go:233 cmd/incus/storage_volume_snapshot.go:341 cmd/incus/warning.go:99
+#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173 cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272 cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588 cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155 cmd/incus/low_level.go:695 cmd/incus/network.go:1055 cmd/incus/network.go:1252 cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121 cmd/incus/network_zone.go:822 cmd/incus/operation.go:150 cmd/incus/profile.go:705 cmd/incus/project.go:523 cmd/incus/project.go:1000 cmd/incus/remote.go:1040 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667 cmd/incus/storage_bucket.go:465 cmd/incus/storage_bucket.go:861 cmd/incus/storage_volume.go:1524 cmd/incus/storage_volume_bitmap.go:233 cmd/incus/storage_volume_snapshot.go:341 cmd/incus/warning.go:99
 msgid   "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr  ""
 
@@ -3002,7 +3002,7 @@ msgstr  ""
 msgid   "Format (table|compact)"
 msgstr  ""
 
-#: cmd/incus/low_level.go:216
+#: cmd/incus/low_level.go:217
 msgid   "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr  ""
 
@@ -3066,11 +3066,11 @@ msgstr  ""
 msgid   "GRANULARITY"
 msgstr  ""
 
-#: cmd/incus/low_level.go:684 cmd/incus/low_level.go:714
+#: cmd/incus/low_level.go:685 cmd/incus/low_level.go:715
 msgid   "GUID"
 msgstr  ""
 
-#: cmd/incus/low_level.go:715
+#: cmd/incus/low_level.go:716
 msgid   "GUID NAME"
 msgstr  ""
 
@@ -3197,7 +3197,7 @@ msgstr  ""
 msgid   "Get the key as an instance property"
 msgstr  ""
 
-#: cmd/incus/low_level.go:597 cmd/incus/low_level.go:598
+#: cmd/incus/low_level.go:598 cmd/incus/low_level.go:599
 msgid   "Get values for UEFI variables"
 msgstr  ""
 
@@ -3291,7 +3291,7 @@ msgstr  ""
 msgid   "Global Flags:"
 msgstr  ""
 
-#: cmd/incus/low_level.go:101 cmd/incus/storage_volume_bitmap.go:76
+#: cmd/incus/low_level.go:102 cmd/incus/storage_volume_bitmap.go:76
 msgid   "Granularity of the dirty bitmap in bytes"
 msgstr  ""
 
@@ -3361,7 +3361,7 @@ msgstr  ""
 msgid   "INSTANCE NAME"
 msgstr  ""
 
-#: cmd/incus/low_level.go:719
+#: cmd/incus/low_level.go:720
 msgid   "INTERPRETED VALUE"
 msgstr  ""
 
@@ -3557,7 +3557,7 @@ msgstr  ""
 msgid   "Incus - Command line client"
 msgstr  ""
 
-#: cmd/incus/low_level.go:536
+#: cmd/incus/low_level.go:537
 #, c-format
 msgid   "Incus does not know how to dissect %s:%s"
 msgstr  ""
@@ -3610,7 +3610,7 @@ msgstr  ""
 msgid   "Instance type"
 msgstr  ""
 
-#: cmd/incus/low_level.go:803
+#: cmd/incus/low_level.go:804
 #, c-format
 msgid   "Invalid GUID: %s"
 msgstr  ""
@@ -3688,7 +3688,7 @@ msgstr  ""
 msgid   "Invalid format %q"
 msgstr  ""
 
-#: cmd/incus/low_level.go:652 cmd/incus/low_level.go:950 cmd/incus/monitor.go:74
+#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:951 cmd/incus/monitor.go:74
 #, c-format
 msgid   "Invalid format: %s"
 msgstr  ""
@@ -3868,7 +3868,7 @@ msgid   "List DHCP leases\n"
         "  L - Location of the DHCP Lease (e.g. its cluster member)"
 msgstr  ""
 
-#: cmd/incus/low_level.go:690 cmd/incus/low_level.go:691
+#: cmd/incus/low_level.go:691 cmd/incus/low_level.go:692
 msgid   "List UEFI GUIDs and variables"
 msgstr  ""
 
@@ -4825,7 +4825,7 @@ msgstr  ""
 msgid   "Make the image public"
 msgstr  ""
 
-#: cmd/incus/low_level.go:391 cmd/incus/low_level.go:392
+#: cmd/incus/low_level.go:392 cmd/incus/low_level.go:393
 msgid   "Manage NVRAM on virtual machines"
 msgstr  ""
 
@@ -4857,7 +4857,7 @@ msgstr  ""
 msgid   "Manage devices"
 msgstr  ""
 
-#: cmd/incus/low_level.go:68 cmd/incus/low_level.go:69
+#: cmd/incus/low_level.go:69 cmd/incus/low_level.go:70
 msgid   "Manage dirty bitmaps on virtual machines"
 msgstr  ""
 
@@ -5215,11 +5215,11 @@ msgstr  ""
 msgid   "NBD access to a block storage volume"
 msgstr  ""
 
-#: cmd/incus/low_level.go:261
+#: cmd/incus/low_level.go:262
 msgid   "NBD access to all of a virtual machine's disks"
 msgstr  ""
 
-#: cmd/incus/low_level.go:262
+#: cmd/incus/low_level.go:263
 msgid   "NBD access to all of a virtual machine's disks\n"
         "\n"
         "This exposes all the disks of a running virtual machine over a local NBD\n"
@@ -5227,22 +5227,22 @@ msgid   "NBD access to all of a virtual machine's disks\n"
         "device name."
 msgstr  ""
 
-#: cmd/incus/low_level.go:331 cmd/incus/storage_volume.go:2670
+#: cmd/incus/low_level.go:332 cmd/incus/storage_volume.go:2670
 #, c-format
 msgid   "NBD client connected %q"
 msgstr  ""
 
-#: cmd/incus/low_level.go:332 cmd/incus/storage_volume.go:2671
+#: cmd/incus/low_level.go:333 cmd/incus/storage_volume.go:2671
 #, c-format
 msgid   "NBD client disconnected %q"
 msgstr  ""
 
-#: cmd/incus/low_level.go:348 cmd/incus/storage_volume.go:2676
+#: cmd/incus/low_level.go:349 cmd/incus/storage_volume.go:2676
 #, c-format
 msgid   "NBD connection failed: %v"
 msgstr  ""
 
-#: cmd/incus/low_level.go:313 cmd/incus/storage_volume.go:2660
+#: cmd/incus/low_level.go:314 cmd/incus/storage_volume.go:2660
 #, c-format
 msgid   "NBD listening on %v"
 msgstr  ""
@@ -5820,7 +5820,7 @@ msgstr  ""
 msgid   "Press ctrl+c to finish"
 msgstr  ""
 
-#: cmd/incus/cluster.go:942 cmd/incus/cluster_group.go:377 cmd/incus/config.go:270 cmd/incus/config.go:345 cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234 cmd/incus/config_trust.go:333 cmd/incus/image.go:488 cmd/incus/low_level.go:564 cmd/incus/network.go:767 cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526 cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298 cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733 cmd/incus/network_zone.go:675 cmd/incus/network_zone.go:1344 cmd/incus/profile.go:575 cmd/incus/project.go:398 cmd/incus/storage.go:358 cmd/incus/storage_bucket.go:336 cmd/incus/storage_bucket.go:1210 cmd/incus/storage_volume.go:1086 cmd/incus/storage_volume.go:1118
+#: cmd/incus/cluster.go:942 cmd/incus/cluster_group.go:377 cmd/incus/config.go:270 cmd/incus/config.go:345 cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234 cmd/incus/config_trust.go:333 cmd/incus/image.go:488 cmd/incus/low_level.go:565 cmd/incus/network.go:767 cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526 cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298 cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733 cmd/incus/network_zone.go:675 cmd/incus/network_zone.go:1344 cmd/incus/profile.go:575 cmd/incus/project.go:398 cmd/incus/storage.go:358 cmd/incus/storage_bucket.go:336 cmd/incus/storage_bucket.go:1210 cmd/incus/storage_volume.go:1086 cmd/incus/storage_volume.go:1118
 msgid   "Press enter to open the editor again or ctrl+c to abort change"
 msgstr  ""
 
@@ -6030,7 +6030,7 @@ msgstr  ""
 msgid   "Query virtual machine images"
 msgstr  ""
 
-#: cmd/incus/low_level.go:717
+#: cmd/incus/low_level.go:718
 msgid   "RAW VALUE"
 msgstr  ""
 
@@ -6409,7 +6409,7 @@ msgstr  ""
 msgid   "Run a local API proxy for the remote"
 msgstr  ""
 
-#: cmd/incus/low_level.go:151
+#: cmd/incus/low_level.go:152
 msgid   "Run a low-level repair action on an instance.\n"
         "\n"
         "Supported actions:\n"
@@ -6417,7 +6417,7 @@ msgid   "Run a low-level repair action on an instance.\n"
         "  rebuild-nvram            Rebuild the virtual machine's UEFI NVRAM"
 msgstr  ""
 
-#: cmd/incus/low_level.go:150
+#: cmd/incus/low_level.go:151
 msgid   "Run a repair action on an instance"
 msgstr  ""
 
@@ -6887,19 +6887,19 @@ msgstr  ""
 msgid   "Set the key as an instance property"
 msgstr  ""
 
-#: cmd/incus/low_level.go:861
+#: cmd/incus/low_level.go:862
 msgid   "Set the variable attributes (requires `--format=base64|binary|hex`)"
 msgstr  ""
 
-#: cmd/incus/low_level.go:863
+#: cmd/incus/low_level.go:864
 msgid   "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr  ""
 
-#: cmd/incus/low_level.go:857
+#: cmd/incus/low_level.go:858
 msgid   "Set values for UEFI variables"
 msgstr  ""
 
-#: cmd/incus/low_level.go:858
+#: cmd/incus/low_level.go:859
 msgid   "Set values for UEFI variables."
 msgstr  ""
 
@@ -7196,7 +7196,7 @@ msgstr  ""
 msgid   "Source:"
 msgstr  ""
 
-#: cmd/incus/low_level.go:270 cmd/incus/storage_volume.go:2609
+#: cmd/incus/low_level.go:271 cmd/incus/storage_volume.go:2609
 msgid   "Specific address to listen on"
 msgstr  ""
 
@@ -7346,7 +7346,7 @@ msgstr  ""
 msgid   "Storage volume snapshot %s deleted from %s"
 msgstr  ""
 
-#: cmd/incus/low_level.go:102 cmd/incus/storage_volume_bitmap.go:77
+#: cmd/incus/low_level.go:103 cmd/incus/storage_volume_bitmap.go:77
 msgid   "Store the bitmap on disk"
 msgstr  ""
 
@@ -7404,7 +7404,7 @@ msgstr  ""
 msgid   "TARGET"
 msgstr  ""
 
-#: cmd/incus/low_level.go:718
+#: cmd/incus/low_level.go:719
 msgid   "TIMESTAMP"
 msgstr  ""
 
@@ -7832,7 +7832,7 @@ msgstr  ""
 msgid   "Type: %s"
 msgstr  ""
 
-#: cmd/incus/low_level.go:1017
+#: cmd/incus/low_level.go:1018
 #, c-format
 msgid   "UEFI variable %s:%s deleted on %s"
 msgstr  ""
@@ -7891,7 +7891,7 @@ msgstr  ""
 msgid   "Unavailable remote server"
 msgstr  ""
 
-#: cmd/incus/low_level.go:920
+#: cmd/incus/low_level.go:921
 msgid   "Unexpected input size"
 msgstr  ""
 
@@ -7905,7 +7905,7 @@ msgstr  ""
 msgid   "Unknown channel type for client %q: %s"
 msgstr  ""
 
-#: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1165 cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438 cmd/incus/config_trust.go:620 cmd/incus/image.go:1130 cmd/incus/image_alias.go:266 cmd/incus/list.go:616 cmd/incus/low_level.go:733 cmd/incus/network.go:1107 cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107 cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449 cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157 cmd/incus/network_zone.go:165 cmd/incus/operation.go:190 cmd/incus/profile.go:754 cmd/incus/project.go:569 cmd/incus/remote.go:1074 cmd/incus/snapshot.go:384 cmd/incus/storage.go:710 cmd/incus/storage_bucket.go:507 cmd/incus/storage_bucket.go:894 cmd/incus/storage_volume.go:1661 cmd/incus/storage_volume_bitmap.go:292 cmd/incus/storage_volume_snapshot.go:437 cmd/incus/top.go:102 cmd/incus/warning.go:242
+#: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1165 cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438 cmd/incus/config_trust.go:620 cmd/incus/image.go:1130 cmd/incus/image_alias.go:266 cmd/incus/list.go:616 cmd/incus/low_level.go:734 cmd/incus/network.go:1107 cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107 cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449 cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157 cmd/incus/network_zone.go:165 cmd/incus/operation.go:190 cmd/incus/profile.go:754 cmd/incus/project.go:569 cmd/incus/remote.go:1074 cmd/incus/snapshot.go:384 cmd/incus/storage.go:710 cmd/incus/storage_bucket.go:507 cmd/incus/storage_bucket.go:894 cmd/incus/storage_volume.go:1661 cmd/incus/storage_volume_bitmap.go:292 cmd/incus/storage_volume_snapshot.go:437 cmd/incus/top.go:102 cmd/incus/warning.go:242
 #, c-format
 msgid   "Unknown column shorthand char '%c' in '%s'"
 msgstr  ""
@@ -7935,7 +7935,7 @@ msgstr  ""
 msgid   "Unknown output type %q"
 msgstr  ""
 
-#: cmd/incus/low_level.go:979 cmd/incus/low_level.go:980
+#: cmd/incus/low_level.go:980 cmd/incus/low_level.go:981
 msgid   "Unset UEFI variables"
 msgstr  ""
 
@@ -8203,7 +8203,7 @@ msgstr  ""
 msgid   "User aborted delete operation"
 msgstr  ""
 
-#: cmd/incus/low_level.go:716
+#: cmd/incus/low_level.go:717
 msgid   "VARIABLE NAME"
 msgstr  ""
 
@@ -8468,7 +8468,7 @@ msgstr  ""
 msgid   "Zone description"
 msgstr  ""
 
-#: cmd/incus/low_level.go:145
+#: cmd/incus/low_level.go:146
 msgid   "action"
 msgstr  ""
 
@@ -8496,7 +8496,7 @@ msgstr  ""
 msgid   "backup file"
 msgstr  ""
 
-#: cmd/incus/low_level.go:90 cmd/incus/storage_volume_bitmap.go:66 cmd/incus/storage_volume_bitmap.go:135 cmd/incus/storage_volume_bitmap.go:357
+#: cmd/incus/low_level.go:91 cmd/incus/storage_volume_bitmap.go:66 cmd/incus/storage_volume_bitmap.go:135 cmd/incus/storage_volume_bitmap.go:357
 msgid   "bitmap"
 msgstr  ""
 
@@ -8802,7 +8802,7 @@ msgid   "incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:et
         "  List instances with their running state and user comment."
 msgstr  ""
 
-#: cmd/incus/low_level.go:210
+#: cmd/incus/low_level.go:211
 msgid   "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
         "    Creates an ELF format memory dump of the vm1 instance."
 msgstr  ""
