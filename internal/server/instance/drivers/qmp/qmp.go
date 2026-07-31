@@ -301,7 +301,7 @@ var commandTimeouts = map[string]time.Duration{
 	"object-add":                heavyCommandTimeout,
 	"stop":                      heavyCommandTimeout,
 	"system_reset":              heavyCommandTimeout,
-	"query-migrate":             5 * time.Second,
+	"query-migrate":             heavyCommandTimeout,
 	"screendump":                10 * time.Second,
 }
 
