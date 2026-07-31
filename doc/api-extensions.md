@@ -3352,3 +3352,17 @@ when set to `true` prevents the instance from being started.
 ## `instance_nvram_bulk_update`
 
 This adds a new `PATCH /1.0/instances/{name}/nvram` endpoint to update NVRAM in bulk.
+
+## `instance_refresh_migration`
+
+Adds support for refresh migration, where a running container is moved to another
+cluster member through a series of incremental transfers, only being stopped for
+the last one.
+
+This adds a `refresh` field to `POST /1.0/instances/{name}`. When set to `true` on
+a stateless migration (`migration` set to `true` and `live` set to `false`), a
+running container is migrated this way.
+
+It also adds `refresh-migrate` as a configuration option to `cluster.evacuate`
+and as an evacuation mode, which forces refresh migration of instances during
+cluster evacuation.

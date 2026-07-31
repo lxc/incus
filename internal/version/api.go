@@ -564,6 +564,7 @@ var APIExtensions = []string{
 	"acme_eab",
 	"instance_protection_start",
 	"instance_nvram_bulk_update",
+	"instance_refresh_migration",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
