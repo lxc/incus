@@ -85,6 +85,12 @@ type InstancePost struct {
 	// Example: false
 	Live bool `json:"live" yaml:"live"`
 
+	// Whether to transfer a running instance incrementally
+	// Example: false
+	//
+	// API extension: instance_refresh_migration
+	Refresh bool `json:"refresh" yaml:"refresh"`
+
 	// Whether snapshots should be discarded (migration only)
 	// Example: false
 	InstanceOnly bool `json:"instance_only" yaml:"instance_only"`
