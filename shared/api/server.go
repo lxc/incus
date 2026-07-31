@@ -1,6 +1,7 @@
 package api
 
 import (
+	"slices"
 	"strings"
 
 	"go.yaml.in/yaml/v4"
@@ -228,10 +229,15 @@ func (srv *Server) Writable() ServerPut {
 
 // isConfigKeySensitive is used to check if a given configuration key is likely to be sensitive and should be censored.
 func isConfigKeySensitive(key string) bool {
+	// Sensitive keys that aren't covered by the suffix check.
+	if slices.Contains([]string{"acme.eab.kid", "acme.provider.environment", "oidc.client.id"}, key) {
+		return true
+	}
+
 	fields := strings.Split(key, ".")
 	segment := fields[len(fields)-1]
 
-	for _, suffix := range []string{"key", "cert", "password", "secret", "token"} {
+	for _, suffix := range []string{"key", "cert", "hmac", "password", "secret", "token"} {
 		if strings.HasSuffix(segment, suffix) {
 			return true
 		}
