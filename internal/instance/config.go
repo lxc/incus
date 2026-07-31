@@ -180,6 +180,9 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//       enabled and for which all its devices can be migrated as well.
 	//   - `live-migrate`: Instances are live-migrated to another server. This means the instance remains running
 	//      and operational during the migration process, ensuring minimal disruption.
+	//   - `refresh-migrate`: Instances are migrated to another server through a series of incremental
+	//      transfers, keeping the instance running until the last one. This isn't a live migration, but the
+	//      downtime is limited to the final transfer. Only supported for containers.
 	//   - `migrate`: In this mode, instances are migrated to another server in the cluster. The migration
 	//      process will not be live, meaning there will be a brief downtime for the instance during the
 	//      migration.
@@ -194,7 +197,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  defaultdesc: `auto`
 	//  liveupdate: no
 	//  shortdesc: What to do when evacuating the instance
-	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "stop", "stateful-stop", "force-stop")),
+	"cluster.evacuate": validate.Optional(validate.IsOneOf("auto", "migrate", "live-migrate", "refresh-migrate", "stop", "stateful-stop", "force-stop")),
 
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.cpu)
 	// A number or a specific range of CPUs to expose to the instance.
