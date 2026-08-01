@@ -175,7 +175,7 @@ func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Start the server.
-	err = http.Serve(server, handler)
+	err = http.Serve(server, &handler)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ type remoteProxyHandler struct {
 	token string
 }
 
-func (h remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Increase counters.
 	defer func() {
 		h.mu.Lock()
@@ -283,49 +283,79 @@ func (h remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Handle /1.0 internally (saves a round-trip).
-	if r.RequestURI == "/1.0" || strings.HasPrefix(r.RequestURI, "/1.0?project=") {
+	// Handle GET /1.0 internally (saves a round-trip).
+	if r.Method == http.MethodGet && r.URL.Path == "/1.0" {
 		// Parse query URL.
 		values, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
 			return
 		}
 
-		// Update project name to match.
-		projectName := values.Get("project")
-		if projectName == "" {
-			projectName = api.ProjectDefaultName
+		// Only handle the request internally if project is the sole parameter.
+		supported := true
+		for k := range values {
+			if k != "project" {
+				supported = false
+				break
+			}
 		}
 
-		api10 := api.Server(*h.api10)
-		api10.Environment.Project = projectName
+		if supported {
+			// Update project name to match.
+			projectName := values.Get("project")
+			if projectName == "" {
+				projectName = api.ProjectDefaultName
+			}
 
-		// Set the request headers.
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("ETag", h.api10Etag)
-		w.WriteHeader(http.StatusOK)
+			// Get the cached data, refreshing it if needed.
+			h.mu.RLock()
+			cached := h.api10
+			cachedEtag := h.api10Etag
+			h.mu.RUnlock()
 
-		// Generate a body from the cached data.
-		serverBody, err := json.Marshal(api10)
-		if err != nil {
+			if cached == nil {
+				cached, cachedEtag, err = h.s.GetServer()
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				h.mu.Lock()
+				h.api10 = cached
+				h.api10Etag = cachedEtag
+				h.mu.Unlock()
+			}
+
+			api10 := api.Server(*cached)
+			api10.Environment.Project = projectName
+
+			// Set the request headers.
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("ETag", cachedEtag)
+			w.WriteHeader(http.StatusOK)
+
+			// Generate a body from the cached data.
+			serverBody, err := json.Marshal(api10)
+			if err != nil {
+				return
+			}
+
+			apiResponse := api.Response{
+				Type:       "sync",
+				Status:     "success",
+				StatusCode: 200,
+				Metadata:   serverBody,
+			}
+
+			body, err := json.Marshal(apiResponse)
+			if err != nil {
+				return
+			}
+
+			_, _ = w.Write(body)
+
 			return
 		}
-
-		apiResponse := api.Response{
-			Type:       "sync",
-			Status:     "success",
-			StatusCode: 200,
-			Metadata:   serverBody,
-		}
-
-		body, err := json.Marshal(apiResponse)
-		if err != nil {
-			return
-		}
-
-		_, _ = w.Write(body)
-
-		return
 	}
 
 	// Forward everything else.
@@ -335,4 +365,12 @@ func (h remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxy.ServeHTTP(w, r)
+
+	// Invalidate the cache on modification of /1.0.
+	if r.Method != http.MethodGet && r.URL.Path == "/1.0" {
+		h.mu.Lock()
+		h.api10 = nil
+		h.api10Etag = ""
+		h.mu.Unlock()
+	}
 }
