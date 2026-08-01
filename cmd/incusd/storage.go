@@ -91,14 +91,14 @@ func storageStartup(s *state.State) error {
 		if err != nil {
 			logger.Error("Failed mounting storage pool", logger.Ctx{"pool": poolName, "err": err})
 			_ = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarningLocalNode(ctx, "", cluster.TypeStoragePool, int(pool.ID()), warningtype.StoragePoolUnvailable, err.Error())
+				return tx.UpsertWarning(ctx, s.ServerName, "", cluster.TypeStoragePool, int(pool.ID()), warningtype.StoragePoolUnvailable, err.Error())
 			})
 
 			return false
 		}
 
 		logger.Info("Initialized storage pool", logger.Ctx{"pool": poolName})
-		_ = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(s.DB.Cluster, "", warningtype.StoragePoolUnvailable, cluster.TypeStoragePool, int(pool.ID()))
+		_ = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(s.DB.Cluster, s.ServerName, "", warningtype.StoragePoolUnvailable, cluster.TypeStoragePool, int(pool.ID()))
 
 		return true
 	}

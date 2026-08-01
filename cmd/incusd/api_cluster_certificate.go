@@ -112,7 +112,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 
 		reverter.Add(func() {
 			_ = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.UnableToUpdateClusterCertificate, err.Error())
+				return tx.UpsertWarning(ctx, s.ServerName, "", -1, -1, warningtype.UnableToUpdateClusterCertificate, err.Error())
 			})
 		})
 
@@ -249,7 +249,7 @@ func updateClusterCertificate(ctx context.Context, s *state.State, gateway *clus
 	gateway.NetworkUpdateCert(cert)
 
 	// Resolve warning of this type
-	_ = warnings.ResolveWarningsByLocalNodeAndType(s.DB.Cluster, warningtype.UnableToUpdateClusterCertificate)
+	_ = warnings.ResolveWarningsByNodeAndType(s.DB.Cluster, s.ServerName, warningtype.UnableToUpdateClusterCertificate)
 
 	reverter.Success()
 

@@ -1625,7 +1625,7 @@ func (d *Daemon) init() error {
 	_ = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Create warnings that have been collected
 		for _, w := range dbWarnings {
-			err := tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.Type(w.TypeCode), w.LastMessage)
+			err := tx.UpsertWarning(ctx, d.serverName, "", -1, -1, warningtype.Type(w.TypeCode), w.LastMessage)
 			if err != nil {
 				logger.Warn("Failed to create warning", logger.Ctx{"err": err})
 			}
@@ -1635,7 +1635,7 @@ func (d *Daemon) init() error {
 	})
 
 	// Resolve warnings older than the daemon start time
-	err = warnings.ResolveWarningsByLocalNodeOlderThan(d.db.Cluster, d.startTime)
+	err = warnings.ResolveWarningsByNodeOlderThan(d.db.Cluster, d.serverName, d.startTime)
 	if err != nil {
 		logger.Warn("Failed to resolve warnings", logger.Ctx{"err": err})
 	}
@@ -2360,7 +2360,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLead
 
 			if d.db.Cluster != nil {
 				err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					return tx.UpsertWarningLocalNode(ctx, "", -1, -1, warningtype.ClusterTimeSkew, fmt.Sprintf("leaderTime: %s, localTime: %s", hbData.Time, now))
+					return tx.UpsertWarning(ctx, d.serverName, "", -1, -1, warningtype.ClusterTimeSkew, fmt.Sprintf("leaderTime: %s, localTime: %s", hbData.Time, now))
 				})
 				if err != nil {
 					logger.Warn("Failed to create cluster time skew warning", logger.Ctx{"err": err})
@@ -2374,7 +2374,7 @@ func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLead
 			logger.Warn("Time skew resolved")
 
 			if d.db.Cluster != nil {
-				err := warnings.ResolveWarningsByLocalNodeAndType(d.db.Cluster, warningtype.ClusterTimeSkew)
+				err := warnings.ResolveWarningsByNodeAndType(d.db.Cluster, d.serverName, warningtype.ClusterTimeSkew)
 				if err != nil {
 					logger.Warn("Failed to resolve cluster time skew warning", logger.Ctx{"err": err})
 				}
@@ -2777,7 +2777,7 @@ func (d *Daemon) clusterSyncCertificate() error {
 	d.gateway.NetworkUpdateCert(newCert)
 
 	// Resolve warning of this type.
-	_ = warnings.ResolveWarningsByLocalNodeAndType(d.db.Cluster, warningtype.UnableToUpdateClusterCertificate)
+	_ = warnings.ResolveWarningsByNodeAndType(d.db.Cluster, d.serverName, warningtype.UnableToUpdateClusterCertificate)
 
 	logger.Info("Updated cluster certificate from leader")
 

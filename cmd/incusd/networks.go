@@ -1820,7 +1820,7 @@ func networkStartup(s *state.State) error {
 			err = fmt.Errorf("Failed starting: %w", err)
 
 			_ = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarningLocalNode(ctx, n.Project(), dbCluster.TypeNetwork, int(n.ID()), warningtype.NetworkUnvailable, err.Error())
+				return tx.UpsertWarning(ctx, s.ServerName, n.Project(), dbCluster.TypeNetwork, int(n.ID()), warningtype.NetworkUnvailable, err.Error())
 			})
 
 			networkWarningsMu.Lock()
@@ -1849,7 +1849,7 @@ func networkStartup(s *state.State) error {
 		networkWarningsMu.Unlock()
 
 		if resolveWarning || resolveAllWarnings {
-			_ = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(s.DB.Cluster, n.Project(), warningtype.NetworkUnvailable, dbCluster.TypeNetwork, int(n.ID()))
+			_ = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(s.DB.Cluster, s.ServerName, n.Project(), warningtype.NetworkUnvailable, dbCluster.TypeNetwork, int(n.ID()))
 		}
 
 		return nil
