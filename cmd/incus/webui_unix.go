@@ -112,7 +112,7 @@ func (c *cmdWebui) run(cmd *cobra.Command, args []string) error {
 	_ = util.OpenBrowser(uiURL)
 
 	// Start the server.
-	err = http.Serve(server, handler)
+	err = http.Serve(server, &handler)
 	if err != nil {
 		return err
 	}
