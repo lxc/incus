@@ -324,7 +324,7 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 			if attempt >= maxAttempts {
 				warnErr := s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
 					// If unable to start after 3 tries, record a warning.
-					return tx.UpsertWarningLocalNode(ctx, inst.Project().Name, cluster.TypeInstance, inst.ID(), warningtype.InstanceAutostartFailure, fmt.Sprintf("%v", err))
+					return tx.UpsertWarning(ctx, s.ServerName, inst.Project().Name, cluster.TypeInstance, inst.ID(), warningtype.InstanceAutostartFailure, fmt.Sprintf("%v", err))
 				})
 				if warnErr != nil {
 					instLogger.Warn("Failed to create instance autostart failure warning", logger.Ctx{"err": warnErr})
@@ -341,7 +341,7 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 		}
 
 		// Resolve any previous warning.
-		warnErr := warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(s.DB.Cluster, inst.Project().Name, warningtype.InstanceAutostartFailure, cluster.TypeInstance, inst.ID())
+		warnErr := warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(s.DB.Cluster, s.ServerName, inst.Project().Name, warningtype.InstanceAutostartFailure, cluster.TypeInstance, inst.ID())
 		if warnErr != nil {
 			instLogger.Warn("Failed to resolve instance autostart failure warning", logger.Ctx{"err": warnErr})
 		}

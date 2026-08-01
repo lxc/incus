@@ -22,20 +22,6 @@ INSERT INTO warnings (node_id, project_id, entity_type_code, entity_id, uuid, ty
   VALUES ((SELECT nodes.id FROM nodes WHERE nodes.name = ?), (SELECT projects.id FROM projects WHERE projects.name = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `)
 
-// UpsertWarningLocalNode creates or updates a warning for the local member. Returns error if no local member name.
-func (c *ClusterTx) UpsertWarningLocalNode(ctx context.Context, projectName string, entityTypeCode int, entityID int, typeCode warningtype.Type, message string) error {
-	localName, err := c.GetLocalNodeName(ctx)
-	if err != nil {
-		return fmt.Errorf("Failed getting local member name: %w", err)
-	}
-
-	if localName == "" {
-		return errors.New("Local member name not available")
-	}
-
-	return c.UpsertWarning(ctx, localName, projectName, entityTypeCode, entityID, typeCode, message)
-}
-
 // UpsertWarning creates or updates a warning.
 func (c *ClusterTx) UpsertWarning(ctx context.Context, nodeName string, projectName string, entityTypeCode int, entityID int, typeCode warningtype.Type, message string) error {
 	// Validate
