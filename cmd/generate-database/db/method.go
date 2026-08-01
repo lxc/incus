@@ -390,7 +390,12 @@ func (m *Method) getMany(buf *file.Buffer) error {
 		m.ifErrNotNil(buf, false, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "objects")))
 		buf.L("}")
 		buf.N()
-		buf.L("for i, filter := range filters {")
+		if len(filters) > 0 {
+			buf.L("for i, filter := range filters {")
+		} else {
+			buf.L("for _, filter := range filters {")
+		}
+
 		for i, filter := range filters {
 			branch := "if"
 			if i > 0 {
