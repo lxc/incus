@@ -282,7 +282,7 @@ WHERE networks.id = ? AND networks.state = ?
 
 	configs := map[string]map[string]string{}
 	for _, node := range nodes {
-		config, err := query.SelectConfig(ctx, c.tx, "networks_config", "node_id=?", node.ID)
+		config, err := query.SelectConfig(ctx, c.tx, "networks_config", "network_id=? AND node_id=?", networkID, node.ID)
 		if err != nil {
 			return nil, err
 		}

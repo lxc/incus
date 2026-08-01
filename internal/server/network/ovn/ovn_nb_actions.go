@@ -2765,6 +2765,11 @@ func (o *NB) SetChassisGroupPriority(ctx context.Context, haChassisGroupName OVN
 		operations = append(operations, updateOps...)
 	}
 
+	// Skip the transaction if nothing changed.
+	if len(operations) == 0 {
+		return nil
+	}
+
 	// Apply the changes.
 	resp, err := o.client.Transact(ctx, operations...)
 	if err != nil {
