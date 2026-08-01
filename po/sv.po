@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-30 19:13-0400\n"
+"POT-Creation-Date: 2026-08-01 10:17+0000\n"
 "PO-Revision-Date: 2026-07-30 20:53+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -787,6 +787,11 @@ msgstr "--recursive/-r krävs vid hämtning av kataloger"
 msgid "--recursive/-r is required when pushing directories"
 msgstr "--rekursiv/-r krävs vid överföring av kataloger"
 
+#: cmd/incus/move.go:103
+#, fuzzy
+msgid "--refresh can only be used with --stateless"
+msgstr "--refresh kan endast användas med instanser"
+
 #: cmd/incus/copy.go:204
 msgid "--refresh can only be used with instances"
 msgstr "--refresh kan endast användas med instanser"
@@ -795,7 +800,7 @@ msgstr "--refresh kan endast användas med instanser"
 msgid "--reuse requires --copy-aliases"
 msgstr "--reuse kräver --reuse"
 
-#: cmd/incus/move.go:215
+#: cmd/incus/move.go:222
 msgid "--target can only be used with clusters"
 msgstr "--target kan endast användas med kluster"
 
@@ -1279,7 +1284,7 @@ msgstr ""
 "Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
 "<nyckel>=<värde>: %s"
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:252
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1395,11 +1400,11 @@ msgstr "Cacher:"
 msgid "Can't bind address %q: %w"
 msgstr "Kan inte binda adress %q: %w"
 
-#: cmd/incus/move.go:117
+#: cmd/incus/move.go:123
 msgid "Can't override configuration or profiles in local rename"
 msgstr "Kan inte åsidosätta konfiguration eller profiler vid lokal namnändring"
 
-#: cmd/incus/move.go:113
+#: cmd/incus/move.go:119
 msgid "Can't perform local rename without a new instance name"
 msgstr "Kan inte utföra lokal namnändring utan nytt instansnamn"
 
@@ -1620,7 +1625,7 @@ msgstr "Klustermedlem %s borttagen från grupp %s"
 
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529
 #: cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68
-#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:69
+#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:71
 #: cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880
 #: cmd/incus/network.go:1057 cmd/incus/network.go:1440
 #: cmd/incus/network.go:1524 cmd/incus/network.go:1586
@@ -1736,7 +1741,7 @@ msgstr ""
 msgid "Config key/value to apply to the new project"
 msgstr "Konfigurationsnyckel/värde som ska tillämpas på det nya projektet"
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid "Config key/value to apply to the target instance"
 msgstr "Konfigurationsnyckel/värde som ska tillämpas på målinstansen"
 
@@ -1795,7 +1800,7 @@ msgstr "Innehållstyp: %s"
 msgid "Control: %s (%s)"
 msgstr "Kontroll: %s (%s)"
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:67
+#: cmd/incus/copy.go:66 cmd/incus/move.go:69
 msgid "Copy a stateful instance stateless"
 msgstr "Kopiera en tillståndsberoende instans tillståndsfri"
 
@@ -1872,7 +1877,7 @@ msgstr "Kopiera instansen utan dess ögonblicksbilder"
 msgid "Copy the volume without its snapshots"
 msgstr "Kopiera volymen utan dess ögonblicksbilder"
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70
+#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72
 #: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr "Kopiera till ett annat projekt än källan"
@@ -2896,8 +2901,8 @@ msgstr "Evakuera klustermedlem"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action "
-"(\"cluster.evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action (\"cluster."
+"evacuate\" instance configuration option)"
 msgstr ""
 "Evakuera klustermedlem\n"
 "\n"
@@ -3328,6 +3333,11 @@ msgstr "Det gick inte att skapa säkerhetskopia: %v"
 msgid "Failed to create certificate: %w"
 msgstr "Det gick inte att skapa certifikatet: %w"
 
+#: cmd/incus/move_nearlive.go:86
+#, fuzzy, c-format
+msgid "Failed to create pre-copy snapshot %q: %w"
+msgstr "Det gick inte att skapa %q: %w"
+
 #: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid "Failed to create storage volume backup: %w"
@@ -3338,11 +3348,22 @@ msgstr "Det gick inte att skapa säkerhetskopia av lagringsvolym: %w"
 msgid "Failed to delete bitmap: %w"
 msgstr "Misslyckades med att begära dump: %w"
 
-#: cmd/incus/move.go:199
+#: cmd/incus/move.go:206
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
 "Det gick inte att ta bort den ursprungliga instansen efter kopieringen: %w"
+
+#: cmd/incus/move_nearlive.go:110
+#, fuzzy, c-format
+msgid "Failed to delete partial copy of instance %q on the target server: %s"
+msgstr ""
+"Det gick inte att ta bort den ursprungliga instansen efter kopieringen: %w"
+
+#: cmd/incus/move_nearlive.go:24
+#, fuzzy, c-format
+msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
+msgstr "Det gick inte att uppdatera målinstansen '%s': %v"
 
 #: cmd/incus/low_level.go:239
 #, c-format
@@ -3436,7 +3457,7 @@ msgstr "Det gick inte att läsa från filen: %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Läsning från stdin misslyckades: %w"
 
-#: cmd/incus/copy.go:382
+#: cmd/incus/copy.go:394
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Det gick inte att uppdatera målinstansen '%s': %v"
@@ -3466,6 +3487,11 @@ msgstr "Misslyckades med att dumpa instansminnet: %w"
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr "Misslyckades med att begära dump: %w"
+
+#: cmd/incus/move_nearlive.go:140
+#, fuzzy, c-format
+msgid "Failed to restart instance %q after a failed move: %s"
+msgstr "Det gick inte att hämta instansens UEFI-variabel: %w"
 
 #: cmd/incus/cluster.go:1841
 #, c-format
@@ -3516,6 +3542,16 @@ msgstr "Det gick inte att hämta instansens UEFI-variabler: %w"
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "Det gick inte att upprätta ett förtroendeförhållande med klustret: %w"
+
+#: cmd/incus/move_nearlive.go:168
+#, fuzzy, c-format
+msgid "Failed to start instance %q on the target server: %w"
+msgstr "Det gick inte att analysera förinställningen: %w"
+
+#: cmd/incus/move_nearlive.go:129
+#, fuzzy, c-format
+msgid "Failed to stop instance %q: %w"
+msgstr "Misslyckades med att dumpa instansminnet: %w"
 
 #: cmd/incus/cluster.go:1547
 #, c-format
@@ -4223,7 +4259,7 @@ msgstr ""
 "Ignorera eventuella konfigurerade automatiska utgångsdatum för "
 "lagringsvolymen"
 
-#: cmd/incus/copy.go:73 cmd/incus/move.go:71
+#: cmd/incus/copy.go:73 cmd/incus/move.go:73
 msgid "Ignore copy errors for volatile files"
 msgstr "Ignorera kopieringsfel för flyktiga filer"
 
@@ -5480,8 +5516,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5559,8 +5595,8 @@ msgstr ""
 "  L - Instansens plats (t.ex. dess klustermedlem) \n"
 "  f - Fingeravtryck för basavbildning (kort) \n"
 "  F - Fingeravtryck för basavbildning (långt) \n"
-"Anpassade kolumner definieras med \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Anpassade kolumner definieras med \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "\n"
 "KEY: Den (utökade) konfigurations- eller enhetsnyckeln som ska visas. Om\n"
 "[config:|devices:] utelämnas är standardvärdet konfigurationsnyckeln. NAME: "
@@ -6490,8 +6526,8 @@ msgstr "Hantera lagringsvolymer"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 "Hantera lagringsvolymer\n"
 "\n"
@@ -6568,12 +6604,12 @@ msgstr "Minnesanvändning:"
 msgid "Memory:"
 msgstr "Minne:"
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:293
 #, c-format
 msgid "Migration API failure: %w"
 msgstr "Fel i migrerings-API: %w"
 
-#: cmd/incus/move.go:305
+#: cmd/incus/move.go:312
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr "Migreringsfel: %w"
@@ -6661,11 +6697,11 @@ msgstr ""
 msgid "Move custom storage volumes between pools"
 msgstr "Flytta anpassade lagringsvolymer mellan pooler"
 
-#: cmd/incus/move.go:40
+#: cmd/incus/move.go:41
 msgid "Move instances within or in between servers"
 msgstr "Flytta instanser inom eller mellan servrar"
 
-#: cmd/incus/move.go:41
+#: cmd/incus/move.go:42
 msgid ""
 "Move instances within or in between servers\n"
 "\n"
@@ -6693,7 +6729,7 @@ msgstr ""
 "Överföringsläget pull är standard eftersom det är kompatibelt med alla "
 "serverversioner.\n"
 
-#: cmd/incus/move.go:65
+#: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr "Flytta instansen utan dess ögonblicksbilder"
 
@@ -7071,7 +7107,7 @@ msgid "New aliases to add to the image"
 msgstr "Nya alias att lägga till i avbildningen"
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
-#: cmd/incus/move.go:62
+#: cmd/incus/move.go:63
 msgid "New key/value to apply to a specific device"
 msgstr "Ny nyckel/värde som ska tillämpas på en specifik enhet"
 
@@ -7359,6 +7395,11 @@ msgstr "Porttyp: %s"
 msgid "Ports:"
 msgstr "Portar:"
 
+#: cmd/incus/move_nearlive.go:96
+#, fuzzy, c-format
+msgid "Pre-copying instance: %s"
+msgstr "Uppdateringsinstans: %s"
+
 #: cmd/incus/admin_init.go:53
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr "Pre-seed-läge, förväntar sig YAML-konfiguration från stdin"
@@ -7490,7 +7531,7 @@ msgstr "Profil som ska tillämpas på den nya avbildningen"
 msgid "Profile to apply to the new instance"
 msgstr "Profil som ska tillämpas på den nya instansen"
 
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid "Profile to apply to the target instance"
 msgstr "Profil som ska tillämpas på målinstansen"
 
@@ -7697,7 +7738,7 @@ msgstr "Uppdatera och uppdatera befintliga kopior av lagringsvolymer"
 msgid "Refresh images"
 msgstr "Uppdatera avbildningar"
 
-#: cmd/incus/copy.go:404
+#: cmd/incus/copy.go:416
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr "Uppdateringsinstans: %s"
@@ -9085,7 +9126,7 @@ msgid "Storage pool description"
 msgstr "Beskrivning av lagringspool"
 
 #: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42
-#: cmd/incus/move.go:68
+#: cmd/incus/move.go:70
 msgid "Storage pool name"
 msgstr "Lagringspoolens namn"
 
@@ -9642,17 +9683,23 @@ msgstr "Transceivertyp: %s"
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr "Överföringsläge, ett av pull (standard), push eller relay"
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66
+#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
 msgstr "Överföringsläge. Drag, tryck eller relä"
+
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer the instance incrementally, reducing the downtime of a running "
+"instance"
+msgstr ""
 
 #: cmd/incus/image.go:775
 #, c-format
 msgid "Transferring image: %s"
 msgstr "Överför avbildning: %s"
 
-#: cmd/incus/copy.go:360 cmd/incus/move.go:291
+#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "Överföring av instans: %s"
@@ -9835,7 +9882,7 @@ msgstr "Inaktivera konfigurationsnycklarna för en klustergrupp"
 msgid "Unset a cluster member's configuration keys"
 msgstr "Inaktivera konfigurationsnycklar för en klustermedlem"
 
-#: cmd/incus/move.go:64
+#: cmd/incus/move.go:65
 msgid "Unset all profiles on the target instance"
 msgstr "Inaktivera alla profiler på målinstansen"
 
@@ -10738,8 +10785,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 "incus create images:debian/12 u1\n"
@@ -10748,8 +10795,8 @@ msgstr ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Skapa instansen med konfigurationen från config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Skapa och starta en virtuell maskin, med åsidosättning av diskstorlek "
 "och buss"
 
@@ -10904,21 +10951,21 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from "
-"config.yaml\n"
+"    Create and start a container named \"c2\" with configuration from config."
+"yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://"
-"images.linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://images."
+"linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
@@ -10937,15 +10984,15 @@ msgstr ""
 "    Skapa och starta en virtuell maskin med namnet \"v1\" med 4 vCPU och 4 "
 "GiB RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Skapa och starta en virtuell maskin med namnet \"v2\", med överskrivning "
 "av diskstorlek och buss"
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10955,9 +11002,8 @@ msgid ""
 "incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP "
-"Visa\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP Visa\n"
 "instanser med kolumnerna \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" och \"MAC\". \"BASE IMAGE\",\n"
 "\"MAC\" och \"IMAGE OS\" är anpassade kolumner som genereras från "
@@ -10995,7 +11041,7 @@ msgstr ""
 "incus monitor --type=lifecycle\n"
 "Visa endast livscykelhändelser."
 
-#: cmd/incus/move.go:52
+#: cmd/incus/move.go:53
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -11056,8 +11102,8 @@ msgstr ""
 "Skapa ett nytt nätverk med namnet foo\n"
 "\n"
 "incus network create foo < config.yaml\n"
-"Skapa ett nytt nätverk med namnet foo med hjälp av innehållet i "
-"config.yaml.\n"
+"Skapa ett nytt nätverk med namnet foo med hjälp av innehållet i config."
+"yaml.\n"
 "\n"
 "incus network create bar network=baz --type ovn\n"
 "Skapa ett nytt OVN-nätverk med namnet bar med baz som uppkopplingsnätverk"
@@ -11080,22 +11126,22 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 "incus network integration create o1 ovn\n"
 "    Skapa nätverksintegration o1 av typen ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Skapa nätverksintegration o1 av typen ovn med konfiguration från "
-"config.yaml"
+"    Skapa nätverksintegration o1 av typen ovn med konfiguration från config."
+"yaml"
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
 "incus nätverksintegration redigera <nätverksintegration> < network-"
 "integration.yaml\n"
@@ -11577,8 +11623,8 @@ msgstr ""
 "Ställer in storleken på en anpassad volym \"data\" i poolen \"default\" till "
 "1\n"
 "\n"
-"GiB incus storage volume set default virtual-machine/data "
-"snapshots.expiry=7d\n"
+"GiB incus storage volume set default virtual-machine/data snapshots."
+"expiry=7d\n"
 "Ställer in utgångsperioden för en ögonblicksbild för en virtuell maskin "
 "\"data\" i poolen \"default\" till sju dagar"
 

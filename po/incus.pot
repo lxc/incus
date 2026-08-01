@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-07-30 19:13-0400\n"
+        "POT-Creation-Date: 2026-08-01 10:17+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -496,6 +496,10 @@ msgstr  ""
 msgid   "--recursive/-r is required when pushing directories"
 msgstr  ""
 
+#: cmd/incus/move.go:103
+msgid   "--refresh can only be used with --stateless"
+msgstr  ""
+
 #: cmd/incus/copy.go:204
 msgid   "--refresh can only be used with instances"
 msgstr  ""
@@ -504,7 +508,7 @@ msgstr  ""
 msgid   "--reuse requires --copy-aliases"
 msgstr  ""
 
-#: cmd/incus/move.go:215
+#: cmd/incus/move.go:222
 msgid   "--target can only be used with clusters"
 msgstr  ""
 
@@ -936,7 +940,7 @@ msgstr  ""
 msgid   "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr  ""
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:252 cmd/incus/network_integration.go:139 cmd/incus/project.go:168
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259 cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid   "Bad key=value pair: %q"
 msgstr  ""
@@ -1051,11 +1055,11 @@ msgstr  ""
 msgid   "Can't bind address %q: %w"
 msgstr  ""
 
-#: cmd/incus/move.go:117
+#: cmd/incus/move.go:123
 msgid   "Can't override configuration or profiles in local rename"
 msgstr  ""
 
-#: cmd/incus/move.go:113
+#: cmd/incus/move.go:119
 msgid   "Can't perform local rename without a new instance name"
 msgstr  ""
 
@@ -1260,7 +1264,7 @@ msgstr  ""
 msgid   "Cluster member %s removed from group %s"
 msgstr  ""
 
-#: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529 cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68 cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:69 cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880 cmd/incus/network.go:1057 cmd/incus/network.go:1440 cmd/incus/network.go:1524 cmd/incus/network.go:1586 cmd/incus/network_forward.go:249 cmd/incus/network_forward.go:320 cmd/incus/network_forward.go:486 cmd/incus/network_forward.go:625 cmd/incus/network_forward.go:767 cmd/incus/network_forward.go:845 cmd/incus/network_forward.go:918 cmd/incus/network_load_balancer.go:252 cmd/incus/network_load_balancer.go:323 cmd/incus/network_load_balancer.go:472 cmd/incus/network_load_balancer.go:594 cmd/incus/network_load_balancer.go:747 cmd/incus/network_load_balancer.go:824 cmd/incus/network_load_balancer.go:889 cmd/incus/network_load_balancer.go:983 cmd/incus/network_load_balancer.go:1049 cmd/incus/storage.go:117 cmd/incus/storage.go:397 cmd/incus/storage.go:474 cmd/incus/storage.go:806 cmd/incus/storage.go:900 cmd/incus/storage.go:980 cmd/incus/storage_bucket.go:115 cmd/incus/storage_bucket.go:204 cmd/incus/storage_bucket.go:254 cmd/incus/storage_bucket.go:373 cmd/incus/storage_bucket.go:604 cmd/incus/storage_bucket.go:710 cmd/incus/storage_bucket.go:763 cmd/incus/storage_bucket.go:862 cmd/incus/storage_bucket.go:988 cmd/incus/storage_bucket.go:1078 cmd/incus/storage_bucket.go:1127 cmd/incus/storage_bucket.go:1249 cmd/incus/storage_bucket.go:1309 cmd/incus/storage_bucket.go:1490 cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:603 cmd/incus/storage_volume.go:698 cmd/incus/storage_volume.go:958 cmd/incus/storage_volume.go:1170 cmd/incus/storage_volume.go:1288 cmd/incus/storage_volume.go:1736 cmd/incus/storage_volume.go:1800 cmd/incus/storage_volume.go:1884 cmd/incus/storage_volume.go:1968 cmd/incus/storage_volume.go:2118 cmd/incus/storage_volume.go:2208 cmd/incus/storage_volume.go:2264 cmd/incus/storage_volume.go:2472 cmd/incus/storage_volume_bitmap.go:79 cmd/incus/storage_volume_bitmap.go:144 cmd/incus/storage_volume_bitmap.go:234 cmd/incus/storage_volume_bitmap.go:365 cmd/incus/storage_volume_snapshot.go:99 cmd/incus/storage_volume_snapshot.go:247 cmd/incus/storage_volume_snapshot.go:484 cmd/incus/storage_volume_snapshot.go:553 cmd/incus/storage_volume_snapshot.go:618
+#: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529 cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68 cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:71 cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880 cmd/incus/network.go:1057 cmd/incus/network.go:1440 cmd/incus/network.go:1524 cmd/incus/network.go:1586 cmd/incus/network_forward.go:249 cmd/incus/network_forward.go:320 cmd/incus/network_forward.go:486 cmd/incus/network_forward.go:625 cmd/incus/network_forward.go:767 cmd/incus/network_forward.go:845 cmd/incus/network_forward.go:918 cmd/incus/network_load_balancer.go:252 cmd/incus/network_load_balancer.go:323 cmd/incus/network_load_balancer.go:472 cmd/incus/network_load_balancer.go:594 cmd/incus/network_load_balancer.go:747 cmd/incus/network_load_balancer.go:824 cmd/incus/network_load_balancer.go:889 cmd/incus/network_load_balancer.go:983 cmd/incus/network_load_balancer.go:1049 cmd/incus/storage.go:117 cmd/incus/storage.go:397 cmd/incus/storage.go:474 cmd/incus/storage.go:806 cmd/incus/storage.go:900 cmd/incus/storage.go:980 cmd/incus/storage_bucket.go:115 cmd/incus/storage_bucket.go:204 cmd/incus/storage_bucket.go:254 cmd/incus/storage_bucket.go:373 cmd/incus/storage_bucket.go:604 cmd/incus/storage_bucket.go:710 cmd/incus/storage_bucket.go:763 cmd/incus/storage_bucket.go:862 cmd/incus/storage_bucket.go:988 cmd/incus/storage_bucket.go:1078 cmd/incus/storage_bucket.go:1127 cmd/incus/storage_bucket.go:1249 cmd/incus/storage_bucket.go:1309 cmd/incus/storage_bucket.go:1490 cmd/incus/storage_volume.go:396 cmd/incus/storage_volume.go:603 cmd/incus/storage_volume.go:698 cmd/incus/storage_volume.go:958 cmd/incus/storage_volume.go:1170 cmd/incus/storage_volume.go:1288 cmd/incus/storage_volume.go:1736 cmd/incus/storage_volume.go:1800 cmd/incus/storage_volume.go:1884 cmd/incus/storage_volume.go:1968 cmd/incus/storage_volume.go:2118 cmd/incus/storage_volume.go:2208 cmd/incus/storage_volume.go:2264 cmd/incus/storage_volume.go:2472 cmd/incus/storage_volume_bitmap.go:79 cmd/incus/storage_volume_bitmap.go:144 cmd/incus/storage_volume_bitmap.go:234 cmd/incus/storage_volume_bitmap.go:365 cmd/incus/storage_volume_snapshot.go:99 cmd/incus/storage_volume_snapshot.go:247 cmd/incus/storage_volume_snapshot.go:484 cmd/incus/storage_volume_snapshot.go:553 cmd/incus/storage_volume_snapshot.go:618
 msgid   "Cluster member name"
 msgstr  ""
 
@@ -1309,7 +1313,7 @@ msgstr  ""
 msgid   "Config key/value to apply to the new project"
 msgstr  ""
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid   "Config key/value to apply to the target instance"
 msgstr  ""
 
@@ -1358,7 +1362,7 @@ msgstr  ""
 msgid   "Control: %s (%s)"
 msgstr  ""
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:67
+#: cmd/incus/copy.go:66 cmd/incus/move.go:69
 msgid   "Copy a stateful instance stateless"
 msgstr  ""
 
@@ -1412,7 +1416,7 @@ msgstr  ""
 msgid   "Copy the volume without its snapshots"
 msgstr  ""
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70 cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
+#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72 cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid   "Copy to a project different from the source"
 msgstr  ""
 
@@ -2672,6 +2676,11 @@ msgstr  ""
 msgid   "Failed to create certificate: %w"
 msgstr  ""
 
+#: cmd/incus/move_nearlive.go:86
+#, c-format
+msgid   "Failed to create pre-copy snapshot %q: %w"
+msgstr  ""
+
 #: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid   "Failed to create storage volume backup: %w"
@@ -2682,9 +2691,19 @@ msgstr  ""
 msgid   "Failed to delete bitmap: %w"
 msgstr  ""
 
-#: cmd/incus/move.go:199
+#: cmd/incus/move.go:206
 #, c-format
 msgid   "Failed to delete original instance after copying it: %w"
+msgstr  ""
+
+#: cmd/incus/move_nearlive.go:110
+#, c-format
+msgid   "Failed to delete partial copy of instance %q on the target server: %s"
+msgstr  ""
+
+#: cmd/incus/move_nearlive.go:24
+#, c-format
+msgid   "Failed to delete pre-copy snapshot %q of instance %q: %s"
 msgstr  ""
 
 #: cmd/incus/low_level.go:239
@@ -2777,7 +2796,7 @@ msgstr  ""
 msgid   "Failed to read from stdin: %w"
 msgstr  ""
 
-#: cmd/incus/copy.go:382
+#: cmd/incus/copy.go:394
 #, c-format
 msgid   "Failed to refresh target instance '%s': %v"
 msgstr  ""
@@ -2805,6 +2824,11 @@ msgstr  ""
 #: cmd/incus/admin_sql.go:97
 #, c-format
 msgid   "Failed to request dump: %w"
+msgstr  ""
+
+#: cmd/incus/move_nearlive.go:140
+#, c-format
+msgid   "Failed to restart instance %q after a failed move: %s"
 msgstr  ""
 
 #: cmd/incus/cluster.go:1841
@@ -2850,6 +2874,16 @@ msgstr  ""
 #: cmd/incus/cluster.go:1815
 #, c-format
 msgid   "Failed to setup trust relationship with cluster: %w"
+msgstr  ""
+
+#: cmd/incus/move_nearlive.go:168
+#, c-format
+msgid   "Failed to start instance %q on the target server: %w"
+msgstr  ""
+
+#: cmd/incus/move_nearlive.go:129
+#, c-format
+msgid   "Failed to stop instance %q: %w"
 msgstr  ""
 
 #: cmd/incus/cluster.go:1547
@@ -3443,7 +3477,7 @@ msgstr  ""
 msgid   "Ignore any configured auto-expiry for the storage volume"
 msgstr  ""
 
-#: cmd/incus/copy.go:73 cmd/incus/move.go:71
+#: cmd/incus/copy.go:73 cmd/incus/move.go:73
 msgid   "Ignore copy errors for volatile files"
 msgstr  ""
 
@@ -5083,12 +5117,12 @@ msgstr  ""
 msgid   "Memory:"
 msgstr  ""
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:293
 #, c-format
 msgid   "Migration API failure: %w"
 msgstr  ""
 
-#: cmd/incus/move.go:305
+#: cmd/incus/move.go:312
 #, c-format
 msgid   "Migration operation failure: %w"
 msgstr  ""
@@ -5163,11 +5197,11 @@ msgstr  ""
 msgid   "Move custom storage volumes between pools"
 msgstr  ""
 
-#: cmd/incus/move.go:40
+#: cmd/incus/move.go:41
 msgid   "Move instances within or in between servers"
 msgstr  ""
 
-#: cmd/incus/move.go:41
+#: cmd/incus/move.go:42
 msgid   "Move instances within or in between servers\n"
         "\n"
         "Transfer modes (--mode):\n"
@@ -5178,7 +5212,7 @@ msgid   "Move instances within or in between servers\n"
         "The pull transfer mode is the default as it is compatible with all server versions.\n"
 msgstr  ""
 
-#: cmd/incus/move.go:65
+#: cmd/incus/move.go:66
 msgid   "Move the instance without its snapshots"
 msgstr  ""
 
@@ -5528,7 +5562,7 @@ msgstr  ""
 msgid   "New aliases to add to the image"
 msgstr  ""
 
-#: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44 cmd/incus/move.go:62
+#: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44 cmd/incus/move.go:63
 msgid   "New key/value to apply to a specific device"
 msgstr  ""
 
@@ -5800,6 +5834,11 @@ msgstr  ""
 msgid   "Ports:"
 msgstr  ""
 
+#: cmd/incus/move_nearlive.go:96
+#, c-format
+msgid   "Pre-copying instance: %s"
+msgstr  ""
+
 #: cmd/incus/admin_init.go:53
 msgid   "Pre-seed mode, expects YAML config from stdin"
 msgstr  ""
@@ -5916,7 +5955,7 @@ msgstr  ""
 msgid   "Profile to apply to the new instance"
 msgstr  ""
 
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid   "Profile to apply to the target instance"
 msgstr  ""
 
@@ -6103,7 +6142,7 @@ msgstr  ""
 msgid   "Refresh images"
 msgstr  ""
 
-#: cmd/incus/copy.go:404
+#: cmd/incus/copy.go:416
 #, c-format
 msgid   "Refreshing instance: %s"
 msgstr  ""
@@ -7310,7 +7349,7 @@ msgstr  ""
 msgid   "Storage pool description"
 msgstr  ""
 
-#: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42 cmd/incus/move.go:68
+#: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42 cmd/incus/move.go:70
 msgid   "Storage pool name"
 msgstr  ""
 
@@ -7783,8 +7822,12 @@ msgstr  ""
 msgid   "Transfer mode, one of pull (default), push or relay"
 msgstr  ""
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66 cmd/incus/storage_volume.go:395
+#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67 cmd/incus/storage_volume.go:395
 msgid   "Transfer mode. One of pull, push or relay"
+msgstr  ""
+
+#: cmd/incus/move.go:68
+msgid   "Transfer the instance incrementally, reducing the downtime of a running instance"
 msgstr  ""
 
 #: cmd/incus/image.go:775
@@ -7792,7 +7835,7 @@ msgstr  ""
 msgid   "Transferring image: %s"
 msgstr  ""
 
-#: cmd/incus/copy.go:360 cmd/incus/move.go:291
+#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid   "Transferring instance: %s"
 msgstr  ""
@@ -7947,7 +7990,7 @@ msgstr  ""
 msgid   "Unset a cluster member's configuration keys"
 msgstr  ""
 
-#: cmd/incus/move.go:64
+#: cmd/incus/move.go:65
 msgid   "Unset all profiles on the target instance"
 msgstr  ""
 
@@ -8818,7 +8861,7 @@ msgid   "incus monitor --type=logging\n"
         "    Only show lifecycle events."
 msgstr  ""
 
-#: cmd/incus/move.go:52
+#: cmd/incus/move.go:53
 msgid   "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] [--instance-only]\n"
         "    Move an instance between two hosts, renaming it if destination name differs.\n"
         "\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-30 19:13-0400\n"
+"POT-Creation-Date: 2026-08-01 10:17+0000\n"
 "PO-Revision-Date: 2026-07-30 20:56+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -786,6 +786,11 @@ msgstr ""
 msgid "--recursive/-r is required when pushing directories"
 msgstr ""
 
+#: cmd/incus/move.go:103
+#, fuzzy
+msgid "--refresh can only be used with --stateless"
+msgstr "--refresh 只能与实例一起使用"
+
 #: cmd/incus/copy.go:204
 msgid "--refresh can only be used with instances"
 msgstr "--refresh 只能与实例一起使用"
@@ -794,7 +799,7 @@ msgstr "--refresh 只能与实例一起使用"
 msgid "--reuse requires --copy-aliases"
 msgstr ""
 
-#: cmd/incus/move.go:215
+#: cmd/incus/move.go:222
 msgid "--target can only be used with clusters"
 msgstr "--target 只能与集群一起使用"
 
@@ -1264,7 +1269,7 @@ msgstr "备份："
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr "设备覆盖语法错误，应为“<设备>,<键>=<值>”：%s"
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:252
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1380,11 +1385,11 @@ msgstr "缓存："
 msgid "Can't bind address %q: %w"
 msgstr "无法绑定地址 %q：%w"
 
-#: cmd/incus/move.go:117
+#: cmd/incus/move.go:123
 msgid "Can't override configuration or profiles in local rename"
 msgstr "无法在本地重命名中覆盖配置或配置文件"
 
-#: cmd/incus/move.go:113
+#: cmd/incus/move.go:119
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
@@ -1598,7 +1603,7 @@ msgstr "已从组 %s 中移除集群成员 %s"
 
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529
 #: cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68
-#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:69
+#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:71
 #: cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880
 #: cmd/incus/network.go:1057 cmd/incus/network.go:1440
 #: cmd/incus/network.go:1524 cmd/incus/network.go:1586
@@ -1711,7 +1716,7 @@ msgstr "要应用于新网络集成的配置键/值"
 msgid "Config key/value to apply to the new project"
 msgstr "要应用于新项目的配置键/值"
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid "Config key/value to apply to the target instance"
 msgstr "要应用于目标实例的配置键/值"
 
@@ -1770,7 +1775,7 @@ msgstr "内容类型：%s"
 msgid "Control: %s (%s)"
 msgstr "控制：%s（%s）"
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:67
+#: cmd/incus/copy.go:66 cmd/incus/move.go:69
 msgid "Copy a stateful instance stateless"
 msgstr "无状态复制有状态实例"
 
@@ -1844,7 +1849,7 @@ msgstr "复制实例但不复制快照"
 msgid "Copy the volume without its snapshots"
 msgstr "复制卷但不复制快照"
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70
+#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72
 #: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr "复制到与源不同的项目"
@@ -2862,8 +2867,8 @@ msgstr "解散集群成员"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action "
-"(\"cluster.evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action (\"cluster."
+"evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -3273,6 +3278,11 @@ msgstr "创建备份失败：%v"
 msgid "Failed to create certificate: %w"
 msgstr "创建证书失败：%w"
 
+#: cmd/incus/move_nearlive.go:86
+#, fuzzy, c-format
+msgid "Failed to create pre-copy snapshot %q: %w"
+msgstr "创建 %q 失败：%w"
+
 #: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid "Failed to create storage volume backup: %w"
@@ -3283,10 +3293,20 @@ msgstr "创建存储卷备份失败：%w"
 msgid "Failed to delete bitmap: %w"
 msgstr "请求转储失败：%w"
 
-#: cmd/incus/move.go:199
+#: cmd/incus/move.go:206
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "复制后删除原始实例失败：%w"
+
+#: cmd/incus/move_nearlive.go:110
+#, fuzzy, c-format
+msgid "Failed to delete partial copy of instance %q on the target server: %s"
+msgstr "复制后删除原始实例失败：%w"
+
+#: cmd/incus/move_nearlive.go:24
+#, fuzzy, c-format
+msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
+msgstr "刷新目标实例“%s”失败：%v"
 
 #: cmd/incus/low_level.go:239
 #, c-format
@@ -3380,7 +3400,7 @@ msgstr "无法从标准输入读取：%w"
 msgid "Failed to read from stdin: %w"
 msgstr "无法从标准输入读取：%w"
 
-#: cmd/incus/copy.go:382
+#: cmd/incus/copy.go:394
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "刷新目标实例“%s”失败：%v"
@@ -3410,6 +3430,11 @@ msgstr "转储实例内存失败：%w"
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr "请求转储失败：%w"
+
+#: cmd/incus/move_nearlive.go:140
+#, fuzzy, c-format
+msgid "Failed to restart instance %q after a failed move: %s"
+msgstr "转储实例内存失败：%w"
 
 #: cmd/incus/cluster.go:1841
 #, c-format
@@ -3458,6 +3483,16 @@ msgstr "转储实例内存失败：%w"
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "无法与集群建立信任关系：%w"
+
+#: cmd/incus/move_nearlive.go:168
+#, fuzzy, c-format
+msgid "Failed to start instance %q on the target server: %w"
+msgstr "解析 preseed 失败：%w"
+
+#: cmd/incus/move_nearlive.go:129
+#, fuzzy, c-format
+msgid "Failed to stop instance %q: %w"
+msgstr "转储实例内存失败：%w"
 
 #: cmd/incus/cluster.go:1547
 #, c-format
@@ -4126,7 +4161,7 @@ msgstr "忽略该实例的任何自动过期时间配置"
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr "忽略该存储卷的任何自动过期时间配置"
 
-#: cmd/incus/copy.go:73 cmd/incus/move.go:71
+#: cmd/incus/copy.go:73 cmd/incus/move.go:73
 msgid "Ignore copy errors for volatile files"
 msgstr "忽略易失性文件的复制错误"
 
@@ -5296,8 +5331,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -6075,8 +6110,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
@@ -6149,12 +6184,12 @@ msgstr ""
 msgid "Memory:"
 msgstr ""
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:293
 #, c-format
 msgid "Migration API failure: %w"
 msgstr ""
 
-#: cmd/incus/move.go:305
+#: cmd/incus/move.go:312
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr ""
@@ -6235,11 +6270,11 @@ msgstr ""
 msgid "Move custom storage volumes between pools"
 msgstr ""
 
-#: cmd/incus/move.go:40
+#: cmd/incus/move.go:41
 msgid "Move instances within or in between servers"
 msgstr ""
 
-#: cmd/incus/move.go:41
+#: cmd/incus/move.go:42
 msgid ""
 "Move instances within or in between servers\n"
 "\n"
@@ -6255,7 +6290,7 @@ msgid ""
 "versions.\n"
 msgstr ""
 
-#: cmd/incus/move.go:65
+#: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr ""
 
@@ -6631,7 +6666,7 @@ msgid "New aliases to add to the image"
 msgstr ""
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
-#: cmd/incus/move.go:62
+#: cmd/incus/move.go:63
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -6913,6 +6948,11 @@ msgstr ""
 msgid "Ports:"
 msgstr ""
 
+#: cmd/incus/move_nearlive.go:96
+#, fuzzy, c-format
+msgid "Pre-copying instance: %s"
+msgstr "正在刷新实例: %s"
+
 #: cmd/incus/admin_init.go:53
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
@@ -7042,7 +7082,7 @@ msgstr ""
 msgid "Profile to apply to the new instance"
 msgstr ""
 
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid "Profile to apply to the target instance"
 msgstr ""
 
@@ -7244,7 +7284,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr "刷新镜像列表"
 
-#: cmd/incus/copy.go:404
+#: cmd/incus/copy.go:416
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr "正在刷新实例: %s"
@@ -8528,7 +8568,7 @@ msgid "Storage pool description"
 msgstr ""
 
 #: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42
-#: cmd/incus/move.go:68
+#: cmd/incus/move.go:70
 msgid "Storage pool name"
 msgstr ""
 
@@ -9040,9 +9080,15 @@ msgstr ""
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66
+#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
+msgstr ""
+
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer the instance incrementally, reducing the downtime of a running "
+"instance"
 msgstr ""
 
 #: cmd/incus/image.go:775
@@ -9050,7 +9096,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:360 cmd/incus/move.go:291
+#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr ""
@@ -9228,7 +9274,7 @@ msgstr ""
 msgid "Unset a cluster member's configuration keys"
 msgstr ""
 
-#: cmd/incus/move.go:64
+#: cmd/incus/move.go:65
 msgid "Unset all profiles on the target instance"
 msgstr ""
 
@@ -10054,8 +10100,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -10157,29 +10203,29 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from "
-"config.yaml\n"
+"    Create and start a container named \"c2\" with configuration from config."
+"yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://"
-"images.linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://images."
+"linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10208,7 +10254,7 @@ msgid ""
 "    Only show lifecycle events."
 msgstr ""
 
-#: cmd/incus/move.go:52
+#: cmd/incus/move.go:53
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -10263,16 +10309,16 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315

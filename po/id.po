@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-30 19:13-0400\n"
+"POT-Creation-Date: 2026-08-01 10:17+0000\n"
 "PO-Revision-Date: 2026-07-30 20:56+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/incus/cli/id/"
@@ -528,6 +528,11 @@ msgstr ""
 msgid "--recursive/-r is required when pushing directories"
 msgstr ""
 
+#: cmd/incus/move.go:103
+#, fuzzy
+msgid "--refresh can only be used with --stateless"
+msgstr "--console tidak bisa dipakai dengan --allx"
+
 #: cmd/incus/copy.go:204
 msgid "--refresh can only be used with instances"
 msgstr ""
@@ -536,7 +541,7 @@ msgstr ""
 msgid "--reuse requires --copy-aliases"
 msgstr ""
 
-#: cmd/incus/move.go:215
+#: cmd/incus/move.go:222
 msgid "--target can only be used with clusters"
 msgstr ""
 
@@ -987,7 +992,7 @@ msgstr "Cadangan:"
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:252
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1104,11 +1109,11 @@ msgstr "Singgahan:"
 msgid "Can't bind address %q: %w"
 msgstr ""
 
-#: cmd/incus/move.go:117
+#: cmd/incus/move.go:123
 msgid "Can't override configuration or profiles in local rename"
 msgstr ""
 
-#: cmd/incus/move.go:113
+#: cmd/incus/move.go:119
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
@@ -1322,7 +1327,7 @@ msgstr ""
 
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529
 #: cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68
-#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:69
+#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:71
 #: cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880
 #: cmd/incus/network.go:1057 cmd/incus/network.go:1440
 #: cmd/incus/network.go:1524 cmd/incus/network.go:1586
@@ -1428,7 +1433,7 @@ msgstr ""
 msgid "Config key/value to apply to the new project"
 msgstr ""
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid "Config key/value to apply to the target instance"
 msgstr ""
 
@@ -1487,7 +1492,7 @@ msgstr ""
 msgid "Control: %s (%s)"
 msgstr ""
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:67
+#: cmd/incus/copy.go:66 cmd/incus/move.go:69
 msgid "Copy a stateful instance stateless"
 msgstr ""
 
@@ -1547,7 +1552,7 @@ msgstr ""
 msgid "Copy the volume without its snapshots"
 msgstr ""
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70
+#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72
 #: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr ""
@@ -2524,8 +2529,8 @@ msgstr ""
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action "
-"(\"cluster.evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action (\"cluster."
+"evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -2901,6 +2906,11 @@ msgstr ""
 msgid "Failed to create certificate: %w"
 msgstr ""
 
+#: cmd/incus/move_nearlive.go:86
+#, c-format
+msgid "Failed to create pre-copy snapshot %q: %w"
+msgstr ""
+
 #: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid "Failed to create storage volume backup: %w"
@@ -2911,9 +2921,19 @@ msgstr ""
 msgid "Failed to delete bitmap: %w"
 msgstr ""
 
-#: cmd/incus/move.go:199
+#: cmd/incus/move.go:206
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
+msgstr ""
+
+#: cmd/incus/move_nearlive.go:110
+#, c-format
+msgid "Failed to delete partial copy of instance %q on the target server: %s"
+msgstr ""
+
+#: cmd/incus/move_nearlive.go:24
+#, c-format
+msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
 msgstr ""
 
 #: cmd/incus/low_level.go:239
@@ -3008,7 +3028,7 @@ msgstr ""
 msgid "Failed to read from stdin: %w"
 msgstr ""
 
-#: cmd/incus/copy.go:382
+#: cmd/incus/copy.go:394
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr ""
@@ -3037,6 +3057,11 @@ msgstr ""
 #: cmd/incus/admin_sql.go:97
 #, c-format
 msgid "Failed to request dump: %w"
+msgstr ""
+
+#: cmd/incus/move_nearlive.go:140
+#, c-format
+msgid "Failed to restart instance %q after a failed move: %s"
 msgstr ""
 
 #: cmd/incus/cluster.go:1841
@@ -3085,6 +3110,16 @@ msgstr ""
 #: cmd/incus/cluster.go:1815
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
+msgstr ""
+
+#: cmd/incus/move_nearlive.go:168
+#, c-format
+msgid "Failed to start instance %q on the target server: %w"
+msgstr ""
+
+#: cmd/incus/move_nearlive.go:129
+#, c-format
+msgid "Failed to stop instance %q: %w"
 msgstr ""
 
 #: cmd/incus/cluster.go:1547
@@ -3722,7 +3757,7 @@ msgstr ""
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr ""
 
-#: cmd/incus/copy.go:73 cmd/incus/move.go:71
+#: cmd/incus/copy.go:73 cmd/incus/move.go:73
 msgid "Ignore copy errors for volatile files"
 msgstr ""
 
@@ -4671,8 +4706,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5355,8 +5390,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
@@ -5429,12 +5464,12 @@ msgstr ""
 msgid "Memory:"
 msgstr ""
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:293
 #, c-format
 msgid "Migration API failure: %w"
 msgstr ""
 
-#: cmd/incus/move.go:305
+#: cmd/incus/move.go:312
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr ""
@@ -5514,11 +5549,11 @@ msgstr ""
 msgid "Move custom storage volumes between pools"
 msgstr ""
 
-#: cmd/incus/move.go:40
+#: cmd/incus/move.go:41
 msgid "Move instances within or in between servers"
 msgstr ""
 
-#: cmd/incus/move.go:41
+#: cmd/incus/move.go:42
 msgid ""
 "Move instances within or in between servers\n"
 "\n"
@@ -5534,7 +5569,7 @@ msgid ""
 "versions.\n"
 msgstr ""
 
-#: cmd/incus/move.go:65
+#: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr ""
 
@@ -5913,7 +5948,7 @@ msgid "New aliases to add to the image"
 msgstr ""
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
-#: cmd/incus/move.go:62
+#: cmd/incus/move.go:63
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -6197,6 +6232,11 @@ msgstr ""
 msgid "Ports:"
 msgstr ""
 
+#: cmd/incus/move_nearlive.go:96
+#, fuzzy, c-format
+msgid "Pre-copying instance: %s"
+msgstr "Membuat instansi"
+
 #: cmd/incus/admin_init.go:53
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
@@ -6326,7 +6366,7 @@ msgstr "Profil yang akan diterapkan ke image baru"
 msgid "Profile to apply to the new instance"
 msgstr "Profil yang akan diterapkan ke instansi baru"
 
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid "Profile to apply to the target instance"
 msgstr "Profil yang akan diterapkan ke instansi target"
 
@@ -6527,7 +6567,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr ""
 
-#: cmd/incus/copy.go:404
+#: cmd/incus/copy.go:416
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr ""
@@ -7806,7 +7846,7 @@ msgid "Storage pool description"
 msgstr "deskripsi"
 
 #: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42
-#: cmd/incus/move.go:68
+#: cmd/incus/move.go:70
 msgid "Storage pool name"
 msgstr ""
 
@@ -8314,9 +8354,15 @@ msgstr ""
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66
+#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
+msgstr ""
+
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer the instance incrementally, reducing the downtime of a running "
+"instance"
 msgstr ""
 
 #: cmd/incus/image.go:775
@@ -8324,7 +8370,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:360 cmd/incus/move.go:291
+#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr ""
@@ -8502,7 +8548,7 @@ msgstr ""
 msgid "Unset a cluster member's configuration keys"
 msgstr ""
 
-#: cmd/incus/move.go:64
+#: cmd/incus/move.go:65
 msgid "Unset all profiles on the target instance"
 msgstr ""
 
@@ -9313,8 +9359,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -9416,29 +9462,29 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from "
-"config.yaml\n"
+"    Create and start a container named \"c2\" with configuration from config."
+"yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://"
-"images.linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://images."
+"linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -9467,7 +9513,7 @@ msgid ""
 "    Only show lifecycle events."
 msgstr ""
 
-#: cmd/incus/move.go:52
+#: cmd/incus/move.go:53
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -9522,16 +9568,16 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315
