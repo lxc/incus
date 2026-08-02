@@ -967,7 +967,7 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 
 	// Check if instance is start protected.
 	if util.IsTrue(d.expandedConfig["security.protection.start"]) {
-		return errors.New("Instance is protected")
+		return errors.New("Instance has startup protection enabled")
 	}
 
 	// Must happen before creating operation Start lock to avoid the status check returning Stopped due to the
