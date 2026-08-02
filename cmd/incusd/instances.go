@@ -206,7 +206,8 @@ var instanceNVRAMCmd = APIEndpoint{
 	Name: "instanceNVRAM",
 	Path: "instances/{name}/nvram",
 
-	Get: APIEndpointAction{Handler: instanceNVRAMGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Get:   APIEndpointAction{Handler: instanceNVRAMGet, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanView, "name")},
+	Patch: APIEndpointAction{Handler: instanceNVRAMPatch, AccessHandler: allowPermission(auth.ObjectTypeInstance, auth.EntitlementCanEdit, "name")},
 }
 
 var instanceNVRAMGUIDCmd = APIEndpoint{
