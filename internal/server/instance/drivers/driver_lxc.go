@@ -1910,7 +1910,7 @@ func (d *lxc) handleIdmappedStorage() (idmap.StorageType, *idmap.Set, error) {
 	// We need to change the on-disk idmap but the container is protected
 	// against idmap changes.
 	if util.IsTrue(d.expandedConfig["security.protection.shift"]) {
-		return idmap.StorageTypeNone, nil, errors.New("Container is protected against filesystem shifting")
+		return idmap.StorageTypeNone, nil, errors.New("Instance has filesystem shifting protection enabled")
 	}
 
 	d.logger.Debug("Container idmap changed, remapping")
@@ -4555,9 +4555,7 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 	}
 
 	if !force && util.IsTrue(d.expandedConfig["security.protection.delete"]) && !d.IsSnapshot() {
-		err := errors.New("Instance is protected")
-		d.logger.Warn("Failed to delete instance", logger.Ctx{"err": err})
-		return err
+		return errors.New("Instance has delete protection enabled")
 	}
 
 	// Wait for any file operations to complete.
