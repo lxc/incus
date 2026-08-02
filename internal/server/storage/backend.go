@@ -2932,6 +2932,22 @@ func (b *backend) CleanupInstancePaths(inst instance.Instance, op *operations.Op
 		return fmt.Errorf("Failed removing instance snapshots directory %q: %w", snapshotDir, err)
 	}
 
+	// Unmount the volume if still mounted, draining any leaked mount reference counts.
+	if linux.IsMountPoint(vol.MountPath()) {
+		l.Warn("Instance mount path still mounted during cleanup, unmounting", logger.Ctx{"path": vol.MountPath()})
+
+		for range 20 {
+			_, err := b.driver.UnmountVolume(vol, false, op)
+			if err != nil && !errors.Is(err, drivers.ErrInUse) {
+				return fmt.Errorf("Failed unmounting instance volume %q: %w", vol.MountPath(), err)
+			}
+
+			if !linux.IsMountPoint(vol.MountPath()) {
+				break
+			}
+		}
+	}
+
 	// Remove empty mount path.
 	err = os.Remove(vol.MountPath())
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
