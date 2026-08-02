@@ -22,6 +22,12 @@ import (
 	"github.com/lxc/incus/v7/shared/uefi"
 )
 
+type rawInstanceNVRAMVariable struct {
+	Data       json.RawMessage `json:"data"`
+	Attributes []string        `json:"attributes"`
+	Timestamp  *time.Time      `json:"timestamp"`
+}
+
 func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) (*uefi.Store, instance.VM, response.Response) {
 	s := d.State()
 
@@ -838,15 +844,10 @@ func instanceNVRAMGUIDVarPut(d *Daemon, r *http.Request) response.Response {
 		}
 	} else {
 		// This leaves the dissected data unmarshalled for deferred processing.
-		var raw struct {
-			Data       json.RawMessage `json:"data"`
-			Attributes []string        `json:"attributes"`
-			Timestamp  *time.Time      `json:"timestamp"`
-		}
-
+		var raw rawInstanceNVRAMVariable
 		err := json.NewDecoder(r.Body).Decode(&raw)
 		if err != nil {
-			return response.SmartError(err)
+			return response.BadRequest(err)
 		}
 
 		v.Data = raw.Data
@@ -869,4 +870,104 @@ func instanceNVRAMGUIDVarPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	return response.SyncResponseLocation(true, nil, r.URL.String())
+}
+
+// swagger:operation PATCH /1.0/instances/{name}/nvram instances instance_nvram_patch
+//
+//	Bulk modify NVRAM variables.
+//
+//	This consumes nested objects keyed on GUID, then variable name, deleting the corresponding
+//	UEFI variables if the objects are `null`, and updating them otherwise.
+//
+//	Only supported for VMs.
+//
+//	---
+//	consumes:
+//	  - application/json
+//	parameters:
+//	  - in: path
+//	    name: name
+//	    description: Instance name
+//	    type: string
+//	    required: true
+//	  - in: query
+//	    name: project
+//	    description: Project name
+//	    type: string
+//	    example: default
+//	  - in: body
+//	    name: UEFI variables map
+//	    description: Load Balancer
+//	    required: true
+//	    schema:
+//	       type: object
+//	       description: UEFI variables
+//	       additionalProperties:
+//	         type: object
+//	         description: Namespaced UEFI variables
+//	         additionalProperties:
+//	           $ref: "#/definitions/InstanceNVRAMVariablePut"
+//	responses:
+//	  "200":
+//	    $ref: "#/responses/EmptySyncResponse"
+//	  "400":
+//	    $ref: "#/responses/BadRequest"
+//	  "403":
+//	    $ref: "#/responses/Forbidden"
+//	  "404":
+//	    $ref: "#/responses/NotFound"
+//	  "409":
+//	    $ref: "#/responses/Conflict"
+//	  "500":
+//	    $ref: "#/responses/InternalServerError"
+func instanceNVRAMPatch(d *Daemon, r *http.Request) response.Response {
+	projectName := request.ProjectParam(r)
+	name, err := pathVar(r, "name")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	store, inst, resp := getNVRAMStore(d, r, projectName, name)
+	if resp != nil {
+		return resp
+	}
+
+	if inst.IsRunning() {
+		return response.BadRequest(errors.New("UEFI variables cannot be modified on running VMs"))
+	}
+
+	var patched map[string]map[string]*rawInstanceNVRAMVariable
+	err = json.NewDecoder(r.Body).Decode(&patched)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
+	for guid, vars := range patched {
+		_, ok := store.Vars[guid]
+		if !ok {
+			store.Vars[guid] = map[string]*api.InstanceNVRAMVariable{}
+		}
+
+		for varName, raw := range vars {
+			if raw == nil {
+				delete(store.Vars[guid], varName)
+				continue
+			}
+
+			v := api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{Data: raw.Data, Attributes: raw.Attributes, Timestamp: raw.Timestamp}}
+			err = uefi.Format(&v, guid, varName)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			store.Vars[guid][varName] = &v
+		}
+	}
+
+	err = inst.SetNVRAM(store)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.EmptySyncResponse
 }
