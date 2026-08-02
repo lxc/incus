@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-30 19:13-0400\n"
+"POT-Creation-Date: 2026-08-01 10:17+0000\n"
 "PO-Revision-Date: 2026-07-30 20:54+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -803,6 +803,11 @@ msgstr "Il est nécessaire de passer --recursive/-r pour tirer des répertoires"
 msgid "--recursive/-r is required when pushing directories"
 msgstr "Il est nécessaire de passer --recursive/-r pour tirer des répertoires"
 
+#: cmd/incus/move.go:103
+#, fuzzy
+msgid "--refresh can only be used with --stateless"
+msgstr "--refresh ne peut être utilisé qu'avec des instances"
+
 #: cmd/incus/copy.go:204
 msgid "--refresh can only be used with instances"
 msgstr "--refresh ne peut être utilisé qu'avec des instances"
@@ -811,7 +816,7 @@ msgstr "--refresh ne peut être utilisé qu'avec des instances"
 msgid "--reuse requires --copy-aliases"
 msgstr ""
 
-#: cmd/incus/move.go:215
+#: cmd/incus/move.go:222
 msgid "--target can only be used with clusters"
 msgstr "--target ne peut être utilisé que sur un cluster"
 
@@ -975,9 +980,8 @@ msgstr ""
 "\n"
 "L'authentification HTTP Basic (RFC 26176) peut être utilisée si elle est "
 "combinée avec le protocole « simplestreams » :\n"
-"  incus remote add ressource_distante_identifiant https://"
-"UTILISATEUR:MOTDEPASSE@exemple.com/complement/de/chemin --"
-"protocol=simplestreams\n"
+"  incus remote add ressource_distante_identifiant https://UTILISATEUR:"
+"MOTDEPASSE@exemple.com/complement/de/chemin --protocol=simplestreams\n"
 
 #: cmd/incus/config_trust.go:93
 msgid "Add new trusted client"
@@ -1292,7 +1296,7 @@ msgstr ""
 "Impossible de traiter ce remplacement, la syntaxe attendue est "
 "<périphérique>,<clef>=<valeur> : %s"
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:252
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1408,13 +1412,13 @@ msgstr "Caches mémoire :"
 msgid "Can't bind address %q: %w"
 msgstr "Impossible de se lier à l’adresse %q : %w"
 
-#: cmd/incus/move.go:117
+#: cmd/incus/move.go:123
 msgid "Can't override configuration or profiles in local rename"
 msgstr ""
 "Impossible de surcharger la configuration ou les profiles lors du renommage "
 "local"
 
-#: cmd/incus/move.go:113
+#: cmd/incus/move.go:119
 #, fuzzy
 msgid "Can't perform local rename without a new instance name"
 msgstr "Profil à appliquer au nouveau conteneur"
@@ -1640,7 +1644,7 @@ msgstr "Le membre du cluster « %s » a été supprimé du groupe « %s 
 
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529
 #: cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68
-#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:69
+#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:71
 #: cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880
 #: cmd/incus/network.go:1057 cmd/incus/network.go:1440
 #: cmd/incus/network.go:1524 cmd/incus/network.go:1586
@@ -1758,7 +1762,7 @@ msgstr ""
 msgid "Config key/value to apply to the new project"
 msgstr "Configuration clef/valeur à associer au nouveau projet"
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid "Config key/value to apply to the target instance"
 msgstr "Configuration clef/valeur à associer pour l'instance cible"
 
@@ -1817,7 +1821,7 @@ msgstr "Type de contenu : %s"
 msgid "Control: %s (%s)"
 msgstr "Contrôle : %s (%s)"
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:67
+#: cmd/incus/copy.go:66 cmd/incus/move.go:69
 msgid "Copy a stateful instance stateless"
 msgstr "Copie une instance avec état"
 
@@ -1895,7 +1899,7 @@ msgstr "Copier l'instance sans ses instantanés"
 msgid "Copy the volume without its snapshots"
 msgstr "Copier le volume sans ses instantanés"
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70
+#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72
 #: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr "Copie dans un projet différent de la source"
@@ -2921,8 +2925,8 @@ msgstr "Évacuer un membre du cluster"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action "
-"(\"cluster.evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action (\"cluster."
+"evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -3361,6 +3365,11 @@ msgstr "Échec de la création de la sauvegarde : %v"
 msgid "Failed to create certificate: %w"
 msgstr "Échec de la création du certificat : %w"
 
+#: cmd/incus/move_nearlive.go:86
+#, fuzzy, c-format
+msgid "Failed to create pre-copy snapshot %q: %w"
+msgstr "Échec de la création de %q : %w"
+
 #: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid "Failed to create storage volume backup: %w"
@@ -3371,11 +3380,22 @@ msgstr "Échec de la création de la sauvegarde du volume de stockage : %w"
 msgid "Failed to delete bitmap: %w"
 msgstr "Échec de la demande de dump : %w"
 
-#: cmd/incus/move.go:199
+#: cmd/incus/move.go:206
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
 "Échec de la suppression de l'instance originale après l'avoir copiée : %w"
+
+#: cmd/incus/move_nearlive.go:110
+#, fuzzy, c-format
+msgid "Failed to delete partial copy of instance %q on the target server: %s"
+msgstr ""
+"Échec de la suppression de l'instance originale après l'avoir copiée : %w"
+
+#: cmd/incus/move_nearlive.go:24
+#, fuzzy, c-format
+msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
+msgstr "Échec du rafraîchissement de l'instance cible '%s' : %v"
 
 #: cmd/incus/low_level.go:239
 #, fuzzy, c-format
@@ -3470,7 +3490,7 @@ msgstr "Échec de la lecture à partir de l'entrée standard : %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Échec de la lecture à partir de l'entrée standard : %w"
 
-#: cmd/incus/copy.go:382
+#: cmd/incus/copy.go:394
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Échec du rafraîchissement de l'instance cible '%s' : %v"
@@ -3500,6 +3520,11 @@ msgstr "Échec de la mise à jour de l'état du membre du cluster : %w"
 #, fuzzy, c-format
 msgid "Failed to request dump: %w"
 msgstr "Échec de la demande de dump : %w"
+
+#: cmd/incus/move_nearlive.go:140
+#, fuzzy, c-format
+msgid "Failed to restart instance %q after a failed move: %s"
+msgstr "Échec de la mise à jour de l'état du membre du cluster : %w"
 
 #: cmd/incus/cluster.go:1841
 #, c-format
@@ -3551,6 +3576,16 @@ msgstr "Échec de la mise à jour de l'état du membre du cluster : %w"
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr ""
 "Échec de l'établissement d'une relation de confiance avec le cluster : %w"
+
+#: cmd/incus/move_nearlive.go:168
+#, fuzzy, c-format
+msgid "Failed to start instance %q on the target server: %w"
+msgstr "Échec de l’analyse du preseed : %w"
+
+#: cmd/incus/move_nearlive.go:129
+#, fuzzy, c-format
+msgid "Failed to stop instance %q: %w"
+msgstr "Échec de la mise à jour de l'état du membre du cluster : %w"
 
 #: cmd/incus/cluster.go:1547
 #, c-format
@@ -4270,7 +4305,7 @@ msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr ""
 "Ignorer toute expiration automatique configurée pour le volume de stockage"
 
-#: cmd/incus/copy.go:73 cmd/incus/move.go:71
+#: cmd/incus/copy.go:73 cmd/incus/move.go:73
 msgid "Ignore copy errors for volatile files"
 msgstr "Ignorer les erreurs de copie pour les fichiers non permanents"
 
@@ -5512,8 +5547,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -6487,8 +6522,8 @@ msgstr "Gérer les volumes de stockage"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 "Gérer les volumes de stockage\n"
 "\n"
@@ -6565,12 +6600,12 @@ msgstr "Utilisation mémoire :"
 msgid "Memory:"
 msgstr "Mémoire :"
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:293
 #, c-format
 msgid "Migration API failure: %w"
 msgstr "Erreur dans l’API de migration : %w"
 
-#: cmd/incus/move.go:305
+#: cmd/incus/move.go:312
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr "Échec dans l’opération de migration : %w"
@@ -6657,12 +6692,12 @@ msgstr ""
 msgid "Move custom storage volumes between pools"
 msgstr "Déplacer un volume de stockage personnalisé d’un pool à un autre"
 
-#: cmd/incus/move.go:40
+#: cmd/incus/move.go:41
 msgid "Move instances within or in between servers"
 msgstr ""
 "Déplacer une instance d’un serveur à un autre, ou au sein d’un même serveur"
 
-#: cmd/incus/move.go:41
+#: cmd/incus/move.go:42
 msgid ""
 "Move instances within or in between servers\n"
 "\n"
@@ -6690,7 +6725,7 @@ msgstr ""
 "Le mode de transfert pull celui utilisé par défaut, car il est compatible "
 "avec toutes les versions du serveur.\n"
 
-#: cmd/incus/move.go:65
+#: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr "Déplacer l’instance sans ses instantanés"
 
@@ -7073,7 +7108,7 @@ msgid "New aliases to add to the image"
 msgstr "Nouveaux alias à rajouter à l’image"
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
-#: cmd/incus/move.go:62
+#: cmd/incus/move.go:63
 msgid "New key/value to apply to a specific device"
 msgstr "Nouvelle paire clef/valeur à appliquer sur un périphérique donné"
 
@@ -7365,6 +7400,11 @@ msgstr "Type de port : %s"
 msgid "Ports:"
 msgstr "Ports :"
 
+#: cmd/incus/move_nearlive.go:96
+#, fuzzy, c-format
+msgid "Pre-copying instance: %s"
+msgstr "Rafraîchissement de l’instance « %s »"
+
 #: cmd/incus/admin_init.go:53
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
@@ -7498,7 +7538,7 @@ msgstr "Profil à appliquer à la nouvelle image"
 msgid "Profile to apply to the new instance"
 msgstr "Profil à appliquer à la nouvelle instance"
 
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid "Profile to apply to the target instance"
 msgstr "Profil à appliquer à l’instance cible"
 
@@ -7707,7 +7747,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr "Récupération de l'image : %s"
 
-#: cmd/incus/copy.go:404
+#: cmd/incus/copy.go:416
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr "Rafraîchissement de l’instance « %s »"
@@ -9052,7 +9092,7 @@ msgid "Storage pool description"
 msgstr "Description du pool de stockage"
 
 #: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42
-#: cmd/incus/move.go:68
+#: cmd/incus/move.go:70
 msgid "Storage pool name"
 msgstr "Nom du pool de stockage"
 
@@ -9595,17 +9635,23 @@ msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
 "Mode de transfert (« pull », « push » ou « relay » ; par défaut, « pull »)"
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66
+#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
 msgstr "Mode de transfert (« pull », « push » ou « relay »)"
+
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer the instance incrementally, reducing the downtime of a running "
+"instance"
+msgstr ""
 
 #: cmd/incus/image.go:775
 #, c-format
 msgid "Transferring image: %s"
 msgstr "Transfert de l'image : %s"
 
-#: cmd/incus/copy.go:360 cmd/incus/move.go:291
+#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "Transfert de l’instance : %s"
@@ -9789,7 +9835,7 @@ msgstr "Supprimer une clef de configuration d’un groupe de serveurs"
 msgid "Unset a cluster member's configuration keys"
 msgstr "Supprimer une clef de configuration d’un membre du cluster"
 
-#: cmd/incus/move.go:64
+#: cmd/incus/move.go:65
 #, fuzzy
 msgid "Unset all profiles on the target instance"
 msgstr "tous les profils de la source n'existent pas sur la cible"
@@ -10643,8 +10689,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/create.go:51
 msgid ""
@@ -10654,8 +10700,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -10762,29 +10808,29 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from "
-"config.yaml\n"
+"    Create and start a container named \"c2\" with configuration from config."
+"yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://"
-"images.linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://images."
+"linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -10813,7 +10859,7 @@ msgid ""
 "    Only show lifecycle events."
 msgstr ""
 
-#: cmd/incus/move.go:52
+#: cmd/incus/move.go:53
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -10844,8 +10890,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/network_address_set.go:233
 #, fuzzy
@@ -10860,8 +10906,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/network.go:342
 msgid ""
@@ -10890,22 +10936,22 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 "incus profile create p1\n"
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315
@@ -10922,8 +10968,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/network_peer.go:308
 msgid ""
@@ -10954,8 +11000,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/network_zone.go:1027
 #, fuzzy
@@ -10970,8 +11016,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/operation.go:296
 msgid ""
@@ -11013,8 +11059,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/config_device.go:103
 msgid ""
@@ -11151,8 +11197,8 @@ msgstr ""
 "    Créer un profil nommé « p1 »\n"
 "\n"
 "incus profile create p1 < config.yaml\n"
-"    Créer un profil nommé « p1 » en lisant la configuration depuis "
-"config.yaml"
+"    Créer un profil nommé « p1 » en lisant la configuration depuis config."
+"yaml"
 
 #: cmd/incus/storage.go:269
 msgid ""
@@ -13264,9 +13310,9 @@ msgstr "« %s »"
 #~ "lxc config trust list "
 #~ "[<remote>:]                                           Lister tous les "
 #~ "certificats de confiance.\n"
-#~ "lxc config trust add [<remote>:] "
-#~ "<certfile.crt>                             Ajouter certfile.crt aux hôtes "
-#~ "de confiance.\n"
+#~ "lxc config trust add [<remote>:] <certfile."
+#~ "crt>                             Ajouter certfile.crt aux hôtes de "
+#~ "confiance.\n"
 #~ "lxc config trust remove [<remote>:] [hostname|"
 #~ "fingerprint]                  Supprimer le certificat des hôtes de "
 #~ "confiance.\n"
@@ -13278,8 +13324,8 @@ msgstr "« %s »"
 #~ "share/c1 path=opt\n"
 #~ "\n"
 #~ "Pour positionner une clé de configuration dans la configuration lxc :\n"
-#~ "    lxc config set [<remote>:]<container> raw.lxc "
-#~ "'lxc.aa_allow_incomplete = 1'\n"
+#~ "    lxc config set [<remote>:]<container> raw.lxc 'lxc."
+#~ "aa_allow_incomplete = 1'\n"
 #~ "\n"
 #~ "Pour écouter sur le port 8443 en IPv4 et IPv6 (vous pouvez omettre 8443 "
 #~ "c'est la valeur par défaut) :\n"
@@ -13469,8 +13515,8 @@ msgstr "« %s »"
 #~ "lxc image edit [<remote>:]<image>\n"
 #~ "    Edit image, either by launching external editor or reading STDIN.\n"
 #~ "    Example: lxc image edit <image> # launch editor\n"
-#~ "             cat image.yaml | lxc image edit <image> # read from "
-#~ "image.yaml\n"
+#~ "             cat image.yaml | lxc image edit <image> # read from image."
+#~ "yaml\n"
 #~ "\n"
 #~ "lxc image alias create [<remote>:]<alias> <fingerprint>\n"
 #~ "    Create a new alias for an existing image.\n"
@@ -13560,8 +13606,8 @@ msgstr "« %s »"
 #~ "    Éditer l'image, soit en lançant un éditeur externe ou en lisant "
 #~ "STDIN.\n"
 #~ "    Exemple : lxc image edit <image> # lance l'éditeur\n"
-#~ "              cat image.yaml | lxc image edit <image> # lit depuis "
-#~ "image.yaml\n"
+#~ "              cat image.yaml | lxc image edit <image> # lit depuis image."
+#~ "yaml\n"
 #~ "\n"
 #~ "lxc image alias create [<remote>:]<alias> <fingerprint>\n"
 #~ "    Créer un nouvel alias pour une image existante.\n"
@@ -14152,8 +14198,8 @@ msgstr "« %s »"
 #~ "  f - Base Image Fingerprint (short)\n"
 #~ "  F - Base Image Fingerprint (long)\n"
 #~ "\n"
-#~ "Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-#~ "\":\n"
+#~ "Custom columns are defined with \"[config:|devices:]key[:name][:"
+#~ "maxWidth]\":\n"
 #~ "  KEY: The (extended) config or devices key to display. If [config:|"
 #~ "devices:] is omitted then it defaults to config key.\n"
 #~ "  NAME: Name to display in the column header.\n"
@@ -14219,8 +14265,8 @@ msgstr "« %s »"
 #~ "Colonnes en mode rapide : nsacPt\n"
 #~ "\n"
 #~ "Exemple :\n"
-#~ "    lxc list -c n,volatile.base_image:\\BASE "
-#~ "IMAGE\\:0,s46,volatile.eth0.hwaddr:MAC"
+#~ "    lxc list -c n,volatile.base_image:\\BASE IMAGE\\:0,s46,volatile.eth0."
+#~ "hwaddr:MAC"
 
 #~ msgid "Failed to generate 'lxc.%s.1': %v"
 #~ msgstr "Échec lors de la génération de 'lxc.%s.1': %v"

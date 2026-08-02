@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-30 19:13-0400\n"
+"POT-Creation-Date: 2026-08-01 10:17+0000\n"
 "PO-Revision-Date: 2026-07-30 20:52+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -794,6 +794,11 @@ msgstr "Параметр --recursive/-r необходим при извлече
 msgid "--recursive/-r is required when pushing directories"
 msgstr "Параметр --recursive/-r необходим при передаче каталогов"
 
+#: cmd/incus/move.go:103
+#, fuzzy
+msgid "--refresh can only be used with --stateless"
+msgstr "--refresh может использоваться только с экземплярами"
+
 #: cmd/incus/copy.go:204
 msgid "--refresh can only be used with instances"
 msgstr "--refresh может использоваться только с экземплярами"
@@ -802,7 +807,7 @@ msgstr "--refresh может использоваться только с экз
 msgid "--reuse requires --copy-aliases"
 msgstr "--reuse требует --copy-aliases"
 
-#: cmd/incus/move.go:215
+#: cmd/incus/move.go:222
 msgid "--target can only be used with clusters"
 msgstr "--target может использоваться только с кластерами"
 
@@ -1289,7 +1294,7 @@ msgstr ""
 "Неверный синтаксис переопределения устройства, ожидается <устройство>,"
 "<параметр>=<значение>: %s"
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:252
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1405,13 +1410,13 @@ msgstr "Кеши:"
 msgid "Can't bind address %q: %w"
 msgstr "Не удается привязать адрес %q: %w"
 
-#: cmd/incus/move.go:117
+#: cmd/incus/move.go:123
 msgid "Can't override configuration or profiles in local rename"
 msgstr ""
 "Не удается переопределить конфигурацию или профили при локальном "
 "переименовании"
 
-#: cmd/incus/move.go:113
+#: cmd/incus/move.go:119
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 "Невозможно выполнить локальное переименование без нового имени экземпляра"
@@ -1635,7 +1640,7 @@ msgstr "Кластерный участник %s удален из группы 
 
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529
 #: cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68
-#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:69
+#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:71
 #: cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880
 #: cmd/incus/network.go:1057 cmd/incus/network.go:1440
 #: cmd/incus/network.go:1524 cmd/incus/network.go:1586
@@ -1755,7 +1760,7 @@ msgstr ""
 msgid "Config key/value to apply to the new project"
 msgstr "Параметр \"ключ/значение\", который будет применен к новому проекту"
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid "Config key/value to apply to the target instance"
 msgstr ""
 "Параметр \"параметр/значение\", который будет применен к целевому экземпляру"
@@ -1815,7 +1820,7 @@ msgstr "Тип содержимого: %s"
 msgid "Control: %s (%s)"
 msgstr "контроль: %s (%s)"
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:67
+#: cmd/incus/copy.go:66 cmd/incus/move.go:69
 msgid "Copy a stateful instance stateless"
 msgstr "Копировать экземпляр с сохранением его состояния"
 
@@ -1894,7 +1899,7 @@ msgstr "Копировать экземпляр без его моменталь
 msgid "Copy the volume without its snapshots"
 msgstr "Копировать том без его моментальных снимков"
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70
+#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72
 #: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr "Копировать в проект, отличный от исходного"
@@ -2929,8 +2934,8 @@ msgstr "Эвакуировать участника кластера"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action "
-"(\"cluster.evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action (\"cluster."
+"evacuate\" instance configuration option)"
 msgstr ""
 "Эвакуация участника кластера\n"
 "\n"
@@ -3366,6 +3371,11 @@ msgstr "Не удалось создать резервную копию: %v"
 msgid "Failed to create certificate: %w"
 msgstr "Не удалось создать сертификат: %w"
 
+#: cmd/incus/move_nearlive.go:86
+#, fuzzy, c-format
+msgid "Failed to create pre-copy snapshot %q: %w"
+msgstr "Не удалось создать %q: %w"
+
 #: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid "Failed to create storage volume backup: %w"
@@ -3376,10 +3386,20 @@ msgstr "Не удалось создать резервную копию том�
 msgid "Failed to delete bitmap: %w"
 msgstr "Не удалось запросить дамп: %w"
 
-#: cmd/incus/move.go:199
+#: cmd/incus/move.go:206
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr "Не удалось удалить исходный экземпляр после его копирования: %w"
+
+#: cmd/incus/move_nearlive.go:110
+#, fuzzy, c-format
+msgid "Failed to delete partial copy of instance %q on the target server: %s"
+msgstr "Не удалось удалить исходный экземпляр после его копирования: %w"
+
+#: cmd/incus/move_nearlive.go:24
+#, fuzzy, c-format
+msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
+msgstr "Не удалось обновить целевой экземпляр '%s': %v"
 
 #: cmd/incus/low_level.go:239
 #, c-format
@@ -3473,7 +3493,7 @@ msgstr "Не удалось прочитать из файла: %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Не удалось прочитать из стандартного ввода: %w"
 
-#: cmd/incus/copy.go:382
+#: cmd/incus/copy.go:394
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Не удалось обновить целевой экземпляр '%s': %v"
@@ -3503,6 +3523,11 @@ msgstr "Не удалось скопировать память экземпля
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr "Не удалось запросить дамп: %w"
+
+#: cmd/incus/move_nearlive.go:140
+#, fuzzy, c-format
+msgid "Failed to restart instance %q after a failed move: %s"
+msgstr "Не удалось получить переменную UEFI экземпляра: %w"
 
 #: cmd/incus/cluster.go:1841
 #, c-format
@@ -3552,6 +3577,16 @@ msgstr "Не удалось получить переменные UEFI экзе�
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "Не удалось установить доверительные отношения с кластером: %w"
+
+#: cmd/incus/move_nearlive.go:168
+#, fuzzy, c-format
+msgid "Failed to start instance %q on the target server: %w"
+msgstr "Не удалось разобрать файл предварительной настройки (preseed): %w"
+
+#: cmd/incus/move_nearlive.go:129
+#, fuzzy, c-format
+msgid "Failed to stop instance %q: %w"
+msgstr "Не удалось скопировать память экземпляра: %w"
 
 #: cmd/incus/cluster.go:1547
 #, c-format
@@ -3715,9 +3750,9 @@ msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
-"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс "
-"\",noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их "
-"при необходимости, например, csv,header"
+"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс \","
+"noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их при "
+"необходимости, например, csv,header"
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
@@ -3738,9 +3773,9 @@ msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
-"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс "
-"\",noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их "
-"при отсутствии, например, csv,header"
+"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс \","
+"noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их при "
+"отсутствии, например, csv,header"
 
 #: cmd/incus/monitor.go:60
 msgid "Format (json|pretty|yaml)"
@@ -3786,8 +3821,8 @@ msgstr ""
 "на него соединения\n"
 "на указанный адрес и порт внутри экземпляра.\n"
 "\n"
-"Перед номером любого из портов можно указать адрес (в формате "
-"«ADDRESS:PORT»);\n"
+"Перед номером любого из портов можно указать адрес (в формате «ADDRESS:"
+"PORT»);\n"
 "если адрес не указан, по умолчанию используется 127.0.0.1. Адреса IPv6 "
 "необходимо заключать\n"
 "в квадратные скобки (например, «[::1]:80»)."
@@ -4270,7 +4305,7 @@ msgstr ""
 "Игнорировать любое настроенное автоматическое истечение срока действия для "
 "тома хранения"
 
-#: cmd/incus/copy.go:73 cmd/incus/move.go:71
+#: cmd/incus/copy.go:73 cmd/incus/move.go:73
 msgid "Ignore copy errors for volatile files"
 msgstr "Игнорировать ошибки копирования для временных файлов"
 
@@ -5534,8 +5569,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5618,8 +5653,8 @@ msgstr ""
 "  f - Отпечаток базового образа (краткий)\n"
 "  F - Отпечаток базового образа (длинный)\n"
 "\n"
-"Пользовательские столбцы определяются с помощью \"[config:|"
-"devices:]key[:name][:maxWidth]\":\n"
+"Пользовательские столбцы определяются с помощью \"[config:|devices:]key[:"
+"name][:maxWidth]\":\n"
 "  KEY: (расширенный) ключ конфигурации или устройств для отображения. Если "
 "[config:|devices:] опущено,\n"
 "     по умолчанию используется ключ конфигурации.\n"
@@ -6548,13 +6583,13 @@ msgstr "Управление томами хранения"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 "Управление томами хранения\n"
 "\n"
-"Если не указан префикс, все операции с томами затрагивают \"custom\" "
-"(созданные пользователем) тома."
+"Если не указан префикс, все операции с томами затрагивают "
+"\"custom\" (созданные пользователем) тома."
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
 msgid "Manage the list of remote servers"
@@ -6626,12 +6661,12 @@ msgstr "Использование памяти:"
 msgid "Memory:"
 msgstr "Память:"
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:293
 #, c-format
 msgid "Migration API failure: %w"
 msgstr "Сбой API миграции: %w"
 
-#: cmd/incus/move.go:305
+#: cmd/incus/move.go:312
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr "Операция миграции завершилась с ошибкой: %w"
@@ -6721,11 +6756,11 @@ msgstr ""
 msgid "Move custom storage volumes between pools"
 msgstr "Перемещение пользовательских томов хранения между пулами"
 
-#: cmd/incus/move.go:40
+#: cmd/incus/move.go:41
 msgid "Move instances within or in between servers"
 msgstr "Перемещение экземпляров внутри серверов или между ними"
 
-#: cmd/incus/move.go:41
+#: cmd/incus/move.go:42
 msgid ""
 "Move instances within or in between servers\n"
 "\n"
@@ -6754,7 +6789,7 @@ msgstr ""
 "Режим передачи pull является режимом по умолчанию, поскольку он совместим со "
 "всеми версиями сервера.\n"
 
-#: cmd/incus/move.go:65
+#: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr "Переместить экземпляр без его моментальных снимков"
 
@@ -7139,7 +7174,7 @@ msgid "New aliases to add to the image"
 msgstr "Новые псевдонимы для добавления к образу"
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
-#: cmd/incus/move.go:62
+#: cmd/incus/move.go:63
 msgid "New key/value to apply to a specific device"
 msgstr "Новая пара параметр/значение для применения к конкретному устройству"
 
@@ -7436,6 +7471,11 @@ msgstr "Тип порта: %s"
 msgid "Ports:"
 msgstr "Порты:"
 
+#: cmd/incus/move_nearlive.go:96
+#, fuzzy, c-format
+msgid "Pre-copying instance: %s"
+msgstr "Обновление экземпляра: %s"
+
 #: cmd/incus/admin_init.go:53
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
@@ -7570,7 +7610,7 @@ msgstr "Профиль, применяемый к новому образу"
 msgid "Profile to apply to the new instance"
 msgstr "Профиль, применяемый к новому экземпляру"
 
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid "Profile to apply to the target instance"
 msgstr "Профиль, применяемый к целевому экземпляру"
 
@@ -7778,7 +7818,7 @@ msgstr "Обновить существующие копии томов хран
 msgid "Refresh images"
 msgstr "Обновить образы"
 
-#: cmd/incus/copy.go:404
+#: cmd/incus/copy.go:416
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr "Обновление экземпляра: %s"
@@ -9183,7 +9223,7 @@ msgid "Storage pool description"
 msgstr "Описание пула хранения"
 
 #: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42
-#: cmd/incus/move.go:68
+#: cmd/incus/move.go:70
 msgid "Storage pool name"
 msgstr "Название пула хранения"
 
@@ -9746,17 +9786,23 @@ msgstr "Тип передатчика: %s"
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr "Режим передачи, один из pull (по умолчанию), push или relay"
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66
+#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
 msgstr "Режим передачи. Один из pull, push или relay"
+
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer the instance incrementally, reducing the downtime of a running "
+"instance"
+msgstr ""
 
 #: cmd/incus/image.go:775
 #, c-format
 msgid "Transferring image: %s"
 msgstr "Передача образа: %s"
 
-#: cmd/incus/copy.go:360 cmd/incus/move.go:291
+#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "Передача экземпляра: %s"
@@ -9941,7 +9987,7 @@ msgstr "Убрать параметров конфигурации класте�
 msgid "Unset a cluster member's configuration keys"
 msgstr "Убрать параметры конфигурации участника кластера"
 
-#: cmd/incus/move.go:64
+#: cmd/incus/move.go:65
 msgid "Unset all profiles on the target instance"
 msgstr "Убрать все профили с целевого экземпляра"
 
@@ -10860,8 +10906,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 "incus create images:debian/12 u1\n"
@@ -10870,8 +10916,8 @@ msgstr ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Создать экземпляр u1 с конфигурацией из config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Создать и запустить виртуальную машину v2, переопределив размер диска и "
 "шину"
 
@@ -11028,21 +11074,21 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from "
-"config.yaml\n"
+"    Create and start a container named \"c2\" with configuration from config."
+"yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://"
-"images.linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://images."
+"linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
@@ -11053,21 +11099,21 @@ msgstr ""
 "    Создать и запустить контейнер \"c2\" с конфигурацией из config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
-"    Создать и запустить контейнер \"c3\" с тем же размером, что и AWS "
-"t2.micro (1 vCPU, 1 ГБ ОЗУ)\n"
+"    Создать и запустить контейнер \"c3\" с тем же размером, что и AWS t2."
+"micro (1 vCPU, 1 ГБ ОЗУ)\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Создать и запустить виртуальную машину \"v1\" с 4 vCPU и 4 ГБ ОЗУ\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Создать и запустить виртуальную машину \"v2\" с переопределением размера "
 "диска и шины"
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -11077,8 +11123,8 @@ msgid ""
 "incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "    Отобразить экземпляры, используя столбцы \"НАЗВАНИЕ\", \"БАЗОВЫЙ "
 "ОБРАЗ\", \"СТАТУС\", \"IPV4\", \"IPV6\" и \"MAC\".\n"
 "    \"БАЗОВЫЙ ОБРАЗ\", \"MAC\" и \"ОБРАЗ OS\" — это пользовательские "
@@ -11119,7 +11165,7 @@ msgstr ""
 "incus monitor --type=lifecycle\n"
 "    Отображать только события жизненного цикла."
 
-#: cmd/incus/move.go:52
+#: cmd/incus/move.go:53
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
@@ -11180,8 +11226,8 @@ msgstr ""
 "    Создать новую сеть с именем foo\n"
 "\n"
 "incus network create foo < config.yaml\n"
-"    Создать новую сеть с именем foo, используя содержимое файла "
-"config.yaml.\n"
+"    Создать новую сеть с именем foo, используя содержимое файла config."
+"yaml.\n"
 "\n"
 "incus network create bar network=baz --type ovn\n"
 "    Создать новую сеть OVN с именем bar, используя baz в качестве сети "
@@ -11205,8 +11251,8 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 "incus network integration create o1 ovn\n"
 "    Создать сетевую интеграцию o1 типа ovn\n"
@@ -11216,13 +11262,13 @@ msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
-"incus network integration edit <сетевая интеграция> < network-"
-"integration.yaml\n"
+"incus network integration edit <сетевая интеграция> < network-integration."
+"yaml\n"
 "    Обновить сетевую интеграцию, используя содержимое файла network-"
 "integration.yaml"
 
@@ -11473,8 +11519,8 @@ msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
 "    Update a storage bucket using the content of bucket.yaml."
 msgstr ""
-"incus storage bucket edit [<сервер>:]<пул> <сегмент хранилища> < "
-"bucket.yaml\n"
+"incus storage bucket edit [<сервер>:]<пул> <сегмент хранилища> < bucket."
+"yaml\n"
 "    Обновить сегмент хранилища, используя содержимое файла bucket.yaml."
 
 #: cmd/incus/storage_bucket.go:1124
@@ -11484,8 +11530,8 @@ msgid ""
 msgstr ""
 "incus storage bucket edit [<сервер>:]<пул хранения> <сегмент хранения> "
 "<параметр> < key.yaml\n"
-"    Обновить параметр сегмента хранилища, используя содержимое файла "
-"key.yaml."
+"    Обновить параметр сегмента хранилища, используя содержимое файла key."
+"yaml."
 
 #: cmd/incus/storage_bucket.go:1303
 msgid ""

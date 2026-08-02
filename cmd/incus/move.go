@@ -24,6 +24,7 @@ type cmdMove struct {
 	flagInstanceOnly      bool
 	flagDevice            []string
 	flagMode              string
+	flagRefresh           bool
 	flagStateless         bool
 	flagStorage           string
 	flagTarget            string
@@ -64,6 +65,7 @@ incus move <old name> <new name> [--instance-only]
 	cli.AddBoolFlag(cmd.Flags(), &c.flagNoProfiles, "no-profiles", i18n.G("Unset all profiles on the target instance"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagInstanceOnly, "instance-only", i18n.G("Move the instance without its snapshots"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagMode, "mode", moveDefaultMode, "", i18n.G("Transfer mode. One of pull, push or relay"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRefresh, "refresh", i18n.G("Transfer the instance incrementally, reducing the downtime of a running instance"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagStateless, "stateless", i18n.G("Copy a stateful instance stateless"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorage, "storage|s", "", "", i18n.G("Storage pool name"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTarget, "target", "", "", i18n.G("Cluster member name"))
@@ -96,6 +98,10 @@ func (c *cmdMove) run(cmd *cobra.Command, args []string) error {
 	dstServer := parsed[1].RemoteServer
 	hasDstInstance := !parsed[1].RemoteObject.Skipped
 	dstInstanceName := parsed[1].RemoteObject.String
+
+	if c.flagRefresh && !c.flagStateless {
+		return errors.New(i18n.G("--refresh can only be used with --stateless"))
+	}
 
 	// Parse the mode
 	mode := moveDefaultMode
@@ -181,6 +187,7 @@ func (c *cmdMove) run(cmd *cobra.Command, args []string) error {
 	cpy.flagProfile = c.flagProfile
 	cpy.flagNoProfiles = c.flagNoProfiles
 	cpy.flagAllowInconsistent = c.flagAllowInconsistent
+	cpy.flagRefresh = c.flagRefresh
 
 	instanceOnly := c.flagInstanceOnly
 
