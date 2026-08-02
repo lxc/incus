@@ -563,6 +563,7 @@ var APIExtensions = []string{
 	"resources_cpu_cluster",
 	"acme_eab",
 	"instance_protection_start",
+	"instance_nvram_bulk_update",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
