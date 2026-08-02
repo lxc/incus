@@ -1123,7 +1123,7 @@ var mediaDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
 		path.add(fmt.Sprintf("%x", remaining), len(remaining) == 0)
 		return path.String(), nil
 	case 0x04: // File Path.
-		path, err := r.readZn16(r.rem())
+		path, err := r.readZn16(r.rem() / 2)
 		if err != nil {
 			return "", err
 		}
@@ -1267,7 +1267,7 @@ func devicePathNode(nodeType uint8, subtype uint8, b []byte) (string, error) {
 		case 0x04: // Media Device Path.
 			repr, err := mediaDevicePath(subtype, b)
 			if err != nil {
-				return fmt.Sprintf("MediaType(0x%x,%x)", subtype, b), nil
+				return fmt.Sprintf("MediaPath(0x%x,%x)", subtype, b), nil
 			}
 
 			return repr, err
