@@ -356,8 +356,15 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 	sourceMemberInfo, targetMemberInfo, err := evacuateClusterSelectTarget(ctx, opts.s, inst)
 	if err != nil {
 		if api.StatusErrorCheck(err, http.StatusNotFound) {
-			// Skip migration if no target is available.
-			l.Warn("No migration target available for instance")
+			// No target was available, so stop the instance in place instead.
+			l.Warn("No migration target available for instance, stopping it in place")
+
+			if opts.stopInstance != nil && isRunning {
+				_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
+
+				return opts.stopInstance(inst, "")
+			}
+
 			return nil
 		}
 
@@ -762,7 +769,7 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 	}
 
 	if targetMemberInfo == nil {
-		return nil, nil, fmt.Errorf("Couldn't find a cluster member for instance %q in project %q", inst.Name(), inst.Project().Name)
+		return nil, nil, api.StatusErrorf(http.StatusNotFound, "Couldn't find a cluster member for instance %q in project %q", inst.Name(), inst.Project().Name)
 	}
 
 	return sourceMemberInfo, targetMemberInfo, nil
