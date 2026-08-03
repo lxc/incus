@@ -6998,6 +6998,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			"security.agent.metrics",
 			"security.csm",
 			"security.protection.delete",
+			"security.protection.start",
 			"security.guestapi",
 			"security.secureboot",
 		}
