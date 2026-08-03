@@ -3,9 +3,11 @@
 package incus
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/apex/log"
+	ispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opencontainers/umoci"
 	"github.com/opencontainers/umoci/oci/cas/dir"
 	"github.com/opencontainers/umoci/oci/casext"
@@ -61,4 +63,52 @@ func unpackOCIImage(imagePath string, imageTag string, bundlePath string) error 
 	defer logger.WarnOnError(engine.Close, "Failed to close CAS engine")
 
 	return umoci.Unpack(engineExt, imageTag, bundlePath, unpackOptions)
+}
+
+// getOCIImageCmd reads the image config blob's Cmd field directly from a local OCI layout, the same way umoci itself reads it (no subprocess).
+func getOCIImageCmd(imagePath string, imageTag string) ([]string, error) {
+	engine, err := dir.Open(imagePath)
+	if err != nil {
+		return nil, fmt.Errorf("Open CAS: %w", err)
+	}
+
+	engineExt := casext.NewEngine(engine)
+	defer logger.WarnOnError(engine.Close, "Failed to close CAS engine")
+
+	ctx := context.Background()
+
+	descriptorPaths, err := engineExt.ResolveReference(ctx, imageTag)
+	if err != nil {
+		return nil, fmt.Errorf("resolve reference: %w", err)
+	}
+
+	if len(descriptorPaths) != 1 {
+		return nil, fmt.Errorf("tag is ambiguous or missing: %s", imageTag)
+	}
+
+	manifestBlob, err := engineExt.FromDescriptor(ctx, descriptorPaths[0].Descriptor())
+	if err != nil {
+		return nil, fmt.Errorf("get manifest: %w", err)
+	}
+
+	defer logger.WarnOnError(manifestBlob.Close, "Failed to close manifest blob")
+
+	manifest, ok := manifestBlob.Data.(ispec.Manifest)
+	if !ok {
+		return nil, fmt.Errorf("unexpected manifest blob type: %s", manifestBlob.Descriptor.MediaType)
+	}
+
+	configBlob, err := engineExt.FromDescriptor(ctx, manifest.Config)
+	if err != nil {
+		return nil, fmt.Errorf("get config blob: %w", err)
+	}
+
+	defer logger.WarnOnError(configBlob.Close, "Failed to close config blob")
+
+	config, ok := configBlob.Data.(ispec.Image)
+	if !ok {
+		return nil, fmt.Errorf("unexpected config blob type: %s", configBlob.Descriptor.MediaType)
+	}
+
+	return config.Config.Cmd, nil
 }

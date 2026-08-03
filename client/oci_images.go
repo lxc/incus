@@ -40,6 +40,11 @@ type ociInfo struct {
 	} `json:"LayersData"`
 }
 
+// ociImageConfig carries the OCI image's own (unmerged) default command.
+type ociImageConfig struct {
+	Cmd []string `json:"Cmd"`
+}
+
 // Get the proxy host value.
 func (r *ProtocolOCI) getProxyHost() (*url.URL, error) {
 	req, err := http.NewRequest("GET", r.httpHost, nil)
@@ -204,6 +209,23 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		return nil, err
 	}
 
+	// Capture the image's own unmerged command before unpack merges it into Process.Args.
+	imageCmd, err := getOCIImageCmd(filepath.Join(ociPath, "oci"), imageTag)
+	if err != nil {
+		logger.Debug("Error inspecting OCI image config", logger.Ctx{"image": filepath.Join(ociPath, "oci"), "err": err})
+		return nil, err
+	}
+
+	cmdData, err := json.Marshal(ociImageConfig{Cmd: imageCmd})
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.WriteFile(filepath.Join(ociPath, "image", "oci-image-config.json"), cmdData, 0o644)
+	if err != nil {
+		return nil, err
+	}
+
 	// Generate a metadata.yaml.
 	if req.ProgressHandler != nil {
 		req.ProgressHandler(ioprogress.ProgressData{Text: "Generating image metadata"})
@@ -256,7 +278,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		return nil, err
 	}
 
-	metadataProcess := subprocess.NewProcessWithFds("tar", []string{"-cf", "-", "-C", filepath.Join(ociPath, "image"), "config.json", "metadata.yaml"}, nil, compressWrite, os.Stderr)
+	metadataProcess := subprocess.NewProcessWithFds("tar", []string{"-cf", "-", "-C", filepath.Join(ociPath, "image"), "config.json", "metadata.yaml", "oci-image-config.json"}, nil, compressWrite, os.Stderr)
 	err = metadataProcess.Start(ctx)
 	if err != nil {
 		return nil, err
