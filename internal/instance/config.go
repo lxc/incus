@@ -347,6 +347,15 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Prevents the instance from being deleted
 	"security.protection.delete": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(entity=instance, group=security, key=security.protection.start)
+	//
+	// ---
+	//  type: bool
+	//  defaultdesc: `false`
+	//  liveupdate: yes
+	//  shortdesc: Prevents the instance from being started
+	"security.protection.start": validate.Optional(validate.IsBool),
+
 	// gendoc:generate(entity=instance, group=security, key=security.selinux.type)
 	// Override the SELinux file type used for labeling instance storage.
 	// ---
