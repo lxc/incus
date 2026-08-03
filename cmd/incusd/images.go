@@ -1572,6 +1572,90 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 	return &result, imageType, nil
 }
 
+// getOCIImageCmd reads the image's own unmerged command from the stored metadata tarball at fname.
+// Returns a nil slice, no error, if the tarball predates this file (older cached images).
+func getOCIImageCmd(fname string) ([]string, error) {
+	var tr *tar.Reader
+
+	r, err := os.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+
+	defer logger.WarnOnError(r.Close, "Failed to close file")
+
+	_, algo, unpacker, err := archive.DetectCompressionFile(r)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.Seek(0, io.SeekStart)
+	if err != nil {
+		return nil, err
+	}
+
+	if unpacker == nil {
+		return nil, errors.New("Unsupported backup compression")
+	}
+
+	if len(unpacker) > 0 {
+		if algo == ".squashfs" {
+			// sqfs2tar can only read from a file
+			unpacker = append(unpacker, fname)
+		}
+
+		cmd := exec.Command(unpacker[0], unpacker[1:]...)
+		cmd.Stdin = r
+
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return nil, err
+		}
+
+		defer logger.WarnOnError(stdout.Close, "Failed to close stdout pipe")
+
+		err = cmd.Start()
+		if err != nil {
+			return nil, err
+		}
+
+		defer logger.WarnOnError(cmd.Wait, "Failed to wait for command")
+
+		// Double close stdout, this is to avoid blocks in Wait()
+		defer logger.WarnOnError(stdout.Close, "Failed to close stdout pipe")
+
+		tr = tar.NewReader(stdout)
+	} else {
+		tr = tar.NewReader(r)
+	}
+
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break // End of archive
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		if hdr.Name == "oci-image-config.json" || hdr.Name == "./oci-image-config.json" {
+			var imageConfig struct {
+				Cmd []string `json:"Cmd"`
+			}
+
+			err = json.NewDecoder(localUtil.MaxBytesReader(tr, 1024*1024)).Decode(&imageConfig)
+			if err != nil {
+				return nil, err
+			}
+
+			return imageConfig.Cmd, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectName string, public bool, clauses *filter.ClauseSet, hasPermission auth.PermissionChecker, allProjects bool) (any, error) {
 	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 

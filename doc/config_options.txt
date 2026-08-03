@@ -2296,6 +2296,19 @@ The specified version expression is used to set `libnvidia-container NVIDIA_REQU
 
 <!-- config group instance-nvidia end -->
 <!-- config group instance-oci start -->
+```{config:option} oci.cmd instance-oci
+:condition: "OCI container"
+:liveupdate: "no"
+:shortdesc: "Default command"
+:type: "string"
+Override the default command of an OCI container.
+
+Unlike `oci.entrypoint`, this doesn't replace `Process.Args`; it only
+records the image's (or an override's) default command arguments so
+that the unmerged entry point can be recovered as `oci.entrypoint` minus
+this value.
+```
+
 ```{config:option} oci.cwd instance-oci
 :condition: "OCI container"
 :liveupdate: "no"

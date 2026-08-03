@@ -31,16 +31,16 @@ It's an integer which indicates the priority of a container during shutdown.
 
 Containers will shutdown starting with the highest priority level.
 
-Containers with the same priority will shutdown in parallel.  It defaults to 0.
+Containers with the same priority will shutdown in parallel. It defaults to 0.
 
 ## `container_syscall_filtering`
 
 A number of new syscalls related container configuration keys were introduced.
 
-* `security.syscalls.blacklist_default` <!-- wokeignore:rule=blacklist -->
-* `security.syscalls.blacklist_compat` <!-- wokeignore:rule=blacklist -->
-* `security.syscalls.blacklist` <!-- wokeignore:rule=blacklist -->
-* `security.syscalls.whitelist` <!-- wokeignore:rule=whitelist -->
+- `security.syscalls.blacklist_default` <!-- wokeignore:rule=blacklist -->
+- `security.syscalls.blacklist_compat` <!-- wokeignore:rule=blacklist -->
+- `security.syscalls.blacklist` <!-- wokeignore:rule=blacklist -->
+- `security.syscalls.whitelist` <!-- wokeignore:rule=whitelist -->
 
 See [Instance configuration](instance-config) for how to use them.
 
@@ -67,11 +67,11 @@ Add support for the ETag header on all relevant endpoints.
 
 This adds the following HTTP header on answers to GET:
 
-* ETag (SHA-256 of user modifiable content)
+- ETag (SHA-256 of user modifiable content)
 
 And adds support for the following HTTP header on PUT requests:
 
-* If-Match (ETag value retrieved through previous GET)
+- If-Match (ETag value retrieved through previous GET)
 
 This makes it possible to GET an Incus object, modify it and PUT it without
 risking to hit a race condition where Incus or another client modified the
@@ -136,15 +136,15 @@ Network management API for Incus.
 
 This includes:
 
-* Addition of the `managed` property on `/1.0/networks` entries
-* All the network configuration options (see [Network configuration](networks.md) for details)
-* `POST /1.0/networks` (see [RESTful API](rest-api.md) for details)
-* `PUT /1.0/networks/<entry>` (see [RESTful API](rest-api.md) for details)
-* `PATCH /1.0/networks/<entry>` (see [RESTful API](rest-api.md) for details)
-* `DELETE /1.0/networks/<entry>` (see [RESTful API](rest-api.md) for details)
-* `ipv4.address` property on `nic` type devices (when `nictype` is `bridged`)
-* `ipv6.address` property on `nic` type devices (when `nictype` is `bridged`)
-* `security.mac_filtering` property on `nic` type devices (when `nictype` is `bridged`)
+- Addition of the `managed` property on `/1.0/networks` entries
+- All the network configuration options (see [Network configuration](networks.md) for details)
+- `POST /1.0/networks` (see [RESTful API](rest-api.md) for details)
+- `PUT /1.0/networks/<entry>` (see [RESTful API](rest-api.md) for details)
+- `PATCH /1.0/networks/<entry>` (see [RESTful API](rest-api.md) for details)
+- `DELETE /1.0/networks/<entry>` (see [RESTful API](rest-api.md) for details)
+- `ipv4.address` property on `nic` type devices (when `nictype` is `bridged`)
+- `ipv6.address` property on `nic` type devices (when `nictype` is `bridged`)
+- `security.mac_filtering` property on `nic` type devices (when `nictype` is `bridged`)
 
 ## `profile_usedby`
 
@@ -173,9 +173,9 @@ That output will expire similarly to other log files, typically after 48 hours.
 
 Adds the following to the REST API:
 
-* ETag header on GET of a certificate
-* PUT of certificate entries
-* PATCH of certificate entries
+- ETag header on GET of a certificate
+- PUT of certificate entries
+- PATCH of certificate entries
 
 ## `container_exec_signal_handling`
 
@@ -222,27 +222,27 @@ Storage management API for Incus.
 
 This includes:
 
-* `GET /1.0/storage-pools`
-* `POST /1.0/storage-pools` (see [RESTful API](rest-api.md) for details)
+- `GET /1.0/storage-pools`
+- `POST /1.0/storage-pools` (see [RESTful API](rest-api.md) for details)
 
-* `GET /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
-* `POST /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
-* `PUT /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
-* `PATCH /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
-* `DELETE /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
+- `GET /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
+- `POST /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
+- `PUT /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
+- `PATCH /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
+- `DELETE /1.0/storage-pools/<name>` (see [RESTful API](rest-api.md) for details)
 
-* `GET /1.0/storage-pools/<name>/volumes` (see [RESTful API](rest-api.md) for details)
+- `GET /1.0/storage-pools/<name>/volumes` (see [RESTful API](rest-api.md) for details)
 
-* `GET /1.0/storage-pools/<name>/volumes/<volume_type>` (see [RESTful API](rest-api.md) for details)
-* `POST /1.0/storage-pools/<name>/volumes/<volume_type>` (see [RESTful API](rest-api.md) for details)
+- `GET /1.0/storage-pools/<name>/volumes/<volume_type>` (see [RESTful API](rest-api.md) for details)
+- `POST /1.0/storage-pools/<name>/volumes/<volume_type>` (see [RESTful API](rest-api.md) for details)
 
-* `GET /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
-* `POST /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
-* `PUT /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
-* `PATCH /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
-* `DELETE /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
+- `GET /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
+- `POST /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
+- `PUT /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
+- `PATCH /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
+- `DELETE /1.0/storage-pools/<pool>/volumes/<volume_type>/<name>` (see [RESTful API](rest-api.md) for details)
 
-* All storage configuration options (see [Storage configuration](storage.md) for details)
+- All storage configuration options (see [Storage configuration](storage.md) for details)
 
 ## `file_delete`
 
@@ -486,28 +486,28 @@ Clustering API for Incus.
 
 This includes the following new endpoints (see [RESTful API](rest-api.md) for details):
 
-* `GET /1.0/cluster`
-* `UPDATE /1.0/cluster`
+- `GET /1.0/cluster`
+- `UPDATE /1.0/cluster`
 
-* `GET /1.0/cluster/members`
+- `GET /1.0/cluster/members`
 
-* `GET /1.0/cluster/members/<name>`
-* `POST /1.0/cluster/members/<name>`
-* `DELETE /1.0/cluster/members/<name>`
+- `GET /1.0/cluster/members/<name>`
+- `POST /1.0/cluster/members/<name>`
+- `DELETE /1.0/cluster/members/<name>`
 
 The following existing endpoints have been modified:
 
-* `POST /1.0/containers` accepts a new `target` query parameter
-* `POST /1.0/storage-pools` accepts a new `target` query parameter
-* `GET /1.0/storage-pool/<name>` accepts a new `target` query parameter
-* `POST /1.0/storage-pool/<pool>/volumes/<type>` accepts a new `target` query parameter
-* `GET /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
-* `POST /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
-* `PUT /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
-* `PATCH /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
-* `DELETE /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
-* `POST /1.0/networks` accepts a new `target` query parameter
-* `GET /1.0/networks/<name>` accepts a new `target` query parameter
+- `POST /1.0/containers` accepts a new `target` query parameter
+- `POST /1.0/storage-pools` accepts a new `target` query parameter
+- `GET /1.0/storage-pool/<name>` accepts a new `target` query parameter
+- `POST /1.0/storage-pool/<pool>/volumes/<type>` accepts a new `target` query parameter
+- `GET /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
+- `POST /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
+- `PUT /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
+- `PATCH /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
+- `DELETE /1.0/storage-pool/<pool>/volumes/<type>/<name>` accepts a new `target` query parameter
+- `POST /1.0/networks` accepts a new `target` query parameter
+- `GET /1.0/networks/<name>` accepts a new `target` query parameter
 
 ## `event_lifecycle`
 
@@ -534,18 +534,18 @@ Add container backup support.
 
 This includes the following new endpoints (see [RESTful API](rest-api.md) for details):
 
-* `GET /1.0/containers/<name>/backups`
-* `POST /1.0/containers/<name>/backups`
+- `GET /1.0/containers/<name>/backups`
+- `POST /1.0/containers/<name>/backups`
 
-* `GET /1.0/containers/<name>/backups/<name>`
-* `POST /1.0/containers/<name>/backups/<name>`
-* `DELETE /1.0/containers/<name>/backups/<name>`
+- `GET /1.0/containers/<name>/backups/<name>`
+- `POST /1.0/containers/<name>/backups/<name>`
+- `DELETE /1.0/containers/<name>/backups/<name>`
 
-* `GET /1.0/containers/<name>/backups/<name>/export`
+- `GET /1.0/containers/<name>/backups/<name>/export`
 
 The following existing endpoint has been modified:
 
-* `POST /1.0/containers` accepts the new source type `backup`
+- `POST /1.0/containers` accepts the new source type `backup`
 
 ## `dev_incus_images`
 
@@ -567,10 +567,10 @@ socket) or `unix:@/tmp/unix.sock` (abstract socket).
 
 Supported connections are now:
 
-* `TCP <-> TCP`
-* `UNIX <-> UNIX`
-* `TCP <-> UNIX`
-* `UNIX <-> TCP`
+- `TCP <-> TCP`
+- `UNIX <-> UNIX`
+- `TCP <-> UNIX`
+- `UNIX <-> TCP`
 
 ## `proxy_udp`
 
@@ -578,13 +578,13 @@ Add support for UDP in proxy devices.
 
 Supported connections are now:
 
-* `TCP <-> TCP`
-* `UNIX <-> UNIX`
-* `TCP <-> UNIX`
-* `UNIX <-> TCP`
-* `UDP <-> UDP`
-* `TCP <-> UDP`
-* `UNIX <-> UDP`
+- `TCP <-> TCP`
+- `UNIX <-> UNIX`
+- `TCP <-> UNIX`
+- `UNIX <-> TCP`
+- `UDP <-> UDP`
+- `TCP <-> UDP`
+- `UNIX <-> UDP`
 
 ## `clustering_join`
 
@@ -608,7 +608,7 @@ Adds support for retrieving a network's state.
 
 This adds the following new endpoint (see [RESTful API](rest-api.md) for details):
 
-* `GET /1.0/networks/<name>/state`
+- `GET /1.0/networks/<name>/state`
 
 ## `proxy_unix_dac_properties`
 
@@ -668,9 +668,9 @@ allows configuration of backup compression.
 This introduces a few extra configuration keys when using `nvidia.runtime` and the `libnvidia-container` library.
 Those keys translate pretty much directly to the matching NVIDIA container environment variables:
 
-* `nvidia.driver.capabilities` => `NVIDIA_DRIVER_CAPABILITIES`
-* `nvidia.require.cuda` => `NVIDIA_REQUIRE_CUDA`
-* `nvidia.require.driver` => `NVIDIA_REQUIRE_DRIVER`
+- `nvidia.driver.capabilities` => `NVIDIA_DRIVER_CAPABILITIES`
+- `nvidia.require.cuda` => `NVIDIA_REQUIRE_CUDA`
+- `nvidia.require.driver` => `NVIDIA_REQUIRE_DRIVER`
 
 ## `storage_api_volume_snapshots`
 
@@ -679,13 +679,13 @@ only for volumes.
 
 This adds the following new endpoint (see [RESTful API](rest-api.md) for details):
 
-* `GET /1.0/storage-pools/<pool>/volumes/<type>/<name>/snapshots`
-* `POST /1.0/storage-pools/<pool>/volumes/<type>/<name>/snapshots`
+- `GET /1.0/storage-pools/<pool>/volumes/<type>/<name>/snapshots`
+- `POST /1.0/storage-pools/<pool>/volumes/<type>/<name>/snapshots`
 
-* `GET /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
-* `PUT /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
-* `POST /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
-* `DELETE /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
+- `GET /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
+- `PUT /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
+- `POST /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
+- `DELETE /1.0/storage-pools/<pool>/volumes/<type>/<volume>/snapshots/<name>`
 
 ## `storage_unmapped`
 
@@ -779,7 +779,7 @@ an empty string or `0001-01-01T00:00:00Z` (zero time). This is the default if
 
 This adds the following new endpoint (see [RESTful API](rest-api.md) for details):
 
-* `PUT /1.0/containers/<name>/snapshots/<name>`
+- `PUT /1.0/containers/<name>/snapshots/<name>`
 
 ## `snapshot_expiry_creation`
 
@@ -815,9 +815,9 @@ used to track the current mapping for the container.
 
 This effectively gives us:
 
-* `volatile.last_state.idmap` => On-disk idmap
-* `volatile.idmap.current` => Current kernel map
-* `volatile.idmap.next` => Next on-disk idmap
+- `volatile.last_state.idmap` => On-disk idmap
+- `volatile.idmap.current` => Current kernel map
+- `volatile.idmap.next` => Next on-disk idmap
 
 This is required to implement environments where the on-disk map isn't
 changed but the kernel map is (e.g. `idmapped mounts`).
@@ -880,22 +880,22 @@ This introduces container IP filtering (`security.ipv4_filtering` and `security.
 
 Rework the resources API at `/1.0/resources`, especially:
 
-* CPU
-   * Fix reporting to track sockets, cores and threads
-   * Track NUMA node per core
-   * Track base and turbo frequency per socket
-   * Track current frequency per core
-   * Add CPU cache information
-   * Export the CPU architecture
-   * Show online/offline status of threads
-* Memory
-   * Add huge-pages tracking
-   * Track memory consumption per NUMA node too
-* GPU
-   * Split DRM information to separate struct
-   * Export device names and nodes in DRM struct
-   * Export device name and node in NVIDIA struct
-   * Add SR-IOV VF tracking
+- CPU
+  - Fix reporting to track sockets, cores and threads
+  - Track NUMA node per core
+  - Track base and turbo frequency per socket
+  - Track current frequency per core
+  - Add CPU cache information
+  - Export the CPU architecture
+  - Show online/offline status of threads
+- Memory
+  - Add huge-pages tracking
+  - Track memory consumption per NUMA node too
+- GPU
+  - Split DRM information to separate struct
+  - Export device names and nodes in DRM struct
+  - Export device name and node in NVIDIA struct
+  - Add SR-IOV VF tracking
 
 ## `container_exec_user_group_cwd`
 
@@ -943,12 +943,12 @@ This introduces support for a new Type field on images, indicating what type of 
 
 Extends the disk resource API struct to include:
 
-* Proper detection of SATA devices (type)
-* Device path
-* Drive RPM
-* Block size
-* Firmware version
-* Serial number
+- Proper detection of SATA devices (type)
+- Device path
+- Drive RPM
+- Block size
+- Firmware version
+- Serial number
 
 ## `clustering_roles`
 
@@ -1189,7 +1189,7 @@ This adds system information to the output of `/1.0/resources`.
 This adds the push and relay modes to image copy.
 It also introduces the following new endpoint:
 
-* `POST 1.0/images/<fingerprint>/export`
+- `POST 1.0/images/<fingerprint>/export`
 
 ## `network_dns_search`
 
@@ -1213,22 +1213,22 @@ Those contain additional state information relevant to those particular types.
 
 Bond:
 
-* Mode
-* Transmit hash
-* Up delay
-* Down delay
-* MII frequency
-* MII state
-* Lower devices
+- Mode
+- Transmit hash
+- Up delay
+- Down delay
+- MII frequency
+- MII state
+- Lower devices
 
 Bridge:
 
-* ID
-* Forward delay
-* STP mode
-* Default VLAN
-* VLAN filtering
-* Upper devices
+- ID
+- Forward delay
+- STP mode
+- Default VLAN
+- VLAN filtering
+- Upper devices
 
 ## `resources_cpu_isolated`
 
@@ -1242,11 +1242,11 @@ suitable `?project=` and `?target=` when appropriate.
 
 The 5 entities that have `UsedBy` are:
 
-* Profiles
-* Projects
-* Networks
-* Storage pools
-* Storage volumes
+- Profiles
+- Projects
+- Networks
+- Storage pools
+- Storage volumes
 
 ## `custom_block_volumes`
 
@@ -1262,10 +1262,10 @@ which can be used to set the failure domain of a node.
 
 A number of new syscalls related container configuration keys were updated.
 
-* `security.syscalls.deny_default`
-* `security.syscalls.deny_compat`
-* `security.syscalls.deny`
-* `security.syscalls.allow`
+- `security.syscalls.deny_default`
+- `security.syscalls.deny_compat`
+- `security.syscalls.deny`
+- `security.syscalls.allow`
 
 ## `resources_gpu_mdev`
 
@@ -1315,8 +1315,8 @@ type network they should connect to.
 
 Also introduces two new global configuration keys that apply to all `ovn` networks and NIC devices:
 
-* `network.ovn.integration_bridge` - the OVS integration bridge to use.
-* `network.ovn.northbound_connection` - the OVN northbound database connection string.
+- `network.ovn.integration_bridge` - the OVS integration bridge to use.
+- `network.ovn.northbound_connection` - the OVN northbound database connection string.
 
 ## `projects_networks`
 
@@ -1333,18 +1333,18 @@ Add custom volume backup support.
 
 This includes the following new endpoints (see [RESTful API](rest-api.md) for details):
 
-* `GET /1.0/storage-pools/<pool>/<type>/<volume>/backups`
-* `POST /1.0/storage-pools/<pool>/<type>/<volume>/backups`
+- `GET /1.0/storage-pools/<pool>/<type>/<volume>/backups`
+- `POST /1.0/storage-pools/<pool>/<type>/<volume>/backups`
 
-* `GET /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>`
-* `POST /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>`
-* `DELETE /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>`
+- `GET /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>`
+- `POST /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>`
+- `DELETE /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>`
 
-* `GET /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>/export`
+- `GET /1.0/storage-pools/<pool>/<type>/<volume>/backups/<name>/export`
 
 The following existing endpoint has been modified:
 
-* `POST /1.0/storage-pools/<pool>/<type>/<volume>` accepts the new source type `backup`
+- `POST /1.0/storage-pools/<pool>/<type>/<volume>` accepts the new source type `backup`
 
 ## `backup_override_name`
 
@@ -1449,8 +1449,8 @@ This adds a `vlan` section to the `/1.0/networks/NAME/state` API.
 
 Those contain additional state information relevant to VLAN interfaces:
 
-* `lower_device`
-* `vid`
+- `lower_device`
+- `vid`
 
 ## `instance_nic_bridged_port_isolation`
 
@@ -1460,7 +1460,7 @@ This adds the `security.port_isolation` field for bridged NIC instances.
 
 Adds the following endpoint for bulk state change (see [RESTful API](rest-api.md) for details):
 
-* `PUT /1.0/instances`
+- `PUT /1.0/instances`
 
 ## `network_gvrp`
 
@@ -1564,13 +1564,13 @@ specifying the default behavior for unmatched traffic.
 
 Warning API for Incus.
 
-This includes the following endpoints (see  [Restful API](rest-api.md) for details):
+This includes the following endpoints (see [Restful API](rest-api.md) for details):
 
-* `GET /1.0/warnings`
+- `GET /1.0/warnings`
 
-* `GET /1.0/warnings/<uuid>`
-* `PUT /1.0/warnings/<uuid>`
-* `DELETE /1.0/warnings/<uuid>`
+- `GET /1.0/warnings/<uuid>`
+- `PUT /1.0/warnings/<uuid>`
+- `DELETE /1.0/warnings/<uuid>`
 
 ## `projects_restricted_backups_and_snapshots`
 
@@ -1637,25 +1637,25 @@ routes to `bridge` and `ovn` networks.
 
 This comes with the addition to global configuration of:
 
-* `core.bgp_address`
-* `core.bgp_asn`
-* `core.bgp_routerid`
+- `core.bgp_address`
+- `core.bgp_asn`
+- `core.bgp_routerid`
 
 The following network configurations keys (`bridge` and `physical`):
 
-* `bgp.peers.<name>.address`
-* `bgp.peers.<name>.asn`
-* `bgp.peers.<name>.password`
+- `bgp.peers.<name>.address`
+- `bgp.peers.<name>.asn`
+- `bgp.peers.<name>.password`
 
 The `nexthop` configuration keys (`bridge`):
 
-* `bgp.ipv4.nexthop`
-* `bgp.ipv6.nexthop`
+- `bgp.ipv4.nexthop`
+- `bgp.ipv6.nexthop`
 
 And the following NIC-specific configuration keys (`bridged` NIC type):
 
-* `ipv4.routes.external`
-* `ipv6.routes.external`
+- `ipv4.routes.external`
+- `ipv6.routes.external`
 
 ## `network_forward`
 
@@ -1676,7 +1676,7 @@ This adds metrics to Incus. It returns metrics of running instances using the Op
 
 This includes the following endpoints:
 
-* `GET /1.0/metrics`
+- `GET /1.0/metrics`
 
 ## `image_source_project`
 
@@ -1702,22 +1702,22 @@ Introduces a built-in DNS server and zones API to provide DNS records for Incus 
 
 This introduces the following server configuration key:
 
-* `core.dns_address`
+- `core.dns_address`
 
 The following network configuration key:
 
-* `dns.zone.forward`
-* `dns.zone.reverse.ipv4`
-* `dns.zone.reverse.ipv6`
+- `dns.zone.forward`
+- `dns.zone.reverse.ipv4`
+- `dns.zone.reverse.ipv6`
 
 And the following project configuration key:
 
-* `restricted.networks.zones`
+- `restricted.networks.zones`
 
 A new REST API is also introduced to manage DNS zones:
 
-* `/1.0/network-zones` (GET, POST)
-* `/1.0/network-zones/<name>` (GET, PUT, PATCH, DELETE)
+- `/1.0/network-zones` (GET, POST)
+- `/1.0/network-zones/<name>` (GET, PUT, PATCH, DELETE)
 
 ## `ovn_nic_acceleration`
 
@@ -1741,11 +1741,11 @@ This adds support for moving storage volume between projects.
 
 This adds a new `cloud-init` configuration key namespace which contains the following keys:
 
-* `cloud-init.vendor-data`
-* `cloud-init.user-data`
-* `cloud-init.network-config`
+- `cloud-init.vendor-data`
+- `cloud-init.user-data`
+- `cloud-init.network-config`
 
- It also adds a new endpoint `/1.0/devices` to `/dev/incus` which shows an instance's devices.
+It also adds a new endpoint `/1.0/devices` to `/dev/incus` which shows an instance's devices.
 
 ## `network_dns_nat`
 
@@ -1769,12 +1769,12 @@ Add support for grouping cluster members.
 
 This introduces the following new endpoints:
 
-* `/1.0/cluster/groups` (GET, POST)
-* `/1.0/cluster/groups/<name>` (GET, POST, PUT, PATCH, DELETE)
+- `/1.0/cluster/groups` (GET, POST)
+- `/1.0/cluster/groups/<name>` (GET, POST, PUT, PATCH, DELETE)
 
- The following project restriction is added:
+The following project restriction is added:
 
-* `restricted.cluster.groups`
+- `restricted.cluster.groups`
 
 ## `ceph_rbd_du`
 
@@ -1818,7 +1818,7 @@ Adds `allow_inconsistent` field to instance source on `POST /1.0/instances`. If 
 This adds an `ovn` section to the `/1.0/networks/NAME/state` API which contains additional state information relevant to
 OVN networks:
 
-* chassis
+- chassis
 
 ## `storage_volume_api_filtering`
 
@@ -1839,12 +1839,12 @@ This extends the network zones (DNS) API to add the ability to create and manage
 
 This adds:
 
-* `GET /1.0/network-zones/ZONE/records`
-* `POST /1.0/network-zones/ZONE/records`
-* `GET /1.0/network-zones/ZONE/records/RECORD`
-* `PUT /1.0/network-zones/ZONE/records/RECORD`
-* `PATCH /1.0/network-zones/ZONE/records/RECORD`
-* `DELETE /1.0/network-zones/ZONE/records/RECORD`
+- `GET /1.0/network-zones/ZONE/records`
+- `POST /1.0/network-zones/ZONE/records`
+- `GET /1.0/network-zones/ZONE/records/RECORD`
+- `PUT /1.0/network-zones/ZONE/records/RECORD`
+- `PATCH /1.0/network-zones/ZONE/records/RECORD`
+- `DELETE /1.0/network-zones/ZONE/records/RECORD`
 
 ## `network_zones_all_projects`
 
@@ -2004,6 +2004,7 @@ This introduces the storage bucket API. It allows the management of S3 object st
 This updates the storage bucket API to return initial admin credentials at bucket creation time.
 
 ## `metrics_cpu_effective_total`
+
 This introduces a new `incus_cpu_effective_total` metric to the `/1.0/metrics` API.
 It reports the total number of effective CPUs.
 
@@ -2014,9 +2015,9 @@ If not specified, all networks are accessible (assuming it is also allowed by th
 
 This also introduces a change whereby network access is controlled by the project's `restricted.devices.nic` setting:
 
-* If `restricted.devices.nic` is set to `managed` (the default if not specified), only managed networks are accessible.
-* If `restricted.devices.nic` is set to `allow`, all networks are accessible (dependent on the `restricted.networks.access` setting).
-* If `restricted.devices.nic` is set to `block`, no networks are accessible.
+- If `restricted.devices.nic` is set to `managed` (the default if not specified), only managed networks are accessible.
+- If `restricted.devices.nic` is set to `allow`, all networks are accessible (dependent on the `restricted.networks.access` setting).
+- If `restricted.devices.nic` is set to `block`, no networks are accessible.
 
 ## `storage_buckets_local`
 
@@ -2028,12 +2029,12 @@ This adds support for sending life cycle and logging events to a Loki server.
 
 It adds the following global configuration keys:
 
-* `loki.api.ca_cert`: CA certificate which can be used when sending events to the Loki server
-* `loki.api.url`: URL to the Loki server (protocol, name or IP and port)
-* `loki.auth.username` and `loki.auth.password`: Used if Loki is behind a reverse proxy with basic authentication enabled
-* `loki.labels`: Comma-separated list of values which are to be used as labels for Loki events.
-* `loki.loglevel`: Minimum log level for events sent to the Loki server.
-* `loki.types`: Types of events which are to be sent to the Loki server (`lifecycle` and/or `logging`).
+- `loki.api.ca_cert`: CA certificate which can be used when sending events to the Loki server
+- `loki.api.url`: URL to the Loki server (protocol, name or IP and port)
+- `loki.auth.username` and `loki.auth.password`: Used if Loki is behind a reverse proxy with basic authentication enabled
+- `loki.labels`: Comma-separated list of values which are to be used as labels for Loki events.
+- `loki.loglevel`: Minimum log level for events sent to the Loki server.
+- `loki.types`: Types of events which are to be sent to the Loki server (`lifecycle` and/or `logging`).
 
 ## `acme`
 
@@ -2041,24 +2042,24 @@ This adds ACME support, which allows [Let's Encrypt](https://letsencrypt.org/) o
 
 It adds the following global configuration keys:
 
-* `acme.domain`: The domain for which the certificate should be issued.
-* `acme.email`: The email address used for the account of the ACME service.
-* `acme.ca_url`: The directory URL of the ACME service, defaults to `https://acme-v02.api.letsencrypt.org/directory`.
+- `acme.domain`: The domain for which the certificate should be issued.
+- `acme.email`: The email address used for the account of the ACME service.
+- `acme.ca_url`: The directory URL of the ACME service, defaults to `https://acme-v02.api.letsencrypt.org/directory`.
 
 It also adds the following endpoint, which is required for the HTTP-01 challenge:
 
-* `/.well-known/acme-challenge/<token>`
+- `/.well-known/acme-challenge/<token>`
 
 ## `internal_metrics`
 
 This adds internal metrics to the list of metrics.
 These include:
 
-* Total running operations
-* Total active warnings
-* Daemon uptime in seconds
-* Go memory stats
-* Number of goroutines
+- Total running operations
+- Total active warnings
+- Daemon uptime in seconds
+- Go memory stats
+- Number of goroutines
 
 ## `cluster_join_token_expiry`
 
@@ -2076,6 +2077,7 @@ This change adds support for storing the creation date and time of storage volum
 This adds the `CreatedAt` field to the `StorageVolume` and `StorageVolumeSnapshot` API types.
 
 ## `cpu_hotplug`
+
 This adds CPU hotplugging for VMs.
 Hotplugging is disabled when using CPU pinning, because this would require hotplugging NUMA devices as well, which is not possible.
 
@@ -2114,6 +2116,7 @@ Adds support for a Starlark scriptlet to be provided to Incus to allow customize
 The Starlark scriptlet is provided to Incus via the new global configuration option `instances.placement.scriptlet`.
 
 ## `storage_pool_source_wipe`
+
 Adds support for a `source.wipe` Boolean on the storage pool, indicating
 that Incus should wipe partition headers off the requested disk rather
 than potentially fail due to pre-existing file systems.
@@ -2124,39 +2127,44 @@ This adds support for using ZFS block {spellexception}`filesystem` volumes allow
 
 This adds the following new configuration options for ZFS storage pools:
 
-* `volume.zfs.block_mode`
-* `volume.block.mount_options`
-* `volume.block.filesystem`
+- `volume.zfs.block_mode`
+- `volume.block.mount_options`
+- `volume.block.filesystem`
 
 ## `instance_generation_id`
 
 Adds support for instance generation ID. The VM or container generation ID will change whenever the instance's place in time moves backwards. As of now, the generation ID is only exposed through to VM type instances. This allows for the VM guest OS to reinitialize any state it needs to avoid duplicating potential state that has already occurred:
 
-* `volatile.uuid.generation`
+- `volatile.uuid.generation`
 
 ## `disk_io_cache`
+
 This introduces a new `io.cache` property to disk devices which can be used to override the VM caching behavior.
 
 ## `amd_sev`
+
 Adds support for AMD SEV (Secure Encrypted Virtualization) that can be used to encrypt the memory of a guest VM.
 
 This adds the following new configuration options for SEV encryption:
 
-* `security.sev` : (bool) is SEV enabled for this VM
-* `security.sev.policy.es` : (bool) is SEV-ES enabled for this VM
-* `security.sev.session.dh` : (string) guest owner's `base64`-encoded Diffie-Hellman key
-* `security.sev.session.data` : (string) guest owner's `base64`-encoded session blob
+- `security.sev` : (bool) is SEV enabled for this VM
+- `security.sev.policy.es` : (bool) is SEV-ES enabled for this VM
+- `security.sev.session.dh` : (string) guest owner's `base64`-encoded Diffie-Hellman key
+- `security.sev.session.data` : (string) guest owner's `base64`-encoded session blob
 
 ## `storage_pool_loop_resize`
+
 This allows growing loop file backed storage pools by changing the `size` setting of the pool.
 
 ## `migration_vm_live`
+
 This adds support for performing VM QEMU to QEMU live migration for both shared storage (clustered Ceph) and
 non-shared storage pools.
 
 This also adds the `CRIUType_VM_QEMU` value of `3` for the migration `CRIUType` `protobuf` field.
 
 ## `ovn_nic_nesting`
+
 This adds support for nesting an `ovn` NIC inside another `ovn` NIC on the same instance.
 This allows for an OVN logical switch port to be tunneled inside another OVN NIC using VLAN tagging.
 
@@ -2168,68 +2176,77 @@ This adds support for OpenID Connect (OIDC) authentication.
 
 This adds the following new configuration keys:
 
-* `oidc.issuer`
-* `oidc.client.id`
-* `oidc.audience`
+- `oidc.issuer`
+- `oidc.client.id`
+- `oidc.audience`
 
 ## `network_ovn_l3only`
+
 This adds the ability to set an `ovn` network into "layer 3 only" mode.
 This mode can be enabled at IPv4 or IPv6 level using `ipv4.l3only` and `ipv6.l3only` configuration options respectively.
 
 With this mode enabled the following changes are made to the network:
 
-* The virtual router's internal port address will be configured with a single host netmask (e.g. /32 for IPv4 or /128 for IPv6).
-* Static routes for active instance NIC addresses will be added to the virtual router.
-* A discard route for the entire internal subnet will be added to the virtual router to prevent packets destined for inactive addresses from escaping to the uplink network.
-* The DHCPv4 server will be configured to indicate that a netmask of 255.255.255.255 be used for instance configuration.
+- The virtual router's internal port address will be configured with a single host netmask (e.g. /32 for IPv4 or /128 for IPv6).
+- Static routes for active instance NIC addresses will be added to the virtual router.
+- A discard route for the entire internal subnet will be added to the virtual router to prevent packets destined for inactive addresses from escaping to the uplink network.
+- The DHCPv4 server will be configured to indicate that a netmask of 255.255.255.255 be used for instance configuration.
 
 ## `ovn_nic_acceleration_vdpa`
 
 This updates the `ovn_nic_acceleration` API extension. The `acceleration` configuration key for OVN NICs can now takes the value `vdpa` to support Virtual Data Path Acceleration (VDPA).
 
 ## `cluster_healing`
+
 This adds cluster healing which automatically evacuates offline cluster members.
 
 This adds the following new configuration key:
 
-* `cluster.healing_threshold`
+- `cluster.healing_threshold`
 
 The configuration key takes an integer, and can be disabled by setting it to 0 (default). If set, the value represents the threshold after which an offline cluster member is to be evacuated. In case the value is lower than `cluster.offline_threshold`, that value will be used instead.
 
 When the offline cluster member is evacuated, only remote-backed instances will be migrated. Local instances will be ignored as there is no way of migrating them once the cluster member is offline.
 
 ## `instances_state_total`
+
 This extension adds a new `total` field to `InstanceStateDisk` and `InstanceStateMemory`, both part of the instance's state API.
 
 ## `auth_user`
+
 Add current user details to the main API endpoint.
 
 This introduces:
 
-* `auth_user_name`
-* `auth_user_method`
+- `auth_user_name`
+- `auth_user_method`
 
 ## `security_csm`
+
 Introduce a new `security.csm` configuration key to control the use of
 `CSM` (Compatibility Support Module) to allow legacy operating systems to
 be run in Incus VMs.
 
 ## `instances_rebuild`
+
 This extension adds the ability to rebuild an instance with the same origin image, alternate image or as empty. A new `POST /1.0/instances/<name>/rebuild?project=<project>` API endpoint has been added as well as a new CLI command [`incus rebuild`](incus_rebuild.md).
 
 ## `numa_cpu_placement`
+
 This adds the possibility to place a set of CPUs in a desired set of NUMA nodes.
 
 This adds the following new configuration key:
 
-* `limits.cpu.nodes` : (string) comma-separated list of NUMA node IDs or NUMA node ID ranges to place the CPUs (chosen with a dynamic value of `limits.cpu`) in.
+- `limits.cpu.nodes` : (string) comma-separated list of NUMA node IDs or NUMA node ID ranges to place the CPUs (chosen with a dynamic value of `limits.cpu`) in.
 
 ## `custom_volume_iso`
+
 This adds the possibility to import ISO images as custom storage volumes.
 
 This adds the `--type` flag to [`incus storage volume import`](incus_storage_volume_import.md).
 
 ## `network_allocations`
+
 This adds the possibility to list an Incus deployment's network allocations.
 
 Through the [`incus network list-allocations`](incus_network_list-allocations.md) command and the `--project <PROJECT> | --all-projects` flags,
@@ -2237,6 +2254,7 @@ you can list all the used IP addresses, hardware addresses (for instances), reso
 each `instance`, `network`, `network forward` and `network load-balancer`.
 
 ## `zfs_delegate`
+
 This implements a new `zfs.delegate` volume Boolean for volumes on a ZFS storage driver.
 When enabled and a suitable system is in use (requires ZFS 2.2 or higher), the ZFS dataset will be delegated to the container, allowing for its use through the `zfs` command line tool.
 
@@ -2250,7 +2268,8 @@ This introduces support for the `all-projects` query parameter for the GET API c
 This parameter allows bypassing the project name filter.
 
 ## `metadata_configuration`
-Adds the `GET /1.0/metadata/configuration` API endpoint to retrieve the generated metadata configuration in a JSON format. The JSON structure adopts the structure ```"configs" > `ENTITY` > `ENTITY_SECTION` > "keys" > [<CONFIG_OPTION_0>, <CONFIG_OPTION_1>, ...]```.
+
+Adds the `GET /1.0/metadata/configuration` API endpoint to retrieve the generated metadata configuration in a JSON format. The JSON structure adopts the structure ``"configs" > `ENTITY` > `ENTITY_SECTION` > "keys" > [<CONFIG_OPTION_0>, <CONFIG_OPTION_1>, ...]``.
 
 ## `syslog_socket`
 
@@ -2290,9 +2309,11 @@ Calling `POST /1.0/storage-pools/<pool>/custom?target=<target>` will copy the cu
 Calling `POST /1.0/storage-pools/<pool>/custom/<volume>?target=<target>` will move the custom volume from the source, specified in the `source` part of the request, to the target.
 
 ## `disk_io_bus`
+
 This introduces a new `io.bus` property to disk devices which can be used to override the bus the disk is attached to.
 
 ## `storage_cephfs_create_missing`
+
 This introduces the configuration keys `cephfs.create_missing`, `cephfs.osd_pg_num`, `cephfs.meta_pool` and `cephfs.osd_pool` to be used when adding a `cephfs` storage pool to instruct Incus to create the necessary entities for the storage pool, if they do not exist.
 
 ## `instance_move_config`
@@ -2301,6 +2322,7 @@ This API extension provides the ability to use flags `--profile`, `--no-profile`
 when moving an instance between projects and/or storage pools.
 
 ## `ovn_ssl_config`
+
 This introduces new server configuration keys to provide the SSL CA and client key pair to access the OVN databases.
 The new configuration keys are `network.ovn.ca_cert`, `network.ovn.client_cert` and `network.ovn.client_key`.
 
@@ -2330,8 +2352,8 @@ In this scenario, the creation and startup is part of a single background operat
 
 This introduces new options for the `cluster.evacuate` option:
 
-* `stateful-stop` has the instance store its state to disk to be resume on restore.
-* `force-stop` has the instance immediately stopped without waiting for it to shut down.
+- `stateful-stop` has the instance store its state to disk to be resume on restore.
+- `force-stop` has the instance immediately stopped without waiting for it to shut down.
 
 ## `boot_host_shutdown_action`
 
@@ -2358,14 +2380,14 @@ Add storage bucket backup support.
 
 This includes the following new endpoints (see [RESTful API](rest-api.md) for details):
 
-* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
-* `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
+- `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
+- `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups`
 
-* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
-* `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
-* `DELETE /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+- `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+- `POST /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
+- `DELETE /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>`
 
-* `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>/export`
+- `GET /1.0/storage-pools/<pool>/buckets/<bucket>/backups/<name>/export`
 
 ## `storage_lvm_cluster`
 
@@ -2414,25 +2436,25 @@ Adds the concept of network integrations and initial support for OVN Interconnec
 
 New API:
 
-* `/1.0/network-integrations` (GET, POST)
-* `/1.0/network-integrations/NAME` (GET, PUT, PATCH, DELETE, POST)
+- `/1.0/network-integrations` (GET, POST)
+- `/1.0/network-integrations/NAME` (GET, PUT, PATCH, DELETE, POST)
 
 Each integration is made of:
 
-* name
-* description
-* type (only `ovn` for now)
-* configuration
-   * `ovn.northbound_connection` (database connection string for the OVN Interconnection database)
-   * `ovn.ca_cert` (optional, SSL CA certificate for the OVN Interconnection database)
-   * `ovn.client_cert` (optional, SSL client certificate to connect to the OVN Interconnection database)
-   * `ovn.client_key` (optional, SSL client key to connect to the OVN Interconnection database)
-   * `ovn.transit.pattern` (Pongo2 template to generate the transit switch name)
+- name
+- description
+- type (only `ovn` for now)
+- configuration
+  - `ovn.northbound_connection` (database connection string for the OVN Interconnection database)
+  - `ovn.ca_cert` (optional, SSL CA certificate for the OVN Interconnection database)
+  - `ovn.client_cert` (optional, SSL client certificate to connect to the OVN Interconnection database)
+  - `ovn.client_key` (optional, SSL client key to connect to the OVN Interconnection database)
+  - `ovn.transit.pattern` (Pongo2 template to generate the transit switch name)
 
 Those integrations attach to network peers through some new fields:
 
-* `type` (`local` for current behavior, `remote` for integrations)
-* `target_integration` (reference to the integration)
+- `type` (`local` for current behavior, `remote` for integrations)
+- `target_integration` (reference to the integration)
 
 ## `instance_memory_swap_bytes`
 
@@ -2539,8 +2561,8 @@ This introduces a few new configuration options to control the virtual machine C
 
 The new configuration keys are:
 
-* `instances.vm.cpu.ARCHITECTURE.baseline`
-* `instances.vm.cpu.ARCHITECTURE.flag`
+- `instances.vm.cpu.ARCHITECTURE.baseline`
+- `instances.vm.cpu.ARCHITECTURE.flag`
 
 ## `disk_volume_subpath`
 
@@ -2558,9 +2580,9 @@ This allows using `none` as the uplink network for an OVN network, making the ne
 
 This adds new configuration options to virtual machines to directly issue QMP commands at various stages of startup:
 
-* `raw.qemu.qmp.early`
-* `raw.qemu.qmp.pre-start`
-* `raw.qemu.qmp.post-start`
+- `raw.qemu.qmp.early`
+- `raw.qemu.qmp.pre-start`
+- `raw.qemu.qmp.post-start`
 
 ## `network_load_balancer_health_check`
 
@@ -2568,11 +2590,11 @@ This adds the ability to perform health checks for load balancer backends.
 
 The following new configuration options are introduced:
 
-* `healthcheck`
-* `healthcheck.interval`
-* `healthcheck.timeout`
-* `healthcheck.failure_count`
-* `healthcheck.success_count`
+- `healthcheck`
+- `healthcheck.interval`
+- `healthcheck.timeout`
+- `healthcheck.failure_count`
+- `healthcheck.success_count`
 
 ## `oidc_scopes`
 
@@ -2637,10 +2659,10 @@ This adds automatic live-migration to balance load on cluster again.
 
 As part of this, the following configuration options have been added:
 
-* `cluster.rebalance.batch`
-* `cluster.rebalance.cooldown`
-* `cluster.rebalance.interval`
-* `cluster.rebalance.threshold`
+- `cluster.rebalance.batch`
+- `cluster.rebalance.cooldown`
+- `cluster.rebalance.interval`
+- `cluster.rebalance.threshold`
 
 ## `custom_volume_refresh_exclude_older_snapshots`
 
@@ -2652,9 +2674,9 @@ This adds ability to set the initial owner of a custom volume.
 
 The following configuration options have been added:
 
-* `initial.gid`
-* `initial.mode`
-* `initial.uid`
+- `initial.gid`
+- `initial.mode`
+- `initial.uid`
 
 ## `storage_live_migration`
 
@@ -2768,10 +2790,10 @@ This adds a LINSTOR storage driver.
 
 This introduces a set of new configuration options on the container to configure the OCI entry point:
 
-* `oci.entrypoint`
-* `oci.cwd`
-* `oci.uid`
-* `oci.gid`
+- `oci.entrypoint`
+- `oci.cwd`
+- `oci.uid`
+- `oci.gid`
 
 Those are initialized at creation time using the values from the OCI image.
 
@@ -2861,11 +2883,11 @@ It can be selected through `logging.NAME.target.type` with the `webhook` value.
 
 The following target keys are supported:
 
-* `logging.NAME.target.address` (URL of the target)
-* `logging.NAME.target.ca_cert` (Certificate when using an HTTPS target with a self-signed certificate)
-* `logging.NAME.target.username` (Username for HTTP authentication)
-* `logging.NAME.target.password` (Password for HTTP authentication)
-* `logging.NAME.target.retry` (How many times to retry the transmission)
+- `logging.NAME.target.address` (URL of the target)
+- `logging.NAME.target.ca_cert` (Certificate when using an HTTPS target with a self-signed certificate)
+- `logging.NAME.target.username` (Username for HTTP authentication)
+- `logging.NAME.target.password` (Password for HTTP authentication)
+- `logging.NAME.target.retry` (How many times to retry the transmission)
 
 The webhook data matches what's sent over the existing events API.
 
@@ -2877,8 +2899,8 @@ This adds a TrueNAS storage driver.
 
 This adds tmpfs support for disk devices.
 
-* `source=tmpfs:` mounts a tmpfs file system, respecting `size`, `uid`, `gid` and `mode` options
-* `source=tmpfs-overlay:` same as tmpfs but with additional overlayfs behavior
+- `source=tmpfs:` mounts a tmpfs file system, respecting `size`, `uid`, `gid` and `mode` options
+- `source=tmpfs-overlay:` same as tmpfs but with additional overlayfs behavior
 
 ## `instance_limits_oom`
 
@@ -2978,14 +3000,14 @@ Adds a `dns.contact` configuration key to network zones.
 
 This introduces two new properties for NICs:
 
-* `attached`, behaving like the `attached` key for disk and USB devices;
-* `connected`, setting the up/down link state for the NIC (when supported).
+- `attached`, behaving like the `attached` key for disk and USB devices;
+- `connected`, setting the up/down link state for the NIC (when supported).
 
 ## `nic_sriov_security_trusted`
 
 This introduces a new property for SR-IOV NICs:
 
-* `security.trusted` allows setting the `trusted` flag for the virtual function if the parent NIC supports it.
+- `security.trusted` allows setting the `trusted` flag for the virtual function if the parent NIC supports it.
 
 ## `direct_backup`
 
@@ -3055,12 +3077,12 @@ This adds project-level metrics to the `/1.0/metrics` endpoint including resourc
 
 This adds a few new APIs for storage volumes and instances:
 
-* `POST /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/nbd`
-* `GET /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps`
-* `POST /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps`
-* `GET /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps/NAME`
-* `DELETE /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps/NAME`
-* `POST /1.0/instances/NAME/bitmaps`
+- `POST /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/nbd`
+- `GET /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps`
+- `POST /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps`
+- `GET /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps/NAME`
+- `DELETE /1.0/storage-pools/POOL/volumes/TYPE/VOLUME/bitmaps/NAME`
+- `POST /1.0/instances/NAME/bitmaps`
 
 This introduces the ability to get a raw `NBD` connection to an Incus block storage volume.
 It also allows interacting with dirty bitmaps on those volumes which can then be used as the basis for incremental backups.
@@ -3108,8 +3130,8 @@ devices.
 
 This introduces a couple of new configuration options:
 
-* `instances.tpm.platform_cert`
-* `instances.tpm.platform_key`
+- `instances.tpm.platform_cert`
+- `instances.tpm.platform_key`
 
 Those can be used to provide a TPM platform CA certificate.
 
@@ -3214,11 +3236,11 @@ instances on the same host.
 
 The following instance configuration keys are added:
 
-* `security.selinux.domain`: Override the SELinux process domain.
-* `security.selinux.type`: Override the SELinux file type used for the
+- `security.selinux.domain`: Override the SELinux process domain.
+- `security.selinux.type`: Override the SELinux file type used for the
   instance storage.
-* `security.selinux.level`: Override the SELinux MCS level.
-* `security.selinux.label_rootfs`: Control rootfs labeling behavior
+- `security.selinux.level`: Override the SELinux MCS level.
+- `security.selinux.label_rootfs`: Control rootfs labeling behavior
   (`auto`, `always` or `never`).
 
 The computed context is persisted in the `volatile.selinux.context` key so
@@ -3247,14 +3269,15 @@ This moves the authorization configuration keys under a general
 
 The following server configuration keys replace the former `openfga.*` keys:
 
-* `authorization.openfga.api.url`: URL of the OpenFGA server
-* `authorization.openfga.api.token`: API token of the OpenFGA server
-* `authorization.openfga.store.id`: ID of the OpenFGA permission store
+- `authorization.openfga.api.url`: URL of the OpenFGA server
+- `authorization.openfga.api.token`: API token of the OpenFGA server
+- `authorization.openfga.store.id`: ID of the OpenFGA permission store
 
 Existing `openfga.*` values are automatically migrated to the new keys on
 upgrade.
 
 ## `network_allocations_network`
+
 Adds the `network` field to the network allocations API response.
 
 ## `gpu_native_context`
@@ -3293,11 +3316,11 @@ request to one of them based on the authentication class of the client.
 
 The following server configuration keys are added:
 
-* `authorization.client.default`: driver for clients without a more specific class route
-* `authorization.client.unix`: driver for local (`unix` socket) clients
-* `authorization.client.tls`: driver for unrestricted TLS clients
-* `authorization.client.tls-restricted`: driver for restricted (project-scoped) TLS clients
-* `authorization.client.oidc`: driver for OIDC-authenticated clients
+- `authorization.client.default`: driver for clients without a more specific class route
+- `authorization.client.unix`: driver for local (`unix` socket) clients
+- `authorization.client.tls`: driver for unrestricted TLS clients
+- `authorization.client.tls-restricted`: driver for restricted (project-scoped) TLS clients
+- `authorization.client.oidc`: driver for OIDC-authenticated clients
 
 Each key accepts one of `allow`, `deny`, `openfga` or `scriptlet`. A per-class
 key falls back to `authorization.client.default` when unset.
@@ -3308,7 +3331,7 @@ that only apply to restricted certificates.
 
 The following server configuration key is also added:
 
-* `authorization.openfga.tls.identifier`: certificate attribute (`fingerprint`
+- `authorization.openfga.tls.identifier`: certificate attribute (`fingerprint`
   or `name`) used as the OpenFGA user when a TLS client is authorized by
   OpenFGA (defaults to `name`).
 
@@ -3316,11 +3339,11 @@ The following server configuration key is also added:
 
 This adds new endpoints to manage virtual machines’ UEFI variables:
 
-* `GET /1.0/instances/{name}/nvram`, to get all UEFI variables
-* `GET /1.0/instances/{name}/nvram/{guid}`, to get UEFI variables under the given GUID
-* `GET /1.0/instances/{name}/nvram/{guid}/{var}`, to get specific UEFI variables
-* `DELETE /1.0/instances/{name}/nvram/{guid}/{var}`, to delete specific UEFI variables
-* `PUT /1.0/instances/{name}/nvram/{guid}/{var}`, to set/update specific UEFI variables
+- `GET /1.0/instances/{name}/nvram`, to get all UEFI variables
+- `GET /1.0/instances/{name}/nvram/{guid}`, to get UEFI variables under the given GUID
+- `GET /1.0/instances/{name}/nvram/{guid}/{var}`, to get specific UEFI variables
+- `DELETE /1.0/instances/{name}/nvram/{guid}/{var}`, to delete specific UEFI variables
+- `PUT /1.0/instances/{name}/nvram/{guid}/{var}`, to set/update specific UEFI variables
 
 It also adds `rebuild-nvram` as an instance debug action.
 
@@ -3341,5 +3364,17 @@ are only unique within a CPU cluster (ARM big.LITTLE).
 Adds support for ACME External Account Binding (EAB) through two new
 server configuration keys:
 
-* `acme.eab.kid`
-* `acme.eab.hmac`
+- `acme.eab.kid`
+- `acme.eab.hmac`
+
+## `instance_oci_cmd`
+
+This introduces a new `oci.cmd` configuration key on OCI containers, holding
+the image's (or an override's) default command arguments.
+
+`oci.entrypoint` keeps its existing meaning (the effective, merged process
+arguments) unchanged for backward compatibility. `oci.cmd` is additive: it
+lets a client recover the image's unmerged entry point by subtracting
+`oci.cmd` from `oci.entrypoint`.
+
+Initialized at creation time using the values from the OCI image.

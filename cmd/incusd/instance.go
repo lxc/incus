@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/internal/server/task"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
@@ -207,6 +208,12 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 		args.Config = inst.LocalConfig()
 		expandedConfig := inst.ExpandedConfig()
 
+		// Read from the stored image, not the per-instance unpacked volume (unreliable across shared-image instances).
+		imageCmd, err := getOCIImageCmd(internalUtil.VarPath("images", img.Fingerprint))
+		if err != nil {
+			return err
+		}
+
 		// Mount the instance.
 		_, err = pool.MountInstance(inst, nil)
 		if err != nil {
@@ -251,6 +258,11 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 		// Set the entrypoint configuration options.
 		if len(config.Process.Args) > 0 && expandedConfig["oci.entrypoint"] == "" {
 			args.Config["oci.entrypoint"] = shellquote.Join(config.Process.Args...)
+		}
+
+		// Record the image's own unmerged command; oci.entrypoint above is unchanged.
+		if len(imageCmd) > 0 && expandedConfig["oci.cmd"] == "" {
+			args.Config["oci.cmd"] = shellquote.Join(imageCmd...)
 		}
 
 		if config.Process.Cwd != "" && expandedConfig["oci.cwd"] == "" {
