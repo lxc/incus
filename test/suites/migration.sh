@@ -375,6 +375,33 @@ migration() {
 
     incus_remote rm -f l1:c1 l2:c2
 
+    # Perform near-live migration tests between two servers.
+    if [ "${incus_backend}" = "zfs" ] || [ "${incus_backend}" = "btrfs" ]; then
+        incus_remote launch testimage l1:c1
+        incus_remote config set l1:c1 boot.host_shutdown_timeout=1
+
+        # An incremental transfer is only meaningful for a stateless move.
+        ! incus_remote move l1:c1 l2:c1 --refresh || false
+
+        # c1 can be moved to the other server while running.
+        incus_remote move l1:c1 l2:c1 --stateless --refresh
+        incus_remote info l2:c1 | grep -q "Status: RUNNING"
+
+        # The source instance is gone.
+        ! incus_remote info l1:c1 || false
+
+        # The pre-copy snapshots were removed from the target.
+        [ "$(incus_remote query l2:/1.0/instances/c1/snapshots | jq 'length')" = "0" ]
+
+        # A stopped container falls back to a regular move.
+        incus_remote stop -f l2:c1
+        incus_remote move l2:c1 l1:c1 --stateless --refresh
+        incus_remote info l1:c1 | grep -q "Status: STOPPED"
+        [ "$(incus_remote query l1:/1.0/instances/c1/snapshots | jq 'length')" = "0" ]
+
+        incus_remote rm -f l1:c1
+    fi
+
     remote_pool1="incustest-$(basename "${INCUS_DIR}")"
     remote_pool2="incustest-$(basename "${incus2_dir}")"
 
