@@ -303,6 +303,12 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 		// If we didn't create the device we should track various properties so we can restore them when the
 		// instance is stopped or the device is detached.
 		if util.IsFalse(saveData["last_state.created"]) {
+			// Check the interface isn't in use by the host.
+			err = networkInterfaceCheckNotInUse(saveData["host_name"])
+			if err != nil {
+				return nil, err
+			}
+
 			err = networkSnapshotPhysicalNIC(saveData["host_name"], saveData)
 			if err != nil {
 				return nil, err
@@ -337,6 +343,12 @@ func (d *nicPhysical) Start() (*deviceConfig.RunConfig, error) {
 			}
 		}
 	} else if d.inst.Type() == instancetype.VM {
+		// Check the interface isn't in use by the host.
+		err = networkInterfaceCheckNotInUse(saveData["host_name"])
+		if err != nil {
+			return nil, err
+		}
+
 		// Try to get PCI information about the network interface.
 		ueventPath := fmt.Sprintf("/sys/class/net/%s/device/uevent", saveData["host_name"])
 		pciDev, err := pcidev.ParseUeventFile(ueventPath)

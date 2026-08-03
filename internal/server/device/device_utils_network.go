@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -148,6 +149,28 @@ func networkCreateVlanDeviceIfNeeded(s *state.State, parent string, vlanDevice s
 	}
 
 	return "existing", nil
+}
+
+// networkInterfaceCheckNotInUse checks that the interface isn't in use by the host as a bridge or bond
+// member or through assigned IP addresses.
+func networkInterfaceCheckNotInUse(nicName string) error {
+	// Check if the interface is a bridge or bond member.
+	masterPath, err := os.Readlink(fmt.Sprintf("/sys/class/net/%s/master", nicName))
+	if err == nil {
+		return fmt.Errorf("Interface %q is in use by the host (member of %q)", nicName, filepath.Base(masterPath))
+	}
+
+	// Check if the interface has IP addresses assigned.
+	addresses, _, err := network.InterfaceStatus(nicName)
+	if err != nil {
+		return err
+	}
+
+	if len(addresses) > 0 {
+		return fmt.Errorf("Interface %q is in use by the host (has assigned IP addresses)", nicName)
+	}
+
+	return nil
 }
 
 // networkSnapshotPhysicalNIC records properties of the NIC to volatile so they can be restored later.

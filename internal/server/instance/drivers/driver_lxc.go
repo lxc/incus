@@ -2608,11 +2608,30 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			lxcMounts = append(lxcMounts, mount.Destination)
 		}
 
-		// Mount /run as a tmpfs if it exists and isn't already mounted.
+		// Mount /run as a tmpfs if it isn't already mounted and the image's /run is empty.
 		if !slices.Contains(lxcMounts, "/run") {
-			err := lxcSetConfigItem(cc, "lxc.mount.entry", "none run tmpfs none,mode=755,optional")
+			// Confine the check to the rootfs to avoid following image-planted symlinks.
+			rootfsRoot, err := os.OpenRoot(d.RootfsPath())
 			if err != nil {
 				return "", nil, err
+			}
+
+			runEmpty := true
+			runDir, err := rootfsRoot.Open("run")
+			if err == nil {
+				names, _ := runDir.Readdirnames(1)
+				runEmpty = len(names) == 0
+
+				_ = runDir.Close()
+			}
+
+			_ = rootfsRoot.Close()
+
+			if runEmpty {
+				err = lxcSetConfigItem(cc, "lxc.mount.entry", "none run tmpfs mode=755,optional")
+				if err != nil {
+					return "", nil, err
+				}
 			}
 		}
 
