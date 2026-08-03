@@ -3,6 +3,7 @@ package device
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/lxc/incus/v7/internal/linux"
@@ -56,6 +57,17 @@ func (d *pci) validateConfig(instConf instance.ConfigReader, partialValidation b
 func (d *pci) validateEnvironment() error {
 	if d.inst.Type() == instancetype.VM && util.IsTrue(d.inst.ExpandedConfig()["migration.stateful"]) {
 		return errors.New("PCI devices cannot be used when migration.stateful is enabled")
+	}
+
+	// If the PCI device is a network device, check its interfaces aren't in use by the host.
+	ents, err := os.ReadDir(filepath.Join("/sys/bus/pci/devices", d.config["address"], "net"))
+	if err == nil {
+		for _, ent := range ents {
+			err = networkInterfaceCheckNotInUse(ent.Name())
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return validatePCIDevice(d.config["address"])
