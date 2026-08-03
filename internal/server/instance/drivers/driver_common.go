@@ -965,6 +965,11 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 		return errors.New("Requested architecture isn't supported by this host")
 	}
 
+	// Check if instance is start protected.
+	if util.IsTrue(d.expandedConfig["security.protection.start"]) {
+		return errors.New("Instance is protected")
+	}
+
 	// Must happen before creating operation Start lock to avoid the status check returning Stopped due to the
 	// existence of a Start operation lock.
 	err = d.isStartableStatusCode(statusCode)
