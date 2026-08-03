@@ -2595,6 +2595,15 @@
 			"oci": {
 				"keys": [
 					{
+						"oci.cmd": {
+							"condition": "OCI container",
+							"liveupdate": "no",
+							"longdesc": "Override the default command of an OCI container.\n\nUnlike `oci.entrypoint`, this doesn't replace `Process.Args`; it only\nrecords the image's (or an override's) default command arguments so\nthat the unmerged entry point can be recovered as `oci.entrypoint` minus\nthis value.",
+							"shortdesc": "Default command",
+							"type": "string"
+						}
+					},
+					{
 						"oci.cwd": {
 							"condition": "OCI container",
 							"liveupdate": "no",
