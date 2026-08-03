@@ -263,6 +263,9 @@ type cmdForknet struct {
 	initialNameservers []string
 	initialSearch      []string
 	initialDomain      string
+
+	// staticDNS disables resolv.conf updates.
+	staticDNS bool
 }
 
 func (c *cmdForknet) command() *cobra.Command {
@@ -1006,10 +1009,13 @@ func (c *cmdForknet) parseInitialResolvConf() {
 		switch fields[0] {
 		case "nameserver":
 			c.initialNameservers = append(c.initialNameservers, fields[1])
+			c.staticDNS = true
 		case "search":
 			c.initialSearch = append(c.initialSearch, fields[1:]...)
+			c.staticDNS = true
 		case "domain":
 			c.initialDomain = fields[1]
+			c.staticDNS = true
 		}
 	}
 }
@@ -1038,6 +1044,11 @@ func (c *cmdForknet) loadInterfaces(l *logrus.Logger) map[string]instanceDrivers
 }
 
 func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
+	// Static oci.dns.* configuration takes precedence; leave resolv.conf untouched.
+	if c.staticDNS {
+		return nil
+	}
+
 	nameservers := map[string]struct{}{}
 	searchLabels := []string{}
 	domainNames := []string{}
