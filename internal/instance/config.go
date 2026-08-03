@@ -802,6 +802,20 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  shortdesc: Entry point
 	"oci.entrypoint": validate.IsAny,
 
+	// gendoc:generate(entity=instance, group=oci, key=oci.cmd)
+	// Override the default command of an OCI container.
+	//
+	// Unlike `oci.entrypoint`, this doesn't replace `Process.Args`; it only
+	// records the image's (or an override's) default command arguments so
+	// that the unmerged entry point can be recovered as `oci.entrypoint` minus
+	// this value.
+	// ---
+	//  type: string
+	//  liveupdate: no
+	//  condition: OCI container
+	//  shortdesc: Default command
+	"oci.cmd": validate.IsAny,
+
 	// gendoc:generate(entity=instance, group=oci, key=oci.cwd)
 	// Override the working directory of an OCI container.
 	// ---
