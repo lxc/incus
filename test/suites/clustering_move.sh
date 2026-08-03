@@ -6,11 +6,15 @@ test_clustering_move() {
     prefix="inc$$"
     bridge="${prefix}"
 
+    # The random storage backend is not supported in clustering tests,
+    # since we need to have the same storage driver on all nodes, so use the driver chosen for the standalone pool.
+    poolDriver=$(incus storage show "$(incus profile device get default root pool)" | awk '/^driver:/ {print $2}')
+
     setup_clustering_netns 1
     INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_ONE_DIR}"
     ns1="${prefix}1"
-    spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
+    spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
     # Add a newline at the end of each line. YAML as weird rules..
     cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
@@ -20,14 +24,14 @@ test_clustering_move() {
     INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_TWO_DIR}"
     ns2="${prefix}2"
-    spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
+    spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
     # Spawn a third node
     setup_clustering_netns 3
     INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
     chmod +x "${INCUS_THREE_DIR}"
     ns3="${prefix}3"
-    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
+    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}" "${poolDriver}"
 
     ensure_import_testimage
 
@@ -159,6 +163,41 @@ EOF
 
     # Cleanup
     INCUS_DIR="${INCUS_ONE_DIR}" incus config unset instances.placement.scriptlet
+
+    # Perform near-live migration tests.
+    if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ]; then
+        INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c4 --target node1
+        INCUS_DIR="${INCUS_ONE_DIR}" incus config set c4 boot.host_shutdown_timeout=1
+
+        # --refresh can be called only with --stateless.
+        ! INCUS_DIR="${INCUS_ONE_DIR}" incus move c4 --target node2 --refresh || false
+
+        # c4 can be moved to node2 while running.
+        INCUS_DIR="${INCUS_ONE_DIR}" incus move c4 --target node2 --stateless --refresh
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Location: node2"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Status: RUNNING"
+
+        # The pre-copy snapshots and the temporary copy are gone.
+        [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c4/snapshots | jq 'length')" = "0" ]
+        ! INCUS_DIR="${INCUS_ONE_DIR}" incus list --format csv --columns n | grep -q '^move-of-' || false
+
+        # Existing snapshots are carried over.
+        INCUS_DIR="${INCUS_ONE_DIR}" incus snapshot create c4 snap0
+        INCUS_DIR="${INCUS_ONE_DIR}" incus move c4 --target node1 --stateless --refresh
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Location: node1"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Status: RUNNING"
+        [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c4/snapshots | jq 'length')" = "1" ]
+        INCUS_DIR="${INCUS_ONE_DIR}" incus query /1.0/instances/c4/snapshots | jq -re '.[0] | endswith("/snap0")'
+
+        # A stopped container falls back to a regular migration.
+        INCUS_DIR="${INCUS_ONE_DIR}" incus stop -f c4
+        INCUS_DIR="${INCUS_ONE_DIR}" incus move c4 --target node2 --stateless --refresh
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Location: node2"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Status: STOPPED"
+
+        # Cleanup
+        INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c4
+    fi
 
     # Perform project restriction tests.
     # At this stage we have:

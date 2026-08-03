@@ -3015,6 +3015,12 @@ test_clustering_evacuation() {
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c6 | grep -q "Status: RUNNING"
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c6 | grep -q "Location: node2"
 
+    if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ]; then
+        # The pre-copy snapshots and the temporary copy are gone (c1 is using near-live migration).
+        [ "$(INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/instances/c1/snapshots | jq 'length')" = "0" ]
+        ! INCUS_DIR="${INCUS_TWO_DIR}" incus list --format csv --columns n | grep -q '^move-of-' || false
+    fi
+
     # Ensure instances cannot be created on the evacuated node
     ! INCUS_DIR="${INCUS_TWO_DIR}" incus launch testimage c7 --target=node1 || false
 
