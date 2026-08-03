@@ -1162,6 +1162,12 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 		}
 	}
 
+	_, err = fmt.Fprint(f, "options edns0\n")
+	if err != nil {
+		l.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
+		return err
+	}
+
 	return nil
 }
 
