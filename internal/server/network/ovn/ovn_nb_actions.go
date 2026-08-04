@@ -321,6 +321,32 @@ func (o *NB) GetLogicalRouter(ctx context.Context, routerName OVNRouter) (*ovnNB
 	return logicalRouter, nil
 }
 
+// GetLogicalRouterNATs returns the NAT rules of a logical router.
+func (o *NB) GetLogicalRouterNATs(ctx context.Context, routerName OVNRouter) ([]ovnNB.NAT, error) {
+	// Get the logical router.
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the NAT rules.
+	natRules := make([]ovnNB.NAT, 0, len(logicalRouter.Nat))
+	for _, natUUID := range logicalRouter.Nat {
+		natRule := ovnNB.NAT{
+			UUID: natUUID,
+		}
+
+		err = o.get(ctx, &natRule)
+		if err != nil {
+			return nil, err
+		}
+
+		natRules = append(natRules, natRule)
+	}
+
+	return natRules, nil
+}
+
 // CreateLogicalRouterNAT adds an SNAT or DNAT rule to a logical router to translate packets from intNet to extIP.
 func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, natType string, intNet *net.IPNet, extIP net.IP, intIP net.IP, stateless bool, mayExist bool) error {
 	// Prepare the addresses.
