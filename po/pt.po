@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-01 10:17+0000\n"
+"POT-Creation-Date: 2026-08-04 10:10+0000\n"
 "PO-Revision-Date: 2026-07-30 22:48+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
@@ -731,7 +731,7 @@ msgstr "- Porto %d (%s)"
 msgid "--all cannot be used together with other arguments"
 msgstr "--all não pode ser usado juntamente com outros argumentos"
 
-#: cmd/incus/low_level.go:917 cmd/incus/low_level.go:937
+#: cmd/incus/low_level.go:924 cmd/incus/low_level.go:948
 #, fuzzy, c-format
 msgid "--attributes cannot be used with --format=%s"
 msgstr "--attributes não pode ser usado sem --raw"
@@ -815,7 +815,7 @@ msgstr "--target só pode ser usado com agrupamentos"
 msgid "--target cannot be used with instances"
 msgstr "--target não pode ser usado com instâncias"
 
-#: cmd/incus/low_level.go:941
+#: cmd/incus/low_level.go:952
 #, fuzzy, c-format
 msgid "--timestamp cannot be used with --format=%s"
 msgstr "--timestamp não pode ser usado sem --raw"
@@ -1328,6 +1328,10 @@ msgstr "Ponte:"
 #: cmd/incus/storage_bucket.go:116
 msgid "Bucket description"
 msgstr "Descrição de bucket"
+
+#: cmd/incus/low_level.go:893
+msgid "Bulk NVRAM variable update is only supported for non-binary formats"
+msgstr ""
 
 #: cmd/incus/info.go:371
 #, c-format
@@ -2910,8 +2914,8 @@ msgstr "Evacuar membro do agrupamento"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action (\"cluster."
-"evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
 "Evacuar membro de agrupamento\n"
 "\n"
@@ -3382,6 +3386,11 @@ msgstr "Falhou ao apagar instância original após a copiar: %w"
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
 msgstr "Falhou ao refrescar instância alvo: '%s': %v"
 
+#: cmd/incus/low_level.go:962 cmd/incus/low_level.go:1044
+#, fuzzy, c-format
+msgid "Failed to delete variable %s:%s: %w"
+msgstr "Falhou ao analisar variável %s:%s: %w"
+
 #: cmd/incus/low_level.go:239
 #, c-format
 msgid "Failed to dump instance memory: %w"
@@ -3460,7 +3469,7 @@ msgstr "Falhou ao analisar resposta de despejo: %w"
 msgid "Failed to parse the preseed: %w"
 msgstr "Falhou ao analisar o preseed: %w"
 
-#: cmd/incus/low_level.go:955
+#: cmd/incus/low_level.go:974
 #, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr "Falhou ao analisar variável %s:%s: %w"
@@ -3475,7 +3484,7 @@ msgstr "Falhou ao ler do ficheiro: %w"
 msgid "Failed to read from stdin: %w"
 msgstr "Falhou ao ler do stdin: %w"
 
-#: cmd/incus/copy.go:394
+#: cmd/incus/copy.go:387
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Falhou ao refrescar instância alvo: '%s': %v"
@@ -3550,7 +3559,7 @@ msgstr "Falhou ao obter lista de pools de armazenamento: %w"
 msgid "Failed to set UEFI variable %s:%s: %s"
 msgstr "Falhou ao definir variável UEFI %s:%s: %s"
 
-#: cmd/incus/low_level.go:963
+#: cmd/incus/low_level.go:943
 #, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
 msgstr "Falhou ao definir variável UEFI %s:%s: %w"
@@ -3730,8 +3739,8 @@ msgid ""
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. csv,"
-"header"
+"para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. "
+"csv,header"
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
@@ -3753,8 +3762,8 @@ msgid ""
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. csv,"
-"header"
+"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. "
+"csv,header"
 
 #: cmd/incus/monitor.go:60
 msgid "Format (json|pretty|yaml)"
@@ -3799,8 +3808,8 @@ msgstr ""
 "Isto corre uma escuta TCP local e reencaminha cada ligação feita a ela\n"
 "para o endereço e porto fornecidos dentro da instância.\n"
 "\n"
-"Ambos portos podem ser prefixados com um endereço para usar (\"ENDEREÇO:"
-"PORTO\"),\n"
+"Ambos portos podem ser prefixados com um endereço para usar "
+"(\"ENDEREÇO:PORTO\"),\n"
 "usando por predefinição 127.0.0.1 caso contrário. Os endereços IPv6 têm de "
 "ser envolvidos\n"
 "em parenteses quadrados (ex. \"[::1]:80\")."
@@ -4524,7 +4533,7 @@ msgstr "Data de validade inválida: %w"
 msgid "Invalid format %q"
 msgstr "Formato inválido %q"
 
-#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:951
+#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:989
 #: cmd/incus/monitor.go:74
 #, c-format
 msgid "Invalid format: %s"
@@ -5554,8 +5563,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5640,8 +5649,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
+"[:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -6592,8 +6601,8 @@ msgstr "Gerir volumes de armazenamento"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 "Gerir volumes de armazenamento\n"
 "\n"
@@ -6735,6 +6744,12 @@ msgstr ""
 #: cmd/incus/file.go:498
 msgid "More than one file to download, but target is not a directory"
 msgstr "Mais de um ficheiro para descarregar, mas o alvo não é um diretório"
+
+#: cmd/incus/low_level.go:889 cmd/incus/low_level.go:1031
+msgid ""
+"More than one variable was passed but the server is missing the required "
+"\"instance_nvram_bulk_update\" API extension"
+msgstr ""
 
 #: cmd/incus/storage_volume_file.go:338
 msgid "Mount files from custom storage volumes"
@@ -7812,7 +7827,7 @@ msgstr "Refresca e atualiza as cópias de volume de armazenamento existentes"
 msgid "Refresh images"
 msgstr "Refresca imagens"
 
-#: cmd/incus/copy.go:416
+#: cmd/incus/copy.go:409
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr "A refrescar instância: %s"
@@ -9791,7 +9806,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr "A transferir imagem: %s"
 
-#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:365 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr "A transferir instância: %s"
@@ -9837,9 +9852,14 @@ msgstr "Tipo de peer (local ou remoto)"
 msgid "Type: %s"
 msgstr "Tipo: %s"
 
-#: cmd/incus/low_level.go:1018
+#: cmd/incus/low_level.go:1048
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
+msgstr "Variável UEFI %s:%s deletada em %s"
+
+#: cmd/incus/low_level.go:1068
+#, fuzzy, c-format
+msgid "UEFI variables %s deleted on %s\n"
 msgstr "Variável UEFI %s:%s deletada em %s"
 
 #: cmd/incus/project.go:1055
@@ -9903,7 +9923,7 @@ msgstr "Incapaz de criar um ficheiro temporário: %v"
 msgid "Unavailable remote server"
 msgstr "Servidor remoto não disponível"
 
-#: cmd/incus/low_level.go:921
+#: cmd/incus/low_level.go:928
 #, fuzzy
 msgid "Unexpected input size"
 msgstr "%s inesperado"
@@ -9962,7 +9982,7 @@ msgstr "Chave desconhecida: %s"
 msgid "Unknown output type %q"
 msgstr "Tipo de saída desconhecido %q"
 
-#: cmd/incus/low_level.go:980 cmd/incus/low_level.go:981
+#: cmd/incus/low_level.go:1006 cmd/incus/low_level.go:1007
 msgid "Unset UEFI variables"
 msgstr "Desconfigurar variáveis UEFI"
 
@@ -10894,8 +10914,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 "incus create images:debian/12 u1\n"
@@ -10904,8 +10924,8 @@ msgstr ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Cria a instância com configuração a partir de config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
 "barramento"
 
@@ -11058,21 +11078,21 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from config."
-"yaml\n"
+"    Create and start a container named \"c2\" with configuration from "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://images."
-"linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
@@ -11080,28 +11100,28 @@ msgstr ""
 "\tCria e arranca contentor com nome \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Cria e arranca um contentor com nome \"c2\"  com configuração de config."
-"yaml\n"
+"    Cria e arranca um contentor com nome \"c2\"  com configuração de "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Cria e arranca contentor com nome \"c3\" usando o mesmo tamanho que um "
 "AWS t2.micro (1 vCPU, 1GiB de RAM)\n"
-"    Encontre a lista de tipos de instância suportados aqui: https://images."
-"linuxcontainers.org/meta/instance-types/\n"
+"    Encontre a lista de tipos de instância suportados aqui: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Cria e arranca uma máquina virtual com nome \"v1\" com 4 vCPUs e 4GiB de "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual com nome \"v2\", sobrepondo o tamanho "
 "de disco e barramento"
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -11111,8 +11131,8 @@ msgid ""
 "incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Mostra instâncias usando as colunas \"NAME\", \"BASE IMAGE\", \"STATE\", "
 "\"IPV4\", \"IPV6\" e \"MAC\".\n"
 "  \"BASE IMAGE\", \"MAC\" e \"IMAGE OS\" são coluna personalizadas geradas "
@@ -11235,8 +11255,8 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 "incus network integration create o1 ovn\n"
 "\tCria integração de rede o1 do tipo ovn\n"
@@ -11246,15 +11266,15 @@ msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
-"incus network integration edit <integração de rede> < network-integration."
-"yaml\n"
-"    Atualiza uma integração de rede usando o conteúdo de network-integration."
-"yaml"
+"incus network integration edit <integração de rede> < network-"
+"integration.yaml\n"
+"    Atualiza uma integração de rede usando o conteúdo de network-"
+"integration.yaml"
 
 #: cmd/incus/network_load_balancer.go:315
 msgid ""
@@ -11511,8 +11531,8 @@ msgid ""
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
-"    Atualiza uma chave de bucket de armazenamento usando o conteúdo de key."
-"yaml."
+"    Atualiza uma chave de bucket de armazenamento usando o conteúdo de "
+"key.yaml."
 
 #: cmd/incus/storage_bucket.go:1303
 msgid ""
@@ -13059,8 +13079,8 @@ msgstr "“%s”"
 
 #~ msgid ""
 #~ "incus admin os service edit [<remote>:]<service> < service.yaml\n"
-#~ "    Update an IncusOS service configuration using the content of service."
-#~ "yaml."
+#~ "    Update an IncusOS service configuration using the content of "
+#~ "service.yaml."
 #~ msgstr ""
 #~ "incus admin os service edit [<remoto>:]<serviço> < service.yaml\n"
 #~ "    Atualiza uma configuração de serviço IncusOS usando o conteúdo de "
