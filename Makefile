@@ -12,8 +12,8 @@ GOPATH ?= $(shell $(GO) env GOPATH)
 CGO_LDFLAGS_ALLOW ?= (-Wl,-wrap,pthread_create)|(-Wl,-z,now)
 SPHINXENV=doc/.sphinx/venv/bin/activate
 SPHINXPIPPATH=doc/.sphinx/venv/bin/pip
-OVN_MINVER=23.03.0
-OVS_MINVER=2.15.0
+OVN_MINVER=24.03.0
+OVS_MINVER=3.3.0
 
 ifneq "$(wildcard vendor)" ""
 	RAFT_PATH=$(CURDIR)/vendor/raft
