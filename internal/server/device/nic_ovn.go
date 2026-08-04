@@ -79,7 +79,7 @@ func (d *nicOVN) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.priority", "connected"}
+	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.priority", "connected", "ipv4.address.external", "ipv6.address.external"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -1159,8 +1159,8 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 	}
 
-	// Apply any changes needed when assigned ACLs change.
-	if d.config["security.acls"] != oldConfig["security.acls"] {
+	// Apply any changes needed when assigned ACLs or external NAT addresses change.
+	if d.config["security.acls"] != oldConfig["security.acls"] || d.config["ipv4.address.external"] != oldConfig["ipv4.address.external"] || d.config["ipv6.address.external"] != oldConfig["ipv6.address.external"] {
 		// Work out which ACLs have been removed and remove logical port from those groups.
 		oldACLs := util.SplitNTrimSpace(oldConfig["security.acls"], ",", -1, true)
 		newACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
