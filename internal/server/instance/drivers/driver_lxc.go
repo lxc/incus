@@ -2696,6 +2696,8 @@ ff02::2 ip6-allrouters
 			fmt.Fprintf(&resolvConf, "domain %s\n", d.expandedConfig["oci.dns.domain"])
 		}
 
+		resolvConf.WriteString("options edns0\n")
+
 		err = instRoot.WriteFile("network/resolv.conf", []byte(resolvConf.String()), 0o644)
 		if err != nil {
 			return "", nil, err
