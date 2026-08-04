@@ -121,6 +121,7 @@ func (r *ProtocolIncus) UseProject(name string) InstanceServer {
 		eventListeners:       make(map[string][]*EventListener), // New project specific listeners.
 		skipEvents:           r.skipEvents,
 		oidcClient:           r.oidcClient,
+		tempPath:             r.tempPath,
 	}
 }
 
@@ -146,6 +147,7 @@ func (r *ProtocolIncus) UseTarget(name string) InstanceServer {
 		skipEvents:           r.skipEvents,
 		oidcClient:           r.oidcClient,
 		clusterTarget:        name,
+		tempPath:             r.tempPath,
 	}
 }
 
