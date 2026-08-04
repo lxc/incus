@@ -189,6 +189,9 @@ Each storage bucket is assigned one or more access keys, which the applications 
 
 Storage buckets can be located on local storage (with `dir`, `btrfs`, `lvm` or `zfs` pools) or on remote storage (with `cephobject` pools).
 
+In a cluster, storage buckets on local storage belong to a single cluster member and their data is not replicated.
+See {ref}`howto-storage-buckets-cluster` for more information.
+
 To enable storage buckets for local storage pool drivers and allow applications to access the buckets via the S3 protocol, you must configure the {config:option}`server-core:core.storage_buckets_address` server setting.
 
 See the following how-to guide for additional information:
