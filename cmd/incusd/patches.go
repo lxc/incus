@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -104,6 +105,7 @@ var patches = []patch{
 	{name: "storage_lvmcluster_qcow2_overhead", stage: patchPostDaemonStorage, run: patchGenericStorage},
 	{name: "authorization_openfga_config_keys", stage: patchPreDaemonStorage, run: patchAuthorizationOpenFGAConfigKeys},
 	{name: "authorization_client_routes_from_driver", stage: patchPreDaemonStorage, run: patchAuthorizationClientRoutesFromDriver},
+	{name: "network_ovn_l2proxy_arp_proxy", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNL2ProxyARPProxy)},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1927,6 +1929,165 @@ func patchAuthorizationClientRoutesFromDriver(_ string, d *Daemon) error {
 
 		return nil
 	})
+}
+
+// patchNetworkOVNL2ProxyARPProxy converts the DNAT_AND_SNAT rules used to publish addresses on OVN
+// uplink networks with l2proxy ingress mode into arp_proxy entries on the external switch router port.
+func patchNetworkOVNL2ProxyARPProxy(_ string, d *Daemon) error {
+	s := d.State()
+
+	// Only apply patch on leader.
+	var err error
+	var localConfig *node.Config
+	isLeader := false
+
+	err = d.db.Node.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		localConfig, err = node.ConfigLoad(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	leaderAddress, err := s.Cluster.LeaderAddress()
+	if err != nil {
+		// If we're not clustered, we're the leader.
+		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			return err
+		}
+
+		isLeader = true
+	} else if localConfig.ClusterAddress() == leaderAddress {
+		isLeader = true
+	}
+
+	if !isLeader {
+		return nil
+	}
+
+	// Get all networks.
+	var networks map[string]map[int64]api.Network
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		networks, err = tx.GetCreatedNetworks(ctx)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	for projectName, projectNetworks := range networks {
+		for networkID, netInfo := range projectNetworks {
+			if netInfo.Type != "ovn" {
+				continue
+			}
+
+			// Check that OVN is available.
+			ovnnb, _, err := s.OVN()
+			if err != nil {
+				logger.Errorf("Failed to connect to OVN: %v", err)
+				return errRetryNextTime
+			}
+
+			networkPrefix := acl.OVNNetworkPrefix(networkID)
+			routerName := ovn.OVNRouter(fmt.Sprintf("%s-lr", networkPrefix))
+			extSwitchRouterPortName := ovn.OVNSwitchPort(fmt.Sprintf("%s-ls-ext-lsp-router", networkPrefix))
+
+			// Get the identity DNAT_AND_SNAT rules used to publish addresses on the uplink.
+			natRules, err := ovnnb.GetLogicalRouterNATs(context.TODO(), routerName)
+			if err != nil {
+				if errors.Is(err, ovn.ErrNotFound) {
+					continue // Skip networks that don't exist on the OVN side.
+				}
+
+				return fmt.Errorf("Failed getting NAT rules for network %q in project %q: %w", netInfo.Name, projectName, err)
+			}
+
+			var identityIPs []net.IP
+			for _, natRule := range natRules {
+				if natRule.Type != "dnat_and_snat" || natRule.ExternalIP != natRule.LogicalIP {
+					continue
+				}
+
+				ip := net.ParseIP(natRule.ExternalIP)
+				if ip == nil {
+					continue
+				}
+
+				identityIPs = append(identityIPs, ip)
+			}
+
+			if len(identityIPs) == 0 {
+				continue
+			}
+
+			// Get the list of active instance ports.
+			activePorts, err := ovnnb.GetLogicalSwitchActivePorts(context.TODO(), acl.OVNIntSwitchName(networkID))
+			if err != nil {
+				return fmt.Errorf("Failed getting active ports for network %q in project %q: %w", netInfo.Name, projectName, err)
+			}
+
+			// Get the external routes of active NICs so their per-IP rules can be converted to subnets.
+			var routeIPNets []*net.IPNet
+			err = network.UsedByInstanceDevices(s, projectName, netInfo.Name, netInfo.Type, func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+				instancePortName := ovn.OVNSwitchPort(fmt.Sprintf("%s-instance-%s-%s", networkPrefix, inst.Config["volatile.uuid"], nicName))
+				_, found := activePorts[instancePortName]
+				if !found {
+					return nil // Skip NICs that aren't started.
+				}
+
+				for _, key := range []string{"ipv4.routes.external", "ipv6.routes.external"} {
+					for _, routeStr := range util.SplitNTrimSpace(nicConfig[key], ",", -1, true) {
+						_, routeIPNet, err := net.ParseCIDR(routeStr)
+						if err != nil {
+							continue
+						}
+
+						routeIPNets = append(routeIPNets, routeIPNet)
+					}
+				}
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			// Build the proxy ARP/NDP entries.
+			var addIPNets []net.IPNet
+			for _, routeIPNet := range routeIPNets {
+				addIPNets = append(addIPNets, *routeIPNet)
+			}
+
+			for _, ip := range identityIPs {
+				covered := false
+				for _, routeIPNet := range routeIPNets {
+					if routeIPNet.Contains(ip) {
+						covered = true
+						break
+					}
+				}
+
+				if !covered {
+					addIPNets = append(addIPNets, network.IPToNet(ip))
+				}
+			}
+
+			// Add the proxy ARP/NDP entries before removing the NAT rules to avoid an advertisement gap.
+			err = ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), extSwitchRouterPortName, addIPNets, nil)
+			if err != nil {
+				return fmt.Errorf("Failed adding proxy ARP/NDP entries for network %q in project %q: %w", netInfo.Name, projectName, err)
+			}
+
+			err = ovnnb.DeleteLogicalRouterNAT(context.TODO(), routerName, "dnat_and_snat", false, identityIPs...)
+			if err != nil {
+				return fmt.Errorf("Failed deleting NAT rules for network %q in project %q: %w", netInfo.Name, projectName, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Patches end here
