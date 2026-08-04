@@ -480,6 +480,27 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 				if err != nil {
 					return err
 				}
+
+				// On a cluster move onto a differently named instance, as done by near-live
+				// migration, dependent volumes on shared storage aren't transferred, they're taken
+				// over from the source once its last transfer has landed. That's when their devices
+				// appear in the request. A same-name move needs none of this as the devices already
+				// belong to the very record being received into.
+				if clusterMoveSourceName != "" && clusterMoveSourceName != req.Name {
+					for devName, devConfig := range req.Devices {
+						if devConfig["type"] != "disk" || util.IsFalseOrEmpty(devConfig["dependent"]) || devConfig["path"] == "/" || devConfig["pool"] == "" {
+							continue
+						}
+
+						_, ok := devs[devName]
+						if ok {
+							continue
+						}
+
+						devs[devName] = devConfig
+						updateNeeded = true
+					}
+				}
 			}
 
 			if updateNeeded {
