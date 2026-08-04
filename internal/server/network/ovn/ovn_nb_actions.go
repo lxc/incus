@@ -344,7 +344,9 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		return err
 	}
 
-	// Check if the rule already exists.
+	// Check if the rule already exists, and collect any stale rules
+	// for the same logical IP so they can be replaced.
+	staleOperations := []ovsdb.Operation{}
 	for _, natUUID := range logicalRouter.Nat {
 		natRule := ovnNB.NAT{
 			UUID: natUUID,
@@ -361,12 +363,32 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		}
 
 		// Check if matching our new rule.
-		if natRule.LogicalIP == logicalIP && natRule.ExternalIP == externalIP {
-			if mayExist {
-				return nil
+		if natRule.LogicalIP == logicalIP {
+			if natRule.ExternalIP == externalIP {
+				if mayExist {
+					return nil
+				}
+
+				return ErrExists
 			}
 
-			return ErrExists
+			deleteOps, err := o.client.Where(&natRule).Delete()
+			if err != nil {
+				return err
+			}
+
+			staleOperations = append(staleOperations, deleteOps...)
+
+			deleteOps, err = o.client.Where(logicalRouter).Mutate(logicalRouter, ovsModel.Mutation{
+				Field:   &logicalRouter.Nat,
+				Mutator: ovsdb.MutateOperationDelete,
+				Value:   []string{natRule.UUID},
+			})
+			if err != nil {
+				return err
+			}
+
+			staleOperations = append(staleOperations, deleteOps...)
 		}
 	}
 
@@ -378,7 +400,7 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 		ExternalIP: externalIP,
 	}
 
-	operations := []ovsdb.Operation{}
+	operations := staleOperations
 
 	createOps, err := o.client.Create(&natRule)
 	if err != nil {
