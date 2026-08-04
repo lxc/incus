@@ -3343,3 +3343,8 @@ server configuration keys:
 
 * `acme.eab.kid`
 * `acme.eab.hmac`
+
+## `instance_protection_start`
+
+Adds a new `security.protection.start` instance configuration key which
+when set to `true` prevents the instance from being started.

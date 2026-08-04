@@ -2774,6 +2774,14 @@ For virtual machines, setting this to `false` disables nested virtualization (tu
 Set this option to `true` to prevent the instance's file system from being UID/GID shifted on startup.
 ```
 
+```{config:option} security.protection.start instance-security
+:defaultdesc: "`false`"
+:liveupdate: "yes"
+:shortdesc: "Prevents the instance from being started"
+:type: "bool"
+
+```
+
 ```{config:option} security.secureboot instance-security
 :condition: "virtual machine"
 :defaultdesc: "`true`"

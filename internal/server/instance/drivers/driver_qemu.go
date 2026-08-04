@@ -6998,6 +6998,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			"security.agent.metrics",
 			"security.csm",
 			"security.protection.delete",
+			"security.protection.start",
 			"security.guestapi",
 			"security.secureboot",
 		}
@@ -7668,7 +7669,7 @@ func (d *qemu) delete(force bool, cleanupDependencies bool) error {
 
 	// Check if instance is delete protected.
 	if !force && util.IsTrue(d.expandedConfig["security.protection.delete"]) && !d.IsSnapshot() {
-		return errors.New("Instance is protected")
+		return errors.New("Instance has delete protection enabled")
 	}
 
 	// Delete any persistent warnings for instance.

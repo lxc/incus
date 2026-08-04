@@ -3080,6 +3080,15 @@
 						}
 					},
 					{
+						"security.protection.start": {
+							"defaultdesc": "`false`",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Prevents the instance from being started",
+							"type": "bool"
+						}
+					},
+					{
 						"security.secureboot": {
 							"condition": "virtual machine",
 							"defaultdesc": "`true`",
