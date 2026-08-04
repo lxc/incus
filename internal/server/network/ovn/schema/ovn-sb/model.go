@@ -52,7 +52,7 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 
 var schema = `{
   "name": "OVN_Southbound",
-  "version": "20.27.0",
+  "version": "20.33.0",
   "tables": {
     "Address_Set": {
       "columns": {
@@ -78,6 +78,9 @@ var schema = `{
     },
     "BFD": {
       "columns": {
+        "chassis_name": {
+          "type": "string"
+        },
         "detect_mult": {
           "type": "integer"
         },
@@ -472,7 +475,8 @@ var schema = `{
                 [
                   "ipv6",
                   "str",
-                  "mac"
+                  "mac",
+                  "domain"
                 ]
               ]
             }
@@ -494,6 +498,18 @@ var schema = `{
           }
         },
         "external_ids": {
+          "type": {
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
+        "options": {
           "type": {
             "key": {
               "type": "string"
@@ -625,6 +641,9 @@ var schema = `{
               "maxInteger": 16777215
             }
           }
+        },
+        "timestamp": {
+          "type": "integer"
         }
       },
       "indexes": [
@@ -790,6 +809,9 @@ var schema = `{
             "max": 1
           }
         },
+        "chassis_name": {
+          "type": "string"
+        },
         "datapath": {
           "type": {
             "key": {
@@ -939,6 +961,26 @@ var schema = `{
             },
             "min": 0,
             "max": "unlimited"
+          }
+        },
+        "lr_datapath_group": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "Logical_DP_Group"
+            },
+            "min": 0,
+            "max": 1
+          }
+        },
+        "ls_datapath_group": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "Logical_DP_Group"
+            },
+            "min": 0,
+            "max": 1
           }
         },
         "name": {
@@ -1220,7 +1262,8 @@ var schema = `{
                 "set",
                 [
                   "from-lport",
-                  "to-lport"
+                  "to-lport",
+                  "both"
                 ]
               ]
             }
@@ -1243,7 +1286,8 @@ var schema = `{
                 "set",
                 [
                   "gre",
-                  "erspan"
+                  "erspan",
+                  "local"
                 ]
               ]
             }
@@ -1692,6 +1736,9 @@ var schema = `{
     },
     "Service_Monitor": {
       "columns": {
+        "chassis_name": {
+          "type": "string"
+        },
         "external_ids": {
           "type": {
             "key": {

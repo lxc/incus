@@ -27,12 +27,15 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 
 var schema = `{
   "name": "OVN_IC_Southbound",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "tables": {
     "Availability_Zone": {
       "columns": {
         "name": {
           "type": "string"
+        },
+        "nb_ic_cfg": {
+          "type": "integer"
         }
       },
       "indexes": [
@@ -260,6 +263,9 @@ var schema = `{
             "min": 0,
             "max": "unlimited"
           }
+        },
+        "nb_ic_cfg": {
+          "type": "integer"
         },
         "options": {
           "type": {

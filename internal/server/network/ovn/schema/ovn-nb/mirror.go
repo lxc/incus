@@ -13,17 +13,19 @@ type (
 var (
 	MirrorFilterFromLport MirrorFilter = "from-lport"
 	MirrorFilterToLport   MirrorFilter = "to-lport"
+	MirrorFilterBoth      MirrorFilter = "both"
 	MirrorTypeGre         MirrorType   = "gre"
 	MirrorTypeErspan      MirrorType   = "erspan"
+	MirrorTypeLocal       MirrorType   = "local"
 )
 
 // Mirror defines an object in Mirror table
 type Mirror struct {
 	UUID        string            `ovsdb:"_uuid"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
-	Filter      MirrorFilter      `ovsdb:"filter" validate:"oneof='from-lport' 'to-lport'"`
+	Filter      MirrorFilter      `ovsdb:"filter" validate:"oneof='from-lport' 'to-lport' 'both'"`
 	Index       int               `ovsdb:"index"`
 	Name        string            `ovsdb:"name"`
 	Sink        string            `ovsdb:"sink"`
-	Type        MirrorType        `ovsdb:"type" validate:"oneof='gre' 'erspan'"`
+	Type        MirrorType        `ovsdb:"type" validate:"oneof='gre' 'erspan' 'local'"`
 }

@@ -9,5 +9,6 @@ const CTZoneTable = "CT_Zone"
 type CTZone struct {
 	UUID          string            `ovsdb:"_uuid"`
 	ExternalIDs   map[string]string `ovsdb:"external_ids"`
+	Limit         *int              `ovsdb:"limit" validate:"omitempty,min=0,max=4294967295"`
 	TimeoutPolicy *string           `ovsdb:"timeout_policy"`
 }

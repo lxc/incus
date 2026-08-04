@@ -17,6 +17,7 @@ var (
 	ACLActionAllowStateless ACLAction    = "allow-stateless"
 	ACLActionDrop           ACLAction    = "drop"
 	ACLActionReject         ACLAction    = "reject"
+	ACLActionPass           ACLAction    = "pass"
 	ACLDirectionFromLport   ACLDirection = "from-lport"
 	ACLDirectionToLport     ACLDirection = "to-lport"
 	ACLSeverityAlert        ACLSeverity  = "alert"
@@ -29,7 +30,7 @@ var (
 // ACL defines an object in ACL table
 type ACL struct {
 	UUID        string            `ovsdb:"_uuid"`
-	Action      ACLAction         `ovsdb:"action" validate:"oneof='allow' 'allow-related' 'allow-stateless' 'drop' 'reject'"`
+	Action      ACLAction         `ovsdb:"action" validate:"oneof='allow' 'allow-related' 'allow-stateless' 'drop' 'reject' 'pass'"`
 	Direction   ACLDirection      `ovsdb:"direction" validate:"oneof='from-lport' 'to-lport'"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
 	Label       int               `ovsdb:"label" validate:"min=0,max=4294967295"`
@@ -40,4 +41,5 @@ type ACL struct {
 	Options     map[string]string `ovsdb:"options"`
 	Priority    int               `ovsdb:"priority" validate:"min=0,max=32767"`
 	Severity    *ACLSeverity      `ovsdb:"severity" validate:"omitempty,oneof='alert' 'warning' 'notice' 'info' 'debug'"`
+	Tier        int               `ovsdb:"tier" validate:"min=0,max=3"`
 }

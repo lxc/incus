@@ -37,7 +37,7 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 
 var schema = `{
   "name": "Open_vSwitch",
-  "version": "8.2.0",
+  "version": "8.5.0",
   "tables": {
     "AutoAttach": {
       "columns": {
@@ -350,6 +350,17 @@ var schema = `{
             "max": "unlimited"
           }
         },
+        "limit": {
+          "type": {
+            "key": {
+              "type": "integer",
+              "minInteger": 0,
+              "maxInteger": 4294967295
+            },
+            "min": 0,
+            "max": 1
+          }
+        },
         "timeout_policy": {
           "type": {
             "key": {
@@ -558,6 +569,17 @@ var schema = `{
             },
             "min": 0,
             "max": "unlimited"
+          }
+        },
+        "ct_zone_default_limit": {
+          "type": {
+            "key": {
+              "type": "integer",
+              "minInteger": 0,
+              "maxInteger": 4294967295
+            },
+            "min": 0,
+            "max": 1
           }
         },
         "ct_zones": {
@@ -796,6 +818,17 @@ var schema = `{
             "max": 1
           }
         },
+        "stats_interval": {
+          "type": {
+            "key": {
+              "type": "integer",
+              "minInteger": 1,
+              "maxInteger": 3600
+            },
+            "min": 0,
+            "max": 1
+          }
+        },
         "targets": {
           "type": {
             "key": {
@@ -803,6 +836,17 @@ var schema = `{
             },
             "min": 0,
             "max": "unlimited"
+          }
+        },
+        "template_interval": {
+          "type": {
+            "key": {
+              "type": "integer",
+              "minInteger": 1,
+              "maxInteger": 3600
+            },
+            "min": 0,
+            "max": 1
           }
         }
       }
@@ -848,7 +892,8 @@ var schema = `{
             },
             "min": 0,
             "max": "unlimited"
-          }
+          },
+          "ephemeral": true
         },
         "cfm_fault": {
           "type": {
@@ -978,6 +1023,22 @@ var schema = `{
           "ephemeral": true
         },
         "ingress_policing_burst": {
+          "type": {
+            "key": {
+              "type": "integer",
+              "minInteger": 0
+            }
+          }
+        },
+        "ingress_policing_kpkts_burst": {
+          "type": {
+            "key": {
+              "type": "integer",
+              "minInteger": 0
+            }
+          }
+        },
+        "ingress_policing_kpkts_rate": {
           "type": {
             "key": {
               "type": "integer",

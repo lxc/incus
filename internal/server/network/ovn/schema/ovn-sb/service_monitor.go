@@ -21,6 +21,7 @@ var (
 // ServiceMonitor defines an object in Service_Monitor table
 type ServiceMonitor struct {
 	UUID        string                  `ovsdb:"_uuid"`
+	ChassisName string                  `ovsdb:"chassis_name"`
 	ExternalIDs map[string]string       `ovsdb:"external_ids"`
 	IP          string                  `ovsdb:"ip"`
 	LogicalPort string                  `ovsdb:"logical_port"`
