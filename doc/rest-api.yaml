@@ -11876,6 +11876,54 @@ paths:
             summary: Get the NVRAM variable GUIDs
             tags:
                 - instances
+        patch:
+            consumes:
+                - application/json
+            description: |-
+                This consumes nested objects keyed on GUID, then variable name, deleting the corresponding
+                UEFI variables if the objects are `null`, and updating them otherwise.
+
+                Only supported for VMs.
+            operationId: instance_nvram_patch
+            parameters:
+                - description: Instance name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Project name
+                  example: default
+                  in: query
+                  name: project
+                  type: string
+                - description: Load Balancer
+                  in: body
+                  name: UEFI variables map
+                  required: true
+                  schema:
+                    additionalProperties:
+                        additionalProperties:
+                            $ref: '#/definitions/InstanceNVRAMVariablePut'
+                        description: Namespaced UEFI variables
+                        type: object
+                    description: UEFI variables
+                    type: object
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "409":
+                    $ref: '#/responses/Conflict'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Bulk modify NVRAM variables.
+            tags:
+                - instances
     /1.0/instances/{name}/nvram/{guid}:
         get:
             description: |-
