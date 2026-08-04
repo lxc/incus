@@ -2309,7 +2309,8 @@ Override the working directory of an OCI container.
 :liveupdate: "no"
 :shortdesc: "DNS domain"
 :type: "string"
-Domain name for the initial `resolv.conf`.
+Domain name for `resolv.conf`.
+When set, the domain name received over DHCP is ignored.
 ```
 
 ```{config:option} oci.dns.nameservers instance-oci
@@ -2317,7 +2318,8 @@ Domain name for the initial `resolv.conf`.
 :liveupdate: "no"
 :shortdesc: "DNS name servers"
 :type: "string"
-Comma-separated list of name server addresses for the initial `resolv.conf`.
+Comma-separated list of name server addresses for `resolv.conf`.
+When set, name servers received over DHCP are ignored.
 ```
 
 ```{config:option} oci.dns.search instance-oci
@@ -2325,7 +2327,8 @@ Comma-separated list of name server addresses for the initial `resolv.conf`.
 :liveupdate: "no"
 :shortdesc: "DNS search domains"
 :type: "string"
-Comma-separated list of search domains for the initial `resolv.conf`.
+Comma-separated list of search domains for `resolv.conf`.
+When set, search domains received over DHCP are ignored.
 ```
 
 ```{config:option} oci.entrypoint instance-oci
