@@ -7,10 +7,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-01 10:17+0000\n"
+"POT-Creation-Date: 2026-08-04 10:10+0000\n"
 "PO-Revision-Date: 2026-07-30 20:54+0000\n"
-"Last-Translator: Dklfajsjfi49wefklsf32 <nlincus@users.noreply.hosted.weblate."
-"org>\n"
+"Last-Translator: Dklfajsjfi49wefklsf32 "
+"<nlincus@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/incus/cli/nl/>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -744,7 +744,7 @@ msgstr "- Port %d (%s)"
 msgid "--all cannot be used together with other arguments"
 msgstr "--target kan niet gebruikt worden met: instances"
 
-#: cmd/incus/low_level.go:917 cmd/incus/low_level.go:937
+#: cmd/incus/low_level.go:924 cmd/incus/low_level.go:948
 #, fuzzy, c-format
 msgid "--attributes cannot be used with --format=%s"
 msgstr "--no-profiles kan niet gebruikt worden met --refresh"
@@ -830,7 +830,7 @@ msgstr "--target kan alleen gebruikt worden met clusters"
 msgid "--target cannot be used with instances"
 msgstr "--target kan niet gebruikt worden met: instances"
 
-#: cmd/incus/low_level.go:941
+#: cmd/incus/low_level.go:952
 #, fuzzy, c-format
 msgid "--timestamp cannot be used with --format=%s"
 msgstr "--no-profiles kan niet gebruikt worden met --refresh"
@@ -1328,6 +1328,10 @@ msgstr "Brug (Bridge):"
 
 #: cmd/incus/storage_bucket.go:116
 msgid "Bucket description"
+msgstr ""
+
+#: cmd/incus/low_level.go:893
+msgid "Bulk NVRAM variable update is only supported for non-binary formats"
 msgstr ""
 
 #: cmd/incus/info.go:371
@@ -2843,8 +2847,8 @@ msgstr ""
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action (\"cluster."
-"evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -3250,6 +3254,11 @@ msgstr ""
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
 msgstr "Backup aan het maken van instantiatie (instance): %s"
 
+#: cmd/incus/low_level.go:962 cmd/incus/low_level.go:1044
+#, fuzzy, c-format
+msgid "Failed to delete variable %s:%s: %w"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
+
 #: cmd/incus/low_level.go:239
 #, c-format
 msgid "Failed to dump instance memory: %w"
@@ -3327,7 +3336,7 @@ msgstr ""
 msgid "Failed to parse the preseed: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:955
+#: cmd/incus/low_level.go:974
 #, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr ""
@@ -3342,7 +3351,7 @@ msgstr ""
 msgid "Failed to read from stdin: %w"
 msgstr ""
 
-#: cmd/incus/copy.go:394
+#: cmd/incus/copy.go:387
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr ""
@@ -3416,7 +3425,7 @@ msgstr ""
 msgid "Failed to set UEFI variable %s:%s: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:963
+#: cmd/incus/low_level.go:943
 #, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
 msgstr ""
@@ -4319,7 +4328,7 @@ msgstr ""
 msgid "Invalid format %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:951
+#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:989
 #: cmd/incus/monitor.go:74
 #, c-format
 msgid "Invalid format: %s"
@@ -5019,8 +5028,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5704,8 +5713,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
@@ -5836,6 +5845,12 @@ msgstr ""
 
 #: cmd/incus/file.go:498
 msgid "More than one file to download, but target is not a directory"
+msgstr ""
+
+#: cmd/incus/low_level.go:889 cmd/incus/low_level.go:1031
+msgid ""
+"More than one variable was passed but the server is missing the required "
+"\"instance_nvram_bulk_update\" API extension"
 msgstr ""
 
 #: cmd/incus/storage_volume_file.go:338
@@ -6873,7 +6888,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr ""
 
-#: cmd/incus/copy.go:416
+#: cmd/incus/copy.go:409
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr ""
@@ -8681,7 +8696,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:372 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:365 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr ""
@@ -8725,9 +8740,14 @@ msgstr ""
 msgid "Type: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1018
+#: cmd/incus/low_level.go:1048
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
+msgstr ""
+
+#: cmd/incus/low_level.go:1068
+#, c-format
+msgid "UEFI variables %s deleted on %s\n"
 msgstr ""
 
 #: cmd/incus/project.go:1055
@@ -8789,7 +8809,7 @@ msgstr ""
 msgid "Unavailable remote server"
 msgstr ""
 
-#: cmd/incus/low_level.go:921
+#: cmd/incus/low_level.go:928
 msgid "Unexpected input size"
 msgstr ""
 
@@ -8847,7 +8867,7 @@ msgstr ""
 msgid "Unknown output type %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:980 cmd/incus/low_level.go:981
+#: cmd/incus/low_level.go:1006 cmd/incus/low_level.go:1007
 msgid "Unset UEFI variables"
 msgstr ""
 
@@ -9687,8 +9707,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -9790,29 +9810,29 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from config."
-"yaml\n"
+"    Create and start a container named \"c2\" with configuration from "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://images."
-"linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -9896,16 +9916,16 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315

@@ -850,7 +850,7 @@ type cmdLowLevelNVRAMSet struct {
 	flagTimestamp  int64
 }
 
-var cmdLowLevelNVRAMSetUsage = u.Usage{u.Instance.Remote(), u.MakeKV(u.Variable, u.Value)}
+var cmdLowLevelNVRAMSetUsage = u.Usage{u.Instance.Remote(), u.MakeKV(u.Variable, u.Value).List(1)}
 
 func (c *cmdLowLevelNVRAMSet) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -876,9 +876,6 @@ func (c *cmdLowLevelNVRAMSet) command() *cobra.Command {
 }
 
 func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
-	// We deliberately only accept a single definition at a time because we don’t want to give users
-	// the impression that they are hitting any kind of optimized path. Setting 100 variables leads to
-	// 100 full NVRAM rewrites.
 	parsed, err := c.global.Parse(cmdLowLevelNVRAMSetUsage, cmd, args)
 	if err != nil {
 		return err
@@ -886,21 +883,31 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	keys, err := kvToMap(u.AsSingleton(parsed[1]))
+	single := len(parsed[1].List) == 1
+	if !single {
+		if !d.HasExtension("instance_nvram_bulk_update") {
+			return errors.New(i18n.G(`More than one variable was passed but the server is missing the required "instance_nvram_bulk_update" API extension`))
+		}
+
+		if !slices.Contains([]string{"json", "yaml"}, c.flagFormat) {
+			return errors.New(i18n.G("Bulk NVRAM variable update is only supported for non-binary formats"))
+		}
+	}
+
+	keys, err := kvToMap(parsed[1])
 	if err != nil {
 		return err
 	}
 
-	var errs []error
-
+	bulk := map[string]map[string]*api.InstanceNVRAMVariablePut{}
 	for k, v := range keys {
 		guid, varName, err := nvramGuessVar(k)
 		if err != nil {
-			errs = append(errs, err)
-			continue
+			return err
 		}
 
-		if slices.Contains([]string{"base64", "binary", "efivarfs", "hex"}, c.flagFormat) {
+		switch c.flagFormat {
+		case "base64", "binary", "efivarfs", "hex":
 			attributes := c.flagAttributes
 			var data []byte
 			switch c.flagFormat {
@@ -932,7 +939,11 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 			}
 
 			err = d.UpdateRawInstanceNVRAMGUIDVar(instanceName, guid, varName, data, attributes, c.flagTimestamp)
-		} else {
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed to set UEFI variable %s:%s: %w"), guid, varName, err)
+			}
+
+		case "json", "yaml":
 			if cmd.Flags().Changed("attributes") {
 				return fmt.Errorf(i18n.G("--attributes cannot be used with --format=%s"), c.flagFormat)
 			}
@@ -941,30 +952,45 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf(i18n.G("--timestamp cannot be used with --format=%s"), c.flagFormat)
 			}
 
-			data := api.InstanceNVRAMVariablePut{}
-			switch c.flagFormat {
-			case "json":
-				err = json.Unmarshal([]byte(v), &data)
-			case "yaml":
-				err = yaml.Load([]byte(v), &data)
-			default:
-				return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
+			var data *api.InstanceNVRAMVariablePut
+
+			// If the value passed is empty, switch to the unset logic.
+			if v == "" {
+				if single {
+					err = d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
+					if err != nil {
+						return fmt.Errorf(i18n.G("Failed to delete variable %s:%s: %w"), guid, varName, err)
+					}
+				}
+			} else {
+				switch c.flagFormat {
+				case "json":
+					err = json.Unmarshal([]byte(v), data)
+				case "yaml":
+					err = yaml.Load([]byte(v), data)
+				}
+
+				if err != nil {
+					return fmt.Errorf(i18n.G("Failed to parse variable %s:%s: %w"), guid, varName, err)
+				}
+
+				if single {
+					return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, *data, "")
+				}
 			}
 
-			if err != nil {
-				errs = append(errs, fmt.Errorf(i18n.G("Failed to parse variable %s:%s: %w"), guid, varName, err))
-				continue
+			_, ok := bulk[guid]
+			if !ok {
+				bulk[guid] = map[string]*api.InstanceNVRAMVariablePut{}
 			}
 
-			err = d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, data, "")
-		}
-
-		if err != nil {
-			errs = append(errs, fmt.Errorf(i18n.G("Failed to set UEFI variable %s:%s: %w"), guid, varName, err))
+			bulk[guid][varName] = data
+		default:
+			return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
 		}
 	}
 
-	return errors.Join(errs...)
+	return d.UpdateInstanceNVRAM(instanceName, bulk)
 }
 
 // Unset.
@@ -972,7 +998,7 @@ type cmdLowLevelNVRAMUnset struct {
 	global *cmdGlobal
 }
 
-var cmdLowLevelNVRAMUnsetUsage = u.Usage{u.Instance.Remote(), u.Variable}
+var cmdLowLevelNVRAMUnsetUsage = u.Usage{u.Instance.Remote(), u.Variable.List(1)}
 
 func (c *cmdLowLevelNVRAMUnset) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -993,9 +1019,6 @@ func (c *cmdLowLevelNVRAMUnset) command() *cobra.Command {
 }
 
 func (c *cmdLowLevelNVRAMUnset) run(cmd *cobra.Command, args []string) error {
-	// We deliberately only accept a single deletion at a time because we don’t want to give users
-	// the impression that they are hitting any kind of optimized path. Deleting 100 variables leads
-	// to 100 full NVRAM rewrites.
 	parsed, err := c.global.Parse(cmdLowLevelNVRAMUnsetUsage, cmd, args)
 	if err != nil {
 		return err
@@ -1003,19 +1026,46 @@ func (c *cmdLowLevelNVRAMUnset) run(cmd *cobra.Command, args []string) error {
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName, err := nvramGuessVar(parsed[1].String)
-	if err != nil {
-		return err
+	single := len(parsed[1].List) == 1
+	if !single && !d.HasExtension("instance_nvram_bulk_update") {
+		return errors.New(i18n.G(`More than one variable was passed but the server is missing the required "instance_nvram_bulk_update" API extension`))
 	}
 
-	// Delete the UEFI variable.
-	err = d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	bulk := map[string]map[string]*api.InstanceNVRAMVariablePut{}
+	for _, v := range parsed[1].List {
+		guid, varName, err := nvramGuessVar(v.String)
+		if err != nil {
+			return err
+		}
+
+		if single {
+			err = d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed to delete variable %s:%s: %w"), guid, varName, err)
+			}
+
+			if !c.global.flagQuiet {
+				fmt.Printf(i18n.G("UEFI variable %s:%s deleted on %s")+"\n", guid, varName, formatRemote(c.global.conf, parsed[0]))
+			}
+
+			return nil
+		}
+
+		_, ok := bulk[guid]
+		if !ok {
+			bulk[guid] = map[string]*api.InstanceNVRAMVariablePut{}
+		}
+
+		bulk[guid][varName] = nil
+	}
+
+	err = d.UpdateInstanceNVRAM(instanceName, bulk)
 	if err != nil {
 		return err
 	}
 
 	if !c.global.flagQuiet {
-		fmt.Printf(i18n.G("UEFI variable %s:%s deleted on %s")+"\n", guid, varName, formatRemote(c.global.conf, parsed[0]))
+		fmt.Printf(i18n.G("UEFI variables %s deleted on %s\n"), strings.Join(parsed[1].StringList, ", "), formatRemote(c.global.conf, parsed[0]))
 	}
 
 	return nil

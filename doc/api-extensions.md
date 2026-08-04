@@ -3348,3 +3348,7 @@ server configuration keys:
 
 Adds a new `security.protection.start` instance configuration key which
 when set to `true` prevents the instance from being started.
+
+## `instance_nvram_bulk_update`
+
+This adds a new `PATCH /1.0/instances/{name}/nvram` endpoint to update NVRAM in bulk.

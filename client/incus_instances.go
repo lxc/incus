@@ -3449,6 +3449,26 @@ func (r *ProtocolIncus) DeleteInstanceNVRAMGUIDVar(name string, guid string, var
 	return nil
 }
 
+// UpdateInstanceNVRAM sets interpreted OVMF variables on an instance or deletes them, in bulk.
+func (r *ProtocolIncus) UpdateInstanceNVRAM(name string, vars map[string]map[string]*api.InstanceNVRAMVariablePut) error {
+	if !r.HasExtension("instance_nvram_bulk_update") {
+		return errors.New(`The server is missing the required "instance_nvram_bulk_update" API extension`)
+	}
+
+	path, _, err := r.instanceTypeToPath(api.InstanceTypeVM)
+	if err != nil {
+		return err
+	}
+
+	// Send the request
+	_, _, err = r.query("PATCH", fmt.Sprintf("%s/%s/nvram", path, url.PathEscape(name)), vars, "")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateRawInstanceNVRAMGUIDVar sets raw OVMF variables on an instance.
 func (r *ProtocolIncus) UpdateRawInstanceNVRAMGUIDVar(name string, guid string, varName string, data []byte, attributes uint32, timestamp int64) error {
 	if !r.HasExtension("instance_nvram") {
