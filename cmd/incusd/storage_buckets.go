@@ -375,9 +375,12 @@ func storagePoolBucketsGet(d *Daemon, r *http.Request) response.Response {
 	if recursion > 0 {
 		buckets := make([]*api.StorageBucket, 0, len(filteredDBBuckets))
 		for _, dbBucket := range filteredDBBuckets {
-			u := pool.GetBucketURL(dbBucket.Name)
-			if u != nil {
-				dbBucket.S3URL = u.String()
+			// Only include the S3 URL when the bucket is reachable through this server.
+			if !s.ServerClustered || dbBucket.Location == "" || dbBucket.Location == s.ServerName {
+				u := pool.GetBucketURL(dbBucket.Name)
+				if u != nil {
+					dbBucket.S3URL = u.String()
+				}
 			}
 
 			buckets = append(buckets, &dbBucket.StorageBucket)
@@ -552,6 +555,11 @@ func storagePoolBucketGet(d *Daemon, r *http.Request) response.Response {
 	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	targetMember := request.QueryParam(r, "target")
@@ -890,6 +898,11 @@ func storagePoolBucketPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
+	}
+
 	// Decode the request.
 	req := api.StorageBucketPut{}
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -999,6 +1012,11 @@ func storagePoolBucketDelete(d *Daemon, r *http.Request) response.Response {
 	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	err = pool.DeleteBucket(bucketProjectName, bucketName, nil)
@@ -1170,6 +1188,11 @@ func storagePoolBucketKeysGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
+	}
+
 	// If target is set, get buckets only for this cluster members.
 	targetMember := request.QueryParam(r, "target")
 	memberSpecific := targetMember != ""
@@ -1279,6 +1302,11 @@ func storagePoolBucketKeysPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
+	}
+
 	// Parse the request into a record.
 	req := api.StorageBucketKeysPost{}
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -1381,6 +1409,11 @@ func storagePoolBucketKeyDelete(d *Daemon, r *http.Request) response.Response {
 	keyName, err := pathVar(r, "keyName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	err = pool.DeleteBucketKey(bucketProjectName, bucketName, keyName, nil)
@@ -1489,6 +1522,11 @@ func storagePoolBucketKeyGet(d *Daemon, r *http.Request) response.Response {
 	keyName, err := pathVar(r, "keyName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	targetMember := request.QueryParam(r, "target")
@@ -1604,6 +1642,11 @@ func storagePoolBucketKeyPut(d *Daemon, r *http.Request) response.Response {
 	keyName, err := pathVar(r, "keyName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, bucketProjectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	// Decode the request.
