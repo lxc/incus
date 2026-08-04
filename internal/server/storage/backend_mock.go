@@ -248,7 +248,7 @@ func (b *mockBackend) RenameInstanceSnapshot(inst instance.Instance, newName str
 }
 
 // DeleteInstanceSnapshot removes an instance volume snapshot.
-func (b *mockBackend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.Operation) error {
+func (b *mockBackend) DeleteInstanceSnapshot(inst instance.Instance, cleanupDependencies bool, op *operations.Operation) error {
 	return nil
 }
 
