@@ -56,8 +56,8 @@ Minimum versions for network related tooling:
 
 When using Incus with OVN networks, the minimum versions of OVS and OVN are:
 
-* `openvswitch`: 2.15.0
-* `ovn`: 23.03.0
+* `openvswitch`: 3.3.0
+* `ovn`: 24.03.0
 
 ## Storage
 
