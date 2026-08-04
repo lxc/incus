@@ -227,6 +227,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -1037,118 +1039,127 @@ func (c *cmdForknet) loadInterfaces(l *logrus.Logger) map[string]instanceDrivers
 	return ifaces
 }
 
+// appendUnique appends value to list unless empty or already present.
+func appendUnique(list []string, value string) []string {
+	if value == "" || slices.Contains(list, value) {
+		return list
+	}
+
+	return append(list, value)
+}
+
 func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
-	nameservers := map[string]struct{}{}
+	nameservers := []string{}
 	searchLabels := []string{}
 	domainNames := []string{}
 
 	// Seed with the values parsed from the initial resolv.conf.
+	// Any field set there comes from static configuration (oci.dns.*) and disables the matching DHCP field.
 	for _, ns := range c.initialNameservers {
-		nameservers[ns] = struct{}{}
+		nameservers = appendUnique(nameservers, ns)
 	}
 
-	searchLabels = append(searchLabels, c.initialSearch...)
-
-	if c.initialDomain != "" {
-		domainNames = append(domainNames, c.initialDomain)
+	for _, s := range c.initialSearch {
+		searchLabels = appendUnique(searchLabels, s)
 	}
 
+	domainNames = appendUnique(domainNames, c.initialDomain)
+
+	// Hold the lock until the file is fully written so concurrent DHCP clients can't corrupt it.
 	c.applyDNSMu.Lock()
+	defer c.applyDNSMu.Unlock()
+
+	// Sort the interfaces for a stable output.
+	ifaces4 := make([]string, 0, len(c.dhcpv4Leases))
+	for iface := range c.dhcpv4Leases {
+		ifaces4 = append(ifaces4, iface)
+	}
+
+	sort.Strings(ifaces4)
+
+	ifaces6 := make([]string, 0, len(c.dhcpv6Leases))
+	for iface := range c.dhcpv6Leases {
+		ifaces6 = append(ifaces6, iface)
+	}
+
+	sort.Strings(ifaces6)
 
 	// IPv4 leases.
-	for _, lease := range c.dhcpv4Leases {
+	for _, iface := range ifaces4 {
+		lease := c.dhcpv4Leases[iface]
 		if lease == nil || lease.Offer == nil {
 			continue
 		}
 
 		// Nameservers from DHCPv4.
-		for _, ns := range lease.Offer.DNS() {
-			nameservers[ns.String()] = struct{}{}
+		if len(c.initialNameservers) == 0 {
+			for _, ns := range lease.Offer.DNS() {
+				nameservers = appendUnique(nameservers, ns.String())
+			}
 		}
 
 		// Domain name (option 15).
-		dn := lease.Offer.DomainName()
-		if dn != "" {
-			domainNames = append(domainNames, dn)
+		if c.initialDomain == "" {
+			domainNames = appendUnique(domainNames, lease.Offer.DomainName())
 		}
 
 		// Domain search list (option 119).
-		ds := lease.Offer.DomainSearch()
-		if ds != nil && len(ds.Labels) > 0 {
-			searchLabels = append(searchLabels, ds.Labels...)
+		if len(c.initialSearch) == 0 {
+			ds := lease.Offer.DomainSearch()
+			if ds != nil {
+				for _, s := range ds.Labels {
+					searchLabels = appendUnique(searchLabels, s)
+				}
+			}
 		}
 	}
 
 	// IPv6 leases.
-	for _, reply := range c.dhcpv6Leases {
+	for _, iface := range ifaces6 {
+		reply := c.dhcpv6Leases[iface]
 		if reply == nil {
 			continue
 		}
 
 		// Nameservers from DHCPv6.
-		for _, ns := range reply.Options.DNS() {
-			nameservers[ns.String()] = struct{}{}
+		if len(c.initialNameservers) == 0 {
+			for _, ns := range reply.Options.DNS() {
+				nameservers = appendUnique(nameservers, ns.String())
+			}
 		}
 
 		// Domain search list.
-		dsl := reply.Options.DomainSearchList()
-		if dsl != nil && len(dsl.Labels) > 0 {
-			searchLabels = append(searchLabels, dsl.Labels...)
+		if len(c.initialSearch) == 0 {
+			dsl := reply.Options.DomainSearchList()
+			if dsl != nil {
+				for _, s := range dsl.Labels {
+					searchLabels = appendUnique(searchLabels, s)
+				}
+			}
 		}
 	}
 
-	c.applyDNSMu.Unlock()
+	// Build the new resolv.conf content.
+	var sb strings.Builder
 
-	// Create resolv.conf.
-	f, err := os.Create(filepath.Join(c.instNetworkPath, "resolv.conf"))
-	if err != nil {
-		l.WithError(err).Error("Giving up on DHCP, couldn't create resolv.conf")
-		return err
-	}
-
-	defer logger.WarnOnError(f.Close, "Failed to close resolv.conf")
-
-	// Write unique nameservers.
-	for ns := range nameservers {
-		_, err = fmt.Fprintf(f, "nameserver %s\n", ns)
-		if err != nil {
-			l.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
-			return err
-		}
+	for _, ns := range nameservers {
+		fmt.Fprintf(&sb, "nameserver %s\n", ns)
 	}
 
 	// Prefer a search list if present; otherwise write a single domain if available.
 	if len(searchLabels) > 0 {
-		seen := map[string]struct{}{}
-		out := []string{}
-
-		for _, s := range searchLabels {
-			if s == "" {
-				continue
-			}
-
-			_, ok := seen[s]
-			if ok {
-				continue
-			}
-
-			seen[s] = struct{}{}
-			out = append(out, s)
-		}
-
-		if len(out) > 0 {
-			_, err = fmt.Fprintf(f, "search %s\n", strings.Join(out, " "))
-			if err != nil {
-				l.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
-				return err
-			}
-		}
+		fmt.Fprintf(&sb, "search %s\n", strings.Join(searchLabels, " "))
 	} else if len(domainNames) > 0 {
-		_, err = fmt.Fprintf(f, "domain %s\n", domainNames[0])
-		if err != nil {
-			l.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
-			return err
-		}
+		fmt.Fprintf(&sb, "domain %s\n", domainNames[0])
+	}
+
+	sb.WriteString("options edns0\n")
+
+	// Write in place as the file is bind-mounted into the container.
+	err := os.WriteFile(filepath.Join(c.instNetworkPath, "resolv.conf"), []byte(sb.String()), 0o644)
+	if err != nil {
+		l.WithError(err).Error("Giving up on DHCP, couldn't write resolv.conf")
+		return err
 	}
 
 	return nil

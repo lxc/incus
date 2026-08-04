@@ -839,7 +839,8 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"oci.uid": validate.Optional(validate.IsUint32),
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.dns.nameservers)
-	// Comma-separated list of name server addresses for the initial `resolv.conf`.
+	// Comma-separated list of name server addresses for `resolv.conf`.
+	// When set, name servers received over DHCP are ignored.
 	// ---
 	//  type: string
 	//  liveupdate: no
@@ -848,7 +849,8 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"oci.dns.nameservers": validate.Optional(validate.IsListOf(validate.IsNetworkAddress)),
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.dns.domain)
-	// Domain name for the initial `resolv.conf`.
+	// Domain name for `resolv.conf`.
+	// When set, the domain name received over DHCP is ignored.
 	// ---
 	//  type: string
 	//  liveupdate: no
@@ -857,7 +859,8 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"oci.dns.domain": validate.Optional(isResolvConfValue),
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.dns.search)
-	// Comma-separated list of search domains for the initial `resolv.conf`.
+	// Comma-separated list of search domains for `resolv.conf`.
+	// When set, search domains received over DHCP are ignored.
 	// ---
 	//  type: string
 	//  liveupdate: no

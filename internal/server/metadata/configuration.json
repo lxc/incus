@@ -2607,7 +2607,7 @@
 						"oci.dns.domain": {
 							"condition": "OCI container",
 							"liveupdate": "no",
-							"longdesc": "Domain name for the initial `resolv.conf`.",
+							"longdesc": "Domain name for `resolv.conf`.\nWhen set, the domain name received over DHCP is ignored.",
 							"shortdesc": "DNS domain",
 							"type": "string"
 						}
@@ -2616,7 +2616,7 @@
 						"oci.dns.nameservers": {
 							"condition": "OCI container",
 							"liveupdate": "no",
-							"longdesc": "Comma-separated list of name server addresses for the initial `resolv.conf`.",
+							"longdesc": "Comma-separated list of name server addresses for `resolv.conf`.\nWhen set, name servers received over DHCP are ignored.",
 							"shortdesc": "DNS name servers",
 							"type": "string"
 						}
@@ -2625,7 +2625,7 @@
 						"oci.dns.search": {
 							"condition": "OCI container",
 							"liveupdate": "no",
-							"longdesc": "Comma-separated list of search domains for the initial `resolv.conf`.",
+							"longdesc": "Comma-separated list of search domains for `resolv.conf`.\nWhen set, search domains received over DHCP are ignored.",
 							"shortdesc": "DNS search domains",
 							"type": "string"
 						}
