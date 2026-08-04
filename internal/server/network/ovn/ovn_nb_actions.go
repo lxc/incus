@@ -2582,6 +2582,114 @@ func (o *NB) UpdateLogicalSwitchPortLinkRouter(ctx context.Context, switchPortNa
 	return nil
 }
 
+// UpdateLogicalSwitchPortARPProxy adds and removes entries from a logical switch port's arp_proxy option.
+func (o *NB) UpdateLogicalSwitchPortARPProxy(ctx context.Context, switchPortName OVNSwitchPort, addIPNets []net.IPNet, removeIPNets []net.IPNet) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(switchPortName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Get the current entries.
+	entries := strings.Fields(lsp.Options["arp_proxy"])
+
+	// Apply the requested changes.
+	for _, ipNet := range removeIPNets {
+		entry := ipNet.String()
+		entries = slices.DeleteFunc(entries, func(e string) bool { return e == entry })
+	}
+
+	for _, ipNet := range addIPNets {
+		entry := ipNet.String()
+		if !slices.Contains(entries, entry) {
+			entries = append(entries, entry)
+		}
+	}
+
+	slices.Sort(entries)
+
+	// Check if anything changed.
+	newValue := strings.Join(entries, " ")
+	if newValue == lsp.Options["arp_proxy"] {
+		return nil
+	}
+
+	// Update the fields.
+	if lsp.Options == nil {
+		lsp.Options = map[string]string{}
+	}
+
+	if newValue != "" {
+		lsp.Options["arp_proxy"] = newValue
+	} else {
+		delete(lsp.Options, "arp_proxy")
+	}
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ClearLogicalSwitchPortARPProxy removes the arp_proxy option from a logical switch port.
+func (o *NB) ClearLogicalSwitchPortARPProxy(ctx context.Context, switchPortName OVNSwitchPort) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(switchPortName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	// Check if there's anything to clear.
+	_, found := lsp.Options["arp_proxy"]
+	if !found {
+		return nil
+	}
+
+	// Update the fields.
+	delete(lsp.Options, "arp_proxy")
+
+	// Update the record.
+	operations, err := o.client.Where(&lsp).Update(&lsp)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateLogicalSwitchPortLinkProviderNetwork links a logical switch port to a provider network.
 func (o *NB) UpdateLogicalSwitchPortLinkProviderNetwork(ctx context.Context, switchPortName OVNSwitchPort, extNetworkName string) error {
 	// Get the logical switch port.
