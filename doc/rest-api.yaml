@@ -2134,6 +2134,14 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: AllowInconsistent
+            dependent_volumes_move:
+                description: |-
+                    Whether the dependent volumes are moved along with the instance rather than copied (cluster-internal)
+
+                    API extension: instance_refresh_migration
+                example: false
+                type: boolean
+                x-go-name: DependentVolumesMove
             instance_only:
                 description: Whether snapshots should be discarded (migration only)
                 example: false
@@ -2416,6 +2424,14 @@ definitions:
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
+            dependent_volumes_move:
+                description: |-
+                    Whether the dependent volumes are moved along with the instance rather than copied (cluster-internal)
+
+                    API extension: instance_refresh_migration
+                example: false
+                type: boolean
+                x-go-name: DependentVolumesMove
             fingerprint:
                 description: Image fingerprint (for image source)
                 example: ed56997f7c5b48e8d78986d2467a26109be6fb9f2d92e8c7b08eb8b6cec7629a
