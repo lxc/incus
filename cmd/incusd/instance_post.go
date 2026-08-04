@@ -518,7 +518,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Cross-server instance migration.
-	ws, err := newMigrationSource(inst, req.Live, req.InstanceOnly, req.AllowInconsistent, "", "", req.Devices, req.Target)
+	ws, err := newMigrationSource(inst, req.Live, req.InstanceOnly, req.AllowInconsistent, "", "", req.Devices, req.DependentVolumesMove, req.Target)
 	if err != nil {
 		return response.InternalError(err)
 	}
@@ -924,7 +924,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 			// On shared storage there is nothing to pre-copy.
 			if !sourcePool.Driver().Info().Remote {
-				return migrateInstanceNearLive(ctx, s, inst, target, targetInstInfo, progressHandler)
+				return migrateInstanceNearLive(ctx, s, inst, target, targetInstInfo, req.Devices, op, progressHandler)
 			}
 
 			err = instanceShutdownOrForceStop(inst)
@@ -946,7 +946,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		// Setup a new migration source.
-		sourceMigration, err := newMigrationSource(inst, req.Live, false, req.AllowInconsistent, inst.Name(), req.Pool, req.Devices, nil)
+		sourceMigration, err := newMigrationSource(inst, req.Live, false, req.AllowInconsistent, inst.Name(), req.Pool, req.Devices, false, nil)
 		if err != nil {
 			return fmt.Errorf("Failed setting up instance migration on source: %w", err)
 		}
@@ -1114,7 +1114,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 				// Delete the snapshots in reverse order.
 				k = snapshotCount - 1 - k
 
-				err = sourcePool.DeleteInstanceSnapshot(snapshots[k], nil)
+				err = sourcePool.DeleteInstanceSnapshot(snapshots[k], false, nil)
 				if err != nil {
 					return fmt.Errorf("Failed delete instance snapshot %q on source member: %w", snapshots[k].Name(), err)
 				}
