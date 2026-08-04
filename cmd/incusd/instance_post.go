@@ -924,7 +924,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 			// On shared storage there is nothing to pre-copy.
 			if !sourcePool.Driver().Info().Remote {
-				return migrateInstanceNearLive(ctx, s, inst, target, targetInstInfo, progressHandler)
+				return migrateInstanceNearLive(ctx, s, inst, target, targetInstInfo, sourceMemberInfo, req.Devices, op, progressHandler)
 			}
 
 			err = instanceShutdownOrForceStop(inst)
@@ -1114,7 +1114,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 				// Delete the snapshots in reverse order.
 				k = snapshotCount - 1 - k
 
-				err = sourcePool.DeleteInstanceSnapshot(snapshots[k], nil)
+				err = sourcePool.DeleteInstanceSnapshot(snapshots[k], false, nil)
 				if err != nil {
 					return fmt.Errorf("Failed delete instance snapshot %q on source member: %w", snapshots[k].Name(), err)
 				}
