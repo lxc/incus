@@ -13,6 +13,19 @@ For example:
 
     incus config set core.storage_buckets_address=:8555
 
+(howto-storage-buckets-cluster)=
+## Storage buckets in a cluster
+
+Incus does not replicate the data of storage buckets across the cluster.
+When using local storage (`dir`, `btrfs`, `lvm` or `zfs` pools), each storage bucket belongs to the cluster member it was created on.
+
+As with storage volumes, as long as the bucket name is unique within the cluster, bucket operations are transparently forwarded to the server that stores the bucket.
+If several servers have a bucket of the same name, the `--target` flag must be used to select the right one.
+
+S3 API access is only possible through the server that stores the bucket, and the `s3_url` field of the bucket points to that server.
+
+Clusters that need highly available object storage should use Ceph object storage (`cephobject` pools), which provides an S3 API that is usable through any cluster member.
+
 ## Manage storage buckets
 
 Storage buckets provide access to object storage exposed using the S3 protocol.
@@ -36,6 +49,7 @@ To add a storage bucket on a cluster member, add the `--target` flag:
 ```{note}
 For most storage drivers, storage buckets are not replicated across the cluster and exist only on the member for which they were created.
 This behavior is different for `cephobject` storage pools, where buckets are available from any cluster member.
+See {ref}`howto-storage-buckets-cluster` for more information.
 ```
 
 ### Configure storage bucket settings
