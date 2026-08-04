@@ -906,7 +906,8 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		if slices.Contains([]string{"base64", "binary", "efivarfs", "hex"}, c.flagFormat) {
+		switch c.flagFormat {
+		case "base64", "binary", "efivarfs", "hex":
 			attributes := c.flagAttributes
 			var data []byte
 			switch c.flagFormat {
@@ -941,7 +942,8 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return fmt.Errorf(i18n.G("Failed to set UEFI variable %s:%s: %w"), guid, varName, err)
 			}
-		} else {
+
+		case "json", "yaml":
 			if cmd.Flags().Changed("attributes") {
 				return fmt.Errorf(i18n.G("--attributes cannot be used with --format=%s"), c.flagFormat)
 			}
@@ -950,22 +952,31 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf(i18n.G("--timestamp cannot be used with --format=%s"), c.flagFormat)
 			}
 
-			data := api.InstanceNVRAMVariablePut{}
-			switch c.flagFormat {
-			case "json":
-				err = json.Unmarshal([]byte(v), &data)
-			case "yaml":
-				err = yaml.Load([]byte(v), &data)
-			default:
-				return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
-			}
+			var data *api.InstanceNVRAMVariablePut
 
-			if err != nil {
-				return fmt.Errorf(i18n.G("Failed to parse variable %s:%s: %w"), guid, varName, err)
-			}
+			// If the value passed is empty, switch to the unset logic.
+			if v == "" {
+				if single {
+					err = d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
+					if err != nil {
+						return fmt.Errorf(i18n.G("Failed to delete variable %s:%s: %w"), guid, varName, err)
+					}
+				}
+			} else {
+				switch c.flagFormat {
+				case "json":
+					err = json.Unmarshal([]byte(v), data)
+				case "yaml":
+					err = yaml.Load([]byte(v), data)
+				}
 
-			if single {
-				return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, data, "")
+				if err != nil {
+					return fmt.Errorf(i18n.G("Failed to parse variable %s:%s: %w"), guid, varName, err)
+				}
+
+				if single {
+					return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, *data, "")
+				}
 			}
 
 			_, ok := bulk[guid]
@@ -973,7 +984,9 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				bulk[guid] = map[string]*api.InstanceNVRAMVariablePut{}
 			}
 
-			bulk[guid][varName] = &data
+			bulk[guid][varName] = data
+		default:
+			return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
 		}
 	}
 
@@ -1028,7 +1041,7 @@ func (c *cmdLowLevelNVRAMUnset) run(cmd *cobra.Command, args []string) error {
 		if single {
 			err = d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
 			if err != nil {
-				return err
+				return fmt.Errorf(i18n.G("Failed to delete variable %s:%s: %w"), guid, varName, err)
 			}
 
 			if !c.global.flagQuiet {
