@@ -3606,7 +3606,7 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 }
 
 // DeleteInstanceSnapshot removes the snapshot volume for the supplied snapshot instance.
-func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.Operation) error {
+func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, cleanupDependencies bool, op *operations.Operation) error {
 	l := b.logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 	l.Debug("DeleteInstanceSnapshot started")
 	defer l.Debug("DeleteInstanceSnapshot finished")
@@ -3696,6 +3696,10 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 	err = VolumeDBDelete(b, inst.Project().Name, inst.Name(), vol.Type())
 	if err != nil {
 		return err
+	}
+
+	if !cleanupDependencies {
+		return nil
 	}
 
 	err = src.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
