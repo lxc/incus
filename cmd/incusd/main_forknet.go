@@ -1153,6 +1153,8 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 		fmt.Fprintf(&sb, "domain %s\n", domainNames[0])
 	}
 
+	sb.WriteString("options edns0\n")
+
 	// Write in place as the file is bind-mounted into the container.
 	err := os.WriteFile(filepath.Join(c.instNetworkPath, "resolv.conf"), []byte(sb.String()), 0o644)
 	if err != nil {
