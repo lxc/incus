@@ -1880,7 +1880,7 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			tag := int(opts.VLAN)
 
 			logicalSwitchPort.ParentName = &parentName
-			logicalSwitchPort.Tag = &tag
+			logicalSwitchPort.TagRequest = &tag
 		}
 
 		if opts.RouterPort != "" {
