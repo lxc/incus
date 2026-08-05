@@ -222,6 +222,56 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 	return client, nil
 }
 
+// ConnectIfBucketIsRemote figures out the address of the cluster member on which the bucket with the given name
+// is defined. If it's not the local cluster member it will connect to it and return the connected client,
+// otherwise it just returns nil. If there is more than one cluster member with a matching bucket name, an error
+// is returned.
+func ConnectIfBucketIsRemote(s *state.State, poolName string, projectName string, bucketName string, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, r *http.Request) (incus.InstanceServer, error) {
+	// No need to connect if not clustered.
+	if !s.ServerClustered {
+		return nil, nil
+	}
+
+	var bucket *db.StorageBucket
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		poolID, err := tx.GetStoragePoolID(ctx, poolName)
+		if err != nil {
+			return err
+		}
+
+		bucket, err = tx.GetStoragePoolBucket(ctx, poolID, projectName, false, bucketName)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Use the local cluster member if the bucket is on a remote pool or belongs to this member.
+	if bucket.Location == "" || bucket.Location == s.ServerName {
+		return nil, nil
+	}
+
+	var node db.NodeInfo
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		node, err = tx.GetNodeByName(ctx, bucket.Location)
+		return err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed getting cluster member info for %q: %w", bucket.Location, err)
+	}
+
+	// Connect to the remote cluster member.
+	client, err := Connect(node.Address, networkCert, serverCert, r, false)
+	if err != nil {
+		return nil, err
+	}
+
+	client = client.UseProject(projectName)
+
+	return client, nil
+}
+
 // SetupTrust is a convenience around InstanceServer.CreateCertificate that adds the given server certificate to
 // the trusted pool of the cluster at the given address, using the given token. The certificate is added as
 // type CertificateTypeServer to allow intra-member communication. If a certificate with the same fingerprint

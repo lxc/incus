@@ -210,6 +210,11 @@ func storagePoolBucketBackupsGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, projectName, bucketName)
+	if resp != nil {
+		return resp
+	}
+
 	// Get the storage pool itself.
 	var poolID int64
 
@@ -348,6 +353,11 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 	bucketName, err := pathVar(r, "bucketName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, projectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	targetMember := request.QueryParam(r, "target")
@@ -610,6 +620,11 @@ func storagePoolBucketBackupGet(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, projectName, bucketName)
+	if resp != nil {
+		return resp
+	}
+
 	fullName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
 	entry, err := storagePoolBucketBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
@@ -711,6 +726,11 @@ func storagePoolBucketBackupPost(d *Daemon, r *http.Request) response.Response {
 	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, projectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	req := api.StorageBucketBackupPost{}
@@ -844,6 +864,11 @@ func storagePoolBucketBackupDelete(d *Daemon, r *http.Request) response.Response
 		return response.SmartError(err)
 	}
 
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, projectName, bucketName)
+	if resp != nil {
+		return resp
+	}
+
 	fullName := bucketName + internalInstance.SnapshotDelimiter + backupName
 
 	entry, err := storagePoolBucketBackupLoadByName(r.Context(), s, projectName, poolName, fullName)
@@ -958,6 +983,11 @@ func storagePoolBucketBackupExportGet(d *Daemon, r *http.Request) response.Respo
 	backupName, err := pathVar(r, "backupName")
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	resp = forwardedResponseIfBucketIsRemote(s, r, poolName, projectName, bucketName)
+	if resp != nil {
+		return resp
 	}
 
 	targetMember := request.QueryParam(r, "target")
