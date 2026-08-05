@@ -538,8 +538,9 @@ func (m *Monitor) MigrateWait(ctx context.Context, state string) error {
 				} `json:"return"`
 			}
 
+			// Monitor timeouts are expected during switchover (QEMU main loop busy), keep polling.
 			err := m.Run("query-migrate", nil, &resp)
-			if err != nil {
+			if err != nil && !errors.Is(err, ErrMonitorTimeout) {
 				return err
 			}
 
@@ -608,8 +609,9 @@ func (m *Monitor) MigrateIncoming(ctx context.Context, name string) error {
 			} `json:"return"`
 		}
 
+		// Monitor timeouts are expected during switchover (QEMU main loop busy), keep polling.
 		err := m.Run("query-migrate", nil, &resp)
-		if err != nil {
+		if err != nil && !errors.Is(err, ErrMonitorTimeout) {
 			return err
 		}
 
