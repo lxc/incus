@@ -220,25 +220,18 @@ test_network_ovn_basic() {
     incus init "${instanceImage}" u1 --project testovn -s "${poolName}"
     incus config device add u1 eth0 nic network=ovn-virtual-network name=eth0 --project testovn
 
-    # Record NAT rules count before u1 started.
-    natRulesBefore=$(ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l)
-
     incus start u1 --project testovn
 
-    # Test external IPs allocated and published using dnat.
+    # Test external IPs allocated and published using ARP proxy.
     sleep 5
     U1_EXT_IPV4="$(incus list u1 --project testovn -c4 --format=csv | cut -d' ' -f1)"
     U1_EXT_IPV6="$(incus list u1 --project testovn -c6 --format=csv | cut -d' ' -f1)"
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | grep "${U1_EXT_IPV4},${U1_EXT_IPV4},dnat_and_snat"
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | grep "${U1_EXT_IPV6},${U1_EXT_IPV6},dnat_and_snat"
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -F "${U1_EXT_IPV4}/32"
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -F "${U1_EXT_IPV6}/128"
     incus stop -f u1 --project testovn
 
-    # Check NAT rules got cleaned up.
-    natRulesAfter=$(ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l)
-    if [ "$natRulesBefore" -ne "$natRulesAfter" ]; then
-        echo "NAT rules left over. Started with ${natRulesBefore} now have ${natRulesAfter}"
-        false
-    fi
+    # Check ARP proxy entries got cleaned up.
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
 
     # Test external IPs routed to OVN NIC.
     incus network set ovn-virtual-network --project testovn \
@@ -275,14 +268,9 @@ test_network_ovn_basic() {
     incus network unset dummy ipv4.routes.anycast --project default
     incus network unset dummy ipv6.routes.anycast --project default
 
-    # Check DNAT_AND_SNAT rules get added when starting instance port with external routes.
+    # Check ARP proxy entries get added when starting instance port with external routes.
     incus start u1 --project testovn
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | grep "198.51.100.0,198.51.100.0,dnat_and_snat"
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | grep "198.51.100.63,198.51.100.63,dnat_and_snat"
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | grep "2001:db8:1:2::,2001:db8:1:2::,dnat_and_snat"
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | grep "2001:db8:1:2::3f,2001:db8:1:2::3f,dnat_and_snat"
-    ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l | grep -xF 132
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -F "arp_proxy=198.51.100.0/26 2001:db8:1:2::/122"
 
     # Add internal static route to instance NIC.
     incus config device set u1 eth0 ipv4.routes=203.0.113.1/32 ipv6.routes=2001:db8:2:2::1/128 --project testovn
@@ -309,44 +297,33 @@ test_network_ovn_basic() {
     incus network unset ovn-virtual-network --project testovn ipv6.dhcp
     incus start u1 --project testovn
 
-    # Check DNAT_AND_SNAT NAT rules get removed when switching to routed ingress mode.
-    natRulesBeforeRouted=$(ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l)
+    # Check ARP proxy entries get removed when switching to routed ingress mode.
     incus network set dummy ovn.ingress_mode=routed
-    natRulesAfterRouted=$(ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l)
-    if [ "$natRulesAfterRouted" -ne "4" ]; then
-        echo "NAT rules left over after switching to routed ingress mode. Expecting 4. Started with ${natRulesBeforeRouted} now have ${natRulesAfterRouted}"
-        false
-    fi
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
 
-    # Check DNAT_AND_SNAT rules are re-added when switching to l2proxy ingress mode.
+    # Check ARP proxy entries are re-added when switching to l2proxy ingress mode.
     incus network unset dummy ovn.ingress_mode
-    natRulesAfterL2proxy=$(ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l)
-    if [ "$natRulesBeforeRouted" -ne "$natRulesAfterL2proxy" ]; then
-        echo "NAT rules not restored after switching to l2proxy ingress mode. Started with ${natRulesBeforeRouted} now have ${natRulesAfterL2proxy}"
-        false
-    fi
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -F "arp_proxy=198.51.100.0/26 2001:db8:1:2::/122"
 
     incus stop -f u1 --project testovn
 
-    # Check NAT rules got cleaned up.
-    natRulesAfter=$(ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l)
-    if [ "$natRulesBefore" -ne "$natRulesAfter" ]; then
-        echo "NAT rules left over. Started with ${natRulesBefore} now have ${natRulesAfter}"
-        false
-    fi
+    # Check ARP proxy entries got cleaned up.
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
 
-    # Check routed ingress mode allows larger subnets and doesn't add DNAT rules.
+    # Check routed ingress mode allows larger subnets and doesn't add ARP proxy entries.
     incus network set dummy ovn.ingress_mode=routed
     incus config device set u1 eth0 ipv4.routes.external=198.51.100.0/24 --project testovn
     incus config device set u1 eth0 ipv6.routes.external=2001:db8:1:2::/64 --project testovn
     incus start u1 --project testovn
 
-    # Check no NAT rules got added.
+    # Check no NAT rules or ARP proxy entries got added.
     natRulesAfter=$(ovn-nbctl --bare --format=csv --column=external_ip,logical_ip,type find nat | wc -l)
     if [ "$natRulesBefore" -ne "$natRulesAfter" ]; then
         echo "NAT rules got added in routed ingress mode. Started with ${natRulesBefore} now have ${natRulesAfter}"
         false
     fi
+
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
 
     incus delete -f u1 --project testovn
     incus network unset dummy ovn.ingress_mode
