@@ -372,6 +372,12 @@ func (o *NB) CreateLogicalRouterNAT(ctx context.Context, routerName OVNRouter, n
 				return ErrExists
 			}
 
+			// Only SNAT rules are unique per logical IP, DNAT rules may
+			// translate multiple external addresses to the same target.
+			if natType != "snat" {
+				continue
+			}
+
 			deleteOps, err := o.client.Where(&natRule).Delete()
 			if err != nil {
 				return err
@@ -1874,7 +1880,7 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 			tag := int(opts.VLAN)
 
 			logicalSwitchPort.ParentName = &parentName
-			logicalSwitchPort.Tag = &tag
+			logicalSwitchPort.TagRequest = &tag
 		}
 
 		if opts.RouterPort != "" {
