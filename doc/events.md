@@ -13,6 +13,18 @@ Incus Currently supports three event types.
 - `operation`: Shows all ongoing operations from creation to completion (including updates to their state and progress metadata).
 - `lifecycle`: Shows an audit trail for specific actions occurring over Incus.
 
+## Event ordering
+
+Events are delivered to each listener in the order that Incus generated them.
+
+A listener that cannot keep up with the stream is disconnected rather than having events silently skipped. After
+reconnecting, anything being tracked from the event stream should be re-fetched, as the events that occurred while
+disconnected are not resent.
+
+When using the Go client, handlers registered through `AddHandler` are called concurrently and may therefore observe
+events out of order. Calling `SetOrdered` on the listener before adding any handler makes them run one event at a time
+and in order instead.
+
 ## Event structure
 
 ### Example
