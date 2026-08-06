@@ -849,6 +849,18 @@ definitions:
                 format: date-time
                 type: string
                 x-go-name: LastUsedAt
+            locations:
+                description: |-
+                    List of cluster members with a local copy of the image
+
+                    API extension: image_locations
+                example:
+                    - server01
+                    - server02
+                items:
+                    type: string
+                type: array
+                x-go-name: Locations
             profiles:
                 description: |-
                     List of profiles to use when creating from this image (if none provided by user)
