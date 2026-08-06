@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-08-04 10:10+0000\n"
+        "POT-Creation-Date: 2026-08-06 09:02+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -508,7 +508,7 @@ msgstr  ""
 msgid   "--reuse requires --copy-aliases"
 msgstr  ""
 
-#: cmd/incus/move.go:222
+#: cmd/incus/move.go:226
 msgid   "--target can only be used with clusters"
 msgstr  ""
 
@@ -940,7 +940,7 @@ msgstr  ""
 msgid   "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr  ""
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259 cmd/incus/network_integration.go:139 cmd/incus/project.go:168
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:269 cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid   "Bad key=value pair: %q"
 msgstr  ""
@@ -1061,6 +1061,10 @@ msgstr  ""
 
 #: cmd/incus/move.go:123
 msgid   "Can't override configuration or profiles in local rename"
+msgstr  ""
+
+#: cmd/incus/move.go:127
+msgid   "Can't perform an incremental transfer in local rename"
 msgstr  ""
 
 #: cmd/incus/move.go:119
@@ -2695,7 +2699,7 @@ msgstr  ""
 msgid   "Failed to delete bitmap: %w"
 msgstr  ""
 
-#: cmd/incus/move.go:206
+#: cmd/incus/move.go:210
 #, c-format
 msgid   "Failed to delete original instance after copying it: %w"
 msgstr  ""
@@ -5126,12 +5130,12 @@ msgstr  ""
 msgid   "Memory:"
 msgstr  ""
 
-#: cmd/incus/move.go:293
+#: cmd/incus/move.go:303
 #, c-format
 msgid   "Migration API failure: %w"
 msgstr  ""
 
-#: cmd/incus/move.go:312
+#: cmd/incus/move.go:322
 #, c-format
 msgid   "Migration operation failure: %w"
 msgstr  ""
@@ -7714,6 +7718,10 @@ msgstr  ""
 msgid   "The server doesn't have a web UI installed"
 msgstr  ""
 
+#: cmd/incus/move.go:231
+msgid   "The server doesn't implement incremental instance transfers"
+msgstr  ""
+
 #: cmd/incus/info.go:413
 msgid   "The server doesn't implement the newer v2 resources API"
 msgstr  ""
@@ -7848,7 +7856,7 @@ msgstr  ""
 msgid   "Transferring image: %s"
 msgstr  ""
 
-#: cmd/incus/copy.go:365 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:365 cmd/incus/move.go:308 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid   "Transferring instance: %s"
 msgstr  ""

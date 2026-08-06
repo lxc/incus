@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-04 10:10+0000\n"
+"POT-Creation-Date: 2026-08-06 09:02+0000\n"
 "PO-Revision-Date: 2026-08-05 19:35+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Greek <https://hosted.weblate.org/projects/incus/cli/el/>\n"
@@ -537,7 +537,7 @@ msgstr ""
 msgid "--reuse requires --copy-aliases"
 msgstr ""
 
-#: cmd/incus/move.go:222
+#: cmd/incus/move.go:226
 msgid "--target can only be used with clusters"
 msgstr ""
 
@@ -985,7 +985,7 @@ msgstr ""
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:259
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1107,6 +1107,10 @@ msgstr ""
 
 #: cmd/incus/move.go:123
 msgid "Can't override configuration or profiles in local rename"
+msgstr ""
+
+#: cmd/incus/move.go:127
+msgid "Can't perform an incremental transfer in local rename"
 msgstr ""
 
 #: cmd/incus/move.go:119
@@ -2513,8 +2517,8 @@ msgstr ""
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action "
-"(\"cluster.evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action (\"cluster."
+"evacuate\" instance configuration option)"
 msgstr ""
 
 #: cmd/incus/cluster.go:1555
@@ -2903,7 +2907,7 @@ msgstr ""
 msgid "Failed to delete bitmap: %w"
 msgstr ""
 
-#: cmd/incus/move.go:206
+#: cmd/incus/move.go:210
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
@@ -4688,8 +4692,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
-"\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:"
+"maxWidth]\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5369,8 +5373,8 @@ msgstr ""
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect \"custom\" "
-"(user created) volumes."
+"Unless specified through a prefix, all volume operations affect "
+"\"custom\" (user created) volumes."
 msgstr ""
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
@@ -5443,12 +5447,12 @@ msgstr ""
 msgid "Memory:"
 msgstr ""
 
-#: cmd/incus/move.go:293
+#: cmd/incus/move.go:303
 #, c-format
 msgid "Migration API failure: %w"
 msgstr ""
 
-#: cmd/incus/move.go:312
+#: cmd/incus/move.go:322
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr ""
@@ -8183,6 +8187,10 @@ msgstr ""
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
+#: cmd/incus/move.go:231
+msgid "The server doesn't implement incremental instance transfers"
+msgstr ""
+
 #: cmd/incus/info.go:413
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
@@ -8332,7 +8340,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:365 cmd/incus/move.go:298 cmd/incus/move_nearlive.go:147
+#: cmd/incus/copy.go:365 cmd/incus/move.go:308 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr ""
@@ -9310,8 +9318,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
@@ -9413,29 +9421,29 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from "
-"config.yaml\n"
+"    Create and start a container named \"c2\" with configuration from config."
+"yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://"
-"images.linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://images."
+"linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
-"root,io.bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
+"bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c "
-"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
+"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
+"parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -9519,16 +9527,16 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from "
-"config.yaml"
+"    Create network integration o1 of type ovn with configuration from config."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-"
-"integration.yaml\n"
-"    Update a network integration using the content of network-"
-"integration.yaml"
+"incus network integration edit <network integration> < network-integration."
+"yaml\n"
+"    Update a network integration using the content of network-integration."
+"yaml"
 msgstr ""
 
 #: cmd/incus/network_load_balancer.go:315
