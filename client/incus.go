@@ -60,9 +60,7 @@ type ProtocolIncus struct {
 
 // Disconnect gets rid of any background goroutines.
 func (r *ProtocolIncus) Disconnect() {
-	if r.ctxConnected.Err() != nil {
-		r.ctxConnectedCancel()
-	}
+	r.ctxConnectedCancel()
 }
 
 // GetConnectionInfo returns the basic connection information used to interact with the server.
