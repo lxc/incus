@@ -113,11 +113,16 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 
 			r.eventListenersLock.Lock()
 			r.eventConnsLock.Lock()
-			if len(r.eventListeners[listener.projectName]) == 0 {
+			if r.ctxConnected.Err() != nil || len(r.eventListeners[listener.projectName]) == 0 {
 				// We don't need the connection anymore, disconnect and clear.
 				if r.eventListeners[listener.projectName] != nil {
 					_ = r.eventConns[listener.projectName].Close()
 					delete(r.eventConns, listener.projectName)
+				}
+
+				// Tell any listener still around that we're going away.
+				for _, l := range r.eventListeners[listener.projectName] {
+					l.ctxCancel()
 				}
 
 				r.eventListeners[listener.projectName] = nil
