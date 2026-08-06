@@ -3366,3 +3366,8 @@ running container is migrated this way.
 It also adds `refresh-migrate` as a configuration option to `cluster.evacuate`
 and as an evacuation mode, which forces refresh migration of instances during
 cluster evacuation.
+
+## `image_locations`
+
+Adds a new `locations` field to the image API, listing the names of the
+cluster members which have a local copy of the image.
