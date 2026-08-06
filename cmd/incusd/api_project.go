@@ -624,10 +624,15 @@ func projectPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	err = projectChange(r.Context(), s, project, req)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(project.Name, lifecycle.ProjectUpdated.Event(project.Name, requestor, nil))
 
-	return projectChange(r.Context(), s, project, req)
+	return response.EmptySyncResponse
 }
 
 // swagger:operation PATCH /1.0/projects/{name} projects project_patch
@@ -749,14 +754,19 @@ func projectPatch(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	err = projectChange(r.Context(), s, project, req)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(project.Name, lifecycle.ProjectUpdated.Event(project.Name, requestor, nil))
 
-	return projectChange(r.Context(), s, project, req)
+	return response.EmptySyncResponse
 }
 
 // Common logic between PUT and PATCH.
-func projectChange(ctx context.Context, s *state.State, project *api.Project, req api.ProjectPut) response.Response {
+func projectChange(ctx context.Context, s *state.State, project *api.Project, req api.ProjectPut) error {
 	// Make a list of config keys that have changed.
 	configChanged := []string{}
 	for key := range project.Config {
@@ -784,7 +794,7 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 	// Quick checks.
 	if len(featuresChanged) > 0 {
 		if project.Name == api.ProjectDefaultName {
-			return response.BadRequest(errors.New("You can't change the features of the default project"))
+			return api.StatusErrorf(http.StatusBadRequest, "You can't change the features of the default project")
 		}
 
 		// Consider the project empty if it is only used by the default profile.
@@ -796,13 +806,13 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 				// If feature is currently enabled, and it is being changed in the request, it
 				// must be being disabled. So prevent it on non-empty projects.
 				if util.IsTrue(project.Config[featureChanged]) {
-					return response.BadRequest(fmt.Errorf("Project feature %q cannot be disabled on non-empty projects", featureChanged))
+					return api.StatusErrorf(http.StatusBadRequest, "Project feature %q cannot be disabled on non-empty projects", featureChanged)
 				}
 
 				// If feature is currently disabled, and it is being changed in the request, it
 				// must be being enabled. So check if feature can be enabled on non-empty projects.
 				if util.IsFalse(project.Config[featureChanged]) && !cluster.ProjectFeatures[featureChanged].CanEnableNonEmpty {
-					return response.BadRequest(fmt.Errorf("Project feature %q cannot be enabled on non-empty projects", featureChanged))
+					return api.StatusErrorf(http.StatusBadRequest, "Project feature %q cannot be enabled on non-empty projects", featureChanged)
 				}
 			}
 		}
@@ -811,7 +821,7 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 	// Validate the configuration.
 	err := projectValidateConfig(s, req.Config)
 	if err != nil {
-		return response.BadRequest(err)
+		return api.StatusErrorf(http.StatusBadRequest, "%v", err)
 	}
 
 	// Update the database entry.
@@ -851,10 +861,10 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 		return nil
 	})
 	if err != nil {
-		return response.SmartError(err)
+		return err
 	}
 
-	return response.EmptySyncResponse
+	return nil
 }
 
 // swagger:operation POST /1.0/projects/{name} projects project_post
