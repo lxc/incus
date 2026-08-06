@@ -498,6 +498,22 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		//  shortdesc: Comma-separated list of unconfigured network interfaces to include in the bridge
 		"bridge.external_interfaces": validate.Optional(validateExternalInterfaces),
 
+		// gendoc:generate(entity=network_ovn, group=common, key=bridge.multicast_snooping)
+		//
+		// ---
+		//  type: bool
+		//  default: `true`
+		//  shortdesc: Whether to enable multicast snooping on the virtual network
+		"bridge.multicast_snooping": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_ovn, group=common, key=bridge.multicast_relay)
+		//
+		// ---
+		//  type: bool
+		//  default: `false`
+		//  shortdesc: Whether to relay multicast traffic through the network's logical router
+		"bridge.multicast_relay": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.address)
 		//
 		// ---
@@ -2737,6 +2753,12 @@ func (n *ovn) setup(update bool) error {
 		if !update {
 			reverter.Add(func() { _ = n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName()) })
 		}
+
+		// Apply multicast relay setting.
+		err = n.ovnnb.UpdateLogicalRouterMulticastRelay(context.TODO(), n.getRouterName(), util.IsTrue(n.config["bridge.multicast_relay"]))
+		if err != nil {
+			return fmt.Errorf("Failed setting multicast relay on router: %w", err)
+		}
 	} else {
 		err := n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName())
 		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
@@ -3037,6 +3059,12 @@ func (n *ovn) setup(update bool) error {
 
 	if !update {
 		reverter.Add(func() { _ = n.ovnnb.DeleteLogicalSwitch(context.TODO(), n.getIntSwitchName()) })
+	}
+
+	// Apply multicast snooping setting.
+	err = n.ovnnb.UpdateLogicalSwitchMulticastSnooping(context.TODO(), n.getIntSwitchName(), util.IsTrueOrEmpty(n.config["bridge.multicast_snooping"]))
+	if err != nil {
+		return fmt.Errorf("Failed setting multicast snooping on internal switch: %w", err)
 	}
 
 	// Add any listed existing external interface.
