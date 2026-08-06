@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-07-31 05:12-0400\n"
+"POT-Creation-Date: 2026-08-07 15:15-0400\n"
 "PO-Revision-Date: 2026-04-21 02:59+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -744,7 +744,7 @@ msgstr "- Port %d (%s)"
 msgid "--all cannot be used together with other arguments"
 msgstr "--target kan niet gebruikt worden met: instances"
 
-#: cmd/incus/low_level.go:917 cmd/incus/low_level.go:937
+#: cmd/incus/low_level.go:924 cmd/incus/low_level.go:948
 #, fuzzy, c-format
 msgid "--attributes cannot be used with --format=%s"
 msgstr "--no-profiles kan niet gebruikt worden met --refresh"
@@ -808,6 +808,11 @@ msgstr ""
 msgid "--recursive/-r is required when pushing directories"
 msgstr ""
 
+#: cmd/incus/move.go:103
+#, fuzzy
+msgid "--refresh can only be used with --stateless"
+msgstr "--refresh kan alleen worden gebruikt bij geïnstantieerden (instances)"
+
 #: cmd/incus/copy.go:204
 msgid "--refresh can only be used with instances"
 msgstr "--refresh kan alleen worden gebruikt bij geïnstantieerden (instances)"
@@ -816,7 +821,7 @@ msgstr "--refresh kan alleen worden gebruikt bij geïnstantieerden (instances)"
 msgid "--reuse requires --copy-aliases"
 msgstr ""
 
-#: cmd/incus/move.go:215
+#: cmd/incus/move.go:226
 msgid "--target can only be used with clusters"
 msgstr "--target kan alleen gebruikt worden met clusters"
 
@@ -825,12 +830,12 @@ msgstr "--target kan alleen gebruikt worden met clusters"
 msgid "--target cannot be used with instances"
 msgstr "--target kan niet gebruikt worden met: instances"
 
-#: cmd/incus/low_level.go:941
+#: cmd/incus/low_level.go:952
 #, fuzzy, c-format
 msgid "--timestamp cannot be used with --format=%s"
 msgstr "--no-profiles kan niet gebruikt worden met --refresh"
 
-#: cmd/incus/admin_sql.go:128
+#: cmd/incus/admin_sql.go:132
 #, c-format
 msgid "=> Query %d:"
 msgstr ""
@@ -1289,7 +1294,7 @@ msgstr "Backups:"
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr "Ongeldige device override syntax, verwacht: <device>,<key>=<value>: %s"
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:252
+#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1323,6 +1328,10 @@ msgstr "Brug (Bridge):"
 
 #: cmd/incus/storage_bucket.go:116
 msgid "Bucket description"
+msgstr ""
+
+#: cmd/incus/low_level.go:893
+msgid "Bulk NVRAM variable update is only supported for non-binary formats"
 msgstr ""
 
 #: cmd/incus/info.go:371
@@ -1405,13 +1414,20 @@ msgstr "Caches:"
 msgid "Can't bind address %q: %w"
 msgstr "Kan niet binden (bind) aan adres (address) %q: %w"
 
-#: cmd/incus/move.go:117
+#: cmd/incus/move.go:123
 msgid "Can't override configuration or profiles in local rename"
 msgstr ""
 "Niet mogelijk om geforceerd (override) de configuratie of de profielen in "
 "een lokaal (local) herbenaming (rename) uit te voeren"
 
-#: cmd/incus/move.go:113
+#: cmd/incus/move.go:127
+#, fuzzy
+msgid "Can't perform an incremental transfer in local rename"
+msgstr ""
+"Niet mogelijk om geforceerd (override) de configuratie of de profielen in "
+"een lokaal (local) herbenaming (rename) uit te voeren"
+
+#: cmd/incus/move.go:119
 msgid "Can't perform local rename without a new instance name"
 msgstr ""
 
@@ -1624,7 +1640,7 @@ msgstr ""
 
 #: cmd/incus/config.go:105 cmd/incus/config.go:387 cmd/incus/config.go:529
 #: cmd/incus/config.go:697 cmd/incus/config.go:821 cmd/incus/copy.go:68
-#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:69
+#: cmd/incus/create.go:70 cmd/incus/info.go:57 cmd/incus/move.go:71
 #: cmd/incus/network.go:351 cmd/incus/network.go:806 cmd/incus/network.go:880
 #: cmd/incus/network.go:1057 cmd/incus/network.go:1440
 #: cmd/incus/network.go:1524 cmd/incus/network.go:1586
@@ -1739,7 +1755,7 @@ msgstr ""
 msgid "Config key/value to apply to the new project"
 msgstr ""
 
-#: cmd/incus/move.go:61
+#: cmd/incus/move.go:62
 msgid "Config key/value to apply to the target instance"
 msgstr ""
 
@@ -1798,7 +1814,7 @@ msgstr ""
 msgid "Control: %s (%s)"
 msgstr ""
 
-#: cmd/incus/copy.go:66 cmd/incus/move.go:67
+#: cmd/incus/copy.go:66 cmd/incus/move.go:69
 msgid "Copy a stateful instance stateless"
 msgstr ""
 
@@ -1858,7 +1874,7 @@ msgstr ""
 msgid "Copy the volume without its snapshots"
 msgstr ""
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:70
+#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72
 #: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr ""
@@ -2855,11 +2871,11 @@ msgstr ""
 msgid "Examples:"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:29
+#: cmd/incus/admin_sql.go:30
 msgid "Execute a SQL query against the local or global database"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:30
+#: cmd/incus/admin_sql.go:31
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -3215,6 +3231,11 @@ msgstr ""
 msgid "Failed to create certificate: %w"
 msgstr ""
 
+#: cmd/incus/move_nearlive.go:86
+#, fuzzy, c-format
+msgid "Failed to create pre-copy snapshot %q: %w"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
+
 #: cmd/incus/storage_volume.go:2338
 #, c-format
 msgid "Failed to create storage volume backup: %w"
@@ -3225,10 +3246,25 @@ msgstr ""
 msgid "Failed to delete bitmap: %w"
 msgstr ""
 
-#: cmd/incus/move.go:199
+#: cmd/incus/move.go:210
 #, c-format
 msgid "Failed to delete original instance after copying it: %w"
 msgstr ""
+
+#: cmd/incus/move_nearlive.go:110
+#, c-format
+msgid "Failed to delete partial copy of instance %q on the target server: %s"
+msgstr ""
+
+#: cmd/incus/move_nearlive.go:24
+#, fuzzy, c-format
+msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
+
+#: cmd/incus/low_level.go:962 cmd/incus/low_level.go:1044
+#, fuzzy, c-format
+msgid "Failed to delete variable %s:%s: %w"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
 
 #: cmd/incus/low_level.go:239
 #, c-format
@@ -3297,7 +3333,7 @@ msgstr ""
 msgid "Failed to open target file %q: %w"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:103
+#: cmd/incus/admin_sql.go:104
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr ""
@@ -3307,7 +3343,7 @@ msgstr ""
 msgid "Failed to parse the preseed: %w"
 msgstr ""
 
-#: cmd/incus/low_level.go:955
+#: cmd/incus/low_level.go:974
 #, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr ""
@@ -3317,12 +3353,12 @@ msgstr ""
 msgid "Failed to read from file: %w"
 msgstr ""
 
-#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:80
+#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:81
 #, c-format
 msgid "Failed to read from stdin: %w"
 msgstr ""
 
-#: cmd/incus/copy.go:382
+#: cmd/incus/copy.go:387
 #, c-format
 msgid "Failed to refresh target instance '%s': %v"
 msgstr ""
@@ -3348,10 +3384,15 @@ msgstr ""
 msgid "Failed to repair instance: %w"
 msgstr "Backup aan het maken van instantiatie (instance): %s"
 
-#: cmd/incus/admin_sql.go:97
+#: cmd/incus/admin_sql.go:98
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr ""
+
+#: cmd/incus/move_nearlive.go:140
+#, fuzzy, c-format
+msgid "Failed to restart instance %q after a failed move: %s"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
 
 #: cmd/incus/cluster.go:1841
 #, c-format
@@ -3391,7 +3432,7 @@ msgstr ""
 msgid "Failed to set UEFI variable %s:%s: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:963
+#: cmd/incus/low_level.go:943
 #, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
 msgstr ""
@@ -3400,6 +3441,16 @@ msgstr ""
 #, c-format
 msgid "Failed to setup trust relationship with cluster: %w"
 msgstr ""
+
+#: cmd/incus/move_nearlive.go:168
+#, fuzzy, c-format
+msgid "Failed to start instance %q on the target server: %w"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
+
+#: cmd/incus/move_nearlive.go:129
+#, fuzzy, c-format
+msgid "Failed to stop instance %q: %w"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
 
 #: cmd/incus/cluster.go:1547
 #, c-format
@@ -3542,7 +3593,7 @@ msgid ""
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
+#: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
@@ -4036,7 +4087,7 @@ msgstr ""
 msgid "Ignore any configured auto-expiry for the storage volume"
 msgstr ""
 
-#: cmd/incus/copy.go:73 cmd/incus/move.go:71
+#: cmd/incus/copy.go:73 cmd/incus/move.go:73
 msgid "Ignore copy errors for volatile files"
 msgstr ""
 
@@ -4284,7 +4335,7 @@ msgstr ""
 msgid "Invalid format %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:951
+#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:989
 #: cmd/incus/monitor.go:74
 #, c-format
 msgid "Invalid format: %s"
@@ -5743,12 +5794,12 @@ msgstr ""
 msgid "Memory:"
 msgstr ""
 
-#: cmd/incus/move.go:286
+#: cmd/incus/move.go:303
 #, c-format
 msgid "Migration API failure: %w"
 msgstr ""
 
-#: cmd/incus/move.go:305
+#: cmd/incus/move.go:322
 #, c-format
 msgid "Migration operation failure: %w"
 msgstr ""
@@ -5803,6 +5854,12 @@ msgstr ""
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 
+#: cmd/incus/low_level.go:889 cmd/incus/low_level.go:1031
+msgid ""
+"More than one variable was passed but the server is missing the required "
+"\"instance_nvram_bulk_update\" API extension"
+msgstr ""
+
 #: cmd/incus/storage_volume_file.go:338
 #, fuzzy
 msgid "Mount files from custom storage volumes"
@@ -5828,11 +5885,11 @@ msgstr ""
 msgid "Move custom storage volumes between pools"
 msgstr ""
 
-#: cmd/incus/move.go:40
+#: cmd/incus/move.go:41
 msgid "Move instances within or in between servers"
 msgstr ""
 
-#: cmd/incus/move.go:41
+#: cmd/incus/move.go:42
 msgid ""
 "Move instances within or in between servers\n"
 "\n"
@@ -5848,7 +5905,7 @@ msgid ""
 "versions.\n"
 msgstr ""
 
-#: cmd/incus/move.go:65
+#: cmd/incus/move.go:66
 msgid "Move the instance without its snapshots"
 msgstr ""
 
@@ -6223,7 +6280,7 @@ msgid "New aliases to add to the image"
 msgstr ""
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
-#: cmd/incus/move.go:62
+#: cmd/incus/move.go:63
 msgid "New key/value to apply to a specific device"
 msgstr ""
 
@@ -6505,6 +6562,11 @@ msgstr ""
 msgid "Ports:"
 msgstr ""
 
+#: cmd/incus/move_nearlive.go:96
+#, fuzzy, c-format
+msgid "Pre-copying instance: %s"
+msgstr "Backup aan het maken van instantiatie (instance): %s"
+
 #: cmd/incus/admin_init.go:53
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
@@ -6634,7 +6696,7 @@ msgstr ""
 msgid "Profile to apply to the new instance"
 msgstr ""
 
-#: cmd/incus/move.go:63
+#: cmd/incus/move.go:64
 msgid "Profile to apply to the target instance"
 msgstr ""
 
@@ -6833,7 +6895,7 @@ msgstr ""
 msgid "Refresh images"
 msgstr ""
 
-#: cmd/incus/copy.go:404
+#: cmd/incus/copy.go:409
 #, c-format
 msgid "Refreshing instance: %s"
 msgstr ""
@@ -7135,7 +7197,7 @@ msgstr ""
 msgid "Role (admin or read-only)"
 msgstr ""
 
-#: cmd/incus/admin_sql.go:137
+#: cmd/incus/admin_sql.go:141
 #, c-format
 msgid "Rows affected: %d"
 msgstr ""
@@ -8115,7 +8177,7 @@ msgid "Storage pool description"
 msgstr ""
 
 #: cmd/incus/copy.go:67 cmd/incus/create.go:68 cmd/incus/import.go:42
-#: cmd/incus/move.go:68
+#: cmd/incus/move.go:70
 msgid "Storage pool name"
 msgstr ""
 
@@ -8492,6 +8554,10 @@ msgstr ""
 msgid "The server doesn't have a web UI installed"
 msgstr ""
 
+#: cmd/incus/move.go:231
+msgid "The server doesn't implement incremental instance transfers"
+msgstr ""
+
 #: cmd/incus/info.go:413
 msgid "The server doesn't implement the newer v2 resources API"
 msgstr ""
@@ -8625,9 +8691,15 @@ msgstr ""
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr ""
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:66
+#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
+msgstr ""
+
+#: cmd/incus/move.go:68
+msgid ""
+"Transfer the instance incrementally, reducing the downtime of a running "
+"instance"
 msgstr ""
 
 #: cmd/incus/image.go:775
@@ -8635,7 +8707,7 @@ msgstr ""
 msgid "Transferring image: %s"
 msgstr ""
 
-#: cmd/incus/copy.go:360 cmd/incus/move.go:291
+#: cmd/incus/copy.go:365 cmd/incus/move.go:308 cmd/incus/move_nearlive.go:147
 #, c-format
 msgid "Transferring instance: %s"
 msgstr ""
@@ -8679,9 +8751,14 @@ msgstr ""
 msgid "Type: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1018
+#: cmd/incus/low_level.go:1048
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
+msgstr ""
+
+#: cmd/incus/low_level.go:1068
+#, c-format
+msgid "UEFI variables %s deleted on %s\n"
 msgstr ""
 
 #: cmd/incus/project.go:1055
@@ -8743,7 +8820,7 @@ msgstr ""
 msgid "Unavailable remote server"
 msgstr ""
 
-#: cmd/incus/low_level.go:921
+#: cmd/incus/low_level.go:928
 msgid "Unexpected input size"
 msgstr ""
 
@@ -8801,7 +8878,7 @@ msgstr ""
 msgid "Unknown output type %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:980 cmd/incus/low_level.go:981
+#: cmd/incus/low_level.go:1006 cmd/incus/low_level.go:1007
 msgid "Unset UEFI variables"
 msgstr ""
 
@@ -8813,7 +8890,7 @@ msgstr "Verwijder de cluster groep eigenschappen (keys)"
 msgid "Unset a cluster member's configuration keys"
 msgstr ""
 
-#: cmd/incus/move.go:64
+#: cmd/incus/move.go:65
 msgid "Unset all profiles on the target instance"
 msgstr ""
 
@@ -9795,7 +9872,7 @@ msgid ""
 "    Only show lifecycle events."
 msgstr ""
 
-#: cmd/incus/move.go:52
+#: cmd/incus/move.go:53
 msgid ""
 "incus move [<remote>:]<source instance> [<remote>:][<destination instance>] "
 "[--instance-only]\n"
