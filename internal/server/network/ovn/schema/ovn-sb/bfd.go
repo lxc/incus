@@ -19,6 +19,7 @@ var (
 // BFD defines an object in BFD table
 type BFD struct {
 	UUID        string            `ovsdb:"_uuid"`
+	ChassisName string            `ovsdb:"chassis_name"`
 	DetectMult  int               `ovsdb:"detect_mult"`
 	Disc        int               `ovsdb:"disc"`
 	DstIP       string            `ovsdb:"dst_ip"`

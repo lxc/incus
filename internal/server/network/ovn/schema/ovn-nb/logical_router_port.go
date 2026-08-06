@@ -19,4 +19,5 @@ type LogicalRouterPort struct {
 	Networks       []string          `ovsdb:"networks" validate:"min=1"`
 	Options        map[string]string `ovsdb:"options"`
 	Peer           *string           `ovsdb:"peer"`
+	Status         map[string]string `ovsdb:"status"`
 }

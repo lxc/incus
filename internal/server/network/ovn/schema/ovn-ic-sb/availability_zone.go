@@ -7,6 +7,7 @@ const AvailabilityZoneTable = "Availability_Zone"
 
 // AvailabilityZone defines an object in Availability_Zone table
 type AvailabilityZone struct {
-	UUID string `ovsdb:"_uuid"`
-	Name string `ovsdb:"name"`
+	UUID    string `ovsdb:"_uuid"`
+	Name    string `ovsdb:"name"`
+	NbIcCfg int    `ovsdb:"nb_ic_cfg"`
 }

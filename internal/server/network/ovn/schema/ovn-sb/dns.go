@@ -10,5 +10,6 @@ type DNS struct {
 	UUID        string            `ovsdb:"_uuid"`
 	Datapaths   []string          `ovsdb:"datapaths" validate:"min=1"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
+	Options     map[string]string `ovsdb:"options"`
 	Records     map[string]string `ovsdb:"records"`
 }

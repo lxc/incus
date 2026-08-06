@@ -22,7 +22,7 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 
 var schema = `{
   "name": "OVN_IC_Northbound",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tables": {
     "Connection": {
       "columns": {
@@ -120,6 +120,9 @@ var schema = `{
             "max": "unlimited"
           }
         },
+        "nb_ic_cfg": {
+          "type": "integer"
+        },
         "options": {
           "type": {
             "key": {
@@ -131,6 +134,9 @@ var schema = `{
             "min": 0,
             "max": "unlimited"
           }
+        },
+        "sb_ic_cfg": {
+          "type": "integer"
         },
         "ssl": {
           "type": {

@@ -15,5 +15,7 @@ type IPFIX struct {
 	ObsPointID         *int              `ovsdb:"obs_point_id" validate:"omitempty,min=0,max=4294967295"`
 	OtherConfig        map[string]string `ovsdb:"other_config"`
 	Sampling           *int              `ovsdb:"sampling" validate:"omitempty,min=1,max=4294967295"`
+	StatsInterval      *int              `ovsdb:"stats_interval" validate:"omitempty,min=1,max=3600"`
 	Targets            []string          `ovsdb:"targets"`
+	TemplateInterval   *int              `ovsdb:"template_interval" validate:"omitempty,min=1,max=3600"`
 }

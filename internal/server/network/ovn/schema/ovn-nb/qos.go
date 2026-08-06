@@ -13,6 +13,7 @@ type (
 
 var (
 	QoSActionDSCP         QoSAction    = "dscp"
+	QoSActionMark         QoSAction    = "mark"
 	QoSBandwidthRate      QoSBandwidth = "rate"
 	QoSBandwidthBurst     QoSBandwidth = "burst"
 	QoSDirectionFromLport QoSDirection = "from-lport"
@@ -22,7 +23,7 @@ var (
 // QoS defines an object in QoS table
 type QoS struct {
 	UUID        string            `ovsdb:"_uuid"`
-	Action      map[string]int    `ovsdb:"action" validate:"dive,keys,oneof='dscp',endkeys,min=0,max=63"`
+	Action      map[string]int    `ovsdb:"action" validate:"dive,keys,oneof='dscp' 'mark',endkeys,min=0,max=4294967295"`
 	Bandwidth   map[string]int    `ovsdb:"bandwidth" validate:"dive,keys,oneof='rate' 'burst',endkeys,min=1,max=4294967295"`
 	Direction   QoSDirection      `ovsdb:"direction" validate:"oneof='from-lport' 'to-lport'"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`

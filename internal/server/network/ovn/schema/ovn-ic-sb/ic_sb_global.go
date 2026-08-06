@@ -10,6 +10,7 @@ type ICSBGlobal struct {
 	UUID        string            `ovsdb:"_uuid"`
 	Connections []string          `ovsdb:"connections"`
 	ExternalIDs map[string]string `ovsdb:"external_ids"`
+	NbIcCfg     int               `ovsdb:"nb_ic_cfg"`
 	Options     map[string]string `ovsdb:"options"`
 	SSL         *string           `ovsdb:"ssl"`
 }

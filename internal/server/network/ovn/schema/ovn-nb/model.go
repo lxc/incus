@@ -48,7 +48,7 @@ func FullDatabaseModel() (model.ClientDBModel, error) {
 
 var schema = `{
   "name": "OVN_Northbound",
-  "version": "7.0.0",
+  "version": "7.3.0",
   "tables": {
     "ACL": {
       "columns": {
@@ -63,7 +63,8 @@ var schema = `{
                   "allow-related",
                   "allow-stateless",
                   "drop",
-                  "reject"
+                  "reject",
+                  "pass"
                 ]
               ]
             }
@@ -168,6 +169,15 @@ var schema = `{
             },
             "min": 0,
             "max": 1
+          }
+        },
+        "tier": {
+          "type": {
+            "key": {
+              "type": "integer",
+              "minInteger": 0,
+              "maxInteger": 3
+            }
           }
         }
       }
@@ -475,6 +485,18 @@ var schema = `{
     "DNS": {
       "columns": {
         "external_ids": {
+          "type": {
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
+        "options": {
           "type": {
             "key": {
               "type": "string"
@@ -943,6 +965,17 @@ var schema = `{
             }
           }
         },
+        "bfd_sessions": {
+          "type": {
+            "key": {
+              "type": "uuid",
+              "refTable": "BFD",
+              "refType": "weak"
+            },
+            "min": 0,
+            "max": "unlimited"
+          }
+        },
         "external_ids": {
           "type": {
             "key": {
@@ -1099,6 +1132,18 @@ var schema = `{
             },
             "min": 0,
             "max": 1
+          }
+        },
+        "status": {
+          "type": {
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "min": 0,
+            "max": "unlimited"
           }
         }
       },
@@ -1582,7 +1627,8 @@ var schema = `{
                 "set",
                 [
                   "from-lport",
-                  "to-lport"
+                  "to-lport",
+                  "both"
                 ]
               ]
             }
@@ -1605,7 +1651,8 @@ var schema = `{
                 "set",
                 [
                   "gre",
-                  "erspan"
+                  "erspan",
+                  "local"
                 ]
               ]
             }
@@ -1848,12 +1895,18 @@ var schema = `{
           "type": {
             "key": {
               "type": "string",
-              "enum": "dscp"
+              "enum": [
+                "set",
+                [
+                  "dscp",
+                  "mark"
+                ]
+              ]
             },
             "value": {
               "type": "integer",
               "minInteger": 0,
-              "maxInteger": 63
+              "maxInteger": 4294967295
             },
             "min": 0,
             "max": "unlimited"

@@ -7,9 +7,10 @@ const IGMPGroupTable = "IGMP_Group"
 
 // IGMPGroup defines an object in IGMP_Group table
 type IGMPGroup struct {
-	UUID     string   `ovsdb:"_uuid"`
-	Address  string   `ovsdb:"address"`
-	Chassis  *string  `ovsdb:"chassis"`
-	Datapath *string  `ovsdb:"datapath"`
-	Ports    []string `ovsdb:"ports"`
+	UUID        string   `ovsdb:"_uuid"`
+	Address     string   `ovsdb:"address"`
+	Chassis     *string  `ovsdb:"chassis"`
+	ChassisName string   `ovsdb:"chassis_name"`
+	Datapath    *string  `ovsdb:"datapath"`
+	Ports       []string `ovsdb:"ports"`
 }
