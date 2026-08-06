@@ -1,9 +1,11 @@
 package drivers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -1024,6 +1026,43 @@ func (d *lvm) deactivateVolume(vol Volume) (bool, error) {
 
 	d.logger.Debug("Deactivated logical volume", logger.Ctx{"volName": vol.Name(), "dev": volPath})
 	return true, nil
+}
+
+// detectBlockVolumeType activates a block volume and probes its device for a qcow2 header,
+// returning the matching "block.type" config value.
+func (d *lvm) detectBlockVolumeType(vol Volume) (string, error) {
+	activated, err := d.activateVolume(vol)
+	if err != nil {
+		return "", err
+	}
+
+	if activated {
+		defer func() { _, _ = d.deactivateVolume(vol) }()
+	}
+
+	volDevPath, err := d.lvmDevPath(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name))
+	if err != nil {
+		return "", err
+	}
+
+	f, err := os.Open(volDevPath)
+	if err != nil {
+		return "", err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	magic := make([]byte, 4)
+	_, err = io.ReadFull(f, magic)
+	if err != nil {
+		return "", err
+	}
+
+	if bytes.Equal(magic, []byte{'Q', 'F', 'I', 0xfb}) {
+		return BlockVolumeTypeQcow2, nil
+	}
+
+	return BlockVolumeTypeRaw, nil
 }
 
 // getSourceType determines the source type based on the source value.

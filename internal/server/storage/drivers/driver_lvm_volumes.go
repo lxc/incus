@@ -946,6 +946,25 @@ func (d *lvm) ListVolumes() ([]Volume, error) {
 		return nil, fmt.Errorf("Failed getting volume list: %v: %w", strings.TrimSpace(string(errMsg)), err)
 	}
 
+	// On clustered pools, block volumes can be either raw or qcow2 formatted, detect which is in
+	// use so that the volumes (and their associated filesystem volumes) get handled correctly.
+	if d.clustered {
+		for _, v := range vols {
+			if !v.IsVMBlock() && !v.IsCustomBlock() {
+				continue
+			}
+
+			blockType, err := d.detectBlockVolumeType(v)
+			if err != nil {
+				// The volume may be in exclusive use on another cluster member.
+				d.logger.Warn("Failed detecting block type of volume", logger.Ctx{"volName": v.Name(), "err": err})
+				continue
+			}
+
+			v.config["block.type"] = blockType
+		}
+	}
+
 	volList := make([]Volume, 0, len(vols))
 	for _, v := range vols {
 		volList = append(volList, v)
