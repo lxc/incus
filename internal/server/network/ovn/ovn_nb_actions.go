@@ -321,6 +321,38 @@ func (o *NB) GetLogicalRouter(ctx context.Context, routerName OVNRouter) (*ovnNB
 	return logicalRouter, nil
 }
 
+// UpdateLogicalRouterMulticastRelay sets the multicast relay option on the logical router.
+func (o *NB) UpdateLogicalRouterMulticastRelay(ctx context.Context, routerName OVNRouter, relay bool) error {
+	logicalRouter, err := o.GetLogicalRouter(ctx, routerName)
+	if err != nil {
+		return err
+	}
+
+	if logicalRouter.Options == nil {
+		logicalRouter.Options = map[string]string{}
+	}
+
+	logicalRouter.Options["mcast_relay"] = fmt.Sprintf("%v", relay)
+
+	operations, err := o.client.Where(logicalRouter).Update(logicalRouter)
+	if err != nil {
+		return err
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetLogicalRouterNATs returns the NAT rules of a logical router.
 func (o *NB) GetLogicalRouterNATs(ctx context.Context, routerName OVNRouter) ([]ovnNB.NAT, error) {
 	// Get the logical router.
@@ -1289,6 +1321,40 @@ func (o *NB) UpdateLogicalSwitchIPAllocation(ctx context.Context, switchName OVN
 	} else {
 		delete(logicalSwitch.OtherConfig, "exclude_ips")
 	}
+
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	if err != nil {
+		return err
+	}
+
+	// Apply the database changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateLogicalSwitchMulticastSnooping sets the multicast snooping config on the logical switch.
+func (o *NB) UpdateLogicalSwitchMulticastSnooping(ctx context.Context, switchName OVNSwitch, snoop bool) error {
+	// Get the logical switch.
+	logicalSwitch, err := o.GetLogicalSwitch(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
+	// Update the configuration.
+	if logicalSwitch.OtherConfig == nil {
+		logicalSwitch.OtherConfig = map[string]string{}
+	}
+
+	logicalSwitch.OtherConfig["mcast_snoop"] = fmt.Sprintf("%v", snoop)
 
 	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
 	if err != nil {
