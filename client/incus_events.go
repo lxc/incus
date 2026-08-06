@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
@@ -158,16 +157,7 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 			// Send the message to all handlers
 			r.eventListenersLock.Lock()
 			for _, listener := range r.eventListeners[listener.projectName] {
-				listener.targetsLock.Lock()
-				for _, target := range listener.targets {
-					if target.types != nil && !slices.Contains(target.types, event.Type) {
-						continue
-					}
-
-					go target.function(event)
-				}
-
-				listener.targetsLock.Unlock()
+				listener.send(event)
 			}
 
 			r.eventListenersLock.Unlock()
