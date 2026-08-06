@@ -4108,6 +4108,20 @@ User keys can be used in search.
 
 ```
 
+```{config:option} bridge.multicast_relay network_ovn-common
+:default: "`false`"
+:shortdesc: "Whether to relay multicast traffic through the network's logical router"
+:type: "bool"
+
+```
+
+```{config:option} bridge.multicast_snooping network_ovn-common
+:default: "`true`"
+:shortdesc: "Whether to enable multicast snooping on the virtual network"
+:type: "bool"
+
+```
+
 ```{config:option} dns.domain network_ovn-common
 :default: "`incus`"
 :shortdesc: "Domain to advertise to DHCP clients and use for DNS resolution"
