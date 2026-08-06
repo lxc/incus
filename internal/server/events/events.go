@@ -85,6 +85,7 @@ func (s *Server) AddListener(projectName string, allProjects bool, projectPermis
 			done:                    cancel.New(context.Background()),
 			id:                      uuid.New().String(),
 			recvFunc:                recvFunc,
+			writeQueue:              make(chan api.Event, eventQueueSize),
 		},
 
 		allProjects:           allProjects,
@@ -173,6 +174,12 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 
 	listeners := s.listeners
 	for _, listener := range listeners {
+		// Drop listeners that are already gone.
+		if listener.IsClosed() {
+			delete(s.listeners, listener.id)
+			continue
+		}
+
 		// If the event is project specific, check if the listener is requesting events from that project.
 		if event.Project != "" && !listener.allProjects && event.Project != listener.projectName {
 			continue
@@ -196,31 +203,12 @@ func (s *Server) broadcast(event api.Event, eventSource EventSource) error {
 			continue
 		}
 
-		go func(listener *Listener, event api.Event) {
-			// Check that the listener still exists
-			if listener == nil {
-				return
-			}
-
-			// Make sure we're not done already
-			if listener.IsClosed() {
-				// Remove the listener from the list
-				s.lock.Lock()
-				delete(s.listeners, listener.id)
-				s.lock.Unlock()
-				return
-			}
-
-			err := listener.WriteJSON(event)
-			if err != nil {
-				// Remove the listener from the list
-				s.lock.Lock()
-				delete(s.listeners, listener.id)
-				s.lock.Unlock()
-
-				listener.Close()
-			}
-		}(listener, event)
+		// Queue the event so a slow listener doesn't hold up the others or lose ordering.
+		err := listener.enqueue(event)
+		if err != nil {
+			delete(s.listeners, listener.id)
+			listener.Close()
+		}
 	}
 
 	s.lock.Unlock()
