@@ -191,6 +191,12 @@ type Image struct {
 	//
 	// API extension: images_all_projects
 	Project string `json:"project" yaml:"project"`
+
+	// List of cluster members with a local copy of the image
+	// Example: ["server01", "server02"]
+	//
+	// API extension: image_locations
+	Locations []string `json:"locations" yaml:"locations"`
 }
 
 // Writable converts a full Image struct into a ImagePut struct (filters read-only fields).
