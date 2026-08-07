@@ -41,6 +41,7 @@ func (s *DevIncusServer) AddListener(instanceID int, connection EventListenerCon
 			messageTypes:            messageTypes,
 			done:                    cancel.New(context.Background()),
 			id:                      uuid.New().String(),
+			writeQueue:              make(chan api.Event, eventQueueSize),
 		},
 		instanceID: instanceID,
 	}
@@ -79,6 +80,12 @@ func (s *DevIncusServer) broadcast(instanceID int, event api.Event) error {
 	s.lock.Lock()
 	listeners := s.listeners
 	for _, listener := range listeners {
+		// Drop listeners that are already gone.
+		if listener.IsClosed() {
+			delete(s.listeners, listener.id)
+			continue
+		}
+
 		if !slices.Contains(listener.messageTypes, event.Type) {
 			continue
 		}
@@ -87,27 +94,12 @@ func (s *DevIncusServer) broadcast(instanceID int, event api.Event) error {
 			continue
 		}
 
-		go func(listener *DevIncusListener, event api.Event) {
-			// Check that the listener still exists
-			if listener == nil {
-				return
-			}
-
-			// Make sure we're not done already
-			if listener.IsClosed() {
-				return
-			}
-
-			err := listener.WriteJSON(event)
-			if err != nil {
-				// Remove the listener from the list
-				s.lock.Lock()
-				delete(s.listeners, listener.id)
-				s.lock.Unlock()
-
-				listener.Close()
-			}
-		}(listener, event)
+		// Queue the event so a slow listener doesn't hold up the others or lose ordering.
+		err := listener.enqueue(event)
+		if err != nil {
+			delete(s.listeners, listener.id)
+			listener.Close()
+		}
 	}
 
 	s.lock.Unlock()

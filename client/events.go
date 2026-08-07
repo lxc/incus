@@ -3,10 +3,14 @@ package incus
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 
 	"github.com/lxc/incus/v7/shared/api"
 )
+
+// eventQueueSize is how many events may be pending handling before an ordered listener is dropped.
+const eventQueueSize = 1000
 
 // The EventListener struct is used to interact with an Incus event stream.
 type EventListener struct {
@@ -19,12 +23,84 @@ type EventListener struct {
 	projectName string
 	targets     []*EventTarget
 	targetsLock sync.Mutex
+
+	// queue is only set when ordered delivery was requested.
+	queue chan api.Event
 }
 
 // The EventTarget struct is returned to the caller of AddHandler and used in RemoveHandler.
 type EventTarget struct {
 	function func(api.Event)
 	types    []string
+}
+
+// SetOrdered makes the listener call its handlers one event at a time and in order (must be called before AddHandler).
+func (e *EventListener) SetOrdered() {
+	e.targetsLock.Lock()
+	defer e.targetsLock.Unlock()
+
+	if e.queue != nil {
+		return
+	}
+
+	e.queue = make(chan api.Event, eventQueueSize)
+
+	go e.dispatch()
+}
+
+// dispatch delivers queued events to the handlers, one event at a time.
+func (e *EventListener) dispatch() {
+	for {
+		var event api.Event
+
+		select {
+		case <-e.ctx.Done():
+			return
+		case event = <-e.queue:
+		}
+
+		e.targetsLock.Lock()
+		targets := slices.Clone(e.targets)
+		e.targetsLock.Unlock()
+
+		for _, target := range targets {
+			if target.types != nil && !slices.Contains(target.types, event.Type) {
+				continue
+			}
+
+			target.function(event)
+		}
+	}
+}
+
+// send passes an event on to the handlers of this listener.
+func (e *EventListener) send(event api.Event) {
+	e.targetsLock.Lock()
+	defer e.targetsLock.Unlock()
+
+	if e.ctx.Err() != nil {
+		return
+	}
+
+	if e.queue == nil {
+		for _, target := range e.targets {
+			if target.types != nil && !slices.Contains(target.types, event.Type) {
+				continue
+			}
+
+			go target.function(event)
+		}
+
+		return
+	}
+
+	select {
+	case e.queue <- event:
+	default:
+		// Dropping events would leave the handler with a silently incomplete view.
+		e.err = errors.New("Event handlers are too far behind")
+		e.ctxCancel()
+	}
 }
 
 // AddHandler adds a function to be called whenever an event is received.
@@ -78,10 +154,6 @@ func (e *EventListener) Disconnect() {
 	e.r.eventListenersLock.Lock()
 	defer e.r.eventListenersLock.Unlock()
 
-	if e.ctx.Err() != nil {
-		return
-	}
-
 	// Locate and remove it from the global list
 	for i, listener := range e.r.eventListeners[e.projectName] {
 		if listener == e {
@@ -90,6 +162,10 @@ func (e *EventListener) Disconnect() {
 			e.r.eventListeners[e.projectName] = e.r.eventListeners[e.projectName][:len(e.r.eventListeners[e.projectName])-1]
 			break
 		}
+	}
+
+	if e.ctx.Err() != nil {
+		return
 	}
 
 	// Turn off the handler
