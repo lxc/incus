@@ -150,6 +150,20 @@ func (c *ClusterTx) imageFill(ctx context.Context, id int, image *api.Image, cre
 		image.UpdateSource = &source
 	}
 
+	// Get the locations
+	q = `
+SELECT nodes.name FROM nodes
+  JOIN images_nodes ON images_nodes.node_id = nodes.id
+WHERE images_nodes.image_id = ?
+ORDER BY nodes.name
+`
+	locations, err := query.SelectStrings(ctx, c.tx, q, id)
+	if err != nil {
+		return err
+	}
+
+	image.Locations = locations
+
 	return nil
 }
 
