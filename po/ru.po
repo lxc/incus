@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-08-06 09:02+0000\n"
-"PO-Revision-Date: 2026-08-05 19:33+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-07 19:42+0000\n"
+"Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Weblate 2026.8.1.dev0\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: cmd/incus/info.go:457
 msgid "  Chassis:"
@@ -1154,8 +1154,8 @@ msgstr "Вы присоединяетесь к существующему кла
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
 msgstr ""
-"Вы уверены, что хотите совершить действие %s над участником кластера %q? "
-"да(yes)/нет(no) [по умолчанию=no]: "
+"Вы уверены, что хотите совершить действие %s над участником кластера %q? да"
+"(yes)/нет(no) [по умолчанию=no]: "
 
 #: cmd/incus/console.go:459
 msgid "As neither could be found, the raw SPICE socket can be found at:"
@@ -1291,8 +1291,8 @@ msgstr "Резервные копии:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Неверный синтаксис переопределения устройства, ожидается <устройство>,"
-"<параметр>=<значение>: %s"
+"Неверный синтаксис переопределения устройства, ожидается <устройство>"
+",<параметр>=<значение>: %s"
 
 #: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1519,8 +1519,7 @@ msgstr ""
 
 #: cmd/incus/storage_volume.go:454
 msgid "Cannot set --volume-only when copying a snapshot"
-msgstr ""
-"Невозможно применить --volume-only при копировании моментального снимка"
+msgstr "Невозможно применить --volume-only при копировании моментального снимка"
 
 #: cmd/incus/network_acl.go:899
 #, c-format
@@ -2547,8 +2546,7 @@ msgstr "Показать профили из всех проектов"
 
 #: cmd/incus/top.go:45
 msgid "Display resource usage info per instance"
-msgstr ""
-"Отображение информации об использовании ресурсов для каждого экземпляра"
+msgstr "Отображение информации об использовании ресурсов для каждого экземпляра"
 
 #: cmd/incus/storage_bucket.go:466
 msgid "Display storage pool buckets from all projects"
@@ -3741,8 +3739,8 @@ msgstr ""
 "строя, был переустановлен\n"
 "или по какой-либо другой причине больше никогда не заработает.\n"
 "\n"
-"Вы действительно уверены, что хотите принудительно удалить %s? да(yes)/"
-"нет(no): "
+"Вы действительно уверены, что хотите принудительно удалить %s? да(yes)/нет"
+"(no): "
 
 #: cmd/incus/console.go:57
 msgid ""
@@ -3765,9 +3763,9 @@ msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
-"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс \","
-"noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их при "
-"необходимости, например, csv,header"
+"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс "
+"\",noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их "
+"при необходимости, например, csv,header"
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
@@ -3788,9 +3786,9 @@ msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
-"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс \","
-"noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их при "
-"отсутствии, например, csv,header"
+"Формат (csv|json|таблица|yaml|компактный|markdown), используйте суффикс "
+"\",noheader\", чтобы отключить заголовки, и \",header\", чтобы включить их "
+"при отсутствии, например, csv,header"
 
 #: cmd/incus/monitor.go:60
 msgid "Format (json|pretty|yaml)"
@@ -3836,8 +3834,8 @@ msgstr ""
 "на него соединения\n"
 "на указанный адрес и порт внутри экземпляра.\n"
 "\n"
-"Перед номером любого из портов можно указать адрес (в формате «ADDRESS:"
-"PORT»);\n"
+"Перед номером любого из портов можно указать адрес (в формате «ADDRESS:PORT»)"
+";\n"
 "если адрес не указан, по умолчанию используется 127.0.0.1. Адреса IPv6 "
 "необходимо заключать\n"
 "в квадратные скобки (например, «[::1]:80»)."
@@ -6603,8 +6601,8 @@ msgid ""
 msgstr ""
 "Управление томами хранения\n"
 "\n"
-"Если не указан префикс, все операции с томами затрагивают "
-"\"custom\" (созданные пользователем) тома."
+"Если не указан префикс, все операции с томами затрагивают \"custom\" "
+"(созданные пользователем) тома."
 
 #: cmd/incus/remote.go:52 cmd/incus/remote.go:53
 msgid "Manage the list of remote servers"
@@ -6835,8 +6833,7 @@ msgstr ""
 
 #: cmd/incus/image.go:727
 msgid "Must run as root to import from directory"
-msgstr ""
-"Для импорта из директории необходимо запустить программу с правами root"
+msgstr "Для импорта из директории необходимо запустить программу с правами root"
 
 #: cmd/incus/cluster.go:197 cmd/incus/cluster.go:1149
 #: cmd/incus/cluster_group.go:467 cmd/incus/config_trust.go:416
@@ -8064,8 +8061,7 @@ msgstr "Обработка: %s (%s)"
 
 #: cmd/incus/cluster.go:1039 cmd/incus/cluster.go:1040
 msgid "Request a join token for adding a cluster member"
-msgstr ""
-"Запросить токен присоединения для добавления нового участника в кластер"
+msgstr "Запросить токен присоединения для добавления нового участника в кластер"
 
 #: cmd/incus/delete.go:41 cmd/incus/snapshot.go:233
 msgid "Require user confirmation"
@@ -8128,8 +8124,7 @@ msgstr "Восстановление участника кластера: %s"
 
 #: cmd/incus/config_trust.go:101 cmd/incus/config_trust.go:178
 msgid "Restrict the certificate to one or more projects"
-msgstr ""
-"Ограничьте права доступа по сертификату одним или несколькими проектами"
+msgstr "Ограничьте права доступа по сертификату одним или несколькими проектами"
 
 #: cmd/incus/action.go:81 cmd/incus/action.go:82
 msgid "Resume instances"
@@ -8811,8 +8806,7 @@ msgstr "Настроить хранилище на основе устройст
 
 #: cmd/incus/admin_init.go:60
 msgid "Setup loop based storage with SIZE in GiB"
-msgstr ""
-"Настроить хранилища на основе loop устройства с указанием размера в ГиБ"
+msgstr "Настроить хранилища на основе loop устройства с указанием размера в ГиБ"
 
 #: cmd/incus/network_allocations.go:66
 msgid "Show a summary of used IP ranges per subnet"
@@ -9095,8 +9089,7 @@ msgstr "Сделать моментальный снимок тома хране
 
 #: cmd/incus/storage_volume.go:2032
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
-"Моментальные снимки только для чтения и их конфигурацию нельзя изменить"
+msgstr "Моментальные снимки только для чтения и их конфигурацию нельзя изменить"
 
 #: cmd/incus/info.go:834 cmd/incus/storage_volume.go:1390
 msgid "Snapshots:"
@@ -9487,8 +9480,8 @@ msgstr "Были найдены следующие неизвестные том
 #, c-format
 msgid "The instance %s is currently running, stop it first or pass --force"
 msgstr ""
-"Экземпляр %s в настоящее время запущен, сначала остановите его или передайте "
-"--force"
+"Экземпляр %s в настоящее время запущен, сначала остановите его или "
+"передайте --force"
 
 #: cmd/incus/publish.go:90
 msgid ""
@@ -10554,8 +10547,7 @@ msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:616
 msgid "Would you like stale cached images to be updated automatically?"
-msgstr ""
-"Хотите, чтобы устаревшие кэшированные образы автоматически обновлялись?"
+msgstr "Хотите, чтобы устаревшие кэшированные образы автоматически обновлялись?"
 
 #: cmd/incus/admin_init_interactive.go:562
 msgid "Would you like the server to be available over the network?"
@@ -10947,8 +10939,8 @@ msgstr ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Создать экземпляр u1 с конфигурацией из config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Создать и запустить виртуальную машину v2, переопределив размер диска и "
 "шину"
 
@@ -11154,8 +11146,8 @@ msgid ""
 "incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "    Отобразить экземпляры, используя столбцы \"НАЗВАНИЕ\", \"БАЗОВЫЙ "
 "ОБРАЗ\", \"СТАТУС\", \"IPV4\", \"IPV6\" и \"MAC\".\n"
 "    \"БАЗОВЫЙ ОБРАЗ\", \"MAC\" и \"ОБРАЗ OS\" — это пользовательские "
@@ -11257,8 +11249,8 @@ msgstr ""
 "    Создать новую сеть с именем foo\n"
 "\n"
 "incus network create foo < config.yaml\n"
-"    Создать новую сеть с именем foo, используя содержимое файла config."
-"yaml.\n"
+"    Создать новую сеть с именем foo, используя содержимое файла "
+"config.yaml.\n"
 "\n"
 "incus network create bar network=baz --type ovn\n"
 "    Создать новую сеть OVN с именем bar, используя baz в качестве сети "
@@ -11298,8 +11290,8 @@ msgid ""
 "    Update a network integration using the content of network-integration."
 "yaml"
 msgstr ""
-"incus network integration edit <сетевая интеграция> < network-integration."
-"yaml\n"
+"incus network integration edit <сетевая интеграция> < network-"
+"integration.yaml\n"
 "    Обновить сетевую интеграцию, используя содержимое файла network-"
 "integration.yaml"
 
@@ -11550,8 +11542,8 @@ msgid ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> < bucket.yaml\n"
 "    Update a storage bucket using the content of bucket.yaml."
 msgstr ""
-"incus storage bucket edit [<сервер>:]<пул> <сегмент хранилища> < bucket."
-"yaml\n"
+"incus storage bucket edit [<сервер>:]<пул> <сегмент хранилища> < "
+"bucket.yaml\n"
 "    Обновить сегмент хранилища, используя содержимое файла bucket.yaml."
 
 #: cmd/incus/storage_bucket.go:1124
@@ -11561,8 +11553,8 @@ msgid ""
 msgstr ""
 "incus storage bucket edit [<сервер>:]<пул хранения> <сегмент хранения> "
 "<параметр> < key.yaml\n"
-"    Обновить параметр сегмента хранилища, используя содержимое файла key."
-"yaml."
+"    Обновить параметр сегмента хранилища, используя содержимое файла "
+"key.yaml."
 
 #: cmd/incus/storage_bucket.go:1303
 msgid ""
