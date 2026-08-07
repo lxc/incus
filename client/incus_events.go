@@ -83,6 +83,19 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 	r.eventConns[listener.projectName] = wsConn // Save for others to use.
 	r.eventConnsLock.Unlock()
 
+	// The server pings every 10s, so a silent connection is a dead one.
+	resetReadDeadline := func() {
+		_ = wsConn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	}
+
+	resetReadDeadline()
+
+	defaultPingHandler := wsConn.PingHandler()
+	wsConn.SetPingHandler(func(appData string) error {
+		resetReadDeadline()
+		return defaultPingHandler(appData)
+	})
+
 	// Initialize the event listener list if we were able to connect to the events websocket.
 	r.eventListeners[listener.projectName] = []*EventListener{&listener}
 
@@ -99,11 +112,16 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 
 			r.eventListenersLock.Lock()
 			r.eventConnsLock.Lock()
-			if len(r.eventListeners[listener.projectName]) == 0 {
+			if r.ctxConnected.Err() != nil || len(r.eventListeners[listener.projectName]) == 0 {
 				// We don't need the connection anymore, disconnect and clear.
 				if r.eventListeners[listener.projectName] != nil {
 					_ = r.eventConns[listener.projectName].Close()
 					delete(r.eventConns, listener.projectName)
+				}
+
+				// Tell any listener still around that we're going away.
+				for _, l := range r.eventListeners[listener.projectName] {
+					l.ctxCancel()
 				}
 
 				r.eventListeners[listener.projectName] = nil
@@ -141,6 +159,8 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 
 				return
 			}
+
+			resetReadDeadline()
 
 			// Attempt to unpack the message
 			event := api.Event{}
