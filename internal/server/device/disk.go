@@ -1670,11 +1670,11 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 
 							if errors.Is(errUnsupported, ErrMissingVirtiofsd) {
 								_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-									return tx.UpsertWarningLocalNode(ctx, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.MissingVirtiofsd, "Using 9p as a fallback")
+									return tx.UpsertWarning(ctx, d.state.ServerName, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.MissingVirtiofsd, "Using 9p as a fallback")
 								})
 							} else {
 								// Resolve previous warning.
-								_ = warnings.ResolveWarningsByLocalNodeAndProjectAndType(d.state.DB.Cluster, d.inst.Project().Name, warningtype.MissingVirtiofsd)
+								_ = warnings.ResolveWarningsByNodeAndProjectAndType(d.state.DB.Cluster, d.state.ServerName, d.inst.Project().Name, warningtype.MissingVirtiofsd)
 							}
 
 							return nil
@@ -1690,7 +1690,7 @@ func (d *disk) startVM() (*deviceConfig.RunConfig, error) {
 					runConf.PostHooks = append(runConf.PostHooks, unixListener.Close)
 
 					// Resolve previous warning
-					_ = warnings.ResolveWarningsByLocalNodeAndProjectAndType(d.state.DB.Cluster, d.inst.Project().Name, warningtype.MissingVirtiofsd)
+					_ = warnings.ResolveWarningsByNodeAndProjectAndType(d.state.DB.Cluster, d.state.ServerName, d.inst.Project().Name, warningtype.MissingVirtiofsd)
 
 					// Add the socket path to the mount options to indicate to the qemu driver
 					// that this share is available.

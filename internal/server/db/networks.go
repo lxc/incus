@@ -105,83 +105,121 @@ func (c *ClusterTx) GetCreatedNetworksByProject(ctx context.Context, projectName
 	return nets[projectName], nil
 }
 
+// NetworkInfo holds the full database record of a network, including per-member state.
+type NetworkInfo struct {
+	ID    int64
+	Info  *api.Network
+	Nodes map[int64]NetworkNode
+}
+
+// GetCreatedNetworksInfo returns records for all networks in state networkCreated across all projects,
+// keyed on project name and network ID.
+func (c *ClusterTx) GetCreatedNetworksInfo(ctx context.Context) (map[string]map[int64]NetworkInfo, error) {
+	return c.getCreatedNetworksInfo(ctx, "")
+}
+
 // getCreatedNetworks returns a map of api.Network associated to project and network ID.
 // Supports an optional projectName filter. If projectName is empty, all networks in created state are returned.
 func (c *ClusterTx) getCreatedNetworks(ctx context.Context, projectName string) (map[string]map[int64]api.Network, error) {
-	var sb strings.Builder
-	sb.WriteString(`SELECT projects.name, networks.id, networks.name, coalesce(networks.description, ''), networks.type, networks.state
-	FROM networks
-	JOIN projects on projects.id = networks.project_id
-	WHERE networks.state = ?
-	`)
-
-	args := []any{networkCreated}
-
-	if projectName != "" {
-		sb.WriteString(" AND projects.name = ?")
-		args = append(args, projectName)
-	}
-
-	rows, err := c.tx.QueryContext(ctx, sb.String(), args...)
+	networksInfo, err := c.getCreatedNetworksInfo(ctx, projectName)
 	if err != nil {
 		return nil, err
 	}
 
-	defer logger.WarnOnError(rows.Close, "Failed to close rows")
+	projectNetworks := make(map[string]map[int64]api.Network, len(networksInfo))
+	for projectName, networks := range networksInfo {
+		projectNetworks[projectName] = make(map[int64]api.Network, len(networks))
+		for networkID, record := range networks {
+			projectNetworks[projectName][networkID] = *record.Info
+		}
+	}
 
-	projectNetworks := make(map[string]map[int64]api.Network)
+	return projectNetworks, nil
+}
 
-	for i := 0; rows.Next(); i++ {
-		var projectName string
-		var networkID int64
-		var networkType NetworkType
-		var networkState NetworkState
-		var network api.Network
+// getCreatedNetworksInfo returns records for all networks in state networkCreated, keyed on project name
+// and network ID. Supports an optional projectName filter. If projectName is empty, all networks in
+// created state are returned.
+func (c *ClusterTx) getCreatedNetworksInfo(ctx context.Context, projectName string) (map[string]map[int64]NetworkInfo, error) {
+	// Get all created networks.
+	networkStateCreated := networkCreated
+	filter := cluster.NetworkFilter{State: &networkStateCreated}
+	if projectName != "" {
+		filter.Project = &projectName
+	}
 
-		err := rows.Scan(&projectName, &networkID, &network.Name, &network.Description, &networkType, &networkState)
+	dbNetworks, err := cluster.GetNetworks(ctx, c.tx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	networksByID := make(map[int64]*NetworkInfo, len(dbNetworks))
+	for _, dbNetwork := range dbNetworks {
+		record := &NetworkInfo{
+			ID:    dbNetwork.ID,
+			Info:  &api.Network{Managed: true},
+			Nodes: map[int64]NetworkNode{},
+		}
+
+		record.Info.Name = dbNetwork.Name
+		record.Info.Description = dbNetwork.Description
+		record.Info.Project = dbNetwork.Project
+		record.Info.Config = map[string]string{}
+
+		// Populate Status and Type fields by converting from DB values.
+		record.Info.Status = NetworkStateToAPIStatus(dbNetwork.State)
+		networkFillType(record.Info, dbNetwork.Type)
+
+		networksByID[dbNetwork.ID] = record
+	}
+
+	// Populate config with both the global and local member entries.
+	globalNodeID := int64(0)
+	configFilters := make([]cluster.NetworkConfigFilter, 0, len(networksByID)*2)
+	for networkID := range networksByID {
+		configFilters = append(configFilters, cluster.NetworkConfigFilter{NodeID: &c.nodeID, NetworkID: &networkID}, cluster.NetworkConfigFilter{NodeID: &globalNodeID, NetworkID: &networkID})
+	}
+
+	if len(configFilters) > 0 {
+		dbConfigs, err := cluster.GetNetworkConfig(ctx, c.tx, configFilters...)
 		if err != nil {
 			return nil, err
 		}
 
-		// Populate Status and Type fields by converting from DB values.
-		network.Status = NetworkStateToAPIStatus(networkState)
-		networkFillType(&network, networkType)
-
-		if projectNetworks[projectName] != nil {
-			projectNetworks[projectName][networkID] = network
-		} else {
-			projectNetworks[projectName] = map[int64]api.Network{
-				networkID: network,
+		for _, dbConfig := range dbConfigs {
+			record, ok := networksByID[dbConfig.NetworkID]
+			if ok {
+				record.Info.Config[dbConfig.Key] = dbConfig.Value
 			}
 		}
 	}
 
-	err = rows.Err()
+	// Populate cluster member info.
+	dbNetworkNodes, err := cluster.GetNetworkNodes(ctx, c.tx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Populate config.
-	for projectName, networks := range projectNetworks {
-		for networkID, network := range networks {
-			networkConfig, err := query.SelectConfig(ctx, c.tx, "networks_config", "network_id=? AND (node_id=? OR node_id IS NULL)", networkID, c.nodeID)
-			if err != nil {
-				return nil, err
+	for _, dbNetworkNode := range dbNetworkNodes {
+		record, ok := networksByID[dbNetworkNode.NetworkID]
+		if ok {
+			record.Nodes[dbNetworkNode.NodeID] = NetworkNode{
+				ID:    dbNetworkNode.NodeID,
+				Name:  dbNetworkNode.Name,
+				State: dbNetworkNode.State,
 			}
 
-			network.Config = networkConfig
-
-			nodes, err := c.NetworkNodes(ctx, networkID)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, node := range nodes {
-				network.Locations = append(network.Locations, node.Name)
-			}
-
-			projectNetworks[projectName][networkID] = network
+			record.Info.Locations = append(record.Info.Locations, dbNetworkNode.Name)
 		}
+	}
+
+	projectNetworks := make(map[string]map[int64]NetworkInfo)
+	for networkID, record := range networksByID {
+		if projectNetworks[record.Info.Project] == nil {
+			projectNetworks[record.Info.Project] = map[int64]NetworkInfo{}
+		}
+
+		projectNetworks[record.Info.Project][networkID] = *record
 	}
 
 	return projectNetworks, nil
@@ -548,7 +586,7 @@ func (c *ClusterTx) networks(ctx context.Context, project string, where string, 
 }
 
 // NetworkState indicates the state of the network or network node.
-type NetworkState int
+type NetworkState = cluster.NetworkState
 
 // Network state.
 const (
@@ -558,7 +596,7 @@ const (
 )
 
 // NetworkType indicates type of network.
-type NetworkType int
+type NetworkType = cluster.NetworkType
 
 // Network types.
 const (

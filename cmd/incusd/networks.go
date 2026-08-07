@@ -1757,15 +1757,10 @@ func networkStartup(s *state.State) error {
 		}
 	}
 
-	// Get a list of projects.
-	var projectNames []string
-
-	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-		projectNames, err = dbCluster.GetProjectNames(ctx, tx.Tx())
-		return err
-	})
+	// Load all created networks from all projects in a single transaction.
+	loadedNetworks, err := network.LoadAllCreated(s.ShutdownCtx, s)
 	if err != nil {
-		return fmt.Errorf("Failed to load projects: %w", err)
+		return fmt.Errorf("Failed to load networks: %w", err)
 	}
 
 	// Build a list of networks to initialize, keyed by project and network name.
@@ -1778,31 +1773,40 @@ func networkStartup(s *state.State) error {
 		networkPriorityLogical:    make(map[network.ProjectNetwork]struct{}),
 	}
 
+	// Assume all networks are networkPriorityStandalone initially.
+	for pn := range loadedNetworks {
+		initNetworks[networkPriorityStandalone][pn] = struct{}{}
+	}
+
+	// Get the current network warnings for the local member so that warning resolution is only
+	// attempted for networks that actually have one.
+	networkWarnings := make(map[int]struct{})
+	resolveAllWarnings := false
+
+	// networkWarningsMu protects concurrent access to the networkWarnings map.
+	var networkWarningsMu sync.Mutex
+
 	err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-		for _, projectName := range projectNames {
-			networkNames, err := tx.GetCreatedNetworkNamesByProject(ctx, projectName)
-			if err != nil {
-				return fmt.Errorf("Failed to load networks for project %q: %w", projectName, err)
+		typeCode := warningtype.NetworkUnvailable
+		dbWarnings, err := dbCluster.GetWarnings(ctx, tx.Tx(), dbCluster.WarningFilter{Node: &s.ServerName, TypeCode: &typeCode})
+		if err != nil {
+			return err
+		}
+
+		for _, dbWarning := range dbWarnings {
+			if dbWarning.EntityTypeCode != dbCluster.TypeNetwork || dbWarning.Status == warningtype.StatusResolved {
+				continue
 			}
 
-			for _, networkName := range networkNames {
-				pn := network.ProjectNetwork{
-					ProjectName: projectName,
-					NetworkName: networkName,
-				}
-
-				// Assume all networks are networkPriorityStandalone initially.
-				initNetworks[networkPriorityStandalone][pn] = struct{}{}
-			}
+			networkWarnings[dbWarning.EntityID] = struct{}{}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return err
+		logger.Warn("Failed loading existing network warnings", logger.Ctx{"err": err})
+		resolveAllWarnings = true
 	}
-
-	loadedNetworks := make(map[network.ProjectNetwork]network.Network)
 
 	// Limit the number of concurrent network starts to one per two runtime threads.
 	numParallel := max(runtime.NumCPU()/2, 1)
@@ -1816,8 +1820,12 @@ func networkStartup(s *state.State) error {
 			err = fmt.Errorf("Failed starting: %w", err)
 
 			_ = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarningLocalNode(ctx, n.Project(), dbCluster.TypeNetwork, int(n.ID()), warningtype.NetworkUnvailable, err.Error())
+				return tx.UpsertWarning(ctx, s.ServerName, n.Project(), dbCluster.TypeNetwork, int(n.ID()), warningtype.NetworkUnvailable, err.Error())
 			})
+
+			networkWarningsMu.Lock()
+			networkWarnings[int(n.ID())] = struct{}{}
+			networkWarningsMu.Unlock()
 
 			return err
 		}
@@ -1834,7 +1842,15 @@ func networkStartup(s *state.State) error {
 		delete(initNetworks[priority], pn)
 		initNetworksMu.Unlock()
 
-		_ = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(s.DB.Cluster, n.Project(), warningtype.NetworkUnvailable, dbCluster.TypeNetwork, int(n.ID()))
+		// Only resolve warnings for networks that have one.
+		networkWarningsMu.Lock()
+		_, resolveWarning := networkWarnings[int(n.ID())]
+		delete(networkWarnings, int(n.ID()))
+		networkWarningsMu.Unlock()
+
+		if resolveWarning || resolveAllWarnings {
+			_ = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(s.DB.Cluster, s.ServerName, n.Project(), warningtype.NetworkUnvailable, dbCluster.TypeNetwork, int(n.ID()))
+		}
 
 		return nil
 	}

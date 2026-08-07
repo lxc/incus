@@ -160,6 +160,15 @@ func (hbState *APIHeartbeat) Update(fullStateList bool, raftNodes []db.RaftNode,
 
 // Send sends heartbeat requests to the nodes supplied and updates heartbeat state.
 func (hbState *APIHeartbeat) Send(ctx context.Context, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, localAddress string, nodes []db.NodeInfo, spreadDuration time.Duration) {
+	// Find the local member name for warning management.
+	var localName string
+	for _, node := range nodes {
+		if node.Address == localAddress {
+			localName = node.Name
+			break
+		}
+	}
+
 	heartbeatsWg := sync.WaitGroup{}
 	sendHeartbeat := func(nodeID int64, name string, address string, spreadDuration time.Duration, heartbeatData *APIHeartbeat) {
 		defer heartbeatsWg.Done()
@@ -197,7 +206,7 @@ func (hbState *APIHeartbeat) Send(ctx context.Context, networkCert *localtls.Cer
 			heartbeatData.Unlock()
 			logger.Debug("Successful heartbeat", logger.Ctx{"remote": address})
 
-			err = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(hbState.cluster, "", warningtype.OfflineClusterMember, cluster.TypeNode, int(nodeID))
+			err = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(hbState.cluster, localName, "", warningtype.OfflineClusterMember, cluster.TypeNode, int(nodeID))
 			if err != nil {
 				logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
 			}
@@ -206,7 +215,7 @@ func (hbState *APIHeartbeat) Send(ctx context.Context, networkCert *localtls.Cer
 
 			if ctx.Err() == nil {
 				err = hbState.cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					return tx.UpsertWarningLocalNode(ctx, "", cluster.TypeNode, int(nodeID), warningtype.OfflineClusterMember, err.Error())
+					return tx.UpsertWarning(ctx, localName, "", cluster.TypeNode, int(nodeID), warningtype.OfflineClusterMember, err.Error())
 				})
 				if err != nil {
 					logger.Warn("Failed to create warning", logger.Ctx{"err": err})

@@ -43,6 +43,47 @@ func TestGetNetworksLocalConfigs(t *testing.T) {
 	})
 }
 
+// The GetCreatedNetworksInfo method returns the networks with their config and cluster member info.
+func TestGetCreatedNetworksInfo(t *testing.T) {
+	cluster, cleanup := db.NewTestCluster(t)
+	defer cleanup()
+
+	err := cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err := tx.CreateNetwork(ctx, api.ProjectDefaultName, "incusbr0", "test network", db.NetworkTypeBridge, map[string]string{
+			"dns.mode":                   "none",
+			"bridge.external_interfaces": "vlan0",
+		})
+
+		return err
+	})
+	require.NoError(t, err)
+
+	var networks map[string]map[int64]db.NetworkInfo
+
+	err = cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		networks, err = tx.GetCreatedNetworksInfo(ctx)
+		return err
+	})
+	require.NoError(t, err)
+
+	require.Len(t, networks, 1)
+	require.Len(t, networks[api.ProjectDefaultName], 1)
+
+	for networkID, network := range networks[api.ProjectDefaultName] {
+		assert.Equal(t, networkID, network.ID)
+		assert.Equal(t, "incusbr0", network.Info.Name)
+		assert.Equal(t, "test network", network.Info.Description)
+		assert.Equal(t, api.ProjectDefaultName, network.Info.Project)
+		assert.Equal(t, "bridge", network.Info.Type)
+		assert.Equal(t, api.NetworkStatusCreated, network.Info.Status)
+		assert.True(t, network.Info.Managed)
+		assert.Equal(t, api.ConfigMap{"dns.mode": "none", "bridge.external_interfaces": "vlan0"}, network.Info.Config)
+		assert.Equal(t, []string{"none"}, network.Info.Locations)
+		assert.Len(t, network.Nodes, 1)
+	}
+}
+
 func TestCreatePendingNetwork(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)
 	defer cleanup()

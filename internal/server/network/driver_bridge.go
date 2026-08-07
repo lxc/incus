@@ -1611,13 +1611,13 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			n.logger.Warn("IPv6 networks with a prefix larger than 64 aren't properly supported by dnsmasq")
 
 			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarningLocalNode(ctx, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.LargerIPv6PrefixThanSupported, "")
+				return tx.UpsertWarning(ctx, n.state.ServerName, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.LargerIPv6PrefixThanSupported, "")
 			})
 			if err != nil {
 				n.logger.Warn("Failed to create warning", logger.Ctx{"err": err})
 			}
 		} else {
-			err = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(n.state.DB.Cluster, n.project, warningtype.LargerIPv6PrefixThanSupported, dbCluster.TypeNetwork, int(n.id))
+			err = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(n.state.DB.Cluster, n.state.ServerName, n.project, warningtype.LargerIPv6PrefixThanSupported, dbCluster.TypeNetwork, int(n.id))
 			if err != nil {
 				n.logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
 			}
@@ -1967,7 +1967,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		if n.config["raw.dnsmasq"] == "" {
 			p.SetApparmor(apparmor.DnsmasqProfileName(n))
 
-			err = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(n.state.DB.Cluster, n.project, warningtype.AppArmorDisabledDueToRawDnsmasq, dbCluster.TypeNetwork, int(n.id))
+			err = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(n.state.DB.Cluster, n.state.ServerName, n.project, warningtype.AppArmorDisabledDueToRawDnsmasq, dbCluster.TypeNetwork, int(n.id))
 			if err != nil {
 				n.logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
 			}
@@ -1975,7 +1975,7 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			n.logger.Warn("Skipping AppArmor for dnsmasq due to raw.dnsmasq being set", logger.Ctx{"name": n.name})
 
 			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarningLocalNode(ctx, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.AppArmorDisabledDueToRawDnsmasq, "")
+				return tx.UpsertWarning(ctx, n.state.ServerName, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.AppArmorDisabledDueToRawDnsmasq, "")
 			})
 			if err != nil {
 				n.logger.Warn("Failed to create warning", logger.Ctx{"err": err})
@@ -3268,7 +3268,7 @@ func (n *bridge) forwardSetupFirewall() error {
 				msg := fmt.Sprintf("IPv%d bridge netfilter not enabled. Instances using the bridge will not be able to connect to the forward listen IPs", ipVersion)
 				n.logger.Warn(msg, logger.Ctx{"err": err})
 				err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					return tx.UpsertWarningLocalNode(ctx, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
+					return tx.UpsertWarning(ctx, n.state.ServerName, n.project, dbCluster.TypeNetwork, int(n.id), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
 				})
 				if err != nil {
 					n.logger.Warn("Failed to create warning", logger.Ctx{"err": err})
@@ -3277,7 +3277,7 @@ func (n *bridge) forwardSetupFirewall() error {
 		}
 
 		if !brNetfilterWarning {
-			err = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(n.state.DB.Cluster, n.project, warningtype.ProxyBridgeNetfilterNotEnabled, dbCluster.TypeNetwork, int(n.id))
+			err = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(n.state.DB.Cluster, n.state.ServerName, n.project, warningtype.ProxyBridgeNetfilterNotEnabled, dbCluster.TypeNetwork, int(n.id))
 			if err != nil {
 				n.logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
 			}

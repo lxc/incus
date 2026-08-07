@@ -3585,7 +3585,7 @@ func (n *ovn) ensureNetworkPortGroup(projectID int64) error {
 // addChassisGroupEntry adds an entry for the local OVS chassis to the OVN logical network's chassis group.
 // The chassis priority value is a stable-random value derived from chassis group name and node ID. This is so we
 // don't end up using the same chassis for the primary uplink chassis for all OVN networks in a cluster.
-func (n *ovn) addChassisGroupEntry() error {
+func (n *ovn) addChassisGroupEntry(memberIDs []int) error {
 	// Get local chassis ID for chassis group.
 	vswitch, err := n.state.OVS()
 	if err != nil {
@@ -3606,24 +3606,7 @@ func (n *ovn) addChassisGroupEntry() error {
 		return fmt.Errorf("Failed generating stable random chassis group priority: %w", err)
 	}
 
-	// Get all members in cluster.
 	ourMemberID := int(n.state.DB.Cluster.GetNodeID())
-	var memberIDs []int
-	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		members, err := tx.GetNodes(ctx)
-		if err != nil {
-			return fmt.Errorf("Failed getting cluster members for adding chassis group entry: %w", err)
-		}
-
-		for _, member := range members {
-			memberIDs = append(memberIDs, int(member.ID))
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
 
 	// Sort the nodes based on ID for stable priority generation.
 	sort.Ints(memberIDs)
@@ -3798,7 +3781,7 @@ func (n *ovn) Rename(newName string) error {
 
 // chassisEnabled checks the cluster config to see if this particular
 // member should act as an OVN chassis.
-func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx) (bool, error) {
+func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx, members []db.NodeInfo) (bool, error) {
 	// Check that we have an uplink network, that it's physical, and that parent is not "none".
 	if n.config["network"] == "none" {
 		return false, nil
@@ -3816,10 +3799,6 @@ func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx) (bool, error
 
 	// Get the member info.
 	memberID := tx.GetNodeID()
-	members, err := tx.GetNodes(ctx)
-	if err != nil {
-		return false, fmt.Errorf("Failed getting cluster members: %w", err)
-	}
 
 	// Determine whether to add ourselves as a chassis.
 	// If no server has the role, enable the chassis, otherwise only
@@ -3862,6 +3841,7 @@ func (n *ovn) Start() error {
 
 	var projectID int64
 	var chassisEnabled bool
+	var memberIDs []int
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the project ID.
 		projectID, err = dbCluster.GetProjectID(context.Background(), tx.Tx(), n.project)
@@ -3869,8 +3849,18 @@ func (n *ovn) Start() error {
 			return err
 		}
 
+		// Get all members in the cluster.
+		members, err := tx.GetNodes(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed getting cluster members: %w", err)
+		}
+
+		for _, member := range members {
+			memberIDs = append(memberIDs, int(member.ID))
+		}
+
 		// Check if we should enable the chassis.
-		chassisEnabled, err = n.chassisEnabled(ctx, tx)
+		chassisEnabled, err = n.chassisEnabled(ctx, tx, members)
 		if err != nil {
 			return err
 		}
@@ -3890,7 +3880,7 @@ func (n *ovn) Start() error {
 	// Handle chassis groups.
 	if chassisEnabled {
 		// Add local member's OVS chassis ID to logical chassis group.
-		err = n.addChassisGroupEntry()
+		err = n.addChassisGroupEntry(memberIDs)
 		if err != nil {
 			return err
 		}

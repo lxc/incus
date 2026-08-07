@@ -575,13 +575,13 @@ func (d *proxy) setupNAT() error {
 			msg := fmt.Sprintf("IPv%d bridge netfilter not enabled. Instances using the bridge will not be able to connect to the proxy listen IP", ipVersion)
 			d.logger.Warn(msg, logger.Ctx{"err": err})
 			err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarningLocalNode(ctx, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
+				return tx.UpsertWarning(ctx, d.state.ServerName, d.inst.Project().Name, cluster.TypeInstance, d.inst.ID(), warningtype.ProxyBridgeNetfilterNotEnabled, fmt.Sprintf("%s: %v", msg, err))
 			})
 			if err != nil {
 				logger.Warn("Failed to create warning", logger.Ctx{"err": err})
 			}
 		} else {
-			err = warnings.ResolveWarningsByLocalNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
+			err = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.state.ServerName, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
 			if err != nil {
 				logger.Warn("Failed to resolve warning", logger.Ctx{"err": err})
 			}
@@ -765,7 +765,7 @@ func (d *proxy) killProxyProc(pidPath string) error {
 
 // Remove cleans up the device when it is removed from an instance.
 func (d *proxy) Remove(cleanupDependencies bool) error {
-	err := warnings.DeleteWarningsByLocalNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
+	err := warnings.DeleteWarningsByNodeAndProjectAndTypeAndEntity(d.state.DB.Cluster, d.state.ServerName, d.inst.Project().Name, warningtype.ProxyBridgeNetfilterNotEnabled, cluster.TypeInstance, d.inst.ID())
 	if err != nil {
 		logger.Warn("Failed to delete warning", logger.Ctx{"err": err})
 	}
