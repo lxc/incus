@@ -4799,30 +4799,45 @@ func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, stri
 // resizeMetadataImage resizes the qcow2 metadata image to match the raw disk size.
 // The data-file has to be overridden as the one recorded in the image no longer exists.
 func (d *qemu) resizeMetadataImage(qcow2Path string, rawPath string, newSize int64, oldSize int64) error {
-	fInfo, err := os.Stat(rawPath)
-	if err != nil {
-		return err
-	}
-
-	rawDriver := "file"
-	if linux.IsBlockdev(fInfo.Mode()) {
-		rawDriver = "host_device"
-	}
-
 	escape := func(s string) string {
 		return strings.ReplaceAll(s, ",", ",,")
 	}
 
 	args := []string{"resize"}
+
 	if newSize < oldSize {
-		args = append(args, "--shrink")
+		fInfo, err := os.Stat(rawPath)
+		if err != nil {
+			return err
+		}
+
+		rawDriver := "file"
+		if linux.IsBlockdev(fInfo.Mode()) {
+			rawDriver = "host_device"
+		}
+
+		args = append(args, "--shrink", "--image-opts", fmt.Sprintf("driver=qcow2,file.filename=%s,data-file.driver=%s,data-file.filename=%s", escape(qcow2Path), rawDriver, escape(rawPath)))
 	} else {
-		args = append(args, "--preallocation=metadata")
+		// Growing preallocates metadata up to the end of the last cluster which
+		// may lie past the end of a disk that's not 64KiB aligned. As qcow2
+		// can't grow a block device, use a sparse temporary file instead, the
+		// 1:1 mapping guaranteed by data_file_raw means no data is involved.
+		tmpPath := strings.TrimSuffix(qcow2Path, ".qcow2") + ".raw.tmp"
+		defer func() {
+			_ = os.Remove(tmpPath)
+		}()
+
+		_, err := subprocess.RunCommand("qemu-img", "create", "-f", "raw", tmpPath, fmt.Sprintf("%d", newSize))
+		if err != nil {
+			return fmt.Errorf("Failed creating temporary raw data-file: %w", err)
+		}
+
+		args = append(args, "--preallocation=metadata", "--image-opts", fmt.Sprintf("driver=qcow2,file.filename=%s,data-file.driver=file,data-file.filename=%s", escape(qcow2Path), escape(tmpPath)))
 	}
 
-	args = append(args, "--image-opts", fmt.Sprintf("driver=qcow2,file.filename=%s,data-file.driver=%s,data-file.filename=%s", escape(qcow2Path), rawDriver, escape(rawPath)), fmt.Sprintf("%d", newSize))
+	args = append(args, fmt.Sprintf("%d", newSize))
 
-	_, err = subprocess.RunCommand("qemu-img", args...)
+	_, err := subprocess.RunCommand("qemu-img", args...)
 	if err != nil {
 		return fmt.Errorf("Failed resizing qcow2 metadata image %q: %w", qcow2Path, err)
 	}
