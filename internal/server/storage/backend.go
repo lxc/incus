@@ -1787,6 +1787,19 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 				volumeSnapExpiryDate = *srcConfig.VolumeSnapshots[i].ExpiresAt
 			}
 
+			// Delete any stale volume DB record left over from an interrupted previous refresh.
+			_, err := VolumeDBGet(b, inst.Project().Name, newSnapshotName, volType)
+			if err != nil && !response.IsNotFoundError(err) {
+				return err
+			}
+
+			if err == nil {
+				err = VolumeDBDelete(b, inst.Project().Name, newSnapshotName, volType)
+				if err != nil {
+					return err
+				}
+			}
+
 			// Validate config and create database entry for new storage volume.
 			err = VolumeDBCreate(b, inst.Project().Name, newSnapshotName, srcConfig.VolumeSnapshots[i].Description, volType, true, srcConfig.VolumeSnapshots[i].Config, srcConfig.VolumeSnapshots[i].CreatedAt, volumeSnapExpiryDate, contentType, false, true)
 			if err != nil {
@@ -1794,6 +1807,12 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 			}
 
 			reverter.Add(func() { _ = VolumeDBDelete(b, inst.Project().Name, newSnapshotName, volType) })
+		}
+
+		// Re-create any volume DB record missing for an existing instance snapshot.
+		err = b.createMissingInstanceSnapshotVolumes(inst, volType, contentType, vol.Config(), "", reverter)
+		if err != nil {
+			return err
 		}
 
 		err = b.driver.RefreshVolume(vol, srcVol, srcSnapVols, allowInconsistent, op)
@@ -2125,6 +2144,39 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 	return nil
 }
 
+// createMissingInstanceSnapshotVolumes creates the volume DB record for any instance snapshot that lacks one.
+func (b *backend) createMissingInstanceSnapshotVolumes(inst instance.Instance, volType drivers.VolumeType, contentType drivers.ContentType, volConfig map[string]string, volDescription string, reverter *revert.Reverter) error {
+	snapInsts, err := inst.Snapshots()
+	if err != nil {
+		return err
+	}
+
+	for _, snapInst := range snapInsts {
+		_, err := VolumeDBGet(b, snapInst.Project().Name, snapInst.Name(), volType)
+		if err == nil {
+			continue
+		}
+
+		if !response.IsNotFoundError(err) {
+			return err
+		}
+
+		snapProjectName := snapInst.Project().Name
+		snapVolName := snapInst.Name()
+
+		b.logger.Warn("Re-creating missing storage volume snapshot record", logger.Ctx{"project": snapProjectName, "volume": snapVolName})
+
+		err = VolumeDBCreate(b, snapProjectName, snapVolName, volDescription, volType, true, volConfig, snapInst.CreationDate(), snapInst.ExpiryDate(), contentType, true, true)
+		if err != nil {
+			return err
+		}
+
+		reverter.Add(func() { _ = VolumeDBDelete(b, snapProjectName, snapVolName, volType) })
+	}
+
+	return nil
+}
+
 // CreateInstanceFromMigration receives an instance being migrated.
 // The args.Name and args.Config fields are ignored and, instance properties are used instead.
 func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.ReadWriteCloser, args localMigration.VolumeTargetArgs, op *operations.Operation) error {
@@ -2310,6 +2362,21 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 				}
 			}
 
+			// Delete any stale volume DB record left over from an interrupted previous refresh.
+			if args.Refresh {
+				_, err := VolumeDBGet(b, inst.Project().Name, newSnapshotName, volType)
+				if err != nil && !response.IsNotFoundError(err) {
+					return err
+				}
+
+				if err == nil {
+					err = VolumeDBDelete(b, inst.Project().Name, newSnapshotName, volType)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
 			// Validate config and create database entry for new storage volume.
 			// Strip unsupported config keys (in case the export was made from a different type of storage pool).
 			err = VolumeDBCreate(b, inst.Project().Name, newSnapshotName, snapDescription, volType, true, snapConfig, snapCreationDate, snapExpiryDate, contentType, true, true)
@@ -2318,6 +2385,14 @@ func (b *backend) CreateInstanceFromMigration(inst instance.Instance, conn io.Re
 			}
 
 			reverter.Add(func() { _ = VolumeDBDelete(b, inst.Project().Name, newSnapshotName, volType) })
+		}
+	}
+
+	// On refresh, re-create any volume DB record missing for an existing instance snapshot.
+	if args.Refresh {
+		err = b.createMissingInstanceSnapshotVolumes(inst, volType, contentType, vol.Config(), volumeDescription, reverter)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -3633,13 +3708,19 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 
 	snapVolName := drivers.GetSnapshotVolumeName(parentStorageName, snapName)
 
-	// Load storage volume from database.
+	// Load storage volume from database. Tolerate a missing record so that
+	// snapshots which lost theirs (interrupted refresh) can still be deleted.
 	srcDBVol, err := VolumeDBGet(b, inst.Project().Name, inst.Name(), volType)
-	if err != nil {
+	if err != nil && !response.IsNotFoundError(err) {
 		return err
 	}
 
-	vol := b.GetVolume(volType, contentType, snapVolName, srcDBVol.Config)
+	var srcDBVolConfig map[string]string
+	if srcDBVol != nil {
+		srcDBVolConfig = srcDBVol.Config
+	}
+
+	vol := b.GetVolume(volType, contentType, snapVolName, srcDBVolConfig)
 
 	// Load parent storage volume from database.
 	parentDBVol, err := VolumeDBGet(b, inst.Project().Name, parentName, volType)
@@ -3693,9 +3774,11 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 	}
 
 	// Remove the snapshot volume record from the database if exists.
-	err = VolumeDBDelete(b, inst.Project().Name, inst.Name(), vol.Type())
-	if err != nil {
-		return err
+	if srcDBVol != nil {
+		err = VolumeDBDelete(b, inst.Project().Name, inst.Name(), vol.Type())
+		if err != nil {
+			return err
+		}
 	}
 
 	err = src.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
