@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -75,12 +76,12 @@ func (c *cmdAdminSQL) run(cmd *cobra.Command, args []string) error {
 
 	if query == "-" {
 		// Read from stdin
-		bytes, err := io.ReadAll(os.Stdin)
+		content, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Failed to read from stdin: %w"), err)
 		}
 
-		query = string(bytes)
+		query = string(content)
 	}
 
 	if query == ".dump" || query == ".schema" || query == ".tables" {
@@ -117,8 +118,11 @@ func (c *cmdAdminSQL) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Use json.Number so integers (e.g. database IDs) render as-is rather than as floats.
 	batch := internalSQL.SQLBatch{}
-	err = json.Unmarshal(response.Metadata, &batch)
+	decoder := json.NewDecoder(bytes.NewReader(response.Metadata))
+	decoder.UseNumber()
+	err = decoder.Decode(&batch)
 	if err != nil {
 		return err
 	}
