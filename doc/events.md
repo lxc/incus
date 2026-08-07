@@ -22,8 +22,9 @@ reconnecting, anything being tracked from the event stream should be re-fetched,
 disconnected are not resent.
 
 When using the Go client, handlers registered through `AddHandler` are called concurrently and may therefore observe
-events out of order. Calling `SetOrdered` on the listener before adding any handler makes them run one event at a time
-and in order instead.
+events out of order. Use `AddChannel` instead to receive the events on a channel, which delivers them one at a time and
+in the order they arrived, and is closed once the listener ends. Its size argument sets how far behind the reader may
+fall before the listener is dropped.
 
 ## Event structure
 
