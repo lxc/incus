@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-08-06 09:02+0000\n"
-"PO-Revision-Date: 2026-08-05 19:34+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"PO-Revision-Date: 2026-08-07 19:43+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.8.1.dev0\n"
+"X-Generator: Weblate 2026.9.dev0\n"
 
 #: cmd/incus/info.go:457
 msgid "  Chassis:"
@@ -794,9 +794,8 @@ msgid "--recursive/-r is required when pushing directories"
 msgstr "--recursive/-r é requerido quando se empurram diretórios"
 
 #: cmd/incus/move.go:103
-#, fuzzy
 msgid "--refresh can only be used with --stateless"
-msgstr "--refresh só pode ser usado com instâncias"
+msgstr "--refresh só pode ser usado com --stateless"
 
 #: cmd/incus/copy.go:204
 msgid "--refresh can only be used with instances"
@@ -1290,8 +1289,8 @@ msgstr "Salvaguardas:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,"
-"<chave>=<valor>: %s"
+"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,<chave>"
+"=<valor>: %s"
 
 #: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1332,6 +1331,8 @@ msgstr "Descrição de bucket"
 #: cmd/incus/low_level.go:893
 msgid "Bulk NVRAM variable update is only supported for non-binary formats"
 msgstr ""
+"Atualização da variável NVRAM a granel só é suportado para formatos não-"
+"binário"
 
 #: cmd/incus/info.go:371
 #, c-format
@@ -2458,8 +2459,7 @@ msgstr "Não recebi o nome da nova instância do servidor"
 
 #: cmd/incus/snapshot.go:201
 msgid "Didn't get name of new instance snapshot from the server"
-msgstr ""
-"Não recebi o nome do novo instantâneo de instância a partir do servidor"
+msgstr "Não recebi o nome do novo instantâneo de instância a partir do servidor"
 
 #: cmd/incus/storage_volume_snapshot.go:215
 msgid "Didn't get name of new volume snapshot from the server"
@@ -2565,8 +2565,8 @@ msgstr ""
 "quais atributos da instância a exibir quando mostra em tabela ou em formato\n"
 "compactado.\n"
 "\n"
-"Os argumentos de coluna são pré-definidos de caracteres curtos (veja "
-"abaixo).\n"
+"Os argumentos de coluna são pré-definidos de caracteres curtos (veja abaixo)"
+".\n"
 "As vírgulas entre os caracteres curtos consecutivos são opcionais.\n"
 "\n"
 "Coluna de caracteres curtos:\n"
@@ -3362,9 +3362,9 @@ msgid "Failed to create certificate: %w"
 msgstr "Falhou ao criar certificado: %w"
 
 #: cmd/incus/move_nearlive.go:86
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create pre-copy snapshot %q: %w"
-msgstr "Falhou ao criar %q: %w"
+msgstr "Falhou ao criar instantâneo de pré-cópia %q: %w"
 
 #: cmd/incus/storage_volume.go:2338
 #, c-format
@@ -3382,19 +3382,19 @@ msgid "Failed to delete original instance after copying it: %w"
 msgstr "Falhou ao apagar instância original após a copiar: %w"
 
 #: cmd/incus/move_nearlive.go:110
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete partial copy of instance %q on the target server: %s"
-msgstr "Falhou ao apagar instância original após a copiar: %w"
+msgstr "Falhou ao apagar cópia parcial da instância %q no servidor alvo: %s"
 
 #: cmd/incus/move_nearlive.go:24
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
-msgstr "Falhou ao refrescar instância alvo: '%s': %v"
+msgstr "Falhou ao apagar instantâneo de pré-cópia %q da instância %q: %s"
 
 #: cmd/incus/low_level.go:962 cmd/incus/low_level.go:1044
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete variable %s:%s: %w"
-msgstr "Falhou ao analisar variável %s:%s: %w"
+msgstr "Falhou ao apagar variável %s:%s: %w"
 
 #: cmd/incus/low_level.go:239
 #, c-format
@@ -3521,9 +3521,9 @@ msgid "Failed to request dump: %w"
 msgstr "Falhou ao pedir despejo: %w"
 
 #: cmd/incus/move_nearlive.go:140
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to restart instance %q after a failed move: %s"
-msgstr "Falhou ao obter variável UEFI da instância: %w"
+msgstr "Falhou ao reiniciar instância %q após um mover falhado: %s"
 
 #: cmd/incus/cluster.go:1841
 #, c-format
@@ -3575,14 +3575,14 @@ msgid "Failed to setup trust relationship with cluster: %w"
 msgstr "Falhou ao configurar relação de confiança com agrupamento: %w"
 
 #: cmd/incus/move_nearlive.go:168
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to start instance %q on the target server: %w"
-msgstr "Falhou ao analisar o preseed: %w"
+msgstr "Falhou ao arrancar instância %q no servidor alvo: %w"
 
 #: cmd/incus/move_nearlive.go:129
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to stop instance %q: %w"
-msgstr "Falhou ao reparar instância: %w"
+msgstr "Falhou ao parar instância %q: %w"
 
 #: cmd/incus/cluster.go:1547
 #, c-format
@@ -3744,8 +3744,8 @@ msgid ""
 "disable headers and \",header\" to enable if demanded, e.g. csv,header"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. csv,"
-"header"
+"para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. "
+"csv,header"
 
 #: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
@@ -3767,8 +3767,8 @@ msgid ""
 "disable headers and \",header\" to enable it if missing, e.g. csv,header"
 msgstr ""
 "Formato (csv|json|table|yaml|compact|markdown), use sufixo \",noheader\" "
-"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. csv,"
-"header"
+"para desativar cabeçalhos e \",header\" para os ativar se em falta, ex. "
+"csv,header"
 
 #: cmd/incus/monitor.go:60
 msgid "Format (json|pretty|yaml)"
@@ -3790,8 +3790,8 @@ msgstr "Formato (table|compact)"
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-"
-"zlib, ...)"
+"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
+"...)"
 
 #: cmd/incus/port_forward.go:30
 msgid "Forward a local TCP port to the instance"
@@ -3813,8 +3813,8 @@ msgstr ""
 "Isto corre uma escuta TCP local e reencaminha cada ligação feita a ela\n"
 "para o endereço e porto fornecidos dentro da instância.\n"
 "\n"
-"Ambos portos podem ser prefixados com um endereço para usar (\"ENDEREÇO:"
-"PORTO\"),\n"
+"Ambos portos podem ser prefixados com um endereço para usar "
+"(\"ENDEREÇO:PORTO\"),\n"
 "usando por predefinição 127.0.0.1 caso contrário. Os endereços IPv6 têm de "
 "ser envolvidos\n"
 "em parenteses quadrados (ex. \"[::1]:80\")."
@@ -5043,12 +5043,12 @@ msgstr ""
 "== Colunas ==\n"
 "A opção -c recebe uma lista separada por vírgulas de argumentos que "
 "controlam\n"
-"quais atributos de equilibrador de carga de rede são incluídos ao mostrar "
-"em \n"
+"quais atributos de equilibrador de carga de rede são incluídos ao mostrar em "
+"\n"
 "tabela ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5096,8 +5096,8 @@ msgstr ""
 "quais atributos de peer de rede são incluídos ao mostrar em tabela ou\n"
 "formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5312,8 +5312,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5365,8 +5365,8 @@ msgstr ""
 "quais atributos de alias de imagem são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5478,8 +5478,8 @@ msgstr ""
 "quais atributos de instantâneos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5622,8 +5622,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5654,8 +5654,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Colunas personalizadas são definidas com "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -5706,8 +5706,8 @@ msgstr ""
 "quais atributos de alocações de rede são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5757,8 +5757,8 @@ msgstr ""
 "quais atributos de integrações de rede são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5913,8 +5913,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5961,8 +5961,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6146,8 +6146,8 @@ msgstr ""
 "quais atributos remotos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6277,8 +6277,7 @@ msgstr "Registo (%s):"
 
 #: cmd/incus/monitor.go:83
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr ""
-"Filtragem de nível de relatório só pode ser usada com formatação bonita"
+msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/network.go:990
 msgid "Logical router"
@@ -6755,6 +6754,8 @@ msgid ""
 "More than one variable was passed but the server is missing the required "
 "\"instance_nvram_bulk_update\" API extension"
 msgstr ""
+"Foi passada mais do que uma variável mas no servidor está a faltar a "
+"extensão de API necessária \"instance_nvram_bulk_update\""
 
 #: cmd/incus/storage_volume_file.go:338
 msgid "Mount files from custom storage volumes"
@@ -7211,8 +7212,7 @@ msgstr "Nenhum %s backend de armazenamento disponível"
 #: cmd/incus/config_trust.go:801
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr ""
-"Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
+msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1335
 #, c-format
@@ -7490,9 +7490,9 @@ msgid "Ports:"
 msgstr "Portos:"
 
 #: cmd/incus/move_nearlive.go:96
-#, fuzzy, c-format
+#, c-format
 msgid "Pre-copying instance: %s"
-msgstr "A refrescar instância: %s"
+msgstr "A pré-copiar instância: %s"
 
 #: cmd/incus/admin_init.go:53
 msgid "Pre-seed mode, expects YAML config from stdin"
@@ -8780,8 +8780,8 @@ msgstr "Definir os atributos da variável (requer `--format=base64|binary|hex`)"
 msgid ""
 "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr ""
-"Definir a marca temporal da variável (requer `--format=base64|binary|"
-"efivarfs|hex`)"
+"Definir a marca temporal da variável (requer `--"
+"format=base64|binary|efivarfs|hex`)"
 
 #: cmd/incus/low_level.go:858
 msgid "Set values for UEFI variables"
@@ -9081,8 +9081,7 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:2032
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
-"Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:834 cmd/incus/storage_volume.go:1390
 msgid "Snapshots:"
@@ -9404,8 +9403,7 @@ msgstr "A bandeira --show-log só é suportada pelo tipo de saída 'console'"
 
 #: cmd/incus/network_allocations.go:169
 msgid "The --summary flag cannot be used with custom columns (-c)"
-msgstr ""
-"A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
+msgstr "A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
 
 #: cmd/incus/admin_init_interactive.go:524
 msgid "The LVM thin provisioning tools couldn't be found on the system"
@@ -9486,8 +9484,7 @@ msgstr ""
 
 #: cmd/incus/create.go:428
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
-"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/cluster_group.go:863
 #, c-format
@@ -9810,6 +9807,8 @@ msgid ""
 "Transfer the instance incrementally, reducing the downtime of a running "
 "instance"
 msgstr ""
+"Transferir a instância incrementalmente, reduzindo o tempo inativo de uma "
+"instância em execução"
 
 #: cmd/incus/image.go:775
 #, c-format
@@ -9868,9 +9867,9 @@ msgid "UEFI variable %s:%s deleted on %s"
 msgstr "Variável UEFI %s:%s deletada em %s"
 
 #: cmd/incus/low_level.go:1068
-#, fuzzy, c-format
+#, c-format
 msgid "UEFI variables %s deleted on %s\n"
-msgstr "Variável UEFI %s:%s deletada em %s"
+msgstr "Variáveis UEFI %s apagadas em %s\n"
 
 #: cmd/incus/project.go:1055
 msgid "UNLIMITED"
@@ -9997,8 +9996,7 @@ msgstr "Desconfigurar variáveis UEFI"
 
 #: cmd/incus/cluster_group.go:962
 msgid "Unset a cluster group's configuration keys"
-msgstr ""
-"Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:592
 msgid "Unset a cluster member's configuration keys"
@@ -10468,8 +10466,7 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/cluster.go:1679
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
-"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:171
 msgid "What IPv4 address should be used?"
@@ -10933,8 +10930,8 @@ msgstr ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Cria a instância com configuração a partir de config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual, sobrepondo o tamanho de disco e "
 "barramento"
 
@@ -11109,21 +11106,21 @@ msgstr ""
 "\tCria e arranca contentor com nome \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Cria e arranca um contentor com nome \"c2\"  com configuração de config."
-"yaml\n"
+"    Cria e arranca um contentor com nome \"c2\"  com configuração de "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Cria e arranca contentor com nome \"c3\" usando o mesmo tamanho que um "
 "AWS t2.micro (1 vCPU, 1GiB de RAM)\n"
-"    Encontre a lista de tipos de instância suportados aqui: https://images."
-"linuxcontainers.org/meta/instance-types/\n"
+"    Encontre a lista de tipos de instância suportados aqui: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Cria e arranca uma máquina virtual com nome \"v1\" com 4 vCPUs e 4GiB de "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Cria e arranca uma máquina virtual com nome \"v2\", sobrepondo o tamanho "
 "de disco e barramento"
 
@@ -11140,8 +11137,8 @@ msgid ""
 "incus list -c ns,user.comment:comment\n"
 "  List instances with their running state and user comment."
 msgstr ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Mostra instâncias usando as colunas \"NAME\", \"BASE IMAGE\", \"STATE\", "
 "\"IPV4\", \"IPV6\" e \"MAC\".\n"
 "  \"BASE IMAGE\", \"MAC\" e \"IMAGE OS\" são coluna personalizadas geradas "
@@ -11280,10 +11277,10 @@ msgid ""
 "    Update a network integration using the content of network-integration."
 "yaml"
 msgstr ""
-"incus network integration edit <integração de rede> < network-integration."
-"yaml\n"
-"    Atualiza uma integração de rede usando o conteúdo de network-integration."
-"yaml"
+"incus network integration edit <integração de rede> < network-"
+"integration.yaml\n"
+"    Atualiza uma integração de rede usando o conteúdo de network-"
+"integration.yaml"
 
 #: cmd/incus/network_load_balancer.go:315
 msgid ""
@@ -11540,8 +11537,8 @@ msgid ""
 "    Update a storage bucket key using the content of key.yaml."
 msgstr ""
 "incus storage bucket edit [<remote>:]<pool> <bucket> <key> < key.yaml\n"
-"    Atualiza uma chave de bucket de armazenamento usando o conteúdo de key."
-"yaml."
+"    Atualiza uma chave de bucket de armazenamento usando o conteúdo de "
+"key.yaml."
 
 #: cmd/incus/storage_bucket.go:1303
 msgid ""
