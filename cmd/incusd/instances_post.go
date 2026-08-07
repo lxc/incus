@@ -480,6 +480,25 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 				if err != nil {
 					return err
 				}
+
+				// Dependent volumes on shared storage aren't transferred, they're taken over from
+				// the source once its last transfer has landed. That's when their devices appear
+				// in the request.
+				if req.Source.DependentVolumesMove {
+					for devName, devConfig := range req.Devices {
+						if devConfig["type"] != "disk" || util.IsFalseOrEmpty(devConfig["dependent"]) || devConfig["path"] == "/" || devConfig["pool"] == "" {
+							continue
+						}
+
+						_, ok := devs[devName]
+						if ok {
+							continue
+						}
+
+						devs[devName] = devConfig
+						updateNeeded = true
+					}
+				}
 			}
 
 			if updateNeeded {
@@ -534,6 +553,12 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 // validateDependentVolumes validates dependent volumes during copy.
 func validateDependentVolumes(source instance.Instance, req *api.InstancesPost) error {
+	// During near-live migration, shared storage stays as-is
+	// and local storage is removed from the source, so validation is skipped.
+	if req.Source.DependentVolumesMove {
+		return nil
+	}
+
 	// Fetch all dependent devices belonging to the instance.
 	dependentVolumes := []string{}
 	err := source.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
@@ -1722,10 +1747,11 @@ func clusterCopyContainerInternal(ctx context.Context, s *state.State, r *http.R
 	} else {
 		instanceOnly := req.Source.InstanceOnly
 		pullReq := api.InstancePost{
-			Migration:    true,
-			Live:         req.Source.Live,
-			InstanceOnly: instanceOnly,
-			Devices:      req.Devices,
+			Migration:            true,
+			Live:                 req.Source.Live,
+			InstanceOnly:         instanceOnly,
+			Devices:              req.Devices,
+			DependentVolumesMove: req.Source.DependentVolumesMove,
 		}
 
 		op, err := client.MigrateInstance(req.Source.Source, pullReq)

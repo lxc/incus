@@ -12,6 +12,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/shared/api"
@@ -29,18 +30,21 @@ func nearLiveMigrationSupported(s *state.State, inst instance.Instance, req api.
 		return errors.New("Near-live migration is only supported for containers")
 	}
 
-	// Dependent volumes can't be transferred incrementally, so there's nothing to pre-copy.
-	dependent := false
 	err := inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
-		dependent = true
+		diskPool, err := storagePools.LoadByName(s, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		driverName := diskPool.Driver().Info().Name
+		if driverName == "dir" || driverName == "lvm" {
+			return fmt.Errorf("Near-live migration isn't supported for dependent disk %q on %q storage pools", dev.Name, driverName)
+		}
+
 		return nil
 	})
 	if err != nil {
 		return err
-	}
-
-	if dependent {
-		return errors.New("Near-live migration isn't supported for instances with dependent volumes")
 	}
 
 	_, rootDiskConf, err := internalInstance.GetRootDiskDevice(inst.ExpandedDevices().CloneNative())
@@ -66,21 +70,31 @@ func nearLiveMigrationSupported(s *state.State, inst instance.Instance, req api.
 }
 
 // runNearLiveCopyRound performs a single copy of the instance onto the target member.
-func runNearLiveCopyRound(ctx context.Context, inst instance.Instance, target incus.InstanceServer, targetName string, targetInstInfo *api.Instance, refresh bool, progressHandler func(newOp api.Operation)) error {
+func runNearLiveCopyRound(ctx context.Context, inst instance.Instance, target incus.InstanceServer, targetName string, targetInstInfo *api.Instance, sharedDisks []string, final bool, refresh bool, progressHandler func(newOp api.Operation)) error {
 	instPut := targetInstInfo.Writable()
 
 	// Never tell the target that the instance was running.
 	instPut.Config = maps.Clone(instPut.Config)
 	delete(instPut.Config, "volatile.last_state.power")
 
+	// Dependent volumes on shared storage stay attached to the source while it runs, so the copy
+	// only gets their devices with the final transfer.
+	if !final {
+		instPut.Devices = maps.Clone(instPut.Devices)
+		for _, devName := range sharedDisks {
+			delete(instPut.Devices, devName)
+		}
+	}
+
 	op, err := target.CreateInstance(api.InstancesPost{
 		Name:        targetName,
 		InstancePut: instPut,
 		Type:        api.InstanceType(targetInstInfo.Type),
 		Source: api.InstanceSource{
-			Type:    "copy",
-			Source:  inst.Name(),
-			Refresh: refresh,
+			Type:                 "copy",
+			Source:               inst.Name(),
+			Refresh:              refresh,
+			DependentVolumesMove: true,
 		},
 	})
 	if err != nil {
@@ -106,7 +120,7 @@ func runNearLiveCopyRound(ctx context.Context, inst instance.Instance, target in
 // refreshed once more, so the final copy, which does require the container to be stopped, only has
 // to carry the changes written since the last snapshot. Once the final transfer lands, the source
 // is deleted and the copy is renamed to the real name and started.
-func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.Instance, target incus.InstanceServer, targetInstInfo *api.Instance, progressHandler func(newOp api.Operation)) error {
+func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.Instance, target incus.InstanceServer, targetInstInfo *api.Instance, deviceOverrides api.DevicesMap, op *operations.Operation, progressHandler func(newOp api.Operation)) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -140,8 +154,35 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 	l.Debug("Near-live migration started")
 	defer l.Debug("Near-live migration finished")
 
-	transfer := func(refresh bool) error {
-		return runNearLiveCopyRound(ctx, inst, target, targetName, targetInstInfo, refresh, progressHandler)
+	// Collect the dependent disks whose volumes are on shared storage.
+	sharedDisks := []string{}
+
+	localDevices := inst.LocalDevices()
+	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		diskPool, err := storagePools.LoadByName(s, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if !diskPool.Driver().Info().Remote {
+			return nil
+		}
+
+		_, ok := localDevices[dev.Name]
+		if !ok {
+			return fmt.Errorf("Dependent disk %q isn't a local device", dev.Name)
+		}
+
+		sharedDisks = append(sharedDisks, dev.Name)
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	transfer := func(final bool, refresh bool) error {
+		return runNearLiveCopyRound(ctx, inst, target, targetName, targetInstInfo, sharedDisks, final, refresh, progressHandler)
 	}
 
 	snapshotNames := []string{}
@@ -158,7 +199,7 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 		reverter.Add(func() {
 			snapInst, err := instance.LoadByProjectAndName(s, projectName, instName+internalInstance.SnapshotDelimiter+snapName)
 			if err == nil {
-				err = snapInst.Delete(true, false)
+				err = snapInst.Delete(true, true)
 			}
 
 			if err != nil {
@@ -172,7 +213,7 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 		snapshotNames = append(snapshotNames, snapName)
 
 		// The first round creates the instance on the target, later rounds refresh it.
-		err = transfer(round > 1)
+		err = transfer(false, round > 1)
 		if err != nil {
 			return err
 		}
@@ -210,8 +251,9 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 		}
 	})
 
-	// Final transfer, carrying everything written since the second snapshot.
-	err = transfer(true)
+	// Final transfer, carrying everything written since the second snapshot. This is also what hands
+	// the shared dependent volumes over, by giving the copy their devices.
+	err = transfer(true, true)
 	if err != nil {
 		return err
 	}
@@ -220,12 +262,19 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 
 	reverter.Success()
 
+	// The dependent volumes now belong to the copy, so leave them and their snapshots alone.
 	err = inst.Delete(true, false)
 	if err != nil {
 		return fmt.Errorf("Failed deleting source instance: %w", err)
 	}
 
 	l.Debug("Source instance deleted")
+
+	// Remove the dependent volumes that were transferred.
+	err = cleanupDependentDisks(s, inst, deviceOverrides, op)
+	if err != nil {
+		return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
+	}
 
 	// Remove the pre-copy snapshots from the instance copy on the target member.
 	for _, snapName := range snapshotNames {

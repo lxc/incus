@@ -3363,6 +3363,11 @@ This adds a `refresh` field to `POST /1.0/instances/{name}`. When set to `true` 
 a stateless migration (`migration` set to `true` and `live` set to `false`), a
 running container is migrated this way.
 
+It also adds a `dependent_volumes_move` field to `POST /1.0/instances/{name}` and
+to the source of `POST /1.0/instances`. It's used between cluster members to move
+an instance's dependent volumes along with it rather than copy them: those on
+shared storage are taken over by the target member instead of being transferred.
+
 It also adds `refresh-migrate` as a configuration option to `cluster.evacuate`
 and as an evacuation mode, which forces refresh migration of instances during
 cluster evacuation.

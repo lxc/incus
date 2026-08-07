@@ -171,6 +171,7 @@ type migrationSourceWs struct {
 
 	clusterMoveSourceName string
 	devices               api.DevicesMap
+	dependentVolumesMove  bool
 
 	pushCertificate  string
 	pushOperationURL string

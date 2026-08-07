@@ -89,7 +89,7 @@ type Pool interface {
 	CanRestoreInstanceSnapshot(inst instance.Instance, src instance.Instance) error
 	CreateInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) error
 	RenameInstanceSnapshot(inst instance.Instance, newName string, op *operations.Operation) error
-	DeleteInstanceSnapshot(inst instance.Instance, op *operations.Operation) error
+	DeleteInstanceSnapshot(inst instance.Instance, cleanupDependencies bool, op *operations.Operation) error
 	RestoreInstanceSnapshot(inst instance.Instance, src instance.Instance, op *operations.Operation) error
 	MountInstanceSnapshot(inst instance.Instance, op *operations.Operation) (*MountInfo, error)
 	UnmountInstanceSnapshot(inst instance.Instance, op *operations.Operation) error

@@ -91,6 +91,12 @@ type InstancePost struct {
 	// API extension: instance_refresh_migration
 	Refresh bool `json:"refresh" yaml:"refresh"`
 
+	// Whether the dependent volumes are moved along with the instance rather than copied (cluster-internal)
+	// Example: false
+	//
+	// API extension: instance_refresh_migration
+	DependentVolumesMove bool `json:"dependent_volumes_move" yaml:"dependent_volumes_move"`
+
 	// Whether snapshots should be discarded (migration only)
 	// Example: false
 	InstanceOnly bool `json:"instance_only" yaml:"instance_only"`
@@ -371,6 +377,12 @@ type InstanceSource struct {
 	// Whether this is refreshing an existing instance (for migration and copy)
 	// Example: false
 	Refresh bool `json:"refresh,omitempty" yaml:"refresh,omitempty"`
+
+	// Whether the dependent volumes are moved along with the instance rather than copied (cluster-internal)
+	// Example: false
+	//
+	// API extension: instance_refresh_migration
+	DependentVolumesMove bool `json:"dependent_volumes_move,omitempty" yaml:"dependent_volumes_move,omitempty"`
 
 	// Whether to exclude source snapshots earlier than latest target snapshot
 	// Example: false

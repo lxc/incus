@@ -195,8 +195,31 @@ EOF
         INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Location: node2"
         INCUS_DIR="${INCUS_ONE_DIR}" incus info c4 | grep -q "Status: STOPPED"
 
+        # Dependent volumes are moved along with the instance.
+        INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c5 --target node1
+        INCUS_DIR="${INCUS_ONE_DIR}" incus config set c5 boot.host_shutdown_timeout=1
+        INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume create data vol1
+        INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume attach data vol1 c5 vol1 /mnt/vol1
+        INCUS_DIR="${INCUS_ONE_DIR}" incus config device set c5 vol1 dependent=true
+
+        # A dependent volume on local storage is transferred along with the instance.
+        INCUS_DIR="${INCUS_ONE_DIR}" incus move c5 --target node2 --stateless --refresh
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c5 | grep -q "Location: node2"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info c5 | grep -q "Status: RUNNING"
+
+        # The volume followed the instance, and is gone from node1.
+        [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume list data --format csv --columns nL | grep -c '^vol1,node2$')" = "1" ]
+        [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume snapshot list data vol1 --format json | jq 'length')" = "0" ]
+
+        # And it moves back the same way.
+        INCUS_DIR="${INCUS_ONE_DIR}" incus move c5 --target node1 --stateless --refresh
+        [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume list data --format csv --columns nL | grep -c '^vol1,node1$')" = "1" ]
+
         # Cleanup
         INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c4
+        INCUS_DIR="${INCUS_ONE_DIR}" incus config device remove c5 vol1
+        INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume delete data vol1
+        INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c5
     fi
 
     # Perform project restriction tests.
