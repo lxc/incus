@@ -4586,6 +4586,22 @@
 						}
 					},
 					{
+						"bridge.multicast_relay": {
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Whether to relay multicast traffic through the network's logical router",
+							"type": "bool"
+						}
+					},
+					{
+						"bridge.multicast_snooping": {
+							"default": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to enable multicast snooping on the virtual network",
+							"type": "bool"
+						}
+					},
+					{
 						"dns.domain": {
 							"default": "`incus`",
 							"longdesc": "",

@@ -3371,3 +3371,11 @@ cluster evacuation.
 
 Adds a new `locations` field to the image API, listing the names of the
 cluster members which have a local copy of the image.
+
+## `network_ovn_multicast`
+
+Adds multicast configuration to OVN networks through two new
+configuration keys:
+
+* `bridge.multicast_snooping`
+* `bridge.multicast_relay`
