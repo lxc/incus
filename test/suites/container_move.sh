@@ -79,6 +79,26 @@ test_container_move() {
     [ "$(incus config get c8 user.test --project ${project})" = "success" ] # Verify new local config entry.
     incus delete -f c8 --project "${project}"
 
+    # Near-live migration.
+    incus launch "${image}" c9
+    incus config set c9 boot.host_shutdown_timeout=1
+
+    # --refresh can be called only with --stateless.
+    ! incus move c9 --target-project "${project}" --refresh || false
+    incus query -X POST -d '{\"migration\": true, \"live\": true, \"refresh\": true}' /1.0/instances/c9 2>&1 | grep -q "Refresh migration can't be used with a stateful migration"
+
+    # A local rename can't be performed as near-live migration.
+    ! incus move c9 c10 --stateless --refresh || false
+
+    # A running container can't change project, name or storage pool.
+    ! incus move c9 --target-project "${project}" --stateless --refresh || false
+    ! incus move c9 --storage "${pool2}" --stateless --refresh || false
+
+    # The evacuation mode is a valid instance configuration value.
+    incus config set c9 cluster.evacuate=refresh-migrate
+
+    incus delete -f c9
+
     incus profile delete "${profile}" --project "${project}"
     incus storage delete "${pool2}"
     incus project delete "${project}"

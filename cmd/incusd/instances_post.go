@@ -600,7 +600,7 @@ func checkVolumesOnRemoteStorage(s *state.State, pool *api.StoragePool, inst ins
 }
 
 func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
-	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
+	if s.ServerClustered && r.Context().Value(request.CtxProtocol) != "cluster" && s.DB.Cluster.LocalNodeIsEvacuated() {
 		return response.Forbidden(errors.New("Cluster member is evacuated"))
 	}
 
