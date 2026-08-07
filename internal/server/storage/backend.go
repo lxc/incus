@@ -3633,13 +3633,19 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 
 	snapVolName := drivers.GetSnapshotVolumeName(parentStorageName, snapName)
 
-	// Load storage volume from database.
+	// Load storage volume from database. Tolerate a missing record so that
+	// snapshots which lost theirs (interrupted refresh) can still be deleted.
 	srcDBVol, err := VolumeDBGet(b, inst.Project().Name, inst.Name(), volType)
-	if err != nil {
+	if err != nil && !response.IsNotFoundError(err) {
 		return err
 	}
 
-	vol := b.GetVolume(volType, contentType, snapVolName, srcDBVol.Config)
+	var srcDBVolConfig map[string]string
+	if srcDBVol != nil {
+		srcDBVolConfig = srcDBVol.Config
+	}
+
+	vol := b.GetVolume(volType, contentType, snapVolName, srcDBVolConfig)
 
 	// Load parent storage volume from database.
 	parentDBVol, err := VolumeDBGet(b, inst.Project().Name, parentName, volType)
@@ -3693,9 +3699,11 @@ func (b *backend) DeleteInstanceSnapshot(inst instance.Instance, op *operations.
 	}
 
 	// Remove the snapshot volume record from the database if exists.
-	err = VolumeDBDelete(b, inst.Project().Name, inst.Name(), vol.Type())
-	if err != nil {
-		return err
+	if srcDBVol != nil {
+		err = VolumeDBDelete(b, inst.Project().Name, inst.Name(), vol.Type())
+		if err != nil {
+			return err
+		}
 	}
 
 	err = src.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
