@@ -22,8 +22,9 @@ reconnecting, anything being tracked from the event stream should be re-fetched,
 disconnected are not resent.
 
 When using the Go client, handlers registered through `AddHandler` are called concurrently and may therefore observe
-events out of order. Calling `SetOrdered` on the listener before adding any handler makes them run one event at a time
-and in order instead.
+events out of order. Use `AddChannel` instead to receive the events on a channel, which delivers them one at a time and
+in the order they arrived, and is closed once the listener ends. Its size argument sets how far behind the reader may
+fall before the listener is dropped.
 
 ## Event structure
 
@@ -98,8 +99,8 @@ type: lifecycle
 | `image-alias-deleted`                  | An alias has been deleted for an existing image.                      | `target`: the original instance.                                                                     |
 | `image-alias-renamed`                  | The alias for an existing image has been renamed.                     | `old_name`: the previous name.                                                                       |
 | `image-alias-updated`                  | The configuration for an image alias has changed.                     | `target`: the original instance.                                                                     |
-| `instance-agent-started`               | The instance agent has connected to the host.                        |                                                                                                      |
-| `instance-agent-stopped`               | The instance agent has disconnected from the host.                   |                                                                                                      |
+| `instance-agent-started`               | The instance agent has connected to the host.                         |                                                                                                      |
+| `instance-agent-stopped`               | The instance agent has disconnected from the host.                    |                                                                                                      |
 | `image-created`                        | A new image has been added to the image store.                        | `type`: `container` or `vm`.                                                                         |
 | `image-deleted`                        | The image has been deleted from the image store.                      |                                                                                                      |
 | `image-refreshed`                      | The local image copy has updated to the current source image version. |                                                                                                      |
