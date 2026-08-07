@@ -13,6 +13,7 @@ Configure network forwards </howto/network_forwards>
 Configure network integrations </howto/network_integrations>
 Configure network zones </howto/network_zones>
 Configure Incus as BGP server </howto/network_bgp>
+Export OVN networks through dynamic routing </howto/network_ovn_dynamic_routing>
 Display Incus IPAM information </howto/network_ipam>
 /reference/network_bridge
 /reference/network_ovn
