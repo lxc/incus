@@ -319,6 +319,7 @@ run_standalone_network() {
     run_test test_container_devices_nic_sriov "container devices - nic - sriov"
     run_test test_container_devices_proxy "container devices - proxy"
     run_test test_network_acl "network ACL management"
+    run_test test_network_bridge_firewall "network bridge firewall"
     run_test test_network_dhcp_routes "network dhcp routes"
     run_test test_network_forward "network address forwards"
     run_test test_network_hwaddr_pattern "network MAC address pattern"
