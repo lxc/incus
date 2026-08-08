@@ -345,6 +345,7 @@ run_standalone_network() {
 # Any other container test
 run_standalone_container() {
     run_test test_basic_usage "basic usage"
+    run_test test_cgroup "cgroup limits"
     run_test test_cloud_init "cloud-init"
     run_test test_concurrent "concurrent startup"
     run_test test_concurrent_exec "concurrent exec"
