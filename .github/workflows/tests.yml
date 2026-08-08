@@ -679,6 +679,190 @@ jobs:
           cd test
           sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_TMPFS,INCUS_REQUIRED_TESTS env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh network_ovn_${{ matrix.test }}
 
+  extended-tests:
+    name: Extended
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - cgroup
+          - interception
+          - network_bridge_firewall
+          - storage_buckets_drivers
+        os:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+        exclude:
+          # Only run on arm64 the tests that benefit from kernel behavior coverage.
+          - test: network_bridge_firewall
+            os: ubuntu-24.04-arm
+          - test: storage_buckets_drivers
+            os: ubuntu-24.04-arm
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Performance tuning
+        run: |
+          set -eux
+          # optimize ext4 FSes for performance, not reliability
+          for fs in $(findmnt --noheading --type ext4 --list --uniq | awk '{print $1}'); do
+            # nombcache and data=writeback cannot be changed on remount
+            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}" || true
+          done
+
+          # disable dpkg from calling sync()
+          echo "force-unsafe-io" | sudo tee /etc/dpkg/dpkg.cfg.d/force-unsafe-io
+
+      - name: Remove LXD
+        run: |
+          set -eux
+          sudo snap remove lxd --purge
+
+      - name: Remove docker
+        run: |
+          set -eux
+          sudo apt-get autopurge -y moby-containerd docker uidmap
+          sudo ip link delete docker0
+          sudo nft flush ruleset
+
+      - name: Setup swap
+        if: matrix.test == 'cgroup'
+        run: |
+          set -eux
+          if [ "$(wc -l < /proc/swaps)" = "1" ]; then
+            sudo fallocate -l 4G /SWAP.img
+            sudo chmod 600 /SWAP.img
+            sudo mkswap /SWAP.img
+            sudo swapon /SWAP.img
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Go (stable)
+        uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: |
+          set -x
+
+          sudo install -d -m 0755 /etc/apt/keyrings
+          codename="$(lsb_release -cs)"
+
+          # Configure ppa:ubuntu-lxc/daily directly
+          # (apt-add-repository relies on the Launchpad API which is unreliable).
+          curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&options=mr&search=0xE9C00C1B1B59A86C2CFEE6990CE27B8C4122B4B7" | sudo tee /etc/apt/keyrings/ubuntu-lxc-daily.asc > /dev/null
+          sudo tee /etc/apt/sources.list.d/ubuntu-lxc-daily.sources > /dev/null <<EOF
+          Types: deb
+          URIs: https://ppa.launchpadcontent.net/ubuntu-lxc/daily/ubuntu
+          Suites: ${codename}
+          Components: main
+          Signed-By: /etc/apt/keyrings/ubuntu-lxc-daily.asc
+          EOF
+
+          sudo apt-get update
+
+          sudo systemctl mask lxc.service lxc-net.service
+
+          sudo apt-get install --no-install-recommends -y \
+            acl \
+            apparmor \
+            attr \
+            autoconf \
+            automake \
+            bind9-dnsutils \
+            btrfs-progs \
+            curl \
+            dnsmasq-base \
+            gettext \
+            git \
+            iperf3 \
+            jq \
+            libacl1-dev \
+            libcap-dev \
+            libdbus-1-dev \
+            liblxc-dev \
+            liblz4-dev \
+            libseccomp-dev \
+            libselinux-dev \
+            libsqlite3-dev \
+            libtool \
+            libudev-dev \
+            libuv1-dev \
+            linux-modules-extra-$(uname -r) \
+            lvm2 \
+            lxcfs \
+            make \
+            nftables \
+            pkg-config \
+            socat \
+            sqlite3 \
+            squashfs-tools \
+            thin-provisioning-tools \
+            uuid-runtime \
+            xz-utils \
+            zfsutils-linux
+
+          # Make sure all AppArmor profiles are loaded.
+          sudo systemctl start apparmor
+
+      - name: Build LXCFS from main
+        if: matrix.test == 'cgroup'
+        run: |
+          set -eux
+
+          sudo apt-get install --no-install-recommends -y \
+            libfuse3-dev \
+            meson \
+            ninja-build \
+            python3-jinja2 \
+            systemd-dev
+
+          git clone --depth=1 https://github.com/lxc/lxcfs ~/lxcfs
+          cd ~/lxcfs
+          meson setup build --prefix=/usr -Ddocs=false
+          ninja -C build
+          sudo ninja -C build install
+
+          sudo systemctl daemon-reload
+          sudo systemctl restart lxcfs
+          lxcfs --version
+
+      - name: Download go dependencies
+        run: |
+          go mod download
+
+      - name: Build cowsql and raft
+        run: |
+          set -x
+          make deps
+
+          raft_path="$(go env GOPATH)/deps/raft"
+          cowsql_path="$(go env GOPATH)/deps/cowsql"
+          {
+            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
+            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
+            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
+            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+          } >> "$GITHUB_ENV"
+
+      - name: Run Incus build
+        run: |
+          make
+
+      - name: "Run extended tests (${{ matrix.test }}, ${{ matrix.os }})"
+        env:
+          CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+          INCUS_VERBOSE: "1"
+          INCUS_REQUIRED_TESTS: "${{ matrix.test }}"
+        run: |
+          chmod +x ~
+          echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
+          cd test
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_REQUIRED_TESTS env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh ${{ matrix.test }}
+
   client:
     name: Client
     strategy:

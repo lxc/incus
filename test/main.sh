@@ -286,6 +286,7 @@ run_standalone_storage() {
     run_test test_snap_volume_db_recovery "snapshot volume database record recovery"
     run_test test_storage_bucket_export "storage buckets export and import"
     run_test test_storage_buckets "storage buckets"
+    run_test test_storage_buckets_drivers "storage buckets on all local drivers"
     run_test test_storage_driver_btrfs "btrfs storage driver"
     run_test test_storage_driver_ceph "ceph storage driver"
     run_test test_storage_driver_cephfs "cephfs storage driver"
@@ -319,6 +320,7 @@ run_standalone_network() {
     run_test test_container_devices_nic_sriov "container devices - nic - sriov"
     run_test test_container_devices_proxy "container devices - proxy"
     run_test test_network_acl "network ACL management"
+    run_test test_network_bridge_firewall "network bridge firewall"
     run_test test_network_dhcp_routes "network dhcp routes"
     run_test test_network_forward "network address forwards"
     run_test test_network_hwaddr_pattern "network MAC address pattern"
@@ -345,6 +347,7 @@ run_standalone_network() {
 # Any other container test
 run_standalone_container() {
     run_test test_basic_usage "basic usage"
+    run_test test_cgroup "cgroup limits"
     run_test test_cloud_init "cloud-init"
     run_test test_concurrent "concurrent startup"
     run_test test_concurrent_exec "concurrent exec"
@@ -370,6 +373,7 @@ run_standalone_container() {
     run_test test_fdleak "fd leak"
     run_test test_filemanip "file manipulations"
     run_test test_idmap "id mapping"
+    run_test test_interception "syscall interception"
     run_test test_lxc_to_incus "LXC to Incus"
     run_test test_port_forward "port forward"
     run_test test_property "container property"
