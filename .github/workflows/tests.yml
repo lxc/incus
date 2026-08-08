@@ -686,6 +686,7 @@ jobs:
       matrix:
         test:
           - cgroup
+          - interception
         os:
           - ubuntu-24.04
           - ubuntu-24.04-arm
