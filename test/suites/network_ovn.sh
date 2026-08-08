@@ -1,4 +1,10 @@
 network_ovn_supported() {
+    if [ -n "${INCUS_OFFLINE:-}" ]; then
+        echo "==> SKIP: External connectivity needed to pull test image"
+        export TEST_UNMET_REQUIREMENT="external connectivity needed to pull test image"
+        return 1
+    fi
+
     if ! command -v ovn-nbctl > /dev/null 2>&1 || ! command -v ovs-vsctl > /dev/null 2>&1; then
         echo "==> SKIP: OVN tools not available"
         export TEST_UNMET_REQUIREMENT="OVN tools not available"
