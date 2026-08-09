@@ -28,7 +28,7 @@ type cmdCreate struct {
 
 	flagConfig          []string
 	flagDevice          []string
-	flagEnvironmentFile string
+	flagEnvironmentFile []string
 	flagEphemeral       bool
 	flagNetwork         string
 	flagProfile         []string
@@ -63,7 +63,7 @@ incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io.bus=nvme
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagProfile, "profile|p", i18n.G("Profile to apply to the new instance"))
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagDevice, "device|d", i18n.G("New key/value to apply to a specific device"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagEphemeral, "ephemeral|e", i18n.G("Ephemeral instance"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagEnvironmentFile, "environment-file", "", "", i18n.G("Include environment variables from file"))
+	cli.AddStringArrayFlag(cmd.Flags(), &c.flagEnvironmentFile, "environment-file", i18n.G("Include environment variables from file"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagNetwork, "network|n", "", "", i18n.G("Network name"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagStorage, "storage|s", "", "", i18n.G("Storage pool name"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type|t", "", "", i18n.G("Instance type"))
@@ -188,8 +188,12 @@ func (c *cmdCreate) create(conf *config.Config, parsed []*u.Parsed, launch bool)
 		configMap = map[string]string{}
 	}
 
-	if c.flagEnvironmentFile != "" {
-		envMap, err := readEnvironmentFile(c.flagEnvironmentFile)
+	for _, envFile := range c.flagEnvironmentFile {
+		if envFile == "" {
+			continue
+		}
+
+		envMap, err := readEnvironmentFile(envFile)
 		if err != nil {
 			return nil, err
 		}
