@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/lxc/incus/v7/internal/instancewriter"
+	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/migration"
 	"github.com/lxc/incus/v7/internal/rsync"
 	"github.com/lxc/incus/v7/internal/server/backup"
@@ -581,6 +582,9 @@ func (d *cephfs) CreateVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 	// Create the snapshot.
 	sourcePath := GetVolumeMountPath(d.name, snapVol.volType, parentName)
 	cephSnapPath := filepath.Join(sourcePath, ".snap", snapName)
+
+	// Flush dirty data to the MDS as mksnap doesn't wait for client writeback.
+	_ = linux.SyncFS(sourcePath)
 
 	err := os.Mkdir(cephSnapPath, 0o711)
 	if err != nil {
