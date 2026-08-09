@@ -13,7 +13,9 @@ btrfs_configure() {
 
     INCUS_DIR=$1
 
-    incus storage create "incustest-$(basename "${INCUS_DIR}")" btrfs size=1GiB
+    # Use a larger pool than other backends as btrfs cannot reclaim its
+    # allocated metadata chunks and runs out of space on 1GiB pools.
+    incus storage create "incustest-$(basename "${INCUS_DIR}")" btrfs size=4GiB
     incus profile device add default root disk path="/" pool="incustest-$(basename "${INCUS_DIR}")"
 
     echo "==> Configuring btrfs backend in ${INCUS_DIR}"
