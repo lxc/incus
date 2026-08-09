@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-08-06 09:02+0000\n"
-"PO-Revision-Date: 2026-08-07 19:43+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-08 22:51+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -1419,9 +1419,8 @@ msgid "Can't override configuration or profiles in local rename"
 msgstr "Incapaz de sobrepor configuração ou perfis em renomeação local"
 
 #: cmd/incus/move.go:127
-#, fuzzy
 msgid "Can't perform an incremental transfer in local rename"
-msgstr "Não pode executar renomear local sem um nome de nova instância"
+msgstr "Não pode executar transferência incremental em renome local"
 
 #: cmd/incus/move.go:119
 msgid "Can't perform local rename without a new instance name"
@@ -9645,9 +9644,8 @@ msgid "The server doesn't have a web UI installed"
 msgstr "O servidor não tem uma Interface de Utilizador web instalada"
 
 #: cmd/incus/move.go:231
-#, fuzzy
 msgid "The server doesn't implement incremental instance transfers"
-msgstr "O servidor não implementa a nova API de recursos v2"
+msgstr "O servidor não implementa transferências de instância incremental"
 
 #: cmd/incus/info.go:413
 msgid "The server doesn't implement the newer v2 resources API"
