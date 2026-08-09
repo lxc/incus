@@ -91,8 +91,11 @@ EOF
     kill -9 "${client_websocket}"
     kill -9 "${client_stream}"
 
-    incus monitor --type=lifecycle > "${TEST_DIR}/dev_incus.log" &
+    ${cmd} monitor --type=lifecycle > "${TEST_DIR}/dev_incus.log" &
     monitorDevIncusPID=$!
+
+    # Give the monitor a chance to subscribe.
+    sleep 1
 
     # Test instance Ready state
     incus info dev-incus | grep -q 'Status: RUNNING'
@@ -117,8 +120,11 @@ EOF
     # volatile.last_state.ready should be unset during daemon init
     [ -z "$(incus config get dev-incus volatile.last_state.ready)" ]
 
-    incus monitor --type=lifecycle > "${TEST_DIR}/dev_incus.log" &
+    ${cmd} monitor --type=lifecycle > "${TEST_DIR}/dev_incus.log" &
     monitorDevIncusPID=$!
+
+    # Give the monitor a chance to subscribe.
+    sleep 1
 
     incus exec dev-incus -- dev_incus-client ready-state true
     [ "$(incus config get dev-incus volatile.last_state.ready)" = "true" ]
