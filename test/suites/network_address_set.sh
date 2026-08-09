@@ -148,6 +148,10 @@ EOF
     incus network set "${brName}" security.acls="allowtcp8080"
     nc -l -p 8080 -q0 -s 192.0.2.1 < /dev/null > /dev/null &
     nc -l -p 8080 -q0 -s 2001:db8::1 < /dev/null > /dev/null &
+
+    # Give the listeners a chance to bind.
+    sleep 1
+
     incus exec testct --disable-stdin -- nc -w2 192.0.2.1 8080
     incus network address-set add testAS 2001:db8::1
     incus exec testct --disable-stdin -- nc -w2 2001:db8::1 8080
