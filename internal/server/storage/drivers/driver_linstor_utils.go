@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	linstorapi "github.com/LINBIT/golinstor"
 	linstorClient "github.com/LINBIT/golinstor/client"
 	"github.com/LINBIT/golinstor/clonestatus"
 	"github.com/google/uuid"
@@ -370,13 +371,12 @@ func (d *linstor) deleteResourceGroup() error {
 	return nil
 }
 
-// getResourceDefinition returns the Linstor resource definition for a given volume.
-func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool) (linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
+// getVolumeResourceDefinitions returns all Linstor resource definitions matching a given volume.
+func (d *linstor) getVolumeResourceDefinitions(vol Volume, fetchVolumeDefinitions bool) ([]linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
 	l := logger.AddContext(logger.Ctx{"vol": vol.name, "volType": vol.volType, "contentType": vol.contentType})
-	l.Debug("Getting resource definition for volume")
 	linstor, err := d.state.Linstor()
 	if err != nil {
-		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
+		return nil, err
 	}
 
 	// Query resource definitions that match the desired volume by its name.
@@ -388,7 +388,7 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 		WithVolumeDefinitions: fetchVolumeDefinitions,
 	})
 	if err != nil {
-		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
+		return nil, err
 	}
 
 	l.Debug("Queried resource definitions", logger.Ctx{"query": LinstorAuxName + "=" + d.config[LinstorVolumePrefixConfigKey] + vol.name, "result": resourceDefinitions})
@@ -399,6 +399,19 @@ func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool)
 		if rd.ResourceGroupName == d.config[LinstorResourceGroupNameConfigKey] {
 			filteredResourceDefinitions = append(filteredResourceDefinitions, rd)
 		}
+	}
+
+	return filteredResourceDefinitions, nil
+}
+
+// getResourceDefinition returns the Linstor resource definition for a given volume.
+func (d *linstor) getResourceDefinition(vol Volume, fetchVolumeDefinitions bool) (linstorClient.ResourceDefinitionWithVolumeDefinition, error) {
+	l := logger.AddContext(logger.Ctx{"vol": vol.name, "volType": vol.volType, "contentType": vol.contentType})
+	l.Debug("Getting resource definition for volume")
+
+	filteredResourceDefinitions, err := d.getVolumeResourceDefinitions(vol, fetchVolumeDefinitions)
+	if err != nil {
+		return linstorClient.ResourceDefinitionWithVolumeDefinition{}, err
 	}
 
 	if len(filteredResourceDefinitions) == 0 {
@@ -861,18 +874,27 @@ func (d *linstor) deleteResourceDefinitionFromSnapshot(vol Volume) error {
 		return err
 	}
 
-	resourceDefinition, err := d.getResourceDefinition(vol, false)
+	// Delete every matching resource definition, as an interrupted past deletion can leave more than one behind.
+	resourceDefinitions, err := d.getVolumeResourceDefinitions(vol, false)
 	if err != nil {
-		if errors.Is(err, errResourceDefinitionNotFound) {
-			return nil
-		}
-
 		return err
 	}
 
-	err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinition.Name)
-	if err != nil {
-		return err
+	for _, resourceDefinition := range resourceDefinitions {
+		// DRBD demotes the resource asynchronously after the last close, so
+		// retry for a while when LINSTOR still reports the resource in use.
+		for range 20 {
+			err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinition.Name)
+			if err == nil || !linstorClient.IsApiCallError(err, linstorapi.FailInUse) {
+				break
+			}
+
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		if err != nil {
+			return err
+		}
 	}
 
 	d.logger.Debug("Resource definition for snapshot deleted")
