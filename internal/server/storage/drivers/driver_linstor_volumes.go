@@ -1096,7 +1096,7 @@ func (d *linstor) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 			}
 
 			l.Debug("Will try mount")
-			err = TryMount(volDevPath, mountPath, snapVolFS, mountFlags, mountOptions)
+			err = TryMount(volDevPath, mountPath, snapVolFS, mountFlags|unix.MS_RDONLY, mountOptions)
 			if err != nil {
 				l.Debug("Tried mounting but failed", logger.Ctx{"error": err})
 				return err
