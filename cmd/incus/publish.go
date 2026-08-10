@@ -39,7 +39,7 @@ func (c *cmdPublish) command() *cobra.Command {
 
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagMakePublic, "public", i18n.G("Make the image public"))
-	cli.AddStringArrayFlag(cmd.Flags(), &c.flagAliases, "alias", i18n.G("New alias to define at target"))
+	cli.AddStringArrayFlag(cmd.Flags(), &c.flagAliases, "alias", i18n.G("New alias to define at target (may be passed multiple times)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Stop the instance if currently running"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagCompressionAlgorithm, "compression", "", "", i18n.G("Compression algorithm to use (`none` for uncompressed)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagExpiresAt, "expire", "", "", i18n.G("Image expiration date (format: rfc3339)"))

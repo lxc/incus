@@ -55,7 +55,7 @@ incus monitor --type=lifecycle
 	cmd.RunE = c.run
 	cli.AddBoolFlag(cmd.Flags(), &c.flagPretty, "pretty", i18n.G("Pretty rendering (short for --format=pretty)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Show events from all projects"))
-	cli.AddStringArrayFlag(cmd.Flags(), &c.flagType, "type|t", i18n.G("Event type to listen for"))
+	cli.AddStringArrayFlag(cmd.Flags(), &c.flagType, "type|t", i18n.G("Event type to listen for (may be passed multiple times)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagLogLevel, "loglevel", "", "", i18n.G("Minimum level for log messages (only available when using pretty format)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", "yaml", "", i18n.G("Format (json|pretty|yaml)"))
 
