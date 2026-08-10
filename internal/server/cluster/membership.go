@@ -27,10 +27,10 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-// errClusterBusy is returned by cowsql if attempting attempting to join a cluster at the same time as a role-change.
-// This error tells us we can retry and probably join the cluster or fail due to something else.
-// The error code here is SQLITE_BUSY.
-var errClusterBusy = errors.New("A configuration change is already in progress (5)")
+// ErrClusterBusy is returned by cowsql if attempting a configuration change while another one is in progress.
+// This error tells us we can retry and probably succeed or fail due to something else.
+// The error code here is SQLITE_BUSY. As cowsql only exposes the error as text, matching must be done on the error string.
+var ErrClusterBusy = errors.New("a configuration change is already in progress (5)")
 
 // Bootstrap turns a non-clustered server into the first (and leader)
 // member of a new cluster.
@@ -448,7 +448,7 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 			return fmt.Errorf("Failed to join cluster: %w", ctx.Err())
 		default:
 			err = cowsqlClient.Add(ctx, info.NodeInfo)
-			if err != nil && err.Error() == errClusterBusy.Error() {
+			if err != nil && err.Error() == ErrClusterBusy.Error() {
 				// If the cluster is busy with a role change, sleep a second and then keep trying to join.
 				time.Sleep(1 * time.Second)
 				continue
