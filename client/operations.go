@@ -285,7 +285,12 @@ func (op *operation) setupListener() error {
 		case <-listener.ctx.Done():
 			op.handlerLock.Lock()
 			if op.listener != nil {
-				op.Err = listener.err.Error()
+				if listener.err != nil {
+					op.Err = listener.err.Error()
+				} else {
+					op.Err = "Lost connection to the event listener"
+				}
+
 				op.closeChActive()
 			}
 
