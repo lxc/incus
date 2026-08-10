@@ -461,9 +461,15 @@ func (g *Gateway) Kill() {
 	g.cancel()
 }
 
+// ErrNoOnlineVoter indicates that no online voter was found to transfer leadership to.
+var ErrNoOnlineVoter = errors.New("No online voter found")
+
 // TransferLeadership attempts to transfer leadership to another node.
 func (g *Gateway) TransferLeadership() error {
-	cowsqlClient, err := g.getClient()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cowsqlClient, err := client.New(ctx, g.bindAddress)
 	if err != nil {
 		return err
 	}
@@ -471,7 +477,7 @@ func (g *Gateway) TransferLeadership() error {
 	defer logger.WarnOnError(cowsqlClient.Close, "Failed to close client")
 
 	// Try to find a voter that is also online.
-	servers, err := cowsqlClient.Cluster(context.Background())
+	servers, err := cowsqlClient.Cluster(ctx)
 	if err != nil {
 		return err
 	}
@@ -496,11 +502,8 @@ func (g *Gateway) TransferLeadership() error {
 	}
 
 	if id == 0 {
-		return errors.New("No online voter found")
+		return ErrNoOnlineVoter
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	return cowsqlClient.Transfer(ctx, id)
 }
