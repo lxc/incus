@@ -93,7 +93,7 @@ func (c *cmdNetworkIntegrationCreate) command() *cobra.Command {
 incus network integration create o1 ovn < config.yaml
     Create network integration o1 of type ovn with configuration from config.yaml`))
 
-	cli.AddStringArrayFlag(cmd.Flags(), &c.flagConfig, "config|c", i18n.G("Config key/value to apply to the new network integration"))
+	cli.AddStringArrayFlag(cmd.Flags(), &c.flagConfig, "config|c", i18n.G("Config key/value to apply to the new network integration (may be passed multiple times)"))
 
 	cmd.RunE = c.run
 
