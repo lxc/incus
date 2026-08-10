@@ -864,15 +864,35 @@ func (d *linstor) createResourceDefinitionFromSnapshot(snapVol Volume, vol Volum
 	return nil
 }
 
-// deleteResourceDefinitionFromSnapshot deletes the resource definition created from a snapshot.
-func (d *linstor) deleteResourceDefinitionFromSnapshot(vol Volume) error {
-	l := d.logger.AddContext(logger.Ctx{"vol": vol.Name()})
-	l.Debug("Deleting resource definition for snapshot")
-
+// deleteResourceDefinition deletes a resource definition, retrying on transient errors.
+func (d *linstor) deleteResourceDefinition(resourceDefinitionName string) error {
 	linstor, err := d.state.Linstor()
 	if err != nil {
 		return err
 	}
+
+	// DRBD demotes the resource asynchronously after the last close and the backing
+	// device can also be briefly held open (udev), so retry transient failures.
+	for range 20 {
+		err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinitionName)
+		if err == nil {
+			break
+		}
+
+		if !linstorClient.IsApiCallError(err, linstorapi.FailInUse) && !linstorClient.IsApiCallError(err, linstorapi.FailUnknownError) {
+			break
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return err
+}
+
+// deleteResourceDefinitionFromSnapshot deletes the resource definition created from a snapshot.
+func (d *linstor) deleteResourceDefinitionFromSnapshot(vol Volume) error {
+	l := d.logger.AddContext(logger.Ctx{"vol": vol.Name()})
+	l.Debug("Deleting resource definition for snapshot")
 
 	// Delete every matching resource definition, as an interrupted past deletion can leave more than one behind.
 	resourceDefinitions, err := d.getVolumeResourceDefinitions(vol, false)
@@ -881,17 +901,7 @@ func (d *linstor) deleteResourceDefinitionFromSnapshot(vol Volume) error {
 	}
 
 	for _, resourceDefinition := range resourceDefinitions {
-		// DRBD demotes the resource asynchronously after the last close, so
-		// retry for a while when LINSTOR still reports the resource in use.
-		for range 20 {
-			err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinition.Name)
-			if err == nil || !linstorClient.IsApiCallError(err, linstorapi.FailInUse) {
-				break
-			}
-
-			time.Sleep(500 * time.Millisecond)
-		}
-
+		err = d.deleteResourceDefinition(resourceDefinition.Name)
 		if err != nil {
 			return err
 		}

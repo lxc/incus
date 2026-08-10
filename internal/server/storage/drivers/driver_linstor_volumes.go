@@ -517,11 +517,6 @@ func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 	l := d.logger.AddContext(logger.Ctx{"volume": vol.Name()})
 	l.Debug("Deleting Linstor volume")
 
-	linstor, err := d.state.Linstor()
-	if err != nil {
-		return err
-	}
-
 	// Test if the volume exists.
 	volumeExists, err := d.HasVolume(vol)
 	if err != nil {
@@ -536,7 +531,7 @@ func (d *linstor) DeleteVolume(vol Volume, op *operations.Operation) error {
 			return err
 		}
 
-		err = linstor.Client.ResourceDefinitions.Delete(context.TODO(), resourceDefinition.Name)
+		err = d.deleteResourceDefinition(resourceDefinition.Name)
 		if err != nil {
 			return fmt.Errorf("Unable to delete the resource definition: %w", err)
 		}
