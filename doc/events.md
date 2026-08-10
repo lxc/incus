@@ -126,6 +126,7 @@ type: lifecycle
 | `instance-metadata-template-deleted`   | The image template file for the instance has been deleted.            | `path`: relative file path.                                                                          |
 | `instance-metadata-template-retrieved` | The image template file for the instance has been downloaded.         | `path`: relative file path.                                                                          |
 | `instance-metadata-updated`            | The instance's image metadata has changed.                            |                                                                                                      |
+| `instance-migrated`                    | The instance has been migrated.                                      |                                                                                                      |
 | `instance-paused`                      | The instance has been put in a paused state.                          |                                                                                                      |
 | `instance-ready`                       | The instance is ready.                                                |                                                                                                      |
 | `instance-renamed`                     | The instance has been renamed.                                        | `old_name`: the previous name.                                                                       |
