@@ -161,6 +161,9 @@ func (d *zone) validateName(name string) error {
 		return nil
 	}
 
+	// Allow underscore prefix (SRV, TXT and other service records).
+	name = strings.TrimPrefix(name, "_")
+
 	return validate.IsAPIName(name, false)
 }
 
