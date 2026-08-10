@@ -596,7 +596,8 @@ func (c *ClusterTx) AddImageToLocalNode(ctx context.Context, project, fingerprin
 		return err
 	}
 
-	_, err = c.tx.ExecContext(ctx, "INSERT INTO images_nodes(image_id, node_id) VALUES(?, ?)", imageID, c.nodeID)
+	// OR IGNORE as the member may have registered the image concurrently.
+	_, err = c.tx.ExecContext(ctx, "INSERT OR IGNORE INTO images_nodes(image_id, node_id) VALUES(?, ?)", imageID, c.nodeID)
 
 	return err
 }

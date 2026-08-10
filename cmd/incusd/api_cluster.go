@@ -2705,12 +2705,18 @@ findLeader:
 		return fmt.Errorf("Failed handing over cluster member role: %w", err)
 	}
 
-	_, _, err = client.RawQuery("POST", "/internal/cluster/handover", post, "")
-	if err != nil {
-		return err
+	// Retry for a while if another configuration change is in progress, as
+	// leaving without a successful handover can cost the cluster its quorum.
+	for range 30 {
+		_, _, err = client.RawQuery("POST", "/internal/cluster/handover", post, "")
+		if err == nil || !strings.Contains(err.Error(), "configuration change is already in progress") {
+			return err
+		}
+
+		time.Sleep(time.Second)
 	}
 
-	return nil
+	return err
 }
 
 // Used to assign a new role to a the local cowsql node.

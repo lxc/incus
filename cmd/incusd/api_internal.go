@@ -652,24 +652,30 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 			continue
 		}
 
-		result := internalSQL.SQLResult{}
+		var result internalSQL.SQLResult
 
-		tx, err := dbConn.Begin()
-		if err != nil {
-			return response.SmartError(err)
-		}
+		err := query.Retry(r.Context(), func(_ context.Context) error {
+			result = internalSQL.SQLResult{}
 
-		if strings.HasPrefix(strings.ToUpper(statement), "SELECT") {
-			err = internalSQLSelect(tx, statement, &result)
-			_ = tx.Rollback()
-		} else {
-			err = internalSQLExec(tx, statement, &result)
+			tx, err := dbConn.Begin()
 			if err != nil {
+				return err
+			}
+
+			if strings.HasPrefix(strings.ToUpper(statement), "SELECT") {
+				err = internalSQLSelect(tx, statement, &result)
 				_ = tx.Rollback()
 			} else {
-				err = tx.Commit()
+				err = internalSQLExec(tx, statement, &result)
+				if err != nil {
+					_ = tx.Rollback()
+				} else {
+					err = tx.Commit()
+				}
 			}
-		}
+
+			return err
+		})
 		if err != nil {
 			return response.SmartError(err)
 		}

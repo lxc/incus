@@ -1037,13 +1037,21 @@ func (d *linstor) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 		return d.MountVolumeSnapshot(fsVol, op)
 	}
 
-	// Create a new temporary resource definition from the snapshot
-	err = d.createResourceDefinitionFromSnapshot(snapVol, snapVol)
+	// Reuse any existing resource definition, e.g. from a concurrent mount or an interrupted cleanup.
+	_, err = d.getResourceDefinition(snapVol, false)
 	if err != nil {
-		return err
-	}
+		if !errors.Is(err, errResourceDefinitionNotFound) {
+			return err
+		}
 
-	rev.Add(func() { _ = d.deleteResourceDefinitionFromSnapshot(snapVol) })
+		// Create a new temporary resource definition from the snapshot.
+		err = d.createResourceDefinitionFromSnapshot(snapVol, snapVol)
+		if err != nil {
+			return err
+		}
+
+		rev.Add(func() { _ = d.deleteResourceDefinitionFromSnapshot(snapVol) })
+	}
 
 	volDevPath, err := d.getLinstorDevPath(snapVol)
 	if err != nil {
@@ -1088,7 +1096,7 @@ func (d *linstor) MountVolumeSnapshot(snapVol Volume, op *operations.Operation) 
 			}
 
 			l.Debug("Will try mount")
-			err = TryMount(volDevPath, mountPath, snapVolFS, mountFlags, mountOptions)
+			err = TryMount(volDevPath, mountPath, snapVolFS, mountFlags|unix.MS_RDONLY, mountOptions)
 			if err != nil {
 				l.Debug("Tried mounting but failed", logger.Ctx{"error": err})
 				return err
