@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-06 09:02+0000\n"
+"POT-Creation-Date: 2026-08-10 17:32-0400\n"
 "PO-Revision-Date: 2026-08-08 22:51+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
-"\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
+">\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -819,7 +819,7 @@ msgstr "--target não pode ser usado com instâncias"
 msgid "--timestamp cannot be used with --format=%s"
 msgstr "--timestamp não pode ser usado com --format=%s"
 
-#: cmd/incus/admin_sql.go:128
+#: cmd/incus/admin_sql.go:132
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> Consultar %d:"
@@ -1160,7 +1160,7 @@ msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr ""
 "Como nenhum pode ser encontrado, o socket SPICE cru pode ser encontrado em:"
 
-#: cmd/incus/create.go:339 cmd/incus/rebuild.go:100
+#: cmd/incus/create.go:343 cmd/incus/rebuild.go:100
 msgid "Asked for a VM but image is of type container"
 msgstr "Pedido por um VM mas a imagem é de tipo recipiente"
 
@@ -1289,10 +1289,10 @@ msgstr "Salvaguardas:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,<chave>"
-"=<valor>: %s"
+"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,"
+"<chave>=<valor>: %s"
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:269
+#: cmd/incus/copy.go:176 cmd/incus/create.go:209 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
@@ -1486,7 +1486,7 @@ msgstr "Não pode usar ambos --no-expiry e --expiry"
 msgid "Cannot mix HTTPS and Unix URLs"
 msgstr "Não pode misturar URLs HTTPS e Unix"
 
-#: cmd/incus/create.go:314
+#: cmd/incus/create.go:318
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1748,19 +1748,29 @@ msgstr ""
 "volumes de armazenamento ISO)"
 
 #: cmd/incus/copy.go:60 cmd/incus/create.go:62 cmd/incus/import.go:43
-msgid "Config key/value to apply to the new instance"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the new instance (may be passed multiple times)"
 msgstr "Configurar chave/valor para aplicar à nova instância"
 
 #: cmd/incus/network_integration.go:96
-msgid "Config key/value to apply to the new network integration"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the new network integration (may be passed "
+"multiple times)"
 msgstr "Configurar chave/valor para aplicar à nova integração de rede"
 
 #: cmd/incus/project.go:119
-msgid "Config key/value to apply to the new project"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the new project (may be passed multiple times)"
 msgstr "Configurar chave/valor para aplicar ao novo projeto"
 
 #: cmd/incus/move.go:62
-msgid "Config key/value to apply to the target instance"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the target instance (may be passed multiple "
+"times)"
 msgstr "Configurar chave/valor para aplicar à instância alvo"
 
 #: cmd/incus/admin_recover.go:129
@@ -2452,13 +2462,14 @@ msgstr "ID de Dispositivo: %v"
 msgid "DevicePath: %v"
 msgstr "Caminho de Dispositivo: %v"
 
-#: cmd/incus/create.go:396
+#: cmd/incus/create.go:400
 msgid "Didn't get name of new instance from the server"
 msgstr "Não recebi o nome da nova instância do servidor"
 
 #: cmd/incus/snapshot.go:201
 msgid "Didn't get name of new instance snapshot from the server"
-msgstr "Não recebi o nome do novo instantâneo de instância a partir do servidor"
+msgstr ""
+"Não recebi o nome do novo instantâneo de instância a partir do servidor"
 
 #: cmd/incus/storage_volume_snapshot.go:215
 msgid "Didn't get name of new volume snapshot from the server"
@@ -2564,8 +2575,8 @@ msgstr ""
 "quais atributos da instância a exibir quando mostra em tabela ou em formato\n"
 "compactado.\n"
 "\n"
-"Os argumentos de coluna são pré-definidos de caracteres curtos (veja abaixo)"
-".\n"
+"Os argumentos de coluna são pré-definidos de caracteres curtos (veja "
+"abaixo).\n"
 "As vírgulas entre os caracteres curtos consecutivos são opcionais.\n"
 "\n"
 "Coluna de caracteres curtos:\n"
@@ -2834,7 +2845,10 @@ msgid "Entry TTL"
 msgstr "Entrada TTL"
 
 #: cmd/incus/exec.go:64
-msgid "Environment variable to set (e.g. HOME=/home/foo)"
+#, fuzzy
+msgid ""
+"Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
+"times)"
 msgstr "Variável do ambiente a definir (ex. HOME=/home/foo)"
 
 #: cmd/incus/copy.go:63 cmd/incus/create.go:65
@@ -2918,8 +2932,8 @@ msgstr "Evacuar membro do agrupamento"
 msgid ""
 "Evacuate cluster member\n"
 "\n"
-"The action flag allows overriding the default server-side action (\"cluster."
-"evacuate\" instance configuration option)"
+"The action flag allows overriding the default server-side action "
+"(\"cluster.evacuate\" instance configuration option)"
 msgstr ""
 "Evacuar membro de agrupamento\n"
 "\n"
@@ -2932,18 +2946,19 @@ msgid "Evacuating cluster member: %s"
 msgstr "A evacuar membro do agrupamento: %s"
 
 #: cmd/incus/monitor.go:58
-msgid "Event type to listen for"
+#, fuzzy
+msgid "Event type to listen for (may be passed multiple times)"
 msgstr "Tipo de evento para escutar"
 
 #: cmd/incus/color/color.go:40
 msgid "Examples:"
 msgstr "Exemplos:"
 
-#: cmd/incus/admin_sql.go:29
+#: cmd/incus/admin_sql.go:30
 msgid "Execute a SQL query against the local or global database"
 msgstr "Executa uma consulta SQL contra a base de dados local ou global"
 
-#: cmd/incus/admin_sql.go:30
+#: cmd/incus/admin_sql.go:31
 msgid ""
 "Execute a SQL query against the local or global database\n"
 "\n"
@@ -3249,12 +3264,12 @@ msgstr "Falhou ao importar pedido: %w"
 msgid "Failed loading network %q: %w"
 msgstr "Falhou ao carregar rede %q:%w"
 
-#: cmd/incus/create.go:297
+#: cmd/incus/create.go:301
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr "Falhou ao carregar perfil %q para sobreposição de dispositivo: %w"
 
-#: cmd/incus/create.go:215
+#: cmd/incus/create.go:219
 #, c-format
 msgid "Failed loading storage pool %q: %w"
 msgstr "Falhou ao carregar pool de armazenamento %q:%w"
@@ -3463,7 +3478,7 @@ msgstr "Falhou ao abrir ficheiro fonte %q: %v"
 msgid "Failed to open target file %q: %w"
 msgstr "Falhou ao abrir ficheiro alvo %q: %w"
 
-#: cmd/incus/admin_sql.go:103
+#: cmd/incus/admin_sql.go:104
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "Falhou ao analisar resposta de despejo: %w"
@@ -3483,7 +3498,7 @@ msgstr "Falhou ao analisar variável %s:%s: %w"
 msgid "Failed to read from file: %w"
 msgstr "Falhou ao ler do ficheiro: %w"
 
-#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:80
+#: cmd/incus/admin_init_preseed.go:25 cmd/incus/admin_sql.go:81
 #, c-format
 msgid "Failed to read from stdin: %w"
 msgstr "Falhou ao ler do stdin: %w"
@@ -3514,7 +3529,7 @@ msgstr "Falhou ao renderizar a configuração: %w"
 msgid "Failed to repair instance: %w"
 msgstr "Falhou ao reparar instância: %w"
 
-#: cmd/incus/admin_sql.go:97
+#: cmd/incus/admin_sql.go:98
 #, c-format
 msgid "Failed to request dump: %w"
 msgstr "Falhou ao pedir despejo: %w"
@@ -3746,7 +3761,7 @@ msgstr ""
 "para desativar cabeçalhos e \",header\" para os ativar se preciso, ex. "
 "csv,header"
 
-#: cmd/incus/admin_sql.go:57 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
+#: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
 #: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
@@ -3789,8 +3804,8 @@ msgstr "Formato (table|compact)"
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
-"...)"
+"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-"
+"zlib, ...)"
 
 #: cmd/incus/port_forward.go:30
 msgid "Forward a local TCP port to the instance"
@@ -4392,7 +4407,8 @@ msgid "Importing instance: %s"
 msgstr "A importar instância: %s"
 
 #: cmd/incus/create.go:66
-msgid "Include environment variables from file"
+#, fuzzy
+msgid "Include environment variables from file (may be passed multiple times)"
 msgstr "Incluir variáveis de ambiente do ficheiro"
 
 #: cmd/incus/manpage.go:33
@@ -4433,7 +4449,7 @@ msgstr "Instância desligada"
 msgid "Instance disconnected for client %q"
 msgstr "Instância desligada para cliente %q"
 
-#: cmd/incus/create.go:406
+#: cmd/incus/create.go:410
 #, c-format
 msgid "Instance name is: %s"
 msgstr "Nome da instância é: %s"
@@ -5042,12 +5058,12 @@ msgstr ""
 "== Colunas ==\n"
 "A opção -c recebe uma lista separada por vírgulas de argumentos que "
 "controlam\n"
-"quais atributos de equilibrador de carga de rede são incluídos ao mostrar em "
-"\n"
+"quais atributos de equilibrador de carga de rede são incluídos ao mostrar "
+"em \n"
 "tabela ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5095,8 +5111,8 @@ msgstr ""
 "quais atributos de peer de rede são incluídos ao mostrar em tabela ou\n"
 "formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5311,8 +5327,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5364,8 +5380,8 @@ msgstr ""
 "quais atributos de alias de imagem são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5477,8 +5493,8 @@ msgstr ""
 "quais atributos de instantâneos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5567,8 +5583,8 @@ msgid ""
 "  f - Base Image Fingerprint (short)\n"
 "  F - Base Image Fingerprint (long)\n"
 "\n"
-"Custom columns are defined with \"[config:|devices:]key[:name][:"
-"maxWidth]\":\n"
+"Custom columns are defined with \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "  KEY: The (extended) config or devices key to display. If [config:|"
 "devices:] is omitted then it defaults to config key.\n"
 "  NAME: Name to display in the column header.\n"
@@ -5621,8 +5637,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5653,8 +5669,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com "
-"\"[config:|devices:]key[:name][:maxWidth]\":\n"
+"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
+"[:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -5705,8 +5721,8 @@ msgstr ""
 "quais atributos de alocações de rede são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5756,8 +5772,8 @@ msgstr ""
 "quais atributos de integrações de rede são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5912,8 +5928,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5960,8 +5976,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6145,8 +6161,8 @@ msgstr ""
 "quais atributos remotos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
-",\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
+"abaixo),\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6276,7 +6292,8 @@ msgstr "Registo (%s):"
 
 #: cmd/incus/monitor.go:83
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
+msgstr ""
+"Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/network.go:990
 msgid "Logical router"
@@ -6604,8 +6621,8 @@ msgstr "Gerir volumes de armazenamento"
 msgid ""
 "Manage storage volumes\n"
 "\n"
-"Unless specified through a prefix, all volume operations affect "
-"\"custom\" (user created) volumes."
+"Unless specified through a prefix, all volume operations affect \"custom\" "
+"(user created) volumes."
 msgstr ""
 "Gerir volumes de armazenamento\n"
 "\n"
@@ -7191,16 +7208,20 @@ msgid "Never follow symbolic links in source path"
 msgstr "Nunca seguir os links simbólicos no caminho da fonte"
 
 #: cmd/incus/publish.go:42
-msgid "New alias to define at target"
+#, fuzzy
+msgid "New alias to define at target (may be passed multiple times)"
 msgstr "Novo alias para definir no alvo"
 
 #: cmd/incus/image.go:180 cmd/incus/image.go:704
-msgid "New aliases to add to the image"
+#, fuzzy
+msgid "New aliases to add to the image (may be passed multiple times)"
 msgstr "Novos aliases para adicionar à imagem"
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
 #: cmd/incus/move.go:63
-msgid "New key/value to apply to a specific device"
+#, fuzzy
+msgid ""
+"New key/value to apply to a specific device (may be passed multiple times)"
 msgstr "Nova chave/valor para aplicar a um dispositivo específico"
 
 #: cmd/incus/admin_init_interactive.go:270
@@ -7211,7 +7232,8 @@ msgstr "Nenhum %s backend de armazenamento disponível"
 #: cmd/incus/config_trust.go:801
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
+msgstr ""
+"Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1335
 #, c-format
@@ -7617,15 +7639,18 @@ msgid "Profile description"
 msgstr "Descrição do perfil"
 
 #: cmd/incus/image.go:184
-msgid "Profile to apply to the new image"
+#, fuzzy
+msgid "Profile to apply to the new image (may be passed multiple times)"
 msgstr "Perfil a aplicar à nova imagem"
 
 #: cmd/incus/copy.go:62 cmd/incus/create.go:63
-msgid "Profile to apply to the new instance"
+#, fuzzy
+msgid "Profile to apply to the new instance (may be passed multiple times)"
 msgstr "Perfil a aplicar à nova instância"
 
 #: cmd/incus/move.go:64
-msgid "Profile to apply to the target instance"
+#, fuzzy
+msgid "Profile to apply to the target instance (may be passed multiple times)"
 msgstr "Perfil a aplicar à instância alvo"
 
 #: cmd/incus/profile.go:249
@@ -8129,7 +8154,7 @@ msgstr "Resumir instâncias"
 msgid "Retrieve the instance's console log"
 msgstr "Obter o relatório de consola da instância"
 
-#: cmd/incus/create.go:353
+#: cmd/incus/create.go:357
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "A obter imagem: %s"
@@ -8146,7 +8171,7 @@ msgstr "Revoga testemunho de adesão de membro de agrupamento"
 msgid "Role (admin or read-only)"
 msgstr "Função (administrar ou só leitura)"
 
-#: cmd/incus/admin_sql.go:137
+#: cmd/incus/admin_sql.go:141
 #, c-format
 msgid "Rows affected: %d"
 msgstr "Linhas afetadas: %d"
@@ -8779,8 +8804,8 @@ msgstr "Definir os atributos da variável (requer `--format=base64|binary|hex`)"
 msgid ""
 "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr ""
-"Definir a marca temporal da variável (requer `--"
-"format=base64|binary|efivarfs|hex`)"
+"Definir a marca temporal da variável (requer `--format=base64|binary|"
+"efivarfs|hex`)"
 
 #: cmd/incus/low_level.go:858
 msgid "Set values for UEFI variables"
@@ -9080,7 +9105,8 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:2032
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr ""
+"Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:834 cmd/incus/storage_volume.go:1390
 msgid "Snapshots:"
@@ -9402,7 +9428,8 @@ msgstr "A bandeira --show-log só é suportada pelo tipo de saída 'console'"
 
 #: cmd/incus/network_allocations.go:169
 msgid "The --summary flag cannot be used with custom columns (-c)"
-msgstr "A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
+msgstr ""
+"A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
 
 #: cmd/incus/admin_init_interactive.go:524
 msgid "The LVM thin provisioning tools couldn't be found on the system"
@@ -9481,9 +9508,10 @@ msgid ""
 msgstr ""
 "A instância está atualmente em execução. Use --force para a parar e reiniciar"
 
-#: cmd/incus/create.go:428
+#: cmd/incus/create.go:432
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr ""
+"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/cluster_group.go:863
 #, c-format
@@ -9748,11 +9776,11 @@ msgstr "Tempo a esperar para a instância desligar de maneira limpa"
 msgid "Timestamps:"
 msgstr "Marcas temporais:"
 
-#: cmd/incus/create.go:430
+#: cmd/incus/create.go:434
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr "Para anexar uma rede a uma instância, use: incus network attach"
 
-#: cmd/incus/create.go:429
+#: cmd/incus/create.go:433
 msgid "To create a new network, use: incus network create"
 msgstr "Para criar uma nova rede, use: incus network create"
 
@@ -9994,7 +10022,8 @@ msgstr "Desconfigurar variáveis UEFI"
 
 #: cmd/incus/cluster_group.go:962
 msgid "Unset a cluster group's configuration keys"
-msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr ""
+"Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:592
 msgid "Unset a cluster member's configuration keys"
@@ -10464,7 +10493,8 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/cluster.go:1679
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr ""
+"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:171
 msgid "What IPv4 address should be used?"
@@ -10918,8 +10948,8 @@ msgid ""
 "incus create images:debian/12 u1 < config.yaml\n"
 "    Create the instance with configuration from config.yaml\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 "incus create images:debian/12 u1\n"
@@ -11082,21 +11112,21 @@ msgid ""
 "    Create and start a container named \"c1\"\n"
 "\n"
 "incus launch images:debian/12 c2 < config.yaml\n"
-"    Create and start a container named \"c2\" with configuration from config."
-"yaml\n"
+"    Create and start a container named \"c2\" with configuration from "
+"config.yaml\n"
 "\n"
 "incus launch images:debian/12 c3 -t aws:t2.micro\n"
 "    Create and start a container named \"c3\" using the same size as an AWS "
 "t2.micro (1 vCPU, 1GiB of RAM)\n"
-"    Find the list of supported instance types here: https://images."
-"linuxcontainers.org/meta/instance-types/\n"
+"    Find the list of supported instance types here: https://"
+"images.linuxcontainers.org/meta/instance-types/\n"
 "\n"
 "incus launch images:debian/12 v1 --vm -c limits.cpu=4 -c limits.memory=4GiB\n"
 "    Create and start a virtual machine named \"v1\" with 4 vCPUs and 4GiB of "
 "RAM\n"
 "\n"
-"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d root,io."
-"bus=nvme\n"
+"incus launch images:debian/12 v2 --vm -d root,size=50GiB -d "
+"root,io.bus=nvme\n"
 "    Create and start a virtual machine named \"v2\", overriding the disk "
 "size and bus"
 msgstr ""
@@ -11124,8 +11154,8 @@ msgstr ""
 
 #: cmd/incus/list.go:143
 msgid ""
-"incus list -c nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0."
-"parent:ETHP\n"
+"incus list -c "
+"nFs46,volatile.eth0.hwaddr:MAC,config:image.os,devices:eth0.parent:ETHP\n"
 "  Show instances using the \"NAME\", \"BASE IMAGE\", \"STATE\", \"IPV4\", "
 "\"IPV6\" and \"MAC\" columns.\n"
 "  \"BASE IMAGE\", \"MAC\" and \"IMAGE OS\" are custom columns generated from "
@@ -11259,8 +11289,8 @@ msgid ""
 "   Create network integration o1 of type ovn\n"
 "\n"
 "incus network integration create o1 ovn < config.yaml\n"
-"    Create network integration o1 of type ovn with configuration from config."
-"yaml"
+"    Create network integration o1 of type ovn with configuration from "
+"config.yaml"
 msgstr ""
 "incus network integration create o1 ovn\n"
 "\tCria integração de rede o1 do tipo ovn\n"
@@ -11270,10 +11300,10 @@ msgstr ""
 
 #: cmd/incus/network_integration.go:226
 msgid ""
-"incus network integration edit <network integration> < network-integration."
-"yaml\n"
-"    Update a network integration using the content of network-integration."
-"yaml"
+"incus network integration edit <network integration> < network-"
+"integration.yaml\n"
+"    Update a network integration using the content of network-"
+"integration.yaml"
 msgstr ""
 "incus network integration edit <integração de rede> < network-"
 "integration.yaml\n"
@@ -13083,8 +13113,8 @@ msgstr "“%s”"
 
 #~ msgid ""
 #~ "incus admin os service edit [<remote>:]<service> < service.yaml\n"
-#~ "    Update an IncusOS service configuration using the content of service."
-#~ "yaml."
+#~ "    Update an IncusOS service configuration using the content of "
+#~ "service.yaml."
 #~ msgstr ""
 #~ "incus admin os service edit [<remoto>:]<serviço> < service.yaml\n"
 #~ "    Atualiza uma configuração de serviço IncusOS usando o conteúdo de "
