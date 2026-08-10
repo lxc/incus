@@ -345,8 +345,8 @@ test_property() {
     # This will create a snapshot named 'snap0'
     incus storage volume snapshot create "${storage_pool}" "${storage_volume}"
 
-    incus storage volume set "${storage_pool}" "${storage_volume}"/snap0 expires_at="2024-03-23T17:38:37.753398689-04:00" --property
-    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep 'expires_at: 2024-03-23T17:38:37.753398689-04:00'
+    incus storage volume set "${storage_pool}" "${storage_volume}"/snap0 expires_at="2052-03-23T17:38:37.753398689-04:00" --property
+    incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep 'expires_at: 2052-03-23T17:38:37.753398689-04:00'
     incus storage volume unset "${storage_pool}" "${storage_volume}"/snap0 expires_at --property
     incus storage volume snapshot show "${storage_pool}" "${storage_volume}" snap0 | grep 'expires_at: 0001-01-01T00:00:00Z'
 
