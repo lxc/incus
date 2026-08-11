@@ -57,17 +57,17 @@ var networkAddressSetCmd = APIEndpoint{
 //     name: project
 //     description: Project name
 //     type: string
-//     example: default
+//     x-example: default
 //   - in: query
 //     name: all-projects
 //     description: Retrieve network address sets from all projects
 //     type: boolean
-//     example: true
+//     x-example: true
 //   - in: query
 //     name: filter
 //     description: Collection filter
 //     type: string
-//     example: default
+//     x-example: default
 // responses:
 //   "200":
 //     description: API endpoints
@@ -123,17 +123,17 @@ var networkAddressSetCmd = APIEndpoint{
 //     name: project
 //     description: Project name
 //     type: string
-//     example: default
+//     x-example: default
 //   - in: query
 //     name: all-projects
 //     description: Retrieve network address sets from all projects
 //     type: boolean
-//     example: true
+//     x-example: true
 //   - in: query
 //     name: filter
 //     description: Collection filter
 //     type: string
-//     example: default
+//     x-example: default
 //
 // responses:
 //  "200":
@@ -272,7 +272,7 @@ func networkAddressSetsGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: address set
 //      description: address set
@@ -354,7 +354,7 @@ func networkAddressSetsPost(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      $ref: "#/responses/EmptySyncResponse"
@@ -421,7 +421,7 @@ func networkAddressSetDelete(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: address set
@@ -502,7 +502,7 @@ func networkAddressSetGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: address set
 //      description: Address set configuration
@@ -546,7 +546,7 @@ func networkAddressSetGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: address set
 //      description: Address set configuration
@@ -644,7 +644,7 @@ func networkAddressSetPut(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: address set
 //      description: Address set rename request

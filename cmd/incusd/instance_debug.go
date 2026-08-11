@@ -42,12 +42,12 @@ import (
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: format
 //	    description: Memory dump format
 //	    type: string
-//	    example: elf
+//	    x-example: elf
 //	responses:
 //	  "200":
 //	    description: Success
@@ -164,7 +164,7 @@ func instanceDebugMemoryGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: state
 //	    description: State

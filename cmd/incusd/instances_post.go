@@ -1148,12 +1148,12 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: instance
 //	    description: Instance request

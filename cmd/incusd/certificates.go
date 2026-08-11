@@ -67,7 +67,7 @@ var certificateCmd = APIEndpoint{
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -122,7 +122,7 @@ var certificateCmd = APIEndpoint{
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
