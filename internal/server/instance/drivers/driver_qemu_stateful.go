@@ -12,6 +12,7 @@ type qemuBootState struct {
 
 	CPUType     string           `json:"cpu_type"`
 	CPUTopology *qemuCPUTopology `json:"cpu_topology"`
+	MaxCPUs     int              `json:"max_cpus,omitempty"`
 
 	MachineType string `json:"machine_type"`
 
