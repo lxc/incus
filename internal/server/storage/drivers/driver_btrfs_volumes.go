@@ -1256,6 +1256,13 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 				return err
 			}
 
+			// Wait for the rescan triggered by enabling quotas as
+			// limits aren't enforced until it completes.
+			_, err = subprocess.RunCommand("btrfs", "quota", "rescan", "-w", path)
+			if err != nil {
+				return err
+			}
+
 			// Try again.
 			qgroup, _, err = d.getQGroup(volPath)
 		}
