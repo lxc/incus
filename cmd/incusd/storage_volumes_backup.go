@@ -110,11 +110,9 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/custom/foo/backups/backup0",
-//                "/1.0/storage-pools/local/volumes/custom/foo/backups/backup1"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/custom/foo/backups/backup0
+//              - /1.0/storage-pools/local/volumes/custom/foo/backups/backup1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

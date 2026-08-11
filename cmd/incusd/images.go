@@ -1679,11 +1679,9 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb",
-//                "/1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1"
-//              ]
+//            example:
+//              - /1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb
+//              - /1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -1802,11 +1800,9 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb",
-//                "/1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1"
-//              ]
+//            example:
+//              - /1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb
+//              - /1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -3634,11 +3630,9 @@ func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/images/aliases/foo",
-//                "/1.0/images/aliases/bar1"
-//              ]
+//            example:
+//              - /1.0/images/aliases/foo
+//              - /1.0/images/aliases/bar1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

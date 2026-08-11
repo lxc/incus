@@ -85,11 +85,9 @@ var networkZoneRecordCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/network-zones/example.net/records/foo",
-//                "/1.0/network-zones/example.net/records/bar"
-//              ]
+//            example:
+//              - /1.0/network-zones/example.net/records/foo
+//              - /1.0/network-zones/example.net/records/bar
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

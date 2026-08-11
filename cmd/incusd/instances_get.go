@@ -74,11 +74,9 @@ import (
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/instances/foo",
-//                "/1.0/instances/bar"
-//              ]
+//            example:
+//              - /1.0/instances/foo
+//              - /1.0/instances/bar
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

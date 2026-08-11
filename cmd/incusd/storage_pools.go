@@ -93,11 +93,9 @@ var storagePoolCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local",
-//                "/1.0/storage-pools/remote"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local
+//              - /1.0/storage-pools/remote
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

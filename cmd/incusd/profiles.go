@@ -97,11 +97,9 @@ var profileCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/profiles/default",
-//                "/1.0/profiles/foo"
-//              ]
+//            example:
+//              - /1.0/profiles/default
+//              - /1.0/profiles/foo
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

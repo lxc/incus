@@ -163,11 +163,9 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 //	           type: array
 //	           items:
 //	             type: string
-//	           example: |-
-//	             [
-//	               "/etc",
-//	               "/home"
-//	             ]
+//	           example:
+//	             - /etc
+//	             - /home
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":

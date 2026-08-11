@@ -81,11 +81,9 @@ var networkIntegrationCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/network-integrations/region2",
-//                "/1.0/network-integrations/region3"
-//              ]
+//            example:
+//              - /1.0/network-integrations/region2
+//              - /1.0/network-integrations/region3
 //    "403":
 //      $ref: "#/responses/Forbidden"
 //    "500":

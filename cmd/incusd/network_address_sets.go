@@ -92,11 +92,9 @@ var networkAddressSetCmd = APIEndpoint{
 //           description: List of endpoints
 //           items:
 //             type: string
-//           example: |-
-//             [
-//               "/1.0/network-address-sets/foo",
-//               "/1.0/network-address-sets/bar"
-//             ]
+//           example:
+//             - /1.0/network-address-sets/foo
+//             - /1.0/network-address-sets/bar
 //   "400":
 //     $ref: "#/responses/BadRequest"
 //   "403":

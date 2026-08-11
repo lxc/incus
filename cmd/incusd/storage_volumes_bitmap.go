@@ -89,11 +89,9 @@ var storagePoolVolumeTypeBitmapCmd = APIEndpoint{
 //	          description: List of endpoints
 //	          items:
 //	            type: string
-//	          example: |-
-//	            [
-//	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0",
-//	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1"
-//	            ]
+//	          example:
+//	            - /1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0
+//	            - /1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":

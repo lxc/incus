@@ -103,11 +103,9 @@ var projectAccessCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/projects/default",
-//                "/1.0/projects/foo"
-//              ]
+//            example:
+//              - /1.0/projects/default
+//              - /1.0/projects/foo
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
