@@ -367,7 +367,7 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 			}
 
 			if objectType == auth.ObjectTypeStorageVolume {
-				dbVolType, err := storagePools.VolumeTypeNameToDBType(muxVars[1])
+				dbVolType, err := storagePools.VolumeTypeNameToDBType(r.PathValue(muxVars[1]))
 				if err != nil {
 					return projectName
 				}
