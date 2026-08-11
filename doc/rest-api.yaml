@@ -1445,7 +1445,6 @@ definitions:
                     Certificates to add
 
                     API extension: init_preseed_certificates.
-                example: PEM encoded certificate
                 items:
                     $ref: '#/definitions/CertificatesPost'
                 type: array
@@ -1463,28 +1462,24 @@ definitions:
                 $ref: '#/definitions/ConfigMap'
             networks:
                 description: Networks by project to add
-                example: Network on the "default" project
                 items:
                     $ref: '#/definitions/InitNetworksProjectPost'
                 type: array
                 x-go-name: Networks
             profiles:
                 description: Profiles to add
-                example: '"default" profile with a root disk device'
                 items:
                     $ref: '#/definitions/InitProfileProjectPost'
                 type: array
                 x-go-name: Profiles
             projects:
                 description: Projects to add
-                example: '"default" project'
                 items:
                     $ref: '#/definitions/ProjectsPost'
                 type: array
                 x-go-name: Projects
             storage_pools:
                 description: Storage Pools to add
-                example: local dir storage pool
                 items:
                     $ref: '#/definitions/StoragePoolsPost'
                 type: array
@@ -1494,7 +1489,6 @@ definitions:
                     Storage Volumes to add
 
                     API extension: init_preseed_storage_volumes.
-                example: local dir storage volume
                 items:
                     $ref: '#/definitions/InitStorageVolumesProjectPost'
                 type: array
@@ -1538,7 +1532,6 @@ definitions:
                     Certificates to add
 
                     API extension: init_preseed_certificates.
-                example: PEM encoded certificate
                 items:
                     $ref: '#/definitions/CertificatesPost'
                 type: array
@@ -1558,28 +1551,24 @@ definitions:
                 $ref: '#/definitions/ConfigMap'
             networks:
                 description: Networks by project to add
-                example: Network on the "default" project
                 items:
                     $ref: '#/definitions/InitNetworksProjectPost'
                 type: array
                 x-go-name: Networks
             profiles:
                 description: Profiles to add
-                example: '"default" profile with a root disk device'
                 items:
                     $ref: '#/definitions/InitProfileProjectPost'
                 type: array
                 x-go-name: Profiles
             projects:
                 description: Projects to add
-                example: '"default" project'
                 items:
                     $ref: '#/definitions/ProjectsPost'
                 type: array
                 x-go-name: Projects
             storage_pools:
                 description: Storage Pools to add
-                example: local dir storage pool
                 items:
                     $ref: '#/definitions/StoragePoolsPost'
                 type: array
@@ -1589,7 +1578,6 @@ definitions:
                     Storage Volumes to add
 
                     API extension: init_preseed_storage_volumes.
-                example: local dir storage volume
                 items:
                     $ref: '#/definitions/InitStorageVolumesProjectPost'
                 type: array
@@ -2911,11 +2899,6 @@ definitions:
         description: MetadataConfig repreents metadata about configuration keys
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
-    MetadataConfigEntityName:
-        description: MetadataConfigEntityName represents a main API object type
-        example: instance
-        type: string
-        x-go-package: github.com/lxc/incus/v7/shared/api
     MetadataConfigGroup:
         description: MetadataConfigGroup represents a group of config keys
         properties:
@@ -2927,11 +2910,6 @@ definitions:
                 type: array
                 x-go-name: Keys
         type: object
-        x-go-package: github.com/lxc/incus/v7/shared/api
-    MetadataConfigGroupName:
-        description: MetadataConfigGroupName represents the name of a group of config keys
-        example: volatile
-        type: string
         x-go-package: github.com/lxc/incus/v7/shared/api
     MetadataConfigKey:
         description: MetadataConfigKey describe a configuration key
@@ -7580,15 +7558,15 @@ paths:
             operationId: server_get
             parameters:
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -7632,10 +7610,10 @@ paths:
             operationId: server_patch
             parameters:
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Server configuration
                   in: body
                   name: server
@@ -7669,10 +7647,10 @@ paths:
             operationId: server_put
             parameters:
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Server configuration
                   in: body
                   name: server
@@ -7705,10 +7683,10 @@ paths:
             operationId: certificates_get
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -7719,11 +7697,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/certificates/390fdd27ed5dc2408edc11fe602eafceb6c025ddbad9341dfdcb1056a8dd98b1",
-                                      "/1.0/certificates/22aee3f051f96abe6d7756892eecabf4b4b22e2ba877840a4ca981e9ea54030a"
-                                    ]
+                                example:
+                                    - /1.0/certificates/390fdd27ed5dc2408edc11fe602eafceb6c025ddbad9341dfdcb1056a8dd98b1
+                                    - /1.0/certificates/22aee3f051f96abe6d7756892eecabf4b4b22e2ba877840a4ca981e9ea54030a
                                 items:
                                     type: string
                                 type: array
@@ -7980,10 +7956,10 @@ paths:
             operationId: certificates_get_recursion1
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -8142,11 +8118,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/cluster/groups/server01",
-                                      "/1.0/cluster/groups/server02"
-                                    ]
+                                example:
+                                    - /1.0/cluster/groups/server01
+                                    - /1.0/cluster/groups/server02
                                 items:
                                     type: string
                                 type: array
@@ -8437,10 +8411,10 @@ paths:
             operationId: cluster_members_get
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -8451,11 +8425,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/cluster/members/server01",
-                                      "/1.0/cluster/members/server02"
-                                    ]
+                                example:
+                                    - /1.0/cluster/members/server01
+                                    - /1.0/cluster/members/server02
                                 items:
                                     type: string
                                 type: array
@@ -8784,10 +8756,10 @@ paths:
             operationId: cluster_members_get_recursion1
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -8833,15 +8805,15 @@ paths:
             operationId: events_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Event type(s), comma separated (valid types are logging, operation or lifecycle)
-                  example: logging,lifecycle
                   in: query
                   name: type
                   type: string
+                  x-example: logging,lifecycle
                 - description: Retrieve instances from all projects
                   in: query
                   name: all-projects
@@ -8866,15 +8838,15 @@ paths:
             operationId: images_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
                 - description: Retrieve images from all projects
                   in: query
                   name: all-projects
@@ -8889,11 +8861,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb",
-                                      "/1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1"
-                                    ]
+                                example:
+                                    - /1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb
+                                    - /1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1
                                 items:
                                     type: string
                                 type: array
@@ -8930,60 +8900,48 @@ paths:
             operationId: images_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
-                - description: Image
+                  x-example: default
+                - description: Image (or raw image file)
                   in: body
                   name: image
                   schema:
                     $ref: '#/definitions/ImagesPost'
-                - description: Raw image file
-                  in: body
-                  name: raw_image
                 - description: Push secret for server to server communication
-                  example: RANDOM-STRING
                   in: header
                   name: X-Incus-secret
-                  schema:
-                    type: string
+                  type: string
+                  x-example: RANDOM-STRING
                 - description: Expected fingerprint when pushing a raw image
                   in: header
                   name: X-Incus-fingerprint
-                  schema:
-                    type: string
+                  type: string
                 - description: List of aliases to assign
                   in: header
+                  items:
+                    type: string
                   name: X-Incus-aliases
-                  schema:
-                    items:
-                        type: string
-                    type: array
-                - description: Descriptive properties
+                  type: array
+                - description: Descriptive properties (URL encoded)
                   in: header
                   name: X-Incus-properties
-                  schema:
-                    additionalProperties:
-                        type: string
-                    type: object
+                  type: string
                 - description: Whether the image is available to unauthenticated users
                   in: header
                   name: X-Incus-public
-                  schema:
-                    type: boolean
+                  type: boolean
                 - description: Original filename of the image
                   in: header
                   name: X-Incus-filename
-                  schema:
-                    type: string
+                  type: string
                 - description: List of profiles to use
                   in: header
+                  items:
+                    type: string
                   name: X-Incus-profiles
-                  schema:
-                    items:
-                        type: string
-                    type: array
+                  type: array
             produces:
                 - application/json
             responses:
@@ -9013,10 +8971,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9045,10 +9003,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9097,10 +9055,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image configuration
                   in: body
                   name: image
@@ -9139,10 +9097,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image configuration
                   in: body
                   name: image
@@ -9182,10 +9140,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/octet-stream
                 - multipart/form-data
@@ -9215,10 +9173,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image push request
                   in: body
                   name: image
@@ -9256,15 +9214,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Secret token to retrieve a private image
-                  example: RANDOM-STRING
                   in: query
                   name: secret
                   type: string
+                  x-example: RANDOM-STRING
             produces:
                 - application/octet-stream
                 - multipart/form-data
@@ -9298,10 +9256,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9334,10 +9292,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9367,15 +9325,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Secret token to retrieve a private image
-                  example: RANDOM-STRING
                   in: query
                   name: secret
                   type: string
+                  x-example: RANDOM-STRING
             produces:
                 - application/json
             responses:
@@ -9418,10 +9376,10 @@ paths:
             operationId: images_aliases_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9432,11 +9390,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/images/aliases/foo",
-                                      "/1.0/images/aliases/bar1"
-                                    ]
+                                example:
+                                    - /1.0/images/aliases/foo
+                                    - /1.0/images/aliases/bar1
                                 items:
                                     type: string
                                 type: array
@@ -9473,10 +9429,10 @@ paths:
             operationId: images_aliases_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image alias
                   in: body
                   name: image alias
@@ -9512,10 +9468,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9544,10 +9500,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9596,10 +9552,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image alias configuration
                   in: body
                   name: image alias
@@ -9638,10 +9594,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image alias rename request
                   in: body
                   name: image alias
@@ -9678,10 +9634,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image alias configuration
                   in: body
                   name: image alias
@@ -9721,10 +9677,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9767,10 +9723,10 @@ paths:
             operationId: images_aliases_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -9816,15 +9772,15 @@ paths:
             operationId: images_get_untrusted
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
                 - description: Retrieve images from all projects
                   in: query
                   name: all-projects
@@ -9839,11 +9795,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb",
-                                      "/1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1"
-                                    ]
+                                example:
+                                    - /1.0/images/06b86454720d36b20f94e31c6812e05ec51c1b568cf3a8abd273769d213394bb
+                                    - /1.0/images/084dd79dd1360fd25a2479eb46674c2a5ef3022a40fe03c91ab3603e3402b8e1
                                 items:
                                     type: string
                                 type: array
@@ -9884,10 +9838,10 @@ paths:
             operationId: images_post_untrusted
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image
                   in: body
                   name: image
@@ -9918,15 +9872,15 @@ paths:
             operationId: images_get_recursion1_untrusted
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
                 - description: Retrieve images from all projects
                   in: query
                   name: all-projects
@@ -9976,20 +9930,20 @@ paths:
             operationId: images_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
                 - description: Retrieve images from all projects
-                  example: default
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10035,15 +9989,15 @@ paths:
             operationId: instances_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
                 - description: Retrieve instances from all projects
                   in: query
                   name: all-projects
@@ -10058,11 +10012,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/instances/foo",
-                                      "/1.0/instances/bar"
-                                    ]
+                                example:
+                                    - /1.0/instances/foo
+                                    - /1.0/instances/bar
                                 items:
                                     type: string
                                 type: array
@@ -10103,23 +10055,20 @@ paths:
             operationId: instances_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member
-                  example: default
                   in: query
                   name: target
                   type: string
-                - description: Instance request
+                  x-example: default
+                - description: Instance request (or raw backup file)
                   in: body
                   name: instance
                   schema:
                     $ref: '#/definitions/InstancesPost'
-                - description: Raw backup file
-                  in: body
-                  name: raw_backup
             produces:
                 - application/json
             responses:
@@ -10145,10 +10094,10 @@ paths:
             operationId: instances_put
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: State
                   in: body
                   name: state
@@ -10186,10 +10135,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10218,10 +10167,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10270,10 +10219,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Update request
                   in: body
                   name: instance
@@ -10318,10 +10267,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Migration request
                   in: body
                   name: migration
@@ -10357,10 +10306,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Update request
                   in: body
                   name: instance
@@ -10447,10 +10396,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10461,11 +10410,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/instances/foo/backups/backup0",
-                                      "/1.0/instances/foo/backups/backup1"
-                                    ]
+                                example:
+                                    - /1.0/instances/foo/backups/backup0
+                                    - /1.0/instances/foo/backups/backup1
                                 items:
                                     type: string
                                 type: array
@@ -10511,10 +10458,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Backup request
                   in: body
                   name: backup
@@ -10557,10 +10504,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10594,10 +10541,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10651,10 +10598,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Backup rename
                   in: body
                   name: backup
@@ -10694,10 +10641,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/octet-stream
             responses:
@@ -10727,10 +10674,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10783,10 +10730,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Bitmap request
                   in: body
                   name: bitmap
@@ -10821,10 +10768,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -10855,19 +10802,19 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - default: log
                   description: Console type
                   enum:
                     - log
                     - vga
-                  example: vga
                   in: query
                   name: type
                   type: string
+                  x-example: vga
             produces:
                 - application/json
             responses:
@@ -10903,10 +10850,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Console request
                   in: body
                   name: console
@@ -10943,15 +10890,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Memory dump format
-                  example: elf
                   in: query
                   name: format
                   type: string
+                  x-example: elf
             responses:
                 "200":
                     description: Success
@@ -10979,10 +10926,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: State
                   in: body
                   name: state
@@ -11025,10 +10972,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Exec request
                   in: body
                   name: exec
@@ -11063,21 +11010,20 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Perform recursive deletion
-                  example: true
                   in: header
                   name: X-Incus-force
-                  schema:
-                    type: boolean
+                  type: boolean
+                  x-example: true
             produces:
                 - application/json
             responses:
@@ -11106,15 +11052,15 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
                 - application/octet-stream
@@ -11124,14 +11070,19 @@ paths:
                     headers:
                         X-Incus-gid:
                             description: File owner GID
+                            type: integer
                         X-Incus-mode:
                             description: Mode mask
+                            type: integer
                         X-Incus-modified:
                             description: Last modified date
+                            type: string
                         X-Incus-type:
                             description: Type of file (file, symlink or directory)
+                            type: string
                         X-Incus-uid:
                             description: File owner UID
+                            type: integer
                 "400":
                     $ref: '#/responses/BadRequest'
                 "403":
@@ -11155,29 +11106,34 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             responses:
                 "200":
                     description: Raw file or directory listing
                     headers:
                         X-Incus-gid:
                             description: File owner GID
+                            type: integer
                         X-Incus-mode:
                             description: Mode mask
+                            type: integer
                         X-Incus-modified:
                             description: Last modified date
+                            type: string
                         X-Incus-type:
                             description: Type of file (file, symlink or directory)
+                            type: string
                         X-Incus-uid:
                             description: File owner UID
+                            type: integer
                 "400":
                     $ref: '#/responses/BadRequest'
                 "403":
@@ -11203,48 +11159,45 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Raw file content
                   in: body
                   name: raw_file
+                  schema:
+                    type: string
                 - description: File owner UID
-                  example: 1000
                   in: header
                   name: X-Incus-uid
-                  schema:
-                    type: integer
+                  type: integer
+                  x-example: 1000
                 - description: File owner GID
-                  example: 1000
                   in: header
                   name: X-Incus-gid
-                  schema:
-                    type: integer
+                  type: integer
+                  x-example: 1000
                 - description: File mode
-                  example: 420
                   in: header
                   name: X-Incus-mode
-                  schema:
-                    type: integer
+                  type: integer
+                  x-example: 420
                 - description: Type of file (file, symlink or directory)
-                  example: file
                   in: header
                   name: X-Incus-type
-                  schema:
-                    type: string
+                  type: string
+                  x-example: file
                 - description: Write mode (overwrite or append)
-                  example: overwrite
                   in: header
                   name: X-Incus-write
-                  schema:
-                    type: string
+                  type: string
+                  x-example: overwrite
             produces:
                 - application/json
             responses:
@@ -11274,10 +11227,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11288,10 +11241,8 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/instances/foo/logs/lxc.log"
-                                    ]
+                                example:
+                                    - /1.0/instances/foo/logs/lxc.log
                                 items:
                                     type: string
                                 type: array
@@ -11337,10 +11288,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11374,10 +11325,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
                 - application/octet-stream
@@ -11408,10 +11359,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11422,11 +11373,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stdout",
-                                      "/1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stderr",
-                                    ]
+                                example:
+                                    - /1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stdout
+                                    - /1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stderr
                                 items:
                                     type: string
                                 type: array
@@ -11472,10 +11421,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11509,10 +11458,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
                 - application/octet-stream
@@ -11543,10 +11492,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11595,10 +11544,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image metadata
                   in: body
                   name: metadata
@@ -11637,10 +11586,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Image metadata
                   in: body
                   name: metadata
@@ -11678,15 +11627,15 @@ paths:
                   required: true
                   type: string
                 - description: Template name
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11717,15 +11666,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Template name
-                  example: hostname.tpl
                   in: query
                   name: path
                   type: string
+                  x-example: hostname.tpl
             produces:
                 - application/json
                 - application/octet-stream
@@ -11757,18 +11706,20 @@ paths:
                   required: true
                   type: string
                 - description: Template name
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Raw file content
                   in: body
                   name: raw_file
+                  schema:
+                    type: string
             produces:
                 - application/json
             responses:
@@ -11806,15 +11757,15 @@ paths:
                   required: true
                   type: string
                 - description: Whether to connect to an already running NBD session
-                  example: 1
                   in: query
                   name: reuse
                   type: integer
+                  x-example: 1
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
                 - application/octet-stream
@@ -11848,10 +11799,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11862,11 +11813,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c",
-                                      "/1.0/instances/foo/nvram/d9bee56e-75dc-49d9-b4d7-b534210f637a",
-                                    ]
+                                example:
+                                    - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c
+                                    - /1.0/instances/foo/nvram/d9bee56e-75dc-49d9-b4d7-b534210f637a
                                 items:
                                     type: string
                                 type: array
@@ -11912,10 +11861,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Load Balancer
                   in: body
                   name: UEFI variables map
@@ -11963,10 +11912,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -11977,11 +11926,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000",
-                                      "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder"
-                                    ]
+                                example:
+                                    - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000
+                                    - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder
                                 items:
                                     type: string
                                 type: array
@@ -12022,21 +11969,22 @@ paths:
                   required: true
                   type: string
                 - description: Variable GUID
-                  example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
                   in: path
                   name: guid
                   required: true
                   type: string
+                  x-example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
                 - description: Variable name
-                  example: BootOrder
                   in: path
                   name: var
+                  required: true
                   type: string
+                  x-example: BootOrder
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12069,21 +12017,22 @@ paths:
                   required: true
                   type: string
                 - description: Variable GUID
-                  example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
                   in: path
                   name: guid
                   required: true
                   type: string
+                  x-example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
                 - description: Variable name
-                  example: BootOrder
                   in: path
                   name: var
+                  required: true
                   type: string
+                  x-example: BootOrder
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
                 - application/octet-stream
@@ -12138,31 +12087,30 @@ paths:
                   required: true
                   type: string
                 - description: Variable GUID
-                  example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
                   in: path
                   name: guid
                   required: true
                   type: string
+                  x-example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
                 - description: Variable name
-                  example: BootOrder
                   in: path
                   name: var
+                  required: true
                   type: string
+                  x-example: BootOrder
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Raw UEFI variable attributes to set
                   in: header
                   name: X-Incus-attributes
-                  schema:
-                    type: integer
+                  type: integer
                 - description: Raw UEFI variable UNIX timestamp (in seconds) to set
                   in: header
                   name: X-Incus-timestamp
-                  schema:
-                    type: integer
+                  type: integer
             produces:
                 - application/json
             responses:
@@ -12204,10 +12152,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12261,10 +12209,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12280,13 +12228,10 @@ paths:
                                         type: string
                                     type: array
                                 description: UEFI variables
-                                example: |-
-                                    {
-                                      "8be4df61-93ca-11d2-aa0d-00e098032b8c": [
-                                        "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000",
-                                        "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder"
-                                      ]
-                                    }
+                                example:
+                                    8be4df61-93ca-11d2-aa0d-00e098032b8c:
+                                        - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000
+                                        - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder
                                 type: object
                             status:
                                 description: Status description
@@ -12328,10 +12273,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12394,10 +12339,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Port forwarding request
                   in: body
                   name: port-forward
@@ -12436,10 +12381,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: InstanceRebuild request
                   in: body
                   name: instance
@@ -12504,10 +12449,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12518,11 +12463,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/instances/foo/snapshots/snap0",
-                                      "/1.0/instances/foo/snapshots/snap1"
-                                    ]
+                                example:
+                                    - /1.0/instances/foo/snapshots/snap0
+                                    - /1.0/instances/foo/snapshots/snap1
                                 items:
                                     type: string
                                 type: array
@@ -12564,10 +12507,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Snapshot request
                   in: body
                   name: snapshot
@@ -12609,10 +12552,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12646,10 +12589,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12703,10 +12646,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Snapshot update
                   in: body
                   name: snapshot
@@ -12756,10 +12699,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Snapshot migration
                   in: body
                   name: snapshot
@@ -12800,10 +12743,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Snapshot update
                   in: body
                   name: snapshot
@@ -12840,10 +12783,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -12950,10 +12893,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: State
                   in: body
                   name: state
@@ -12991,10 +12934,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13037,15 +12980,15 @@ paths:
             operationId: instances_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
                 - description: Retrieve instances from all projects
                   in: query
                   name: all-projects
@@ -13100,15 +13043,15 @@ paths:
             operationId: instances_get_recursion2
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
                 - description: Retrieve instances from all projects
                   in: query
                   name: all-projects
@@ -13154,10 +13097,10 @@ paths:
                 - instances
     /1.0/metadata/configuration:
         get:
-            description: Returns the generated metadata configuration in YAML format.
+            description: Returns the generated metadata configuration.
             operationId: metadata_configuration_get
             produces:
-                - text/plain
+                - application/json
             responses:
                 "200":
                     description: API endpoints
@@ -13165,8 +13108,7 @@ paths:
                         description: Sync response
                         properties:
                             metadata:
-                                description: The generated metadata configuration
-                                type: string
+                                $ref: '#/definitions/MetadataConfiguration'
                             status:
                                 description: Status description
                                 example: Success
@@ -13191,15 +13133,15 @@ paths:
             operationId: metrics_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - text/plain
             responses:
@@ -13227,20 +13169,20 @@ paths:
             operationId: network_acls_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve network ACLs from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13251,11 +13193,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/network-acls/foo",
-                                      "/1.0/network-acls/bar"
-                                    ]
+                                example:
+                                    - /1.0/network-acls/foo
+                                    - /1.0/network-acls/bar
                                 items:
                                     type: string
                                 type: array
@@ -13292,10 +13232,10 @@ paths:
             operationId: network_acls_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: ACL
                   in: body
                   name: acl
@@ -13331,10 +13271,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13363,10 +13303,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13415,10 +13355,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: ACL configuration
                   in: body
                   name: acl
@@ -13457,10 +13397,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: ACL rename request
                   in: body
                   name: acl
@@ -13497,10 +13437,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: ACL configuration
                   in: body
                   name: acl
@@ -13538,10 +13478,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/octet-stream
             responses:
@@ -13566,20 +13506,20 @@ paths:
             operationId: network_acls_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve network ACLs from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13625,20 +13565,20 @@ paths:
             operationId: network_address_sets_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve network address sets from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13649,11 +13589,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/network-address-sets/foo",
-                                      "/1.0/network-address-sets/bar"
-                                    ]
+                                example:
+                                    - /1.0/network-address-sets/foo
+                                    - /1.0/network-address-sets/bar
                                 items:
                                     type: string
                                 type: array
@@ -13690,10 +13628,10 @@ paths:
             operationId: network_address_sets_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: address set
                   in: body
                   name: address set
@@ -13729,10 +13667,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13761,10 +13699,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13813,10 +13751,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Address set configuration
                   in: body
                   name: address set
@@ -13855,10 +13793,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Address set rename request
                   in: body
                   name: address set
@@ -13895,10 +13833,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Address set configuration
                   in: body
                   name: address set
@@ -13931,20 +13869,20 @@ paths:
             operationId: network_address_sets_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve network address sets from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -13990,10 +13928,10 @@ paths:
             operationId: network_allocations_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve entities from all projects
                   in: query
                   name: all-projects
@@ -14042,10 +13980,10 @@ paths:
             operationId: network_integrations_get
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14056,11 +13994,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/network-integrations/region2",
-                                      "/1.0/network-integrations/region3"
-                                    ]
+                                example:
+                                    - /1.0/network-integrations/region2
+                                    - /1.0/network-integrations/region3
                                 items:
                                     type: string
                                 type: array
@@ -14300,10 +14236,10 @@ paths:
             operationId: network_integrations_get_recursion1
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14343,20 +14279,20 @@ paths:
             operationId: network_zones_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve network zones from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14367,11 +14303,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/network-zones/example.net",
-                                      "/1.0/network-zones/example.com"
-                                    ]
+                                example:
+                                    - /1.0/network-zones/example.net
+                                    - /1.0/network-zones/example.com
                                 items:
                                     type: string
                                 type: array
@@ -14408,10 +14342,10 @@ paths:
             operationId: network_zones_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: zone
                   in: body
                   name: zone
@@ -14447,10 +14381,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14479,10 +14413,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14531,10 +14465,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: zone configuration
                   in: body
                   name: zone
@@ -14573,10 +14507,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: zone configuration
                   in: body
                   name: zone
@@ -14614,15 +14548,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14633,11 +14567,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/network-zones/example.net/records/foo",
-                                      "/1.0/network-zones/example.net/records/bar"
-                                    ]
+                                example:
+                                    - /1.0/network-zones/example.net/records/foo
+                                    - /1.0/network-zones/example.net/records/bar
                                 items:
                                     type: string
                                 type: array
@@ -14679,10 +14611,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: zone
                   in: body
                   name: zone
@@ -14723,10 +14655,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14760,10 +14692,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14817,10 +14749,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: zone record configuration
                   in: body
                   name: zone
@@ -14864,10 +14796,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: zone record configuration
                   in: body
                   name: zone
@@ -14905,15 +14837,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -14959,20 +14891,20 @@ paths:
             operationId: network_zones_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve network zones from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15018,20 +14950,20 @@ paths:
             operationId: networks_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve networks from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15042,11 +14974,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/networks/mybr0",
-                                      "/1.0/networks/mybr1"
-                                    ]
+                                example:
+                                    - /1.0/networks/mybr0
+                                    - /1.0/networks/mybr1
                                 items:
                                     type: string
                                 type: array
@@ -15085,15 +15015,15 @@ paths:
             operationId: networks_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Network
                   in: body
                   name: network
@@ -15129,10 +15059,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15161,15 +15091,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -15218,15 +15148,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Network configuration
                   in: body
                   name: network
@@ -15265,10 +15195,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Network rename request
                   in: body
                   name: network
@@ -15305,15 +15235,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Network configuration
                   in: body
                   name: network
@@ -15351,15 +15281,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -15410,15 +15340,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -15466,15 +15396,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15485,11 +15415,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/networks/mybr0/forwards/192.0.2.1",
-                                      "/1.0/networks/mybr0/forwards/192.0.2.2"
-                                    ]
+                                example:
+                                    - /1.0/networks/mybr0/forwards/192.0.2.1
+                                    - /1.0/networks/mybr0/forwards/192.0.2.2
                                 items:
                                     type: string
                                 type: array
@@ -15531,10 +15459,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Forward
                   in: body
                   name: forward
@@ -15575,10 +15503,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15612,10 +15540,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15669,10 +15597,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Address forward configuration
                   in: body
                   name: forward
@@ -15716,10 +15644,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Address forward configuration
                   in: body
                   name: forward
@@ -15757,15 +15685,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15816,15 +15744,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15835,11 +15763,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/networks/mybr0/load-balancers/192.0.2.1",
-                                      "/1.0/networks/mybr0/load-balancers/192.0.2.2"
-                                    ]
+                                example:
+                                    - /1.0/networks/mybr0/load-balancers/192.0.2.1
+                                    - /1.0/networks/mybr0/load-balancers/192.0.2.2
                                 items:
                                     type: string
                                 type: array
@@ -15881,10 +15807,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Load Balancer
                   in: body
                   name: load-balancer
@@ -15925,10 +15851,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -15962,10 +15888,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16019,10 +15945,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Address load balancer configuration
                   in: body
                   name: load-balancer
@@ -16066,10 +15992,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Address load balancer configuration
                   in: body
                   name: load-balancer
@@ -16112,10 +16038,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16163,15 +16089,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16222,15 +16148,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16241,11 +16167,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/networks/mybr0/peers/my-peer-1",
-                                      "/1.0/networks/mybr0/peers/my-peer-2"
-                                    ]
+                                example:
+                                    - /1.0/networks/mybr0/peers/my-peer-1
+                                    - /1.0/networks/mybr0/peers/my-peer-2
                                 items:
                                     type: string
                                 type: array
@@ -16287,10 +16211,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Peer
                   in: body
                   name: peer
@@ -16331,10 +16255,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16368,10 +16292,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16425,10 +16349,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Peer configuration
                   in: body
                   name: Peer
@@ -16472,10 +16396,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Peer configuration
                   in: body
                   name: peer
@@ -16513,15 +16437,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16567,20 +16491,20 @@ paths:
             operationId: networks_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve networks from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -16626,10 +16550,10 @@ paths:
             operationId: operations_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve operations from all projects
                   in: query
                   name: all-projects
@@ -16648,12 +16572,9 @@ paths:
                                         type: string
                                     type: array
                                 description: JSON object of operation types to operation URLs
-                                example: |-
-                                    {
-                                      "running": [
-                                        "/1.0/operations/6916c8a6-9b7d-4abd-90b3-aedfec7ec7da"
-                                      ]
-                                    }
+                                example:
+                                    running:
+                                        - /1.0/operations/6916c8a6-9b7d-4abd-90b3-aedfec7ec7da
                                 type: object
                             status:
                                 description: Status description
@@ -16765,10 +16686,10 @@ paths:
                   required: true
                   type: string
                 - description: Timeout in seconds (-1 means never)
-                  example: -1
                   in: query
                   name: timeout
                   type: integer
+                  x-example: -1
             produces:
                 - application/json
             responses:
@@ -16819,15 +16740,15 @@ paths:
                   required: true
                   type: string
                 - description: Authentication token
-                  example: random-string
                   in: query
                   name: secret
                   type: string
+                  x-example: random-string
                 - description: Timeout in seconds (-1 means never)
-                  example: -1
                   in: query
                   name: timeout
                   type: integer
+                  x-example: -1
             produces:
                 - application/json
             responses:
@@ -16879,10 +16800,10 @@ paths:
                   required: true
                   type: string
                 - description: Authentication token
-                  example: random-string
                   in: query
                   name: secret
                   type: string
+                  x-example: random-string
             produces:
                 - application/json
             responses:
@@ -16919,10 +16840,10 @@ paths:
                   required: true
                   type: string
                 - description: Authentication token
-                  example: random-string
                   in: query
                   name: secret
                   type: string
+                  x-example: random-string
             produces:
                 - application/json
             responses:
@@ -16947,10 +16868,10 @@ paths:
             operationId: operations_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve operations from all projects
                   in: query
                   name: all-projects
@@ -17000,20 +16921,20 @@ paths:
             operationId: profiles_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve profiles from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -17024,11 +16945,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/profiles/default",
-                                      "/1.0/profiles/foo"
-                                    ]
+                                example:
+                                    - /1.0/profiles/default
+                                    - /1.0/profiles/foo
                                 items:
                                     type: string
                                 type: array
@@ -17065,10 +16984,10 @@ paths:
             operationId: profiles_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Profile
                   in: body
                   name: profile
@@ -17104,10 +17023,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -17136,10 +17055,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -17188,10 +17107,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Profile configuration
                   in: body
                   name: profile
@@ -17230,10 +17149,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Profile rename request
                   in: body
                   name: profile
@@ -17270,10 +17189,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Profile configuration
                   in: body
                   name: profile
@@ -17306,20 +17225,20 @@ paths:
             operationId: profiles_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve profiles from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -17365,10 +17284,10 @@ paths:
             operationId: projects_get
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -17379,11 +17298,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/projects/default",
-                                      "/1.0/projects/foo"
-                                    ]
+                                example:
+                                    - /1.0/projects/default
+                                    - /1.0/projects/foo
                                 items:
                                     type: string
                                 type: array
@@ -17727,10 +17644,10 @@ paths:
             operationId: projects_get_recursion1
             parameters:
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -17776,10 +17693,10 @@ paths:
             operationId: resources_get
             parameters:
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -17822,15 +17739,15 @@ paths:
             operationId: storage_pools_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -17841,11 +17758,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/local",
-                                      "/1.0/storage-pools/remote"
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/local
+                                    - /1.0/storage-pools/remote
                                 items:
                                     type: string
                                 type: array
@@ -17884,15 +17799,15 @@ paths:
             operationId: storage_pools_post
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage pool
                   in: body
                   name: storage
@@ -17933,15 +17848,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -17977,15 +17892,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage bucket configuration
                   in: body
                   name: storage bucket
@@ -18029,15 +17944,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage bucket configuration
                   in: body
                   name: storage bucket
@@ -18085,15 +18000,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -18134,15 +18049,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage bucket key configuration
                   in: body
                   name: storage bucket
@@ -18180,10 +18095,10 @@ paths:
                   required: true
                   type: string
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -18231,10 +18146,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -18263,15 +18178,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -18320,15 +18235,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage pool configuration
                   in: body
                   name: storage pool
@@ -18367,15 +18282,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage pool configuration
                   in: body
                   name: storage pool
@@ -18413,20 +18328,20 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve storage pool buckets from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -18437,11 +18352,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/default/buckets/foo",
-                                      "/1.0/storage-pools/default/buckets/bar",
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/default/buckets/foo
+                                    - /1.0/storage-pools/default/buckets/bar
                                 items:
                                     type: string
                                 type: array
@@ -18483,10 +18396,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Bucket
                   in: body
                   name: bucket
@@ -18529,10 +18442,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -18585,15 +18498,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -18604,11 +18517,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/local/buckets/foo/backups/backup0",
-                                      "/1.0/storage-pools/local/buckets/foo/backups/backup1"
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/local/buckets/foo/backups/backup0
+                                    - /1.0/storage-pools/local/buckets/foo/backups/backup1
                                 items:
                                     type: string
                                 type: array
@@ -18659,15 +18570,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage bucket backup
                   in: body
                   name: bucket
@@ -18716,15 +18627,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -18763,15 +18674,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -18830,15 +18741,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage bucket backup
                   in: body
                   name: bucket rename
@@ -18884,15 +18795,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/octet-stream
             responses:
@@ -18927,15 +18838,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -18991,10 +18902,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -19005,11 +18916,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/default/buckets/foo/keys/my-read-only-key",
-                                      "/1.0/storage-pools/default/buckets/bar/keys/admin",
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/default/buckets/foo/keys/my-read-only-key
+                                    - /1.0/storage-pools/default/buckets/bar/keys/admin
                                 items:
                                     type: string
                                 type: array
@@ -19056,10 +18965,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Bucket
                   in: body
                   name: bucket
@@ -19105,10 +19014,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -19161,10 +19070,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -19220,10 +19129,10 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -19271,20 +19180,20 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve storage pool buckets from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -19335,20 +19244,20 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Retrieve storage pool buckets from all projects
-                  example: true
                   in: query
                   name: all-projects
                   type: boolean
+                  x-example: true
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -19399,20 +19308,20 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -19423,13 +19332,11 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/local/volumes/container/a1",
-                                      "/1.0/storage-pools/local/volumes/container/a2",
-                                      "/1.0/storage-pools/local/volumes/custom/backups",
-                                      "/1.0/storage-pools/local/volumes/custom/images"
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/local/volumes/container/a1
+                                    - /1.0/storage-pools/local/volumes/container/a2
+                                    - /1.0/storage-pools/local/volumes/custom/backups
+                                    - /1.0/storage-pools/local/volumes/custom/images
                                 items:
                                     type: string
                                 type: array
@@ -19473,15 +19380,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume
                   in: body
                   name: volume
@@ -19524,15 +19431,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -19543,11 +19450,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/local/volumes/custom/backups",
-                                      "/1.0/storage-pools/local/volumes/custom/images"
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/local/volumes/custom/backups
+                                    - /1.0/storage-pools/local/volumes/custom/images
                                 items:
                                     type: string
                                 type: array
@@ -19596,15 +19501,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume
                   in: body
                   name: volume
@@ -19652,15 +19557,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -19699,15 +19604,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -19766,15 +19671,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume configuration
                   in: body
                   name: storage volume
@@ -19830,15 +19735,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Migration request
                   in: body
                   name: migration
@@ -19886,15 +19791,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume configuration
                   in: body
                   name: storage volume
@@ -19942,15 +19847,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -19961,11 +19866,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/local/volumes/custom/foo/backups/backup0",
-                                      "/1.0/storage-pools/local/volumes/custom/foo/backups/backup1"
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/local/volumes/custom/foo/backups/backup0
+                                    - /1.0/storage-pools/local/volumes/custom/foo/backups/backup1
                                 items:
                                     type: string
                                 type: array
@@ -20021,15 +19924,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume backup
                   in: body
                   name: volume
@@ -20083,15 +19986,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -20135,15 +20038,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -20207,21 +20110,21 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume backup
                   in: body
                   name: volume rename
                   required: true
                   schema:
-                    $ref: '#/definitions/StorageVolumeSnapshotPost'
+                    $ref: '#/definitions/StorageVolumeBackupPost'
             produces:
                 - application/json
             responses:
@@ -20266,15 +20169,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/octet-stream
             responses:
@@ -20314,15 +20217,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -20383,15 +20286,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -20402,11 +20305,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0",
-                                      "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1"
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0
+                                    - /1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1
                                 items:
                                     type: string
                                 type: array
@@ -20458,15 +20359,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume bitmap
                   in: body
                   name: volume
@@ -20520,15 +20421,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -20572,15 +20473,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -20638,15 +20539,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -20707,21 +20608,20 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Perform recursive deletion
-                  example: true
                   in: header
                   name: X-Incus-force
-                  schema:
-                    type: boolean
+                  type: boolean
+                  x-example: true
             produces:
                 - application/json
             responses:
@@ -20760,15 +20660,15 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
                 - application/octet-stream
@@ -20778,14 +20678,19 @@ paths:
                     headers:
                         X-Incus-gid:
                             description: File owner GID
+                            type: integer
                         X-Incus-mode:
                             description: Mode mask
+                            type: integer
                         X-Incus-modified:
                             description: Last modified date
+                            type: string
                         X-Incus-type:
                             description: Type of file (file, symlink or directory)
+                            type: string
                         X-Incus-uid:
                             description: File owner UID
+                            type: integer
                 "400":
                     $ref: '#/responses/BadRequest'
                 "403":
@@ -20819,29 +20724,34 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             responses:
                 "200":
                     description: Raw file or directory listing
                     headers:
                         X-Incus-gid:
                             description: File owner GID
+                            type: integer
                         X-Incus-mode:
                             description: Mode mask
+                            type: integer
                         X-Incus-modified:
                             description: Last modified date
+                            type: string
                         X-Incus-type:
                             description: Type of file (file, symlink or directory)
+                            type: string
                         X-Incus-uid:
                             description: File owner UID
+                            type: integer
                 "400":
                     $ref: '#/responses/BadRequest'
                 "403":
@@ -20877,48 +20787,45 @@ paths:
                   required: true
                   type: string
                 - description: Path to the file
-                  example: default
                   in: query
                   name: path
                   type: string
+                  x-example: default
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Raw file content
                   in: body
                   name: raw_file
+                  schema:
+                    type: string
                 - description: File owner UID
-                  example: 1000
                   in: header
                   name: X-Incus-uid
-                  schema:
-                    type: integer
+                  type: integer
+                  x-example: 1000
                 - description: File owner GID
-                  example: 1000
                   in: header
                   name: X-Incus-gid
-                  schema:
-                    type: integer
+                  type: integer
+                  x-example: 1000
                 - description: File mode
-                  example: 420
                   in: header
                   name: X-Incus-mode
-                  schema:
-                    type: integer
+                  type: integer
+                  x-example: 420
                 - description: Type of file (file, symlink or directory)
-                  example: file
                   in: header
                   name: X-Incus-type
-                  schema:
-                    type: string
+                  type: string
+                  x-example: file
                 - description: Write mode (overwrite or append)
-                  example: overwrite
                   in: header
                   name: X-Incus-write
-                  schema:
-                    type: string
+                  type: string
+                  x-example: overwrite
             produces:
                 - application/json
             responses:
@@ -20958,15 +20865,15 @@ paths:
                   required: true
                   type: string
                 - description: Whether to have the volume be writable
-                  example: 1
                   in: query
                   name: writable
                   type: integer
+                  x-example: 1
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
                 - application/octet-stream
@@ -21011,15 +20918,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume rebuild request
                   in: body
                   name: volume
@@ -21104,15 +21011,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21123,11 +21030,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap0",
-                                      "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap1"
-                                    ]
+                                example:
+                                    - /1.0/storage-pools/local/volumes/custom/foo/snapshots/snap0
+                                    - /1.0/storage-pools/local/volumes/custom/foo/snapshots/snap1
                                 items:
                                     type: string
                                 type: array
@@ -21179,15 +21084,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume snapshot
                   in: body
                   name: volume
@@ -21240,15 +21145,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21292,15 +21197,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21364,15 +21269,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume snapshot configuration
                   in: body
                   name: storage volume snapshot
@@ -21426,15 +21331,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume snapshot
                   in: body
                   name: volume rename
@@ -21486,15 +21391,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Storage volume snapshot configuration
                   in: body
                   name: storage volume snapshot
@@ -21542,15 +21447,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21611,15 +21516,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21677,15 +21582,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21738,15 +21643,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21802,15 +21707,15 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
             produces:
                 - application/json
             responses:
@@ -21861,20 +21766,20 @@ paths:
                   required: true
                   type: string
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Cluster member name
-                  example: server01
                   in: query
                   name: target
                   type: string
+                  x-example: server01
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -21920,15 +21825,15 @@ paths:
             operationId: storage_pools_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
                 - description: Collection filter
-                  example: default
                   in: query
                   name: filter
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -21974,10 +21879,10 @@ paths:
             operationId: warnings_get
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
@@ -21988,11 +21893,9 @@ paths:
                         properties:
                             metadata:
                                 description: List of endpoints
-                                example: |-
-                                    [
-                                      "/1.0/warnings/39c61a48-cc17-40ae-8248-4f7b4cadedf4",
-                                      "/1.0/warnings/951779a5-2820-4d96-b01e-88fe820e5310"
-                                    ]
+                                example:
+                                    - /1.0/warnings/39c61a48-cc17-40ae-8248-4f7b4cadedf4
+                                    - /1.0/warnings/951779a5-2820-4d96-b01e-88fe820e5310
                                 items:
                                     type: string
                                 type: array
@@ -22171,10 +22074,10 @@ paths:
             operationId: warnings_get_recursion1
             parameters:
                 - description: Project name
-                  example: default
                   in: query
                   name: project
                   type: string
+                  x-example: default
             produces:
                 - application/json
             responses:
