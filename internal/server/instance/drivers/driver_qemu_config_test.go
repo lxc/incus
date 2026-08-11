@@ -18,7 +18,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 
 	runTest := func(expected string, sections []cfg.Section) {
 		t.Run(expected, func(t *testing.T) {
-			actual := normalize(qemuStringifyCfgPredictably(sections...).String())
+			actual := normalize(qemuStringifyCfg(sections...).String())
 			expected = normalize(expected)
 			if actual != expected {
 				t.Errorf("Expected: %s. Got: %s", expected, actual)
