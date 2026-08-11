@@ -523,6 +523,7 @@ func instanceNVRAMGUIDGet(d *Daemon, r *http.Request) response.Response {
 //	    name: var
 //	    description: Variable name
 //	    type: string
+//	    required: true
 //	    x-example: BootOrder
 //	  - in: query
 //	    name: project
@@ -636,6 +637,7 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 //	    name: var
 //	    description: Variable name
 //	    type: string
+//	    required: true
 //	    x-example: BootOrder
 //	  - in: query
 //	    name: project
@@ -731,6 +733,7 @@ func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {
 //	    name: var
 //	    description: Variable name
 //	    type: string
+//	    required: true
 //	    x-example: BootOrder
 //	  - in: query
 //	    name: project
