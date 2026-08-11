@@ -201,6 +201,24 @@ func (d *qemu) cpuTopology() (*qemuCPUTopology, error) {
 	return topology, nil
 }
 
+// maxCPUs returns the maximum number of vCPUs, used as the hotplug limit for non-fixed topologies.
+func (d *qemu) maxCPUs(topology *qemuCPUTopology) (int, error) {
+	cpu, err := resources.GetCPU()
+	if err != nil {
+		return 0, err
+	}
+
+	// Cap the max number of CPUs to 64 unless directly assigned more.
+	maxCpus := 64
+	if int(cpu.Total) < maxCpus {
+		maxCpus = int(cpu.Total)
+	} else if topology.Cores > maxCpus {
+		maxCpus = topology.Cores
+	}
+
+	return maxCpus, nil
+}
+
 // startupCPUSet returns the host CPUs to confine QEMU to during startup.
 // On systems with heterogeneous CPU types (ARM big.LITTLE), KVM vCPU initialization
 // fails if the thread gets scheduled across CPU types, so QEMU must start on a
