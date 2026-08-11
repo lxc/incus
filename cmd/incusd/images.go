@@ -2091,17 +2091,20 @@ func autoUpdateImages(ctx context.Context, s *state.State) error {
 				}
 			}
 
-			_ = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			// Remove the database entries for the image after distributing to cluster members.
+			err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 				for _, ID := range deleteIDs {
-					// Remove the database entry for the image after distributing to cluster members.
 					err := tx.DeleteImage(ctx, ID)
 					if err != nil {
-						logger.Error("Error deleting old image from database", logger.Ctx{"err": err, "fingerprint": fingerprint, "ID": ID})
+						return err
 					}
 				}
 
 				return nil
 			})
+			if err != nil {
+				logger.Error("Error deleting old image from database", logger.Ctx{"err": err, "fingerprint": fingerprint, "IDs": deleteIDs})
+			}
 		}
 	}
 
