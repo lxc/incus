@@ -813,7 +813,7 @@ func clusterGroupPatch(d *Daemon, r *http.Request) response.Response {
 			return err
 		}
 
-		err = dbCluster.DeleteNodeClusterGroup(ctx, tx.Tx(), int(groupID))
+		err = dbCluster.DeleteNodeClusterGroups(ctx, tx.Tx(), int(groupID))
 		if err != nil {
 			return err
 		}
