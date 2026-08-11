@@ -116,7 +116,7 @@ func (c *cmdProjectCreate) command() *cobra.Command {
 incus project create p1 < config.yaml
     Create a project named p1 with configuration from config.yaml`))
 
-	cli.AddStringArrayFlag(cmd.Flags(), &c.flagConfig, "config|c", i18n.G("Config key/value to apply to the new project"))
+	cli.AddStringArrayFlag(cmd.Flags(), &c.flagConfig, "config|c", i18n.G("Config key/value to apply to the new project (may be passed multiple times)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagDescription, "description", "", "", i18n.G("Project description"))
 
 	cmd.RunE = c.run
