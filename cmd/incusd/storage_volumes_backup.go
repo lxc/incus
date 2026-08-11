@@ -775,7 +775,7 @@ func storagePoolVolumeTypeCustomBackupGet(d *Daemon, r *http.Request) response.R
 //	    description: Storage volume backup
 //	    required: true
 //	    schema:
-//	      $ref: "#/definitions/StorageVolumeSnapshotPost"
+//	      $ref: "#/definitions/StorageVolumeBackupPost"
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
