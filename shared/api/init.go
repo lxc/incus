@@ -19,29 +19,23 @@ type InitLocalPreseed struct {
 	ServerPut `yaml:",inline"`
 
 	// Networks by project to add
-	// Example: Network on the "default" project
 	Networks []InitNetworksProjectPost `json:"networks" yaml:"networks"`
 
 	// Storage Pools to add
-	// Example: local dir storage pool
 	StoragePools []StoragePoolsPost `json:"storage_pools" yaml:"storage_pools"`
 
 	// Storage Volumes to add
-	// Example: local dir storage volume
 	//
 	// API extension: init_preseed_storage_volumes.
 	StorageVolumes []InitStorageVolumesProjectPost `json:"storage_volumes" yaml:"storage_volumes"`
 
 	// Profiles to add
-	// Example: "default" profile with a root disk device
 	Profiles []InitProfileProjectPost `json:"profiles" yaml:"profiles"`
 
 	// Projects to add
-	// Example: "default" project
 	Projects []ProjectsPost `json:"projects" yaml:"projects"`
 
 	// Certificates to add
-	// Example: PEM encoded certificate
 	//
 	// API extension: init_preseed_certificates.
 	Certificates []CertificatesPost `json:"certificates" yaml:"certificates"`
