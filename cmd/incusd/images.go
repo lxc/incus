@@ -1121,45 +1121,36 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //	  - in: header
 //	    name: X-Incus-secret
 //	    description: Push secret for server to server communication
-//	    schema:
-//	      type: string
+//	    type: string
 //	    x-example: RANDOM-STRING
 //	  - in: header
 //	    name: X-Incus-fingerprint
 //	    description: Expected fingerprint when pushing a raw image
-//	    schema:
-//	      type: string
+//	    type: string
 //	  - in: header
 //	    name: X-Incus-aliases
 //	    description: List of aliases to assign
-//	    schema:
-//	      type: array
-//	      items:
-//	        type: string
+//	    type: array
+//	    items:
+//	      type: string
 //	  - in: header
 //	    name: X-Incus-properties
-//	    description: Descriptive properties
-//	    schema:
-//	      type: object
-//	      additionalProperties:
-//	        type: string
+//	    description: Descriptive properties (URL encoded)
+//	    type: string
 //	  - in: header
 //	    name: X-Incus-public
 //	    description: Whether the image is available to unauthenticated users
-//	    schema:
-//	      type: boolean
+//	    type: boolean
 //	  - in: header
 //	    name: X-Incus-filename
 //	    description: Original filename of the image
-//	    schema:
-//	      type: string
+//	    type: string
 //	  - in: header
 //	    name: X-Incus-profiles
 //	    description: List of profiles to use
-//	    schema:
-//	      type: array
-//	      items:
-//	        type: string
+//	    type: array
+//	    items:
+//	      type: string
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
