@@ -201,5 +201,5 @@ func autoRenewCertificateTask(d *Daemon) (task.Func, task.Schedule) {
 		_ = autoRenewCertificate(ctx, d, false)
 	}
 
-	return f, task.Daily()
+	return f, task.Hourly()
 }
