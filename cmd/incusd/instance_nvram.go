@@ -740,13 +740,11 @@ func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {
 //	  - in: header
 //	    name: X-Incus-attributes
 //	    description: Raw UEFI variable attributes to set
-//	    schema:
-//	      type: integer
+//	    type: integer
 //	  - in: header
 //	    name: X-Incus-timestamp
 //	    description: Raw UEFI variable UNIX timestamp (in seconds) to set
-//	    schema:
-//	      type: integer
+//	    type: integer
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
