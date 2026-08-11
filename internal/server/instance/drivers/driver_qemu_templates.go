@@ -30,23 +30,6 @@ func qemuStringifyCfg(conf ...cfg.Section) *strings.Builder {
 	for _, section := range conf {
 		writeHeader(sb, section.Comment, section.Name)
 
-		for key, value := range section.Entries {
-			writeEntry(sb, key, value)
-		}
-
-		sb.WriteString("\n")
-	}
-
-	return sb
-}
-
-// qemuStringifyCfgPredictably is only there to ensure tests reproducibility.
-func qemuStringifyCfgPredictably(conf ...cfg.Section) *strings.Builder {
-	sb := &strings.Builder{}
-
-	for _, section := range conf {
-		writeHeader(sb, section.Comment, section.Name)
-
 		keys := make([]string, 0, len(section.Entries))
 		for key := range section.Entries {
 			keys = append(keys, key)
