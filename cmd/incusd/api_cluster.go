@@ -1136,7 +1136,7 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -1161,11 +1161,9 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/cluster/members/server01",
-//                "/1.0/cluster/members/server02"
-//              ]
+//            example:
+//              - /1.0/cluster/members/server01
+//              - /1.0/cluster/members/server02
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -1191,7 +1189,7 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //	    name: filter
 //	    description: Collection filter
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints

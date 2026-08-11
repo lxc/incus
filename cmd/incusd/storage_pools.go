@@ -63,12 +63,12 @@ var storagePoolCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -93,11 +93,9 @@ var storagePoolCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local",
-//                "/1.0/storage-pools/remote"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local
+//              - /1.0/storage-pools/remote
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -123,12 +121,12 @@ var storagePoolCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -288,12 +286,12 @@ func storagePoolsGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: storage
 //	    description: Storage pool
@@ -699,12 +697,12 @@ func storagePoolsPostCluster(ctx context.Context, s *state.State, pool *api.Stor
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage pool
@@ -833,12 +831,12 @@ func storagePoolGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: storage pool
 //	    description: Storage pool configuration
@@ -977,12 +975,12 @@ func storagePoolPut(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: storage pool
 //	    description: Storage pool configuration
@@ -1101,7 +1099,7 @@ func doStoragePoolUpdate(s *state.State, pool storagePools.Pool, req api.Storage
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"

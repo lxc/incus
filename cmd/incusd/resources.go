@@ -36,7 +36,7 @@ var storagePoolResourcesCmd = APIEndpoint{
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Hardware resources
@@ -105,7 +105,7 @@ func api10ResourcesGet(d *Daemon, r *http.Request) response.Response {
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Hardware resources

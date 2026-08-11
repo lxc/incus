@@ -84,12 +84,12 @@ var storagePoolVolumeSnapshotTypeCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume snapshot
@@ -335,12 +335,12 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: server01
+//      x-example: server01
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -365,11 +365,9 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap0",
-//                "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap1"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/custom/foo/snapshots/snap0
+//              - /1.0/storage-pools/local/volumes/custom/foo/snapshots/snap1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -410,12 +408,12 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -607,12 +605,12 @@ func storagePoolVolumeSnapshotsTypeGet(d *Daemon, r *http.Request) response.Resp
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume rename
 //	    description: Storage volume snapshot
@@ -766,12 +764,12 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume snapshot
@@ -930,12 +928,12 @@ func storagePoolVolumeSnapshotTypeGet(d *Daemon, r *http.Request) response.Respo
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: storage volume snapshot
 //	    description: Storage volume snapshot configuration
@@ -1089,12 +1087,12 @@ func storagePoolVolumeSnapshotTypePut(d *Daemon, r *http.Request) response.Respo
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: storage volume snapshot
 //	    description: Storage volume snapshot configuration
@@ -1287,12 +1285,12 @@ func doStoragePoolVolumeSnapshotUpdate(s *state.State, r *http.Request, poolName
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"

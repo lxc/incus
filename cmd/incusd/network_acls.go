@@ -65,17 +65,17 @@ var networkACLLogCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve network ACLs from all projects
 //      type: boolean
-//      example: true
+//      x-example: true
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -100,11 +100,9 @@ var networkACLLogCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/network-acls/foo",
-//                "/1.0/network-acls/bar"
-//              ]
+//            example:
+//              - /1.0/network-acls/foo
+//              - /1.0/network-acls/bar
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -130,17 +128,17 @@ var networkACLLogCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve network ACLs from all projects
 //      type: boolean
-//      example: true
+//      x-example: true
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -291,7 +289,7 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: acl
 //	    description: ACL
@@ -372,7 +370,7 @@ func networkACLsPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -438,7 +436,7 @@ func networkACLDelete(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: ACL
@@ -518,7 +516,7 @@ func networkACLGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: acl
 //      description: ACL configuration
@@ -562,7 +560,7 @@ func networkACLGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: acl
 //	    description: ACL configuration
@@ -661,7 +659,7 @@ func networkACLPut(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: acl
 //	    description: ACL rename request
@@ -743,7 +741,7 @@ func networkACLPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	     description: Raw log file

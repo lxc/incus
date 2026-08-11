@@ -422,7 +422,7 @@ func operationCancel(s *state.State, r *http.Request, projectName string, op *ap
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve operations from all projects
@@ -453,12 +453,9 @@ func operationCancel(s *state.State, r *http.Request, projectName string, op *ap
 //              items:
 //                type: string
 //            description: JSON object of operation types to operation URLs
-//            example: |-
-//              {
-//                "running": [
-//                  "/1.0/operations/6916c8a6-9b7d-4abd-90b3-aedfec7ec7da"
-//                ]
-//              }
+//            example:
+//              running:
+//                - /1.0/operations/6916c8a6-9b7d-4abd-90b3-aedfec7ec7da
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -484,7 +481,7 @@ func operationCancel(s *state.State, r *http.Request, projectName string, op *ap
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: all-projects
 //	    description: Retrieve operations from all projects
@@ -879,12 +876,12 @@ func operationsGetByType(s *state.State, r *http.Request, projectName string, op
 //      name: secret
 //      description: Authentication token
 //      type: string
-//      example: random-string
+//      x-example: random-string
 //    - in: query
 //      name: timeout
 //      description: Timeout in seconds (-1 means never)
 //      type: integer
-//      example: -1
+//      x-example: -1
 //  responses:
 //    "200":
 //      description: Operation
@@ -936,7 +933,7 @@ func operationsGetByType(s *state.State, r *http.Request, projectName string, op
 //	    name: timeout
 //	    description: Timeout in seconds (-1 means never)
 //	    type: integer
-//	    example: -1
+//	    x-example: -1
 //	responses:
 //	  "200":
 //	    description: Operation
@@ -1126,7 +1123,7 @@ func (r *operationWebSocket) Code() int {
 //      name: secret
 //      description: Authentication token
 //      type: string
-//      example: random-string
+//      x-example: random-string
 //  responses:
 //    "101":
 //      description: Websocket operation messages (dependent on operation)
@@ -1163,7 +1160,7 @@ func (r *operationWebSocket) Code() int {
 //	    name: secret
 //	    description: Authentication token
 //	    type: string
-//	    example: random-string
+//	    x-example: random-string
 //	responses:
 //	  "101":
 //	    description: Websocket operation messages (dependent on operation)

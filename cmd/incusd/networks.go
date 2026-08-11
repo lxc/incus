@@ -93,17 +93,17 @@ var networkStateCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve networks from all projects
 //      type: boolean
-//      example: true
+//      x-example: true
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -128,11 +128,9 @@ var networkStateCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/networks/mybr0",
-//                "/1.0/networks/mybr1"
-//              ]
+//            example:
+//              - /1.0/networks/mybr0
+//              - /1.0/networks/mybr1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -158,17 +156,17 @@ var networkStateCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve networks from all projects
 //      type: boolean
-//      example: true
+//      x-example: true
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -357,12 +355,12 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: network
 //	    description: Network
@@ -918,12 +916,12 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Network
@@ -1151,7 +1149,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -1278,7 +1276,7 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: network
 //	    description: Network rename request
@@ -1427,12 +1425,12 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: network
 //	    description: Network configuration
@@ -1578,12 +1576,12 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: network
 //	    description: Network configuration
@@ -1672,12 +1670,12 @@ func doNetworkUpdate(n network.Network, req api.NetworkPut, targetNode string, c
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -2145,12 +2143,12 @@ func networkRestartOVN(s *state.State) error {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints

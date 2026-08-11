@@ -59,12 +59,12 @@ var storagePoolVolumeTypeBitmapCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume bitmaps
@@ -89,11 +89,9 @@ var storagePoolVolumeTypeBitmapCmd = APIEndpoint{
 //	          description: List of endpoints
 //	          items:
 //	            type: string
-//	          example: |-
-//	            [
-//	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0",
-//	              "/1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1"
-//	            ]
+//	          example:
+//	            - /1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap0
+//	            - /1.0/storage-pools/shared/volumes/custom/foo/bitmaps/bitmap1
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
@@ -134,12 +132,12 @@ var storagePoolVolumeTypeBitmapCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume bitmaps
@@ -303,12 +301,12 @@ func storagePoolVolumeTypeBitmapsGet(d *Daemon, r *http.Request) response.Respon
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume bitmap
@@ -453,12 +451,12 @@ func storagePoolVolumeTypeBitmapsPost(d *Daemon, r *http.Request) response.Respo
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume bitmap
@@ -622,12 +620,12 @@ func storagePoolVolumeTypeBitmapGet(d *Daemon, r *http.Request) response.Respons
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"

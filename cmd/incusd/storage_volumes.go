@@ -113,17 +113,17 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: server01
+//      x-example: server01
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -148,13 +148,11 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/container/a1",
-//                "/1.0/storage-pools/local/volumes/container/a2",
-//                "/1.0/storage-pools/local/volumes/custom/backups",
-//                "/1.0/storage-pools/local/volumes/custom/images"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/container/a1
+//              - /1.0/storage-pools/local/volumes/container/a2
+//              - /1.0/storage-pools/local/volumes/custom/backups
+//              - /1.0/storage-pools/local/volumes/custom/images
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -185,17 +183,17 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: server01
+//      x-example: server01
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -255,12 +253,12 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: server01
+//      x-example: server01
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -285,11 +283,9 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/custom/backups",
-//                "/1.0/storage-pools/local/volumes/custom/images"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/custom/backups
+//              - /1.0/storage-pools/local/volumes/custom/images
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -325,12 +321,12 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -390,12 +386,12 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -762,12 +758,12 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume
@@ -817,12 +813,12 @@ func filterVolumes(volumes []*db.StorageVolume, clauses *filter.ClauseSet, allPr
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume
@@ -1278,12 +1274,12 @@ func doVolumeMigration(s *state.State, r *http.Request, requestProjectName strin
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: migration
 //	    description: Migration request
@@ -1947,12 +1943,12 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume
@@ -2014,12 +2010,12 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume
@@ -2278,12 +2274,12 @@ func getVolumeFull(ctx context.Context, s *state.State, poolName string, vol api
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: storage volume
 //	    description: Storage volume configuration
@@ -2471,12 +2467,12 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: storage volume
 //	    description: Storage volume configuration
@@ -2630,12 +2626,12 @@ func storagePoolVolumePatch(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"

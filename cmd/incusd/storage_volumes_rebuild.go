@@ -59,12 +59,12 @@ var storagePoolVolumeTypeRebuildCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume rebuild request

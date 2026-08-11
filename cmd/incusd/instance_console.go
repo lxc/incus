@@ -458,7 +458,7 @@ func (s *consoleWs) cancel(*operations.Operation) error {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: console
 //	    description: Console request
@@ -634,14 +634,14 @@ func instanceConsolePost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: type
 //	    description: Console type
 //	    type: string
 //	    enum: [log, vga]
 //	    default: log
-//	    example: vga
+//	    x-example: vga
 //	responses:
 //	  "200":
 //	     description: |
@@ -824,7 +824,7 @@ func instanceConsoleLogGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"

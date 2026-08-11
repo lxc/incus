@@ -59,12 +59,12 @@ var networkPeerCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -89,11 +89,9 @@ var networkPeerCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/networks/mybr0/peers/my-peer-1",
-//                "/1.0/networks/mybr0/peers/my-peer-2"
-//              ]
+//            example:
+//              - /1.0/networks/mybr0/peers/my-peer-1
+//              - /1.0/networks/mybr0/peers/my-peer-2
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -124,12 +122,12 @@ var networkPeerCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -309,7 +307,7 @@ func networkPeersGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: peer
 //	    description: Peer
@@ -409,7 +407,7 @@ func networkPeersPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -494,7 +492,7 @@ func networkPeerDelete(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Peer
@@ -614,7 +612,7 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: Peer
 //      description: Peer configuration
@@ -663,7 +661,7 @@ func networkPeerGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: peer
 //	    description: Peer configuration

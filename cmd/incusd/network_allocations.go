@@ -40,7 +40,7 @@ var networkAllocationsCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: all-projects
 //	    description: Retrieve entities from all projects

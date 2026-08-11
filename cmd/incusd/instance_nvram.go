@@ -89,7 +89,7 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -114,11 +114,9 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c",
-//                "/1.0/instances/foo/nvram/d9bee56e-75dc-49d9-b4d7-b534210f637a",
-//              ]
+//            example:
+//              - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c
+//              - /1.0/instances/foo/nvram/d9bee56e-75dc-49d9-b4d7-b534210f637a
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -151,7 +149,7 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -179,13 +177,10 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //              description: List of endpoints
 //              items:
 //                type: string
-//            example: |-
-//              {
-//                "8be4df61-93ca-11d2-aa0d-00e098032b8c": [
-//                  "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000",
-//                  "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder"
-//                ]
-//              }
+//            example:
+//              8be4df61-93ca-11d2-aa0d-00e098032b8c:
+//                - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000
+//                - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -218,7 +213,7 @@ func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) 
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: NVRAM variables
@@ -339,7 +334,7 @@ func instanceNVRAMGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -364,11 +359,9 @@ func instanceNVRAMGet(d *Daemon, r *http.Request) response.Response {
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000",
-//                "/1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder"
-//              ]
+//            example:
+//              - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/Boot0000
+//              - /1.0/instances/foo/nvram/8be4df61-93ca-11d2-aa0d-00e098032b8c/BootOrder
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -406,7 +399,7 @@ func instanceNVRAMGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: NVRAM variables
@@ -518,17 +511,18 @@ func instanceNVRAMGUIDGet(d *Daemon, r *http.Request) response.Response {
 //	    description: Variable GUID
 //	    type: string
 //	    required: true
-//	    example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+//	    x-example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
 //	  - in: path
 //	    name: var
 //	    description: Variable name
 //	    type: string
-//	    example: BootOrder
+//	    required: true
+//	    x-example: BootOrder
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: NVRAM variable
@@ -631,17 +625,18 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 //	    description: Variable GUID
 //	    type: string
 //	    required: true
-//	    example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+//	    x-example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
 //	  - in: path
 //	    name: var
 //	    description: Variable name
 //	    type: string
-//	    example: BootOrder
+//	    required: true
+//	    x-example: BootOrder
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -726,27 +721,26 @@ func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {
 //	    description: Variable GUID
 //	    type: string
 //	    required: true
-//	    example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
+//	    x-example: 8be4df61-93ca-11d2-aa0d-00e098032b8c
 //	  - in: path
 //	    name: var
 //	    description: Variable name
 //	    type: string
-//	    example: BootOrder
+//	    required: true
+//	    x-example: BootOrder
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: header
 //	    name: X-Incus-attributes
 //	    description: Raw UEFI variable attributes to set
-//	    schema:
-//	      type: integer
+//	    type: integer
 //	  - in: header
 //	    name: X-Incus-timestamp
 //	    description: Raw UEFI variable UNIX timestamp (in seconds) to set
-//	    schema:
-//	      type: integer
+//	    type: integer
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -894,7 +888,7 @@ func instanceNVRAMGUIDVarPut(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: UEFI variables map
 //	    description: Load Balancer

@@ -47,7 +47,7 @@ import (
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -72,11 +72,9 @@ import (
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/instances/foo/backups/backup0",
-//                "/1.0/instances/foo/backups/backup1"
-//              ]
+//            example:
+//              - /1.0/instances/foo/backups/backup0
+//              - /1.0/instances/foo/backups/backup1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -107,7 +105,7 @@ import (
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -223,7 +221,7 @@ func instanceBackupsGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: backup
 //	    description: Backup request
@@ -467,7 +465,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Instance backup
@@ -562,7 +560,7 @@ func instanceBackupGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: backup
 //	    description: Backup rename
@@ -676,7 +674,7 @@ func instanceBackupPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -769,7 +767,7 @@ func instanceBackupDelete(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Raw image data

@@ -59,12 +59,12 @@ var networkForwardCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -89,11 +89,9 @@ var networkForwardCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/networks/mybr0/forwards/192.0.2.1",
-//                "/1.0/networks/mybr0/forwards/192.0.2.2"
-//              ]
+//            example:
+//              - /1.0/networks/mybr0/forwards/192.0.2.1
+//              - /1.0/networks/mybr0/forwards/192.0.2.2
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -124,12 +122,12 @@ var networkForwardCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -305,7 +303,7 @@ func networkForwardsGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: forward
 //	    description: Forward
@@ -403,7 +401,7 @@ func networkForwardsPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -490,7 +488,7 @@ func networkForwardDelete(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Address forward
@@ -632,7 +630,7 @@ func networkForwardGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: forward
 //      description: Address forward configuration
@@ -681,7 +679,7 @@ func networkForwardGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: forward
 //	    description: Address forward configuration

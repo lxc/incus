@@ -47,12 +47,12 @@ import (
 //	    name: writable
 //	    description: Whether to have the volume be writable
 //	    type: integer
-//	    example: 1
+//	    x-example: 1
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "101":
 //	    description: Switching protocols to NBD

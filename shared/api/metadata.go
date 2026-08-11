@@ -50,15 +50,11 @@ type MetadataConfig map[MetadataConfigEntityName]map[MetadataConfigGroupName]Met
 // MetadataConfigEntityName represents a main API object type
 // Example: instance
 //
-// swagger:model
-//
 // API extension: metadata_configuration.
 type MetadataConfigEntityName string
 
 // MetadataConfigGroupName represents the name of a group of config keys
 // Example: volatile
-//
-// swagger:model
 //
 // API extension: metadata_configuration.
 type MetadataConfigGroupName string

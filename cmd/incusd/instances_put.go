@@ -58,7 +58,7 @@ func coalesceErrors(local bool, errors map[string]error) error {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: state
 //	    description: State

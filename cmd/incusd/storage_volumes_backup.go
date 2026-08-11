@@ -80,12 +80,12 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: target
 //      description: Cluster member name
 //      type: string
-//      example: server01
+//      x-example: server01
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -110,11 +110,9 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/custom/foo/backups/backup0",
-//                "/1.0/storage-pools/local/volumes/custom/foo/backups/backup1"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/custom/foo/backups/backup0
+//              - /1.0/storage-pools/local/volumes/custom/foo/backups/backup1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -155,12 +153,12 @@ var storagePoolVolumeTypeCustomBackupExportCmd = APIEndpoint{
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -324,12 +322,12 @@ func storagePoolVolumeTypeCustomBackupsGet(d *Daemon, r *http.Request) response.
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume
 //	    description: Storage volume backup
@@ -630,12 +628,12 @@ func storagePoolVolumeTypeCustomBackupsPost(d *Daemon, r *http.Request) response
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Storage volume backup
@@ -766,18 +764,18 @@ func storagePoolVolumeTypeCustomBackupGet(d *Daemon, r *http.Request) response.R
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	  - in: body
 //	    name: volume rename
 //	    description: Storage volume backup
 //	    required: true
 //	    schema:
-//	      $ref: "#/definitions/StorageVolumeSnapshotPost"
+//	      $ref: "#/definitions/StorageVolumeBackupPost"
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -924,12 +922,12 @@ func storagePoolVolumeTypeCustomBackupPost(d *Daemon, r *http.Request) response.
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -1060,12 +1058,12 @@ func storagePoolVolumeTypeCustomBackupDelete(d *Daemon, r *http.Request) respons
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: target
 //	    description: Cluster member name
 //	    type: string
-//	    example: server01
+//	    x-example: server01
 //	responses:
 //	  "200":
 //	    description: Raw backup data

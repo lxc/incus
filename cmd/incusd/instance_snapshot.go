@@ -47,7 +47,7 @@ import (
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -72,11 +72,9 @@ import (
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/instances/foo/snapshots/snap0",
-//                "/1.0/instances/foo/snapshots/snap1"
-//              ]
+//            example:
+//              - /1.0/instances/foo/snapshots/snap0
+//              - /1.0/instances/foo/snapshots/snap1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -107,7 +105,7 @@ import (
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -242,7 +240,7 @@ func instanceSnapshotsGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: snapshot
 //	    description: Snapshot request
@@ -444,7 +442,7 @@ func instanceSnapshotHandler(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: snapshot
 //	    description: Snapshot update
@@ -497,7 +495,7 @@ func snapshotPatch(s *state.State, r *http.Request, snapInst instance.Instance) 
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: snapshot
 //	    description: Snapshot update
@@ -620,7 +618,7 @@ func snapshotPut(s *state.State, r *http.Request, snapInst instance.Instance) re
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Instance snapshot
@@ -694,7 +692,7 @@ func snapshotGet(snapInst instance.Instance) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: snapshot
 //	    description: Snapshot migration
@@ -859,7 +857,7 @@ func snapshotPost(s *state.State, r *http.Request, snapInst instance.Instance) r
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"

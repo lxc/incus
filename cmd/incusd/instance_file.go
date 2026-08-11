@@ -100,36 +100,31 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	     description: Raw file or directory listing
 //	     headers:
 //	       X-Incus-uid:
 //	         description: File owner UID
-//	         schema:
-//	           type: integer
+//	         type: integer
 //	       X-Incus-gid:
 //	         description: File owner GID
-//	         schema:
-//	           type: integer
+//	         type: integer
 //	       X-Incus-mode:
 //	         description: Mode mask
-//	         schema:
-//	           type: integer
+//	         type: integer
 //	       X-Incus-modified:
 //	         description: Last modified date
-//	         schema:
-//	           type: string
+//	         type: string
 //	       X-Incus-type:
 //	         description: Type of file (file, symlink or directory)
-//	         schema:
-//	           type: string
+//	         type: string
 //	     content:
 //	       application/octet-stream:
 //	         schema:
@@ -140,11 +135,9 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 //	           type: array
 //	           items:
 //	             type: string
-//	           example: |-
-//	             [
-//	               "/etc",
-//	               "/home"
-//	             ]
+//	           example:
+//	             - /etc
+//	             - /home
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
@@ -189,36 +182,31 @@ func instanceFileGet(s *state.State, inst instance.Instance, path string, r *htt
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	     description: Raw file or directory listing
 //	     headers:
 //	       X-Incus-uid:
 //	         description: File owner UID
-//	         schema:
-//	           type: integer
+//	         type: integer
 //	       X-Incus-gid:
 //	         description: File owner GID
-//	         schema:
-//	           type: integer
+//	         type: integer
 //	       X-Incus-mode:
 //	         description: Mode mask
-//	         schema:
-//	           type: integer
+//	         type: integer
 //	       X-Incus-modified:
 //	         description: Last modified date
-//	         schema:
-//	           type: string
+//	         type: string
 //	       X-Incus-type:
 //	         description: Type of file (file, symlink or directory)
-//	         schema:
-//	           type: string
+//	         type: string
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
@@ -265,45 +253,42 @@ func instanceFileHead(_ *state.State, inst instance.Instance, path string, _ *ht
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: raw_file
 //	    description: Raw file content
+//	    schema:
+//	      type: string
 //	  - in: header
 //	    name: X-Incus-uid
 //	    description: File owner UID
-//	    schema:
-//	      type: integer
-//	    example: 1000
+//	    type: integer
+//	    x-example: 1000
 //	  - in: header
 //	    name: X-Incus-gid
 //	    description: File owner GID
-//	    schema:
-//	      type: integer
-//	    example: 1000
+//	    type: integer
+//	    x-example: 1000
 //	  - in: header
 //	    name: X-Incus-mode
 //	    description: File mode
-//	    schema:
-//	      type: integer
-//	    example: 0644
+//	    type: integer
+//	    x-example: 0644
 //	  - in: header
 //	    name: X-Incus-type
 //	    description: Type of file (file, symlink or directory)
-//	    schema:
-//	      type: string
-//	    example: file
+//	    type: string
+//	    x-example: file
 //	  - in: header
 //	    name: X-Incus-write
 //	    description: Write mode (overwrite or append)
-//	    schema:
-//	      type: string
-//	    example: overwrite
+//	    type: string
+//	    x-example: overwrite
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -350,18 +335,17 @@ func instanceFilePost(s *state.State, inst instance.Instance, path string, r *ht
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: header
 //	    name: X-Incus-force
 //	    description: Perform recursive deletion
-//	    schema:
-//	      type: boolean
-//	    example: true
+//	    type: boolean
+//	    x-example: true
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"

@@ -45,7 +45,7 @@ import (
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Image metadata
@@ -177,7 +177,7 @@ func instanceMetadataGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: metadata
 //	    description: Image metadata
@@ -308,7 +308,7 @@ func instanceMetadataPatch(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: metadata
 //	    description: Image metadata
@@ -428,12 +428,12 @@ func doInstanceMetadataUpdate(s *state.State, inst instance.Instance, metadata a
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: path
 //	    description: Template name
 //	    type: string
-//	    example: hostname.tpl
+//	    x-example: hostname.tpl
 //	responses:
 //	  "200":
 //	     description: Raw template file or file listing
@@ -447,11 +447,9 @@ func doInstanceMetadataUpdate(s *state.State, inst instance.Instance, metadata a
 //	           type: array
 //	           items:
 //	             type: string
-//	           example: |-
-//	             [
-//	               "hostname.tpl",
-//	               "hosts.tpl"
-//	             ]
+//	           example:
+//	             - hostname.tpl
+//	             - hosts.tpl
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
@@ -602,15 +600,17 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 //	    name: path
 //	    description: Template name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: raw_file
 //	    description: Raw file content
+//	    schema:
+//	      type: string
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -731,12 +731,12 @@ func instanceMetadataTemplatesPost(d *Daemon, r *http.Request) response.Response
 //	    name: path
 //	    description: Template name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"

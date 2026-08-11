@@ -56,7 +56,7 @@ var networkIntegrationCmd = APIEndpoint{
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -81,11 +81,9 @@ var networkIntegrationCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/network-integrations/region2",
-//                "/1.0/network-integrations/region3"
-//              ]
+//            example:
+//              - /1.0/network-integrations/region2
+//              - /1.0/network-integrations/region3
 //    "403":
 //      $ref: "#/responses/Forbidden"
 //    "500":
@@ -105,7 +103,7 @@ var networkIntegrationCmd = APIEndpoint{
 //       name: filter
 //       description: Collection filter
 //       type: string
-//       example: default
+//       x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
