@@ -18,3 +18,6 @@ if [ "${hash1}" != "${hash2}" ]; then
     echo "==> Please update the ${f} file in your commit (make update-api)"
     exit 1
 fi
+
+echo "Checking that ${f} is valid..."
+swagger validate "${f}"
