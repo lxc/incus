@@ -688,15 +688,12 @@ jobs:
           - cgroup
           - interception
           - network_bridge_firewall
-          - storage_buckets_drivers
         os:
           - ubuntu-24.04
           - ubuntu-24.04-arm
         exclude:
           # Only run on arm64 the tests that benefit from kernel behavior coverage.
           - test: network_bridge_firewall
-            os: ubuntu-24.04-arm
-          - test: storage_buckets_drivers
             os: ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
 
