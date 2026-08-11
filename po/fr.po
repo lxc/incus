@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-10 17:32-0400\n"
+"POT-Creation-Date: 2026-08-12 16:17-0400\n"
 "PO-Revision-Date: 2026-08-12 03:46+0000\n"
 "Last-Translator: Varlorg <varlorg@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/incus/cli/fr/>\n"
@@ -661,7 +661,7 @@ msgstr "%q n'est pas une adresse IP"
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "%s %q pool %q du projet %q (incluant %d copie instantanée)"
 
-#: cmd/incus/image.go:1143
+#: cmd/incus/image.go:1161
 #, c-format
 msgid "%s (%d more)"
 msgstr "%s (%d de plus)"
@@ -857,11 +857,11 @@ msgstr "ADRESSE"
 msgid "ADDRESSES"
 msgstr "ADRESSES"
 
-#: cmd/incus/alias.go:155 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
+#: cmd/incus/alias.go:155 cmd/incus/image.go:1112 cmd/incus/image_alias.go:248
 msgid "ALIAS"
 msgstr "ALIAS"
 
-#: cmd/incus/image.go:1111
+#: cmd/incus/image.go:1113
 msgid "ALIASES"
 msgstr "ALIAS"
 
@@ -873,7 +873,7 @@ msgstr "chemin d’API"
 msgid "APP"
 msgstr "APP"
 
-#: cmd/incus/cluster.go:200 cmd/incus/image.go:1105 cmd/incus/list.go:537
+#: cmd/incus/cluster.go:200 cmd/incus/image.go:1107 cmd/incus/list.go:537
 msgid "ARCHITECTURE"
 msgstr "ARCHITECTURE"
 
@@ -1047,8 +1047,8 @@ msgstr "Rubriques d’aide additionnelles :"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Propriété de configuration du pool de stockage supplémentaire (<clef>"
-"=<valuer>, rien lorsque terminé) :"
+"Propriété de configuration du pool de stockage supplémentaire "
+"(<clef>=<valuer>, rien lorsque terminé) :"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1158,7 +1158,8 @@ msgstr "Rejoingez-vous un cluster existant ?"
 #: cmd/incus/cluster.go:1530
 #, c-format
 msgid "Are you sure you want to %s cluster member %q? (yes/no) [default=no]: "
-msgstr "Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
+msgstr ""
+"Êtes-vous sûr de %s le membre du cluster %q ? (oui/non) [défaut=non] : "
 
 #: cmd/incus/console.go:459
 msgid "As neither could be found, the raw SPICE socket can be found at:"
@@ -1293,8 +1294,8 @@ msgstr "Sauvegardes :"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Impossible de traiter ce remplacement, la syntaxe attendue est <périphérique>"
-",<clef>=<valeur> : %s"
+"Impossible de traiter ce remplacement, la syntaxe attendue est "
+"<périphérique>,<clef>=<valeur> : %s"
 
 #: cmd/incus/copy.go:176 cmd/incus/create.go:209 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1702,7 +1703,7 @@ msgstr "Clustering activé"
 
 #: cmd/incus/cluster.go:172 cmd/incus/cluster.go:1130
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
-#: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
+#: cmd/incus/config_trust.go:589 cmd/incus/image.go:1079
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
 #: cmd/incus/low_level.go:696 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
@@ -2187,7 +2188,7 @@ msgid "DEFAULT TARGET ADDRESS"
 msgstr "ADRESSE CIBLE PAR DÉFAUT"
 
 #: cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469
-#: cmd/incus/config_trust.go:420 cmd/incus/image.go:1106
+#: cmd/incus/config_trust.go:420 cmd/incus/image.go:1108
 #: cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086
 #: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433
@@ -2533,7 +2534,7 @@ msgstr "Disque utilisé :"
 msgid "Display clusters from all projects"
 msgstr "Afficher les clusters tous projets confondus"
 
-#: cmd/incus/image.go:1079
+#: cmd/incus/image.go:1081
 msgid "Display images from all projects"
 msgstr "Afficher les images tous projets confondus"
 
@@ -2795,7 +2796,7 @@ msgstr "Clé de configuration invalide"
 
 #: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1159
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
-#: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
+#: cmd/incus/config_trust.go:614 cmd/incus/image.go:1126
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
 #: cmd/incus/low_level.go:728 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
@@ -2812,6 +2813,11 @@ msgstr "Clé de configuration invalide"
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
 "Entrée en colonne vide (commande redondante, de tête ou de queue ) dans '%s '"
+
+#: cmd/incus/image.go:1132
+#, c-format
+msgid "Empty property name in '%s'"
+msgstr ""
 
 #: cmd/incus/cluster.go:775
 msgid "Enable clustering on a single non-clustered server"
@@ -2848,8 +2854,8 @@ msgid ""
 "Enter a sorting type ('a' for alphabetical, 'c' for CPU, 'm' for memory, 'd' "
 "for disk):"
 msgstr ""
-"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, « m "
-"» pour mémoire, ou « d » pour disque) :"
+"Entrez le type de tri souhaité (« a » pour alphabétique, « c » pour CPU, "
+"« m » pour mémoire, ou « d » pour disque) :"
 
 #: cmd/incus/top.go:263
 msgid "Enter new delay in seconds:"
@@ -3178,8 +3184,8 @@ msgstr "DOMAINE D'ÉCHEC"
 msgid "FILENAME"
 msgstr "FICHIER"
 
-#: cmd/incus/config_trust.go:419 cmd/incus/image.go:1108
-#: cmd/incus/image.go:1109 cmd/incus/image_alias.go:249
+#: cmd/incus/config_trust.go:419 cmd/incus/image.go:1110
+#: cmd/incus/image.go:1111 cmd/incus/image_alias.go:249
 msgid "FINGERPRINT"
 msgstr "EMPREINTE"
 
@@ -3350,7 +3356,8 @@ msgstr "Échec de la configuration du cluster : %w"
 #: cmd/incus/admin_init.go:107
 #, c-format
 msgid "Failed to connect to get server info: %w"
-msgstr "Échec de la connexion pour obtenir des informations sur le serveur : %w"
+msgstr ""
+"Échec de la connexion pour obtenir des informations sur le serveur : %w"
 
 #: cmd/incus/admin_init.go:102
 #, c-format
@@ -3782,7 +3789,7 @@ msgstr ""
 #: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
-#: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
+#: cmd/incus/image.go:1080 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
 #: cmd/incus/low_level.go:695 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
@@ -3914,11 +3921,11 @@ msgstr ""
 "L’opération est utile dans des processus d’authentification où un jeton est "
 "transmis à un autre serveur Incus."
 
-#: cmd/incus/image.go:1737
+#: cmd/incus/image.go:1755
 msgid "Generate a metadata tarball"
 msgstr ""
 
-#: cmd/incus/image.go:1739
+#: cmd/incus/image.go:1757
 msgid ""
 "Generate a metadata tarball\n"
 "\n"
@@ -3960,7 +3967,7 @@ msgstr "Nom du réseau"
 msgid "Get current load-balancer status"
 msgstr "Nom du réseau"
 
-#: cmd/incus/image.go:1532 cmd/incus/image.go:1533
+#: cmd/incus/image.go:1550 cmd/incus/image.go:1551
 msgid "Get image properties"
 msgstr "Obtenir les propriétés de l'image"
 
@@ -4049,7 +4056,8 @@ msgstr ""
 
 #: cmd/incus/cluster_group.go:813
 msgid "Get values for cluster group configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un groupe de serveurs"
 
 #: cmd/incus/cluster.go:443
 msgid "Get values for cluster member configuration keys"
@@ -4117,7 +4125,8 @@ msgstr "Clé de configuration invalide"
 
 #: cmd/incus/storage_bucket.go:370 cmd/incus/storage_bucket.go:371
 msgid "Get values for storage bucket configuration keys"
-msgstr "Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
+msgstr ""
+"Récupérer la valeur d’une clef de configuration d’un bucket de stockage"
 
 #: cmd/incus/storage.go:392 cmd/incus/storage.go:393
 msgid "Get values for storage pool configuration keys"
@@ -4144,8 +4153,8 @@ msgstr ""
 "Si le type n’est pas spécifié, Incus considère le type « custom ».\n"
 "Les types reconnus sont « custom », « container » et « virtual-machine ».\n"
 "\n"
-"Pour un instantané, préciser son nom (le type doit être explicitement défini)"
-"."
+"Pour un instantané, préciser son nom (le type doit être explicitement "
+"défini)."
 
 #: cmd/incus/storage_volume.go:2610
 msgid "Get write access to the disk"
@@ -4287,7 +4296,8 @@ msgstr "Identifiant : %v"
 #: cmd/incus/image.go:178
 #, fuzzy
 msgid "If an alias already exists, delete and recreate it"
-msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr ""
+"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/rebuild.go:34
 msgid "If an instance is running, stop it and then rebuild it"
@@ -4304,7 +4314,8 @@ msgstr ""
 
 #: cmd/incus/image.go:703 cmd/incus/publish.go:46
 msgid "If the image alias already exists, delete and create a new one"
-msgstr "Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
+msgstr ""
+"Si l'alias de l'image existe déjà, le supprimer d'abord puis le recréer"
 
 #: cmd/incus/snapshot.go:101 cmd/incus/storage_volume_snapshot.go:98
 msgid "If the snapshot name already exists, delete and create a new one"
@@ -4340,7 +4351,7 @@ msgstr "Ignorer l'état de l’instance"
 msgid "Image alias description"
 msgstr "Description de l’alias"
 
-#: cmd/incus/image.go:1448
+#: cmd/incus/image.go:1466
 msgid "Image already up to date."
 msgstr "L'image est déjà à jour."
 
@@ -4365,7 +4376,7 @@ msgstr "Format d’image"
 msgid "Image imported with fingerprint: %s"
 msgstr "Image importée avec l'empreinte : %s"
 
-#: cmd/incus/image.go:1446
+#: cmd/incus/image.go:1464
 msgid "Image refreshed successfully!"
 msgstr "Image rafraîchie avec succès !"
 
@@ -5412,7 +5423,9 @@ msgid ""
 "    a - Architecture\n"
 "    s - Size\n"
 "    u - Upload date\n"
-"    t - Type"
+"    t - Type\n"
+"\n"
+"Custom columns are defined with \"properties:key\", e.g. \"properties:os\""
 msgstr ""
 "Lister les images\n"
 "\n"
@@ -5607,8 +5620,8 @@ msgstr ""
 "configuration (par exemple, « volatile.eth0.hwaddr=10:66:6a:.* »).\n"
 "\n"
 "Exemples :\n"
-" – « user.blah=abc » listera toutes les instances dont la propriété libre «"
-" blah » est égale à « abc »,\n"
+" – « user.blah=abc » listera toutes les instances dont la propriété libre "
+"« blah » est égale à « abc »,\n"
 " – « u.blah=abc » aura le même effet,\n"
 " – « security.privileged=true » listera toutes les instances privilégiées,\n"
 " – « s.privileged=true » aura le même effet,\n"
@@ -5653,8 +5666,8 @@ msgstr ""
 "À ces colonnes s’ajoutent des colonnes personnalisées qui peuvent être "
 "définies avec « [config:|devices:]<clef>[:<nom>][:<largeur maximale>] » :\n"
 " – <clef> représente le nom de la clef de configuration de l’instance "
-"(config) ou des périphériques (devices) à afficher (si « config: » et «"
-" devices: » sont omis, « config: » est choisi par défaut),\n"
+"(config) ou des périphériques (devices) à afficher (si « config: » et "
+"« devices: » sont omis, « config: » est choisi par défaut),\n"
 " – <nom> représente le nom de la colonne à afficher (par défaut, le nom de "
 "la clef),\n"
 " – <largeur maximale> est la largeur maximale de la colonne (les résultats "
@@ -6641,8 +6654,8 @@ msgstr "Configuration minimale (non-interactif)"
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
-"Verbosité minimale des journaux (uniquement disponible avec le format «"
-" pretty »)"
+"Verbosité minimale des journaux (uniquement disponible avec le format "
+"« pretty »)"
 
 #: cmd/incus/admin_init_interactive.go:470
 msgid "Minimum size is 1GiB"
@@ -7319,7 +7332,7 @@ msgstr "PROCESSUS"
 msgid "PROFILES"
 msgstr "PROFILS"
 
-#: cmd/incus/image.go:1107 cmd/incus/list.go:542 cmd/incus/network.go:1080
+#: cmd/incus/image.go:1109 cmd/incus/list.go:542 cmd/incus/network.go:1080
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:144 cmd/incus/profile.go:731
 #: cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1645
@@ -7335,7 +7348,7 @@ msgstr "PROJETS"
 msgid "PROTOCOL"
 msgstr "PROTOCOLE"
 
-#: cmd/incus/image.go:1112 cmd/incus/remote.go:1058
+#: cmd/incus/image.go:1114 cmd/incus/remote.go:1058
 msgid "PUBLIC"
 msgstr "PUBLIC"
 
@@ -7619,7 +7632,7 @@ msgstr ""
 msgid "Properties:"
 msgstr "Propriétés :"
 
-#: cmd/incus/image.go:1577
+#: cmd/incus/image.go:1595
 msgid "Property not found"
 msgstr "Propriété non trouvée"
 
@@ -7692,7 +7705,7 @@ msgstr "Envoi de « %s » à « %s » : %%s"
 msgid "Query path must start with /"
 msgstr "Le chemin de la requête doit commencer par « / »"
 
-#: cmd/incus/image.go:529 cmd/incus/image.go:913 cmd/incus/image.go:1471
+#: cmd/incus/image.go:529 cmd/incus/image.go:913 cmd/incus/image.go:1489
 msgid "Query virtual machine images"
 msgstr ""
 
@@ -7775,9 +7788,10 @@ msgstr "Pousser ou récupérer des fichiers récursivement"
 
 #: cmd/incus/storage_volume.go:400
 msgid "Refresh and update the existing storage volume copies"
-msgstr "Rafraîchir et mettre à jour les copies du volume de stockage existantes"
+msgstr ""
+"Rafraîchir et mettre à jour les copies du volume de stockage existantes"
 
-#: cmd/incus/image.go:1391 cmd/incus/image.go:1392
+#: cmd/incus/image.go:1409 cmd/incus/image.go:1410
 #, fuzzy
 msgid "Refresh images"
 msgstr "Récupération de l'image : %s"
@@ -7787,7 +7801,7 @@ msgstr "Récupération de l'image : %s"
 msgid "Refreshing instance: %s"
 msgstr "Rafraîchissement de l’instance « %s »"
 
-#: cmd/incus/image.go:1415
+#: cmd/incus/image.go:1433
 #, fuzzy, c-format
 msgid "Refreshing the image: %s"
 msgstr "Récupération de l'image : %s"
@@ -7843,8 +7857,8 @@ msgid ""
 "Remove %s and everything it contains (instances, images, volumes, "
 "networks, ...) (yes/no): "
 msgstr ""
-"Supprimer %s et tout ce qu’il contient (instances, images, volumes, réseaux"
-"…) (oui/non) : "
+"Supprimer %s et tout ce qu’il contient (instances, images, volumes, "
+"réseaux…) (oui/non) : "
 
 #: cmd/incus/cluster_group.go:567
 msgid "Remove a cluster member from a cluster group"
@@ -8154,7 +8168,7 @@ msgstr "Rendre l'image publique"
 msgid "SEVERITY"
 msgstr "GRAVITÉ"
 
-#: cmd/incus/image.go:1113
+#: cmd/incus/image.go:1115
 msgid "SIZE"
 msgstr "TAILLE"
 
@@ -8351,7 +8365,7 @@ msgid ""
 "    incus profile device set [<remote>:]<profile> <device> <key> <value>"
 msgstr ""
 
-#: cmd/incus/image.go:1595 cmd/incus/image.go:1596
+#: cmd/incus/image.go:1613 cmd/incus/image.go:1614
 msgid "Set image properties"
 msgstr ""
 
@@ -8468,7 +8482,8 @@ msgstr ""
 
 #: cmd/incus/network_zone.go:1121 cmd/incus/network_zone.go:1122
 msgid "Set network zone record configuration keys"
-msgstr "Définir des clefs de configuration sur un enregistrement de zone réseau"
+msgstr ""
+"Définir des clefs de configuration sur un enregistrement de zone réseau"
 
 #: cmd/incus/profile.go:986
 #, fuzzy
@@ -8740,7 +8755,7 @@ msgstr ""
 msgid "Show full device configuration"
 msgstr "Afficher la configuration étendue"
 
-#: cmd/incus/image.go:1468 cmd/incus/image.go:1469
+#: cmd/incus/image.go:1486 cmd/incus/image.go:1487
 msgid "Show image properties"
 msgstr "Afficher les propriétés d’une image"
 
@@ -9230,7 +9245,7 @@ msgstr ""
 msgid "TOKEN"
 msgstr "JETON"
 
-#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1114
+#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1116
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:555 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
@@ -9551,8 +9566,8 @@ msgstr "Le périphérique spécifié n'est pas un disque (périphérique %s)"
 msgid ""
 "The specified disk does not point to the given storage volume (found %s)"
 msgstr ""
-"Le disque spécifié ne pointe pas vers le volume de stockage spécifié (trouvé "
-": %s)"
+"Le disque spécifié ne pointe pas vers le volume de stockage spécifié "
+"(trouvé : %s)"
 
 #: cmd/incus/storage_volume.go:796
 #, c-format
@@ -9751,7 +9766,7 @@ msgstr "Le profil « %s » a été supprimé"
 msgid "UNLIMITED"
 msgstr "ILLIMITÉ"
 
-#: cmd/incus/image.go:1115
+#: cmd/incus/image.go:1117
 msgid "UPLOAD DATE"
 msgstr "DATE DE PUBLICATION"
 
@@ -9826,7 +9841,7 @@ msgstr ""
 
 #: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1165
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
-#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
+#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1148
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
 #: cmd/incus/low_level.go:734 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
@@ -9894,7 +9909,7 @@ msgstr ""
 msgid "Unset device configuration keys"
 msgstr "Clé de configuration invalide"
 
-#: cmd/incus/image.go:1659 cmd/incus/image.go:1660
+#: cmd/incus/image.go:1677 cmd/incus/image.go:1678
 msgid "Unset image properties"
 msgstr ""
 
@@ -10914,8 +10929,8 @@ msgid ""
 "incus move <old name> <new name> [--instance-only]\n"
 "    Rename a local instance."
 msgstr ""
-"incus move [<serveur distant>:]<instance source> [<serveur distant> "
-":][<instance cible>] [--instance-only]\n"
+"incus move [<serveur distant>:]<instance source> [<serveur distant> :]"
+"[<instance cible>] [--instance-only]\n"
 "    Déplacer une instance entre deux hôtes, avec renommage si le nom de "
 "destination est différent.\n"
 "\n"
@@ -11446,7 +11461,7 @@ msgid "new %s name"
 msgstr "%s (nouveau nom)"
 
 #: cmd/incus/config_trust.go:481 cmd/incus/image.go:953 cmd/incus/image.go:958
-#: cmd/incus/image.go:1172
+#: cmd/incus/image.go:1190
 msgid "no"
 msgstr "non"
 
@@ -11638,7 +11653,7 @@ msgstr "o"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:478
 #: cmd/incus/delete.go:56 cmd/incus/image.go:955 cmd/incus/image.go:960
-#: cmd/incus/image.go:1169 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
+#: cmd/incus/image.go:1187 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
 msgid "yes"
 msgstr "oui"
 
