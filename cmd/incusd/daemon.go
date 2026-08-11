@@ -1748,6 +1748,28 @@ func (d *Daemon) numRunningInstances(instances []instance.Instance) int {
 	return count
 }
 
+// closeGlobalDatabase closes the global database with a timeout as queries
+// stuck on an unreachable cluster can block it indefinitely.
+func closeGlobalDatabase(clusterDB *db.Cluster) {
+	done := make(chan struct{})
+	go func() {
+		err := clusterDB.Close()
+		if err != nil {
+			logger.Debug("Could not close global database cleanly", logger.Ctx{"err": err})
+		}
+
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		buf := make([]byte, 1024*1024)
+		n := runtime.Stack(buf, true)
+		logger.Warn("Timed out closing the global database", logger.Ctx{"goroutines": string(buf[:n])})
+	}
+}
+
 // Stop stops the shared daemon.
 func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	logger.Info("Starting shutdown sequence", logger.Ctx{"signal": sig})
@@ -1782,7 +1804,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 			d.gateway.Kill()
 
 			if d.db.Cluster != nil {
-				_ = d.db.Cluster.Close()
+				closeGlobalDatabase(d.db.Cluster)
 			}
 		}
 	}
@@ -1803,7 +1825,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 			// Make all future queries fail fast as DB is not available.
 			d.gateway.Kill()
-			_ = d.db.Cluster.Close()
+			closeGlobalDatabase(d.db.Cluster)
 		}
 
 		if err == nil {
@@ -1899,25 +1921,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 	if d.db.Cluster != nil {
 		logger.Info("Closing the database")
-
-		// Close the database with a timeout as queries stuck on an unreachable cluster can block it indefinitely.
-		done := make(chan struct{})
-		go func() {
-			err := d.db.Cluster.Close()
-			if err != nil {
-				logger.Debug("Could not close global database cleanly", logger.Ctx{"err": err})
-			}
-
-			close(done)
-		}()
-
-		select {
-		case <-done:
-		case <-time.After(10 * time.Second):
-			buf := make([]byte, 1024*1024)
-			n := runtime.Stack(buf, true)
-			logger.Warn("Timed out closing the global database", logger.Ctx{"goroutines": string(buf[:n])})
-		}
+		closeGlobalDatabase(d.db.Cluster)
 	}
 
 	if d.db != nil && d.db.Node != nil {
@@ -1925,7 +1929,20 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	}
 
 	if d.gateway != nil {
-		trackError(d.gateway.Shutdown(), "Shutdown cowsql")
+		// Shut down the gateway with a timeout as its raft cleanup can get stuck on unreachable cluster members.
+		gatewayErr := make(chan error, 1)
+		go func() {
+			gatewayErr <- d.gateway.Shutdown()
+		}()
+
+		select {
+		case err := <-gatewayErr:
+			trackError(err, "Shutdown cowsql")
+		case <-time.After(10 * time.Second):
+			buf := make([]byte, 1024*1024)
+			n := runtime.Stack(buf, true)
+			logger.Warn("Timed out shutting down cowsql", logger.Ctx{"goroutines": string(buf[:n])})
+		}
 	}
 
 	if d.endpoints != nil {
