@@ -15,10 +15,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/procfs"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/backup"
@@ -1678,17 +1678,23 @@ func (d *common) processStartedAt(pid int) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("Invalid PID %d", pid)
 	}
 
-	file, err := os.Stat(fmt.Sprintf("/proc/%d", pid))
+	proc, err := procfs.NewProc(pid)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	linuxInfo, ok := file.Sys().(*syscall.Stat_t)
-	if !ok {
-		return time.Time{}, errors.New("Bad stat type")
+	stat, err := proc.Stat()
+	if err != nil {
+		return time.Time{}, err
 	}
 
-	return time.Unix(int64(linuxInfo.Ctim.Sec), int64(linuxInfo.Ctim.Nsec)), nil
+	startedAt, err := stat.StartTime()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	seconds, fraction := math.Modf(startedAt)
+	return time.Unix(int64(seconds), int64(fraction*float64(time.Second))), nil
 }
 
 // ETag returns the instance configuration ETag data for pre-condition validation.
