@@ -7714,7 +7714,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 					return err
 				}
 			}
-			defer logger.WarnOnError(w.Close, "Failed to close file")
+			defer logger.WarnOnErrorExcept(w.Close, []error{os.ErrClosed}, "Failed to close file")
 
 			// Read the template
 			tplString, err := os.ReadFile(filepath.Join(d.TemplatesPath(), tpl.Template))

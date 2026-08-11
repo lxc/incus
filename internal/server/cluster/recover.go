@@ -195,7 +195,7 @@ func Reconfigure(database *db.Node, raftNodes []db.RaftNode) error {
 			return err
 		}
 
-		defer logger.WarnOnError(file.Close, "Failed to close file")
+		defer logger.WarnOnErrorExcept(file.Close, []error{os.ErrClosed}, "Failed to close file")
 
 		_, err = file.Write([]byte(content.String()))
 		if err != nil {

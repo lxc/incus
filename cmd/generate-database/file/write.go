@@ -124,7 +124,7 @@ func Append(entity string, path string, snippet Snippet, iface bool) error {
 			return fmt.Errorf("Open target source code file %q: %w", path, err)
 		}
 
-		defer logger.WarnOnError(file.Close, "Failed to close file")
+		defer logger.WarnOnErrorExcept(file.Close, []error{os.ErrClosed}, "Failed to close file")
 	}
 
 	bytes, err := buffer.code()

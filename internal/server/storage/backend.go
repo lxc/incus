@@ -9172,7 +9172,7 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 			return fmt.Errorf("Error opening file for reading %q: %w", nbdPath, err)
 		}
 
-		defer logger.WarnOnError(from.Close, "Failed to close source file")
+		defer logger.WarnOnErrorExcept(from.Close, []error{os.ErrClosed}, "Failed to close source file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(from)
@@ -9343,7 +9343,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 			return fmt.Errorf("Error opening file for writing %q: %w", path, err)
 		}
 
-		defer logger.WarnOnError(to.Close, "Failed to close destination file")
+		defer logger.WarnOnErrorExcept(to.Close, []error{os.ErrClosed}, "Failed to close destination file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(conn)
