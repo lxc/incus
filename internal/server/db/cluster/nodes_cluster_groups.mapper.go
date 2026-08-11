@@ -255,9 +255,9 @@ func GetNodeClusterGroupID(ctx context.Context, db tx, groupID int) (_ int64, _e
 	return id, nil
 }
 
-// DeleteNodeClusterGroup deletes the node_cluster_group matching the given key parameters.
-// generator: node_cluster_group DeleteOne-by-GroupID
-func DeleteNodeClusterGroup(ctx context.Context, db dbtx, groupID int) (_err error) {
+// DeleteNodeClusterGroups deletes the node_cluster_group matching the given key parameters.
+// generator: node_cluster_group DeleteMany-by-GroupID
+func DeleteNodeClusterGroups(ctx context.Context, db dbtx, groupID int) (_err error) {
 	defer func() {
 		_err = mapErr(_err, "Node_cluster_group")
 	}()
@@ -272,15 +272,9 @@ func DeleteNodeClusterGroup(ctx context.Context, db dbtx, groupID int) (_err err
 		return fmt.Errorf("Delete \"nodes_clusters_groups\": %w", err)
 	}
 
-	n, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("Fetch affected rows: %w", err)
-	}
-
-	if n == 0 {
-		return ErrNotFound
-	} else if n > 1 {
-		return fmt.Errorf("Query deleted %d NodeClusterGroup rows instead of 1", n)
 	}
 
 	return nil
