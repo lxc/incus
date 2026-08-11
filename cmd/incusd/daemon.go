@@ -1779,6 +1779,10 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 		if err != nil {
 			logger.Warn("Could not handover member's responsibilities", logger.Ctx{"err": err})
 			d.gateway.Kill()
+
+			if d.db.Cluster != nil {
+				_ = d.db.Cluster.Close()
+			}
 		}
 	}
 
