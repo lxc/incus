@@ -308,6 +308,7 @@ run_standalone_storage() {
 # Tests related to virtual machines (needs QEMU and KVM)
 run_standalone_vm() {
     run_test test_cpu_vm "VM CPU hotplug"
+    run_test test_guestapi_vm "VM guest API"
 }
 
 # Network and networking related tests
