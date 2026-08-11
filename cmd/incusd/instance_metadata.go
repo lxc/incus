@@ -611,6 +611,8 @@ func instanceMetadataTemplatesGet(d *Daemon, r *http.Request) response.Response 
 //	  - in: body
 //	    name: raw_file
 //	    description: Raw file content
+//	    schema:
+//	      type: string
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
