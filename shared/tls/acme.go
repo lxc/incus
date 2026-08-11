@@ -16,9 +16,10 @@ import (
 )
 
 // CertificateNeedsUpdate returns true if the domain doesn't match the certificate's DNS names
-// or it's valid for less than the threshold.
-func CertificateNeedsUpdate(domain string, cert *x509.Certificate, threshold time.Duration) bool {
-	if time.Now().After(cert.NotAfter.Add(-threshold)) {
+// or more than 80% of its validity period has elapsed.
+func CertificateNeedsUpdate(domain string, cert *x509.Certificate) bool {
+	validity := cert.NotAfter.Sub(cert.NotBefore)
+	if time.Now().After(cert.NotBefore.Add(time.Duration(float64(validity) * 0.8))) {
 		return true
 	}
 
