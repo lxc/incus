@@ -17,11 +17,11 @@ var metadataConfigurationCmd = APIEndpoint{
 //
 //	Get the metadata configuration
 //
-//	Returns the generated metadata configuration in YAML format.
+//	Returns the generated metadata configuration.
 //
 //	---
 //	produces:
-//	  - text/plain
+//	  - application/json
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -42,8 +42,7 @@ var metadataConfigurationCmd = APIEndpoint{
 //	          description: Status code
 //	          example: 200
 //	        metadata:
-//	          type: string
-//	          description: The generated metadata configuration
+//	          $ref: "#/definitions/MetadataConfiguration"
 //	  "403":
 //	    $ref: "#/responses/Forbidden"
 //	  "500":
