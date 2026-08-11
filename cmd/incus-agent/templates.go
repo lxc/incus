@@ -115,7 +115,7 @@ func templatesApply(path string) ([]string, error) {
 					return err
 				}
 			}
-			defer logger.WarnOnError(w.Close, "Failed to close file")
+			defer logger.WarnOnErrorExcept(w.Close, []error{os.ErrClosed}, "Failed to close file")
 
 			// Do the copy.
 			src, err := os.Open(filePath)
