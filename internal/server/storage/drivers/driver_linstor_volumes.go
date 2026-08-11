@@ -280,6 +280,11 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		return fmt.Errorf("Unable to parse volume size: %w", err)
 	}
 
+	requiredBytes, err = d.roundVolumeBlockSizeBytes(vol, requiredBytes)
+	if err != nil {
+		return err
+	}
+
 	requiredKiB := requiredBytes / 1024
 	resourceDefinitionName := d.generateUUIDWithPrefix()
 
@@ -292,6 +297,11 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		requiredBytes, err := units.ParseByteSizeString(fsVol.ConfigSize())
 		if err != nil {
 			return fmt.Errorf("Unable to parse volume size: %w", err)
+		}
+
+		requiredBytes, err = d.roundVolumeBlockSizeBytes(fsVol, requiredBytes)
+		if err != nil {
+			return err
 		}
 
 		requiredKiB := requiredBytes / 1024
@@ -1205,6 +1215,11 @@ func (d *linstor) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool
 	// Do nothing if size isn't specified.
 	if sizeBytes <= 0 {
 		return nil
+	}
+
+	sizeBytes, err = d.roundVolumeBlockSizeBytes(vol, sizeBytes)
+	if err != nil {
+		return err
 	}
 
 	// Get the device path.
