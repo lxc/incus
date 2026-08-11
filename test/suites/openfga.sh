@@ -78,6 +78,7 @@ test_openfga() {
     user_is_not_server_operator
     user_is_not_project_admin
     user_is_project_operator
+    user_can_view_inherited_storage_volume
 
     # Create an instance for testing the "instance -> user" relation.
     incus launch testimage user-foo
@@ -201,6 +202,26 @@ user_is_project_operator() {
     incus launch testimage oidc-openfga:operator-foo
     INC_LOCAL='' incus_remote exec oidc-openfga:operator-foo -- echo "bar"
     incus delete oidc-openfga:operator-foo --force
+}
+
+user_can_view_inherited_storage_volume() {
+    project_name="openfga-inherited-volume"
+    pool_name="$(incus storage list oidc-openfga: -f csv | cut -d, -f1)"
+    volume_name="openfga-inherited-volume"
+
+    incus project create "${project_name}" -c features.storage.volumes=false
+    fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 operator "project:${project_name}"
+    incus storage volume create "oidc-openfga:${pool_name}" "${volume_name}"
+
+    fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 operator project:default
+    fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 viewer project:default
+    incus storage volume show "oidc-openfga:${pool_name}" "${volume_name}" --project "${project_name}"
+    fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 viewer project:default
+    fga tuple write --store-id "${OPENFGA_STORE_ID}" user:user1 operator project:default
+
+    incus storage volume delete "oidc-openfga:${pool_name}" "${volume_name}"
+    fga tuple delete --store-id "${OPENFGA_STORE_ID}" user:user1 operator "project:${project_name}"
+    incus project delete "${project_name}"
 }
 
 user_is_not_project_operator() {
