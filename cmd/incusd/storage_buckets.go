@@ -121,11 +121,9 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/default/buckets/foo",
-//                "/1.0/storage-pools/default/buckets/bar",
-//              ]
+//            example:
+//              - /1.0/storage-pools/default/buckets/foo
+//              - /1.0/storage-pools/default/buckets/bar
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -1080,11 +1078,9 @@ func storagePoolBucketDelete(d *Daemon, r *http.Request) response.Response {
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/default/buckets/foo/keys/my-read-only-key",
-//                "/1.0/storage-pools/default/buckets/bar/keys/admin",
-//              ]
+//            example:
+//              - /1.0/storage-pools/default/buckets/foo/keys/my-read-only-key
+//              - /1.0/storage-pools/default/buckets/bar/keys/admin
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

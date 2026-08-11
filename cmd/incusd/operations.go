@@ -453,12 +453,9 @@ func operationCancel(s *state.State, r *http.Request, projectName string, op *ap
 //              items:
 //                type: string
 //            description: JSON object of operation types to operation URLs
-//            example: |-
-//              {
-//                "running": [
-//                  "/1.0/operations/6916c8a6-9b7d-4abd-90b3-aedfec7ec7da"
-//                ]
-//              }
+//            example:
+//              running:
+//                - /1.0/operations/6916c8a6-9b7d-4abd-90b3-aedfec7ec7da
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

@@ -135,11 +135,9 @@ func instanceFileHandler(d *Daemon, r *http.Request) response.Response {
 //	           type: array
 //	           items:
 //	             type: string
-//	           example: |-
-//	             [
-//	               "/etc",
-//	               "/home"
-//	             ]
+//	           example:
+//	             - /etc
+//	             - /home
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":

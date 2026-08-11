@@ -148,13 +148,11 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/container/a1",
-//                "/1.0/storage-pools/local/volumes/container/a2",
-//                "/1.0/storage-pools/local/volumes/custom/backups",
-//                "/1.0/storage-pools/local/volumes/custom/images"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/container/a1
+//              - /1.0/storage-pools/local/volumes/container/a2
+//              - /1.0/storage-pools/local/volumes/custom/backups
+//              - /1.0/storage-pools/local/volumes/custom/images
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
@@ -285,11 +283,9 @@ var storagePoolVolumeTypeFileCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/custom/backups",
-//                "/1.0/storage-pools/local/volumes/custom/images"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/custom/backups
+//              - /1.0/storage-pools/local/volumes/custom/images
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

@@ -96,10 +96,8 @@ var instanceExecOutputsCmd = APIEndpoint{
 //	          description: List of endpoints
 //	          items:
 //	            type: string
-//	          example: |-
-//	            [
-//	              "/1.0/instances/foo/logs/lxc.log"
-//	            ]
+//	          example:
+//	            - /1.0/instances/foo/logs/lxc.log
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":
@@ -383,11 +381,9 @@ func instanceLogDelete(d *Daemon, r *http.Request) response.Response {
 //	          description: List of endpoints
 //	          items:
 //	            type: string
-//	          example: |-
-//	            [
-//	              "/1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stdout",
-//	              "/1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stderr",
-//	            ]
+//	          example:
+//	            - /1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stdout
+//	            - /1.0/instances/foo/logs/exec-output/exec_d0a89537-0617-4ed6-a79b-c2e88a970965.stderr
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":

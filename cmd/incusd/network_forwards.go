@@ -89,11 +89,9 @@ var networkForwardCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/networks/mybr0/forwards/192.0.2.1",
-//                "/1.0/networks/mybr0/forwards/192.0.2.2"
-//              ]
+//            example:
+//              - /1.0/networks/mybr0/forwards/192.0.2.1
+//              - /1.0/networks/mybr0/forwards/192.0.2.2
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

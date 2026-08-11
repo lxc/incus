@@ -89,11 +89,9 @@ var networkPeerCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/networks/mybr0/peers/my-peer-1",
-//                "/1.0/networks/mybr0/peers/my-peer-2"
-//              ]
+//            example:
+//              - /1.0/networks/mybr0/peers/my-peer-1
+//              - /1.0/networks/mybr0/peers/my-peer-2
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

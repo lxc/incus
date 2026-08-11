@@ -128,11 +128,9 @@ var networkStateCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/networks/mybr0",
-//                "/1.0/networks/mybr1"
-//              ]
+//            example:
+//              - /1.0/networks/mybr0
+//              - /1.0/networks/mybr1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

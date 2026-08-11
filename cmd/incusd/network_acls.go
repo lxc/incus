@@ -100,11 +100,9 @@ var networkACLLogCmd = APIEndpoint{
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/network-acls/foo",
-//                "/1.0/network-acls/bar"
-//              ]
+//            example:
+//              - /1.0/network-acls/foo
+//              - /1.0/network-acls/bar
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

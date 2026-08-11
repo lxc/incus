@@ -100,11 +100,9 @@ func filterWarnings(warnings []api.Warning, clauses *filter.ClauseSet) ([]api.Wa
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/warnings/39c61a48-cc17-40ae-8248-4f7b4cadedf4",
-//                "/1.0/warnings/951779a5-2820-4d96-b01e-88fe820e5310"
-//              ]
+//            example:
+//              - /1.0/warnings/39c61a48-cc17-40ae-8248-4f7b4cadedf4
+//              - /1.0/warnings/951779a5-2820-4d96-b01e-88fe820e5310
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":

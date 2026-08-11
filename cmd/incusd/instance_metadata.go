@@ -447,11 +447,9 @@ func doInstanceMetadataUpdate(s *state.State, inst instance.Instance, metadata a
 //	           type: array
 //	           items:
 //	             type: string
-//	           example: |-
-//	             [
-//	               "hostname.tpl",
-//	               "hosts.tpl"
-//	             ]
+//	           example:
+//	             - hostname.tpl
+//	             - hosts.tpl
 //	  "400":
 //	    $ref: "#/responses/BadRequest"
 //	  "403":

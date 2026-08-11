@@ -365,11 +365,9 @@ func storagePoolVolumeSnapshotsTypePost(d *Daemon, r *http.Request) response.Res
 //            description: List of endpoints
 //            items:
 //              type: string
-//            example: |-
-//              [
-//                "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap0",
-//                "/1.0/storage-pools/local/volumes/custom/foo/snapshots/snap1"
-//              ]
+//            example:
+//              - /1.0/storage-pools/local/volumes/custom/foo/snapshots/snap0
+//              - /1.0/storage-pools/local/volumes/custom/foo/snapshots/snap1
 //    "400":
 //      $ref: "#/responses/BadRequest"
 //    "403":
