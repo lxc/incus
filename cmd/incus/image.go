@@ -1071,7 +1071,9 @@ Column shorthand chars:
     a - Architecture
     s - Size
     u - Upload date
-    t - Type`,
+    t - Type
+
+Custom columns are defined with "properties:key", e.g. "properties:os"`,
 	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultImagesColumns, "", i18n.G("Columns"))
@@ -1122,6 +1124,22 @@ func (c *cmdImageList) parseColumns() ([]imageColumn, error) {
 	for _, columnEntry := range columnList {
 		if columnEntry == "" {
 			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		key, ok := strings.CutPrefix(columnEntry, "properties:")
+		if ok {
+			if key == "" {
+				return nil, fmt.Errorf(i18n.G("Empty property name in '%s'"), columnEntry)
+			}
+
+			columns = append(columns, imageColumn{
+				Name: strings.ToUpper(key),
+				Data: func(image api.Image) string {
+					return image.Properties[key]
+				},
+			})
+
+			continue
 		}
 
 		for _, columnRune := range columnEntry {
