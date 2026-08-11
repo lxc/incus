@@ -311,6 +311,7 @@ run_standalone_vm() {
     run_test test_guestapi_vm "VM guest API"
     run_test test_network_routed "VM routed NIC"
     run_test test_storage_disks_vm "VM disk devices"
+    run_test test_storage_vm "VM storage"
 }
 
 # Network and networking related tests
