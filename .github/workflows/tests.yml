@@ -856,6 +856,246 @@ jobs:
           cd test
           sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_REQUIRED_TESTS env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh ${{ matrix.test }}
 
+  vm-tests:
+    name: VM
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test: cpu_vm
+          - test: guestapi_vm
+          - test: network_routed
+          - test: storage_disks_vm
+          - test: storage_vm
+            driver: dir
+          - test: storage_vm
+            driver: btrfs
+          - test: storage_vm
+            driver: lvm
+          - test: storage_vm
+            driver: lvm-thin
+          - test: storage_vm
+            driver: zfs
+          - test: storage_vm
+            driver: ceph
+          - test: storage_vm
+            driver: linstor
+          - test: storage_volumes_vm
+            driver: dir
+          - test: storage_volumes_vm
+            driver: btrfs
+          - test: storage_volumes_vm
+            driver: lvm
+          - test: storage_volumes_vm
+            driver: lvm-thin
+          - test: storage_volumes_vm
+            driver: zfs
+          - test: storage_volumes_vm
+            driver: ceph
+          - test: storage_volumes_vm
+            driver: linstor
+    # Runs on ephemeral Debian VMs with nested virtualization (amd64 only).
+    runs-on:
+      - self-hosted
+      - lxc-incus-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Go (stable)
+        uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: |
+          set -x
+
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+            acl \
+            attr \
+            autoconf \
+            automake \
+            bind9-dnsutils \
+            btrfs-progs \
+            build-essential \
+            busybox-static \
+            curl \
+            dnsmasq-base \
+            dosfstools \
+            genisoimage \
+            gettext \
+            git \
+            iputils-ping \
+            jq \
+            libacl1-dev \
+            libcap-dev \
+            libdbus-1-dev \
+            lxc-dev \
+            liblz4-dev \
+            libseccomp-dev \
+            libselinux-dev \
+            libsqlite3-dev \
+            libtool \
+            libudev-dev \
+            libuv1-dev \
+            lvm2 \
+            make \
+            nftables \
+            ovmf \
+            pkg-config \
+            procps \
+            qemu-system-modules-spice \
+            qemu-system-x86 \
+            qemu-utils \
+            rsync \
+            socat \
+            sqlite3 \
+            squashfs-tools \
+            thin-provisioning-tools \
+            uuid-runtime \
+            virtiofsd \
+            xfsprogs \
+            xz-utils
+
+          # Install ZFS
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y "linux-headers-$(uname -r)"
+          curl -sL https://pkgs.zabbly.com/get/zfs-stable | sudo DEBIAN_FRONTEND=noninteractive sh
+
+      - name: Setup MicroCeph
+        if: matrix.driver == 'ceph'
+        run: |
+          set -x
+
+          # Setup scratch space
+          sudo truncate -s 20G /scratch.img
+          block_path="$(sudo losetup --show -f /scratch.img)"
+
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ceph-common qemu-block-extra snapd
+          sudo snap wait system seed.loaded
+          sudo snap install microceph --channel=quincy/stable
+
+          # /snap/bin isn't part of sudo's secure_path on Debian.
+          sudo ln -s /snap/bin/microceph /snap/bin/microceph.ceph /usr/local/bin/
+
+          sudo microceph cluster bootstrap
+          sudo microceph.ceph config set global osd_pool_default_size 1
+          sudo microceph.ceph config set global mon_allow_pool_delete true
+          sudo microceph.ceph config set global osd_memory_target 939524096
+          sudo microceph.ceph osd crush rule rm replicated_rule
+          sudo microceph.ceph osd crush rule create-replicated replicated default osd
+          for flag in nosnaptrim noscrub nobackfill norebalance norecover noscrub nodeep-scrub; do
+              sudo microceph.ceph osd set $flag
+          done
+
+          # Repurpose the scratch disk for ceph OSD.
+          sudo microceph disk add --wipe "${block_path}"
+          sudo rm -rf /etc/ceph
+          sudo ln -s /var/snap/microceph/current/conf/ /etc/ceph
+          sleep 30
+          sudo microceph.ceph status
+
+          # Wait until there are no more "unkowns" pgs
+          for _ in $(seq 60); do
+            if sudo microceph.ceph pg stat | grep -wF unknown; then
+              sleep 1
+            else
+              break
+            fi
+          done
+          sudo microceph.ceph status
+          sudo rm -f /snap/bin/rbd
+
+      - name: Setup LINSTOR
+        if: matrix.driver == 'linstor'
+        run: |
+          set -x
+
+          # Setup scratch space
+          sudo truncate -s 20G /scratch.img
+          block_path="$(sudo losetup --show -f /scratch.img)"
+
+          # Configure the LINBIT public repository (drbd-dkms only comes with the Proxmox suite).
+          sudo install -d -m 0755 /etc/apt/keyrings
+          curl -fsSL https://packages.linbit.com/package-signing-pubkey.asc | sudo tee /etc/apt/keyrings/linbit.asc > /dev/null
+          sudo tee /etc/apt/sources.list.d/linbit.sources > /dev/null <<EOF
+          Types: deb
+          URIs: https://packages.linbit.com/public
+          Suites: $(. /etc/os-release && echo ${VERSION_CODENAME})
+          Components: misc
+          Signed-By: /etc/apt/keyrings/linbit.asc
+
+          Types: deb
+          URIs: https://packages.linbit.com/public
+          Suites: proxmox-9
+          Components: drbd-9
+          Signed-By: /etc/apt/keyrings/linbit.asc
+          EOF
+          sudo apt-get update
+
+          # Install everything required to compile DRBD and run LINSTOR tools.
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+            drbd-dkms \
+            linstor-client \
+            linstor-controller \
+            linstor-satellite \
+            python3-setuptools
+
+          # Enable DRBD.
+          sudo modprobe -r drbd || true
+          sudo modprobe drbd
+
+          # Get the runner IP.
+          runner_ip="$(hostname -I | cut -d' ' -f1)"
+
+          # Create a single local node.
+          sudo linstor node create local "${runner_ip}" --node-type combined
+
+          # Repurpose the scratch disk for LINSTOR physical storage.
+          sudo linstor physical-storage create-device-pool --storage-pool incus --pool-name linstor-incus zfsthin local "${block_path}"
+
+          # Update the runner env.
+          echo "INCUS_LINSTOR_CLUSTER=${runner_ip}" >> "$GITHUB_ENV"
+
+      - name: Download go dependencies
+        run: |
+          go mod download
+
+      - name: Build cowsql and raft
+        run: |
+          set -x
+          make deps
+
+          raft_path="$(go env GOPATH)/deps/raft"
+          cowsql_path="$(go env GOPATH)/deps/cowsql"
+          {
+            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
+            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
+            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
+            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+          } >> "$GITHUB_ENV"
+
+      - name: Run Incus build
+        run: |
+          make
+
+      - name: "Run VM tests (${{ matrix.test }}, ${{ matrix.driver }})"
+        env:
+          CGO_LDFLAGS_ALLOW: "(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+          INCUS_CEPH_CLUSTER: "ceph"
+          INCUS_CLI_TIMEOUT: "600"
+          INCUS_LINSTOR_LOCAL_SATELLITE: "local"
+          INCUS_VERBOSE: "1"
+          INCUS_REQUIRED_TESTS: "${{ matrix.test }}"
+          INCUS_VM_STORAGE_DRIVERS: "${{ matrix.driver }}"
+        run: |
+          chmod +x ~
+          echo "root:1000000:1000000000" | sudo tee /etc/subuid /etc/subgid
+          cd test
+          sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_CEPH_CLUSTER,INCUS_CLI_TIMEOUT,INCUS_LINSTOR_CLUSTER,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_REQUIRED_TESTS,INCUS_VM_STORAGE_DRIVERS env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh ${{ matrix.test }}
+
   client:
     name: Client
     strategy:
