@@ -2676,42 +2676,83 @@ func handoverMemberRole(s *state.State, gateway *cluster.Gateway) error {
 
 	logCtx := logger.Ctx{"address": localClusterAddress}
 
-	// Find the cluster leader.
-findLeader:
-	leader, err := s.Cluster.LeaderAddress()
-	if err != nil {
-		return err
-	}
-
-	if leader == "" {
-		return errors.New("No leader address found")
-	}
-
-	if leader == localClusterAddress {
-		logger.Info("Transferring leadership", logCtx)
-		err := gateway.TransferLeadership()
-		if err != nil {
-			return fmt.Errorf("Failed to transfer leadership: %w", err)
+	// Retry for a while on transient errors (leader changes, unreachable
+	// leader or another configuration change in progress), as leaving
+	// without a successful handover can cost the cluster its quorum.
+	// Individual attempts can be slow (each internal call has its own
+	// timeout), so bound the retries by time rather than count to avoid
+	// hanging shutdown when the cluster has lost quorum.
+	var err error
+	deadline := time.Now().Add(30 * time.Second)
+	for i := 0; time.Now().Before(deadline); i++ {
+		if i > 0 {
+			time.Sleep(time.Second)
 		}
 
-		goto findLeader
-	}
+		// Find the cluster leader, which may change between attempts.
+		var leader string
+		leader, err = s.Cluster.LeaderAddress()
+		if err != nil {
+			continue
+		}
 
-	logger.Info("Handing over cluster member role", logCtx)
-	client, err := cluster.Connect(leader, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
-	if err != nil {
-		return fmt.Errorf("Failed handing over cluster member role: %w", err)
-	}
+		if leader == "" {
+			err = errors.New("No leader address found")
+			continue
+		}
 
-	// Retry for a while if another configuration change is in progress, as
-	// leaving without a successful handover can cost the cluster its quorum.
-	for range 30 {
+		if leader == localClusterAddress {
+			logger.Info("Transferring leadership", logCtx)
+			err = gateway.TransferLeadership()
+			if err != nil {
+				err = fmt.Errorf("Failed to transfer leadership: %w", err)
+
+				// Give up when there is nobody to hand over to.
+				if errors.Is(err, cluster.ErrNoOnlineVoter) {
+					return err
+				}
+
+				continue
+			}
+
+			leader, err = s.Cluster.LeaderAddress()
+			if err != nil {
+				continue
+			}
+
+			if leader == "" || leader == localClusterAddress {
+				err = errors.New("No leader address found")
+				continue
+			}
+		}
+
+		logger.Info("Handing over cluster member role", logCtx)
+		var client incus.InstanceServer
+		client, err = cluster.Connect(leader, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
+		if err != nil {
+			err = fmt.Errorf("Failed handing over cluster member role: %w", err)
+			continue
+		}
+
+		// Bound the request so an unresponsive leader can't hang shutdown.
+		httpClient, httpErr := client.GetHTTPClient()
+		if httpErr == nil {
+			httpClient.Timeout = 10 * time.Second
+		}
+
 		_, _, err = client.RawQuery("POST", "/internal/cluster/handover", post, "")
-		if err == nil || !strings.Contains(err.Error(), "configuration change is already in progress") {
+		if err == nil {
+			return nil
+		}
+
+		// Give up right away on errors that won't resolve by retrying.
+		// The errors come back from the leader as text, usually wrapped in extra context and with
+		// inconsistent capitalization ("Not leader", "503 not leader", "not leader (10250)"), so
+		// case-insensitive substring matching is the best we can do.
+		errText := strings.ToLower(err.Error())
+		if !strings.Contains(errText, cluster.ErrClusterBusy.Error()) && !strings.Contains(errText, "not leader") && !strings.Contains(errText, "unable to connect") && !strings.Contains(errText, "client.timeout") {
 			return err
 		}
-
-		time.Sleep(time.Second)
 	}
 
 	return err
