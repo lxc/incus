@@ -1908,17 +1908,33 @@ func (d *lvm) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 	// as newer snapshots are taken at using the "100%ORIGIN" size). Confusing isn't it.
 	if snapVol.IsVMBlock() || snapVol.contentType == ContentTypeFS {
 		snapLVPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, ContentTypeFS, snapVol.name)
-		_, err = subprocess.TryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
+		needsGrow, err := d.snapshotNeedsCoWGrow(snapLVPath)
 		if err != nil {
 			return err
+		}
+
+		// Only resize when needed as newer LVM fails to grow snapshots already at full CoW capacity.
+		if needsGrow {
+			_, err = subprocess.TryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	if snapVol.IsVMBlock() || (snapVol.contentType == ContentTypeBlock && snapVol.volType == VolumeTypeCustom) {
 		snapLVPath := d.lvmPath(d.config["lvm.vg_name"], snapVol.volType, ContentTypeBlock, snapVol.name)
-		_, err = subprocess.TryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
+		needsGrow, err := d.snapshotNeedsCoWGrow(snapLVPath)
 		if err != nil {
 			return err
+		}
+
+		// Only resize when needed as newer LVM fails to grow snapshots already at full CoW capacity.
+		if needsGrow {
+			_, err = subprocess.TryRunCommand("lvresize", "-l", "+100%ORIGIN", "-f", snapLVPath)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
