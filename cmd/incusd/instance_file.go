@@ -264,6 +264,8 @@ func instanceFileHead(_ *state.State, inst instance.Instance, path string, _ *ht
 //	  - in: body
 //	    name: raw_file
 //	    description: Raw file content
+//	    schema:
+//	      type: string
 //	  - in: header
 //	    name: X-Incus-uid
 //	    description: File owner UID

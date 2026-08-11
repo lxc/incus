@@ -1110,14 +1110,10 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //	    x-example: default
 //	  - in: body
 //	    name: image
-//	    description: Image
+//	    description: Image (or raw image file)
 //	    required: false
 //	    schema:
 //	      $ref: "#/definitions/ImagesPost"
-//	  - in: body
-//	    name: raw_image
-//	    description: Raw image file
-//	    required: false
 //	  - in: header
 //	    name: X-Incus-secret
 //	    description: Push secret for server to server communication

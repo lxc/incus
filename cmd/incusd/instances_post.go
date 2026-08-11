@@ -1156,14 +1156,10 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 //	    x-example: default
 //	  - in: body
 //	    name: instance
-//	    description: Instance request
+//	    description: Instance request (or raw backup file)
 //	    required: false
 //	    schema:
 //	      $ref: "#/definitions/InstancesPost"
-//	  - in: body
-//	    name: raw_backup
-//	    description: Raw backup file
-//	    required: false
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
