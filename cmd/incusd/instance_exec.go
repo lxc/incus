@@ -554,7 +554,7 @@ func (s *execWs) do(op *operations.Operation) error {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: exec
 //	    description: Exec request

@@ -128,12 +128,12 @@ func storagePoolVolumeTypeFileHandler(d *Daemon, r *http.Request) response.Respo
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	     description: Raw file or directory listing
@@ -226,12 +226,12 @@ func storageVolumeFileGet(s *state.State, vol storageDrivers.Volume, volumeProje
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	     description: Raw file or directory listing
@@ -311,12 +311,12 @@ func storageVolumeFileHead(s *state.State, vol storageDrivers.Volume, volumeProj
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: raw_file
 //	    description: Raw file content
@@ -325,31 +325,31 @@ func storageVolumeFileHead(s *state.State, vol storageDrivers.Volume, volumeProj
 //	    description: File owner UID
 //	    schema:
 //	      type: integer
-//	    example: 1000
+//	    x-example: 1000
 //	  - in: header
 //	    name: X-Incus-gid
 //	    description: File owner GID
 //	    schema:
 //	      type: integer
-//	    example: 1000
+//	    x-example: 1000
 //	  - in: header
 //	    name: X-Incus-mode
 //	    description: File mode
 //	    schema:
 //	      type: integer
-//	    example: 0644
+//	    x-example: 0644
 //	  - in: header
 //	    name: X-Incus-type
 //	    description: Type of file (file, symlink or directory)
 //	    schema:
 //	      type: string
-//	    example: file
+//	    x-example: file
 //	  - in: header
 //	    name: X-Incus-write
 //	    description: Write mode (overwrite or append)
 //	    schema:
 //	      type: string
-//	    example: overwrite
+//	    x-example: overwrite
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -405,18 +405,18 @@ func storageVolumeFilePost(s *state.State, vol storageDrivers.Volume, volumeProj
 //	    name: path
 //	    description: Path to the file
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: header
 //	    name: X-Incus-force
 //	    description: Perform recursive deletion
 //	    schema:
 //	      type: boolean
-//	    example: true
+//	    x-example: true
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"

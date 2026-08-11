@@ -1136,7 +1136,7 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -1191,7 +1191,7 @@ func clusterAcceptMember(client incus.InstanceServer, name string, address strin
 //	    name: filter
 //	    description: Collection filter
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints

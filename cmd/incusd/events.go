@@ -185,12 +185,12 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: type
 //	    description: Event type(s), comma separated (valid types are logging, operation or lifecycle)
 //	    type: string
-//	    example: logging,lifecycle
+//	    x-example: logging,lifecycle
 //	  - in: query
 //	    name: all-projects
 //	    description: Retrieve instances from all projects

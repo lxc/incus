@@ -35,7 +35,7 @@ import (
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"

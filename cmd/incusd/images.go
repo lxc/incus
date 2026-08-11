@@ -1070,7 +1070,7 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: body
 //      name: image
 //      description: Image
@@ -1107,7 +1107,7 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image
 //	    description: Image
@@ -1123,7 +1123,7 @@ func imageCreateInPool(s *state.State, info *api.Image, storagePool string) erro
 //	    description: Push secret for server to server communication
 //	    schema:
 //	      type: string
-//	    example: RANDOM-STRING
+//	    x-example: RANDOM-STRING
 //	  - in: header
 //	    name: X-Incus-fingerprint
 //	    description: Expected fingerprint when pushing a raw image
@@ -1658,12 +1658,12 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve images from all projects
@@ -1722,12 +1722,12 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve images from all projects
@@ -1781,12 +1781,12 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: filter
 //      description: Collection filter
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: all-projects
 //      description: Retrieve images from all projects
@@ -1845,17 +1845,17 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: filter
 //	    description: Collection filter
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: query
 //	    name: all-projects
 //	    description: Retrieve images from all projects
 //	    type: boolean
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -2823,7 +2823,7 @@ func pruneExpiredImages(ctx context.Context, s *state.State, op *operations.Oper
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -3122,12 +3122,12 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: secret
 //      description: Secret token to retrieve a private image
 //      type: string
-//      example: RANDOM-STRING
+//      x-example: RANDOM-STRING
 //  responses:
 //    "200":
 //      description: Image
@@ -3179,7 +3179,7 @@ func imageValidSecret(s *state.State, r *http.Request, projectName string, finge
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Image
@@ -3285,7 +3285,7 @@ func imageGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image
 //	    description: Image configuration
@@ -3403,7 +3403,7 @@ func imagePut(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image
 //	    description: Image configuration
@@ -3528,7 +3528,7 @@ func imagePatch(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image alias
 //	    description: Image alias
@@ -3622,7 +3622,7 @@ func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: API endpoints
@@ -3677,7 +3677,7 @@ func imageAliasesPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints
@@ -3786,7 +3786,7 @@ func imageAliasesGet(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: Image alias
@@ -3838,7 +3838,7 @@ func imageAliasesGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Image alias
@@ -3921,7 +3921,7 @@ func imageAliasGet(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    $ref: "#/responses/EmptySyncResponse"
@@ -3994,7 +3994,7 @@ func imageAliasDelete(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image alias
 //	    description: Image alias configuration
@@ -4094,7 +4094,7 @@ func imageAliasPut(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image alias
 //	    description: Image alias configuration
@@ -4209,7 +4209,7 @@ func imageAliasPatch(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image alias
 //	    description: Image alias rename request
@@ -4306,12 +4306,12 @@ func imageAliasPost(d *Daemon, r *http.Request) response.Response {
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //    - in: query
 //      name: secret
 //      description: Secret token to retrieve a private image
 //      type: string
-//      example: RANDOM-STRING
+//      x-example: RANDOM-STRING
 //  responses:
 //    "200":
 //      description: Raw image data
@@ -4347,7 +4347,7 @@ func imageAliasPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: Raw image data
@@ -4518,7 +4518,7 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	  - in: body
 //	    name: image
 //	    description: Image push request
@@ -4686,7 +4686,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"
@@ -4816,7 +4816,7 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "202":
 //	    $ref: "#/responses/Operation"

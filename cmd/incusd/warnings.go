@@ -75,7 +75,7 @@ func filterWarnings(warnings []api.Warning, clauses *filter.ClauseSet) ([]api.Wa
 //      name: project
 //      description: Project name
 //      type: string
-//      example: default
+//      x-example: default
 //  responses:
 //    "200":
 //      description: Sync response
@@ -130,7 +130,7 @@ func filterWarnings(warnings []api.Warning, clauses *filter.ClauseSet) ([]api.Wa
 //	    name: project
 //	    description: Project name
 //	    type: string
-//	    example: default
+//	    x-example: default
 //	responses:
 //	  "200":
 //	    description: API endpoints
