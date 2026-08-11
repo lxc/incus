@@ -1,6 +1,6 @@
 network_bridge_firewall_tests() {
     # Add a local NIC device as the testsuite default profile already has a p2p eth0.
-    incus init images:debian/12 c1
+    incus init images:debian/13 c1
     incus config device add c1 eth0 nic name=eth0 "$@"
     incus start c1
     sleep 10

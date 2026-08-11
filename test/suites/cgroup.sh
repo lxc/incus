@@ -20,7 +20,7 @@ test_cgroup() {
     poolName=$(incus profile device get default root pool)
 
     incus network create incusbr0
-    incus init images:debian/12 c1 -s "${poolName}"
+    incus init images:debian/13 c1 -s "${poolName}"
     incus config device add c1 eth0 nic network=incusbr0 name=eth0
 
     echo "==> Start a container with no limits"
