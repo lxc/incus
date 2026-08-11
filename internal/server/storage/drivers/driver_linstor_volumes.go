@@ -309,10 +309,11 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 		volumeSizes = append(volumeSizes, requiredKiB)
 	}
 
-	// Spawn resource.
+	// Spawn the resource definitions without deploying them so properties can still be set.
 	err = linstor.Client.ResourceGroups.Spawn(context.TODO(), d.config[LinstorResourceGroupNameConfigKey], linstorClient.ResourceGroupSpawn{
 		ResourceDefinitionName: resourceDefinitionName,
 		VolumeSizes:            volumeSizes,
+		DefinitionsOnly:        true,
 	})
 	if err != nil {
 		return fmt.Errorf("Unable to spawn from resource group: %w", err)
@@ -324,6 +325,17 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	err = d.setResourceDefinitionProperties(vol, resourceDefinitionName)
 	if err != nil {
 		return err
+	}
+
+	err = d.setResourceDefinitionExactSize(resourceDefinitionName)
+	if err != nil {
+		return err
+	}
+
+	// Deploy the resource.
+	err = linstor.Client.Resources.Autoplace(context.TODO(), resourceDefinitionName, linstorClient.AutoPlaceRequest{})
+	if err != nil {
+		return fmt.Errorf("Unable to deploy resource: %w", err)
 	}
 
 	// Setup the filesystem.
