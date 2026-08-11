@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -1898,9 +1899,24 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 
 	if d.db.Cluster != nil {
 		logger.Info("Closing the database")
-		err := d.db.Cluster.Close()
-		if err != nil {
-			logger.Debug("Could not close global database cleanly", logger.Ctx{"err": err})
+
+		// Close the database with a timeout as queries stuck on an unreachable cluster can block it indefinitely.
+		done := make(chan struct{})
+		go func() {
+			err := d.db.Cluster.Close()
+			if err != nil {
+				logger.Debug("Could not close global database cleanly", logger.Ctx{"err": err})
+			}
+
+			close(done)
+		}()
+
+		select {
+		case <-done:
+		case <-time.After(10 * time.Second):
+			buf := make([]byte, 1024*1024)
+			n := runtime.Stack(buf, true)
+			logger.Warn("Timed out closing the global database", logger.Ctx{"goroutines": string(buf[:n])})
 		}
 	}
 
