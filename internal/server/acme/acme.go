@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/lxc/incus/v7/internal/server/state"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
@@ -58,7 +57,7 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 			return nil, fmt.Errorf("Failed to parse certificate: %w", err)
 		}
 
-		if !incustls.CertificateNeedsUpdate(domain, cert, 30*24*time.Hour) {
+		if !incustls.CertificateNeedsUpdate(domain, cert) {
 			return &CertKeyPair{
 				Certificate: clusterCert,
 				PrivateKey:  key,
@@ -81,8 +80,8 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 		return nil, fmt.Errorf("Failed to parse certificate: %w", err)
 	}
 
-	if !force && !incustls.CertificateNeedsUpdate(domain, cert, 30*24*time.Hour) {
-		l.Debug("Skipping certificate renewal as it is still valid for more than 30 days")
+	if !force && !incustls.CertificateNeedsUpdate(domain, cert) {
+		l.Debug("Skipping certificate renewal as it hasn't reached 80% of its validity period")
 		return nil, nil
 	}
 
