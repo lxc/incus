@@ -305,6 +305,11 @@ run_standalone_storage() {
     run_test test_storage_volume_snapshots "storage volume snapshots"
 }
 
+# Tests related to virtual machines (needs QEMU and KVM)
+run_standalone_vm() {
+    run_test test_cpu_vm "VM CPU hotplug"
+}
+
 # Network and networking related tests
 run_standalone_network() {
     run_test test_address_set "network address set"
@@ -420,6 +425,7 @@ case "${1:-""}" in
     run_standalone_container
     run_standalone_network
     run_standalone_storage
+    run_standalone_vm
     run_cluster
     ;;
   standalone)
@@ -427,6 +433,7 @@ case "${1:-""}" in
     run_standalone_container
     run_standalone_network
     run_standalone_storage
+    run_standalone_vm
     ;;
   standalone_*)
     # shellcheck disable=SC2086
