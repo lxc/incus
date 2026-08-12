@@ -1,8 +1,10 @@
 package uefi
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -24,268 +26,148 @@ func wrapDP(f func(*reader, uint8) (string, error)) func(uint8, []byte) (string,
 	}
 }
 
-// dpFormatter helps formatting device paths with optional arguments.
-type dpFormatter struct {
-	name          string
-	firstOptional int
-	args          []string
-}
-
-// add adds an argument to a device path formatter.
-func (d *dpFormatter) add(value string, optional ...bool) {
-	opt := false
-	if len(optional) > 0 {
-		opt = optional[0]
-	}
-
-	d.args = append(d.args, value)
-	if !opt {
-		d.firstOptional = len(d.args)
-	}
-}
-
-// addMandatory adds mandatory arguments to a device path formatter.
-func (d *dpFormatter) addMandatory(values ...string) {
-	for _, value := range values {
-		d.add(value)
-	}
-}
-
-// String returns the formatted device path.
-func (d *dpFormatter) String() string {
-	return fmt.Sprintf("%s(%s)", d.name, strings.Join(d.args[:d.firstOptional], ","))
-}
-
 // hardwareDevicePath dissects a device path node with type 0x01.
 var hardwareDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
+	path := dpFormatter{}
+	var err error
 	switch subtype {
 	case 0x01: // PCI.
-		fn, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		dev, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Pci(0x%x,0x%x)", dev, fn), nil
+		path.name = "Pci"
+		err = path.addDissected(r, "u8", "u8")
+		// The arguments are stored swapped in their binary representation.
+		slices.Reverse(path.args)
 	case 0x02: // PCCARD.
-		fn, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("PcCard(0x%x)", fn), nil
+		path.name = "PcCard"
+		err = path.addDissected(r, "u8")
 	case 0x03: // Memory Mapped.
-		memType, err := r.readU32()
-		if err != nil {
-			return "", err
-		}
-
-		memStart, err := r.readU64()
-		if err != nil {
-			return "", err
-		}
-
-		memEnd, err := r.readU64()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("MemoryMapped(0x%x,0x%x,0x%x)", memType, memStart, memEnd), nil
+		path.name = "MemoryMapped"
+		err = path.addDissected(r, "u32", "u64", "u64")
 	case 0x04: // Vendor.
-		guid, err := r.readGUID()
-		if err != nil {
-			return "", err
-		}
-
-		remaining, err := r.read(r.rem())
-		if err != nil {
-			return "", err
-		}
-
-		path := dpFormatter{name: "VenHw"}
-		path.add(guid)
-		path.add(fmt.Sprintf("%x", remaining), len(remaining) == 0)
-		return path.String(), nil
+		path.name = "VenHw"
+		err = path.addDissected(r, "guid", "*")
 	case 0x05: // Controller.
-		ctrl, err := r.readU32()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Ctrl(0x%x)", ctrl), nil
+		path.name = "Ctrl"
+		err = path.addDissected(r, "u32")
 	case 0x06: // BMC.
-		bmcType, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		baseAddr, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("BMC(0x%x,0x%x)", bmcType, baseAddr), nil
+		path.name = "BMC"
+		err = path.addDissected(r, "u8", "u64")
+	default:
+		err = errUnexpectedData
 	}
 
-	return "", errUnexpectedData
+	if err != nil {
+		return "", err
+	}
+
+	return path.String(), nil
 })
 
 // acpiDevicePath dissects a device path node with type 0x02.
 var acpiDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
+	path := dpFormatter{}
+	var err error
 	switch subtype {
 	case 0x01: // ACPI Device Path.
-		hid, err := r.readEISA()
+		var hid string
+		hid, err = r.readEISA()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		uid, err := r.readU32()
-		if err != nil {
-			return "", err
-		}
-
+		// The UEFI specification mandates that for the recognized EISA IDs listed below, the UID is
+		// required for display.
+		format := "u32"
 		switch hid {
 		case "PNP0301":
-			return fmt.Sprintf("Keyboard(0x%x)", uid), nil
+			path.name = "Keyboard"
 		case "PNP0401":
-			return fmt.Sprintf("ParallelPort(0x%x)", uid), nil
+			path.name = "ParallelPort"
 		case "PNP0501":
-			return fmt.Sprintf("Serial(0x%x)", uid), nil
+			path.name = "Serial"
 		case "PNP0604":
-			return fmt.Sprintf("Floppy(0x%x)", uid), nil
+			path.name = "Floppy"
 		case "PNP0A03":
-			return fmt.Sprintf("PciRoot(0x%x)", uid), nil
+			path.name = "PciRoot"
 		case "PNP0A08":
-			return fmt.Sprintf("PcieRoot(0x%x)", uid), nil
+			path.name = "PcieRoot"
 		default:
-			path := dpFormatter{name: "Acpi"}
+			path.name = "Acpi"
 			path.add(hid)
-			path.add(fmt.Sprintf("0x%x", uid), uid == 0)
-			return path.String(), nil
+			// Here, the specification says the UID is optional.
+			format = "u32?"
 		}
 
+		err = path.addDissected(r, format)
 	case 0x02: // Expanded ACPI Device Path.
-		hid, err := r.readEISA()
+		var hid, cid, hidStr, uidStr, cidStr string
+		var uid uint32
+		hid, err = r.readEISA()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		uid, err := r.readU32()
+		uid, err = r.readU32()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		cid, err := r.readEISA()
+		cid, err = r.readEISA()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		hidStr, err := r.readZn8()
+		hidStr, err = r.readZn8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		uidStr, err := r.readZn8()
+		uidStr, err = r.readZn8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		cidStr, err := r.readZn8()
+		cidStr, err = r.readZn8()
 		if err != nil {
-			return "", err
-		}
-
-		displayedUID := fmt.Sprintf("0x%x", uid)
-		if len(uidStr) > 0 {
-			displayedUID = uidStr
-		}
-
-		if hid == "PNP0A03" || cid == "PNP0A03" && hid != "PNP0A08" {
-			return fmt.Sprintf("PciRoot(0x%x)", displayedUID), nil
-		} else if hid == "PNP0A08" || cid == "PNP0A08" {
-			return fmt.Sprintf("PcieRoot(0x%x)", displayedUID), nil
+			break
 		}
 
 		if len(hidStr) == 0 && len(cidStr) == 0 && len(uidStr) > 0 {
-			return fmt.Sprintf("AcpiExp(%s,%s,%s)", hid, cid, uidStr), nil
+			path.name = "AcpiExp"
+			path.addMandatory(hid, cid, uidStr)
+		} else {
+			path.name = "AcpiEx"
+			path.addMandatory(hid, cid)
+			path.add(fmt.Sprintf("0x%x", uid), uid == 0)
+			path.add(hidStr, len(hidStr) == 0)
+			path.add(cidStr, len(cidStr) == 0)
+			path.add(uidStr, len(uidStr) == 0)
 		}
 
-		path := dpFormatter{name: "AcpiEx"}
-		path.addMandatory(hid, cid, fmt.Sprintf("0x%x", uid))
-		path.add(hidStr, len(hidStr) == 0)
-		path.add(cidStr, len(cidStr) == 0)
-		path.add(uidStr, len(uidStr) == 0)
-		return path.String(), nil
 	case 0x03: // _ADR Device Path.
-		var adrs []string
-		for !r.eof() {
-			adr, err := r.readU32()
-			if err != nil {
-				return "", err
-			}
-
-			adrs = append(adrs, fmt.Sprintf("0x%x", adr))
-		}
-
-		return fmt.Sprintf("AcpiAdr(%s)", strings.Join(adrs, ",")), nil
+		path.name = "AcpiAdr"
+		err = path.addDissected(r, "u32*")
 	case 0x04: // NVDIMM Device.
-		nfit, err := r.readU32()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("NvdimmAcpiAdr(0x%x)", nfit), nil
+		path.name = "NvdimmAcpiAdr"
+		err = path.addDissected(r, "u32")
+	default:
+		err = errUnexpectedData
 	}
 
-	return "", errUnexpectedData
+	if err != nil {
+		return "", err
+	}
+
+	return path.String(), nil
 })
-
-// fcDevicePath dissects a Fibre Channel device path node. The `ex` parameter switches the binary
-// parsing logic to big-endian.
-func fcDevicePath(r *reader, ex bool) (string, error) {
-	err := r.skip(4)
-	if err != nil {
-		return "", err
-	}
-
-	var wwn, lun uint64
-	name := "Fibre"
-	if ex {
-		name = "FibreEx"
-		wwn, err = r.readU64BE()
-		if err != nil {
-			return "", err
-		}
-
-		lun, err = r.readU64BE()
-	} else {
-		wwn, err = r.readU64()
-		if err != nil {
-			return "", err
-		}
-
-		lun, err = r.readU64()
-	}
-
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s(0x%x,0x%x)", name, wwn, lun), nil
-}
 
 // sasDevicePath dissects a SAS device path node. The `ex` parameter switches the binary parsing
 // logic to big-endian.
 func sasDevicePath(r *reader, ex bool, reserved uint32) (string, error) {
 	var address, lun uint64
 	var err error
-	name := "Sas"
+	path := dpFormatter{name: "Sas"}
 	if ex {
-		name = "SasEx"
+		path.name = "SasEx"
 		address, err = r.readU64BE()
 		if err != nil {
 			return "", err
@@ -305,24 +187,26 @@ func sasDevicePath(r *reader, ex bool, reserved uint32) (string, error) {
 		return "", err
 	}
 
-	args := []string{fmt.Sprintf("0x%x", address)}
-
-	topology, err := r.readU8()
+	path.add(fmt.Sprintf("0x%x", address))
+	topology, err := r.readU16()
 	if err != nil {
 		return "", err
 	}
 
 	moreInfo := false
 	moreInfoNext := false
-	switch topology & 0x0F {
-	case 0x02:
+	sasSATA := "NoTopology"
+	switch topology & 0x000F {
+	case 0x0002:
 		moreInfoNext = true
 		fallthrough
-	case 0x01:
+	case 0x0001:
 		moreInfo = true
+	case 0x0000:
+	default:
+		sasSATA = fmt.Sprintf("0x%x", topology)
 	}
 
-	sasSATA := "NoTopology"
 	external := false
 	var connectStr string
 	if moreInfo {
@@ -336,7 +220,7 @@ func sasDevicePath(r *reader, ex bool, reserved uint32) (string, error) {
 			external = true
 		}
 
-		connect := topology >> 6
+		connect := uint8(topology) >> 6
 		var ok bool
 		connectStr, ok = map[uint8]string{0: "Direct", 1: "Expanded"}[connect]
 		if !ok {
@@ -344,245 +228,180 @@ func sasDevicePath(r *reader, ex bool, reserved uint32) (string, error) {
 		}
 	}
 
-	bay, err := r.readU8()
-	if err != nil {
-		return "", err
-	}
-
 	rtp, err := r.readU16()
 	if err != nil {
 		return "", err
 	}
 
-	// We need to print the LUN if a RTP is specified in order to disambiguate.
-	if lun != 0 || rtp != 0 {
-		args = append(args, fmt.Sprintf("0x%x", lun))
+	// We need to print the LUN if a RTP is specified in order to disambiguate. Even though the
+	// specification does not explicitly say it, it looks like SAS nodes are expected to always show
+	// it.
+	if lun != 0 || rtp != 0 || sasSATA == "SAS" {
+		path.add(fmt.Sprintf("0x%x", lun))
 	}
 
 	if rtp != 0 {
-		args = append(args, fmt.Sprintf("0x%x", rtp))
+		path.add(fmt.Sprintf("0x%x", rtp))
 	}
 
 	// We need to print the topology if reserved data are specified in order to disambiguate.
 	if sasSATA != "NoTopology" || reserved != 0 {
-		args = append(args, sasSATA)
+		path.add(sasSATA)
 	}
 
-	if sasSATA != "NoTopology" {
+	if moreInfo {
 		if external {
-			args = append(args, "External")
+			path.add("External")
+		} else {
+			path.add("Internal")
 		}
 
-		if connectStr != "Direct" {
-			args = append(args, connectStr)
-		}
+		path.add(connectStr)
 	}
 
 	if moreInfoNext {
 		// We need to print the bay as a plain integer in order to disambiguate, and because of the
 		// strange 1-offset.
-		args = append(args, fmt.Sprintf("%d", bay+1))
+		path.add(fmt.Sprintf("%d", (topology>>8)+1))
 	}
 
 	if reserved != 0 {
-		args = append(args, fmt.Sprintf("0x%x", reserved))
+		path.add(fmt.Sprintf("0x%x", reserved))
 	}
 
-	return fmt.Sprintf("%s(%s)", name, strings.Join(args, ",")), nil
+	return path.String(), nil
 }
 
 // messagingDevicePath dissects a device path node with type 0x03.
 var messagingDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
+	path := dpFormatter{}
+	var err error
+out:
 	switch subtype {
 	case 0x01: // ATAPI.
-		controller, err := r.readE8(map[uint8]string{0: "Primary", 1: "Secondary"}, true)
+		path.name = "Ata"
+		var controller, drive string
+		controller, err = r.readE8(map[uint8]string{0: "Primary", 1: "Secondary"}, true)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		drive, err := r.readE8(map[uint8]string{0: "Master", 1: "Slave"}, true)
+		drive, err = r.readE8(map[uint8]string{0: "Master", 1: "Slave"}, true)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		lun, err := r.readU16()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Ata(%s,%s,0x%x)", controller, drive, lun), nil
+		path.addMandatory(controller, drive)
+		err = path.addDissected(r, "u16")
 	case 0x02: // SCSI.
-		pun, err := r.readU16()
-		if err != nil {
-			return "", err
-		}
-
-		lun, err := r.readU16()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Scsi(0x%x,0x%x)", pun, lun), nil
+		path.name = "Scsi"
+		err = path.addDissected(r, "u16", "u16")
 	case 0x03: // Fibre Channel.
-		return fcDevicePath(r, false)
+		path.name = "Fibre"
+		err = path.addDissected(r, "s4", "u64", "u64")
 	case 0x04: // 1394.
-		err := r.skip(4)
-		if err != nil {
-			return "", err
-		}
-
-		guid, err := r.readGUID()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("I1394(%s)", guid), nil
+		path.name = "I1394"
+		err = path.addDissected(r, "s4", "u64")
 	case 0x05: // USB.
-		port, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		intf, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("USB(0x%x,0x%x)", port, intf), nil
+		path.name = "USB"
+		err = path.addDissected(r, "u8", "u8")
 	case 0x06: // I2O Random Block Storage Class.
-		tid, err := r.readU32()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("I2O(0x%x)", tid), nil
+		path.name = "I2O"
+		err = path.addDissected(r, "u32")
 	case 0x09: // InfiniBand.
-		flags, err := r.readU32()
-		if err != nil {
-			return "", err
-		}
-
-		gid, err := r.read(16)
-		if err != nil {
-			return "", err
-		}
-
-		serviceID, err := r.readU64()
-		if err != nil {
-			return "", err
-		}
-
-		targetID, err := r.readU64()
-		if err != nil {
-			return "", err
-		}
-
-		deviceID, err := r.readU64()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Infiniband(0x%x,0x%x,0x%x,0x%x,0x%x)", flags, gid, serviceID, targetID, deviceID), nil
+		path.name = "Infiniband"
+		err = path.addDissected(r, "u32", "guid", "u64", "u64", "u64")
 	case 0x0a: // Vendor.
-		guid, err := r.readGUID()
+		var guid string
+		guid, err = r.readGUID()
 		if err != nil {
-			return "", err
+			break
 		}
 
+		path.name = map[string]string{EfiPcAnsiGuid: "VenPcAnsi", EfiVT100Guid: "VenVt100", EfiVT100PlusGuid: "VenVt100Plus", EfiVTUTF8Guid: "VenUtf8", EfiUartDevicePathGuid: "UartFlowCtrl", EfiDebugPortProtocolGuid: "DebugPort"}[guid]
 		switch guid {
-		case EfiPcAnsiGuid:
-			return "VenPcAnsi()", nil
-		case EfiVT100Guid:
-			return "VenVt100()", nil
-		case EfiVT100PlusGuid:
-			return "VenVt100Plus()", nil
-		case EfiVTUTF8Guid:
-			return "VenUtf8()", nil
+		case EfiPcAnsiGuid, EfiVT100Guid, EfiVT100PlusGuid, EfiVTUTF8Guid, EfiDebugPortProtocolGuid:
+			break out
 		case EfiUartDevicePathGuid:
-			flow, err := r.readE32(map[uint32]string{0: "None", 1: "Hardware", 2: "XonXoff"}, true)
-			if err != nil {
-				return "", err
-			}
-
-			return fmt.Sprintf("UartFlowCtrl(%s)", flow), nil
+			var flow string
+			flow, err = r.readE32(map[uint32]string{0: "None", 1: "Hardware", 2: "XonXoff"}, true)
+			path.add(flow)
+			break out
 		case EfiSasDevicePathGuid:
-			reserved, err := r.readU32()
+			var reserved uint32
+			reserved, err = r.readU32()
 			if err != nil {
-				return "", err
+				break out
 			}
 
 			return sasDevicePath(r, false, reserved)
-		case EfiDebugPortProtocolGuid:
-			return "DebugPort()", nil
 		}
 
-		remaining, err := r.read(r.rem())
-		if err != nil {
-			return "", err
-		}
-
-		path := dpFormatter{name: "VenMsg"}
+		path.name = "VenMsg"
 		path.add(guid)
-		path.add(fmt.Sprintf("%x", remaining), len(remaining) == 0)
-		return path.String(), nil
+		err = path.addDissected(r, "*")
 	case 0x0b: // MAC Address for a network interface.
-		mac, err := r.read(32)
+		var mac []byte
+		var ifType uint8
+		mac, err = r.read(32)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		ifType, err := r.readU8()
+		ifType, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
 		if ifType == 0x00 || ifType == 0x01 {
 			mac = mac[:6]
 		}
 
-		path := dpFormatter{name: "MAC"}
+		path.name = "MAC"
 		path.add(fmt.Sprintf("%x", mac))
 		path.add(fmt.Sprintf("0x%x", ifType), ifType == 0x00)
-		return path.String(), nil
 	case 0x0c: // IPv4.
-		localRaw, err := r.read(4)
+		var localRaw, remoteRaw, gatewayRaw, maskRaw []byte
+		var localPort, remotePort uint16
+		var protocol, ipType string
+		localRaw, err = r.read(4)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		remoteRaw, err := r.read(4)
+		remoteRaw, err = r.read(4)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		localPort, err := r.readU16()
+		localPort, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		remotePort, err := r.readU16()
+		remotePort, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		protocol, err := r.readE16(map[uint16]string{6: "TCP", 17: "UDP"}, false)
+		protocol, err = r.readE16(map[uint16]string{6: "TCP", 17: "UDP"}, false)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		ipType, err := r.readE8(map[uint8]string{0: "DHCP", 1: "Static"}, true)
+		ipType, err = r.readE8(map[uint8]string{0: "DHCP", 1: "Static"}, true)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		gatewayRaw, err := r.read(4)
+		gatewayRaw, err = r.read(4)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		maskRaw, err := r.read(4)
+		maskRaw, err = r.read(4)
 		if err != nil {
-			return "", err
+			break
 		}
 
 		localIP := formatIP(localRaw, localPort)
@@ -590,126 +409,139 @@ var messagingDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) 
 		gatewayIP := formatIP(gatewayRaw)
 		maskIP := formatIP(maskRaw)
 
-		path := dpFormatter{name: "IPv4"}
+		path.name = "IPv4"
 		path.add(remoteIP)
 		path.add(protocol, protocol == "UDP")
 		path.add(ipType, ipType == "DHCP")
 		path.add(localIP, localIP == "0.0.0.0")
 		path.add(gatewayIP, gatewayIP == "0.0.0.0")
 		path.add(maskIP, maskIP == "0.0.0.0")
-		return path.String(), nil
 	case 0x0d: // IPv6.
-		localRaw, err := r.read(16)
+		var localRaw, remoteRaw, gatewayRaw []byte
+		var localPort, remotePort uint16
+		var protocol, origin string
+		var prefix uint8
+		localRaw, err = r.read(16)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		remoteRaw, err := r.read(16)
+		remoteRaw, err = r.read(16)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		localPort, err := r.readU16()
+		localPort, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		remotePort, err := r.readU16()
+		remotePort, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		protocol, err := r.readE16(map[uint16]string{6: "TCP", 17: "UDP"}, false)
+		protocol, err = r.readE16(map[uint16]string{6: "TCP", 17: "UDP"}, false)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		origin, err := r.readE8(map[uint8]string{0: "Static", 1: "StatelessAutoConfigure", 2: "StatefulAutoConfigure"}, true)
+		origin, err = r.readE8(map[uint8]string{0: "Static", 1: "StatelessAutoConfigure", 2: "StatefulAutoConfigure"}, true)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		prefix, err := r.readU8()
+		prefix, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		gatewayRaw, err := r.read(16)
+		gatewayRaw, err = r.read(16)
 		if err != nil {
-			return "", err
+			break
 		}
 
 		localIP := formatIP6(localRaw, localPort)
 		remoteIP := formatIP6(remoteRaw, remotePort)
 		gatewayIP := formatIP6(gatewayRaw)
 
-		path := dpFormatter{name: "IPv6"}
+		path.name = "IPv6"
 		path.add(remoteIP)
 		// The specification states that there is a default value even if the next field doesn’t.
 		path.add(protocol, protocol == "UDP")
 		path.add(origin)
-		path.add(localIP, localIP == "[::]")
-		path.add(gatewayIP, gatewayIP == "[::]")
+		path.add(localIP, localIP == "::")
+		path.add(gatewayIP, gatewayIP == "::")
 		// The specification doesn’t give any hint on how to display the prefix length. We are choosing
 		// to display is as an integer defaulting to 64.
 		path.add(strconv.Itoa(int(prefix)), prefix == 64)
-		return path.String(), nil
 	case 0x0e: // UART.
-		err := r.skip(4)
+		var baudRate uint64
+		var dataBits, parity, stopBits uint8
+		err = r.skip(4)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		baudRate, err := r.readU64()
+		baudRate, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		dataBits, err := r.readU8()
+		dataBits, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		parity, err := r.readE8(map[uint8]string{0: "D", 1: "N", 2: "E", 3: "O", 4: "M", 5: "S"}, false)
+		// The UEFI specification requires that both the parity and stop bits be formatted in a similar
+		// way. If either can’t be mapped to a keyword, then the other must be displayed as an integer.
+		parity, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		stopBits, err := r.readE8(map[byte]string{0: "D", 1: "1", 2: "1.5", 3: "2"}, false)
+		stopBits, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		path := dpFormatter{name: "Uart"}
-		path.add(strconv.FormatUint(baudRate, 10), baudRate == 115200)
-		path.add(strconv.Itoa(int(dataBits)), dataBits == 8)
-		path.add(parity, parity == "D")
-		path.add(stopBits, stopBits == "D")
-		return path.String(), nil
+		path.name = "Uart"
+		path.add(fmt.Sprintf("%d", baudRate), baudRate == 115200)
+		path.add(fmt.Sprintf("%d", dataBits), dataBits == 8)
+		if parity > 5 || stopBits > 3 {
+			path.add(fmt.Sprintf("0x%x", parity), parity == 0)
+			path.add(fmt.Sprintf("0x%x", stopBits), stopBits == 0)
+		} else {
+			path.add(map[uint8]string{0: "D", 1: "N", 2: "E", 3: "O", 4: "M", 5: "S"}[parity], parity == 0)
+			path.add(map[byte]string{0: "D", 1: "1", 2: "1.5", 3: "2"}[stopBits], stopBits == 0)
+		}
+
 	case 0x0f: // USB Class.
-		vid, err := r.readU16()
+		var vid, pid uint16
+		var usbClass, usbSubclass, protocol uint8
+		vid, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		pid, err := r.readU16()
+		pid, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		usbClass, err := r.readU8()
+		usbClass, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		usbSubclass, err := r.readU8()
+		usbSubclass, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		protocol, err := r.readU8()
+		protocol, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
 		// UsbAppSpecific is not defined in UEFI, but helps us discriminate subclasses after.
@@ -727,7 +559,7 @@ var messagingDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) 
 			name = "UsbClass"
 		}
 
-		path := dpFormatter{name: name}
+		path.name = name
 		path.add(fmt.Sprintf("0x%x", vid), vid == 0xFFFF)
 		path.add(fmt.Sprintf("0x%x", pid), pid == 0xFFFF)
 		if !knownClass {
@@ -739,258 +571,188 @@ var messagingDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) 
 		}
 
 		path.add(fmt.Sprintf("0x%x", protocol), protocol == 0xFF)
-		return path.String(), nil
 	case 0x10: // USB WWID.
-		usbInterface, err := r.readU16()
+		var usbInterface, vid, pid uint16
+		var sn string
+		usbInterface, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		vid, err := r.readU16()
+		vid, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		pid, err := r.readU16()
+		pid, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		sn, err := r.readZ16(r.rem() / 2)
+		sn, err = r.readZ16(r.rem() / 2)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		return fmt.Sprintf("UsbWwid(0x%x,0x%x,0x%x,%q)", vid, pid, usbInterface, sn), nil
+		path.name = "UsbWwid"
+		path.addMandatory(fmt.Sprintf("0x%x", vid), fmt.Sprintf("0x%x", pid), fmt.Sprintf("0x%x", usbInterface), sn)
 	case 0x11: // Device Logical unit.
-		lun, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Unit(0x%x)", lun), nil
+		path.name = "Unit"
+		err = path.addDissected(r, "u8")
 	case 0x12: // SATA.
-		hpn, err := r.readU16()
-		if err != nil {
-			return "", err
-		}
-
-		pmpn, err := r.readU16()
-		if err != nil {
-			return "", err
-		}
-
-		lun, err := r.readU16()
-		if err != nil {
-			return "", err
-		}
-
-		path := dpFormatter{name: "Sata"}
-		path.add(fmt.Sprintf("0x%x", hpn))
-		path.add(fmt.Sprintf("0x%x", pmpn), pmpn == 0xFFFF)
-		// The UEFI specification marks this parameter as mandatory, but we don’t.
-		path.add(fmt.Sprintf("0x%x", lun), lun == 0x0000)
-		return path.String(), nil
+		path.name = "Sata"
+		// The UEFI specification marks the last parameter (LUN) as mandatory, but we don’t.
+		err = path.addDissected(r, "u16", "u16?65535", "u16?")
 	case 0x13: // iSCSI.
-		protocol, err := r.readE16(map[uint16]string{0: "TCP"}, false)
+		var protocol, targetName string
+		var options, portalGroup uint16
+		var lun uint64
+		protocol, err = r.readE16(map[uint16]string{0: "TCP"}, false)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		options, err := r.readU16()
+		options, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
 		headerDigest, ok := map[uint16]string{0x0000: "None", 0x0002: "CRC32C"}[options&0x0003]
 		if !ok {
-			return "", errUnexpectedData
+			err = errUnexpectedData
+			break
 		}
 
 		dataDigest, ok := map[uint16]string{0x0000: "None", 0x0008: "CRC32C"}[options&0x000c]
 		if !ok {
-			return "", errUnexpectedData
+			err = errUnexpectedData
+			break
 		}
 
 		authentication, ok := map[uint16]string{0x0000: "CHAP_BI", 0x0800: "None", 0x1000: "CHAP_UNI"}[options&0x1c00]
 		if !ok {
-			return "", errUnexpectedData
+			err = errUnexpectedData
+			break
 		}
 
-		lun, err := r.readU64BE()
+		lun, err = r.readU64BE()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		portalGroup, err := r.readU16()
+		portalGroup, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		targetName, err := r.readZ16(r.rem() / 2)
+		targetName, err = r.readZ16(r.rem() / 2)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		path := dpFormatter{name: "iSCSI"}
+		path.name = "iSCSI"
 		path.addMandatory(targetName, fmt.Sprintf("0x%x", portalGroup), fmt.Sprintf("0x%x", lun))
 		path.add(headerDigest, headerDigest == "None")
 		path.add(dataDigest, dataDigest == "None")
 		path.add(authentication, authentication == "None")
 		path.add(protocol, protocol == "TCP")
-		return path.String(), nil
 	case 0x14: // Vlan (802.1q).
-		vlan, err := r.readU16()
+		// We display the VLAN as a plain base-10 integer.
+		var vlan uint16
+		vlan, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		return fmt.Sprintf("Vlan(%d)", vlan), nil
+		path.name = "Vlan"
+		path.add(fmt.Sprintf("%d", vlan))
 	case 0x15: // Fibre Channel Ex.
-		return fcDevicePath(r, true)
+		path.name = "FibreEx"
+		err = path.addDissected(r, "s4", "u64be", "u64be")
 	case 0x16: // SAS Ex.
 		return sasDevicePath(r, true, 0)
 	case 0x17: // NVM Express Namespace.
-		nsid, err := r.readU32()
-		if err != nil {
-			return "", err
-		}
-
-		eui, err := r.readEUI64()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("NVMe(0x%x,%s)", nsid, eui), nil
+		path.name = "NVMe"
+		err = path.addDissected(r, "u32", "eui64")
 	case 0x18: // Universal Resource Identifier (URI) Device Path.
-		uri, err := r.readZ8(r.rem())
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Uri(%s)", uri), nil
+		path.name = "Uri"
+		err = path.addDissected(r, "z8?")
 	case 0x19: // UFS.
-		pun, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		lun, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("UFS(0x%x,0x%x)", pun, lun), nil
+		path.name = "UFS"
+		err = path.addDissected(r, "u8", "u8")
 	case 0x1a: // SD.
-		slot, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		path := dpFormatter{name: "SD"}
-		path.add(fmt.Sprintf("0x%x", slot), slot != 0)
-		return path.String(), nil
+		path.name = "SD"
+		err = path.addDissected(r, "u8?")
 	case 0x1b: // Bluetooth.
-		addr, err := r.read(6)
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Bluetooth(%x)", addr), nil
+		path.name = "Bluetooth"
+		err = path.addDissected(r, "6")
 	case 0x1c: // Wi-Fi Device Path.
-		ssid, err := r.read(32)
-		if err != nil {
-			return "", err
-		}
-
 		// Sane string parsing strategies unfortunately don’t apply to SSIDs, which can contain null
 		// bytes.
-		return fmt.Sprintf("Wi-Fi(%q)", strings.TrimRight(string(ssid), "\x00")), nil
+		var ssid []byte
+		ssid, err = r.read(32)
+		if err != nil {
+			break
+		}
+
+		path.name = "Wi-Fi"
+		path.add(strings.TrimRight(string(ssid), "\x00"))
 	case 0x1d: // eMMC.
-		slot, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		path := dpFormatter{name: "eMMC"}
-		path.add(fmt.Sprintf("0x%x", slot), slot != 0)
-		return path.String(), nil
+		path.name = "eMMC"
+		err = path.addDissected(r, "u8?")
 	case 0x1e: // BluetoothLE.
-		addr, err := r.read(6)
-		if err != nil {
-			return "", err
-		}
-
-		addrType, err := r.readU8()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("BluetoothLE(%x,0x%x)", addr, addrType), nil
+		path.name = "BluetoothLE"
+		err = path.addDissected(r, "6", "u8")
 	case 0x1f: // DNS Device Path.
-		v6, err := r.readB8()
+		var v6 bool
+		var ip []byte
+		v6, err = r.readB8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		var ips []string
+		path.name = "Dns"
 		for !r.eof() {
-			ip, err := r.read(16)
+			ip, err = r.read(16)
 			if err != nil {
-				return "", err
+				break out
 			}
 
 			if v6 {
-				ips = append(ips, formatIP6(ip))
+				path.add(formatIP6(ip))
 			} else {
-				ips = append(ips, formatIP(ip))
+				path.add(formatIP(ip))
 			}
 		}
 
-		return fmt.Sprintf("Dns(%s)", strings.Join(ips, ",")), nil
 	case 0x20: // NVDIMM Namespace.
-		uuid, err := r.readGUID()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("NVDIMM(%s)", uuid), nil
+		path.name = "NVDIMM"
+		err = path.addDissected(r, "guid")
 	case 0x21: // REST Service Device Path.
-		service, err := r.readU8()
+		path.name = "RestService"
+		var service, access uint8
+		service, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		access, err := r.readU8()
+		access, err = r.readU8()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		path := dpFormatter{name: "RestService"}
 		path.addMandatory(fmt.Sprintf("0x%x", service), fmt.Sprintf("0x%x", access))
 
 		if service == 0xFF {
-			guid, err := r.readGUID()
-			if err != nil {
-				return "", err
-			}
-
-			path.add(guid)
-			if !r.eof() {
-				remaining, err := r.read(r.rem())
-				if err != nil {
-					return "", err
-				}
-
-				path.add(fmt.Sprintf("%x", remaining))
-			}
+			// The UEFI specification doesn’t mark the last field as optional, but we do.
+			err = path.addDissected(r, "guid", "*")
 		}
 
-		return path.String(), nil
 	case 0x22: // NVMe-oF Namespace Device Path.
-		nidt, err := r.readE8(map[uint8]string{1: "eui", 2: "nvme-nguid", 3: "urn:uuid"}, true)
+		var nidt string
+		nidt, err = r.readE8(map[uint8]string{1: "eui", 2: "nvme-nguid", 3: "urn:uuid"}, true)
 		if err != nil {
-			return "", err
+			break
 		}
 
 		var nid string
@@ -998,245 +760,253 @@ var messagingDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) 
 		case "eui":
 			nid, err = r.readEUI64BE()
 			if err != nil {
-				return "", err
+				break out
 			}
 
 			err = r.skip(8)
 			if err != nil {
-				return "", err
+				break out
 			}
 
 		case "nvme-nguid":
-			b, err := r.read(16)
+			var b []byte
+			b, err = r.read(16)
 			if err != nil {
-				return "", err
+				break out
 			}
 
-			nid = fmt.Sprintf("%X-%X-%X", b[0:8], b[8:11], b[11:16])
+			nid = fmt.Sprintf("%x-%x-%x", b[0:8], b[8:11], b[11:16])
 		case "urn:uuid":
 			nid, err = r.readGUIDBE()
 			if err != nil {
-				return "", err
+				break out
 			}
 		}
 
-		nqn, err := r.readZn8(r.rem())
+		var nqn string
+		nqn, err = r.readZn8(r.rem())
 		if err != nil {
-			return "", err
+			break out
 		}
 
-		return fmt.Sprintf("NVMEoF(%s,%s:%s)", nqn, nidt, nid), nil
+		path.name = "NVMEoF"
+		path.addMandatory(nqn, nidt+":"+nid)
+	default:
+		err = errUnexpectedData
 	}
 
-	return "", errUnexpectedData
+	if err != nil {
+		return "", err
+	}
+
+	return path.String(), nil
 })
 
 // mediaDevicePath dissects a device path node with type 0x04.
 var mediaDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
+	path := dpFormatter{}
+	var err error
 	switch subtype {
 	case 0x01: // Hard Drive.
-		partition, err := r.readU32()
+		var partition uint32
+		var start, size uint64
+		var signature []byte
+		var format, sigType string
+		partition, err = r.readU32()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		start, err := r.readU64()
+		start, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		size, err := r.readU64()
+		size, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		signature, err := r.read(16)
+		signature, err = r.read(16)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		format, err := r.readE8(map[uint8]string{1: "MBR", 2: "GPT"}, true)
+		format, err = r.readE8(map[uint8]string{1: "MBR", 2: "GPT"}, true)
 		if err != nil {
-			return "", err
+			break
 		}
 
 		// The UEFI specification does not handle format / signature type mismatches, so we do the same.
-		// Additionally, it doesn’t explain how to handle non-0x01 or 0x02 signature types.
-		sigType, err := r.readE8(map[uint8]string{1: "MBR", 2: "GPT"}, true)
+		// Additionally, it doesn’t explain how to handle non-0x01 or 0x02 signature types. Even though
+		// the 0x00 type is allowed, it is not a valid format; we decide to reject all those
+		// under-specified cases.
+		sigType, err = r.readE8(map[uint8]string{1: "MBR", 2: "GPT"}, true)
 		if err != nil {
-			return "", err
+			break
 		}
 
 		if sigType != format {
-			return "", errUnexpectedData
+			err = errUnexpectedData
+			break
 		}
 
-		path := dpFormatter{name: "HD"}
+		path.name = "HD"
 		path.add(fmt.Sprintf("0x%x", partition), partition == 0)
 		path.add(format, format == "GPT")
 		// The UEFI specification marks this parameter as mandatory, thus making the previous ones being
 		// optional moot.
 		if sigType == "MBR" {
-			path.add(fmt.Sprintf("0x%x", signature[:4]))
+			path.add(fmt.Sprintf("0x%x", binary.LittleEndian.Uint32(signature[:4])))
 		} else {
 			path.add(formatGUID(signature))
 		}
 
 		if partition != 0 {
 			// Most tools format those as integers, so we do the same.
-			path.add(fmt.Sprintf("%d", start))
-			path.add(fmt.Sprintf("%d", size))
+			path.addMandatory(fmt.Sprintf("%d", start), fmt.Sprintf("%d", size))
 		}
 
-		return path.String(), nil
 	case 0x02: // CD-ROM “El Torito” Format.
-		entry, err := r.readU32()
+		var entry uint32
+		var start, size uint64
+		entry, err = r.readU32()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		start, err := r.readU64()
+		start, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		size, err := r.readU64()
+		size, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		// Most tools format those as integers, so we do the same.
-		return fmt.Sprintf("CDROM(%d,%d,%d)", entry, start, size), nil
+		path.name = "CDROM"
+		// Most tools format sizes as integers, so we do the same.
+		path.addMandatory(fmt.Sprintf("0x%x", entry), fmt.Sprintf("%d", start), fmt.Sprintf("%d", size))
 	case 0x03: // Vendor.
-		guid, err := r.readGUID()
-		if err != nil {
-			return "", err
-		}
-
-		remaining, err := r.read(r.rem())
-		if err != nil {
-			return "", err
-		}
-
-		path := dpFormatter{name: "VenMedia"}
-		path.add(guid)
-		path.add(fmt.Sprintf("%x", remaining), len(remaining) == 0)
-		return path.String(), nil
+		path.name = "VenMedia"
+		err = path.addDissected(r, "guid", "*")
 	case 0x04: // File Path.
-		path, err := r.readZn16(r.rem() / 2)
+		var file string
+		file, err = r.readZn16(r.rem() / 2)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		return path, nil
+		return file, nil
 	case 0x05: // Media Protocol.
-		guid, err := r.readGUID()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Media(%s)", guid), nil
+		path.name = "Media"
+		err = path.addDissected(r, "guid")
 	case 0x06: // PIWG Firmware File.
-		guid, err := r.readGUID()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("FvFile(%s)", guid), nil
+		path.name = "FvFile"
+		err = path.addDissected(r, "guid")
 	case 0x07: // PIWG Firmware Volume.
-		guid, err := r.readGUID()
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("Fv(%s)", guid), nil
+		path.name = "Fv"
+		err = path.addDissected(r, "guid")
 	case 0x08: // Relative Offset Range.
-		err := r.skip(4)
+		var start, end uint64
+		err = r.skip(4)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		start, err := r.readU64()
+		start, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		end, err := r.readU64()
+		end, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		return fmt.Sprintf("Offset(0x%x,0x%x)", start, end), nil
+		path.name = "Offset"
+		path.addMandatory(fmt.Sprintf("%d", start), fmt.Sprintf("%d", end))
 	case 0x09: // RAM Disk Device Path.
-		start, err := r.readU64()
+		var start, end uint64
+		var guid string
+		var instance uint16
+		start, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		end, err := r.readU64()
+		end, err = r.readU64()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		guid, err := r.readGUID()
+		guid, err = r.readGUID()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		instance, err := r.readU16()
+		instance, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		path := dpFormatter{name: "RamDisk"}
-		path.addMandatory(fmt.Sprintf("0x%x", start), fmt.Sprintf("0x%x", end))
+		path.addMandatory(fmt.Sprintf("%d", start), fmt.Sprintf("%d", end))
 		path.add(fmt.Sprintf("0x%x", instance), instance == 0)
+		var ok bool
+		path.name, ok = map[string]string{EfiVirtualDiskGuid: "VirtualDisk", EfiVirtualCdGuid: "VirtualCD", EfiPersistentVirtualDiskGuid: "PersistentVirtualDisk", EfiPersistentVirtualCdGuid: "PersistentVirtualCD"}[guid]
 
-		switch guid {
-		case EfiVirtualDiskGuid:
-			path.name = "VirtualDisk"
-		case EfiVirtualCdGuid:
-			path.name = "VirtualCD"
-		case EfiPersistentVirtualDiskGuid:
-			path.name = "PersistentVirtualDisk"
-		case EfiPersistentVirtualCdGuid:
-			path.name = "PersistentVirtualCD"
-		default:
+		if !ok {
 			path.add(guid)
+			path.name = "RamDisk"
 		}
 
-		return path.String(), nil
+	default:
+		err = errUnexpectedData
 	}
 
-	return "", errUnexpectedData
+	if err != nil {
+		return "", err
+	}
+
+	return path.String(), nil
 })
 
 // bbsDevicePath dissects a device path node with type 0x05.
 var bbsDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
+	path := dpFormatter{}
+	var err error
 	switch subtype {
 	case 0x01: // BIOS Boot Specification Device Path.
-		deviceType, err := r.readE16(map[uint16]string{1: "Floppy", 2: "HD", 3: "CDROM", 4: "PCMCIA", 5: "USB", 6: "Network"}, false)
+		var deviceType, description string
+		var status uint16
+		deviceType, err = r.readE16(map[uint16]string{1: "Floppy", 2: "HD", 3: "CDROM", 4: "PCMCIA", 5: "USB", 6: "Network"}, false)
 		if err != nil {
-			return "", err
+			break
 		}
 
-		status, err := r.readU16()
+		status, err = r.readU16()
 		if err != nil {
-			return "", err
+			break
 		}
 
-		description, err := r.readZn8(r.rem())
+		description, err = r.readZn8(r.rem())
 		if err != nil {
-			return "", err
+			break
 		}
 
-		path := dpFormatter{name: "BBS"}
+		path.name = "BBS"
 		path.addMandatory(deviceType, description)
 		path.add(fmt.Sprintf("0x%x", status), status == 0)
-		return path.String(), nil
+	default:
+		err = errUnexpectedData
 	}
 
-	return "", errUnexpectedData
+	if err != nil {
+		return "", err
+	}
+
+	return path.String(), nil
 })
 
 // devicePathNode dissects a device path node.
