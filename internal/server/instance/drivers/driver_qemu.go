@@ -3832,7 +3832,7 @@ func (d *qemu) templateApplyNow(trigger instance.TemplateTrigger, path string) e
 				return err
 			}
 
-			defer logger.WarnOnError(w.Close, "Failed to close file")
+			defer logger.WarnOnErrorExcept(w.Close, []error{os.ErrClosed}, "Failed to close file")
 
 			// Read the template.
 			tplString, err := os.ReadFile(filepath.Join(d.TemplatesPath(), tpl.Template))
@@ -8384,7 +8384,7 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 		return "", "", nil, fmt.Errorf("Failed opening file descriptor for migration storage snapshot %q: %w", snapshotFile, err)
 	}
 
-	defer logger.WarnOnError(snapFile.Close, "Failed to close snapshot file")
+	defer logger.WarnOnErrorExcept(snapFile.Close, []error{os.ErrClosed}, "Failed to close snapshot file")
 
 	// Remove the snapshot file as we don't want to sync this to the target.
 	err = os.Remove(snapshotFile)

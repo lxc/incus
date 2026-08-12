@@ -897,6 +897,31 @@ func (d *lvm) thinPoolVolumeUsage(volDevPath string) (uint64, uint64, error) {
 	return totalSize, usedSize, nil
 }
 
+// snapshotNeedsCoWGrow returns whether a snapshot lacks the CoW capacity needed for a full restore.
+func (d *lvm) snapshotNeedsCoWGrow(snapLVPath string) (bool, error) {
+	out, err := subprocess.RunCommand("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size,origin_size", snapLVPath)
+	if err != nil {
+		return false, err
+	}
+
+	fields := strings.Fields(out)
+	if len(fields) != 2 {
+		return false, fmt.Errorf("Unexpected output from lvs: %q", out)
+	}
+
+	lvSize, err := strconv.ParseInt(fields[0], 10, 64)
+	if err != nil {
+		return false, err
+	}
+
+	originSize, err := strconv.ParseInt(fields[1], 10, 64)
+	if err != nil {
+		return false, err
+	}
+
+	return lvSize <= originSize, nil
+}
+
 // parseLogicalVolumeSnapshot parses a raw logical volume name (from lvs command) and checks whether it is a
 // snapshot of the supplied parent volume. Returns unescaped parsed snapshot name if snapshot volume recognised,
 // empty string if not. The parent is required due to limitations in the naming scheme that Incus has historically

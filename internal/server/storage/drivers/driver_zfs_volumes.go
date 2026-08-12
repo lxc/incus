@@ -3170,7 +3170,7 @@ func (d *zfs) BackupVolume(vol Volume, writer instancewriter.InstanceWriter, bas
 			return fmt.Errorf("Failed to open temporary file for ZFS backup: %w", err)
 		}
 
-		defer logger.WarnOnError(tmpFile.Close, "Failed to close temporary file")
+		defer logger.WarnOnErrorExcept(tmpFile.Close, []error{os.ErrClosed}, "Failed to close temporary file")
 		defer logger.WarnOnError(func() error { return os.Remove(tmpFile.Name()) }, "Failed to remove temporary file")
 
 		// Write the subvolume to the file.

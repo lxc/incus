@@ -166,7 +166,7 @@ func (ctw *InstanceTarWriter) WriteFile(name string, srcPath string, fi os.FileI
 			return fmt.Errorf("Failed to open file %q: %w", srcPath, err)
 		}
 
-		defer logger.WarnOnError(f.Close, "Failed to close file", logger.Ctx{"path": srcPath})
+		defer logger.WarnOnErrorExcept(f.Close, []error{os.ErrClosed}, "Failed to close file", logger.Ctx{"path": srcPath})
 
 		r := io.Reader(f)
 		if ignoreGrowth {

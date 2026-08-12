@@ -214,7 +214,7 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 			return fmt.Errorf("Error opening file for reading %q: %w", path, err)
 		}
 
-		defer logger.WarnOnError(from.Close, "Failed to close file")
+		defer logger.WarnOnErrorExcept(from.Close, []error{os.ErrClosed}, "Failed to close file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(from)
@@ -343,7 +343,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 			return fmt.Errorf("Error opening file for writing %q: %w", path, err)
 		}
 
-		defer logger.WarnOnError(to.Close, "Failed to close file")
+		defer logger.WarnOnErrorExcept(to.Close, []error{os.ErrClosed}, "Failed to close file")
 
 		// Setup progress tracker.
 		fromPipe := io.ReadCloser(conn)

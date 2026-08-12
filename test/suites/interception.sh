@@ -8,11 +8,11 @@ test_interception() {
     poolName=$(incus profile device get default root pool)
 
     incus network create incusbr0
-    incus init images:debian/12 c1 -s "${poolName}"
+    incus init images:debian/13 c1 -s "${poolName}"
     incus config device add c1 eth0 nic network=incusbr0 name=eth0
     incus start c1
     sleep 10
-    incus exec c1 -- apt-get install --no-install-recommends --yes attr fuse2fs fuse
+    incus exec c1 -- apt-get install --no-install-recommends --yes attr e2fsprogs fuse2fs fuse
 
     echo "==> Testing setxattr interception"
     incus exec c1 -- touch xattr-test

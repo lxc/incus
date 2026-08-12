@@ -62,7 +62,7 @@ func (r *CSVReport) write() error {
 		return err
 	}
 
-	defer logger.WarnOnError(file.Close, "Failed to close file")
+	defer logger.WarnOnErrorExcept(file.Close, []error{os.ErrClosed}, "Failed to close file")
 
 	writer := csv.NewWriter(file)
 	err = writer.WriteAll(r.records)
