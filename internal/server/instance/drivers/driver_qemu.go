@@ -1799,6 +1799,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		bs.CPUType = cpuType
 	}
 
+	if bs.MaxCPUs == 0 {
+		maxCPUs, err := d.maxCPUs(bs.CPUTopology)
+		if err != nil {
+			return err
+		}
+
+		bs.MaxCPUs = maxCPUs
+	}
+
 	// Setup the memory.
 	if bs.MemoryTopology == nil {
 		// Get the memory topology.
@@ -4569,9 +4578,6 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 			cpuOpts.cpuCores = 1
 			cpuOpts.cpuSockets = 1
 			cpuOpts.cpuThreads = 1
-
-			// Expose the total requested by the user already so the hotplug limit can be set higher if needed.
-			cpuOpts.cpuRequested = cpuInfo.Cores
 		} else {
 			cpuOpts.cpuCount = cpuInfo.Cores
 			cpuOpts.cpuCores = cpuInfo.Cores
@@ -4672,6 +4678,8 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, bs *qemuBootState) error 
 	if err != nil {
 		return err
 	}
+
+	cpuOpts.cpuMaxCpus = bs.MaxCPUs
 
 	// A fixed topology is written verbatim, either due to CPU pinning or an explicit topology request.
 	cpuFixedTopology := bs.CPUTopology.VCPUs != nil || bs.CPUTopology.Explicit
