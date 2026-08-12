@@ -461,3 +461,92 @@ func processRawDPArgs(w *writer, args []string) (uint8, error) {
 
 	return uint8(subType), formatDPArgs(w, args[1:], "*")
 }
+
+// decomposeDPInstance decomposes a device path instance into a slice of node names and their
+// arguments.
+func decomposeDPInstance(s string) ([][]string, error) {
+	var out [][]string
+	var node []string
+	var sb strings.Builder
+	inArgs := false
+	inQuote := false
+	for i := 0; i < len(s); {
+		if inQuote {
+			if s[i] == '"' {
+				inQuote = false
+				i++
+				continue
+			}
+
+			r, _, tl, err := strconv.UnquoteChar(s[i:], '"')
+			if err != nil {
+				return nil, fmt.Errorf("Invalid quoted string at index %d: %w", i, err)
+			}
+
+			sb.WriteRune(r)
+			i += len(s[i:]) - len(tl)
+			continue
+		}
+
+		switch s[i] {
+		case '"':
+			inQuote = true
+		case '(':
+			if inArgs {
+				return nil, fmt.Errorf("Unexpected '(' at index %d", i)
+			}
+
+			node = append(node, strings.ToLower(sb.String()))
+			sb.Reset()
+			inArgs = true
+		case ',':
+			if inArgs {
+				node = append(node, sb.String())
+				sb.Reset()
+			} else {
+				sb.WriteByte(',')
+			}
+
+		case ')':
+			if !inArgs {
+				return nil, fmt.Errorf("Unexpected ')' at index %d", i)
+			}
+
+			if sb.Len() != 0 {
+				node = append(node, sb.String())
+				sb.Reset()
+			}
+
+			inArgs = false
+		case '/':
+			if inArgs {
+				sb.WriteByte('/')
+			} else if len(node) == 0 {
+				out = append(out, []string{"", sb.String()})
+				sb.Reset()
+			} else {
+				out = append(out, node)
+				node = nil
+			}
+
+		default:
+			sb.WriteByte(s[i])
+		}
+
+		i++
+	}
+
+	if inQuote {
+		return nil, fmt.Errorf("Unterminated quoted string")
+	}
+
+	if inArgs {
+		return nil, fmt.Errorf("Unterminated argument list")
+	}
+
+	if len(node) == 0 {
+		return append(out, []string{"", sb.String()}), nil
+	}
+
+	return append(out, node), nil
+}
