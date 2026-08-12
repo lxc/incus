@@ -486,6 +486,14 @@ func (d Nftables) InstanceSetupProxyNAT(projectName string, instanceName string,
 		listenAddressStr = forward.ListenAddress.String()
 	}
 
+	// Only used for wildcard listen addresses, where no address match constrains the family.
+	nfProto := "ipv4"
+	loopbackNet := "127.0.0.0/8"
+	if ipFamily == "ip6" {
+		nfProto = "ipv6"
+		loopbackNet = "::1/128"
+	}
+
 	targetAddressStr := forward.TargetAddress.String()
 
 	// Generate slices of rules to add.
@@ -517,6 +525,8 @@ func (d Nftables) InstanceSetupProxyNAT(projectName string, instanceName string,
 
 		dnatRules = append(dnatRules, map[string]any{
 			"ipFamily":      ipFamily,
+			"nfProto":       nfProto,
+			"loopbackNet":   loopbackNet,
 			"protocol":      forward.Protocol,
 			"listenAddress": listenAddressStr,
 			"listenPorts":   portRangeStr(listenPortRange, "-"),

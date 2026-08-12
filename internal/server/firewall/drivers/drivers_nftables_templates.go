@@ -103,14 +103,14 @@ table {{.family}} {{.namespace}} {
 	chain {{.chainPrefix}}prert{{.chainSeparator}}{{.label}} {
 		type nat hook prerouting priority -100; policy accept;
 		{{ range .dnatRules }}
-		{{ if .listenAddress }}{{.ipFamily}} daddr {{.listenAddress}} {{ end }}{{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat {{.ipFamily}} to {{.targetDest}}
+		{{ if .listenAddress }}{{.ipFamily}} daddr {{.listenAddress}} {{ else }}meta nfproto {{.nfProto}} fib daddr type local {{ end }}{{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat {{.ipFamily}} to {{.targetDest}}
 		{{ end }}
 	}
 
 	chain {{.chainPrefix}}out{{.chainSeparator}}{{.label}} {
 		type nat hook output priority -100; policy accept;
 		{{ range .dnatRules }}
-		{{ if .listenAddress }}{{.ipFamily}} daddr {{.listenAddress}} {{ end }}{{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat {{.ipFamily}} to {{.targetDest}}
+		{{ if .listenAddress }}{{.ipFamily}} daddr {{.listenAddress}} {{ else }}meta nfproto {{.nfProto}} {{.ipFamily}} daddr != {{.loopbackNet}} fib daddr type local {{ end }}{{ if .protocol }}{{.protocol}} dport {{.listenPorts}}{{ end }} dnat {{.ipFamily}} to {{.targetDest}}
 		{{ end }}
 	}
 
