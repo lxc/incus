@@ -1,6 +1,7 @@
 package uefi
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"slices"
@@ -205,4 +206,258 @@ func (d *dpFormatter) addDissected(r *reader, types ...string) error {
 	}
 
 	return nil
+}
+
+// formatDPArgs formats consecutive device path arguments.
+func formatDPArgs(w *writer, args []string, types ...string) error {
+	var err error
+	var i int
+	var t string
+	initialArgs := args
+out:
+	for i, t = range types {
+		t, loop := strings.CutSuffix(t, "*")
+		parts := strings.SplitN(t, "?", 2)
+		optional := len(parts) == 2
+		t = parts[0]
+		hasDefault := optional && parts[1] != ""
+		skip := optional && len(args) == 0
+		if len(args) == 0 && !loop && !skip {
+			err = errors.New("Not enough arguments")
+			break
+		}
+
+		size, sizeErr := strconv.Atoi(t)
+		if sizeErr == nil {
+			t = ""
+		} else if strings.HasPrefix(t, "s") {
+			size, err = strconv.Atoi(t[1:])
+			if err != nil {
+				return fmt.Errorf("Cannot parse skip length for %s: %w", t, err)
+			}
+
+			t = "s"
+		}
+
+		for !loop || len(args) > 0 {
+			skipThis := skip
+			switch t {
+			case "s":
+				if optional {
+					// This indicates a programming error and shouldn’t happen.
+					return errors.New("Cannot make skips optional")
+				}
+
+				err = w.skip(size)
+				skipThis = true
+			case "u8", "u16", "u32", "u64", "u64be":
+				var v uint64
+				if hasDefault {
+					v, _ = strconv.ParseUint(parts[1], 10, uintSizes[t])
+				}
+
+				if !skip {
+					v, err = strconv.ParseUint(args[0], 0, uintSizes[t])
+				}
+
+				if err == nil {
+					switch t {
+					case "u8":
+						err = w.writeU8(uint8(v))
+					case "u16":
+						err = w.writeU16(uint16(v))
+					case "u32":
+						err = w.writeU32(uint32(v))
+					case "u64":
+						err = w.writeU64(v)
+					case "u64be":
+						err = w.writeU64BE(v)
+					}
+				}
+
+			case "guid", "guidbe", "eisa", "eui64", "eui64be":
+				var v string
+				if optional {
+					if !hasDefault {
+						// This indicates a programming error and shouldn’t happen.
+						return fmt.Errorf("No default %s given", t)
+					}
+
+					v = parts[1]
+				}
+
+				if !skip {
+					v = args[0]
+				}
+
+				switch t {
+				case "guid":
+					err = w.writeGUID(v)
+				case "guidbe":
+					err = w.writeGUIDBE(v)
+				case "eisa":
+					err = w.writeEISA(v)
+				case "eui64":
+					err = w.writeEUI64(v)
+				case "eui64be":
+					err = w.writeEUI64BE(v)
+				}
+
+			case "z8", "zn8", "z16", "zn16":
+				var v string
+				if hasDefault {
+					v = parts[1]
+				}
+
+				if !skip {
+					v = args[0]
+				}
+
+				switch t {
+				case "z8":
+					err = w.writeZ8(v)
+				case "zn8":
+					err = w.writeZn8(v)
+				case "z16":
+					err = w.writeZ16(v)
+				case "zn16":
+					err = w.writeZn16(v)
+				}
+
+			// This case handles both fixed integers and `*` specifiers to mean “write the argument as a
+			// hex-dump”.
+			case "":
+				if optional {
+					// This indicates a programming error and shouldn’t happen.
+					return errors.New("No default hex-dump")
+				}
+
+				// A hex dump takes twice the length of the actual data.
+				if !loop && len(args[0]) != 2*size {
+					return fmt.Errorf("Wrong buffer size for %s (expected %d)", args[0], size)
+				}
+
+				var v []byte
+				// As an extra precaution, strip any leading `0x`.
+				v, err = hex.DecodeString(strings.TrimPrefix(strings.ToLower(args[0]), "0x"))
+				if err == nil {
+					err = w.write(v)
+				}
+
+				// To play nice with whatever comes next, reset the loop indicator.
+				loop = false
+			default:
+				err = fmt.Errorf("Unknown type specifier: %s", t)
+			}
+
+			if err != nil {
+				break out
+			}
+
+			if !skipThis {
+				args = args[1:]
+			}
+
+			if !loop {
+				break
+			}
+		}
+	}
+
+	if err != nil {
+		return fmt.Errorf("Failed writing %v into %v at index %d: %w", initialArgs, types, i, err)
+	}
+
+	if len(args) != 0 {
+		return tooManyArgs(args)
+	}
+
+	return nil
+}
+
+// expectArgs returns an error if the wrong number of arguments was passed.
+func expectArgs(args []string, sizes ...int) error {
+	sizesStr := make([]string, len(sizes))
+	for i, size := range sizes {
+		if len(args) == size {
+			return nil
+		}
+
+		sizesStr[i] = strconv.Itoa(size)
+	}
+
+	eitherOr := ""
+	switch len(sizes) {
+	case 0:
+		// This indicates a programming error and shouldn’t happen.
+		return errors.New("Missing argument constraints")
+	case 1:
+		eitherOr = sizesStr[0]
+	default:
+		eitherOr = "either " + strings.Join(sizesStr[:len(sizes)-1], ", ") + " or " + sizesStr[len(sizes)-1]
+	}
+
+	return fmt.Errorf("Expected %s arguments, got %d", eitherOr, len(args))
+}
+
+// expectArgsRange returns an error if the wrong number of arguments was passed.
+func expectArgsRange(args []string, limits ...int) error {
+	var low int
+	high := 100
+	switch len(limits) {
+	case 0:
+		// This indicates a programming error and shouldn’t happen.
+		return errors.New("Missing argument constraints")
+	case 2:
+		high = limits[1]
+		fallthrough
+	case 1:
+		low = limits[0]
+	}
+
+	if len(args) < low || len(args) > high && high != 100 {
+		if low == 0 {
+			if high == 1 {
+				return fmt.Errorf("Expected at most 1 argument, got %d", len(args))
+			}
+
+			return fmt.Errorf("Expected at most %d arguments, got %d", high, len(args))
+		}
+
+		if high == 100 {
+			if low == 1 {
+				return fmt.Errorf("Expected at least 1 argument, got %d", len(args))
+			}
+
+			return fmt.Errorf("Expected at least %d arguments, got %d", low, len(args))
+		}
+
+		return fmt.Errorf("Expected between %d and %d arguments, got %d", low, high, len(args))
+	}
+
+	return nil
+}
+
+// tooManyArgs formats an error with superfluous arguments.
+func tooManyArgs(args []string) error {
+	if len(args) == 1 {
+		return fmt.Errorf("Unexpected additional argument %s", args[0])
+	}
+
+	return fmt.Errorf("Unexpected additional arguments %v", args)
+}
+
+// processRawDPArgs processes raw device path arguments.
+func processRawDPArgs(w *writer, args []string) (uint8, error) {
+	err := expectArgs(args, 2)
+	if err != nil {
+		return 0, err
+	}
+
+	subType, err := strconv.ParseUint(args[0], 0, 8)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint8(subType), formatDPArgs(w, args[1:], "*")
 }
