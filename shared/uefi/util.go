@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 )
 
 // errUnexpectedData is a very generic error returned whenever something fails if the parser.
@@ -39,12 +39,12 @@ func formatIP6(ip6 []byte, port ...uint16) string {
 		p = port[0]
 	}
 
-	ip := net.IP(ip6)
+	ip := netip.AddrFrom16([16]byte(ip6)).String()
 	if p == 0 {
-		return fmt.Sprintf("[%s]", ip)
+		return ip
 	}
 
-	return fmt.Sprintf("%s:%d", ip, p)
+	return fmt.Sprintf("[%s]:%d", ip, p)
 }
 
 // ParseAttributes parses UEFI variable attributes and formats them.
