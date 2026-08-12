@@ -136,7 +136,7 @@ var boot = wrap(func(r *reader) (any, error) {
 		return nil, err
 	}
 
-	paths, err := devicePaths(b)
+	paths, err := devicePathsDissect(newReader(b))
 	if err != nil {
 		return nil, err
 	}

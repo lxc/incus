@@ -2,27 +2,45 @@ package uefi
 
 import (
 	"encoding/binary"
-	"encoding/json"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"net/netip"
 	"slices"
 	"strconv"
 	"strings"
 )
 
-// wrapDP wraps a device path dissector.
-func wrapDP(f func(*reader, uint8) (string, error)) func(uint8, []byte) (string, error) {
-	return func(subtype uint8, b []byte) (string, error) {
-		r := newReader(b)
-		v, err := f(r, subtype)
-		if err != nil {
-			return "", err
-		}
+type dpDissector struct {
+	dissect func(uint8, []byte) (string, error)
+	format  func(string, ...string) (uint8, []byte, error)
+}
 
-		if !r.eof() {
-			return "", errUnexpectedData
-		}
+// wrap wraps a variable dissector.
+func wrapDP(f func(*reader, uint8) (string, error), g func(*writer, string, ...string) (uint8, error)) dpDissector {
+	return dpDissector{
+		dissect: func(subtype uint8, b []byte) (string, error) {
+			r := newReader(b)
+			v, err := f(r, subtype)
+			if err != nil {
+				return "", err
+			}
 
-		return v, nil
+			if !r.eof() {
+				return "", errUnexpectedData
+			}
+
+			return v, nil
+		},
+		format: func(name string, args ...string) (uint8, []byte, error) {
+			w := newWriter()
+			subType, err := g(w, name, args...)
+			if err != nil {
+				return 0, nil, err
+			}
+
+			return subType, w.data, nil
+		},
 	}
 }
 
@@ -60,6 +78,32 @@ var hardwareDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
 	}
 
 	return path.String(), nil
+}, func(w *writer, name string, args ...string) (uint8, error) {
+	switch name {
+	case "pci":
+		err := expectArgs(args, 2)
+		if err != nil {
+			return 0, err
+		}
+
+		// Some argument reordering is needed.
+		return 0x01, formatDPArgs(w, []string{args[1], args[0]}, "u8", "u8")
+	case "pccard":
+		return 0x02, formatDPArgs(w, args, "u8")
+	case "memorymapped":
+		return 0x03, formatDPArgs(w, args, "u32", "u64", "u64")
+	case "venhw":
+		return 0x04, formatDPArgs(w, args, "guid", "*")
+	case "ctrl":
+		return 0x05, formatDPArgs(w, args, "u32")
+	case "bmc":
+		return 0x06, formatDPArgs(w, args, "u8", "u64")
+	case "hardwarepath":
+		return processRawDPArgs(w, args)
+	}
+
+	// This is unreachable.
+	return 0, errUnexpectedData
 })
 
 // acpiDevicePath dissects a device path node with type 0x02.
@@ -158,11 +202,63 @@ var acpiDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
 	}
 
 	return path.String(), nil
+}, func(w *writer, name string, args ...string) (uint8, error) {
+	switch name {
+	case "acpi":
+		return 0x01, formatDPArgs(w, args, "eisa", "u32?")
+	case "keyboard", "parallelport", "serial", "floppy", "pciroot", "pcieroot":
+		err := w.writeEISA(map[string]string{"keyboard": "PNP0301", "parallelport": "PNP0401", "serial": "PNP0501", "floppy": "PNP0604", "pciroot": "PNP0A03", "pcieroot": "PNP0A08"}[name])
+		if err != nil {
+			return 0, err
+		}
+
+		return 0x01, formatDPArgs(w, args, "u32?")
+	case "acpiexp":
+		err := expectArgs(args, 3)
+		if err != nil {
+			return 0, err
+		}
+
+		// Some argument reordering is needed.
+		return 0x02, formatDPArgs(w, []string{args[0], "0", args[1], "", args[2], ""}, "eisa", "u32", "eisa", "zn8", "zn8", "zn8")
+	case "acpiex":
+		err := expectArgsRange(args, 2, 6)
+		if err != nil {
+			return 0, err
+		}
+
+		reordered := []string{args[0], "0", args[1], "", "", ""}
+		switch len(args) {
+		case 6:
+			reordered[4] = args[5]
+			fallthrough
+		case 5:
+			reordered[5] = args[4]
+			fallthrough
+		case 4:
+			reordered[3] = args[3]
+			fallthrough
+		case 3:
+			reordered[1] = args[2]
+		}
+
+		// Some argument reordering is needed.
+		return 0x02, formatDPArgs(w, reordered, "eisa", "u32", "eisa", "zn8", "zn8", "zn8")
+	case "acpiadr":
+		return 0x03, formatDPArgs(w, args, "u32*")
+	case "nvdimmacpiadr":
+		return 0x04, formatDPArgs(w, args, "u32")
+	case "acpipath":
+		return processRawDPArgs(w, args)
+	}
+
+	// This is unreachable.
+	return 0, errUnexpectedData
 })
 
-// sasDevicePath dissects a SAS device path node. The `ex` parameter switches the binary parsing
-// logic to big-endian.
-func sasDevicePath(r *reader, ex bool, reserved uint32) (string, error) {
+// sasDevicePathDissect dissects a SAS device path node. The `ex` parameter switches the binary
+// parsing logic to big-endian.
+func sasDevicePathDissect(r *reader, ex bool, reserved uint32) (string, error) {
 	var address, lun uint64
 	var err error
 	path := dpFormatter{name: "Sas"}
@@ -272,6 +368,175 @@ func sasDevicePath(r *reader, ex bool, reserved uint32) (string, error) {
 	return path.String(), nil
 }
 
+// sasDevicePathFormat formats a SAS device path node. The `ex` parameter switches the binary
+// dumping logic to big-endian.
+func sasDevicePathFormat(ex bool, args ...string) (uint32, []byte, error) {
+	err := expectArgsRange(args, 1)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	w := newWriter()
+	var reserved uint32
+	reordered := []string{args[0], "0", "0", "0"}
+	skipped := 0
+
+	if len(args) >= 2 {
+		// If the second argument cannot be parsed as an integer, we consider that both LUN and RTP
+		// arguments are skipped.
+		_, err := strconv.ParseUint(args[1], 0, 64)
+		if err == nil {
+			reordered[1] = args[1]
+		} else {
+			skipped = 2
+		}
+	}
+
+	if len(args) >= 3 && skipped == 0 {
+		// If the third argument cannot be parsed as an integer, we consider that the RTP argument is
+		// skipped.
+		_, err := strconv.ParseUint(args[2], 0, 16)
+		if err == nil {
+			reordered[3] = args[2]
+		} else {
+			skipped = 1
+		}
+	}
+
+	if ex && len(args)+skipped > 7 {
+		return 0, nil, tooManyArgs(args[7-skipped:])
+	}
+
+	if len(args)+skipped > 8 {
+		return 0, nil, tooManyArgs(args[8-skipped:])
+	}
+
+	sasSATA := "0"
+	if len(args)+skipped >= 4 {
+		sasSATA = strings.ToLower(args[3-skipped])
+		if sasSATA == "notopology" {
+			sasSATA = "0"
+		}
+	}
+
+	if len(args)+skipped == 4 {
+		// According to the UEFI specification, this case can either be a 4-argument Sas(Ex) or a
+		// 3-argument Sas with reserved bytes. We forbid the latter as it cannot be parsed
+		// unambiguously.
+		if slices.Contains([]string{"sas", "sata"}, sasSATA) {
+			return 0, nil, errors.New("Missing topology information")
+		}
+
+		reordered[2] = sasSATA
+	}
+
+	if len(args)+skipped == 5 {
+		// This case can only be a 4-argument Sas with reserved bytes. We provide specific error
+		// messages for SasEx nodes.
+		if ex {
+			if slices.Contains([]string{"sas", "sata"}, sasSATA) {
+				return 0, nil, errors.New("Missing connect argument")
+			}
+
+			return 0, nil, tooManyArgs(args[4-skipped:])
+		}
+
+		if slices.Contains([]string{"sas", "sata"}, sasSATA) {
+			return 0, nil, errors.New("Missing topology information")
+		}
+
+		reordered[2] = sasSATA
+		v, err := strconv.ParseUint(args[4-skipped], 0, 32)
+		if err != nil {
+			return 0, nil, fmt.Errorf("Couldn’t parse reserved bytes %s: %w", args[4-skipped], err)
+		}
+
+		reserved = uint32(v)
+	}
+
+	if len(args)+skipped >= 6 {
+		if !slices.Contains([]string{"sas", "sata"}, sasSATA) {
+			return 0, nil, errors.New("Unexpected topology information")
+		}
+
+		topology := uint16(0x0001)
+		if sasSATA == "sata" {
+			topology |= 0x0010
+		}
+
+		location, ok := map[string]uint64{"internal": 0, "external": 1}[strings.ToLower(args[4-skipped])]
+		if !ok {
+			var err error
+			location, err = strconv.ParseUint(args[4-skipped], 0, 64)
+			if err != nil || location > 1 {
+				return 0, nil, fmt.Errorf("Couldn’t parse topology location %s: Unknown value", args[4-skipped])
+			}
+		}
+
+		if location == 1 {
+			topology |= 0x0020
+		}
+
+		connect, ok := map[string]uint64{"direct": 0, "expanded": 1}[strings.ToLower(args[5-skipped])]
+		if !ok {
+			var err error
+			connect, err = strconv.ParseUint(args[5-skipped], 0, 64)
+			if err != nil || connect > 3 {
+				return 0, nil, fmt.Errorf("Couldn’t parse topology connect %s: Unknown value", args[5-skipped])
+			}
+		}
+
+		topology |= uint16(connect << 6)
+
+		// We now have to disambiguate whether the next argument, if it exists, is a drive bay or
+		// reserved bytes. For the sake of sanity, we don’t allow specifying the drive bay parameter as
+		// anything other a plain integer. The reason is that the `0xXX` syntax suggests some kind of
+		// proximity with the actual stored byte; however, bays are 1-indexed, leading to a rather
+		// confusing ambiguity.
+		if len(args)+skipped >= 7 {
+			// We need to parse a uint16 so that 256 can fit.
+			v, err := strconv.ParseUint(args[6-skipped], 10, 16)
+			if err == nil && v > 0 && v <= 256 {
+				topology |= uint16(v-1) << 8
+				// We also need to swap bits 1 and 2 to indicate that this new byte must be parsed.
+				topology ^= 0x0003
+			} else if ex || len(args)+skipped == 8 {
+				if err != nil {
+					return 0, nil, fmt.Errorf("Couldn’t parse drive bay %s: %w", args[6-skipped], err)
+				}
+
+				return 0, nil, fmt.Errorf("Couldn’t parse drive bay %s: Expected 1 ≤ n ≤ 256", args[6-skipped])
+			} else {
+				skipped = skipped + 1
+			}
+		}
+
+		reordered[2] = fmt.Sprintf("%d", topology)
+		if len(args)+skipped == 8 {
+			// This case can only be a Sas node with reserved bytes. We provide a specific error message
+			// for SasEx nodes.
+			if ex {
+				return 0, nil, fmt.Errorf("Unexpected reserved bytes %s", args[7-skipped])
+			}
+
+			v, err := strconv.ParseUint(args[7-skipped], 0, 32)
+			if err != nil {
+				return 0, nil, fmt.Errorf("Couldn’t parse reserved bytes %s: %w", args[6-skipped], err)
+			}
+
+			reserved = uint32(v)
+		}
+	}
+
+	if ex {
+		err = formatDPArgs(w, reordered, "u64be", "u64be", "u16", "u16")
+	} else {
+		err = formatDPArgs(w, reordered, "u64", "u64", "u16", "u16")
+	}
+
+	return reserved, w.data, err
+}
+
 // messagingDevicePath dissects a device path node with type 0x03.
 var messagingDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
 	path := dpFormatter{}
@@ -334,7 +599,7 @@ out:
 				break out
 			}
 
-			return sasDevicePath(r, false, reserved)
+			return sasDevicePathDissect(r, false, reserved)
 		}
 
 		path.name = "VenMsg"
@@ -670,7 +935,7 @@ out:
 		path.name = "FibreEx"
 		err = path.addDissected(r, "s4", "u64be", "u64be")
 	case 0x16: // SAS Ex.
-		return sasDevicePath(r, true, 0)
+		return sasDevicePathDissect(r, true, 0)
 	case 0x17: // NVM Express Namespace.
 		path.name = "NVMe"
 		err = path.addDissected(r, "u32", "eui64")
@@ -800,6 +1065,487 @@ out:
 	}
 
 	return path.String(), nil
+}, func(w *writer, name string, args ...string) (uint8, error) {
+	switch name {
+	case "ata":
+		err := expectArgs(args, 3)
+		if err != nil {
+			return 0, err
+		}
+
+		controller, ok := map[string]string{"primary": "0", "secondary": "1"}[strings.ToLower(args[0])]
+		if !ok {
+			controller = args[0]
+		}
+
+		drive, ok := map[string]string{"master": "0", "slave": "1"}[strings.ToLower(args[1])]
+		if !ok {
+			drive = args[1]
+		}
+
+		return 0x01, formatDPArgs(w, []string{controller, drive, args[2]}, "u8", "u8", "u16")
+	case "scsi":
+		return 0x02, formatDPArgs(w, args, "u16", "u16")
+	case "fibre":
+		return 0x03, formatDPArgs(w, args, "s4", "u64", "u64")
+	case "i1394":
+		return 0x04, formatDPArgs(w, args, "s4", "u64")
+	case "usb":
+		return 0x05, formatDPArgs(w, args, "u8", "u8")
+	case "i2o":
+		return 0x06, formatDPArgs(w, args, "u32")
+	case "infiniband":
+		return 0x09, formatDPArgs(w, args, "u32", "guid", "u64", "u64", "u64")
+	case "venmsg":
+		return 0x0a, formatDPArgs(w, args, "guid", "*")
+	case "venpcansi", "venvt100", "venvt100plus", "venutf8", "debugport":
+		guid := map[string]string{"venpcansi": EfiPcAnsiGuid, "venvt100": EfiVT100Guid, "venvt100plus": EfiVT100PlusGuid, "venutf8": EfiVTUTF8Guid, "debugport": EfiDebugPortProtocolGuid}[name]
+		return 0x0a, formatDPArgs(w, []string{guid}, "guid")
+	case "uartflowctrl":
+		err := expectArgs(args, 1)
+		if err != nil {
+			return 0, err
+		}
+
+		flow, ok := map[string]string{"none": "0", "hardware": "1", "xonxoff": "2"}[strings.ToLower(args[0])]
+		if !ok {
+			flow = args[0]
+		}
+
+		return 0x0a, formatDPArgs(w, []string{EfiUartDevicePathGuid, flow}, "guid", "u32")
+	case "sas":
+		reserved, b, err := sasDevicePathFormat(false, args...)
+		if err != nil {
+			return 0, err
+		}
+
+		err = w.writeGUID(EfiSasDevicePathGuid)
+		if err != nil {
+			return 0, err
+		}
+
+		err = w.writeU32(reserved)
+		if err != nil {
+			return 0, err
+		}
+
+		return 0x0a, w.write(b)
+	case "mac":
+		err := expectArgsRange(args, 1, 2)
+		if err != nil {
+			return 0, err
+		}
+
+		v, err := hex.DecodeString(args[0])
+		if err != nil {
+			return 0, fmt.Errorf("Couldn’t parse address %s: %w", args[0], err)
+		}
+
+		mac := make([]byte, 32)
+		copy(mac, v)
+		ifType := uint64(0)
+		if len(args) == 2 {
+			ifType, err = strconv.ParseUint(args[1], 0, 8)
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse interface type %s: %w", args[1], err)
+			}
+		}
+
+		return 0x0b, formatDPArgs(w, []string{fmt.Sprintf("%x", mac), fmt.Sprintf("%d", ifType)}, "*", "u8")
+	case "ipv4":
+		err := expectArgsRange(args, 1, 6)
+		if err != nil {
+			return 0, err
+		}
+
+		remoteRaw, remotePort, err := parseIP(args[0])
+		if err != nil {
+			return 0, fmt.Errorf("Couldn’t parse remote IP %s: %w", args[0], err)
+		}
+
+		reordered := []string{"00000000", fmt.Sprintf("%x", remoteRaw), "0", fmt.Sprintf("%d", remotePort), "17", "0", "00000000", "00000000"}
+		var ok bool
+		if len(args) >= 2 {
+			reordered[4], ok = map[string]string{"tcp": "6", "udp": "17"}[strings.ToLower(args[1])]
+			if !ok {
+				reordered[4] = args[1]
+			}
+		}
+
+		if len(args) >= 3 {
+			reordered[5], ok = map[string]string{"dhcp": "0", "static": "1"}[strings.ToLower(args[2])]
+			if !ok {
+				reordered[5] = args[2]
+			}
+
+			if !slices.Contains([]string{"0", "1"}, reordered[5]) {
+				return 0, fmt.Errorf("Unknown IP type %s", args[2])
+			}
+		}
+
+		if len(args) >= 4 {
+			localRaw, localPort, err := parseIP(args[3])
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse local IP %s: %w", args[3], err)
+			}
+
+			reordered[0] = fmt.Sprintf("%x", localRaw)
+			reordered[2] = fmt.Sprintf("%d", localPort)
+		}
+
+		if len(args) >= 5 {
+			gatewayRaw, _, err := parseIP(args[4], false)
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse gateway IP %s: %w", args[4], err)
+			}
+
+			reordered[6] = fmt.Sprintf("%x", gatewayRaw)
+		}
+
+		if len(args) == 6 {
+			maskRaw, _, err := parseIP(args[5], false)
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse subnet mask %s: %w", args[5], err)
+			}
+
+			reordered[7] = fmt.Sprintf("%x", maskRaw)
+		}
+
+		return 0x0c, formatDPArgs(w, reordered, "*", "*", "u16", "u16", "u16", "u8", "*", "*")
+	case "ipv6":
+		err := expectArgsRange(args, 3, 6)
+		if err != nil {
+			return 0, err
+		}
+
+		remoteRaw, remotePort, err := parseIP6(args[0])
+		if err != nil {
+			return 0, fmt.Errorf("Couldn’t parse remote IP %s: %w", args[0], err)
+		}
+
+		protocol, ok := map[string]string{"tcp": "6", "udp": "17"}[strings.ToLower(args[1])]
+		if !ok {
+			protocol = args[1]
+		}
+
+		origin, ok := map[string]string{"static": "0", "statelessautoconfigure": "1", "statefulautoconfigure": "2"}[strings.ToLower(args[2])]
+		if !ok {
+			origin = args[2]
+		}
+
+		if !slices.Contains([]string{"0", "1", "2"}, origin) {
+			return 0, fmt.Errorf("Unknown IP origin %s", args[2])
+		}
+
+		reordered := []string{"00000000000000000000000000000000", fmt.Sprintf("%x", remoteRaw), "0", fmt.Sprintf("%d", remotePort), protocol, origin, "64", "00000000000000000000000000000000"}
+		if len(args) >= 4 {
+			localRaw, localPort, err := parseIP6(args[3])
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse local IP %s: %w", args[3], err)
+			}
+
+			reordered[0] = fmt.Sprintf("%x", localRaw)
+			reordered[2] = fmt.Sprintf("%d", localPort)
+		}
+
+		if len(args) >= 5 {
+			gatewayRaw, _, err := parseIP6(args[4], false)
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse gateway IP %s: %w", args[4], err)
+			}
+
+			reordered[7] = fmt.Sprintf("%x", gatewayRaw)
+		}
+
+		if len(args) == 6 {
+			reordered[6] = args[5]
+		}
+
+		return 0x0d, formatDPArgs(w, reordered, "*", "*", "u16", "u16", "u16", "u8", "u8", "*")
+	case "uart":
+		err := expectArgsRange(args, 0, 4)
+		if err != nil {
+			return 0, err
+		}
+
+		reordered := []string{"115200", "8", "0", "0"}
+		if len(args) >= 1 {
+			reordered[0] = args[0]
+		}
+
+		if len(args) >= 2 {
+			reordered[1] = args[1]
+		}
+
+		var parityOK bool
+		if len(args) >= 3 {
+			reordered[2], parityOK = map[string]string{"d": "0", "n": "1", "e": "2", "o": "3", "m": "4", "s": "5"}[strings.ToLower(args[2])]
+			if !parityOK {
+				reordered[2] = args[2]
+			}
+		}
+
+		if len(args) == 4 {
+			// The specification tells us that if the parity has been given with a keyword, then so must
+			// the stop bits be. This is a way to disambiguate the value.
+			if parityOK {
+				var ok bool
+				reordered[3], ok = map[string]string{"d": "0", "1": "1", "1.5": "2", "2": "3"}[strings.ToLower(args[3])]
+				if !ok {
+					return 0, fmt.Errorf("Couldn’t parse stop bits %s: Unknown value", args[3])
+				}
+			} else {
+				reordered[3] = args[3]
+			}
+		}
+
+		return 0x0e, formatDPArgs(w, reordered, "s4", "u64", "u8", "u8", "u8")
+	case "usbclass":
+		return 0x0f, formatDPArgs(w, args, "u16?65535", "u16?65535", "u8?255", "u8?255", "u8?255")
+	case "usbaudio", "usbcdccontrol", "usbhid", "usbimage", "usbprinter", "usbmassstorage", "usbhub", "usbcdcdata", "usbsmartcard", "usbvideo", "usbdiagnostic", "usbwireless":
+		usbClass := map[string]string{"usbaudio": "1", "usbcdccontrol": "2", "usbhid": "3", "usbimage": "6", "usbprinter": "7", "usbmassstorage": "8", "usbhub": "9", "usbcdcdata": "10", "usbsmartcard": "11", "usbvideo": "14", "usbdiagnostic": "220", "usbwireless": "224"}[name]
+		reordered := []string{"65535", "65535", usbClass, "255", "255"}
+		switch len(args) {
+		case 4:
+			reordered[4] = args[3]
+			fallthrough
+		case 3:
+			reordered[3] = args[2]
+			fallthrough
+		case 2:
+			reordered[1] = args[1]
+			fallthrough
+		case 1:
+			reordered[0] = args[0]
+		case 0:
+		default:
+			return 0, expectArgsRange(args, 0, 4)
+		}
+
+		return 0x0f, formatDPArgs(w, reordered, "u16", "u16", "u8", "u8", "u8")
+	case "usbdevicefirmwareupdate", "usbirdabridge", "usbtestandmeasurement":
+		usbSubclass := map[string]string{"usbdevicefirmwareupdate": "1", "usbirdabridge": "2", "usbtestandmeasurement": "3"}[name]
+		reordered := []string{"65535", "65535", "254", usbSubclass, "255"}
+		switch len(args) {
+		case 3:
+			reordered[4] = args[2]
+			fallthrough
+		case 2:
+			reordered[1] = args[1]
+			fallthrough
+		case 1:
+			reordered[0] = args[0]
+		case 0:
+		default:
+			return 0, expectArgsRange(args, 0, 3)
+		}
+
+		return 0x0f, formatDPArgs(w, reordered, "u16", "u16", "u8", "u8", "u8")
+	case "usbwwid":
+		err := expectArgs(args, 4)
+		if err != nil {
+			return 0, err
+		}
+
+		reordered := []string{args[2], args[0], args[1], args[3]}
+		return 0x10, formatDPArgs(w, reordered, "u16", "u16", "u16", "z16")
+	case "unit":
+		return 0x11, formatDPArgs(w, args, "u8")
+	case "sata":
+		return 0x12, formatDPArgs(w, args, "u16", "u16?65535", "u16?")
+	case "iscsi":
+		err := expectArgsRange(args, 3, 7)
+		if err != nil {
+			return 0, err
+		}
+
+		reordered := []string{"0", "", args[2], args[1], args[0]}
+		var options uint16
+		if len(args) >= 4 {
+			headerDigest, ok := map[string]uint16{"none": 0x0000, "crc32c": 0x0002}[strings.ToLower(args[3])]
+			if !ok {
+				return 0, fmt.Errorf("Couldn’t parse header digest type %s: Unknown value", args[3])
+			}
+
+			options |= headerDigest
+		}
+
+		if len(args) >= 5 {
+			dataDigest, ok := map[string]uint16{"none": 0x0000, "crc32c": 0x0008}[strings.ToLower(args[4])]
+			if !ok {
+				return 0, fmt.Errorf("Couldn’t parse data digest type %s: Unknown value", args[4])
+			}
+
+			options |= dataDigest
+		}
+
+		if len(args) >= 6 {
+			authentication, ok := map[string]uint16{"chap_bi": 0x0000, "none": 0x0800, "chap_uni": 0x1000}[strings.ToLower(args[5])]
+			if !ok {
+				return 0, fmt.Errorf("Couldn’t parse authentication type %s: Unknown value", args[5])
+			}
+
+			options |= authentication
+		} else {
+			options |= 0x0800
+		}
+
+		reordered[1] = fmt.Sprintf("%d", options)
+
+		if len(args) == 7 {
+			protocol := args[6]
+			if strings.ToLower(protocol) == "tcp" {
+				protocol = "0"
+			}
+
+			reordered[0] = protocol
+		}
+
+		return 0x13, formatDPArgs(w, reordered, "u16", "u16", "u64be", "u16", "z16")
+	case "vlan":
+		return 0x14, formatDPArgs(w, args, "u16")
+	case "fibreex":
+		return 0x15, formatDPArgs(w, args, "s4", "u64be", "u64be")
+	case "sasex":
+		_, b, err := sasDevicePathFormat(true, args...)
+		if err != nil {
+			return 0, err
+		}
+
+		return 0x16, w.write(b)
+	case "nvme":
+		return 0x17, formatDPArgs(w, args, "u32", "eui64")
+	case "uri":
+		return 0x18, formatDPArgs(w, args, "z8?")
+	case "ufs":
+		return 0x19, formatDPArgs(w, args, "u8", "u8")
+	case "sd":
+		return 0x1a, formatDPArgs(w, args, "u8?")
+	case "bluetooth":
+		return 0x1b, formatDPArgs(w, args, "6")
+	case "wi-fi":
+		err := expectArgs(args, 1)
+		if err != nil {
+			return 0, err
+		}
+
+		ssid := []byte(args[0])
+		if len(ssid) > 32 {
+			return 0, fmt.Errorf("Couldn’t parse SSID %s: Expected at most 32 bytes, got %d", ssid, len(ssid))
+		}
+
+		data := make([]byte, 32)
+		copy(data, ssid)
+		return 0x1c, w.write(data)
+	case "emmc":
+		return 0x1d, formatDPArgs(w, args, "u8?")
+	case "bluetoothle":
+		return 0x1e, formatDPArgs(w, args, "6", "u8")
+	case "dns":
+		// The standard doesn’t explicitly allow mixing IPv4 and IPv6 addresses, but it doesn’t cost
+		// much to handle.
+		v6 := false
+		for _, ip := range args {
+			addr, err := netip.ParseAddr(ip)
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse IP address %s: %w", ip, err)
+			}
+
+			if addr.Is6() {
+				v6 = true
+			}
+		}
+
+		err := w.writeB8(v6)
+		if err != nil {
+			return 0, err
+		}
+
+		for _, ip := range args {
+			var b []byte
+			if v6 {
+				b, _, err = parseIP6(ip, false)
+			} else {
+				b, _, err = parseIP(ip, false)
+			}
+
+			if err != nil {
+				return 0, err
+			}
+
+			data := make([]byte, 16)
+			copy(data, b)
+			err = w.write(data)
+			if err != nil {
+				return 0, err
+			}
+		}
+
+		return 0x1f, nil
+	case "nvdimm":
+		return 0x20, formatDPArgs(w, args, "guid")
+	case "restservice":
+		err := expectArgsRange(args, 2, 4)
+		if err != nil {
+			return 0, err
+		}
+
+		service, err := strconv.ParseUint(args[0], 0, 8)
+		if err != nil {
+			return 0, fmt.Errorf("Couldn’t parse service type %s: %w", args[0], err)
+		}
+
+		if service == 0xFF {
+			err = expectArgsRange(args, 3, 4)
+			if err != nil {
+				return 0, err
+			}
+
+			return 0x21, formatDPArgs(w, args, "u8", "u8", "guid", "*")
+		}
+
+		err = expectArgs(args, 2)
+		if err != nil {
+			return 0, err
+		}
+
+		return 0x21, formatDPArgs(w, args, "u8", "u8")
+	case "nvmeof":
+		err := expectArgs(args, 2)
+		if err != nil {
+			return 0, err
+		}
+
+		nid := args[1]
+		var nidt string
+		var ok bool
+		types := []string{"u8"}
+		nid, ok = strings.CutPrefix(nid, "eui:")
+		if ok {
+			nidt = "1"
+			types = append(types, "eui64be", "s8")
+		} else {
+			nid, ok = strings.CutPrefix(nid, "nvme-nguid:")
+			if ok {
+				nidt = "2"
+				nid = strings.ReplaceAll(nid, "-", "")
+				types = append(types, "16")
+			} else {
+				nid, ok = strings.CutPrefix(nid, "urn:uuid:")
+				if !ok {
+					return 0, fmt.Errorf("Couldn’t parse namespace identifier %s: Unknown identifier type", nid)
+				}
+
+				nidt = "3"
+				types = append(types, "guidbe")
+			}
+		}
+
+		return 0x22, formatDPArgs(w, []string{nidt, nid, args[0]}, append(types, "zn8")...)
+	}
+
+	// This is unreachable.
+	return 0, errUnexpectedData
 })
 
 // mediaDevicePath dissects a device path node with type 0x04.
@@ -970,6 +1716,94 @@ var mediaDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
 	}
 
 	return path.String(), nil
+}, func(w *writer, name string, args ...string) (uint8, error) {
+	switch name {
+	case "hd":
+		err := expectArgs(args, 3, 5)
+		if err != nil {
+			return 0, err
+		}
+
+		partition, err := strconv.ParseUint(args[0], 0, 8)
+		if err != nil {
+			return 0, fmt.Errorf("Couldn’t parse partition number %s: %w", args[0], err)
+		}
+
+		format, ok := map[string]uint64{"mbr": 1, "gpt": 2}[strings.ToLower(args[1])]
+		if !ok {
+			// Because the specification is incomplete, we reject anything other than 0x01 and 0x02.
+			format, err := strconv.ParseUint(args[1], 0, 8)
+			if err != nil {
+				return 0, fmt.Errorf("Couldn’t parse partition format %s: %w", args[1], err)
+			}
+
+			if format != 0x01 && format != 0x02 {
+				return 0, fmt.Errorf("Couldn’t parse partition format %s: Unknown value", args[1])
+			}
+		}
+
+		types := []string{"u32", "u64", "u64"}
+		if format == 0x01 {
+			if partition > 4 {
+				return 0, fmt.Errorf("Couldn’t parse partition number %s: Expected n ≤ 4", args[0])
+			}
+
+			types = append(types, "u32", "s12")
+		} else {
+			types = append(types, "guid")
+		}
+
+		reordered := []string{args[0], "0", "0", args[2], fmt.Sprintf("%d", format), fmt.Sprintf("%d", format)}
+		if partition == 0 {
+			err = expectArgs(args, 3)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			err = expectArgs(args, 5)
+			if err != nil {
+				return 0, nil
+			}
+
+			reordered[1] = args[3]
+			reordered[2] = args[4]
+		}
+
+		return 0x01, formatDPArgs(w, reordered, append(types, "u8", "u8")...)
+	case "cdrom":
+		return 0x02, formatDPArgs(w, args, "u32", "u64", "u64")
+	case "venmedia":
+		return 0x03, formatDPArgs(w, args, "guid", "*")
+	case "":
+		return 0x04, formatDPArgs(w, args, "zn16")
+	case "media", "fvfile", "fv":
+		return map[string]uint8{"media": 0x05, "fvfile": 0x06, "fv": 0x07}[name], formatDPArgs(w, args, "guid")
+	case "offset":
+		return 0x08, formatDPArgs(w, args, "s4", "u64", "u64")
+	case "virtualdisk", "virtualcd", "persistentvirtualdisk", "persistentvirtualcd":
+		err := expectArgsRange(args, 2, 3)
+		if err != nil {
+			return 0, err
+		}
+
+		guid := map[string]string{"virtualdisk": EfiVirtualDiskGuid, "virtualcd": EfiVirtualCdGuid, "persistentvirtualdisk": EfiPersistentVirtualDiskGuid, "persistentvirtualcd": EfiPersistentVirtualCdGuid}[name]
+		reordered := []string{args[0], args[1], guid}
+		if len(args) == 3 {
+			reordered = append(reordered, args[2])
+		}
+
+		return 0x09, formatDPArgs(w, reordered, "u64", "u64", "guid", "u16?")
+	case "ramdisk":
+		err := expectArgs(args, 4)
+		if err != nil {
+			return 0, err
+		}
+
+		return 0x09, formatDPArgs(w, []string{args[0], args[1], args[3], args[2]}, "u64", "u64", "guid", "u16")
+	}
+
+	// This is unreachable.
+	return 0, errUnexpectedData
 })
 
 // bbsDevicePath dissects a device path node with type 0x05.
@@ -1007,42 +1841,68 @@ var bbsDevicePath = wrapDP(func(r *reader, subtype uint8) (string, error) {
 	}
 
 	return path.String(), nil
+}, func(w *writer, name string, args ...string) (uint8, error) {
+	switch name {
+	case "bbs":
+		err := expectArgsRange(args, 2, 3)
+		if err != nil {
+			return 0, err
+		}
+
+		deviceType, ok := map[string]string{"floppy": "1", "hd": "2", "cdrom": "3", "pcmcia": "4", "usb": "5", "network": "6"}[strings.ToLower(args[0])]
+		if !ok {
+			deviceType = args[0]
+		}
+
+		reordered := []string{deviceType, "0", args[1]}
+		if len(args) == 3 {
+			reordered[1] = args[2]
+		}
+
+		// Some argument reordering is needed.
+		return 0x01, formatDPArgs(w, reordered, "u16", "u16", "zn8")
+	case "bbspath":
+		return processRawDPArgs(w, args)
+	}
+
+	// This is unreachable.
+	return 0, errUnexpectedData
 })
 
-// devicePathNode dissects a device path node.
-func devicePathNode(nodeType uint8, subtype uint8, b []byte) (string, error) {
+// devicePathNodeDissect dissects a device path node.
+func devicePathNodeDissect(nodeType uint8, subtype uint8, b []byte) (string, error) {
 	v, err := func() (string, error) {
 		switch nodeType {
 		case 0x01: // Hardware Device Path.
-			repr, err := hardwareDevicePath(subtype, b)
+			repr, err := hardwareDevicePath.dissect(subtype, b)
 			if err != nil {
 				return fmt.Sprintf("HardwarePath(0x%x,%x)", subtype, b), nil
 			}
 
 			return repr, nil
 		case 0x02: // ACPI Device Path.
-			repr, err := acpiDevicePath(subtype, b)
+			repr, err := acpiDevicePath.dissect(subtype, b)
 			if err != nil {
 				return fmt.Sprintf("AcpiPath(0x%x,%x)", subtype, b), nil
 			}
 
 			return repr, nil
 		case 0x03: // Messaging Device Path.
-			repr, err := messagingDevicePath(subtype, b)
+			repr, err := messagingDevicePath.dissect(subtype, b)
 			if err != nil {
 				return fmt.Sprintf("Msg(0x%x,%x)", subtype, b), nil
 			}
 
 			return repr, err
 		case 0x04: // Media Device Path.
-			repr, err := mediaDevicePath(subtype, b)
+			repr, err := mediaDevicePath.dissect(subtype, b)
 			if err != nil {
 				return fmt.Sprintf("MediaPath(0x%x,%x)", subtype, b), nil
 			}
 
 			return repr, err
 		case 0x05: // BIOS Boot Specification Device Path.
-			repr, err := bbsDevicePath(subtype, b)
+			repr, err := bbsDevicePath.dissect(subtype, b)
 			if err != nil {
 				return fmt.Sprintf("BbsPath(0x%x,%x)", subtype, b), nil
 			}
@@ -1059,11 +1919,63 @@ func devicePathNode(nodeType uint8, subtype uint8, b []byte) (string, error) {
 	return fmt.Sprintf("Path(0x%x,0x%x,%x)", nodeType, subtype, b), nil
 }
 
-// devicePaths dissects an array of device path structures.
-func devicePaths(b []byte) ([][]string, error) {
+// devicePathNodeFormat formats a device path node.
+func devicePathNodeFormat(name string, args ...string) ([]byte, error) {
+	var nodeType, subType uint8
+	var b []byte
+	var err error
+	switch name {
+	case "pci", "pccard", "memorymapped", "venhw", "ctrl", "bmc", "hardwarepath":
+		nodeType = 0x01
+		subType, b, err = hardwareDevicePath.format(name, args...)
+	case "acpi", "keyboard", "parallelport", "serial", "floppy", "pciroot", "pcieroot", "acpiexp", "acpiex", "acpiadr", "nvdimmacpiadr", "acpipath":
+		nodeType = 0x02
+		subType, b, err = acpiDevicePath.format(name, args...)
+	case "ata", "scsi", "fibre", "i1394", "usb", "i2o", "infiniband", "venmsg", "venpcansi", "venvt100", "venvt100plus", "venutf8", "uartflowctrl", "sas", "debugport", "mac", "ipv4", "ipv6", "uart", "usbclass", "usbaudio", "usbcdccontrol", "usbhid", "usbimage", "usbprinter", "usbmassstorage", "usbhub", "usbcdcdata", "usbsmartcard", "usbvideo", "usbdiagnostic", "usbwireless", "usbdevicefirmwareupdate", "usbirdabridge", "usbtestandmeasurement", "usbwwid", "unit", "sata", "iscsi", "vlan", "fibreex", "sasex", "nvme", "uri", "ufs", "sd", "bluetooth", "wi-fi", "emmc", "bluetoothle", "dns", "nvdimm", "restservice", "nvmeof":
+		nodeType = 0x03
+		subType, b, err = messagingDevicePath.format(name, args...)
+	case "hd", "cdrom", "venmedia", "", "media", "fvfile", "fv", "offset", "ramdisk", "virtualdisk", "virtualcd", "persistentvirtualdisk", "persistentvirtualcd":
+		nodeType = 0x04
+		subType, b, err = mediaDevicePath.format(name, args...)
+	case "bbs", "bbspath":
+		nodeType = 0x05
+		subType, b, err = bbsDevicePath.format(name, args...)
+	default:
+		err = fmt.Errorf("Unknown node %s", name)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse node %s with arguments %v: %w", strings.ToUpper(name), args, err)
+	}
+
+	w := newWriter()
+	err = w.writeU8(nodeType)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU8(subType)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.writeU16(uint16(4 + len(b)))
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.write(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.data, nil
+}
+
+// devicePathsDissect dissects an array of device path structures.
+func devicePathsDissect(r *reader) ([][]string, error) {
 	var paths [][]string
 	var instances, nodes []string
-	r := newReader(b)
 
 	for !r.eof() {
 		nodeType, err := r.readU8()
@@ -1092,7 +2004,7 @@ func devicePaths(b []byte) ([][]string, error) {
 
 		// If we haven’t reached the End of Hardware Device Path marker, continue processing.
 		if nodeType != 0x7f {
-			summarized, err := devicePathNode(nodeType, subtype, node)
+			summarized, err := devicePathNodeDissect(nodeType, subtype, node)
 			if err != nil {
 				return nil, err
 			}
@@ -1124,22 +2036,54 @@ func devicePaths(b []byte) ([][]string, error) {
 	return paths, nil
 }
 
-// devicePath dissects a device path structure.
-// TODO: Implement variable formatting.
-var devicePath = dissector{
-	dissect: func(b []byte) (any, error) {
-		paths, err := devicePaths(b)
-		if err != nil {
-			return nil, err
-		}
+// devicePathsFormat formats an array of device path structures.
+func devicePathsFormat(w *writer, paths [][]string) error {
+	for _, path := range paths {
+		for i, instance := range path {
+			nodes, err := decomposeDPInstance(instance)
+			if err != nil {
+				return fmt.Errorf("Failed to parse device path instance %s: %w", instance, err)
+			}
 
-		if len(paths) != 1 {
-			return nil, errUnexpectedData
-		}
+			for _, node := range nodes {
+				b, err := devicePathNodeFormat(node[0], node[1:]...)
+				if err != nil {
+					return fmt.Errorf("Failed to parse device path instance %s: %w", instance, err)
+				}
 
-		return paths[0], nil
-	},
-	format: func(json.RawMessage) ([]byte, error) {
-		return nil, errNotImplemented
-	},
+				err = w.write(b)
+				if err != nil {
+					return err
+				}
+			}
+
+			if i == len(path)-1 {
+				err = w.write([]byte{0x7f, 0xff, 0x04, 0x00})
+			} else {
+				err = w.write([]byte{0x7f, 0x01, 0x04, 0x00})
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
+
+// devicePath dissects a device path structure.
+var devicePath = wrap(func(r *reader) ([]string, error) {
+	paths, err := devicePathsDissect(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(paths) != 1 {
+		return nil, errUnexpectedData
+	}
+
+	return paths[0], nil
+}, func(w *writer, v []string) error {
+	return devicePathsFormat(w, [][]string{v})
+})
