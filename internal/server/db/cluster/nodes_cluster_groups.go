@@ -15,7 +15,7 @@ package cluster
 //generate-database:mapper method -e node_cluster_group Create
 //generate-database:mapper method -e node_cluster_group Exists
 //generate-database:mapper method -e node_cluster_group ID
-//generate-database:mapper method -e node_cluster_group DeleteOne-by-GroupID
+//generate-database:mapper method -e node_cluster_group DeleteMany-by-GroupID
 
 // NodeClusterGroup associates a node to a cluster group.
 type NodeClusterGroup struct {
