@@ -2,11 +2,11 @@ package uefi
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
-	"strings"
 	"time"
 	"unicode/utf16"
+
+	"github.com/google/uuid"
 )
 
 // reader is a wrapper to help reading OVMF files.
@@ -218,11 +218,15 @@ func (r *reader) readEISA() (string, error) {
 		return "", err
 	}
 
+	if b == 0 {
+		return "0", nil
+	}
+
 	c1 := byte(b>>10&0x1f) + 'A' - 1
 	c2 := byte(b>>5&0x1f) + 'A' - 1
 	c3 := byte(b&0x1f) + 'A' - 1
 	if c1 < 'A' || c1 > 'Z' || c2 < 'A' || c2 > 'Z' || c3 < 'A' || c3 > 'Z' {
-		return fmt.Sprintf("0x%08x", b), nil
+		return "", errUnexpectedData
 	}
 
 	return fmt.Sprintf("%c%c%c%04X", c1, c2, c3, uint16(b>>16)), nil
@@ -496,7 +500,12 @@ func (w *writer) writeU64(v uint64) error {
 
 // writeGUID writes a GUID.
 func (w *writer) writeGUID(guid string) error {
-	b, err := hex.DecodeString(strings.ReplaceAll(guid, "-", ""))
+	g, err := uuid.Parse(guid)
+	if err != nil {
+		return err
+	}
+
+	b, err := g.MarshalBinary()
 	if err != nil {
 		return err
 	}
@@ -527,7 +536,7 @@ func (w *writer) writeZn8(s string, n ...int) error {
 	return w.writeZ8(s+"\x00", n...)
 }
 
-// writeZ16 writes an UTF16 string.
+// writeZ16 writes a UTF16 string.
 func (w *writer) writeZ16(s string) error {
 	b := make([]byte, len(s)*2)
 	for i, c := range utf16.Encode([]rune(s)) {
