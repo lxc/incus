@@ -5238,7 +5238,7 @@
 						"features.networks": {
 							"defaultdesc": "`false`",
 							"initialvaluedesc": "`false`",
-							"longdesc": "",
+							"longdesc": "This feature requires the server to be configured for OVN.",
 							"shortdesc": "Whether to use a separate set of networks for the project",
 							"type": "bool"
 						}
