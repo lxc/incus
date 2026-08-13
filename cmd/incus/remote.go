@@ -1378,6 +1378,20 @@ func (c *cmdRemoteRename) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Rename the client certificate files.
+	if !conf.Remotes[remoteName].Global {
+		for _, ext := range []string{"crt", "key", "ca"} {
+			oldCertPath := conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", remoteName, ext))
+			newCertPath := conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", newRemoteName, ext))
+			if util.PathExists(oldCertPath) {
+				err := os.Rename(oldCertPath, newCertPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	// Rename the OIDC token file.
 	oldOIDCPath := conf.OIDCTokenPath(remoteName)
 	newOIDCPath := conf.OIDCTokenPath(newRemoteName)
