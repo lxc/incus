@@ -2428,7 +2428,15 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 				continue
 			}
 
+			// Lock this operation to ensure that concurrent image operations don't conflict.
+			unlock, err := imageOperationLock(ctx, fingerprint)
+			if err != nil {
+				logger.Error("Error locking image for deletion from storage pool", logger.Ctx{"err": err, "pool": pool.Name(), "fingerprint": fingerprint})
+				continue
+			}
+
 			err = pool.DeleteImage(fingerprint, op)
+			unlock()
 			if err != nil {
 				logger.Error("Error deleting image from storage pool", logger.Ctx{"err": err, "pool": pool.Name(), "fingerprint": fingerprint})
 				continue
@@ -2454,6 +2462,14 @@ func autoUpdateImage(ctx context.Context, s *state.State, op *operations.Operati
 		setRefreshResult(false)
 		return nil, nil
 	}
+
+	// Lock this operation to ensure that concurrent image operations don't conflict.
+	unlock, err := imageOperationLock(ctx, fingerprint)
+	if err != nil {
+		return nil, err
+	}
+
+	defer unlock()
 
 	// Remove main image file.
 	fname := filepath.Join(s.OS.VarDir, "images", fingerprint)
@@ -2704,7 +2720,13 @@ func pruneExpiredImages(ctx context.Context, s *state.State, op *operations.Oper
 // pruneExpiredImage removes an expired image's database records and, once unused by all projects,
 // its storage volumes and files.
 func pruneExpiredImage(ctx context.Context, s *state.State, op *operations.Operation, fingerprint string, dbImages []dbCluster.Image, projectsImageRemoteCacheExpiryDays map[string]int64) error {
-	var err error
+	// Lock this operation to ensure that concurrent image operations don't conflict.
+	unlock, err := imageOperationLock(ctx, fingerprint)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
 
 	dbImagesDeleted := 0
 	for _, dbImage := range dbImages {
