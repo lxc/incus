@@ -121,6 +121,9 @@ type cmdRemoteAdd struct {
 	flagProject    string
 	flagKeepAlive  int
 	flagCredHelper string
+	flagTLSCert    string
+	flagTLSKey     string
+	flagTLSP12     string
 }
 
 var cmdRemoteAddUsage = u.Usage{u.NewName(u.Remote).Optional(), u.Either(u.Placeholder(i18n.G("IP/FQDN/URL")).List(1), u.Placeholder(i18n.G("token")))}
@@ -153,6 +156,9 @@ The remote name can be ignored if a single target is provided.
 	cli.AddStringFlag(cmd.Flags(), &c.flagProject, "project", "", "", i18n.G("Project to use for the remote"))
 	cli.AddIntFlag(cmd.Flags(), &c.flagKeepAlive, "keepalive", i18n.G("Maintain remote connection for faster commands"), 0)
 	cli.AddStringFlag(cmd.Flags(), &c.flagCredHelper, "credentials-helper", "", "", i18n.G("Binary helper for retrieving credentials"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Remote-specific TLS client certificate (PEM)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Remote-specific TLS client key (PEM)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSP12, "tls-p12", "", "", i18n.G("Remote-specific TLS client keypair (PKCS#12)"))
 
 	return cmd
 }
@@ -201,10 +207,90 @@ func (c *cmdRemoteAdd) findProject(d incus.InstanceServer, project string) (stri
 	return project, nil
 }
 
+// setupClientCertificate records a remote-specific TLS client certificate and key.
+func (c *cmdRemoteAdd) setupClientCertificate(server string) error {
+	conf := c.global.conf
+
+	var certPEM []byte
+	var keyPEM []byte
+
+	if c.flagTLSP12 != "" {
+		data, err := os.ReadFile(c.flagTLSP12)
+		if err != nil {
+			return err
+		}
+
+		key, cert, caCerts, err := pkcs12.DecodeChain(data, "")
+		if err != nil {
+			if !errors.Is(err, pkcs12.ErrIncorrectPassword) {
+				return err
+			}
+
+			password, askErr := c.global.asker.AskPasswordOnce(fmt.Sprintf(i18n.G("Password for %s: "), c.flagTLSP12))
+			if askErr != nil {
+				return askErr
+			}
+
+			key, cert, caCerts, err = pkcs12.DecodeChain(data, password)
+			if err != nil {
+				return err
+			}
+		}
+
+		keyDER, err := x509.MarshalPKCS8PrivateKey(key)
+		if err != nil {
+			return err
+		}
+
+		keyPEM = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})
+		certPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+		for _, caCert := range caCerts {
+			certPEM = append(certPEM, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caCert.Raw})...)
+		}
+	} else {
+		var err error
+
+		certPEM, err = os.ReadFile(c.flagTLSCert)
+		if err != nil {
+			return err
+		}
+
+		keyPEM, err = os.ReadFile(c.flagTLSKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Validate the keypair.
+	_, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Invalid TLS client keypair: %w"), err)
+	}
+
+	// Record the keypair.
+	dnam := conf.ConfigPath("clientcerts")
+	err = os.MkdirAll(dnam, 0o750)
+	if err != nil {
+		return errors.New(i18n.G("Could not create client cert dir"))
+	}
+
+	err = os.WriteFile(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", server)), certPEM, 0o644)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.key", server)), keyPEM, 0o600)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *cmdRemoteAdd) runToken(server string, token string, rawToken *api.CertificateAddToken) error {
 	conf := c.global.conf
 
-	if !conf.HasClientCertificate() {
+	if !conf.HasRemoteClientCertificate(server) && !conf.HasClientCertificate() {
 		fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
 		err := conf.GenerateClientCertificate()
 		if err != nil {
@@ -403,7 +489,7 @@ func normalizeAddress(addr string) (string, string, error) {
 	return addr, rScheme, nil
 }
 
-func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
+func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
 	conf := c.global.conf
 
 	// Do NOT blindly copy the following parsing line; it is a dirty hack to disambiguate the parser.
@@ -434,6 +520,34 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 	// Initialize the remotes list if needed
 	if conf.Remotes == nil {
 		conf.Remotes = map[string]config.Remote{}
+	}
+
+	// Handle remote-specific TLS client keypair.
+	if c.flagTLSP12 != "" && (c.flagTLSCert != "" || c.flagTLSKey != "") {
+		return errors.New(i18n.G("--tls-p12 can't be used with --tls-cert or --tls-key"))
+	}
+
+	if (c.flagTLSCert != "") != (c.flagTLSKey != "") {
+		return errors.New(i18n.G("--tls-cert and --tls-key must be used together"))
+	}
+
+	if c.flagTLSP12 != "" || c.flagTLSCert != "" {
+		if c.flagProtocol != "incus" {
+			return errors.New(i18n.G("TLS client certificates can only be used with the incus protocol"))
+		}
+
+		err = c.setupClientCertificate(server)
+		if err != nil {
+			return err
+		}
+
+		// Remove the recorded keypair if adding the remote fails.
+		defer func() {
+			if err != nil {
+				_ = os.Remove(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.crt", server)))
+				_ = os.Remove(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.key", server)))
+			}
+		}()
 	}
 
 	rawToken, err := localtls.CertificateTokenDecode(target)
@@ -487,7 +601,7 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 	// If the remote is made of private HTTPS servers, then we need to ensure we have a client
 	// certificate before adding the remote server.
 	if allHTTPS && !c.flagPublic && (c.flagAuthType == api.AuthenticationMethodTLS || c.flagAuthType == "") {
-		if !c.global.conf.HasClientCertificate() {
+		if !conf.HasRemoteClientCertificate(server) && !conf.HasClientCertificate() {
 			fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
 			err = c.global.conf.GenerateClientCertificate()
 			if err != nil {
@@ -673,6 +787,17 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 	// Check if additional authentication is required.
 	if srv.Auth != "trusted" {
 		if c.flagAuthType == api.AuthenticationMethodTLS {
+			// Explain why a trust token is needed when in verbose mode.
+			if c.global.flagLogVerbose {
+				tlsCert, _, _, certErr := conf.GetClientCertificate(server)
+				if certErr == nil && tlsCert != "" {
+					fingerprint, fpErr := localtls.CertFingerprintStr(tlsCert)
+					if fpErr == nil {
+						fmt.Fprintf(os.Stderr, i18n.G("The remote server doesn't trust our client certificate (fingerprint: %s)")+"\n", fingerprint)
+					}
+				}
+			}
+
 			// Prompt for trust token
 			if c.flagToken == "" {
 				c.flagToken, err = c.global.asker.AskString(fmt.Sprintf(i18n.G("Trust token for %s: "), server), "", nil)
@@ -1253,6 +1378,20 @@ func (c *cmdRemoteRename) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Rename the client certificate files.
+	if !conf.Remotes[remoteName].Global {
+		for _, ext := range []string{"crt", "key", "ca"} {
+			oldCertPath := conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", remoteName, ext))
+			newCertPath := conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", newRemoteName, ext))
+			if util.PathExists(oldCertPath) {
+				err := os.Rename(oldCertPath, newCertPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	// Rename the OIDC token file.
 	oldOIDCPath := conf.OIDCTokenPath(remoteName)
 	newOIDCPath := conf.OIDCTokenPath(newRemoteName)
@@ -1344,6 +1483,10 @@ func (c *cmdRemoteRemove) run(cmd *cobra.Command, args []string) error {
 	_ = os.Remove(conf.ServerCertPath(remoteName))
 	_ = os.Remove(conf.CookiesPath(remoteName))
 	_ = os.Remove(conf.OIDCTokenPath(remoteName))
+
+	for _, ext := range []string{"crt", "key", "ca"} {
+		_ = os.Remove(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", remoteName, ext)))
+	}
 
 	return conf.SaveConfig(c.global.confPath)
 }
