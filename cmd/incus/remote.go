@@ -1484,6 +1484,10 @@ func (c *cmdRemoteRemove) run(cmd *cobra.Command, args []string) error {
 	_ = os.Remove(conf.CookiesPath(remoteName))
 	_ = os.Remove(conf.OIDCTokenPath(remoteName))
 
+	for _, ext := range []string{"crt", "key", "ca"} {
+		_ = os.Remove(conf.ConfigPath("clientcerts", fmt.Sprintf("%s.%s", remoteName, ext)))
+	}
+
 	return conf.SaveConfig(c.global.confPath)
 }
 
