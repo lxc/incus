@@ -4664,7 +4664,7 @@ This setting applies to both images and image aliases.
 :initialvaluedesc: "`false`"
 :shortdesc: "Whether to use a separate set of networks for the project"
 :type: "bool"
-
+This feature requires the server to be configured for OVN.
 ```
 
 ```{config:option} features.networks.zones project-features
