@@ -38,6 +38,113 @@ func Lock(ctx context.Context, lockName string) (UnlockFunc, error) {
 	}
 }
 
+type rwState struct {
+	readers        int
+	writer         bool
+	writersWaiting int
+	waitCh         chan struct{}
+}
+
+var rwLocks = map[string]*rwState{}
+var rwLocksMutex sync.Mutex
+
+func (s *rwState) broadcast() {
+	close(s.waitCh)
+	s.waitCh = make(chan struct{})
+}
+
+func getRWLock(lockName string) *rwState {
+	state, ok := rwLocks[lockName]
+	if !ok {
+		state = &rwState{waitCh: make(chan struct{})}
+		rwLocks[lockName] = state
+	}
+
+	return state
+}
+
+func releaseRWLock(lockName string, state *rwState) {
+	current, ok := rwLocks[lockName]
+	if ok && current == state && state.readers == 0 && !state.writer && state.writersWaiting == 0 {
+		delete(rwLocks, lockName)
+	}
+}
+
+func rwUnlock(lockName string, state *rwState, release func(*rwState)) UnlockFunc {
+	var once sync.Once
+
+	return func() {
+		once.Do(func() {
+			rwLocksMutex.Lock()
+			release(state)
+			state.broadcast()
+			releaseRWLock(lockName, state)
+			rwLocksMutex.Unlock()
+		})
+	}
+}
+
+// RWLock acquires an exclusive named read-write lock.
+// Writers are prioritized over new readers so a continuous stream of readers cannot starve a writer.
+func RWLock(ctx context.Context, lockName string) (UnlockFunc, error) {
+	rwLocksMutex.Lock()
+
+	for {
+		state := getRWLock(lockName)
+		if state.readers == 0 && !state.writer {
+			state.writer = true
+			rwLocksMutex.Unlock()
+
+			return rwUnlock(lockName, state, func(state *rwState) { state.writer = false }), nil
+		}
+
+		state.writersWaiting++
+		waitCh := state.waitCh
+		rwLocksMutex.Unlock()
+
+		select {
+		case <-waitCh:
+		case <-ctx.Done():
+			rwLocksMutex.Lock()
+			state.writersWaiting--
+			state.broadcast()
+			releaseRWLock(lockName, state)
+			rwLocksMutex.Unlock()
+
+			return nil, fmt.Errorf("Failed to obtain lock %q: %w", lockName, ctx.Err())
+		}
+
+		rwLocksMutex.Lock()
+		state.writersWaiting--
+	}
+}
+
+// RLock acquires a shared named read-write lock.
+func RLock(ctx context.Context, lockName string) (UnlockFunc, error) {
+	rwLocksMutex.Lock()
+
+	for {
+		state := getRWLock(lockName)
+		if !state.writer && state.writersWaiting == 0 {
+			state.readers++
+			rwLocksMutex.Unlock()
+
+			return rwUnlock(lockName, state, func(state *rwState) { state.readers-- }), nil
+		}
+
+		waitCh := state.waitCh
+		rwLocksMutex.Unlock()
+
+		select {
+		case <-waitCh:
+		case <-ctx.Done():
+			return nil, fmt.Errorf("Failed to obtain lock %q: %w", lockName, ctx.Err())
+		}
+
+		rwLocksMutex.Lock()
+	}
+}
+
 // TryLock creates a named lock for activities that require exclusive access.
 // It does not block if the lock is already held.
 // If the lock is acquired successfully, it returns an unlock function that
