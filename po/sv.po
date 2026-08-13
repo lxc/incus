@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-10 17:32-0400\n"
+"POT-Creation-Date: 2026-08-12 16:17-0400\n"
 "PO-Revision-Date: 2026-08-12 03:52+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -652,7 +652,7 @@ msgstr "%q är inte en IP-adress"
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "%s %q på pool %q i projekt %q (inkluderar %d snapshots)"
 
-#: cmd/incus/image.go:1143
+#: cmd/incus/image.go:1161
 #, c-format
 msgid "%s (%d more)"
 msgstr "%s (%d fler)"
@@ -843,11 +843,11 @@ msgstr "ADRESS"
 msgid "ADDRESSES"
 msgstr "ADRESSER"
 
-#: cmd/incus/alias.go:155 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
+#: cmd/incus/alias.go:155 cmd/incus/image.go:1112 cmd/incus/image_alias.go:248
 msgid "ALIAS"
 msgstr "ALIAS"
 
-#: cmd/incus/image.go:1111
+#: cmd/incus/image.go:1113
 msgid "ALIASES"
 msgstr "ALIASER"
 
@@ -859,7 +859,7 @@ msgstr "API-sökväg"
 msgid "APP"
 msgstr "APP"
 
-#: cmd/incus/cluster.go:200 cmd/incus/image.go:1105 cmd/incus/list.go:537
+#: cmd/incus/cluster.go:200 cmd/incus/image.go:1107 cmd/incus/list.go:537
 msgid "ARCHITECTURE"
 msgstr "ARKITEKTUR"
 
@@ -1036,8 +1036,8 @@ msgstr "Ytterligare hjälpämnen:"
 msgid ""
 "Additional storage pool configuration property (KEY=VALUE, empty when done):"
 msgstr ""
-"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när klar)"
-":"
+"Ytterligare konfigurationsegenskap för lagringspool (KEY=VALUE, tom när "
+"klar):"
 
 #: cmd/incus/admin_init.go:56
 msgid "Address to bind to (default: none)"
@@ -1281,8 +1281,8 @@ msgstr "Säkerhetskopior:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,<nyckel>"
-"=<värde>: %s"
+"Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
+"<nyckel>=<värde>: %s"
 
 #: cmd/incus/copy.go:176 cmd/incus/create.go:209 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -1683,7 +1683,7 @@ msgstr "Klustering aktiverad"
 
 #: cmd/incus/cluster.go:172 cmd/incus/cluster.go:1130
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
-#: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
+#: cmd/incus/config_trust.go:589 cmd/incus/image.go:1079
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
 #: cmd/incus/low_level.go:696 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
@@ -2163,7 +2163,7 @@ msgid "DEFAULT TARGET ADDRESS"
 msgstr "STANDARDMÅLADRESS"
 
 #: cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469
-#: cmd/incus/config_trust.go:420 cmd/incus/image.go:1106
+#: cmd/incus/config_trust.go:420 cmd/incus/image.go:1108
 #: cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086
 #: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433
@@ -2506,7 +2506,7 @@ msgstr "Diskar:"
 msgid "Display clusters from all projects"
 msgstr "Visa kluster från alla projekt"
 
-#: cmd/incus/image.go:1079
+#: cmd/incus/image.go:1081
 msgid "Display images from all projects"
 msgstr "Visa bilder från alla projekt"
 
@@ -2772,7 +2772,7 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 
 #: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1159
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
-#: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
+#: cmd/incus/config_trust.go:614 cmd/incus/image.go:1126
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
 #: cmd/incus/low_level.go:728 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
@@ -2787,7 +2787,13 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 #: cmd/incus/warning.go:236
 #, c-format
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
-msgstr "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+msgstr ""
+"Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+
+#: cmd/incus/image.go:1132
+#, c-format
+msgid "Empty property name in '%s'"
+msgstr ""
 
 #: cmd/incus/cluster.go:775
 msgid "Enable clustering on a single non-clustered server"
@@ -3150,8 +3156,8 @@ msgstr "FELOMRÅDE"
 msgid "FILENAME"
 msgstr "FILNAMN"
 
-#: cmd/incus/config_trust.go:419 cmd/incus/image.go:1108
-#: cmd/incus/image.go:1109 cmd/incus/image_alias.go:249
+#: cmd/incus/config_trust.go:419 cmd/incus/image.go:1110
+#: cmd/incus/image.go:1111 cmd/incus/image_alias.go:249
 msgid "FINGERPRINT"
 msgstr "FINGERAVTRYCK"
 
@@ -3750,7 +3756,7 @@ msgstr ""
 #: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
-#: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
+#: cmd/incus/image.go:1080 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
 #: cmd/incus/low_level.go:695 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
@@ -3890,11 +3896,11 @@ msgstr ""
 "nyckeln. Detta är användbart för fjärrautentiseringsarbetsflöden där en "
 "token skickas till en annan Incus-server."
 
-#: cmd/incus/image.go:1737
+#: cmd/incus/image.go:1755
 msgid "Generate a metadata tarball"
 msgstr "Generera en metadata-tarball"
 
-#: cmd/incus/image.go:1739
+#: cmd/incus/image.go:1757
 msgid ""
 "Generate a metadata tarball\n"
 "\n"
@@ -3945,7 +3951,7 @@ msgstr "Hämta aktuell status för lastbalanseraren"
 msgid "Get current load-balancer status"
 msgstr "Hämta aktuell lastbalanserarstatus"
 
-#: cmd/incus/image.go:1532 cmd/incus/image.go:1533
+#: cmd/incus/image.go:1550 cmd/incus/image.go:1551
 msgid "Get image properties"
 msgstr "Hämta bildegenskaper"
 
@@ -4298,7 +4304,7 @@ msgstr "Ignorera instansens tillstånd"
 msgid "Image alias description"
 msgstr "Bildaliasbeskrivning"
 
-#: cmd/incus/image.go:1448
+#: cmd/incus/image.go:1466
 msgid "Image already up to date."
 msgstr "Bilden är redan uppdaterad."
 
@@ -4323,7 +4329,7 @@ msgstr "Bildformat"
 msgid "Image imported with fingerprint: %s"
 msgstr "Avbild importerad med fingeravtryck: %s"
 
-#: cmd/incus/image.go:1446
+#: cmd/incus/image.go:1464
 msgid "Image refreshed successfully!"
 msgstr "Bilden har uppdaterats!"
 
@@ -5363,6 +5369,7 @@ msgid "List images"
 msgstr "Lista avbilder"
 
 #: cmd/incus/image.go:1051
+#, fuzzy
 msgid ""
 "List images\n"
 "\n"
@@ -5386,7 +5393,9 @@ msgid ""
 "    a - Architecture\n"
 "    s - Size\n"
 "    u - Upload date\n"
-"    t - Type"
+"    t - Type\n"
+"\n"
+"Custom columns are defined with \"properties:key\", e.g. \"properties:os\""
 msgstr ""
 "Lista avbilder\n"
 "\n"
@@ -5623,8 +5632,8 @@ msgstr ""
 "  L - Instansens plats (t.ex. dess klustermedlem) \n"
 "  f - Fingeravtryck för basavbildning (kort) \n"
 "  F - Fingeravtryck för basavbildning (långt) \n"
-"Anpassade kolumner definieras med "
-"\"[config:|devices:]key[:name][:maxWidth]\":\n"
+"Anpassade kolumner definieras med \"[config:|devices:]key[:name][:maxWidth]"
+"\":\n"
 "\n"
 "KEY: Den (utökade) konfigurations- eller enhetsnyckeln som ska visas. Om\n"
 "[config:|devices:] utelämnas är standardvärdet konfigurationsnyckeln. NAME: "
@@ -7320,7 +7329,7 @@ msgstr "PROCESSER"
 msgid "PROFILES"
 msgstr "PROFILER"
 
-#: cmd/incus/image.go:1107 cmd/incus/list.go:542 cmd/incus/network.go:1080
+#: cmd/incus/image.go:1109 cmd/incus/list.go:542 cmd/incus/network.go:1080
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:144 cmd/incus/profile.go:731
 #: cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1645
@@ -7336,7 +7345,7 @@ msgstr "PROJEKT"
 msgid "PROTOCOL"
 msgstr "PROTOKOLL"
 
-#: cmd/incus/image.go:1112 cmd/incus/remote.go:1058
+#: cmd/incus/image.go:1114 cmd/incus/remote.go:1058
 msgid "PUBLIC"
 msgstr "PUBLIK"
 
@@ -7616,7 +7625,7 @@ msgstr "Projekt att använda för fjärrkontrollen"
 msgid "Properties:"
 msgstr "Egenskaper:"
 
-#: cmd/incus/image.go:1577
+#: cmd/incus/image.go:1595
 msgid "Property not found"
 msgstr "Egenskap hittades inte"
 
@@ -7684,7 +7693,7 @@ msgstr "Trycker %s till %s: %%s"
 msgid "Query path must start with /"
 msgstr "Sökvägen måste börja med /"
 
-#: cmd/incus/image.go:529 cmd/incus/image.go:913 cmd/incus/image.go:1471
+#: cmd/incus/image.go:529 cmd/incus/image.go:913 cmd/incus/image.go:1489
 msgid "Query virtual machine images"
 msgstr "Fråga virtuella maskinavbildningar"
 
@@ -7775,7 +7784,7 @@ msgstr "Överför filer rekursivt"
 msgid "Refresh and update the existing storage volume copies"
 msgstr "Uppdatera och uppdatera befintliga kopior av lagringsvolymer"
 
-#: cmd/incus/image.go:1391 cmd/incus/image.go:1392
+#: cmd/incus/image.go:1409 cmd/incus/image.go:1410
 msgid "Refresh images"
 msgstr "Uppdatera avbildningar"
 
@@ -7784,7 +7793,7 @@ msgstr "Uppdatera avbildningar"
 msgid "Refreshing instance: %s"
 msgstr "Uppdateringsinstans: %s"
 
-#: cmd/incus/image.go:1415
+#: cmd/incus/image.go:1433
 #, c-format
 msgid "Refreshing the image: %s"
 msgstr "Uppdaterar avbildningen: %s"
@@ -8139,7 +8148,7 @@ msgstr "Kör mot alla projekt"
 msgid "SEVERITY"
 msgstr "ALLVARLIGHET"
 
-#: cmd/incus/image.go:1113
+#: cmd/incus/image.go:1115
 msgid "SIZE"
 msgstr "STORLEK"
 
@@ -8340,7 +8349,7 @@ msgstr ""
 "in med:\n"
 "    incus profile device set [<fjärr>:]<profil> <enhet> <nyckel> <värde>"
 
-#: cmd/incus/image.go:1595 cmd/incus/image.go:1596
+#: cmd/incus/image.go:1613 cmd/incus/image.go:1614
 msgid "Set image properties"
 msgstr "Ställ in avbildningsegenskaper"
 
@@ -8780,7 +8789,7 @@ msgstr "Visa händelser från alla projekt"
 msgid "Show full device configuration"
 msgstr "Visa fullständig enhetskonfiguration"
 
-#: cmd/incus/image.go:1468 cmd/incus/image.go:1469
+#: cmd/incus/image.go:1486 cmd/incus/image.go:1487
 msgid "Show image properties"
 msgstr "Visa avbildningsegenskaper"
 
@@ -9270,7 +9279,7 @@ msgstr "TIDSSTÄMPEL"
 msgid "TOKEN"
 msgstr "TOKEN"
 
-#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1114
+#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1116
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:555 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
@@ -9805,7 +9814,7 @@ msgstr "UEFI-variabel %s:%s borttagen den %s"
 msgid "UNLIMITED"
 msgstr "OBEGRÄNSAD"
 
-#: cmd/incus/image.go:1115
+#: cmd/incus/image.go:1117
 msgid "UPLOAD DATE"
 msgstr "UPPLADDNINGSDATUM"
 
@@ -9879,7 +9888,7 @@ msgstr "Okänd kanaltyp för klient %q: %s"
 
 #: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1165
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
-#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
+#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1148
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
 #: cmd/incus/low_level.go:734 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
@@ -9945,7 +9954,7 @@ msgstr "Återställ klientens standardinställningar"
 msgid "Unset device configuration keys"
 msgstr "Avmarkera enhetskonfigurationsnycklar"
 
-#: cmd/incus/image.go:1659 cmd/incus/image.go:1660
+#: cmd/incus/image.go:1677 cmd/incus/image.go:1678
 msgid "Unset image properties"
 msgstr "Ta bort avbildningsegenskaper"
 
@@ -10365,8 +10374,8 @@ msgid ""
 "they otherwise would."
 msgstr ""
 "Vi har upptäckt att du kör i en container utan privilegier.\n"
-"Det innebär att om du inte manuellt har konfigurerat din värd på annat sätt, "
-"\n"
+"Det innebär att om du inte manuellt har konfigurerat din värd på annat "
+"sätt, \n"
 "kommer du inte att ha tillräckligt med uid och gid att tilldela dina "
 "containrar.\n"
 "\n"
@@ -10408,7 +10417,8 @@ msgstr "Var ska denna lagringspool lagra sina data?"
 
 #: cmd/incus/export.go:53
 msgid "Whether or not to only backup the instance (without dependent volumes)"
-msgstr "Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
+msgstr ""
+"Huruvida endast instansen ska säkerhetskopieras (utan beroende volymer)"
 
 #: cmd/incus/export.go:52
 msgid "Whether or not to only backup the instance (without snapshots)"
@@ -10430,7 +10440,8 @@ msgstr ""
 
 #: cmd/incus/snapshot.go:98
 msgid "Whether or not to snapshot the instance's running state"
-msgstr "Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
+msgstr ""
+"Om man ska ta en ögonblicksbild av instansens körningsstatus eller inte"
 
 #: cmd/incus/rebuild.go:28
 msgid ""
@@ -11804,7 +11815,7 @@ msgid "new %s name"
 msgstr "nytt %s namn"
 
 #: cmd/incus/config_trust.go:481 cmd/incus/image.go:953 cmd/incus/image.go:958
-#: cmd/incus/image.go:1172
+#: cmd/incus/image.go:1190
 msgid "no"
 msgstr "nej"
 
@@ -11993,7 +12004,7 @@ msgstr "j"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:478
 #: cmd/incus/delete.go:56 cmd/incus/image.go:955 cmd/incus/image.go:960
-#: cmd/incus/image.go:1169 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
+#: cmd/incus/image.go:1187 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
 msgid "yes"
 msgstr "ja"
 
