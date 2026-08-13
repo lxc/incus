@@ -1199,13 +1199,27 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 				uplinkConfig = uplink.Config
 			}
 
+			// Work out which external addresses have been removed or changed.
+			removedExternalIPs := []net.IP{}
+			for _, key := range []string{"ipv4.address.external", "ipv6.address.external"} {
+				if oldConfig[key] == "" || oldConfig[key] == d.config[key] {
+					continue
+				}
+
+				extIP := net.ParseIP(oldConfig[key])
+				if extIP != nil {
+					removedExternalIPs = append(removedExternalIPs, extIP)
+				}
+			}
+
 			// Update OVN logical switch port for instance.
 			_, _, err := d.network.InstanceDevicePortStart(&network.OVNInstanceNICSetupOpts{
-				InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
-				DNSName:      d.inst.Name(),
-				DeviceName:   d.name,
-				DeviceConfig: nicNormalizedAddressConfig(d.config),
-				UplinkConfig: uplinkConfig,
+				InstanceUUID:             d.inst.LocalConfig()["volatile.uuid"],
+				DNSName:                  d.inst.Name(),
+				DeviceName:               d.name,
+				DeviceConfig:             nicNormalizedAddressConfig(d.config),
+				UplinkConfig:             uplinkConfig,
+				RemovedExternalAddresses: removedExternalIPs,
 			}, removedACLs)
 			if err != nil {
 				return fmt.Errorf("Failed updating OVN port: %w", err)
