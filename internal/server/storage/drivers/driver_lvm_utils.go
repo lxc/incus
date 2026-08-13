@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -113,6 +114,45 @@ func (d *lvm) isLVMNotFoundExitError(err error) bool {
 	}
 
 	return true
+}
+
+// sanlockVolumeGroups returns the shared volume groups using the sanlock lock manager, excluding excludeName.
+func (d *lvm) sanlockVolumeGroups(excludeName string) ([]string, error) {
+	output, err := subprocess.RunCommand("vgs", "--noheadings", "-o", "vg_name", "-S", "vg_lock_type=sanlock")
+	if err != nil {
+		return nil, fmt.Errorf("Error listing sanlock volume groups: %w", err)
+	}
+
+	vgNames := []string{}
+	for line := range strings.Lines(output) {
+		vgName := strings.TrimSpace(line)
+		if vgName == "" || vgName == excludeName {
+			continue
+		}
+
+		vgNames = append(vgNames, vgName)
+	}
+
+	return vgNames, nil
+}
+
+// sanlockHasGlobalLock checks whether the given shared volume group hosts the sanlock global lock.
+// The volume group's sanlock lease volume must be active on the local system.
+func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
+	devPath := filepath.Join("/dev/mapper", fmt.Sprintf("%s-lvmlock", strings.ReplaceAll(vgName, "-", "--")))
+
+	output, err := subprocess.RunCommand("sanlock", "direct", "dump", fmt.Sprintf("%s:0:134217728", devPath))
+	if err != nil {
+		return false, fmt.Errorf("Error reading sanlock leases on %q: %w", devPath, err)
+	}
+
+	for line := range strings.Lines(output) {
+		if slices.Contains(strings.Fields(line), "GLLK") {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
