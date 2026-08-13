@@ -9,8 +9,8 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 )
 
-// eventQueueSize is how many events may be pending handling before an ordered listener is dropped.
-const eventQueueSize = 1000
+// eventChannelSize is the buffer size used for channels added without an explicit size.
+const eventChannelSize = 1000
 
 // The EventListener struct is used to interact with an Incus event stream.
 type EventListener struct {
@@ -22,10 +22,8 @@ type EventListener struct {
 	// projectName stores which project this event listener is associated with (empty for all projects).
 	projectName string
 	targets     []*EventTarget
+	channels    []*eventChannel
 	targetsLock sync.Mutex
-
-	// queue is only set when ordered delivery was requested.
-	queue chan api.Event
 }
 
 // The EventTarget struct is returned to the caller of AddHandler and used in RemoveHandler.
@@ -34,46 +32,13 @@ type EventTarget struct {
 	types    []string
 }
 
-// SetOrdered makes the listener call its handlers one event at a time and in order (must be called before AddHandler).
-func (e *EventListener) SetOrdered() {
-	e.targetsLock.Lock()
-	defer e.targetsLock.Unlock()
-
-	if e.queue != nil {
-		return
-	}
-
-	e.queue = make(chan api.Event, eventQueueSize)
-
-	go e.dispatch()
+// The eventChannel struct tracks a channel added through AddChannel.
+type eventChannel struct {
+	ch    chan api.Event
+	types []string
 }
 
-// dispatch delivers queued events to the handlers, one event at a time.
-func (e *EventListener) dispatch() {
-	for {
-		var event api.Event
-
-		select {
-		case <-e.ctx.Done():
-			return
-		case event = <-e.queue:
-		}
-
-		e.targetsLock.Lock()
-		targets := slices.Clone(e.targets)
-		e.targetsLock.Unlock()
-
-		for _, target := range targets {
-			if target.types != nil && !slices.Contains(target.types, event.Type) {
-				continue
-			}
-
-			target.function(event)
-		}
-	}
-}
-
-// send passes an event on to the handlers of this listener.
+// send passes an event on to the handlers and channels of this listener.
 func (e *EventListener) send(event api.Event) {
 	e.targetsLock.Lock()
 	defer e.targetsLock.Unlock()
@@ -82,25 +47,95 @@ func (e *EventListener) send(event api.Event) {
 		return
 	}
 
-	if e.queue == nil {
-		for _, target := range e.targets {
-			if target.types != nil && !slices.Contains(target.types, event.Type) {
-				continue
-			}
-
-			go target.function(event)
+	for _, target := range e.targets {
+		if target.types != nil && !slices.Contains(target.types, event.Type) {
+			continue
 		}
 
-		return
+		go target.function(event)
 	}
 
-	select {
-	case e.queue <- event:
-	default:
-		// Dropping events would leave the handler with a silently incomplete view.
-		e.err = errors.New("Event handlers are too far behind")
-		e.ctxCancel()
+	for _, entry := range e.channels {
+		if entry.types != nil && !slices.Contains(entry.types, event.Type) {
+			continue
+		}
+
+		select {
+		case entry.ch <- event:
+		default:
+			// Dropping events would leave the reader with a silently incomplete view.
+			e.err = errors.New("Event channel is too far behind")
+			e.ctxCancel()
+
+			return
+		}
 	}
+}
+
+// AddChannel adds a channel to be sent every matching event, size 0 means use the client's default.
+func (e *EventListener) AddChannel(types []string, size int) <-chan api.Event {
+	if size <= 0 {
+		size = eventChannelSize
+	}
+
+	ch := make(chan api.Event, size)
+
+	// Handle locking
+	e.targetsLock.Lock()
+	defer e.targetsLock.Unlock()
+
+	// A listener that is already done will never deliver anything.
+	if e.ctx.Err() != nil {
+		close(ch)
+
+		return ch
+	}
+
+	// Close the channels once the listener is done so that readers can range over them.
+	if e.channels == nil {
+		context.AfterFunc(e.ctx, e.closeChannels)
+	}
+
+	e.channels = append(e.channels, &eventChannel{ch: ch, types: types})
+
+	return ch
+}
+
+// RemoveChannel removes and closes a channel previously added with AddChannel.
+func (e *EventListener) RemoveChannel(ch <-chan api.Event) error {
+	if ch == nil {
+		return errors.New("A valid channel must be provided")
+	}
+
+	// Handle locking
+	e.targetsLock.Lock()
+	defer e.targetsLock.Unlock()
+
+	// Locate and remove the channel from the list
+	for i, entry := range e.channels {
+		if entry.ch == ch {
+			close(entry.ch)
+			copy(e.channels[i:], e.channels[i+1:])
+			e.channels[len(e.channels)-1] = nil
+			e.channels = e.channels[:len(e.channels)-1]
+
+			return nil
+		}
+	}
+
+	return errors.New("Couldn't find this channel")
+}
+
+// closeChannels closes all remaining channels once the listener is done.
+func (e *EventListener) closeChannels() {
+	e.targetsLock.Lock()
+	defer e.targetsLock.Unlock()
+
+	for _, entry := range e.channels {
+		close(entry.ch)
+	}
+
+	e.channels = nil
 }
 
 // AddHandler adds a function to be called whenever an event is received.
