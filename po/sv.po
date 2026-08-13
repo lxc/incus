@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-07 15:15-0400\n"
+"POT-Creation-Date: 2026-08-14 22:38-0400\n"
 "PO-Revision-Date: 2026-04-21 03:01+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -653,7 +653,7 @@ msgstr "%q är inte en IP-adress"
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "%s %q på pool %q i projekt %q (inkluderar %d snapshots)"
 
-#: cmd/incus/image.go:1143
+#: cmd/incus/image.go:1161
 #, c-format
 msgid "%s (%d more)"
 msgstr "%s (%d fler)"
@@ -816,12 +816,22 @@ msgstr "--target kan inte användas med instanser"
 msgid "--timestamp cannot be used with --format=%s"
 msgstr "--no-profiles kan inte användas tillsammans med --refresh"
 
+#: cmd/incus/remote.go:531
+#, fuzzy
+msgid "--tls-cert and --tls-key must be used together"
+msgstr "Målsökvägen och flaggan --listen kan inte användas tillsammans"
+
+#: cmd/incus/remote.go:527
+#, fuzzy
+msgid "--tls-p12 can't be used with --tls-cert or --tls-key"
+msgstr "--no-profiles kan inte användas tillsammans med --refresh"
+
 #: cmd/incus/admin_sql.go:132
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> Fråga %d:"
 
-#: cmd/incus/remote.go:757
+#: cmd/incus/remote.go:882
 msgid "A client certificate is already present"
 msgstr "Ett klientcertifikat finns redan"
 
@@ -843,11 +853,11 @@ msgstr "ADRESS"
 msgid "ADDRESSES"
 msgstr "ADRESSER"
 
-#: cmd/incus/alias.go:155 cmd/incus/image.go:1110 cmd/incus/image_alias.go:248
+#: cmd/incus/alias.go:155 cmd/incus/image.go:1112 cmd/incus/image_alias.go:248
 msgid "ALIAS"
 msgstr "ALIAS"
 
-#: cmd/incus/image.go:1111
+#: cmd/incus/image.go:1113
 msgid "ALIASES"
 msgstr "ALIASER"
 
@@ -859,7 +869,7 @@ msgstr "API-sökväg"
 msgid "APP"
 msgstr "APP"
 
-#: cmd/incus/cluster.go:200 cmd/incus/image.go:1105 cmd/incus/list.go:537
+#: cmd/incus/cluster.go:200 cmd/incus/image.go:1107 cmd/incus/list.go:537
 msgid "ARCHITECTURE"
 msgstr "ARKITEKTUR"
 
@@ -867,11 +877,11 @@ msgstr "ARKITEKTUR"
 msgid "ATTRIBUTES"
 msgstr ""
 
-#: cmd/incus/remote.go:1057
+#: cmd/incus/remote.go:1182
 msgid "AUTH TYPE"
 msgstr "AUTENTISERINGSTYP"
 
-#: cmd/incus/remote.go:148
+#: cmd/incus/remote.go:151
 msgid "Accept certificate"
 msgstr "Acceptera certifikat"
 
@@ -938,11 +948,11 @@ msgstr "Lägg till medlem i grupp"
 msgid "Add new aliases"
 msgstr "Lägg till nya alias"
 
-#: cmd/incus/remote.go:131
+#: cmd/incus/remote.go:134
 msgid "Add new remote servers"
 msgstr "Lägg till nya fjärrservrar"
 
-#: cmd/incus/remote.go:132
+#: cmd/incus/remote.go:135
 #, fuzzy
 msgid ""
 "Add new remote servers\n"
@@ -1053,7 +1063,7 @@ msgstr "Addres: %s"
 msgid "Address: %v"
 msgstr "Adress: %v"
 
-#: cmd/incus/remote.go:338
+#: cmd/incus/remote.go:424
 #, fuzzy
 msgid "Addresses cannot be empty"
 msgstr "Poolnamnet får inte vara tomt"
@@ -1107,7 +1117,7 @@ msgstr "Alla profiler borttagna från %s"
 msgid "All projects"
 msgstr "Alla projekt"
 
-#: cmd/incus/remote.go:229
+#: cmd/incus/remote.go:315
 msgid "All server addresses are unavailable"
 msgstr "Alla serveradresser är otillgängliga"
 
@@ -1150,7 +1160,7 @@ msgstr ""
 msgid "As neither could be found, the raw SPICE socket can be found at:"
 msgstr "Eftersom ingen av dem kunde hittas, finns den råa SPICE-sockeln på:"
 
-#: cmd/incus/create.go:339 cmd/incus/rebuild.go:100
+#: cmd/incus/create.go:343 cmd/incus/rebuild.go:100
 msgid "Asked for a VM but image is of type container"
 msgstr "Begärde en VM men bilden är av typen container"
 
@@ -1198,7 +1208,7 @@ msgstr ""
 "Med det här kommandot kan du interagera med startkonsolen för en instans\n"
 "och hämta tidigare loggposter från den."
 
-#: cmd/incus/remote.go:664
+#: cmd/incus/remote.go:778
 #, c-format
 msgid "Authentication type '%s' not supported by server"
 msgstr "Autentiseringstyp '%s' stöds inte av servern"
@@ -1226,7 +1236,7 @@ msgstr "Automatiskt (icke-interaktivt) läge"
 msgid "Available Commands:"
 msgstr "Tillgängliga projekt:"
 
-#: cmd/incus/remote.go:185
+#: cmd/incus/remote.go:191
 msgid "Available projects:"
 msgstr "Tillgängliga projekt:"
 
@@ -1282,13 +1292,13 @@ msgstr ""
 "Felaktig syntax för enhetsöverskrivning, förväntar sig <enhet>,"
 "<nyckel>=<värde>: %s"
 
-#: cmd/incus/copy.go:176 cmd/incus/create.go:205 cmd/incus/move.go:269
+#: cmd/incus/copy.go:176 cmd/incus/create.go:209 cmd/incus/move.go:269
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
 #, c-format
 msgid "Bad key=value pair: %q"
 msgstr "Felaktigt nyckel=värde-par: %q"
 
-#: cmd/incus/remote.go:155
+#: cmd/incus/remote.go:158
 msgid "Binary helper for retrieving credentials"
 msgstr "Binär hjälpfunktion för hämtning av inloggningsuppgifter"
 
@@ -1425,7 +1435,7 @@ msgstr "Kan inte läsa från miljöfil: %w"
 msgid "Can't read from stdin: %w"
 msgstr "Kan inte läsa från stdin: %w"
 
-#: cmd/incus/remote.go:1339
+#: cmd/incus/remote.go:1478
 msgid "Can't remove the default remote"
 msgstr "Kan inte ta bort standardfjärrkontrollen"
 
@@ -1472,11 +1482,11 @@ msgstr "Kan inte använda --minimal och --preseed tillsammans"
 msgid "Can't use both --no-expiry and --expiry"
 msgstr "Kan inte använda både --no-expiry och --expiry"
 
-#: cmd/incus/remote.go:484
+#: cmd/incus/remote.go:598
 msgid "Cannot mix HTTPS and Unix URLs"
 msgstr ""
 
-#: cmd/incus/create.go:314
+#: cmd/incus/create.go:318
 #, c-format
 msgid ""
 "Cannot override config for device %q: Device not found in profile devices"
@@ -1527,7 +1537,7 @@ msgstr "Certifikatstoken för %s borttaget"
 msgid "Certificate description"
 msgstr "Certifikatbeskrivning"
 
-#: cmd/incus/remote.go:282
+#: cmd/incus/remote.go:368
 #, c-format
 msgid ""
 "Certificate fingerprint mismatch between certificate token and server %q"
@@ -1543,7 +1553,7 @@ msgstr ""
 "Certifikatets fingeravtryck stämmer inte överens mellan anslutningstoken och "
 "klustermedlem %q"
 
-#: cmd/incus/remote.go:561
+#: cmd/incus/remote.go:675
 #, c-format
 msgid "Certificate fingerprint: %s"
 msgstr "Certifikatets fingeravtryck: %s"
@@ -1567,7 +1577,7 @@ msgstr "Välj %s:"
 msgid "Client %s certificate add token:"
 msgstr "Klient %s certifikat lägg till token:"
 
-#: cmd/incus/remote.go:710
+#: cmd/incus/remote.go:835
 msgid "Client certificate now trusted by server:"
 msgstr "Klientcertifikatet är nu betrott av servern:"
 
@@ -1681,14 +1691,14 @@ msgstr "Klustering aktiverad"
 
 #: cmd/incus/cluster.go:172 cmd/incus/cluster.go:1130
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
-#: cmd/incus/config_trust.go:589 cmd/incus/image.go:1077
+#: cmd/incus/config_trust.go:589 cmd/incus/image.go:1079
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
 #: cmd/incus/low_level.go:696 cmd/incus/network.go:1054
 #: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
 #: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
 #: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
 #: cmd/incus/network_zone.go:123 cmd/incus/operation.go:152
-#: cmd/incus/profile.go:704 cmd/incus/project.go:522 cmd/incus/remote.go:1041
+#: cmd/incus/profile.go:704 cmd/incus/project.go:522 cmd/incus/remote.go:1166
 #: cmd/incus/snapshot.go:344 cmd/incus/storage.go:666
 #: cmd/incus/storage_bucket.go:467 cmd/incus/storage_bucket.go:863
 #: cmd/incus/storage_volume.go:1496 cmd/incus/storage_volume_bitmap.go:232
@@ -1736,20 +1746,30 @@ msgstr ""
 "för ISO-lagringsvolymer)"
 
 #: cmd/incus/copy.go:60 cmd/incus/create.go:62 cmd/incus/import.go:43
-msgid "Config key/value to apply to the new instance"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the new instance (may be passed multiple times)"
 msgstr "Konfigurera nyckel/värde som ska tillämpas på den nya instansen"
 
 #: cmd/incus/network_integration.go:96
-msgid "Config key/value to apply to the new network integration"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the new network integration (may be passed "
+"multiple times)"
 msgstr ""
 "Konfigurera nyckel/värde som ska tillämpas på den nya nätverksintegrationen"
 
 #: cmd/incus/project.go:119
-msgid "Config key/value to apply to the new project"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the new project (may be passed multiple times)"
 msgstr "Konfigurationsnyckel/värde som ska tillämpas på det nya projektet"
 
 #: cmd/incus/move.go:62
-msgid "Config key/value to apply to the target instance"
+#, fuzzy
+msgid ""
+"Config key/value to apply to the target instance (may be passed multiple "
+"times)"
 msgstr "Konfigurationsnyckel/värde som ska tillämpas på målinstansen"
 
 #: cmd/incus/admin_recover.go:129
@@ -1912,12 +1932,17 @@ msgstr "Kärna %d"
 msgid "Cores:"
 msgstr "Kärnor:"
 
-#: cmd/incus/remote.go:597
+#: cmd/incus/remote.go:711
 #, c-format
 msgid "Could not close server cert file %q: %w"
 msgstr "Kunde inte stänga servercertifikatfilen %q: %w"
 
-#: cmd/incus/remote.go:288 cmd/incus/remote.go:581
+#: cmd/incus/remote.go:274
+#, fuzzy
+msgid "Could not create client cert dir"
+msgstr "Kunde inte skapa servercertifikatskatalog"
+
+#: cmd/incus/remote.go:374 cmd/incus/remote.go:695
 msgid "Could not create server cert dir"
 msgstr "Kunde inte skapa servercertifikatskatalog"
 
@@ -1947,7 +1972,7 @@ msgid "Could not write new remote certificate for remote '%s' with error: %v"
 msgstr ""
 "Det gick inte att skriva ett nytt fjärrcertifikat för fjärr '%s' med fel: %v"
 
-#: cmd/incus/remote.go:592
+#: cmd/incus/remote.go:706
 #, c-format
 msgid "Could not write server cert file %q: %w"
 msgstr "Kunde inte skriva servercertifikatfilen %q: %w"
@@ -2152,7 +2177,7 @@ msgid "DEFAULT TARGET ADDRESS"
 msgstr "STANDARDMÅLADRESS"
 
 #: cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469
-#: cmd/incus/config_trust.go:420 cmd/incus/image.go:1106
+#: cmd/incus/config_trust.go:420 cmd/incus/image.go:1108
 #: cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086
 #: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
 #: cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433
@@ -2442,7 +2467,7 @@ msgstr "Enhets-ID: %v"
 msgid "DevicePath: %v"
 msgstr "Enhetsväg: %v"
 
-#: cmd/incus/create.go:396
+#: cmd/incus/create.go:400
 msgid "Didn't get name of new instance from the server"
 msgstr "Fick inte namnet på den nya instansen från servern"
 
@@ -2497,7 +2522,7 @@ msgstr "Diskar:"
 msgid "Display clusters from all projects"
 msgstr "Visa kluster från alla projekt"
 
-#: cmd/incus/image.go:1079
+#: cmd/incus/image.go:1081
 msgid "Display images from all projects"
 msgstr "Visa bilder från alla projekt"
 
@@ -2763,14 +2788,14 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 
 #: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1159
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
-#: cmd/incus/config_trust.go:614 cmd/incus/image.go:1124
+#: cmd/incus/config_trust.go:614 cmd/incus/image.go:1126
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
 #: cmd/incus/low_level.go:728 cmd/incus/network.go:1101
 #: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
 #: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
 #: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
 #: cmd/incus/network_zone.go:159 cmd/incus/operation.go:184
-#: cmd/incus/profile.go:748 cmd/incus/project.go:563 cmd/incus/remote.go:1068
+#: cmd/incus/profile.go:748 cmd/incus/project.go:563 cmd/incus/remote.go:1193
 #: cmd/incus/snapshot.go:378 cmd/incus/storage.go:704
 #: cmd/incus/storage_bucket.go:501 cmd/incus/storage_bucket.go:888
 #: cmd/incus/storage_volume.go:1655 cmd/incus/storage_volume_bitmap.go:286
@@ -2780,6 +2805,11 @@ msgstr "Redigera förtroendekonfigurationer som YAML"
 msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
 "Tom kolumnpost (överflödig, inledande eller avslutande kommando) i '%s'"
+
+#: cmd/incus/image.go:1132
+#, c-format
+msgid "Empty property name in '%s'"
+msgstr ""
 
 #: cmd/incus/cluster.go:775
 msgid "Enable clustering on a single non-clustered server"
@@ -2827,7 +2857,10 @@ msgid "Entry TTL"
 msgstr "Inmatning TTL"
 
 #: cmd/incus/exec.go:64
-msgid "Environment variable to set (e.g. HOME=/home/foo)"
+#, fuzzy
+msgid ""
+"Environment variable to set (e.g. HOME=/home/foo) (may be passed multiple "
+"times)"
 msgstr "Miljövariabel att ställa in (t.ex. HOME=/home/foo)"
 
 #: cmd/incus/copy.go:63 cmd/incus/create.go:65
@@ -2921,8 +2954,9 @@ msgstr ""
 msgid "Evacuating cluster member: %s"
 msgstr "Evakuerar klustermedlem: %s"
 
-#: cmd/incus/monitor.go:58
-msgid "Event type to listen for"
+#: cmd/incus/monitor.go:57
+#, fuzzy
+msgid "Event type to listen for (may be passed multiple times)"
 msgstr "Händelsetyp att lyssna efter"
 
 #: cmd/incus/color/color.go:40
@@ -3135,8 +3169,8 @@ msgstr "FELOMRÅDE"
 msgid "FILENAME"
 msgstr "FILNAMN"
 
-#: cmd/incus/config_trust.go:419 cmd/incus/image.go:1108
-#: cmd/incus/image.go:1109 cmd/incus/image_alias.go:249
+#: cmd/incus/config_trust.go:419 cmd/incus/image.go:1110
+#: cmd/incus/image.go:1111 cmd/incus/image_alias.go:249
 msgid "FINGERPRINT"
 msgstr "FINGERAVTRYCK"
 
@@ -3229,12 +3263,12 @@ msgstr "Misslyckad importbegäran: %w"
 msgid "Failed loading network %q: %w"
 msgstr "Misslyckades med att läsa in nätverket %q: %w"
 
-#: cmd/incus/create.go:297
+#: cmd/incus/create.go:301
 #, c-format
 msgid "Failed loading profile %q for device override: %w"
 msgstr "Det gick inte att läsa in profilen %q för enhetsöverskrivning: %w"
 
-#: cmd/incus/create.go:215
+#: cmd/incus/create.go:219
 #, c-format
 msgid "Failed loading storage pool %q: %w"
 msgstr "Misslyckades med att läsa in lagringspool %q: %w"
@@ -3265,7 +3299,7 @@ msgstr "Misslyckades med att starta sshfs: %w"
 msgid "Failed to accept incoming connection: %w"
 msgstr "Det gick inte att acceptera inkommande anslutning: %w"
 
-#: cmd/incus/remote.go:239
+#: cmd/incus/remote.go:325
 msgid "Failed to add remote"
 msgstr "Det gick inte att lägga till fjärrkontrollen"
 
@@ -3290,7 +3324,7 @@ msgstr "Det gick inte att kontrollera om daemonen är redo (försök %d): %v"
 msgid "Failed to close export file: %w"
 msgstr "Det gick inte att stänga exportfilen: %w"
 
-#: cmd/incus/remote.go:305
+#: cmd/incus/remote.go:391
 #, c-format
 msgid "Failed to close server cert file %q: %w"
 msgstr "Det gick inte att stänga servercertifikatfilen %q: %w"
@@ -3315,7 +3349,7 @@ msgstr "Det gick inte att ansluta till lokal daemon: %w"
 msgid "Failed to connect to target cluster node %q: %w"
 msgstr "Det gick inte att ansluta till målklusterknutpunkten %q: %w"
 
-#: cmd/incus/remote.go:295
+#: cmd/incus/remote.go:381
 #, c-format
 msgid "Failed to create %q: %w"
 msgstr "Det gick inte att skapa %q: %w"
@@ -3335,7 +3369,7 @@ msgstr "Det gick inte att skapa säkerhetskopia: %v"
 msgid "Failed to create bitmap: %w"
 msgstr "Det gick inte att skapa säkerhetskopia: %v"
 
-#: cmd/incus/remote.go:320
+#: cmd/incus/remote.go:406
 #, c-format
 msgid "Failed to create certificate: %w"
 msgstr "Det gick inte att skapa certifikatet: %w"
@@ -3392,7 +3426,7 @@ msgstr "Det gick inte att hämta säkerhetskopian av lagringsbucket: %w"
 msgid "Failed to fetch storage volume backup file: %w"
 msgstr "Det gick inte att hämta säkerhetskopian av lagringsvolymen: %w"
 
-#: cmd/incus/remote.go:327
+#: cmd/incus/remote.go:413
 #, c-format
 msgid "Failed to find project: %w"
 msgstr "Projektet kunde inte hittas: %w"
@@ -3575,7 +3609,7 @@ msgstr "Det gick inte att uppdatera klustermedlemmens status: %w"
 msgid "Failed to walk path for %s: %s"
 msgstr "Kunde inte gå sökvägen för %s: %s"
 
-#: cmd/incus/remote.go:300
+#: cmd/incus/remote.go:386
 #, c-format
 msgid "Failed to write server cert file %q: %w"
 msgstr "Det gick inte att skriva servercertifikatfilen %q: %w"
@@ -3735,7 +3769,7 @@ msgstr ""
 #: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
-#: cmd/incus/image.go:1078 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
+#: cmd/incus/image.go:1080 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
 #: cmd/incus/low_level.go:695 cmd/incus/network.go:1055
 #: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
 #: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
@@ -3743,7 +3777,7 @@ msgstr ""
 #: cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121
 #: cmd/incus/network_zone.go:822 cmd/incus/operation.go:150
 #: cmd/incus/profile.go:705 cmd/incus/project.go:523 cmd/incus/project.go:1000
-#: cmd/incus/remote.go:1040 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667
+#: cmd/incus/remote.go:1165 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667
 #: cmd/incus/storage_bucket.go:465 cmd/incus/storage_bucket.go:861
 #: cmd/incus/storage_volume.go:1524 cmd/incus/storage_volume_bitmap.go:233
 #: cmd/incus/storage_volume_snapshot.go:341 cmd/incus/warning.go:99
@@ -3755,7 +3789,7 @@ msgstr ""
 "för att inaktivera rubriker och \",header\" för att aktivera dem om de "
 "saknas, t.ex. csv,header"
 
-#: cmd/incus/monitor.go:60
+#: cmd/incus/monitor.go:59
 msgid "Format (json|pretty|yaml)"
 msgstr "Format (json|pretty|yaml)"
 
@@ -3763,7 +3797,7 @@ msgstr "Format (json|pretty|yaml)"
 msgid "Format (man|md|rest|yaml)"
 msgstr "Format (man|md|rest|yaml)"
 
-#: cmd/incus/remote.go:820
+#: cmd/incus/remote.go:945
 msgid "Format (pem|pfx)"
 msgstr "Format (pem|pfx)"
 
@@ -3823,7 +3857,7 @@ msgstr "Frekvens: %vMhz"
 msgid "Frequency: %vMhz (min: %vMhz, max: %vMhz)"
 msgstr "Frekvens: %vMhz (min: %vMhz, max: %vMhz)"
 
-#: cmd/incus/remote.go:1060
+#: cmd/incus/remote.go:1185
 msgid "GLOBAL"
 msgstr "GLOBALT"
 
@@ -3848,11 +3882,11 @@ msgstr ""
 msgid "GUID NAME"
 msgstr "NAMN"
 
-#: cmd/incus/remote.go:926
+#: cmd/incus/remote.go:1051
 msgid "Generate a client token derived from the client certificate"
 msgstr "Generera en klienttoken som härrör från klientcertifikatet"
 
-#: cmd/incus/remote.go:927
+#: cmd/incus/remote.go:1052
 msgid ""
 "Generate a client trust token derived from the existing client certificate "
 "and private key.\n"
@@ -3866,11 +3900,11 @@ msgstr ""
 "nyckeln. Detta är användbart för fjärrautentiseringsarbetsflöden där en "
 "token skickas till en annan Incus-server."
 
-#: cmd/incus/image.go:1737
+#: cmd/incus/image.go:1755
 msgid "Generate a metadata tarball"
 msgstr "Generera en metadata-tarball"
 
-#: cmd/incus/image.go:1739
+#: cmd/incus/image.go:1757
 msgid ""
 "Generate a metadata tarball\n"
 "\n"
@@ -3900,12 +3934,12 @@ msgstr ""
 msgid "Generate manpages for all commands"
 msgstr "Skapa man-sidor för alla kommandon"
 
-#: cmd/incus/remote.go:738
+#: cmd/incus/remote.go:863
 msgid "Generate the client certificate"
 msgstr "Skapa klientcertifikatet"
 
-#: cmd/incus/remote.go:208 cmd/incus/remote.go:491 cmd/incus/remote.go:762
-#: cmd/incus/remote.go:846 cmd/incus/remote.go:952
+#: cmd/incus/remote.go:294 cmd/incus/remote.go:605 cmd/incus/remote.go:887
+#: cmd/incus/remote.go:971 cmd/incus/remote.go:1077
 msgid "Generating a client certificate. This may take a minute..."
 msgstr "Genererar ett klientcertifikat. Detta kan ta en minut..."
 
@@ -3921,7 +3955,7 @@ msgstr "Hämta aktuell status för lastbalanseraren"
 msgid "Get current load-balancer status"
 msgstr "Hämta aktuell lastbalanserarstatus"
 
-#: cmd/incus/image.go:1532 cmd/incus/image.go:1533
+#: cmd/incus/image.go:1550 cmd/incus/image.go:1551
 msgid "Get image properties"
 msgstr "Hämta bildegenskaper"
 
@@ -4190,7 +4224,7 @@ msgstr "IP-adresser"
 msgid "IP addresses:"
 msgstr "IP-adresser:"
 
-#: cmd/incus/remote.go:126 cmd/incus/remote.go:1405
+#: cmd/incus/remote.go:129 cmd/incus/remote.go:1548
 msgid "IP/FQDN/URL"
 msgstr ""
 
@@ -4275,7 +4309,7 @@ msgstr "Ignorera instansens tillstånd"
 msgid "Image alias description"
 msgstr "Bildaliasbeskrivning"
 
-#: cmd/incus/image.go:1448
+#: cmd/incus/image.go:1466
 msgid "Image already up to date."
 msgstr "Bilden är redan uppdaterad."
 
@@ -4300,7 +4334,7 @@ msgstr "Bildformat"
 msgid "Image imported with fingerprint: %s"
 msgstr "Avbild importerad med fingeravtryck: %s"
 
-#: cmd/incus/image.go:1446
+#: cmd/incus/image.go:1464
 msgid "Image refreshed successfully!"
 msgstr "Bilden har uppdaterats!"
 
@@ -4371,7 +4405,8 @@ msgid "Importing instance: %s"
 msgstr "Importera instans: %s"
 
 #: cmd/incus/create.go:66
-msgid "Include environment variables from file"
+#, fuzzy
+msgid "Include environment variables from file (may be passed multiple times)"
 msgstr "Inkludera miljövariabler från fil"
 
 #: cmd/incus/manpage.go:33
@@ -4412,7 +4447,7 @@ msgstr "Instans frånkopplad"
 msgid "Instance disconnected for client %q"
 msgstr "Instans frånkopplad för klient %q"
 
-#: cmd/incus/create.go:406
+#: cmd/incus/create.go:410
 #, c-format
 msgid "Instance name is: %s"
 msgstr "Instansnamn är: %s"
@@ -4444,13 +4479,18 @@ msgstr "Ogiltig sökväg %s"
 msgid "Invalid IP address or DNS name"
 msgstr "Ogiltig IP-adress eller DNS-namn"
 
+#: cmd/incus/remote.go:267
+#, fuzzy, c-format
+msgid "Invalid TLS client keypair: %w"
+msgstr "Ogiltigt anslutningstoken: %w"
+
 #: cmd/incus/export.go:134 cmd/incus/storage_bucket.go:1390
 #: cmd/incus/storage_volume.go:2371
 #, c-format
 msgid "Invalid URL %q: %w"
 msgstr "Ogiltig URL %q: %w"
 
-#: cmd/incus/remote.go:360
+#: cmd/incus/remote.go:446
 #, c-format
 msgid "Invalid URL scheme \"%s\" in \"%s\""
 msgstr "Ogiltigt URL-schema \"%s\" i \"%s\""
@@ -4480,7 +4520,7 @@ msgstr "Ogiltigt booleskt värde: %s"
 msgid "Invalid certificate"
 msgstr "Ogiltigt certifikat"
 
-#: cmd/incus/remote.go:836
+#: cmd/incus/remote.go:961
 #, c-format
 msgid "Invalid certificate format %q"
 msgstr "Ogiltigt certifikatformat %q"
@@ -4516,7 +4556,7 @@ msgid "Invalid format %q"
 msgstr "Ogiltigt format %q"
 
 #: cmd/incus/low_level.go:653 cmd/incus/low_level.go:989
-#: cmd/incus/monitor.go:74
+#: cmd/incus/monitor.go:73
 #, c-format
 msgid "Invalid format: %s"
 msgstr "Ogiltigt format: %s"
@@ -4558,7 +4598,7 @@ msgstr "Ogiltig peer-typ"
 msgid "Invalid port %q"
 msgstr "Ogiltigt format %q"
 
-#: cmd/incus/remote.go:463
+#: cmd/incus/remote.go:577
 #, c-format
 msgid "Invalid protocol: %s"
 msgstr "Ogiltigt protokoll: %s"
@@ -4608,7 +4648,7 @@ msgstr "För att ansluta sig till ett befintligt kluster krävs root-behörighet
 msgid "Keep the image up to date after initial copy"
 msgstr "Håll avbilden uppdaterad efter den första kopieringen"
 
-#: cmd/incus/remote.go:1511 cmd/incus/remote.go:1515
+#: cmd/incus/remote.go:1654 cmd/incus/remote.go:1658
 msgid "Keepalive timeouts must be positive integers"
 msgstr ""
 
@@ -5371,7 +5411,9 @@ msgid ""
 "    a - Architecture\n"
 "    s - Size\n"
 "    u - Upload date\n"
-"    t - Type"
+"    t - Type\n"
+"\n"
+"Custom columns are defined with \"properties:key\", e.g. \"properties:os\""
 msgstr ""
 "Lista avbilder\n"
 "\n"
@@ -6048,11 +6090,11 @@ msgstr ""
 "    u - Antal referenser (används av)\n"
 "    U - Aktuell diskanvändning"
 
-#: cmd/incus/remote.go:1013
+#: cmd/incus/remote.go:1138
 msgid "List the available remotes"
 msgstr "Lista tillgängliga fjärrkontroller"
 
-#: cmd/incus/remote.go:1014
+#: cmd/incus/remote.go:1139
 #, fuzzy
 msgid ""
 "List the available remotes\n"
@@ -6218,7 +6260,7 @@ msgstr "Plats: %s"
 msgid "Log (%s):"
 msgstr ""
 
-#: cmd/incus/monitor.go:83
+#: cmd/incus/monitor.go:82
 msgid "Log level filtering can only be used with pretty formatting"
 msgstr "Loggnivåfiltrering kan endast användas med snygg formatering"
 
@@ -6327,7 +6369,7 @@ msgstr "MTU"
 msgid "MTU: %d"
 msgstr "MTU: %d"
 
-#: cmd/incus/remote.go:154
+#: cmd/incus/remote.go:157
 msgid "Maintain remote connection for faster commands"
 msgstr "Behåll fjärranslutningen för snabbare kommandon"
 
@@ -6573,7 +6615,7 @@ msgstr "Hantera betrodda kunder"
 msgid "Manage warnings"
 msgstr "Hantera varningar"
 
-#: cmd/incus/remote.go:739
+#: cmd/incus/remote.go:864
 msgid "Manually trigger the generation of a client certificate"
 msgstr "Manuell aktivering av generering av ett klientcertifikat"
 
@@ -6645,7 +6687,7 @@ msgstr "Migreringsfel: %w"
 msgid "Minimal configuration (non-interactive)"
 msgstr "Minimal konfiguration (icke-interaktiv)"
 
-#: cmd/incus/monitor.go:59
+#: cmd/incus/monitor.go:58
 msgid ""
 "Minimum level for log messages (only available when using pretty format)"
 msgstr ""
@@ -6674,11 +6716,11 @@ msgstr "Modell: %s"
 msgid "Model: %v"
 msgstr "Modell: %v"
 
-#: cmd/incus/monitor.go:37
+#: cmd/incus/monitor.go:36
 msgid "Monitor a local or remote server"
 msgstr "Övervaka en lokal eller fjärrserver"
 
-#: cmd/incus/monitor.go:38
+#: cmd/incus/monitor.go:37
 msgid ""
 "Monitor a local or remote server\n"
 "\n"
@@ -6794,7 +6836,7 @@ msgstr "Måste köras som root för att importera från katalogen"
 #: cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:432
 #: cmd/incus/network_peer.go:139 cmd/incus/network_zone.go:145
 #: cmd/incus/network_zone.go:874 cmd/incus/profile.go:730
-#: cmd/incus/project.go:546 cmd/incus/project.go:675 cmd/incus/remote.go:1054
+#: cmd/incus/project.go:546 cmd/incus/project.go:675 cmd/incus/remote.go:1179
 #: cmd/incus/snapshot.go:367 cmd/incus/storage.go:690
 #: cmd/incus/storage_bucket.go:483 cmd/incus/storage_bucket.go:878
 #: cmd/incus/storage_volume.go:1626 cmd/incus/storage_volume_bitmap.go:272
@@ -6874,7 +6916,7 @@ msgstr "NICar:"
 #: cmd/incus/network.go:1130 cmd/incus/operation.go:217
 #: cmd/incus/project.go:584 cmd/incus/project.go:593 cmd/incus/project.go:602
 #: cmd/incus/project.go:611 cmd/incus/project.go:620 cmd/incus/project.go:629
-#: cmd/incus/remote.go:1127 cmd/incus/remote.go:1136 cmd/incus/remote.go:1145
+#: cmd/incus/remote.go:1252 cmd/incus/remote.go:1261 cmd/incus/remote.go:1270
 #: cmd/incus/storage_volume_bitmap.go:267
 msgid "NO"
 msgstr "NEJ"
@@ -6937,7 +6979,7 @@ msgstr "Namn på befintlig brygga eller värdgränssnitt:"
 msgid "Name of the new storage pool"
 msgstr "Namn på den nya lagringspoolen"
 
-#: cmd/incus/remote.go:190
+#: cmd/incus/remote.go:196
 msgid "Name of the project to use for this remote:"
 msgstr "Namn på projektet som ska användas för denna fjärrkontroll:"
 
@@ -7130,16 +7172,20 @@ msgid "Never follow symbolic links in source path"
 msgstr ""
 
 #: cmd/incus/publish.go:42
-msgid "New alias to define at target"
+#, fuzzy
+msgid "New alias to define at target (may be passed multiple times)"
 msgstr "Nytt alias att definiera vid målet"
 
 #: cmd/incus/image.go:180 cmd/incus/image.go:704
-msgid "New aliases to add to the image"
+#, fuzzy
+msgid "New aliases to add to the image (may be passed multiple times)"
 msgstr "Nya alias att lägga till i avbildningen"
 
 #: cmd/incus/copy.go:61 cmd/incus/create.go:64 cmd/incus/import.go:44
 #: cmd/incus/move.go:63
-msgid "New key/value to apply to a specific device"
+#, fuzzy
+msgid ""
+"New key/value to apply to a specific device (may be passed multiple times)"
 msgstr "Ny nyckel/värde som ska tillämpas på en specifik enhet"
 
 #: cmd/incus/admin_init_interactive.go:270
@@ -7228,7 +7274,7 @@ msgstr ""
 msgid "Only \"custom\" volumes can be rebuilt"
 msgstr "Endast \"anpassade\" volymer kan exporteras"
 
-#: cmd/incus/remote.go:449
+#: cmd/incus/remote.go:563
 msgid "Only https URLs are supported for oci and simplestreams"
 msgstr "Endast https-URL:er stöds för oci och simplestreams"
 
@@ -7314,7 +7360,7 @@ msgstr "PROCESSER"
 msgid "PROFILES"
 msgstr "PROFILER"
 
-#: cmd/incus/image.go:1107 cmd/incus/list.go:542 cmd/incus/network.go:1080
+#: cmd/incus/image.go:1109 cmd/incus/list.go:542 cmd/incus/network.go:1080
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:144 cmd/incus/profile.go:731
 #: cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1645
@@ -7326,11 +7372,11 @@ msgstr "PROJEKT"
 msgid "PROJECTS"
 msgstr "PROJEKT"
 
-#: cmd/incus/remote.go:1056
+#: cmd/incus/remote.go:1181
 msgid "PROTOCOL"
 msgstr "PROTOKOLL"
 
-#: cmd/incus/image.go:1112 cmd/incus/remote.go:1058
+#: cmd/incus/image.go:1114 cmd/incus/remote.go:1183
 msgid "PUBLIC"
 msgstr "PUBLIK"
 
@@ -7346,7 +7392,7 @@ msgstr "Skickade paket"
 msgid "Partitions:"
 msgstr "Partitioner:"
 
-#: cmd/incus/main.go:546 cmd/incus/remote.go:885
+#: cmd/incus/main.go:546 cmd/incus/remote.go:229 cmd/incus/remote.go:1010
 #, c-format
 msgid "Password for %s: "
 msgstr "Lösenord för %s: "
@@ -7381,7 +7427,7 @@ msgstr "Utför en inkrementell kopiering"
 msgid "Please create those missing entries and then hit ENTER:"
 msgstr "Skapa de saknade posterna och tryck sedan på ENTER:"
 
-#: cmd/incus/remote.go:230
+#: cmd/incus/remote.go:316
 #, fuzzy
 msgid ""
 "Please provide alternate server addresses separated with commas (empty to "
@@ -7392,7 +7438,7 @@ msgstr "Ange en alternativ serveradress (lämna tomt för att avbryta):"
 msgid "Please provide join token:"
 msgstr "Ange anslutningstoken:"
 
-#: cmd/incus/remote.go:573
+#: cmd/incus/remote.go:687
 msgid "Please type 'y', 'n' or the fingerprint:"
 msgstr "Skriv 'y', 'n' eller fingeravtrycket:"
 
@@ -7468,7 +7514,7 @@ msgstr ""
 "Tryck på Enter för att öppna redigeraren igen eller Ctrl+C för att avbryta "
 "ändringen"
 
-#: cmd/incus/monitor.go:56
+#: cmd/incus/monitor.go:55
 msgid "Pretty rendering (short for --format=pretty)"
 msgstr "Snygg rendering (förkortning för --format=pretty)"
 
@@ -7476,7 +7522,7 @@ msgstr "Snygg rendering (förkortning för --format=pretty)"
 msgid "Print help"
 msgstr "Skriv ut hjälp"
 
-#: cmd/incus/remote.go:817
+#: cmd/incus/remote.go:942
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr ""
 "Skriv ut eller hämta det klientcertifikat som används av denna Incus-klient"
@@ -7555,15 +7601,18 @@ msgid "Profile description"
 msgstr "Profilbeskrivning"
 
 #: cmd/incus/image.go:184
-msgid "Profile to apply to the new image"
+#, fuzzy
+msgid "Profile to apply to the new image (may be passed multiple times)"
 msgstr "Profil som ska tillämpas på den nya avbildningen"
 
 #: cmd/incus/copy.go:62 cmd/incus/create.go:63
-msgid "Profile to apply to the new instance"
+#, fuzzy
+msgid "Profile to apply to the new instance (may be passed multiple times)"
 msgstr "Profil som ska tillämpas på den nya instansen"
 
 #: cmd/incus/move.go:64
-msgid "Profile to apply to the target instance"
+#, fuzzy
+msgid "Profile to apply to the target instance (may be passed multiple times)"
 msgstr "Profil som ska tillämpas på målinstansen"
 
 #: cmd/incus/profile.go:249
@@ -7598,7 +7647,7 @@ msgstr "Projekt %s döpt om till %s"
 msgid "Project description"
 msgstr "Projektbeskrivning"
 
-#: cmd/incus/remote.go:153
+#: cmd/incus/remote.go:156
 msgid "Project to use for the remote"
 msgstr "Projekt att använda för fjärrkontrollen"
 
@@ -7606,7 +7655,7 @@ msgstr "Projekt att använda för fjärrkontrollen"
 msgid "Properties:"
 msgstr "Egenskaper:"
 
-#: cmd/incus/image.go:1577
+#: cmd/incus/image.go:1595
 msgid "Property not found"
 msgstr "Egenskap hittades inte"
 
@@ -7624,7 +7673,7 @@ msgstr "Angiven certifikatväg finns inte: %s"
 msgid "Proxy timeout (exits when no connections)"
 msgstr "Proxy-timeout (avslutas när inga anslutningar finns)"
 
-#: cmd/incus/remote.go:152
+#: cmd/incus/remote.go:155
 msgid "Public image server"
 msgstr "Publik avbildningsserver"
 
@@ -7674,7 +7723,7 @@ msgstr "Trycker %s till %s: %%s"
 msgid "Query path must start with /"
 msgstr "Sökvägen måste börja med /"
 
-#: cmd/incus/image.go:529 cmd/incus/image.go:913 cmd/incus/image.go:1471
+#: cmd/incus/image.go:529 cmd/incus/image.go:913 cmd/incus/image.go:1489
 msgid "Query virtual machine images"
 msgstr "Fråga virtuella maskinavbildningar"
 
@@ -7766,7 +7815,7 @@ msgstr "Överför filer rekursivt"
 msgid "Refresh and update the existing storage volume copies"
 msgstr "Uppdatera och uppdatera befintliga kopior av lagringsvolymer"
 
-#: cmd/incus/image.go:1391 cmd/incus/image.go:1392
+#: cmd/incus/image.go:1409 cmd/incus/image.go:1410
 msgid "Refresh images"
 msgstr "Uppdatera avbildningar"
 
@@ -7775,44 +7824,57 @@ msgstr "Uppdatera avbildningar"
 msgid "Refreshing instance: %s"
 msgstr "Uppdateringsinstans: %s"
 
-#: cmd/incus/image.go:1415
+#: cmd/incus/image.go:1433
 #, c-format
 msgid "Refreshing the image: %s"
 msgstr "Uppdaterar avbildningen: %s"
 
-#: cmd/incus/remote.go:431 cmd/incus/remote.go:1236
+#: cmd/incus/remote.go:517 cmd/incus/remote.go:1361
 #, c-format
 msgid "Remote %s already exists"
 msgstr "Fjärrkontroll %s finns redan"
 
-#: cmd/incus/remote.go:1227 cmd/incus/remote.go:1327 cmd/incus/remote.go:1391
-#: cmd/incus/remote.go:1440 cmd/incus/remote.go:1521
+#: cmd/incus/remote.go:1352 cmd/incus/remote.go:1466 cmd/incus/remote.go:1534
+#: cmd/incus/remote.go:1583 cmd/incus/remote.go:1664
 #, c-format
 msgid "Remote %s doesn't exist"
 msgstr "Fjärrkontroll %s finns inte"
 
-#: cmd/incus/remote.go:1335
+#: cmd/incus/remote.go:1474
 #, c-format
 msgid "Remote %s is global and cannot be removed"
 msgstr "Fjärrkontroll %s är global och kan inte tas bort"
 
-#: cmd/incus/remote.go:1231 cmd/incus/remote.go:1331 cmd/incus/remote.go:1444
+#: cmd/incus/remote.go:1356 cmd/incus/remote.go:1470 cmd/incus/remote.go:1587
 #, c-format
 msgid "Remote %s is static and cannot be modified"
 msgstr "Fjärrservern %s är statisk och kan inte ändras"
 
-#: cmd/incus/remote.go:425
+#: cmd/incus/remote.go:511
 msgid "Remote names may not contain colons"
 msgstr "Fjärrnamn får inte innehålla kolon"
 
-#: cmd/incus/remote.go:422
+#: cmd/incus/remote.go:508
 #, fuzzy
 msgid "Remote names may not contain colons; please provide an explicit one"
 msgstr "Fjärrnamn får inte innehålla kolon"
 
-#: cmd/incus/remote.go:149
+#: cmd/incus/remote.go:152
 msgid "Remote trust token"
 msgstr "Fjärrtillförlitlighetstoken"
+
+#: cmd/incus/remote.go:159
+#, fuzzy
+msgid "Remote-specific TLS client certificate (PEM)"
+msgstr "Skapa klientcertifikatet"
+
+#: cmd/incus/remote.go:160
+msgid "Remote-specific TLS client key (PEM)"
+msgstr ""
+
+#: cmd/incus/remote.go:161
+msgid "Remote-specific TLS client keypair (PKCS#12)"
+msgstr ""
 
 #: cmd/incus/info.go:301
 #, c-format
@@ -7898,7 +7960,7 @@ msgstr "Ta bort portar från en lastbalanserare"
 msgid "Remove profiles from instances"
 msgstr "Ta bort profiler från instanser"
 
-#: cmd/incus/remote.go:1299 cmd/incus/remote.go:1300
+#: cmd/incus/remote.go:1438 cmd/incus/remote.go:1439
 msgid "Remove remotes"
 msgstr "Ta bort fjärrkontroller"
 
@@ -7968,7 +8030,7 @@ msgstr "Byt namn på profiler"
 msgid "Rename projects"
 msgstr "Byt namn på projekt"
 
-#: cmd/incus/remote.go:1198 cmd/incus/remote.go:1199
+#: cmd/incus/remote.go:1323 cmd/incus/remote.go:1324
 msgid "Rename remotes"
 msgstr "Byt namn på fjärrkontroller"
 
@@ -8060,7 +8122,7 @@ msgstr "Återuppta instanser"
 msgid "Retrieve the instance's console log"
 msgstr "Hämta instansens konsollogg"
 
-#: cmd/incus/create.go:353
+#: cmd/incus/create.go:357
 #, c-format
 msgid "Retrieving image: %s"
 msgstr "Hämtar avbildning: %s"
@@ -8125,7 +8187,7 @@ msgstr "Kör mot alla projekt"
 msgid "SEVERITY"
 msgstr "ALLVARLIGHET"
 
-#: cmd/incus/image.go:1113
+#: cmd/incus/image.go:1115
 msgid "SIZE"
 msgstr "STORLEK"
 
@@ -8175,7 +8237,7 @@ msgstr "TILLSTÅND"
 msgid "STATEFUL"
 msgstr "TILLSTÅNDSFULL"
 
-#: cmd/incus/remote.go:1059
+#: cmd/incus/remote.go:1184
 msgid "STATIC"
 msgstr "STATISK"
 
@@ -8243,15 +8305,15 @@ msgstr "Serienummer: %v"
 msgid "Serial: %s"
 msgstr "Serienummer: %s"
 
-#: cmd/incus/remote.go:151
+#: cmd/incus/remote.go:154
 msgid "Server authentication type (tls or oidc)"
 msgstr "Serverautentiseringstyp (tls eller oidc)"
 
-#: cmd/incus/remote.go:571
+#: cmd/incus/remote.go:685
 msgid "Server certificate NACKed by user"
 msgstr "Servercertifikat avvisat av användaren"
 
-#: cmd/incus/remote.go:706
+#: cmd/incus/remote.go:831
 msgid "Server doesn't trust us after authentication"
 msgstr "Servern litar inte på oss efter autentisering"
 
@@ -8260,7 +8322,7 @@ msgstr "Servern litar inte på oss efter autentisering"
 msgid "Server isn't part of a cluster"
 msgstr "Servern ingår inte i ett kluster"
 
-#: cmd/incus/remote.go:150
+#: cmd/incus/remote.go:153
 msgid "Server protocol (incus, oci or simplestreams)"
 msgstr "Serverprotokoll (incus, oci eller simplestreams)"
 
@@ -8282,7 +8344,7 @@ msgstr "Ställ in konfigurationsnycklarna för en klustergrupp"
 msgid "Set a cluster member's configuration keys"
 msgstr "Ställ in konfigurationsnycklarna för en klustermedlem"
 
-#: cmd/incus/remote.go:1483 cmd/incus/remote.go:1484
+#: cmd/incus/remote.go:1626 cmd/incus/remote.go:1627
 msgid "Set a keepalive timeout for a remote"
 msgstr ""
 
@@ -8326,7 +8388,7 @@ msgstr ""
 "in med:\n"
 "    incus profile device set [<fjärr>:]<profil> <enhet> <nyckel> <värde>"
 
-#: cmd/incus/image.go:1595 cmd/incus/image.go:1596
+#: cmd/incus/image.go:1613 cmd/incus/image.go:1614
 msgid "Set image properties"
 msgstr "Ställ in avbildningsegenskaper"
 
@@ -8583,7 +8645,7 @@ msgstr ""
 "<värde> Om typen inte anges antar Incus att typen är \"custom\". Värden\n"
 "som stöds för typen är \"custom\", \"container\" och \"virtual-machine\"."
 
-#: cmd/incus/remote.go:1411 cmd/incus/remote.go:1412
+#: cmd/incus/remote.go:1554 cmd/incus/remote.go:1555
 #, fuzzy
 msgid "Set the URL(s) for the remote"
 msgstr "Ställ in URL-adressen för fjärrkontrollen"
@@ -8761,7 +8823,7 @@ msgstr "Visa detaljer om en klustermedlem"
 msgid "Show details on a background operation"
 msgstr "Visa detaljer om en bakgrundsoperation"
 
-#: cmd/incus/monitor.go:57
+#: cmd/incus/monitor.go:56
 msgid "Show events from all projects"
 msgstr "Visa händelser från alla projekt"
 
@@ -8769,7 +8831,7 @@ msgstr "Visa händelser från alla projekt"
 msgid "Show full device configuration"
 msgstr "Visa fullständig enhetskonfiguration"
 
-#: cmd/incus/image.go:1468 cmd/incus/image.go:1469
+#: cmd/incus/image.go:1486 cmd/incus/image.go:1487
 msgid "Show image properties"
 msgstr "Visa avbildningsegenskaper"
 
@@ -8922,7 +8984,7 @@ msgstr ""
 msgid "Show the current project"
 msgstr "Visa det aktuella projektet"
 
-#: cmd/incus/remote.go:784 cmd/incus/remote.go:785
+#: cmd/incus/remote.go:909 cmd/incus/remote.go:910
 msgid "Show the default remote"
 msgstr "Visa standardfjärrkontrollen"
 
@@ -9230,7 +9292,7 @@ msgstr "Växling (topp)"
 msgid "Switch the current project"
 msgstr "Byt aktuellt projekt"
 
-#: cmd/incus/remote.go:1363 cmd/incus/remote.go:1364
+#: cmd/incus/remote.go:1506 cmd/incus/remote.go:1507
 msgid "Switch the default remote"
 msgstr "Byt standardfjärrkontroll"
 
@@ -9254,11 +9316,16 @@ msgstr "MÅL"
 msgid "TIMESTAMP"
 msgstr ""
 
+#: cmd/incus/remote.go:536
+#, fuzzy
+msgid "TLS client certificates can only be used with the incus protocol"
+msgstr "--refresh kan endast användas med instanser"
+
 #: cmd/incus/cluster.go:1150 cmd/incus/config_trust.go:605
 msgid "TOKEN"
 msgstr "TOKEN"
 
-#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1114
+#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1116
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:555 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
@@ -9406,7 +9473,7 @@ msgstr ""
 "Instansen körs för närvarande. Använd --force för att stoppa och starta om "
 "den"
 
-#: cmd/incus/create.go:428
+#: cmd/incus/create.go:432
 msgid "The instance you are starting doesn't have any network attached to it."
 msgstr "Den instans du startar har inget nätverk anslutet till sig."
 
@@ -9527,6 +9594,12 @@ msgstr "Objektet med taggen %q finns inte"
 #: cmd/incus/admin_recover.go:149
 msgid "The recovery process will be scanning the following storage pools:"
 msgstr "Återställningsprocessen kommer att skanna följande lagringspooler:"
+
+#: cmd/incus/remote.go:796
+#, c-format
+msgid ""
+"The remote server doesn't trust our client certificate (fingerprint: %s)"
+msgstr ""
 
 #: cmd/incus/admin_init_auto.go:26
 #, c-format
@@ -9665,12 +9738,12 @@ msgstr "Vänta tills instansen stängs av på ett korrekt sätt"
 msgid "Timestamps:"
 msgstr "Tidsstämplar:"
 
-#: cmd/incus/create.go:430
+#: cmd/incus/create.go:434
 msgid "To attach a network to an instance, use: incus network attach"
 msgstr ""
 "För att ansluta ett nätverk till en instans, använd: incus network attach"
 
-#: cmd/incus/create.go:429
+#: cmd/incus/create.go:433
 msgid "To create a new network, use: incus network create"
 msgstr "För att skapa ett nytt nätverk, använd: incus network create"
 
@@ -9739,7 +9812,7 @@ msgstr "Överföring av instans: %s"
 msgid "Transmit policy"
 msgstr "Överföringspolicy"
 
-#: cmd/incus/remote.go:678
+#: cmd/incus/remote.go:803
 #, c-format
 msgid "Trust token for %s: "
 msgstr "Förtroendetoken för %s: "
@@ -9790,11 +9863,11 @@ msgstr "Profil %s raderad"
 msgid "UNLIMITED"
 msgstr "OBEGRÄNSAD"
 
-#: cmd/incus/image.go:1115
+#: cmd/incus/image.go:1117
 msgid "UPLOAD DATE"
 msgstr "UPPLADDNINGSDATUM"
 
-#: cmd/incus/cluster.go:198 cmd/incus/remote.go:1055
+#: cmd/incus/cluster.go:198 cmd/incus/remote.go:1180
 #: cmd/incus/usage/usage.go:866
 msgid "URL"
 msgstr "URL"
@@ -9844,7 +9917,7 @@ msgstr ""
 msgid "Unable to create a temporary file: %v"
 msgstr "Det går inte att skapa en tillfällig fil: %v"
 
-#: cmd/incus/remote.go:277 cmd/incus/remote.go:311
+#: cmd/incus/remote.go:363 cmd/incus/remote.go:397
 msgid "Unavailable remote server"
 msgstr "Fjärrserver otillgänglig"
 
@@ -9865,14 +9938,14 @@ msgstr "Okänd kanaltyp för klient %q: %s"
 
 #: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1165
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
-#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1130
+#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1148
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
 #: cmd/incus/low_level.go:734 cmd/incus/network.go:1107
 #: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
 #: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
 #: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
 #: cmd/incus/network_zone.go:165 cmd/incus/operation.go:190
-#: cmd/incus/profile.go:754 cmd/incus/project.go:569 cmd/incus/remote.go:1074
+#: cmd/incus/profile.go:754 cmd/incus/project.go:569 cmd/incus/remote.go:1199
 #: cmd/incus/snapshot.go:384 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:507 cmd/incus/storage_bucket.go:894
 #: cmd/incus/storage_volume.go:1661 cmd/incus/storage_volume_bitmap.go:292
@@ -9931,7 +10004,7 @@ msgstr ""
 msgid "Unset device configuration keys"
 msgstr "Avmarkera enhetskonfigurationsnycklar"
 
-#: cmd/incus/image.go:1659 cmd/incus/image.go:1660
+#: cmd/incus/image.go:1677 cmd/incus/image.go:1678
 msgid "Unset image properties"
 msgstr "Ta bort avbildningsegenskaper"
 
@@ -10514,7 +10587,7 @@ msgstr "Vill du använda klustring?"
 #: cmd/incus/network.go:1127 cmd/incus/operation.go:220
 #: cmd/incus/project.go:586 cmd/incus/project.go:595 cmd/incus/project.go:604
 #: cmd/incus/project.go:613 cmd/incus/project.go:622 cmd/incus/project.go:631
-#: cmd/incus/remote.go:1129 cmd/incus/remote.go:1138 cmd/incus/remote.go:1147
+#: cmd/incus/remote.go:1254 cmd/incus/remote.go:1263 cmd/incus/remote.go:1272
 #: cmd/incus/storage_volume_bitmap.go:264
 msgid "YES"
 msgstr "JA"
@@ -10622,7 +10695,7 @@ msgstr "Hantera kommandoalias"
 msgid "condition"
 msgstr "villkor"
 
-#: cmd/incus/project.go:677 cmd/incus/remote.go:1089
+#: cmd/incus/project.go:677 cmd/incus/remote.go:1214
 msgid "current"
 msgstr "nuvarande"
 
@@ -11067,7 +11140,7 @@ msgstr ""
 "incus debug dump-memory vm1 memory-dump.elf --format=elf\n"
 "    Skapar en minnesdump i ELF-format av vm1-instansen."
 
-#: cmd/incus/monitor.go:43
+#: cmd/incus/monitor.go:42
 msgid ""
 "incus monitor --type=logging\n"
 "    Only show log messages.\n"
@@ -11377,7 +11450,7 @@ msgstr ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Ta bort lokal instans \"c1\"."
 
-#: cmd/incus/remote.go:1485
+#: cmd/incus/remote.go:1628
 msgid ""
 "incus remote set-keepalive my-remote 30\n"
 "    Set a keepalive with 30 seconds timeout for my-remote\n"
@@ -11752,7 +11825,7 @@ msgstr ""
 msgid "key"
 msgstr ""
 
-#: cmd/incus/remote.go:1099
+#: cmd/incus/remote.go:1224
 msgid "last"
 msgstr ""
 
@@ -11769,7 +11842,7 @@ msgstr ""
 msgid "member"
 msgstr ""
 
-#: cmd/incus/remote.go:570
+#: cmd/incus/remote.go:684
 msgid "n"
 msgstr "n"
 
@@ -11797,7 +11870,7 @@ msgid "new %s name"
 msgstr "Nätverksnamn"
 
 #: cmd/incus/config_trust.go:481 cmd/incus/image.go:953 cmd/incus/image.go:958
-#: cmd/incus/image.go:1172
+#: cmd/incus/image.go:1190
 msgid "no"
 msgstr "nej"
 
@@ -11810,7 +11883,7 @@ msgstr ""
 msgid "not enough arguments; expected a value for %s"
 msgstr ""
 
-#: cmd/incus/remote.go:562
+#: cmd/incus/remote.go:676
 msgid "ok (y/n/[fingerprint])?"
 msgstr "ok (y/n/[fingeravtryck])?"
 
@@ -11930,7 +12003,7 @@ msgstr "<mål>"
 msgid "template"
 msgstr ""
 
-#: cmd/incus/remote.go:126 cmd/incus/usage/usage.go:864
+#: cmd/incus/remote.go:129 cmd/incus/usage/usage.go:864
 msgid "token"
 msgstr "token"
 
@@ -11992,13 +12065,13 @@ msgstr "Kolumner"
 msgid "warning UUID"
 msgstr ""
 
-#: cmd/incus/remote.go:572
+#: cmd/incus/remote.go:686
 msgid "y"
 msgstr "j"
 
 #: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:478
 #: cmd/incus/delete.go:56 cmd/incus/image.go:955 cmd/incus/image.go:960
-#: cmd/incus/image.go:1169 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
+#: cmd/incus/image.go:1187 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
 msgid "yes"
 msgstr "ja"
 
