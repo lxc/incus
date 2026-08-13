@@ -112,10 +112,19 @@ func bootOrder(prefix string) dissector {
 	})
 }
 
+type bootType struct {
+	Active         bool       `json:"active"`
+	ForceReconnect bool       `json:"force_reconnect"`
+	Hidden         bool       `json:"hidden"`
+	Category       string     `json:"category"`
+	Description    string     `json:"description"`
+	DevicePaths    [][]string `json:"paths"`
+	OptionalData   string     `json:"optional_data,omitempty"`
+}
+
 // boot dissects `Boot####`, `Driver####`, `SysPrep####`, `OsRecovery####` and
 // `PlatformRecovery####` variables.
-// TODO: Implement variable formatting.
-var boot = wrap(func(r *reader) (any, error) {
+var boot = wrap(func(r *reader) (*bootType, error) {
 	attrs, err := r.readU32()
 	if err != nil {
 		return nil, err
@@ -136,7 +145,7 @@ var boot = wrap(func(r *reader) (any, error) {
 		return nil, err
 	}
 
-	paths, err := devicePaths(b)
+	paths, err := devicePathsDissect(newReader(b))
 	if err != nil {
 		return nil, err
 	}
@@ -157,15 +166,7 @@ var boot = wrap(func(r *reader) (any, error) {
 		return nil, err
 	}
 
-	return struct {
-		Active         bool       `json:"active"`
-		ForceReconnect bool       `json:"force_reconnect"`
-		Hidden         bool       `json:"hidden"`
-		Category       string     `json:"category"`
-		Description    string     `json:"description"`
-		DevicePaths    [][]string `json:"paths"`
-		OptionalData   string     `json:"optional_data,omitempty"`
-	}{
+	return &bootType{
 		Active:         attrs&0x01 != 0,
 		ForceReconnect: attrs&0x02 != 0,
 		Hidden:         attrs&0x08 != 0,
@@ -174,6 +175,69 @@ var boot = wrap(func(r *reader) (any, error) {
 		DevicePaths:    paths,
 		OptionalData:   base64.StdEncoding.EncodeToString(remaining),
 	}, nil
+}, func(w *writer, v *bootType) error {
+	var attrs uint32
+	switch v.Category {
+	case "boot":
+	case "app":
+		attrs |= 0x100
+	default:
+		category, err := strconv.ParseUint(v.Category, 0, 16)
+		if err != nil {
+			return fmt.Errorf("Failed to parse category %s: %w", v.Category, err)
+		}
+
+		if category&^0x1f00 != 0 {
+			return fmt.Errorf("Failed to parse category %s: too many bits set", v.Category)
+		}
+
+		attrs |= uint32(category)
+	}
+
+	if v.Active {
+		attrs |= 0x01
+	}
+
+	if v.ForceReconnect {
+		attrs |= 0x02
+	}
+
+	if v.Hidden {
+		attrs |= 0x08
+	}
+
+	err := w.writeU32(attrs)
+	if err != nil {
+		return err
+	}
+
+	w2 := newWriter()
+	err = devicePathsFormat(w2, v.DevicePaths)
+	if err != nil {
+		return fmt.Errorf("Failed to parse device paths: %w", err)
+	}
+
+	err = w.writeU16(uint16(w2.size()))
+	if err != nil {
+		return err
+	}
+
+	err = w.writeZn16(v.Description)
+	if err != nil {
+		return err
+	}
+
+	err = w.write(w2.data)
+	if err != nil {
+		return err
+	}
+
+	remaining, err := base64.StdEncoding.DecodeString(v.OptionalData)
+	if err != nil {
+		return fmt.Errorf("Failed to parse optional data %s: %w", v.OptionalData, err)
+	}
+
+	return w.write(remaining)
 })
 
 type eslEntry struct {
