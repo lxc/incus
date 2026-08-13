@@ -2078,6 +2078,15 @@ func (b *backend) CreateInstanceFromImage(inst instance.Instance, fingerprint st
 			return err
 		}
 
+		// Keep the cached image volume stable while copying from it. EnsureImage can call
+		// DeleteImage, so this lock must be acquired only after EnsureImage returns.
+		unlockImage, err := locking.RLock(context.TODO(), drivers.OperationLockName("UseImage", b.name, drivers.VolumeTypeImage, "", fingerprint))
+		if err != nil {
+			return err
+		}
+
+		defer unlockImage()
+
 		// Try and load existing volume config on this storage pool so we can compare filesystems if needed.
 		imgDBVol, err := VolumeDBGet(b, api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage)
 		if err != nil {
@@ -4513,6 +4522,15 @@ func (b *backend) DeleteImage(fingerprint string, op *operations.Operation) erro
 	}
 
 	defer unlock()
+
+	// Wait for operations copying from the cached image volume and prevent new copies until
+	// the deletion has completed.
+	unlockImage, err := locking.RWLock(context.TODO(), drivers.OperationLockName("UseImage", b.name, drivers.VolumeTypeImage, "", fingerprint))
+	if err != nil {
+		return err
+	}
+
+	defer unlockImage()
 
 	// Load the storage volume in order to get the volume config which is needed for some drivers.
 	imgDBVol, err := VolumeDBGet(b, api.ProjectDefaultName, fingerprint, drivers.VolumeTypeImage)
