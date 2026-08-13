@@ -681,12 +681,6 @@ func qemuControlSocket(opts *qemuControlSocketOpts) []cfg.Section {
 			"server":  "on",
 			"wait":    "off",
 		},
-	}, {
-		Name: "mon",
-		Entries: map[string]string{
-			"chardev": "monitor",
-			"mode":    "control",
-		},
 	}}
 }
 

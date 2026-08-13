@@ -1836,6 +1836,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-cpu", bs.CPUType,
 		"-nographic",
 		"-serial", "chardev:console",
+		"-qmp", "chardev:monitor",
 		"-nodefaults",
 		"-no-user-config",
 		"-sandbox", "on,obsolete=deny,elevateprivileges=allow,spawn=allow,resourcecontrol=deny",
@@ -10645,7 +10646,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		"-nodefaults",
 		"-no-user-config",
 		"-chardev", fmt.Sprintf("socket,id=monitor,path=%s,server=on,wait=off", qemuEscapeCmdline(monitorPath.Name())),
-		"-mon", "chardev=monitor,mode=control",
+		"-qmp", "chardev:monitor",
 		"-machine", qemuMachineType(hostArch),
 	}
 

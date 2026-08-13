@@ -747,11 +747,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			backend = "socket"
 			path = "/dev/shm/control-socket"
 			server = "on"
-			wait = "off"
-
-			[mon]
-			chardev = "monitor"
-			mode = "control"`,
+			wait = "off"`,
 		}}
 		for _, tc := range testCases {
 			runTest(tc.expected, qemuControlSocket(&tc.opts))
