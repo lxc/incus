@@ -584,13 +584,26 @@ func (d *lvm) Delete(op *operations.Operation) error {
 
 		// Remove volume group if needed.
 		if removeVg {
+			var otherSanlockVGs []string
+
+			args := []string{"-f"}
+
 			if d.clustered {
+				// Record the other shared VGs using sanlock as removing this VG may
+				// destroy the sanlock global lock if this VG happens to host it.
+				otherSanlockVGs, err = d.sanlockVolumeGroups(d.config["lvm.vg_name"])
+				if err != nil {
+					return err
+				}
+
 				// In lvmlockd version 2.03.31 (2025-02-27), there appears to be a bug causing an inconsistent state
-				// between sanlock and lvmlockd during sahred VG removal, which results in lock-related errors.
+				// between sanlock and lvmlockd during shared VG removal, which results in lock-related errors.
 				// Unmount the pool (perform vgchange --lockstop) to release and clear all shared locks.
 				// Next, change the VG lock type to 'none'. Changing the lock type to 'none' avoids this behavior by
 				// converting the VG to a non-shared configuration.
-				// After that, the VG can be removed using the standard non-shared LVM removal procedure.
+				// After that, the VG can be removed with lvmlockd disabled, as vgremove would
+				// otherwise still require the sanlock global lock which may just have been
+				// destroyed by the lock type change if this VG was the one hosting it.
 				_, err := d.Unmount()
 				if err != nil {
 					return err
@@ -600,15 +613,52 @@ func (d *lvm) Delete(op *operations.Operation) error {
 				if err != nil {
 					return fmt.Errorf("Failed to change lock type to none for %q", d.config["lvm.vg_name"])
 				}
+
+				args = append(args, "--config", "global{use_lvmlockd=0}")
 			}
 
+			args = append(args, d.config["lvm.vg_name"])
+
 			// When deleting a shared VG, it may take more than a minute for the previously released shared locks to clear.
-			_, err := subprocess.TryRunCommandAttemptsDuration(240, 500*time.Millisecond, "vgremove", "-f", d.config["lvm.vg_name"])
+			_, err := subprocess.TryRunCommandAttemptsDuration(240, 500*time.Millisecond, "vgremove", args...)
 			if err != nil {
 				return fmt.Errorf("Failed to delete the volume group for the lvm storage pool: %w", err)
 			}
 
 			d.logger.Debug("Volume group removed", logger.Ctx{"vg_name": d.config["lvm.vg_name"]})
+
+			// If the removed VG was hosting the sanlock global lock, re-enable the global
+			// lock in one of the remaining shared VGs as it's otherwise permanently lost,
+			// preventing any future creation or deletion of shared VGs cluster-wide.
+			if len(otherSanlockVGs) > 0 {
+				hasGlobalLock := false
+				allChecked := true
+
+				for _, vgName := range otherSanlockVGs {
+					hosted, err := d.sanlockHasGlobalLock(vgName)
+					if err != nil {
+						d.logger.Warn("Failed to check for sanlock global lock", logger.Ctx{"vg_name": vgName, "err": err})
+						allChecked = false
+
+						continue
+					}
+
+					if hosted {
+						hasGlobalLock = true
+
+						break
+					}
+				}
+
+				if allChecked && !hasGlobalLock {
+					_, err = subprocess.TryRunCommand("lvmlockctl", "--gl-enable", otherSanlockVGs[0])
+					if err != nil {
+						return fmt.Errorf("Failed to move the sanlock global lock to volume group %q: %w", otherSanlockVGs[0], err)
+					}
+
+					d.logger.Info("Moved sanlock global lock", logger.Ctx{"vg_name": otherSanlockVGs[0]})
+				}
+			}
 		} else {
 			// Otherwise just remove the lvmVgPoolMarker tag to indicate Incus no longer uses this VG.
 			if slices.Contains(vgTags, lvmVgPoolMarker) {
