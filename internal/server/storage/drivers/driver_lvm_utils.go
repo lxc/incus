@@ -96,16 +96,23 @@ func (d *lvm) openLoopFile(source string) (string, error) {
 }
 
 // isLVMNotFoundExitError checks whether the supplied error is an exit error from an LVM command
-// meaning that the object was not found. Returns true if it is (exit status 5) false if not.
+// meaning that the object was not found. Returns true if it is false if not.
 func (d *lvm) isLVMNotFoundExitError(err error) bool {
 	var exitError *exec.ExitError
-	if errors.As(err, &exitError) {
-		if exitError.ExitCode() == 5 {
-			return true
-		}
+	if !errors.As(err, &exitError) || exitError.ExitCode() != 5 {
+		return false
 	}
 
-	return false
+	// LVM uses exit status 5 for all command failures, so check the error output to
+	// tell missing objects apart from other failures (e.g. lock manager errors).
+	var runError subprocess.RunError
+	if errors.As(err, &runError) {
+		stderr := runError.StdErr().String()
+
+		return strings.Contains(stderr, "not found") || strings.Contains(stderr, "Failed to find") || strings.Contains(stderr, "No physical volume label read")
+	}
+
+	return true
 }
 
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
