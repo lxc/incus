@@ -185,9 +185,9 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 		return fmt.Errorf("Failed loading instance storage pool: %w", err)
 	}
 
-	// Lock this operation to ensure that concurrent image operations don't conflict.
-	// Other operations will wait for this one to finish.
-	unlock, err := imageOperationLock(ctx, img.Fingerprint)
+	// Keep the image stable while creating the instance, while allowing other creations from the
+	// same image to proceed concurrently.
+	unlock, err := imageOperationLockShared(ctx, img.Fingerprint)
 	if err != nil {
 		return err
 	}
