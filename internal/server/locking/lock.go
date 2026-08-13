@@ -45,8 +45,10 @@ type rwState struct {
 	waitCh         chan struct{}
 }
 
-var rwLocks = map[string]*rwState{}
-var rwLocksMutex sync.Mutex
+var (
+	rwLocks      = map[string]*rwState{}
+	rwLocksMutex sync.Mutex
+)
 
 func (s *rwState) broadcast() {
 	close(s.waitCh)
