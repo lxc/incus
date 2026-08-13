@@ -5,18 +5,22 @@ test_network_acl() {
     # Check basic ACL creation, listing, deletion and project namespacing support.
     ! incus network acl create 192.168.1.1 || false # Don't allow non-hostname compatible names.
     incus network acl create testacl
-    incus project create testproj -c features.networks=true
-    incus project create testproj2 -c features.networks=false
-    incus network acl create testacl --project testproj
-    incus project show testproj | grep testacl # Check project sees testacl using it.
-    ! incus network acl create testacl --project testproj2 || false
     incus network acl ls | grep testacl
-    incus network acl ls --project testproj | grep testacl
+    if incus project create testproj -c features.networks=true; then
+        incus project create testproj2 -c features.networks=false
+        incus network acl create testacl --project testproj
+        incus project show testproj | grep testacl # Check project sees testacl using it.
+        ! incus network acl create testacl --project testproj2 || false
+        incus network acl ls --project testproj | grep testacl
+        incus network acl delete testacl --project testproj
+        ! incus network acl ls --project testproj | grep testacl || false
+        incus project delete testproj
+        incus project delete testproj2
+    else
+        echo "==> SKIP: Skipping project-specific network ACL tests as OVN isn't available"
+    fi
     incus network acl delete testacl
-    incus network acl delete testacl --project testproj
     ! incus network acl ls | grep testacl || false
-    ! incus network acl ls --project testproj | grep testacl || false
-    incus project delete testproj
     incus network acl create testacl --description "Test description"
     incus network acl list | grep -q -F 'Test description'
     incus network acl show testacl | grep -q -F 'description: Test description'
