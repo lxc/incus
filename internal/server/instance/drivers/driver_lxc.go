@@ -6446,6 +6446,12 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 					return err
 				}
 
+				err = actionScriptOp.Start()
+				if err != nil {
+					_ = os.RemoveAll(checkpointDir)
+					return err
+				}
+
 				err = d.migrationSendWriteActionScript(checkpointDir, actionScriptOp.URL(), actionScriptOpSecret, d.state.OS.ExecPath)
 				if err != nil {
 					_ = os.RemoveAll(checkpointDir)
@@ -6490,12 +6496,6 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 					}
 				} else {
 					d.logger.Debug("The other side does not support pre-copy")
-				}
-
-				err = actionScriptOp.Start()
-				if err != nil {
-					_ = os.RemoveAll(checkpointDir)
-					return err
 				}
 
 				go func() {
