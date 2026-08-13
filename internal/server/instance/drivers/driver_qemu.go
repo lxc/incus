@@ -4320,7 +4320,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		if sevOpts != nil {
 			for i := range conf {
 				if conf[i].Name == "machine" {
-					conf[i].Entries["memory-encryption"] = "sev0"
+					conf[i].Entries["confidential-guest-support"] = "sev0"
 					break
 				}
 			}
