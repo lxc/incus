@@ -673,6 +673,17 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) error {
 	// Check if additional authentication is required.
 	if srv.Auth != "trusted" {
 		if c.flagAuthType == api.AuthenticationMethodTLS {
+			// Explain why a trust token is needed when in verbose mode.
+			if c.global.flagLogVerbose {
+				tlsCert, _, _, certErr := conf.GetClientCertificate(server)
+				if certErr == nil && tlsCert != "" {
+					fingerprint, fpErr := localtls.CertFingerprintStr(tlsCert)
+					if fpErr == nil {
+						fmt.Fprintf(os.Stderr, i18n.G("The remote server doesn't trust our client certificate (fingerprint: %s)")+"\n", fingerprint)
+					}
+				}
+			}
+
 			// Prompt for trust token
 			if c.flagToken == "" {
 				c.flagToken, err = c.global.asker.AskString(fmt.Sprintf(i18n.G("Trust token for %s: "), server), "", nil)
