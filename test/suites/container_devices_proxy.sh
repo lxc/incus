@@ -208,10 +208,19 @@ container_devices_proxy_tcp() {
 
     incus config device remove nattest validNAT
 
-    # Wildcard listen address (no destination address match in the generated rules).
+    # Wildcard listen address (only host-local destination addresses are matched).
     incus config device add nattest validNAT proxy listen="tcp:0.0.0.0:1234" connect="tcp:${v4_addr}:1234" bind=host nat=true
-    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
-    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "daddr")" -eq 0 ]
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "meta nfproto .* fib daddr type .* tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip daddr != 127.0.0.0/8 fib daddr type .* tcp dport 1234 dnat ip to ${v4_addr}:1234")" -eq 1 ]
+
+    incus config device remove nattest validNAT
+    ! nft -nn list chain inet incus prert.nattest.validNAT || false
+    ! nft -nn list chain inet incus out.nattest.validNAT || false
+
+    # Wildcard IPv6 listen address.
+    incus config device add nattest validNAT proxy listen="tcp:[::]:1234" connect="tcp:[${v6_addr}]:1234" bind=host nat=true
+    [ "$(nft -nn list chain inet incus prert.nattest.validNAT | grep -c "meta nfproto .* fib daddr type .* tcp dport 1234 dnat ip6 to \[${v6_addr}\]:1234")" -eq 1 ]
+    [ "$(nft -nn list chain inet incus out.nattest.validNAT | grep -c "ip6 daddr != ::1.*fib daddr type .* tcp dport 1234 dnat ip6 to \[${v6_addr}\]:1234")" -eq 1 ]
 
     incus config device remove nattest validNAT
     ! nft -nn list chain inet incus prert.nattest.validNAT || false
