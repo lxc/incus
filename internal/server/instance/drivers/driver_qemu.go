@@ -2027,7 +2027,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Apply the RTC configuration.
-	// This needs to happen close to creating the full qemu cmd or the time might drift in between.
+	// This needs to happen close to writing the config file or the time might drift in between.
 	adjustment := d.getStartupRTCAdjustment()
 
 	if d.GuestOS() == osinfo.Windows || adjustment != 0 {
@@ -2040,8 +2040,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			base = base.UTC()
 		}
 
-		datetime := base.Format("2006-01-02T15:04:05")
-		qemuArgs = append(qemuArgs, "-rtc", fmt.Sprintf("base=%s", datetime))
+		d.conf = append(d.conf, cfg.Section{
+			Name:    "rtc",
+			Comment: "Clock",
+			Entries: map[string]string{"base": base.Format("2006-01-02T15:04:05")},
+		})
 	}
 
 	d.cmdArgs = qemuArgs
