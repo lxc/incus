@@ -1836,25 +1836,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-cpu", bs.CPUType,
 		"-nographic",
 		"-serial", "chardev:console",
+		"-qmp", "chardev:monitor",
 		"-nodefaults",
 		"-no-user-config",
-		"-sandbox", "on,obsolete=deny,elevateprivileges=allow,spawn=allow,resourcecontrol=deny",
 		"-readconfig", confFile,
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
-	}
-
-	// Get the feature flags.
-	info := DriverStatuses()[instancetype.VM].Info
-	_, spiceSupported := info.Features["spice"]
-	if spiceSupported {
-		spiceConfig, err := d.spiceCmdlineConfig(&fdFiles)
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		qemuArgs = append(qemuArgs, "-spice", spiceConfig)
 	}
 
 	// When a GPU is using virtio-gpu DRM native context, the guest needs a host-backed
@@ -2016,17 +2003,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	// Handle hugepages on architectures where we don't set NUMA nodes.
-	if d.architecture != osarch.ARCH_64BIT_INTEL_X86 && util.IsTrue(d.expandedConfig["limits.memory.hugepages"]) {
-		hugetlb, err := localUtil.HugepagesPath()
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		qemuArgs = append(qemuArgs, "-mem-path", hugetlb, "-mem-prealloc")
-	}
-
 	if d.expandedConfig["raw.qemu"] != "" {
 		fields, err := shellquote.Split(d.expandedConfig["raw.qemu"])
 		if err != nil {
@@ -2038,7 +2014,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	}
 
 	// Apply the RTC configuration.
-	// This needs to happen close to creating the full qemu cmd or the time might drift in between.
+	// This needs to happen close to writing the config file or the time might drift in between.
 	adjustment := d.getStartupRTCAdjustment()
 
 	if d.GuestOS() == osinfo.Windows || adjustment != 0 {
@@ -2051,8 +2027,11 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			base = base.UTC()
 		}
 
-		datetime := base.Format("2006-01-02T15:04:05")
-		qemuArgs = append(qemuArgs, "-rtc", fmt.Sprintf("base=%s", datetime))
+		d.conf = append(d.conf, cfg.Section{
+			Name:    "rtc",
+			Comment: "Clock",
+			Entries: map[string]string{"base": base.Format("2006-01-02T15:04:05")},
+		})
 	}
 
 	d.cmdArgs = qemuArgs
@@ -3348,18 +3327,25 @@ func (d *qemu) migrateSockPath() string {
 	return filepath.Join(d.RunPath(), "migrate.sock")
 }
 
-func (d *qemu) spiceCmdlineConfig(fdFiles *[]*os.File) (string, error) {
+func (d *qemu) spiceConfig(fdFiles *[]*os.File) ([]cfg.Section, error) {
 	// Reference the socket through a short /proc/self/fd path to handle
 	// run paths that exceed the unix socket path limit.
 	spiceDir, err := os.OpenFile(d.RunPath(), unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	spiceDirFD := d.addFileDescriptor(fdFiles, spiceDir)
-	spicePath := fmt.Sprintf("/proc/self/fd/%d/qemu.spice", spiceDirFD)
 
-	return fmt.Sprintf("unix=on,disable-ticketing=on,addr=%s", spicePath), nil
+	return []cfg.Section{{
+		Name:    "spice",
+		Comment: "SPICE",
+		Entries: map[string]string{
+			"unix":              "on",
+			"disable-ticketing": "on",
+			"addr":              fmt.Sprintf("/proc/self/fd/%d/qemu.spice", spiceDirFD),
+		},
+	}}, nil
 }
 
 // generateConfigShare generates the config share directory that will be exported to the VM via
@@ -4037,6 +4023,9 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	// Set OS Specific qemu args.
 	conf = append(conf, d.osVersionSpecificOptions()...)
 
+	// Restrict the available syscalls.
+	conf = append(conf, qemuSandbox()...)
+
 	err := d.addCPUMemoryConfig(&conf, bs)
 	if err != nil {
 		return nil, err
@@ -4208,6 +4197,15 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	_, virtioSound := info.Features["virtio-sound"]
 	_, virtioVGA := info.Features["virtio-vga"]
 
+	if spice {
+		spiceConf, err := d.spiceConfig(fdFiles)
+		if err != nil {
+			return nil, err
+		}
+
+		conf = append(conf, spiceConf...)
+	}
+
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
 		dev: qemuDevOpts{
@@ -4319,7 +4317,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		if sevOpts != nil {
 			for i := range conf {
 				if conf[i].Name == "machine" {
-					conf[i].Entries["memory-encryption"] = "sev0"
+					conf[i].Entries["confidential-guest-support"] = "sev0"
 					break
 				}
 			}
@@ -10645,7 +10643,7 @@ func (d *qemu) checkFeatures(hostArch int, qemuPath string) (map[string]any, err
 		"-nodefaults",
 		"-no-user-config",
 		"-chardev", fmt.Sprintf("socket,id=monitor,path=%s,server=on,wait=off", qemuEscapeCmdline(monitorPath.Name())),
-		"-mon", "chardev=monitor,mode=control",
+		"-qmp", "chardev:monitor",
 		"-machine", qemuMachineType(hostArch),
 	}
 

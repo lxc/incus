@@ -150,6 +150,20 @@ func qemuBase(opts *qemuBaseOpts) []cfg.Section {
 	)
 }
 
+func qemuSandbox() []cfg.Section {
+	return []cfg.Section{{
+		Name:    "sandbox",
+		Comment: "Syscall filtering",
+		Entries: map[string]string{
+			"enable":            "on",
+			"obsolete":          "deny",
+			"elevateprivileges": "allow",
+			"spawn":             "allow",
+			"resourcecontrol":   "deny",
+		},
+	}}
+}
+
 type qemuMemoryOpts struct {
 	memSizeMB int64
 	maxSizeMB int64
@@ -680,12 +694,6 @@ func qemuControlSocket(opts *qemuControlSocketOpts) []cfg.Section {
 			"path":    opts.path,
 			"server":  "on",
 			"wait":    "off",
-		},
-	}, {
-		Name: "mon",
-		Entries: map[string]string{
-			"chardev": "monitor",
-			"mode":    "control",
 		},
 	}}
 }

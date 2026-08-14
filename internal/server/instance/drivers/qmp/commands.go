@@ -1659,18 +1659,18 @@ func (m *Monitor) BlockJobCancelWait(jobID string) error {
 // BlockJobComplete completes a block job that is in ready state.
 func (m *Monitor) BlockJobComplete(deviceNodeName string) error {
 	var args struct {
-		Device string `json:"device"`
+		ID string `json:"id"`
 	}
 
-	args.Device = deviceNodeName
+	args.ID = deviceNodeName
 
-	err := m.Run("block-job-complete", args, nil)
+	err := m.Run("job-complete", args, nil)
 	if err != nil {
 		return err
 	}
 
 	// Wait for the job to reach its final state and report its result.
-	_, err = m.blockJobWait(args.Device, false, true)
+	_, err = m.blockJobWait(args.ID, false, true)
 	if err != nil {
 		return err
 	}
