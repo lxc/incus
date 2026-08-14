@@ -1839,7 +1839,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-qmp", "chardev:monitor",
 		"-nodefaults",
 		"-no-user-config",
-		"-sandbox", "on,obsolete=deny,elevateprivileges=allow,spawn=allow,resourcecontrol=deny",
 		"-readconfig", confFile,
 		"-pidfile", d.pidFilePath(),
 		"-D", d.LogFilePath(),
@@ -4026,6 +4025,9 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 
 	// Set OS Specific qemu args.
 	conf = append(conf, d.osVersionSpecificOptions()...)
+
+	// Restrict the available syscalls.
+	conf = append(conf, qemuSandbox()...)
 
 	err := d.addCPUMemoryConfig(&conf, bs)
 	if err != nil {
