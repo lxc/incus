@@ -96,6 +96,23 @@ func TestQemuConfigTemplates(t *testing.T) {
 		}
 	})
 
+	t.Run("qemu_sandbox", func(t *testing.T) {
+		testCases := []struct {
+			expected string
+		}{{
+			`# Syscall filtering
+			[sandbox]
+			elevateprivileges = "allow"
+			enable = "on"
+			obsolete = "deny"
+			resourcecontrol = "deny"
+			spawn = "allow"`,
+		}}
+		for _, tc := range testCases {
+			runTest(tc.expected, qemuSandbox())
+		}
+	})
+
 	t.Run("qemu_memory", func(t *testing.T) {
 		testCases := []struct {
 			opts     qemuMemoryOpts
