@@ -1306,7 +1306,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 		}
 
 		newDevices := inst.LocalDevices().CloneNative()
-		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, inst.Project().Name, snapshots, newDevices, false)
+		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, inst.Project().Name, snapshots, newDevices, nil, false)
 		if err != nil {
 			err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
 			return err
@@ -1864,7 +1864,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		}
 
 		newDevices := inst.LocalDevices().CloneNative()
-		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, inst.Project().Name, snapshots, newDevices, false)
+		dependentVolumesOffer, err := GenerateDependentVolumesOffer(b.state, srcConfig, inst.Project().Name, snapshots, newDevices, nil, false)
 		if err != nil {
 			err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
 			return err

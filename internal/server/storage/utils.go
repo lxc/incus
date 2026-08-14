@@ -1335,7 +1335,7 @@ func ClusterWideStorageConfig(driverName string) []string {
 
 // GenerateDependentVolumesOffer creates an offer header containing
 // all information required for dependent volume migration.
-func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, projectName string, snapshots bool, devices api.DevicesMap, clusterMove bool) ([]*migration.DependentVolume, error) {
+func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, projectName string, snapshots bool, devices api.DevicesMap, skipDisks []string, clusterMove bool) ([]*migration.DependentVolume, error) {
 	result := make([]*migration.DependentVolume, 0, len(config.DependentVolumes))
 	if len(config.DependentVolumes) == 0 {
 		return result, nil
@@ -1356,6 +1356,10 @@ func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, 
 		deviceName := DeviceByPoolAndVolume(devicesMap, poolName, volName)
 		if deviceName == "" {
 			return nil, fmt.Errorf("Device for volume %s/%s not found", poolName, volName)
+		}
+
+		if slices.Contains(skipDisks, deviceName) {
+			continue
 		}
 
 		shouldMigrate, err := ShouldMigrateDependentVolume(s, poolName, volName, devices[deviceName], clusterMove)
