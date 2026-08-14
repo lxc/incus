@@ -1813,7 +1813,8 @@ func networkStartup(s *state.State) error {
 	var initNetworksMu sync.Mutex
 
 	initNetwork := func(n network.Network, priority int) error {
-		err = n.Start()
+		// Use a local error variable as this runs concurrently.
+		err := n.Start()
 		if err != nil {
 			err = fmt.Errorf("Failed starting: %w", err)
 
