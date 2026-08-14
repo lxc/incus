@@ -1844,19 +1844,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		"-D", d.LogFilePath(),
 	}
 
-	// Get the feature flags.
-	info := DriverStatuses()[instancetype.VM].Info
-	_, spiceSupported := info.Features["spice"]
-	if spiceSupported {
-		spiceConfig, err := d.spiceCmdlineConfig(&fdFiles)
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		qemuArgs = append(qemuArgs, "-spice", spiceConfig)
-	}
-
 	// When a GPU is using virtio-gpu DRM native context, the guest needs a host-backed
 	// GL display. Switch the default headless setup to egl-headless and point it at the
 	// resolved render node (if any) so rendering is offloaded to the host GPU.
@@ -3340,18 +3327,25 @@ func (d *qemu) migrateSockPath() string {
 	return filepath.Join(d.RunPath(), "migrate.sock")
 }
 
-func (d *qemu) spiceCmdlineConfig(fdFiles *[]*os.File) (string, error) {
+func (d *qemu) spiceConfig(fdFiles *[]*os.File) ([]cfg.Section, error) {
 	// Reference the socket through a short /proc/self/fd path to handle
 	// run paths that exceed the unix socket path limit.
 	spiceDir, err := os.OpenFile(d.RunPath(), unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	spiceDirFD := d.addFileDescriptor(fdFiles, spiceDir)
-	spicePath := fmt.Sprintf("/proc/self/fd/%d/qemu.spice", spiceDirFD)
 
-	return fmt.Sprintf("unix=on,disable-ticketing=on,addr=%s", spicePath), nil
+	return []cfg.Section{{
+		Name:    "spice",
+		Comment: "SPICE",
+		Entries: map[string]string{
+			"unix":              "on",
+			"disable-ticketing": "on",
+			"addr":              fmt.Sprintf("/proc/self/fd/%d/qemu.spice", spiceDirFD),
+		},
+	}}, nil
 }
 
 // generateConfigShare generates the config share directory that will be exported to the VM via
@@ -4202,6 +4196,15 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	_, plan9 := info.Features["plan9"]
 	_, virtioSound := info.Features["virtio-sound"]
 	_, virtioVGA := info.Features["virtio-vga"]
+
+	if spice {
+		spiceConf, err := d.spiceConfig(fdFiles)
+		if err != nil {
+			return nil, err
+		}
+
+		conf = append(conf, spiceConf...)
+	}
 
 	devBus, devAddr, multi = bus.allocate(busFunctionGroupGeneric)
 	serialOpts := qemuSerialOpts{
