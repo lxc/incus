@@ -2017,17 +2017,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	// Handle hugepages on architectures where we don't set NUMA nodes.
-	if d.architecture != osarch.ARCH_64BIT_INTEL_X86 && util.IsTrue(d.expandedConfig["limits.memory.hugepages"]) {
-		hugetlb, err := localUtil.HugepagesPath()
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-
-		qemuArgs = append(qemuArgs, "-mem-path", hugetlb, "-mem-prealloc")
-	}
-
 	if d.expandedConfig["raw.qemu"] != "" {
 		fields, err := shellquote.Split(d.expandedConfig["raw.qemu"])
 		if err != nil {
