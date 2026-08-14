@@ -1200,6 +1200,21 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 		if inUse {
 			return response.BadRequest(errors.New("The network is currently in use"))
 		}
+
+		// If we are clustered, also notify all other nodes, if any.
+		if s.ServerClustered {
+			notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			err = notifier(func(client incus.InstanceServer) error {
+				return client.UseProject(n.Project()).DeleteNetwork(n.Name())
+			})
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
 	}
 
 	// Also run the driver deletion for locally pending OVN networks on the client-facing request,
@@ -1217,21 +1232,6 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 	// originally serving the request.
 	if clusterNotification {
 		return response.EmptySyncResponse
-	}
-
-	// If we are clustered, also notify all other nodes, if any.
-	if s.ServerClustered {
-		notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
-		if err != nil {
-			return response.SmartError(err)
-		}
-
-		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.Project()).DeleteNetwork(n.Name())
-		})
-		if err != nil {
-			return response.SmartError(err)
-		}
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
