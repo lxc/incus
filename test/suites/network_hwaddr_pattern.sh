@@ -38,8 +38,7 @@ test_network_hwaddr_pattern() {
     incus stop --project foo -f nettest-foo
     incus delete --project foo -f nettest-foo
 
-    incus project set foo features.networks=true
-    if incus network create --project foo "inct$$-foo"; then
+    if incus project set foo features.networks=true && incus network create --project foo "inct$$-foo"; then
         ip link show "inct$$-foo" | grep -q 'link/ether 00:33:44:'
         incus network delete --project foo "inct$$-foo"
     else

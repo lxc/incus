@@ -593,6 +593,52 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 
 		d.events.SetLocalLocation(d.serverName)
 
+		// Apply the cluster's global configuration locally so it's in effect during member initialization.
+		clusterServer, _, err := client.GetServer()
+		if err != nil {
+			return fmt.Errorf("Failed to retrieve cluster configuration: %w", err)
+		}
+
+		globalConfigValues := map[string]string{}
+		for key, value := range clusterServer.Config {
+			_, ok := clusterConfig.ConfigSchema[key]
+			if ok {
+				globalConfigValues[key] = value
+			}
+		}
+
+		var joinGlobalConfig *clusterConfig.Config
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+
+			joinGlobalConfig, err = clusterConfig.Load(ctx, tx)
+			if err != nil {
+				return err
+			}
+
+			_, err = joinGlobalConfig.Patch(globalConfigValues)
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to apply cluster configuration: %w", err)
+		}
+
+		d.globalConfigMu.Lock()
+		oldGlobalConfig := d.globalConfig
+		d.globalConfig = joinGlobalConfig
+		d.globalConfigMu.Unlock()
+
+		reverter.Add(func() {
+			d.globalConfigMu.Lock()
+			d.globalConfig = oldGlobalConfig
+			d.globalConfigMu.Unlock()
+
+			_ = d.setupLinstor()
+		})
+
+		// Reset the Linstor client so it picks up the new configuration.
+		_ = d.setupLinstor()
+
 		// Create all storage pools and networks.
 		err = clusterInitMember(localClient, client, req.MemberConfig)
 		if err != nil {

@@ -19,11 +19,14 @@ test_address_set() {
     ! incus network address-set add testAS 10.0.0.0-10.0.255.255 || false
     incus network address-set delete testAS
 
-    incus project create testproj -c features.networks=true
-    incus network address-set create testAS --project testproj
-    incus network address-set ls --project testproj | grep -q "testAS"
-    incus network address-set delete testAS --project testproj
-    incus project delete testproj
+    if incus project create testproj -c features.networks=true; then
+        incus network address-set create testAS --project testproj
+        incus network address-set ls --project testproj | grep -q "testAS"
+        incus network address-set delete testAS --project testproj
+        incus project delete testproj
+    else
+        echo "==> SKIP: Skipping project-specific network address set tests as OVN isn't available"
+    fi
 
     cat << EOF | incus network address-set create testAS
 description: Test Address set from STDIN

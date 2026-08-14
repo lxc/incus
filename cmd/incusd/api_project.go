@@ -391,6 +391,14 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Check that OVN is available if the project features its own networks.
+	if util.IsTrue(project.Config["features.networks"]) {
+		err = projectCheckOVNAvailable(s)
+		if err != nil {
+			return response.BadRequest(err)
+		}
+	}
+
 	var id int64
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		id, err = cluster.CreateProject(ctx, tx.Tx(), cluster.Project{Description: project.Description, Name: project.Name})
@@ -820,6 +828,14 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 	err := projectValidateConfig(s, req.Config)
 	if err != nil {
 		return api.StatusErrorf(http.StatusBadRequest, "%v", err)
+	}
+
+	// Check that OVN is available when enabling project-specific networks.
+	if slices.Contains(featuresChanged, "features.networks") && util.IsTrue(req.Config["features.networks"]) {
+		err = projectCheckOVNAvailable(s)
+		if err != nil {
+			return api.StatusErrorf(http.StatusBadRequest, "%v", err)
+		}
 	}
 
 	// Update the database entry.
@@ -1447,6 +1463,16 @@ func isEitherAllowOrBlockOrManaged(value string) error {
 	return validate.Optional(validate.IsOneOf("block", "allow", "managed"))(value)
 }
 
+// projectCheckOVNAvailable checks that OVN is usable as it's required for projects with their own networks.
+func projectCheckOVNAvailable(s *state.State) error {
+	ovnnb, _, err := s.OVN()
+	if err != nil || ovnnb == nil {
+		return errors.New(`OVN is required for projects with "features.networks" enabled`)
+	}
+
+	return nil
+}
+
 func projectValidateConfig(s *state.State, config map[string]string) error {
 	// Validate the project configuration.
 	projectConfigKeys := map[string]func(value string) error{
@@ -1495,7 +1521,7 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		"features.storage.buckets": validate.Optional(validate.IsBool),
 
 		// gendoc:generate(entity=project, group=features, key=features.networks)
-		//
+		// This feature requires the server to be configured for OVN.
 		// ---
 		//  type: bool
 		//  defaultdesc: `false`

@@ -1083,7 +1083,6 @@ test_clustering_network() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${bridge}" ipv4.routes=192.0.2.0/24
     INCUS_DIR="${INCUS_ONE_DIR}" incus project create foo \
         -c restricted=true \
-        -c features.networks=true \
         -c restricted.networks.subnets="${bridge}":192.0.2.0/24
 
     # Spawn a second node
