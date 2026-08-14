@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/internal/version"
@@ -22,6 +23,207 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 )
+
+// dependentDiskTransfer moves the volumes of an instance's dependent disks on local storage,
+// as near-live migration of an instance whose root is on shared storage needs.
+type dependentDiskTransfer struct {
+	s                *state.State
+	inst             instance.Instance
+	target           incus.InstanceServer
+	sourceMemberInfo *db.NodeInfo
+	op               *operations.Operation
+
+	devs       []deviceConfig.DeviceNamed
+	snapPrefix string
+	snapshots  []string
+}
+
+// start collects the dependent disks on local storage and moves them to the target member while the
+// instance runs.
+func (t *dependentDiskTransfer) start(ctx context.Context, reverter *revert.Reverter) error {
+	err := t.inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		diskPool, err := storagePools.LoadByName(t.s, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if !diskPool.Driver().Info().Remote {
+			t.devs = append(t.devs, dev)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(t.devs) == 0 {
+		return nil
+	}
+
+	t.snapPrefix, err = instance.MoveTemporaryName(t.inst)
+	if err != nil {
+		return err
+	}
+
+	// Undo the pre-copy if the move doesn't get as far as handing the instance over.
+	reverter.Add(func() {
+		for _, dev := range t.devs {
+			poolName := dev.Config["pool"]
+			volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
+			diskPool, err := storagePools.LoadByName(t.s, poolName)
+			if err == nil {
+				for _, snapName := range t.snapshots {
+					err := diskPool.DeleteCustomVolumeSnapshot(t.inst.Project().Name, fmt.Sprintf("%s/%s", volName, snapName), t.op)
+					if err != nil && !response.IsNotFoundError(err) {
+						logger.Warn("Failed removing pre-copy snapshot from dependent volume", logger.Ctx{"project": t.inst.Project().Name, "instance": t.inst.Name(), "volume": volName, "snapshot": snapName, "err": err})
+					}
+				}
+			} else {
+				logger.Warn("Failed loading storage pool of dependent volume", logger.Ctx{"project": t.inst.Project().Name, "instance": t.inst.Name(), "pool": poolName, "err": err})
+			}
+
+			err = t.target.DeleteStoragePoolVolume(poolName, "custom", volName)
+			if err != nil {
+				logger.Warn("Failed removing pre-copied dependent volume from target member", logger.Ctx{"project": t.inst.Project().Name, "instance": t.inst.Name(), "volume": volName, "err": err})
+			}
+		}
+	})
+
+	for round := 1; round <= 2; round++ {
+		err = t.transfer(ctx, fmt.Sprintf("%s-%d", t.snapPrefix, round), round > 1)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// finalTransfer brings the pre-copied volumes fully up to date with the instance stopped.
+func (t *dependentDiskTransfer) finalTransfer(ctx context.Context) error {
+	if len(t.devs) == 0 {
+		return nil
+	}
+
+	return t.transfer(ctx, "", true)
+}
+
+// transfer copies the collected disks to the target member.
+func (t *dependentDiskTransfer) transfer(ctx context.Context, snapName string, refresh bool) error {
+	projectName := t.inst.Project().Name
+
+	if snapName != "" {
+		t.snapshots = append(t.snapshots, snapName)
+	}
+
+	for _, dev := range t.devs {
+		poolName := dev.Config["pool"]
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
+		diskPool, err := storagePools.LoadByName(t.s, poolName)
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		// Snapshot the volume.
+		if snapName != "" {
+			err = diskPool.CreateCustomVolumeSnapshot(projectName, volName, snapName, time.Time{}, false, t.op)
+			if err != nil {
+				return fmt.Errorf("Failed creating pre-copy snapshot %q for volume %q: %w", snapName, volName, err)
+			}
+		}
+
+		srcMigration, err := newStorageMigrationSource(false, nil)
+		if err != nil {
+			return fmt.Errorf("Failed setting up migration of dependent volume %q on source: %w", volName, err)
+		}
+
+		run := func(_ *operations.Operation) error {
+			return srcMigration.DoStorage(t.s, projectName, poolName, volName, t.op)
+		}
+
+		cancel := func(_ *operations.Operation) error {
+			srcMigration.disconnect()
+			return nil
+		}
+
+		resources := map[string][]api.URL{}
+		resources["storage_volumes"] = []api.URL{*api.NewURL().Path(version.APIVersion, "storage-pools", poolName, "volumes", "custom", volName)}
+		srcOp, err := operations.OperationCreate(t.s, projectName, operations.OperationClassWebsocket, operationtype.VolumeMigrate, resources, srcMigration.Metadata(), run, cancel, srcMigration.Connect, nil)
+		if err != nil {
+			return err
+		}
+
+		srcOp.CopyRequestor(t.op)
+
+		err = srcOp.Start()
+		if err != nil {
+			return fmt.Errorf("Failed starting migration source operation for dependent volume %q: %w", volName, err)
+		}
+
+		sourceSecrets := make(map[string]string, len(srcMigration.conns))
+		for connName, conn := range srcMigration.conns {
+			sourceSecrets[connName] = conn.Secret()
+		}
+
+		err = t.target.CreateStoragePoolVolume(poolName, api.StorageVolumesPost{
+			Name: volName,
+			Type: "custom",
+			Source: api.StorageVolumeSource{
+				Type:        "migration",
+				Mode:        "pull",
+				Operation:   fmt.Sprintf("https://%s%s", t.sourceMemberInfo.Address, srcOp.URL()),
+				Websockets:  sourceSecrets,
+				Certificate: string(t.s.Endpoints.NetworkCert().PublicKey()),
+				Name:        volName,
+				Pool:        poolName,
+				Refresh:     refresh,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("Failed requesting create of dependent volume %q on destination: %w", volName, err)
+		}
+
+		// The source only finishes once the target has confirmed the transfer, so this covers both ends.
+		err = srcOp.Wait(ctx)
+		if err != nil {
+			return fmt.Errorf("Transfer of dependent volume %q to destination failed: %w", volName, err)
+		}
+	}
+
+	return nil
+}
+
+// diskNames returns the disk devices whose volumes were transferred.
+func (t *dependentDiskTransfer) diskNames() []string {
+	names := make([]string, 0, len(t.devs))
+	for _, dev := range t.devs {
+		names = append(names, dev.Name)
+	}
+
+	return names
+}
+
+// deleteSnapshots removes the temporary snapshots from the volumes on the target member.
+func (t *dependentDiskTransfer) deleteSnapshots() {
+	for _, dev := range t.devs {
+		poolName := dev.Config["pool"]
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
+		for _, snapName := range t.snapshots {
+			snapOp, err := t.target.DeleteStoragePoolVolumeSnapshot(poolName, "custom", volName, snapName)
+			if err == nil {
+				err = snapOp.Wait()
+			}
+
+			if err != nil {
+				logger.Warn("Failed removing pre-copy snapshot after migration", logger.Ctx{"project": t.inst.Project().Name, "instance": t.inst.Name(), "volume": volName, "snapshot": snapName, "err": err})
+			}
+		}
+	}
+}
 
 // nearLiveMigrationSupported checks whether a stateless move of a running container can be performed as a near-live migration.
 func nearLiveMigrationSupported(s *state.State, inst instance.Instance, req api.InstancePost, target string) error {
@@ -90,7 +292,7 @@ func runNearLiveCopyRound(ctx context.Context, s *state.State, inst instance.Ins
 	}
 
 	// Setup a new migration source.
-	sourceMigration, err := newMigrationSource(inst, false, false, false, inst.Name(), "", instPut.Devices, nil)
+	sourceMigration, err := newMigrationSource(inst, false, false, false, inst.Name(), "", instPut.Devices, nil, nil)
 	if err != nil {
 		return fmt.Errorf("Failed setting up instance migration on source: %w", err)
 	}

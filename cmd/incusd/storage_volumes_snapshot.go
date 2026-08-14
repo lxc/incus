@@ -1379,7 +1379,9 @@ func storagePoolVolumeSnapshotTypeDelete(d *Daemon, r *http.Request) response.Re
 		return response.SmartError(err)
 	}
 
-	if util.IsTrue(parentDBVolume.Config["dependent"]) {
+	// Direct removal isn't allowed for dependent volumes, except for requests from another cluster
+	// member, as those are part of a near-live migration.
+	if util.IsTrue(parentDBVolume.Config["dependent"]) && !isClusterNotification(r) {
 		return response.BadRequest(fmt.Errorf("Direct snapshot removal is not allowed for dependent volumes"))
 	}
 
