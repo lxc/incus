@@ -132,6 +132,21 @@ var imagePublishLock sync.Mutex
 // stepping on each other's toes.
 var imageTaskMu sync.Mutex
 
+// errorRecordingWriter wraps an io.Writer and records the first write error.
+type errorRecordingWriter struct {
+	w   io.Writer
+	err error
+}
+
+func (w *errorRecordingWriter) Write(p []byte) (int, error) {
+	n, err := w.w.Write(p)
+	if err != nil && w.err == nil {
+		w.err = err
+	}
+
+	return n, err
+}
+
 func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 	// Compressors with reproducible output and the flags needed for it.
 	reproducible := map[string][]string{
@@ -202,11 +217,25 @@ func compressFile(compress string, infile io.Reader, outfile io.Writer) error {
 			args = append(args, flags...)
 		}
 
+		// Record output write errors as a failing write closes the pipe and kills
+		// the compressor with SIGPIPE, masking the actual error (e.g. ENOSPC).
+		writer := &errorRecordingWriter{w: outfile}
+		stderr := bytes.Buffer{}
+
 		cmd := exec.Command(fields[0], args...)
 		cmd.Stdin = infile
-		cmd.Stdout = outfile
+		cmd.Stdout = writer
+		cmd.Stderr = &stderr
 		err := cmd.Run()
 		if err != nil {
+			if writer.err != nil {
+				return writer.err
+			}
+
+			if stderr.Len() > 0 {
+				return fmt.Errorf("%s: %w (%s)", fields[0], err, strings.TrimSpace(stderr.String()))
+			}
+
 			return err
 		}
 	}
