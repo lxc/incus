@@ -110,7 +110,7 @@ func (d *lvm) isLVMNotFoundExitError(err error) bool {
 
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
 func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
-	_, err := subprocess.RunCommand("pvs", "--noheadings", "-o", "pv_name", pvName)
+	_, err := subprocess.RunCommandCLocale("pvs", "--noheadings", "-o", "pv_name", pvName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -124,7 +124,7 @@ func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
 
 // volumeGroupExists checks if an LVM Volume Group exists and returns any tags on that volume group.
 func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
-	output, err := subprocess.RunCommand("vgs", "--noheadings", "-o", "vg_tags", vgName)
+	output, err := subprocess.RunCommandCLocale("vgs", "--noheadings", "-o", "vg_tags", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil, nil
@@ -265,7 +265,7 @@ func (d *lvm) countThinVolumes(vgName, poolName string) (int, error) {
 
 // thinpoolExists checks whether the specified thinpool exists in a volume group.
 func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
-	output, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
+	output, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -285,7 +285,7 @@ func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
 
 // logicalVolumeExists checks whether the specified logical volume exists.
 func (d *lvm) logicalVolumeExists(volDevPath string) (bool, error) {
-	_, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_name", volDevPath)
+	_, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "-o", "lv_name", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -842,7 +842,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 // logicalVolumeSize gets the size in bytes of a logical volume.
 func (d *lvm) logicalVolumeSize(volDevPath string) (int64, error) {
-	output, err := subprocess.RunCommand("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
+	output, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume not found")
