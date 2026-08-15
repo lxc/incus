@@ -144,20 +144,25 @@ func (e *EventListener) AddHandler(types []string, function func(api.Event)) (*E
 		return nil, errors.New("A valid function must be provided")
 	}
 
-	// Handle locking
-	e.targetsLock.Lock()
-	defer e.targetsLock.Unlock()
-
 	// Create a new target
-	target := EventTarget{
+	target := &EventTarget{
 		function: function,
 		types:    types,
 	}
 
-	// And add it to the targets
-	e.targets = append(e.targets, &target)
+	e.addTarget(target)
 
-	return &target, nil
+	return target, nil
+}
+
+// addTarget adds an existing target to the listener.
+func (e *EventListener) addTarget(target *EventTarget) {
+	// Handle locking
+	e.targetsLock.Lock()
+	defer e.targetsLock.Unlock()
+
+	// And add it to the targets
+	e.targets = append(e.targets, target)
 }
 
 // RemoveHandler removes a function to be called whenever an event is received.
