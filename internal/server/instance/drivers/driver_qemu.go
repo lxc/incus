@@ -354,6 +354,9 @@ type qemu struct {
 	// Stateful migration streams.
 	migrationReceiveStateful map[string]io.ReadWriteCloser
 
+	// Cancelled if the migration source fails partway through.
+	migrationReceiveCtx context.Context
+
 	// Indicate whether the root disk will be live-migrated.
 	migrationRootDisk bool
 	disksToMigrate    []localMigration.DependentVolumeArgs
@@ -1141,7 +1144,12 @@ func (d *qemu) restoreState(monitor *qmp.Monitor) error {
 			_ = pipeWrite.Close()
 		}()
 
-		err = d.restoreStateHandle(context.Background(), monitor, pipeRead)
+		ctx := d.migrationReceiveCtx
+		if ctx == nil {
+			ctx = context.Background()
+		}
+
+		err = d.restoreStateHandle(ctx, monitor, pipeRead)
 		if err != nil {
 			return fmt.Errorf("Failed restoring checkpoint from source: %w", err)
 		}
@@ -9368,6 +9376,8 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 				d.migrationReceiveStateful = map[string]io.ReadWriteCloser{
 					api.SecretNameState: stateConn,
 				}
+
+				d.migrationReceiveCtx = ctx
 
 				d.disksToMigrate = append(d.disksToMigrate, dependentVolumes...)
 
