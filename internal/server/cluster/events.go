@@ -149,7 +149,7 @@ func EventListenerWait(ctx context.Context, address string) error {
 
 	if listenersUnavailable[address] {
 		listenersLock.Unlock()
-		return errors.New("Server isn't ready yet")
+		return errors.New("Target cluster member is unavailable")
 	}
 
 	listenAddresses := []string{address}
@@ -270,12 +270,27 @@ func EventsUpdateListeners(s *state.State, hbMembers map[int64]APIHeartbeatMembe
 	keepListeners := make(map[string]struct{})
 	wg := sync.WaitGroup{}
 	for _, hbMember := range hbMembers {
-		// Don't bother trying to connect to ourselves or offline members.
-		if hbMember.Name == s.ServerName || !hbMember.Online {
+		// Don't bother trying to connect to ourselves.
+		if hbMember.Name == s.ServerName {
+			continue
+		}
+
+		// Don't bother trying to connect to offline members, but mark them as unavailable so that
+		// anything waiting on an event connection to them fails fast rather than timing out.
+		if !hbMember.Online {
+			listenersLock.Lock()
+			listenersUnavailable[hbMember.Address] = true
+			listenersLock.Unlock()
 			continue
 		}
 
 		if localEventMode != EventModeFullMesh && !RoleInSlice(db.ClusterRoleEventHub, hbMember.Roles) {
+			// No direct connection is made to this member in event-hub mode, so clear any
+			// stale unavailable flag left over from an offline period.
+			listenersLock.Lock()
+			delete(listenersUnavailable, hbMember.Address)
+			listenersLock.Unlock()
+
 			continue // Skip non-event-hub members if we are operating in event-hub mode.
 		}
 
