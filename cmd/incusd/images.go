@@ -2156,6 +2156,11 @@ func distributeImage(ctx context.Context, s *state.State, nodes []string, oldFin
 			return fmt.Errorf("Failed to retrieve information about cluster member with address %q: %w", nodeAddress, err)
 		}
 
+		// Skip offline members.
+		if nodeInfo.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+			continue
+		}
+
 		client, err := cluster.Connect(nodeAddress, s.Endpoints.NetworkCert(), s.ServerCert(), nil, true)
 		if err != nil {
 			return fmt.Errorf("Failed to connect to %q for image synchronization: %w", nodeAddress, err)
@@ -5081,16 +5086,38 @@ func imageSyncBetweenNodes(ctx context.Context, s *state.State, r *http.Request,
 
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// Get a list of nodes that do not have the image.
-			addresses, err = tx.GetNodesWithoutImage(ctx, fingerprint)
+			candidates, err := tx.GetNodesWithoutImage(ctx, fingerprint)
+			if err != nil {
+				return err
+			}
 
-			return err
+			// Skip offline members.
+			members, err := tx.GetNodes(ctx)
+			if err != nil {
+				return err
+			}
+
+			offlineThreshold := s.GlobalConfig.OfflineThreshold()
+
+			addresses = nil
+			for _, member := range members {
+				if member.IsOffline(offlineThreshold) {
+					continue
+				}
+
+				if slices.Contains(candidates, member.Address) {
+					addresses = append(addresses, member.Address)
+				}
+			}
+
+			return nil
 		})
 		if err != nil {
 			return fmt.Errorf("Failed to get nodes for the image synchronization: %w", err)
 		}
 
-		if len(addresses) <= 0 {
-			logger.Info("All members have image", logger.Ctx{"fingerprint": fingerprint, "project": project})
+		if len(addresses) == 0 {
+			logger.Info("All online members have image", logger.Ctx{"fingerprint": fingerprint, "project": project})
 			return nil
 		}
 
