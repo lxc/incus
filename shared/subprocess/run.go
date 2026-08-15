@@ -138,6 +138,8 @@ func RunCommandWithFds(ctx context.Context, stdin io.Reader, stdout io.Writer, n
 
 // TryRunCommand runs the specified command up to 20 times with a 500ms delay between each call
 // until it runs without an error. If after 20 times it is still failing then returns the error.
+//
+// This always runs with translations disabled.
 func TryRunCommand(name string, arg ...string) (string, error) {
 	return TryRunCommandAttemptsDuration(20, 500*time.Millisecond, name, arg...)
 }
@@ -145,12 +147,14 @@ func TryRunCommand(name string, arg ...string) (string, error) {
 // TryRunCommandAttemptsDuration runs the specified command up to a specified number times with a
 // specified delay between each call until it runs without an error. If after the number of times
 // it is still failing then returns the error.
+//
+// This always runs with translations disabled.
 func TryRunCommandAttemptsDuration(attempts int, delay time.Duration, name string, arg ...string) (string, error) {
 	var err error
 	var output string
 
 	for range attempts {
-		output, err = RunCommand(name, arg...)
+		output, err = RunCommandCLocale(name, arg...)
 		if err == nil {
 			break
 		}
