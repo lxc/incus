@@ -649,6 +649,12 @@ func storagePoolVolumesGet(d *Daemon, r *http.Request) response.Response {
 						return response.InternalError(fmt.Errorf("Failed getting cluster member info for %q: %w", vol.Location, err))
 					}
 
+					// Return the volume without state information if its member is offline.
+					if volNode.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+						volumesFull = append(volumesFull, &api.StorageVolumeFull{StorageVolume: *vol})
+						continue
+					}
+
 					client, err := cluster.Connect(volNode.Address, s.Endpoints.NetworkCert(), s.ServerCert(), r, false)
 					if err != nil {
 						return response.InternalError(err)
