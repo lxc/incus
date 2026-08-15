@@ -115,7 +115,9 @@ func tlsTransport(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo)
 
 	transport.DialTLSContext = func(ctx context.Context, network string, addr string) (net.Conn, error) {
 		// Establish the TCP connection.
-		conn, err := net.Dial("tcp", addr)
+		dialer := net.Dialer{Timeout: 10 * time.Second}
+
+		conn, err := dialer.DialContext(ctx, "tcp", addr)
 		if err != nil {
 			return nil, fmt.Errorf("Failed connecting to HTTPS endpoint %q: %w", addr, err)
 		}
@@ -123,12 +125,16 @@ func tlsTransport(networkCert *localtls.CertInfo, serverCert *localtls.CertInfo)
 		// Get TLS connection.
 		tlsConn := tls.Client(conn, config)
 
-		// Validate the connection
-		err = tlsConn.Handshake()
+		// Validate the connection (TLSHandshakeTimeout doesn't apply to DialTLSContext).
+		_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
+
+		err = tlsConn.HandshakeContext(ctx)
 		if err != nil {
 			_ = conn.Close()
 			return nil, err
 		}
+
+		_ = conn.SetDeadline(time.Time{})
 
 		// Look for an exact match with the certificate provided.
 		// But ignore any other issue (validity, scope, ...).
