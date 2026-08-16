@@ -670,7 +670,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 		defer r.cleanup()
 	}
 
-	defer logger.WarnOnError(r.conn.Close, "Failed to close connection")
+	defer logger.WarnOnErrorExcept(r.conn.Close, []error{net.ErrClosed}, "Failed to close connection")
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
@@ -682,7 +682,7 @@ func (r *upgradeResponse) Render(w http.ResponseWriter) error {
 		return api.StatusErrorf(http.StatusInternalServerError, "Failed to hijack connection: %v", err)
 	}
 
-	defer logger.WarnOnError(remoteConn.Close, "Failed to close remote connection")
+	defer logger.WarnOnErrorExcept(remoteConn.Close, []error{net.ErrClosed}, "Failed to close remote connection")
 
 	remoteTCP, _ := tcp.ExtractConn(remoteConn)
 	if remoteTCP != nil {
