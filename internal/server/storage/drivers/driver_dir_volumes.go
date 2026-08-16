@@ -50,8 +50,10 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		if err != nil {
 			return err
 		}
-	} else if vol.volType != VolumeTypeBucket {
-		// Filesystem quotas only used with non-block volume types.
+	}
+
+	// Set up the quota project (usage tracking only for block volumes).
+	if vol.volType != VolumeTypeBucket {
 		revertFunc, err := d.setupInitialQuota(vol)
 		if err != nil {
 			return err
