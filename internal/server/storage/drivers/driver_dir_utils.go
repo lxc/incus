@@ -47,6 +47,11 @@ func (d *dir) setupInitialQuota(vol Volume) (revert.Hook, error) {
 		return nil, err
 	}
 
+	// Block volumes are size limited by their disk file, only use the project for usage tracking.
+	if IsContentBlock(vol.contentType) {
+		sizeBytes = 0
+	}
+
 	err = d.setQuota(volPath, volID, sizeBytes)
 	if err != nil {
 		return nil, err
