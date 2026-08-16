@@ -114,7 +114,7 @@ See the {ref}`storage-drivers` documentation for the available configuration opt
 
 Use the following command to set configuration options for a storage volume:
 
-    incus storage volume set <pool_name> [<volume_type>/]<volume_name> <key> <value>
+    incus storage volume set <pool_name> [<volume_type>/]<volume_name> <key>=<value>
 
 The default {ref}`storage volume type <storage-volume-types>` is `custom`, so you can leave out the `<volume_type>/` when configuring a custom storage volume.
 
@@ -177,12 +177,16 @@ In some cases, it is also possible to reduce the size of a storage volume.
 
 To resize a storage volume, set its size configuration:
 
-    incus storage volume set <pool_name> <volume_name> size <new_size>
+    incus storage volume set <pool_name> <volume_name> size=<new_size>
+
+Direct volume resizing is not always supported; for resizing
+`virtual-machine/*` volumes you should edit its `root` device instead:
+
+    incus config device set my-vm root size=<new_size>
 
 ```{important}
 - Growing a storage volume usually works (if the storage pool has sufficient storage).
 - Shrinking a storage volume is only possible for storage volumes with content type `filesystem`.
   It is not guaranteed to work though, because you cannot shrink storage below its current used size.
 - Shrinking a storage volume with content type `block` is not possible.
-
 ```
