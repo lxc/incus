@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -96,21 +97,67 @@ func (d *lvm) openLoopFile(source string) (string, error) {
 }
 
 // isLVMNotFoundExitError checks whether the supplied error is an exit error from an LVM command
-// meaning that the object was not found. Returns true if it is (exit status 5) false if not.
+// meaning that the object was not found. Returns true if it is false if not.
 func (d *lvm) isLVMNotFoundExitError(err error) bool {
 	var exitError *exec.ExitError
-	if errors.As(err, &exitError) {
-		if exitError.ExitCode() == 5 {
-			return true
+	if !errors.As(err, &exitError) || exitError.ExitCode() != 5 {
+		return false
+	}
+
+	// LVM uses exit status 5 for all command failures, so check the error output to
+	// tell missing objects apart from other failures (e.g. lock manager errors).
+	var runError subprocess.RunError
+	if errors.As(err, &runError) {
+		stderr := runError.StdErr().String()
+
+		return strings.Contains(stderr, "not found") || strings.Contains(stderr, "Failed to find") || strings.Contains(stderr, "No physical volume label read")
+	}
+
+	return true
+}
+
+// sanlockVolumeGroups returns the shared volume groups using the sanlock lock manager, excluding excludeName.
+func (d *lvm) sanlockVolumeGroups(excludeName string) ([]string, error) {
+	output, err := subprocess.RunCommand("vgs", "--noheadings", "-o", "vg_name", "-S", "vg_lock_type=sanlock")
+	if err != nil {
+		return nil, fmt.Errorf("Error listing sanlock volume groups: %w", err)
+	}
+
+	vgNames := []string{}
+	for line := range strings.Lines(output) {
+		vgName := strings.TrimSpace(line)
+		if vgName == "" || vgName == excludeName {
+			continue
+		}
+
+		vgNames = append(vgNames, vgName)
+	}
+
+	return vgNames, nil
+}
+
+// sanlockHasGlobalLock checks whether the given shared volume group hosts the sanlock global lock.
+// The volume group's sanlock lease volume must be active on the local system.
+func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
+	devPath := filepath.Join("/dev/mapper", fmt.Sprintf("%s-lvmlock", strings.ReplaceAll(vgName, "-", "--")))
+
+	output, err := subprocess.RunCommand("sanlock", "direct", "dump", fmt.Sprintf("%s:0:134217728", devPath))
+	if err != nil {
+		return false, fmt.Errorf("Error reading sanlock leases on %q: %w", devPath, err)
+	}
+
+	for line := range strings.Lines(output) {
+		if slices.Contains(strings.Fields(line), "GLLK") {
+			return true, nil
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
 func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
-	_, err := subprocess.RunCommand("pvs", "--noheadings", "-o", "pv_name", pvName)
+	_, err := subprocess.RunCommandCLocale("pvs", "--noheadings", "-o", "pv_name", pvName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -124,7 +171,7 @@ func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
 
 // volumeGroupExists checks if an LVM Volume Group exists and returns any tags on that volume group.
 func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
-	output, err := subprocess.RunCommand("vgs", "--noheadings", "-o", "vg_tags", vgName)
+	output, err := subprocess.RunCommandCLocale("vgs", "--noheadings", "-o", "vg_tags", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil, nil
@@ -265,7 +312,7 @@ func (d *lvm) countThinVolumes(vgName, poolName string) (int, error) {
 
 // thinpoolExists checks whether the specified thinpool exists in a volume group.
 func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
-	output, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
+	output, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -285,7 +332,7 @@ func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
 
 // logicalVolumeExists checks whether the specified logical volume exists.
 func (d *lvm) logicalVolumeExists(volDevPath string) (bool, error) {
-	_, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_name", volDevPath)
+	_, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "-o", "lv_name", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -842,7 +889,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 // logicalVolumeSize gets the size in bytes of a logical volume.
 func (d *lvm) logicalVolumeSize(volDevPath string) (int64, error) {
-	output, err := subprocess.RunCommand("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
+	output, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume not found")
