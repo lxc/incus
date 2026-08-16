@@ -2,9 +2,11 @@ package cluster
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/shared/api"
 )
 
 // ResolveTarget is a convenience for resolving a target member name to address.
@@ -20,6 +22,10 @@ func ResolveTarget(ctx context.Context, s *state.State, targetMember string) (st
 		member, err := tx.GetNodeByName(ctx, targetMember)
 		if err != nil {
 			return err
+		}
+
+		if member.IsOffline(s.GlobalConfig.OfflineThreshold()) {
+			return api.StatusErrorf(http.StatusServiceUnavailable, "Cluster member %q is offline", targetMember)
 		}
 
 		memberAddress = member.Address

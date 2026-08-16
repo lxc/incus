@@ -66,18 +66,19 @@ func NewNotifier(s *state.State, networkCert *localtls.CertInfo, serverCert *loc
 		}
 
 		if member.IsOffline(offlineThreshold) {
-			// Even if the heartbeat timestamp is not recent
-			// enough, let's try to connect to the node, just in
-			// case the heartbeat is lagging behind for some reason
-			// and the node is actually up.
-			if !HasConnectivity(networkCert, serverCert, member.Address, true) {
-				switch policy {
-				case NotifyAll:
+			switch policy {
+			case NotifyAll:
+				// Even if the heartbeat timestamp is not recent
+				// enough, let's try to connect to the node, just in
+				// case the heartbeat is lagging behind for some reason
+				// and the node is actually up.
+				if !HasConnectivity(networkCert, serverCert, member.Address, false) {
 					return nil, fmt.Errorf("peer node %s is down", member.Address)
-				case NotifyAlive:
-					continue // Just skip this node
-				case NotifyTryAll:
 				}
+
+			case NotifyAlive:
+				continue // Just skip this node
+			case NotifyTryAll:
 			}
 		}
 
