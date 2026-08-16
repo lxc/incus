@@ -12034,7 +12034,7 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 		session := nbdSessions[d.id]
 		if session == nil {
 			nbdSessionsMu.Unlock()
-			return nil, nil, errors.New("No NBD session is currently active")
+			return nil, nil, api.StatusErrorf(http.StatusBadRequest, "No NBD session is currently active")
 		}
 
 		conn, err := net.Dial("unix", d.nbdPath())
