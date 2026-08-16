@@ -8390,7 +8390,7 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 		return "", "", nil, fmt.Errorf("Failed opening file image for migration storage snapshot %q: %w", snapshotFile, err)
 	}
 
-	defer logger.WarnOnError(func() error { return os.Remove(snapshotFile) }, "Failed to remove snapshot file")
+	defer logger.WarnOnErrorExcept(func() error { return os.Remove(snapshotFile) }, []error{fs.ErrNotExist}, "Failed to remove snapshot file")
 
 	// Pass the snapshot file to the running QEMU process.
 	snapFile, err := os.OpenFile(snapshotFile, unix.O_RDWR, 0)
