@@ -1589,11 +1589,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		volatileSet["volatile.uuid.generation"] = vmGenUUID
 	}
 
-	// Generate the config drive.
-	err = d.generateConfigShare(volatileSet)
-	if err != nil {
-		op.Done(err)
-		return err
+	// Generate the config drive. Skip this when starting as a live migration target as the
+	// running guest relies on the current content and the source may still hold its own
+	// mount of a shared config volume.
+	if d.migrationReceiveStateful == nil {
+		err = d.generateConfigShare(volatileSet)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
 	}
 
 	// Create all needed paths.
