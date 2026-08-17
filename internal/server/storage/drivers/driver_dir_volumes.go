@@ -50,8 +50,10 @@ func (d *dir) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 		if err != nil {
 			return err
 		}
-	} else if vol.volType != VolumeTypeBucket {
-		// Filesystem quotas only used with non-block volume types.
+	}
+
+	// Set up the quota project (usage tracking only for block volumes).
+	if vol.volType != VolumeTypeBucket {
 		revertFunc, err := d.setupInitialQuota(vol)
 		if err != nil {
 			return err
@@ -134,7 +136,27 @@ func (d *dir) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcData 
 		return postHookWrapper, revertHook, nil
 	}
 
-	return nil, revertHook, nil
+	// For custom volumes the DB record is created before the restore, so the quota can be set immediately.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	if revertHook != nil {
+		reverter.Add(revertHook)
+	}
+
+	revertQuota, err := d.setupInitialQuota(vol)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if revertQuota != nil {
+		reverter.Add(revertQuota)
+	}
+
+	cleanup := reverter.Clone().Fail
+	reverter.Success()
+
+	return nil, cleanup, nil
 }
 
 // CreateVolumeFromCopy provides same-pool volume copying functionality.
