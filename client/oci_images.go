@@ -198,7 +198,7 @@ func (r *ProtocolOCI) GetImageFile(fingerprint string, req ImageFileRequest) (*I
 		req.ProgressHandler(ioprogress.ProgressData{Text: "Unpacking the OCI image"})
 	}
 
-	err = unpackOCIImage(filepath.Join(ociPath, "oci"), imageTag, filepath.Join(ociPath, "image"))
+	err = r.unpackOCIImage(filepath.Join(ociPath, "oci"), imageTag, filepath.Join(ociPath, "image"))
 	if err != nil {
 		logger.Debug("Error unpacking OCI image", logger.Ctx{"image": filepath.Join(ociPath, "oci"), "err": err})
 		return nil, err

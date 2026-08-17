@@ -47,7 +47,7 @@ func (h *umociLogHandler) HandleLog(e *log.Entry) error {
 	return nil
 }
 
-func unpackOCIImage(imagePath string, imageTag string, bundlePath string) error {
+func (r *ProtocolOCI) unpackOCIImage(imagePath string, imageTag string, bundlePath string) error {
 	var unpackOptions layer.UnpackOptions
 	unpackOptions.KeepDirlinks = true
 
