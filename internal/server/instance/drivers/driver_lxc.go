@@ -2588,6 +2588,14 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			lxcMounts = append(lxcMounts, filepath.Clean(fmt.Sprintf("/%s", fields[1])))
 		}
 
+		// OCI VOLUME paths, tracked through the org.opencontainers.image.volumes annotation (PR #678).
+		ociVolumes := make(map[string]bool)
+		for _, vol := range strings.Split(config.Annotations["org.opencontainers.image.volumes"], ",") {
+			if vol != "" {
+				ociVolumes[filepath.Clean(vol)] = true
+			}
+		}
+
 		// Configure mounts.
 		for _, mount := range config.Mounts {
 			// We only support simple tmpfs at this stage.
@@ -2597,6 +2605,11 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 			// Skip all our own mounts.
 			if slices.Contains(lxcMounts, filepath.Clean(mount.Destination)) {
+				continue
+			}
+
+			// Skip OCI VOLUME paths so they stay persistent (mount.Source == "none" is a fallback for umoci pre PR #678).
+			if ociVolumes[filepath.Clean(mount.Destination)] || mount.Source == "none" {
 				continue
 			}
 
