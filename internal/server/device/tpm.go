@@ -2,11 +2,13 @@ package device
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -23,6 +25,30 @@ import (
 
 type tpm struct {
 	deviceCommon
+}
+
+// liveMigrationReceiver is implemented by instance drivers whose start can be the target of a live migration.
+type liveMigrationReceiver interface {
+	IsLiveMigration() bool
+}
+
+// swtpmHasMigrationSupport checks whether swtpm supports the --migration option.
+func swtpmHasMigrationSupport() bool {
+	output, err := subprocess.RunCommand("swtpm", "socket", "--print-capabilities")
+	if err != nil {
+		return false
+	}
+
+	var caps struct {
+		Features []string `json:"features"`
+	}
+
+	err = json.Unmarshal([]byte(output), &caps)
+	if err != nil {
+		return false
+	}
+
+	return slices.Contains(caps.Features, "cmdarg-migration")
 }
 
 // CanMigrate returns whether the device can be migrated to any other cluster member.
@@ -305,7 +331,21 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 	_ = os.Remove(socketPath)
 	_ = os.Remove(filepath.Join(tpmDevPath, fmt.Sprintf("swtpm-%s.sock", d.name)))
 
-	proc, err := subprocess.NewProcess("swtpm", []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", tpmDevPath), "--ctrl", fmt.Sprintf("type=unixio,path=%s", socketName)}, "", "")
+	args := []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", tpmDevPath), "--ctrl", fmt.Sprintf("type=unixio,path=%s", socketName)}
+
+	// When starting from a live migration, the TPM state comes with the migration stream.
+	if swtpmHasMigrationSupport() {
+		migrationOpts := "release-lock-outgoing"
+
+		receiver, ok := d.inst.(liveMigrationReceiver)
+		if ok && receiver.IsLiveMigration() {
+			migrationOpts += ",incoming"
+		}
+
+		args = append(args, "--migration", migrationOpts)
+	}
+
+	proc, err := subprocess.NewProcess("swtpm", args, "", "")
 	if err != nil {
 		return nil, err
 	}
