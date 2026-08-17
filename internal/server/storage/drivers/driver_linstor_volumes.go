@@ -810,7 +810,7 @@ func (d *linstor) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Op
 			return false, ErrInUse
 		}
 
-		err = TryUnmount(mountPath, unix.MNT_DETACH)
+		err = TryUnmount(mountPath, 0)
 		if err != nil {
 			return false, err
 		}
