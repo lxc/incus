@@ -103,6 +103,25 @@ func forceUnmount(path string) (bool, error) {
 	}
 }
 
+// flushBlockDeviceCache flushes and invalidates the kernel buffer cache of a block device.
+// This is needed on devices whose content may have been modified through another node, as
+// the kernel may otherwise keep serving stale cached data.
+func flushBlockDeviceCache(devPath string) error {
+	f, err := os.Open(devPath)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	_, err = unix.IoctlRetInt(int(f.Fd()), unix.BLKFLSBUF)
+	if err != nil {
+		return fmt.Errorf("Failed flushing block device %q: %w", devPath, err)
+	}
+
+	return nil
+}
+
 // mountReadOnly performs a read-only bind-mount.
 func mountReadOnly(srcPath string, dstPath string) (bool, error) {
 	// Check if already mounted.
