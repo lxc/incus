@@ -291,7 +291,9 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 
 func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
-	socketPath := filepath.Join(tpmDevPath, fmt.Sprintf("swtpm-%s.sock", d.name))
+
+	socketName := fmt.Sprintf("swtpm-%s.sock", linux.PathNameEncode(d.name))
+	socketPath := filepath.Join(d.inst.DevicesPath(), socketName)
 	runConf := deviceConfig.RunConfig{
 		TPMDevice: []deviceConfig.RunConfigItem{
 			{Key: "devName", Value: d.name},
@@ -299,15 +301,17 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 		},
 	}
 
-	// Delete any leftover socket.
+	// Delete any leftover socket, including at the previous location.
 	_ = os.Remove(socketPath)
+	_ = os.Remove(filepath.Join(tpmDevPath, fmt.Sprintf("swtpm-%s.sock", d.name)))
 
-	proc, err := subprocess.NewProcess("swtpm", []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", tpmDevPath), "--ctrl", fmt.Sprintf("type=unixio,path=swtpm-%s.sock", d.name)}, "", "")
+	proc, err := subprocess.NewProcess("swtpm", []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", tpmDevPath), "--ctrl", fmt.Sprintf("type=unixio,path=%s", socketName)}, "", "")
 	if err != nil {
 		return nil, err
 	}
 
-	proc.Cwd = tpmDevPath
+	// Use a relative control socket path to stay under the unix socket path length limit.
+	proc.Cwd = d.inst.DevicesPath()
 
 	// Start the TPM emulator.
 	err = proc.Start(context.Background())
