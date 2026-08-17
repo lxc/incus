@@ -16,6 +16,8 @@ github.com/lxc/incus/v7/shared/tls
 github.com/lxc/incus/v7/shared/units
 github.com/lxc/incus/v7/shared/util
 github.com/lxc/incus/v7/shared/ws
+github.com/opencontainers/image-spec/specs-go/v1
+github.com/opencontainers/runtime-spec/specs-go
 github.com/opencontainers/umoci
 github.com/opencontainers/umoci/oci/casext
 github.com/opencontainers/umoci/oci/cas/dir
