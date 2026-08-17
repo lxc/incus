@@ -11559,6 +11559,11 @@ func (d *qemu) CanLiveMigrate() bool {
 	return true
 }
 
+// IsLiveMigration returns whether the instance is starting as the target of a live migration.
+func (d *qemu) IsLiveMigration() bool {
+	return d.migrationReceiveStateful != nil
+}
+
 // GuestOS returns the guest OS. In this driver, we consider anything unknown to be Linux.
 func (d *qemu) GuestOS() osinfo.OSType {
 	osType, _ := osinfo.DetermineOS(strings.ToLower(d.expandedConfig["image.os"]))
