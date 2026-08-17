@@ -15,7 +15,7 @@ func getDissector(guid string, name string) dissector {
 		if n > 4 {
 			hasFourDigits = true
 			for _, c := range name[n-4:] {
-				if c < '0' || c > '9' {
+				if (c < '0' || c > '9') && (c < 'A' || c > 'F') {
 					hasFourDigits = false
 					break
 				}
