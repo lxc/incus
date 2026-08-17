@@ -12,9 +12,6 @@ import (
 // errUnexpectedData is a very generic error returned whenever something fails if the parser.
 var errUnexpectedData = errors.New("Unexpected data")
 
-// errNotImplemented is an error returned whenever part of a dissector is not implemented.
-var errNotImplemented = errors.New("Not implemented")
-
 // formatGUID formats a GUID.
 func formatGUID(guid []byte) string {
 	return fmt.Sprintf("%08x-%04x-%04x-%x-%x", binary.LittleEndian.Uint32(guid[0:4]), binary.LittleEndian.Uint16(guid[4:6]), binary.LittleEndian.Uint16(guid[6:8]), guid[8:10], guid[10:16])

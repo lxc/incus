@@ -15,15 +15,7 @@ type dissector struct {
 }
 
 // wrap wraps a variable dissector.
-func wrap[T any](f func(*reader) (T, error), gs ...func(*writer, T) error) dissector {
-	g := func(*writer, T) error {
-		return errNotImplemented
-	}
-
-	if len(gs) > 0 {
-		g = gs[0]
-	}
-
+func wrap[T any](f func(*reader) (T, error), g func(*writer, T) error) dissector {
 	return dissector{
 		dissect: func(b []byte) (any, error) {
 			r := newReader(b)
