@@ -1540,7 +1540,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 
 			// Generate source snapshot volumes list.
 			srcSnapVolumeName := drivers.GetSnapshotVolumeName(srcVolName, srcSnap.Name)
-			srcSnapVolStorageName := project.StorageVolume(projectName, srcSnapVolumeName)
+			srcSnapVolStorageName := project.StorageVolume(srcProjectName, srcSnapVolumeName)
 			srcSnapVol := srcPool.GetVolume(drivers.VolumeTypeCustom, contentType, srcSnapVolStorageName, srcSnap.Config)
 			srcSnapVols = append(srcSnapVols, srcSnapVol)
 		}
