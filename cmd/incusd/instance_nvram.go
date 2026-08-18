@@ -853,6 +853,10 @@ func instanceNVRAMGUIDVarPut(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	if !slices.Contains(v.Attributes, "NON_VOLATILE") {
+		return response.BadRequest(errors.New("Volatile UEFI variables cannot be stored in the NVRAM"))
+	}
+
 	store.Vars[guid][varName] = &v
 	err = inst.SetNVRAM(store)
 	if err != nil {
@@ -946,6 +950,10 @@ func instanceNVRAMPatch(d *Daemon, r *http.Request) response.Response {
 			if raw == nil {
 				delete(store.Vars[guid], varName)
 				continue
+			}
+
+			if !slices.Contains(raw.Attributes, "NON_VOLATILE") {
+				return response.BadRequest(errors.New("Volatile UEFI variables cannot be stored in the NVRAM"))
 			}
 
 			v := api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{Data: raw.Data, Attributes: raw.Attributes, Timestamp: raw.Timestamp}}
