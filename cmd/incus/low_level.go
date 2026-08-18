@@ -174,7 +174,7 @@ Supported actions:
 		}
 
 		if len(args) == 1 {
-			return []string{"rebuild-config-volume"}, cobra.ShellCompDirectiveNoFileComp
+			return []string{"rebuild-config-volume", "rebuild-nvram"}, cobra.ShellCompDirectiveNoFileComp
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp
