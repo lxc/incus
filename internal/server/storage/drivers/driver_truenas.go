@@ -105,6 +105,7 @@ func (d *truenas) Info() Info {
 		OptimizedBackups:             false,
 		PreservesInodes:              false,
 		Remote:                       d.isRemote(),
+		NearLiveMigration:            false,
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
 		VolumeMultiNode:              false, // can only use the same volume if its read-only.d.isRemote(),
 		BlockBacking:                 true,

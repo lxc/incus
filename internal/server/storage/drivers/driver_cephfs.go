@@ -94,6 +94,7 @@ func (d *cephfs) Info() Info {
 		OptimizedImages:              false,
 		PreservesInodes:              false,
 		Remote:                       d.isRemote(),
+		NearLiveMigration:            false,
 		VolumeTypes:                  []VolumeType{VolumeTypeCustom},
 		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 false,
