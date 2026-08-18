@@ -391,7 +391,8 @@ Column shorthand chars:
 	n - Name
 	t - Type
 	c - Common Name
-	f - Fingerprint
+	f - Fingerprint (short)
+	F - Fingerprint (long)
 	d - Description
 	i - Issue date
 	e - Expiry date
@@ -417,6 +418,7 @@ func (c *cmdConfigTrustList) parseColumns() ([]certificateColumn, error) {
 		't': {i18n.G("TYPE"), c.typeColumnData},
 		'c': {i18n.G("COMMON NAME"), c.commonNameColumnData},
 		'f': {i18n.G("FINGERPRINT"), c.fingerprintColumnData},
+		'F': {i18n.G("FINGERPRINT"), c.fingerprintFullColumnData},
 		'd': {i18n.G("DESCRIPTION"), c.descriptionColumnData},
 		'i': {i18n.G("ISSUE DATE"), c.issueDateColumnData},
 		'e': {i18n.G("EXPIRY DATE"), c.expiryDateColumnData},
@@ -459,6 +461,10 @@ func (c *cmdConfigTrustList) commonNameColumnData(rowData rowData) string {
 
 func (c *cmdConfigTrustList) fingerprintColumnData(rowData rowData) string {
 	return rowData.Cert.Fingerprint[0:12]
+}
+
+func (c *cmdConfigTrustList) fingerprintFullColumnData(rowData rowData) string {
+	return rowData.Cert.Fingerprint
 }
 
 func (c *cmdConfigTrustList) descriptionColumnData(rowData rowData) string {
