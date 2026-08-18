@@ -8721,6 +8721,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// migration and blockdev-mirror. This requires that the migration be continued after it
 			// has reached the "pre-switchover" status.
 			"pause-before-switchover": true,
+
+			// Emit MIGRATION events on status changes so we notice pre-switchover
+			// immediately rather than on the next poll.
+			"events": true,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -8771,6 +8775,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// flush its pending config volume writes to disk before the target reads or
 			// overwrites them through its own mount of the shared volume.
 			"pause-before-switchover": true,
+
+			// Emit MIGRATION events on status changes so we notice pre-switchover
+			// immediately rather than on the next poll.
+			"events": true,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
