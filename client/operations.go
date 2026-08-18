@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -20,6 +22,7 @@ type operation struct {
 	listener     *EventListener
 	handlerReady bool
 	handlerLock  sync.Mutex
+	handlers     []*EventTarget
 	skipListener bool
 
 	chActive     chan bool
@@ -70,7 +73,19 @@ func (op *operation) AddHandler(function func(api.Operation)) (*EventTarget, err
 		function(newOp)
 	}
 
-	return op.listener.AddHandler([]string{"operation"}, wrapped)
+	// Track the target so it survives listener reconnections.
+	target := &EventTarget{
+		function: wrapped,
+		types:    []string{"operation"},
+	}
+
+	op.handlers = append(op.handlers, target)
+
+	if op.listener != nil {
+		op.listener.addTarget(target)
+	}
+
+	return target, nil
 }
 
 // Cancel will request that Incus cancels the operation (if supported).
@@ -97,6 +112,14 @@ func (op *operation) RemoveHandler(target *EventTarget) error {
 	// Make sure we're not racing with ourselves
 	op.handlerLock.Lock()
 	defer op.handlerLock.Unlock()
+
+	// Stop tracking the target.
+	for i, entry := range op.handlers {
+		if entry == target {
+			op.handlers = slices.Delete(op.handlers, i, i+1)
+			break
+		}
+	}
 
 	// If the listener is gone, just return
 	if op.listener == nil {
@@ -211,8 +234,6 @@ func (op *operation) setupListener() error {
 		return nil
 	}
 
-	op.handlerReady = true
-
 	// Get a new listener
 	if op.listener == nil {
 		listener, err := op.r.GetEvents()
@@ -222,6 +243,8 @@ func (op *operation) setupListener() error {
 
 		op.listener = listener
 	}
+
+	op.handlerReady = true
 
 	// Setup the handler
 	chReady := make(chan bool)
@@ -258,13 +281,19 @@ func (op *operation) setupListener() error {
 	if err != nil {
 		op.listener.Disconnect()
 		op.listener = nil
-		op.closeChActive()
+		op.handlerReady = false
 		close(chReady)
 
 		return err
 	}
 
+	// Re-register any user handlers (needed after a reconnection).
+	for _, target := range op.handlers {
+		op.listener.addTarget(target)
+	}
+
 	// Monitor event listener
+	listener := op.listener
 	go func() {
 		<-chReady
 
@@ -272,8 +301,7 @@ func (op *operation) setupListener() error {
 		op.handlerLock.Lock()
 
 		// Check if we're done already (because of another event)
-		listener := op.listener
-		if listener == nil {
+		if op.listener != listener {
 			op.handlerLock.Unlock()
 			return
 		}
@@ -283,21 +311,60 @@ func (op *operation) setupListener() error {
 		// Wait for the listener or operation to be done
 		select {
 		case <-listener.ctx.Done():
-			op.handlerLock.Lock()
-			if op.listener != nil {
-				if listener.err != nil {
-					op.Err = listener.err.Error()
-				} else {
-					op.Err = "Lost connection to the event listener"
-				}
-
-				op.closeChActive()
-			}
-
-			op.handlerLock.Unlock()
 		case <-op.chActive:
 			return
 		}
+
+		op.handlerLock.Lock()
+
+		// Check if the operation is done or moved to another listener.
+		if op.listener != listener {
+			op.handlerLock.Unlock()
+			return
+		}
+
+		// A deliberate disconnection, don't try to reconnect.
+		if listener.err == nil {
+			op.Err = "Lost connection to the event listener"
+			op.closeChActive()
+			op.handlerLock.Unlock()
+
+			return
+		}
+
+		// The connection failed, get ready for a reconnection attempt.
+		op.listener = nil
+		op.handlerReady = false
+		op.handlerLock.Unlock()
+
+		// Attempt to reconnect and resume monitoring.
+		for range 5 {
+			err := op.setupListener()
+			if err == nil {
+				return
+			}
+
+			// The server is reachable but the operation is gone.
+			if api.StatusErrorCheck(err, http.StatusNotFound) {
+				break
+			}
+
+			// Give up if the client itself disconnected.
+			if op.r.ctxConnected.Err() != nil {
+				break
+			}
+
+			time.Sleep(2 * time.Second)
+		}
+
+		// Reconnection failed, report the original error.
+		op.handlerLock.Lock()
+		if !op.handlerReady {
+			op.Err = listener.err.Error()
+			op.closeChActive()
+		}
+
+		op.handlerLock.Unlock()
 	}()
 
 	// And do a manual refresh to avoid races
@@ -305,7 +372,7 @@ func (op *operation) setupListener() error {
 	if err != nil {
 		op.listener.Disconnect()
 		op.listener = nil
-		op.closeChActive()
+		op.handlerReady = false
 		close(chReady)
 
 		return err
