@@ -1097,10 +1097,32 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global}
 	cmd.AddCommand(lowLevelSecureBootListCmd.command())
 
+	// Remove.
+	lowLevelSecureBootRemoveCmd := cmdLowLevelSecureBootRemove{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootRemoveCmd.command())
+
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706.
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
 	return cmd
+}
+
+// eslGUIDVar gets the GUID and variable name associated to the given ESL.
+func eslGUIDVar(esl string) (string, string) {
+	var guid, varName string
+	switch esl {
+	case "pk", "kek":
+		guid = uefi.EfiGlobalVariableGuid
+		varName = strings.ToUpper(esl)
+	case "db", "dbx", "dbt":
+		guid = uefi.EfiImageSecurityDatabaseGuid
+		varName = esl
+	case "mok":
+		guid = uefi.ShimLockGuid
+		varName = "MokList"
+	}
+
+	return guid, varName
 }
 
 // List.
@@ -1272,18 +1294,7 @@ func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	var guid, varName string
-	switch parsed[1].String {
-	case "pk", "kek":
-		guid = uefi.EfiGlobalVariableGuid
-		varName = strings.ToUpper(parsed[1].String)
-	case "db", "dbx", "dbt":
-		guid = uefi.EfiImageSecurityDatabaseGuid
-		varName = parsed[1].String
-	case "mok":
-		guid = uefi.ShimLockGuid
-		varName = "MokList"
-	}
+	guid, varName := eslGUIDVar(parsed[1].String)
 
 	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
 	if err != nil {
@@ -1333,4 +1344,137 @@ func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error
 	}
 
 	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, esl)
+}
+
+// Remove.
+type cmdLowLevelSecureBootRemove struct {
+	global *cmdGlobal
+
+	flagAll   bool
+	flagOwner string
+	flagType  string
+}
+
+var cmdLowLevelSecureBootRemoveUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...), u.Either(u.Fingerprint, u.Flag("all"))}
+
+func (c *cmdLowLevelSecureBootRemove) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("remove", cmdLowLevelSecureBootRemoveUsage...)
+	cmd.Aliases = []string{"delete", "rm"}
+	cmd.Short = i18n.G("Remove Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove Secure Boot signatures`))
+
+	cmd.RunE = c.run
+	cli.AddBoolFlag(cmd.Flags(), &c.flagAll, "all|a", i18n.G("Remove all signatures"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "", "", i18n.G("Only remove signatures owned by the given owner"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type", "", "", i18n.G("Only remove signatures of the given type"))
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelSecureBootRemove) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootRemoveUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	guid, varName := eslGUIDVar(parsed[1].String)
+	hasFingerprint := parsed[2].BranchID == 0
+	var fingerprint string
+	if hasFingerprint {
+		fingerprint = parsed[2].String
+
+		if cmd.Flags().Changed("owner") || cmd.Flags().Changed("type") {
+			return errors.New(i18n.G("--owner and --type require --all to be set"))
+		}
+	}
+
+	v, etag, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		return err
+	}
+
+	if c.flagAll && !cmd.Flags().Changed("owner") && !cmd.Flags().Changed("type") {
+		// Deleting the variable is a good way to purge the ESL.
+		return d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	}
+
+	// We received a JSON object unmarshalled as a map, so we convert it back to JSON to unmarshal it
+	// again into our desired type.
+	marshalled, err := json.Marshal(v.Data)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
+	}
+
+	var esl, newESL uefi.ESL
+	err = json.Unmarshal(marshalled, &esl)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
+	}
+
+	var owner string
+	if cmd.Flags().Changed("owner") {
+		owner, err = uefi.ParseGUIDOrName(c.flagOwner)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Unable to parse owner %s: %w"), c.flagOwner, err)
+		}
+	}
+
+	removed := 0
+	for _, node := range esl {
+		if node.Type == c.flagType {
+			removed += len(node.Entries)
+			continue
+		}
+
+		var entries []uefi.ESLEntry
+		for _, entry := range node.Entries {
+			if entry.Owner == owner {
+				removed++
+				continue
+			}
+
+			cert, _ := x509.ParseCertificate(entry.Data)
+			if hasFingerprint && strings.HasPrefix(eslFingerprint(&entry, cert), fingerprint) {
+				removed++
+				continue
+			}
+
+			entries = append(entries, entry)
+		}
+
+		if len(entries) > 0 {
+			newESL = append(newESL, uefi.ESLNode{Type: node.Type, Header: node.Header, Entries: entries})
+		}
+	}
+
+	if removed == 0 {
+		return errors.New(i18n.G("No signature matches"))
+	}
+
+	if hasFingerprint && removed > 1 {
+		return errors.New(i18n.G("Several signatures match the given fingerprint"))
+	}
+
+	return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, api.InstanceNVRAMVariablePut{
+		Data:       newESL,
+		Attributes: v.Attributes,
+		Timestamp:  v.Timestamp,
+	}, etag)
 }
