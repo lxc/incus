@@ -525,34 +525,49 @@ func (m *Monitor) QueryMigrate() (*MigrationStatus, error) {
 // Returns nil if the migraton job reaches the specified status or an error if the migration job is in the failed
 // status.
 func (m *Monitor) MigrateWait(ctx context.Context, state string) error {
+	// Listen for status change events (sent when the "events" migration capability is set),
+	// falling back to polling when they're not available.
+	chEvent, cancel := m.listenForEvent(EventMigration)
+	defer cancel()
+
 	// Wait until it completes or fails.
 	for {
+		// Prepare the response.
+		var resp struct {
+			Return struct {
+				Status string `json:"status"`
+			} `json:"return"`
+		}
+
+		// Monitor timeouts are expected during switchover (QEMU main loop busy), keep polling.
+		err := m.Run("query-migrate", nil, &resp)
+		if err != nil && !errors.Is(err, ErrMonitorTimeout) {
+			return err
+		}
+
+		if resp.Return.Status == "failed" {
+			return errors.New("Migrate call failed")
+		}
+
+		if resp.Return.Status == state {
+			return nil
+		}
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		default:
-			// Prepare the response.
-			var resp struct {
-				Return struct {
-					Status string `json:"status"`
-				} `json:"return"`
-			}
+		case data := <-chEvent:
+			status, ok := data["status"].(string)
+			if ok {
+				if status == "failed" {
+					return errors.New("Migrate call failed")
+				}
 
-			// Monitor timeouts are expected during switchover (QEMU main loop busy), keep polling.
-			err := m.Run("query-migrate", nil, &resp)
-			if err != nil && !errors.Is(err, ErrMonitorTimeout) {
-				return err
+				if status == state {
+					return nil
+				}
 			}
-
-			if resp.Return.Status == "failed" {
-				return errors.New("Migrate call failed")
-			}
-
-			if resp.Return.Status == state {
-				return nil
-			}
-
-			time.Sleep(1 * time.Second)
+		case <-time.After(1 * time.Second):
 		}
 	}
 }

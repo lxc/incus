@@ -52,6 +52,9 @@ var EventDiskEjected = "DEVICE_TRAY_MOVED"
 // EventRTCChange is used to get RTC adjustment.
 var EventRTCChange = "RTC_CHANGE"
 
+// EventMigration is the event sent on migration status changes.
+var EventMigration = "MIGRATION"
+
 // ExcludedCommands is used to filter verbose commands from the QMP logs.
 var ExcludedCommands = []string{"ringbuf-read"}
 
@@ -71,6 +74,15 @@ type Monitor struct {
 	stateMu        sync.Mutex
 	detachDisk     func(name string) error
 	instanceState  *api.InstanceState
+
+	listenersMu sync.Mutex
+	listenerID  uint64
+	listeners   map[uint64]eventListener
+}
+
+type eventListener struct {
+	name string
+	ch   chan map[string]any
 }
 
 // TransactionAction represents a single action within a QMP transaction.
@@ -155,6 +167,11 @@ func (m *Monitor) start() error {
 							}()
 						}
 					}
+				}
+
+				// Deliver non-empty events to any registered listeners.
+				if e.Event != "" {
+					m.dispatchEvent(e.Event, e.Data)
 				}
 
 				// Deliver non-empty events to the event handler.
@@ -494,6 +511,47 @@ func (m *Monitor) getEventHandler() func(name string, data map[string]any) {
 	defer m.stateMu.Unlock()
 
 	return m.eventHandler
+}
+
+// listenForEvent registers a listener for the named event, returning a buffered channel
+// receiving the event data and a function to unregister the listener.
+func (m *Monitor) listenForEvent(name string) (chan map[string]any, func()) {
+	m.listenersMu.Lock()
+	defer m.listenersMu.Unlock()
+
+	if m.listeners == nil {
+		m.listeners = map[uint64]eventListener{}
+	}
+
+	m.listenerID++
+	id := m.listenerID
+
+	ch := make(chan map[string]any, 10)
+	m.listeners[id] = eventListener{name: name, ch: ch}
+
+	return ch, func() {
+		m.listenersMu.Lock()
+		defer m.listenersMu.Unlock()
+
+		delete(m.listeners, id)
+	}
+}
+
+// dispatchEvent delivers an event to matching listeners without ever blocking.
+func (m *Monitor) dispatchEvent(name string, data map[string]any) {
+	m.listenersMu.Lock()
+	defer m.listenersMu.Unlock()
+
+	for _, listener := range m.listeners {
+		if listener.name != name {
+			continue
+		}
+
+		select {
+		case listener.ch <- data:
+		default:
+		}
+	}
 }
 
 // ExpectReset marks the monitor as expecting a single RESET event triggered by us
