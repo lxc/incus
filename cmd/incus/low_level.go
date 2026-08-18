@@ -698,7 +698,22 @@ func (c *cmdLowLevelNVRAMList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdLowLevelNVRAMListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List UEFI GUIDs and variables")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List UEFI GUIDs and variables`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List UEFI GUIDs and variables
+
+The -c option takes a (optionally comma-separated) list of arguments
+that control which variable attributes to output when displaying in table
+or csv format.
+
+Default column layout is: Gn
+
+Column shorthand chars:
+	a - Attributes
+	g - GUID
+	G - Familiar GUID name or GUID if none
+	n - Name
+	r - Raw value
+	t - Authenticated write timestamp
+	v - Interpreted value`))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
