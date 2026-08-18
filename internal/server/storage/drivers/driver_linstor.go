@@ -294,6 +294,7 @@ func (d *linstor) Info() Info {
 		DefaultVMBlockFilesystemSize: deviceConfig.DefaultVMBlockFilesystemSize,
 		Buckets:                      false,
 		Remote:                       d.isRemote(),
+		NearLiveMigration:            false,
 		VolumeMultiNode:              false, // DRBD uses an active-passive replication paradigm, so we cannot use the same volume concurrently in multiple nodes.
 		OptimizedImages:              true,
 		OptimizedBackups:             false,
