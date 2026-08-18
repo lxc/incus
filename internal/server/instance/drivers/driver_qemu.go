@@ -1589,11 +1589,15 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		volatileSet["volatile.uuid.generation"] = vmGenUUID
 	}
 
-	// Generate the config drive.
-	err = d.generateConfigShare(volatileSet)
-	if err != nil {
-		op.Done(err)
-		return err
+	// Generate the config drive. Skip this when starting as a live migration target as the
+	// running guest relies on the current content and the source may still hold its own
+	// mount of a shared config volume.
+	if d.migrationReceiveStateful == nil {
+		err = d.generateConfigShare(volatileSet)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
 	}
 
 	// Create all needed paths.
@@ -8182,6 +8186,18 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		offerHeader.Criu = migration.CRIUType_VM_QEMU.Enum()
 	}
 
+	// When moving between cluster members on shared storage, the target will mount the
+	// config volume while we still have it mounted. Sync it first so the target doesn't
+	// find a dirty journal.
+	if args.Live && remoteClusterMove && !storageMove {
+		err = linux.SyncFS(d.Path())
+		if err != nil {
+			err := fmt.Errorf("Failed syncing config volume: %w", err)
+			op.Done(err)
+			return err
+		}
+	}
+
 	// Send offer to target.
 	d.logger.Debug("Sending migration offer to target")
 	err = args.ControlSend(offerHeader)
@@ -8705,6 +8721,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			// migration and blockdev-mirror. This requires that the migration be continued after it
 			// has reached the "pre-switchover" status.
 			"pause-before-switchover": true,
+
+			// Emit MIGRATION events on status changes so we notice pre-switchover
+			// immediately rather than on the next poll.
+			"events": true,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -8750,6 +8770,15 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		capabilities := map[string]bool{
 			// Automatically throttle down the guest to speed up convergence of RAM migration.
 			"auto-converge": true,
+
+			// Pause the migration before the device state serialization so the source can
+			// flush its pending config volume writes to disk before the target reads or
+			// overwrites them through its own mount of the shared volume.
+			"pause-before-switchover": true,
+
+			// Emit MIGRATION events on status changes so we notice pre-switchover
+			// immediately rather than on the next poll.
+			"events": true,
 		}
 
 		err = monitor.MigrateSetCapabilities(capabilities)
@@ -8886,16 +8915,16 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		}()
 	}
 
+	// Wait until state transfer has reached pre-switchover state (the guest OS will remain paused).
+	err = monitor.MigrateWait(ctx, "pre-switchover")
+	if err != nil {
+		return fmt.Errorf("Failed waiting for state transfer to reach pre-switchover stage: %w", err)
+	}
+
+	d.logger.Debug("Stateful migration checkpoint reached pre-switchover phase")
+
 	// Non-shared storage snapshot transfer finalization.
 	if !sameSharedStorage || dependentVolumeMove {
-		// Wait until state transfer has reached pre-switchover state (the guest OS will remain paused).
-		err = monitor.MigrateWait(ctx, "pre-switchover")
-		if err != nil {
-			return fmt.Errorf("Failed waiting for state transfer to reach pre-switchover stage: %w", err)
-		}
-
-		d.logger.Debug("Stateful migration checkpoint reached pre-switchover phase")
-
 		if finalizeRootTransfer != nil {
 			err = finalizeRootTransfer()
 			if err != nil {
@@ -8911,15 +8940,25 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed transferring snapshot disk: %w", err)
 			}
 		}
-
-		// Finalise the migration state transfer (the guest OS will remain paused).
-		err = monitor.MigrateContinue("pre-switchover")
-		if err != nil {
-			return fmt.Errorf("Failed continuing state transfer: %w", err)
-		}
-
-		d.logger.Debug("Stateful migration checkpoint send continuing")
 	}
+
+	// With the guest paused, flush any pending config volume writes (TPM state, UEFI
+	// variables) so they reach the shared volume before the target writes to it during
+	// the switchover.
+	if sameSharedStorage {
+		err = linux.SyncFS(d.Path())
+		if err != nil {
+			return fmt.Errorf("Failed syncing config volume: %w", err)
+		}
+	}
+
+	// Finalize the migration state transfer (the guest OS will remain paused).
+	err = monitor.MigrateContinue("pre-switchover")
+	if err != nil {
+		return fmt.Errorf("Failed continuing state transfer: %w", err)
+	}
+
+	d.logger.Debug("Stateful migration checkpoint send continuing")
 
 	// Wait until the migration state transfer has completed (the guest OS will remain paused).
 	err = monitor.MigrateWait(ctx, "completed")
@@ -11526,6 +11565,11 @@ func (d *qemu) CanLiveMigrate() bool {
 	}
 
 	return true
+}
+
+// IsLiveMigration returns whether the instance is starting as the target of a live migration.
+func (d *qemu) IsLiveMigration() bool {
+	return d.migrationReceiveStateful != nil
 }
 
 // GuestOS returns the guest OS. In this driver, we consider anything unknown to be Linux.
