@@ -716,7 +716,7 @@ func (c *cmdLowLevelNVRAMList) command() *cobra.Command {
 	return cmd
 }
 
-const defaultNVRAMColumns = "Gnv"
+const defaultNVRAMColumns = "Gn"
 
 func (c *cmdLowLevelNVRAMList) parseColumns() ([]nvramColumn, error) {
 	columnsShorthandMap := map[rune]nvramColumn{
