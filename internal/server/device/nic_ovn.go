@@ -1159,8 +1159,14 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 	}
 
-	// Apply any changes needed when assigned ACLs or external NAT addresses change.
-	if d.config["security.acls"] != oldConfig["security.acls"] || d.config["ipv4.address.external"] != oldConfig["ipv4.address.external"] || d.config["ipv6.address.external"] != oldConfig["ipv6.address.external"] {
+	// Apply any changes needed when assigned ACLs, external NAT addresses or nic limit changes.
+	if d.config["security.acls"] != oldConfig["security.acls"] ||
+		d.config["ipv4.address.external"] != oldConfig["ipv4.address.external"] ||
+		d.config["ipv6.address.external"] != oldConfig["ipv6.address.external"] ||
+		d.config["limits.ingress"] != oldConfig["limits.ingress"] ||
+		d.config["limits.egress"] != oldConfig["limits.egress"] ||
+		d.config["limits.max"] != oldConfig["limits.max"] ||
+		d.config["limits.priority"] != oldConfig["limits.priority"] {
 		// Work out which ACLs have been removed and remove logical port from those groups.
 		oldACLs := util.SplitNTrimSpace(oldConfig["security.acls"], ",", -1, true)
 		newACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
