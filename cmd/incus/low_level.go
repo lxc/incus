@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +19,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
@@ -1093,6 +1097,10 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 	cmd.Short = i18n.G("Manage Secure Boot on virtual machines")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage Secure Boot on virtual machines`))
 
+	// Add.
+	lowLevelSecureBootAddCmd := cmdLowLevelSecureBootAdd{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootAddCmd.command())
+
 	// List.
 	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global}
 	cmd.AddCommand(lowLevelSecureBootListCmd.command())
@@ -1123,6 +1131,193 @@ func eslGUIDVar(esl string) (string, string) {
 	}
 
 	return guid, varName
+}
+
+// Add.
+type cmdLowLevelSecureBootAdd struct {
+	global *cmdGlobal
+
+	flagOwner string
+	flagType  string
+}
+
+var cmdLowLevelSecureBootAddUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...), u.File}
+
+func (c *cmdLowLevelSecureBootAdd) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("add", cmdLowLevelSecureBootAddUsage...)
+	cmd.Short = i18n.G("Add Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add Secure Boot signatures`))
+
+	cmd.RunE = c.run
+	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "OVMF", "", i18n.G("Set the signature owner"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type", "", "", i18n.G("Don’t import the file as a certificate but rather compute and import its digest (sha256|sha384|sha512)"))
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootAddUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	guid, varName := eslGUIDVar(parsed[1].String)
+	fileName := parsed[2].String
+	var input []byte
+	if fileName == "-" && !termios.IsTerminal(getStdinFd()) {
+		input, err = io.ReadAll(os.Stdin)
+	} else {
+		input, err = os.ReadFile(fileName)
+	}
+
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed reading input file: %w"), err)
+	}
+
+	owner, err := uefi.ParseGUIDOrName(c.flagOwner)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Unable to parse owner %s: %w"), c.flagOwner, err)
+	}
+
+	isSignature := cmd.Flags().Changed("type")
+	var data []byte
+	if isSignature {
+		if slices.Contains([]string{"PK", "KEK", "dbt"}, varName) {
+			return errors.New(i18n.G("Cannot store a signature in PK, KEK or dbt"))
+		}
+
+		switch c.flagType {
+		case "sha256":
+			sum := sha256.Sum256(input)
+			data = sum[:]
+		case "sha384":
+			sum := sha512.Sum384(input)
+			data = sum[:]
+		case "sha512":
+			sum := sha512.Sum512(input)
+			data = sum[:]
+		default:
+			return fmt.Errorf(i18n.G("Unknown signature type %s"), c.flagType)
+		}
+	} else {
+		// Try to parse the file as PEM first.
+		rest := input
+		ok := false
+		var block *pem.Block
+		for {
+			block, rest = pem.Decode(rest)
+			if block == nil {
+				break
+			}
+
+			if block.Type != "CERTIFICATE" {
+				continue
+			}
+
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed to parse PEM certificate: %w"), err)
+			}
+
+			data = cert.Raw
+			ok = true
+			break
+		}
+
+		if !ok {
+			// Now try to parse the file as DER.
+			certs, err := x509.ParseCertificates(input)
+			if err != nil {
+				return errors.New(i18n.G("Failed to parse input file as either PEM or DER certificate"))
+			}
+
+			if len(certs) == 0 {
+				return errors.New(i18n.G("Input file contains no certificate"))
+			}
+
+			data = certs[0].Raw
+		}
+	}
+
+	v, etag, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		if varName == "MokList" {
+			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
+				Data:       uefi.ESL{},
+				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS"},
+			}}
+		} else {
+			now := time.Now().UTC()
+			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
+				Data:       uefi.ESL{},
+				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS", "TIME_BASED_AUTHENTICATED_WRITE_ACCESS"},
+				Timestamp:  &now,
+			}}
+		}
+	}
+
+	// We received a JSON object unmarshalled as a map, so we convert it back to JSON to unmarshal it
+	// again into our desired type.
+	marshalled, err := json.Marshal(v.Data)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
+	}
+
+	var esl uefi.ESL
+	err = json.Unmarshal(marshalled, &esl)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
+	}
+
+	// First, make sure the store doesn’t already contain the certificate/signature. If we are
+	// dealing with PK, this also checks that there is no certificate enrolled.
+	count := 0
+	for _, node := range esl {
+		for _, entry := range node.Entries {
+			count++
+			if bytes.Equal(entry.Data, data) {
+				if isSignature {
+					return errors.New(i18n.G("The given signature is already present in this ESL"))
+				}
+
+				return errors.New(i18n.G("The given certificate is already present in this ESL"))
+			}
+		}
+	}
+
+	if varName == "PK" && count > 0 {
+		return errors.New(i18n.G("A PK certificate is already enrolled; remove it first to enroll a new one"))
+	}
+
+	eslNode := uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: owner, Data: data}}}
+	if isSignature {
+		eslNode.Type = c.flagType
+	} else {
+		eslNode.Type = "x509"
+	}
+
+	return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, api.InstanceNVRAMVariablePut{
+		Data:       append(esl, eslNode),
+		Attributes: v.Attributes,
+		Timestamp:  v.Timestamp,
+	}, etag)
 }
 
 // List.
