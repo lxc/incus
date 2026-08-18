@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
@@ -54,6 +56,9 @@ func (c *cmdLowLevel) command() *cobra.Command {
 
 	lowLevelRepairCmd := cmdLowLevelRepair{global: c.global}
 	cmd.AddCommand(lowLevelRepairCmd.command())
+
+	lowLevelSecureBootCmd := cmdLowLevelSecureBoot{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootCmd.command())
 
 	return cmd
 }
@@ -1069,4 +1074,263 @@ func (c *cmdLowLevelNVRAMUnset) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+type cmdLowLevelSecureBoot struct {
+	global *cmdGlobal
+}
+
+type secureBootColumn struct {
+	Name string
+	Data func(string, *uefi.ESLEntry, *x509.Certificate) string
+}
+
+var cmdLowLevelSecureBootESLNames = []string{"pk", "kek", "db", "dbx", "dbt", "mok"}
+
+func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("secureboot")
+	cmd.Short = i18n.G("Manage Secure Boot on virtual machines")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage Secure Boot on virtual machines`))
+
+	// List.
+	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootListCmd.command())
+
+	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706.
+	cmd.Args = cobra.NoArgs
+	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
+	return cmd
+}
+
+// List.
+type cmdLowLevelSecureBootList struct {
+	global *cmdGlobal
+
+	flagFormat  string
+	flagColumns string
+}
+
+var cmdLowLevelSecureBootListUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...)}
+
+func (c *cmdLowLevelSecureBootList) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("list", cmdLowLevelSecureBootListUsage...)
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List Secure Boot signatures
+
+The -c option takes a (optionally comma-separated) list of arguments
+that control which signature attributes to output when displaying in table
+or csv format.
+
+Default column layout is: tOfs
+
+Column shorthand chars:
+	f - Fingerprint (short)
+	F - Fingerprint (long)
+	i - Issuer (short, for certificates)
+	I - Issuer (long, for certificates)
+	o - Owner GUID
+	O - Owner familiar GUID name or GUID if none
+	r - Raw value
+	s - Subject (short, for certificates)
+	S - Subject (long, for certificates)
+	t - Signature type`))
+
+	cmd.RunE = c.run
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultSecureBootColumns, "", i18n.G("Columns"))
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+const defaultSecureBootColumns = "tOfs"
+
+func (c *cmdLowLevelSecureBootList) parseColumns() ([]secureBootColumn, error) {
+	columnsShorthandMap := map[rune]secureBootColumn{
+		'f': {i18n.G("FINGERPRINT"), c.fingerprintColumnData},
+		'F': {i18n.G("FINGERPRINT"), c.fingerprintFullColumnData},
+		'i': {i18n.G("ISSUER"), c.issuerColumnData},
+		'I': {i18n.G("ISSUER"), c.issuerFullColumnData},
+		'o': {i18n.G("OWNER GUID"), c.ownerColumnData},
+		'O': {i18n.G("OWNER GUID NAME"), c.ownerNameColumnData},
+		'r': {i18n.G("RAW VALUE"), c.rawColumnData},
+		's': {i18n.G("SUBJECT"), c.subjectColumnData},
+		'S': {i18n.G("SUBJECT"), c.subjectFullColumnData},
+		't': {i18n.G("TYPE"), c.typeColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []secureBootColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+// eslFingerprint returns the fingerprint of the given ESL entry.
+func eslFingerprint(v *uefi.ESLEntry, cert *x509.Certificate) string {
+	var data []byte
+	if cert == nil {
+		data = v.Data
+	} else {
+		sum := sha256.Sum256(cert.Raw)
+		data = sum[:]
+	}
+
+	return fmt.Sprintf("%x", data)
+}
+
+func (c *cmdLowLevelSecureBootList) fingerprintColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	fingerprint := eslFingerprint(v, cert)
+	return fingerprint[:12]
+}
+
+func (c *cmdLowLevelSecureBootList) fingerprintFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return eslFingerprint(v, cert)
+}
+
+func (c *cmdLowLevelSecureBootList) issuerColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Issuer.CommonName
+}
+
+func (c *cmdLowLevelSecureBootList) issuerFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Issuer.String()
+}
+
+func (c *cmdLowLevelSecureBootList) ownerColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return v.Owner
+}
+
+func (c *cmdLowLevelSecureBootList) ownerNameColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return uefi.GUIDName(v.Owner)
+}
+
+func (c *cmdLowLevelSecureBootList) rawColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return base64.StdEncoding.EncodeToString(v.Data)
+}
+
+func (c *cmdLowLevelSecureBootList) subjectColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Subject.CommonName
+}
+
+func (c *cmdLowLevelSecureBootList) subjectFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Subject.String()
+}
+
+func (c *cmdLowLevelSecureBootList) typeColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return sigType
+}
+
+func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootListUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	var guid, varName string
+	switch parsed[1].String {
+	case "pk", "kek":
+		guid = uefi.EfiGlobalVariableGuid
+		varName = strings.ToUpper(parsed[1].String)
+	case "db", "dbx", "dbt":
+		guid = uefi.EfiImageSecurityDatabaseGuid
+		varName = parsed[1].String
+	case "mok":
+		guid = uefi.ShimLockGuid
+		varName = "MokList"
+	}
+
+	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		return err
+	}
+
+	// We received a JSON object unmarshalled as a map, so we convert it back to JSON to unmarshal it
+	// again into our desired type.
+	marshalled, err := json.Marshal(v.Data)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
+	}
+
+	var esl uefi.ESL
+	err = json.Unmarshal(marshalled, &esl)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
+	}
+
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
+	// Render the table
+	data := [][]string{}
+	for _, node := range esl {
+		for _, entry := range node.Entries {
+			line := []string{}
+			cert, _ := x509.ParseCertificate(entry.Data)
+			for _, column := range columns {
+				line = append(line, column.Data(node.Type, &entry, cert))
+			}
+
+			data = append(data, line)
+		}
+	}
+
+	sort.Sort(cli.SortColumnsNaturally(data))
+
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
+	}
+
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, esl)
 }
