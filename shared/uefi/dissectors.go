@@ -99,7 +99,8 @@ func bootOrder(prefix string) dissector {
 	})
 }
 
-type bootType struct {
+// Boot represents a boot entry.
+type Boot struct {
 	Active         bool       `json:"active"`
 	ForceReconnect bool       `json:"force_reconnect"`
 	Hidden         bool       `json:"hidden"`
@@ -111,7 +112,7 @@ type bootType struct {
 
 // boot dissects `Boot####`, `Driver####`, `SysPrep####`, `OsRecovery####` and
 // `PlatformRecovery####` variables.
-var boot = wrap(func(r *reader) (*bootType, error) {
+var boot = wrap(func(r *reader) (*Boot, error) {
 	attrs, err := r.readU32()
 	if err != nil {
 		return nil, err
@@ -153,7 +154,7 @@ var boot = wrap(func(r *reader) (*bootType, error) {
 		return nil, err
 	}
 
-	return &bootType{
+	return &Boot{
 		Active:         attrs&0x01 != 0,
 		ForceReconnect: attrs&0x02 != 0,
 		Hidden:         attrs&0x08 != 0,
@@ -162,7 +163,7 @@ var boot = wrap(func(r *reader) (*bootType, error) {
 		DevicePaths:    paths,
 		OptionalData:   base64.StdEncoding.EncodeToString(remaining),
 	}, nil
-}, func(w *writer, v *bootType) error {
+}, func(w *writer, v *Boot) error {
 	var attrs uint32
 	switch v.Category {
 	case "boot":
