@@ -53,6 +53,13 @@ type DiskLimits struct {
 	ReadIOps   int64
 	WriteBytes int64
 	WriteIOps  int64
+
+	ReadBytesBurst   int64
+	ReadIOpsBurst    int64
+	ReadBurstLength  int64
+	WriteBytesBurst  int64
+	WriteIOpsBurst   int64
+	WriteBurstLength int64
 }
 
 // RunConfig represents run-time config used for device setup/cleanup.
