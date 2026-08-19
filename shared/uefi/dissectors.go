@@ -84,17 +84,12 @@ func bootOrder(prefix string) dissector {
 		return entries, nil
 	}, func(w *writer, v []string) error {
 		for _, entry := range v {
-			suffix, ok := strings.CutPrefix(entry, prefix)
-			if !ok || len(suffix) != 4 {
+			bootPrefix, n, ok := ParseBootXXXX(strings.ToUpper(entry))
+			if !ok || bootPrefix != strings.ToUpper(prefix) {
 				return fmt.Errorf("Entries must be of the form %s####", prefix)
 			}
 
-			n, err := strconv.ParseUint(suffix, 16, 16)
-			if err != nil {
-				return fmt.Errorf("Invalid entry ID: %s", suffix)
-			}
-
-			err = w.writeU16(uint16(n))
+			err := w.writeU16(uint16(n))
 			if err != nil {
 				return err
 			}
