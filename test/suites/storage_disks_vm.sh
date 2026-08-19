@@ -115,6 +115,10 @@ test_storage_disks_vm() {
     incus exec v1 --project restricted -- chown 1000:1000 /mnt/foo2
     ! incus exec v1 --project restricted -- chown 1001:1001 /mnt/foo2 || false
 
+    # Check burst I/O limits can be applied to and cleared from a running VM.
+    incus config device override v1 root limits.read=10MiB limits.read.burst=20MiB limits.read.burst.length=10s
+    incus config device set v1 root limits.read= limits.read.burst= limits.read.burst.length=
+
     # Check security.secureboot setting is applied to running VM at next start up.
     incus exec v1 -- mokutil --sb-state | grep -Fx "SecureBoot enabled"
     incus profile set default security.secureboot=false
