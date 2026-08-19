@@ -45,6 +45,8 @@ func getDissector(guid string, name string) dissector {
 		}
 
 		switch name {
+		case "BootNext":
+			return bootNext
 		case "BootOrder":
 			return bootOrder("Boot")
 		case "ConIn", "ConOut", "ErrOut":
