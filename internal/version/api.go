@@ -567,6 +567,7 @@ var APIExtensions = []string{
 	"instance_refresh_migration",
 	"image_locations",
 	"network_ovn_multicast",
+	"device_burst_limits",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
