@@ -130,6 +130,23 @@
 						}
 					},
 					{
+						"limits.max.burst": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s and/or IOPS that both reads and writes may burst up to (same as setting both `limits.read.burst` and `limits.write.burst`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.burst.length": {
+							"default": "`1s`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "How long the burst limits may be sustained for (same as setting both `limits.read.burst.length` and `limits.write.burst.length`)",
+							"type": "string"
+						}
+					},
+					{
 						"limits.read": {
 							"longdesc": "",
 							"required": "no",
@@ -138,10 +155,44 @@
 						}
 					},
 					{
+						"limits.read.burst": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s and/or IOPS that reads may burst up to for `limits.read.burst.length` (only for virtual machines) - see also {ref}`storage-configure-IO`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.read.burst.length": {
+							"default": "`1s`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "How long `limits.read.burst` may be sustained for before falling back to the sustained limit",
+							"type": "string"
+						}
+					},
+					{
 						"limits.write": {
 							"longdesc": "",
 							"required": "no",
 							"shortdesc": "I/O limit in byte/s (various suffixes supported, see {ref}`instances-limit-units`) and/or in IOPS (must be suffixed with `iops`), comma separated when specifying both - see also {ref}`storage-configure-IO`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.write.burst": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "I/O limit in byte/s and/or IOPS that writes may burst up to for `limits.write.burst.length` (only for virtual machines) - see also {ref}`storage-configure-IO`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.write.burst.length": {
+							"default": "`1s`",
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "How long `limits.write.burst` may be sustained for before falling back to the sustained limit",
 							"type": "string"
 						}
 					},
