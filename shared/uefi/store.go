@@ -9,8 +9,8 @@ import (
 )
 
 type blockMapEntry struct {
-	Count uint32 `json:"count"`
-	Size  uint32 `json:"size"`
+	count uint32
+	size  uint32
 }
 
 // Store is a projection of the on-disk OVMF variable store format.
@@ -20,6 +20,7 @@ type Store struct {
 	blockMap []blockMapEntry
 	length   uint64
 	varSize  uint32
+	rest     []byte
 }
 
 // ParseNVRAM parses the contents of an OVMF NVRAM store.
@@ -49,7 +50,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 		return nil, err
 	}
 
-	if length > uint64(len(data)) {
+	if length != uint64(len(data)) {
 		return nil, fmt.Errorf("Invalid length: %d", length)
 	}
 
@@ -129,7 +130,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 			break
 		}
 
-		blockMap = append(blockMap, blockMapEntry{Count: blockCnt, Size: blockBytes})
+		blockMap = append(blockMap, blockMapEntry{count: blockCnt, size: blockBytes})
 		totalBytes += uint64(blockCnt) * uint64(blockBytes)
 	}
 
@@ -247,6 +248,22 @@ func ParseNVRAM(data []byte) (*Store, error) {
 		}
 	}
 
+	if length == 0x20000 {
+		err = r.seek(0x0e000)
+	} else {
+		err = r.seek(0x40000)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	rest, err := r.read(r.rem())
+	if err != nil {
+		return nil, err
+	}
+
+	s.rest = rest
 	return s, nil
 }
 
@@ -305,12 +322,12 @@ func (s *Store) Bytes() ([]byte, error) {
 	}
 
 	for _, b := range s.blockMap {
-		err = w.writeU32(b.Count)
+		err = w.writeU32(b.count)
 		if err != nil {
 			return nil, err
 		}
 
-		err = w.writeU32(b.Size)
+		err = w.writeU32(b.size)
 		if err != nil {
 			return nil, err
 		}
@@ -422,15 +439,31 @@ func (s *Store) Bytes() ([]byte, error) {
 		}
 	}
 
-	if uint64(w.size()) > s.length {
-		return nil, fmt.Errorf("Variables require %d bytes but store length is %d", w.size(), s.length)
+	var varStoreLength int
+	if s.length == 0x20000 {
+		varStoreLength = 0x0e000
+	} else {
+		varStoreLength = 0x40000
 	}
 
-	for uint64(w.size()) < s.length {
+	if w.size() > varStoreLength {
+		return nil, fmt.Errorf("Variables require %d bytes but store length is %d", w.size(), varStoreLength)
+	}
+
+	if uint64(varStoreLength+len(s.rest)) != s.length {
+		return nil, errors.New("Unexpected NVRAM length")
+	}
+
+	for w.size() < varStoreLength {
 		err = w.writeU8(0xff)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	err = w.write(s.rest)
+	if err != nil {
+		return nil, err
 	}
 
 	return w.data, nil
