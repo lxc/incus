@@ -28,12 +28,12 @@ func unixBlockLimitValidate(config deviceConfig.Device) error {
 		return nil
 	}
 
-	readBps, readIops, writeBps, writeIops, err := diskParseLimits(config)
+	limits, err := diskParseLimits(config)
 	if err != nil {
 		return fmt.Errorf("Invalid I/O limit: %w", err)
 	}
 
-	if (config["limits.read"] != "" && readBps <= 0 && readIops <= 0) || (config["limits.write"] != "" && writeBps <= 0 && writeIops <= 0) {
+	if (config["limits.read"] != "" && limits.readBps <= 0 && limits.readIops <= 0) || (config["limits.write"] != "" && limits.writeBps <= 0 && limits.writeIops <= 0) {
 		return errors.New("I/O limits must be greater than zero")
 	}
 
@@ -58,7 +58,7 @@ func unixBlockLimitApply(runConf *deviceConfig.RunConfig, devicePath string, con
 		return errors.New("I/O limits require a block device")
 	}
 
-	readBps, readIops, writeBps, writeIops, err := diskParseLimits(config)
+	ioLimits, err := diskParseLimits(config)
 	if err != nil {
 		return err
 	}
@@ -74,10 +74,10 @@ func unixBlockLimitApply(runConf *deviceConfig.RunConfig, devicePath string, con
 		unit      string
 		value     int64
 	}{
-		{"read", "bps", readBps},
-		{"read", "iops", readIops},
-		{"write", "bps", writeBps},
-		{"write", "iops", writeIops},
+		{"read", "bps", ioLimits.readBps},
+		{"read", "iops", ioLimits.readIops},
+		{"write", "bps", ioLimits.writeBps},
+		{"write", "iops", ioLimits.writeIops},
 	}
 
 	for _, limit := range limits {
