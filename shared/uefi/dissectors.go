@@ -228,6 +228,23 @@ var boot = wrap(func(r *reader) (*Boot, error) {
 	return w.write(remaining)
 })
 
+// bootNext dissects `BootNext` variables.
+var bootNext = wrap(func(r *reader) (string, error) {
+	n, err := r.readU16()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Boot%04X", n), nil
+}, func(w *writer, v string) error {
+	bootPrefix, n, ok := ParseBootXXXX(strings.ToUpper(v))
+	if !ok || bootPrefix != "BOOT" {
+		return errors.New("BootNext must be of the form Boot####")
+	}
+
+	return w.writeU16(uint16(n))
+})
+
 // ESLEntry represents an ESL entry.
 type ESLEntry struct {
 	Owner string `json:"owner"`
