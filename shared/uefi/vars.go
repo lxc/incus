@@ -34,20 +34,9 @@ func getDissector(guid string, name string) dissector {
 		}
 
 	case EfiGlobalVariableGuid:
-		hasFourDigits := false
-		n := len(name)
-		if n > 4 {
-			hasFourDigits = true
-			for _, c := range name[n-4:] {
-				if (c < '0' || c > '9') && (c < 'A' || c > 'F') {
-					hasFourDigits = false
-					break
-				}
-			}
-		}
-
-		if hasFourDigits {
-			switch name[:n-4] {
+		bootPrefix, _, ok := ParseBootXXXX(name)
+		if ok {
+			switch bootPrefix {
 			case "Boot", "Driver", "SysPrep", "OsRecovery", "PlatformRecovery":
 				return boot
 			case "Key":

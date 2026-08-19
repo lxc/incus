@@ -181,3 +181,29 @@ func csum16(b []byte) uint16 {
 
 	return sum
 }
+
+// ParseBootXXXX tries to parse `Boot####` and related variable names.
+func ParseBootXXXX(name string) (string, uint16, bool) {
+	hasFourDigits := false
+	n := len(name)
+	if n > 4 {
+		hasFourDigits = true
+		for _, c := range name[n-4:] {
+			if (c < '0' || c > '9') && (c < 'A' || c > 'F') {
+				hasFourDigits = false
+				break
+			}
+		}
+	}
+
+	if !hasFourDigits {
+		return name, 0, false
+	}
+
+	i, err := strconv.ParseUint(name[n-4:], 16, 16)
+	if err != nil {
+		return name, 0, false
+	}
+
+	return name[:n-4], uint16(i), true
+}
