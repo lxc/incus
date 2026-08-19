@@ -114,6 +114,12 @@ func getDissector(guid string, name string) dissector {
 			return u32
 		}
 
+	case OvmfPlatformConfigGuid:
+		switch name {
+		case "PlatformConfig":
+			return platformConfig
+		}
+
 	case ShimLockGuid:
 		switch name {
 		case "MokList":

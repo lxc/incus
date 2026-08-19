@@ -755,3 +755,35 @@ var certDB = wrap(func(r *reader) ([]certDBEntry, error) {
 
 	return w.writeU32At(uint32(w.size()), 0)
 })
+
+type platformConfigType struct {
+	Width  uint32 `json:"width"`
+	Height uint32 `json:"height"`
+}
+
+// platformConfig dissects `PlatformConfig` variables.
+var platformConfig = wrap(func(r *reader) (*platformConfigType, error) {
+	width, err := r.readU32()
+	if err != nil {
+		return nil, err
+	}
+
+	height, err := r.readU32()
+	if err != nil {
+		return nil, err
+	}
+
+	return &platformConfigType{Width: width, Height: height}, nil
+}, func(w *writer, v *platformConfigType) error {
+	err := w.writeU32(v.Width)
+	if err != nil {
+		return err
+	}
+
+	err = w.writeU32(v.Height)
+	if err != nil {
+		return err
+	}
+
+	return nil
+})

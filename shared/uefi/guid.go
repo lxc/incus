@@ -51,6 +51,7 @@ const (
 	EfiVirtualCdGuid                         = "3d5abd30-4175-87ce-6d64-d2ade523c4bb"
 	EfiVirtualDiskGuid                       = "77ab535a-45fc-624b-5560-f7b281d1f96e"
 	IScsiConfigGuid                          = "4b47d616-a8d6-4552-9d44-ccad2e0f4cf9"
+	OvmfPlatformConfigGuid                   = "7235c51c-0c80-4cab-87ac-3b084a6304b1"
 	Tcg2ConfigFormSetGuid                    = "6339d487-26ba-424b-9a5d-687e25d740bc"
 
 	// EDK2 Module-local.
@@ -113,6 +114,7 @@ var guidNames = map[string]string{
 	EfiVirtualCdGuid:                         "EFI_VIRTUAL_CD_GUID",
 	EfiVirtualDiskGuid:                       "EFI_VIRTUAL_DISK_GUID",
 	IScsiConfigGuid:                          "ISCSI_CONFIG_GUID",
+	OvmfPlatformConfigGuid:                   "OVMF_PLATFORM_CONFIG_GUID",
 	Tcg2ConfigFormSetGuid:                    "TCG2_CONFIG_FORM_SET_GUID",
 
 	// EDK2 Module-local.
