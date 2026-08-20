@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"net/netip"
 	"os"
@@ -562,6 +563,123 @@ func networkNICRouteDelete(routeDev string, viaIPv4 string, viaIPv6 string, rout
 	}
 }
 
+// nicLimitMax is the largest rate or bucket that can be represented, netlink storing both as a byte count in a uint32.
+const nicLimitMax = int64(math.MaxUint32) * 8
+
+// nicLimits represents the parsed rate limits of a nic device, rates in bit/s and buckets in bit.
+type nicLimits struct {
+	ingress       int64
+	egress        int64
+	ingressBurst  int64
+	ingressBucket int64
+	egressBurst   int64
+	egressBucket  int64
+}
+
+// nicParseLimits parses a nic device configuration for its rate limits.
+func nicParseLimits(config deviceConfig.Device) (*nicLimits, error) {
+	limits := &nicLimits{}
+
+	// parseValue parses a single bit or bit/s value, the max key taking precedence over the per-direction one.
+	parseValue := func(key string, maxKey string) (int64, error) {
+		value := config[key]
+
+		if config[maxKey] != "" {
+			key = maxKey
+			value = config[maxKey]
+		}
+
+		if value == "" {
+			return 0, nil
+		}
+
+		size, err := units.ParseBitSizeString(value)
+		if err != nil {
+			return -1, fmt.Errorf("Invalid %s value %q: %w", key, value, err)
+		}
+
+		return size, nil
+	}
+
+	fields := []struct {
+		key    string
+		maxKey string
+		target *int64
+	}{
+		{"limits.ingress", "limits.max", &limits.ingress},
+		{"limits.egress", "limits.max", &limits.egress},
+		{"limits.ingress.burst", "limits.max.burst", &limits.ingressBurst},
+		{"limits.egress.burst", "limits.max.burst", &limits.egressBurst},
+		{"limits.ingress.bucket", "limits.max.bucket", &limits.ingressBucket},
+		{"limits.egress.bucket", "limits.max.bucket", &limits.egressBucket},
+	}
+
+	for _, field := range fields {
+		value, err := parseValue(field.key, field.maxKey)
+		if err != nil {
+			return nil, err
+		}
+
+		*field.target = value
+	}
+
+	return limits, nil
+}
+
+// nicValidateBurstLimits checks that the burst limits of a device are consistent with its sustained limits.
+func nicValidateBurstLimits(config deviceConfig.Device, burstRate bool) error {
+	limits, err := nicParseLimits(config)
+	if err != nil {
+		return err
+	}
+
+	checks := []struct {
+		name      string
+		sustained int64
+		burst     int64
+		bucket    int64
+	}{
+		{"ingress", limits.ingress, limits.ingressBurst, limits.ingressBucket},
+		{"egress", limits.egress, limits.egressBurst, limits.egressBucket},
+	}
+
+	for _, check := range checks {
+		if check.burst == 0 && check.bucket == 0 {
+			continue
+		}
+
+		if check.sustained == 0 {
+			return fmt.Errorf("The %s burst limit requires a matching sustained limit", check.name)
+		}
+
+		if check.bucket == 0 {
+			return fmt.Errorf("The %s burst rate requires a matching burst bucket", check.name)
+		}
+
+		if burstRate && check.burst == 0 {
+			return fmt.Errorf("The %s burst bucket requires a matching burst rate", check.name)
+		}
+
+		if check.burst != 0 && check.burst < check.sustained {
+			return fmt.Errorf("The %s burst rate must be higher than the sustained limit", check.name)
+		}
+
+		if check.burst > nicLimitMax {
+			return fmt.Errorf("The %s burst rate must be at most %d bit/s", check.name, nicLimitMax)
+		}
+
+		if check.bucket < 1000 {
+			return fmt.Errorf("The %s burst bucket must be at least %d bit", check.name, 1000)
+		}
+
+		if check.bucket > nicLimitMax {
+			return fmt.Errorf("The %s burst bucket must be at most %d bit", check.name, nicLimitMax)
+		}
+	}
+
+	return nil
+}
+
 // networkSetupHostVethLimits applies any network rate limits to the veth device specified in the config.
 func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, bridged bool) error {
 	var err error
@@ -579,21 +697,13 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 	}
 
 	// Parse the values
-	var ingressInt int64
-	if d.config["limits.ingress"] != "" {
-		ingressInt, err = units.ParseBitSizeString(d.config["limits.ingress"])
-		if err != nil {
-			return err
-		}
+	limits, err := nicParseLimits(d.config)
+	if err != nil {
+		return err
 	}
 
-	var egressInt int64
-	if d.config["limits.egress"] != "" {
-		egressInt, err = units.ParseBitSizeString(d.config["limits.egress"])
-		if err != nil {
-			return err
-		}
-	}
+	ingressInt := limits.ingress
+	egressInt := limits.egress
 
 	// Clean any existing entry
 	qdiscIngress := &ip.QdiscIngress{Qdisc: ip.Qdisc{Dev: veth, Handle: "ffff:0"}}
@@ -617,6 +727,12 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 		}
 
 		classHTB := &ip.ClassHTB{Class: ip.Class{Dev: veth, Parent: "1:0", Classid: "1:10"}, Rate: fmt.Sprintf("%dbit", ingressInt)}
+
+		if limits.ingressBurst > 0 {
+			classHTB.Ceil = fmt.Sprintf("%dbit", limits.ingressBurst)
+			classHTB.Buffer = uint32(limits.ingressBucket / 8)
+		}
+
 		err = classHTB.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create limit tc class: %s", err)
@@ -637,6 +753,14 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 		}
 
 		police := &ip.ActionPolice{Rate: uint32(egressInt / 8), Burst: uint32(egressInt / 40), Mtu: 65535, Drop: true}
+
+		if limits.egressBurst > 0 {
+			police.PeakRate = uint32(limits.egressBurst / 8)
+
+			// Never go below the default bucket, police needs one large enough to pass a full packet.
+			police.Burst = max(police.Burst, uint32(limits.egressBucket/8))
+		}
+
 		filter := &ip.U32Filter{Filter: ip.Filter{Dev: veth, Parent: "ffff:0", Protocol: "all"}, Value: 0, Mask: 0, Actions: []ip.Action{police}}
 		err = filter.Add()
 		if err != nil {
