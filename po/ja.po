@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-20 14:46+0000\n"
+"POT-Creation-Date: 2026-08-20 19:39+0000\n"
 "PO-Revision-Date: 2026-08-12 03:47+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -738,15 +738,15 @@ msgstr "--target はインスタンスでは使えません"
 msgid "--attributes cannot be used with --format=%s"
 msgstr "--no-profiles と --refresh は同時に指定できません"
 
-#: cmd/incus/action.go:246
+#: cmd/incus/action.go:253
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "インスタンスの強制シャットダウンの際は --console は使えません"
 
-#: cmd/incus/action.go:414
+#: cmd/incus/action.go:508
 msgid "--console can't be used with --all"
 msgstr "--console と --all は同時に指定できません"
 
-#: cmd/incus/action.go:418
+#: cmd/incus/action.go:512
 msgid "--console only works with a single instance"
 msgstr "--console は単一のインスタンスのときのみ指定できます"
 
@@ -787,6 +787,16 @@ msgstr "--no-profiles と --refresh は同時に指定できません"
 #: cmd/incus/copy.go:148
 msgid "--no-profiles cannot be used with --refresh"
 msgstr "--no-profiles と --refresh は同時に指定できません"
+
+#: cmd/incus/action.go:266
+#, fuzzy
+msgid "--override-boot can't be used on frozen instances"
+msgstr "--target はインスタンスでは使えません"
+
+#: cmd/incus/action.go:517
+#, fuzzy
+msgid "--override-boot only works with a single instance"
+msgstr "--console は単一のインスタンスのときのみ指定できます"
 
 #: cmd/incus/low_level.go:1612
 msgid "--owner and --type require --all to be set"
@@ -1230,6 +1240,12 @@ msgstr ""
 "このコマンドはインスタンスのブートコンソールに接続できます。\n"
 "そしてそこから過去のログエントリを取り出すことができます。"
 
+#: cmd/incus/action.go:164
+msgid ""
+"Attempt to boot a specific boot option (set to `ask` for an interactive "
+"choice)"
+msgstr ""
+
 #: cmd/incus/remote.go:778
 #, c-format
 msgid "Authentication type '%s' not supported by server"
@@ -1333,7 +1349,7 @@ msgstr "ストレージボリューム %s を削除しました"
 msgid "Bond:"
 msgstr "ボンディング:"
 
-#: cmd/incus/action.go:355
+#: cmd/incus/action.go:449
 msgid "Both --all and instance name given"
 msgstr "--all とインスタンス名を両方同時に指定することはできません"
 
@@ -1516,6 +1532,10 @@ msgid ""
 msgstr ""
 "デバイス %q の設定を上書きできません: プロファイルのデバイス内にデバイスが見"
 "つかりません"
+
+#: cmd/incus/action.go:289
+msgid "Cannot parse this --override-boot value"
+msgstr ""
 
 #: cmd/incus/utils.go:304
 #, fuzzy
@@ -2201,16 +2221,17 @@ msgstr "現在の VF 数: %d"
 msgid "DEFAULT TARGET ADDRESS"
 msgstr "DEFAULT TARGET ADDRESS"
 
-#: cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469
-#: cmd/incus/config_trust.go:422 cmd/incus/image.go:1108
-#: cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086
-#: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
-#: cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433
-#: cmd/incus/network_load_balancer.go:151 cmd/incus/network_peer.go:140
-#: cmd/incus/network_zone.go:146 cmd/incus/network_zone.go:875
-#: cmd/incus/operation.go:169 cmd/incus/profile.go:732 cmd/incus/project.go:553
-#: cmd/incus/storage.go:692 cmd/incus/storage_bucket.go:484
-#: cmd/incus/storage_bucket.go:879 cmd/incus/storage_volume.go:1627
+#: cmd/incus/action.go:330 cmd/incus/cluster.go:202
+#: cmd/incus/cluster_group.go:469 cmd/incus/config_trust.go:422
+#: cmd/incus/image.go:1108 cmd/incus/image_alias.go:251 cmd/incus/list.go:540
+#: cmd/incus/network.go:1086 cmd/incus/network_acl.go:163
+#: cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:144
+#: cmd/incus/network_integration.go:433 cmd/incus/network_load_balancer.go:151
+#: cmd/incus/network_peer.go:140 cmd/incus/network_zone.go:146
+#: cmd/incus/network_zone.go:875 cmd/incus/operation.go:169
+#: cmd/incus/profile.go:732 cmd/incus/project.go:553 cmd/incus/storage.go:692
+#: cmd/incus/storage_bucket.go:484 cmd/incus/storage_bucket.go:879
+#: cmd/incus/storage_volume.go:1627
 msgid "DESCRIPTION"
 msgstr "DESCRIPTION"
 
@@ -3318,6 +3339,11 @@ msgstr "バリデーションレスポンスの読み取りに失敗しました
 msgid "Failed reading input file: %w"
 msgstr "ファイルから読み込めません: %w"
 
+#: cmd/incus/action.go:355
+#, fuzzy, c-format
+msgid "Failed setting BootNext: %w"
+msgstr "コマンドの実行に失敗しました: %w"
+
 #: cmd/incus/console.go:437
 #, c-format
 msgid "Failed starting command: %w"
@@ -3734,7 +3760,7 @@ msgstr "強制的に擬似端末を割り当てます"
 msgid "Force removing a member, even if degraded"
 msgstr "degraded 状態であっても強制的にメンバを削除します"
 
-#: cmd/incus/action.go:165
+#: cmd/incus/action.go:172
 msgid "Force the instance to stop"
 msgstr "インスタンスを強制停止します"
 
@@ -4224,7 +4250,7 @@ msgstr "インスタンスから sshfs への I/O コピーに失敗しました
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "sshfs からインスタンスへの I/O コピーに失敗しました: %v"
 
-#: cmd/incus/network.go:964 cmd/incus/operation.go:167
+#: cmd/incus/action.go:330 cmd/incus/network.go:964 cmd/incus/operation.go:167
 msgid "ID"
 msgstr "ID"
 
@@ -4356,7 +4382,7 @@ msgstr "設定されている自動でのストレージボリュームの有効
 msgid "Ignore copy errors for volatile files"
 msgstr "コピー中にファイルが更新された場合のエラーを無視します"
 
-#: cmd/incus/action.go:157
+#: cmd/incus/action.go:163
 msgid "Ignore the instance state"
 msgstr "インスタンスの状態を無視します"
 
@@ -4395,7 +4421,7 @@ msgstr "イメージは以下のフィンガープリントでインポートさ
 msgid "Image refreshed successfully!"
 msgstr "イメージの更新が成功しました!"
 
-#: cmd/incus/action.go:161 cmd/incus/launch.go:49
+#: cmd/incus/action.go:168 cmd/incus/launch.go:49
 msgid "Immediately attach to the console"
 msgstr "起動直後にインスタンスのコンソールに接続します"
 
@@ -7645,6 +7671,10 @@ msgstr "プロジェクトを指定します"
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr "ターミナルモードを上書きします (auto, interactive, non-interactive)"
 
+#: cmd/incus/action.go:330
+msgid "PATH"
+msgstr ""
+
 #: cmd/incus/info.go:119 cmd/incus/info.go:205
 #, c-format
 msgid "PCI address: %v"
@@ -7741,7 +7771,7 @@ msgstr "エイリアス %s は存在しません"
 msgid "Path to the existing block device:"
 msgstr "既存のブロックデバイスのパス:"
 
-#: cmd/incus/action.go:58 cmd/incus/action.go:59
+#: cmd/incus/action.go:63 cmd/incus/action.go:64
 msgid "Pause instances"
 msgstr "インスタンスを一時停止します"
 
@@ -8422,7 +8452,7 @@ msgstr "ユーザの確認を要求する"
 msgid "Resources:"
 msgstr "リソース:"
 
-#: cmd/incus/action.go:104 cmd/incus/action.go:105
+#: cmd/incus/action.go:109 cmd/incus/action.go:110
 msgid "Restart instances"
 msgstr "インスタンスを再起動します"
 
@@ -8477,7 +8507,7 @@ msgstr "クラスターメンバーをリストアしています: %s"
 msgid "Restrict the certificate to one or more projects"
 msgstr "証明書の使用を1つ以上のプロジェクトに制限します"
 
-#: cmd/incus/action.go:81 cmd/incus/action.go:82
+#: cmd/incus/action.go:86 cmd/incus/action.go:87
 #, fuzzy
 msgid "Resume instances"
 msgstr "インスタンスを再起動します"
@@ -8540,7 +8570,7 @@ msgstr "すべてのインスタンスに対してコマンドを実行します
 msgid "Run again a specific project"
 msgstr "特定のプロジェクトを再実行します"
 
-#: cmd/incus/action.go:151
+#: cmd/incus/action.go:157
 msgid "Run against all instances"
 msgstr "すべてのインスタンスに対してコマンドを実行します"
 
@@ -8650,6 +8680,10 @@ msgstr "秘密鍵（空白の場合自動生成）"
 #, c-format
 msgid "Secret key: %s"
 msgstr "秘密鍵: %s"
+
+#: cmd/incus/action.go:335
+msgid "Select next boot entry: "
+msgstr ""
 
 #: cmd/incus/query.go:40 cmd/incus/query.go:41
 #, fuzzy
@@ -9487,7 +9521,7 @@ msgstr "スナップショット:"
 msgid "Socket %d:"
 msgstr "ソケット %d:"
 
-#: cmd/incus/action.go:456
+#: cmd/incus/action.go:554
 #, c-format
 msgid "Some instances failed to %s"
 msgstr "一部のインスタンスで %s が失敗しました"
@@ -9513,7 +9547,7 @@ msgstr "取得元:"
 msgid "Specific address to listen on"
 msgstr "聴くための特定のアドレス"
 
-#: cmd/incus/action.go:36 cmd/incus/action.go:37
+#: cmd/incus/action.go:41 cmd/incus/action.go:42
 msgid "Start instances"
 msgstr "インスタンスを起動します"
 
@@ -9549,7 +9583,7 @@ msgstr "ステートフル"
 msgid "Status: %s"
 msgstr "状態: %s"
 
-#: cmd/incus/action.go:126 cmd/incus/action.go:127
+#: cmd/incus/action.go:131 cmd/incus/action.go:132
 msgid "Stop instances"
 msgstr "インスタンスを停止します"
 
@@ -9667,7 +9701,7 @@ msgstr "ストレージボリューム %s を削除しました"
 msgid "Store the bitmap on disk"
 msgstr "インスタンスの状態を保存します"
 
-#: cmd/incus/action.go:155
+#: cmd/incus/action.go:161
 msgid "Store the instance state"
 msgstr "インスタンスの状態を保存します"
 
@@ -10173,7 +10207,7 @@ msgstr "この LXD サーバはネットワークから利用できません"
 msgid "Threads:"
 msgstr "スレッド:"
 
-#: cmd/incus/action.go:166
+#: cmd/incus/action.go:173
 msgid "Time to wait for the instance to shutdown cleanly"
 msgstr "インスタンスがクリーンにシャットダウンするまで待つ時間"
 
@@ -10266,7 +10300,7 @@ msgstr "通信ポリシー"
 msgid "Trust token for %s: "
 msgstr "%s:%s のクラスターに join するためのトークンが削除されました"
 
-#: cmd/incus/action.go:306 cmd/incus/launch.go:142
+#: cmd/incus/action.go:400 cmd/incus/launch.go:142
 #, fuzzy, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr "更に情報を得るために `lxc info --show-log %s` を実行してみてください"
@@ -10367,6 +10401,16 @@ msgstr "クラスタメンバへの接続に失敗しました"
 msgid "Unable to create a temporary file: %v"
 msgstr "テンポラリファイルを作成できません: %v"
 
+#: cmd/incus/action.go:321
+#, fuzzy, c-format
+msgid "Unable to parse %s as a boot entry"
+msgstr "事前に与える構成ファイルのパースに失敗しました: %w"
+
+#: cmd/incus/action.go:314
+#, fuzzy, c-format
+msgid "Unable to parse %s as valid JSON"
+msgstr "事前に与える構成ファイルのパースに失敗しました: %w"
+
 #: cmd/incus/low_level.go:1301 cmd/incus/low_level.go:1526
 #: cmd/incus/low_level.go:1638
 #, c-format
@@ -10392,6 +10436,11 @@ msgstr "リモートサーバーが利用できません"
 #, fuzzy
 msgid "Unexpected input size"
 msgstr "リンクを検出: %v"
+
+#: cmd/incus/action.go:340 cmd/incus/action.go:348
+#, fuzzy, c-format
+msgid "Unknown boot option %d"
+msgstr "未知の出力タイプ: %q"
 
 #: cmd/incus/config_trust.go:200
 #, c-format
@@ -11240,7 +11289,7 @@ msgstr "有効"
 msgid "ephemeral"
 msgstr "タイプ: %s (ephemeral)"
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:546
 #, c-format
 msgid "error: %v"
 msgstr "エラー: %v"
