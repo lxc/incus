@@ -232,20 +232,25 @@ var boot = wrap(func(r *reader) (*bootType, error) {
 	return w.write(remaining)
 })
 
-type eslEntry struct {
+// ESLEntry represents an ESL entry.
+type ESLEntry struct {
 	Owner string `json:"owner"`
 	Data  []byte `json:"data"`
 }
 
-type eslNode struct {
+// ESLNode represents a collection of ESL entries sharing a type and a header.
+type ESLNode struct {
 	Type    string     `json:"type"`
 	Header  []byte     `json:"header,omitempty"`
-	Entries []eslEntry `json:"entries"`
+	Entries []ESLEntry `json:"entries"`
 }
 
+// ESL represents an EFI Signature List.
+type ESL []ESLNode
+
 // esl dissects EFI signature lists.
-var esl = wrap(func(r *reader) ([]eslNode, error) {
-	db := []eslNode{}
+var esl = wrap(func(r *reader) (ESL, error) {
+	db := []ESLNode{}
 	for !r.eof() {
 		start := r.pos()
 		sigGUID, err := r.readGUID()
@@ -278,7 +283,7 @@ var esl = wrap(func(r *reader) ([]eslNode, error) {
 			return nil, err
 		}
 
-		lst := eslNode{Type: typeStr, Header: header}
+		lst := ESLNode{Type: typeStr, Header: header}
 		for r.pos()-start < int(listSize) {
 			owner, err := r.readGUID()
 			if err != nil {
@@ -290,14 +295,14 @@ var esl = wrap(func(r *reader) ([]eslNode, error) {
 				return nil, err
 			}
 
-			lst.Entries = append(lst.Entries, eslEntry{Owner: owner, Data: body})
+			lst.Entries = append(lst.Entries, ESLEntry{Owner: owner, Data: body})
 		}
 
 		db = append(db, lst)
 	}
 
 	return db, nil
-}, func(w *writer, v []eslNode) error {
+}, func(w *writer, v ESL) error {
 	for _, node := range v {
 		start := w.size()
 		sigGUID, ok := sigGUIDs[node.Type]

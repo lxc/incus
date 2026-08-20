@@ -1,10 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"crypto/sha512"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +19,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
@@ -54,6 +60,9 @@ func (c *cmdLowLevel) command() *cobra.Command {
 
 	lowLevelRepairCmd := cmdLowLevelRepair{global: c.global}
 	cmd.AddCommand(lowLevelRepairCmd.command())
+
+	lowLevelSecureBootCmd := cmdLowLevelSecureBoot{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootCmd.command())
 
 	return cmd
 }
@@ -165,7 +174,7 @@ Supported actions:
 		}
 
 		if len(args) == 1 {
-			return []string{"rebuild-config-volume"}, cobra.ShellCompDirectiveNoFileComp
+			return []string{"rebuild-config-volume", "rebuild-nvram"}, cobra.ShellCompDirectiveNoFileComp
 		}
 
 		return nil, cobra.ShellCompDirectiveNoFileComp
@@ -689,7 +698,22 @@ func (c *cmdLowLevelNVRAMList) command() *cobra.Command {
 	cmd.Use = cli.U("list", cmdLowLevelNVRAMListUsage...)
 	cmd.Aliases = []string{"ls"}
 	cmd.Short = i18n.G("List UEFI GUIDs and variables")
-	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List UEFI GUIDs and variables`))
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List UEFI GUIDs and variables
+
+The -c option takes a (optionally comma-separated) list of arguments
+that control which variable attributes to output when displaying in table
+or csv format.
+
+Default column layout is: Gn
+
+Column shorthand chars:
+	a - Attributes
+	g - GUID
+	G - Familiar GUID name or GUID if none
+	n - Name
+	r - Raw value
+	t - Authenticated write timestamp
+	v - Interpreted value`))
 
 	cmd.RunE = c.run
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
@@ -707,7 +731,7 @@ func (c *cmdLowLevelNVRAMList) command() *cobra.Command {
 	return cmd
 }
 
-const defaultNVRAMColumns = "Gnv"
+const defaultNVRAMColumns = "Gn"
 
 func (c *cmdLowLevelNVRAMList) parseColumns() ([]nvramColumn, error) {
 	columnsShorthandMap := map[rune]nvramColumn{
@@ -952,7 +976,7 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf(i18n.G("--timestamp cannot be used with --format=%s"), c.flagFormat)
 			}
 
-			var data *api.InstanceNVRAMVariablePut
+			data := api.InstanceNVRAMVariablePut{}
 
 			// If the value passed is empty, switch to the unset logic.
 			if v == "" {
@@ -965,9 +989,9 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 			} else {
 				switch c.flagFormat {
 				case "json":
-					err = json.Unmarshal([]byte(v), data)
+					err = json.Unmarshal([]byte(v), &data)
 				case "yaml":
-					err = yaml.Load([]byte(v), data)
+					err = yaml.Load([]byte(v), &data)
 				}
 
 				if err != nil {
@@ -975,7 +999,7 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				}
 
 				if single {
-					return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, *data, "")
+					return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, data, "")
 				}
 			}
 
@@ -984,7 +1008,7 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				bulk[guid] = map[string]*api.InstanceNVRAMVariablePut{}
 			}
 
-			bulk[guid][varName] = data
+			bulk[guid][varName] = &data
 		default:
 			return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
 		}
@@ -1069,4 +1093,598 @@ func (c *cmdLowLevelNVRAMUnset) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+type cmdLowLevelSecureBoot struct {
+	global *cmdGlobal
+}
+
+type secureBootColumn struct {
+	Name string
+	Data func(string, *uefi.ESLEntry, *x509.Certificate) string
+}
+
+var cmdLowLevelSecureBootESLNames = []string{"pk", "kek", "db", "dbx", "dbt", "mok"}
+
+func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("secureboot")
+	cmd.Short = i18n.G("Manage Secure Boot on virtual machines")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Manage Secure Boot on virtual machines`))
+
+	// Add.
+	lowLevelSecureBootAddCmd := cmdLowLevelSecureBootAdd{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootAddCmd.command())
+
+	// List.
+	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootListCmd.command())
+
+	// Remove.
+	lowLevelSecureBootRemoveCmd := cmdLowLevelSecureBootRemove{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootRemoveCmd.command())
+
+	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706.
+	cmd.Args = cobra.NoArgs
+	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
+	return cmd
+}
+
+// eslGUIDVar gets the GUID and variable name associated to the given ESL.
+func eslGUIDVar(esl string) (string, string) {
+	var guid, varName string
+	switch esl {
+	case "pk", "kek":
+		guid = uefi.EfiGlobalVariableGuid
+		varName = strings.ToUpper(esl)
+	case "db", "dbx", "dbt":
+		guid = uefi.EfiImageSecurityDatabaseGuid
+		varName = esl
+	case "mok":
+		guid = uefi.ShimLockGuid
+		varName = "MokList"
+	}
+
+	return guid, varName
+}
+
+// Add.
+type cmdLowLevelSecureBootAdd struct {
+	global *cmdGlobal
+
+	flagOwner string
+	flagType  string
+}
+
+var cmdLowLevelSecureBootAddUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...), u.File}
+
+func (c *cmdLowLevelSecureBootAdd) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("add", cmdLowLevelSecureBootAddUsage...)
+	cmd.Short = i18n.G("Add Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add Secure Boot signatures`))
+
+	cmd.RunE = c.run
+	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "OVMF", "", i18n.G("Set the signature owner"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type", "", "", i18n.G("Don’t import the file as a certificate but rather compute and import its digest (sha256|sha384|sha512)"))
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootAddUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	guid, varName := eslGUIDVar(parsed[1].String)
+	fileName := parsed[2].String
+	var input []byte
+	if fileName == "-" && !termios.IsTerminal(getStdinFd()) {
+		input, err = io.ReadAll(os.Stdin)
+	} else {
+		input, err = os.ReadFile(fileName)
+	}
+
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed reading input file: %w"), err)
+	}
+
+	owner, err := uefi.ParseGUIDOrName(c.flagOwner)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Unable to parse owner %s: %w"), c.flagOwner, err)
+	}
+
+	isSignature := cmd.Flags().Changed("type")
+	var data []byte
+	if isSignature {
+		if slices.Contains([]string{"PK", "KEK", "dbt"}, varName) {
+			return errors.New(i18n.G("Cannot store a signature in PK, KEK or dbt"))
+		}
+
+		switch c.flagType {
+		case "sha256":
+			sum := sha256.Sum256(input)
+			data = sum[:]
+		case "sha384":
+			sum := sha512.Sum384(input)
+			data = sum[:]
+		case "sha512":
+			sum := sha512.Sum512(input)
+			data = sum[:]
+		default:
+			return fmt.Errorf(i18n.G("Unknown signature type %s"), c.flagType)
+		}
+	} else {
+		// Try to parse the file as PEM first.
+		rest := input
+		ok := false
+		var block *pem.Block
+		for {
+			block, rest = pem.Decode(rest)
+			if block == nil {
+				break
+			}
+
+			if block.Type != "CERTIFICATE" {
+				continue
+			}
+
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed to parse PEM certificate: %w"), err)
+			}
+
+			data = cert.Raw
+			ok = true
+			break
+		}
+
+		if !ok {
+			// Now try to parse the file as DER.
+			certs, err := x509.ParseCertificates(input)
+			if err != nil {
+				return errors.New(i18n.G("Failed to parse input file as either PEM or DER certificate"))
+			}
+
+			if len(certs) == 0 {
+				return errors.New(i18n.G("Input file contains no certificate"))
+			}
+
+			data = certs[0].Raw
+		}
+	}
+
+	v, etag, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		if varName == "MokList" {
+			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
+				Data:       uefi.ESL{},
+				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS"},
+			}}
+		} else {
+			now := time.Now().UTC()
+			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
+				Data:       uefi.ESL{},
+				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS", "TIME_BASED_AUTHENTICATED_WRITE_ACCESS"},
+				Timestamp:  &now,
+			}}
+		}
+	}
+
+	// We received a JSON object unmarshalled as a map, so we convert it back to JSON to unmarshal it
+	// again into our desired type.
+	marshalled, err := json.Marshal(v.Data)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
+	}
+
+	var esl uefi.ESL
+	err = json.Unmarshal(marshalled, &esl)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
+	}
+
+	// First, make sure the store doesn’t already contain the certificate/signature. If we are
+	// dealing with PK, this also checks that there is no certificate enrolled.
+	count := 0
+	for _, node := range esl {
+		for _, entry := range node.Entries {
+			count++
+			if bytes.Equal(entry.Data, data) {
+				if isSignature {
+					return errors.New(i18n.G("The given signature is already present in this ESL"))
+				}
+
+				return errors.New(i18n.G("The given certificate is already present in this ESL"))
+			}
+		}
+	}
+
+	if varName == "PK" && count > 0 {
+		return errors.New(i18n.G("A PK certificate is already enrolled; remove it first to enroll a new one"))
+	}
+
+	eslNode := uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: owner, Data: data}}}
+	if isSignature {
+		eslNode.Type = c.flagType
+	} else {
+		eslNode.Type = "x509"
+	}
+
+	return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, api.InstanceNVRAMVariablePut{
+		Data:       append(esl, eslNode),
+		Attributes: v.Attributes,
+		Timestamp:  v.Timestamp,
+	}, etag)
+}
+
+// List.
+type cmdLowLevelSecureBootList struct {
+	global *cmdGlobal
+
+	flagFormat  string
+	flagColumns string
+}
+
+var cmdLowLevelSecureBootListUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...)}
+
+func (c *cmdLowLevelSecureBootList) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("list", cmdLowLevelSecureBootListUsage...)
+	cmd.Aliases = []string{"ls"}
+	cmd.Short = i18n.G("List Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`List Secure Boot signatures
+
+The -c option takes a (optionally comma-separated) list of arguments
+that control which signature attributes to output when displaying in table
+or csv format.
+
+Default column layout is: tOfs
+
+Column shorthand chars:
+	f - Fingerprint (short)
+	F - Fingerprint (long)
+	i - Issuer (short, for certificates)
+	I - Issuer (long, for certificates)
+	o - Owner GUID
+	O - Owner familiar GUID name or GUID if none
+	r - Raw value
+	s - Subject (short, for certificates)
+	S - Subject (long, for certificates)
+	t - Signature type`))
+
+	cmd.RunE = c.run
+	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
+	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultSecureBootColumns, "", i18n.G("Columns"))
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+const defaultSecureBootColumns = "tOfs"
+
+func (c *cmdLowLevelSecureBootList) parseColumns() ([]secureBootColumn, error) {
+	columnsShorthandMap := map[rune]secureBootColumn{
+		'f': {i18n.G("FINGERPRINT"), c.fingerprintColumnData},
+		'F': {i18n.G("FINGERPRINT"), c.fingerprintFullColumnData},
+		'i': {i18n.G("ISSUER"), c.issuerColumnData},
+		'I': {i18n.G("ISSUER"), c.issuerFullColumnData},
+		'o': {i18n.G("OWNER GUID"), c.ownerColumnData},
+		'O': {i18n.G("OWNER GUID NAME"), c.ownerNameColumnData},
+		'r': {i18n.G("RAW VALUE"), c.rawColumnData},
+		's': {i18n.G("SUBJECT"), c.subjectColumnData},
+		'S': {i18n.G("SUBJECT"), c.subjectFullColumnData},
+		't': {i18n.G("TYPE"), c.typeColumnData},
+	}
+
+	columnList := strings.Split(c.flagColumns, ",")
+	columns := []secureBootColumn{}
+
+	for _, columnEntry := range columnList {
+		if columnEntry == "" {
+			return nil, fmt.Errorf(i18n.G("Empty column entry (redundant, leading or trailing command) in '%s'"), c.flagColumns)
+		}
+
+		for _, columnRune := range columnEntry {
+			column, ok := columnsShorthandMap[columnRune]
+			if !ok {
+				return nil, fmt.Errorf(i18n.G("Unknown column shorthand char '%c' in '%s'"), columnRune, columnEntry)
+			}
+
+			columns = append(columns, column)
+		}
+	}
+
+	return columns, nil
+}
+
+// eslFingerprint returns the fingerprint of the given ESL entry.
+func eslFingerprint(v *uefi.ESLEntry, cert *x509.Certificate) string {
+	var data []byte
+	if cert == nil {
+		data = v.Data
+	} else {
+		sum := sha256.Sum256(cert.Raw)
+		data = sum[:]
+	}
+
+	return fmt.Sprintf("%x", data)
+}
+
+func (c *cmdLowLevelSecureBootList) fingerprintColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	fingerprint := eslFingerprint(v, cert)
+	return fingerprint[:12]
+}
+
+func (c *cmdLowLevelSecureBootList) fingerprintFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return eslFingerprint(v, cert)
+}
+
+func (c *cmdLowLevelSecureBootList) issuerColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Issuer.CommonName
+}
+
+func (c *cmdLowLevelSecureBootList) issuerFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Issuer.String()
+}
+
+func (c *cmdLowLevelSecureBootList) ownerColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return v.Owner
+}
+
+func (c *cmdLowLevelSecureBootList) ownerNameColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return uefi.GUIDName(v.Owner)
+}
+
+func (c *cmdLowLevelSecureBootList) rawColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return base64.StdEncoding.EncodeToString(v.Data)
+}
+
+func (c *cmdLowLevelSecureBootList) subjectColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Subject.CommonName
+}
+
+func (c *cmdLowLevelSecureBootList) subjectFullColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	if cert == nil {
+		return i18n.G("(not a certificate)")
+	}
+
+	return cert.Subject.String()
+}
+
+func (c *cmdLowLevelSecureBootList) typeColumnData(sigType string, v *uefi.ESLEntry, cert *x509.Certificate) string {
+	return sigType
+}
+
+func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootListUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	guid, varName := eslGUIDVar(parsed[1].String)
+
+	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		return err
+	}
+
+	// We received a JSON object unmarshalled as a map, so we convert it back to JSON to unmarshal it
+	// again into our desired type.
+	marshalled, err := json.Marshal(v.Data)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
+	}
+
+	var esl uefi.ESL
+	err = json.Unmarshal(marshalled, &esl)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
+	}
+
+	// Parse column flags.
+	columns, err := c.parseColumns()
+	if err != nil {
+		return err
+	}
+
+	// Render the table
+	data := [][]string{}
+	for _, node := range esl {
+		for _, entry := range node.Entries {
+			line := []string{}
+			cert, _ := x509.ParseCertificate(entry.Data)
+			for _, column := range columns {
+				line = append(line, column.Data(node.Type, &entry, cert))
+			}
+
+			data = append(data, line)
+		}
+	}
+
+	sort.Sort(cli.SortColumnsNaturally(data))
+
+	header := []string{}
+	for _, column := range columns {
+		header = append(header, column.Name)
+	}
+
+	return cli.RenderTable(os.Stdout, c.flagFormat, header, data, esl)
+}
+
+// Remove.
+type cmdLowLevelSecureBootRemove struct {
+	global *cmdGlobal
+
+	flagAll   bool
+	flagOwner string
+	flagType  string
+}
+
+var cmdLowLevelSecureBootRemoveUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...), u.Either(u.Fingerprint, u.Flag("all"))}
+
+func (c *cmdLowLevelSecureBootRemove) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("remove", cmdLowLevelSecureBootRemoveUsage...)
+	cmd.Aliases = []string{"delete", "rm"}
+	cmd.Short = i18n.G("Remove Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Remove Secure Boot signatures`))
+
+	cmd.RunE = c.run
+	cli.AddBoolFlag(cmd.Flags(), &c.flagAll, "all|a", i18n.G("Remove all signatures"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "", "", i18n.G("Only remove signatures owned by the given owner"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type", "", "", i18n.G("Only remove signatures of the given type"))
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelSecureBootRemove) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootRemoveUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	guid, varName := eslGUIDVar(parsed[1].String)
+	hasFingerprint := parsed[2].BranchID == 0
+	var fingerprint string
+	if hasFingerprint {
+		fingerprint = parsed[2].String
+
+		if cmd.Flags().Changed("owner") || cmd.Flags().Changed("type") {
+			return errors.New(i18n.G("--owner and --type require --all to be set"))
+		}
+	}
+
+	v, etag, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		return err
+	}
+
+	if c.flagAll && !cmd.Flags().Changed("owner") && !cmd.Flags().Changed("type") {
+		// Deleting the variable is a good way to purge the ESL.
+		return d.DeleteInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	}
+
+	// We received a JSON object unmarshalled as a map, so we convert it back to JSON to unmarshal it
+	// again into our desired type.
+	marshalled, err := json.Marshal(v.Data)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
+	}
+
+	var esl, newESL uefi.ESL
+	err = json.Unmarshal(marshalled, &esl)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
+	}
+
+	var owner string
+	if cmd.Flags().Changed("owner") {
+		owner, err = uefi.ParseGUIDOrName(c.flagOwner)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Unable to parse owner %s: %w"), c.flagOwner, err)
+		}
+	}
+
+	removed := 0
+	for _, node := range esl {
+		if node.Type == c.flagType {
+			removed += len(node.Entries)
+			continue
+		}
+
+		var entries []uefi.ESLEntry
+		for _, entry := range node.Entries {
+			if entry.Owner == owner {
+				removed++
+				continue
+			}
+
+			cert, _ := x509.ParseCertificate(entry.Data)
+			if hasFingerprint && strings.HasPrefix(eslFingerprint(&entry, cert), fingerprint) {
+				removed++
+				continue
+			}
+
+			entries = append(entries, entry)
+		}
+
+		if len(entries) > 0 {
+			newESL = append(newESL, uefi.ESLNode{Type: node.Type, Header: node.Header, Entries: entries})
+		}
+	}
+
+	if removed == 0 {
+		return errors.New(i18n.G("No signature matches"))
+	}
+
+	if hasFingerprint && removed > 1 {
+		return errors.New(i18n.G("Several signatures match the given fingerprint"))
+	}
+
+	return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, api.InstanceNVRAMVariablePut{
+		Data:       newESL,
+		Attributes: v.Attributes,
+		Timestamp:  v.Timestamp,
+	}, etag)
 }
