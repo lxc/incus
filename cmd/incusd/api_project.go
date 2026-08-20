@@ -840,6 +840,21 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 
 	// Update the database entry.
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Prevent networks shared from the default project from conflicting with the project's own networks.
+		if util.IsTrue(req.Config["restricted"]) && util.IsTrue(req.Config["features.networks"]) && req.Config["restricted.networks.access"] != "" {
+			networks, err := tx.GetNetworks(ctx, project.Name)
+			if err != nil {
+				return err
+			}
+
+			allowedNetworks := util.SplitNTrimSpace(req.Config["restricted.networks.access"], ",", -1, false)
+			for _, networkName := range networks {
+				if slices.Contains(allowedNetworks, networkName) {
+					return api.StatusErrorf(http.StatusBadRequest, "Network %q in restricted.networks.access conflicts with an existing project network", networkName)
+				}
+			}
+		}
+
 		err := projecthelpers.AllowProjectUpdate(tx, project.Name, req.Config, configChanged)
 		if err != nil {
 			return err
@@ -1886,6 +1901,10 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.access)
 		// Specify a comma-delimited list of network names that are allowed for use in this project.
 		// If this option is not set, all networks are accessible.
+		//
+		// In restricted projects with {config:option}`project-features:features.networks` enabled,
+		// the listed networks from the default project are shared into the project and their names
+		// can't be used for the project's own networks.
 		//
 		// Note that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.
 		// ---
