@@ -18,7 +18,9 @@ type Class struct {
 // ClassHTB represents htb qdisc class object.
 type ClassHTB struct {
 	Class
-	Rate string
+	Rate   string
+	Ceil   string
+	Buffer uint32
 }
 
 // Add adds class to a node.
@@ -58,6 +60,17 @@ func (class *ClassHTB) Add() error {
 
 		htbClassAttrs.Rate = uint64(rate)
 	}
+
+	if class.Ceil != "" {
+		ceil, err := units.ParseBitSizeString(class.Ceil)
+		if err != nil {
+			return fmt.Errorf("Invalid ceil %q: %w", class.Ceil, err)
+		}
+
+		htbClassAttrs.Ceil = uint64(ceil)
+	}
+
+	htbClassAttrs.Buffer = class.Buffer
 
 	err = netlink.ClassAdd(netlink.NewHtbClass(classAttrs, htbClassAttrs))
 	if err != nil {
