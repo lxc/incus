@@ -54,6 +54,17 @@ linters:
         - name: empty-lines
         - name: duplicated-imports
         - name: error-return
+    staticcheck:
+      checks:
+        - all
+        - -SA4023 # Hangs and produces false positives as of staticcheck 2026.1 rc.
+        - -ST1000
+        - -ST1003
+        - -ST1005 # Error strings should not be capitalized.
+        - -ST1016
+        - -ST1020
+        - -ST1021
+        - -ST1022
   exclusions:
     generated: lax
     rules:
@@ -68,9 +79,6 @@ linters:
           - revive
           - godot
         path: "^test/mini-oidc/storage/"
-      - linters:
-          - staticcheck
-        text: "ST1005:"
       - linters:
           - godot
         text: "Comment should end in a period"
