@@ -363,7 +363,7 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 	}
 
 	// The NIC's network may be a non-default project, so lookup project and get network's project name.
-	networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, instConf.Project().Name)
+	networkProjectName, _, err := project.NetworkProjectForName(d.state.DB.Cluster, instConf.Project().Name, d.config["network"])
 	if err != nil {
 		return fmt.Errorf("Failed loading network project name: %w", err)
 	}
@@ -1599,7 +1599,7 @@ func (d *nicOVN) Register() error {
 	}
 
 	// The NIC's network may be a non-default project, so lookup project and get network's project name.
-	networkProjectName, _, err := project.NetworkProject(d.state.DB.Cluster, d.inst.Project().Name)
+	networkProjectName, _, err := project.NetworkProjectForName(d.state.DB.Cluster, d.inst.Project().Name, d.config["network"])
 	if err != nil {
 		return fmt.Errorf("Failed loading network project name: %w", err)
 	}
