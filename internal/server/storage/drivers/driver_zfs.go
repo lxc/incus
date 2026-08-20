@@ -121,6 +121,7 @@ func (d *zfs) Info() Info {
 		OptimizedBackups:             true,
 		PreservesInodes:              true,
 		Remote:                       d.isRemote(),
+		NearLiveMigration:            true,
 		VolumeTypes:                  []VolumeType{VolumeTypeBucket, VolumeTypeCustom, VolumeTypeImage, VolumeTypeContainer, VolumeTypeVM},
 		VolumeMultiNode:              d.isRemote(),
 		BlockBacking:                 util.IsTrue(d.config["volume.zfs.block_mode"]),
