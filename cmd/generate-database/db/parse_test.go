@@ -34,7 +34,7 @@ func TestParse(t *testing.T) {
 	pkg, err := packages.Load(&packages.Config{
 		Mode:  packages.LoadTypes | packages.NeedTypesInfo,
 		Tests: true,
-	}, "")
+	}, ".")
 	require.NoError(t, err)
 
 	m, err := db.Parse(pkg[1].PkgPath, []*types.Package{pkg[1].Types}, "Teacher", "objects")
