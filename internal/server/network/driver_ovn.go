@@ -616,6 +616,15 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		//  default: `false`
 		"ipv6.dhcp.stateful": validate.Optional(validate.IsBool),
 
+		// gendoc:generate(entity=network_ovn, group=common, key=ipv6.ra)
+		//
+		// ---
+		//  type: bool
+		//  condition: IPv6 address
+		//  default: `true`
+		//  shortdesc: Whether to send IPv6 router advertisements
+		"ipv6.ra": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.nat)
 		//
 		// ---
@@ -3371,7 +3380,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	// Set IPv6 router advertisement settings.
-	if routerIntPortIPv6Net != nil {
+	if routerIntPortIPv6Net != nil && util.IsTrueOrEmpty(n.config["ipv6.ra"]) {
 		adressMode := networkOVN.OVNIPv6AddressModeSLAAC
 		if dhcpV6Subnet != nil {
 			adressMode = networkOVN.OVNIPv6AddressModeDHCPStateless
