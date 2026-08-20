@@ -383,6 +383,11 @@ func allowPermission(objectType auth.ObjectType, entitlement auth.Entitlement, m
 				return project.ImageProjectFromRecord(p)
 			}
 
+			if objectType == auth.ObjectTypeNetwork && len(muxVars) > 0 {
+				// Networks shared from the default project resolve to the default project.
+				return project.NetworkProjectForNameFromRecord(p, r.PathValue(muxVars[0]))
+			}
+
 			if slices.Contains([]auth.ObjectType{auth.ObjectTypeNetwork, auth.ObjectTypeNetworkACL, auth.ObjectTypeNetworkAddressSet}, objectType) {
 				return project.NetworkProjectFromRecord(p)
 			}

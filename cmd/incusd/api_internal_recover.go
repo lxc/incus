@@ -228,7 +228,6 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 
 			// Look up effective project names for profiles and networks.
 			var profileProjectname string
-			var networkProjectName string
 
 			if projectInfo == nil {
 				addDependencyError(fmt.Errorf("Project %q", projectName))
@@ -236,7 +235,6 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 			}
 
 			profileProjectname = project.ProfileProjectFromRecord(projectInfo)
-			networkProjectName = project.NetworkProjectFromRecord(projectInfo)
 
 			for _, poolVol := range poolVols {
 				if poolVol.Container == nil {
@@ -267,8 +265,11 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 						continue
 					}
 
+					// Get the effective network project of the NIC (accounts for shared networks).
+					devNetworkProject := project.NetworkProjectForNameFromRecord(projectInfo, devConfig["network"])
+
 					foundNetwork := false
-					for _, n := range projectNetworks[networkProjectName] {
+					for _, n := range projectNetworks[devNetworkProject] {
 						if n.Name == devConfig["network"] {
 							foundNetwork = true
 							break
