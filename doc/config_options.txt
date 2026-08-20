@@ -4996,6 +4996,10 @@ If this option is not set, all image servers are accessible.
 Specify a comma-delimited list of network names that are allowed for use in this project.
 If this option is not set, all networks are accessible.
 
+In restricted projects with {config:option}`project-features:features.networks` enabled,
+the listed networks from the default project are shared into the project and their names
+can't be used for the project's own networks.
+
 Note that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.
 ```
 
