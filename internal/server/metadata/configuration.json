@@ -4270,6 +4270,15 @@
 						}
 					},
 					{
+						"ipv6.ra": {
+							"condition": "IPv6 address",
+							"default": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to send IPv6 router advertisements",
+							"type": "bool"
+						}
+					},
+					{
 						"ipv6.routes": {
 							"condition": "IPv6 address",
 							"default": "-",
@@ -4835,6 +4844,15 @@
 							"longdesc": "",
 							"shortdesc": "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)",
 							"type": "string"
+						}
+					},
+					{
+						"ipv6.ra": {
+							"condition": "IPv6 address",
+							"default": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to send IPv6 router advertisements",
+							"type": "bool"
 						}
 					},
 					{
