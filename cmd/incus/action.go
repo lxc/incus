@@ -1,10 +1,14 @@
 package main
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"slices"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -17,6 +21,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	config "github.com/lxc/incus/v7/shared/cliconfig"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/uefi"
 )
 
 // Start.
@@ -136,12 +141,13 @@ func (c *cmdStop) command() *cobra.Command {
 type cmdAction struct {
 	global *cmdGlobal
 
-	flagAll       bool
-	flagConsole   string
-	flagForce     bool
-	flagStateful  bool
-	flagStateless bool
-	flagTimeout   int
+	flagAll          bool
+	flagConsole      string
+	flagForce        bool
+	flagOverrideBoot string
+	flagStateful     bool
+	flagStateless    bool
+	flagTimeout      int
 }
 
 func (c *cmdAction) command(action string) *cobra.Command {
@@ -155,6 +161,7 @@ func (c *cmdAction) command(action string) *cobra.Command {
 		cli.AddBoolFlag(cmd.Flags(), &c.flagStateful, "stateful", i18n.G("Store the instance state"))
 	case "start":
 		cli.AddBoolFlag(cmd.Flags(), &c.flagStateless, "stateless", i18n.G("Ignore the instance state"))
+		cli.AddStringFlag(cmd.Flags(), &c.flagOverrideBoot, "override-boot", "", "ask", i18n.G("Attempt to boot a specific boot option (set to `ask` for an interactive choice)"))
 	}
 
 	if slices.Contains([]string{"start", "restart", "stop"}, action) {
@@ -255,11 +262,98 @@ func (c *cmdAction) doAction(action string, conf *config.Config, p *u.Parsed) er
 		// "start" for a frozen instance means "unfreeze"
 		if current.StatusCode == api.Frozen {
 			action = "unfreeze"
+			if c.flagOverrideBoot != "" {
+				return errors.New(i18n.G("--override-boot can't be used on frozen instances"))
+			}
 		}
 
 		// Always restore state (if present) unless asked not to
 		if action == "start" && current.Stateful && !c.flagStateless {
 			state = true
+		}
+
+		if c.flagOverrideBoot != "" {
+			// If the user has requested to set the next boot entry, load the available entries and select
+			// the relevant one.
+			bootNext := strings.ToUpper(c.flagOverrideBoot)
+			ask := bootNext == "ASK"
+			entry := uint16(0)
+			if !ask {
+				i, err := strconv.ParseUint(bootNext, 0, 16)
+				if err == nil {
+					entry = uint16(i)
+				} else {
+					var ok bool
+					bootNext, entry, ok = uefi.ParseBootXXXX(bootNext)
+					if !ok || bootNext != "BOOT" {
+						return errors.New(i18n.G("Cannot parse this --override-boot value"))
+					}
+				}
+			}
+
+			vars, err := d.GetInstanceNVRAMGUID(instanceName, uefi.EfiGlobalVariableGuid)
+			if err != nil {
+				return err
+			}
+
+			var bootOptions []uint16
+			data := [][]string{}
+			for name, v := range vars {
+				bootPrefix, i, ok := uefi.ParseBootXXXX(name)
+				if !ok || bootPrefix != "Boot" {
+					continue
+				}
+
+				bootOptions = append(bootOptions, i)
+				if ask {
+					// We received a JSON object unmarshalled as a map, so we convert it back to JSON to
+					// unmarshal it again into our desired type.
+					marshalled, err := json.Marshal(v.Data)
+					if err != nil {
+						// This shouldn’t happen.
+						return fmt.Errorf(i18n.G("Unable to parse %s as valid JSON"), name)
+					}
+
+					var boot uefi.Boot
+					err = json.Unmarshal(marshalled, &boot)
+					if err != nil || len(boot.DevicePaths) == 0 || len(boot.DevicePaths[0]) == 0 {
+						// This shouldn’t happen.
+						return fmt.Errorf(i18n.G("Unable to parse %s as a boot entry"), name)
+					}
+
+					data = append(data, []string{strconv.FormatUint(uint64(i), 10), boot.Description, boot.DevicePaths[0][0]})
+				}
+			}
+
+			if ask {
+				sort.Sort(cli.SortColumnsNaturally(data))
+				err = cli.RenderTable(os.Stdout, "table", []string{i18n.G("ID"), i18n.G("DESCRIPTION"), i18n.G("PATH")}, data, nil)
+				if err != nil {
+					return err
+				}
+
+				i, err := c.global.asker.AskInt(i18n.G("Select next boot entry: "), 0x0000, 0xffff, "", func(i int64) error {
+					if slices.Contains(bootOptions, uint16(i)) {
+						return nil
+					}
+
+					return fmt.Errorf(i18n.G("Unknown boot option %d"), i)
+				})
+				if err != nil {
+					return err
+				}
+
+				entry = uint16(i)
+			} else if !slices.Contains(bootOptions, entry) {
+				return fmt.Errorf(i18n.G("Unknown boot option %d"), entry)
+			}
+
+			b := make([]byte, 2)
+			binary.LittleEndian.PutUint16(b, entry)
+			err = d.UpdateRawInstanceNVRAMGUIDVar(instanceName, uefi.EfiGlobalVariableGuid, "BootNext", b, 7, 0)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed setting BootNext: %w"), err)
+			}
 		}
 	}
 
@@ -417,6 +511,10 @@ func (c *cmdAction) run(cmd *cobra.Command, args []string) error {
 		if len(batch) > 1 {
 			return errors.New(i18n.G("--console only works with a single instance"))
 		}
+	}
+
+	if len(batch) > 1 && cmd.Flags().Changed("override-boot") {
+		return errors.New(i18n.G("--override-boot only works with a single instance"))
 	}
 
 	// Run the action for every listed instance

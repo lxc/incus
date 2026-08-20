@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-20 14:46+0000\n"
+"POT-Creation-Date: 2026-08-20 19:39+0000\n"
 "PO-Revision-Date: 2026-08-12 03:48+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -738,17 +738,17 @@ msgstr "--all не может использоваться вместе с др�
 msgid "--attributes cannot be used with --format=%s"
 msgstr "--attributes нельзя использовать вместе с --format=%s"
 
-#: cmd/incus/action.go:246
+#: cmd/incus/action.go:253
 msgid "--console can't be used while forcing instance shutdown"
 msgstr ""
 "--console не может быть использоваться при принудительном завершении работы "
 "экземпляра"
 
-#: cmd/incus/action.go:414
+#: cmd/incus/action.go:508
 msgid "--console can't be used with --all"
 msgstr "--console не может быть использован с --all"
 
-#: cmd/incus/action.go:418
+#: cmd/incus/action.go:512
 msgid "--console only works with a single instance"
 msgstr "--console работает только с одним экземпляром"
 
@@ -791,6 +791,16 @@ msgstr "--no-profiles не может использоваться вместе 
 #: cmd/incus/copy.go:148
 msgid "--no-profiles cannot be used with --refresh"
 msgstr "--no-profiles не может использоваться с --refresh"
+
+#: cmd/incus/action.go:266
+#, fuzzy
+msgid "--override-boot can't be used on frozen instances"
+msgstr "--target не может использоваться с экземплярами"
+
+#: cmd/incus/action.go:517
+#, fuzzy
+msgid "--override-boot only works with a single instance"
+msgstr "--console работает только с одним экземпляром"
 
 #: cmd/incus/low_level.go:1612
 msgid "--owner and --type require --all to be set"
@@ -1243,6 +1253,12 @@ msgstr ""
 "Эта команда позволяет вам взаимодействовать с консолью загрузки экземпляра\n"
 ", а также извлекать из нее прошлые записи журнала событий."
 
+#: cmd/incus/action.go:164
+msgid ""
+"Attempt to boot a specific boot option (set to `ask` for an interactive "
+"choice)"
+msgstr ""
+
 #: cmd/incus/remote.go:778
 #, c-format
 msgid "Authentication type '%s' not supported by server"
@@ -1345,7 +1361,7 @@ msgstr "Битовая карта %s удалена с тома %s"
 msgid "Bond:"
 msgstr "Связь:"
 
-#: cmd/incus/action.go:355
+#: cmd/incus/action.go:449
 msgid "Both --all and instance name given"
 msgstr "Одновременно указан параметр --all и название экземпляра"
 
@@ -1531,6 +1547,10 @@ msgid ""
 msgstr ""
 "Невозможно переопределить конфигурацию для устройства %q: Устройство не "
 "найдено в профиле устройств"
+
+#: cmd/incus/action.go:289
+msgid "Cannot parse this --override-boot value"
+msgstr ""
 
 #: cmd/incus/utils.go:304
 msgid "Cannot read the stdin twice"
@@ -2227,16 +2247,17 @@ msgstr "Текущее количество VF: %d"
 msgid "DEFAULT TARGET ADDRESS"
 msgstr "ЦЕЛЕВОЙ АДРЕС ПО УМОЛЧАНИЮ"
 
-#: cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469
-#: cmd/incus/config_trust.go:422 cmd/incus/image.go:1108
-#: cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086
-#: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
-#: cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433
-#: cmd/incus/network_load_balancer.go:151 cmd/incus/network_peer.go:140
-#: cmd/incus/network_zone.go:146 cmd/incus/network_zone.go:875
-#: cmd/incus/operation.go:169 cmd/incus/profile.go:732 cmd/incus/project.go:553
-#: cmd/incus/storage.go:692 cmd/incus/storage_bucket.go:484
-#: cmd/incus/storage_bucket.go:879 cmd/incus/storage_volume.go:1627
+#: cmd/incus/action.go:330 cmd/incus/cluster.go:202
+#: cmd/incus/cluster_group.go:469 cmd/incus/config_trust.go:422
+#: cmd/incus/image.go:1108 cmd/incus/image_alias.go:251 cmd/incus/list.go:540
+#: cmd/incus/network.go:1086 cmd/incus/network_acl.go:163
+#: cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:144
+#: cmd/incus/network_integration.go:433 cmd/incus/network_load_balancer.go:151
+#: cmd/incus/network_peer.go:140 cmd/incus/network_zone.go:146
+#: cmd/incus/network_zone.go:875 cmd/incus/operation.go:169
+#: cmd/incus/profile.go:732 cmd/incus/project.go:553 cmd/incus/storage.go:692
+#: cmd/incus/storage_bucket.go:484 cmd/incus/storage_bucket.go:879
+#: cmd/incus/storage_volume.go:1627
 msgid "DESCRIPTION"
 msgstr "ОПИСАНИЕ"
 
@@ -3358,6 +3379,11 @@ msgstr "Не удалось распознать ответ проверки: %w
 msgid "Failed reading input file: %w"
 msgstr "Не удалось прочитать из файла: %w"
 
+#: cmd/incus/action.go:355
+#, fuzzy, c-format
+msgid "Failed setting BootNext: %w"
+msgstr "Не удалось запустить команду: %w"
+
 #: cmd/incus/console.go:437
 #, c-format
 msgid "Failed starting command: %w"
@@ -3772,7 +3798,7 @@ msgstr "Принудительное создание псевдотермина
 msgid "Force removing a member, even if degraded"
 msgstr "Принудительное удаление участника, даже если он деградировал"
 
-#: cmd/incus/action.go:165
+#: cmd/incus/action.go:172
 msgid "Force the instance to stop"
 msgstr "Принудительно остановить экземпляр"
 
@@ -4285,7 +4311,7 @@ msgstr "Ошибка ввода-вывода при копировании из 
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "Ошибка ввода-вывода при копировании из sshfs в экземпляр: %v"
 
-#: cmd/incus/network.go:964 cmd/incus/operation.go:167
+#: cmd/incus/action.go:330 cmd/incus/network.go:964 cmd/incus/operation.go:167
 msgid "ID"
 msgstr "ИДЕНТИФИКАТОР"
 
@@ -4414,7 +4440,7 @@ msgstr ""
 msgid "Ignore copy errors for volatile files"
 msgstr "Игнорировать ошибки копирования для временных файлов"
 
-#: cmd/incus/action.go:157
+#: cmd/incus/action.go:163
 msgid "Ignore the instance state"
 msgstr "Игнорировать состояние экземпляра"
 
@@ -4451,7 +4477,7 @@ msgstr "Импортирован образ с отпечатком: %s"
 msgid "Image refreshed successfully!"
 msgstr "Образ успешно обновлен!"
 
-#: cmd/incus/action.go:161 cmd/incus/launch.go:49
+#: cmd/incus/action.go:168 cmd/incus/launch.go:49
 msgid "Immediately attach to the console"
 msgstr "Немедленно подключиться к консоли"
 
@@ -7567,6 +7593,10 @@ msgstr ""
 "Переопределить режим работы терминала (автоматический, интерактивный или "
 "неинтерактивный)"
 
+#: cmd/incus/action.go:330
+msgid "PATH"
+msgstr ""
+
 #: cmd/incus/info.go:119 cmd/incus/info.go:205
 #, c-format
 msgid "PCI address: %v"
@@ -7660,7 +7690,7 @@ msgstr "Путь %s не существует"
 msgid "Path to the existing block device:"
 msgstr "Путь к существующему блочному устройству:"
 
-#: cmd/incus/action.go:58 cmd/incus/action.go:59
+#: cmd/incus/action.go:63 cmd/incus/action.go:64
 msgid "Pause instances"
 msgstr "Приостановить экземпляры"
 
@@ -8331,7 +8361,7 @@ msgstr "Требовать подтверждения пользователя"
 msgid "Resources:"
 msgstr "Ресурсы:"
 
-#: cmd/incus/action.go:104 cmd/incus/action.go:105
+#: cmd/incus/action.go:109 cmd/incus/action.go:110
 msgid "Restart instances"
 msgstr "Перезапустить экземпляры"
 
@@ -8387,7 +8417,7 @@ msgid "Restrict the certificate to one or more projects"
 msgstr ""
 "Ограничьте права доступа по сертификату одним или несколькими проектами"
 
-#: cmd/incus/action.go:81 cmd/incus/action.go:82
+#: cmd/incus/action.go:86 cmd/incus/action.go:87
 msgid "Resume instances"
 msgstr "Возобновить экземпляры"
 
@@ -8453,7 +8483,7 @@ msgstr "Выполнить операцию восстановления для 
 msgid "Run again a specific project"
 msgstr "Запустить снова конкретный проект"
 
-#: cmd/incus/action.go:151
+#: cmd/incus/action.go:157
 msgid "Run against all instances"
 msgstr "Запустить для всех экземпляров"
 
@@ -8559,6 +8589,10 @@ msgstr "Секретный ключ (автогенерация, если пус
 #, c-format
 msgid "Secret key: %s"
 msgstr "Секретный ключ: %s"
+
+#: cmd/incus/action.go:335
+msgid "Select next boot entry: "
+msgstr ""
 
 #: cmd/incus/query.go:40 cmd/incus/query.go:41
 msgid "Send a raw query to the server"
@@ -9380,7 +9414,7 @@ msgstr "Моментальные снимки:"
 msgid "Socket %d:"
 msgstr "Сокет %d:"
 
-#: cmd/incus/action.go:456
+#: cmd/incus/action.go:554
 #, c-format
 msgid "Some instances failed to %s"
 msgstr "Некоторые экземпляры не удалось %s"
@@ -9405,7 +9439,7 @@ msgstr "Источник:"
 msgid "Specific address to listen on"
 msgstr "Конкретный адрес для подключений"
 
-#: cmd/incus/action.go:36 cmd/incus/action.go:37
+#: cmd/incus/action.go:41 cmd/incus/action.go:42
 msgid "Start instances"
 msgstr "Запустить экземпляры"
 
@@ -9441,7 +9475,7 @@ msgstr "запушенное"
 msgid "Status: %s"
 msgstr "Статус: %s"
 
-#: cmd/incus/action.go:126 cmd/incus/action.go:127
+#: cmd/incus/action.go:131 cmd/incus/action.go:132
 msgid "Stop instances"
 msgstr "Остановить экземпляры"
 
@@ -9557,7 +9591,7 @@ msgstr "Моментальный снимок %s тома хранения, уд
 msgid "Store the bitmap on disk"
 msgstr "Сохраните битовую карту на диске"
 
-#: cmd/incus/action.go:155
+#: cmd/incus/action.go:161
 msgid "Store the instance state"
 msgstr "Сохранить состояние экземпляра"
 
@@ -10048,7 +10082,7 @@ msgstr "Этот сервер не доступен по сети"
 msgid "Threads:"
 msgstr "Потоки:"
 
-#: cmd/incus/action.go:166
+#: cmd/incus/action.go:173
 msgid "Time to wait for the instance to shutdown cleanly"
 msgstr "Время ожидания корректного завершения работы экземпляра"
 
@@ -10137,7 +10171,7 @@ msgstr "Политика передачи"
 msgid "Trust token for %s: "
 msgstr "Доверенный токен для %s: "
 
-#: cmd/incus/action.go:306 cmd/incus/launch.go:142
+#: cmd/incus/action.go:400 cmd/incus/launch.go:142
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr ""
@@ -10238,6 +10272,16 @@ msgstr ""
 msgid "Unable to create a temporary file: %v"
 msgstr "Невозможно создать временный файл: %v"
 
+#: cmd/incus/action.go:321
+#, fuzzy, c-format
+msgid "Unable to parse %s as a boot entry"
+msgstr "Не удалось разобрать файл предварительной настройки (preseed): %w"
+
+#: cmd/incus/action.go:314
+#, fuzzy, c-format
+msgid "Unable to parse %s as valid JSON"
+msgstr "Не удалось разобрать файл предварительной настройки (preseed): %w"
+
 #: cmd/incus/low_level.go:1301 cmd/incus/low_level.go:1526
 #: cmd/incus/low_level.go:1638
 #, c-format
@@ -10262,6 +10306,11 @@ msgstr "Дистанционный сервер недоступен"
 #: cmd/incus/low_level.go:952
 msgid "Unexpected input size"
 msgstr "Неожиданный размер входных данных"
+
+#: cmd/incus/action.go:340 cmd/incus/action.go:348
+#, fuzzy, c-format
+msgid "Unknown boot option %d"
+msgstr "Неизвестный тип вывода %q"
 
 #: cmd/incus/config_trust.go:200
 #, c-format
@@ -11074,7 +11123,7 @@ msgstr "включено"
 msgid "ephemeral"
 msgstr "эфемерный"
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:546
 #, c-format
 msgid "error: %v"
 msgstr "ошибка: %v"

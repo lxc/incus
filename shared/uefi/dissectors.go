@@ -84,17 +84,12 @@ func bootOrder(prefix string) dissector {
 		return entries, nil
 	}, func(w *writer, v []string) error {
 		for _, entry := range v {
-			suffix, ok := strings.CutPrefix(entry, prefix)
-			if !ok || len(suffix) != 4 {
+			bootPrefix, n, ok := ParseBootXXXX(strings.ToUpper(entry))
+			if !ok || bootPrefix != strings.ToUpper(prefix) {
 				return fmt.Errorf("Entries must be of the form %s####", prefix)
 			}
 
-			n, err := strconv.ParseUint(suffix, 16, 16)
-			if err != nil {
-				return fmt.Errorf("Invalid entry ID: %s", suffix)
-			}
-
-			err = w.writeU16(uint16(n))
+			err := w.writeU16(uint16(n))
 			if err != nil {
 				return err
 			}
@@ -104,7 +99,8 @@ func bootOrder(prefix string) dissector {
 	})
 }
 
-type bootType struct {
+// Boot represents a boot entry.
+type Boot struct {
 	Active         bool       `json:"active"`
 	ForceReconnect bool       `json:"force_reconnect"`
 	Hidden         bool       `json:"hidden"`
@@ -116,7 +112,7 @@ type bootType struct {
 
 // boot dissects `Boot####`, `Driver####`, `SysPrep####`, `OsRecovery####` and
 // `PlatformRecovery####` variables.
-var boot = wrap(func(r *reader) (*bootType, error) {
+var boot = wrap(func(r *reader) (*Boot, error) {
 	attrs, err := r.readU32()
 	if err != nil {
 		return nil, err
@@ -158,7 +154,7 @@ var boot = wrap(func(r *reader) (*bootType, error) {
 		return nil, err
 	}
 
-	return &bootType{
+	return &Boot{
 		Active:         attrs&0x01 != 0,
 		ForceReconnect: attrs&0x02 != 0,
 		Hidden:         attrs&0x08 != 0,
@@ -167,7 +163,7 @@ var boot = wrap(func(r *reader) (*bootType, error) {
 		DevicePaths:    paths,
 		OptionalData:   base64.StdEncoding.EncodeToString(remaining),
 	}, nil
-}, func(w *writer, v *bootType) error {
+}, func(w *writer, v *Boot) error {
 	var attrs uint32
 	switch v.Category {
 	case "boot":
@@ -230,6 +226,23 @@ var boot = wrap(func(r *reader) (*bootType, error) {
 	}
 
 	return w.write(remaining)
+})
+
+// bootNext dissects `BootNext` variables.
+var bootNext = wrap(func(r *reader) (string, error) {
+	n, err := r.readU16()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("Boot%04X", n), nil
+}, func(w *writer, v string) error {
+	bootPrefix, n, ok := ParseBootXXXX(strings.ToUpper(v))
+	if !ok || bootPrefix != "BOOT" {
+		return errors.New("BootNext must be of the form Boot####")
+	}
+
+	return w.writeU16(uint16(n))
 })
 
 // ESLEntry represents an ESL entry.
@@ -754,4 +767,36 @@ var certDB = wrap(func(r *reader) ([]certDBEntry, error) {
 	}
 
 	return w.writeU32At(uint32(w.size()), 0)
+})
+
+type platformConfigType struct {
+	Width  uint32 `json:"width"`
+	Height uint32 `json:"height"`
+}
+
+// platformConfig dissects `PlatformConfig` variables.
+var platformConfig = wrap(func(r *reader) (*platformConfigType, error) {
+	width, err := r.readU32()
+	if err != nil {
+		return nil, err
+	}
+
+	height, err := r.readU32()
+	if err != nil {
+		return nil, err
+	}
+
+	return &platformConfigType{Width: width, Height: height}, nil
+}, func(w *writer, v *platformConfigType) error {
+	err := w.writeU32(v.Width)
+	if err != nil {
+		return err
+	}
+
+	err = w.writeU32(v.Height)
+	if err != nil {
+		return err
+	}
+
+	return nil
 })

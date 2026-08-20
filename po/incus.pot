@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-08-20 14:46+0000\n"
+        "POT-Creation-Date: 2026-08-20 19:39+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -448,15 +448,15 @@ msgstr  ""
 msgid   "--attributes cannot be used with --format=%s"
 msgstr  ""
 
-#: cmd/incus/action.go:246
+#: cmd/incus/action.go:253
 msgid   "--console can't be used while forcing instance shutdown"
 msgstr  ""
 
-#: cmd/incus/action.go:414
+#: cmd/incus/action.go:508
 msgid   "--console can't be used with --all"
 msgstr  ""
 
-#: cmd/incus/action.go:418
+#: cmd/incus/action.go:512
 msgid   "--console only works with a single instance"
 msgstr  ""
 
@@ -490,6 +490,14 @@ msgstr  ""
 
 #: cmd/incus/copy.go:148
 msgid   "--no-profiles cannot be used with --refresh"
+msgstr  ""
+
+#: cmd/incus/action.go:266
+msgid   "--override-boot can't be used on frozen instances"
+msgstr  ""
+
+#: cmd/incus/action.go:517
+msgid   "--override-boot only works with a single instance"
 msgstr  ""
 
 #: cmd/incus/low_level.go:1612
@@ -888,6 +896,10 @@ msgid   "Attach to instance consoles\n"
         "as well as retrieve past log entries from it."
 msgstr  ""
 
+#: cmd/incus/action.go:164
+msgid   "Attempt to boot a specific boot option (set to `ask` for an interactive choice)"
+msgstr  ""
+
 #: cmd/incus/remote.go:778
 #, c-format
 msgid   "Authentication type '%s' not supported by server"
@@ -986,7 +998,7 @@ msgstr  ""
 msgid   "Bond:"
 msgstr  ""
 
-#: cmd/incus/action.go:355
+#: cmd/incus/action.go:449
 msgid   "Both --all and instance name given"
 msgstr  ""
 
@@ -1161,6 +1173,10 @@ msgstr  ""
 #: cmd/incus/create.go:318
 #, c-format
 msgid   "Cannot override config for device %q: Device not found in profile devices"
+msgstr  ""
+
+#: cmd/incus/action.go:289
+msgid   "Cannot parse this --override-boot value"
 msgstr  ""
 
 #: cmd/incus/utils.go:304
@@ -1712,7 +1728,7 @@ msgstr  ""
 msgid   "DEFAULT TARGET ADDRESS"
 msgstr  ""
 
-#: cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469 cmd/incus/config_trust.go:422 cmd/incus/image.go:1108 cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086 cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433 cmd/incus/network_load_balancer.go:151 cmd/incus/network_peer.go:140 cmd/incus/network_zone.go:146 cmd/incus/network_zone.go:875 cmd/incus/operation.go:169 cmd/incus/profile.go:732 cmd/incus/project.go:553 cmd/incus/storage.go:692 cmd/incus/storage_bucket.go:484 cmd/incus/storage_bucket.go:879 cmd/incus/storage_volume.go:1627
+#: cmd/incus/action.go:330 cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469 cmd/incus/config_trust.go:422 cmd/incus/image.go:1108 cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086 cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433 cmd/incus/network_load_balancer.go:151 cmd/incus/network_peer.go:140 cmd/incus/network_zone.go:146 cmd/incus/network_zone.go:875 cmd/incus/operation.go:169 cmd/incus/profile.go:732 cmd/incus/project.go:553 cmd/incus/storage.go:692 cmd/incus/storage_bucket.go:484 cmd/incus/storage_bucket.go:879 cmd/incus/storage_volume.go:1627
 msgid   "DESCRIPTION"
 msgstr  ""
 
@@ -2645,6 +2661,11 @@ msgstr  ""
 msgid   "Failed reading input file: %w"
 msgstr  ""
 
+#: cmd/incus/action.go:355
+#, c-format
+msgid   "Failed setting BootNext: %w"
+msgstr  ""
+
 #: cmd/incus/console.go:437
 #, c-format
 msgid   "Failed starting command: %w"
@@ -3046,7 +3067,7 @@ msgstr  ""
 msgid   "Force removing a member, even if degraded"
 msgstr  ""
 
-#: cmd/incus/action.go:165
+#: cmd/incus/action.go:172
 msgid   "Force the instance to stop"
 msgstr  ""
 
@@ -3446,7 +3467,7 @@ msgstr  ""
 msgid   "I/O copy from sshfs to instance failed: %v"
 msgstr  ""
 
-#: cmd/incus/network.go:964 cmd/incus/operation.go:167
+#: cmd/incus/action.go:330 cmd/incus/network.go:964 cmd/incus/operation.go:167
 msgid   "ID"
 msgstr  ""
 
@@ -3562,7 +3583,7 @@ msgstr  ""
 msgid   "Ignore copy errors for volatile files"
 msgstr  ""
 
-#: cmd/incus/action.go:157
+#: cmd/incus/action.go:163
 msgid   "Ignore the instance state"
 msgstr  ""
 
@@ -3599,7 +3620,7 @@ msgstr  ""
 msgid   "Image refreshed successfully!"
 msgstr  ""
 
-#: cmd/incus/action.go:161 cmd/incus/launch.go:49
+#: cmd/incus/action.go:168 cmd/incus/launch.go:49
 msgid   "Immediately attach to the console"
 msgstr  ""
 
@@ -5857,6 +5878,10 @@ msgstr  ""
 msgid   "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr  ""
 
+#: cmd/incus/action.go:330
+msgid   "PATH"
+msgstr  ""
+
 #: cmd/incus/info.go:119 cmd/incus/info.go:205
 #, c-format
 msgid   "PCI address: %v"
@@ -5946,7 +5971,7 @@ msgstr  ""
 msgid   "Path to the existing block device:"
 msgstr  ""
 
-#: cmd/incus/action.go:58 cmd/incus/action.go:59
+#: cmd/incus/action.go:63 cmd/incus/action.go:64
 msgid   "Pause instances"
 msgstr  ""
 
@@ -6557,7 +6582,7 @@ msgstr  ""
 msgid   "Resources:"
 msgstr  ""
 
-#: cmd/incus/action.go:104 cmd/incus/action.go:105
+#: cmd/incus/action.go:109 cmd/incus/action.go:110
 msgid   "Restart instances"
 msgstr  ""
 
@@ -6596,7 +6621,7 @@ msgstr  ""
 msgid   "Restrict the certificate to one or more projects"
 msgstr  ""
 
-#: cmd/incus/action.go:81 cmd/incus/action.go:82
+#: cmd/incus/action.go:86 cmd/incus/action.go:87
 msgid   "Resume instances"
 msgstr  ""
 
@@ -6654,7 +6679,7 @@ msgstr  ""
 msgid   "Run again a specific project"
 msgstr  ""
 
-#: cmd/incus/action.go:151
+#: cmd/incus/action.go:157
 msgid   "Run against all instances"
 msgstr  ""
 
@@ -6757,6 +6782,10 @@ msgstr  ""
 #: cmd/incus/storage_bucket.go:1056
 #, c-format
 msgid   "Secret key: %s"
+msgstr  ""
+
+#: cmd/incus/action.go:335
+msgid   "Select next boot entry: "
 msgstr  ""
 
 #: cmd/incus/query.go:40 cmd/incus/query.go:41
@@ -7420,7 +7449,7 @@ msgstr  ""
 msgid   "Socket %d:"
 msgstr  ""
 
-#: cmd/incus/action.go:456
+#: cmd/incus/action.go:554
 #, c-format
 msgid   "Some instances failed to %s"
 msgstr  ""
@@ -7441,7 +7470,7 @@ msgstr  ""
 msgid   "Specific address to listen on"
 msgstr  ""
 
-#: cmd/incus/action.go:36 cmd/incus/action.go:37
+#: cmd/incus/action.go:41 cmd/incus/action.go:42
 msgid   "Start instances"
 msgstr  ""
 
@@ -7477,7 +7506,7 @@ msgstr  ""
 msgid   "Status: %s"
 msgstr  ""
 
-#: cmd/incus/action.go:126 cmd/incus/action.go:127
+#: cmd/incus/action.go:131 cmd/incus/action.go:132
 msgid   "Stop instances"
 msgstr  ""
 
@@ -7591,7 +7620,7 @@ msgstr  ""
 msgid   "Store the bitmap on disk"
 msgstr  ""
 
-#: cmd/incus/action.go:155
+#: cmd/incus/action.go:161
 msgid   "Store the instance state"
 msgstr  ""
 
@@ -7996,7 +8025,7 @@ msgstr  ""
 msgid   "Threads:"
 msgstr  ""
 
-#: cmd/incus/action.go:166
+#: cmd/incus/action.go:173
 msgid   "Time to wait for the instance to shutdown cleanly"
 msgstr  ""
 
@@ -8072,7 +8101,7 @@ msgstr  ""
 msgid   "Trust token for %s: "
 msgstr  ""
 
-#: cmd/incus/action.go:306 cmd/incus/launch.go:142
+#: cmd/incus/action.go:400 cmd/incus/launch.go:142
 #, c-format
 msgid   "Try `incus info --show-log %s%s` for more info"
 msgstr  ""
@@ -8158,6 +8187,16 @@ msgstr  ""
 msgid   "Unable to create a temporary file: %v"
 msgstr  ""
 
+#: cmd/incus/action.go:321
+#, c-format
+msgid   "Unable to parse %s as a boot entry"
+msgstr  ""
+
+#: cmd/incus/action.go:314
+#, c-format
+msgid   "Unable to parse %s as valid JSON"
+msgstr  ""
+
 #: cmd/incus/low_level.go:1301 cmd/incus/low_level.go:1526 cmd/incus/low_level.go:1638
 #, c-format
 msgid   "Unable to parse %s:%s as an EFI Signature List"
@@ -8179,6 +8218,11 @@ msgstr  ""
 
 #: cmd/incus/low_level.go:952
 msgid   "Unexpected input size"
+msgstr  ""
+
+#: cmd/incus/action.go:340 cmd/incus/action.go:348
+#, c-format
+msgid   "Unknown boot option %d"
 msgstr  ""
 
 #: cmd/incus/config_trust.go:200
@@ -8869,7 +8913,7 @@ msgstr  ""
 msgid   "ephemeral"
 msgstr  ""
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:546
 #, c-format
 msgid   "error: %v"
 msgstr  ""
