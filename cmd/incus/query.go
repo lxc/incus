@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"slices"
 	"strings"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/lxc/incus/v7/internal/i18n"
 	"github.com/lxc/incus/v7/shared/api"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 type cmdQuery struct {
@@ -27,6 +29,7 @@ type cmdQuery struct {
 	flagRespRaw  bool
 	flagAction   string
 	flagData     string
+	flagDataFile string
 }
 
 var cmdQueryUsage = u.Usage{u.Placeholder(i18n.G("API path")).Remote()}
@@ -49,6 +52,7 @@ func (c *cmdQuery) command() *cobra.Command {
 	cli.AddBoolFlag(cmd.Flags(), &c.flagRespRaw, "raw", i18n.G("Print the raw response"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagAction, "request|X", "GET", "", i18n.G("Action"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagData, "data|d", "", "", i18n.G("Input data"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagDataFile, "data-file", "", "", i18n.G("Input data file (\"-\" for stdin)"))
 
 	return cmd
 }
@@ -79,6 +83,10 @@ func (c *cmdQuery) run(cmd *cobra.Command, args []string) error {
 		return errors.New(i18n.G("--project cannot be used with the query command"))
 	}
 
+	if c.flagData != "" && c.flagDataFile != "" {
+		return errors.New(i18n.G("--data cannot be used with --data-file"))
+	}
+
 	if !slices.Contains([]string{"GET", "PUT", "POST", "PATCH", "DELETE"}, c.flagAction) {
 		return fmt.Errorf(i18n.G("Action %q isn't supported by this tool"), c.flagAction)
 	}
@@ -93,6 +101,22 @@ func (c *cmdQuery) run(cmd *cobra.Command, args []string) error {
 	err = json.Unmarshal([]byte(c.flagData), &data)
 	if err != nil {
 		data = c.flagData
+	}
+
+	var input *os.File
+	if c.flagDataFile != "" {
+		if isStdin(c.flagDataFile) {
+			input = os.Stdin
+		} else {
+			input, err = os.Open(c.flagDataFile)
+			if err != nil {
+				return fmt.Errorf(i18n.G("Failed to open input file %q: %w"), c.flagDataFile, err)
+			}
+
+			defer logger.WarnOnErrorExcept(input.Close, []error{os.ErrClosed}, "Failed to close file")
+		}
+
+		data = input
 	}
 
 	// Perform the query
@@ -121,8 +145,16 @@ func (c *cmdQuery) run(cmd *cobra.Command, args []string) error {
 		}
 
 		// Setup input.
-		var rs io.ReadSeeker
-		if c.flagData != "" {
+		var rs io.Reader
+		if input != nil {
+			// Rewind the input so that it can be sent again.
+			_, err := input.Seek(0, io.SeekStart)
+			if err != nil {
+				return cleanErr
+			}
+
+			rs = input
+		} else if c.flagData != "" {
 			rs = bytes.NewReader([]byte(c.flagData))
 		}
 
