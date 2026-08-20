@@ -733,6 +733,22 @@
 						}
 					},
 					{
+						"limits.egress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that outgoing traffic may send in excess of `limits.egress`, requires `limits.egress.burst`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.egress.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that outgoing traffic may burst up to, requires `limits.egress.bucket`",
+							"type": "string"
+						}
+					},
+					{
 						"limits.ingress": {
 							"longdesc": "",
 							"managed": "no",
@@ -741,10 +757,42 @@
 						}
 					},
 					{
+						"limits.ingress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that incoming traffic may send in excess of `limits.ingress`, requires `limits.ingress.burst`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that incoming traffic may burst up to, requires `limits.ingress.bucket`",
+							"type": "string"
+						}
+					},
+					{
 						"limits.max": {
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that both incoming and outgoing traffic may burst up to (same as setting both `limits.ingress.burst` and `limits.egress.burst`)",
 							"type": "string"
 						}
 					},
@@ -1268,6 +1316,14 @@
 						}
 					},
 					{
+						"limits.egress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that outgoing traffic may send in excess of `limits.egress` (mutually exclusive with `limits.max.bucket`)",
+							"type": "string"
+						}
+					},
+					{
 						"limits.ingress": {
 							"longdesc": "",
 							"managed": "no",
@@ -1276,10 +1332,26 @@
 						}
 					},
 					{
+						"limits.ingress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that incoming traffic may send in excess of `limits.ingress` (mutually exclusive with `limits.max.bucket`)",
+							"type": "string"
+						}
+					},
+					{
 						"limits.max": {
 							"longdesc": "",
 							"managed": "no",
 							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic. (same as setting both limits.ingress and limits.egress / mutually exclusive with limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket` / mutually exclusive with them)",
 							"type": "string"
 						}
 					},
@@ -1462,6 +1534,22 @@
 						}
 					},
 					{
+						"limits.egress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that outgoing traffic may send in excess of `limits.egress`, requires `limits.egress.burst`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.egress.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that outgoing traffic may burst up to, requires `limits.egress.bucket`",
+							"type": "string"
+						}
+					},
+					{
 						"limits.ingress": {
 							"longdesc": "",
 							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)",
@@ -1469,9 +1557,41 @@
 						}
 					},
 					{
+						"limits.ingress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that incoming traffic may send in excess of `limits.ingress`, requires `limits.ingress.burst`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that incoming traffic may burst up to, requires `limits.ingress.bucket`",
+							"type": "string"
+						}
+					},
+					{
 						"limits.max": {
 							"longdesc": "",
 							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that both incoming and outgoing traffic may burst up to (same as setting both `limits.ingress.burst` and `limits.egress.burst`)",
 							"type": "string"
 						}
 					},
@@ -1767,6 +1887,22 @@
 						}
 					},
 					{
+						"limits.egress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that outgoing traffic may send in excess of `limits.egress`, requires `limits.egress.burst`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.egress.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that outgoing traffic may burst up to, requires `limits.egress.bucket`",
+							"type": "string"
+						}
+					},
+					{
 						"limits.ingress": {
 							"longdesc": "",
 							"shortdesc": "I/O limit in bit/s for incoming traffic (various suffixes supported, see {ref}`instances-limit-units`)",
@@ -1774,9 +1910,41 @@
 						}
 					},
 					{
+						"limits.ingress.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that incoming traffic may send in excess of `limits.ingress`, requires `limits.ingress.burst`",
+							"type": "string"
+						}
+					},
+					{
+						"limits.ingress.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that incoming traffic may burst up to, requires `limits.ingress.bucket`",
+							"type": "string"
+						}
+					},
+					{
 						"limits.max": {
 							"longdesc": "",
 							"shortdesc": "I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.bucket": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket`)",
+							"type": "string"
+						}
+					},
+					{
+						"limits.max.burst": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "I/O limit in bit/s that both incoming and outgoing traffic may burst up to (same as setting both `limits.ingress.burst` and `limits.egress.burst`)",
 							"type": "string"
 						}
 					},
