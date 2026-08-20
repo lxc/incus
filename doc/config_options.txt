@@ -3844,6 +3844,14 @@ User keys can be used in search.
 
 ```
 
+```{config:option} ipv6.ra network_bridge-common
+:condition: "IPv6 address"
+:default: "`true`"
+:shortdesc: "Whether to send IPv6 router advertisements"
+:type: "bool"
+
+```
+
 ```{config:option} ipv6.routes network_bridge-common
 :condition: "IPv6 address"
 :default: "-"
@@ -4327,6 +4335,14 @@ User keys can be used in search.
 :condition: "IPv6 address"
 :shortdesc: "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)"
 :type: "string"
+
+```
+
+```{config:option} ipv6.ra network_ovn-common
+:condition: "IPv6 address"
+:default: "`true`"
+:shortdesc: "Whether to send IPv6 router advertisements"
+:type: "bool"
 
 ```
 
