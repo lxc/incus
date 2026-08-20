@@ -92,6 +92,10 @@ All I/O limits only apply to actual block device access.
 Therefore, consider the file system's own overhead when setting limits.
 Access to cached data is not affected by the limit.
 
+For virtual machines, you can also allow the disk to temporarily exceed its limits by setting the `limits.read.burst`, `limits.write.burst` or `limits.max.burst` properties, along with `limits.read.burst.length`, `limits.write.burst.length` or `limits.max.burst.length` to control how long a burst may last (one second by default).
+A burst limit must be higher than the sustained limit it applies to, and only takes effect alongside one.
+Burst limits are not available for containers.
+
 (storage-volume-special)=
 ### Use the volume for backups or images
 
