@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-19 22:43-0400\n"
+"POT-Creation-Date: 2026-08-20 14:46+0000\n"
 "PO-Revision-Date: 2026-08-12 03:54+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Georgian <https://hosted.weblate.org/projects/incus/cli/ka/>\n"
@@ -513,6 +513,11 @@ msgstr "--console-ის გამოყენება --all-თან ერ�
 msgid "--console only works with a single instance"
 msgstr "--console მხოლოდ ერთ გაშვებულ ასლთან მუშაობს"
 
+#: cmd/incus/query.go:87
+#, fuzzy
+msgid "--data cannot be used with --data-file"
+msgstr "--target გაშვებულ ასლებთან ერთად ვერ გამოიყენებთ"
+
 #: cmd/incus/config.go:474 cmd/incus/config.go:726
 msgid "--expanded cannot be used with a server"
 msgstr "--expanded სერვერთან ერთად ვერ გამოიყენებთ"
@@ -547,7 +552,7 @@ msgstr "--no-profiles -ის და --refresh -ის ერთად გამ
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:79
+#: cmd/incus/query.go:83
 msgid "--project cannot be used with the query command"
 msgstr "--project -ის გამოყენება მოთხოვნის ბრძანებასთან ერთად შეუძლებელია"
 
@@ -635,7 +640,7 @@ msgstr "ფსევდონიმი"
 msgid "ALIASES"
 msgstr "ფსევდონიმები"
 
-#: cmd/incus/query.go:32
+#: cmd/incus/query.go:35
 msgid "API path"
 msgstr ""
 
@@ -676,12 +681,12 @@ msgstr "წვდომა გაფართოებულ კონფიგ�
 msgid "Acknowledge warning"
 msgstr "გაფრთხილების დადასტურება"
 
-#: cmd/incus/query.go:50
+#: cmd/incus/query.go:53
 #, fuzzy
 msgid "Action"
 msgstr "მდგომარეობა"
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:91
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "ქმედება %q ამ პროგრამის მიერ მხარდაჭერილი არაა"
@@ -3078,6 +3083,11 @@ msgstr ""
 msgid "Failed to load configuration: %s"
 msgstr ""
 
+#: cmd/incus/query.go:113
+#, fuzzy, c-format
+msgid "Failed to open input file %q: %w"
+msgstr "sshfs-ის გაშვების შეცდომა: %w"
+
 #: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828
 #: cmd/incus/utils_sftp.go:330
 #, c-format
@@ -3982,9 +3992,13 @@ msgstr ""
 msgid "Infiniband:"
 msgstr ""
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:54
 msgid "Input data"
 msgstr "შეყვანილი მონაცემები"
+
+#: cmd/incus/query.go:55
+msgid "Input data file (\"-\" for stdin)"
+msgstr ""
 
 #: cmd/incus/low_level.go:1265
 #, fuzzy
@@ -6470,7 +6484,7 @@ msgstr "დახმარების გამოტანა"
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr ""
 
-#: cmd/incus/query.go:49
+#: cmd/incus/query.go:52
 msgid "Print the raw response"
 msgstr ""
 
@@ -6659,7 +6673,7 @@ msgstr ""
 msgid "Pushing %s to %s: %%s"
 msgstr ""
 
-#: cmd/incus/query.go:88
+#: cmd/incus/query.go:96
 msgid "Query path must start with /"
 msgstr ""
 
@@ -7213,7 +7227,7 @@ msgstr ""
 msgid "Secret key: %s"
 msgstr "საიდუმლო გასაღები: %s"
 
-#: cmd/incus/query.go:37 cmd/incus/query.go:38
+#: cmd/incus/query.go:40 cmd/incus/query.go:41
 msgid "Send a raw query to the server"
 msgstr ""
 
@@ -9201,7 +9215,7 @@ msgid ""
 "  containers."
 msgstr ""
 
-#: cmd/incus/query.go:48
+#: cmd/incus/query.go:51
 msgid "Wait for the operation to complete"
 msgstr ""
 
@@ -9954,7 +9968,7 @@ msgid ""
 "    Update a project using the content of project.yaml"
 msgstr ""
 
-#: cmd/incus/query.go:41
+#: cmd/incus/query.go:44
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\"."

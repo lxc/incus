@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-19 22:43-0400\n"
+"POT-Creation-Date: 2026-08-20 14:46+0000\n"
 "PO-Revision-Date: 2026-08-12 03:49+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -749,6 +749,11 @@ msgstr "--console 不能与 --all 一起使用"
 msgid "--console only works with a single instance"
 msgstr "--console 只适用于单个实例"
 
+#: cmd/incus/query.go:87
+#, fuzzy
+msgid "--data cannot be used with --data-file"
+msgstr "--target 不能与实例一起使用"
+
 #: cmd/incus/config.go:474 cmd/incus/config.go:726
 msgid "--expanded cannot be used with a server"
 msgstr "--expanded 不能与服务器一起使用"
@@ -784,7 +789,7 @@ msgstr "--no-profiles 不能与 --refresh 一起使用"
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:79
+#: cmd/incus/query.go:83
 msgid "--project cannot be used with the query command"
 msgstr "--project 不能与 query 命令一起使用"
 
@@ -874,7 +879,7 @@ msgstr "别名"
 msgid "ALIASES"
 msgstr "别名"
 
-#: cmd/incus/query.go:32
+#: cmd/incus/query.go:35
 msgid "API path"
 msgstr ""
 
@@ -915,12 +920,12 @@ msgstr "访问扩展配置"
 msgid "Acknowledge warning"
 msgstr "确认警告"
 
-#: cmd/incus/query.go:50
+#: cmd/incus/query.go:53
 #, fuzzy
 msgid "Action"
 msgstr "描述"
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:91
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "此工具不支持操作 %q"
@@ -3447,6 +3452,11 @@ msgstr "监听连接失败：%w"
 msgid "Failed to load configuration: %s"
 msgstr "加载配置失败：%s"
 
+#: cmd/incus/query.go:113
+#, fuzzy, c-format
+msgid "Failed to open input file %q: %w"
+msgstr "关闭服务器证书文件 %q 失败：%w"
+
 #: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828
 #: cmd/incus/utils_sftp.go:330
 #, fuzzy, c-format
@@ -4387,9 +4397,13 @@ msgstr ""
 msgid "Infiniband:"
 msgstr "Infiniband："
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:54
 msgid "Input data"
 msgstr "输入数据"
+
+#: cmd/incus/query.go:55
+msgid "Input data file (\"-\" for stdin)"
+msgstr ""
 
 #: cmd/incus/low_level.go:1265
 #, fuzzy
@@ -7192,7 +7206,7 @@ msgstr ""
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr "客户端证书已存在"
 
-#: cmd/incus/query.go:49
+#: cmd/incus/query.go:52
 msgid "Print the raw response"
 msgstr ""
 
@@ -7385,7 +7399,7 @@ msgstr "向实例推送文件"
 msgid "Pushing %s to %s: %%s"
 msgstr "正在向 %[2]s 推送 %[1]s: %%s"
 
-#: cmd/incus/query.go:88
+#: cmd/incus/query.go:96
 msgid "Query path must start with /"
 msgstr "查询路径必须以 / 开头"
 
@@ -7950,7 +7964,7 @@ msgstr ""
 msgid "Secret key: %s"
 msgstr ""
 
-#: cmd/incus/query.go:37 cmd/incus/query.go:38
+#: cmd/incus/query.go:40 cmd/incus/query.go:41
 msgid "Send a raw query to the server"
 msgstr ""
 
@@ -9952,7 +9966,7 @@ msgid ""
 "  containers."
 msgstr ""
 
-#: cmd/incus/query.go:48
+#: cmd/incus/query.go:51
 msgid "Wait for the operation to complete"
 msgstr ""
 
@@ -10714,7 +10728,7 @@ msgid ""
 "    Update a project using the content of project.yaml"
 msgstr ""
 
-#: cmd/incus/query.go:41
+#: cmd/incus/query.go:44
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\"."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-19 22:43-0400\n"
+"POT-Creation-Date: 2026-08-20 14:46+0000\n"
 "PO-Revision-Date: 2026-08-12 03:44+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -754,6 +754,11 @@ msgstr "--refresh kann nur mit Containern verwendet werden"
 msgid "--console only works with a single instance"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
+#: cmd/incus/query.go:87
+#, fuzzy
+msgid "--data cannot be used with --data-file"
+msgstr "--target kann nicht mit Instanzen verwendet werden"
+
 #: cmd/incus/config.go:474 cmd/incus/config.go:726
 #, fuzzy
 msgid "--expanded cannot be used with a server"
@@ -793,7 +798,7 @@ msgstr "--refresh kann nur mit Containern verwendet werden"
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:79
+#: cmd/incus/query.go:83
 #, fuzzy
 msgid "--project cannot be used with the query command"
 msgstr "--refresh kann nur mit Containern verwendet werden"
@@ -884,7 +889,7 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASES"
 
-#: cmd/incus/query.go:32
+#: cmd/incus/query.go:35
 msgid "API path"
 msgstr ""
 
@@ -928,12 +933,12 @@ msgstr "Zugriff auf erweiterte Konfiguration"
 msgid "Acknowledge warning"
 msgstr "Warnung gesehen"
 
-#: cmd/incus/query.go:50
+#: cmd/incus/query.go:53
 #, fuzzy
 msgid "Action"
 msgstr "Fingerabdruck: %s\n"
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:91
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "Aktion %q wird von diesem Programm nicht unterstützt"
@@ -3596,6 +3601,11 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to load configuration: %s"
 msgstr ""
 
+#: cmd/incus/query.go:113
+#, fuzzy, c-format
+msgid "Failed to open input file %q: %w"
+msgstr "Akzeptiere Zertifikat"
+
 #: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828
 #: cmd/incus/utils_sftp.go:330
 #, fuzzy, c-format
@@ -4542,8 +4552,12 @@ msgstr ""
 msgid "Infiniband:"
 msgstr ""
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:54
 msgid "Input data"
+msgstr ""
+
+#: cmd/incus/query.go:55
+msgid "Input data file (\"-\" for stdin)"
 msgstr ""
 
 #: cmd/incus/low_level.go:1265
@@ -7141,7 +7155,7 @@ msgstr ""
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr "Ein Client Zertifikat ist bereits erstellt worden"
 
-#: cmd/incus/query.go:49
+#: cmd/incus/query.go:52
 msgid "Print the raw response"
 msgstr ""
 
@@ -7343,7 +7357,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Pushing %s to %s: %%s"
 msgstr ""
 
-#: cmd/incus/query.go:88
+#: cmd/incus/query.go:96
 msgid "Query path must start with /"
 msgstr ""
 
@@ -7933,7 +7947,7 @@ msgstr ""
 msgid "Secret key: %s"
 msgstr "Erstellt: %s"
 
-#: cmd/incus/query.go:37 cmd/incus/query.go:38
+#: cmd/incus/query.go:40 cmd/incus/query.go:41
 msgid "Send a raw query to the server"
 msgstr ""
 
@@ -10060,7 +10074,7 @@ msgid ""
 "  containers."
 msgstr ""
 
-#: cmd/incus/query.go:48
+#: cmd/incus/query.go:51
 msgid "Wait for the operation to complete"
 msgstr ""
 
@@ -10948,7 +10962,7 @@ msgstr ""
 "    Automatisches Editieren der Konfiguration eines Projekts mit der "
 "Konfigurationsdatei \"project.yaml\""
 
-#: cmd/incus/query.go:41
+#: cmd/incus/query.go:44
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\"."

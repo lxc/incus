@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-19 22:43-0400\n"
+"POT-Creation-Date: 2026-08-20 14:46+0000\n"
 "PO-Revision-Date: 2026-08-12 03:47+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -750,6 +750,11 @@ msgstr "--console と --all は同時に指定できません"
 msgid "--console only works with a single instance"
 msgstr "--console は単一のインスタンスのときのみ指定できます"
 
+#: cmd/incus/query.go:87
+#, fuzzy
+msgid "--data cannot be used with --data-file"
+msgstr "--target はインスタンスでは使えません"
+
 #: cmd/incus/config.go:474 cmd/incus/config.go:726
 msgid "--expanded cannot be used with a server"
 msgstr "--expanded はサーバーでは使えません"
@@ -787,7 +792,7 @@ msgstr "--no-profiles と --refresh は同時に指定できません"
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:79
+#: cmd/incus/query.go:83
 msgid "--project cannot be used with the query command"
 msgstr "--project は query コマンドでは使えません"
 
@@ -878,7 +883,7 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASES"
 
-#: cmd/incus/query.go:32
+#: cmd/incus/query.go:35
 msgid "API path"
 msgstr "API パス"
 
@@ -919,12 +924,12 @@ msgstr "拡張した設定を表示する"
 msgid "Acknowledge warning"
 msgstr "警告を確認します"
 
-#: cmd/incus/query.go:50
+#: cmd/incus/query.go:53
 #, fuzzy
 msgid "Action"
 msgstr "説明"
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:91
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "%q はこのツールではサポートされていません"
@@ -3495,6 +3500,11 @@ msgstr "コネクションのリッスンに失敗しました: %w"
 msgid "Failed to load configuration: %s"
 msgstr "設定のロードに失敗しました: %s"
 
+#: cmd/incus/query.go:113
+#, fuzzy, c-format
+msgid "Failed to open input file %q: %w"
+msgstr "ターゲットファイルのオープンに失敗しました %q: %w"
+
 #: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828
 #: cmd/incus/utils_sftp.go:330
 #, c-format
@@ -4480,9 +4490,13 @@ msgstr ""
 msgid "Infiniband:"
 msgstr "Infiniband:"
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:54
 msgid "Input data"
 msgstr "入力するデータ"
+
+#: cmd/incus/query.go:55
+msgid "Input data file (\"-\" for stdin)"
+msgstr ""
 
 #: cmd/incus/low_level.go:1265
 #, fuzzy
@@ -7846,7 +7860,7 @@ msgstr "ヘルプを表示します"
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr "クライアント証明書がサーバに格納されました:"
 
-#: cmd/incus/query.go:49
+#: cmd/incus/query.go:52
 msgid "Print the raw response"
 msgstr "レスポンスをそのまま表示します"
 
@@ -8042,7 +8056,7 @@ msgstr "インスタンス内にファイルをコピーします"
 msgid "Pushing %s to %s: %%s"
 msgstr "ファイル %s をコンテナ %s 内にコピーします: %%s"
 
-#: cmd/incus/query.go:88
+#: cmd/incus/query.go:96
 msgid "Query path must start with /"
 msgstr "query のパスは / で始める必要があります"
 
@@ -8637,7 +8651,7 @@ msgstr "秘密鍵（空白の場合自動生成）"
 msgid "Secret key: %s"
 msgstr "秘密鍵: %s"
 
-#: cmd/incus/query.go:37 cmd/incus/query.go:38
+#: cmd/incus/query.go:40 cmd/incus/query.go:41
 #, fuzzy
 msgid "Send a raw query to the server"
 msgstr "直接リクエスト (raw query) を LXD に送ります"
@@ -10892,7 +10906,7 @@ msgstr ""
 "で\n"
 "  ブロックします。"
 
-#: cmd/incus/query.go:48
+#: cmd/incus/query.go:51
 msgid "Wait for the operation to complete"
 msgstr "処理が完全に終わるまで待ちます"
 
@@ -11935,7 +11949,7 @@ msgstr ""
 "lxc profile edit <profile> < profile.yaml\n"
 "    profile.yaml の内容でプロファイルを更新します"
 
-#: cmd/incus/query.go:41
+#: cmd/incus/query.go:44
 #, fuzzy
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
