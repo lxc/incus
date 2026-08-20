@@ -1546,7 +1546,7 @@ func (d *nicBridged) setFilters() (err error) {
 
 		// Ensure address sets for ACL, we state bridge because
 		// this is the table firewall driver will use for this kind of NIC.
-		err = addressSet.FirewallApplyAddressSetsForACLRules(d.state, "bridge", d.inst.Project().Name, aclNames)
+		err = addressSet.FirewallApplyAddressSetsForACLRules(d.state, "bridge", networkProjectName, aclNames)
 		if err != nil {
 			return err
 		}
