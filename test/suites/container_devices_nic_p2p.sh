@@ -16,6 +16,8 @@ test_container_devices_nic_p2p() {
     incus profile device set ${ctName} eth0 ipv6.routes "2001:db8::1${ipRand}/128"
     incus profile device set ${ctName} eth0 limits.ingress 1Mbit
     incus profile device set ${ctName} eth0 limits.egress 2Mbit
+    incus profile device set ${ctName} eth0 limits.ingress.burst=10Mbit limits.ingress.bucket=5Mbit
+    incus profile device set ${ctName} eth0 limits.egress.burst=20Mbit limits.egress.bucket=8Mbit
     incus profile device set ${ctName} eth0 host_name "${vethHostName}"
     incus profile device set ${ctName} eth0 mtu "1400"
     incus profile device set ${ctName} eth0 hwaddr "${ctMAC}"
@@ -39,6 +41,26 @@ test_container_devices_nic_p2p() {
     fi
     if ! tc filter show dev "${vethHostName}" egress | grep "2Mbit"; then
         echo "limits.egress invalid"
+        false
+    fi
+
+    # Check profile burst limits are applied on boot.
+    if ! tc class show dev "${vethHostName}" | grep "ceil 10Mbit"; then
+        echo "limits.ingress.burst invalid"
+        false
+    fi
+    if ! tc filter show dev "${vethHostName}" egress | grep "peakrate 20Mbit"; then
+        echo "limits.egress.burst invalid"
+        false
+    fi
+
+    # The burst bucket is stored as a number of ticks, so allow for the rounding on the way back.
+    if ! tc class show dev "${vethHostName}" | grep -E "burst (625000|624999)b"; then
+        echo "limits.ingress.bucket invalid"
+        false
+    fi
+    if ! tc filter show dev "${vethHostName}" egress | grep -E "burst (1000000|999999)b"; then
+        echo "limits.egress.bucket invalid"
         false
     fi
 
@@ -167,6 +189,8 @@ test_container_devices_nic_p2p() {
     incus config device set "${ctName}" eth0 ipv6.routes "2001:db8::2${ipRand}/128"
     incus config device set "${ctName}" eth0 limits.ingress 3Mbit
     incus config device set "${ctName}" eth0 limits.egress 4Mbit
+    incus config device set "${ctName}" eth0 limits.ingress.burst=30Mbit limits.ingress.bucket=10Mbit
+    incus config device set "${ctName}" eth0 limits.egress.burst=40Mbit limits.egress.bucket=16Mbit
     incus config device set "${ctName}" eth0 mtu 1402
     incus config device set "${ctName}" eth0 hwaddr "${ctMAC}"
 
@@ -189,6 +213,31 @@ test_container_devices_nic_p2p() {
         echo "limits.egress invalid"
         false
     fi
+
+    # Check burst limits are applied on update.
+    if ! tc class show dev "${vethHostName}" | grep "ceil 30Mbit"; then
+        echo "limits.ingress.burst invalid"
+        false
+    fi
+    if ! tc filter show dev "${vethHostName}" egress | grep "peakrate 40Mbit"; then
+        echo "limits.egress.burst invalid"
+        false
+    fi
+    if ! tc class show dev "${vethHostName}" | grep -E "burst (1250000|1249999)b"; then
+        echo "limits.ingress.bucket invalid"
+        false
+    fi
+    if ! tc filter show dev "${vethHostName}" egress | grep -E "burst (2000000|1999999)b"; then
+        echo "limits.egress.bucket invalid"
+        false
+    fi
+
+    # Check invalid burst limits are rejected.
+    ! incus config device set "${ctName}" eth0 limits.ingress.burst 1Mbit || false
+    ! incus config device set "${ctName}" eth0 limits.ingress.burst 1000iops || false
+    ! incus config device set "${ctName}" eth0 limits.ingress.bucket 500bit || false
+    ! incus config device set "${ctName}" eth0 limits.ingress.bucket foo || false
+    ! incus config device unset "${ctName}" eth0 limits.ingress.bucket || false
 
     # Check custom MTU is applied update.
     if ! incus exec "${ctName}" -- grep "1402" /sys/class/net/eth0/mtu; then
