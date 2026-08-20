@@ -249,6 +249,25 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 
 			networkNames = map[string][]string{}
 			networkNames[projectName] = networks
+
+			// Include networks shared from the default project.
+			if projectName != api.ProjectDefaultName {
+				defaultNetworks, err := tx.GetNetworks(ctx, api.ProjectDefaultName)
+				if err != nil {
+					return err
+				}
+
+				sharedNetworks := []string{}
+				for _, networkName := range defaultNetworks {
+					if project.NetworkSharedFromDefault(reqProject, networkName) {
+						sharedNetworks = append(sharedNetworks, networkName)
+					}
+				}
+
+				if len(sharedNetworks) > 0 {
+					networkNames[api.ProjectDefaultName] = sharedNetworks
+				}
+			}
 		}
 
 		return nil
@@ -416,6 +435,11 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, req.Name, true) {
 		return response.SmartError(api.StatusErrorf(http.StatusForbidden, "Network not allowed in project"))
+	}
+
+	// Prevent using the name of a network shared from the default project.
+	if project.NetworkSharedFromDefault(reqProject, req.Name) {
+		return response.BadRequest(fmt.Errorf("Network name %q is reserved for a network shared from the default project", req.Name))
 	}
 
 	if req.Type == "" {
@@ -962,12 +986,12 @@ func networkGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	networkName, err := pathVar(r, "networkName")
+	projectName, reqProject, err := project.NetworkProjectForName(s.DB.Cluster, request.ProjectParam(r), networkName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -1360,6 +1384,11 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Invalid network name: %w", err))
 	}
 
+	// Prevent using the name of a network shared from the default project.
+	if project.NetworkSharedFromDefault(reqProject, req.Name) {
+		return response.BadRequest(fmt.Errorf("Network name %q is reserved for a network shared from the default project", req.Name))
+	}
+
 	// Check network isn't in use.
 	inUse, err := n.IsUsed(false)
 	if err != nil {
@@ -1713,12 +1742,12 @@ func doNetworkUpdate(n network.Network, req api.NetworkPut, targetNode string, c
 func networkLeasesGet(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	networkName, err := pathVar(r, "networkName")
+	projectName, reqProject, err := project.NetworkProjectForName(s.DB.Cluster, request.ProjectParam(r), networkName)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2190,12 +2219,12 @@ func networkStateGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
+	networkName, err := pathVar(r, "networkName")
 	if err != nil {
 		return response.SmartError(err)
 	}
 
-	networkName, err := pathVar(r, "networkName")
+	projectName, reqProject, err := project.NetworkProjectForName(s.DB.Cluster, request.ProjectParam(r), networkName)
 	if err != nil {
 		return response.SmartError(err)
 	}
