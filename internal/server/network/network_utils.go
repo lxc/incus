@@ -114,8 +114,8 @@ func UsedByInstanceDevices(s *state.State, networkProjectName string, networkNam
 	for _, inst := range instances {
 		p := projects[inst.Project]
 
-		// Get the instance's effective network project name.
-		instNetworkProject := project.NetworkProjectFromRecord(&p)
+		// Get the effective network project name for this network name.
+		instNetworkProject := project.NetworkProjectForNameFromRecord(&p, networkName)
 
 		// Skip instances who's effective network project doesn't match this Network's project.
 		if instNetworkProject != networkProjectName {
@@ -297,7 +297,7 @@ func usedByProfileDevices(s *state.State, profileDevices map[string]cluster.Devi
 
 	// Skip profiles who's translated network project doesn't match the requested network's project.
 	// Because its devices can't be using this network.
-	profileNetworkProjectName := project.NetworkProjectFromRecord(profileProject)
+	profileNetworkProjectName := project.NetworkProjectForNameFromRecord(profileProject, networkName)
 	if networkProjectName != profileNetworkProjectName {
 		return false, nil
 	}
