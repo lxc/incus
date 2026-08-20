@@ -473,6 +473,15 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  shortdesc: Comma-separated list of IPv6 ranges to use for DHCP (FIRST-LAST format)
 		"ipv6.dhcp.ranges": validate.Optional(validate.IsListOf(validate.IsNetworkRangeV6)),
 
+		// gendoc:generate(entity=network_bridge, group=common, key=ipv6.ra)
+		//
+		// ---
+		//  type: bool
+		//  condition: IPv6 address
+		//  default: `true`
+		//  shortdesc: Whether to send IPv6 router advertisements
+		"ipv6.ra": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=network_bridge, group=common, key=ipv6.routes)
 		//
 		// ---
@@ -1624,7 +1633,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 		}
 
 		// Update the dnsmasq config.
-		dnsmasqCmd = append(dnsmasqCmd, []string{fmt.Sprintf("--listen-address=%s", ipAddress.String()), "--enable-ra"}...)
+		dnsmasqCmd = append(dnsmasqCmd, fmt.Sprintf("--listen-address=%s", ipAddress.String()))
+		if util.IsTrueOrEmpty(n.config["ipv6.ra"]) {
+			dnsmasqCmd = append(dnsmasqCmd, "--enable-ra")
+		}
+
 		if n.DHCPv6Subnet() != nil {
 			if n.hasIPv6Firewall() {
 				fwOpts.FeaturesV6.ICMPDHCPDNSAccess = true
@@ -1649,10 +1662,10 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 				} else {
 					dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("%s,%s,%d,%s", dhcpalloc.GetIP(subnet, 2), dhcpalloc.GetIP(subnet, -1), subnetSize, expiry)}...)
 				}
-			} else {
+			} else if util.IsTrueOrEmpty(n.config["ipv6.ra"]) {
 				dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("::,constructor:%s,ra-stateless,ra-names", n.name)}...)
 			}
-		} else {
+		} else if util.IsTrueOrEmpty(n.config["ipv6.ra"]) {
 			dnsmasqCmd = append(dnsmasqCmd, []string{"--dhcp-range", fmt.Sprintf("::,constructor:%s,ra-only", n.name)}...)
 		}
 
