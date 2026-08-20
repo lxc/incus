@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-08-19 22:43-0400\n"
+        "POT-Creation-Date: 2026-08-20 14:46+0000\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -460,6 +460,10 @@ msgstr  ""
 msgid   "--console only works with a single instance"
 msgstr  ""
 
+#: cmd/incus/query.go:87
+msgid   "--data cannot be used with --data-file"
+msgstr  ""
+
 #: cmd/incus/config.go:474 cmd/incus/config.go:726
 msgid   "--expanded cannot be used with a server"
 msgstr  ""
@@ -492,7 +496,7 @@ msgstr  ""
 msgid   "--owner and --type require --all to be set"
 msgstr  ""
 
-#: cmd/incus/query.go:79
+#: cmd/incus/query.go:83
 msgid   "--project cannot be used with the query command"
 msgstr  ""
 
@@ -574,7 +578,7 @@ msgstr  ""
 msgid   "ALIASES"
 msgstr  ""
 
-#: cmd/incus/query.go:32
+#: cmd/incus/query.go:35
 msgid   "API path"
 msgstr  ""
 
@@ -615,11 +619,11 @@ msgstr  ""
 msgid   "Acknowledge warning"
 msgstr  ""
 
-#: cmd/incus/query.go:50
+#: cmd/incus/query.go:53
 msgid   "Action"
 msgstr  ""
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:91
 #, c-format
 msgid   "Action %q isn't supported by this tool"
 msgstr  ""
@@ -2820,6 +2824,11 @@ msgstr  ""
 msgid   "Failed to load configuration: %s"
 msgstr  ""
 
+#: cmd/incus/query.go:113
+#, c-format
+msgid   "Failed to open input file %q: %w"
+msgstr  ""
+
 #: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828 cmd/incus/utils_sftp.go:330
 #, c-format
 msgid   "Failed to open source file %q: %v"
@@ -3672,8 +3681,12 @@ msgstr  ""
 msgid   "Infiniband:"
 msgstr  ""
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:54
 msgid   "Input data"
+msgstr  ""
+
+#: cmd/incus/query.go:55
+msgid   "Input data file (\"-\" for stdin)"
 msgstr  ""
 
 #: cmd/incus/low_level.go:1265
@@ -6032,7 +6045,7 @@ msgstr  ""
 msgid   "Print or retrieve the client certificate used by this Incus client"
 msgstr  ""
 
-#: cmd/incus/query.go:49
+#: cmd/incus/query.go:52
 msgid   "Print the raw response"
 msgstr  ""
 
@@ -6218,7 +6231,7 @@ msgstr  ""
 msgid   "Pushing %s to %s: %%s"
 msgstr  ""
 
-#: cmd/incus/query.go:88
+#: cmd/incus/query.go:96
 msgid   "Query path must start with /"
 msgstr  ""
 
@@ -6746,7 +6759,7 @@ msgstr  ""
 msgid   "Secret key: %s"
 msgstr  ""
 
-#: cmd/incus/query.go:37 cmd/incus/query.go:38
+#: cmd/incus/query.go:40 cmd/incus/query.go:41
 msgid   "Send a raw query to the server"
 msgstr  ""
 
@@ -8583,7 +8596,7 @@ msgid   "Wait for the daemon to be ready to process requests\n"
         "  containers."
 msgstr  ""
 
-#: cmd/incus/query.go:48
+#: cmd/incus/query.go:51
 msgid   "Wait for the operation to complete"
 msgstr  ""
 
@@ -9245,7 +9258,7 @@ msgid   "incus project edit <project> < project.yaml\n"
         "    Update a project using the content of project.yaml"
 msgstr  ""
 
-#: cmd/incus/query.go:41
+#: cmd/incus/query.go:44
 msgid   "incus query -X DELETE --wait /1.0/instances/c1\n"
         "    Delete local instance \"c1\"."
 msgstr  ""
