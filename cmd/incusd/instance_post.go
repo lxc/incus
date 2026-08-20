@@ -194,12 +194,13 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 
 		// Check that the new isn't already in use.
 		var id int
-		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_ = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 			// Check that the name isn't already in use.
 			id, _ = tx.GetInstanceID(ctx, instProject, req.Name)
 
 			return nil
 		})
+
 		if id > 0 {
 			return response.Conflict(fmt.Errorf("Name %q already in use", req.Name))
 		}
