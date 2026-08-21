@@ -66,11 +66,18 @@ func (c *cmdAdminRecover) run(cmd *cobra.Command, args []string) error {
 	unknownPools := make([]api.StoragePoolsPost, 0, len(existingPools))
 
 	// Build up a list of unknown pools to scan.
-	// We don't offer this option if the server is clustered because we don't allow creating storage pools on
-	// an individual server when clustered.
-	if !isClustered {
-		var supportedDriverNames []string
+	// When clustered, we only offer shared storage pools because we don't allow creating
+	// storage pools on an individual server when clustered.
+	var supportedDriverNames []string
+	for _, supportedDriver := range server.Environment.StorageSupportedDrivers {
+		if isClustered && !supportedDriver.Remote {
+			continue
+		}
 
+		supportedDriverNames = append(supportedDriverNames, supportedDriver.Name)
+	}
+
+	if len(supportedDriverNames) > 0 {
 		for {
 			addUnknownPool, err := c.global.asker.AskBool(i18n.G("Would you like to recover another storage pool?")+" (yes/no) [default=no]: ", "no")
 			if err != nil {
@@ -79,13 +86,6 @@ func (c *cmdAdminRecover) run(cmd *cobra.Command, args []string) error {
 
 			if !addUnknownPool {
 				break
-			}
-
-			// Get available storage drivers if not done already.
-			if supportedDriverNames == nil {
-				for _, supportedDriver := range server.Environment.StorageSupportedDrivers {
-					supportedDriverNames = append(supportedDriverNames, supportedDriver.Name)
-				}
 			}
 
 			unknownPool := api.StoragePoolsPost{
