@@ -158,12 +158,6 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 				return response.SmartError(fmt.Errorf("Failed loading existing pool %q: %w", p.Name, err))
 			}
 
-			// If the pool DB record doesn't exist, and we are clustered, then don't proceed
-			// any further as we do not support pool DB record recovery when clustered.
-			if s.ServerClustered {
-				return response.BadRequest(errors.New("Storage pool recovery not supported when clustered"))
-			}
-
 			// If pool doesn't exist in DB, initialize a temporary pool with the supplied info.
 			poolInfo := api.StoragePool{
 				Name:           p.Name,
@@ -175,6 +169,12 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 			pool, err = storagePools.NewTemporary(s, &poolInfo)
 			if err != nil {
 				return response.SmartError(fmt.Errorf("Failed to initialize unknown pool %q: %w", p.Name, err))
+			}
+
+			// When clustered, we don't support per-member pool DB record recovery,
+			// so only allow shared storage pools to be recovered.
+			if s.ServerClustered && !pool.Driver().Info().Remote {
+				return response.BadRequest(fmt.Errorf("Only shared storage pools can be recovered when clustered, pool %q isn't shared", p.Name))
 			}
 
 			// Populate configuration with default values.
@@ -346,28 +346,74 @@ func internalRecoverScan(ctx context.Context, s *state.State, userPools []api.St
 				}
 			}
 
+			var poolName, poolDescription, poolDriverName string
+			var poolConfig map[string]string
+
 			if instPoolVol != nil {
 				// Create storage pool DB record from config in the instance.
-				logger.Info("Creating storage pool DB record from instance config", logger.Ctx{"name": instPoolVol.Pool.Name, "description": instPoolVol.Pool.Description, "driver": instPoolVol.Pool.Driver, "config": instPoolVol.Pool.Config})
-				poolID, err = dbStoragePoolCreateAndUpdateCache(ctx, s, instPoolVol.Pool.Name, instPoolVol.Pool.Description, instPoolVol.Pool.Driver, instPoolVol.Pool.Config)
-				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed creating storage pool %q database entry: %w", pool.Name(), err))
-				}
+				poolName = instPoolVol.Pool.Name
+				poolDescription = instPoolVol.Pool.Description
+				poolDriverName = instPoolVol.Pool.Driver
+				poolConfig = instPoolVol.Pool.Config
+				logger.Info("Creating storage pool DB record from instance config", logger.Ctx{"name": poolName, "description": poolDescription, "driver": poolDriverName, "config": poolConfig})
 			} else {
 				// Create storage pool DB record from config supplied by user if not
 				// instance volume pool config found.
-				poolDriverName := pool.Driver().Info().Name
-				poolDriverConfig := pool.Driver().Config()
-				logger.Info("Creating storage pool DB record from user config", logger.Ctx{"name": pool.Name(), "driver": poolDriverName, "config": poolDriverConfig})
-				poolID, err = dbStoragePoolCreateAndUpdateCache(ctx, s, pool.Name(), "", poolDriverName, poolDriverConfig)
-				if err != nil {
-					return response.SmartError(fmt.Errorf("Failed creating storage pool %q database entry: %w", pool.Name(), err))
-				}
+				poolName = pool.Name()
+				poolDriverName = pool.Driver().Info().Name
+				poolConfig = pool.Driver().Config()
+				logger.Info("Creating storage pool DB record from user config", logger.Ctx{"name": poolName, "driver": poolDriverName, "config": poolConfig})
+			}
+
+			poolID, err = dbStoragePoolCreateAndUpdateCache(ctx, s, poolName, poolDescription, poolDriverName, poolConfig)
+			if err != nil {
+				return response.SmartError(fmt.Errorf("Failed creating storage pool %q database entry: %w", pool.Name(), err))
 			}
 
 			reverter.Add(func() {
 				_ = dbStoragePoolDeleteAndUpdateCache(context.Background(), s, pool.Name())
 			})
+
+			// When clustered, add the pool to the other cluster members.
+			// This is only reached for shared storage pools which use the same
+			// member-specific config on every member.
+			if s.ServerClustered {
+				err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+					members, err := tx.GetNodes(ctx)
+					if err != nil {
+						return err
+					}
+
+					// Extract the member-specific config keys.
+					memberConfig := map[string]string{}
+					for _, key := range db.NodeSpecificStorageConfig(poolDriverName) {
+						if poolConfig[key] != "" {
+							memberConfig[key] = poolConfig[key]
+						}
+					}
+
+					for _, member := range members {
+						if member.ID == tx.GetNodeID() {
+							continue
+						}
+
+						err = tx.UpdateStoragePoolAfterNodeJoin(poolID, member.ID)
+						if err != nil {
+							return err
+						}
+
+						err = tx.CreateStoragePoolConfig(poolID, member.ID, memberConfig)
+						if err != nil {
+							return err
+						}
+					}
+
+					return nil
+				})
+				if err != nil {
+					return response.SmartError(fmt.Errorf("Failed adding storage pool %q to cluster members: %w", pool.Name(), err))
+				}
+			}
 
 			// Set storage pool node to storagePoolCreated.
 			// Must come before storage pool is loaded from the database.
