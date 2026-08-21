@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-20 19:39+0000\n"
+"POT-Creation-Date: 2026-08-21 15:27+0000\n"
 "PO-Revision-Date: 2026-08-12 03:49+0000\n"
 "Last-Translator: meipeter <meipeter114514@outlook.com>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -693,8 +693,8 @@ msgstr ""
 msgid "(no timestamp)"
 msgstr ""
 
-#: cmd/incus/low_level.go:1453 cmd/incus/low_level.go:1461
-#: cmd/incus/low_level.go:1481 cmd/incus/low_level.go:1489
+#: cmd/incus/low_level.go:1454 cmd/incus/low_level.go:1462
+#: cmd/incus/low_level.go:1482 cmd/incus/low_level.go:1490
 #, fuzzy
 msgid "(not a certificate)"
 msgstr "无效的证书"
@@ -795,7 +795,7 @@ msgstr "--target 不能与实例一起使用"
 msgid "--override-boot only works with a single instance"
 msgstr "--console 只适用于单个实例"
 
-#: cmd/incus/low_level.go:1612
+#: cmd/incus/low_level.go:1613
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
@@ -853,7 +853,7 @@ msgstr "--no-profiles 不能与 --refresh 一起使用"
 msgid "=> Query %d:"
 msgstr "=> 查询 %d："
 
-#: cmd/incus/low_level.go:1321
+#: cmd/incus/low_level.go:1322
 msgid ""
 "A PK certificate is already enrolled; remove it first to enroll a new one"
 msgstr ""
@@ -940,7 +940,7 @@ msgstr "描述"
 msgid "Action %q isn't supported by this tool"
 msgstr "此工具不支持操作 %q"
 
-#: cmd/incus/low_level.go:1164 cmd/incus/low_level.go:1165
+#: cmd/incus/low_level.go:1165 cmd/incus/low_level.go:1166
 msgid "Add Secure Boot signatures"
 msgstr ""
 
@@ -1546,7 +1546,7 @@ msgstr "复制快照时无法设置 --volume-only"
 msgid "Cannot set key: %s"
 msgstr "无法设置键：%s"
 
-#: cmd/incus/low_level.go:1216
+#: cmd/incus/low_level.go:1217
 msgid "Cannot store a signature in PK, KEK or dbt"
 msgstr ""
 
@@ -1721,7 +1721,7 @@ msgstr "已启用集群"
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:403
 #: cmd/incus/config_trust.go:595 cmd/incus/image.go:1079
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:720 cmd/incus/low_level.go:1375
+#: cmd/incus/low_level.go:720 cmd/incus/low_level.go:1376
 #: cmd/incus/network.go:1054 cmd/incus/network.go:1253
 #: cmd/incus/network_allocations.go:75 cmd/incus/network_forward.go:122
 #: cmd/incus/network_integration.go:417 cmd/incus/network_load_balancer.go:129
@@ -2638,7 +2638,7 @@ msgstr "使用 --force 不需要用户确认"
 msgid "Don't show progress information"
 msgstr "不显示进度信息"
 
-#: cmd/incus/low_level.go:1169
+#: cmd/incus/low_level.go:1170
 msgid ""
 "Don’t import the file as a certificate but rather compute and import its "
 "digest (sha256|sha384|sha512)"
@@ -2815,7 +2815,7 @@ msgstr "将信任配置编辑为 YAML"
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:434
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1126
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:752 cmd/incus/low_level.go:1413
+#: cmd/incus/low_level.go:752 cmd/incus/low_level.go:1414
 #: cmd/incus/network.go:1101 cmd/incus/network.go:1291
 #: cmd/incus/network_allocations.go:101 cmd/incus/network_forward.go:158
 #: cmd/incus/network_integration.go:443 cmd/incus/network_load_balancer.go:164
@@ -3173,7 +3173,7 @@ msgstr "文件名"
 
 #: cmd/incus/config_trust.go:420 cmd/incus/config_trust.go:421
 #: cmd/incus/image.go:1110 cmd/incus/image.go:1111 cmd/incus/image_alias.go:249
-#: cmd/incus/low_level.go:1396 cmd/incus/low_level.go:1397
+#: cmd/incus/low_level.go:1397 cmd/incus/low_level.go:1398
 msgid "FINGERPRINT"
 msgstr "指纹"
 
@@ -3286,7 +3286,7 @@ msgstr "解析 SSH 主机密钥失败：%w"
 msgid "Failed parsing validation response: %w"
 msgstr "解析验证响应失败：%w"
 
-#: cmd/incus/low_level.go:1204
+#: cmd/incus/low_level.go:1205
 #, fuzzy, c-format
 msgid "Failed reading input file: %w"
 msgstr "无法从标准输入读取：%w"
@@ -3417,7 +3417,7 @@ msgstr "复制后删除原始实例失败：%w"
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
 msgstr "刷新目标实例“%s”失败：%v"
 
-#: cmd/incus/low_level.go:986 cmd/incus/low_level.go:1068
+#: cmd/incus/low_level.go:986 cmd/incus/low_level.go:1069
 #, fuzzy, c-format
 msgid "Failed to delete variable %s:%s: %w"
 msgstr "解析服务器失败：%w"
@@ -3494,7 +3494,7 @@ msgstr "关闭服务器证书文件 %q 失败：%w"
 msgid "Failed to open target file %q: %w"
 msgstr "关闭服务器证书文件 %q 失败：%w"
 
-#: cmd/incus/low_level.go:1249
+#: cmd/incus/low_level.go:1250
 #, fuzzy, c-format
 msgid "Failed to parse PEM certificate: %w"
 msgstr "创建证书失败：%w"
@@ -3504,7 +3504,7 @@ msgstr "创建证书失败：%w"
 msgid "Failed to parse dump response: %w"
 msgstr "解析转储响应失败：%w"
 
-#: cmd/incus/low_level.go:1261
+#: cmd/incus/low_level.go:1262
 msgid "Failed to parse input file as either PEM or DER certificate"
 msgstr ""
 
@@ -3513,7 +3513,7 @@ msgstr ""
 msgid "Failed to parse the preseed: %w"
 msgstr "解析 preseed 失败：%w"
 
-#: cmd/incus/low_level.go:998
+#: cmd/incus/low_level.go:999
 #, fuzzy, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr "解析服务器失败：%w"
@@ -3783,7 +3783,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:404 cmd/incus/config_trust.go:594
 #: cmd/incus/image.go:1080 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:719 cmd/incus/low_level.go:1374
+#: cmd/incus/low_level.go:719 cmd/incus/low_level.go:1375
 #: cmd/incus/network.go:1055 cmd/incus/network.go:1252
 #: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:72
 #: cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416
@@ -4249,7 +4249,7 @@ msgstr "IPv6上行地址"
 msgid "ISSUE DATE"
 msgstr "发行日期"
 
-#: cmd/incus/low_level.go:1398 cmd/incus/low_level.go:1399
+#: cmd/incus/low_level.go:1399 cmd/incus/low_level.go:1400
 #, fuzzy
 msgid "ISSUER"
 msgstr "发行日期"
@@ -4431,7 +4431,7 @@ msgstr "输入数据"
 msgid "Input data file (\"-\" for stdin)"
 msgstr ""
 
-#: cmd/incus/low_level.go:1265
+#: cmd/incus/low_level.go:1266
 #, fuzzy
 msgid "Input file contains no certificate"
 msgstr "生成客户端证书"
@@ -4561,7 +4561,7 @@ msgstr "无效的过期日期：%w"
 msgid "Invalid format %q"
 msgstr "无效的格式 %q"
 
-#: cmd/incus/low_level.go:662 cmd/incus/low_level.go:1013
+#: cmd/incus/low_level.go:662 cmd/incus/low_level.go:1014
 #: cmd/incus/monitor.go:73
 #, c-format
 msgid "Invalid format: %s"
@@ -4767,11 +4767,11 @@ msgstr ""
 "  t - 类型\n"
 "  L - DHCP 租约位置（例如其集群成员）"
 
-#: cmd/incus/low_level.go:1352
+#: cmd/incus/low_level.go:1353
 msgid "List Secure Boot signatures"
 msgstr ""
 
-#: cmd/incus/low_level.go:1353
+#: cmd/incus/low_level.go:1354
 msgid ""
 "List Secure Boot signatures\n"
 "\n"
@@ -6118,7 +6118,7 @@ msgstr ""
 msgid "Manage NVRAM on virtual machines"
 msgstr "创建虚拟机"
 
-#: cmd/incus/low_level.go:1112 cmd/incus/low_level.go:1113
+#: cmd/incus/low_level.go:1113 cmd/incus/low_level.go:1114
 #, fuzzy
 msgid "Manage Secure Boot on virtual machines"
 msgstr "创建虚拟机"
@@ -6449,7 +6449,7 @@ msgstr ""
 msgid "More than one file to download, but target is not a directory"
 msgstr "将下载多个文件, 但目标不是目录"
 
-#: cmd/incus/low_level.go:913 cmd/incus/low_level.go:1055
+#: cmd/incus/low_level.go:913 cmd/incus/low_level.go:1056
 msgid ""
 "More than one variable was passed but the server is missing the required "
 "\"instance_nvram_bulk_update\" API extension"
@@ -6920,7 +6920,7 @@ msgstr ""
 msgid "No matching rule(s) found"
 msgstr ""
 
-#: cmd/incus/low_level.go:1678
+#: cmd/incus/low_level.go:1679
 msgid "No signature matches"
 msgstr ""
 
@@ -6959,11 +6959,11 @@ msgstr ""
 msgid "OVN:"
 msgstr ""
 
-#: cmd/incus/low_level.go:1400
+#: cmd/incus/low_level.go:1401
 msgid "OWNER GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:1401
+#: cmd/incus/low_level.go:1402
 msgid "OWNER GUID NAME"
 msgstr ""
 
@@ -6992,11 +6992,11 @@ msgid ""
 "Only one of --storage-create-device or --storage-create-loop can be specified"
 msgstr ""
 
-#: cmd/incus/low_level.go:1580
+#: cmd/incus/low_level.go:1581
 msgid "Only remove signatures of the given type"
 msgstr ""
 
-#: cmd/incus/low_level.go:1579
+#: cmd/incus/low_level.go:1580
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
@@ -7437,7 +7437,7 @@ msgstr "查询路径必须以 / 开头"
 msgid "Query virtual machine images"
 msgstr "查询虚拟机镜像"
 
-#: cmd/incus/low_level.go:742 cmd/incus/low_level.go:1402
+#: cmd/incus/low_level.go:742 cmd/incus/low_level.go:1403
 msgid "RAW VALUE"
 msgstr ""
 
@@ -7597,7 +7597,7 @@ msgid ""
 "networks, ...) (yes/no): "
 msgstr "移除项目 %s 及其所有内容 (实例, 镜像, 存储卷, 网络, ...) (yes/no): "
 
-#: cmd/incus/low_level.go:1574 cmd/incus/low_level.go:1575
+#: cmd/incus/low_level.go:1575 cmd/incus/low_level.go:1576
 msgid "Remove Secure Boot signatures"
 msgstr ""
 
@@ -7637,7 +7637,7 @@ msgstr "从实例拉取文件"
 msgid "Remove all rules that match"
 msgstr "移除所有匹配的规则"
 
-#: cmd/incus/low_level.go:1578
+#: cmd/incus/low_level.go:1579
 #, fuzzy
 msgid "Remove all signatures"
 msgstr "移除别名"
@@ -7973,7 +7973,7 @@ msgstr ""
 msgid "STP"
 msgstr ""
 
-#: cmd/incus/low_level.go:1403 cmd/incus/low_level.go:1404
+#: cmd/incus/low_level.go:1404 cmd/incus/low_level.go:1405
 msgid "SUBJECT"
 msgstr ""
 
@@ -8397,7 +8397,7 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/low_level.go:1168
+#: cmd/incus/low_level.go:1169
 msgid "Set the signature owner"
 msgstr ""
 
@@ -8430,7 +8430,7 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/low_level.go:1682
+#: cmd/incus/low_level.go:1683
 msgid "Several signatures match the given fingerprint"
 msgstr ""
 
@@ -8953,7 +8953,7 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:418 cmd/incus/image.go:1116
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:555
-#: cmd/incus/low_level.go:1405 cmd/incus/network.go:1082
+#: cmd/incus/low_level.go:1406 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
 #: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1625
@@ -9063,12 +9063,12 @@ msgstr ""
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
-#: cmd/incus/low_level.go:1315
+#: cmd/incus/low_level.go:1316
 #, fuzzy
 msgid "The given certificate is already present in this ESL"
 msgstr "客户端证书已存在"
 
-#: cmd/incus/low_level.go:1312
+#: cmd/incus/low_level.go:1313
 #, fuzzy
 msgid "The given signature is already present in this ESL"
 msgstr "客户端证书已存在"
@@ -9441,12 +9441,12 @@ msgstr ""
 msgid "Type: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1072
+#: cmd/incus/low_level.go:1073
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1092
+#: cmd/incus/low_level.go:1093
 #, c-format
 msgid "UEFI variables %s deleted on %s\n"
 msgstr ""
@@ -9516,19 +9516,19 @@ msgstr "解析 preseed 失败：%w"
 msgid "Unable to parse %s as valid JSON"
 msgstr "解析 preseed 失败：%w"
 
-#: cmd/incus/low_level.go:1301 cmd/incus/low_level.go:1526
-#: cmd/incus/low_level.go:1638
+#: cmd/incus/low_level.go:1302 cmd/incus/low_level.go:1527
+#: cmd/incus/low_level.go:1639
 #, c-format
 msgid "Unable to parse %s:%s as an EFI Signature List"
 msgstr ""
 
-#: cmd/incus/low_level.go:1294 cmd/incus/low_level.go:1519
-#: cmd/incus/low_level.go:1631
+#: cmd/incus/low_level.go:1295 cmd/incus/low_level.go:1520
+#: cmd/incus/low_level.go:1632
 #, c-format
 msgid "Unable to parse %s:%s as valid JSON"
 msgstr ""
 
-#: cmd/incus/low_level.go:1209 cmd/incus/low_level.go:1645
+#: cmd/incus/low_level.go:1210 cmd/incus/low_level.go:1646
 #, fuzzy, c-format
 msgid "Unable to parse owner %s: %w"
 msgstr "解析 preseed 失败：%w"
@@ -9560,7 +9560,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:440
 #: cmd/incus/config_trust.go:626 cmd/incus/image.go:1148
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:758 cmd/incus/low_level.go:1419
+#: cmd/incus/low_level.go:758 cmd/incus/low_level.go:1420
 #: cmd/incus/network.go:1107 cmd/incus/network.go:1297
 #: cmd/incus/network_allocations.go:107 cmd/incus/network_forward.go:164
 #: cmd/incus/network_integration.go:449 cmd/incus/network_load_balancer.go:170
@@ -9600,12 +9600,12 @@ msgstr ""
 msgid "Unknown output type %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:1230
+#: cmd/incus/low_level.go:1231
 #, c-format
 msgid "Unknown signature type %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1030 cmd/incus/low_level.go:1031
+#: cmd/incus/low_level.go:1031 cmd/incus/low_level.go:1032
 msgid "Unset UEFI variables"
 msgstr ""
 
