@@ -101,6 +101,12 @@ func starlarkMarshal(input any, parent *starlark.Dict) (starlark.Value, error) {
 	case reflect.Bool:
 		sv = starlark.Bool(v.Bool())
 	case reflect.Array, reflect.Slice:
+		// We treat arrays and slices of bytes as Starlark bytes.
+		if v.Type().Elem().Kind() == reflect.Uint8 {
+			sv = starlark.Bytes(v.Bytes())
+			break
+		}
+
 		vlen := v.Len()
 		listElems := make([]starlark.Value, 0, vlen)
 
@@ -225,6 +231,8 @@ func StarlarkUnmarshal(input starlark.Value) (any, error) {
 		return float64(v), nil
 	case starlark.String:
 		return string(v), nil
+	case starlark.Bytes:
+		return []byte(v), nil
 	case *starlark.List:
 		length := v.Len()
 		result := make([]any, length)
