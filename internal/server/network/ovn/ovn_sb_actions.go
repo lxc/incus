@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	ovsModel "github.com/ovn-kubernetes/libovsdb/model"
+	"github.com/ovn-kubernetes/libovsdb/ovsdb"
+
 	ovnNB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-nb"
 	ovnSB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-sb"
 )
@@ -39,6 +42,40 @@ func (o *SB) GetLogicalRouterPortActiveChassisHostname(ctx context.Context, ovnR
 	}
 
 	return chassis.Hostname, nil
+}
+
+// DeleteMACBindings deletes the dynamic MAC bindings for the provided IPs on the specified logical port.
+func (o *SB) DeleteMACBindings(ctx context.Context, portName OVNRouterPort, ips ...net.IP) error {
+	if len(ips) == 0 {
+		return nil
+	}
+
+	var operations []ovsdb.Operation
+	for _, ip := range ips {
+		mb := ovnSB.MACBinding{}
+		ops, err := o.client.WhereAll(&mb,
+			ovsModel.Condition{Field: &mb.LogicalPort, Function: ovsdb.ConditionEqual, Value: string(portName)},
+			ovsModel.Condition{Field: &mb.IP, Function: ovsdb.ConditionEqual, Value: ip.String()},
+		).Delete()
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, ops...)
+	}
+
+	// Apply the changes.
+	reply, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(reply, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetServiceHealth returns the current health record for a particular server and port.
