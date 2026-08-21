@@ -1405,10 +1405,21 @@ func (d *qemu) runStartupScriptlet(monitor *qmp.Monitor, stage string) error {
 			return errors.New("Unexpected instance type")
 		}
 
-		err := scriptlet.QEMURun(logger.Log, instanceData, &d.cmdArgs, &d.conf, monitor, nil, stage)
+		nvram, err := d.getNVRAM()
 		if err != nil {
-			err = fmt.Errorf("Failed running QEMU scriptlet at %s stage: %w", stage, err)
-			return err
+			return fmt.Errorf("Failed reading the NVRAM at %s stage: %w", stage, err)
+		}
+
+		err = scriptlet.QEMURun(logger.Log, instanceData, &d.cmdArgs, &d.conf, monitor, nvram, stage)
+		if err != nil {
+			return fmt.Errorf("Failed running QEMU scriptlet at %s stage: %w", stage, err)
+		}
+
+		if stage == "config" {
+			err = d.setNVRAM(nvram)
+			if err != nil {
+				return fmt.Errorf("Failed writing the NVRAM at %s stage: %w", stage, err)
+			}
 		}
 	}
 
@@ -12504,6 +12515,17 @@ func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.M
 	return dataDev, nil
 }
 
+// getNVRAM gets the NVRAM assuming the config volume is mounted and the NVRAM already has been
+// initialized.
+func (d *qemu) getNVRAM() (*uefi.Store, error) {
+	nvRAM, err := os.ReadFile(d.nvramPath())
+	if err != nil {
+		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+	}
+
+	return uefi.ParseNVRAM(nvRAM)
+}
+
 // GetNVRAM gets the NVRAM.
 func (d *qemu) GetNVRAM() (*uefi.Store, error) {
 	if !d.IsRunning() {
@@ -12525,12 +12547,27 @@ func (d *qemu) GetNVRAM() (*uefi.Store, error) {
 		}
 	}
 
-	nvRAM, err := os.ReadFile(d.nvramPath())
-	if err != nil {
-		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
+	return d.getNVRAM()
+}
+
+// setNVRAM sets the NVRAM assuming the config volume is mounted.
+func (d *qemu) setNVRAM(store *uefi.Store) error {
+	if !store.Modified() {
+		return nil
 	}
 
-	return uefi.ParseNVRAM(nvRAM)
+	f, err := os.Create(d.nvramPath())
+	if err != nil {
+		return fmt.Errorf("Failed opening NVRAM file: %w", err)
+	}
+
+	b, err := store.Bytes()
+	if err != nil {
+		return err
+	}
+
+	_, err = f.Write(b)
+	return err
 }
 
 // SetNVRAM sets the NVRAM.
@@ -12556,18 +12593,7 @@ func (d *qemu) SetNVRAM(store *uefi.Store) error {
 		}
 	}
 
-	f, err := os.Create(d.nvramPath())
-	if err != nil {
-		return fmt.Errorf("Failed opening NVRAM file: %w", err)
-	}
-
-	b, err := store.Bytes()
-	if err != nil {
-		return err
-	}
-
-	_, err = f.Write(b)
-	return err
+	return d.setNVRAM(store)
 }
 
 // ResetNVRAM resets the NVRAM.
