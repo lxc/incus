@@ -2,7 +2,6 @@ package uefi
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/lxc/incus/v7/shared/api"
 )
@@ -134,7 +133,7 @@ func getDissector(guid string, name string) dissector {
 	}
 }
 
-// Dissect dissects an UEFI variable.
+// Dissect dissects a UEFI variable.
 func Dissect(v *api.InstanceNVRAMVariable, guid string, name string) error {
 	dissected, err := getDissector(guid, name).dissect(v.Binary)
 	if err == nil {
@@ -144,11 +143,15 @@ func Dissect(v *api.InstanceNVRAMVariable, guid string, name string) error {
 	return nil
 }
 
-// Format formats an UEFI variable.
+// Format formats a UEFI variable.
 func Format(v *api.InstanceNVRAMVariable, guid string, name string) error {
 	raw, ok := v.Data.(json.RawMessage)
 	if !ok {
-		return fmt.Errorf("Unexpected type %T", v.Data)
+		var err error
+		raw, err = json.Marshal(v.Data)
+		if err != nil {
+			return err
+		}
 	}
 
 	formatted, err := getDissector(guid, name).format(raw)
