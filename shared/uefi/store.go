@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/lxc/incus/v7/shared/api"
 )
@@ -13,7 +14,8 @@ type blockMapEntry struct {
 	size  uint32
 }
 
-// Store is a projection of the on-disk OVMF variable store format.
+// Store is a projection of the on-disk OVMF variable store format. The structure DOES NOT handle
+// concurrent access.
 type Store struct {
 	Vars     map[string]map[string]*api.InstanceNVRAMVariable
 	attrs    uint32
@@ -21,6 +23,7 @@ type Store struct {
 	length   uint64
 	varSize  uint32
 	rest     []byte
+	modified bool
 }
 
 // ParseNVRAM parses the contents of an OVMF NVRAM store.
@@ -467,4 +470,69 @@ func (s *Store) Bytes() ([]byte, error) {
 	}
 
 	return w.data, nil
+}
+
+// Get gets a variable from the store.
+func (s *Store) Get(guid string, varName string) (*api.InstanceNVRAMVariable, bool) {
+	vars, ok := s.Vars[guid]
+	if !ok {
+		return nil, false
+	}
+
+	v, ok := vars[varName]
+	if !ok {
+		return nil, false
+	}
+
+	return v, true
+}
+
+// Has checks whether the store contains a variable.
+func (s *Store) Has(guid string, varName string) bool {
+	_, ok := s.Get(guid, varName)
+	return ok
+}
+
+// Set sets a variable in the store.
+func (s *Store) Set(guid string, varName string, v api.InstanceNVRAMVariable) error {
+	if !slices.Contains(v.Attributes, "NON_VOLATILE") {
+		return errors.New("Volatile UEFI variables cannot be stored in the NVRAM")
+	}
+
+	if v.Binary == nil {
+		err := Format(&v, guid, varName)
+		if err != nil {
+			return err
+		}
+	}
+
+	vars, ok := s.Vars[guid]
+	if !ok {
+		s.Vars[guid] = map[string]*api.InstanceNVRAMVariable{varName: &v}
+		s.modified = true
+		return nil
+	}
+
+	if s.Vars[guid][varName] == nil || !bytes.Equal(s.Vars[guid][varName].Binary, v.Binary) {
+		vars[varName] = &v
+		s.modified = true
+	}
+
+	return nil
+}
+
+// Unset removes a variable from the store.
+func (s *Store) Unset(guid string, varName string) bool {
+	if s.Has(guid, varName) {
+		delete(s.Vars[guid], varName)
+		s.modified = true
+		return true
+	}
+
+	return false
+}
+
+// Modified returns whether the store was modified.
+func (s *Store) Modified() bool {
+	return s.modified
 }
