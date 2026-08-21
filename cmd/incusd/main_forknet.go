@@ -412,6 +412,15 @@ func (c *cmdForknet) runDHCP(_ *cobra.Command, args []string) error {
 			}
 		}
 
+		// Prevent router advertisements from configuring addresses on interfaces
+		// with a static or disabled IPv6 configuration.
+		if !config.DHCP6 {
+			err := c.disableIPv6Autoconf(iface)
+			if err != nil {
+				l.WithError(err).Warning("Couldn't disable IPv6 address auto-configuration")
+			}
+		}
+
 		// Skip interfaces that are fully statically configured.
 		if !config.DHCP4 && !config.DHCP6 {
 			l.Info("skipping dhcp on statically configured interface")
@@ -1163,6 +1172,23 @@ func (c *cmdForknet) dhcpApplyDNS(l *logrus.Logger) error {
 	}
 
 	return nil
+}
+
+// disableIPv6Autoconf prevents router advertisements from configuring addresses on the interface.
+func (c *cmdForknet) disableIPv6Autoconf(iface string) error {
+	// Don't auto-configure addresses from router advertisements.
+	err := os.WriteFile(filepath.Join("/proc/sys/net/ipv6/conf", iface, "autoconf"), []byte("0"), 0o644)
+	if err != nil {
+		return err
+	}
+
+	// Remove any already auto-configured address.
+	addr := &ip.Addr{
+		DevName: iface,
+		Family:  ip.FamilyV6,
+	}
+
+	return addr.FlushDynamic()
 }
 
 // disableIPv6Gateway prevents router advertisements from providing a default gateway on the interface.
