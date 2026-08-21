@@ -664,7 +664,7 @@
 						"ipv4.address": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "An IPv4 address to assign to the instance through DHCP (can be `none` to restrict all IPv4 traffic when `security.ipv4_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)",
+							"shortdesc": "An IPv4 address to assign to the instance through DHCP (can be `none` to disable DHCPv4 inside an OCI container and restrict all IPv4 traffic when `security.ipv4_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)",
 							"type": "string"
 						}
 					},
@@ -696,7 +696,7 @@
 						"ipv6.address": {
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "An IPv6 address to assign to the instance through DHCP (can be `none` to restrict all IPv6 traffic when `security.ipv6_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)",
+							"shortdesc": "An IPv6 address to assign to the instance through DHCP (can be `none` to disable DHCPv6 and SLAAC inside an OCI container and restrict all IPv6 traffic when `security.ipv6_filtering` is set, or a CIDR value to statically configure the address inside an OCI container)",
 							"type": "string"
 						}
 					},
