@@ -310,6 +310,7 @@ run_standalone_vm() {
     run_test test_cpu_vm "VM CPU hotplug"
     run_test test_guestapi_vm "VM guest API"
     run_test test_network_routed "VM routed NIC"
+    run_test test_nvram_vm "VM NVRAM"
     run_test test_storage_disks_vm "VM disk devices"
     run_test test_storage_vm "VM storage"
     run_test test_storage_volumes_vm "VM storage volumes"

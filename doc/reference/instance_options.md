@@ -407,15 +407,22 @@ This is done through `raw.qemu.scriptlet`. The scriptlet must define the `qemu_h
 
 The following commands are exposed to that scriptlet:
 
-- `log_info` will log an `INFO` message
-- `log_warn` will log a `WARNING` message
-- `log_error` will log an `ERROR` message
-- `run_qmp` will run an arbitrary QMP command (JSON) and return its output
-- `run_command` will run the specified command with an optional list of arguments and return its output
-- `get_qemu_cmdline` will return the list of command-line arguments passed to QEMU
-- `set_qemu_cmdline` will set them
-- `get_qemu_conf` will return the QEMU configuration file as a dictionary
-- `set_qemu_conf` will set it from a dictionary
+- `log_info(*message)` will log an `INFO` message
+- `log_warn(*message)` will log a `WARNING` message
+- `log_error(*message)` will log an `ERROR` message
+- `run_qmp(command)` will run an arbitrary QMP command (JSON) and return its output
+- `run_command(name, **args)` will run the specified command with an optional list of arguments and return its output
+- `get_qemu_cmdline()` will return the list of command-line arguments passed to QEMU
+- `set_qemu_cmdline(args)` will set them
+- `get_qemu_conf()` will return the QEMU configuration file as a dictionary
+- `set_qemu_conf(conf)` will set it from a dictionary
+- `get_nvram_var(guid, name)` will get an NVRAM variable
+- `has_nvram_var(guid, name)` will check whether a variable is present in the NVRAM
+- `set_nvram_var(guid, name, v)` will set an NVRAM variable
+- `unset_nvram_var(guid, name)` will unset an NVRAM variable
+- `get_raw_nvram_var(guid, name)` will get a binary NVRAM variable
+- `set_raw_nvram_var(guid, name, v, attributes=None, timestamp=None)` will set a binary NVRAM variable
+- `list_nvram_vars(guid=None)` will list NVRAM variables
 
 Additionally the following alias commands (internally use `run_command`) are also available to simplify scripts:
 

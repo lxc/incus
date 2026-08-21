@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
+	"time"
 
 	"go.starlark.net/starlark"
 
@@ -15,6 +18,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/scriptlet"
+	"github.com/lxc/incus/v7/shared/uefi"
 )
 
 // marshalQEMUConf marshals a configuration into a []map[string]any.
@@ -50,7 +54,7 @@ func unmarshalQEMUConf(conf any) ([]cfg.Section, error) {
 }
 
 // QEMURun runs the QEMU scriptlet.
-func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[]cfg.Section, m *qmp.Monitor, stage string) error {
+func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[]cfg.Section, m *qmp.Monitor, nvram *uefi.Store, stage string) error {
 	logFunc := log.CreateLogger(l, "QEMU scriptlet ("+stage+")")
 
 	// We do not want to handle a qemuCfgSection object within our scriptlet, for simplicity.
@@ -347,6 +351,213 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		return starlark.None, nil
 	}
 
+	getNVRAMVarFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var guid, varName string
+		err := starlark.UnpackArgs(b.Name(), args, kwargs, "guid", &guid, "name", &varName)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err := uefi.ParseGUIDOrName(guid)
+		if err != nil {
+			return nil, err
+		}
+
+		v, ok := nvram.Get(g, varName)
+		if !ok {
+			return nil, fmt.Errorf("Variable %s:%s not found", guid, varName)
+		}
+
+		_ = uefi.Dissect(v, g, varName)
+		rv, err := scriptlet.StarlarkMarshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("Marshalling NVRAM variable failed: %w", err)
+		}
+
+		return rv, nil
+	}
+
+	hasNVRAMVarFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var guid, varName string
+		err := starlark.UnpackArgs(b.Name(), args, kwargs, "guid", &guid, "name", &varName)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err := uefi.ParseGUIDOrName(guid)
+		if err != nil {
+			return nil, err
+		}
+
+		return starlark.Bool(nvram.Has(g, varName)), nil
+	}
+
+	setNVRAMVarFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := assertConfigStage(b.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		var guid, varName string
+		var vv starlark.Value
+		err = starlark.UnpackArgs(b.Name(), args, kwargs, "guid", &guid, "name", &varName, "v", &vv)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err := uefi.ParseGUIDOrName(guid)
+		if err != nil {
+			return nil, err
+		}
+
+		vAny, err := scriptlet.StarlarkUnmarshal(vv)
+		if err != nil {
+			return nil, err
+		}
+
+		// We received a Starlark dict unmarshalled as a map (of apparent type any), so we convert it to
+		// JSON to unmarshal it again into our desired type.
+		marshalled, err := json.Marshal(vAny)
+		if err != nil {
+			return nil, err
+		}
+
+		var vPut api.InstanceNVRAMVariablePut
+		err = json.Unmarshal(marshalled, &vPut)
+		if err != nil {
+			return nil, err
+		}
+
+		err = nvram.Set(g, varName, api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: vPut})
+		if err != nil {
+			return nil, err
+		}
+
+		return starlark.None, nil
+	}
+
+	unsetNVRAMVarFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := assertConfigStage(b.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		var guid, varName string
+		err = starlark.UnpackArgs(b.Name(), args, kwargs, "guid", &guid, "name", &varName)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err := uefi.ParseGUIDOrName(guid)
+		if err != nil {
+			return nil, err
+		}
+
+		ok := nvram.Unset(g, varName)
+		if !ok {
+			return nil, fmt.Errorf("Variable %s:%s not found", guid, varName)
+		}
+
+		return starlark.None, nil
+	}
+
+	getRawNVRAMVarFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var guid, varName string
+		err := starlark.UnpackArgs(b.Name(), args, kwargs, "guid", &guid, "name", &varName)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err := uefi.ParseGUIDOrName(guid)
+		if err != nil {
+			return nil, err
+		}
+
+		v, ok := nvram.Get(g, varName)
+		if !ok {
+			return nil, fmt.Errorf("Variable %s:%s not found", guid, varName)
+		}
+
+		return starlark.Bytes(v.Binary), nil
+	}
+
+	setRawNVRAMVarFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		err := assertConfigStage(b.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		var guid, varName string
+		var vv starlark.Bytes
+		attributes := uint32(0)
+		timestamp := int64(0)
+		err = starlark.UnpackArgs(b.Name(), args, kwargs, "guid", &guid, "name", &varName, "v", &vv, "attributes??", &attributes, "timestamp??", &timestamp)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err := uefi.ParseGUIDOrName(guid)
+		if err != nil {
+			return nil, err
+		}
+
+		v := api.InstanceNVRAMVariable{Binary: []byte(vv)}
+		if attributes == 0 {
+			v.Attributes = []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS"}
+		} else {
+			v.Attributes = uefi.ParseAttributes(attributes)
+		}
+
+		if timestamp != 0 {
+			ts := time.Unix(timestamp, 0).UTC()
+			v.Timestamp = &ts
+		}
+
+		err = nvram.Set(g, varName, v)
+		if err != nil {
+			return nil, err
+		}
+
+		return starlark.None, nil
+	}
+
+	listNVRAMVarsFunc := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+		var guid string
+		err := starlark.UnpackArgs(b.Name(), args, kwargs, "guid??", &guid)
+		if err != nil {
+			return nil, err
+		}
+
+		v := make(map[string][]string, len(nvram.Vars))
+		for guid, vars := range nvram.Vars {
+			v[guid] = slices.Collect(maps.Keys(vars))
+		}
+
+		var rv starlark.Value
+		if guid == "" {
+			rv, err = scriptlet.StarlarkMarshal(v)
+		} else {
+			var g string
+			g, err = uefi.ParseGUIDOrName(guid)
+			if err != nil {
+				return nil, err
+			}
+
+			vars, ok := v[g]
+			if !ok {
+				return nil, fmt.Errorf("GUID %s not found", guid)
+			}
+
+			rv, err = scriptlet.StarlarkMarshal(vars)
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("Marshalling NVRAM variables failed: %w", err)
+		}
+
+		return rv, nil
+	}
+
 	// Remember to match the entries in scriptletLoad.QEMUCompile() with this list so Starlark can
 	// perform compile time validation of functions used.
 	env := starlark.StringDict{
@@ -375,6 +586,14 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 		"set_qemu_cmdline": starlark.NewBuiltin("set_qemu_cmdline", setCmdArgsFunc),
 		"get_qemu_conf":    starlark.NewBuiltin("get_qemu_conf", getConfFunc),
 		"set_qemu_conf":    starlark.NewBuiltin("set_qemu_conf", setConfFunc),
+
+		"get_nvram_var":     starlark.NewBuiltin("get_nvram_var", getNVRAMVarFunc),
+		"has_nvram_var":     starlark.NewBuiltin("has_nvram_var", hasNVRAMVarFunc),
+		"set_nvram_var":     starlark.NewBuiltin("set_nvram_var", setNVRAMVarFunc),
+		"unset_nvram_var":   starlark.NewBuiltin("unset_nvram_var", unsetNVRAMVarFunc),
+		"get_raw_nvram_var": starlark.NewBuiltin("get_raw_nvram_var", getRawNVRAMVarFunc),
+		"set_raw_nvram_var": starlark.NewBuiltin("set_raw_nvram_var", setRawNVRAMVarFunc),
+		"list_nvram_vars":   starlark.NewBuiltin("list_nvram_vars", listNVRAMVarsFunc),
 	}
 
 	prog, thread, err := scriptletLoad.QEMUProgram(instance.Name)

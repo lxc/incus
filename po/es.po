@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-20 19:39+0000\n"
+"POT-Creation-Date: 2026-08-21 15:27+0000\n"
 "PO-Revision-Date: 2026-08-12 03:45+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/incus/cli/es/>\n"
@@ -693,8 +693,8 @@ msgstr ""
 msgid "(no timestamp)"
 msgstr ""
 
-#: cmd/incus/low_level.go:1453 cmd/incus/low_level.go:1461
-#: cmd/incus/low_level.go:1481 cmd/incus/low_level.go:1489
+#: cmd/incus/low_level.go:1454 cmd/incus/low_level.go:1462
+#: cmd/incus/low_level.go:1482 cmd/incus/low_level.go:1490
 #, fuzzy
 msgid "(not a certificate)"
 msgstr "Acepta certificado"
@@ -800,7 +800,7 @@ msgstr "--container-only no se puede pasar cuando la fuente es una instantánea"
 msgid "--override-boot only works with a single instance"
 msgstr "Perfil para aplicar al nuevo contenedor"
 
-#: cmd/incus/low_level.go:1612
+#: cmd/incus/low_level.go:1613
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
@@ -858,7 +858,7 @@ msgstr "--container-only no se puede pasar cuando la fuente es una instantánea"
 msgid "=> Query %d:"
 msgstr ""
 
-#: cmd/incus/low_level.go:1321
+#: cmd/incus/low_level.go:1322
 msgid ""
 "A PK certificate is already enrolled; remove it first to enroll a new one"
 msgstr ""
@@ -945,7 +945,7 @@ msgstr "condición"
 msgid "Action %q isn't supported by this tool"
 msgstr "El filtrado no está soportado aún"
 
-#: cmd/incus/low_level.go:1164 cmd/incus/low_level.go:1165
+#: cmd/incus/low_level.go:1165 cmd/incus/low_level.go:1166
 msgid "Add Secure Boot signatures"
 msgstr ""
 
@@ -1549,7 +1549,7 @@ msgstr ""
 msgid "Cannot set key: %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1216
+#: cmd/incus/low_level.go:1217
 msgid "Cannot store a signature in PK, KEK or dbt"
 msgstr ""
 
@@ -1727,7 +1727,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:403
 #: cmd/incus/config_trust.go:595 cmd/incus/image.go:1079
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:720 cmd/incus/low_level.go:1375
+#: cmd/incus/low_level.go:720 cmd/incus/low_level.go:1376
 #: cmd/incus/network.go:1054 cmd/incus/network.go:1253
 #: cmd/incus/network_allocations.go:75 cmd/incus/network_forward.go:122
 #: cmd/incus/network_integration.go:417 cmd/incus/network_load_balancer.go:129
@@ -2635,7 +2635,7 @@ msgstr ""
 msgid "Don't show progress information"
 msgstr ""
 
-#: cmd/incus/low_level.go:1169
+#: cmd/incus/low_level.go:1170
 msgid ""
 "Don’t import the file as a certificate but rather compute and import its "
 "digest (sha256|sha384|sha512)"
@@ -2816,7 +2816,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:434
 #: cmd/incus/config_trust.go:620 cmd/incus/image.go:1126
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:752 cmd/incus/low_level.go:1413
+#: cmd/incus/low_level.go:752 cmd/incus/low_level.go:1414
 #: cmd/incus/network.go:1101 cmd/incus/network.go:1291
 #: cmd/incus/network_allocations.go:101 cmd/incus/network_forward.go:158
 #: cmd/incus/network_integration.go:443 cmd/incus/network_load_balancer.go:164
@@ -3137,7 +3137,7 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:420 cmd/incus/config_trust.go:421
 #: cmd/incus/image.go:1110 cmd/incus/image.go:1111 cmd/incus/image_alias.go:249
-#: cmd/incus/low_level.go:1396 cmd/incus/low_level.go:1397
+#: cmd/incus/low_level.go:1397 cmd/incus/low_level.go:1398
 msgid "FINGERPRINT"
 msgstr "HUELLA DIGITAL"
 
@@ -3250,7 +3250,7 @@ msgstr "Acepta certificado"
 msgid "Failed parsing validation response: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/low_level.go:1204
+#: cmd/incus/low_level.go:1205
 #, fuzzy, c-format
 msgid "Failed reading input file: %w"
 msgstr "No se peude leer desde stdin: %s"
@@ -3381,7 +3381,7 @@ msgstr "Perfil para aplicar al nuevo contenedor"
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
 msgstr "Perfil para aplicar al nuevo contenedor"
 
-#: cmd/incus/low_level.go:986 cmd/incus/low_level.go:1068
+#: cmd/incus/low_level.go:986 cmd/incus/low_level.go:1069
 #, fuzzy, c-format
 msgid "Failed to delete variable %s:%s: %w"
 msgstr "Acepta certificado"
@@ -3458,7 +3458,7 @@ msgstr "Acepta certificado"
 msgid "Failed to open target file %q: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/low_level.go:1249
+#: cmd/incus/low_level.go:1250
 #, fuzzy, c-format
 msgid "Failed to parse PEM certificate: %w"
 msgstr "Acepta certificado"
@@ -3468,7 +3468,7 @@ msgstr "Acepta certificado"
 msgid "Failed to parse dump response: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/low_level.go:1261
+#: cmd/incus/low_level.go:1262
 msgid "Failed to parse input file as either PEM or DER certificate"
 msgstr ""
 
@@ -3477,7 +3477,7 @@ msgstr ""
 msgid "Failed to parse the preseed: %w"
 msgstr "Acepta certificado"
 
-#: cmd/incus/low_level.go:998
+#: cmd/incus/low_level.go:999
 #, fuzzy, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr "Acepta certificado"
@@ -3732,7 +3732,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:404 cmd/incus/config_trust.go:594
 #: cmd/incus/image.go:1080 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:719 cmd/incus/low_level.go:1374
+#: cmd/incus/low_level.go:719 cmd/incus/low_level.go:1375
 #: cmd/incus/network.go:1055 cmd/incus/network.go:1252
 #: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:72
 #: cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416
@@ -4209,7 +4209,7 @@ msgstr "Expira: %s"
 msgid "ISSUE DATE"
 msgstr ""
 
-#: cmd/incus/low_level.go:1398 cmd/incus/low_level.go:1399
+#: cmd/incus/low_level.go:1399 cmd/incus/low_level.go:1400
 msgid "ISSUER"
 msgstr ""
 
@@ -4391,7 +4391,7 @@ msgstr ""
 msgid "Input data file (\"-\" for stdin)"
 msgstr ""
 
-#: cmd/incus/low_level.go:1265
+#: cmd/incus/low_level.go:1266
 #, fuzzy
 msgid "Input file contains no certificate"
 msgstr "Acepta certificado"
@@ -4524,7 +4524,7 @@ msgstr "Nombre del contenedor es: %s"
 msgid "Invalid format %q"
 msgstr "Nombre del contenedor es: %s"
 
-#: cmd/incus/low_level.go:662 cmd/incus/low_level.go:1013
+#: cmd/incus/low_level.go:662 cmd/incus/low_level.go:1014
 #: cmd/incus/monitor.go:73
 #, fuzzy, c-format
 msgid "Invalid format: %s"
@@ -4715,11 +4715,11 @@ msgid ""
 "  L - Location of the DHCP Lease (e.g. its cluster member)"
 msgstr ""
 
-#: cmd/incus/low_level.go:1352
+#: cmd/incus/low_level.go:1353
 msgid "List Secure Boot signatures"
 msgstr ""
 
-#: cmd/incus/low_level.go:1353
+#: cmd/incus/low_level.go:1354
 msgid ""
 "List Secure Boot signatures\n"
 "\n"
@@ -5793,7 +5793,7 @@ msgstr ""
 msgid "Manage NVRAM on virtual machines"
 msgstr "Copiando la imagen: %s"
 
-#: cmd/incus/low_level.go:1112 cmd/incus/low_level.go:1113
+#: cmd/incus/low_level.go:1113 cmd/incus/low_level.go:1114
 #, fuzzy
 msgid "Manage Secure Boot on virtual machines"
 msgstr "Copiando la imagen: %s"
@@ -6141,7 +6141,7 @@ msgstr ""
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 
-#: cmd/incus/low_level.go:913 cmd/incus/low_level.go:1055
+#: cmd/incus/low_level.go:913 cmd/incus/low_level.go:1056
 msgid ""
 "More than one variable was passed but the server is missing the required "
 "\"instance_nvram_bulk_update\" API extension"
@@ -6617,7 +6617,7 @@ msgstr ""
 msgid "No matching rule(s) found"
 msgstr ""
 
-#: cmd/incus/low_level.go:1678
+#: cmd/incus/low_level.go:1679
 msgid "No signature matches"
 msgstr ""
 
@@ -6657,11 +6657,11 @@ msgstr "Versión de CUDA: %v"
 msgid "OVN:"
 msgstr ""
 
-#: cmd/incus/low_level.go:1400
+#: cmd/incus/low_level.go:1401
 msgid "OWNER GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:1401
+#: cmd/incus/low_level.go:1402
 msgid "OWNER GUID NAME"
 msgstr ""
 
@@ -6690,11 +6690,11 @@ msgid ""
 "Only one of --storage-create-device or --storage-create-loop can be specified"
 msgstr ""
 
-#: cmd/incus/low_level.go:1580
+#: cmd/incus/low_level.go:1581
 msgid "Only remove signatures of the given type"
 msgstr ""
 
-#: cmd/incus/low_level.go:1579
+#: cmd/incus/low_level.go:1580
 msgid "Only remove signatures owned by the given owner"
 msgstr ""
 
@@ -7143,7 +7143,7 @@ msgstr ""
 msgid "Query virtual machine images"
 msgstr ""
 
-#: cmd/incus/low_level.go:742 cmd/incus/low_level.go:1402
+#: cmd/incus/low_level.go:742 cmd/incus/low_level.go:1403
 msgid "RAW VALUE"
 msgstr ""
 
@@ -7300,7 +7300,7 @@ msgid ""
 "networks, ...) (yes/no): "
 msgstr ""
 
-#: cmd/incus/low_level.go:1574 cmd/incus/low_level.go:1575
+#: cmd/incus/low_level.go:1575 cmd/incus/low_level.go:1576
 msgid "Remove Secure Boot signatures"
 msgstr ""
 
@@ -7339,7 +7339,7 @@ msgstr "Aliases:"
 msgid "Remove all rules that match"
 msgstr ""
 
-#: cmd/incus/low_level.go:1578
+#: cmd/incus/low_level.go:1579
 msgid "Remove all signatures"
 msgstr ""
 
@@ -7691,7 +7691,7 @@ msgstr ""
 msgid "STP"
 msgstr ""
 
-#: cmd/incus/low_level.go:1403 cmd/incus/low_level.go:1404
+#: cmd/incus/low_level.go:1404 cmd/incus/low_level.go:1405
 msgid "SUBJECT"
 msgstr ""
 
@@ -8134,7 +8134,7 @@ msgstr ""
 msgid "Set the key as an instance property"
 msgstr ""
 
-#: cmd/incus/low_level.go:1168
+#: cmd/incus/low_level.go:1169
 msgid "Set the signature owner"
 msgstr ""
 
@@ -8167,7 +8167,7 @@ msgstr ""
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr ""
 
-#: cmd/incus/low_level.go:1682
+#: cmd/incus/low_level.go:1683
 msgid "Several signatures match the given fingerprint"
 msgstr ""
 
@@ -8711,7 +8711,7 @@ msgstr ""
 
 #: cmd/incus/config_trust.go:418 cmd/incus/image.go:1116
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:555
-#: cmd/incus/low_level.go:1405 cmd/incus/network.go:1082
+#: cmd/incus/low_level.go:1406 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
 #: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1625
@@ -8820,12 +8820,12 @@ msgstr ""
 msgid "The following unknown volumes have been found:"
 msgstr ""
 
-#: cmd/incus/low_level.go:1315
+#: cmd/incus/low_level.go:1316
 #, fuzzy
 msgid "The given certificate is already present in this ESL"
 msgstr "Certificado del cliente almacenado en el servidor: "
 
-#: cmd/incus/low_level.go:1312
+#: cmd/incus/low_level.go:1313
 #, fuzzy
 msgid "The given signature is already present in this ESL"
 msgstr "Certificado del cliente almacenado en el servidor: "
@@ -9202,12 +9202,12 @@ msgstr ""
 msgid "Type: %s"
 msgstr "Expira: %s"
 
-#: cmd/incus/low_level.go:1072
+#: cmd/incus/low_level.go:1073
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1092
+#: cmd/incus/low_level.go:1093
 #, fuzzy, c-format
 msgid "UEFI variables %s deleted on %s\n"
 msgstr "Perfil %s eliminado"
@@ -9278,19 +9278,19 @@ msgstr "Acepta certificado"
 msgid "Unable to parse %s as valid JSON"
 msgstr "Acepta certificado"
 
-#: cmd/incus/low_level.go:1301 cmd/incus/low_level.go:1526
-#: cmd/incus/low_level.go:1638
+#: cmd/incus/low_level.go:1302 cmd/incus/low_level.go:1527
+#: cmd/incus/low_level.go:1639
 #, c-format
 msgid "Unable to parse %s:%s as an EFI Signature List"
 msgstr ""
 
-#: cmd/incus/low_level.go:1294 cmd/incus/low_level.go:1519
-#: cmd/incus/low_level.go:1631
+#: cmd/incus/low_level.go:1295 cmd/incus/low_level.go:1520
+#: cmd/incus/low_level.go:1632
 #, c-format
 msgid "Unable to parse %s:%s as valid JSON"
 msgstr ""
 
-#: cmd/incus/low_level.go:1209 cmd/incus/low_level.go:1645
+#: cmd/incus/low_level.go:1210 cmd/incus/low_level.go:1646
 #, fuzzy, c-format
 msgid "Unable to parse owner %s: %w"
 msgstr "Acepta certificado"
@@ -9323,7 +9323,7 @@ msgstr ""
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:440
 #: cmd/incus/config_trust.go:626 cmd/incus/image.go:1148
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:758 cmd/incus/low_level.go:1419
+#: cmd/incus/low_level.go:758 cmd/incus/low_level.go:1420
 #: cmd/incus/network.go:1107 cmd/incus/network.go:1297
 #: cmd/incus/network_allocations.go:107 cmd/incus/network_forward.go:164
 #: cmd/incus/network_integration.go:449 cmd/incus/network_load_balancer.go:170
@@ -9363,12 +9363,12 @@ msgstr ""
 msgid "Unknown output type %q"
 msgstr ""
 
-#: cmd/incus/low_level.go:1230
+#: cmd/incus/low_level.go:1231
 #, c-format
 msgid "Unknown signature type %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1030 cmd/incus/low_level.go:1031
+#: cmd/incus/low_level.go:1031 cmd/incus/low_level.go:1032
 msgid "Unset UEFI variables"
 msgstr ""
 

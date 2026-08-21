@@ -569,6 +569,7 @@ var APIExtensions = []string{
 	"network_ovn_multicast",
 	"device_burst_limits",
 	"network_ipv6_ra",
+	"qemu_scriptlet_nvram",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
