@@ -107,6 +107,7 @@ var patches = []patch{
 	{name: "authorization_client_routes_from_driver", stage: patchPreDaemonStorage, run: patchAuthorizationClientRoutesFromDriver},
 	{name: "network_ovn_l2proxy_arp_proxy", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNL2ProxyARPProxy)},
 	{name: "auth_openfga_instance_tcp", stage: patchPostNetworks, run: patchGenericAuthorization},
+	{name: "auth_openfga_shared_networks", stage: patchPostNetworks, run: patchGenericAuthorization},
 }
 
 type patchRun func(name string, d *Daemon) error
