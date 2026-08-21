@@ -83,6 +83,8 @@ type Authorizer interface {
 	AddNetwork(ctx context.Context, projectName string, networkName string) error
 	DeleteNetwork(ctx context.Context, projectName string, networkName string) error
 	RenameNetwork(ctx context.Context, projectName string, oldNetworkName string, newNetworkName string) error
+	AddNetworkShare(ctx context.Context, projectName string, networkName string) error
+	DeleteNetworkShare(ctx context.Context, projectName string, networkName string) error
 
 	AddNetworkZone(ctx context.Context, projectName string, networkZoneName string) error
 	DeleteNetworkZone(ctx context.Context, projectName string, networkZoneName string) error
@@ -131,6 +133,7 @@ type Resources struct {
 	ImageAliasObjects         []Object
 	InstanceObjects           []Object
 	NetworkObjects            []Object
+	NetworkShareObjects       map[string][]Object
 	NetworkACLObjects         []Object
 	NetworkAddressSetObjects  []Object
 	NetworkIntegrationObjects []Object

@@ -168,6 +168,7 @@ const (
 )
 
 const (
-	relationServer  = "server"
-	relationProject = "project"
+	relationServer     = "server"
+	relationProject    = "project"
+	relationSharedWith = "shared_with"
 )

@@ -242,6 +242,16 @@ func (c *commonAuthorizer) RenameNetwork(ctx context.Context, projectName string
 	return nil
 }
 
+// AddNetworkShare is a no-op.
+func (c *commonAuthorizer) AddNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	return nil
+}
+
+// DeleteNetworkShare is a no-op.
+func (c *commonAuthorizer) DeleteNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	return nil
+}
+
 // AddNetworkZone is a no-op.
 func (c *commonAuthorizer) AddNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
 	return nil
