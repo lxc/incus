@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 )
 
 // Addr represents arguments for address protocol manipulation.
@@ -55,6 +56,32 @@ func (a *Addr) scopeNum() (int, error) {
 	}
 
 	return int(scope), nil
+}
+
+// FlushDynamic removes all non-permanent addresses from the device.
+func (a *Addr) FlushDynamic() error {
+	link, err := linkByName(a.DevName)
+	if err != nil {
+		return err
+	}
+
+	addrs, err := netlink.AddrList(link, int(a.Family))
+	if err != nil {
+		return fmt.Errorf("Failed to get addresses for device %s: %w", a.DevName, err)
+	}
+
+	for _, addr := range addrs {
+		if addr.Flags&unix.IFA_F_PERMANENT != 0 {
+			continue
+		}
+
+		err := netlink.AddrDel(link, &addr)
+		if err != nil {
+			return fmt.Errorf("Failed to delete address %v: %w", addr, err)
+		}
+	}
+
+	return nil
 }
 
 // Flush flushes protocol addresses.
