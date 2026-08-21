@@ -78,6 +78,52 @@ test_nvram_vm() {
     incus wait v1 agent
     incus stop v1
 
+    # Use a scriptlet.
+    incus config set v1 raw.qemu.scriptlet=- <<EOF
+def qemu_hook(instance, stage):
+  if stage == "config":
+    set_nvram_var("OVMF_PLATFORM_CONFIG_GUID", "PlatformConfig", {
+      "data": {"width": 1280, "height": 768},
+      "attributes": ["NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS"]
+    })
+    set_raw_nvram_var("00112233-4455-6677-8899-aabbccddeeff", "abc", b"def", attributes=3)
+    if "Lang" not in list_nvram_vars()["8be4df61-93ca-11d2-aa0d-00e098032b8c"]:
+      fail("lang")
+    if "PlatformLang" not in list_nvram_vars("EFI_GLOBAL_VARIABLE"):
+      fail("platformLang")
+    unset_nvram_var("EFI_GLOBAL_VARIABLE", "Lang")
+  else:
+    if get_raw_nvram_var("OVMF_PLATFORM_CONFIG_GUID", "PlatformConfig") != b"\x00\x05\x00\x00\x00\x03\x00\x00":
+      fail("platformConfig")
+    platformConfig = get_nvram_var("OVMF_PLATFORM_CONFIG_GUID", "PlatformConfig")
+    if platformConfig.data.width != 1280:
+      fail("platformConfig.data.width")
+    if platformConfig.data.height != 768:
+      fail("platformConfig.data.height")
+    if platformConfig.attributes != ["NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS"]:
+      fail("platformConfig.attributes")
+    if platformConfig.timestamp != None:
+      fail("platformConfig.timestamp")
+    if platformConfig.binary != b"\x00\x05\x00\x00\x00\x03\x00\x00":
+      fail("platformConfig.binary")
+    if not has_nvram_var("00112233-4455-6677-8899-aabbccddeeff", "abc"):
+      fail("abc")
+    abc = get_nvram_var("00112233-4455-6677-8899-aabbccddeeff", "abc")
+    if abc.data != None:
+      fail("abc.data")
+    if abc.attributes != ["NON_VOLATILE", "BOOTSERVICE_ACCESS"]:
+      fail("abc.attributes")
+    if abc.timestamp != None:
+      fail("abc.timestamp")
+    if abc.binary != b"def":
+      fail("abc.binary")
+EOF
+    incus start v1
+    incus wait v1 agent
+    incus stop v1
+    incus config unset v1 raw.qemu.scriptlet
+    [ "$(incus low-level nvram get v1 00112233-4455-6677-8899-aabbccddeeff:abc --format=binary)" = "def" ]
+
     echo "==> Deleting VM"
     incus rm -f v1
 
