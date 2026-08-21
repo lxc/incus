@@ -976,7 +976,7 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf(i18n.G("--timestamp cannot be used with --format=%s"), c.flagFormat)
 			}
 
-			data := api.InstanceNVRAMVariablePut{}
+			var data *api.InstanceNVRAMVariablePut
 
 			// If the value passed is empty, switch to the unset logic.
 			if v == "" {
@@ -987,6 +987,7 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 					}
 				}
 			} else {
+				data = &api.InstanceNVRAMVariablePut{}
 				switch c.flagFormat {
 				case "json":
 					err = json.Unmarshal([]byte(v), &data)
@@ -999,7 +1000,7 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				}
 
 				if single {
-					return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, data, "")
+					return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, *data, "")
 				}
 			}
 
@@ -1008,7 +1009,7 @@ func (c *cmdLowLevelNVRAMSet) run(cmd *cobra.Command, args []string) error {
 				bulk[guid] = map[string]*api.InstanceNVRAMVariablePut{}
 			}
 
-			bulk[guid][varName] = &data
+			bulk[guid][varName] = data
 		default:
 			return fmt.Errorf(i18n.G("Invalid format: %s"), c.flagFormat)
 		}
