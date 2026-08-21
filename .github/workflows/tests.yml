@@ -865,6 +865,7 @@ jobs:
           - test: cpu_vm
           - test: guestapi_vm
           - test: network_routed
+          - test: nvram_vm
           - test: storage_disks_vm
           - test: storage_vm
             driver: dir
