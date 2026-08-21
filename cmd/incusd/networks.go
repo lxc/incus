@@ -559,6 +559,10 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			if err != nil {
 				logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
 			}
+
+			if projectName == api.ProjectDefaultName {
+				networkUpdateShares(r.Context(), s, req.Name, true)
+			}
 		}
 
 		return resp
@@ -613,6 +617,10 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			err = s.Authorizer.AddNetwork(r.Context(), projectName, req.Name)
 			if err != nil {
 				logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
+			}
+
+			if projectName == api.ProjectDefaultName {
+				networkUpdateShares(r.Context(), s, req.Name, true)
 			}
 		}
 
@@ -679,11 +687,56 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		logger.Error("Failed to add network to authorizer", logger.Ctx{"name": req.Name, "project": projectName, "error": err})
 	}
 
+	if projectName == api.ProjectDefaultName {
+		networkUpdateShares(r.Context(), s, req.Name, true)
+	}
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkCreated.Event(n, requestor, nil))
 
 	reverter.Success()
 	return resp
+}
+
+// networkUpdateShares updates the authorizer's share entries for a default project network.
+func networkUpdateShares(ctx context.Context, s *state.State, networkName string, add bool) {
+	var projectNames []string
+
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		dbProjects, err := dbCluster.GetProjects(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		for _, dbProject := range dbProjects {
+			p, err := dbProject.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			if project.NetworkSharedFromDefault(p, networkName) {
+				projectNames = append(projectNames, p.Name)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		logger.Error("Failed loading projects for network shares", logger.Ctx{"network": networkName, "error": err})
+		return
+	}
+
+	for _, projectName := range projectNames {
+		if add {
+			err = s.Authorizer.AddNetworkShare(ctx, projectName, networkName)
+		} else {
+			err = s.Authorizer.DeleteNetworkShare(ctx, projectName, networkName)
+		}
+
+		if err != nil {
+			logger.Error("Failed to update network share in authorizer", logger.Ctx{"network": networkName, "project": projectName, "error": err})
+		}
+	}
 }
 
 // networkPartiallyCreated returns true of supplied network has properties that indicate it has had previous
@@ -1273,6 +1326,10 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 		logger.Error("Failed to remove network from authorizer", logger.Ctx{"name": networkName, "project": projectName, "error": err})
 	}
 
+	if projectName == api.ProjectDefaultName {
+		networkUpdateShares(r.Context(), s, networkName, false)
+	}
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(projectName, lifecycle.NetworkDeleted.Event(n, requestor, nil))
 
@@ -1424,6 +1481,11 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 	err = s.Authorizer.RenameNetwork(r.Context(), projectName, networkName, req.Name)
 	if err != nil {
 		logger.Error("Failed to rename network in authorizer", logger.Ctx{"old_name": networkName, "new_name": req.Name, "project": projectName, "error": err})
+	}
+
+	if projectName == api.ProjectDefaultName {
+		networkUpdateShares(r.Context(), s, networkName, false)
+		networkUpdateShares(r.Context(), s, req.Name, true)
 	}
 
 	requestor := request.CreateRequestor(r)

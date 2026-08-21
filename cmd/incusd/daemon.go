@@ -2175,6 +2175,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, tl
 				return err
 			}
 
+			defaultNetworks := []string{}
 			err = query.Scan(ctx, tx.Tx(), "SELECT networks.name, projects.name FROM networks JOIN projects ON projects.id=networks.project_id", func(scan func(dest ...any) error) error {
 				var networkName string
 				var projectName string
@@ -2183,11 +2184,49 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, tl
 					return err
 				}
 
+				if projectName == api.ProjectDefaultName {
+					defaultNetworks = append(defaultNetworks, networkName)
+				}
+
 				resources.NetworkObjects = append(resources.NetworkObjects, auth.ObjectNetwork(projectName, networkName))
 				return nil
 			})
 			if err != nil {
 				return err
+			}
+
+			// Get the project config keys relevant to network sharing.
+			projectConfigs := map[string]map[string]string{}
+			err = query.Scan(ctx, tx.Tx(), "SELECT projects.name, projects_config.key, projects_config.value FROM projects_config JOIN projects ON projects.id=projects_config.project_id WHERE projects_config.key IN ('restricted', 'features.networks', 'restricted.networks.access')", func(scan func(dest ...any) error) error {
+				var projectName string
+				var key string
+				var value string
+				err := scan(&projectName, &key, &value)
+				if err != nil {
+					return err
+				}
+
+				if projectConfigs[projectName] == nil {
+					projectConfigs[projectName] = map[string]string{}
+				}
+
+				projectConfigs[projectName][key] = value
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			// Compute the networks shared from the default project into other projects.
+			resources.NetworkShareObjects = map[string][]auth.Object{}
+			for projectName, config := range projectConfigs {
+				p := api.Project{Name: projectName, ProjectPut: api.ProjectPut{Config: config}}
+
+				for _, networkName := range defaultNetworks {
+					if project.NetworkSharedFromDefault(&p, networkName) {
+						resources.NetworkShareObjects[projectName] = append(resources.NetworkShareObjects[projectName], auth.ObjectNetwork(api.ProjectDefaultName, networkName))
+					}
+				}
 			}
 
 			err = query.Scan(ctx, tx.Tx(), "SELECT networks_acls.name, projects.name FROM networks_acls JOIN projects ON projects.id=networks_acls.project_id", func(scan func(dest ...any) error) error {
