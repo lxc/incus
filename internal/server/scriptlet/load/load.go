@@ -80,6 +80,14 @@ func QEMUCompile(name string, src string) (*starlark.Program, error) {
 		"set_qemu_cmdline",
 		"get_qemu_conf",
 		"set_qemu_conf",
+
+		"get_nvram_var",
+		"has_nvram_var",
+		"set_nvram_var",
+		"unset_nvram_var",
+		"get_raw_nvram_var",
+		"set_raw_nvram_var",
+		"list_nvram_vars",
 	})
 }
 
