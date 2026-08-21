@@ -662,6 +662,32 @@ func (f *FGA) RenameNetwork(ctx context.Context, projectName string, oldNetworkN
 	return f.updateTuples(ctx, writes, deletions)
 }
 
+// AddNetworkShare shares a default project network with another project in the authorizer.
+func (f *FGA) AddNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationSharedWith,
+			Object:   ObjectNetwork(api.ProjectDefaultName, networkName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkShare removes the sharing of a default project network with another project in the authorizer.
+func (f *FGA) DeleteNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationSharedWith,
+			Object:   ObjectNetwork(api.ProjectDefaultName, networkName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
 // AddNetworkZone adds a network zone in the authorizer.
 func (f *FGA) AddNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
 	writes := []client.ClientTupleKey{
@@ -1187,6 +1213,63 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 	err = diffObjects(relationProject, remoteProjectResourceObjectStrs, localProjectObjects)
 	if err != nil {
 		return err
+	}
+
+	// Compose the union of local and remote project names for the network share diff.
+	shareProjectNames := []string{}
+	for _, localProjectObject := range resources.ProjectObjects {
+		shareProjectNames = append(shareProjectNames, localProjectObject.Project())
+	}
+
+	for _, remoteProjectObjectStr := range remoteProjectObjectStrs {
+		remoteProjectObject, err := ObjectFromString(remoteProjectObjectStr)
+		if err != nil {
+			return err
+		}
+
+		if !slices.Contains(shareProjectNames, remoteProjectObject.Project()) {
+			shareProjectNames = append(shareProjectNames, remoteProjectObject.Project())
+		}
+	}
+
+	// Perform a per-project diff of the shared network objects.
+	for _, projectName := range shareProjectNames {
+		remoteSharesResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+			User:     ObjectProject(projectName).String(),
+			Relation: relationSharedWith,
+			Type:     string(ObjectTypeNetwork),
+		}).Execute()
+		if err != nil {
+			return err
+		}
+
+		remoteShareStrs := remoteSharesResp.GetObjects()
+		localShares := resources.NetworkShareObjects[projectName]
+
+		for _, localShare := range localShares {
+			if !slices.Contains(remoteShareStrs, localShare.String()) {
+				writes = append(writes, client.ClientTupleKey{
+					User:     ObjectProject(projectName).String(),
+					Relation: relationSharedWith,
+					Object:   localShare.String(),
+				})
+			}
+		}
+
+		for _, remoteShareStr := range remoteShareStrs {
+			remoteShare, err := ObjectFromString(remoteShareStr)
+			if err != nil {
+				return err
+			}
+
+			if !slices.Contains(localShares, remoteShare) {
+				deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+					User:     ObjectProject(projectName).String(),
+					Relation: relationSharedWith,
+					Object:   remoteShareStr,
+				})
+			}
+		}
 	}
 
 	// Perform any necessary writes and deletions against the OpenFGA server.
