@@ -22,12 +22,6 @@ import (
 	"github.com/lxc/incus/v7/shared/uefi"
 )
 
-type rawInstanceNVRAMVariable struct {
-	Data       json.RawMessage `json:"data"`
-	Attributes []string        `json:"attributes"`
-	Timestamp  *time.Time      `json:"timestamp"`
-}
-
 func getNVRAMStore(d *Daemon, r *http.Request, projectName string, name string) (*uefi.Store, instance.VM, response.Response) {
 	s := d.State()
 
@@ -576,12 +570,7 @@ func instanceNVRAMGUIDVarGet(d *Daemon, r *http.Request) response.Response {
 		return resp
 	}
 
-	vars, ok := store.Vars[guid]
-	if !ok {
-		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "GUID not found"))
-	}
-
-	v, ok := vars[varName]
+	v, ok := store.Get(guid, varName)
 	if !ok {
 		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "Variable not found"))
 	}
@@ -676,17 +665,10 @@ func instanceNVRAMGUIDVarDelete(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("UEFI variables cannot be deleted on running VMs"))
 	}
 
-	vars, ok := store.Vars[guid]
-	if !ok {
-		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "GUID not found"))
-	}
-
-	_, ok = vars[varName]
-	if !ok {
+	if !store.Unset(guid, varName) {
 		return response.SmartError(api.StatusErrorf(http.StatusNotFound, "Variable not found"))
 	}
 
-	delete(store.Vars[guid], varName)
 	err = inst.SetNVRAM(store)
 	if err != nil {
 		return response.SmartError(err)
@@ -784,12 +766,7 @@ func instanceNVRAMGUIDVarPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("UEFI variables cannot be modified on running VMs"))
 	}
 
-	_, ok := store.Vars[guid]
-	if !ok {
-		store.Vars[guid] = map[string]*api.InstanceNVRAMVariable{}
-	}
-
-	oldV, updated := store.Vars[guid][varName]
+	oldV, updated := store.Get(guid, varName)
 	if updated {
 		// Validate ETag
 		etag := []any{
@@ -837,19 +814,9 @@ func instanceNVRAMGUIDVarPut(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 	} else {
-		// This leaves the dissected data unmarshalled for deferred processing.
-		var raw rawInstanceNVRAMVariable
-		err := json.NewDecoder(r.Body).Decode(&raw)
+		err := json.NewDecoder(r.Body).Decode(&v.InstanceNVRAMVariablePut)
 		if err != nil {
 			return response.BadRequest(err)
-		}
-
-		v.Data = raw.Data
-		v.Attributes = raw.Attributes
-		v.Timestamp = raw.Timestamp
-		err = uefi.Format(&v, guid, varName)
-		if err != nil {
-			return response.SmartError(err)
 		}
 	}
 
@@ -857,7 +824,11 @@ func instanceNVRAMGUIDVarPut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Volatile UEFI variables cannot be stored in the NVRAM"))
 	}
 
-	store.Vars[guid][varName] = &v
+	err = store.Set(guid, varName, v)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	err = inst.SetNVRAM(store)
 	if err != nil {
 		return response.SmartError(err)
@@ -934,35 +905,23 @@ func instanceNVRAMPatch(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("UEFI variables cannot be modified on running VMs"))
 	}
 
-	var patched map[string]map[string]*rawInstanceNVRAMVariable
+	var patched map[string]map[string]*api.InstanceNVRAMVariablePut
 	err = json.NewDecoder(r.Body).Decode(&patched)
 	if err != nil {
 		return response.BadRequest(err)
 	}
 
 	for guid, vars := range patched {
-		_, ok := store.Vars[guid]
-		if !ok {
-			store.Vars[guid] = map[string]*api.InstanceNVRAMVariable{}
-		}
-
-		for varName, raw := range vars {
-			if raw == nil {
-				delete(store.Vars[guid], varName)
+		for varName, v := range vars {
+			if v == nil {
+				store.Unset(guid, varName)
 				continue
 			}
 
-			if !slices.Contains(raw.Attributes, "NON_VOLATILE") {
-				return response.BadRequest(errors.New("Volatile UEFI variables cannot be stored in the NVRAM"))
-			}
-
-			v := api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{Data: raw.Data, Attributes: raw.Attributes, Timestamp: raw.Timestamp}}
-			err = uefi.Format(&v, guid, varName)
+			err = store.Set(guid, varName, api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: *v})
 			if err != nil {
 				return response.SmartError(err)
 			}
-
-			store.Vars[guid][varName] = &v
 		}
 	}
 
