@@ -186,6 +186,23 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 		// shortdesc: Sets the method how OVN NIC external IPs will be advertised on uplink network: `l2proxy` (proxy ARP/NDP) or `routed`
 		"ovn.ingress_mode": validate.Optional(validate.IsOneOf("l2proxy", "routed")),
 
+		// gendoc:generate(entity=network_physical, group=ovn, key=ovn.dynamic_routing)
+		//
+		// ---
+		// type: bool
+		// condition: standard mode
+		// defaultdesc: `false`
+		// shortdesc: Have downstream OVN networks export their prefixes into a host VRF on the active gateway chassis
+		"ovn.dynamic_routing": validate.Optional(validate.IsBool),
+
+		// gendoc:generate(entity=network_physical, group=ovn, key=ovn.dynamic_routing.vrf.id)
+		//
+		// ---
+		// type: integer
+		// condition: `ovn.dynamic_routing`
+		// shortdesc: Routing table ID of the pre-created host VRF OVN exports into (required when `ovn.dynamic_routing` is enabled)
+		"ovn.dynamic_routing.vrf.id": validate.Optional(validate.IsUint32),
+
 		"volatile.last_state.created": validate.Optional(validate.IsBool),
 	}
 
@@ -241,6 +258,11 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 	err = n.validate(config, rules)
 	if err != nil {
 		return err
+	}
+
+	// Require explicit VRF id
+	if util.IsTrue(config["ovn.dynamic_routing"]) && config["ovn.dynamic_routing.vrf.id"] == "" {
+		return errors.New("ovn.dynamic_routing requires ovn.dynamic_routing.vrf.id to be set")
 	}
 
 	return nil
