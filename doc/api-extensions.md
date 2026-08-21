@@ -3391,3 +3391,8 @@ sustained counterparts and define the rate the device may reach while bursting.
 The new `limits.read.burst.length`, `limits.write.burst.length` and
 `limits.max.burst.length` keys define how long the burst rate may be
 sustained for, defaulting to one second.
+
+## `network_ipv6_ra`
+
+Adds a new `ipv6.ra` configuration key to both `bridge` and `ovn` networks,
+controlling whether IPv6 router advertisements are sent on the network.
