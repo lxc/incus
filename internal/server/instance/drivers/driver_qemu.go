@@ -12535,6 +12535,10 @@ func (d *qemu) GetNVRAM() (*uefi.Store, error) {
 
 // SetNVRAM sets the NVRAM.
 func (d *qemu) SetNVRAM(store *uefi.Store) error {
+	if !store.Modified() {
+		return nil
+	}
+
 	// Mount the instance's config volume.
 	_, err := d.mount()
 	if err != nil {
