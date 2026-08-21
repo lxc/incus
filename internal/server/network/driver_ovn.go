@@ -5552,6 +5552,12 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		for _, dnsIP := range dnsIPs {
 			removeARPProxyIPNets = append(removeARPProxyIPNets, IPToNet(dnsIP))
 		}
+
+		// Delete any MAC bindings learned by the router for those IPs.
+		err = n.ovnsb.DeleteMACBindings(context.TODO(), n.getRouterIntPortName(), dnsIPs...)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Delete internal routes.
