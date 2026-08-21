@@ -3396,3 +3396,16 @@ sustained for, defaulting to one second.
 
 Adds a new `ipv6.ra` configuration key to both `bridge` and `ovn` networks,
 controlling whether IPv6 router advertisements are sent on the network.
+
+## `qemu_scriptlet_nvram`
+
+This extends the QEMU scriptlet feature by adding functions to explore and edit
+the NVRAM:
+
+* `get_nvram_var`
+* `has_nvram_var`
+* `set_nvram_var`
+* `unset_nvram_var`
+* `get_raw_nvram_var`
+* `set_raw_nvram_var`
+* `list_nvram_vars`
