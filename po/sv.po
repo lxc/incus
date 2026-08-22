@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-14 22:38-0400\n"
+"POT-Creation-Date: 2026-08-22 15:30-0400\n"
 "PO-Revision-Date: 2026-04-21 03:01+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/incus/cli/sv/>\n"
@@ -106,7 +106,7 @@ msgstr ""
 "### config:\n"
 "###   size: \"61203283968\""
 
-#: cmd/incus/low_level.go:489
+#: cmd/incus/low_level.go:498
 #, fuzzy
 msgid ""
 "### This is a YAML representation of the UEFI variable.\n"
@@ -684,19 +684,25 @@ msgstr ""
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' är inte en filtyp som stöds"
 
-#: cmd/incus/low_level.go:774
+#: cmd/incus/low_level.go:798
 msgid "(binary data)"
 msgstr ""
 
-#: cmd/incus/low_level.go:779
+#: cmd/incus/low_level.go:803
 #, fuzzy, c-format
 msgid "(error: %w)"
 msgstr "fel: %v"
 
-#: cmd/incus/low_level.go:766
+#: cmd/incus/low_level.go:790
 #, fuzzy
 msgid "(no timestamp)"
 msgstr "Tidsstämplar:"
+
+#: cmd/incus/low_level.go:1454 cmd/incus/low_level.go:1462
+#: cmd/incus/low_level.go:1482 cmd/incus/low_level.go:1490
+#, fuzzy
+msgid "(not a certificate)"
+msgstr "Ogiltigt certifikat"
 
 #: cmd/incus/usage/parse.go:244
 #, c-format
@@ -730,22 +736,27 @@ msgstr "- Port %d (%s)"
 msgid "--all cannot be used together with other arguments"
 msgstr "--all kan inte användas tillsammans med andra argument"
 
-#: cmd/incus/low_level.go:924 cmd/incus/low_level.go:948
+#: cmd/incus/low_level.go:948 cmd/incus/low_level.go:972
 #, fuzzy, c-format
 msgid "--attributes cannot be used with --format=%s"
 msgstr "--no-profiles kan inte användas tillsammans med --refresh"
 
-#: cmd/incus/action.go:246
+#: cmd/incus/action.go:253
 msgid "--console can't be used while forcing instance shutdown"
 msgstr "--console kan inte användas när instansen tvingas stängas ned"
 
-#: cmd/incus/action.go:414
+#: cmd/incus/action.go:508
 msgid "--console can't be used with --all"
 msgstr "--console kan inte användas tillsammans med --all"
 
-#: cmd/incus/action.go:418
+#: cmd/incus/action.go:512
 msgid "--console only works with a single instance"
 msgstr "--console fungerar endast med en enda instans"
+
+#: cmd/incus/query.go:87
+#, fuzzy
+msgid "--data cannot be used with --data-file"
+msgstr "--target kan inte användas med instanser"
 
 #: cmd/incus/config.go:474 cmd/incus/config.go:726
 msgid "--expanded cannot be used with a server"
@@ -777,7 +788,21 @@ msgstr "--no-profiles kan inte användas tillsammans med andra argument"
 msgid "--no-profiles cannot be used with --refresh"
 msgstr "--no-profiles kan inte användas tillsammans med --refresh"
 
-#: cmd/incus/query.go:79
+#: cmd/incus/action.go:266
+#, fuzzy
+msgid "--override-boot can't be used on frozen instances"
+msgstr "--target kan inte användas med instanser"
+
+#: cmd/incus/action.go:517
+#, fuzzy
+msgid "--override-boot only works with a single instance"
+msgstr "--console fungerar endast med en enda instans"
+
+#: cmd/incus/low_level.go:1613
+msgid "--owner and --type require --all to be set"
+msgstr ""
+
+#: cmd/incus/query.go:83
 msgid "--project cannot be used with the query command"
 msgstr "--project kan inte användas med kommandot query"
 
@@ -811,7 +836,7 @@ msgstr "--target kan endast användas med kluster"
 msgid "--target cannot be used with instances"
 msgstr "--target kan inte användas med instanser"
 
-#: cmd/incus/low_level.go:952
+#: cmd/incus/low_level.go:976
 #, fuzzy, c-format
 msgid "--timestamp cannot be used with --format=%s"
 msgstr "--no-profiles kan inte användas tillsammans med --refresh"
@@ -830,6 +855,11 @@ msgstr "--no-profiles kan inte användas tillsammans med --refresh"
 #, c-format
 msgid "=> Query %d:"
 msgstr "=> Fråga %d:"
+
+#: cmd/incus/low_level.go:1322
+msgid ""
+"A PK certificate is already enrolled; remove it first to enroll a new one"
+msgstr ""
 
 #: cmd/incus/remote.go:882
 msgid "A client certificate is already present"
@@ -861,7 +891,7 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASER"
 
-#: cmd/incus/query.go:32
+#: cmd/incus/query.go:35
 msgid "API path"
 msgstr "API-sökväg"
 
@@ -873,7 +903,7 @@ msgstr "APP"
 msgid "ARCHITECTURE"
 msgstr "ARKITEKTUR"
 
-#: cmd/incus/low_level.go:714
+#: cmd/incus/low_level.go:738
 msgid "ATTRIBUTES"
 msgstr ""
 
@@ -902,15 +932,19 @@ msgstr "Öppna den utökade konfigurationen"
 msgid "Acknowledge warning"
 msgstr "Bekräfta varning"
 
-#: cmd/incus/query.go:50
+#: cmd/incus/query.go:53
 #, fuzzy
 msgid "Action"
 msgstr "villkor"
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:91
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "Åtgärden %q stöds inte av detta verktyg"
+
+#: cmd/incus/low_level.go:1165 cmd/incus/low_level.go:1166
+msgid "Add Secure Boot signatures"
+msgstr ""
 
 #: cmd/incus/cluster_group.go:745
 msgid "Add a cluster member to a cluster group"
@@ -1208,6 +1242,12 @@ msgstr ""
 "Med det här kommandot kan du interagera med startkonsolen för en instans\n"
 "och hämta tidigare loggposter från den."
 
+#: cmd/incus/action.go:164
+msgid ""
+"Attempt to boot a specific boot option (set to `ask` for an interactive "
+"choice)"
+msgstr ""
+
 #: cmd/incus/remote.go:778
 #, c-format
 msgid "Authentication type '%s' not supported by server"
@@ -1311,7 +1351,7 @@ msgstr "Lagringsvolymsögonblicksbild %s raderad från %s"
 msgid "Bond:"
 msgstr "Bond:"
 
-#: cmd/incus/action.go:355
+#: cmd/incus/action.go:449
 msgid "Both --all and instance name given"
 msgstr "Både --all och instansnamn angivet"
 
@@ -1328,7 +1368,7 @@ msgstr "Brygga:"
 msgid "Bucket description"
 msgstr "Beskrivning av bucket"
 
-#: cmd/incus/low_level.go:893
+#: cmd/incus/low_level.go:917
 msgid "Bulk NVRAM variable update is only supported for non-binary formats"
 msgstr ""
 
@@ -1349,7 +1389,7 @@ msgstr "Skickade byte"
 msgid "CANCELABLE"
 msgstr "AVBRYTNINGSBAR"
 
-#: cmd/incus/config_trust.go:418
+#: cmd/incus/config_trust.go:419
 msgid "COMMON NAME"
 msgstr "ALLMÄNT NAMN"
 
@@ -1494,6 +1534,10 @@ msgstr ""
 "Kan inte åsidosätta konfigurationen för enhet %q: Enheten hittades inte i "
 "profilens enheter"
 
+#: cmd/incus/action.go:289
+msgid "Cannot parse this --override-boot value"
+msgstr ""
+
 #: cmd/incus/utils.go:304
 msgid "Cannot read the stdin twice"
 msgstr "Kan inte läsa stdin två gånger"
@@ -1518,6 +1562,10 @@ msgstr "Kan inte ställa in --volume-only när du kopierar en ögonblicksbild"
 msgid "Cannot set key: %s"
 msgstr "Kan inte ställa in nyckel: %s"
 
+#: cmd/incus/low_level.go:1217
+msgid "Cannot store a signature in PK, KEK or dbt"
+msgstr ""
+
 #: cmd/incus/info.go:569 cmd/incus/info.go:581
 #, c-format
 msgid "Card %d:"
@@ -1528,7 +1576,7 @@ msgstr "Kort %d:"
 msgid "Card: %s (%s)"
 msgstr "Kort: %s (%s)"
 
-#: cmd/incus/config_trust.go:794
+#: cmd/incus/config_trust.go:800
 #, c-format
 msgid "Certificate add token for %s deleted"
 msgstr "Certifikatstoken för %s borttaget"
@@ -1690,16 +1738,16 @@ msgid "Clustering enabled"
 msgstr "Klustering aktiverad"
 
 #: cmd/incus/cluster.go:172 cmd/incus/cluster.go:1130
-#: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:402
-#: cmd/incus/config_trust.go:589 cmd/incus/image.go:1079
+#: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:403
+#: cmd/incus/config_trust.go:595 cmd/incus/image.go:1079
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
-#: cmd/incus/low_level.go:696 cmd/incus/network.go:1054
-#: cmd/incus/network.go:1253 cmd/incus/network_allocations.go:75
-#: cmd/incus/network_forward.go:122 cmd/incus/network_integration.go:417
-#: cmd/incus/network_load_balancer.go:129 cmd/incus/network_peer.go:118
-#: cmd/incus/network_zone.go:123 cmd/incus/operation.go:152
-#: cmd/incus/profile.go:704 cmd/incus/project.go:522 cmd/incus/remote.go:1166
-#: cmd/incus/snapshot.go:344 cmd/incus/storage.go:666
+#: cmd/incus/low_level.go:720 cmd/incus/low_level.go:1376
+#: cmd/incus/network.go:1054 cmd/incus/network.go:1253
+#: cmd/incus/network_allocations.go:75 cmd/incus/network_forward.go:122
+#: cmd/incus/network_integration.go:417 cmd/incus/network_load_balancer.go:129
+#: cmd/incus/network_peer.go:118 cmd/incus/network_zone.go:123
+#: cmd/incus/operation.go:152 cmd/incus/profile.go:704 cmd/incus/project.go:522
+#: cmd/incus/remote.go:1166 cmd/incus/snapshot.go:344 cmd/incus/storage.go:666
 #: cmd/incus/storage_bucket.go:467 cmd/incus/storage_bucket.go:863
 #: cmd/incus/storage_volume.go:1496 cmd/incus/storage_volume_bitmap.go:232
 #: cmd/incus/storage_volume_snapshot.go:327 cmd/incus/top.go:68
@@ -1995,12 +2043,12 @@ msgstr "Skapa en klustergrupp"
 msgid "Create a dirty bitmap on a storage volume"
 msgstr "Skapa nya anpassade lagringsvolymer"
 
-#: cmd/incus/low_level.go:96
+#: cmd/incus/low_level.go:105
 #, fuzzy
 msgid "Create a dirty bitmap on a virtual machine"
 msgstr "Skapa en virtuell maskin"
 
-#: cmd/incus/low_level.go:97
+#: cmd/incus/low_level.go:106
 msgid "Create a dirty bitmap on all the disks of a running virtual machine"
 msgstr ""
 
@@ -2133,7 +2181,7 @@ msgstr "Skapa projekt"
 msgid "Create storage pools"
 msgstr "Skapa lagringspooler"
 
-#: cmd/incus/low_level.go:104 cmd/incus/storage_volume_bitmap.go:78
+#: cmd/incus/low_level.go:113 cmd/incus/storage_volume_bitmap.go:78
 #, fuzzy
 msgid "Create the bitmap in the disabled state"
 msgstr "Skapa nya instansfilmallar"
@@ -2176,16 +2224,17 @@ msgstr "Aktuellt antal VF: %d"
 msgid "DEFAULT TARGET ADDRESS"
 msgstr "STANDARDMÅLADRESS"
 
-#: cmd/incus/cluster.go:202 cmd/incus/cluster_group.go:469
-#: cmd/incus/config_trust.go:420 cmd/incus/image.go:1108
-#: cmd/incus/image_alias.go:251 cmd/incus/list.go:540 cmd/incus/network.go:1086
-#: cmd/incus/network_acl.go:163 cmd/incus/network_address_set.go:155
-#: cmd/incus/network_forward.go:144 cmd/incus/network_integration.go:433
-#: cmd/incus/network_load_balancer.go:151 cmd/incus/network_peer.go:140
-#: cmd/incus/network_zone.go:146 cmd/incus/network_zone.go:875
-#: cmd/incus/operation.go:169 cmd/incus/profile.go:732 cmd/incus/project.go:553
-#: cmd/incus/storage.go:692 cmd/incus/storage_bucket.go:484
-#: cmd/incus/storage_bucket.go:879 cmd/incus/storage_volume.go:1627
+#: cmd/incus/action.go:330 cmd/incus/cluster.go:202
+#: cmd/incus/cluster_group.go:469 cmd/incus/config_trust.go:422
+#: cmd/incus/image.go:1108 cmd/incus/image_alias.go:251 cmd/incus/list.go:540
+#: cmd/incus/network.go:1086 cmd/incus/network_acl.go:163
+#: cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:144
+#: cmd/incus/network_integration.go:433 cmd/incus/network_load_balancer.go:151
+#: cmd/incus/network_peer.go:140 cmd/incus/network_zone.go:146
+#: cmd/incus/network_zone.go:875 cmd/incus/operation.go:169
+#: cmd/incus/profile.go:732 cmd/incus/project.go:553 cmd/incus/storage.go:692
+#: cmd/incus/storage_bucket.go:484 cmd/incus/storage_bucket.go:879
+#: cmd/incus/storage_volume.go:1627
 msgid "DESCRIPTION"
 msgstr "BESKRIVNING"
 
@@ -2615,6 +2664,12 @@ msgstr "Kräv inte användarens bekräftelse för att använda --force"
 msgid "Don't show progress information"
 msgstr "Visa inte information om framsteg"
 
+#: cmd/incus/low_level.go:1170
+msgid ""
+"Don’t import the file as a certificate but rather compute and import its "
+"digest (sha256|sha384|sha512)"
+msgstr ""
+
 #: cmd/incus/network.go:954
 msgid "Down delay"
 msgstr "Nedfördröjning"
@@ -2661,12 +2716,12 @@ msgstr "EFEMER"
 msgid "EXISTING: %q (backend=%q, source=%q)"
 msgstr "BEFINTLIG: %q (backend=%q, källa=%q)"
 
-#: cmd/incus/cluster.go:1151 cmd/incus/config_trust.go:606
+#: cmd/incus/cluster.go:1151 cmd/incus/config_trust.go:612
 #: cmd/incus/snapshot.go:369 cmd/incus/storage_volume_snapshot.go:423
 msgid "EXPIRES AT"
 msgstr "GÅR UT DEN"
 
-#: cmd/incus/config_trust.go:422
+#: cmd/incus/config_trust.go:424
 msgid "EXPIRY DATE"
 msgstr "UTGÅNGSDATUM"
 
@@ -2690,7 +2745,7 @@ msgstr "Redigera filer i lagringsvolymer"
 msgid "Edit image properties"
 msgstr "Redigera avbildsegenskaper"
 
-#: cmd/incus/low_level.go:471 cmd/incus/low_level.go:472
+#: cmd/incus/low_level.go:480 cmd/incus/low_level.go:481
 #, fuzzy
 msgid "Edit instance UEFI variables"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
@@ -2787,16 +2842,16 @@ msgid "Edit trust configurations as YAML"
 msgstr "Redigera förtroendekonfigurationer som YAML"
 
 #: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1159
-#: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:432
-#: cmd/incus/config_trust.go:614 cmd/incus/image.go:1126
+#: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:434
+#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1126
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:598
-#: cmd/incus/low_level.go:728 cmd/incus/network.go:1101
-#: cmd/incus/network.go:1291 cmd/incus/network_allocations.go:101
-#: cmd/incus/network_forward.go:158 cmd/incus/network_integration.go:443
-#: cmd/incus/network_load_balancer.go:164 cmd/incus/network_peer.go:151
-#: cmd/incus/network_zone.go:159 cmd/incus/operation.go:184
-#: cmd/incus/profile.go:748 cmd/incus/project.go:563 cmd/incus/remote.go:1193
-#: cmd/incus/snapshot.go:378 cmd/incus/storage.go:704
+#: cmd/incus/low_level.go:752 cmd/incus/low_level.go:1414
+#: cmd/incus/network.go:1101 cmd/incus/network.go:1291
+#: cmd/incus/network_allocations.go:101 cmd/incus/network_forward.go:158
+#: cmd/incus/network_integration.go:443 cmd/incus/network_load_balancer.go:164
+#: cmd/incus/network_peer.go:151 cmd/incus/network_zone.go:159
+#: cmd/incus/operation.go:184 cmd/incus/profile.go:748 cmd/incus/project.go:563
+#: cmd/incus/remote.go:1193 cmd/incus/snapshot.go:378 cmd/incus/storage.go:704
 #: cmd/incus/storage_bucket.go:501 cmd/incus/storage_bucket.go:888
 #: cmd/incus/storage_volume.go:1655 cmd/incus/storage_volume_bitmap.go:286
 #: cmd/incus/storage_volume_snapshot.go:431 cmd/incus/top.go:96
@@ -3087,7 +3142,7 @@ msgid ""
 "`2006/01/02 15:04 MST` format)"
 msgstr ""
 
-#: cmd/incus/low_level.go:206
+#: cmd/incus/low_level.go:215
 msgid "Export a virtual machine's memory state"
 msgstr "Exportera en virtuell maskins minnestillstånd"
 
@@ -3129,7 +3184,7 @@ msgstr "Exportera lagringsbehållare"
 msgid "Export storage buckets as tarball."
 msgstr "Exportera lagringsbuckets som tarball."
 
-#: cmd/incus/low_level.go:207
+#: cmd/incus/low_level.go:216
 msgid ""
 "Export the current memory state of a running virtual machine into a dump "
 "file.\n"
@@ -3169,8 +3224,9 @@ msgstr "FELOMRÅDE"
 msgid "FILENAME"
 msgstr "FILNAMN"
 
-#: cmd/incus/config_trust.go:419 cmd/incus/image.go:1110
-#: cmd/incus/image.go:1111 cmd/incus/image_alias.go:249
+#: cmd/incus/config_trust.go:420 cmd/incus/config_trust.go:421
+#: cmd/incus/image.go:1110 cmd/incus/image.go:1111 cmd/incus/image_alias.go:249
+#: cmd/incus/low_level.go:1397 cmd/incus/low_level.go:1398
 msgid "FINGERPRINT"
 msgstr "FINGERAVTRYCK"
 
@@ -3283,6 +3339,16 @@ msgstr "Misslyckades med att analysera SSH-värdnyckel: %w"
 msgid "Failed parsing validation response: %w"
 msgstr "Misslyckad analys av valideringssvar: %w"
 
+#: cmd/incus/low_level.go:1205
+#, fuzzy, c-format
+msgid "Failed reading input file: %w"
+msgstr "Det gick inte att läsa från filen: %w"
+
+#: cmd/incus/action.go:355
+#, fuzzy, c-format
+msgid "Failed setting BootNext: %w"
+msgstr "Startkommandot misslyckades: %w"
+
 #: cmd/incus/console.go:437
 #, c-format
 msgid "Failed starting command: %w"
@@ -3293,7 +3359,7 @@ msgstr "Startkommandot misslyckades: %w"
 msgid "Failed starting sshfs: %w"
 msgstr "Misslyckades med att starta sshfs: %w"
 
-#: cmd/incus/low_level.go:326 cmd/incus/port_forward.go:128
+#: cmd/incus/low_level.go:335 cmd/incus/port_forward.go:128
 #: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:640
 #, c-format
 msgid "Failed to accept incoming connection: %w"
@@ -3364,7 +3430,7 @@ msgstr "Det gick inte att skapa alias %s: %w"
 msgid "Failed to create backup: %v"
 msgstr "Det gick inte att skapa säkerhetskopia: %v"
 
-#: cmd/incus/low_level.go:136 cmd/incus/storage_volume_bitmap.go:121
+#: cmd/incus/low_level.go:145 cmd/incus/storage_volume_bitmap.go:121
 #, fuzzy, c-format
 msgid "Failed to create bitmap: %w"
 msgstr "Det gick inte att skapa säkerhetskopia: %v"
@@ -3406,12 +3472,12 @@ msgstr ""
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
 msgstr "Det gick inte att uppdatera målinstansen '%s': %v"
 
-#: cmd/incus/low_level.go:962 cmd/incus/low_level.go:1044
+#: cmd/incus/low_level.go:986 cmd/incus/low_level.go:1069
 #, fuzzy, c-format
 msgid "Failed to delete variable %s:%s: %w"
 msgstr "Det gick inte att analysera servrarna: %w"
 
-#: cmd/incus/low_level.go:239
+#: cmd/incus/low_level.go:248
 #, c-format
 msgid "Failed to dump instance memory: %w"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
@@ -3436,12 +3502,12 @@ msgstr "Projektet kunde inte hittas: %w"
 msgid "Failed to get bitmap: %w"
 msgstr "Misslyckades med att begära dump: %w"
 
-#: cmd/incus/low_level.go:633 cmd/incus/low_level.go:658
+#: cmd/incus/low_level.go:642 cmd/incus/low_level.go:667
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variable: %w"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
 
-#: cmd/incus/low_level.go:798
+#: cmd/incus/low_level.go:822
 #, fuzzy, c-format
 msgid "Failed to get instance UEFI variables: %w"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
@@ -3456,7 +3522,7 @@ msgstr "Det gick inte att ansluta till klustret: %w"
 msgid "Failed to list bitmaps: %w"
 msgstr "Misslyckades med att begära dump: %w"
 
-#: cmd/incus/low_level.go:311 cmd/incus/port_forward.go:114
+#: cmd/incus/low_level.go:320 cmd/incus/port_forward.go:114
 #: cmd/incus/storage_volume.go:2657 cmd/incus/utils.go:625
 #, c-format
 msgid "Failed to listen for connection: %w"
@@ -3466,6 +3532,11 @@ msgstr "Misslyckades med att lyssna efter anslutning: %w"
 #, c-format
 msgid "Failed to load configuration: %s"
 msgstr "Konfigurationen kunde inte läsas in: %s"
+
+#: cmd/incus/query.go:113
+#, fuzzy, c-format
+msgid "Failed to open input file %q: %w"
+msgstr "Misslyckades att öppna målfil %q: %w"
 
 #: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828
 #: cmd/incus/utils_sftp.go:330
@@ -3478,17 +3549,26 @@ msgstr "Misslyckades med att öppna källfilen %q: %v"
 msgid "Failed to open target file %q: %w"
 msgstr "Misslyckades att öppna målfil %q: %w"
 
+#: cmd/incus/low_level.go:1250
+#, fuzzy, c-format
+msgid "Failed to parse PEM certificate: %w"
+msgstr "Det gick inte att skapa certifikatet: %w"
+
 #: cmd/incus/admin_sql.go:104
 #, c-format
 msgid "Failed to parse dump response: %w"
 msgstr "Det gick inte att analysera dumpningssvaret: %w"
+
+#: cmd/incus/low_level.go:1262
+msgid "Failed to parse input file as either PEM or DER certificate"
+msgstr ""
 
 #: cmd/incus/admin_init_preseed.go:39
 #, c-format
 msgid "Failed to parse the preseed: %w"
 msgstr "Det gick inte att analysera förinställningen: %w"
 
-#: cmd/incus/low_level.go:974
+#: cmd/incus/low_level.go:999
 #, fuzzy, c-format
 msgid "Failed to parse variable %s:%s: %w"
 msgstr "Det gick inte att analysera servrarna: %w"
@@ -3524,7 +3604,7 @@ msgstr "Det gick inte att byta namn på exportfilen: %w"
 msgid "Failed to render the config: %w"
 msgstr "Det gick inte att rendera konfigurationen: %w"
 
-#: cmd/incus/low_level.go:188
+#: cmd/incus/low_level.go:197
 #, fuzzy, c-format
 msgid "Failed to repair instance: %w"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
@@ -3574,12 +3654,12 @@ msgstr "Det gick inte att hämta listan över nätverk: %w"
 msgid "Failed to retrieve list of storage pools: %w"
 msgstr "Det gick inte att hämta listan över lagringspooler: %w"
 
-#: cmd/incus/low_level.go:564
+#: cmd/incus/low_level.go:573
 #, fuzzy, c-format
 msgid "Failed to set UEFI variable %s:%s: %s"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
 
-#: cmd/incus/low_level.go:943
+#: cmd/incus/low_level.go:967
 #, fuzzy, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
 msgstr "Misslyckades med att dumpa instansminnet: %w"
@@ -3684,7 +3764,7 @@ msgstr "Tvinga pseudo-terminaltilldelning"
 msgid "Force removing a member, even if degraded"
 msgstr "Tvinga bort en medlem, även om denne har degraderats"
 
-#: cmd/incus/action.go:165
+#: cmd/incus/action.go:172
 msgid "Force the instance to stop"
 msgstr "Tvinga instansen att stanna"
 
@@ -3749,7 +3829,7 @@ msgstr ""
 "Tvingar fram en anslutning till konsolen, även om det redan finns en aktiv "
 "session"
 
-#: cmd/incus/low_level.go:602 cmd/incus/low_level.go:863
+#: cmd/incus/low_level.go:611 cmd/incus/low_level.go:887
 msgid "Format (base64|binary|efivarfs|hex|json|yaml)"
 msgstr ""
 
@@ -3768,18 +3848,19 @@ msgstr ""
 
 #: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
-#: cmd/incus/config_trust.go:403 cmd/incus/config_trust.go:588
+#: cmd/incus/config_trust.go:404 cmd/incus/config_trust.go:594
 #: cmd/incus/image.go:1080 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
-#: cmd/incus/low_level.go:695 cmd/incus/network.go:1055
-#: cmd/incus/network.go:1252 cmd/incus/network_acl.go:104
-#: cmd/incus/network_allocations.go:72 cmd/incus/network_forward.go:121
-#: cmd/incus/network_integration.go:416 cmd/incus/network_load_balancer.go:128
-#: cmd/incus/network_peer.go:117 cmd/incus/network_zone.go:121
-#: cmd/incus/network_zone.go:822 cmd/incus/operation.go:150
-#: cmd/incus/profile.go:705 cmd/incus/project.go:523 cmd/incus/project.go:1000
-#: cmd/incus/remote.go:1165 cmd/incus/snapshot.go:343 cmd/incus/storage.go:667
-#: cmd/incus/storage_bucket.go:465 cmd/incus/storage_bucket.go:861
-#: cmd/incus/storage_volume.go:1524 cmd/incus/storage_volume_bitmap.go:233
+#: cmd/incus/low_level.go:719 cmd/incus/low_level.go:1375
+#: cmd/incus/network.go:1055 cmd/incus/network.go:1252
+#: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:72
+#: cmd/incus/network_forward.go:121 cmd/incus/network_integration.go:416
+#: cmd/incus/network_load_balancer.go:128 cmd/incus/network_peer.go:117
+#: cmd/incus/network_zone.go:121 cmd/incus/network_zone.go:822
+#: cmd/incus/operation.go:150 cmd/incus/profile.go:705 cmd/incus/project.go:523
+#: cmd/incus/project.go:1000 cmd/incus/remote.go:1165 cmd/incus/snapshot.go:343
+#: cmd/incus/storage.go:667 cmd/incus/storage_bucket.go:465
+#: cmd/incus/storage_bucket.go:861 cmd/incus/storage_volume.go:1524
+#: cmd/incus/storage_volume_bitmap.go:233
 #: cmd/incus/storage_volume_snapshot.go:341 cmd/incus/warning.go:99
 msgid ""
 "Format (csv|json|table|yaml|compact|markdown), use suffix \",noheader\" to "
@@ -3805,7 +3886,7 @@ msgstr "Format (pem|pfx)"
 msgid "Format (table|compact)"
 msgstr "Format (tabell|kompakt)"
 
-#: cmd/incus/low_level.go:217
+#: cmd/incus/low_level.go:226
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
@@ -3873,11 +3954,11 @@ msgstr "Grafikkort:"
 msgid "GRANULARITY"
 msgstr ""
 
-#: cmd/incus/low_level.go:685 cmd/incus/low_level.go:715
+#: cmd/incus/low_level.go:694 cmd/incus/low_level.go:739
 msgid "GUID"
 msgstr ""
 
-#: cmd/incus/low_level.go:716
+#: cmd/incus/low_level.go:740
 #, fuzzy
 msgid "GUID NAME"
 msgstr "NAMN"
@@ -4027,7 +4108,7 @@ msgstr "Hämta nyckeln som en lagringsvolymegenskap"
 msgid "Get the key as an instance property"
 msgstr "Hämta nyckeln som en instansegenskap"
 
-#: cmd/incus/low_level.go:598 cmd/incus/low_level.go:599
+#: cmd/incus/low_level.go:607 cmd/incus/low_level.go:608
 msgid "Get values for UEFI variables"
 msgstr ""
 
@@ -4133,7 +4214,7 @@ msgstr "Eftersom målet %q inte matchar källvolymens plats %q"
 msgid "Global Flags:"
 msgstr ""
 
-#: cmd/incus/low_level.go:102 cmd/incus/storage_volume_bitmap.go:76
+#: cmd/incus/low_level.go:111 cmd/incus/storage_volume_bitmap.go:76
 msgid "Granularity of the dirty bitmap in bytes"
 msgstr ""
 
@@ -4177,7 +4258,7 @@ msgstr "I/O-kopiering från instans till sshfs misslyckades: %v"
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "I/O-kopiering från sshfs till instans misslyckades: %v"
 
-#: cmd/incus/network.go:964 cmd/incus/operation.go:167
+#: cmd/incus/action.go:330 cmd/incus/network.go:964 cmd/incus/operation.go:167
 msgid "ID"
 msgstr "ID"
 
@@ -4203,7 +4284,7 @@ msgstr ""
 msgid "INSTANCE NAME"
 msgstr "INSTANSNAMN"
 
-#: cmd/incus/low_level.go:720
+#: cmd/incus/low_level.go:744
 msgid "INTERPRETED VALUE"
 msgstr ""
 
@@ -4244,8 +4325,13 @@ msgstr "IPv4-uppkopplingsadress"
 msgid "IPv6 uplink address"
 msgstr "IPv6-upplänksadress"
 
-#: cmd/incus/config_trust.go:421
+#: cmd/incus/config_trust.go:423
 msgid "ISSUE DATE"
+msgstr "UTGIVNINGSDATUM"
+
+#: cmd/incus/low_level.go:1399 cmd/incus/low_level.go:1400
+#, fuzzy
+msgid "ISSUER"
 msgstr "UTGIVNINGSDATUM"
 
 #: cmd/incus/info.go:390
@@ -4301,7 +4387,7 @@ msgstr ""
 msgid "Ignore copy errors for volatile files"
 msgstr "Ignorera kopieringsfel för flyktiga filer"
 
-#: cmd/incus/action.go:157
+#: cmd/incus/action.go:163
 msgid "Ignore the instance state"
 msgstr "Ignorera instansens tillstånd"
 
@@ -4338,7 +4424,7 @@ msgstr "Avbild importerad med fingeravtryck: %s"
 msgid "Image refreshed successfully!"
 msgstr "Bilden har uppdaterats!"
 
-#: cmd/incus/action.go:161 cmd/incus/launch.go:49
+#: cmd/incus/action.go:168 cmd/incus/launch.go:49
 msgid "Immediately attach to the console"
 msgstr "Fäst omedelbart på konsolen"
 
@@ -4417,7 +4503,7 @@ msgstr "Inkludera mindre vanliga kommandon"
 msgid "Incus - Command line client"
 msgstr "Incus - Kommandoradsklient"
 
-#: cmd/incus/low_level.go:537
+#: cmd/incus/low_level.go:546
 #, c-format
 msgid "Incus does not know how to dissect %s:%s"
 msgstr ""
@@ -4426,9 +4512,18 @@ msgstr ""
 msgid "Infiniband:"
 msgstr "Infiniband:"
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:54
 msgid "Input data"
 msgstr "Inmatningsdata"
+
+#: cmd/incus/query.go:55
+msgid "Input data file (\"-\" for stdin)"
+msgstr ""
+
+#: cmd/incus/low_level.go:1266
+#, fuzzy
+msgid "Input file contains no certificate"
+msgstr "Skapa klientcertifikatet"
 
 #: cmd/incus/info.go:919
 msgid "Instance Only"
@@ -4470,7 +4565,7 @@ msgstr "Instansnamn är: %s"
 msgid "Instance type"
 msgstr "Instans typ"
 
-#: cmd/incus/low_level.go:804
+#: cmd/incus/low_level.go:828
 #, fuzzy, c-format
 msgid "Invalid GUID: %s"
 msgstr "Ogiltig sökväg %s"
@@ -4516,7 +4611,7 @@ msgstr "Ogiltigt segment för säkerhetskopieringsnamn i sökvägen %q: %w"
 msgid "Invalid boolean value: %s"
 msgstr "Ogiltigt booleskt värde: %s"
 
-#: cmd/incus/config_trust.go:519
+#: cmd/incus/config_trust.go:525
 msgid "Invalid certificate"
 msgstr "Ogiltigt certifikat"
 
@@ -4555,7 +4650,7 @@ msgstr "Ogiltigt utgångsdatum: %w"
 msgid "Invalid format %q"
 msgstr "Ogiltigt format %q"
 
-#: cmd/incus/low_level.go:653 cmd/incus/low_level.go:989
+#: cmd/incus/low_level.go:662 cmd/incus/low_level.go:1014
 #: cmd/incus/monitor.go:73
 #, c-format
 msgid "Invalid format: %s"
@@ -4765,9 +4860,98 @@ msgstr ""
 "IP-adress t\n"
 "- Typ L - Plats för DHCP-lån (t.ex. dess klustermedlem)"
 
-#: cmd/incus/low_level.go:691 cmd/incus/low_level.go:692
+#: cmd/incus/low_level.go:1353
+msgid "List Secure Boot signatures"
+msgstr ""
+
+#: cmd/incus/low_level.go:1354
+#, fuzzy
+msgid ""
+"List Secure Boot signatures\n"
+"\n"
+"The -c option takes a (optionally comma-separated) list of arguments\n"
+"that control which signature attributes to output when displaying in table\n"
+"or csv format.\n"
+"\n"
+"Default column layout is: tOfs\n"
+"\n"
+"Column shorthand chars:\n"
+"\tf - Fingerprint (short)\n"
+"\tF - Fingerprint (long)\n"
+"\ti - Issuer (short, for certificates)\n"
+"\tI - Issuer (long, for certificates)\n"
+"\to - Owner GUID\n"
+"\tO - Owner familiar GUID name or GUID if none\n"
+"\tr - Raw value\n"
+"\ts - Subject (short, for certificates)\n"
+"\tS - Subject (long, for certificates)\n"
+"\tt - Signature type"
+msgstr ""
+"Lista betrodda klienter\n"
+"\n"
+"Flaggan -c tar en lista med argument (valfritt separerade med kommatecken)\n"
+"som styr vilka certifikatattribut som ska visas när de visas i tabell- "
+"eller\n"
+"csv-format.\n"
+"\n"
+"Standardkolumnlayout är: ntdfe\n"
+"\n"
+"Kolumnförkortningar: n -\n"
+"\n"
+"Namn t -\n"
+"Typ c -\n"
+"Gemensamt namn f\n"
+"- Fingeravtryck d\n"
+"- Beskrivning i -\n"
+"Utfärdandedatum\n"
+"e - Utgångsdatum\n"
+"r - Om certifikatet är begränsat p -\n"
+"Nyradseparerad lista över projekt"
+
+#: cmd/incus/low_level.go:700
 msgid "List UEFI GUIDs and variables"
 msgstr ""
+
+#: cmd/incus/low_level.go:701
+#, fuzzy
+msgid ""
+"List UEFI GUIDs and variables\n"
+"\n"
+"The -c option takes a (optionally comma-separated) list of arguments\n"
+"that control which variable attributes to output when displaying in table\n"
+"or csv format.\n"
+"\n"
+"Default column layout is: Gn\n"
+"\n"
+"Column shorthand chars:\n"
+"\ta - Attributes\n"
+"\tg - GUID\n"
+"\tG - Familiar GUID name or GUID if none\n"
+"\tn - Name\n"
+"\tr - Raw value\n"
+"\tt - Authenticated write timestamp\n"
+"\tv - Interpreted value"
+msgstr ""
+"Lista betrodda klienter\n"
+"\n"
+"Flaggan -c tar en lista med argument (valfritt separerade med kommatecken)\n"
+"som styr vilka certifikatattribut som ska visas när de visas i tabell- "
+"eller\n"
+"csv-format.\n"
+"\n"
+"Standardkolumnlayout är: ntdfe\n"
+"\n"
+"Kolumnförkortningar: n -\n"
+"\n"
+"Namn t -\n"
+"Typ c -\n"
+"Gemensamt namn f\n"
+"- Fingeravtryck d\n"
+"- Beskrivning i -\n"
+"Utfärdandedatum\n"
+"e - Utgångsdatum\n"
+"r - Om certifikatet är begränsat p -\n"
+"Nyradseparerad lista över projekt"
 
 #: cmd/incus/network_address_set.go:101
 msgid "List address sets across all projects"
@@ -4777,11 +4961,11 @@ msgstr "Lista adressuppsättningar för alla projekt"
 msgid "List aliases"
 msgstr "Lista alias"
 
-#: cmd/incus/config_trust.go:567
+#: cmd/incus/config_trust.go:573
 msgid "List all active certificate add tokens"
 msgstr "Lista alla aktiva certifikat-tilläggstoken"
 
-#: cmd/incus/config_trust.go:568
+#: cmd/incus/config_trust.go:574
 #, fuzzy
 msgid ""
 "List all active certificate add tokens\n"
@@ -6164,7 +6348,8 @@ msgid ""
 "\tn - Name\n"
 "\tt - Type\n"
 "\tc - Common Name\n"
-"\tf - Fingerprint\n"
+"\tf - Fingerprint (short)\n"
+"\tF - Fingerprint (long)\n"
 "\td - Description\n"
 "\ti - Issue date\n"
 "\te - Expiry date\n"
@@ -6291,12 +6476,12 @@ msgstr ""
 msgid "Low-level cluster administration commands"
 msgstr "Kommandon för administration av låg nivåkluster"
 
-#: cmd/incus/low_level.go:40
+#: cmd/incus/low_level.go:46
 #, fuzzy
 msgid "Low-level commands"
 msgstr "Felsökningskommandon"
 
-#: cmd/incus/low_level.go:41
+#: cmd/incus/low_level.go:47
 #, fuzzy
 msgid "Low-level commands for instances"
 msgstr "Felsökningskommandon för instanser"
@@ -6381,9 +6566,14 @@ msgstr "Gör avbildningen publik"
 msgid "Make the image public"
 msgstr "Gör avbildningen publik"
 
-#: cmd/incus/low_level.go:392 cmd/incus/low_level.go:393
+#: cmd/incus/low_level.go:401 cmd/incus/low_level.go:402
 #, fuzzy
 msgid "Manage NVRAM on virtual machines"
+msgstr "Skapa en virtuell maskin"
+
+#: cmd/incus/low_level.go:1113 cmd/incus/low_level.go:1114
+#, fuzzy
+msgid "Manage Secure Boot on virtual machines"
 msgstr "Skapa en virtuell maskin"
 
 #: cmd/incus/network.go:41 cmd/incus/network.go:42
@@ -6415,7 +6605,7 @@ msgstr "Hantera kommandoalias"
 msgid "Manage devices"
 msgstr "Hantera enheter"
 
-#: cmd/incus/low_level.go:69 cmd/incus/low_level.go:70
+#: cmd/incus/low_level.go:78 cmd/incus/low_level.go:79
 #, fuzzy
 msgid "Manage dirty bitmaps on virtual machines"
 msgstr "Skapa en virtuell maskin"
@@ -6738,7 +6928,7 @@ msgstr "Fler än en enhet matchar, ange enhetens namn"
 msgid "More than one file to download, but target is not a directory"
 msgstr "Fler än en fil att hämta ner, men målet är inte en katalog"
 
-#: cmd/incus/low_level.go:889 cmd/incus/low_level.go:1031
+#: cmd/incus/low_level.go:913 cmd/incus/low_level.go:1056
 msgid ""
 "More than one variable was passed but the server is missing the required "
 "\"instance_nvram_bulk_update\" API extension"
@@ -6830,8 +7020,8 @@ msgid "Must run as root to import from directory"
 msgstr "Måste köras som root för att importera från katalogen"
 
 #: cmd/incus/cluster.go:197 cmd/incus/cluster.go:1149
-#: cmd/incus/cluster_group.go:467 cmd/incus/config_trust.go:416
-#: cmd/incus/config_trust.go:604 cmd/incus/list.go:548
+#: cmd/incus/cluster_group.go:467 cmd/incus/config_trust.go:417
+#: cmd/incus/config_trust.go:610 cmd/incus/list.go:548
 #: cmd/incus/network.go:1081 cmd/incus/network_acl.go:162
 #: cmd/incus/network_address_set.go:154 cmd/incus/network_integration.go:432
 #: cmd/incus/network_peer.go:139 cmd/incus/network_zone.go:145
@@ -6853,12 +7043,12 @@ msgstr "NAT"
 msgid "NBD access to a block storage volume"
 msgstr "Ta bort anpassade lagringsvolymer"
 
-#: cmd/incus/low_level.go:262
+#: cmd/incus/low_level.go:271
 #, fuzzy
 msgid "NBD access to all of a virtual machine's disks"
 msgstr "Ta bort anpassade lagringsvolymer"
 
-#: cmd/incus/low_level.go:263
+#: cmd/incus/low_level.go:272
 msgid ""
 "NBD access to all of a virtual machine's disks\n"
 "\n"
@@ -6867,22 +7057,22 @@ msgid ""
 "device name."
 msgstr ""
 
-#: cmd/incus/low_level.go:332 cmd/incus/storage_volume.go:2670
+#: cmd/incus/low_level.go:341 cmd/incus/storage_volume.go:2670
 #, fuzzy, c-format
 msgid "NBD client connected %q"
 msgstr "SSH-klient ansluten %q"
 
-#: cmd/incus/low_level.go:333 cmd/incus/storage_volume.go:2671
+#: cmd/incus/low_level.go:342 cmd/incus/storage_volume.go:2671
 #, fuzzy, c-format
 msgid "NBD client disconnected %q"
 msgstr "SSH-klienten frånkopplad %q"
 
-#: cmd/incus/low_level.go:349 cmd/incus/storage_volume.go:2676
+#: cmd/incus/low_level.go:358 cmd/incus/storage_volume.go:2676
 #, c-format
 msgid "NBD connection failed: %v"
 msgstr ""
 
-#: cmd/incus/low_level.go:314 cmd/incus/storage_volume.go:2660
+#: cmd/incus/low_level.go:323 cmd/incus/storage_volume.go:2660
 #, fuzzy, c-format
 msgid "NBD listening on %v"
 msgstr "SSH SFTP lyssnar på %v"
@@ -7193,7 +7383,7 @@ msgstr "Ny nyckel/värde som ska tillämpas på en specifik enhet"
 msgid "No %s storage backends available"
 msgstr "Inga %s lagringsbackends tillgängliga"
 
-#: cmd/incus/config_trust.go:801
+#: cmd/incus/config_trust.go:807
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
 msgstr "Inget certifikat lägg till token för medlem %s på fjärr: %s"
@@ -7226,6 +7416,10 @@ msgstr "Inga matchande portar hittades"
 #: cmd/incus/network_acl.go:1057
 msgid "No matching rule(s) found"
 msgstr "Inga matchande regler hittades"
+
+#: cmd/incus/low_level.go:1679
+msgid "No signature matches"
+msgstr ""
 
 #: cmd/incus/admin_init_interactive.go:267
 msgid "No storage backends available"
@@ -7264,6 +7458,15 @@ msgstr "OS-version"
 msgid "OVN:"
 msgstr "OVN:"
 
+#: cmd/incus/low_level.go:1401
+msgid "OWNER GUID"
+msgstr ""
+
+#: cmd/incus/low_level.go:1402
+#, fuzzy
+msgid "OWNER GUID NAME"
+msgstr "NAMN"
+
 #: cmd/incus/network_address_set.go:748
 msgid "One or more provided address isn't currently in the set"
 msgstr ""
@@ -7292,6 +7495,14 @@ msgid ""
 msgstr ""
 "Endast ett av --storage-create-device eller --storage-create-loop kan anges"
 
+#: cmd/incus/low_level.go:1581
+msgid "Only remove signatures of the given type"
+msgstr ""
+
+#: cmd/incus/low_level.go:1580
+msgid "Only remove signatures owned by the given owner"
+msgstr ""
+
 #: cmd/incus/webui.go:21 cmd/incus/webui.go:22
 msgid "Open the web interface"
 msgstr "Öppna webbgränssnittet"
@@ -7317,6 +7528,10 @@ msgstr "Åsidosätt källprojektet"
 msgid "Override the terminal mode (auto, interactive or non-interactive)"
 msgstr ""
 "Åsidosätt terminalläget (automatiskt, interaktivt eller icke-interaktivt)"
+
+#: cmd/incus/action.go:330
+msgid "PATH"
+msgstr ""
 
 #: cmd/incus/info.go:119 cmd/incus/info.go:205
 #, c-format
@@ -7368,7 +7583,7 @@ msgstr "PROFILER"
 msgid "PROJECT"
 msgstr "PROJEKT"
 
-#: cmd/incus/config_trust.go:424
+#: cmd/incus/config_trust.go:426
 msgid "PROJECTS"
 msgstr "PROJEKT"
 
@@ -7411,7 +7626,7 @@ msgstr "Sökvägen %s finns inte"
 msgid "Path to the existing block device:"
 msgstr "Sökväg till befintlig blockenhet:"
 
-#: cmd/incus/action.go:58 cmd/incus/action.go:59
+#: cmd/incus/action.go:63 cmd/incus/action.go:64
 msgid "Pause instances"
 msgstr "Pausa instanser"
 
@@ -7501,7 +7716,7 @@ msgstr "Tryck på Ctrl+C för att avsluta"
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
 #: cmd/incus/config_trust.go:333 cmd/incus/image.go:488
-#: cmd/incus/low_level.go:565 cmd/incus/network.go:767
+#: cmd/incus/low_level.go:574 cmd/incus/network.go:767
 #: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
 #: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
 #: cmd/incus/network_load_balancer.go:710 cmd/incus/network_peer.go:733
@@ -7527,7 +7742,7 @@ msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr ""
 "Skriv ut eller hämta det klientcertifikat som används av denna Incus-klient"
 
-#: cmd/incus/query.go:49
+#: cmd/incus/query.go:52
 msgid "Print the raw response"
 msgstr "Skriv ut det råa svaret"
 
@@ -7719,7 +7934,7 @@ msgstr "Skicka filer till instanser"
 msgid "Pushing %s to %s: %%s"
 msgstr "Trycker %s till %s: %%s"
 
-#: cmd/incus/query.go:88
+#: cmd/incus/query.go:96
 msgid "Query path must start with /"
 msgstr "Sökvägen måste börja med /"
 
@@ -7727,7 +7942,7 @@ msgstr "Sökvägen måste börja med /"
 msgid "Query virtual machine images"
 msgstr "Fråga virtuella maskinavbildningar"
 
-#: cmd/incus/low_level.go:718
+#: cmd/incus/low_level.go:742 cmd/incus/low_level.go:1403
 msgid "RAW VALUE"
 msgstr ""
 
@@ -7743,7 +7958,7 @@ msgstr ""
 msgid "RESOURCE"
 msgstr "RESURS"
 
-#: cmd/incus/config_trust.go:423
+#: cmd/incus/config_trust.go:425
 msgid "RESTRICTED"
 msgstr "BEGRÄNSAD"
 
@@ -7895,6 +8110,11 @@ msgstr ""
 "Ta bort %s och allt som den innehåller (instanser, avbildningar, volymer, "
 "nätverk, ...) (ja/nej): "
 
+#: cmd/incus/low_level.go:1575 cmd/incus/low_level.go:1576
+#, fuzzy
+msgid "Remove Secure Boot signatures"
+msgstr "Ta bort fjärrkontroller"
+
 #: cmd/incus/cluster_group.go:567
 msgid "Remove a cluster member from a cluster group"
 msgstr "Ta bort en klustermedlem från en klustergrupp"
@@ -7926,6 +8146,11 @@ msgstr "Ta bort alla profiler från instansen"
 #: cmd/incus/network_acl.go:963
 msgid "Remove all rules that match"
 msgstr "Ta bort alla regler som matchar"
+
+#: cmd/incus/low_level.go:1579
+#, fuzzy
+msgid "Remove all signatures"
+msgstr "Ta bort alias"
 
 #: cmd/incus/network_load_balancer.go:886
 msgid "Remove backend from a load balancer"
@@ -7977,7 +8202,7 @@ msgstr "Ta bort regler från en ACL"
 msgid "Remove snapshot %s from %s (yes/no): "
 msgstr "Ta bort ögonblicksbild %s från %s (ja/nej): "
 
-#: cmd/incus/config_trust.go:715 cmd/incus/config_trust.go:716
+#: cmd/incus/config_trust.go:721 cmd/incus/config_trust.go:722
 msgid "Remove trusted client"
 msgstr "Ta bort betrodd klient"
 
@@ -8066,7 +8291,7 @@ msgstr "Kräv bekräftelse från användaren"
 msgid "Resources:"
 msgstr "Resurser:"
 
-#: cmd/incus/action.go:104 cmd/incus/action.go:105
+#: cmd/incus/action.go:109 cmd/incus/action.go:110
 msgid "Restart instances"
 msgstr "Starta om instanser"
 
@@ -8114,7 +8339,7 @@ msgstr "Återställer klustermedlem: %s"
 msgid "Restrict the certificate to one or more projects"
 msgstr "Begränsa certifikatet till ett eller flera projekt"
 
-#: cmd/incus/action.go:81 cmd/incus/action.go:82
+#: cmd/incus/action.go:86 cmd/incus/action.go:87
 msgid "Resume instances"
 msgstr "Återuppta instanser"
 
@@ -8127,7 +8352,7 @@ msgstr "Hämta instansens konsollogg"
 msgid "Retrieving image: %s"
 msgstr "Hämtar avbildning: %s"
 
-#: cmd/incus/config_trust.go:748 cmd/incus/config_trust.go:749
+#: cmd/incus/config_trust.go:754 cmd/incus/config_trust.go:755
 msgid "Revoke certificate add token"
 msgstr "Återkalla certifikat lägg till token"
 
@@ -8156,7 +8381,7 @@ msgstr "Kör en lokal API-proxy"
 msgid "Run a local API proxy for the remote"
 msgstr "Kör en lokal API-proxy för fjärrkontrollen"
 
-#: cmd/incus/low_level.go:152
+#: cmd/incus/low_level.go:161
 msgid ""
 "Run a low-level repair action on an instance.\n"
 "\n"
@@ -8166,7 +8391,7 @@ msgid ""
 "  rebuild-nvram            Rebuild the virtual machine's UEFI NVRAM"
 msgstr ""
 
-#: cmd/incus/low_level.go:151
+#: cmd/incus/low_level.go:160
 #, fuzzy
 msgid "Run a repair action on an instance"
 msgstr "Kör mot alla instanser"
@@ -8175,7 +8400,7 @@ msgstr "Kör mot alla instanser"
 msgid "Run again a specific project"
 msgstr "Kör ett specifikt projekt igen"
 
-#: cmd/incus/action.go:151
+#: cmd/incus/action.go:157
 msgid "Run against all instances"
 msgstr "Kör mot alla instanser"
 
@@ -8261,6 +8486,10 @@ msgstr "LAGRINGSVOLYMER"
 msgid "STP"
 msgstr "STP"
 
+#: cmd/incus/low_level.go:1404 cmd/incus/low_level.go:1405
+msgid "SUBJECT"
+msgstr ""
+
 #: cmd/incus/network_allocations.go:245
 msgid "SUBNET"
 msgstr ""
@@ -8278,7 +8507,11 @@ msgstr "Hemlig nyckel (genereras automatiskt om tom)"
 msgid "Secret key: %s"
 msgstr "Hemlig nyckel: %s"
 
-#: cmd/incus/query.go:37 cmd/incus/query.go:38
+#: cmd/incus/action.go:335
+msgid "Select next boot entry: "
+msgstr ""
+
+#: cmd/incus/query.go:40 cmd/incus/query.go:41
 msgid "Send a raw query to the server"
 msgstr "Skicka en rå fråga till servern"
 
@@ -8761,20 +8994,25 @@ msgstr "Ställ in nyckeln som en lagringsvolymegenskap"
 msgid "Set the key as an instance property"
 msgstr "Ställ in nyckeln som en instansegenskap"
 
-#: cmd/incus/low_level.go:862
+#: cmd/incus/low_level.go:1169
+#, fuzzy
+msgid "Set the signature owner"
+msgstr "Ställ in nyckeln som en lagringsegenskap"
+
+#: cmd/incus/low_level.go:886
 msgid "Set the variable attributes (requires `--format=base64|binary|hex`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:864
+#: cmd/incus/low_level.go:888
 msgid ""
 "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr ""
 
-#: cmd/incus/low_level.go:858
+#: cmd/incus/low_level.go:882
 msgid "Set values for UEFI variables"
 msgstr ""
 
-#: cmd/incus/low_level.go:859
+#: cmd/incus/low_level.go:883
 msgid "Set values for UEFI variables."
 msgstr ""
 
@@ -8789,6 +9027,10 @@ msgstr "Konfigurera enhetsbaserad lagring med DEVICE"
 #: cmd/incus/admin_init.go:60
 msgid "Setup loop based storage with SIZE in GiB"
 msgstr "Konfigurera loopbaserad lagring med STORLEK i GiB"
+
+#: cmd/incus/low_level.go:1683
+msgid "Several signatures match the given fingerprint"
+msgstr ""
 
 #: cmd/incus/network_allocations.go:66
 msgid "Show a summary of used IP ranges per subnet"
@@ -9018,7 +9260,7 @@ msgstr ""
 msgid "Show the used and free space in bytes"
 msgstr "Visa använt och ledigt utrymme i byte"
 
-#: cmd/incus/config_trust.go:816 cmd/incus/config_trust.go:817
+#: cmd/incus/config_trust.go:822 cmd/incus/config_trust.go:823
 msgid "Show trust configurations"
 msgstr "Visa förtroendekonfigurationer"
 
@@ -9079,7 +9321,7 @@ msgstr "Ögonblicksbilder:"
 msgid "Socket %d:"
 msgstr "Sockel %d:"
 
-#: cmd/incus/action.go:456
+#: cmd/incus/action.go:554
 #, c-format
 msgid "Some instances failed to %s"
 msgstr "Vissa fall misslyckades med %s"
@@ -9100,11 +9342,11 @@ msgstr ""
 msgid "Source:"
 msgstr "Källa:"
 
-#: cmd/incus/low_level.go:271 cmd/incus/storage_volume.go:2609
+#: cmd/incus/low_level.go:280 cmd/incus/storage_volume.go:2609
 msgid "Specific address to listen on"
 msgstr ""
 
-#: cmd/incus/action.go:36 cmd/incus/action.go:37
+#: cmd/incus/action.go:41 cmd/incus/action.go:42
 msgid "Start instances"
 msgstr "Starta instanser"
 
@@ -9140,7 +9382,7 @@ msgstr "Stateful"
 msgid "Status: %s"
 msgstr "Status: %s"
 
-#: cmd/incus/action.go:126 cmd/incus/action.go:127
+#: cmd/incus/action.go:131 cmd/incus/action.go:132
 msgid "Stop instances"
 msgstr "Stoppa instanser"
 
@@ -9252,12 +9494,12 @@ msgstr "Lagringsvolymen har flyttats utan problem!"
 msgid "Storage volume snapshot %s deleted from %s"
 msgstr "Lagringsvolymsögonblicksbild %s raderad från %s"
 
-#: cmd/incus/low_level.go:103 cmd/incus/storage_volume_bitmap.go:77
+#: cmd/incus/low_level.go:112 cmd/incus/storage_volume_bitmap.go:77
 #, fuzzy
 msgid "Store the bitmap on disk"
 msgstr "Lagra instansens tillstånd"
 
-#: cmd/incus/action.go:155
+#: cmd/incus/action.go:161
 msgid "Store the instance state"
 msgstr "Lagra instansens tillstånd"
 
@@ -9312,7 +9554,7 @@ msgstr "TAGET VID"
 msgid "TARGET"
 msgstr "MÅL"
 
-#: cmd/incus/low_level.go:719
+#: cmd/incus/low_level.go:743
 msgid "TIMESTAMP"
 msgstr ""
 
@@ -9321,12 +9563,13 @@ msgstr ""
 msgid "TLS client certificates can only be used with the incus protocol"
 msgstr "--refresh kan endast användas med instanser"
 
-#: cmd/incus/cluster.go:1150 cmd/incus/config_trust.go:605
+#: cmd/incus/cluster.go:1150 cmd/incus/config_trust.go:611
 msgid "TOKEN"
 msgstr "TOKEN"
 
-#: cmd/incus/config_trust.go:417 cmd/incus/image.go:1116
-#: cmd/incus/image_alias.go:250 cmd/incus/list.go:555 cmd/incus/network.go:1082
+#: cmd/incus/config_trust.go:418 cmd/incus/image.go:1116
+#: cmd/incus/image_alias.go:250 cmd/incus/list.go:555
+#: cmd/incus/low_level.go:1406 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1279 cmd/incus/network_allocations.go:91
 #: cmd/incus/network_integration.go:434 cmd/incus/network_peer.go:142
 #: cmd/incus/operation.go:168 cmd/incus/storage_volume.go:1625
@@ -9459,6 +9702,16 @@ msgstr "Följande okända lagringspooler har hittats:"
 #: cmd/incus/admin_recover.go:205
 msgid "The following unknown volumes have been found:"
 msgstr "Följande okända volymer har hittats:"
+
+#: cmd/incus/low_level.go:1316
+#, fuzzy
+msgid "The given certificate is already present in this ESL"
+msgstr "Ett klientcertifikat finns redan"
+
+#: cmd/incus/low_level.go:1313
+#, fuzzy
+msgid "The given signature is already present in this ESL"
+msgstr "Ett klientcertifikat finns redan"
 
 #: cmd/incus/delete.go:97
 #, c-format
@@ -9730,7 +9983,7 @@ msgstr "Denna server är inte tillgänglig på nätverket"
 msgid "Threads:"
 msgstr "Trådar:"
 
-#: cmd/incus/action.go:166
+#: cmd/incus/action.go:173
 msgid "Time to wait for the instance to shutdown cleanly"
 msgstr "Vänta tills instansen stängs av på ett korrekt sätt"
 
@@ -9817,7 +10070,7 @@ msgstr "Överföringspolicy"
 msgid "Trust token for %s: "
 msgstr "Förtroendetoken för %s: "
 
-#: cmd/incus/action.go:306 cmd/incus/launch.go:142
+#: cmd/incus/action.go:400 cmd/incus/launch.go:142
 #, c-format
 msgid "Try `incus info --show-log %s%s` for more info"
 msgstr "Prova `incus info --show-log %s%s` för mer information"
@@ -9849,12 +10102,12 @@ msgstr "Typ av peer (lokal eller fjärrstyrd)"
 msgid "Type: %s"
 msgstr "Typ: %s"
 
-#: cmd/incus/low_level.go:1048
+#: cmd/incus/low_level.go:1073
 #, c-format
 msgid "UEFI variable %s:%s deleted on %s"
 msgstr ""
 
-#: cmd/incus/low_level.go:1068
+#: cmd/incus/low_level.go:1093
 #, fuzzy, c-format
 msgid "UEFI variables %s deleted on %s\n"
 msgstr "Profil %s raderad"
@@ -9917,14 +10170,46 @@ msgstr ""
 msgid "Unable to create a temporary file: %v"
 msgstr "Det går inte att skapa en tillfällig fil: %v"
 
+#: cmd/incus/action.go:321
+#, c-format
+msgid "Unable to parse %s as a boot entry"
+msgstr ""
+
+#: cmd/incus/action.go:314
+#, c-format
+msgid "Unable to parse %s as valid JSON"
+msgstr ""
+
+#: cmd/incus/low_level.go:1302 cmd/incus/low_level.go:1527
+#: cmd/incus/low_level.go:1639
+#, c-format
+msgid "Unable to parse %s:%s as an EFI Signature List"
+msgstr ""
+
+#: cmd/incus/low_level.go:1295 cmd/incus/low_level.go:1520
+#: cmd/incus/low_level.go:1632
+#, c-format
+msgid "Unable to parse %s:%s as valid JSON"
+msgstr ""
+
+#: cmd/incus/low_level.go:1210 cmd/incus/low_level.go:1646
+#, fuzzy, c-format
+msgid "Unable to parse owner %s: %w"
+msgstr "Det gick inte att analysera förinställningen: %w"
+
 #: cmd/incus/remote.go:363 cmd/incus/remote.go:397
 msgid "Unavailable remote server"
 msgstr "Fjärrserver otillgänglig"
 
-#: cmd/incus/low_level.go:928
+#: cmd/incus/low_level.go:952
 #, fuzzy
 msgid "Unexpected input size"
 msgstr "Länk upptäckt: %v"
+
+#: cmd/incus/action.go:340 cmd/incus/action.go:348
+#, fuzzy, c-format
+msgid "Unknown boot option %d"
+msgstr "Okänd utdatatyp %q"
 
 #: cmd/incus/config_trust.go:200
 #, c-format
@@ -9937,16 +10222,16 @@ msgid "Unknown channel type for client %q: %s"
 msgstr "Okänd kanaltyp för klient %q: %s"
 
 #: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1165
-#: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:438
-#: cmd/incus/config_trust.go:620 cmd/incus/image.go:1148
+#: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:440
+#: cmd/incus/config_trust.go:626 cmd/incus/image.go:1148
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:616
-#: cmd/incus/low_level.go:734 cmd/incus/network.go:1107
-#: cmd/incus/network.go:1297 cmd/incus/network_allocations.go:107
-#: cmd/incus/network_forward.go:164 cmd/incus/network_integration.go:449
-#: cmd/incus/network_load_balancer.go:170 cmd/incus/network_peer.go:157
-#: cmd/incus/network_zone.go:165 cmd/incus/operation.go:190
-#: cmd/incus/profile.go:754 cmd/incus/project.go:569 cmd/incus/remote.go:1199
-#: cmd/incus/snapshot.go:384 cmd/incus/storage.go:710
+#: cmd/incus/low_level.go:758 cmd/incus/low_level.go:1420
+#: cmd/incus/network.go:1107 cmd/incus/network.go:1297
+#: cmd/incus/network_allocations.go:107 cmd/incus/network_forward.go:164
+#: cmd/incus/network_integration.go:449 cmd/incus/network_load_balancer.go:170
+#: cmd/incus/network_peer.go:157 cmd/incus/network_zone.go:165
+#: cmd/incus/operation.go:190 cmd/incus/profile.go:754 cmd/incus/project.go:569
+#: cmd/incus/remote.go:1199 cmd/incus/snapshot.go:384 cmd/incus/storage.go:710
 #: cmd/incus/storage_bucket.go:507 cmd/incus/storage_bucket.go:894
 #: cmd/incus/storage_volume.go:1661 cmd/incus/storage_volume_bitmap.go:292
 #: cmd/incus/storage_volume_snapshot.go:437 cmd/incus/top.go:102
@@ -9980,7 +10265,12 @@ msgstr "Okänd nyckel: %s"
 msgid "Unknown output type %q"
 msgstr "Okänd utdatatyp %q"
 
-#: cmd/incus/low_level.go:1006 cmd/incus/low_level.go:1007
+#: cmd/incus/low_level.go:1231
+#, fuzzy, c-format
+msgid "Unknown signature type %s"
+msgstr "Okänd filtyp '%s'"
+
+#: cmd/incus/low_level.go:1031 cmd/incus/low_level.go:1032
 msgid "Unset UEFI variables"
 msgstr ""
 
@@ -10293,7 +10583,7 @@ msgstr "Användaren avbröt konfigurationen"
 msgid "User aborted delete operation"
 msgstr "Användaren avbröt raderingsåtgärden"
 
-#: cmd/incus/low_level.go:717
+#: cmd/incus/low_level.go:741
 #, fuzzy
 msgid "VARIABLE NAME"
 msgstr "FILNAMN"
@@ -10415,7 +10705,7 @@ msgstr ""
 "slutfört tidiga startuppgifter, såsom att starta om tidigare startade\n"
 "containrar."
 
-#: cmd/incus/query.go:48
+#: cmd/incus/query.go:51
 msgid "Wait for the operation to complete"
 msgstr "Vänta tills operationen är klar"
 
@@ -10612,7 +10902,7 @@ msgstr "Du måste ange ett namn på målinstansen"
 msgid "Zone description"
 msgstr "Zonbeskrivning"
 
-#: cmd/incus/low_level.go:146
+#: cmd/incus/low_level.go:155
 #, fuzzy
 msgid "action"
 msgstr "villkor"
@@ -10645,7 +10935,7 @@ msgstr ""
 msgid "backup file"
 msgstr "socket-fil"
 
-#: cmd/incus/low_level.go:91 cmd/incus/storage_volume_bitmap.go:66
+#: cmd/incus/low_level.go:100 cmd/incus/storage_volume_bitmap.go:66
 #: cmd/incus/storage_volume_bitmap.go:135
 #: cmd/incus/storage_volume_bitmap.go:357
 msgid "bitmap"
@@ -10733,7 +11023,7 @@ msgstr "aktiverad"
 msgid "ephemeral"
 msgstr "efemer"
 
-#: cmd/incus/action.go:448
+#: cmd/incus/action.go:546
 #, c-format
 msgid "error: %v"
 msgstr "fel: %v"
@@ -11131,7 +11421,7 @@ msgstr ""
 "list -c ns,user.comment:comment Lista\n"
 "instanser med deras körningsstatus och användarkommentar."
 
-#: cmd/incus/low_level.go:211
+#: cmd/incus/low_level.go:220
 #, fuzzy
 msgid ""
 "incus low-level dump-memory vm1 memory-dump.elf --format=elf\n"
@@ -11442,7 +11732,7 @@ msgstr ""
 "incus-projekt redigera <projekt> < project.yaml\n"
 "    Uppdatera ett projekt med innehållet i project.yaml"
 
-#: cmd/incus/query.go:41
+#: cmd/incus/query.go:44
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\"."
@@ -11869,7 +12159,7 @@ msgstr "nätverk eller integration"
 msgid "new %s name"
 msgstr "Nätverksnamn"
 
-#: cmd/incus/config_trust.go:481 cmd/incus/image.go:953 cmd/incus/image.go:958
+#: cmd/incus/config_trust.go:487 cmd/incus/image.go:953 cmd/incus/image.go:958
 #: cmd/incus/image.go:1190
 msgid "no"
 msgstr "nej"
@@ -12069,7 +12359,7 @@ msgstr ""
 msgid "y"
 msgstr "j"
 
-#: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:478
+#: cmd/incus/cluster.go:727 cmd/incus/config_trust.go:484
 #: cmd/incus/delete.go:56 cmd/incus/image.go:955 cmd/incus/image.go:960
 #: cmd/incus/image.go:1187 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
 msgid "yes"
