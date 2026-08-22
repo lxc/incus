@@ -1219,10 +1219,28 @@ func (d *ceph) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, o
 				return err
 			}
 		} else if sizeBytes > oldSizeBytes {
+			// NBD devices don't reflect the new size until remapped, preventing online growth.
+			if inUse && strings.HasPrefix(devPath, "/dev/nbd") {
+				return ErrInUse
+			}
+
 			// Grow block device first.
 			err = d.resizeVolume(vol, sizeBytes, false)
 			if err != nil {
 				return err
+			}
+
+			// Remap NBD devices so that they pick up the new size.
+			if strings.HasPrefix(devPath, "/dev/nbd") {
+				err = d.rbdUnmapVolume(vol, true)
+				if err != nil {
+					return err
+				}
+
+				devPath, err = d.rbdMapVolume(vol)
+				if err != nil {
+					return err
+				}
 			}
 
 			// Grow the filesystem to fill block device.
@@ -1253,6 +1271,19 @@ func (d *ceph) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, o
 		// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as it is
 		// expected the caller will do all necessary post resize actions themselves).
 		if vol.IsVMBlock() && !allowUnsafeResize {
+			// Remap NBD devices so that they pick up the new size.
+			if strings.HasPrefix(devPath, "/dev/nbd") {
+				err = d.rbdUnmapVolume(vol, true)
+				if err != nil {
+					return err
+				}
+
+				devPath, err = d.rbdMapVolume(vol)
+				if err != nil {
+					return err
+				}
+			}
+
 			err = d.moveGPTAltHeader(devPath)
 			if err != nil {
 				return err
