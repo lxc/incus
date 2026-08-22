@@ -560,7 +560,7 @@ func (d *nicPhysical) postStop() error {
 func IsPhysicalNICWithBridge(s *state.State, deviceProjectName string, d deviceConfig.Device) bool {
 	if d["network"] != "" {
 		// Translate device's project name into a network project name.
-		networkProjectName, _, err := project.NetworkProject(s.DB.Cluster, deviceProjectName)
+		networkProjectName, _, err := project.NetworkProjectForName(s.DB.Cluster, deviceProjectName, d["network"])
 		if err != nil {
 			return false
 		}

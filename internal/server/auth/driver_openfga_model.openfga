@@ -46,8 +46,9 @@ type instance
 type network
   relations
     define project: [project]
+    define shared_with: [project]
     define can_edit: [user, group#member] or operator from project
-    define can_view: [user, group#member] or can_edit or viewer from project
+    define can_view: [user, group#member] or can_edit or viewer from project or viewer from shared_with
 
 type network_acl
   relations

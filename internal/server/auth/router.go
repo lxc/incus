@@ -421,6 +421,16 @@ func (rt *Router) RenameNetwork(ctx context.Context, projectName string, oldNetw
 	return rt.fanout(func(a Authorizer) error { return a.RenameNetwork(ctx, projectName, oldNetworkName, newNetworkName) })
 }
 
+// AddNetworkShare notifies every loaded driver of a new network share.
+func (rt *Router) AddNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	return rt.fanout(func(a Authorizer) error { return a.AddNetworkShare(ctx, projectName, networkName) })
+}
+
+// DeleteNetworkShare notifies every loaded driver of a removed network share.
+func (rt *Router) DeleteNetworkShare(ctx context.Context, projectName string, networkName string) error {
+	return rt.fanout(func(a Authorizer) error { return a.DeleteNetworkShare(ctx, projectName, networkName) })
+}
+
 // AddNetworkZone notifies every loaded driver of a new network zone.
 func (rt *Router) AddNetworkZone(ctx context.Context, projectName string, networkZoneName string) error {
 	return rt.fanout(func(a Authorizer) error { return a.AddNetworkZone(ctx, projectName, networkZoneName) })

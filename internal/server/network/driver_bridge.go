@@ -2547,10 +2547,6 @@ func (n *bridge) bridgedNICExternalRoutes(bridgeProjectNetworks map[string][]*ap
 			// Get the instance's effective network project name.
 			instNetworkProject := project.NetworkProjectFromRecord(&p)
 
-			if instNetworkProject != api.ProjectDefaultName {
-				return nil // Managed bridge networks can only exist in default project.
-			}
-
 			devices := db.ExpandInstanceDevices(inst.Devices, inst.Profiles)
 
 			// Iterate through each of the instance's devices, looking for bridged NICs that are linked to
@@ -2560,8 +2556,19 @@ func (n *bridge) bridgedNICExternalRoutes(bridgeProjectNetworks map[string][]*ap
 					continue
 				}
 
+				// Get the effective network project of the NIC (accounts for shared networks).
+				devNetworkProject := instNetworkProject
+				if devConfig["network"] != "" {
+					devNetworkProject = project.NetworkProjectForNameFromRecord(&p, devConfig["network"])
+				}
+
+				// Managed bridge networks can only exist in the default project.
+				if devNetworkProject != api.ProjectDefaultName {
+					continue
+				}
+
 				// Check whether the NIC device references one of the networks supplied.
-				if !NICUsesNetwork(devConfig, bridgeProjectNetworks[instNetworkProject]...) {
+				if !NICUsesNetwork(devConfig, bridgeProjectNetworks[devNetworkProject]...) {
 					continue
 				}
 
@@ -2577,7 +2584,7 @@ func (n *bridge) bridgedNICExternalRoutes(bridgeProjectNetworks map[string][]*ap
 
 						externalRoutes = append(externalRoutes, externalSubnetUsage{
 							subnet:          *ipNet,
-							networkProject:  instNetworkProject,
+							networkProject:  devNetworkProject,
 							networkName:     devConfig["network"],
 							instanceProject: inst.Project,
 							instanceName:    inst.Name,
@@ -2914,8 +2921,8 @@ func (n *bridge) ForwardCreate(forward api.NetworkForwardsPost, clientType reque
 
 				err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 					return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
-						// Get the instance's effective network project name.
-						instNetworkProject := project.NetworkProjectFromRecord(&p)
+						// Get the effective network project name for this network name.
+						instNetworkProject := project.NetworkProjectForNameFromRecord(&p, n.Name())
 
 						if instNetworkProject != api.ProjectDefaultName {
 							return nil // Managed bridge networks can only exist in default project.

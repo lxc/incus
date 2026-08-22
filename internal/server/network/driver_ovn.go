@@ -5825,8 +5825,14 @@ func (n *ovn) ovnNICExternalRoutes(ovnProjectNetworksWithOurUplink map[string][]
 					continue
 				}
 
+				// Get the effective network project of the NIC (accounts for shared networks).
+				devNetworkProject := instNetworkProject
+				if devConfig["network"] != "" {
+					devNetworkProject = project.NetworkProjectForNameFromRecord(&p, devConfig["network"])
+				}
+
 				// Check whether the NIC device references one of the OVN networks supplied.
-				if !NICUsesNetwork(devConfig, ovnProjectNetworksWithOurUplink[instNetworkProject]...) {
+				if !NICUsesNetwork(devConfig, ovnProjectNetworksWithOurUplink[devNetworkProject]...) {
 					continue
 				}
 
@@ -5842,7 +5848,7 @@ func (n *ovn) ovnNICExternalRoutes(ovnProjectNetworksWithOurUplink map[string][]
 
 						externalRoutes = append(externalRoutes, externalSubnetUsage{
 							subnet:          *ipNet,
-							networkProject:  instNetworkProject,
+							networkProject:  devNetworkProject,
 							networkName:     devConfig["network"],
 							instanceProject: inst.Project,
 							instanceName:    inst.Name,
@@ -5985,8 +5991,8 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 			// This will restore the l2proxy proxy ARP/NDP entries.
 			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 				return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
-					// Get the instance's effective network project name.
-					instNetworkProject := project.NetworkProjectFromRecord(&p)
+					// Get the effective network project name for this network name.
+					instNetworkProject := project.NetworkProjectForNameFromRecord(&p, n.Name())
 
 					// Skip instances who's effective network project doesn't match this network's
 					// project.

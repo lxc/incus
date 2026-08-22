@@ -436,6 +436,8 @@ func projectsPost(d *Daemon, r *http.Request) response.Response {
 		logger.Error("Failed to add project to authorizer", logger.Ctx{"name": project.Name, "error": err})
 	}
 
+	projectUpdateShares(r.Context(), s, project.Name, nil, project.Config)
+
 	requestor := request.CreateRequestor(r)
 	lc := lifecycle.ProjectCreated.Event(project.Name, requestor, nil)
 	s.Events.SendLifecycle(project.Name, lc)
@@ -840,6 +842,21 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 
 	// Update the database entry.
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Prevent networks shared from the default project from conflicting with the project's own networks.
+		if util.IsTrue(req.Config["restricted"]) && util.IsTrue(req.Config["features.networks"]) && req.Config["restricted.networks.access"] != "" {
+			networks, err := tx.GetNetworks(ctx, project.Name)
+			if err != nil {
+				return err
+			}
+
+			allowedNetworks := util.SplitNTrimSpace(req.Config["restricted.networks.access"], ",", -1, false)
+			for _, networkName := range networks {
+				if slices.Contains(allowedNetworks, networkName) {
+					return api.StatusErrorf(http.StatusBadRequest, "Network %q in restricted.networks.access conflicts with an existing project network", networkName)
+				}
+			}
+		}
+
 		err := projecthelpers.AllowProjectUpdate(tx, project.Name, req.Config, configChanged)
 		if err != nil {
 			return err
@@ -876,6 +893,11 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 	})
 	if err != nil {
 		return err
+	}
+
+	// Update the authorizer's network share entries.
+	if slices.Contains(configChanged, "restricted") || slices.Contains(configChanged, "features.networks") || slices.Contains(configChanged, "restricted.networks.access") {
+		projectUpdateShares(ctx, s, project.Name, project.Config, req.Config)
 	}
 
 	return nil
@@ -941,6 +963,7 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 	// Perform the rename.
 	run := func(op *operations.Operation) error {
 		var id int64
+		var projectConfig map[string]string
 		err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			project, err := cluster.GetProject(ctx, tx.Tx(), req.Name)
 			if err != nil && !response.IsNotFoundError(err) {
@@ -970,6 +993,11 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 				return fmt.Errorf("Failed getting project ID for project %q: %w", name, err)
 			}
 
+			projectConfig, err = cluster.GetProjectConfig(ctx, tx.Tx(), int(id))
+			if err != nil {
+				return fmt.Errorf("Failed getting project config for project %q: %w", name, err)
+			}
+
 			err = validate.IsAPIName(name, false)
 			if err != nil {
 				return fmt.Errorf("Invalid project name: %w", err)
@@ -990,6 +1018,10 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 		if err != nil {
 			logger.Error("Failed to rename project in authorizer", logger.Ctx{"name": name, "new_name": req.Name, "err": err})
 		}
+
+		// Move the network share entries over to the new project name.
+		projectUpdateShares(s.ShutdownCtx, s, name, projectConfig, nil)
+		projectUpdateShares(s.ShutdownCtx, s, req.Name, nil, projectConfig)
 
 		requestor := request.CreateRequestor(r)
 		s.Events.SendLifecycle(req.Name, lifecycle.ProjectRenamed.Event(req.Name, requestor, logger.Ctx{"old_name": name}))
@@ -1354,6 +1386,8 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		logger.Error("Failed to remove project from authorizer", logger.Ctx{"name": name, "err": err})
 	}
 
+	projectUpdateShares(r.Context(), s, name, projectConfig, nil)
+
 	requestor := request.CreateRequestor(r)
 	s.Events.SendLifecycle(name, lifecycle.ProjectDeleted.Event(name, requestor, nil))
 
@@ -1471,6 +1505,71 @@ func projectCheckOVNAvailable(s *state.State) error {
 	}
 
 	return nil
+}
+
+// projectSharedNetworks returns the default project networks shared into a project with the given config.
+func projectSharedNetworks(ctx context.Context, s *state.State, projectName string, config map[string]string) ([]string, error) {
+	// Quick check to avoid a database query.
+	if util.IsFalseOrEmpty(config["restricted"]) || util.IsFalseOrEmpty(config["features.networks"]) || config["restricted.networks.access"] == "" {
+		return nil, nil
+	}
+
+	p := api.Project{Name: projectName, ProjectPut: api.ProjectPut{Config: config}}
+
+	var sharedNetworks []string
+
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		networks, err := tx.GetNetworks(ctx, api.ProjectDefaultName)
+		if err != nil {
+			return err
+		}
+
+		for _, networkName := range networks {
+			if projecthelpers.NetworkSharedFromDefault(&p, networkName) {
+				sharedNetworks = append(sharedNetworks, networkName)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return sharedNetworks, nil
+}
+
+// projectUpdateShares updates the authorizer's share entries when a project's shared networks change.
+func projectUpdateShares(ctx context.Context, s *state.State, projectName string, oldConfig map[string]string, newConfig map[string]string) {
+	oldShared, err := projectSharedNetworks(ctx, s, projectName, oldConfig)
+	if err != nil {
+		logger.Error("Failed loading old shared networks for project", logger.Ctx{"project": projectName, "error": err})
+		return
+	}
+
+	newShared, err := projectSharedNetworks(ctx, s, projectName, newConfig)
+	if err != nil {
+		logger.Error("Failed loading new shared networks for project", logger.Ctx{"project": projectName, "error": err})
+		return
+	}
+
+	for _, networkName := range newShared {
+		if !slices.Contains(oldShared, networkName) {
+			err = s.Authorizer.AddNetworkShare(ctx, projectName, networkName)
+			if err != nil {
+				logger.Error("Failed to add network share to authorizer", logger.Ctx{"network": networkName, "project": projectName, "error": err})
+			}
+		}
+	}
+
+	for _, networkName := range oldShared {
+		if !slices.Contains(newShared, networkName) {
+			err = s.Authorizer.DeleteNetworkShare(ctx, projectName, networkName)
+			if err != nil {
+				logger.Error("Failed to remove network share from authorizer", logger.Ctx{"network": networkName, "project": projectName, "error": err})
+			}
+		}
+	}
 }
 
 func projectValidateConfig(s *state.State, config map[string]string) error {
@@ -1886,6 +1985,10 @@ func projectValidateConfig(s *state.State, config map[string]string) error {
 		// gendoc:generate(entity=project, group=restricted, key=restricted.networks.access)
 		// Specify a comma-delimited list of network names that are allowed for use in this project.
 		// If this option is not set, all networks are accessible.
+		//
+		// In restricted projects with {config:option}`project-features:features.networks` enabled,
+		// the listed networks from the default project are shared into the project and their names
+		// can't be used for the project's own networks.
 		//
 		// Note that this setting depends on the {config:option}`project-restricted:restricted.devices.nic` setting.
 		// ---

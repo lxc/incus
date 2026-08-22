@@ -181,6 +181,39 @@ test_network_ovn_basic() {
     incus network delete ovn-virtual-network --project testovn
     incus network delete incusbr1 --project default
 
+    # Test networks shared from the default project through restricted.networks.access.
+    incus network create incusbr-shared --project default
+    incus project set testovn restricted.networks.access=incusbr-shared
+
+    # Shared network is visible in the project.
+    incus network list --project testovn | grep -F incusbr-shared
+    incus network show incusbr-shared --project testovn
+
+    # Shared network name is reserved in the project.
+    ! incus network create incusbr-shared --project testovn || false
+
+    # Shared network can't be modified or deleted from the project.
+    ! incus network set incusbr-shared user.foo=bar --project testovn || false
+    ! incus network delete incusbr-shared --project testovn || false
+
+    # Shared network can be used by instances in the project.
+    incus init "${instanceImage}" u-shared --project testovn -s "${poolName}"
+    incus config device add u-shared eth0 nic network=incusbr-shared name=eth0 --project testovn
+
+    # Usage from the sharing project is visible and blocks deletion.
+    incus network show incusbr-shared --project default | grep -F "/1.0/instances/u-shared?project=testovn"
+    ! incus network delete incusbr-shared --project default || false
+
+    incus delete -f u-shared --project testovn
+
+    # Names of project networks can't be added to restricted.networks.access.
+    incus network create ovn-virtual-network network=incusbr0 --project testovn
+    ! incus project set testovn restricted.networks.access=incusbr-shared,ovn-virtual-network || false
+    incus network delete ovn-virtual-network --project testovn
+
+    incus project unset testovn restricted.networks.access
+    incus network delete incusbr-shared --project default
+
     # Test physical uplink with external IPs.
     ip link add dummy0 type dummy
     incus network create dummy --type=physical --project default \
