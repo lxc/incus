@@ -6232,6 +6232,14 @@ Note that the claim must be contained in the access token.
 
 ```
 
+```{config:option} ceph.rbd.backend storage_ceph-common
+:default: "`krbd`"
+:scope: "global"
+:shortdesc: "Whether to use the RBD kernel driver (`krbd`) or `librbd` through `qemu-nbd` (`librbd`)"
+:type: "string"
+
+```
+
 ```{config:option} ceph.rbd.clone_copy storage_ceph-common
 :default: "`true`"
 :scope: "global"

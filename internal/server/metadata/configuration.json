@@ -6991,6 +6991,15 @@
 						}
 					},
 					{
+						"ceph.rbd.backend": {
+							"default": "`krbd`",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Whether to use the RBD kernel driver (`krbd`) or `librbd` through `qemu-nbd` (`librbd`)",
+							"type": "string"
+						}
+					},
+					{
 						"ceph.rbd.clone_copy": {
 							"default": "`true`",
 							"longdesc": "",
