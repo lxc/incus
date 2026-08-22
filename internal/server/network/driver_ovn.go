@@ -5404,32 +5404,63 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		egressRate = maxRate
 	}
 
+	egressBucket, err := units.ParseBitSizeString(opts.DeviceConfig["limits.egress.bucket"])
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed converting limits.egress.bucket to int: %w", err)
+	}
+
+	ingressBucket, err := units.ParseBitSizeString(opts.DeviceConfig["limits.ingress.bucket"])
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed converting limits.ingress.bucket to int: %w", err)
+	}
+
+	if opts.DeviceConfig["limits.max.bucket"] != "" {
+		maxBucket, err := units.ParseBitSizeString(opts.DeviceConfig["limits.max.bucket"])
+		if err != nil {
+			return "", nil, fmt.Errorf("Failed converting limits.max.bucket to int: %w", err)
+		}
+
+		// Overwrite the egress and ingress burst buckets if the max burst bucket is set.
+		ingressBucket = maxBucket
+		egressBucket = maxBucket
+	}
+
 	var rules []networkOVN.OVNQoSRule
 	if opts.DeviceConfig["limits.egress"] != "" || opts.DeviceConfig["limits.max"] != "" {
-		egressRate /= 1000
+		bandwidth := map[string]int{
+			"rate": int(egressRate / 1000),
+		}
+
+		if egressBucket > 0 {
+			bandwidth["burst"] = int(egressBucket / 1000)
+		}
+
 		egressRule := networkOVN.OVNQoSRule{
 			Direction: ovnNB.QoSDirectionFromLport,
 			Action:    map[string]int{},
-			Bandwidth: map[string]int{
-				"rate": int(egressRate),
-			},
-			Match:    fmt.Sprintf("inport == \"%s\"", instancePortName),
-			Priority: int(qosPriority),
+			Bandwidth: bandwidth,
+			Match:     fmt.Sprintf("inport == \"%s\"", instancePortName),
+			Priority:  int(qosPriority),
 		}
 
 		rules = append(rules, egressRule)
 	}
 
 	if opts.DeviceConfig["limits.ingress"] != "" || opts.DeviceConfig["limits.max"] != "" {
-		ingressRate /= 1000
+		bandwidth := map[string]int{
+			"rate": int(ingressRate / 1000),
+		}
+
+		if ingressBucket > 0 {
+			bandwidth["burst"] = int(ingressBucket / 1000)
+		}
+
 		ingressRule := networkOVN.OVNQoSRule{
 			Direction: ovnNB.QoSDirectionToLport,
 			Action:    map[string]int{},
-			Bandwidth: map[string]int{
-				"rate": int(ingressRate),
-			},
-			Match:    fmt.Sprintf("outport == \"%s\"", instancePortName),
-			Priority: int(qosPriority),
+			Bandwidth: bandwidth,
+			Match:     fmt.Sprintf("outport == \"%s\"", instancePortName),
+			Priority:  int(qosPriority),
 		}
 
 		rules = append(rules, ingressRule)

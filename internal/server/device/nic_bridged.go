@@ -156,6 +156,54 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		//  shortdesc: I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)
 		"limits.max",
 
+		// gendoc:generate(entity=devices, group=nic_bridged, key=limits.ingress.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that incoming traffic may burst up to, requires `limits.ingress.bucket`
+		"limits.ingress.burst",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=limits.egress.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that outgoing traffic may burst up to, requires `limits.egress.bucket`
+		"limits.egress.burst",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=limits.max.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that both incoming and outgoing traffic may burst up to (same as setting both `limits.ingress.burst` and `limits.egress.burst`)
+		"limits.max.burst",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=limits.ingress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that incoming traffic may send in excess of `limits.ingress`, requires `limits.ingress.burst`
+		"limits.ingress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=limits.egress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that outgoing traffic may send in excess of `limits.egress`, requires `limits.egress.burst`
+		"limits.egress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=limits.max.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket`)
+		"limits.max.bucket",
+
 		// gendoc:generate(entity=devices, group=nic_bridged, key=limits.priority)
 		//
 		// ---
@@ -635,6 +683,11 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		return err
 	}
 
+	err = nicValidateBurstLimits(d.config, true)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -736,7 +789,7 @@ func (d *nicBridged) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged", "connected"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged", "connected"}
 }
 
 // Add is run when a device is added to a non-snapshot instance whether or not the instance is running.
