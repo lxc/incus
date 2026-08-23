@@ -454,6 +454,7 @@ func (c *ClusterTx) GetImageFromAnyProject(ctx context.Context, fingerprint stri
 
 	object = images[0]
 
+	image.Project = object.Project
 	image.Fingerprint = object.Fingerprint
 	image.Filename = object.Filename
 	image.Size = object.Size
