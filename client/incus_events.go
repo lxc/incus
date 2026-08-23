@@ -108,14 +108,25 @@ func (r *ProtocolIncus) getEvents(allProjects bool, eventTypes []string) (*Event
 			case <-time.After(time.Minute):
 			case <-r.ctxConnected.Done():
 			case <-stopCh:
+				// The reader is gone, close our connection and clear it if still current.
+				r.eventConnsLock.Lock()
+				if r.eventConns[listener.projectName] == wsConn {
+					delete(r.eventConns, listener.projectName)
+				}
+
+				r.eventConnsLock.Unlock()
+
+				_ = wsConn.Close()
+
+				return
 			}
 
 			r.eventListenersLock.Lock()
 			r.eventConnsLock.Lock()
 			if r.ctxConnected.Err() != nil || len(r.eventListeners[listener.projectName]) == 0 {
 				// We don't need the connection anymore, disconnect and clear.
-				if r.eventListeners[listener.projectName] != nil {
-					_ = r.eventConns[listener.projectName].Close()
+				if r.eventConns[listener.projectName] == wsConn {
+					_ = wsConn.Close()
 					delete(r.eventConns, listener.projectName)
 				}
 
