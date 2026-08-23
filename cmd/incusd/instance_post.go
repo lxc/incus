@@ -1037,9 +1037,11 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return fmt.Errorf("Instance move to destination failed on source: %w", err)
 		}
 
-		err = destOp.Wait()
-		if err != nil {
-			return fmt.Errorf("Instance move to destination failed: %w", err)
+		// A live migration on the same shared storage is handed over once the source succeeds,
+		// so the database record must follow the instance even if the destination reported an error.
+		destErr := destOp.Wait()
+		if destErr != nil && (!req.Live || !sourcePool.Driver().Info().Remote || req.Pool != "") {
+			return fmt.Errorf("Instance move to destination failed: %w", destErr)
 		}
 
 		// Update the database post-migration.
@@ -1160,6 +1162,10 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			if err != nil {
 				return fmt.Errorf("Failed starting instance on target member: %w", err)
 			}
+		}
+
+		if destErr != nil {
+			return fmt.Errorf("Instance moved to %q but destination reported an error: %w", targetMemberInfo.Name, destErr)
 		}
 	}
 
