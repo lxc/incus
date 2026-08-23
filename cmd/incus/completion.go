@@ -1045,6 +1045,20 @@ func (g *cmdGlobal) cmpProjects(toComplete string) ([]string, cobra.ShellCompDir
 	return results, cmpDirectives
 }
 
+func (g *cmdGlobal) cmpProjectNames(toComplete string) ([]string, cobra.ShellCompDirective) {
+	resources, _ := g.parseServers(toComplete)
+	if len(resources) == 0 {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	projects, err := resources[0].server.GetProjectNames()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return projects, cobra.ShellCompDirectiveNoFileComp
+}
+
 func (g *cmdGlobal) cmpRemotes(toComplete string, includeAll bool) ([]string, cobra.ShellCompDirective) {
 	results := []string{}
 
