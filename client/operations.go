@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"sync"
@@ -337,8 +338,9 @@ func (op *operation) setupListener() error {
 		op.handlerReady = false
 		op.handlerLock.Unlock()
 
-		// Attempt to reconnect and resume monitoring.
-		for range 5 {
+		// Attempt to reconnect, giving up after 30 seconds of continuous failure.
+		deadline := time.Now().Add(30 * time.Second)
+		for time.Now().Before(deadline) {
 			err := op.setupListener()
 			if err == nil {
 				return
@@ -354,13 +356,30 @@ func (op *operation) setupListener() error {
 				break
 			}
 
+			// Fall back to polling the operation in case events remain unavailable.
+			op.handlerLock.Lock()
+			err = op.Refresh()
+			if err == nil {
+				// The operation is still reachable, keep trying.
+				deadline = time.Now().Add(30 * time.Second)
+
+				if op.StatusCode.IsFinal() {
+					op.closeChActive()
+					op.handlerLock.Unlock()
+
+					return
+				}
+			}
+
+			op.handlerLock.Unlock()
+
 			time.Sleep(2 * time.Second)
 		}
 
 		// Reconnection failed, report the original error.
 		op.handlerLock.Lock()
 		if !op.handlerReady {
-			op.Err = listener.err.Error()
+			op.Err = fmt.Sprintf("Lost connection to the event listener and failed to reconnect: %v", listener.err)
 			op.closeChActive()
 		}
 
