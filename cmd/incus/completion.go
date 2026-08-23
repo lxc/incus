@@ -1045,18 +1045,34 @@ func (g *cmdGlobal) cmpProjects(toComplete string) ([]string, cobra.ShellCompDir
 	return results, cmpDirectives
 }
 
-func (g *cmdGlobal) cmpProjectNames(toComplete string) ([]string, cobra.ShellCompDirective) {
-	resources, _ := g.parseServers(toComplete)
-	if len(resources) == 0 {
+// cmpProjectNames provides bare project names from the remote found in remoteArg (a positional argument), defaulting to the default remote.
+func (g *cmdGlobal) cmpProjectNames(remoteArg string) ([]string, cobra.ShellCompDirective) {
+	remote, _, err := g.conf.ParseRemote(remoteArg)
+	if err != nil {
+		remote = g.conf.DefaultRemote
+	}
+
+	server, err := g.conf.GetInstanceServer(remote)
+	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	projects, err := resources[0].server.GetProjectNames()
+	projects, err := server.GetProjectNames()
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}
 
 	return projects, cobra.ShellCompDirectiveNoFileComp
+}
+
+// cmpTargetProjectNames provides project names for --target-project, using the remote of the last positional argument (the destination when typed).
+func (g *cmdGlobal) cmpTargetProjectNames(args []string) ([]string, cobra.ShellCompDirective) {
+	remoteArg := ""
+	if len(args) > 0 {
+		remoteArg = args[len(args)-1]
+	}
+
+	return g.cmpProjectNames(remoteArg)
 }
 
 func (g *cmdGlobal) cmpRemotes(toComplete string, includeAll bool) ([]string, cobra.ShellCompDirective) {
