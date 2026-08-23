@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -304,29 +306,47 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	return nil
 }
 
+// concurrentInstanceActions runs fn on every instance with bounded concurrency.
+// Each instance runs to completion regardless of other failures, all of which are reported at the end.
+func concurrentInstanceActions(instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+	group := errgroup.Group{}
+	group.SetLimit(max(runtime.NumCPU()/16, 1))
+
+	var failuresLock sync.Mutex
+	failures := []string{}
+
+	for _, inst := range instances {
+		group.Go(func() error {
+			err := fn(inst)
+			if err != nil {
+				failuresLock.Lock()
+				failures = append(failures, fmt.Sprintf("%s/%s: %v", inst.Project().Name, inst.Name(), err))
+				failuresLock.Unlock()
+			}
+
+			return nil
+		})
+	}
+
+	_ = group.Wait()
+
+	if len(failures) > 0 {
+		sort.Strings(failures)
+
+		return fmt.Errorf("%s:\n - %s", prefix, strings.Join(failures, "\n - "))
+	}
+
+	return nil
+}
+
 func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 	if opts.migrateInstance == nil {
 		return errors.New("Missing migration callback function")
 	}
 
-	// Limit the number of concurrent evacuations to run at the same time
-	numParallelEvacs := max(runtime.NumCPU()/16, 1)
-
-	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(numParallelEvacs)
-
-	for _, inst := range opts.instances {
-		group.Go(func() error {
-			return evacuateInstancesFunc(groupCtx, inst, opts)
-		})
-	}
-
-	err := group.Wait()
-	if err != nil {
-		return fmt.Errorf("Failed to evacuate instances: %w", err)
-	}
-
-	return nil
+	return concurrentInstanceActions(opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
+		return evacuateInstancesFunc(ctx, inst, opts)
+	})
 }
 
 func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts evacuateOpts) error {
@@ -531,22 +551,12 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 			}
 		}
 
-		// Limit the number of concurrent migrations to run at the same time
-		numParallelMigrations := max(runtime.NumCPU()/16, 1)
-
-		group := &errgroup.Group{}
-		group.SetLimit(numParallelMigrations)
-
 		// Migrate back the remote instances.
-		for _, inst := range instances {
-			group.Go(func() error {
-				return restoreClusterMemberFunc(inst, op, originName, r, s)
-			})
-		}
-
-		err = group.Wait()
+		err = concurrentInstanceActions(instances, "Failed to restore instances", func(inst instance.Instance) error {
+			return restoreClusterMemberFunc(inst, op, originName, r, s)
+		})
 		if err != nil {
-			return fmt.Errorf("Failed to restore instances: %w", err)
+			return err
 		}
 
 		// Set node status to CREATED.
