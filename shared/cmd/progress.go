@@ -106,9 +106,9 @@ func (p *ProgressRenderer) Update(status string) {
 	if p.terminal == 0 {
 		if !termios.IsTerminal(int(os.Stdout.Fd())) {
 			p.terminal = -1
+		} else {
+			p.terminal = 1
 		}
-
-		p.terminal = 1
 	}
 
 	if p.terminal != 1 {
