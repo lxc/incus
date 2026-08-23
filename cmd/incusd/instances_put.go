@@ -12,6 +12,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
+	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/operations"
@@ -85,6 +86,16 @@ func instancesPut(d *Daemon, r *http.Request) response.Response {
 	<-d.waitReady.Done()
 
 	s := d.State()
+
+	// Ensure the project exists.
+	err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+
+		return err
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
 
 	c, err := instance.LoadNodeAll(s, instancetype.Any)
 	if err != nil {
