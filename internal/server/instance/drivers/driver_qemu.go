@@ -10,6 +10,7 @@ import (
 	"embed"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -2629,6 +2630,14 @@ func (d *qemu) setupNvram() error {
 		return err
 	}
 
+	// Get the configured NVRAM defaults.
+	nvramDefaults := map[string]string{}
+	for k, v := range d.expandedConfig {
+		if strings.HasPrefix(k, "initial.nvram.") || strings.HasPrefix(k, "initial.nvram-binary.") || strings.HasPrefix(k, "initial.secureboot.") {
+			nvramDefaults[k] = v
+		}
+	}
+
 	// Unified firmware images (e.g. AMD SEV) carry their own variable store and need no NVRAM.
 	needsNvram := false
 	for _, firmware := range firmwares {
@@ -2639,6 +2648,10 @@ func (d *qemu) setupNvram() error {
 	}
 
 	if !needsNvram {
+		if len(nvramDefaults) > 0 {
+			return errors.New("The selected firmware doesn’t include a NVRAM but NVRAM modifications are required")
+		}
+
 		return nil
 	}
 
@@ -2674,18 +2687,132 @@ func (d *qemu) setupNvram() error {
 
 	nvramPath := d.nvramPath()
 
-	// Handle the case where the firmware vars filename matches our internal one.
-	if efiVarsName == filepath.Base(nvramPath) {
-		return nil
+	if efiVarsName != filepath.Base(nvramPath) {
+		// Generate a symlink.
+		// This is so qemu.nvram can always be assumed to be the EDK2 vars file.
+		// The real file name is then used to determine what firmware must be selected.
+		_ = os.Remove(nvramPath)
+		err = os.Symlink(efiVarsName, nvramPath)
+		if err != nil {
+			return err
+		}
 	}
 
-	// Generate a symlink.
-	// This is so qemu.nvram can always be assumed to be the EDK2 vars file.
-	// The real file name is then used to determine what firmware must be selected.
-	_ = os.Remove(nvramPath)
-	err = os.Symlink(efiVarsName, nvramPath)
-	if err != nil {
-		return err
+	// Initialize the configured NVRAM defaults.
+	if len(nvramDefaults) > 0 {
+		nvram, err := d.getNVRAM()
+		if err != nil {
+			return err
+		}
+
+		for k, raw := range nvramDefaults {
+			var v api.InstanceNVRAMVariable
+			parts := strings.SplitN(k, ".", 4)
+			var guid, varName string
+			if strings.HasPrefix(k, "initial.nvram.") {
+				if len(parts) != 4 {
+					return fmt.Errorf("Unknown key %q", k)
+				}
+
+				guid = parts[2]
+				varName = parts[3]
+				var vPut api.InstanceNVRAMVariablePut
+				err = json.Unmarshal([]byte(raw), &vPut)
+				if err != nil {
+					return err
+				}
+
+				v.InstanceNVRAMVariablePut = vPut
+			} else if strings.HasPrefix(k, "initial.nvram-binary.") {
+				if len(parts) != 4 {
+					return fmt.Errorf("Unknown key %q", k)
+				}
+
+				guid = parts[2]
+				varName = parts[3]
+				varParts := strings.SplitN(raw, ":", 2)
+				if len(varParts) == 1 {
+					v.Attributes = []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS"}
+				} else {
+					attributes, err := strconv.ParseUint(varParts[0], 0, 32)
+					if err != nil {
+						return fmt.Errorf("Invalid attribute value for %q: %q", k, varParts[0])
+					}
+
+					v.Attributes = uefi.ParseAttributes(uint32(attributes))
+				}
+
+				value := varParts[len(varParts)-1]
+				v.Binary, err = base64.RawStdEncoding.DecodeString(strings.TrimRight(value, "="))
+				if err != nil {
+					return fmt.Errorf("Invalid base64 value for %q: %q", k, value)
+				}
+			} else if strings.HasPrefix(k, "initial.secureboot.") {
+				guid, varName = util.ESLGUIDVar(parts[2])
+				var esl uefi.ESL
+				if varName == "MokList" {
+					v.Attributes = []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS"}
+				} else {
+					now := time.Now().UTC()
+					v.Attributes = []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS", "TIME_BASED_AUTHENTICATED_WRITE_ACCESS"}
+					v.Timestamp = &now
+				}
+
+				rest := []byte(raw)
+				ok := false
+				var block *pem.Block
+				for {
+					block, rest = pem.Decode(rest)
+					if block == nil {
+						break
+					}
+
+					switch block.Type {
+					case "CERTIFICATE":
+						cert, err := x509.ParseCertificate(block.Bytes)
+						if err != nil {
+							return fmt.Errorf("Invalid PEM certificate in %q: %w", k, err)
+						}
+
+						esl = append(esl, uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: uefi.IncusVendorGuid, Data: cert.Raw}}, Type: "x509"})
+					case "SIGNATURE":
+						eslNode := uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: uefi.IncusVendorGuid, Data: block.Bytes}}}
+						switch len(block.Bytes) {
+						case 32:
+							eslNode.Type = "sha256"
+						case 48:
+							eslNode.Type = "sha384"
+						case 64:
+							eslNode.Type = "sha512"
+						default:
+							return fmt.Errorf("Unexpected signature length %d in %q", len(block.Bytes), k)
+						}
+
+						esl = append(esl, eslNode)
+					default:
+						return fmt.Errorf("Unknown armor %s in %q", block.Type, k)
+					}
+
+					ok = true
+				}
+
+				if !ok {
+					return fmt.Errorf("Invalid PEM data in %q", k)
+				}
+
+				v.Data = esl
+			}
+
+			err = nvram.Set(guid, varName, v)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = d.setNVRAM(nvram)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -7071,6 +7198,8 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			"cloud-init.",
 			"environment.",
 			"image.",
+			"initial.nvram.",
+			"initial.secureboot.",
 			"snapshots.",
 			"user.",
 			"volatile.",
