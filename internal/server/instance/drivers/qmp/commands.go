@@ -572,6 +572,11 @@ func (m *Monitor) MigrateWait(ctx context.Context, state string) error {
 	}
 }
 
+// MigrateCancel cancels an ongoing migration.
+func (m *Monitor) MigrateCancel() error {
+	return m.Run("migrate_cancel", nil, nil)
+}
+
 // MigrateContinue continues a migration stream.
 func (m *Monitor) MigrateContinue(fromState string) error {
 	var args struct {
