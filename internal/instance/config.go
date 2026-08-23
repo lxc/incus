@@ -1187,6 +1187,60 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
 var InstanceConfigKeysVM = map[string]func(value string) error{
+	// gendoc:generate(entity=instance, group=security, key=initial.secureboot.pk)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: virtual machine
+	//  shortdesc: Initial platform key to enroll when generating the NVRAM (PEM certificate)
+	"initial.secureboot.pk": validate.IsPEM(false),
+
+	// gendoc:generate(entity=instance, group=security, key=initial.secureboot.kek)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: virtual machine
+	//  shortdesc: Initial key exchange keys to enroll when generating the NVRAM (PEM certificate bundle)
+	"initial.secureboot.kek": validate.IsPEM(true),
+
+	// gendoc:generate(entity=instance, group=security, key=initial.secureboot.db)
+	// This option accepts signatures armored with `SIGNATURE` in addition to certificates.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: virtual machine
+	//  shortdesc: Initial authorized signature database entries to enroll when generating the NVRAM (PEM certificate and signature bundle)
+	"initial.secureboot.db": validate.IsPEM(true, "CERTIFICATE", "SIGNATURE"),
+
+	// gendoc:generate(entity=instance, group=security, key=initial.secureboot.dbx)
+	// This option accepts signatures armored with `SIGNATURE` in addition to certificates.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: virtual machine
+	//  shortdesc: Initial forbidden signature database entries to enroll when generating the NVRAM (PEM certificate and signature bundle)
+	"initial.secureboot.dbx": validate.IsPEM(true, "CERTIFICATE", "SIGNATURE"),
+
+	// gendoc:generate(entity=instance, group=security, key=initial.secureboot.dbt)
+	//
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: virtual machine
+	//  shortdesc: Initial authorized timestamp signature database certificates to enroll when generating the NVRAM (PEM certificate bundle)
+	"initial.secureboot.dbt": validate.IsPEM(true),
+
+	// gendoc:generate(entity=instance, group=security, key=initial.secureboot.mok)
+	// This option accepts signatures armored with `SIGNATURE` in addition to certificates.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  condition: virtual machine
+	//  shortdesc: Initial machine owner key entries to enroll when generating the NVRAM (PEM certificate and signature bundle)
+	"initial.secureboot.mok": validate.IsPEM(true, "CERTIFICATE", "SIGNATURE"),
+
 	// gendoc:generate(entity=instance, group=resource-limits, key=limits.memory.hotplug)
 	// If this option is set to `false`, disable memory hotplug entirely.
 	// Alternatively, it can be set to a bytes value which will define an upper limit for hotplugged memory.
@@ -1426,6 +1480,61 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		f, ok := InstanceConfigKeysVM[key]
 		if ok {
 			return f, nil
+		}
+
+		parts := strings.SplitN(key, ".", 4)
+		if len(parts) == 4 && (strings.HasPrefix(key, "initial.nvram.") || strings.HasPrefix(key, "initial.nvram-binary.")) {
+			// Reject GUIDs that don’t follow the strict lowercase 8-4-4-4-12 format, to avoid costly
+			// checks for duplicates.
+			validGUID := true
+			guid := parts[2]
+			if len(guid) != 36 {
+				validGUID = false
+			} else {
+			out:
+				for i := 0; i < len(guid); i++ {
+					switch i {
+					case 8, 13, 18, 23:
+						if guid[i] != '-' {
+							validGUID = false
+							break out
+						}
+
+					default:
+						c := guid[i]
+						if (c < '0' || c > '9') && (c < 'a' && c > 'f') {
+							validGUID = false
+							break out
+						}
+					}
+				}
+			}
+
+			if !validGUID {
+				return nil, fmt.Errorf("Invalid configuration key %s: invalid GUID", key)
+			}
+
+			if strings.HasPrefix(key, "initial.nvram.") {
+				// gendoc:generate(entity=instance, group=raw, key=initial.nvram.<GUID>.<name>)
+				//
+				// ---
+				//  type: blob
+				//  liveupdate: yes
+				//  condition: virtual machine
+				//  shortdesc: Dissected NVRAM variable value to set when generating the NVRAM
+				return validate.IsAny, nil
+			}
+
+			if strings.HasPrefix(key, "initial.nvram-binary.") {
+				// gendoc:generate(entity=instance, group=raw, key=initial.nvram-binary.<GUID>.<name>)
+				// Base64-encoded variable value to set when generating the NVRAM, optionally prefixed by `<attributes>:`, with `<attributes>` an integer.
+				// ---
+				//  type: blob
+				//  liveupdate: yes
+				//  condition: virtual machine
+				//  shortdesc: Base64-encoded NVRAM variable value to set when generating the NVRAM, optionally prefixed by its attributes
+				return validate.IsRawNVRAMVariable, nil
+			}
 		}
 	}
 
