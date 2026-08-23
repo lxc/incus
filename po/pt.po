@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-08-21 15:27+0000\n"
-"PO-Revision-Date: 2026-08-22 19:10+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-08-23 12:17+0000\n"
+"Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
 "Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
 "\n"
 "Language: pt\n"
@@ -701,9 +701,8 @@ msgstr "(sem marca temporal)"
 
 #: cmd/incus/low_level.go:1454 cmd/incus/low_level.go:1462
 #: cmd/incus/low_level.go:1482 cmd/incus/low_level.go:1490
-#, fuzzy
 msgid "(not a certificate)"
-msgstr "Certificado inválido"
+msgstr "(não é um certificado)"
 
 #: cmd/incus/usage/parse.go:244
 #, c-format
@@ -756,9 +755,8 @@ msgid "--console only works with a single instance"
 msgstr "-- console só funciona com uma única instância"
 
 #: cmd/incus/query.go:87
-#, fuzzy
 msgid "--data cannot be used with --data-file"
-msgstr "--target não pode ser usado com instâncias"
+msgstr "--data não pode ser usado com --data-file"
 
 #: cmd/incus/config.go:474 cmd/incus/config.go:726
 msgid "--expanded cannot be used with a server"
@@ -793,18 +791,16 @@ msgid "--no-profiles cannot be used with --refresh"
 msgstr "--no-profiles não pode ser usado com --refresh"
 
 #: cmd/incus/action.go:266
-#, fuzzy
 msgid "--override-boot can't be used on frozen instances"
-msgstr "--target não pode ser usado com instâncias"
+msgstr "--override-boot não pode ser usado com instâncias congeladas"
 
 #: cmd/incus/action.go:517
-#, fuzzy
 msgid "--override-boot only works with a single instance"
-msgstr "-- console só funciona com uma única instância"
+msgstr "--override-boot só funciona com uma única instância"
 
 #: cmd/incus/low_level.go:1613
 msgid "--owner and --type require --all to be set"
-msgstr ""
+msgstr "--owner e-type requer --all para ser definido"
 
 #: cmd/incus/query.go:83
 msgid "--project cannot be used with the query command"
@@ -845,14 +841,12 @@ msgid "--timestamp cannot be used with --format=%s"
 msgstr "--timestamp não pode ser usado com --format=%s"
 
 #: cmd/incus/remote.go:531
-#, fuzzy
 msgid "--tls-cert and --tls-key must be used together"
-msgstr "O caminho do alvo e bandeira --listen não podem ser usados juntamente"
+msgstr "--tls-cert e --tls-key têm de ser usados juntamente"
 
 #: cmd/incus/remote.go:527
-#, fuzzy
 msgid "--tls-p12 can't be used with --tls-cert or --tls-key"
-msgstr "--timestamp não pode ser usado com --format=%s"
+msgstr "--tls-p12 não pode ser usado com --tls-cert ou --tls-key"
 
 #: cmd/incus/admin_sql.go:132
 #, c-format
@@ -863,6 +857,7 @@ msgstr "=> Consultar %d:"
 msgid ""
 "A PK certificate is already enrolled; remove it first to enroll a new one"
 msgstr ""
+"Um certificado PK já está inscrito; remova-o primeiro para inscrever um novo"
 
 #: cmd/incus/remote.go:882
 msgid "A client certificate is already present"
@@ -948,7 +943,7 @@ msgstr "Acção %q não é suportada por esta ferramenta"
 
 #: cmd/incus/low_level.go:1165 cmd/incus/low_level.go:1166
 msgid "Add Secure Boot signatures"
-msgstr ""
+msgstr "Adicionar assinaturas de Arranque Seguro"
 
 #: cmd/incus/cluster_group.go:745
 msgid "Add a cluster member to a cluster group"
@@ -1258,6 +1253,8 @@ msgid ""
 "Attempt to boot a specific boot option (set to `ask` for an interactive "
 "choice)"
 msgstr ""
+"A tentar arrancar uma opção de arranque específica (definir para `ask` para "
+"uma escolha interativa)"
 
 #: cmd/incus/remote.go:778
 #, c-format
@@ -1546,7 +1543,7 @@ msgstr ""
 
 #: cmd/incus/action.go:289
 msgid "Cannot parse this --override-boot value"
-msgstr ""
+msgstr "Incapaz de analisar este valor --override-boot"
 
 #: cmd/incus/utils.go:304
 msgid "Cannot read the stdin twice"
@@ -1575,7 +1572,7 @@ msgstr "Não pode definir a chave: %s"
 
 #: cmd/incus/low_level.go:1217
 msgid "Cannot store a signature in PK, KEK or dbt"
-msgstr ""
+msgstr "Incapaz de armazenar uma assinatura em PK, KEK ou dbt"
 
 #: cmd/incus/info.go:569 cmd/incus/info.go:581
 #, c-format
@@ -2002,9 +1999,8 @@ msgid "Could not close server cert file %q: %w"
 msgstr "Não pode fechar o ficheiro de certificação do servidor %q: %w"
 
 #: cmd/incus/remote.go:274
-#, fuzzy
 msgid "Could not create client cert dir"
-msgstr "Incapaz de criar o directório de certificado do servidor"
+msgstr "Incapaz de criar o directório de certificado do cliente"
 
 #: cmd/incus/remote.go:374 cmd/incus/remote.go:695
 msgid "Could not create server cert dir"
@@ -2682,6 +2678,8 @@ msgid ""
 "Don’t import the file as a certificate but rather compute and import its "
 "digest (sha256|sha384|sha512)"
 msgstr ""
+"Não importa o ficheiro como um certificado mas em vez disso computa e "
+"importa o seu resumo (sha256|sha384|sha512)"
 
 #: cmd/incus/network.go:954
 msgid "Down delay"
@@ -2876,7 +2874,7 @@ msgstr ""
 #: cmd/incus/image.go:1132
 #, c-format
 msgid "Empty property name in '%s'"
-msgstr ""
+msgstr "Nome de propriedade vazio em '%s'"
 
 #: cmd/incus/cluster.go:775
 msgid "Enable clustering on a single non-clustered server"
@@ -3364,14 +3362,14 @@ msgid "Failed parsing validation response: %w"
 msgstr "Falhou ao analisar resposta de validação: %w"
 
 #: cmd/incus/low_level.go:1205
-#, fuzzy, c-format
+#, c-format
 msgid "Failed reading input file: %w"
-msgstr "Falhou ao ler do ficheiro: %w"
+msgstr "Falhou ao ler o ficheiro de entrada: %w"
 
 #: cmd/incus/action.go:355
-#, fuzzy, c-format
+#, c-format
 msgid "Failed setting BootNext: %w"
-msgstr "Falhou ao iniciar comando: %w"
+msgstr "Falhou ao definir BootNext: %w"
 
 #: cmd/incus/console.go:437
 #, c-format
@@ -3557,9 +3555,9 @@ msgid "Failed to load configuration: %s"
 msgstr "Falhou ao carregar configuração: %s"
 
 #: cmd/incus/query.go:113
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open input file %q: %w"
-msgstr "Falhou ao abrir ficheiro alvo %q: %w"
+msgstr "Falhou ao abrir ficheiro de entrada %q: %w"
 
 #: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828
 #: cmd/incus/utils_sftp.go:330
@@ -3573,9 +3571,9 @@ msgid "Failed to open target file %q: %w"
 msgstr "Falhou ao abrir ficheiro alvo %q: %w"
 
 #: cmd/incus/low_level.go:1250
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse PEM certificate: %w"
-msgstr "Falhou ao criar certificado: %w"
+msgstr "Falhou ao analisar certificado PEM: %w"
 
 #: cmd/incus/admin_sql.go:104
 #, c-format
@@ -3584,7 +3582,7 @@ msgstr "Falhou ao analisar resposta de despejo: %w"
 
 #: cmd/incus/low_level.go:1262
 msgid "Failed to parse input file as either PEM or DER certificate"
-msgstr ""
+msgstr "Falhou ao analisar ficheiro de entrada seja como certificado PEM ou DER"
 
 #: cmd/incus/admin_init_preseed.go:39
 #, c-format
@@ -4359,9 +4357,8 @@ msgid "ISSUE DATE"
 msgstr "DATA DO PROBLEMA"
 
 #: cmd/incus/low_level.go:1399 cmd/incus/low_level.go:1400
-#, fuzzy
 msgid "ISSUER"
-msgstr "DATA DO PROBLEMA"
+msgstr "EMISSOR"
 
 #: cmd/incus/info.go:390
 #, c-format
@@ -4543,12 +4540,11 @@ msgstr "Dados de entrada"
 
 #: cmd/incus/query.go:55
 msgid "Input data file (\"-\" for stdin)"
-msgstr ""
+msgstr "Ficheiro de dados de entrada (\"-\" para stdin)"
 
 #: cmd/incus/low_level.go:1266
-#, fuzzy
 msgid "Input file contains no certificate"
-msgstr "Gera o certificado de cliente"
+msgstr "O ficheiro de entrada não contém nenhum certificado"
 
 #: cmd/incus/info.go:919
 msgid "Instance Only"
@@ -4600,9 +4596,9 @@ msgid "Invalid IP address or DNS name"
 msgstr "Endereço IP ou nome DNS inválido"
 
 #: cmd/incus/remote.go:267
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid TLS client keypair: %w"
-msgstr "Testemunho de junção inválido: %w"
+msgstr "Par de chaves de cliente TLS inválido: %w"
 
 #: cmd/incus/export.go:134 cmd/incus/storage_bucket.go:1390
 #: cmd/incus/storage_volume.go:2371
@@ -4889,10 +4885,9 @@ msgstr ""
 
 #: cmd/incus/low_level.go:1353
 msgid "List Secure Boot signatures"
-msgstr ""
+msgstr "Lista assinaturas de Arranque Seguro"
 
 #: cmd/incus/low_level.go:1354
-#, fuzzy
 msgid ""
 "List Secure Boot signatures\n"
 "\n"
@@ -4914,33 +4909,33 @@ msgid ""
 "\tS - Subject (long, for certificates)\n"
 "\tt - Signature type"
 msgstr ""
-"Lista clientes de confiança\n"
+"Lista assinaturas de Arranque Seguro\n"
 "\n"
 "A opção -c recebe uma lista de argumentos (opcionalmente separados por "
 "vírgulas)\n"
-"que controlam quais atributos de certificado são incluídos ao mostrar em "
+"que controlam quais atributos de assinatura são incluídos ao mostrar em "
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Disposição predefinida de coluna: ntdfe\n"
+"Disposição predefinida de coluna: tOfs\n"
 "\n"
 "Caracteres curtos da coluna:\n"
-"\tn - Nome\n"
-"\tt - Tipo\n"
-"\tc - Nome Comun\n"
-"\tf - Impressão digital\n"
-"\td - Descrição\n"
-"\ti - Data do problema\n"
-"\te - Data de validade\n"
-"\tr - Se o certificado é restrito\n"
-"\tp - Lista de projetos separados por nova linha"
+"\tf - Impressão digital (curta)\n"
+"\tF - Impressão digital (longa))\n"
+"\ti - Emissor (curto, para certificados)\n"
+"\tI - Emissor (longo, para certificados)\n"
+"\to - GUID dono\n"
+"\tO - Nome de GUID familiar de dono ou GUID se nenhum\n"
+"\tr - Valor bruto\n"
+"\ts - Sujeito (curto, para certificados)\n"
+"\tS - Sujeito (longo, para certificados)\n"
+"\tt - Tipo de assinatura"
 
 #: cmd/incus/low_level.go:700
 msgid "List UEFI GUIDs and variables"
 msgstr "Listar GUIDs e variáveis de UEFI"
 
 #: cmd/incus/low_level.go:701
-#, fuzzy
 msgid ""
 "List UEFI GUIDs and variables\n"
 "\n"
@@ -4959,26 +4954,24 @@ msgid ""
 "\tt - Authenticated write timestamp\n"
 "\tv - Interpreted value"
 msgstr ""
-"Lista clientes de confiança\n"
+"Lista GUIDs de UEFI e variáveis\n"
 "\n"
 "A opção -c recebe uma lista de argumentos (opcionalmente separados por "
 "vírgulas)\n"
-"que controlam quais atributos de certificado são incluídos ao mostrar em "
+"que controlam quais atributos de variável são incluídos ao mostrar em "
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Disposição predefinida de coluna: ntdfe\n"
+"Disposição predefinida de coluna: Gn\n"
 "\n"
 "Caracteres curtos da coluna:\n"
+"\ta - Atributos\n"
+"\tg - GUID\n"
+"\tG - Nome GUID familiar ou GUID se nenhum\n"
 "\tn - Nome\n"
-"\tt - Tipo\n"
-"\tc - Nome Comun\n"
-"\tf - Impressão digital\n"
-"\td - Descrição\n"
-"\ti - Data do problema\n"
-"\te - Data de validade\n"
-"\tr - Se o certificado é restrito\n"
-"\tp - Lista de projetos separados por nova linha"
+"\tr - Valor bruto\n"
+"\tt - Marca temporal escrita autenticada\n"
+"\tv - Valor interpretado"
 
 #: cmd/incus/network_address_set.go:101
 msgid "List address sets across all projects"
@@ -5609,7 +5602,6 @@ msgid "List images"
 msgstr "Lista imagens"
 
 #: cmd/incus/image.go:1051
-#, fuzzy
 msgid ""
 "List images\n"
 "\n"
@@ -5662,7 +5654,10 @@ msgstr ""
 "    a - Arquitetura\n"
 "    s - Tamanho\n"
 "    u - Data do envio\n"
-"    t - Tipo"
+"    t - Tipo\n"
+"\n"
+"Colunas personalizadas são definidas com \"propriedades:chave\", ex., "
+"\"properties:os\""
 
 #: cmd/incus/config_device.go:301 cmd/incus/config_device.go:302
 msgid "List instance devices"
@@ -6396,7 +6391,6 @@ msgid "List trusted clients"
 msgstr "Lista clientes de confiança"
 
 #: cmd/incus/config_trust.go:381
-#, fuzzy
 msgid ""
 "List trusted clients\n"
 "\n"
@@ -6433,7 +6427,8 @@ msgstr ""
 "\tn - Nome\n"
 "\tt - Tipo\n"
 "\tc - Nome Comun\n"
-"\tf - Impressão digital\n"
+"\tf - Impressão digital (curta)\n"
+"\tF - Impressão digital (longa)\n"
 "\td - Descrição\n"
 "\ti - Data do problema\n"
 "\te - Data de validade\n"
@@ -6631,9 +6626,8 @@ msgid "Manage NVRAM on virtual machines"
 msgstr "Gerir NVRAM em máquinas virtuais"
 
 #: cmd/incus/low_level.go:1113 cmd/incus/low_level.go:1114
-#, fuzzy
 msgid "Manage Secure Boot on virtual machines"
-msgstr "Gerir NVRAM em máquinas virtuais"
+msgstr "Gerir Arranque Seguro em máquinas virtuais"
 
 #: cmd/incus/network.go:41 cmd/incus/network.go:42
 msgid "Manage and attach instances to networks"
@@ -7485,7 +7479,7 @@ msgstr "Nenhuma regra(s) correspondente encontrada"
 
 #: cmd/incus/low_level.go:1679
 msgid "No signature matches"
-msgstr ""
+msgstr "Nenhuma assinatura corresponde"
 
 #: cmd/incus/admin_init_interactive.go:267
 msgid "No storage backends available"
@@ -7528,12 +7522,11 @@ msgstr "OVN:"
 
 #: cmd/incus/low_level.go:1401
 msgid "OWNER GUID"
-msgstr ""
+msgstr "GUID DO DONO"
 
 #: cmd/incus/low_level.go:1402
-#, fuzzy
 msgid "OWNER GUID NAME"
-msgstr "NOME de GUID"
+msgstr "NOME de GUID do DONO"
 
 #: cmd/incus/network_address_set.go:748
 msgid "One or more provided address isn't currently in the set"
@@ -7564,11 +7557,11 @@ msgstr ""
 
 #: cmd/incus/low_level.go:1581
 msgid "Only remove signatures of the given type"
-msgstr ""
+msgstr "Apenas remove assinaturas do tipo fornecido"
 
 #: cmd/incus/low_level.go:1580
 msgid "Only remove signatures owned by the given owner"
-msgstr ""
+msgstr "Apenas remove assinaturas que são propriedade do dono fornecido"
 
 #: cmd/incus/webui.go:21 cmd/incus/webui.go:22
 msgid "Open the web interface"
@@ -7597,7 +7590,7 @@ msgstr "Sobrepor o modo do terminal (auto, interativo ou não interativo)"
 
 #: cmd/incus/action.go:330
 msgid "PATH"
-msgstr ""
+msgstr "CAMINHO"
 
 #: cmd/incus/info.go:119 cmd/incus/info.go:205
 #, c-format
@@ -8142,17 +8135,16 @@ msgid "Remote trust token"
 msgstr "Testemunho de confiança de remoto"
 
 #: cmd/incus/remote.go:159
-#, fuzzy
 msgid "Remote-specific TLS client certificate (PEM)"
-msgstr "Gera o certificado de cliente"
+msgstr "Certificado de cliente (PEM) TLS específico de remoto"
 
 #: cmd/incus/remote.go:160
 msgid "Remote-specific TLS client key (PEM)"
-msgstr ""
+msgstr "Chave de cliente (PEM) TLS específica de remoto"
 
 #: cmd/incus/remote.go:161
 msgid "Remote-specific TLS client keypair (PKCS#12)"
-msgstr ""
+msgstr "Par de chaves de cliente (PKCS#12) TLS específica de remoto"
 
 #: cmd/incus/info.go:301
 #, c-format
@@ -8174,9 +8166,8 @@ msgstr ""
 "(sim/não): "
 
 #: cmd/incus/low_level.go:1575 cmd/incus/low_level.go:1576
-#, fuzzy
 msgid "Remove Secure Boot signatures"
-msgstr "Remove remotos"
+msgstr "Remove assinaturas de Arranque Seguro"
 
 #: cmd/incus/cluster_group.go:567
 msgid "Remove a cluster member from a cluster group"
@@ -8211,9 +8202,8 @@ msgid "Remove all rules that match"
 msgstr "Remove todas as regras que correspondem"
 
 #: cmd/incus/low_level.go:1579
-#, fuzzy
 msgid "Remove all signatures"
-msgstr "Remove aliases"
+msgstr "Remove todas as assinaturas"
 
 #: cmd/incus/network_load_balancer.go:886
 msgid "Remove backend from a load balancer"
@@ -8564,7 +8554,7 @@ msgstr "STP"
 
 #: cmd/incus/low_level.go:1404 cmd/incus/low_level.go:1405
 msgid "SUBJECT"
-msgstr ""
+msgstr "SUJEITO"
 
 #: cmd/incus/network_allocations.go:245
 msgid "SUBNET"
@@ -8585,7 +8575,7 @@ msgstr "Chave secreta: %s"
 
 #: cmd/incus/action.go:335
 msgid "Select next boot entry: "
-msgstr ""
+msgstr "Selecionar próxima entrada de arranque: "
 
 #: cmd/incus/query.go:40 cmd/incus/query.go:41
 msgid "Send a raw query to the server"
@@ -9069,9 +9059,8 @@ msgid "Set the key as an instance property"
 msgstr "Define a chave como uma propriedade de instância"
 
 #: cmd/incus/low_level.go:1169
-#, fuzzy
 msgid "Set the signature owner"
-msgstr "Define a chave como uma propriedade de armazenamento"
+msgstr "Define o dono da assinatura"
 
 #: cmd/incus/low_level.go:886
 msgid "Set the variable attributes (requires `--format=base64|binary|hex`)"
@@ -9106,7 +9095,7 @@ msgstr "Configura armazenamento baseado em loop com TAMANHO em GiB"
 
 #: cmd/incus/low_level.go:1683
 msgid "Several signatures match the given fingerprint"
-msgstr ""
+msgstr "Várias assinaturas correspondem à impressão digital dada"
 
 #: cmd/incus/network_allocations.go:66
 msgid "Show a summary of used IP ranges per subnet"
@@ -9634,9 +9623,9 @@ msgid "TIMESTAMP"
 msgstr "MARCA TEMPORAL"
 
 #: cmd/incus/remote.go:536
-#, fuzzy
 msgid "TLS client certificates can only be used with the incus protocol"
-msgstr "--refresh só pode ser usado com instâncias"
+msgstr ""
+"Certificados de cliente TLS só podem ser usados com o protocolo do incus"
 
 #: cmd/incus/cluster.go:1150 cmd/incus/config_trust.go:611
 msgid "TOKEN"
@@ -9781,14 +9770,12 @@ msgid "The following unknown volumes have been found:"
 msgstr "Os seguintes volumes desconhecidos foram encontrados:"
 
 #: cmd/incus/low_level.go:1316
-#, fuzzy
 msgid "The given certificate is already present in this ESL"
-msgstr "Um certificado de cliente já está presente"
+msgstr "O certificado fornecido já está presente neste ESL"
 
 #: cmd/incus/low_level.go:1313
-#, fuzzy
 msgid "The given signature is already present in this ESL"
-msgstr "Um certificado de cliente já está presente"
+msgstr "A assinatura fornecida já está presente neste ESL"
 
 #: cmd/incus/delete.go:97
 #, c-format
@@ -9933,6 +9920,8 @@ msgstr ""
 msgid ""
 "The remote server doesn't trust our client certificate (fingerprint: %s)"
 msgstr ""
+"O servidor remoto não confia no nosso certificado de cliente (impressão "
+"digital: %s)"
 
 #: cmd/incus/admin_init_auto.go:26
 #, c-format
@@ -10255,31 +10244,31 @@ msgid "Unable to create a temporary file: %v"
 msgstr "Incapaz de criar um ficheiro temporário: %v"
 
 #: cmd/incus/action.go:321
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to parse %s as a boot entry"
-msgstr "Falhou ao analisar o preseed: %w"
+msgstr "Incapaz de analisar %s como uma entrada de arranque"
 
 #: cmd/incus/action.go:314
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to parse %s as valid JSON"
-msgstr "Falhou ao analisar o preseed: %w"
+msgstr "Incapaz de analisar %s como um JSON válido"
 
 #: cmd/incus/low_level.go:1302 cmd/incus/low_level.go:1527
 #: cmd/incus/low_level.go:1639
 #, c-format
 msgid "Unable to parse %s:%s as an EFI Signature List"
-msgstr ""
+msgstr "Incapaz de analisar %s:%s como uma Lista de Assinatura EFI"
 
 #: cmd/incus/low_level.go:1295 cmd/incus/low_level.go:1520
 #: cmd/incus/low_level.go:1632
 #, c-format
 msgid "Unable to parse %s:%s as valid JSON"
-msgstr ""
+msgstr "Incapaz de analisar %s:%s como um JSON válido"
 
 #: cmd/incus/low_level.go:1210 cmd/incus/low_level.go:1646
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to parse owner %s: %w"
-msgstr "Falhou ao analisar o preseed: %w"
+msgstr "Incapaz de analisar dono %s: %w"
 
 #: cmd/incus/remote.go:363 cmd/incus/remote.go:397
 msgid "Unavailable remote server"
@@ -10290,9 +10279,9 @@ msgid "Unexpected input size"
 msgstr "Tamanho de entrada inesperado"
 
 #: cmd/incus/action.go:340 cmd/incus/action.go:348
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown boot option %d"
-msgstr "Tipo de saída desconhecido %q"
+msgstr "Opção de arranque desconhecida %d"
 
 #: cmd/incus/config_trust.go:200
 #, c-format
@@ -10349,9 +10338,9 @@ msgid "Unknown output type %q"
 msgstr "Tipo de saída desconhecido %q"
 
 #: cmd/incus/low_level.go:1231
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown signature type %s"
-msgstr "Tipo de ficheiro desconhecido '%s'"
+msgstr "Tipo de assinatura desconhecido %s"
 
 #: cmd/incus/low_level.go:1031 cmd/incus/low_level.go:1032
 msgid "Unset UEFI variables"
