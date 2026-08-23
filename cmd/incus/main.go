@@ -178,6 +178,15 @@ Custom commands can be defined through aliases, use "incus alias" to control tho
 	app.PersistentFlags().BoolVar(&globalCmd.flagSubCmds, "sub-commands", false, i18n.G("Use with help or --help to view sub-commands"))
 	app.PersistentFlags().BoolVar(&globalCmd.flagExplain, "explain", false, i18n.G("If the command is valid, explain its parsed arguments instead of running it"))
 
+	_ = app.RegisterFlagCompletionFunc("project", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		remoteArg := ""
+		if len(args) > 0 {
+			remoteArg = args[0]
+		}
+
+		return globalCmd.cmpProjectNames(remoteArg)
+	})
+
 	// Wrappers
 	app.PersistentPreRunE = globalCmd.preRun
 	app.PersistentPostRunE = globalCmd.postRun

@@ -23,7 +23,6 @@ type cmdNetworkListAllocations struct {
 	network *cmdNetwork
 
 	flagFormat      string
-	flagProject     string
 	flagAllProjects bool
 	flagColumns     string
 	flagSummary     bool
@@ -70,7 +69,6 @@ Pre-defined column shorthand chars:
 	cmd.RunE = c.run
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagFormat, "format|f", c.global.defaultListFormat(), "", i18n.G(`Format (csv|json|table|yaml|compact|markdown), use suffix ",noheader" to disable headers and ",header" to enable it if missing, e.g. csv,header`))
-	cli.AddStringFlag(cmd.Flags(), &c.flagProject, "project|p", api.ProjectDefaultName, "", i18n.G("Run again a specific project"))
 	cli.AddBoolFlag(cmd.Flags(), &c.flagAllProjects, "all-projects", i18n.G("Run against all projects"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagColumns, "columns|c", defaultNetworkAllocationColumns, "", i18n.G("Columns"))
 
@@ -150,6 +148,10 @@ func (c *cmdNetworkListAllocations) run(cmd *cobra.Command, args []string) error
 	}
 
 	d := parsed[0].RemoteServer
+
+	if c.global.flagProject != "" && c.flagAllProjects {
+		return errors.New(i18n.G("Can't specify --project with --all-projects"))
+	}
 
 	var addresses []api.NetworkAllocations
 	if c.flagAllProjects {

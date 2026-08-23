@@ -184,6 +184,10 @@ It requires the source to be an alias and for it to be public.`,
 	cli.AddStringArrayFlag(cmd.Flags(), &c.flagProfile, "profile|p", i18n.G("Profile to apply to the new image (may be passed multiple times)"))
 	cmd.RunE = c.run
 
+	_ = cmd.RegisterFlagCompletionFunc("target-project", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return c.global.cmpTargetProjectNames(args)
+	})
+
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpImages(toComplete)

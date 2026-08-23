@@ -401,6 +401,10 @@ func (c *cmdStorageVolumeCopy) command() *cobra.Command {
 	cli.AddBoolFlag(cmd.Flags(), &c.flagRefreshExcludeOlder, "refresh-exclude-older", i18n.G("During refresh, exclude source snapshots earlier than latest target snapshot"))
 	cmd.RunE = c.run
 
+	_ = cmd.RegisterFlagCompletionFunc("target-project", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return c.global.cmpTargetProjectNames(args)
+	})
+
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
 			return c.global.cmpStoragePoolWithVolume(toComplete)
@@ -1737,6 +1741,10 @@ func (c *cmdStorageVolumeMove) command() *cobra.Command {
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolume.flagDestinationTarget, "destination-target", "", "", i18n.G("Destination cluster member name"))
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolumeCopy.flagTargetProject, "target-project", "", "", i18n.G("Move to a project different from the source"))
 	cmd.RunE = c.run
+
+	_ = cmd.RegisterFlagCompletionFunc("target-project", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return c.global.cmpTargetProjectNames(args)
+	})
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
