@@ -1289,6 +1289,11 @@ func (c *cmdImageList) imageShouldShow(filters []string, state *api.Image) bool 
 			if ok && fmt.Sprintf("%v", val) == value {
 				found = true
 			}
+
+			// Match architecture filters against the Incus architecture name too.
+			if !found && internalFilter.DotPrefixMatch(key, "architecture") && value == state.Architecture {
+				found = true
+			}
 		} else {
 			for _, alias := range state.Aliases {
 				if strings.Contains(alias.Name, filter) {
