@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -353,7 +354,8 @@ func incusDownloadImage(fingerprint string, uri string, userAgent string, do fun
 	}
 
 	resp.MetaSize = size
-	resp.MetaName = filename
+	// Basename the server-provided name to prevent path traversal.
+	resp.MetaName = filepath.Base(filename)
 
 	// Check the hash
 	hash := fmt.Sprintf("%x", hash256.Sum(nil))
