@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -63,10 +64,7 @@ func (e *websockListenerConnection) Reader(ctx context.Context, recvFunc EventHa
 			return
 		}
 
-		err := e.Close()
-		if err != nil && !errors.Is(err, net.ErrClosed) {
-			logger.Warn("Failed closing connection", logger.Ctx{"err": err})
-		}
+		logger.WarnOnErrorExcept(e.Close, []error{net.ErrClosed, syscall.EPIPE}, "Failed closing connection")
 
 		cancelFunc()
 	}
@@ -185,10 +183,7 @@ func (e *streamListenerConnection) Reader(ctx context.Context, recvFunc EventHan
 			return
 		}
 
-		err := e.Close()
-		if err != nil && !errors.Is(err, net.ErrClosed) {
-			logger.Warn("Failed closing connection", logger.Ctx{"err": err})
-		}
+		logger.WarnOnErrorExcept(e.Close, []error{net.ErrClosed, syscall.EPIPE}, "Failed closing connection")
 
 		cancelFunc()
 	}
@@ -257,10 +252,7 @@ func (e *simpleListenerConnection) Reader(ctx context.Context, recvFunc EventHan
 			return
 		}
 
-		err := e.Close()
-		if err != nil && !errors.Is(err, net.ErrClosed) {
-			logger.Warn("Failed closing connection", logger.Ctx{"err": err})
-		}
+		logger.WarnOnErrorExcept(e.Close, []error{net.ErrClosed, syscall.EPIPE}, "Failed closing connection")
 
 		cancelFunc()
 	}
