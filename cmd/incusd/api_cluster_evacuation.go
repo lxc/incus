@@ -189,10 +189,61 @@ func evacuateMigrateInstance(r *http.Request) evacuateMigrateFunc {
 	}
 }
 
+// evacuateWaitForCreations waits for local instance creation operations to complete.
+func evacuateWaitForCreations(ctx context.Context, op *operations.Operation) error {
+	lastCount := -1
+
+	for {
+		count := 0
+		for _, localOp := range operations.Clone() {
+			if localOp.Type() == operationtype.InstanceCreate && !localOp.Status().IsFinal() {
+				count++
+			}
+		}
+
+		if count == 0 {
+			return nil
+		}
+
+		if op != nil && count != lastCount {
+			lastCount = count
+			_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Waiting for %d instance creation operations to complete", count)})
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+}
+
 func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.Operation, name string, mode string, stopInstance evacuateStopFunc, migrateInstance evacuateMigrateFunc) error {
+	// Setup a reverter.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Set cluster member status to EVACUATING to prevent any new instance from being placed on it.
+	err := evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuating)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() {
+		_ = evacuateClusterSetState(s, name, db.ClusterMemberStateCreated)
+	})
+
+	// Wait for ongoing instance creations to complete (skipped when healing an offline member).
+	if mode != "heal" {
+		err = evacuateWaitForCreations(ctx, op)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Get the instance list for the server being evacuated.
 	var dbInstances []dbCluster.Instance
-	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Node: &name})
@@ -216,20 +267,6 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 
 		instances[i] = inst
 	}
-
-	// Setup a reverter.
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	// Set cluster member status to EVACUATING.
-	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuating)
-	if err != nil {
-		return err
-	}
-
-	reverter.Add(func() {
-		_ = evacuateClusterSetState(s, name, db.ClusterMemberStateCreated)
-	})
 
 	// Perform the evacuation.
 	opts := evacuateOpts{
