@@ -79,7 +79,7 @@ func (d *nicOVN) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.priority", "connected", "ipv4.address.external", "ipv6.address.external"}
+	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "connected", "ipv4.address.external", "ipv6.address.external"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -324,6 +324,30 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		//  managed: no
 		//  shortdesc: I/O limit in bit/s for both incoming and outgoing traffic. (same as setting both limits.ingress and limits.egress / mutually exclusive with limits.ingress and limits.egress)
 		"limits.max",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.ingress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that incoming traffic may send in excess of `limits.ingress` (mutually exclusive with `limits.max.bucket`)
+		"limits.ingress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.egress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that outgoing traffic may send in excess of `limits.egress` (mutually exclusive with `limits.max.bucket`)
+		"limits.egress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.max.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket` / mutually exclusive with them)
+		"limits.max.bucket",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=limits.priority)
 		//
@@ -587,6 +611,15 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 	// Avoid setting both ingress/egress and max to avoid confusion or implicit behavior.
 	if d.config["limits.max"] != "" && (d.config["limits.ingress"] != "" || d.config["limits.egress"] != "") {
 		return errors.New("limits.max is mutually exclusive with limits.ingress and limits.egress")
+	}
+
+	if d.config["limits.max.bucket"] != "" && (d.config["limits.ingress.bucket"] != "" || d.config["limits.egress.bucket"] != "") {
+		return errors.New("limits.max.bucket is mutually exclusive with limits.ingress.bucket and limits.egress.bucket")
+	}
+
+	err = nicValidateBurstLimits(d.config, false)
+	if err != nil {
+		return err
 	}
 
 	if d.config["limits.priority"] != "" {

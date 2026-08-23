@@ -45,7 +45,7 @@ func (d *nicRouted) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.priority", "connected"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "connected"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -134,6 +134,54 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 		//  type: string
 		//  shortdesc: I/O limit in bit/s for both incoming and outgoing traffic (same as setting both limits.ingress and limits.egress)
 		"limits.max",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=limits.ingress.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that incoming traffic may burst up to, requires `limits.ingress.bucket`
+		"limits.ingress.burst",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=limits.egress.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that outgoing traffic may burst up to, requires `limits.egress.bucket`
+		"limits.egress.burst",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=limits.max.burst)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: I/O limit in bit/s that both incoming and outgoing traffic may burst up to (same as setting both `limits.ingress.burst` and `limits.egress.burst`)
+		"limits.max.burst",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=limits.ingress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that incoming traffic may send in excess of `limits.ingress`, requires `limits.ingress.burst`
+		"limits.ingress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=limits.egress.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that outgoing traffic may send in excess of `limits.egress`, requires `limits.egress.burst`
+		"limits.egress.bucket",
+
+		// gendoc:generate(entity=devices, group=nic_routed, key=limits.max.bucket)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: Amount of data in bit that traffic may send in excess of the sustained limit (same as setting both `limits.ingress.bucket` and `limits.egress.bucket`)
+		"limits.max.bucket",
 
 		// gendoc:generate(entity=devices, group=nic_routed, key=limits.priority)
 		//
@@ -302,6 +350,11 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 	rules["vrf"] = validate.Optional(validate.IsAny)
 
 	err = d.config.Validate(rules)
+	if err != nil {
+		return err
+	}
+
+	err = nicValidateBurstLimits(d.config, true)
 	if err != nil {
 		return err
 	}

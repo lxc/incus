@@ -14,10 +14,11 @@ type Action interface {
 
 // ActionPolice represents an action of 'police' type.
 type ActionPolice struct {
-	Rate  uint32 // in byte/s
-	Burst uint32 // in byte
-	Mtu   uint32 // in byte
-	Drop  bool
+	Rate     uint32 // in byte/s
+	Burst    uint32 // in byte
+	Mtu      uint32 // in byte
+	PeakRate uint32 // in byte/s
+	Drop     bool
 }
 
 func (a *ActionPolice) toNetlink() (netlink.Action, error) {
@@ -26,6 +27,7 @@ func (a *ActionPolice) toNetlink() (netlink.Action, error) {
 	action.Rate = a.Rate
 	action.Burst = a.Burst
 	action.Mtu = a.Mtu
+	action.PeakRate = a.PeakRate
 
 	if a.Drop {
 		action.ExceedAction = netlink.TC_POLICE_SHOT
