@@ -3425,8 +3425,11 @@ func (d *lxc) Stop(stateful bool) error {
 
 	err = cc.Stop()
 	if err != nil {
-		op.Done(err)
-		return err
+		// Only fail while the container is still running, it may have finished stopping on its own.
+		if d.IsRunning() {
+			op.Done(err)
+			return err
+		}
 	}
 
 	// Wait for operation lock to be Done. This is normally completed by onStop which picks up the same
