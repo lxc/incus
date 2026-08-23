@@ -1166,7 +1166,7 @@ func (c *cmdLowLevelSecureBootAdd) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add Secure Boot signatures`))
 
 	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "OVMF", "", i18n.G("Set the signature owner"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "Incus", "", i18n.G("Set the signature owner"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type", "", "", i18n.G("Don’t import the file as a certificate but rather compute and import its digest (sha256|sha384|sha512)"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
