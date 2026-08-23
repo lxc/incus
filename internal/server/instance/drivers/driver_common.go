@@ -28,6 +28,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/device/nictype"
 	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/instance/drivers/qemudefault"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
@@ -1657,19 +1658,43 @@ func (d *common) balanceNUMANodes() error {
 		}
 	}
 
+	numaNodesToUse := 1
 	if err == nil && limitsCPU > cpusPerNumaNode {
-		numaNodesToUse := int(math.Ceil(float64(limitsCPU) / float64(cpusPerNumaNode)))
-
-		selectedNumaNodes := make([]string, numaNodesToUse)
-		for i, node := range nodes[:numaNodesToUse] {
-			selectedNumaNodes[i] = strconv.FormatUint(node, 10)
-		}
-
-		joinedNumaNodes := strings.Join(selectedNumaNodes, ",")
-		return d.VolatileSet(map[string]string{"volatile.cpu.nodes": joinedNumaNodes})
+		numaNodesToUse = int(math.Ceil(float64(limitsCPU) / float64(cpusPerNumaNode)))
 	}
 
-	return d.VolatileSet(map[string]string{"volatile.cpu.nodes": fmt.Sprintf("%d", nodes[0])})
+	// Similarly, if the effective memory limit is greater than the amount of memory per NUMA node,
+	// use as many NUMA nodes as needed to fit it.
+	limitsMemoryStr := conf["limits.memory"]
+	if limitsMemoryStr == "" {
+		limitsMemoryStr = qemudefault.MemSize
+	}
+
+	limitsMemory, memoryErr := ParseMemoryStr(limitsMemoryStr)
+	defaultMemory, _ := ParseMemoryStr(qemudefault.MemSize)
+
+	// Never split anything at or below the default memory size.
+	if memoryErr == nil && limitsMemory > defaultMemory && len(nodes) > 0 {
+		memory, err := resources.GetMemory()
+		if err != nil {
+			return err
+		}
+
+		memoryPerNumaNode := int64(memory.Total) / int64(len(nodes))
+		if memoryPerNumaNode > 0 && limitsMemory > memoryPerNumaNode {
+			numaNodesToUse = max(numaNodesToUse, int(math.Ceil(float64(limitsMemory)/float64(memoryPerNumaNode))))
+		}
+	}
+
+	// Cap at the number of available NUMA nodes.
+	numaNodesToUse = min(numaNodesToUse, len(nodes))
+
+	selectedNumaNodes := make([]string, numaNodesToUse)
+	for i, node := range nodes[:numaNodesToUse] {
+		selectedNumaNodes[i] = strconv.FormatUint(node, 10)
+	}
+
+	return d.VolatileSet(map[string]string{"volatile.cpu.nodes": strings.Join(selectedNumaNodes, ",")})
 }
 
 // Gets the process starting time.
