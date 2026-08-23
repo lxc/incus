@@ -1023,13 +1023,14 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 
 	err = monitor.MigrateIncoming(ctx, "migration")
 	if err != nil {
-		if errors.Is(err, qmp.ErrMonitorDisconnect) && util.PathExists(d.LogFilePath()) {
-			qemuError, err := os.ReadFile(d.LogFilePath())
-			if err != nil {
-				return err
+		if errors.Is(err, qmp.ErrMonitorDisconnect) {
+			// Crash output goes to stderr (early log), -D only captures QEMU's internal logging.
+			qemuError, readErr := os.ReadFile(d.EarlyLogFilePath())
+			if readErr != nil || len(strings.TrimSpace(string(qemuError))) == 0 {
+				qemuError, _ = os.ReadFile(d.LogFilePath())
 			}
 
-			return fmt.Errorf("QEMU crashed on VM restore: %s", string(qemuError))
+			return fmt.Errorf("QEMU crashed on VM restore: %s", strings.TrimSpace(string(qemuError)))
 		}
 
 		return err
