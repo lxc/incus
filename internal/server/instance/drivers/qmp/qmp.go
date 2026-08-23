@@ -326,7 +326,14 @@ func (qmp *qemuMachineProtocol) run(command []byte, id uint32) ([]byte, error) {
 	return qmp.runWithFile(command, nil, id)
 }
 
-func (qmp *qemuMachineProtocol) qmpWriteMsg(b []byte, file *os.File) error {
+func (qmp *qemuMachineProtocol) qmpWriteMsg(b []byte, file *os.File, timeout time.Duration) error {
+	// A write only blocks once the socket buffer is full, meaning QEMU stopped
+	// reading the monitor a long time ago. Time out rather than hold qmp.mu forever.
+	err := qmp.uc.SetWriteDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return err
+	}
+
 	if file == nil {
 		// Just send a normal command through.
 		_, err := qmp.uc.Write(b)
@@ -339,7 +346,7 @@ func (qmp *qemuMachineProtocol) qmpWriteMsg(b []byte, file *os.File) error {
 
 	// Send the command along with the file descriptor.
 	oob := unix.UnixRights(int(file.Fd()))
-	_, _, err := qmp.uc.WriteMsgUnix(b, oob, nil)
+	_, _, err = qmp.uc.WriteMsgUnix(b, oob, nil)
 	if err != nil {
 		return err
 	}
@@ -364,21 +371,21 @@ func (qmp *qemuMachineProtocol) runWithFile(command []byte, file *os.File, id ui
 		command = b
 	}
 
-	repCh := make(chan rawResponse, 1)
-	qmp.replies.Store(id, repCh)
-
-	err := qmp.qmpWriteMsg(command, file)
-	if err != nil {
-		qmp.replies.Delete(id)
-		return nil, err
-	}
-
 	// Pick the timeout for this command.
 	cmd := commandName(command)
 	timeout := defaultCommandTimeout
 	override, ok := commandTimeouts[cmd]
 	if ok {
 		timeout = override
+	}
+
+	repCh := make(chan rawResponse, 1)
+	qmp.replies.Store(id, repCh)
+
+	err := qmp.qmpWriteMsg(command, file, timeout)
+	if err != nil {
+		qmp.replies.Delete(id)
+		return nil, err
 	}
 
 	// Wait for a response, error or timeout.
