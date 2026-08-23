@@ -60,9 +60,10 @@ const (
 
 	// Vendors.
 
+	IncusVendorGuid     = "7b3743d8-4c1f-420a-b4d7-3654fa4792cc"
 	MicrosoftVendorGuid = "77fa9abd-0359-4d32-bd60-28f4e78f784b"
 	MtcVendorGuid       = "eb704011-1402-11d3-8e77-00a0c969723b"
-	OVMFVendorGuid      = "a0baa8a3-041d-48a8-bc87-c36d121b5e3d" // Non-standard.
+	OvmfVendorGuid      = "a0baa8a3-041d-48a8-bc87-c36d121b5e3d" // Non-standard.
 
 	// External.
 
@@ -123,9 +124,10 @@ var guidNames = map[string]string{
 
 	// Vendors.
 
+	IncusVendorGuid:     "INCUS_VENDOR_GUID",
 	MicrosoftVendorGuid: "MICROSOFT_VENDOR_GUID",
 	MtcVendorGuid:       "MTC_VENDOR_GUID",
-	OVMFVendorGuid:      "OVMF_VENDOR_GUID", // Non-standard.
+	OvmfVendorGuid:      "OVMF_VENDOR_GUID", // Non-standard.
 
 	// External.
 
