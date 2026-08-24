@@ -382,8 +382,7 @@ func readEnvironmentFile(p string) (map[string]string, error) {
 func structHasField(typ reflect.Type, field string) bool {
 	var parent reflect.Type
 
-	for i := range typ.NumField() {
-		fieldType := typ.Field(i)
+	for fieldType := range typ.Fields() {
 		yaml := fieldType.Tag.Get("yaml")
 
 		if yaml == ",inline" {
