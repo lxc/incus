@@ -324,7 +324,7 @@ func (cg *CGroup) GetCPUAcctUsageAll() (map[int64]CPUStats, error) {
 			case "user_usec":
 				val, err := strconv.ParseInt(fields[1], 10, 64)
 				if err != nil {
-					return nil, fmt.Errorf("Failed parsing %q: %w", val, err)
+					return nil, fmt.Errorf("Failed parsing %q: %w", fields[1], err)
 				}
 
 				// Convert usec to nsec
@@ -332,7 +332,7 @@ func (cg *CGroup) GetCPUAcctUsageAll() (map[int64]CPUStats, error) {
 			case "system_usec":
 				val, err := strconv.ParseInt(fields[1], 10, 64)
 				if err != nil {
-					return nil, fmt.Errorf("Failed parsing %q: %w", val, err)
+					return nil, fmt.Errorf("Failed parsing %q: %w", fields[1], err)
 				}
 
 				// Convert usec to nsec
@@ -389,7 +389,7 @@ func (cg *CGroup) GetCPUAcctUsage() (int64, error) {
 
 			val, err := strconv.ParseInt(fields[1], 10, 64)
 			if err != nil {
-				return -1, fmt.Errorf("Failed parsing %q: %w", val, err)
+				return -1, fmt.Errorf("Failed parsing %q: %w", fields[1], err)
 			}
 
 			// Convert usec to nsec
