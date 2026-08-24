@@ -1008,7 +1008,7 @@ func (c *cmdForknet) parseInitialResolvConf() {
 		return
 	}
 
-	for _, line := range strings.Split(string(content), "\n") {
+	for line := range strings.SplitSeq(string(content), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) < 2 {
 			continue

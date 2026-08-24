@@ -145,7 +145,7 @@ func (d *zfs) prefillCachedProperties(dataset string) {
 	defer zfsCacheMu.Unlock()
 
 	expiry := time.Now().Add(15 * time.Second)
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue

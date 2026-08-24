@@ -63,7 +63,7 @@ func (s *Server) objectPath(key string) (string, error) {
 		return "", errors.New("Invalid object key")
 	}
 
-	for _, seg := range strings.Split(key, "/") {
+	for seg := range strings.SplitSeq(key, "/") {
 		if seg == ".." || seg == "." {
 			return "", errors.New("Invalid object key")
 		}

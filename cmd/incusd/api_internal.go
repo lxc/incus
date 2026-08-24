@@ -544,7 +544,7 @@ func internalVirtualMachineOnResize(d *Daemon, r *http.Request) response.Respons
 	}
 
 	// Update the local instance.
-	for _, dev := range strings.Split(devices, ",") {
+	for dev := range strings.SplitSeq(devices, ",") {
 		fields := strings.SplitN(dev, ":", 2)
 		if len(fields) != 2 {
 			return response.BadRequest(fmt.Errorf("Invalid device/size tuple: %s", dev))
@@ -645,7 +645,7 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 		return response.SyncResponse(true, batch)
 	}
 
-	for _, statement := range strings.Split(req.Query, ";") {
+	for statement := range strings.SplitSeq(req.Query, ";") {
 		statement = strings.TrimLeft(statement, " ")
 
 		if statement == "" {

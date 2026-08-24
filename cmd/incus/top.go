@@ -559,7 +559,7 @@ func parseMetricsFromString(input string) (*metricSet, map[string][]string, erro
 
 func parseLabels(input string) map[string]string {
 	labels := make(map[string]string)
-	for _, pair := range strings.Split(input, ",") {
+	for pair := range strings.SplitSeq(input, ",") {
 		kv := strings.Split(pair, "=")
 		if len(kv) != 2 {
 			continue

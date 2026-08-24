@@ -178,7 +178,7 @@ func (c *cmdInfo) renderGPU(gpu api.ResourcesGPUCard, prefix string, initial boo
 
 			fmt.Println(prefix + "  - " + fmt.Sprintf(i18n.G("%s (%s) (%d available)"), k, v.Name, v.Available))
 			if v.Description != "" {
-				for _, line := range strings.Split(v.Description, "\n") {
+				for line := range strings.SplitSeq(v.Description, "\n") {
 					fmt.Printf(prefix+"      %s\n", line)
 				}
 			}

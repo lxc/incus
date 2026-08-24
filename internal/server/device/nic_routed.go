@@ -364,7 +364,7 @@ func (d *nicRouted) validateConfig(instConf instance.ConfigReader, partialValida
 		ips := make(map[string]struct{})
 
 		if d.config[key] != "" {
-			for _, addr := range strings.Split(d.config[key], ",") {
+			for addr := range strings.SplitSeq(d.config[key], ",") {
 				addr = strings.TrimSpace(addr)
 				_, dupe := ips[addr]
 				if dupe {

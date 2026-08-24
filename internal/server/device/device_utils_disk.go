@@ -52,7 +52,7 @@ func DiskParseRBDFormat(rbd string) (string, string, map[string]string, error) {
 
 	// Parse options.
 	opts := make(map[string]string)
-	for _, o := range strings.Split(rawOpts, ":") {
+	for o := range strings.SplitSeq(rawOpts, ":") {
 		k, v, isValid := strings.Cut(o, "=")
 		if !isValid {
 			return "", "", nil, fmt.Errorf("Invalid rbd format, bad option: %q", o)

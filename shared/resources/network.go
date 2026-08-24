@@ -668,7 +668,7 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 			return nil, err
 		}
 
-		for _, line := range strings.Split(string(entries), "\n") {
+		for line := range strings.SplitSeq(string(entries), "\n") {
 			fields := strings.Split(line, "|")
 			if len(fields) != 3 {
 				continue
@@ -723,7 +723,7 @@ func GetNetworkCounters(name string) (*api.NetworkStateCounters, error) {
 		return nil, err
 	}
 
-	for _, line := range strings.Split(string(content), "\n") {
+	for line := range strings.SplitSeq(string(content), "\n") {
 		fields := strings.Fields(line)
 
 		if len(fields) != 17 {

@@ -151,7 +151,7 @@ func useProxy(addr string, noProxy string) (bool, error) {
 		addr = addr[:strings.LastIndex(addr, ":")]
 	}
 
-	for _, p := range strings.Split(noProxy, ",") {
+	for p := range strings.SplitSeq(noProxy, ",") {
 		p = strings.ToLower(strings.TrimSpace(p))
 		if len(p) == 0 {
 			continue

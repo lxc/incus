@@ -160,7 +160,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 		switch val := objValue.(type) {
 		case string:
 			// Comparison is case insensitive.
-			for _, curValue := range strings.Split(valueStr, stringMultiValueDelimiter) {
+			for curValue := range strings.SplitSeq(valueStr, stringMultiValueDelimiter) {
 				if strings.EqualFold(val, curValue) {
 					return true, nil
 				}
@@ -200,7 +200,7 @@ func (s ClauseSet) match(c Clause, objValue any) (bool, error) {
 		switch val := objValue.(type) {
 		case string:
 			// Comparison is case insensitive.
-			for _, curValue := range strings.Split(valueStr, stringMultiValueDelimiter) {
+			for curValue := range strings.SplitSeq(valueStr, stringMultiValueDelimiter) {
 				if !strings.EqualFold(val, curValue) {
 					return true, nil
 				}

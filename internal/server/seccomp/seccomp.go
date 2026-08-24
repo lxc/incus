@@ -1127,7 +1127,7 @@ func TaskIDs(pid int) (int64, int64, int64, int64, error) {
 	var fsGID int64 = -1
 	UIDFound := false
 	GIDFound := false
-	for _, line := range strings.Split(string(status), "\n") {
+	for line := range strings.SplitSeq(string(status), "\n") {
 		if UIDFound && GIDFound {
 			break
 		}
@@ -1208,7 +1208,7 @@ func FindTGID(procFd int) (int, error) {
 		return -1, err
 	}
 
-	for _, line := range strings.Split(string(status), "\n") {
+	for line := range strings.SplitSeq(string(status), "\n") {
 		m := reTGID.FindStringSubmatch(line)
 		if len(m) > 1 {
 			result, err := strconv.ParseUint(m[1], 10, 32)

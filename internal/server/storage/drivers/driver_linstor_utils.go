@@ -163,7 +163,7 @@ func (d *linstor) controllerVersion() (string, error) {
 		return "", err
 	}
 
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		if strings.HasPrefix(line, "Version:") {
 			fields := strings.Fields(line)
 			if len(fields) < 2 {

@@ -155,7 +155,7 @@ func (d *zfs) ensureInitialDatasets(warnOnExistingPolicyApplyError bool) error {
 	output, _ := subprocess.RunCommand("zfs", args...)
 
 	currentConfig := map[string]map[string]string{}
-	for _, entry := range strings.Split(output, "\n") {
+	for entry := range strings.SplitSeq(output, "\n") {
 		if entry == "" {
 			continue
 		}
@@ -832,7 +832,7 @@ func (d *zfs) patchDropBlockVolumeFilesystemExtension() error {
 		return fmt.Errorf("Failed listing images: %w", err)
 	}
 
-	for _, volume := range strings.Split(out, "\n") {
+	for volume := range strings.SplitSeq(out, "\n") {
 		fields := strings.SplitN(volume, fmt.Sprintf("%s/images/", poolName), 2)
 
 		if len(fields) != 2 || fields[1] == "" {

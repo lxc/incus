@@ -2141,7 +2141,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	// Load any required kernel modules
 	kernelModules := d.expandedConfig["linux.kernel_modules"]
 	if kernelModules != "" {
-		for _, module := range strings.Split(kernelModules, ",") {
+		for module := range strings.SplitSeq(kernelModules, ",") {
 			module = strings.TrimPrefix(module, " ")
 			err := linux.LoadModule(module)
 			if err != nil {
@@ -3137,7 +3137,7 @@ func (d *lxc) Start(stateful bool) error {
 		if util.PathExists(logPath) {
 			logContent, err := os.ReadFile(logPath)
 			if err == nil {
-				for _, line := range strings.Split(string(logContent), "\n") {
+				for line := range strings.SplitSeq(string(logContent), "\n") {
 					fields := strings.Fields(line)
 					if len(fields) < 4 {
 						continue
@@ -5301,7 +5301,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					}
 				}
 			} else if key == "linux.kernel_modules" && value != "" {
-				for _, module := range strings.Split(value, ",") {
+				for module := range strings.SplitSeq(value, ",") {
 					module = strings.TrimPrefix(module, " ")
 					err := linux.LoadModule(module)
 					if err != nil {
@@ -7634,7 +7634,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 			relDir := path.Dir(relPath)
 
 			parent := ""
-			for _, part := range strings.Split(relDir, "/") {
+			for part := range strings.SplitSeq(relDir, "/") {
 				if part == "" || part == "." {
 					continue
 				}

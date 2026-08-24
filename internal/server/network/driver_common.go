@@ -340,7 +340,7 @@ func (n *common) DHCPv6Subnet() *net.IPNet {
 func (n *common) DHCPv4Ranges() []iprange.Range {
 	dhcpRanges := make([]iprange.Range, 0)
 	if n.config["ipv4.dhcp.ranges"] != "" {
-		for _, r := range strings.Split(n.config["ipv4.dhcp.ranges"], ",") {
+		for r := range strings.SplitSeq(n.config["ipv4.dhcp.ranges"], ",") {
 			parts := strings.SplitN(strings.TrimSpace(r), "-", 2)
 			if len(parts) == 2 {
 				startIP := net.ParseIP(parts[0])
@@ -360,7 +360,7 @@ func (n *common) DHCPv4Ranges() []iprange.Range {
 func (n *common) DHCPv6Ranges() []iprange.Range {
 	dhcpRanges := make([]iprange.Range, 0)
 	if n.config["ipv6.dhcp.ranges"] != "" {
-		for _, r := range strings.Split(n.config["ipv6.dhcp.ranges"], ",") {
+		for r := range strings.SplitSeq(n.config["ipv6.dhcp.ranges"], ",") {
 			parts := strings.SplitN(strings.TrimSpace(r), "-", 2)
 			if len(parts) == 2 {
 				startIP := net.ParseIP(parts[0])

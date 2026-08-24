@@ -14,7 +14,7 @@ func FormatSection(header string, content string) string {
 	}
 
 	// Indent the content
-	for _, line := range strings.Split(content, "\n") {
+	for line := range strings.SplitSeq(content, "\n") {
 		if line != "" {
 			out += "  "
 		}
