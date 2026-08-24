@@ -739,8 +739,8 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpo
 		// Authentication
 		trusted, username, protocol, err := d.Authenticate(w, r)
 		if err != nil {
-			var authError *oidc.AuthError
-			if errors.As(err, &authError) {
+			_, ok := errors.AsType[*oidc.AuthError](err)
+			if ok {
 				// Ensure the OIDC headers are set if needed.
 				if d.oidcVerifier != nil {
 					_ = d.oidcVerifier.WriteHeaders(w)

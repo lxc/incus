@@ -325,10 +325,10 @@ func (d *common) moveGPTAltHeader(devPath string) error {
 		return nil
 	}
 
-	var runErr subprocess.RunError
-	if errors.As(err, &runErr) {
-		var exitError *exec.ExitError
-		if errors.As(runErr.Unwrap(), &exitError) {
+	runErr, ok := errors.AsType[subprocess.RunError](err)
+	if ok {
+		exitError, ok := errors.AsType[*exec.ExitError](runErr.Unwrap())
+		if ok {
 			// sgdisk manpage says exit status 3 means:
 			// "Non-GPT disk detected and no -g option, but operation requires a write action".
 

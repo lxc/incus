@@ -10,18 +10,18 @@ import (
 
 // GetErrno checks if the Go error is a kernel errno.
 func GetErrno(err error) (iserrno bool, errno error) {
-	var sysErr *os.SyscallError
-	if errors.As(err, &sysErr) {
+	sysErr, ok := errors.AsType[*os.SyscallError](err)
+	if ok {
 		return true, sysErr.Err
 	}
 
-	var pathErr *os.PathError
-	if errors.As(err, &pathErr) {
+	pathErr, ok := errors.AsType[*os.PathError](err)
+	if ok {
 		return true, pathErr.Err
 	}
 
-	var tmpErrno unix.Errno
-	if errors.As(err, &tmpErrno) {
+	tmpErrno, ok := errors.AsType[unix.Errno](err)
+	if ok {
 		return true, tmpErrno
 	}
 
@@ -37,10 +37,9 @@ func ExitStatus(err error) (int, error) {
 		return 0, err // No error exit status.
 	}
 
-	var exitErr *exec.ExitError
-
 	// Detect and extract ExitError to check the embedded exit status.
-	if errors.As(err, &exitErr) {
+	exitErr, ok := errors.AsType[*exec.ExitError](err)
+	if ok {
 		// If the process was signaled, extract the signal.
 		status, isWaitStatus := exitErr.Sys().(unix.WaitStatus)
 		if isWaitStatus && status.Signaled() {

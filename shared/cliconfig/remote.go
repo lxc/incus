@@ -131,9 +131,8 @@ func (c *Config) getInstanceServer(args *incus.ConnectionArgs, remote Remote, ad
 	if hasUnixPrefix {
 		d, err := incus.ConnectIncusUnix(strings.TrimPrefix(remoteAddr, "//"), args)
 		if err != nil {
-			var netErr *net.OpError
-
-			if errors.As(err, &netErr) {
+			netErr, ok := errors.AsType[*net.OpError](err)
+			if ok {
 				errMsg := netErr.Unwrap().Error()
 
 				switch errMsg {
