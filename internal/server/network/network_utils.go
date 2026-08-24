@@ -365,6 +365,23 @@ func GetTXQueueLength(devName string) (uint32, error) {
 	return uint32(txqlen), nil
 }
 
+// GetTXQueueCount retrieves the number of active transmit queues for a named network device.
+func GetTXQueueCount(devName string) (int, error) {
+	entries, err := os.ReadDir(fmt.Sprintf("/sys/class/net/%s/queues", devName))
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "tx-") {
+			count++
+		}
+	}
+
+	return count, nil
+}
+
 // DefaultGatewaySubnetV4 returns subnet of default gateway interface.
 func DefaultGatewaySubnetV4() (*net.IPNet, string, error) {
 	file, err := os.Open("/proc/net/route")
