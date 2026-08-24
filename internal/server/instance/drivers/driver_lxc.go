@@ -2869,7 +2869,7 @@ ff02::2 ip6-allrouters
 
 	uid := int64(0)
 	if currentIdmapset != nil {
-		uid, _ = currentIdmapset.ShiftFromNS(0, 0)
+		uid, _ = currentIdmapset.ShiftIntoNS(0, 0)
 	}
 
 	err = os.Chown(d.Path(), int(uid), 0)
