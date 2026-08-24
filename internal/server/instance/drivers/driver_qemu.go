@@ -1023,13 +1023,14 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 
 	err = monitor.MigrateIncoming(ctx, "migration")
 	if err != nil {
-		if errors.Is(err, qmp.ErrMonitorDisconnect) && util.PathExists(d.LogFilePath()) {
-			qemuError, err := os.ReadFile(d.LogFilePath())
-			if err != nil {
-				return err
+		if errors.Is(err, qmp.ErrMonitorDisconnect) {
+			// Crash output goes to stderr (early log), -D only captures QEMU's internal logging.
+			qemuError, readErr := os.ReadFile(d.EarlyLogFilePath())
+			if readErr != nil || len(strings.TrimSpace(string(qemuError))) == 0 {
+				qemuError, _ = os.ReadFile(d.LogFilePath())
 			}
 
-			return fmt.Errorf("QEMU crashed on VM restore: %s", string(qemuError))
+			return fmt.Errorf("QEMU crashed on VM restore: %s", strings.TrimSpace(string(qemuError)))
 		}
 
 		return err
@@ -8312,6 +8313,9 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 	g, ctx := errgroup.WithContext(context.Background())
 
+	// Tracks whether a live cluster move completed the state hand-over to the target.
+	committed := false
+
 	// Start control connection monitor.
 	g.Go(func() error {
 		d.logger.Debug("Migrate send control monitor started")
@@ -8374,7 +8378,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs)
+			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs, &committed)
 			if err != nil {
 				return err
 			}
@@ -8400,8 +8404,13 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	{
 		err := g.Wait()
 		if err != nil {
-			op.Done(err)
-			return err
+			if !committed {
+				op.Done(err)
+				return err
+			}
+
+			// Post hand-over errors can't undo the migration, rely on the target's own result instead.
+			d.logger.Warn("Ignoring migration error received after hand-over", logger.Ctx{"err": err})
 		}
 
 		op.Done(nil)
@@ -8717,7 +8726,7 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs) error {
+func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -8739,6 +8748,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	dependentVolumeMove := clusterMoveSourceName != "" && disksToMigrate
 
 	reverter := revert.New()
+	defer reverter.Fail()
 
 	// Non-shared storage snapshot setup.
 	if !sameSharedStorage || dependentVolumeMove {
@@ -8907,6 +8917,12 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		return fmt.Errorf("Failed starting state transfer to target: %w", err)
 	}
 
+	// On failure, cancel the migration and resume the guest.
+	reverter.Add(func() {
+		_ = monitor.MigrateCancel()
+		_ = monitor.Start()
+	})
+
 	// Start monitoring the migration progress.
 	chMonitor := make(chan bool, 1)
 
@@ -9001,12 +9017,24 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 	d.logger.Debug("Stateful migration checkpoint send finished")
 
+	// The state hand-over is complete, past this point the migration can no longer be reverted.
+	if clusterMoveSourceName != "" {
+		*committed = true
+	}
+
+	reverter.Success()
+
 	if clusterMoveSourceName != "" {
 		// If doing an intra-cluster member move then we will be deleting the instance on the source,
 		// so lets just stop it after migration is completed.
 		err = d.Stop(false)
 		if err != nil {
-			return fmt.Errorf("Failed stopping instance: %w", err)
+			d.logger.Warn("Failed stopping instance after hand-over, forcing stop", logger.Ctx{"err": err})
+
+			err = d.forceStop()
+			if err != nil {
+				return fmt.Errorf("Failed stopping instance: %w", err)
+			}
 		}
 	} else {
 		// Resume guest.
@@ -9017,8 +9045,6 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 		d.logger.Debug("Resumed instance")
 	}
-
-	reverter.Success()
 
 	return nil
 }

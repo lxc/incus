@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -189,10 +191,61 @@ func evacuateMigrateInstance(r *http.Request) evacuateMigrateFunc {
 	}
 }
 
+// evacuateWaitForCreations waits for local instance creation operations to complete.
+func evacuateWaitForCreations(ctx context.Context, op *operations.Operation) error {
+	lastCount := -1
+
+	for {
+		count := 0
+		for _, localOp := range operations.Clone() {
+			if localOp.Type() == operationtype.InstanceCreate && !localOp.Status().IsFinal() {
+				count++
+			}
+		}
+
+		if count == 0 {
+			return nil
+		}
+
+		if op != nil && count != lastCount {
+			lastCount = count
+			_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Waiting for %d instance creation operations to complete", count)})
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+}
+
 func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.Operation, name string, mode string, stopInstance evacuateStopFunc, migrateInstance evacuateMigrateFunc) error {
+	// Setup a reverter.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Set cluster member status to EVACUATING to prevent any new instance from being placed on it.
+	err := evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuating)
+	if err != nil {
+		return err
+	}
+
+	reverter.Add(func() {
+		_ = evacuateClusterSetState(s, name, db.ClusterMemberStateCreated)
+	})
+
+	// Wait for ongoing instance creations to complete (skipped when healing an offline member).
+	if mode != "heal" {
+		err = evacuateWaitForCreations(ctx, op)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Get the instance list for the server being evacuated.
 	var dbInstances []dbCluster.Instance
-	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		dbInstances, err = dbCluster.GetInstances(ctx, tx.Tx(), dbCluster.InstanceFilter{Node: &name})
@@ -216,20 +269,6 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 
 		instances[i] = inst
 	}
-
-	// Setup a reverter.
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	// Set cluster member status to EVACUATING.
-	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuating)
-	if err != nil {
-		return err
-	}
-
-	reverter.Add(func() {
-		_ = evacuateClusterSetState(s, name, db.ClusterMemberStateCreated)
-	})
 
 	// Perform the evacuation.
 	opts := evacuateOpts{
@@ -267,29 +306,47 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 	return nil
 }
 
+// concurrentInstanceActions runs fn on every instance with bounded concurrency.
+// Each instance runs to completion regardless of other failures, all of which are reported at the end.
+func concurrentInstanceActions(instances []instance.Instance, prefix string, fn func(inst instance.Instance) error) error {
+	group := errgroup.Group{}
+	group.SetLimit(max(runtime.NumCPU()/16, 1))
+
+	var failuresLock sync.Mutex
+	failures := []string{}
+
+	for _, inst := range instances {
+		group.Go(func() error {
+			err := fn(inst)
+			if err != nil {
+				failuresLock.Lock()
+				failures = append(failures, fmt.Sprintf("%s/%s: %v", inst.Project().Name, inst.Name(), err))
+				failuresLock.Unlock()
+			}
+
+			return nil
+		})
+	}
+
+	_ = group.Wait()
+
+	if len(failures) > 0 {
+		sort.Strings(failures)
+
+		return fmt.Errorf("%s:\n - %s", prefix, strings.Join(failures, "\n - "))
+	}
+
+	return nil
+}
+
 func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 	if opts.migrateInstance == nil {
 		return errors.New("Missing migration callback function")
 	}
 
-	// Limit the number of concurrent evacuations to run at the same time
-	numParallelEvacs := max(runtime.NumCPU()/16, 1)
-
-	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(numParallelEvacs)
-
-	for _, inst := range opts.instances {
-		group.Go(func() error {
-			return evacuateInstancesFunc(groupCtx, inst, opts)
-		})
-	}
-
-	err := group.Wait()
-	if err != nil {
-		return fmt.Errorf("Failed to evacuate instances: %w", err)
-	}
-
-	return nil
+	return concurrentInstanceActions(opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
+		return evacuateInstancesFunc(ctx, inst, opts)
+	})
 }
 
 func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts evacuateOpts) error {
@@ -494,22 +551,12 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 			}
 		}
 
-		// Limit the number of concurrent migrations to run at the same time
-		numParallelMigrations := max(runtime.NumCPU()/16, 1)
-
-		group := &errgroup.Group{}
-		group.SetLimit(numParallelMigrations)
-
 		// Migrate back the remote instances.
-		for _, inst := range instances {
-			group.Go(func() error {
-				return restoreClusterMemberFunc(inst, op, originName, r, s)
-			})
-		}
-
-		err = group.Wait()
+		err = concurrentInstanceActions(instances, "Failed to restore instances", func(inst instance.Instance) error {
+			return restoreClusterMemberFunc(inst, op, originName, r, s)
+		})
 		if err != nil {
-			return fmt.Errorf("Failed to restore instances: %w", err)
+			return err
 		}
 
 		// Set node status to CREATED.
