@@ -1700,6 +1700,9 @@ func (n *ovn) allocateUplinkPortIPs(uplinkNet Network, routerMAC net.HardwareAdd
 		if err != nil {
 			return nil, err
 		}
+
+		// Notify the DNS peers of the uplink zone change.
+		DNSNotifyZones(n.state, uplinkNetConf)
 	}
 
 	// Configure variables needed to configure OVN router.
@@ -3801,7 +3804,20 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 		}
 	}
 
-	return n.delete(clientType)
+	err = n.delete(clientType)
+	if err != nil {
+		return err
+	}
+
+	// Notify the DNS peers of the uplink zone change (uplink address released).
+	if clientType == request.ClientTypeNormal && n.config["network"] != "" {
+		uplink, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
+		if err == nil {
+			DNSNotifyZones(n.state, uplink.Config())
+		}
+	}
+
+	return nil
 }
 
 // Rename renames a network.
@@ -4791,6 +4807,10 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devC
 	})
 
 	reverter.Success()
+
+	// Notify the DNS peers of the zone change.
+	DNSNotifyZones(n.state, n.config)
+
 	return nil
 }
 
@@ -5472,6 +5492,10 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 	}
 
 	reverter.Success()
+
+	// Notify the DNS peers of the zone change.
+	DNSNotifyZones(n.state, n.config)
+
 	return instancePortName, dnsIPs, nil
 }
 
@@ -5666,6 +5690,9 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		}
 	}
 
+	// Notify the DNS peers of the zone change.
+	DNSNotifyZones(n.state, n.config)
+
 	return nil
 }
 
@@ -5745,6 +5772,10 @@ func (n *ovn) InstanceDevicePortRemove(instanceUUID string, devName string, devC
 	}
 
 	reverter.Success()
+
+	// Notify the DNS peers of the zone change.
+	DNSNotifyZones(n.state, n.config)
+
 	return nil
 }
 
