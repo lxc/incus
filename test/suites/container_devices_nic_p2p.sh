@@ -18,6 +18,7 @@ test_container_devices_nic_p2p() {
     incus profile device set ${ctName} eth0 limits.egress 2Mbit
     incus profile device set ${ctName} eth0 limits.ingress.burst=10Mbit limits.ingress.bucket=5Mbit
     incus profile device set ${ctName} eth0 limits.egress.burst=20Mbit limits.egress.bucket=8Mbit
+    incus profile device set ${ctName} eth0 queue.discipline fq_codel
     incus profile device set ${ctName} eth0 host_name "${vethHostName}"
     incus profile device set ${ctName} eth0 mtu "1400"
     incus profile device set ${ctName} eth0 hwaddr "${ctMAC}"
@@ -41,6 +42,12 @@ test_container_devices_nic_p2p() {
     fi
     if ! tc filter show dev "${vethHostName}" egress | grep "2Mbit"; then
         echo "limits.egress invalid"
+        false
+    fi
+
+    # Check the profile queuing discipline is applied to the rate limit's class on boot.
+    if ! tc qdisc show dev "${vethHostName}" | grep "qdisc fq_codel 10: parent 1:10"; then
+        echo "queue.discipline invalid"
         false
     fi
 
@@ -191,6 +198,7 @@ test_container_devices_nic_p2p() {
     incus config device set "${ctName}" eth0 limits.egress 4Mbit
     incus config device set "${ctName}" eth0 limits.ingress.burst=30Mbit limits.ingress.bucket=10Mbit
     incus config device set "${ctName}" eth0 limits.egress.burst=40Mbit limits.egress.bucket=16Mbit
+    incus config device set "${ctName}" eth0 queue.discipline sfq
     incus config device set "${ctName}" eth0 mtu 1402
     incus config device set "${ctName}" eth0 hwaddr "${ctMAC}"
 
@@ -231,6 +239,15 @@ test_container_devices_nic_p2p() {
         echo "limits.egress.bucket invalid"
         false
     fi
+
+    # Check the queuing discipline is changed on update.
+    if ! tc qdisc show dev "${vethHostName}" | grep "qdisc sfq 10: parent 1:10"; then
+        echo "queue.discipline invalid"
+        false
+    fi
+
+    # Check an unknown queuing discipline is rejected.
+    ! incus config device set "${ctName}" eth0 queue.discipline foo || false
 
     # Check invalid burst limits are rejected.
     ! incus config device set "${ctName}" eth0 limits.ingress.burst 1Mbit || false
