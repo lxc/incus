@@ -109,6 +109,7 @@ var patches = []patch{
 	{name: "auth_openfga_instance_tcp", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "auth_openfga_shared_networks", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "storage_cephobject_endpoint_cert", stage: patchPreDaemonStorage, run: patchStorageCephObjectEndpointCert},
+	{name: "network_ovn_acl_address_sets", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNACLAddressSets)},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -2130,6 +2131,139 @@ func patchNetworkOVNL2ProxyARPProxy(_ string, d *Daemon) error {
 		}
 	}
 
+	return nil
+}
+
+// patchNetworkOVNACLAddressSets regenerates the OVN ACL rules.
+func patchNetworkOVNACLAddressSets(_ string, d *Daemon) error {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	s := d.State()
+
+	// Only apply patch on leader.
+	var err error
+	var localConfig *node.Config
+	isLeader := false
+
+	err = d.db.Node.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		localConfig, err = node.ConfigLoad(ctx, tx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	leaderAddress, err := s.Cluster.LeaderAddress()
+	if err != nil {
+		// If we're not clustered, we're the leader.
+		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			return err
+		}
+
+		isLeader = true
+	} else if localConfig.ClusterAddress() == leaderAddress {
+		isLeader = true
+	}
+
+	if !isLeader {
+		return nil
+	}
+
+	// Get all networks.
+	var networks map[string]map[int64]api.Network
+
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		networks, err = tx.GetCreatedNetworks(ctx)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	// Skip if there are no OVN networks.
+	hasOVN := false
+	for _, projectNetworks := range networks {
+		for _, netInfo := range projectNetworks {
+			if netInfo.Type == "ovn" {
+				hasOVN = true
+				break
+			}
+		}
+	}
+
+	if !hasOVN {
+		return nil
+	}
+
+	// Check that OVN is available.
+	ovnnb, _, err := s.OVN()
+	if err != nil {
+		logger.Errorf("Failed to connect to OVN: %v", err)
+		return errRetryNextTime
+	}
+
+	// Re-apply the ACL rules on all ACL port groups.
+	projectACLs := make(map[string][]dbCluster.NetworkACL)
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed loading projects: %w", err)
+		}
+
+		for _, project := range projects {
+			networkACLs, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &project.Name})
+			if err != nil {
+				return err
+			}
+
+			projectACLs[project.Name] = networkACLs
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for projectName, networkACLs := range projectACLs {
+		aclNameIDs := make(map[string]int64, len(networkACLs))
+		for _, networkACL := range networkACLs {
+			aclNameIDs[networkACL.Name] = int64(networkACL.ID)
+		}
+
+		for _, networkACL := range networkACLs {
+			// Get networks using this ACL directly or via a NIC.
+			aclNets := map[string]acl.NetworkACLUsage{}
+			err = acl.NetworkUsage(s, projectName, []string{networkACL.Name}, aclNets)
+			if err != nil {
+				return fmt.Errorf("Failed getting ACL network usage: %w", err)
+			}
+
+			aclOVNNets := map[string]acl.NetworkACLUsage{}
+			for k, v := range aclNets {
+				if v.Type != "ovn" {
+					continue
+				}
+
+				aclOVNNets[k] = v
+			}
+
+			if len(aclOVNNets) < 1 {
+				continue
+			}
+
+			cleanup, err := acl.OVNEnsureACLs(s, logger.AddContext(logger.Ctx{}), ovnnb, projectName, aclNameIDs, aclOVNNets, []string{networkACL.Name}, true)
+			if err != nil {
+				return fmt.Errorf("Failed ensuring ACL %q is configured in OVN: %w", networkACL.Name, err)
+			}
+
+			reverter.Add(cleanup)
+		}
+	}
+
+	reverter.Success()
 	return nil
 }
 
