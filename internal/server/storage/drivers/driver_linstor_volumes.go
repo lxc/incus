@@ -322,9 +322,22 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	l.Debug("Spawned a new Linstor resource definition for volume", logger.Ctx{"resourceDefinitionName": resourceDefinitionName})
 	rev.Add(func() { _ = d.DeleteVolume(vol, op) })
 
-	err = d.setResourceDefinitionProperties(vol, resourceDefinitionName)
+	props, err := d.resourceDefinitionProperties(vol)
 	if err != nil {
 		return err
+	}
+
+	// Mark image volumes as still unpacking so other cluster members don't use them as a clone
+	// source before the fill below completes. Set atomically with the identity properties.
+	if vol.volType == VolumeTypeImage {
+		props[LinstorAuxUnpacking] = "true"
+	}
+
+	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
+		OverrideProps: props,
+	})
+	if err != nil {
+		return fmt.Errorf("Could not set properties on resource definition: %w", err)
 	}
 
 	err = d.setResourceDefinitionExactSize(resourceDefinitionName)
@@ -431,6 +444,16 @@ func (d *linstor) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.
 	}, op)
 	if err != nil {
 		return err
+	}
+
+	// The image volume is now fully unpacked and can be used as a clone source.
+	if vol.volType == VolumeTypeImage {
+		err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
+			DeleteProps: []string{LinstorAuxUnpacking},
+		})
+		if err != nil {
+			return fmt.Errorf("Could not clear the unpacking property on resource definition: %w", err)
+		}
 	}
 
 	rev.Success()
@@ -1462,6 +1485,17 @@ func (d *linstor) CreateVolumeFromBackup(vol Volume, srcBackup backup.Info, srcD
 
 // IsImageCloneSourceReady checks if the image clone source is ready.
 func (d *linstor) IsImageCloneSourceReady(vol Volume) (bool, error) {
-	// TODO: Further implementation required
-	return true, nil
+	resourceDefinition, err := d.getResourceDefinition(vol, false)
+	if err != nil {
+		if errors.Is(err, errResourceDefinitionNotFound) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	// Image volumes carry an unpacking marker until their content is fully unpacked.
+	_, unpacking := resourceDefinition.Props[LinstorAuxUnpacking]
+
+	return !unpacking, nil
 }
