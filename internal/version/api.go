@@ -573,6 +573,7 @@ var APIExtensions = []string{
 	"storage_ceph_rbd_backend",
 	"instance_nvram_config",
 	"storage_cephobject_endpoint_cert",
+	"device_queue_disc",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
