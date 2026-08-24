@@ -263,22 +263,6 @@ func (c *Config) InstancesTPMPlatformCert() (string, string) {
 	return c.m.GetString("instances.tpm.platform_cert"), c.m.GetString("instances.tpm.platform_key")
 }
 
-// LokiServer returns all the Loki settings needed to connect to a server.
-func (c *Config) LokiServer() (string, string, string, string, string, string, []string, []string) {
-	var types []string
-	var labels []string
-
-	if c.m.GetString("loki.types") != "" {
-		types = strings.Split(c.m.GetString("loki.types"), ",")
-	}
-
-	if c.m.GetString("loki.labels") != "" {
-		labels = strings.Split(c.m.GetString("loki.labels"), ",")
-	}
-
-	return c.m.GetString("loki.api.url"), c.m.GetString("loki.auth.username"), c.m.GetString("loki.auth.password"), c.m.GetString("loki.api.ca_cert"), c.m.GetString("loki.instance"), c.m.GetString("loki.loglevel"), labels, types
-}
-
 // ACME returns all ACME settings needed for certificate renewal.
 func (c *Config) ACME() (string, string, string, bool, string) {
 	return c.m.GetString("acme.domain"), c.m.GetString("acme.email"), c.m.GetString("acme.ca_url"), c.m.GetBool("acme.agree_tos"), c.m.GetString("acme.challenge")
