@@ -106,8 +106,8 @@ func (d *lvm) isLVMNotFoundExitError(err error) bool {
 
 	// LVM uses exit status 5 for all command failures, so check the error output to
 	// tell missing objects apart from other failures (e.g. lock manager errors).
-	var runError subprocess.RunError
-	if errors.As(err, &runError) {
+	runError, ok := errors.AsType[subprocess.RunError](err)
+	if ok {
 		stderr := runError.StdErr().String()
 
 		return strings.Contains(stderr, "not found") || strings.Contains(stderr, "Failed to find") || strings.Contains(stderr, "No physical volume label read")
