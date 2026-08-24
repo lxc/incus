@@ -60,6 +60,9 @@ func (d *zone) AddRecord(req api.NetworkZoneRecordsPost) error {
 		return err
 	}
 
+	// Notify the DNS peers of the zone change.
+	d.state.DNS.NotifyZone(d.info.Name)
+
 	return nil
 }
 
@@ -190,6 +193,11 @@ func (d *zone) UpdateRecord(name string, req api.NetworkZoneRecordPut, clientTyp
 		return err
 	}
 
+	// Notify the DNS peers of the zone change.
+	if clientType == request.ClientTypeNormal {
+		s.DNS.NotifyZone(d.info.Name)
+	}
+
 	return nil
 }
 
@@ -225,6 +233,9 @@ func (d *zone) DeleteRecord(name string) error {
 	if err != nil {
 		return err
 	}
+
+	// Notify the DNS peers of the zone change.
+	s.DNS.NotifyZone(d.info.Name)
 
 	return nil
 }
