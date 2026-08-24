@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"time"
 
@@ -46,18 +45,12 @@ func (d *cephobject) s3Client(creds S3Credentials) (*s3.Client, error) {
 
 	httpClient := &http.Client{}
 
-	certFilePath := d.config["cephobject.radosgw.endpoint_cert_file"]
+	certs := d.config["cephobject.radosgw.endpoint_cert"]
 
-	if u.Scheme == "https" && certFilePath != "" {
-		// Read in the cert file.
-		certs, err := os.ReadFile(certFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("Failed reading %q: %w", certFilePath, err)
-		}
-
+	if u.Scheme == "https" && certs != "" {
 		rootCAs := x509.NewCertPool()
 
-		ok := rootCAs.AppendCertsFromPEM(certs)
+		ok := rootCAs.AppendCertsFromPEM([]byte(certs))
 		if !ok {
 			return nil, errors.New("Failed adding S3 client certificates")
 		}
