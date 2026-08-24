@@ -124,6 +124,56 @@ EOF
     incus config unset v1 raw.qemu.scriptlet
     [ "$(incus low-level nvram get v1 00112233-4455-6677-8899-aabbccddeeff:abc --format=binary)" = "def" ]
 
+    # Use configuration overrides.
+    incus config set v1 initial.nvram-binary.00112233-4455-6677-8899-aabbccddeeff.Foo=QmFy
+    incus config set v1 initial.nvram-binary.00112233-4455-6677-8899-aabbccddeeff.Baz=3:UXV4
+    echo '{"data":{"width": 800,"height":600},"attributes":["NON_VOLATILE","BOOTSERVICE_ACCESS","RUNTIME_ACCESS"]}' | incus config set v1 initial.nvram.7235c51c-0c80-4cab-87ac-3b084a6304b1.PlatformConfig=-
+    incus config set v1 initial.secureboot.db=- <<EOF
+-----BEGIN CERTIFICATE-----
+MIIFpDCCA4ygAwIBAgITMwAAABY2vzaJnxV1zAAAAAAAFjANBgkqhkiG9w0BAQsF
+ADBaMQswCQYDVQQGEwJVUzEeMBwGA1UEChMVTWljcm9zb2Z0IENvcnBvcmF0aW9u
+MSswKQYDVQQDEyJNaWNyb3NvZnQgUlNBIERldmljZXMgUm9vdCBDQSAyMDIxMB4X
+DTIzMDYxMzE5MjE0N1oXDTM4MDYxMzE5MzE0N1owTjELMAkGA1UEBhMCVVMxHjAc
+BgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEfMB0GA1UEAxMWTWljcm9zb2Z0
+IFVFRkkgQ0EgMjAyMzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL0i
+Kq7vGjGFE3hRp5v9/HjRY7gam2P1EgbbS0E1am+r9WoEzJfPu9QICRphOg3ms6BG
+/wmt3oAk3BKA8l/ZFu3iQp3NL01hAmGKHEsdGGI5hpdxrT5/XXETS+kqAMG+1bcA
+n15lsiwa/3Tt6oPSOYkzNXN9oKL6QORmUFiq/IfoXCCDNOyr4gvFXz7/SCsRkSbv
+GG5XxZ8Yc5nv4Wp0K7svf1COHdo9drYE5cwuEMeDG4Oj5KUTE3FuM3ijqDzsSCZe
+x8ZeDYeaqsxVNIGtnZD15pZjpugHIBfIkx7SrqTcrn1Zv4heYgyuW/IpQFYdJkDe
+haatVtHPVUd2X5w52wMCAwEAAaOCAW0wggFpMA4GA1UdDwEB/wQEAwIBhjAQBgkr
+BgEEAYI3FQEEAwIBADAdBgNVHQ4EFgQUgaprMkTJNbzg1mKK85gnQh4ySX0wGQYJ
+KwYBBAGCNxQCBAweCgBTAHUAYgBDAEEwDwYDVR0TAQH/BAUwAwEB/zAfBgNVHSME
+GDAWgBSERIYGAJg/LKqzxYnzrC7J5p0JAzBlBgNVHR8EXjBcMFqgWKBWhlRodHRw
+Oi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2NybC9NaWNyb3NvZnQlMjBSU0El
+MjBEZXZpY2VzJTIwUm9vdCUyMENBJTIwMjAyMS5jcmwwcgYIKwYBBQUHAQEEZjBk
+MGIGCCsGAQUFBzAChlZodHRwOi8vd3d3Lm1pY3Jvc29mdC5jb20vcGtpb3BzL2Nl
+cnRzL01pY3Jvc29mdCUyMFJTQSUyMERldmljZXMlMjBSb290JTIwQ0ElMjAyMDIx
+LmNydDANBgkqhkiG9w0BAQsFAAOCAgEAB2ATKlOHEg8a81oUlRfl2NeVVJuLDt2R
+pe3HXUdQk0W3lYhfFxlBY3a1grCoxZ2ZFTaJSb4Swmb7gwywgc7lpKvCoJrr9Qc8
+/iH4mtwZIQyeJCzRXKIWCkvr7EicsVt02wFkwuOAaqsazXcbajmat7pwRP9nlMWB
+BvDLgQSTJyGZvYeIFJwicQ4LL1y+uJBUfMAevCubo1YXS5fn438TNPqwNGub9rIt
+99h72CDTXKeVTE8q+eceaK/8bI/Ihj2fyNHvTRrI0fb9LXzj6EHB6ifB+44lhlqJ
+phC+zuOPpXvEGqDodZD9IbDBo8UWI148zi/+jJi/CFz2ucWyPLbMyOx/0nd0y+3z
+lsmLjRwqiQ+jj73OKoVGmiOij0LAmdbqhR9hGb4WNbd1oJWAZQaH1As1yMSqDs6i
+CmNgyksrXCcEgq8+WIN6WthnPxBT9QwW9yZLioC5xR+g3tjTYUQURaf1q5qIF/23
+lFQCi+S3U6E+jZ5QgqgA4HiUG76zxDAfsg7b8EaQweZX/nzBcLIcS2TZEAMbNPtm
+z4JunkCoETfyZYshCa88k2I987yD3T9VkBXSMa8R5/jKoILhuc+zV5PHVTesf0G/
+H5Y88yaU+djSVSSKirZB8OAWwCOSjHEKTGoNGVX3OpySIZah1fgKjJ2/yevKiEL8
+S7Tv/ycwIWE=
+-----END CERTIFICATE-----
+-----BEGIN SIGNATURE-----
+AAARESIiMzNERFVVZmZ3d4iImZmqqru7zMzd3e7u//8=
+-----END SIGNATURE-----
+EOF
+    incus config set v1 volatile.apply_nvram=true
+    incus start v1
+    incus wait v1 agent
+    [ "$(incus low-level nvram get v1 00112233-4455-6677-8899-aabbccddeeff:Foo --format=json)" = '{"attributes":["NON_VOLATILE","BOOTSERVICE_ACCESS","RUNTIME_ACCESS"],"binary":"QmFy"}' ]
+    [ "$(incus low-level nvram get v1 00112233-4455-6677-8899-aabbccddeeff:Baz --format=json)" = '{"attributes":["NON_VOLATILE","BOOTSERVICE_ACCESS"],"binary":"UXV4"}' ]
+    [ "$(incus low-level nvram get v1 OVMF_PLATFORM_CONFIG_GUID:PlatformConfig --format=json)" = '{"data":{"height":600,"width":800},"attributes":["NON_VOLATILE","BOOTSERVICE_ACCESS","RUNTIME_ACCESS"],"binary":"IAMAAFgCAAA="}' ]
+    [ "$(incus low-level secureboot list v1 db --format=csv --columns=tf | tr '\n' :)" = "sha256,000011112222:x509,f6124e34125b:" ]
+
     echo "==> Deleting VM"
     incus rm -f v1
 

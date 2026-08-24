@@ -1131,24 +1131,6 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 	return cmd
 }
 
-// eslGUIDVar gets the GUID and variable name associated to the given ESL.
-func eslGUIDVar(esl string) (string, string) {
-	var guid, varName string
-	switch esl {
-	case "pk", "kek":
-		guid = uefi.EfiGlobalVariableGuid
-		varName = strings.ToUpper(esl)
-	case "db", "dbx", "dbt":
-		guid = uefi.EfiImageSecurityDatabaseGuid
-		varName = esl
-	case "mok":
-		guid = uefi.ShimLockGuid
-		varName = "MokList"
-	}
-
-	return guid, varName
-}
-
 // Add.
 type cmdLowLevelSecureBootAdd struct {
 	global *cmdGlobal
@@ -1166,7 +1148,7 @@ func (c *cmdLowLevelSecureBootAdd) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add Secure Boot signatures`))
 
 	cmd.RunE = c.run
-	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "OVMF", "", i18n.G("Set the signature owner"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "Incus", "", i18n.G("Set the signature owner"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type", "", "", i18n.G("Don’t import the file as a certificate but rather compute and import its digest (sha256|sha384|sha512)"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -1192,7 +1174,7 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName := eslGUIDVar(parsed[1].String)
+	guid, varName := util.ESLGUIDVar(parsed[1].String)
 	fileName := parsed[2].String
 	var input []byte
 	if fileName == "-" && !termios.IsTerminal(getStdinFd()) {
@@ -1505,7 +1487,7 @@ func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName := eslGUIDVar(parsed[1].String)
+	guid, varName := util.ESLGUIDVar(parsed[1].String)
 
 	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
 	if err != nil {
@@ -1603,7 +1585,7 @@ func (c *cmdLowLevelSecureBootRemove) run(cmd *cobra.Command, args []string) err
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName := eslGUIDVar(parsed[1].String)
+	guid, varName := util.ESLGUIDVar(parsed[1].String)
 	hasFingerprint := parsed[2].BranchID == 0
 	var fingerprint string
 	if hasFingerprint {

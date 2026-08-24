@@ -2881,6 +2881,24 @@
 			"raw": {
 				"keys": [
 					{
+						"initial.nvram-binary.\u003cGUID\u003e.\u003cname\u003e": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "Base64-encoded variable value to set when generating the NVRAM, optionally prefixed by `\u003cattributes\u003e:`, with `\u003cattributes\u003e` an integer.",
+							"shortdesc": "Base64-encoded NVRAM variable value to set when generating the NVRAM, optionally prefixed by its attributes",
+							"type": "blob"
+						}
+					},
+					{
+						"initial.nvram.\u003cGUID\u003e.\u003cname\u003e": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Dissected NVRAM variable value to set when generating the NVRAM",
+							"type": "blob"
+						}
+					},
+					{
 						"raw.apparmor": {
 							"liveupdate": "yes",
 							"longdesc": "The specified entries are appended to the generated profile.",
@@ -3137,6 +3155,60 @@
 			},
 			"security": {
 				"keys": [
+					{
+						"initial.secureboot.db": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "This option accepts signatures armored with `SIGNATURE` in addition to certificates.",
+							"shortdesc": "Initial authorized signature database entries to enroll when generating the NVRAM (PEM certificate and signature bundle)",
+							"type": "string"
+						}
+					},
+					{
+						"initial.secureboot.dbt": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Initial authorized timestamp signature database certificates to enroll when generating the NVRAM (PEM certificate bundle)",
+							"type": "string"
+						}
+					},
+					{
+						"initial.secureboot.dbx": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "This option accepts signatures armored with `SIGNATURE` in addition to certificates.",
+							"shortdesc": "Initial forbidden signature database entries to enroll when generating the NVRAM (PEM certificate and signature bundle)",
+							"type": "string"
+						}
+					},
+					{
+						"initial.secureboot.kek": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Initial key exchange keys to enroll when generating the NVRAM (PEM certificate bundle)",
+							"type": "string"
+						}
+					},
+					{
+						"initial.secureboot.mok": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "This option accepts signatures armored with `SIGNATURE` in addition to certificates.",
+							"shortdesc": "Initial machine owner key entries to enroll when generating the NVRAM (PEM certificate and signature bundle)",
+							"type": "string"
+						}
+					},
+					{
+						"initial.secureboot.pk": {
+							"condition": "virtual machine",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Initial platform key to enroll when generating the NVRAM (PEM certificate)",
+							"type": "string"
+						}
+					},
 					{
 						"security.agent.metrics": {
 							"condition": "virtual machine",

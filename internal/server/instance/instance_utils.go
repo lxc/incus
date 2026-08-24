@@ -100,6 +100,11 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		if ok && config["systemd.credential-binary."+after] != "" {
 			return fmt.Errorf("Mutually exclusive keys %s and systemd.credential-binary.%s are set", k, after)
 		}
+
+		after, ok = strings.CutPrefix(k, "initial.nvram.")
+		if ok && config["initial.nvram-binary."+after] != "" {
+			return fmt.Errorf("Mutually exclusive keys %s and initial.nvram-binary.%s are set", k, after)
+		}
 	}
 
 	_, rawSeccomp := config["raw.seccomp"]

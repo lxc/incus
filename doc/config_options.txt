@@ -2552,6 +2552,22 @@ Override the UID of the process run in an OCI container.
 
 <!-- config group instance-oci end -->
 <!-- config group instance-raw start -->
+```{config:option} initial.nvram-binary.<GUID>.<name> instance-raw
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Base64-encoded NVRAM variable value to set when generating the NVRAM, optionally prefixed by its attributes"
+:type: "blob"
+Base64-encoded variable value to set when generating the NVRAM, optionally prefixed by `<attributes>:`, with `<attributes>` an integer.
+```
+
+```{config:option} initial.nvram.<GUID>.<name> instance-raw
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Dissected NVRAM variable value to set when generating the NVRAM"
+:type: "blob"
+
+```
+
 ```{config:option} raw.apparmor instance-raw
 :liveupdate: "yes"
 :shortdesc: "AppArmor profile entries"
@@ -2820,6 +2836,54 @@ If left empty, no limit is set.
 
 <!-- config group instance-resource-limits end -->
 <!-- config group instance-security start -->
+```{config:option} initial.secureboot.db instance-security
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Initial authorized signature database entries to enroll when generating the NVRAM (PEM certificate and signature bundle)"
+:type: "string"
+This option accepts signatures armored with `SIGNATURE` in addition to certificates.
+```
+
+```{config:option} initial.secureboot.dbt instance-security
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Initial authorized timestamp signature database certificates to enroll when generating the NVRAM (PEM certificate bundle)"
+:type: "string"
+
+```
+
+```{config:option} initial.secureboot.dbx instance-security
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Initial forbidden signature database entries to enroll when generating the NVRAM (PEM certificate and signature bundle)"
+:type: "string"
+This option accepts signatures armored with `SIGNATURE` in addition to certificates.
+```
+
+```{config:option} initial.secureboot.kek instance-security
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Initial key exchange keys to enroll when generating the NVRAM (PEM certificate bundle)"
+:type: "string"
+
+```
+
+```{config:option} initial.secureboot.mok instance-security
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Initial machine owner key entries to enroll when generating the NVRAM (PEM certificate and signature bundle)"
+:type: "string"
+This option accepts signatures armored with `SIGNATURE` in addition to certificates.
+```
+
+```{config:option} initial.secureboot.pk instance-security
+:condition: "virtual machine"
+:liveupdate: "yes"
+:shortdesc: "Initial platform key to enroll when generating the NVRAM (PEM certificate)"
+:type: "string"
+
+```
+
 ```{config:option} security.agent.metrics instance-security
 :condition: "virtual machine"
 :defaultdesc: "`true`"
