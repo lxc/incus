@@ -663,10 +663,10 @@ func ovnApplyToPortGroup(s *state.State, l logger.Logger, client *ovn.NB, aclInf
 		netPortGroupName := OVNACLNetworkPortGroupName(aclNameIDs[aclInfo.Name], aclNet.ID)
 		l.Debug("Applying network specific ACL rules to network OVN port group", logger.Ctx{"networkACL": aclInfo.Name, "network": aclNet.Name, "portGroup": netPortGroupName})
 
-		// Setup per-network dynamic replacements for @internal/@external subject port selectors.
+		// Setup per-network dynamic replacements for @internal/@external subject selectors.
 		matchReplace := map[string]string{
-			fmt.Sprintf("@%s", ruleSubjectInternal): fmt.Sprintf("@%s", OVNIntSwitchPortGroupName(aclNet.ID)),
-			fmt.Sprintf("@%s", ruleSubjectExternal): fmt.Sprintf(`"%s"`, OVNIntSwitchRouterPortName(aclNet.ID)),
+			fmt.Sprintf("$%s", ruleSubjectInternal): fmt.Sprintf("$%s", OVNIntSwitchPortGroupAddressSetPrefix(aclNet.ID)),
+			fmt.Sprintf("$%s", ruleSubjectExternal): fmt.Sprintf("$%s", OVNIntSwitchPortGroupAddressSetPrefix(aclNet.ID)),
 		}
 
 		err = client.UpdatePortGroupACLRules(context.TODO(), netPortGroupName, matchReplace, networkRules...)
@@ -709,11 +709,11 @@ func ovnRuleCriteriaToOVNACLRule(s *state.State, direction string, rule *api.Net
 	// Add directional port filter so we only apply this rule to the ports in the port group.
 	switch direction {
 	case "ingress":
-		matchParts = []string{fmt.Sprintf("outport == @%s", portGroupName)} // Traffic going to Instance.
+		matchParts = []string{fmt.Sprintf("outport == @%s", portGroupName)}
 	case "egress":
-		matchParts = []string{fmt.Sprintf("inport == @%s", portGroupName)} // Traffic leaving Instance.
+		matchParts = []string{ovnPortGroupSourceMatch(portGroupName)}
 	default:
-		matchParts = []string{fmt.Sprintf("inport == @%s || outport == @%s", portGroupName, portGroupName)}
+		matchParts = []string{fmt.Sprintf("(%s || outport == @%s)", ovnPortGroupSourceMatch(portGroupName), portGroupName)}
 	}
 
 	// Add subject filters.
@@ -840,24 +840,19 @@ func ovnRuleSubjectToOVNACLMatch(s *state.State, direction string, aclNameIDs ma
 				fieldParts = append(fieldParts, fmt.Sprintf("%s.%s == %s", protocol, direction, subjectCriterion))
 			} else {
 				// If not valid IP subnet, check if subject is ACL name or address set or network peer name.
-				var subjectPortSelector ovn.OVNPortGroup
 				if slices.Contains(ruleSubjectInternalAliases, subjectCriterion) {
-					// Use pseudo port group name for special reserved port selector types.
+					// Use pseudo address set name for special reserved selector types.
 					// These will be expanded later for each network specific rule.
-					// Convert deprecated #internal to non-deprecated @internal if needed.
-					subjectPortSelector = ovn.OVNPortGroup(ruleSubjectInternal)
+					fieldParts = append(fieldParts, fmt.Sprintf("(ip4.%s == $%s_ip4 || ip6.%s == $%s_ip6)", direction, ruleSubjectInternal, direction, ruleSubjectInternal))
 					networkSpecific = true
 				} else if slices.Contains(ruleSubjectExternalAliases, subjectCriterion) {
-					// Use pseudo port group name for special reserved port selector types.
+					// Use pseudo address set name for special reserved selector types.
 					// These will be expanded later for each network specific rule.
-					// Convert deprecated #external to non-deprecated @external if needed.
-					subjectPortSelector = ovn.OVNPortGroup(ruleSubjectExternal)
+					fieldParts = append(fieldParts, fmt.Sprintf("((ip4 && ip4.%s != $%s_ip4) || (ip6 && ip6.%s != $%s_ip6))", direction, ruleSubjectExternal, direction, ruleSubjectExternal))
 					networkSpecific = true
 				} else if strings.HasPrefix(subjectCriterion, "$") {
 					// Check if subject is an address set if so we use it as it is.
 					fieldParts = append(fieldParts, fmt.Sprintf("ip6.%s == %s_ip6 || ip4.%s == %s_ip4", direction, subjectCriterion, direction, subjectCriterion))
-
-					continue
 				} else {
 					after, ok := strings.CutPrefix(subjectCriterion, "@")
 					if ok {
@@ -881,26 +876,18 @@ func ovnRuleSubjectToOVNACLMatch(s *state.State, direction string, aclNameIDs ma
 
 						fieldParts = append(fieldParts, fmt.Sprintf("ip6.%s == $%s_ip6 || ip4.%s == $%s_ip4", direction, addrSetPrefix, direction, addrSetPrefix))
 						networkPeersNeeded = append(networkPeersNeeded, peer)
-
-						continue // Not a port based selector.
 					} else {
-						// Assume the bare name is an ACL name and convert to port group.
+						// Treat bare name as an ACL name.
 						aclID, found := aclNameIDs[subjectCriterion]
 						if !found {
 							return "", false, false, nil, fmt.Errorf("Cannot find security ACL ID for %q", subjectCriterion)
 						}
 
-						subjectPortSelector = OVNACLDirectionalPortGroups(aclID).All
+						portGroupName := OVNACLDirectionalPortGroups(aclID).All
+						fieldParts = append(fieldParts, fmt.Sprintf("(ip4.%s == $%s_ip4 || ip6.%s == $%s_ip6)", direction, portGroupName, direction, portGroupName))
 						allRule = true
 					}
 				}
-
-				portType := "inport"
-				if direction == "dst" {
-					portType = "outport"
-				}
-
-				fieldParts = append(fieldParts, fmt.Sprintf("%s == @%s", portType, subjectPortSelector))
 			}
 		}
 	}
@@ -1431,8 +1418,13 @@ func addPortGroupDefaultAction(portGroupName ovn.OVNPortGroup, portGroupRules []
 		Direction: "to-lport", // Always use this so that outport is available to Match.
 		Action:    defaultAction,
 		Priority:  ovnACLPriorityPortGroupDefaultAction, // Lowest priority to catch only unmatched traffic.
-		Match:     fmt.Sprintf("(inport == @%s || outport == @%s)", portGroupName, portGroupName),
+		Match:     fmt.Sprintf("(%s || outport == @%s)", ovnPortGroupSourceMatch(portGroupName), portGroupName),
 		Log:       defaultLogged,
 		LogName:   string(portGroupName),
 	})
+}
+
+// ovnPortGroupSourceMatch returns a match for traffic sourced from the port group's addresses.
+func ovnPortGroupSourceMatch(portGroupName ovn.OVNPortGroup) string {
+	return fmt.Sprintf("(ip4.src == $%s_ip4 || ip6.src == $%s_ip6)", portGroupName, portGroupName)
 }
