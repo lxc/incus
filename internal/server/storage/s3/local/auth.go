@@ -281,7 +281,8 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 
 	// Build the canonical resource: the URI-encoded path (which includes the
 	// bucket for path-style requests) followed by any signed sub-resources.
-	resource := r.URL.EscapedPath()
+	var resource strings.Builder
+	resource.WriteString(r.URL.EscapedPath())
 	separator := "?"
 	for _, name := range presignedV2ResourceSubresources {
 		v := q.Get(name)
@@ -289,7 +290,7 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 			continue
 		}
 
-		resource += separator + name + "=" + v
+		resource.WriteString(separator + name + "=" + v)
 		separator = "&"
 	}
 
@@ -300,7 +301,7 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 		r.Header.Get("Content-MD5"),
 		r.Header.Get("Content-Type"),
 		expiresStr,
-		resource,
+		resource.String(),
 	}, "\n")
 
 	mac := hmac.New(sha1.New, []byte(secret))
