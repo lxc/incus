@@ -1,6 +1,6 @@
 module github.com/lxc/incus/v7
 
-go 1.25.12
+go 1.26.7
 
 require (
 	github.com/FuturFusion/vsock v0.0.0-20260219213046-d78a7104f821
