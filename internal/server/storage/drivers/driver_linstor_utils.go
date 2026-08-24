@@ -77,6 +77,9 @@ const LinstorAuxType = "Aux/Incus/type"
 // LinstorAuxContentType represents the AuxProp storing the Incus volume content type.
 const LinstorAuxContentType = "Aux/Incus/content-type"
 
+// LinstorAuxUnpacking represents the AuxProp marking an image volume whose content is still being unpacked.
+const LinstorAuxUnpacking = "Aux/Incus/unpacking"
+
 // errResourceDefinitionNotFound indicates that a resource definition could not be found in Linstor.
 var errResourceDefinitionNotFound = errors.New("Resource definition not found")
 
