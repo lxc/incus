@@ -3428,3 +3428,9 @@ Adds a new `ceph.rbd.backend` configuration key to the Ceph RBD storage driver.
 When set to `librbd`, volumes are accessed through `librbd` rather than the
 RBD kernel driver, with `qemu-nbd` being used whenever a block device is
 needed on the host.
+
+## `instance_nvram_config`
+
+This adds three categories of initial configuration options, `initial.nvram.*`,
+`initial.nvram-binary.*` and `initial.secureboot`, which allow defining default
+NVRAM variables and Secure Boot certificates and keys when rebuilding the NVRAM.

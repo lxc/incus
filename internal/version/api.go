@@ -571,6 +571,7 @@ var APIExtensions = []string{
 	"network_ipv6_ra",
 	"qemu_scriptlet_nvram",
 	"storage_ceph_rbd_backend",
+	"instance_nvram_config",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
