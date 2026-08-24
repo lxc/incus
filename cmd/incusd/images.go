@@ -1588,6 +1588,31 @@ func getImageMetadata(fname string) (*api.ImageMetadata, string, error) {
 	return &result, imageType, nil
 }
 
+// imageMatchClauses matches an image against the clauses, letting architecture filters match both the Incus architecture and the image-provided one.
+func imageMatchClauses(image *api.Image, clauses *filter.ClauseSet) (bool, error) {
+	set := *clauses
+	set.Clauses = slices.Clone(clauses.Clauses)
+
+	for i, clause := range set.Clauses {
+		if !filter.DotPrefixMatch(strings.TrimPrefix(clause.Field, "properties."), "architecture") {
+			continue
+		}
+
+		if !strings.EqualFold(clause.Value, image.Architecture) && !strings.EqualFold(clause.Value, image.Properties["architecture"]) {
+			continue
+		}
+
+		// Rewrite the value to that of the targeted field so either name matches.
+		if strings.HasPrefix(clause.Field, "properties.") {
+			set.Clauses[i].Value = image.Properties["architecture"]
+		} else {
+			set.Clauses[i].Value = image.Architecture
+		}
+	}
+
+	return filter.Match(*image, set)
+}
+
 func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectName string, public bool, clauses *filter.ClauseSet, hasPermission auth.PermissionChecker, allProjects bool) (any, error) {
 	mustLoadObjects := recursion || (clauses != nil && len(clauses.Clauses) > 0)
 
@@ -1634,7 +1659,7 @@ func doImagesGet(ctx context.Context, tx *db.ClusterTx, recursion bool, projectN
 				resultString = append(resultString, api.NewURL().Path(version.APIVersion, "images", fingerprint).String())
 			} else {
 				if clauses != nil && len(clauses.Clauses) > 0 {
-					match, err := filter.Match(*image, *clauses)
+					match, err := imageMatchClauses(image, clauses)
 					if err != nil {
 						return nil, err
 					}
