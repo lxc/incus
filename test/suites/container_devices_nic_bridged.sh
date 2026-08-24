@@ -266,7 +266,20 @@ test_container_devices_nic_bridged() {
         parent=${brName} \
         host_name="${vethHostName}" \
         ipv4.routes="192.0.2.1${ipRand}/32" \
-        ipv6.routes="2001:db8::1${ipRand}/128"
+        ipv6.routes="2001:db8::1${ipRand}/128" \
+        queue.discipline=fq_codel
+
+    # Check the queuing discipline becomes the root qdisc when no limit is set.
+    if ! tc qdisc show dev "${vethHostName}" | grep "qdisc fq_codel 1: root"; then
+        echo "queue.discipline invalid"
+        false
+    fi
+
+    # Check an unknown queuing discipline is rejected.
+    ! incus config device set "${ctName}" eth0 queue.discipline foo || false
+
+    # Check the queuing discipline attachment is rejected on containers.
+    ! incus config device set "${ctName}" eth0 queue.discipline.attach queue || false
 
     # Check removing a required option fails.
     if incus config device unset "${ctName}" eth0 parent; then
@@ -347,6 +360,12 @@ test_container_devices_nic_bridged() {
     fi
     if ! tc filter show dev "${vethHostName}" egress | grep -E "burst (2000000|1999999)b"; then
         echo "limits.egress.bucket invalid"
+        false
+    fi
+
+    # Check the queuing discipline moves to the rate limit's class once a limit is set.
+    if ! tc qdisc show dev "${vethHostName}" | grep "qdisc fq_codel 10: parent 1:10"; then
+        echo "queue.discipline invalid"
         false
     fi
 
