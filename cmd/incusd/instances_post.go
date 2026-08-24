@@ -1441,8 +1441,8 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 				}
 			} else {
 				// Take over the root disk device from the profiles.
-				for i := len(profiles) - 1; i >= 0; i-- {
-					devName, dev, rootErr := internalInstance.GetRootDiskDevice(profiles[i].Devices)
+				for _, profile := range slices.Backward(profiles) {
+					devName, dev, rootErr := internalInstance.GetRootDiskDevice(profile.Devices)
 					if rootErr != nil {
 						continue
 					}
