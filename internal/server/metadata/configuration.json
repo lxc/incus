@@ -839,6 +839,23 @@
 						}
 					},
 					{
+						"queue.discipline": {
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set",
+							"type": "string"
+						}
+					},
+					{
+						"queue.discipline.attach": {
+							"default": "`queue`",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)",
+							"type": "string"
+						}
+					},
+					{
 						"queue.tx.length": {
 							"longdesc": "",
 							"managed": "no",
@@ -1619,6 +1636,21 @@
 						}
 					},
 					{
+						"queue.discipline": {
+							"longdesc": "",
+							"shortdesc": "The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set",
+							"type": "string"
+						}
+					},
+					{
+						"queue.discipline.attach": {
+							"default": "`queue`",
+							"longdesc": "",
+							"shortdesc": "Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)",
+							"type": "string"
+						}
+					},
+					{
 						"queue.tx.length": {
 							"longdesc": "",
 							"shortdesc": "The transmit queue length for the NIC",
@@ -1975,6 +2007,21 @@
 						"parent": {
 							"longdesc": "",
 							"shortdesc": "The name of the parent host device to join the instance to",
+							"type": "string"
+						}
+					},
+					{
+						"queue.discipline": {
+							"longdesc": "",
+							"shortdesc": "The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set",
+							"type": "string"
+						}
+					},
+					{
+						"queue.discipline.attach": {
+							"default": "`queue`",
+							"longdesc": "",
+							"shortdesc": "Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)",
 							"type": "string"
 						}
 					},
