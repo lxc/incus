@@ -54,8 +54,8 @@ func GetLoggingRuleForKey(key string) (Key, error) {
 		// ---
 		//  type: string
 		//  scope: global
-		//  shortdesc: CA certificate for the server
-		return Key{}, nil
+		//  shortdesc: CA certificates for the server (PEM bundle)
+		return Key{Validator: validate.Optional(validate.IsPEM(true))}, nil
 	case "target.instance":
 		// gendoc:generate(entity=server, group=logging, key=logging.NAME.target.instance)
 		// This allows replacing the default instance value (server host name) by a more relevant value like a cluster identifier.
