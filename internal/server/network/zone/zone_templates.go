@@ -6,17 +6,17 @@ import (
 
 // DNS zone template.
 var zoneTemplate = template.Must(template.New("zoneTemplate").Parse(`
-{{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 120 60 86400 30
+{{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 900 60 86400 30
 {{- range $index, $element := .nameservers}}
 {{$.zone}}. 300 IN NS {{$element}}.
 {{- end}}
 {{- range .records}}
 {{ if ne .name "@" }}{{.name}}.{{ end }}{{$.zone}}. {{.ttl}} IN {{.type}} {{.value}}
 {{- end}}
-{{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 120 60 86400 30
+{{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 900 60 86400 30
 `))
 
 // DNS SOA record template.
 var soaTemplate = template.Must(template.New("soaTemplate").Parse(`
-{{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 120 60 86400 30
+{{.zone}}. 3600 IN SOA {{.primary}}. {{.contact}}. {{.serial}} 900 60 86400 30
 `))
