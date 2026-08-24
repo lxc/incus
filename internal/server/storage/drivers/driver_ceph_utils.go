@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -212,6 +213,11 @@ func (d *ceph) rbdDeleteVolume(vol Volume) error {
 // in the /dev directory and is therefore necessary in order to mount it.
 func (d *ceph) rbdMapVolume(vol Volume) (string, error) {
 	rbdName := d.getRBDVolumeName(vol, "", false)
+
+	if d.config["ceph.rbd.backend"] == "librbd" {
+		return d.rbdNbdMapVolume(rbdName)
+	}
+
 	devPath, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
@@ -241,11 +247,27 @@ func (d *ceph) rbdUnmapVolume(vol Volume, unmapUntilEINVAL bool) error {
 	busyCount := 0
 	rbdVol := d.getRBDVolumeName(vol, "", false)
 
+	// Handle any qemu-nbd mapping.
+	err := d.rbdNbdUnmapVolume(rbdVol, unmapUntilEINVAL)
+	if err != nil {
+		return err
+	}
+
+	// Skip the kernel unmap if the volume isn't mapped through the kernel driver.
+	kernelDevPath, err := d.getRBDKernelMappedDevPath(rbdVol)
+	if err != nil {
+		return err
+	}
+
+	if kernelDevPath == "" {
+		return nil
+	}
+
 	ourDeactivate := false
 
 again:
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	_, err := subprocess.RunCommandContext(
+	_, err = subprocess.RunCommandContext(
 		ctx,
 		"rbd",
 		"--id", d.config["ceph.user.name"],
@@ -303,14 +325,32 @@ again:
 // rbdUnmapVolumeSnapshot unmaps a given RBD snapshot.
 // This is a precondition in order to delete an RBD snapshot can.
 func (d *ceph) rbdUnmapVolumeSnapshot(vol Volume, snapshotName string, unmapUntilEINVAL bool) error {
+	rbdVol := d.getRBDVolumeName(vol, snapshotName, false)
+
+	// Handle any qemu-nbd mapping.
+	err := d.rbdNbdUnmapVolume(rbdVol, unmapUntilEINVAL)
+	if err != nil {
+		return err
+	}
+
+	// Skip the kernel unmap if the snapshot isn't mapped through the kernel driver.
+	kernelDevPath, err := d.getRBDKernelMappedDevPath(rbdVol)
+	if err != nil {
+		return err
+	}
+
+	if kernelDevPath == "" {
+		return nil
+	}
+
 again:
-	_, err := subprocess.RunCommand(
+	_, err = subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
 		"--pool", d.config["ceph.osd.pool_name"],
 		"unmap",
-		d.getRBDVolumeName(vol, snapshotName, false),
+		rbdVol,
 	)
 	if err != nil {
 		var runError subprocess.RunError
@@ -1187,13 +1227,16 @@ func (d *ceph) parseClone(clone string) (string, string, string, bool, error) {
 	return poolName, volumeType, volumeName, volumeDeleted, nil
 }
 
-// getRBDMappedDevPath looks at sysfs to retrieve the device path. If it doesn't find it it will map it if told to
-// do so. Returns bool indicating if map was needed and device path e.g. "/dev/rbd<idx>" for an RBD image.
-func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string, error) {
+// getRBDKernelMappedDevPath looks at sysfs to retrieve the device path of an RBD image mapped
+// through the kernel driver. Returns an empty string if the image isn't currently mapped.
+func (d *ceph) getRBDKernelMappedDevPath(rbdName string) (string, error) {
+	// Split RBD name into volume name and snapshot name parts.
+	rbdNameParts := strings.SplitN(rbdName, "@", 2)
+
 	// List all RBD devices.
 	files, err := os.ReadDir("/sys/devices/rbd")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return false, "", err
+		return "", err
 	}
 
 	// Go through the existing RBD devices.
@@ -1220,7 +1263,7 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 				continue
 			}
 
-			return false, "", err
+			return "", err
 		}
 
 		// Skip if the pools don't match.
@@ -1235,13 +1278,8 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 				continue
 			}
 
-			return false, "", err
+			return "", err
 		}
-
-		rbdName := d.getRBDVolumeName(vol, "", false)
-
-		// Split RBD name into volume name and snapshot name parts.
-		rbdNameParts := strings.SplitN(rbdName, "@", 2)
 
 		// Skip if the names don't match (excluding snapshot part of RBD volume name).
 		if strings.TrimSpace(string(devName)) != rbdNameParts[0] {
@@ -1256,23 +1294,204 @@ func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string,
 			}
 
 			if !errors.Is(err, fs.ErrNotExist) {
-				return false, "", err
+				return "", err
 			}
 		}
 
 		devSnapName := strings.TrimSpace(string(devSnap))
 
-		if vol.IsSnapshot() {
+		if len(rbdNameParts) == 2 {
 			// Volume is a snapshot, check device's snapshot name matches the volume's snapshot name.
-			if len(rbdNameParts) == 2 && rbdNameParts[1] == devSnapName {
-				return false, fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
+			if rbdNameParts[1] == devSnapName {
+				return fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
 			}
 		} else if slices.Contains([]string{"-", ""}, devSnapName) {
 			// Volume is not a snapshot and neither is this device.
-			return false, fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
+			return fmt.Sprintf("/dev/rbd%d", idx), nil // We found a match.
 		}
 
 		continue
+	}
+
+	return "", nil
+}
+
+// getRBDNbdImageSpec returns the QEMU image specification used to access the given RBD image through librbd.
+func (d *ceph) getRBDNbdImageSpec(rbdName string) string {
+	// Resolve any symlinks to config path.
+	confPath := fmt.Sprintf("/etc/ceph/%s.conf", d.config["ceph.cluster_name"])
+	target, err := filepath.EvalSymlinks(confPath)
+	if err == nil {
+		confPath = target
+	}
+
+	// Configuration values containing :, @, or = can be escaped with a leading \ character.
+	optEscaper := strings.NewReplacer(":", `\:`, "@", `\@`, "=", `\=`)
+
+	imageName, snapName, _ := strings.Cut(rbdName, "@")
+	poolName := d.config["ceph.osd.pool_name"]
+
+	spec := fmt.Sprintf("rbd:%s/%s", optEscaper.Replace(poolName), optEscaper.Replace(imageName))
+	if snapName != "" {
+		spec = fmt.Sprintf("%s@%s", spec, optEscaper.Replace(snapName))
+	}
+
+	opts := []string{
+		fmt.Sprintf("id=%s", optEscaper.Replace(d.config["ceph.user.name"])),
+		fmt.Sprintf("pool=%s", optEscaper.Replace(poolName)),
+		fmt.Sprintf("cluster=%s", optEscaper.Replace(d.config["ceph.cluster_name"])),
+		fmt.Sprintf("conf=%s", optEscaper.Replace(confPath)),
+	}
+
+	return fmt.Sprintf("%s:%s", spec, strings.Join(opts, ":"))
+}
+
+// rbdNbdMappedDevPaths returns the NBD device paths currently serving the given image specification.
+func (d *ceph) rbdNbdMappedDevPaths(imageSpec string) ([]string, error) {
+	devPaths := []string{}
+
+	entries, err := os.ReadDir("/sys/class/block")
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		fName := entry.Name()
+
+		// Skip anything that's not a whole NBD device.
+		idxStr, found := strings.CutPrefix(fName, "nbd")
+		if !found {
+			continue
+		}
+
+		_, err := strconv.ParseUint(idxStr, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		// Get the process serving the device (only present when connected).
+		pidData, err := os.ReadFile(fmt.Sprintf("/sys/class/block/%s/pid", fName))
+		if err != nil {
+			continue
+		}
+
+		pid, err := strconv.Atoi(strings.TrimSpace(string(pidData)))
+		if err != nil {
+			continue
+		}
+
+		// Check that the device is served by qemu-nbd for our image.
+		cmdline, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
+		if err != nil {
+			continue
+		}
+
+		cmdArgs := strings.Split(strings.TrimSuffix(string(cmdline), "\x00"), "\x00")
+		if len(cmdArgs) == 0 || filepath.Base(cmdArgs[0]) != "qemu-nbd" {
+			continue
+		}
+
+		if slices.Contains(cmdArgs, imageSpec) {
+			devPaths = append(devPaths, fmt.Sprintf("/dev/%s", fName))
+		}
+	}
+
+	return devPaths, nil
+}
+
+// rbdNbdMapVolume maps a given RBD image through qemu-nbd.
+func (d *ceph) rbdNbdMapVolume(rbdName string) (string, error) {
+	err := linux.LoadModule("nbd")
+	if err != nil {
+		return "", fmt.Errorf("Error loading nbd module: %w", err)
+	}
+
+	// Snapshots can only be mapped read-only.
+	readOnly := strings.Contains(rbdName, "@")
+
+	detectZeroes := "unmap"
+	if readOnly {
+		detectZeroes = ""
+	}
+
+	devPath, err := ConnectQemuNbd(d.getRBDNbdImageSpec(rbdName), "raw", detectZeroes, readOnly)
+	if err != nil {
+		return "", err
+	}
+
+	d.logger.Debug("Activated RBD volume", logger.Ctx{"volName": rbdName, "dev": devPath})
+	return devPath, nil
+}
+
+// rbdNbdUnmapVolume unmaps any qemu-nbd mapping of the given RBD image.
+func (d *ceph) rbdNbdUnmapVolume(rbdName string, unmapAll bool) error {
+	devPaths, err := d.rbdNbdMappedDevPaths(d.getRBDNbdImageSpec(rbdName))
+	if err != nil {
+		return err
+	}
+
+	for _, devPath := range devPaths {
+		// Get the qemu-nbd process for the device so we can wait for it to exit.
+		pidData, err := os.ReadFile(fmt.Sprintf("/sys/class/block/%s/pid", filepath.Base(devPath)))
+		if err != nil {
+			// Concurrently disconnected.
+			continue
+		}
+
+		pid := strings.TrimSpace(string(pidData))
+
+		err = DisconnectQemuNbd(devPath)
+		if err != nil {
+			return err
+		}
+
+		// Wait for qemu-nbd to exit so that the RBD image is fully closed.
+		waitUntil := time.Now().Add(30 * time.Second)
+		for util.PathExists(fmt.Sprintf("/proc/%s", pid)) {
+			if time.Now().After(waitUntil) {
+				return fmt.Errorf("Timed out waiting for qemu-nbd to release %q", devPath)
+			}
+
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		d.logger.Debug("Deactivated RBD volume", logger.Ctx{"volName": rbdName, "dev": devPath})
+
+		if !unmapAll {
+			break
+		}
+	}
+
+	return nil
+}
+
+// getRBDMappedDevPath checks for an existing kernel or qemu-nbd mapping of the volume. If it doesn't find
+// one it will map it if told to do so. Returns bool indicating if map was needed and the device path.
+func (d *ceph) getRBDMappedDevPath(vol Volume, mapIfMissing bool) (bool, string, error) {
+	rbdName := d.getRBDVolumeName(vol, "", false)
+
+	// Check for a kernel mapping.
+	devPath, err := d.getRBDKernelMappedDevPath(rbdName)
+	if err != nil {
+		return false, "", err
+	}
+
+	if devPath != "" {
+		return false, devPath, nil
+	}
+
+	// Check for a qemu-nbd mapping.
+	devPaths, err := d.rbdNbdMappedDevPaths(d.getRBDNbdImageSpec(rbdName))
+	if err != nil {
+		return false, "", err
+	}
+
+	if len(devPaths) > 0 {
+		return false, devPaths[0], nil
 	}
 
 	// No device could be found, map it ourselves.
