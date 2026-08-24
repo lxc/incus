@@ -25,7 +25,7 @@ const allocMaxAttempts = 16
 func AllocateLevel(used map[string]struct{}) (string, func(), error) {
 	allocMu.Lock()
 
-	for i := 0; i < allocMaxAttempts; i++ {
+	for i := range allocMaxAttempts {
 		label, err := goselinux.InitContainerLabel()
 		if err != nil {
 			allocMu.Unlock()
