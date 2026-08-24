@@ -55,6 +55,8 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"ipv6.host_address":                    validate.Optional(validate.IsNetworkAddressV6),
 		"ipv4.host_table":                      validate.Optional(validate.IsUint32),
 		"ipv6.host_table":                      validate.Optional(validate.IsUint32),
+		"queue.discipline":                     validate.Optional(validate.IsOneOf("codel", "fq", "fq_codel", "pfifo", "pfifo_fast", "sfq")),
+		"queue.discipline.attach":              validate.Optional(validate.IsOneOf("root", "queue")),
 		"queue.tx.length":                      validate.Optional(validate.IsUint32),
 		"ipv4.routes.external":                 validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
 		"ipv6.routes.external":                 validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
