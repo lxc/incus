@@ -34,6 +34,10 @@ type Server struct {
 	cmd chan serverCmdInfo
 
 	mu sync.Mutex
+
+	// NOTIFY state.
+	notifyZones map[string]*notifyState
+	notifyMu    sync.Mutex
 }
 
 type serverCmd int
@@ -55,7 +59,7 @@ type serverCmdInfo struct {
 // NewServer returns a new server instance.
 func NewServer(cluster *db.Cluster, retriever ZoneRetriever) *Server {
 	// Setup new struct.
-	s := &Server{db: cluster, zoneRetriever: retriever}
+	s := &Server{db: cluster, zoneRetriever: retriever, notifyZones: map[string]*notifyState{}}
 	return s
 }
 

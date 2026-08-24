@@ -1661,3 +1661,16 @@ func ovnRouteExists(currentRoutes []networkOVN.OVNRouterRoute, route networkOVN.
 		return existing.NextHop.Equal(route.NextHop) && existing.Port == route.Port
 	})
 }
+
+// DNSNotifyZones triggers a DNS NOTIFY for all zones configured on the network.
+func DNSNotifyZones(s *state.State, netConfig map[string]string) {
+	if s == nil || s.DNS == nil {
+		return
+	}
+
+	for _, key := range []string{"dns.zone.forward", "dns.zone.reverse.ipv4", "dns.zone.reverse.ipv6"} {
+		for _, zoneName := range util.SplitNTrimSpace(netConfig[key], ",", -1, true) {
+			s.DNS.NotifyZone(zoneName)
+		}
+	}
+}

@@ -970,6 +970,11 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 
 	logger.Debug("Marked network local status as created", logger.Ctx{"project": n.Project(), "network": n.Name()})
 
+	// Notify the DNS peers of the new zone content.
+	if clientType == clusterRequest.ClientTypeNormal {
+		network.DNSNotifyZones(s, n.Config())
+	}
+
 	reverter.Success()
 	return nil
 }
@@ -1326,6 +1331,9 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 		logger.Error("Failed to remove network from authorizer", logger.Ctx{"name": networkName, "project": projectName, "error": err})
 	}
 
+	// Notify the DNS peers of the zone change.
+	network.DNSNotifyZones(s, n.Config())
+
 	if projectName == api.ProjectDefaultName {
 		networkUpdateShares(r.Context(), s, networkName, false)
 	}
@@ -1635,7 +1643,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	resp = doNetworkUpdate(n, req, targetNode, clientType, r.Method, s.ServerClustered)
+	resp = doNetworkUpdate(s, n, req, targetNode, clientType, r.Method, s.ServerClustered)
 
 	// Send a single update event when the server is clustered.
 	if !s.ServerClustered || (s.ServerClustered && clientType == clusterRequest.ClientTypeNormal) {
@@ -1700,7 +1708,7 @@ func networkPatch(d *Daemon, r *http.Request) response.Response {
 
 // doNetworkUpdate loads the current local network config, merges with the requested network config, validates
 // and applies the changes. Will also notify other cluster nodes of non-node specific config if needed.
-func doNetworkUpdate(n network.Network, req api.NetworkPut, targetNode string, clientType clusterRequest.ClientType, httpMethod string, clustered bool) response.Response {
+func doNetworkUpdate(s *state.State, n network.Network, req api.NetworkPut, targetNode string, clientType clusterRequest.ClientType, httpMethod string, clustered bool) response.Response {
 	if req.Config == nil {
 		req.Config = map[string]string{}
 	}
@@ -1733,10 +1741,19 @@ func doNetworkUpdate(n network.Network, req api.NetworkPut, targetNode string, c
 		return response.BadRequest(err)
 	}
 
+	// Keep the old configuration around for zone change notifications.
+	oldConfig := n.Config()
+
 	// Apply the new configuration (will also notify other cluster nodes if needed).
 	err = n.Update(req, targetNode, clientType)
 	if err != nil {
 		return response.SmartError(err)
+	}
+
+	// Notify the DNS peers of both old and new zones.
+	if clientType == clusterRequest.ClientTypeNormal {
+		network.DNSNotifyZones(s, oldConfig)
+		network.DNSNotifyZones(s, req.Config)
 	}
 
 	return response.EmptySyncResponse

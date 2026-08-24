@@ -1528,6 +1528,12 @@ func (d *Daemon) init() error {
 		logger.Info("Started DNS server")
 	}
 
+	// Watch for DHCP lease and static host changes to send DNS NOTIFY messages.
+	err = networkZone.StartLeasesWatcher(d.shutdownCtx, d.State())
+	if err != nil {
+		logger.Warn("Failed to start network zones watcher", logger.Ctx{"err": err})
+	}
+
 	// Setup the networks.
 	if !d.serverClustered || !d.db.Cluster.LocalNodeIsEvacuated() {
 		logger.Infof("Initializing networks")

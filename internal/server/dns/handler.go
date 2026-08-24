@@ -140,41 +140,8 @@ func (d dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func isAllowed(zone api.NetworkZone, ip string, tsig *dns.TSIG, tsigStatus bool) bool {
-	type peer struct {
-		address string
-		key     string
-	}
-
-	// Build a list of peers.
-	peers := map[string]*peer{}
-	for k, v := range zone.Config {
-		if !strings.HasPrefix(k, "peers.") {
-			continue
-		}
-
-		// Extract the fields.
-		fields := strings.SplitN(k, ".", 3)
-		if len(fields) != 3 {
-			continue
-		}
-
-		peerName := fields[1]
-
-		if peers[peerName] == nil {
-			peers[peerName] = &peer{}
-		}
-
-		// Add the correct validation rule for the dynamic field based on last part of key.
-		switch fields[2] {
-		case "address":
-			peers[peerName].address = v
-		case "key":
-			peers[peerName].key = v
-		}
-	}
-
 	// Validate access.
-	for peerName, peer := range peers {
+	for peerName, peer := range zonePeers(zone) {
 		peerKeyName := fmt.Sprintf("%s_%s.", zone.Name, peerName)
 
 		if peer.address != "" && ip != peer.address {
