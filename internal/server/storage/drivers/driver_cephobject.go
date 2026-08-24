@@ -130,14 +130,14 @@ func (d *cephobject) Validate(config map[string]string) error {
 		//  shortdesc: URL of the `radosgw` gateway process
 		"cephobject.radosgw.endpoint": validate.Optional(validate.IsRequestURL),
 
-		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.radosgw.endpoint_cert_file)
+		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.radosgw.endpoint_cert)
 		//
 		// ---
 		//  type: string
 		//  scope: global
 		//  default: -
-		//  shortdesc: Path to the file containing the TLS client certificate to use for endpoint communication
-		"cephobject.radosgw.endpoint_cert_file": validate.Optional(validate.IsAbsFilePath),
+		//  shortdesc: TLS certificate (PEM bundle) to trust for endpoint communication
+		"cephobject.radosgw.endpoint_cert": validate.Optional(validate.IsPEM(true)),
 
 		// gendoc:generate(entity=storage_cephobject, group=common, key=cephobject.bucket_name_prefix)
 		//
