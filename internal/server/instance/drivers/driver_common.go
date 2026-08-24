@@ -1776,7 +1776,7 @@ func (d *common) setOOMPriority(pid int) error {
 		return fmt.Errorf("Failed to set OOM priority: instance not running or PID not found")
 	}
 
-	err = os.WriteFile(fmt.Sprintf("/proc/%d/oom_score_adj", pid), []byte(fmt.Sprintf("%d", score)), 0o644)
+	err = os.WriteFile(fmt.Sprintf("/proc/%d/oom_score_adj", pid), fmt.Appendf(nil, "%d", score), 0o644)
 	if err != nil {
 		return fmt.Errorf("Failed to set OOM priority: %w", err)
 	}
