@@ -64,7 +64,7 @@ For example, running `dig @<DNS_server_IP> -p <DNS_server_PORT> axfr incus.examp
 ```{terminal}
 :input: dig @192.0.2.200 -p 1053 axfr incus.example.net
 
-incus.example.net.                        3600 IN SOA  incus.example.net. ns1.incus.example.net. 1669736788 120 60 86400 30
+incus.example.net.                        3600 IN SOA  incus.example.net. ns1.incus.example.net. 1669736788 900 60 86400 30
 incus.example.net.                        300  IN NS   ns1.incus.example.net.
 inctest.gw.incus.example.net.             300  IN A    192.0.2.1
 inctest.gw.incus.example.net.             300  IN AAAA fd42:4131:a53c:7211::1
@@ -73,7 +73,7 @@ default-ovntest.uplink.incus.example.net. 300  IN AAAA fd42:4131:a53c:7211:1266:
 c1.incus.example.net.                     300  IN AAAA fd42:4131:a53c:7211:1266:6aff:fe19:6ede
 c1.incus.example.net.                     300  IN A    192.0.2.125
 manualtest.incus.example.net.             300  IN A    8.8.8.8
-incus.example.net.                        3600 IN SOA  incus.example.net. ns1.incus.example.net. 1669736788 120 60 86400 30
+incus.example.net.                        3600 IN SOA  incus.example.net. ns1.incus.example.net. 1669736788 900 60 86400 30
 ```
 
 ### Reverse records
@@ -85,12 +85,12 @@ For example, running `dig @<DNS_server_IP> -p <DNS_server_PORT> axfr 2.0.192.in-
 ```{terminal}
 :input: dig @192.0.2.200 -p 1053 axfr 2.0.192.in-addr.arpa
 
-2.0.192.in-addr.arpa.                  3600 IN SOA  2.0.192.in-addr.arpa. ns1.2.0.192.in-addr.arpa. 1669736828 120 60 86400 30
+2.0.192.in-addr.arpa.                  3600 IN SOA  2.0.192.in-addr.arpa. ns1.2.0.192.in-addr.arpa. 1669736828 900 60 86400 30
 2.0.192.in-addr.arpa.                  300  IN NS   ns1.2.0.192.in-addr.arpa.
 1.2.0.192.in-addr.arpa.                300  IN PTR  inctest.gw.incus.example.net.
 20.2.0.192.in-addr.arpa.               300  IN PTR  default-ovntest.uplink.incus.example.net.
 125.2.0.192.in-addr.arpa.              300  IN PTR  c1.incus.example.net.
-2.0.192.in-addr.arpa.                  3600 IN SOA  2.0.192.in-addr.arpa. ns1.2.0.192.in-addr.arpa. 1669736828 120 60 86400 30
+2.0.192.in-addr.arpa.                  3600 IN SOA  2.0.192.in-addr.arpa. ns1.2.0.192.in-addr.arpa. 1669736828 900 60 86400 30
 ```
 
 (network-dns-server)=
@@ -109,6 +109,10 @@ It cannot be directly queried for DNS records.
 Therefore, the built-in DNS server must be used in combination with an external DNS server (`bind9`, `nsd`, ...), which will transfer the entire zone from Incus, refresh it upon expiry and provide authoritative answers to DNS requests.
 
 Authentication for zone transfers is configured on a per-zone basis, with peers defined in the zone configuration and a combination of IP address matching and TSIG-key based authentication.
+
+When the content of a zone changes, Incus sends a DNS NOTIFY message to all configured peers so they can refresh the zone immediately.
+Notifications are rate limited on a per-zone basis.
+As the zone serial number is time based, the secondary servers also re-transfer the zone on every SOA refresh (every 15 minutes).
 ```
 
 ## Create and configure a network zone
