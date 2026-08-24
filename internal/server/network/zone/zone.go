@@ -366,6 +366,11 @@ func (d *zone) Update(config *api.NetworkZonePut, clientType request.ClientType)
 		return err
 	}
 
+	// Notify the DNS peers of the zone change.
+	if clientType == request.ClientTypeNormal {
+		d.state.DNS.NotifyZone(d.info.Name)
+	}
+
 	reverter.Success()
 	return nil
 }
