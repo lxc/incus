@@ -975,9 +975,18 @@ func (d *linstor) copyVolume(vol Volume, srcVol Volume) error {
 		return err
 	}
 
+	// Compute the target's properties so its identity can be set atomically at clone time. The
+	// clone inherits the source's properties, so without an immediate override the target would
+	// be indistinguishable from the source volume until the (potentially slow) clone completes.
+	overrideProps, err := d.resourceDefinitionProperties(vol)
+	if err != nil {
+		return err
+	}
+
 	_, err = linstor.Client.ResourceDefinitions.Clone(context.TODO(), srcResourceDefinition.Name, linstorClient.ResourceDefinitionCloneRequest{
-		Name:          targetResourceDefinitionName,
-		ResourceGroup: d.config[LinstorResourceGroupNameConfigKey],
+		Name:               targetResourceDefinitionName,
+		ResourceGroup:      d.config[LinstorResourceGroupNameConfigKey],
+		GenericPropsModify: linstorClient.GenericPropsModify{OverrideProps: overrideProps},
 	})
 	if err != nil {
 		return fmt.Errorf("Unable to start cloning resource definition: %w", err)
@@ -1009,7 +1018,7 @@ loop:
 
 	rev.Add(func() { _ = linstor.Client.ResourceDefinitions.Delete(context.TODO(), targetResourceDefinitionName) })
 
-	// Set the aux properties on the new resource definition.
+	// Re-apply the aux properties in case the controller ignored the ones in the clone request.
 	err = d.setResourceDefinitionProperties(vol, targetResourceDefinitionName)
 	if err != nil {
 		return err
@@ -1074,6 +1083,27 @@ func (d *linstor) setResourceDefinitionExactSize(resourceDefinitionName string) 
 	return nil
 }
 
+// resourceDefinitionProperties computes the properties to set on a volume's resource definition.
+func (d *linstor) resourceDefinitionProperties(vol Volume) (map[string]string, error) {
+	// Set the base properties.
+	props := map[string]string{
+		LinstorAuxName:                        d.config[LinstorVolumePrefixConfigKey] + vol.name,
+		LinstorAuxType:                        string(vol.volType),
+		LinstorAuxContentType:                 string(vol.contentType),
+		"DrbdOptions/Net/allow-two-primaries": "yes", // Required for mounting volumes simultaneously on two nodes when live migrating
+	}
+
+	// Parse and set properties derived from config.
+	drbdProps, err := d.drbdPropsFromConfig(vol.config)
+	if err != nil {
+		return nil, fmt.Errorf("Could parse config into DRBD options: %w", err)
+	}
+
+	maps.Copy(props, drbdProps)
+
+	return props, nil
+}
+
 // setResourceDefinitionProperties sets properties on the resource definition based on the volume config.
 func (d *linstor) setResourceDefinitionProperties(vol Volume, resourceDefinitionName string) error {
 	l := logger.AddContext(logger.Ctx{"volume": vol.Name(), "resourceDefinition": resourceDefinitionName})
@@ -1084,21 +1114,10 @@ func (d *linstor) setResourceDefinitionProperties(vol Volume, resourceDefinition
 		return err
 	}
 
-	// Set the base properties.
-	overrideProps := map[string]string{
-		LinstorAuxName:                        d.config[LinstorVolumePrefixConfigKey] + vol.name,
-		LinstorAuxType:                        string(vol.volType),
-		LinstorAuxContentType:                 string(vol.contentType),
-		"DrbdOptions/Net/allow-two-primaries": "yes", // Required for mounting volumes simultaneously on two nodes when live migrating
-	}
-
-	// Parse and set properties derived from config.
-	drbdProps, err := d.drbdPropsFromConfig(vol.config)
+	overrideProps, err := d.resourceDefinitionProperties(vol)
 	if err != nil {
-		return fmt.Errorf("Could parse config into DRBD options: %w", err)
+		return err
 	}
-
-	maps.Copy(overrideProps, drbdProps)
 
 	err = linstor.Client.ResourceDefinitions.Modify(context.TODO(), resourceDefinitionName, linstorClient.GenericPropsModify{
 		OverrideProps: overrideProps,
