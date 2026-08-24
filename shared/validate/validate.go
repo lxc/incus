@@ -1089,11 +1089,12 @@ func IsRawNVRAMVariable(value string) error {
 // IsPEM validates whether the string is a valid PEM bundle. This doesn’t validate the content
 // of the individual blocks.
 func IsPEM(bundle bool, armors ...string) func(value string) error {
-	return func(value string) error {
-		if len(armors) == 0 {
-			armors = []string{"CERTIFICATE"}
-		}
+	if len(armors) == 0 {
+		armors = []string{"CERTIFICATE"}
+	}
 
+	armorRegex := regexp.MustCompile("^(?:" + strings.Join(armors, "|") + ")$")
+	return func(value string) error {
 		rest := []byte(value)
 		ok := false
 		var block *pem.Block
@@ -1103,7 +1104,7 @@ func IsPEM(bundle bool, armors ...string) func(value string) error {
 				break
 			}
 
-			if !slices.Contains(armors, block.Type) {
+			if !armorRegex.MatchString(block.Type) {
 				return fmt.Errorf("Unknown armor %s; expected one of %v", block.Type, armors)
 			}
 
