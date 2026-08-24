@@ -302,7 +302,7 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("Error inserting volume %q for project %q in pool %q of type %q into database %q", volumeName, projectName, pool.Name(), volumeType, err)
+		return fmt.Errorf("Error inserting volume %q for project %q in pool %q of type %q into database: %w", volumeName, projectName, pool.Name(), volumeType, err)
 	}
 
 	return nil
