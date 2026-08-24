@@ -150,7 +150,7 @@ func ConnectIfVolumeIsRemote(s *state.State, poolName string, projectName string
 	if errors.Is(err, db.ErrNoClusterMember) {
 		// Instance volumes are named after their instance, so resolve the owning instance directly.
 		if volumeType == db.StoragePoolVolumeTypeContainer || volumeType == db.StoragePoolVolumeTypeVM {
-			instName := strings.SplitN(volumeName, "/", 2)[0]
+			instName, _, _ := strings.Cut(volumeName, "/")
 			return ConnectIfInstanceIsRemote(s, projectName, instName, r)
 		}
 
