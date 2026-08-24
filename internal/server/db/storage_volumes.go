@@ -468,6 +468,11 @@ INSERT INTO storage_volumes (storage_pool_id, node_id, type, name, description, 
 	}
 
 	if err != nil {
+		// Another cluster member may have created the same record concurrently.
+		if strings.HasPrefix(err.Error(), "UNIQUE constraint failed:") {
+			return -1, api.StatusErrorf(http.StatusConflict, "Storage volume record already exists")
+		}
+
 		return -1, err
 	}
 
