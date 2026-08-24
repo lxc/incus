@@ -90,8 +90,8 @@ func ProtoSendControl(ws *websocket.Conn, err error) {
 	}
 
 	msg := MigrationControl{
-		Success: proto.Bool(err == nil),
-		Message: proto.String(message),
+		Success: new(err == nil),
+		Message: new(message),
 	}
 
 	_ = ProtoSend(ws, &msg)
