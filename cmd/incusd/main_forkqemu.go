@@ -83,7 +83,7 @@ func (c *cmdForkqemu) run(cmd *cobra.Command, _ []string) error {
 			})
 		} else if strings.HasPrefix(arg, "cpus=") {
 			set := unix.CPUSet{}
-			for _, entry := range strings.Split(strings.TrimPrefix(arg, "cpus="), ",") {
+			for entry := range strings.SplitSeq(strings.TrimPrefix(arg, "cpus="), ",") {
 				cpuNum, err := strconv.Atoi(entry)
 				if err != nil {
 					_ = cmd.Help()

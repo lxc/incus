@@ -160,7 +160,7 @@ func Init() {
 			scanControllers := bufio.NewScanner(controllers)
 			for scanControllers.Scan() {
 				line := strings.TrimSpace(scanControllers.Text())
-				for _, entry := range strings.Split(line, " ") {
+				for entry := range strings.SplitSeq(line, " ") {
 					cgControllers[entry] = true
 				}
 			}

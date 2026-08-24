@@ -3082,7 +3082,7 @@ func (n *ovn) setup(update bool) error {
 
 	// Add any listed existing external interface.
 	if n.config["bridge.external_interfaces"] != "" {
-		for _, entry := range strings.Split(n.config["bridge.external_interfaces"], ",") {
+		for entry := range strings.SplitSeq(n.config["bridge.external_interfaces"], ",") {
 			entry = strings.TrimSpace(entry)
 
 			// Test for extended configuration of external interface.

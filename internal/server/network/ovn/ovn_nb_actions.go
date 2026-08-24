@@ -2097,7 +2097,7 @@ func (o *NB) GetLogicalSwitchPortIPs(ctx context.Context, portName OVNSwitchPort
 
 	addresses := []net.IP{}
 	for _, address := range lsp.Addresses {
-		for _, entry := range strings.Split(address, " ") {
+		for entry := range strings.SplitSeq(address, " ") {
 			ip := net.ParseIP(entry)
 			if ip != nil {
 				addresses = append(addresses, ip)
@@ -2106,7 +2106,7 @@ func (o *NB) GetLogicalSwitchPortIPs(ctx context.Context, portName OVNSwitchPort
 	}
 
 	if lsp.DynamicAddresses != nil {
-		for _, entry := range strings.Split(*lsp.DynamicAddresses, " ") {
+		for entry := range strings.SplitSeq(*lsp.DynamicAddresses, " ") {
 			ip := net.ParseIP(entry)
 			if ip != nil {
 				addresses = append(addresses, ip)
@@ -2415,7 +2415,7 @@ func (o *NB) GetLogicalSwitchPortDNS(ctx context.Context, portName OVNSwitchPort
 	for key, value := range dnsRecords[0].Records {
 		dnsName = key
 
-		for _, ipPart := range strings.Split(value, " ") {
+		for ipPart := range strings.SplitSeq(value, " ") {
 			ip := net.ParseIP(strings.TrimSpace(ipPart))
 			if ip != nil {
 				ips = append(ips, ip)
@@ -3826,7 +3826,7 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 			lb.HealthCheck = append(lb.HealthCheck, lbhc.UUID)
 
 			// Set up the port bindings.
-			for _, target := range strings.Split(targets, ",") {
+			for target := range strings.SplitSeq(targets, ",") {
 				// Split host and port.
 				host, _, err := net.SplitHostPort(target)
 				if err == nil {

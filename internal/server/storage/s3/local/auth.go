@@ -323,7 +323,7 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 // chunked decoder.
 func hasAWSChunkedEncoding(r *http.Request) bool {
 	for _, v := range r.Header.Values("Content-Encoding") {
-		for _, part := range strings.Split(v, ",") {
+		for part := range strings.SplitSeq(v, ",") {
 			if strings.EqualFold(strings.TrimSpace(part), "aws-chunked") {
 				return true
 			}
@@ -425,7 +425,7 @@ func parseAuthorizationHeader(h string) (*parsedAuthorization, error) {
 	rest = strings.TrimSpace(rest)
 
 	out := &parsedAuthorization{}
-	for _, part := range strings.Split(rest, ",") {
+	for part := range strings.SplitSeq(rest, ",") {
 		part = strings.TrimSpace(part)
 		k, v, ok := strings.Cut(part, "=")
 		if !ok {

@@ -196,8 +196,8 @@ func (d *truenas) objectsExist(objects []string, optType string) (map[string]boo
 		existsMap[str] = false
 	}
 
-	lines := strings.Split(out, "\n")
-	for _, l := range lines {
+	lines := strings.SplitSeq(out, "\n")
+	for l := range lines {
 		if l == "" || l == "-" {
 			continue
 		}
@@ -236,7 +236,7 @@ func (d *truenas) getDatasets(dataset string, types string) ([]string, error) {
 	}
 
 	children := []string{}
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		line = strings.TrimSpace(line)
 		if line == dataset || line == "" {
 			continue
@@ -837,7 +837,7 @@ func (d *truenas) getClones(dataset string) ([]string, error) {
 	}
 
 	clones := []string{}
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		line = strings.TrimSpace(line)
 		if line == dataset || line == "" || line == "-" {
 			continue

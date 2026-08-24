@@ -931,7 +931,7 @@ func GetLeaseAddresses(networkName string, hwaddr string) ([]net.IP, error) {
 
 	addresses := []net.IP{}
 
-	for _, lease := range strings.Split(string(content), "\n") {
+	for lease := range strings.SplitSeq(string(content), "\n") {
 		fields := strings.Fields(lease)
 		if len(fields) < 5 {
 			continue
@@ -1531,7 +1531,7 @@ func ProxyParseAddr(data string) (*deviceConfig.ProxyAddress, error) {
 }
 
 func validateExternalInterfaces(value string) error {
-	for _, entry := range strings.Split(value, ",") {
+	for entry := range strings.SplitSeq(value, ",") {
 		entry = strings.TrimSpace(entry)
 
 		// Test for extended configuration of external interface.

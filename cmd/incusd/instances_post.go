@@ -938,8 +938,8 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	// Override config.
 	configMap := map[string]string{}
 	if config != "" {
-		configOverride := strings.Split(config, " ")
-		for _, entry := range configOverride {
+		configOverride := strings.SplitSeq(config, " ")
+		for entry := range configOverride {
 			key, value, found := strings.Cut(entry, "=")
 			if !found {
 				return response.BadRequest(fmt.Errorf("Failed to parse config <key>=<value>: %q", entry))
@@ -952,8 +952,8 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 	// Override device.
 	deviceMap := map[string]map[string]string{}
 	if device != "" {
-		deviceOverride := strings.Split(device, " ")
-		for _, entry := range deviceOverride {
+		deviceOverride := strings.SplitSeq(device, " ")
+		for entry := range deviceOverride {
 			if !strings.Contains(entry, "=") || !strings.Contains(entry, ",") {
 				return response.BadRequest(fmt.Errorf("Failed to parse device <device>,<key>=<value>: %q", entry))
 			}

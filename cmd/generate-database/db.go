@@ -127,8 +127,8 @@ func generate(pkgs []string, boilerplateFilename string) error {
 			// Reset target to stdout
 			target := "-"
 
-			lines := strings.Split(string(body), "\n")
-			for _, line := range lines {
+			lines := strings.SplitSeq(string(body), "\n")
+			for line := range lines {
 				// Lazy matching for prefix, does not consider Go syntax and therefore
 				// lines starting with prefix, that are part of e.g. multiline strings
 				// match as well. This is highly unlikely to cause false positives.

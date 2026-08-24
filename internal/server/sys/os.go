@@ -213,7 +213,7 @@ func (s *OS) Init() ([]cluster.Warning, error) {
 	}
 
 	btime := int64(0)
-	for _, line := range strings.Split(string(out), "\n") {
+	for line := range strings.SplitSeq(string(out), "\n") {
 		if !strings.HasPrefix(line, "btime ") {
 			continue
 		}

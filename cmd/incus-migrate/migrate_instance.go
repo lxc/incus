@@ -356,9 +356,9 @@ func (m *InstanceMigration) askProfiles() error {
 			return nil
 		}
 
-		profiles := strings.Split(s, " ")
+		profiles := strings.SplitSeq(s, " ")
 
-		for _, profile := range profiles {
+		for profile := range profiles {
 			if !slices.Contains(profileNames, profile) {
 				return fmt.Errorf("Unknown profile %q", profile)
 			}
@@ -383,7 +383,7 @@ func (m *InstanceMigration) askConfig() error {
 			return nil
 		}
 
-		for _, entry := range strings.Split(s, " ") {
+		for entry := range strings.SplitSeq(s, " ") {
 			if !strings.Contains(entry, "=") {
 				return fmt.Errorf("Bad key=value configuration: %v", entry)
 			}
@@ -395,7 +395,7 @@ func (m *InstanceMigration) askConfig() error {
 		return err
 	}
 
-	for _, entry := range strings.Split(configs, " ") {
+	for entry := range strings.SplitSeq(configs, " ") {
 		key, value, _ := strings.Cut(entry, "=")
 		m.instanceArgs.Config[key] = value
 	}

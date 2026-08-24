@@ -109,7 +109,7 @@ func (o *SB) CheckLoadBalancerOnline(ctx context.Context, lb ovnNB.LoadBalancer)
 	}
 
 	for _, v := range lb.Vips {
-		for _, backend := range strings.Split(v, ",") {
+		for backend := range strings.SplitSeq(v, ",") {
 			host, port, err := net.SplitHostPort(backend)
 			if err != nil {
 				return false, err

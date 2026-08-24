@@ -2524,7 +2524,7 @@ func (d *disk) createVolumeSubPath(volConfig map[string]string, volRootPath stri
 	defer logger.WarnOnError(volRoot.Close, "Failed to close volume path")
 
 	var current string
-	for _, component := range strings.Split(volPath, "/") {
+	for component := range strings.SplitSeq(volPath, "/") {
 		if component == "" || component == "." {
 			continue
 		}
@@ -3309,7 +3309,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 		}
 
 		header := true
-		for _, line := range strings.Split(output, "\n") {
+		for line := range strings.SplitSeq(output, "\n") {
 			fields := strings.Fields(line)
 			if len(fields) < 5 {
 				continue
@@ -3366,7 +3366,7 @@ func (d *disk) getParentBlocks(path string) ([]string, error) {
 			devices = append(devices, fmt.Sprintf("%d:%d", major, minor))
 		}
 
-		for _, line := range strings.Split(output, "\n") {
+		for line := range strings.SplitSeq(output, "\n") {
 			fields := strings.Fields(line)
 			if len(fields) == 0 || fields[0] != "devid" {
 				continue

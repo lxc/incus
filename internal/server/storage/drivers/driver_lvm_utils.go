@@ -202,7 +202,7 @@ func (d *lvm) getPhysicalDevices(vgName string) ([]string, error) {
 	}
 
 	result := []string{}
-	for _, line := range strings.Split(strings.TrimSpace(devices), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(devices), "\n") {
 		result = append(result, strings.TrimSpace(line))
 	}
 

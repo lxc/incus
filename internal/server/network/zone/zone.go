@@ -605,7 +605,7 @@ func (d *zone) Content() (*strings.Builder, error) {
 
 	// Get the nameservers.
 	nameservers := []string{}
-	for _, entry := range strings.Split(d.info.Config["dns.nameservers"], ",") {
+	for entry := range strings.SplitSeq(d.info.Config["dns.nameservers"], ",") {
 		entry = strings.TrimSuffix(strings.TrimSpace(entry), ".")
 		if entry == "" {
 			continue
@@ -646,7 +646,7 @@ func (d *zone) Content() (*strings.Builder, error) {
 func (d *zone) SOA() (*strings.Builder, error) {
 	// Get the nameservers.
 	nameservers := []string{}
-	for _, entry := range strings.Split(d.info.Config["dns.nameservers"], ",") {
+	for entry := range strings.SplitSeq(d.info.Config["dns.nameservers"], ",") {
 		entry = strings.TrimSpace(entry)
 		if entry == "" {
 			continue

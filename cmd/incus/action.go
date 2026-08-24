@@ -544,7 +544,7 @@ func (c *cmdAction) run(cmd *cobra.Command, args []string) error {
 
 		success = false
 		msg := fmt.Sprintf(i18n.G("error: %v"), entry.err)
-		for _, line := range strings.Split(msg, "\n") {
+		for line := range strings.SplitSeq(msg, "\n") {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", formatRemote(c.global.conf, entry.parsed), line)
 		}
 	}

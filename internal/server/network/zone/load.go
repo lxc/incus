@@ -121,7 +121,7 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 	// Validate restrictions.
 	if util.IsTrue(p.Config["restricted"]) {
 		found := false
-		for _, entry := range strings.Split(p.Config["restricted.networks.zones"], ",") {
+		for entry := range strings.SplitSeq(p.Config["restricted.networks.zones"], ",") {
 			entry = strings.TrimSpace(entry)
 
 			if zoneInfo.Name == entry || strings.HasSuffix(zoneInfo.Name, "."+entry) {
