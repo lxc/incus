@@ -930,24 +930,24 @@ func networkIntegrationValidate(integrationType string, inUse bool, oldConfig ma
 		// ---
 		//  type: string
 		//  scope: global
-		//  shortdesc: OVN SSL certificate authority for the inter-connection database
-		"ovn.ca_cert": validate.Optional(validate.IsAny),
+		//  shortdesc: OVN SSL certificate authorities for the inter-connection database (PEM bundle)
+		"ovn.ca_cert": validate.IsPEM(true),
 
 		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.client_cert)
 		//
 		// ---
 		//  type: string
 		//  scope: global
-		//  shortdesc: OVN SSL client certificate
-		"ovn.client_cert": validate.Optional(validate.IsAny),
+		//  shortdesc: OVN SSL client certificate (PEM bundle)
+		"ovn.client_cert": validate.IsPEM(true),
 
 		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.client_key)
 		//
 		// ---
 		//  type: string
 		//  scope: global
-		//  shortdesc: OVN SSL client key
-		"ovn.client_key": validate.Optional(validate.IsAny),
+		//  shortdesc: OVN SSL client key (PEM private key)
+		"ovn.client_key": validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"),
 
 		// gendoc:generate(entity=network_integration, group=ovn, key=ovn.transit.pattern)
 		// Specify a Pongo2 template string that represents the transit switch name.
