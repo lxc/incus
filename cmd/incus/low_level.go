@@ -1122,6 +1122,10 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 	lowLevelSecureBootExportCmd := cmdLowLevelSecureBootExport{global: c.global}
 	cmd.AddCommand(lowLevelSecureBootExportCmd.command())
 
+	// Import.
+	lowLevelSecureBootImportCmd := cmdLowLevelSecureBootImport{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootImportCmd.command())
+
 	// List.
 	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global}
 	cmd.AddCommand(lowLevelSecureBootListCmd.command())
@@ -1134,6 +1138,80 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
 	return cmd
+}
+
+func eslParseCert(input []byte, owner string, certOnly bool, bundle bool) (uefi.ESL, error) {
+	var esl uefi.ESL
+	// Try to parse the file as PEM first.
+	rest := input
+	var block *pem.Block
+	for {
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+
+		switch block.Type {
+		case "CERTIFICATE":
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf(i18n.G("Failed to parse PEM certificate: %w"), err)
+			}
+
+			esl = append(esl, uefi.ESLNode{Type: "x509", Entries: []uefi.ESLEntry{{Owner: owner, Data: cert.Raw}}})
+		case "SIGNATURE":
+			if certOnly {
+				return nil, errors.New(i18n.G("Cannot store a signature in PK, KEK or dbt"))
+			}
+
+			if !bundle {
+				return nil, errors.New(i18n.G("Cannot add signature without --bundle"))
+			}
+
+			eslNode := uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: owner, Data: block.Bytes}}}
+			switch len(block.Bytes) {
+			case 32:
+				eslNode.Type = "sha256"
+			case 48:
+				eslNode.Type = "sha384"
+			case 64:
+				eslNode.Type = "sha512"
+			default:
+				return nil, fmt.Errorf(i18n.G("Unexpected signature length %d"), len(block.Bytes))
+			}
+
+			esl = append(esl, eslNode)
+			continue
+		default:
+			fmt.Fprintf(os.Stderr, color.WarningPrefix+i18n.G("Ignored %s block")+"\n", block.Type)
+			continue
+		}
+
+		if !bundle {
+			break
+		}
+	}
+
+	if len(esl) == 0 {
+		// Now try to parse the file as DER.
+		certs, err := x509.ParseCertificates(input)
+		if err != nil {
+			return nil, errors.New(i18n.G("Failed to parse input file as either PEM or DER certificate"))
+		}
+
+		if len(certs) == 0 {
+			return nil, errors.New(i18n.G("Input file contains no certificate"))
+		}
+
+		for _, cert := range certs {
+			esl = append(esl, uefi.ESLNode{Type: "x509", Entries: []uefi.ESLEntry{{Owner: owner, Data: cert.Raw}}})
+			if !bundle {
+				break
+			}
+		}
+	}
+
+	return esl, nil
 }
 
 // Add.
@@ -1230,73 +1308,9 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 
 		esl = append(esl, uefi.ESLNode{Type: c.flagType, Entries: []uefi.ESLEntry{{Owner: owner, Data: data}}})
 	} else {
-		// Try to parse the file as PEM first.
-		rest := input
-		var block *pem.Block
-		for {
-			block, rest = pem.Decode(rest)
-			if block == nil {
-				break
-			}
-
-			switch block.Type {
-			case "CERTIFICATE":
-				cert, err := x509.ParseCertificate(block.Bytes)
-				if err != nil {
-					return fmt.Errorf(i18n.G("Failed to parse PEM certificate: %w"), err)
-				}
-
-				esl = append(esl, uefi.ESLNode{Type: "x509", Entries: []uefi.ESLEntry{{Owner: owner, Data: cert.Raw}}})
-			case "SIGNATURE":
-				if certOnly {
-					return errors.New(i18n.G("Cannot store a signature in PK, KEK or dbt"))
-				}
-
-				if !c.flagBundle {
-					return errors.New(i18n.G("Cannot add signature without --bundle"))
-				}
-
-				eslNode := uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: owner, Data: block.Bytes}}}
-				switch len(block.Bytes) {
-				case 32:
-					eslNode.Type = "sha256"
-				case 48:
-					eslNode.Type = "sha384"
-				case 64:
-					eslNode.Type = "sha512"
-				default:
-					return fmt.Errorf(i18n.G("Unexpected signature length %d"), len(block.Bytes))
-				}
-
-				esl = append(esl, eslNode)
-				continue
-			default:
-				fmt.Fprintf(os.Stderr, color.WarningPrefix+i18n.G("Ignored %s block")+"\n", block.Type)
-				continue
-			}
-
-			if !c.flagBundle {
-				break
-			}
-		}
-
-		if len(esl) == 0 {
-			// Now try to parse the file as DER.
-			certs, err := x509.ParseCertificates(input)
-			if err != nil {
-				return errors.New(i18n.G("Failed to parse input file as either PEM or DER certificate"))
-			}
-
-			if len(certs) == 0 {
-				return errors.New(i18n.G("Input file contains no certificate"))
-			}
-
-			for _, cert := range certs {
-				esl = append(esl, uefi.ESLNode{Type: "x509", Entries: []uefi.ESLEntry{{Owner: owner, Data: cert.Raw}}})
-				if !c.flagBundle {
-					break
-				}
-			}
+		esl, err = eslParseCert(input, owner, certOnly, c.flagBundle)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -1496,6 +1510,100 @@ func (c *cmdLowLevelSecureBootExport) run(cmd *cobra.Command, args []string) err
 	}
 
 	return nil
+}
+
+// Import.
+type cmdLowLevelSecureBootImport struct {
+	global *cmdGlobal
+
+	flagForce bool
+	flagOwner string
+}
+
+var cmdLowLevelSecureBootImportUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...), u.File}
+
+func (c *cmdLowLevelSecureBootImport) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("import", cmdLowLevelSecureBootExportUsage...)
+	cmd.Short = i18n.G("Import Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Import Secure Boot signatures`))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Force overwriting existing ESL"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "Incus", "", i18n.G("Set the signature owner"))
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelSecureBootImport) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootImportUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	guid, varName := util.ESLGUIDVar(parsed[1].String)
+	fileName := parsed[2].String
+	var input []byte
+	if isStdin(fileName) {
+		input, err = io.ReadAll(os.Stdin)
+	} else {
+		input, err = os.ReadFile(fileName)
+	}
+
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed reading input file: %w"), err)
+	}
+
+	owner, err := uefi.ParseGUIDOrName(c.flagOwner)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Unable to parse owner %s: %w"), c.flagOwner, err)
+	}
+
+	esl, err := eslParseCert(input, owner, slices.Contains([]string{"PK", "KEK", "dbt"}, varName), true)
+	if err != nil {
+		return err
+	}
+
+	if varName == "PK" && len(esl) > 1 {
+		return fmt.Errorf(i18n.G("Only one PK certificate can be enrolled; got %d"), len(esl))
+	}
+
+	v, etag, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		if varName == "MokList" {
+			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
+				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS"},
+			}}
+		} else {
+			now := time.Now().UTC()
+			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
+				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS", "TIME_BASED_AUTHENTICATED_WRITE_ACCESS"},
+				Timestamp:  &now,
+			}}
+		}
+	} else if !c.flagForce {
+		return errors.New(i18n.G("The given ESL already exists; use --force to override"))
+	}
+
+	return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, api.InstanceNVRAMVariablePut{
+		Data:       esl,
+		Attributes: v.Attributes,
+		Timestamp:  v.Timestamp,
+	}, etag)
 }
 
 // List.
