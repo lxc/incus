@@ -1140,8 +1140,10 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 type cmdLowLevelSecureBootAdd struct {
 	global *cmdGlobal
 
-	flagOwner string
-	flagType  string
+	flagBundle bool
+	flagOwner  string
+	flagSkip   bool
+	flagType   string
 }
 
 var cmdLowLevelSecureBootAddUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...), u.File}
@@ -1153,8 +1155,10 @@ func (c *cmdLowLevelSecureBootAdd) command() *cobra.Command {
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Add Secure Boot signatures`))
 
 	cmd.RunE = c.run
+	cli.AddBoolFlag(cmd.Flags(), &c.flagBundle, "bundle", i18n.G("Consider the input as a certificate and signature bundle instead of a certificate chain"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagOwner, "owner", "Incus", "", i18n.G("Set the signature owner"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type", "", "", i18n.G("Don’t import the file as a certificate but rather compute and import its digest (sha256|sha384|sha512)"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagSkip, "skip", i18n.G("Skip duplicate signatures"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagType, "type|t", "", "", i18n.G("Don’t import the file as a certificate but rather compute and import its digest (sha256|sha384|sha512)"))
 
 	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) == 0 {
@@ -1182,7 +1186,7 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 	guid, varName := util.ESLGUIDVar(parsed[1].String)
 	fileName := parsed[2].String
 	var input []byte
-	if fileName == "-" && !termios.IsTerminal(getStdinFd()) {
+	if isStdin(fileName) {
 		input, err = io.ReadAll(os.Stdin)
 	} else {
 		input, err = os.ReadFile(fileName)
@@ -1198,12 +1202,18 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 	}
 
 	isSignature := cmd.Flags().Changed("type")
-	var data []byte
+	if isSignature && c.flagBundle {
+		return errors.New(i18n.G("--bundle cannot be used with --type"))
+	}
+
+	certOnly := slices.Contains([]string{"PK", "KEK", "dbt"}, varName)
+	var esl, oldESL, keptESL uefi.ESL
 	if isSignature {
-		if slices.Contains([]string{"PK", "KEK", "dbt"}, varName) {
+		if certOnly {
 			return errors.New(i18n.G("Cannot store a signature in PK, KEK or dbt"))
 		}
 
+		var data []byte
 		switch c.flagType {
 		case "sha256":
 			sum := sha256.Sum256(input)
@@ -1217,10 +1227,11 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 		default:
 			return fmt.Errorf(i18n.G("Unknown signature type %s"), c.flagType)
 		}
+
+		esl = append(esl, uefi.ESLNode{Type: c.flagType, Entries: []uefi.ESLEntry{{Owner: owner, Data: data}}})
 	} else {
 		// Try to parse the file as PEM first.
 		rest := input
-		ok := false
 		var block *pem.Block
 		for {
 			block, rest = pem.Decode(rest)
@@ -1228,21 +1239,48 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 				break
 			}
 
-			if block.Type != "CERTIFICATE" {
+			switch block.Type {
+			case "CERTIFICATE":
+				cert, err := x509.ParseCertificate(block.Bytes)
+				if err != nil {
+					return fmt.Errorf(i18n.G("Failed to parse PEM certificate: %w"), err)
+				}
+
+				esl = append(esl, uefi.ESLNode{Type: "x509", Entries: []uefi.ESLEntry{{Owner: owner, Data: cert.Raw}}})
+			case "SIGNATURE":
+				if certOnly {
+					return errors.New(i18n.G("Cannot store a signature in PK, KEK or dbt"))
+				}
+
+				if !c.flagBundle {
+					return errors.New(i18n.G("Cannot add signature without --bundle"))
+				}
+
+				eslNode := uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: owner, Data: block.Bytes}}}
+				switch len(block.Bytes) {
+				case 32:
+					eslNode.Type = "sha256"
+				case 48:
+					eslNode.Type = "sha384"
+				case 64:
+					eslNode.Type = "sha512"
+				default:
+					return fmt.Errorf(i18n.G("Unexpected signature length %d"), len(block.Bytes))
+				}
+
+				esl = append(esl, eslNode)
+				continue
+			default:
+				fmt.Fprintf(os.Stderr, color.WarningPrefix+i18n.G("Ignored %s block")+"\n", block.Type)
 				continue
 			}
 
-			cert, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				return fmt.Errorf(i18n.G("Failed to parse PEM certificate: %w"), err)
+			if !c.flagBundle {
+				break
 			}
-
-			data = cert.Raw
-			ok = true
-			break
 		}
 
-		if !ok {
+		if len(esl) == 0 {
 			// Now try to parse the file as DER.
 			certs, err := x509.ParseCertificates(input)
 			if err != nil {
@@ -1253,21 +1291,28 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 				return errors.New(i18n.G("Input file contains no certificate"))
 			}
 
-			data = certs[0].Raw
+			for _, cert := range certs {
+				esl = append(esl, uefi.ESLNode{Type: "x509", Entries: []uefi.ESLEntry{{Owner: owner, Data: cert.Raw}}})
+				if !c.flagBundle {
+					break
+				}
+			}
 		}
+	}
+
+	if varName == "PK" && len(esl) > 1 {
+		return fmt.Errorf(i18n.G("Only one PK certificate can be enrolled; got %d"), len(esl))
 	}
 
 	v, etag, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
 	if err != nil {
 		if varName == "MokList" {
 			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
-				Data:       uefi.ESL{},
 				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS"},
 			}}
 		} else {
 			now := time.Now().UTC()
 			v = &api.InstanceNVRAMVariable{InstanceNVRAMVariablePut: api.InstanceNVRAMVariablePut{
-				Data:       uefi.ESL{},
 				Attributes: []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS", "RUNTIME_ACCESS", "TIME_BASED_AUTHENTICATED_WRITE_ACCESS"},
 				Timestamp:  &now,
 			}}
@@ -1282,42 +1327,58 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
 	}
 
-	var esl uefi.ESL
-	err = json.Unmarshal(marshalled, &esl)
+	err = json.Unmarshal(marshalled, &oldESL)
 	if err != nil {
 		// This shouldn’t happen.
 		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
 	}
 
-	// First, make sure the store doesn’t already contain the certificate/signature. If we are
-	// dealing with PK, this also checks that there is no certificate enrolled.
+	// First, make sure the store doesn’t already contain the certificates/signatures. If we are
+	// dealing with PK, this also checks that there is no certificate already enrolled.
 	count := 0
+	firstIteration := true
 	for _, node := range esl {
+		keptNode := uefi.ESLNode{Type: node.Type, Header: node.Header}
 		for _, entry := range node.Entries {
-			count++
-			if bytes.Equal(entry.Data, data) {
-				if isSignature {
-					return errors.New(i18n.G("The given signature is already present in this ESL"))
-				}
+			kept := true
+		out:
+			for _, oldNode := range oldESL {
+				for _, oldEntry := range oldNode.Entries {
+					if firstIteration {
+						count++
+					}
 
-				return errors.New(i18n.G("The given certificate is already present in this ESL"))
+					if bytes.Equal(oldEntry.Data, entry.Data) {
+						if c.flagSkip {
+							count--
+							kept = false
+							break out
+						} else {
+							if isSignature {
+								return errors.New(i18n.G("The given signature is already present in this ESL"))
+							}
+
+							return errors.New(i18n.G("The given certificate is already present in this ESL"))
+						}
+					}
+				}
+			}
+
+			firstIteration = false
+			if kept {
+				keptNode.Entries = append(keptNode.Entries, entry)
 			}
 		}
+
+		keptESL = append(keptESL, keptNode)
 	}
 
 	if varName == "PK" && count > 0 {
 		return errors.New(i18n.G("A PK certificate is already enrolled; remove it first to enroll a new one"))
 	}
 
-	eslNode := uefi.ESLNode{Entries: []uefi.ESLEntry{{Owner: owner, Data: data}}}
-	if isSignature {
-		eslNode.Type = c.flagType
-	} else {
-		eslNode.Type = "x509"
-	}
-
 	return d.UpdateInstanceNVRAMGUIDVar(instanceName, guid, varName, api.InstanceNVRAMVariablePut{
-		Data:       append(esl, eslNode),
+		Data:       append(oldESL, keptESL...),
 		Attributes: v.Attributes,
 		Timestamp:  v.Timestamp,
 	}, etag)
