@@ -4225,21 +4225,21 @@ User keys can be used in search.
 <!-- config group network_integration-ovn start -->
 ```{config:option} ovn.ca_cert network_integration-ovn
 :scope: "global"
-:shortdesc: "OVN SSL certificate authority for the inter-connection database"
+:shortdesc: "OVN SSL certificate authorities for the inter-connection database (PEM bundle)"
 :type: "string"
 
 ```
 
 ```{config:option} ovn.client_cert network_integration-ovn
 :scope: "global"
-:shortdesc: "OVN SSL client certificate"
+:shortdesc: "OVN SSL client certificate (PEM bundle)"
 :type: "string"
 
 ```
 
 ```{config:option} ovn.client_key network_integration-ovn
 :scope: "global"
-:shortdesc: "OVN SSL client key"
+:shortdesc: "OVN SSL client key (PEM private key)"
 :type: "string"
 
 ```
@@ -5831,7 +5831,7 @@ Specify the protocol, name or IP and port. For example `tcp://syslog01.int.examp
 
 ```{config:option} logging.NAME.target.ca_cert server-logging
 :scope: "global"
-:shortdesc: "CA certificate for the server"
+:shortdesc: "CA certificates for the server (PEM bundle)"
 :type: "string"
 
 ```
@@ -5899,7 +5899,7 @@ The events can be any combination of `lifecycle`, `logging`, and `network-acl`.
 <!-- config group server-loki start -->
 ```{config:option} loki.api.ca_cert server-loki
 :scope: "global"
-:shortdesc: "CA certificate for the Loki server"
+:shortdesc: "CA certificates for the Loki server (PEM bundle)"
 :type: "string"
 
 ```
@@ -6004,7 +6004,7 @@ See {ref}`clustering-instance-placement-scriptlet` for more information.
 
 ```{config:option} instances.tpm.platform_cert server-miscellaneous
 :scope: "global"
-:shortdesc: "Platform CA certificate used to provision TPM Endorsement Keys"
+:shortdesc: "Platform CA certificate used to provision TPM Endorsement Keys (PEM bundle)"
 :type: "string"
 PEM encoded platform CA certificate used to sign the Endorsement
 Key and platform certificate of newly created TPM devices.
@@ -6013,7 +6013,7 @@ Must be set together with `instances.tpm.platform_key`.
 
 ```{config:option} instances.tpm.platform_key server-miscellaneous
 :scope: "global"
-:shortdesc: "Private key for the TPM platform CA certificate"
+:shortdesc: "Private key for the TPM platform CA certificate (PEM private key)"
 :type: "string"
 PEM encoded private key matching `instances.tpm.platform_cert`.
 Used to sign the Endorsement Key and platform certificate of newly
@@ -6023,7 +6023,7 @@ created TPM devices.
 ```{config:option} network.ovn.ca_cert server-miscellaneous
 :defaultdesc: "Content of `/etc/ovn/ovn-central.crt` if present"
 :scope: "global"
-:shortdesc: "OVN SSL certificate authority"
+:shortdesc: "OVN SSL certificate authorities (PEM bundle)"
 :type: "string"
 
 ```
@@ -6031,7 +6031,7 @@ created TPM devices.
 ```{config:option} network.ovn.client_cert server-miscellaneous
 :defaultdesc: "Content of `/etc/ovn/cert_host` if present"
 :scope: "global"
-:shortdesc: "OVN SSL client certificate"
+:shortdesc: "OVN SSL client certificate (PEM bundle)"
 :type: "string"
 
 ```
@@ -6039,7 +6039,7 @@ created TPM devices.
 ```{config:option} network.ovn.client_key server-miscellaneous
 :defaultdesc: "Content of `/etc/ovn/key_host` if present"
 :scope: "global"
-:shortdesc: "OVN SSL client key"
+:shortdesc: "OVN SSL client key (PEM private key)"
 :type: "string"
 
 ```
@@ -6084,21 +6084,21 @@ Specify the volume using the syntax `POOL/VOLUME`.
 
 ```{config:option} storage.linstor.ca_cert server-miscellaneous
 :scope: "global"
-:shortdesc: "LINSTOR SSL certificate authority"
+:shortdesc: "LINSTOR SSL certificate authorities (PEM bundle)"
 :type: "string"
 
 ```
 
 ```{config:option} storage.linstor.client_cert server-miscellaneous
 :scope: "global"
-:shortdesc: "LINSTOR SSL client certificate"
+:shortdesc: "LINSTOR SSL client certificate (PEM bundle)"
 :type: "string"
 
 ```
 
 ```{config:option} storage.linstor.client_key server-miscellaneous
 :scope: "global"
-:shortdesc: "LINSTOR SSL client key"
+:shortdesc: "LINSTOR SSL client key (PEM private key)"
 :type: "string"
 
 ```
