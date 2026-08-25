@@ -218,7 +218,7 @@ func lxcParseRawLXC(line string) (string, string, error) {
 }
 
 func lxcValidConfig(rawLxc string) error {
-	for _, line := range strings.Split(rawLxc, "\n") {
+	for line := range strings.SplitSeq(rawLxc, "\n") {
 		key, _, err := lxcParseRawLXC(line)
 		if err != nil {
 			return err

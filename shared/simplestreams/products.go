@@ -213,7 +213,7 @@ func (s *Products) ToAPI() ([]api.Image, map[string][][]string) {
 				// Add the provided aliases
 				if product.Aliases != "" {
 					image.Aliases = []api.ImageAlias{}
-					for _, entry := range strings.Split(product.Aliases, ",") {
+					for entry := range strings.SplitSeq(product.Aliases, ",") {
 						image.Aliases = append(image.Aliases, api.ImageAlias{Name: entry})
 					}
 				}

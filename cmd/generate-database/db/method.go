@@ -102,8 +102,8 @@ func (m *Method) GenerateSignature(buf *file.Buffer) error {
 	buf.L("type %sGenerated interface {", lex.PascalCase(m.entity))
 	defer m.end(buf)
 	if m.config["references"] != "" {
-		refFields := strings.Split(m.config["references"], ",")
-		for _, fieldName := range refFields {
+		refFields := strings.SplitSeq(m.config["references"], ",")
+		for fieldName := range refFields {
 			m.ref = fieldName
 			err := m.signature(buf, true)
 			if err != nil {

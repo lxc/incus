@@ -340,12 +340,12 @@ func VolumeSnapshotToProtobuf(vol *api.StorageVolumeSnapshot) *migration.Snapsho
 		Name:         &vol.Name,
 		LocalConfig:  config,
 		Profiles:     []string{},
-		Ephemeral:    proto.Bool(false),
+		Ephemeral:    new(false),
 		LocalDevices: []*migration.Device{},
 		Architecture: proto.Int32(0),
-		Stateful:     proto.Bool(false),
-		CreationDate: proto.Int64(vol.CreatedAt.UnixNano()),
-		ExpiryDate:   proto.Int64(vol.CreatedAt.UnixNano()),
+		Stateful:     new(false),
+		CreationDate: new(vol.CreatedAt.UnixNano()),
+		ExpiryDate:   new(vol.CreatedAt.UnixNano()),
 	}
 }
 

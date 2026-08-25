@@ -247,7 +247,8 @@ func (d *qemu) startupCPUSet(topology *qemuCPUTopology) []int64 {
 			return nil
 		}
 
-		key := strings.TrimSpace(string(midr))
+		var key strings.Builder
+		key.WriteString(strings.TrimSpace(string(midr)))
 
 		// Include the cache geometry as identical parts may still differ.
 		caches, _ := filepath.Glob(filepath.Join(cpuPath, "cache/index[0-9]*"))
@@ -255,15 +256,15 @@ func (d *qemu) startupCPUSet(topology *qemuCPUTopology) []int64 {
 		for _, cache := range caches {
 			for _, field := range []string{"level", "type", "coherency_line_size", "ways_of_associativity", "number_of_sets"} {
 				value, _ := os.ReadFile(filepath.Join(cache, field))
-				key += "/" + strings.TrimSpace(string(value))
+				key.WriteString("/" + strings.TrimSpace(string(value)))
 			}
 		}
 
-		if groups[key] == nil {
-			keys = append(keys, key)
+		if groups[key.String()] == nil {
+			keys = append(keys, key.String())
 		}
 
-		groups[key] = append(groups[key], id)
+		groups[key.String()] = append(groups[key.String()], id)
 	}
 
 	// Nothing to do on homogeneous systems.

@@ -46,9 +46,8 @@ func (e StatusError) Status() int {
 // status code matches one of the supplied status codes in matchStatus.
 // Returns the matched StatusError status code and true if match criteria are met, otherwise false.
 func StatusErrorMatch(err error, matchStatusCodes ...int) (int, bool) {
-	var statusErr StatusError
-
-	if errors.As(err, &statusErr) {
+	statusErr, ok := errors.AsType[StatusError](err)
+	if ok {
 		statusCode := statusErr.Status()
 
 		if len(matchStatusCodes) <= 0 {

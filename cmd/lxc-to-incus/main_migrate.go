@@ -333,7 +333,7 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 	fmt.Println("Processing container capabilities configuration")
 	value = getConfig(conf, "lxc.cap.drop")
 	if value != nil {
-		for _, cap := range strings.Split(value[0], " ") {
+		for cap := range strings.SplitSeq(value[0], " ") {
 			// Ignore capabilities that are dropped in containers by default.
 			if slices.Contains([]string{"mac_admin", "mac_override", "sys_module", "sys_time"}, cap) {
 				continue

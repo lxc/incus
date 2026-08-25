@@ -281,7 +281,8 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 
 	// Build the canonical resource: the URI-encoded path (which includes the
 	// bucket for path-style requests) followed by any signed sub-resources.
-	resource := r.URL.EscapedPath()
+	var resource strings.Builder
+	resource.WriteString(r.URL.EscapedPath())
 	separator := "?"
 	for _, name := range presignedV2ResourceSubresources {
 		v := q.Get(name)
@@ -289,7 +290,7 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 			continue
 		}
 
-		resource += separator + name + "=" + v
+		resource.WriteString(separator + name + "=" + v)
 		separator = "&"
 	}
 
@@ -300,7 +301,7 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 		r.Header.Get("Content-MD5"),
 		r.Header.Get("Content-Type"),
 		expiresStr,
-		resource,
+		resource.String(),
 	}, "\n")
 
 	mac := hmac.New(sha1.New, []byte(secret))
@@ -323,7 +324,7 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 // chunked decoder.
 func hasAWSChunkedEncoding(r *http.Request) bool {
 	for _, v := range r.Header.Values("Content-Encoding") {
-		for _, part := range strings.Split(v, ",") {
+		for part := range strings.SplitSeq(v, ",") {
 			if strings.EqualFold(strings.TrimSpace(part), "aws-chunked") {
 				return true
 			}
@@ -425,7 +426,7 @@ func parseAuthorizationHeader(h string) (*parsedAuthorization, error) {
 	rest = strings.TrimSpace(rest)
 
 	out := &parsedAuthorization{}
-	for _, part := range strings.Split(rest, ",") {
+	for part := range strings.SplitSeq(rest, ",") {
 		part = strings.TrimSpace(part)
 		k, v, ok := strings.Cut(part, "=")
 		if !ok {

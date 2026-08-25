@@ -483,7 +483,7 @@ func findContainerForPid(pid int32, s *state.State) (instance.Container, error) 
 			return nil, err
 		}
 
-		for _, line := range strings.Split(string(status), "\n") {
+		for line := range strings.SplitSeq(string(status), "\n") {
 			m := re.FindStringSubmatch(line)
 			if len(m) > 1 {
 				result, err := strconv.Atoi(m[1])

@@ -188,7 +188,7 @@ func (cg *CGroup) GetCPUAcctUsageAll() (map[int64]CPUStats, error) {
 		case "user_usec":
 			val, err := strconv.ParseInt(fields[1], 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("Failed parsing %q: %w", val, err)
+				return nil, fmt.Errorf("Failed parsing %q: %w", fields[1], err)
 			}
 
 			// Convert usec to nsec
@@ -196,7 +196,7 @@ func (cg *CGroup) GetCPUAcctUsageAll() (map[int64]CPUStats, error) {
 		case "system_usec":
 			val, err := strconv.ParseInt(fields[1], 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("Failed parsing %q: %w", val, err)
+				return nil, fmt.Errorf("Failed parsing %q: %w", fields[1], err)
 			}
 
 			// Convert usec to nsec
@@ -232,7 +232,7 @@ func (cg *CGroup) GetCPUAcctUsage() (int64, error) {
 
 		val, err := strconv.ParseInt(fields[1], 10, 64)
 		if err != nil {
-			return -1, fmt.Errorf("Failed parsing %q: %w", val, err)
+			return -1, fmt.Errorf("Failed parsing %q: %w", fields[1], err)
 		}
 
 		// Convert usec to nsec
@@ -256,8 +256,8 @@ func (cg *CGroup) GetEffectiveCPUs() (int, error) {
 func parseCPUSet(set string) (int, error) {
 	var out int
 
-	fields := strings.Split(strings.TrimSpace(set), ",")
-	for _, value := range fields {
+	fields := strings.SplitSeq(strings.TrimSpace(set), ",")
+	for value := range fields {
 		// Parse non-range values.
 		if !strings.Contains(value, "-") {
 			_, err := strconv.Atoi(value)
@@ -539,7 +539,7 @@ func (cg *CGroup) GetMemoryStats() (map[string]uint64, error) {
 		return nil, err
 	}
 
-	for _, stat := range strings.Split(stats, "\n") {
+	for stat := range strings.SplitSeq(stats, "\n") {
 		field := strings.Split(stat, " ")
 
 		switch field[0] {
@@ -586,7 +586,7 @@ func (cg *CGroup) GetOOMKills() (int64, error) {
 		return -1, err
 	}
 
-	for _, stat := range strings.Split(stats, "\n") {
+	for stat := range strings.SplitSeq(stats, "\n") {
 		field := strings.Split(stat, " ")
 		// skip incorrect lines
 		if len(field) != 2 {
@@ -649,7 +649,7 @@ func (cg *CGroup) GetIOStats() (map[string]*IOStats, error) {
 		var devID string
 		ioStats := &IOStats{}
 
-		for _, statPart := range strings.Split(scanner.Text(), " ") {
+		for statPart := range strings.SplitSeq(scanner.Text(), " ") {
 			// If the stat part is empty, skip it.
 			if statPart == "" {
 				continue

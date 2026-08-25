@@ -1277,7 +1277,7 @@ func (d *btrfs) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, 
 			}
 
 			id := ""
-			for _, line := range strings.Split(output, "\n") {
+			for line := range strings.SplitSeq(output, "\n") {
 				line = strings.TrimSpace(line)
 				if strings.HasPrefix(line, "Subvolume ID:") {
 					fields := strings.Split(line, ":")

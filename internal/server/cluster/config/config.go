@@ -295,9 +295,9 @@ func (c *Config) ACMEDNS() (string, []string, []string) {
 	var resolvers []string
 
 	if c.m.GetString("acme.provider.environment") != "" {
-		lines := strings.Split(strings.TrimSpace(c.m.GetString("acme.provider.environment")), "\n")
+		lines := strings.SplitSeq(strings.TrimSpace(c.m.GetString("acme.provider.environment")), "\n")
 
-		for _, line := range lines {
+		for line := range lines {
 			if len(strings.TrimSpace(line)) == 0 {
 				continue
 			}

@@ -15,7 +15,7 @@ func (d *lvm) patchStorageSkipActivation() error {
 		return fmt.Errorf("Error getting LVM logical volume list for storage pool %q: %w", d.config["lvm.vg_name"], err)
 	}
 
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		fields := strings.Fields(strings.TrimSpace(line))
 		if len(fields) != 2 {
 			continue

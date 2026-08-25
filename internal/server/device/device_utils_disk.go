@@ -52,7 +52,7 @@ func DiskParseRBDFormat(rbd string) (string, string, map[string]string, error) {
 
 	// Parse options.
 	opts := make(map[string]string)
-	for _, o := range strings.Split(rawOpts, ":") {
+	for o := range strings.SplitSeq(rawOpts, ":") {
 		k, v, isValid := strings.Cut(o, "=")
 		if !isValid {
 			return "", "", nil, fmt.Errorf("Invalid rbd format, bad option: %q", o)
@@ -232,10 +232,10 @@ again:
 		unmapImageName,
 	)
 	if err != nil {
-		var runError subprocess.RunError
-		if errors.As(err, &runError) {
-			var exitError *exec.ExitError
-			if errors.As(runError.Unwrap(), &exitError) {
+		runError, ok := errors.AsType[subprocess.RunError](err)
+		if ok {
+			exitError, ok := errors.AsType[*exec.ExitError](runError.Unwrap())
+			if ok {
 				if exitError.ExitCode() == 22 {
 					// EINVAL (already unmapped)
 					return nil

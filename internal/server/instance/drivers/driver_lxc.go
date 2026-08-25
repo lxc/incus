@@ -2141,7 +2141,7 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	// Load any required kernel modules
 	kernelModules := d.expandedConfig["linux.kernel_modules"]
 	if kernelModules != "" {
-		for _, module := range strings.Split(kernelModules, ",") {
+		for module := range strings.SplitSeq(kernelModules, ",") {
 			module = strings.TrimPrefix(module, " ")
 			err := linux.LoadModule(module)
 			if err != nil {
@@ -3137,7 +3137,7 @@ func (d *lxc) Start(stateful bool) error {
 		if util.PathExists(logPath) {
 			logContent, err := os.ReadFile(logPath)
 			if err == nil {
-				for _, line := range strings.Split(string(logContent), "\n") {
+				for line := range strings.SplitSeq(string(logContent), "\n") {
 					fields := strings.Fields(line)
 					if len(fields) < 4 {
 						continue
@@ -5301,7 +5301,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 					}
 				}
 			} else if key == "linux.kernel_modules" && value != "" {
-				for _, module := range strings.Split(value, ",") {
+				for module := range strings.SplitSeq(value, ",") {
 					module = strings.TrimPrefix(module, " ")
 					err := linux.LoadModule(module)
 					if err != nil {
@@ -6160,10 +6160,10 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	if args.Live {
 		var offerUsePreDumps bool
 		offerUsePreDumps, maxDumpIterations = d.migrationSendCheckForPreDumpSupport()
-		offerHeader.Predump = proto.Bool(offerUsePreDumps)
+		offerHeader.Predump = new(offerUsePreDumps)
 		offerHeader.Criu = migration.CRIUType_CRIU_RSYNC.Enum()
 	} else {
-		offerHeader.Predump = proto.Bool(false)
+		offerHeader.Predump = new(false)
 
 		if d.IsRunning() {
 			// Indicate instance is running to target (can trigger MultiSync mode).
@@ -6181,11 +6181,11 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 		offerHeader.Idmap = make([]*migration.IDMapType, 0, len(idmapset.Entries))
 		for _, ctnIdmap := range idmapset.Entries {
 			idmapEntry := migration.IDMapType{
-				Isuid:    proto.Bool(ctnIdmap.IsUID),
-				Isgid:    proto.Bool(ctnIdmap.IsGID),
-				Hostid:   proto.Int32(int32(ctnIdmap.HostID)),
-				Nsid:     proto.Int32(int32(ctnIdmap.NSID)),
-				Maprange: proto.Int32(int32(ctnIdmap.MapRange)),
+				Isuid:    new(ctnIdmap.IsUID),
+				Isgid:    new(ctnIdmap.IsGID),
+				Hostid:   new(int32(ctnIdmap.HostID)),
+				Nsid:     new(int32(ctnIdmap.NSID)),
+				Maprange: new(int32(ctnIdmap.MapRange)),
 			}
 
 			offerHeader.Idmap = append(offerHeader.Idmap, &idmapEntry)
@@ -6702,7 +6702,7 @@ func (d *lxc) migrateSendPreDumpLoop(args *preDumpLoopArgs) (bool, error) {
 	// If in pre-dump mode, the receiving side expects a message to know if this was the last pre-dump.
 	logger.Debug("Sending another CRIU pre-dump header")
 	syncMsg := migration.MigrationSync{
-		FinalPreDump: proto.Bool(final),
+		FinalPreDump: new(final),
 	}
 
 	data, err := proto.Marshal(&syncMsg)
@@ -6908,9 +6908,9 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	if offerHeader.GetPredump() {
 		// If the other side wants pre-dump and if this side supports it, let's use it.
-		respHeader.Predump = proto.Bool(true)
+		respHeader.Predump = new(true)
 	} else {
-		respHeader.Predump = proto.Bool(false)
+		respHeader.Predump = new(false)
 	}
 
 	// Get rsync options from sender, these are passed into mySink function as part of
@@ -7169,7 +7169,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			defer logger.WarnOnError(func() error { return os.RemoveAll(imagesDir) }, "Failed to remove images directory")
 
 			sync := &migration.MigrationSync{
-				FinalPreDump: proto.Bool(false),
+				FinalPreDump: new(false),
 			}
 
 			if respHeader.GetPredump() {
@@ -7275,11 +7275,11 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 			// Send failure response to source.
 			msg := migration.MigrationControl{
-				Success: proto.Bool(err == nil),
+				Success: new(err == nil),
 			}
 
 			if err != nil {
-				msg.Message = proto.String(err.Error())
+				msg.Message = new(err.Error())
 			}
 
 			d.logger.Debug("Sending migration failure response to source", logger.Ctx{"err": err})
@@ -7293,7 +7293,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 		// Send success response to source to control as nothing has gone wrong so far.
 		msg := migration.MigrationControl{
-			Success: proto.Bool(true),
+			Success: new(true),
 		}
 
 		d.logger.Debug("Sending migration success response to source", logger.Ctx{"success": msg.GetSuccess()})
@@ -7634,7 +7634,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 			relDir := path.Dir(relPath)
 
 			parent := ""
-			for _, part := range strings.Split(relDir, "/") {
+			for part := range strings.SplitSeq(relDir, "/") {
 				if part == "" || part == "." {
 					continue
 				}

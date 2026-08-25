@@ -43,7 +43,7 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 	discard := logr.Discard()
 
 	options := []ovsdbClient.Option{ovsdbClient.WithLogger(&discard), ovsdbClient.WithInactivityCheck(20*time.Second, 5*time.Second, &backoff.ZeroBackOff{})}
-	for _, entry := range strings.Split(dbAddr, ",") {
+	for entry := range strings.SplitSeq(dbAddr, ",") {
 		options = append(options, ovsdbClient.WithEndpoint(entry))
 	}
 

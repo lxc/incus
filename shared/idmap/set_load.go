@@ -71,7 +71,7 @@ func NewSetFromIncusIDMap(value string) (*Set, error) {
 
 	ret := &Set{}
 
-	for _, line := range strings.Split(value, "\n") {
+	for line := range strings.SplitSeq(value, "\n") {
 		if line == "" {
 			continue
 		}

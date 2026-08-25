@@ -216,7 +216,7 @@ func (c *cmdList) evaluateShorthandFilter(key string, value string, inst *api.In
 	}
 
 	matched := false
-	for _, curValue := range strings.Split(value, shorthandValueDelimiter) {
+	for curValue := range strings.SplitSeq(value, shorthandValueDelimiter) {
 		if shorthandFilterFunction(inst, state, curValue) {
 			matched = true
 		}

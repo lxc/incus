@@ -361,7 +361,7 @@ func (h *remoteProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Forward everything else.
 	proxy := httputil.ReverseProxy{
 		Transport: h.transport,
-		Director:  func(*http.Request) {},
+		Rewrite:   func(*httputil.ProxyRequest) {},
 	}
 
 	proxy.ServeHTTP(w, r)

@@ -18,7 +18,7 @@ func NewFileReadWriter(pid int) (*CGroup, error) {
 		return nil, err
 	}
 
-	for _, line := range strings.Split(string(controllers), "\n") {
+	for line := range strings.SplitSeq(string(controllers), "\n") {
 		// Skip empty lines.
 		line = strings.TrimSpace(line)
 		if line == "" {

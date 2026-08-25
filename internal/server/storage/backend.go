@@ -3869,8 +3869,8 @@ func (b *backend) CanRestoreInstanceSnapshot(inst instance.Instance, src instanc
 		snapVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, src.Name()), srcDBVol.Config)
 		err = b.qcow2CanRestoreSnapshot(vol, snapVol, inst.Project().Name)
 		if err != nil {
-			var snapErr drivers.ErrDeleteSnapshots
-			if errors.As(err, &snapErr) {
+			_, ok := errors.AsType[drivers.ErrDeleteSnapshots](err)
+			if ok {
 				return nil
 			}
 
@@ -3882,8 +3882,8 @@ func (b *backend) CanRestoreInstanceSnapshot(inst instance.Instance, src instanc
 
 	err = b.driver.CanRestoreVolume(vol, snapshotName)
 	if err != nil {
-		var snapErr drivers.ErrDeleteSnapshots
-		if errors.As(err, &snapErr) {
+		_, ok := errors.AsType[drivers.ErrDeleteSnapshots](err)
+		if ok {
 			return nil
 		}
 
@@ -4037,8 +4037,8 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 		snapVol := b.GetVolume(volType, contentType, project.Instance(inst.Project().Name, src.Name()), srcDBVol.Config)
 		err = b.qcow2RestoreSnapshot(vol, snapVol, inst.Project().Name, op)
 		if err != nil {
-			var snapErr drivers.ErrDeleteSnapshots
-			if errors.As(err, &snapErr) {
+			snapErr, ok := errors.AsType[drivers.ErrDeleteSnapshots](err)
+			if ok {
 				err = deleteSnapshots(snapErr.Snapshots, inst)
 				if err != nil {
 					return err
@@ -4061,8 +4061,8 @@ func (b *backend) RestoreInstanceSnapshot(inst instance.Instance, src instance.I
 
 	err = b.driver.RestoreVolume(vol, snapshotName, op)
 	if err != nil {
-		var snapErr drivers.ErrDeleteSnapshots
-		if errors.As(err, &snapErr) {
+		snapErr, ok := errors.AsType[drivers.ErrDeleteSnapshots](err)
+		if ok {
 			err = deleteSnapshots(snapErr.Snapshots, inst)
 			if err != nil {
 				return err
@@ -7029,8 +7029,8 @@ func (b *backend) RestoreCustomVolume(projectName, volName string, snapshotName 
 		snapVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, project.StorageVolume(projectName, fullSnapName), curVol.Config)
 		err = b.qcow2RestoreSnapshot(vol, snapVol, projectName, op)
 		if err != nil {
-			var snapErr drivers.ErrDeleteSnapshots
-			if errors.As(err, &snapErr) {
+			snapErr, ok := errors.AsType[drivers.ErrDeleteSnapshots](err)
+			if ok {
 				err = deleteSnapshots(snapErr.Snapshots)
 				if err != nil {
 					return err
@@ -7051,8 +7051,8 @@ func (b *backend) RestoreCustomVolume(projectName, volName string, snapshotName 
 
 	err = b.driver.RestoreVolume(vol, snapshotName, op)
 	if err != nil {
-		var snapErr drivers.ErrDeleteSnapshots
-		if errors.As(err, &snapErr) {
+		snapErr, ok := errors.AsType[drivers.ErrDeleteSnapshots](err)
+		if ok {
 			err = deleteSnapshots(snapErr.Snapshots)
 			if err != nil {
 				return err
