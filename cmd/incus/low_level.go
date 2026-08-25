@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/internal/i18n"
 	"github.com/lxc/incus/v7/shared/api"
 	cli "github.com/lxc/incus/v7/shared/cmd"
+	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/termios"
 	"github.com/lxc/incus/v7/shared/uefi"
 	"github.com/lxc/incus/v7/shared/util"
@@ -1117,6 +1118,10 @@ func (c *cmdLowLevelSecureBoot) command() *cobra.Command {
 	lowLevelSecureBootAddCmd := cmdLowLevelSecureBootAdd{global: c.global}
 	cmd.AddCommand(lowLevelSecureBootAddCmd.command())
 
+	// Export.
+	lowLevelSecureBootExportCmd := cmdLowLevelSecureBootExport{global: c.global}
+	cmd.AddCommand(lowLevelSecureBootExportCmd.command())
+
 	// List.
 	lowLevelSecureBootListCmd := cmdLowLevelSecureBootList{global: c.global}
 	cmd.AddCommand(lowLevelSecureBootListCmd.command())
@@ -1316,6 +1321,120 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 		Attributes: v.Attributes,
 		Timestamp:  v.Timestamp,
 	}, etag)
+}
+
+// Export.
+type cmdLowLevelSecureBootExport struct {
+	global *cmdGlobal
+
+	flagForce bool
+}
+
+var cmdLowLevelSecureBootExportUsage = u.Usage{u.Instance.Remote(), u.EitherVerbatim(cmdLowLevelSecureBootESLNames...), u.Target(u.File).Optional()}
+
+func (c *cmdLowLevelSecureBootExport) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("export", cmdLowLevelSecureBootExportUsage...)
+	cmd.Short = i18n.G("Export Secure Boot signatures")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(`Export Secure Boot signatures`))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagForce, "force|f", i18n.G("Force overwriting existing PEM file"))
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return c.global.cmpInstances(toComplete)
+		}
+
+		if len(args) == 1 {
+			return cmdLowLevelSecureBootESLNames, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveDefault
+	}
+
+	return cmd
+}
+
+func (c *cmdLowLevelSecureBootExport) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdLowLevelSecureBootExportUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[0].RemoteServer
+	instanceName := parsed[0].RemoteObject.String
+	db := parsed[1].String
+	guid, varName := util.ESLGUIDVar(db)
+	hasTarget := !parsed[2].Skipped
+	targetName := parsed[2].Get(instanceName + "." + db + ".pem")
+	if hasTarget && !isStdout(targetName) && !c.flagForce && util.PathExists(targetName) {
+		// Check if the target path already exists.
+		return fmt.Errorf(i18n.G("Target path %q already exists"), targetName)
+	}
+
+	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
+	if err != nil {
+		return err
+	}
+
+	// We received a JSON object unmarshalled as a map, so we convert it back to JSON to unmarshal it
+	// again into our desired type.
+	marshalled, err := json.Marshal(v.Data)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as valid JSON"), uefi.GUIDName(guid), varName)
+	}
+
+	var esl uefi.ESL
+	err = json.Unmarshal(marshalled, &esl)
+	if err != nil {
+		// This shouldn’t happen.
+		return fmt.Errorf(i18n.G("Unable to parse %s:%s as an EFI Signature List"), uefi.GUIDName(guid), varName)
+	}
+
+	var target *os.File
+	if isStdout(targetName) {
+		target = os.Stdout
+	} else {
+		target, err = os.Create(targetName)
+		if err != nil {
+			return err
+		}
+
+		defer logger.WarnOnErrorExcept(target.Close, []error{os.ErrClosed}, "Failed to close target file")
+	}
+
+	for _, node := range esl {
+		switch node.Type {
+		case "x509":
+			for _, entry := range node.Entries {
+				cert, err := x509.ParseCertificate(entry.Data)
+				if err != nil {
+					return err
+				}
+
+				err = pem.Encode(target, &pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
+				if err != nil {
+					return err
+				}
+			}
+
+		case "sha256", "sha384", "sha512":
+			for _, entry := range node.Entries {
+				err = pem.Encode(target, &pem.Block{Type: "SIGNATURE", Bytes: entry.Data})
+				if err != nil {
+					return err
+				}
+			}
+		default:
+			// Technically, some of those signature types are not unknown, but we prefer not to bother
+			// supporting them.
+			return fmt.Errorf(i18n.G("Unknown signature type %s"), node.Type)
+		}
+	}
+
+	return nil
 }
 
 // List.
