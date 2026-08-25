@@ -59,6 +59,9 @@ test_nvram_vm() {
     incus console --show-log v1 | grep "Access Denied"
     incus stop -f v1
     curl -L "https://go.microsoft.com/fwlink/?linkid=2239872" | incus low-level secureboot add v1 db - --owner=microsoft
+    PK="$(incus low-level secureboot export v1 pk -)"
+    ! echo "$PK" | incus low-level secureboot add v1 pk - || false
+    echo "$PK" | incus low-level secureboot add v1 pk - --skip
     incus start v1
     sleep 5
     ! incus console --show-log v1 | grep "Access Denied" || false
@@ -173,6 +176,19 @@ EOF
     [ "$(incus low-level nvram get v1 00112233-4455-6677-8899-aabbccddeeff:Baz --format=json)" = '{"attributes":["NON_VOLATILE","BOOTSERVICE_ACCESS"],"binary":"UXV4"}' ]
     [ "$(incus low-level nvram get v1 OVMF_PLATFORM_CONFIG_GUID:PlatformConfig --format=json)" = '{"data":{"height":600,"width":800},"attributes":["NON_VOLATILE","BOOTSERVICE_ACCESS","RUNTIME_ACCESS"],"binary":"IAMAAFgCAAA="}' ]
     [ "$(incus low-level secureboot list v1 db --format=csv --columns=tf | tr '\n' :)" = "sha256,000011112222:x509,f6124e34125b:" ]
+    incus stop v1
+    DB="$(incus low-level secureboot export v1 db -)"
+    incus low-level secureboot remove v1 db 000011112222
+    incus low-level secureboot remove v1 db f6124e34125b
+    echo "$DB" | incus low-level secureboot add v1 db -
+    [ "$(incus low-level secureboot list v1 db --format=csv --columns=tf | tr '\n' :)" = "x509,f6124e34125b:" ]
+    echo "$DB" | incus low-level secureboot add v1 db - --skip --bundle
+    [ "$(incus low-level secureboot list v1 db --format=csv --columns=tf | tr '\n' :)" = "sha256,000011112222:x509,f6124e34125b:" ]
+    incus low-level nvram unset v1 EFI_IMAGE_SECURITY_DATABASE_GUID:db
+    echo "$DB" | incus low-level secureboot import v1 db -
+    [ "$(incus low-level secureboot export v1 db -)" = "$DB" ]
+    ! echo "$DB" | incus low-level secureboot import v1 db - || false
+    echo "$DB" | incus low-level secureboot import v1 db - --force
 
     echo "==> Deleting VM"
     incus rm -f v1
