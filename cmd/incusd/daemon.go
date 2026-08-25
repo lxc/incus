@@ -516,13 +516,10 @@ func (d *Daemon) getTrustedCertificates() (map[certificate.Type]map[string]x509.
 	}
 
 	// If in PKI mode, filter certificates that aren't trusted by the CA.
-	ca, err := localtls.ReadCert(internalUtil.VarPath("server.ca"))
+	certPool, err := localtls.ReadCerts(internalUtil.VarPath("server.ca"))
 	if err != nil {
 		return nil, err
 	}
-
-	certPool := x509.NewCertPool()
-	certPool.AddCert(ca)
 
 	for certType, certEntries := range certs {
 		if certType == certificate.TypeServer {
