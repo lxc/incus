@@ -228,5 +228,12 @@ EOF
     incus exec idmap -- chown 4000009:4000009 /d
     [ "$(stat -c '%u:%g' "/proc/${PID}/root/d")" = "$((UID_BASE + 29)):$((GID_BASE + 29))" ]
 
+    # Test mapping host uid 0 into the container
+    incus config set idmap raw.idmap="both 0 1000"
+    incus restart idmap --force
+    ROOT_UID=$(incus exec idmap -- cat /proc/self/uid_map | awk '$1 == 0 {print $2}')
+    [ "$(stat -L -c '%u' "${INCUS_DIR}/containers/idmap")" = "${ROOT_UID}" ]
+    incus exec idmap -- stat /dev/.incus-systemd-credentials
+
     incus delete idmap --force
 }
