@@ -263,22 +263,6 @@ func (c *Config) InstancesTPMPlatformCert() (string, string) {
 	return c.m.GetString("instances.tpm.platform_cert"), c.m.GetString("instances.tpm.platform_key")
 }
 
-// LokiServer returns all the Loki settings needed to connect to a server.
-func (c *Config) LokiServer() (string, string, string, string, string, string, []string, []string) {
-	var types []string
-	var labels []string
-
-	if c.m.GetString("loki.types") != "" {
-		types = strings.Split(c.m.GetString("loki.types"), ",")
-	}
-
-	if c.m.GetString("loki.labels") != "" {
-		labels = strings.Split(c.m.GetString("loki.labels"), ",")
-	}
-
-	return c.m.GetString("loki.api.url"), c.m.GetString("loki.auth.username"), c.m.GetString("loki.auth.password"), c.m.GetString("loki.api.ca_cert"), c.m.GetString("loki.instance"), c.m.GetString("loki.loglevel"), labels, types
-}
-
 // ACME returns all ACME settings needed for certificate renewal.
 func (c *Config) ACME() (string, string, string, bool, string) {
 	return c.m.GetString("acme.domain"), c.m.GetString("acme.email"), c.m.GetString("acme.ca_url"), c.m.GetBool("acme.agree_tos"), c.m.GetString("acme.challenge")
@@ -1004,8 +988,8 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  shortdesc: Platform CA certificate used to provision TPM Endorsement Keys
-	"instances.tpm.platform_cert": {},
+	//  shortdesc: Platform CA certificate used to provision TPM Endorsement Keys (PEM bundle)
+	"instances.tpm.platform_cert": {Validator: validate.Optional(validate.IsPEM(true))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=instances.tpm.platform_key)
 	// PEM encoded private key matching `instances.tpm.platform_cert`.
@@ -1014,8 +998,8 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  shortdesc: Private key for the TPM platform CA certificate
-	"instances.tpm.platform_key": {},
+	//  shortdesc: Private key for the TPM platform CA certificate (PEM private key)
+	"instances.tpm.platform_key": {Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
 
 	// gendoc:generate(entity=server, group=loki, key=loki.auth.username)
 	//
@@ -1038,8 +1022,8 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  shortdesc: CA certificate for the Loki server
-	"loki.api.ca_cert": {Deprecated: "Use 'logging.*.target.ca_cert' instead"},
+	//  shortdesc: CA certificates for the Loki server (PEM bundle)
+	"loki.api.ca_cert": {Validator: validate.Optional(validate.IsPEM(true)), Deprecated: "Use 'logging.*.target.ca_cert' instead"},
 
 	// gendoc:generate(entity=server, group=loki, key=loki.api.url)
 	// Specify the protocol, name or IP and port. For example `https://loki.example.com:3100`. Incus will automatically add the `/loki/api/v1/push` suffix so there's no need to add it here.
@@ -1162,8 +1146,8 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  defaultdesc: Content of `/etc/ovn/ovn-central.crt` if present
-	//  shortdesc: OVN SSL certificate authority
-	"network.ovn.ca_cert": {Default: ""},
+	//  shortdesc: OVN SSL certificate authorities (PEM bundle)
+	"network.ovn.ca_cert": {Validator: validate.Optional(validate.IsPEM(true))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.client_cert)
 	//
@@ -1171,8 +1155,8 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  defaultdesc: Content of `/etc/ovn/cert_host` if present
-	//  shortdesc: OVN SSL client certificate
-	"network.ovn.client_cert": {Default: ""},
+	//  shortdesc: OVN SSL client certificate (PEM bundle)
+	"network.ovn.client_cert": {Validator: validate.Optional(validate.IsPEM(true))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=network.ovn.client_key)
 	//
@@ -1180,8 +1164,8 @@ var ConfigSchema = config.Schema{
 	//  type: string
 	//  scope: global
 	//  defaultdesc: Content of `/etc/ovn/key_host` if present
-	//  shortdesc: OVN SSL client key
-	"network.ovn.client_key": {Default: ""},
+	//  shortdesc: OVN SSL client key (PEM private key)
+	"network.ovn.client_key": {Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.controller_connection)
 	//
@@ -1196,24 +1180,24 @@ var ConfigSchema = config.Schema{
 	// ---
 	//  type: string
 	//  scope: global
-	//  shortdesc: LINSTOR SSL certificate authority
-	"storage.linstor.ca_cert": {Default: ""},
+	//  shortdesc: LINSTOR SSL certificate authorities (PEM bundle)
+	"storage.linstor.ca_cert": {Validator: validate.Optional(validate.IsPEM(true))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.client_cert)
 	//
 	// ---
 	//  type: string
 	//  scope: global
-	//  shortdesc: LINSTOR SSL client certificate
-	"storage.linstor.client_cert": {Default: ""},
+	//  shortdesc: LINSTOR SSL client certificate (PEM bundle)
+	"storage.linstor.client_cert": {Validator: validate.Optional(validate.IsPEM(true))},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=storage.linstor.client_key)
 	//
 	// ---
 	//  type: string
 	//  scope: global
-	//  shortdesc: LINSTOR SSL client key
-	"storage.linstor.client_key": {Default: ""},
+	//  shortdesc: LINSTOR SSL client key (PEM private key)
+	"storage.linstor.client_key": {Validator: validate.Optional(validate.IsPEM(false, "PRIVATE KEY", ".* PRIVATE KEY"))},
 }
 
 func expiryValidator(value string) error {

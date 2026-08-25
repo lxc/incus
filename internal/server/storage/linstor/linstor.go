@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -59,13 +59,11 @@ func NewClient(controllerConnection, sslCACert, sslClientCert, sslClientKey stri
 	// If a CA cert is provided, use it to validate the server certificates.
 	if sslCACert != "" {
 		rootCAs := x509.NewCertPool()
-		certBlock, _ := pem.Decode([]byte(sslCACert))
-		caCert, err := x509.ParseCertificate(certBlock.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create Linstor client: %w", err)
+		ok := rootCAs.AppendCertsFromPEM([]byte(sslCACert))
+		if !ok {
+			return nil, errors.New("Failed to create Linstor client: Invalid CA")
 		}
 
-		rootCAs.AddCert(caCert)
 		httpTransport.TLSClientConfig = &tls.Config{RootCAs: rootCAs}
 	}
 
