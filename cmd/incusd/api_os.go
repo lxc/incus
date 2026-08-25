@@ -42,9 +42,9 @@ func apiOSProxy(d *Daemon, r *http.Request) response.Response {
 				return net.Dial("unix", "/run/incus-os/unix.socket")
 			},
 		},
-		Director: func(r *http.Request) {
-			r.URL.Scheme = "http"
-			r.URL.Host = "incus-os"
+		Rewrite: func(r *httputil.ProxyRequest) {
+			r.Out.URL.Scheme = "http"
+			r.Out.URL.Host = "incus-os"
 		},
 	}
 
