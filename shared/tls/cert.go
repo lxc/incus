@@ -386,6 +386,22 @@ func ReadCert(fpath string) (*x509.Certificate, error) {
 	return x509.ParseCertificate(certBlock.Bytes)
 }
 
+// ReadCerts reads a PEM encoded certificate bundle.
+func ReadCerts(fpath string) (*x509.CertPool, error) {
+	bundle, err := os.ReadFile(fpath)
+	if err != nil {
+		return nil, err
+	}
+
+	certPool := x509.NewCertPool()
+	ok := certPool.AppendCertsFromPEM(bundle)
+	if !ok {
+		return nil, errors.New("Invalid certificate bundle file")
+	}
+
+	return certPool, nil
+}
+
 // CertFingerprint returns the SHA256 fingerprint string of an x509 certificate.
 func CertFingerprint(cert *x509.Certificate) string {
 	return fmt.Sprintf("%x", sha256.Sum256(cert.Raw))
