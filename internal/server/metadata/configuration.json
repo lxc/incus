@@ -7255,11 +7255,11 @@
 						}
 					},
 					{
-						"cephobject.radosgw.endpoint_cert_file": {
+						"cephobject.radosgw.endpoint_cert": {
 							"default": "-",
 							"longdesc": "",
 							"scope": "global",
-							"shortdesc": "Path to the file containing the TLS client certificate to use for endpoint communication",
+							"shortdesc": "TLS certificate (PEM bundle) to trust for endpoint communication",
 							"type": "string"
 						}
 					},

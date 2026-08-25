@@ -108,6 +108,7 @@ var patches = []patch{
 	{name: "network_ovn_l2proxy_arp_proxy", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNL2ProxyARPProxy)},
 	{name: "auth_openfga_instance_tcp", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "auth_openfga_shared_networks", stage: patchPostNetworks, run: patchGenericAuthorization},
+	{name: "storage_cephobject_endpoint_cert", stage: patchPreDaemonStorage, run: patchStorageCephObjectEndpointCert},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -1884,6 +1885,46 @@ func patchAuthorizationOpenFGAConfigKeys(_ string, d *Daemon) error {
 		err = tx.UpdateClusterConfig(changes)
 		if err != nil {
 			return fmt.Errorf("Failed updating cluster config: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// patchStorageCephObjectEndpointCert converts cephobject.radosgw.endpoint_cert_file into cephobject.radosgw.endpoint_cert.
+func patchStorageCephObjectEndpointCert(_ string, d *Daemon) error {
+	return d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		pools, _, err := tx.GetStoragePools(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("Failed getting storage pools: %w", err)
+		}
+
+		for _, pool := range pools {
+			if pool.Driver != "cephobject" {
+				continue
+			}
+
+			certFilePath := pool.Config["cephobject.radosgw.endpoint_cert_file"]
+			if certFilePath == "" {
+				continue
+			}
+
+			// Only carry over the value if the new key hasn't already been set.
+			if pool.Config["cephobject.radosgw.endpoint_cert"] == "" {
+				cert, err := os.ReadFile(certFilePath)
+				if err != nil {
+					return fmt.Errorf("Failed reading %q for storage pool %q: %w", certFilePath, pool.Name, err)
+				}
+
+				pool.Config["cephobject.radosgw.endpoint_cert"] = string(cert)
+			}
+
+			delete(pool.Config, "cephobject.radosgw.endpoint_cert_file")
+
+			err = tx.UpdateStoragePool(ctx, pool.Name, pool.Description, pool.Config)
+			if err != nil {
+				return fmt.Errorf("Failed updating storage pool %q: %w", pool.Name, err)
+			}
 		}
 
 		return nil
