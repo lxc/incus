@@ -148,13 +148,25 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 	return nil
 }
 
+func hierarchicalMerge(n int) tw.CellMerging {
+	indices := make([]int, max(0, n-1))
+	for i := range n - 1 {
+		indices[i] = i
+	}
+
+	return tw.CellMerging{
+		Mode:          tw.MergeHierarchical,
+		ByColumnIndex: tw.NewBoolMapper(indices...),
+	}
+}
+
 func getBaseTable(w io.Writer, header []string, data [][]string) (*tablewriter.Table, error) {
 	table := tablewriter.NewTable(
 		w,
 		tablewriter.WithRowConfig(tw.CellConfig{
 			Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
 			Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
-			Merging:    tw.CellMerging{Mode: tw.MergeHierarchical},
+			Merging:    hierarchicalMerge(len(header)),
 			Padding:    tw.CellPadding{Global: tw.Padding{Left: " ", Right: " "}},
 		}),
 		tablewriter.WithHeaderConfig(tw.CellConfig{
