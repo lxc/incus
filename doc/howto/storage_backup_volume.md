@@ -82,11 +82,11 @@ To do so, set the `snapshots.schedule` configuration option for the storage volu
 
 For example, to configure daily snapshots, use the following command:
 
-    incus storage volume set <pool_name> <volume_name> snapshots.schedule @daily
+    incus storage volume set <pool_name> <volume_name> snapshots.schedule=@daily
 
 To configure taking a snapshot every day at 6 am, use the following command:
 
-    incus storage volume set <pool_name> <volume_name> snapshots.schedule "0 6 * * *"
+    incus storage volume set <pool_name> <volume_name> snapshots.schedule="0 6 * * *"
 
 When scheduling regular snapshots, consider setting an automatic expiry (`snapshots.expiry`) and a naming pattern for snapshots (`snapshots.pattern`).
 See the {ref}`storage-drivers` documentation for more information about those configuration options.
