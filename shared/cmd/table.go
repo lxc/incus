@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/renderer"
 	"github.com/olekukonko/tablewriter/tw"
@@ -74,13 +75,18 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 			return err
 		}
 
-		table.Options(tablewriter.WithRendition(tw.Rendition{
-			Borders: tw.BorderNone,
-			Settings: tw.Settings{
-				Lines:      tw.LinesNone,
-				Separators: tw.SeparatorsNone,
-			},
-		}))
+		table.Options(
+			tablewriter.WithRendition(tw.Rendition{
+				Borders: tw.BorderNone,
+				Settings: tw.Settings{
+					Lines: tw.LinesNone,
+				},
+			}),
+			tablewriter.WithRowConfig(tw.CellConfig{
+				Merging: tw.CellMerging{},
+			}),
+			tablewriter.WithPadding(tw.Padding{}),
+		)
 
 		err = table.Render()
 		if err != nil {
@@ -145,12 +151,24 @@ func RenderTable(w io.Writer, format string, header []string, data [][]string, r
 func getBaseTable(w io.Writer, header []string, data [][]string) (*tablewriter.Table, error) {
 	table := tablewriter.NewTable(
 		w,
-		tablewriter.WithRowAlignment(tw.AlignLeft),
-		tablewriter.WithRowAutoWrap(tw.WrapNone),
-		tablewriter.WithHeaderAutoFormat(tw.Off),
-		tablewriter.WithRendition(tw.Rendition{
-			Symbols: tw.NewSymbols(tw.StyleASCII),
+		tablewriter.WithRowConfig(tw.CellConfig{
+			Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+			Formatting: tw.CellFormatting{AutoWrap: tw.WrapNone},
+			Merging:    tw.CellMerging{Mode: tw.MergeHierarchical},
+			Padding:    tw.CellPadding{Global: tw.Padding{Left: " ", Right: " "}},
 		}),
+		tablewriter.WithHeaderConfig(tw.CellConfig{
+			Alignment:  tw.CellAlignment{Global: tw.AlignCenter},
+			Formatting: tw.CellFormatting{AutoFormat: tw.Off},
+			Padding:    tw.CellPadding{Global: tw.Padding{Left: " ", Right: " "}},
+		}),
+		tablewriter.WithRenderer(renderer.NewColorized(renderer.ColorizedConfig{
+			Header:    renderer.Tint{FG: renderer.Colors{color.Bold}},
+			Column:    renderer.Tint{Columns: []renderer.Tint{}},
+			Border:    renderer.Tint{FG: renderer.Colors{color.Faint}},
+			Separator: renderer.Tint{FG: renderer.Colors{color.Faint}},
+			Symbols:   tw.NewSymbols(tw.StyleLight),
+		})),
 	)
 	table.Header(header)
 
