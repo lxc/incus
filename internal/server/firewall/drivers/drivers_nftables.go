@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/google/uuid"
+	"github.com/mdlayher/netx/eui64"
 
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/shared/subprocess"
@@ -391,6 +392,16 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 	if IPv6Nets != nil && len(IPv6Nets) == 0 {
 		tplFields["ipv6FilterAll"] = true
 		tplFields["macFiltering"] = true
+	}
+
+	// Allow the EUI-64 link-local address so NDP and DHCPv6 replies to the instance keep working.
+	if len(IPv6Nets) > 0 {
+		linkLocal, err := eui64.ParseMAC(net.ParseIP("fe80::"), mac)
+		if err != nil {
+			return err
+		}
+
+		IPv6Nets = append(slices.Clone(IPv6Nets), &net.IPNet{IP: linkLocal, Mask: net.CIDRMask(128, 128)})
 	}
 
 	ipv6NetsList := make([]string, 0, len(IPv6Nets))

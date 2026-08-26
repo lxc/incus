@@ -1,3 +1,21 @@
+# Compute the EUI-64 link-local address for a MAC address.
+macToLinkLocal() {
+    IFS=: read -r b1 b2 b3 b4 b5 b6 <<EOF
+${1}
+EOF
+    b1=$(printf "%02x" $(( $(printf "%d" "0x${b1}") ^ 2 )))
+    printf "fe80::%x:%x:%x:%x" "0x${b1}${b2}" "0x${b3}ff" "0xfe${b4}" "0x${b5}${b6}"
+}
+
+# Compute the hex form of the EUI-64 link-local address for a MAC address.
+macToLinkLocalHex() {
+    IFS=: read -r b1 b2 b3 b4 b5 b6 <<EOF
+${1}
+EOF
+    b1=$(printf "%02x" $(( $(printf "%d" "0x${b1}") ^ 2 )))
+    printf "0xfe80000000000000%s%s%sfffe%s%s%s" "${b1}" "${b2}" "${b3}" "${b4}" "${b5}" "${b6}"
+}
+
 test_container_devices_nic_bridged_filtering() {
     ensure_import_testimage
     ensure_has_localhost_remote "${INCUS_ADDR}"
@@ -290,6 +308,8 @@ test_container_devices_nic_bridged_filtering() {
     ipv6RoutesDec="2306139568115679232"
     ipv6RoutesExternalHex="0x20010db800030000"
     ipv6RoutesExternalDec="2306139568115744768"
+    ipv6LinkLocal=$(macToLinkLocal "${ctAMAC}")
+    ipv6LinkLocalHex=$(macToLinkLocalHex "${ctAMAC}")
 
     rules=$(nft -nn list chain bridge incus "${table}.${ctPrefix}A.eth0")
 
@@ -306,11 +326,11 @@ test_container_devices_nic_bridged_filtering() {
             echo "MAC NDP filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
             false
         fi
-        if ! echo "${rules}" | grep -P "iifname \"${ctAHost}\" icmpv6 type 136 @nh,384,128 != (${ipv6Hex}|${ipv6Dec}) @nh,384,64 != (${ipv6RoutesHex}|${ipv6RoutesDec}) @nh,384,64 != (${ipv6RoutesExternalHex}|${ipv6RoutesExternalDec}) drop"; then
+        if ! echo "${rules}" | grep -P "iifname \"${ctAHost}\" icmpv6 type 136 @nh,384,128 != (${ipv6Hex}|${ipv6Dec}) @nh,384,64 != (${ipv6RoutesHex}|${ipv6RoutesDec}) @nh,384,64 != (${ipv6RoutesExternalHex}|${ipv6RoutesExternalDec}) @nh,384,128 != (${ipv6LinkLocalHex}|[0-9]+) drop"; then
             echo "IPv6 NDP filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
             false
         fi
-        if ! echo "${rules}" | grep "iifname \"${ctAHost}\" ip6 saddr != { 2001:db8:1::2, 2001:db8:2::/64, 2001:db8:3::/64 } drop"; then
+        if ! echo "${rules}" | grep "iifname \"${ctAHost}\" ip6 saddr != { 2001:db8:1::2, 2001:db8:2::/64, 2001:db8:3::/64, ${ipv6LinkLocal} } drop"; then
             echo "IPv6 filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
             false
         fi
@@ -339,6 +359,21 @@ test_container_devices_nic_bridged_filtering() {
     # Check basic connectivity with IPv6 filtering and real IPs configured.
     incus exec "${ctPrefix}A" -- ping6 -c2 -W5 2001:db8:1::1
     incus exec "${ctPrefix}A" -- ping6 -c2 -W5 2001:db8:1::3
+
+    # Check the host can reach the EUI-64 link-local address (needed for DHCPv6 replies).
+    incus exec "${ctPrefix}A" -- ip -6 a add "${ipv6LinkLocal}/64" dev eth0
+    wait_for_dad "${ctPrefix}A" eth0
+    ping6 -c2 -W5 "${ipv6LinkLocal}%${brName}"
+
+    # Check a spoofed link-local address is filtered.
+    incus exec "${ctPrefix}A" -- ip -6 a add fe80::1234/64 dev eth0
+    wait_for_dad "${ctPrefix}A" eth0
+    if ping6 -c2 -W5 "fe80::1234%${brName}"; then
+        echo "IPv6 filter not working to spoofed link-local address"
+        false
+    fi
+
+    incus exec "${ctPrefix}A" -- ip -6 a del fe80::1234/64 dev eth0
 
     # Add a fake IP
     incus exec "${ctPrefix}A" -- ip -6 a flush dev eth0
@@ -496,6 +531,8 @@ test_container_devices_nic_bridged_filtering() {
     macHex=$(printf "0x%x" "${macDec}")
     ipv6Hex="0x20010db8000000000000000000000002"
     ipv6Dec="42540766411282592856903984951653826562"
+    ipv6LinkLocal=$(macToLinkLocal "${ctAMAC}")
+    ipv6LinkLocalHex=$(macToLinkLocalHex "${ctAMAC}")
 
     rules=$(nft -nn list chain bridge incus "${table}.${ctPrefix}A.eth0")
 
@@ -512,11 +549,11 @@ test_container_devices_nic_bridged_filtering() {
             echo "MAC NDP filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
             false
         fi
-        if ! echo "${rules}" | grep -P "iifname \"${ctAHost}\" icmpv6 type 136 @nh,384,128 != (${ipv6Hex}|${ipv6Dec}) drop"; then
+        if ! echo "${rules}" | grep -P "iifname \"${ctAHost}\" icmpv6 type 136 @nh,384,128 != (${ipv6Hex}|${ipv6Dec}) @nh,384,128 != (${ipv6LinkLocalHex}|[0-9]+) drop"; then
             echo "IPv6 NDP filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
             false
         fi
-        if ! echo "${rules}" | grep "iifname \"${ctAHost}\" ip6 saddr != 2001:db8::2 drop"; then
+        if ! echo "${rules}" | grep "iifname \"${ctAHost}\" ip6 saddr != { 2001:db8::2, ${ipv6LinkLocal} } drop"; then
             echo "IPv6 filter not applied as part of ipv6_filtering in nftables (${table}.${ctPrefix}A.eth0)"
             false
         fi
