@@ -44,7 +44,7 @@ See {ref}`cluster-member-config` for all available configurations.
 To set these configuration options, use [`incus cluster set`](incus_cluster_set.md) or [`incus cluster edit`](incus_cluster_edit.md).
 For example:
 
-    incus cluster set server1 scheduler.instance manual
+    incus cluster set server1 scheduler.instance=manual
 
 ### Assign member roles
 

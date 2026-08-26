@@ -35,8 +35,8 @@ See the following sections for instructions on how to disable Incus' firewall ru
 
 Run the following commands to prevent Incus from setting firewall rules for a specific network bridge (for example, `incusbr0`):
 
-    incus network set <network_bridge> ipv6.firewall false
-    incus network set <network_bridge> ipv4.firewall false
+    incus network set <network_bridge> ipv6.firewall=false
+    incus network set <network_bridge> ipv4.firewall=false
 
 ### `firewalld`: Add the bridge to the trusted zone
 

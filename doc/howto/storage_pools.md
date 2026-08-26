@@ -193,11 +193,11 @@ Driver-specific keys are namespaced by the driver name.
 
 Use the following command to set configuration options for a storage pool:
 
-    incus storage set <pool_name> <key> <value>
+    incus storage set <pool_name> <key>=<value>
 
 For example, to turn off compression during storage pool migration for a `dir` storage pool, use the following command:
 
-    incus storage set my-dir-pool rsync.compression false
+    incus storage set my-dir-pool rsync.compression=false
 
 You can also edit the storage pool configuration by using the following command:
 

@@ -33,8 +33,8 @@ An example for an OVN integration would be:
 
 ```
 incus network integration create ovn-region ovn
-incus network integration set ovn-region ovn.northbound_connection tcp:[192.0.2.12]:6645,tcp:[192.0.3.13]:6645,tcp:[192.0.3.14]:6645
-incus network integration set ovn-region ovn.southbound_connection tcp:[192.0.2.12]:6646,tcp:[192.0.3.13]:6646,tcp:[192.0.3.14]:6646
+incus network integration set ovn-region ovn.northbound_connection=tcp:[192.0.2.12]:6645,tcp:[192.0.3.13]:6645,tcp:[192.0.3.14]:6645
+incus network integration set ovn-region ovn.southbound_connection=tcp:[192.0.2.12]:6646,tcp:[192.0.3.13]:6646,tcp:[192.0.3.14]:6646
 ```
 
 ## Using a network integration
