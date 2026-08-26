@@ -135,7 +135,7 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 	}
 
 	// Add the client to the struct.
-	client.client = ovn
+	client.client = &timeoutClient{Client: ovn}
 	client.cookie = monitorCookie
 
 	// Set finalizer to stop the monitor.
