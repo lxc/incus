@@ -19,7 +19,7 @@ test_image_empty_profile_list() {
     ! incus image show testimage | grep -q -- '- default' || false
 
     # Launch the container and check its profiles
-    storage=$(incus storage list | grep "^| " | tail -n 1 | cut -d' ' -f2)
+    storage="$(incus storage list --format=csv --columns=n | tail -n1)"
     incus launch testimage c1 -s "$storage"
     incus list -f json c1 | jq -r '.[0].profiles | join(" ")' | grep -q "^$" || false
 
@@ -43,7 +43,7 @@ test_image_alternate_profile_list() {
     ! incus image show testimage | grep -q -- '- default' || false
 
     # Launch the container and check its profiles
-    storage=$(incus storage list | grep "^| " | tail -n 1 | cut -d' ' -f2)
+    storage="$(incus storage list --format=csv --columns=n | tail -n1)"
     incus profile device add p1 root disk path=/ pool="$storage"
     incus launch testimage c1
     incus list -f json c1 | jq -r '.[0].profiles | join(" ")' | grep -q "p1 p2 p3" || false
@@ -66,7 +66,7 @@ test_profiles_project_default() {
 test_profiles_project_images_profiles() {
     incus project create project1
     incus project switch project1
-    storage=$(incus storage list | grep "^| " | tail -n 1 | cut -d' ' -f2)
+    storage="$(incus storage list --format=csv --columns=n | tail -n1)"
     incus profile device add default root disk path=/ pool="$storage"
 
     test_image_nil_profile_list
@@ -93,7 +93,7 @@ test_profiles_project_images() {
 test_profiles_project_profiles() {
     incus project create project1 -c features.images=false
     incus project switch project1
-    storage=$(incus storage list | grep "^| " | tail -n 1 | cut -d' ' -f2)
+    storage="$(incus storage list --format=csv --columns=n | tail -n1)"
     incus profile device add default root disk path=/ pool="$storage"
 
     test_image_nil_profile_list

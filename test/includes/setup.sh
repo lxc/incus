@@ -12,7 +12,7 @@ ensure_has_localhost_remote() {
 }
 
 ensure_import_testimage() {
-    if ! incus image alias list | grep -q "^| testimage\\s*|.*$"; then
+    if ! incus image alias list --format=csv --columns=a | grep -q "^testimage$"; then
         if [ -e "${INCUS_TEST_IMAGE:-}" ]; then
             incus image import "${INCUS_TEST_IMAGE}" --alias testimage
         else
@@ -26,8 +26,7 @@ ensure_import_testimage() {
                 exit 1
             fi
 
-            project="$(incus project list | awk '/(current)/ {print $2}')"
-            deps/import-busybox --alias testimage --project "$project"
+            deps/import-busybox --alias testimage --project "$(incus project get-current)"
         fi
     fi
 }
