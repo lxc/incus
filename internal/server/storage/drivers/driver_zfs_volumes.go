@@ -2562,13 +2562,18 @@ func (d *zfs) MountVolume(vol Volume, op *operations.Operation) error {
 	// Check if filesystem volume already mounted.
 	if vol.contentType == ContentTypeFS && !d.isBlockBacked(vol) {
 		if !linux.IsMountPoint(mountPath) {
-			err := d.setDatasetProperties(dataset, "mountpoint=legacy", "canmount=noauto")
-			if err != nil {
-				return err
-			}
-
 			if zfsDelegate && util.IsTrue(vol.config["zfs.delegate"]) {
+				err := d.resetDelegatedDataset(dataset)
+				if err != nil {
+					return err
+				}
+
 				err = d.setDatasetProperties(dataset, "zoned=on")
+				if err != nil {
+					return err
+				}
+			} else {
+				err := d.setDatasetProperties(dataset, "mountpoint=legacy", "canmount=noauto")
 				if err != nil {
 					return err
 				}
@@ -2682,7 +2687,7 @@ func (d *zfs) UnmountVolume(vol Volume, keepBlockDev bool, op *operations.Operat
 		}
 
 		if !blockBacked && zfsDelegate && util.IsTrue(vol.config["zfs.delegate"]) {
-			err = d.setDatasetProperties(dataset, "zoned=off")
+			err = d.resetDelegatedDataset(dataset)
 			if err != nil {
 				return false, err
 			}
