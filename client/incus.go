@@ -210,10 +210,21 @@ func (r *ProtocolIncus) RequireAuthenticated(authenticated bool) {
 //
 // This should only be used by internal Incus tools.
 func (r *ProtocolIncus) RawQuery(method string, path string, data any, ETag string) (*api.Response, string, error) {
+	return r.RawQueryWithHeaders(method, path, data, ETag, nil)
+}
+
+// RawQueryWithHeaders is RawQuery with additional request headers.
+//
+// The headers are applied last, so they override any header set by the client
+// itself (e.g. Content-Type). A header name mapped to an empty list of values
+// removes that header from the request.
+//
+// This should only be used by internal Incus tools.
+func (r *ProtocolIncus) RawQueryWithHeaders(method string, path string, data any, ETag string, headers http.Header) (*api.Response, string, error) {
 	// Generate the URL
 	url := fmt.Sprintf("%s%s", r.httpBaseURL.String(), path)
 
-	return r.rawQuery(method, url, data, ETag)
+	return r.rawQuery(method, url, data, ETag, headers)
 }
 
 // RawWebsocket allows directly connection to Incus API websockets
@@ -256,9 +267,9 @@ func incusParseResponse(resp *http.Response) (*api.Response, string, error) {
 	return &response, etag, nil
 }
 
-// rawQuery is a method that sends an HTTP request to the Incus server with the provided method, URL, data, and ETag.
+// rawQuery is a method that sends an HTTP request to the Incus server with the provided method, URL, data, ETag and headers.
 // It processes the request based on the data's type and handles the HTTP response, returning parsed results or an error if it occurs.
-func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag string) (*api.Response, string, error) {
+func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag string, headers http.Header) (*api.Response, string, error) {
 	var req *http.Request
 	var err error
 
@@ -319,6 +330,16 @@ func (r *ProtocolIncus) rawQuery(method string, url string, data any, ETag strin
 		req.Header.Set("If-Match", ETag)
 	}
 
+	// Apply the caller provided headers, overriding any of the defaults set above.
+	for name, values := range headers {
+		if len(values) == 0 {
+			req.Header.Del(name)
+			continue
+		}
+
+		req.Header[http.CanonicalHeaderKey(name)] = values
+	}
+
 	// Send the request
 	resp, err := r.DoHTTP(req)
 	if err != nil {
@@ -372,7 +393,7 @@ func (r *ProtocolIncus) query(method string, path string, data any, ETag string)
 	}
 
 	// Run the actual query
-	return r.rawQuery(method, url, data, ETag)
+	return r.rawQuery(method, url, data, ETag, nil)
 }
 
 // queryStruct sends a query to the Incus server, then converts the response metadata into the specified target struct.
