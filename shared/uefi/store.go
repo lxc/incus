@@ -20,8 +20,9 @@ type Store struct {
 	Vars     map[string]map[string]*api.InstanceNVRAMVariable
 	attrs    uint32
 	blockMap []blockMapEntry
-	length   uint64
+	fvLength uint64
 	varSize  uint32
+	fileSize int
 	rest     []byte
 	modified bool
 }
@@ -36,7 +37,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 	}
 
 	if !bytes.Equal(zeroVector, []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) {
-		return nil, fmt.Errorf("Invalid zero vector: %x", zeroVector)
+		return nil, fmt.Errorf("Invalid zero vector; got %x", zeroVector)
 	}
 
 	fsguid, err := r.readGUID()
@@ -45,16 +46,16 @@ func ParseNVRAM(data []byte) (*Store, error) {
 	}
 
 	if fsguid != EfiSystemNvDataFvGuid {
-		return nil, fmt.Errorf("Invalid GUID: %s", fsguid)
+		return nil, fmt.Errorf("Invalid GUID; expected %s, got %s", EfiSystemNvDataFvGuid, fsguid)
 	}
 
-	length, err := r.readU64()
+	fvLength, err := r.readU64()
 	if err != nil {
 		return nil, err
 	}
 
-	if length != uint64(len(data)) {
-		return nil, fmt.Errorf("Invalid length: %d", length)
+	if fvLength > uint64(len(data)) {
+		return nil, fmt.Errorf("Invalid firmware volume length; %d extends past file size %d", fvLength, len(data))
 	}
 
 	sig, err := r.readZ8(4)
@@ -63,7 +64,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 	}
 
 	if sig != "_FVH" {
-		return nil, fmt.Errorf("Invalid FVH signature: %s", sig)
+		return nil, fmt.Errorf("Invalid signature; expected _FVH, got %s", sig)
 	}
 
 	attrs, err := r.readU32()
@@ -71,9 +72,13 @@ func ParseNVRAM(data []byte) (*Store, error) {
 		return nil, err
 	}
 
-	hlength, err := r.readU16()
+	headerLength, err := r.readU16()
 	if err != nil {
 		return nil, err
+	}
+
+	if uint64(headerLength) > fvLength {
+		return nil, fmt.Errorf("Invalid header length; %d extends past volume size %d", headerLength, fvLength)
 	}
 
 	csumHdr, err := r.readU16()
@@ -81,11 +86,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 		return nil, err
 	}
 
-	if int(hlength) > len(data) {
-		return nil, fmt.Errorf("Invalid header length: %d", hlength)
-	}
-
-	if csum16(data[:hlength]) != 0 {
+	if csum16(data[:headerLength]) != 0 {
 		return nil, fmt.Errorf("Invalid header checksum: %x", csumHdr)
 	}
 
@@ -104,7 +105,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 	}
 
 	if reserved != 0 {
-		return nil, fmt.Errorf("Wrong value for FVH.Reserved: 0x%x", reserved)
+		return nil, fmt.Errorf("Invalid reserved field; expected 0x0, got 0x%x", reserved)
 	}
 
 	rev, err := r.readU8()
@@ -113,7 +114,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 	}
 
 	if rev != 2 {
-		return nil, fmt.Errorf("Invalid FVH Revision: 0x%x", rev)
+		return nil, fmt.Errorf("Invalid revision; expected 0x2, got 0x%x", rev)
 	}
 
 	var blockMap []blockMapEntry
@@ -137,12 +138,12 @@ func ParseNVRAM(data []byte) (*Store, error) {
 		totalBytes += uint64(blockCnt) * uint64(blockBytes)
 	}
 
-	if totalBytes != length {
-		return nil, fmt.Errorf("Invalid blockmap: %v", blockMap)
+	if totalBytes != fvLength {
+		return nil, fmt.Errorf("Invalid blockmap %v", blockMap)
 	}
 
-	if r.pos() != int(hlength) {
-		return nil, fmt.Errorf("Invalid header length: %d", hlength)
+	if r.pos() != int(headerLength) {
+		return nil, fmt.Errorf("Invalid header length; expected %d, got %d", headerLength, r.pos())
 	}
 
 	vsGUID, err := r.readGUID()
@@ -151,7 +152,7 @@ func ParseNVRAM(data []byte) (*Store, error) {
 	}
 
 	if vsGUID != EfiAuthenticatedVariableGuid {
-		return nil, fmt.Errorf("Invalid Varstore GUID: %s", vsGUID)
+		return nil, fmt.Errorf("Invalid store GUID; expected %s, got %s", EfiAuthenticatedVariableGuid, vsGUID)
 	}
 
 	varSize, err := r.readU32()
@@ -165,11 +166,12 @@ func ParseNVRAM(data []byte) (*Store, error) {
 	}
 
 	if !bytes.Equal(status, []byte{0x5a, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}) {
-		return nil, fmt.Errorf("Invalid Varstore Status: %x", status)
+		return nil, fmt.Errorf("Invalid store status; expected 0x5afe000000000000 0x%x", status)
 	}
 
-	s := &Store{attrs: attrs, blockMap: blockMap, length: length, varSize: varSize, Vars: make(map[string]map[string]*api.InstanceNVRAMVariable)}
-	for {
+	varStoreLength := int(varSize) + int(headerLength)
+	s := &Store{attrs: attrs, blockMap: blockMap, fvLength: fvLength, varSize: varSize, fileSize: len(data), Vars: make(map[string]map[string]*api.InstanceNVRAMVariable)}
+	for r.pos() < varStoreLength {
 		start, err := r.readU16()
 		if err != nil {
 			return nil, err
@@ -251,17 +253,16 @@ func ParseNVRAM(data []byte) (*Store, error) {
 		}
 	}
 
-	if length == 0x20000 {
-		err = r.seek(0x0e000)
-	} else {
-		err = r.seek(0x40000)
+	if r.pos() > varStoreLength {
+		return nil, fmt.Errorf("Read variable past the variable store")
 	}
 
+	err = r.seek(varStoreLength)
 	if err != nil {
 		return nil, err
 	}
 
-	rest, err := r.read(r.rem())
+	rest, err := r.read(int(fvLength) - varStoreLength)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +284,7 @@ func (s *Store) Bytes() ([]byte, error) {
 		return nil, err
 	}
 
-	err = w.writeU64(s.length)
+	err = w.writeU64(s.fvLength)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +347,8 @@ func (s *Store) Bytes() ([]byte, error) {
 		return nil, err
 	}
 
-	err = w.writeU16At(uint16(w.size()), hlenPos)
+	headerLength := w.size()
+	err = w.writeU16At(uint16(headerLength), hlenPos)
 	if err != nil {
 		return nil, err
 	}
@@ -369,6 +371,11 @@ func (s *Store) Bytes() ([]byte, error) {
 	err = w.write([]byte{0x5a, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 	if err != nil {
 		return nil, err
+	}
+
+	varStoreLength := int(s.varSize) + headerLength
+	if len(s.rest) != int(s.fvLength)-varStoreLength {
+		return nil, errors.New("Invalid volume length")
 	}
 
 	for guid, vars := range s.Vars {
@@ -442,19 +449,8 @@ func (s *Store) Bytes() ([]byte, error) {
 		}
 	}
 
-	var varStoreLength int
-	if s.length == 0x20000 {
-		varStoreLength = 0x0e000
-	} else {
-		varStoreLength = 0x40000
-	}
-
 	if w.size() > varStoreLength {
 		return nil, fmt.Errorf("Variables require %d bytes but store length is %d", w.size(), varStoreLength)
-	}
-
-	if uint64(varStoreLength+len(s.rest)) != s.length {
-		return nil, errors.New("Unexpected NVRAM length")
 	}
 
 	for w.size() < varStoreLength {
@@ -465,6 +461,11 @@ func (s *Store) Bytes() ([]byte, error) {
 	}
 
 	err = w.write(s.rest)
+	if err != nil {
+		return nil, err
+	}
+
+	err = w.skip(s.fileSize - int(s.fvLength))
 	if err != nil {
 		return nil, err
 	}
