@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -108,7 +109,16 @@ func osPrepareExecCommand(s *execWs, cmd *exec.Cmd) {
 	}
 }
 
-func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, cmd *exec.Cmd, l logger.Logger) {
+func osStartExecCommand(ctx context.Context, cmd *exec.Cmd, pty io.ReadWriteCloser) (execProcess, error) {
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cmdProcess{cmd: cmd}, nil
+}
+
+func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, proc execProcess, l logger.Logger) {
 	if control.Command == "window-resize" && s.interactive {
 		winchWidth, err := strconv.Atoi(control.Args["width"])
 		if err != nil {
@@ -131,7 +141,7 @@ func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.Read
 			}
 		}
 	} else if control.Command == "signal" {
-		err := unix.Kill(cmd.Process.Pid, unix.Signal(control.Signal))
+		err := unix.Kill(proc.Pid(), unix.Signal(control.Signal))
 		if err != nil {
 			l.Debug("Failed forwarding signal", logger.Ctx{"err": err, "signal": control.Signal})
 			return
