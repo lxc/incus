@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-25 17:21+0000\n"
+"POT-Creation-Date: 2026-08-27 15:11+0200\n"
 "PO-Revision-Date: 2026-08-22 19:07+0000\n"
 "Last-Translator: Hiroaki Nakamura <hnakamur@gmail.com>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/incus/cli/ja/>\n"
@@ -755,7 +755,7 @@ msgstr "--console と --all は同時に指定できません"
 msgid "--console only works with a single instance"
 msgstr "--console は単一のインスタンスのときのみ指定できます"
 
-#: cmd/incus/query.go:87
+#: cmd/incus/query.go:126
 #, fuzzy
 msgid "--data cannot be used with --data-file"
 msgstr "--target はインスタンスでは使えません"
@@ -807,7 +807,7 @@ msgstr "--console は単一のインスタンスのときのみ指定できま�
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:122
 msgid "--project cannot be used with the query command"
 msgstr "--project は query コマンドでは使えません"
 
@@ -898,7 +898,7 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASES"
 
-#: cmd/incus/query.go:35
+#: cmd/incus/query.go:37
 msgid "API path"
 msgstr "API パス"
 
@@ -939,12 +939,12 @@ msgstr "拡張した設定を表示する"
 msgid "Acknowledge warning"
 msgstr "警告を確認します"
 
-#: cmd/incus/query.go:53
+#: cmd/incus/query.go:58
 #, fuzzy
 msgid "Action"
 msgstr "説明"
 
-#: cmd/incus/query.go:91
+#: cmd/incus/query.go:135
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "%q はこのツールではサポートされていません"
@@ -1334,6 +1334,16 @@ msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 "デバイスを上書きする際の書式が不適切です。次のような形式で指定してください "
 "<device>,<key>=<value>: %s"
+
+#: cmd/incus/query.go:92
+#, c-format
+msgid "Bad header, empty name: %q"
+msgstr ""
+
+#: cmd/incus/query.go:87
+#, c-format
+msgid "Bad header, expecting \"name: value\": %q"
+msgstr ""
 
 #: cmd/incus/copy.go:180 cmd/incus/create.go:209 cmd/incus/move.go:273
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -3254,12 +3264,12 @@ msgstr "FIRST SEEN"
 msgid "FQDN"
 msgstr "FQDN"
 
-#: cmd/incus/utils.go:652
+#: cmd/incus/utils.go:651
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "クライアント %q との SSH ハンドシェイクに失敗しました: %v"
 
-#: cmd/incus/utils.go:675
+#: cmd/incus/utils.go:674
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "クライアント %q のチャンネルの受け入れに失敗しました: %v"
@@ -3269,7 +3279,7 @@ msgstr "クライアント %q のチャンネルの受け入れに失敗しま�
 msgid "Failed checking instance %s exists: %w"
 msgstr "インスタンスの存在確認に失敗しました \"%s:%s\": %w"
 
-#: cmd/incus/utils.go:702
+#: cmd/incus/utils.go:701
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "クライアント %q に対する SFTP インスタンスの接続に失敗しました: %v"
@@ -3305,7 +3315,7 @@ msgstr "インスタンス %q （プロジェクト %q 内）の削除に失敗�
 msgid "Failed deleting source volume after copy: %w"
 msgstr "コピー後のソースボリュームの削除に失敗しました: %w"
 
-#: cmd/incus/utils.go:609
+#: cmd/incus/utils.go:608
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "SSH ホスト鍵の生成に失敗しました: %w"
@@ -3345,7 +3355,7 @@ msgstr "デバイス上書きのためのプロファイル %q のロードに�
 msgid "Failed loading storage pool %q: %w"
 msgstr "ストレージプール %q の取得に失敗しました: %w"
 
-#: cmd/incus/utils.go:614
+#: cmd/incus/utils.go:613
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "SSH ホスト鍵の読み取りに失敗しました: %w"
@@ -3370,13 +3380,13 @@ msgstr "コマンドの実行に失敗しました: %w"
 msgid "Failed starting command: %w"
 msgstr "コマンドの実行に失敗しました: %w"
 
-#: cmd/incus/utils.go:522
+#: cmd/incus/utils.go:521
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "sshfs の起動に失敗しました: %w"
 
 #: cmd/incus/low_level.go:336 cmd/incus/port_forward.go:128
-#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:640
+#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:639
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "受信接続の受け入れに失敗しました: %w"
@@ -3537,7 +3547,7 @@ msgid "Failed to list bitmaps: %w"
 msgstr "ダンプのリクエストに失敗しました: %w"
 
 #: cmd/incus/low_level.go:321 cmd/incus/port_forward.go:114
-#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:625
+#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:624
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "コネクションのリッスンに失敗しました: %w"
@@ -3547,7 +3557,7 @@ msgstr "コネクションのリッスンに失敗しました: %w"
 msgid "Failed to load configuration: %s"
 msgstr "設定のロードに失敗しました: %s"
 
-#: cmd/incus/query.go:113
+#: cmd/incus/query.go:157
 #, fuzzy, c-format
 msgid "Failed to open input file %q: %w"
 msgstr "ターゲットファイルのオープンに失敗しました %q: %w"
@@ -4248,6 +4258,13 @@ msgstr "コマンドを実行する際のグループ ID (GID) (デフォルト 
 msgid "HOSTNAME"
 msgstr "HOSTNAME"
 
+#: cmd/incus/query.go:61
+#, fuzzy
+msgid ""
+"Header to set, an empty value removes it (e.g. \"X-Incus-mode: 0644\") (may "
+"be passed multiple times)"
+msgstr "環境変数を設定します (例: HOME=/home/foo)"
+
 #: cmd/incus/info.go:793
 msgid "Host interface"
 msgstr "ホストインターフェース"
@@ -4261,22 +4278,22 @@ msgstr "名前"
 msgid "Hugepages:\n"
 msgstr "Hugepages:\n"
 
-#: cmd/incus/utils.go:725
+#: cmd/incus/utils.go:724
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "SSH 経由のインスタンスへの I/O コピーが失敗しました: %v"
 
-#: cmd/incus/utils.go:714
+#: cmd/incus/utils.go:713
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "インスタンスから SSH 経由の I/O コピーに失敗しました: %v"
 
-#: cmd/incus/utils.go:546
+#: cmd/incus/utils.go:545
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "インスタンスから sshfs への I/O コピーに失敗しました: %v"
 
-#: cmd/incus/utils.go:556
+#: cmd/incus/utils.go:555
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "sshfs からインスタンスへの I/O コピーに失敗しました: %v"
@@ -4557,11 +4574,11 @@ msgstr ""
 msgid "Infiniband:"
 msgstr "Infiniband:"
 
-#: cmd/incus/query.go:54
+#: cmd/incus/query.go:59
 msgid "Input data"
 msgstr "入力するデータ"
 
-#: cmd/incus/query.go:55
+#: cmd/incus/query.go:60
 msgid "Input data file (\"-\" for stdin)"
 msgstr ""
 
@@ -4579,11 +4596,11 @@ msgstr "インスタンスのみ"
 msgid "Instance description"
 msgstr "説明"
 
-#: cmd/incus/utils.go:548
+#: cmd/incus/utils.go:547
 msgid "Instance disconnected"
 msgstr "インスタンスが切断されました"
 
-#: cmd/incus/utils.go:716
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "クライアント %q に対するインスタンスが切断されました"
@@ -6608,12 +6625,12 @@ msgstr "論理ルーター"
 msgid "Logical switch"
 msgstr "論理ルーター"
 
-#: cmd/incus/utils.go:631
+#: cmd/incus/utils.go:630
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr "ユーザー名 %q とパスワード %q でログイン"
 
-#: cmd/incus/utils.go:633
+#: cmd/incus/utils.go:632
 msgid "Login without username and password"
 msgstr "ユーザー名、パスワードを使用せずにログイン"
 
@@ -7803,7 +7820,7 @@ msgstr "パーティション:"
 msgid "Password for %s: "
 msgstr "%s のパスワード: "
 
-#: cmd/incus/utils.go:602
+#: cmd/incus/utils.go:601
 #, c-format
 msgid "Password rejected for %q"
 msgstr "%q のパスワードが拒否されました"
@@ -7902,7 +7919,7 @@ msgstr "ソート方法を変更するには 's' + ENTER を押してくださ�
 msgid "Press CTRL-C to exit"
 msgstr "終了するには CTRL-C を押してください"
 
-#: cmd/incus/utils.go:526
+#: cmd/incus/utils.go:525
 msgid "Press ctrl+c to finish"
 msgstr "終了するには ctrl+c を押してください"
 
@@ -7936,7 +7953,7 @@ msgstr "ヘルプを表示します"
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr "クライアント証明書がサーバに格納されました:"
 
-#: cmd/incus/query.go:52
+#: cmd/incus/query.go:57
 msgid "Print the raw response"
 msgstr "レスポンスをそのまま表示します"
 
@@ -8132,7 +8149,7 @@ msgstr "インスタンス内にファイルをコピーします"
 msgid "Pushing %s to %s: %%s"
 msgstr "ファイル %s をコンテナ %s 内にコピーします: %%s"
 
-#: cmd/incus/query.go:96
+#: cmd/incus/query.go:140
 msgid "Query path must start with /"
 msgstr "query のパスは / で始める必要があります"
 
@@ -8646,17 +8663,17 @@ msgstr "SOURCE"
 msgid "SR-IOV information:"
 msgstr "SR-IOV 情報:"
 
-#: cmd/incus/utils.go:628
+#: cmd/incus/utils.go:627
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr "SSH SFTP は %v でリッスンしています"
 
-#: cmd/incus/utils.go:645
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "SSH client connected %q"
 msgstr "SSH クライアントが %q に接続されました"
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:645
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr "SSH クライアントが切断されました %q"
@@ -8727,7 +8744,7 @@ msgstr "秘密鍵: %s"
 msgid "Select next boot entry: "
 msgstr ""
 
-#: cmd/incus/query.go:40 cmd/incus/query.go:41
+#: cmd/incus/query.go:42 cmd/incus/query.go:43
 #, fuzzy
 msgid "Send a raw query to the server"
 msgstr "直接リクエスト (raw query) を LXD に送ります"
@@ -10503,7 +10520,7 @@ msgstr "未知の出力タイプ: %q"
 msgid "Unknown certificate type %q"
 msgstr "未知の証明書タイプ %q"
 
-#: cmd/incus/utils.go:668
+#: cmd/incus/utils.go:667
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr "クライアント %q の未知のチャンネルタイプ: %s"
@@ -11011,7 +11028,7 @@ msgstr ""
 "で\n"
 "  ブロックします。"
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:56
 msgid "Wait for the operation to complete"
 msgstr "処理が完全に終わるまで待ちます"
 
@@ -12054,14 +12071,15 @@ msgstr ""
 "lxc profile edit <profile> < profile.yaml\n"
 "    profile.yaml の内容でプロファイルを更新します"
 
-#: cmd/incus/query.go:44
-#, fuzzy
+#: cmd/incus/query.go:46
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
-"    Delete local instance \"c1\"."
+"    Delete local instance \"c1\".\n"
+"\n"
+"incus query -X POST --data-file ./f.txt -H \"X-Incus-type: file\" -H \"X-"
+"Incus-mode: 0600\" /1.0/instances/c1/files?path=/root/f.txt\n"
+"    Upload a file to local instance \"c1\"."
 msgstr ""
-"lxc query -X DELETE --wait /1.0/instances/c1\n"
-"    ローカルのインスタンス \"c1\" を削除します。"
 
 #: cmd/incus/remote.go:1628
 msgid ""
@@ -12571,11 +12589,11 @@ msgstr "スナップショット:"
 msgid "space used"
 msgstr "使用量"
 
-#: cmd/incus/utils.go:566
+#: cmd/incus/utils.go:565
 msgid "sshfs has stopped"
 msgstr "sshfs が停止しました"
 
-#: cmd/incus/utils.go:525
+#: cmd/incus/utils.go:524
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs で %q を %q にマウントします"
@@ -12689,6 +12707,14 @@ msgstr "ゾーン"
 #, fuzzy, c-format
 msgid "“%s”"
 msgstr "「%s」"
+
+#, fuzzy
+#~ msgid ""
+#~ "incus query -X DELETE --wait /1.0/instances/c1\n"
+#~ "    Delete local instance \"c1\"."
+#~ msgstr ""
+#~ "lxc query -X DELETE --wait /1.0/instances/c1\n"
+#~ "    ローカルのインスタンス \"c1\" を削除します。"
 
 #~ msgid "Run again a specific project"
 #~ msgstr "特定のプロジェクトを再実行します"

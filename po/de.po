@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LXD\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-25 17:21+0000\n"
+"POT-Creation-Date: 2026-08-27 15:11+0200\n"
 "PO-Revision-Date: 2026-08-22 19:05+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -759,7 +759,7 @@ msgstr "--refresh kann nur mit Containern verwendet werden"
 msgid "--console only works with a single instance"
 msgstr "kann nicht zum selben Container Namen kopieren"
 
-#: cmd/incus/query.go:87
+#: cmd/incus/query.go:126
 #, fuzzy
 msgid "--data cannot be used with --data-file"
 msgstr "--target kann nicht mit Instanzen verwendet werden"
@@ -813,7 +813,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:122
 #, fuzzy
 msgid "--project cannot be used with the query command"
 msgstr "--refresh kann nur mit Containern verwendet werden"
@@ -904,7 +904,7 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASES"
 
-#: cmd/incus/query.go:35
+#: cmd/incus/query.go:37
 msgid "API path"
 msgstr ""
 
@@ -948,12 +948,12 @@ msgstr "Zugriff auf erweiterte Konfiguration"
 msgid "Acknowledge warning"
 msgstr "Warnung gesehen"
 
-#: cmd/incus/query.go:53
+#: cmd/incus/query.go:58
 #, fuzzy
 msgid "Action"
 msgstr "Fingerabdruck: %s\n"
 
-#: cmd/incus/query.go:91
+#: cmd/incus/query.go:135
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "Aktion %q wird von diesem Programm nicht unterstützt"
@@ -1366,6 +1366,16 @@ msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
 "Ungültige Gerätüberschreibungs-Syntax, erwartet wird <Gerät>,"
 "<Schlüssel>=<Wert>: %s"
+
+#: cmd/incus/query.go:92
+#, c-format
+msgid "Bad header, empty name: %q"
+msgstr ""
+
+#: cmd/incus/query.go:87
+#, c-format
+msgid "Bad header, expecting \"name: value\": %q"
+msgstr ""
 
 #: cmd/incus/copy.go:180 cmd/incus/create.go:209 cmd/incus/move.go:273
 #: cmd/incus/network_integration.go:139 cmd/incus/project.go:168
@@ -3354,12 +3364,12 @@ msgstr "ZUERST BEOBACHTET"
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/utils.go:652
+#: cmd/incus/utils.go:651
 #, fuzzy, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "SSH handshake mit Client %q gescheitert: %v"
 
-#: cmd/incus/utils.go:675
+#: cmd/incus/utils.go:674
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -3369,7 +3379,7 @@ msgstr ""
 msgid "Failed checking instance %s exists: %w"
 msgstr "Check ob Instanz existiert fehlgeschlagen \"%s:%s\": %w"
 
-#: cmd/incus/utils.go:702
+#: cmd/incus/utils.go:701
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
@@ -3405,7 +3415,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Kein Zertifikat für diese Verbindung"
 
-#: cmd/incus/utils.go:609
+#: cmd/incus/utils.go:608
 #, fuzzy, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3445,7 +3455,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/utils.go:614
+#: cmd/incus/utils.go:613
 #, fuzzy, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3470,13 +3480,13 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed starting command: %w"
 msgstr "Akzeptiere Zertifikat"
 
-#: cmd/incus/utils.go:522
+#: cmd/incus/utils.go:521
 #, fuzzy, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Akzeptiere Zertifikat"
 
 #: cmd/incus/low_level.go:336 cmd/incus/port_forward.go:128
-#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:640
+#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:639
 #, fuzzy, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3637,7 +3647,7 @@ msgid "Failed to list bitmaps: %w"
 msgstr "Akzeptiere Zertifikat"
 
 #: cmd/incus/low_level.go:321 cmd/incus/port_forward.go:114
-#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:625
+#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:624
 #, fuzzy, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -3647,7 +3657,7 @@ msgstr "Akzeptiere Zertifikat"
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/query.go:113
+#: cmd/incus/query.go:157
 #, fuzzy, c-format
 msgid "Failed to open input file %q: %w"
 msgstr "Akzeptiere Zertifikat"
@@ -4321,6 +4331,14 @@ msgstr ""
 msgid "HOSTNAME"
 msgstr ""
 
+#: cmd/incus/query.go:61
+#, fuzzy
+msgid ""
+"Header to set, an empty value removes it (e.g. \"X-Incus-mode: 0644\") (may "
+"be passed multiple times)"
+msgstr ""
+"Festzulegende Umgebungsvariable (Environment variable) (z.B. HOME=/home/foo)"
+
 #: cmd/incus/info.go:793
 #, fuzzy
 msgid "Host interface"
@@ -4335,22 +4353,22 @@ msgstr "Name"
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/utils.go:725
+#: cmd/incus/utils.go:724
 #, fuzzy, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/utils.go:714
+#: cmd/incus/utils.go:713
 #, fuzzy, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/utils.go:546
+#: cmd/incus/utils.go:545
 #, fuzzy, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
 
-#: cmd/incus/utils.go:556
+#: cmd/incus/utils.go:555
 #, fuzzy, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "Anhalten des Containers fehlgeschlagen!"
@@ -4616,11 +4634,11 @@ msgstr ""
 msgid "Infiniband:"
 msgstr ""
 
-#: cmd/incus/query.go:54
+#: cmd/incus/query.go:59
 msgid "Input data"
 msgstr ""
 
-#: cmd/incus/query.go:55
+#: cmd/incus/query.go:60
 msgid "Input data file (\"-\" for stdin)"
 msgstr ""
 
@@ -4638,12 +4656,12 @@ msgstr ""
 msgid "Instance description"
 msgstr "Entferntes Administrator Passwort"
 
-#: cmd/incus/utils.go:548
+#: cmd/incus/utils.go:547
 #, fuzzy
 msgid "Instance disconnected"
 msgstr "Entferntes Administrator Passwort"
 
-#: cmd/incus/utils.go:716
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -5923,12 +5941,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:631
+#: cmd/incus/utils.go:630
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:633
+#: cmd/incus/utils.go:632
 msgid "Login without username and password"
 msgstr ""
 
@@ -7095,7 +7113,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr "Administrator Passwort für %s: "
 
-#: cmd/incus/utils.go:602
+#: cmd/incus/utils.go:601
 #, fuzzy, c-format
 msgid "Password rejected for %q"
 msgstr "Administrator Passwort für %s: "
@@ -7196,7 +7214,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:526
+#: cmd/incus/utils.go:525
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -7228,7 +7246,7 @@ msgstr ""
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr "Ein Client Zertifikat ist bereits erstellt worden"
 
-#: cmd/incus/query.go:52
+#: cmd/incus/query.go:57
 msgid "Print the raw response"
 msgstr ""
 
@@ -7430,7 +7448,7 @@ msgstr "kann nicht zum selben Container Namen kopieren"
 msgid "Pushing %s to %s: %%s"
 msgstr ""
 
-#: cmd/incus/query.go:96
+#: cmd/incus/query.go:140
 msgid "Query path must start with /"
 msgstr ""
 
@@ -7941,17 +7959,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:628
+#: cmd/incus/utils.go:627
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:645
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:645
 #, fuzzy, c-format
 msgid "SSH client disconnected %q"
 msgstr "Entferntes Administrator Passwort"
@@ -8020,7 +8038,7 @@ msgstr "Erstellt: %s"
 msgid "Select next boot entry: "
 msgstr ""
 
-#: cmd/incus/query.go:40 cmd/incus/query.go:41
+#: cmd/incus/query.go:42 cmd/incus/query.go:43
 msgid "Send a raw query to the server"
 msgstr ""
 
@@ -9685,7 +9703,7 @@ msgstr "Unbekannter Befehl %s für Abbild"
 msgid "Unknown certificate type %q"
 msgstr "Unbekannter Befehl %s für Abbild"
 
-#: cmd/incus/utils.go:668
+#: cmd/incus/utils.go:667
 #, fuzzy, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr "Unbekannter Befehl %s für Abbild"
@@ -10176,7 +10194,7 @@ msgid ""
 "  containers."
 msgstr ""
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:56
 msgid "Wait for the operation to complete"
 msgstr ""
 
@@ -11064,13 +11082,15 @@ msgstr ""
 "    Automatisches Editieren der Konfiguration eines Projekts mit der "
 "Konfigurationsdatei \"project.yaml\""
 
-#: cmd/incus/query.go:44
+#: cmd/incus/query.go:46
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
-"    Delete local instance \"c1\"."
+"    Delete local instance \"c1\".\n"
+"\n"
+"incus query -X POST --data-file ./f.txt -H \"X-Incus-type: file\" -H \"X-"
+"Incus-mode: 0600\" /1.0/instances/c1/files?path=/root/f.txt\n"
+"    Upload a file to local instance \"c1\"."
 msgstr ""
-"incus query -X DELETE --wait /1.0/instances/c1\n"
-"    Löscht die lokale Instanz \"c1\"."
 
 #: cmd/incus/remote.go:1628
 msgid ""
@@ -11554,11 +11574,11 @@ msgstr ""
 msgid "space used"
 msgstr "Speicherplatz in Benutzung"
 
-#: cmd/incus/utils.go:566
+#: cmd/incus/utils.go:565
 msgid "sshfs has stopped"
 msgstr "sshfs wurde gestoppt"
 
-#: cmd/incus/utils.go:525
+#: cmd/incus/utils.go:524
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs mounted %q auf %q"
@@ -11663,6 +11683,13 @@ msgstr ""
 #, c-format
 msgid "“%s”"
 msgstr ""
+
+#~ msgid ""
+#~ "incus query -X DELETE --wait /1.0/instances/c1\n"
+#~ "    Delete local instance \"c1\"."
+#~ msgstr ""
+#~ "incus query -X DELETE --wait /1.0/instances/c1\n"
+#~ "    Löscht die lokale Instanz \"c1\"."
 
 #, fuzzy, c-format
 #~ msgid "Failed to rebuild instance NVRAM: %w"
