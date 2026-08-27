@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-25 17:21+0000\n"
+"POT-Creation-Date: 2026-08-27 15:11+0200\n"
 "PO-Revision-Date: 2026-08-22 19:13+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Tamil <https://hosted.weblate.org/projects/incus/cli/ta/>\n"
@@ -493,7 +493,7 @@ msgstr ""
 msgid "--console only works with a single instance"
 msgstr ""
 
-#: cmd/incus/query.go:87
+#: cmd/incus/query.go:126
 msgid "--data cannot be used with --data-file"
 msgstr ""
 
@@ -538,7 +538,7 @@ msgstr ""
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:83
+#: cmd/incus/query.go:122
 msgid "--project cannot be used with the query command"
 msgstr ""
 
@@ -624,7 +624,7 @@ msgstr ""
 msgid "ALIASES"
 msgstr ""
 
-#: cmd/incus/query.go:35
+#: cmd/incus/query.go:37
 msgid "API path"
 msgstr ""
 
@@ -665,11 +665,11 @@ msgstr ""
 msgid "Acknowledge warning"
 msgstr ""
 
-#: cmd/incus/query.go:53
+#: cmd/incus/query.go:58
 msgid "Action"
 msgstr ""
 
-#: cmd/incus/query.go:91
+#: cmd/incus/query.go:135
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr ""
@@ -1031,6 +1031,16 @@ msgstr ""
 #: cmd/incus/utils.go:132
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
+msgstr ""
+
+#: cmd/incus/query.go:92
+#, c-format
+msgid "Bad header, empty name: %q"
+msgstr ""
+
+#: cmd/incus/query.go:87
+#, c-format
+msgid "Bad header, expecting \"name: value\": %q"
 msgstr ""
 
 #: cmd/incus/copy.go:180 cmd/incus/create.go:209 cmd/incus/move.go:273
@@ -2796,12 +2806,12 @@ msgstr ""
 msgid "FQDN"
 msgstr ""
 
-#: cmd/incus/utils.go:652
+#: cmd/incus/utils.go:651
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:675
+#: cmd/incus/utils.go:674
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr ""
@@ -2811,7 +2821,7 @@ msgstr ""
 msgid "Failed checking instance %s exists: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:702
+#: cmd/incus/utils.go:701
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
@@ -2847,7 +2857,7 @@ msgstr ""
 msgid "Failed deleting source volume after copy: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:609
+#: cmd/incus/utils.go:608
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr ""
@@ -2887,7 +2897,7 @@ msgstr ""
 msgid "Failed loading storage pool %q: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:614
+#: cmd/incus/utils.go:613
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr ""
@@ -2912,13 +2922,13 @@ msgstr ""
 msgid "Failed starting command: %w"
 msgstr ""
 
-#: cmd/incus/utils.go:522
+#: cmd/incus/utils.go:521
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr ""
 
 #: cmd/incus/low_level.go:336 cmd/incus/port_forward.go:128
-#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:640
+#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:639
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr ""
@@ -3079,7 +3089,7 @@ msgid "Failed to list bitmaps: %w"
 msgstr ""
 
 #: cmd/incus/low_level.go:321 cmd/incus/port_forward.go:114
-#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:625
+#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:624
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr ""
@@ -3089,7 +3099,7 @@ msgstr ""
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/query.go:113
+#: cmd/incus/query.go:157
 #, c-format
 msgid "Failed to open input file %q: %w"
 msgstr ""
@@ -3733,6 +3743,12 @@ msgstr ""
 msgid "HOSTNAME"
 msgstr ""
 
+#: cmd/incus/query.go:61
+msgid ""
+"Header to set, an empty value removes it (e.g. \"X-Incus-mode: 0644\") (may "
+"be passed multiple times)"
+msgstr ""
+
 #: cmd/incus/info.go:793
 msgid "Host interface"
 msgstr ""
@@ -3745,22 +3761,22 @@ msgstr ""
 msgid "Hugepages:\n"
 msgstr ""
 
-#: cmd/incus/utils.go:725
+#: cmd/incus/utils.go:724
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:714
+#: cmd/incus/utils.go:713
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:546
+#: cmd/incus/utils.go:545
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr ""
 
-#: cmd/incus/utils.go:556
+#: cmd/incus/utils.go:555
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr ""
@@ -4013,11 +4029,11 @@ msgstr ""
 msgid "Infiniband:"
 msgstr ""
 
-#: cmd/incus/query.go:54
+#: cmd/incus/query.go:59
 msgid "Input data"
 msgstr ""
 
-#: cmd/incus/query.go:55
+#: cmd/incus/query.go:60
 msgid "Input data file (\"-\" for stdin)"
 msgstr ""
 
@@ -4033,11 +4049,11 @@ msgstr ""
 msgid "Instance description"
 msgstr ""
 
-#: cmd/incus/utils.go:548
+#: cmd/incus/utils.go:547
 msgid "Instance disconnected"
 msgstr ""
 
-#: cmd/incus/utils.go:716
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr ""
@@ -5281,12 +5297,12 @@ msgstr ""
 msgid "Logical switch"
 msgstr ""
 
-#: cmd/incus/utils.go:631
+#: cmd/incus/utils.go:630
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr ""
 
-#: cmd/incus/utils.go:633
+#: cmd/incus/utils.go:632
 msgid "Login without username and password"
 msgstr ""
 
@@ -6376,7 +6392,7 @@ msgstr ""
 msgid "Password for %s: "
 msgstr ""
 
-#: cmd/incus/utils.go:602
+#: cmd/incus/utils.go:601
 #, c-format
 msgid "Password rejected for %q"
 msgstr ""
@@ -6471,7 +6487,7 @@ msgstr ""
 msgid "Press CTRL-C to exit"
 msgstr ""
 
-#: cmd/incus/utils.go:526
+#: cmd/incus/utils.go:525
 msgid "Press ctrl+c to finish"
 msgstr ""
 
@@ -6502,7 +6518,7 @@ msgstr ""
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr ""
 
-#: cmd/incus/query.go:52
+#: cmd/incus/query.go:57
 msgid "Print the raw response"
 msgstr ""
 
@@ -6691,7 +6707,7 @@ msgstr ""
 msgid "Pushing %s to %s: %%s"
 msgstr ""
 
-#: cmd/incus/query.go:96
+#: cmd/incus/query.go:140
 msgid "Query path must start with /"
 msgstr ""
 
@@ -7163,17 +7179,17 @@ msgstr ""
 msgid "SR-IOV information:"
 msgstr ""
 
-#: cmd/incus/utils.go:628
+#: cmd/incus/utils.go:627
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr ""
 
-#: cmd/incus/utils.go:645
+#: cmd/incus/utils.go:644
 #, c-format
 msgid "SSH client connected %q"
 msgstr ""
 
-#: cmd/incus/utils.go:646
+#: cmd/incus/utils.go:645
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr ""
@@ -7241,7 +7257,7 @@ msgstr ""
 msgid "Select next boot entry: "
 msgstr ""
 
-#: cmd/incus/query.go:40 cmd/incus/query.go:41
+#: cmd/incus/query.go:42 cmd/incus/query.go:43
 msgid "Send a raw query to the server"
 msgstr ""
 
@@ -8798,7 +8814,7 @@ msgstr ""
 msgid "Unknown certificate type %q"
 msgstr ""
 
-#: cmd/incus/utils.go:668
+#: cmd/incus/utils.go:667
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr ""
@@ -9241,7 +9257,7 @@ msgid ""
 "  containers."
 msgstr ""
 
-#: cmd/incus/query.go:51
+#: cmd/incus/query.go:56
 msgid "Wait for the operation to complete"
 msgstr ""
 
@@ -9993,10 +10009,14 @@ msgid ""
 "    Update a project using the content of project.yaml"
 msgstr ""
 
-#: cmd/incus/query.go:44
+#: cmd/incus/query.go:46
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
-"    Delete local instance \"c1\"."
+"    Delete local instance \"c1\".\n"
+"\n"
+"incus query -X POST --data-file ./f.txt -H \"X-Incus-type: file\" -H \"X-"
+"Incus-mode: 0600\" /1.0/instances/c1/files?path=/root/f.txt\n"
+"    Upload a file to local instance \"c1\"."
 msgstr ""
 
 #: cmd/incus/remote.go:1628
@@ -10385,11 +10405,11 @@ msgstr ""
 msgid "space used"
 msgstr ""
 
-#: cmd/incus/utils.go:566
+#: cmd/incus/utils.go:565
 msgid "sshfs has stopped"
 msgstr ""
 
-#: cmd/incus/utils.go:525
+#: cmd/incus/utils.go:524
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr ""
