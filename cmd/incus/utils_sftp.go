@@ -129,7 +129,17 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 	return nil
 }
 
+// sftpRecursivePullFile pulls a remote path into targetDir.
 func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, quiet bool) error {
+	// Symlinks created during this transfer, which a malicious server must not be able to make us follow.
+	symlinks := map[string]struct{}{}
+
+	return sftpRecursivePullEntry(sftpConn, p, targetDir, quiet, symlinks)
+}
+
+// sftpRecursivePullEntry pulls a remote path and, for directories, its content.
+// Pre-existing symlinks in the target are followed like cp does, but never ones created by this transfer.
+func sftpRecursivePullEntry(sftpConn *sftp.Client, p string, targetDir string, quiet bool, symlinks map[string]struct{}) error {
 	fInfo, err := sftpConn.Lstat(p)
 	if err != nil {
 		return err
@@ -147,6 +157,17 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, qu
 	target := filepath.Join(targetDir, filepath.Base(p))
 	logger.Infof("Pulling %s from %s (%s)", target, p, fileType)
 
+	// Never write through a symlink planted earlier in this same pull, replace it instead.
+	_, planted := symlinks[target]
+	if planted {
+		err := os.Remove(target)
+		if err != nil {
+			return err
+		}
+
+		delete(symlinks, target)
+	}
+
 	if fileType == "directory" {
 		err := os.Mkdir(target, fInfo.Mode())
 		if err != nil {
@@ -161,7 +182,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, qu
 		for _, ent := range entries {
 			nextP := filepath.Join(p, ent.Name())
 
-			err := sftpRecursivePullFile(sftpConn, nextP, target, quiet)
+			err := sftpRecursivePullEntry(sftpConn, nextP, target, quiet, symlinks)
 			if err != nil {
 				return err
 			}
@@ -240,6 +261,8 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, p string, targetDir string, qu
 		if err != nil {
 			return err
 		}
+
+		symlinks[target] = struct{}{}
 	} else {
 		return fmt.Errorf(i18n.G("Unknown file type '%s'"), fileType)
 	}
