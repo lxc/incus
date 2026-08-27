@@ -371,3 +371,15 @@ In such case, a `bridge` device is preferable.
 A bridge also lets you use MAC filtering and I/O limits, which cannot be applied to a `macvlan` device.
 
 `ipvlan` is similar to `macvlan`, with the difference being that the forked device has IPs statically assigned to it and inherits the parent's MAC address on the network.
+
+## Queuing disciplines
+
+The `bridged`, `p2p` and `routed` interface types accept a `queue.discipline` option, which selects the queuing discipline used on the host side of the NIC.
+
+When a rate limit is configured on the device, the queuing discipline is attached to the class implementing that limit, as that is where packets queue.
+Without a rate limit, it becomes the root queuing discipline of the host side interface.
+
+On virtual machines, `queue.discipline.attach` selects where the queuing discipline is attached.
+The host side interface of a virtual machine is a multi-queue TAP device, so by default (`queue`) the queuing discipline is attached to each of its transmit queues, below an `mq` root.
+Setting it to `root` instead puts a single queuing discipline at the root of the interface, which serializes all of its transmit queues.
+It cannot be set to `queue` when an ingress rate limit is configured, as that limit has to own the interface root.

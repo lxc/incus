@@ -26,6 +26,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/ip"
 	"github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/internal/server/state"
+	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/units"
@@ -680,6 +681,96 @@ func nicValidateBurstLimits(config deviceConfig.Device, burstRate bool) error {
 	return nil
 }
 
+// nicValidateQdisc checks that the queuing discipline of a device is consistent with its other settings.
+func nicValidateQdisc(config deviceConfig.Device, instType instancetype.Type) error {
+	attach := config["queue.discipline.attach"]
+	if attach == "" {
+		return nil
+	}
+
+	if instType != instancetype.VM {
+		return errors.New("The queuing discipline attachment cannot be applied to containers")
+	}
+
+	if config["queue.discipline"] == "" {
+		return errors.New("The queuing discipline attachment requires a queuing discipline")
+	}
+
+	if attach == "queue" && (config["limits.ingress"] != "" || config["limits.max"] != "") {
+		return errors.New("The queuing discipline cannot be attached per queue when an ingress limit is set")
+	}
+
+	return nil
+}
+
+// nicQdiscQueueCount returns the number of transmit queues QEMU attaches to a VM NIC.
+func nicQdiscQueueCount(instConfig map[string]string) (int, error) {
+	cpus, err := instance.CPUUsage(instConfig, api.InstanceTypeVM)
+	if err != nil {
+		return 0, err
+	}
+
+	return max(int(cpus), 2), nil
+}
+
+// networkSetupQdisc puts a qdisc in place, replacing any existing one at the same location.
+func networkSetupQdisc(qdisc *ip.QdiscGeneric) error {
+	// A qdisc cannot change kind in place, so clear any existing one first.
+	err := qdisc.Delete()
+	if err != nil && !errors.Is(err, unix.ENOENT) {
+		return err
+	}
+
+	return qdisc.Add()
+}
+
+// networkSetupHostVethQdisc sets the configured queuing discipline on the host side of a NIC.
+// When a rate limit is in place the qdisc goes on the leaf of the limit's class, as that is where
+// packets actually queue. Otherwise it becomes the root qdisc of the device, or on a VM asking for
+// it, one qdisc per transmit queue underneath a multiqueue root.
+func networkSetupHostVethQdisc(d *deviceCommon, veth string, limited bool) error {
+	kind := d.config["queue.discipline"]
+	if kind == "" {
+		return nil
+	}
+
+	if limited {
+		return networkSetupQdisc(&ip.QdiscGeneric{Qdisc: ip.Qdisc{Dev: veth, Handle: "10:0", Parent: "1:10"}, Kind: kind})
+	}
+
+	if d.inst.Type() != instancetype.VM || d.config["queue.discipline.attach"] == "root" {
+		return networkSetupQdisc(&ip.QdiscGeneric{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}, Kind: kind})
+	}
+
+	// The attached queues win, as limits.cpu may have changed since they were sized. Until
+	// QEMU attaches them the interface has one queue, so predict the count it will use.
+	queues, err := network.GetTXQueueCount(veth)
+	if err != nil {
+		return err
+	}
+
+	if queues <= 1 {
+		queues, err = nicQdiscQueueCount(d.inst.ExpandedConfig())
+		if err != nil {
+			return err
+		}
+	}
+
+	err = networkSetupQdisc(&ip.QdiscGeneric{Qdisc: ip.Qdisc{Dev: veth, Handle: "1:0", Parent: "root"}, Kind: "mq"})
+	if err != nil {
+		return err
+	}
+
+	for i := 1; i <= queues; i++ {
+		err = networkSetupQdisc(&ip.QdiscGeneric{Qdisc: ip.Qdisc{Dev: veth, Handle: fmt.Sprintf("%d:0", i+1), Parent: fmt.Sprintf("1:%d", i)}, Kind: kind})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // networkSetupHostVethLimits applies any network rate limits to the veth device specified in the config.
 func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, bridged bool) error {
 	var err error
@@ -766,6 +857,11 @@ func networkSetupHostVethLimits(d *deviceCommon, oldConfig deviceConfig.Device, 
 		if err != nil {
 			return fmt.Errorf("Failed to create ingress tc filter: %s", err)
 		}
+	}
+
+	err = networkSetupHostVethQdisc(d, veth, d.config["limits.ingress"] != "")
+	if err != nil {
+		return err
 	}
 
 	var networkPriority uint64

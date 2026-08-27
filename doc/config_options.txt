@@ -761,6 +761,21 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} queue.discipline devices-nic_bridged
+:managed: "no"
+:shortdesc: "The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set"
+:type: "string"
+
+```
+
+```{config:option} queue.discipline.attach devices-nic_bridged
+:default: "`queue`"
+:managed: "no"
+:shortdesc: "Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)"
+:type: "string"
+
+```
+
 ```{config:option} queue.tx.length devices-nic_bridged
 :managed: "no"
 :shortdesc: "The transmit queue length for the NIC"
@@ -1440,6 +1455,19 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} queue.discipline devices-nic_p2p
+:shortdesc: "The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set"
+:type: "string"
+
+```
+
+```{config:option} queue.discipline.attach devices-nic_p2p
+:default: "`queue`"
+:shortdesc: "Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)"
+:type: "string"
+
+```
+
 ```{config:option} queue.tx.length devices-nic_p2p
 :shortdesc: "The transmit queue length for the NIC"
 :type: "integer"
@@ -1750,6 +1778,19 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 
 ```{config:option} parent devices-nic_routed
 :shortdesc: "The name of the parent host device to join the instance to"
+:type: "string"
+
+```
+
+```{config:option} queue.discipline devices-nic_routed
+:shortdesc: "The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set"
+:type: "string"
+
+```
+
+```{config:option} queue.discipline.attach devices-nic_routed
+:default: "`queue`"
+:shortdesc: "Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)"
 :type: "string"
 
 ```

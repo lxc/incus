@@ -3443,3 +3443,9 @@ communicating with the `radosgw` endpoint.
 
 This replaces `cephobject.radosgw.endpoint_cert_file`, existing values are
 converted automatically.
+
+## `device_queue_disc`
+
+Adds new `queue.discipline` and `queue.discipline.attach` configuration keys
+to `nic` devices of type `bridged`, `p2p` and `routed`, controlling the queuing
+discipline used on the host side of the NIC and where it gets attached.

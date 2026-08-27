@@ -1264,40 +1264,52 @@ func SnapshotProtobufToInstanceArgs(s *state.State, inst Instance, snap *migrati
 	return &args, nil
 }
 
+// CPUUsage returns an instance's expected CPU usage.
+func CPUUsage(instConfig map[string]string, instType api.InstanceType) (int64, error) {
+	limitsCPU := instConfig["limits.cpu"]
+	if limitsCPU == "" {
+		if instType == api.InstanceTypeVM {
+			// Apply VM CPU cores defaults if not specified.
+			return qemudefault.CPUCores, nil
+		}
+
+		return 0, nil
+	}
+
+	// Check if using shared CPU limits.
+	cpuUsage, err := strconv.ParseInt(limitsCPU, 10, 64)
+	if err != nil && instType == api.InstanceTypeVM && strings.Contains(limitsCPU, "=") {
+		// Or compute the total from an explicit CPU topology.
+		sockets, cores, threads, err := validate.ParseCPUTopology(limitsCPU)
+		if err != nil {
+			return -1, fmt.Errorf("Failed parsing instance resources limits.cpu: %w", err)
+		}
+
+		return int64(sockets * cores * threads), nil
+	} else if err != nil {
+		// Or get count of pinned CPUs.
+		pinnedCPUs, err := resources.ParseCpuset(limitsCPU)
+		if err != nil {
+			return -1, fmt.Errorf("Failed parsing instance resources limits.cpu: %w", err)
+		}
+
+		return int64(len(pinnedCPUs)), nil
+	}
+
+	return cpuUsage, nil
+}
+
 // ResourceUsage returns an instance's expected CPU, memory and disk usage.
 func ResourceUsage(instConfig map[string]string, instDevices map[string]map[string]string, instType api.InstanceType) (int64, int64, int64, error) {
 	var err error
 
-	limitsCPU := instConfig["limits.cpu"]
 	limitsMemory := instConfig["limits.memory"]
-	cpuUsage := int64(0)
 	memoryUsage := int64(0)
 	diskUsage := int64(0)
 
-	// Parse limits.cpu.
-	if limitsCPU != "" {
-		// Check if using shared CPU limits.
-		cpuUsage, err = strconv.ParseInt(limitsCPU, 10, 64)
-		if err != nil && instType == api.InstanceTypeVM && strings.Contains(limitsCPU, "=") {
-			// Or compute the total from an explicit CPU topology.
-			sockets, cores, threads, err := validate.ParseCPUTopology(limitsCPU)
-			if err != nil {
-				return -1, -1, -1, fmt.Errorf("Failed parsing instance resources limits.cpu: %w", err)
-			}
-
-			cpuUsage = int64(sockets * cores * threads)
-		} else if err != nil {
-			// Or get count of pinned CPUs.
-			pinnedCPUs, err := resources.ParseCpuset(limitsCPU)
-			if err != nil {
-				return -1, -1, -1, fmt.Errorf("Failed parsing instance resources limits.cpu: %w", err)
-			}
-
-			cpuUsage = int64(len(pinnedCPUs))
-		}
-	} else if instType == api.InstanceTypeVM {
-		// Apply VM CPU cores defaults if not specified.
-		cpuUsage = qemudefault.CPUCores
+	cpuUsage, err := CPUUsage(instConfig, instType)
+	if err != nil {
+		return -1, -1, -1, err
 	}
 
 	// Parse limits.memory.

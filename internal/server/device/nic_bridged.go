@@ -106,6 +106,23 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
 
+		// gendoc:generate(entity=devices, group=nic_bridged, key=queue.discipline)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  shortdesc: The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set
+		"queue.discipline",
+
+		// gendoc:generate(entity=devices, group=nic_bridged, key=queue.discipline.attach)
+		//
+		// ---
+		//  type: string
+		//  managed: no
+		//  default: `queue`
+		//  shortdesc: Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)
+		"queue.discipline.attach",
+
 		// gendoc:generate(entity=devices, group=nic_bridged, key=queue.tx.length)
 		//
 		// ---
@@ -680,6 +697,11 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		return err
 	}
 
+	err = nicValidateQdisc(d.config, instConf.Type())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -781,7 +803,7 @@ func (d *nicBridged) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged", "connected"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged", "connected"}
 }
 
 // Add is run when a device is added to a non-snapshot instance whether or not the instance is running.

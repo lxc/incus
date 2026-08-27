@@ -46,6 +46,21 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader, partialValidatio
 		//  shortdesc: The Maximum Transmit Unit (MTU) of the new interface
 		"mtu",
 
+		// gendoc:generate(entity=devices, group=nic_p2p, key=queue.discipline)
+		//
+		// ---
+		//  type: string
+		//  shortdesc: The queuing discipline to set on the NIC, applied to the rate limit's class when a limit is set
+		"queue.discipline",
+
+		// gendoc:generate(entity=devices, group=nic_p2p, key=queue.discipline.attach)
+		//
+		// ---
+		//  type: string
+		//  default: `queue`
+		//  shortdesc: Only for VMs: Whether to attach the queuing discipline to each transmit queue (`queue`) or to the interface root (`root`)
+		"queue.discipline.attach",
+
 		// gendoc:generate(entity=devices, group=nic_p2p, key=queue.tx.length)
 		//
 		// ---
@@ -203,6 +218,11 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader, partialValidatio
 		return err
 	}
 
+	err = nicValidateQdisc(d.config, instConf.Type())
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -223,7 +243,7 @@ func (d *nicP2P) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "ipv4.routes", "ipv6.routes", "connected"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "ipv4.routes", "ipv6.routes", "connected"}
 }
 
 // Start is run when the device is added to a running instance or instance is starting up.
