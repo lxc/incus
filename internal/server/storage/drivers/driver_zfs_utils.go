@@ -501,6 +501,29 @@ func (d *zfs) delegateDataset(vol Volume, pid int) error {
 	return nil
 }
 
+// resetDelegatedDataset restores the host-facing properties of a delegated dataset.
+func (d *zfs) resetDelegatedDataset(dataset string) error {
+	// Drop any per-dataset override of the systemd ignore flag.
+	_, err := subprocess.RunCommand("zfs", "inherit", "-r", "org.openzfs.systemd:ignore", dataset)
+	if err != nil {
+		return err
+	}
+
+	// Hide the dataset from the host's mount tooling before clearing zoned.
+	err = d.setDatasetProperties(dataset, "canmount=noauto", "org.openzfs.systemd:ignore=on")
+	if err != nil {
+		return err
+	}
+
+	// The zoned flag must be cleared before the mountpoint can be changed.
+	err = d.setDatasetProperties(dataset, "zoned=off")
+	if err != nil {
+		return err
+	}
+
+	return d.setDatasetProperties(dataset, "mountpoint=legacy")
+}
+
 // ZFSSupportsDelegation returns true if the ZFS version on the system supports user namespace delegation.
 func ZFSSupportsDelegation() bool {
 	return zfsDelegate
