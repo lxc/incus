@@ -114,6 +114,33 @@ func execPost(d *Daemon, r *http.Request) response.Response {
 	return operations.OperationResponse(op)
 }
 
+// execProcess is a started exec command.
+type execProcess interface {
+	Pid() int
+	Wait() (int, error)
+	Kill() error
+}
+
+// cmdProcess wraps an exec.Cmd as an execProcess.
+type cmdProcess struct {
+	cmd *exec.Cmd
+}
+
+// Pid returns the process ID.
+func (p *cmdProcess) Pid() int {
+	return p.cmd.Process.Pid
+}
+
+// Wait waits for the command to exit and returns its exit status.
+func (p *cmdProcess) Wait() (int, error) {
+	return osExitStatus(p.cmd.Wait())
+}
+
+// Kill terminates the command.
+func (p *cmdProcess) Kill() error {
+	return p.cmd.Process.Kill()
+}
+
 type execWs struct {
 	command               []string
 	env                   map[string]string
@@ -305,7 +332,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 
 	osPrepareExecCommand(s, cmd)
 
-	err = cmd.Start()
+	proc, err := osStartExecCommand(ctxCommand, cmd, ptys[0])
 	if err != nil {
 		exitStatus := -1
 
@@ -318,7 +345,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 		return finisher(exitStatus, err)
 	}
 
-	l := logger.AddContext(logger.Ctx{"PID": cmd.Process.Pid, "interactive": s.interactive})
+	l := logger.AddContext(logger.Ctx{"PID": proc.Pid(), "interactive": s.interactive})
 	l.Debug("Instance process started")
 
 	wgEOF.Go(func() {
@@ -367,7 +394,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 				continue
 			}
 
-			osHandleExecControl(control, s, ptys[0], cmd, l)
+			osHandleExecControl(control, s, ptys[0], proc, l)
 		}
 	})
 
@@ -413,7 +440,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 		}
 	}
 
-	exitStatus, err := osExitStatus(cmd.Wait())
+	exitStatus, err := proc.Wait()
 
 	l.Debug("Instance process stopped", logger.Ctx{"err": err, "exitStatus": exitStatus})
 	return finisher(exitStatus, nil)

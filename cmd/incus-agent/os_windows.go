@@ -320,7 +320,16 @@ func osPrepareExecCommand(s *execWs, cmd *exec.Cmd) {
 	return
 }
 
-func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, cmd *exec.Cmd, l logger.Logger) {
+func osStartExecCommand(ctx context.Context, cmd *exec.Cmd, pty io.ReadWriteCloser) (execProcess, error) {
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cmdProcess{cmd: cmd}, nil
+}
+
+func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, proc execProcess, l logger.Logger) {
 	// Ignore control messages.
 	return
 }
