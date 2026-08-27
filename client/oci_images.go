@@ -367,10 +367,12 @@ func (r *ProtocolOCI) runSkopeo(action string, image string, args ...string) (st
 
 	// Handle authentication.
 	if uri.User != nil {
+		// Use the decoded username and password rather than the URL-escaped form.
+		password, _ := uri.User.Password()
 		creds, err := json.Marshal(map[string]any{
 			"auths": map[string]any{
 				uri.Scheme + "://" + uri.Host: map[string]string{
-					"auth": base64.StdEncoding.EncodeToString([]byte(uri.User.String())),
+					"auth": base64.StdEncoding.EncodeToString([]byte(uri.User.Username() + ":" + password)),
 				},
 			},
 		})
