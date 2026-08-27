@@ -330,8 +330,18 @@ func osStartExecCommand(ctx context.Context, cmd *exec.Cmd, pty io.ReadWriteClos
 }
 
 func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, proc execProcess, l logger.Logger) {
-	// Ignore control messages.
-	return
+	if control.Command != "signal" {
+		return
+	}
+
+	// Windows has no signals, treat them all as a request to terminate the process.
+	err := proc.Kill()
+	if err != nil {
+		l.Debug("Failed to terminate process", logger.Ctx{"err": err, "signal": control.Signal})
+		return
+	}
+
+	l.Info("Terminated process", logger.Ctx{"signal": control.Signal})
 }
 
 func osExitStatus(err error) (int, error) {
