@@ -38,8 +38,19 @@ do_zfs_delegate() {
     PID=$(incus info c1 | awk '/^PID:/ {print $2}')
     nsenter -t "${PID}" -U -- zfs list | grep -q containers/c1
 
-    # Confirm that ZFS dataset is empty when off.
+    # Confirm the host-side protection properties are set.
+    zfs_pool=$(incus storage get "${storage_pool}" zfs.pool_name)
+    [ "$(zfs get -H -o value zoned "${zfs_pool}/containers/c1")" = "on" ]
+    [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1")" = "on" ]
+
+    # Confirm the properties are restored after being changed from inside the container.
+    nsenter -t "${PID}" -U -- zfs set org.openzfs.systemd:ignore=off "${zfs_pool}/containers/c1"
+    [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1")" = "off" ]
     incus stop -f c1
+    [ "$(zfs get -H -o value zoned "${zfs_pool}/containers/c1")" = "off" ]
+    [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1")" = "on" ]
+
+    # Confirm that ZFS dataset is empty when off.
     incus storage volume unset "${storage_pool}" container/c1 zfs.delegate
     incus start c1
 
