@@ -335,7 +335,18 @@ func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.Read
 }
 
 func osExitStatus(err error) (int, error) {
-	return 0, err
+	if err == nil {
+		return 0, nil
+	}
+
+	var exitErr *exec.ExitError
+
+	// Detect and extract ExitError to check the embedded exit status.
+	if errors.As(err, &exitErr) {
+		return exitErr.ExitCode(), nil
+	}
+
+	return -1, err // Not able to extract an exit status.
 }
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
