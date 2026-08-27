@@ -184,7 +184,7 @@ func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 
 	// Create the SB struct.
 	client := &SB{
-		client: ovn,
+		client: &timeoutClient{Client: ovn},
 		cookie: monitorCookie,
 	}
 

@@ -1,8 +1,10 @@
 package tls
 
 import (
+	"bytes"
 	"context"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
@@ -132,5 +134,43 @@ func RunACMEChallenge(ctx context.Context, dir, caURL, domain, email, challengeT
 		return nil, nil, err
 	}
 
-	return append(certData, caData...), keyData, nil
+	return appendIssuerChain(certData, caData), keyData, nil
+}
+
+// appendIssuerChain appends the issuer certificates to the certificate chain, skipping any already present.
+func appendIssuerChain(certData []byte, caData []byte) []byte {
+	existing := map[string]bool{}
+
+	rest := certData
+	for {
+		var block *pem.Block
+
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+
+		existing[string(block.Bytes)] = true
+	}
+
+	chain := bytes.Clone(certData)
+
+	rest = caData
+	for {
+		var block *pem.Block
+
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+
+		if existing[string(block.Bytes)] {
+			continue
+		}
+
+		existing[string(block.Bytes)] = true
+		chain = append(chain, pem.EncodeToMemory(block)...)
+	}
+
+	return chain
 }
