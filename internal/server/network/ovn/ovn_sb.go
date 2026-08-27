@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v5"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/go-logr/logr"
 	ovsdbCache "github.com/ovn-kubernetes/libovsdb/cache"
 	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"

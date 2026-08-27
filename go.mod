@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.3.7
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.106.2
 	github.com/aws/smithy-go v1.27.5
-	github.com/cenkalti/backoff/v5 v5.0.3
+	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/checkpoint-restore/go-criu/v8 v8.4.0
 	github.com/cowsql/go-cowsql v1.22.1-0.20260810140515-ae0d26981bfc
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
