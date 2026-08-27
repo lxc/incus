@@ -2,7 +2,7 @@
 # one is preferred, even if the its remote has a more recent one.
 test_image_prefer_cached() {
 
-    if incus image alias list | grep -q "^| testimage\\s*|.*$"; then
+    if incus image alias list --format=csv --columns=a | grep -q "^testimage$"; then
         incus image delete testimage
     fi
 

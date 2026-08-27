@@ -51,12 +51,12 @@ But that's also the cause of most of the security issues with such privileged co
 
 To run Docker inside an Incus container, set the {config:option}`instance-security:security.nesting` property of the container to `true`:
 
-    incus config set <container> security.nesting true
+    incus config set <container> security.nesting=true
 
 Note that Incus containers cannot load kernel modules, so depending on your Docker configuration, you might need to have extra kernel modules loaded by the host.
 You can do so by setting a comma-separated list of kernel modules that your container needs:
 
-    incus config set <container_name> linux.kernel_modules <modules>
+    incus config set <container_name> linux.kernel_modules=<modules>
 
 In addition, creating a `/.dockerenv` file in your container can help Docker ignore some errors it's getting due to running in a nested environment.
 

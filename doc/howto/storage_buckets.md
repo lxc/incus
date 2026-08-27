@@ -58,11 +58,11 @@ See the {ref}`storage-drivers` documentation for the available configuration opt
 
 Use the following command to set configuration options for a storage bucket:
 
-    incus storage bucket set <pool_name> <bucket_name> <key> <value>
+    incus storage bucket set <pool_name> <bucket_name> <key>=<value>
 
 For example, to set the quota size of a bucket, use the following command:
 
-    incus storage bucket set my-pool my-bucket size 1MiB
+    incus storage bucket set my-pool my-bucket size=1MiB
 
 You can also edit the storage bucket configuration by using the following command:
 
@@ -90,7 +90,7 @@ By default, storage buckets do not have a quota applied.
 
 To set or change a quota for a storage bucket, set its size configuration:
 
-    incus storage bucket set <pool_name> <bucket_name> size <new_size>
+    incus storage bucket set <pool_name> <bucket_name> size=<new_size>
 
 ```{important}
 - Growing a storage bucket usually works (if the storage pool has sufficient storage).

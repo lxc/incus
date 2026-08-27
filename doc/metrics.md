@@ -60,15 +60,15 @@ So if you want to use a different address for the metrics API than for the full 
 
 For example, to expose the full API on the `8443` port, enter the following command:
 
-    incus config set core.https_address ":8443"
+    incus config set core.https_address=":8443"
 
 To expose only the metrics API endpoint on the `8444` port, enter the following command:
 
-    incus config set core.metrics_address ":8444"
+    incus config set core.metrics_address=":8444"
 
 To expose only the metrics API endpoint on a specific IP address and port, enter a command similar to the following:
 
-    incus config set core.metrics_address "192.0.2.101:8444"
+    incus config set core.metrics_address="192.0.2.101:8444"
 
 ### Add a metrics certificate to Incus
 
@@ -92,7 +92,7 @@ While not recommended, this might be acceptable if you have other controls in pl
 
 ```bash
 # Disable authentication (NOT RECOMMENDED)
-incus config set core.metrics_authentication false
+incus config set core.metrics_authentication=false
 ```
 
 ### Make the metrics certificate available for Prometheus

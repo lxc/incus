@@ -598,8 +598,8 @@ test_clustering_storage() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus storage list | grep data | grep -q CREATED
 
     # Check both nodes show preseeded storage pool created.
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node1'" --format=csv | grep "^node1,1$"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'data' AND nodes.name = 'node2'" --format=csv | grep "^node2,1$"
 
     # Trying to pass config values other than 'source' results in an error
     ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage create pool1 dir source=/foo size=123 --target node1 || false
@@ -609,19 +609,19 @@ test_clustering_storage() {
         # Create pending nodes.
         INCUS_DIR="${INCUS_ONE_DIR}" incus storage create pool1 "${poolDriver}" --target node1
         INCUS_DIR="${INCUS_TWO_DIR}" incus storage create pool1 "${poolDriver}" --target node2
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" --format=csv | grep "^node1,0$"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" --format=csv | grep "^node2,0$"
 
         # Modify first pending node with invalid config and check it fails and all nodes are pending.
         INCUS_DIR="${INCUS_ONE_DIR}" incus storage set pool1 source=/tmp/not/exist --target node1
         ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage create pool1 "${poolDriver}" || false
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" --format=csv | grep "^node1,0$"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" --format=csv | grep "^node2,0$"
 
         # Run create on second node, so it succeeds and then fails notifying first node.
         ! INCUS_DIR="${INCUS_TWO_DIR}" incus storage create pool1 "${poolDriver}" || false
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" --format=csv | grep "^node1,0$"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" --format=csv | grep "^node2,1$"
 
         # Check we cannot update global config while in pending state.
         ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage set pool1 rsync.bwlimit 10 || false
@@ -650,8 +650,8 @@ test_clustering_storage() {
         stat "${INCUS_TWO_SOURCE}/containers"
 
         # Check both nodes marked created.
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node1'" --format=csv | grep "^node1,1$"
+        INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,storage_pools_nodes.state FROM nodes JOIN storage_pools_nodes ON storage_pools_nodes.node_id = nodes.id JOIN storage_pools ON storage_pools.id = storage_pools_nodes.storage_pool_id WHERE storage_pools.name = 'pool1' AND nodes.name = 'node2'" --format=csv | grep "^node2,1$"
 
         # Check copying storage volumes works.
         INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume create pool1 vol1 --target=node1
@@ -1096,8 +1096,8 @@ test_clustering_network() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus network list | grep "${bridge}" | grep -q CREATED
 
     # Check both nodes show network created.
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node1'" --format=csv | grep "^node1,1$"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${bridge}' AND nodes.name = 'node2'" --format=csv | grep "^node2,1$"
 
     # Trying to pass config values other than
     # 'bridge.external_interfaces' results in an error
@@ -1146,15 +1146,15 @@ test_clustering_network() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep status: | grep -q Errored # Check has errored status.
 
     # Check each node status (expect both node1 and node2 to be pending as local member running created failed first).
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 0     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" --format=csv | grep "^node1,0$"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" --format=csv | grep "^node2,0$"
 
     # Run network create on other node2 (still expect to fail on node1, but expect node2 create to succeed).
     ! INCUS_DIR="${INCUS_TWO_DIR}" incus network create "${net}" || false
 
     # Check each node status (expect node1 to be pending and node2 to be created).
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 0     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" --format=csv | grep "^node1,0$"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" --format=csv | grep "^node2,1$"
 
     # Check interfaces are expected types (dummy on node1 and bridge on node2).
     nsenter -n -t "${INCUS_PID1}" -- ip -details link show "${net}" | grep dummy
@@ -1195,8 +1195,8 @@ test_clustering_network() {
     ! INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" || false                     # Check re-create is blocked after success.
 
     # Check both nodes marked created.
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" | grep "| node1 | 1     |"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" | grep "| node2 | 1     |"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node1'" --format=csv | grep "^node1,1$"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT nodes.name,networks_nodes.state FROM nodes JOIN networks_nodes ON networks_nodes.node_id = nodes.id JOIN networks ON networks.id = networks_nodes.network_id WHERE networks.name = '${net}' AND nodes.name = 'node2'" --format=csv | grep "^node2,1$"
 
     # Check instance can be connected to created network and assign static DHCP allocations.
     INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}"

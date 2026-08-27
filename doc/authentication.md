@@ -134,9 +134,9 @@ Unless you enable [`keepalive` mode](remote-keepalive), then every single call t
 
     $ incus list remote-host:
     Password for client.key:
-    +------+-------+------+------+------+-----------+
-    | NAME | STATE | IPV4 | IPV6 | TYPE | SNAPSHOTS |
-    +------+-------+------+------+------+-----------+
+    ┌──────┬───────┬──────┬──────┬──────┬───────────┐
+    │ NAME │ STATE │ IPV4 │ IPV6 │ TYPE │ SNAPSHOTS │
+    └──────┴───────┴──────┴──────┴──────┴───────────┘
 ```
 
 ```{note}

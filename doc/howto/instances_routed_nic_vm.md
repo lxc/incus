@@ -17,7 +17,7 @@ In this command, `my-parent-network` is your parent network, and the IPv4 and IP
 
 Next we will add some `netplan` configuration to the instance using the `cloud-init.network-config` configuration key:
 
-    cat <<EOF | incus config set bookworm cloud-init.network-config -
+    cat <<EOF | incus config set bookworm cloud-init.network-config=-
     network:
       version: 2
       ethernets:

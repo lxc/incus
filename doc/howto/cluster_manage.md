@@ -7,16 +7,16 @@ After your cluster is formed, use [`incus cluster list`](incus_cluster_list.md) 
 :input: incus cluster list
 :scroll:
 
-+---------+----------------------------+------------------+--------------+----------------+-------------+--------+-------------------+
-| NAME    |            URL             |      ROLES       | ARCHITECTURE | FAILURE DOMAIN | DESCRIPTION | STATE  |      MESSAGE      |
-+---------+----------------------------+------------------+--------------+----------------+-------------+--------+-------------------+
-| server1 | https://192.0.2.101:8443   | database-leader  | x86_64       | default        |             | ONLINE | Fully operational |
-|         |                            | database         |              |                |             |        |                   |
-+---------+----------------------------+------------------+--------------+----------------+-------------+--------+-------------------+
-| server2 | https://192.0.2.102:8443   | database-standby | aarch64      | default        |             | ONLINE | Fully operational |
-+---------+----------------------------+------------------+--------------+----------------+-------------+--------+-------------------+
-| server3 | https://192.0.2.103:8443   | database-standby | aarch64      | default        |             | ONLINE | Fully operational |
-+---------+----------------------------+------------------+--------------+----------------+-------------+--------+-------------------+
+┌─────────┬──────────────────────────┬──────────────────┬──────────────┬────────────────┬─────────────┬────────┬───────────────────┐
+│  NAME   │          URL             │      ROLES       │ ARCHITECTURE │ FAILURE DOMAIN │ DESCRIPTION │ STATUS │      MESSAGE      │
+├─────────┼──────────────────────────┼──────────────────┼──────────────┼────────────────┼─────────────┼────────┼───────────────────┤
+│ server1 │ https://192.0.2.101:8443 │ database-leader  │ x86_64       │ default        │             │ ONLINE │ Fully operational │
+│         │                          │ database         │              │                │             │        │                   │
+├─────────┼──────────────────────────┼──────────────────┼──────────────┼────────────────┼─────────────┼────────┼───────────────────┤
+│ server2 │ https://192.0.2.102:8443 │ database-standby │ aarch64      │ default        │             │ ONLINE │ Fully operational │
+├─────────┼──────────────────────────┼──────────────────┼──────────────┼────────────────┼─────────────┼────────┼───────────────────┤
+│ server3 │ https://192.0.2.103:8443 │ database-standby │ aarch64      │ default        │             │ ONLINE │ Fully operational │
+└─────────┴──────────────────────────┴──────────────────┴──────────────┴────────────────┴─────────────┴────────┴───────────────────┘
 ```
 
 To see more detailed information about an individual cluster member, run the following command:
@@ -44,7 +44,7 @@ See {ref}`cluster-member-config` for all available configurations.
 To set these configuration options, use [`incus cluster set`](incus_cluster_set.md) or [`incus cluster edit`](incus_cluster_edit.md).
 For example:
 
-    incus cluster set server1 scheduler.instance manual
+    incus cluster set server1 scheduler.instance=manual
 
 ### Assign member roles
 

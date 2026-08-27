@@ -29,11 +29,11 @@ To create an alias, run [`incus alias add`](incus_alias_add.md) and provide the 
 ```
 $ incus alias add my-alias "image list"
 $ incus my-alias
-+-------+--------------+--------+----------------------------------------+--------------+-----------+-----------+----------------------+
-| ALIAS | FINGERPRINT  | PUBLIC |              DESCRIPTION               | ARCHITECTURE |   TYPE    |   SIZE    |     UPLOAD DATE      |
-+-------+--------------+--------+----------------------------------------+--------------+-----------+-----------+----------------------+
-|       | 3b3bd7f47fca | no     | Debian bookworm amd64 (20260608_05:24) | x86_64       | CONTAINER | 106.22MiB | 2026/06/08 22:01 -03 |
-+-------+--------------+--------+----------------------------------------+--------------+-----------+-----------+----------------------+
+┌───────┬──────────────┬────────┬────────────────────────────────────────┬──────────────┬───────────┬───────────┬──────────────────────┐
+│ ALIAS │ FINGERPRINT  │ PUBLIC │              DESCRIPTION               │ ARCHITECTURE │   TYPE    │   SIZE    │     UPLOAD DATE      │
+├───────┼──────────────┼────────┼────────────────────────────────────────┼──────────────┼───────────┼───────────┼──────────────────────┤
+│       │ 3b3bd7f47fca │ no     │ Debian bookworm amd64 (20260608_05:24) │ x86_64       │ CONTAINER │ 106.22MiB │ 2026/06/08 22:01 -03 │
+└───────┴──────────────┴────────┴────────────────────────────────────────┴──────────────┴───────────┴───────────┴──────────────────────┘
 ```
 
 When a command alias has the same name as an Incus command, the command alias will mask the Incus command. You would need to remove first the command alias if you want to run verbatim the Incus command of the same name.
@@ -44,11 +44,11 @@ To see all configured aliases, run [`incus alias list`](incus_alias_list.md).
 
 ```
 $ incus alias list
-+----------+---------------------------+
-|  ALIAS   |          TARGET           |
-+----------+---------------------------+
-| my-alias | image list                |
-+----------+---------------------------+
+┌──────────┬────────────┐
+│  ALIAS   │   TARGET   │
+├──────────┼────────────┤
+│ my-alias │ image list │
+└──────────┴────────────┘
 ```
 
 ## How to remove a command alias
@@ -59,9 +59,9 @@ and add the name of that command alias.
 ```
 $ incus alias remove my-alias
 $ incus alias list
-+----------+---------------------------+
-|  ALIAS   |          TARGET           |
-+----------+---------------------------+
+┌────────┬────────┐
+│ ALIAS  │ TARGET │
+└────────┴────────┘
 ```
 
 ## How to rename a command alias
@@ -72,11 +72,11 @@ then add the name of that existing command alias, and finally the name of the ne
 ```
 $ incus alias rename my-alias my-new-alias
 $ incus alias list
-+--------------+---------------------------+
-|    ALIAS     |          TARGET           |
-+--------------+---------------------------+
-| my-new-alias | image list                |
-+--------------+---------------------------+
+┌──────────────┬────────────┐
+│    ALIAS     │   TARGET   │
+├──────────────┼────────────┤
+│ my-new-alias │ image list │
+└──────────────┴────────────┘
 ```
 
 ## Arguments in aliased commands
@@ -108,11 +108,11 @@ Incus comes with the `shell` built-in command alias. That alias is based on the
 
 ```
 $ incus alias list
-+-----------+----------------------+
-|   ALIAS   |        TARGET        |
-+-----------+----------------------+
-| shell     | exec @ARGS@ -- su -l |
-+-----------+----------------------+
+┌───────┬──────────────────────┐
+│ ALIAS │        TARGET        │
+├───────┼──────────────────────┤
+│ shell │ exec @ARGS@ -- su -l │
+└───────┴──────────────────────┘
 ```
 
 If you run `incus shell myinstance`, this command alias will expand into `incus exec myinstance -- su -l`.

@@ -128,7 +128,7 @@ For example, to set the size of your custom storage volume `my-volume` to 1 GiB,
 
 To set the snapshot expiry time for your virtual machine `my-vm` to one month, use the following command:
 
-    incus storage volume set my-pool virtual-machine/my-vm snapshots.expiry 1M
+    incus storage volume set my-pool virtual-machine/my-vm snapshots.expiry=1M
 
 You can also edit the storage volume configuration by using the following command:
 
@@ -145,7 +145,7 @@ In general, the defaults set on a storage pool level (before the volume was crea
 
 For example, to set a default volume size for a storage pool, use the following command:
 
-    incus storage set [<remote>:]<pool_name> volume.size <value>
+    incus storage set [<remote>:]<pool_name> volume.size=<value>
 
 ## View storage volumes
 

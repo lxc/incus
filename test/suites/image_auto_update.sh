@@ -1,5 +1,5 @@
 test_image_auto_update() {
-    if incus image alias list | grep -q "^| testimage\\s*|.*$"; then
+    if incus image alias list --format=csv --columns=a | grep -q "^testimage$"; then
         incus image delete testimage
     fi
 
