@@ -17,8 +17,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 	"github.com/mdlayher/netx/eui64"
 
 	"github.com/lxc/incus/v7/internal/server/db"
