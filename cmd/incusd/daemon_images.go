@@ -15,6 +15,7 @@ import (
 
 	incus "github.com/lxc/incus/v7/client"
 	internalIO "github.com/lxc/incus/v7/internal/io"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/locking"
@@ -231,13 +232,37 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 			}
 		}
 	} else if response.IsNotFoundError(err) {
+		var otherImg *api.Image
 		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 			// Check if the image already exists in some other project.
-			_, imgInfo, err = tx.GetImageFromAnyProject(ctx, fp)
+			_, otherImg, err = tx.GetImageFromAnyProject(ctx, fp)
 
 			return err
 		})
 		if err == nil {
+			// Only reuse another project's image when the caller may see it,
+			// otherwise download it (proving access) and dedupe on disk.
+			reuse := otherImg.Public || r == nil
+			if !reuse {
+				err = s.Authorizer.CheckPermission(ctx, r, auth.ObjectImage(otherImg.Project, otherImg.Fingerprint), auth.EntitlementCanView)
+				if err == nil {
+					reuse = true
+				} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
+					return nil, false, err
+				}
+
+				err = nil
+			}
+
+			if reuse {
+				imgInfo = otherImg
+			} else if args.Server == "" {
+				// No source to prove access against.
+				return nil, false, api.StatusErrorf(http.StatusNotFound, "Image not found")
+			}
+		}
+
+		if err == nil && imgInfo != nil {
 			var nodeAddress string
 
 			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
@@ -353,9 +378,9 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, errors.New("Invalid image fingerprint")
 	}
 
-	// Cleanup any leftover from a past attempt
+	// Download to a temporary name so an existing on-disk copy isn't overwritten.
 	destDir := internalUtil.VarPath("images")
-	destName := filepath.Join(destDir, fp)
+	destName := filepath.Join(destDir, fp+".download")
 
 	failure := true
 	cleanup := func() {
@@ -627,9 +652,12 @@ func imageDownload(ctx context.Context, r *http.Request, s *state.State, op *ope
 		return nil, false, errors.New("Invalid image fingerprint")
 	}
 
-	// Check if the image path changed (private images)
+	// Reuse an existing on-disk copy if present, otherwise move ours into place.
 	newDestName := filepath.Join(destDir, fp)
-	if newDestName != destName {
+	if util.PathExists(newDestName) {
+		_ = os.Remove(destName)
+		_ = os.Remove(destName + ".rootfs")
+	} else {
 		err = internalUtil.FileMove(destName, newDestName)
 		if err != nil {
 			return nil, false, err
