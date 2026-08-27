@@ -379,7 +379,7 @@ func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 	// Miscellaneous
 	env["COMPUTERNAME"] = ""
 	env["PATH"] = fmt.Sprintf("%s;%s;%s\\WindowsPowerShell\\v1.0", system32, env["WINDIR"], system32)
-	env["PATHEXT"] = "COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL"
+	env["PATHEXT"] = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL"
 
 	env["ProgramData"] = fmt.Sprintf("%s\\ProgramData", env["SystemDrive"])
 	env["ALLUSERSPROFILE"] = env["ProgramData"]
