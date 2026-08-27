@@ -188,8 +188,17 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 	return nil
 }
 
-// sftpRecursivePullFile pulls a remote path into targetDir and, for directories, its content.
+// sftpRecursivePullFile pulls a remote path into targetDir.
 func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source string, normalizedSource string, targetDir string, quiet bool, archive bool, dereference bool, createRoot bool) error {
+	// Symlinks created during this transfer, which a malicious server must not be able to make us follow.
+	symlinks := map[string]struct{}{}
+
+	return sftpRecursivePullEntry(sftpConn, fInfo, source, normalizedSource, targetDir, quiet, archive, dereference, createRoot, symlinks)
+}
+
+// sftpRecursivePullEntry pulls a remote path and, for directories, its content.
+// Pre-existing symlinks in the target are followed like cp does, but never ones created by this transfer.
+func sftpRecursivePullEntry(sftpConn *sftp.Client, fInfo os.FileInfo, source string, normalizedSource string, targetDir string, quiet bool, archive bool, dereference bool, createRoot bool, symlinks map[string]struct{}) error {
 	var fileType string
 	if fInfo.IsDir() {
 		fileType = "directory"
@@ -211,6 +220,17 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 	}
 
 	logger.Infof("Pulling %s from %s (%s)", target, normalizedSource, fileType)
+
+	// Never write through a symlink planted earlier in this same pull, replace it instead.
+	_, planted := symlinks[target]
+	if planted {
+		err := os.Remove(target)
+		if err != nil {
+			return err
+		}
+
+		delete(symlinks, target)
+	}
 
 	switch fileType {
 	case "directory":
@@ -252,7 +272,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 				return err
 			}
 
-			err = sftpRecursivePullFile(sftpConn, nextInfo, nextP, nextP, target, quiet, archive, dereference, true)
+			err = sftpRecursivePullEntry(sftpConn, nextInfo, nextP, nextP, target, quiet, archive, dereference, true, symlinks)
 			if err != nil {
 				return err
 			}
@@ -334,6 +354,8 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 		if err != nil {
 			return err
 		}
+
+		symlinks[target] = struct{}{}
 
 		if archive {
 			sftpSetLocalAttrs(target, fInfo)
