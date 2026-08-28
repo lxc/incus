@@ -222,7 +222,11 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 		var config ociSpecs.Spec
 		err = json.Unmarshal([]byte(data), &config)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed parsing OCI config: %w", err)
+		}
+
+		if config.Process == nil {
+			return errors.New("Failed parsing OCI config: Missing process section")
 		}
 
 		// Unmount the instance.
