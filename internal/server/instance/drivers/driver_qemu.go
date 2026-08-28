@@ -5588,6 +5588,16 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 					blockDevFile["driver"] = "file"
 				}
 
+				// Advertise the cluster size as discard granularity as qcow2 drops partial cluster discards.
+				imgInfo, err := storageDrivers.Qcow2Info(srcDevPath)
+				if err != nil {
+					return fmt.Errorf("Failed getting qcow2 info for disk device %q: %w", driveConf.DevName, err)
+				}
+
+				if imgInfo.ClusterSize > 0 {
+					qemuDev["discard_granularity"] = imgInfo.ClusterSize
+				}
+
 				blockDev = map[string]any{
 					"driver":    "qcow2",
 					"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
