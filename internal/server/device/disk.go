@@ -3659,7 +3659,8 @@ func (d *disk) updateDependentConfig() (func() error, error) {
 	}
 
 	if dbVolume.Type == db.StoragePoolVolumeTypeNameCustom {
-		if util.IsTrue(d.config["dependent"]) {
+		// A volume already flagged dependent was restored with its instance, its snapshots are in sync.
+		if util.IsTrue(d.config["dependent"]) && !util.IsTrue(dbVolume.Config["dependent"]) {
 			var volSnapshots []db.StorageVolumeArgs
 			err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 				volSnapshots, err = tx.GetLocalStoragePoolVolumeSnapshotsWithType(ctx, storageProjectName, volName, db.StoragePoolVolumeTypeCustom, d.pool.ID())
