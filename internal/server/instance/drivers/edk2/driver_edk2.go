@@ -16,6 +16,12 @@ type FirmwarePair struct {
 	Vars string
 }
 
+// HasNVRAM returns whether the firmware uses a separate EDK2 variable store.
+// Legacy BIOS images (SeaBIOS) reuse their code image as a placeholder Vars.
+func (f FirmwarePair) HasNVRAM() bool {
+	return f.Vars != "" && f.Vars != f.Code
+}
+
 // Installation represents a set of available firmware at a given location on the system.
 type Installation struct {
 	Path  string
