@@ -271,6 +271,7 @@ SATA
 scalable
 scriptlet
 SDN
+SeaBIOS
 Seccomp
 SELinux
 SEV

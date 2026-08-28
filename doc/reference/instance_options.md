@@ -424,6 +424,8 @@ The following commands are exposed to that scriptlet:
 - `set_raw_nvram_var(guid, name, v, attributes=None, timestamp=None)` will set a binary NVRAM variable
 - `list_nvram_vars(guid=None)` will list NVRAM variables
 
+The NVRAM functions are only available with an EDK2 firmware and fail when using a legacy BIOS (`security.csm=true` with SeaBIOS) or a unified firmware image (AMD SEV).
+
 Additionally the following alias commands (internally use `run_command`) are also available to simplify scripts:
 
 - `blockdev_add`
