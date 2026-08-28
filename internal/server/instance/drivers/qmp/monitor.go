@@ -257,7 +257,12 @@ func (m *Monitor) ping() error {
 	_, err := m.qmp.run(fmt.Appendf([]byte{},
 		`{"execute": "query-version", "id": %d}`, id), id)
 	if err != nil {
-		m.Disconnect()
+		// A slow QEMU is still alive, keep the monitor cached.
+		if errors.Is(err, ErrMonitorTimeout) {
+			return err
+		}
+
+		m.teardown()
 		return ErrMonitorDisconnect
 	}
 
@@ -283,6 +288,12 @@ func (m *Monitor) RunJSON(request []byte, resp any, logCommand bool, id uint32) 
 	if err != nil {
 		// Keep the monitor cached on timeout so retries fail fast.
 		if errors.Is(err, ErrMonitorTimeout) {
+			return err
+		}
+
+		// An error reply came from QEMU itself, so it's alive.
+		var qmpErr *qmpError
+		if errors.As(err, &qmpErr) {
 			return err
 		}
 
@@ -441,6 +452,13 @@ func (m *Monitor) AgenStarted() bool {
 
 // Disconnect forces a disconnection from QEMU.
 func (m *Monitor) Disconnect() {
+	// A deliberate disconnect must not be reported as a VM shutdown.
+	m.SetInitialized(false)
+	m.teardown()
+}
+
+// teardown closes the socket and drops the monitor from the cache.
+func (m *Monitor) teardown() {
 	monitorsLock.Lock()
 	defer monitorsLock.Unlock()
 
