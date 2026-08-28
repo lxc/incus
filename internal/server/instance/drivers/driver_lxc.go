@@ -2471,7 +2471,11 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 		var config ociSpecs.Spec
 		err = json.Unmarshal([]byte(data), &config)
 		if err != nil {
-			return "", nil, err
+			return "", nil, fmt.Errorf("Failed parsing OCI config: %w", err)
+		}
+
+		if config.Process == nil {
+			return "", nil, errors.New("Failed parsing OCI config: Missing process section")
 		}
 
 		// Mark the container as an OCI container if not already set.
