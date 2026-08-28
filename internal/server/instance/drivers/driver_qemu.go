@@ -12745,18 +12745,17 @@ func (d *qemu) setNVRAM(store *uefi.Store) error {
 		return nil
 	}
 
-	f, err := os.Create(d.nvramPath())
-	if err != nil {
-		return fmt.Errorf("Failed opening NVRAM file: %w", err)
-	}
-
 	b, err := store.Bytes()
 	if err != nil {
 		return err
 	}
 
-	_, err = f.Write(b)
-	return err
+	err = os.WriteFile(d.nvramPath(), b, 0o600)
+	if err != nil {
+		return fmt.Errorf("Failed writing NVRAM file: %w", err)
+	}
+
+	return nil
 }
 
 // SetNVRAM sets the NVRAM.
