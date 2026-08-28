@@ -269,7 +269,7 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 }
 
 // defaultCommandTimeout is how long we wait for a QMP reply before giving up.
-const defaultCommandTimeout = 500 * time.Millisecond
+const defaultCommandTimeout = 2 * time.Second
 
 // blockCommandTimeout is used for block commands that do blocking storage I/O.
 const blockCommandTimeout = 5 * time.Second
