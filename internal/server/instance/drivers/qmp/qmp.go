@@ -183,6 +183,7 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 	defer close(events)
 
 	scanner := bufio.NewScanner(r)
+	scanner.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
 	for scanner.Scan() {
 		var e qmpEvent
 
@@ -244,6 +245,8 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 	err := scanner.Err()
 	if err == nil {
 		err = errors.New("Monitor has exited")
+	} else {
+		logger.Warn("QMP monitor read failed", logger.Ctx{"err": err})
 	}
 
 	// Return the error to all existing requests.
