@@ -209,7 +209,12 @@ func (r *ProtocolIncus) GetPrivateImageFile(fingerprint string, secret string, r
 	// Use relatively short response header timeout so as not to hold the image lock open too long.
 	// Deference client and transport in order to clone them so as to not modify timeout of base client.
 	httpClient := *r.http
-	httpTransport := httpClient.Transport.(*http.Transport).Clone()
+	baseTransport, err := r.getUnderlyingHTTPTransport()
+	if err != nil {
+		return nil, err
+	}
+
+	httpTransport := baseTransport.Clone()
 	httpTransport.ResponseHeaderTimeout = 30 * time.Second
 	httpClient.Transport = httpTransport
 
