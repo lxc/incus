@@ -36,6 +36,11 @@ func (r *ProtocolIncus) setupOIDCClient(token *oidc.Tokens[*oidc.IDTokenClaims],
 	r.oidcClient = newOIDCClient(token)
 	r.oidcClient.skipAuthenticate = skipAuthenticate
 	r.oidcClient.httpClient = r.http
+
+	// Route requests to the server through its own transport and everything else (the provider) through the default one.
+	r.oidcClient.oidcTransport.base = r.http.Transport
+	r.oidcClient.oidcTransport.serverHost = r.httpBaseURL.Host
+	r.http.Transport = r.oidcClient.oidcTransport
 }
 
 // GetOIDCTokens returns the current OIDC tokens (if any) from the OIDC client.
@@ -49,17 +54,41 @@ func (r *ProtocolIncus) GetOIDCTokens() *oidc.Tokens[*oidc.IDTokenClaims] {
 	return r.oidcClient.tokens
 }
 
-// oidcTransport is a custom HTTP transport that injects the audience field into requests directed at the device authorization endpoint.
+// oidcTransport is a custom HTTP transport that sends requests to the Incus server through the server-specific transport
+// and requests to the OIDC provider through the default transport, adjusting the form parameters of the device authorization
+// and token endpoint requests.
 type oidcTransport struct {
+	base                        http.RoundTripper
+	serverHost                  string
 	deviceAuthorizationEndpoint string
+	tokenEndpoint               string
 	audience                    string
+}
+
+// Transport returns the underlying *http.Transport used for the Incus server.
+func (o *oidcTransport) Transport() *http.Transport {
+	switch t := o.base.(type) {
+	case *http.Transport:
+		return t
+	case HTTPTransporter:
+		return t.Transport()
+	default:
+		return nil
+	}
 }
 
 // RoundTrip is a method of oidcTransport that modifies the request, adds the audience parameter if appropriate, and sends it along.
 func (o *oidcTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	// Don't modify the request if it's not to the device authorization endpoint, or there are no
-	// URL parameters which need to be set.
-	if r.URL.String() != o.deviceAuthorizationEndpoint || len(o.audience) == 0 {
+	// Requests to the Incus server use the server-specific transport.
+	if o.base != nil && r.URL.Host == o.serverHost {
+		return o.base.RoundTrip(r)
+	}
+
+	isDeviceAuthorization := r.URL.String() == o.deviceAuthorizationEndpoint
+	isToken := r.URL.String() == o.tokenEndpoint
+
+	// Don't modify requests to other endpoints.
+	if !isDeviceAuthorization && !isToken {
 		return http.DefaultTransport.RoundTrip(r)
 	}
 
@@ -68,8 +97,15 @@ func (o *oidcTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	if o.audience != "" {
+	if isDeviceAuthorization && o.audience != "" {
 		r.Form.Add("audience", o.audience)
+	}
+
+	// Drop empty parameters as some providers reject an empty client_secret.
+	for key, values := range r.Form {
+		if strings.Join(values, "") == "" {
+			delete(r.Form, key)
+		}
 	}
 
 	// Update the body with the new URL parameters.
@@ -265,6 +301,8 @@ func (o *oidcClient) refresh(issuer string, clientID string, scopes string) erro
 		return errRefreshAccessToken
 	}
 
+	o.oidcTransport.tokenEndpoint = provider.OAuthConfig().Endpoint.TokenURL
+
 	oauthTokens, err := rp.RefreshTokens[*oidc.IDTokenClaims](context.TODO(), provider, o.tokens.RefreshToken, "", "")
 	if err != nil {
 		return errRefreshAccessToken
@@ -285,14 +323,7 @@ func (o *oidcClient) refresh(issuer string, clientID string, scopes string) erro
 // It presents a user code for the end user to input in the device that has web access and waits for them to complete the authentication,
 // subsequently updating the client's tokens upon successful authentication.
 func (o *oidcClient) authenticate(issuer string, clientID string, audience string, scopes string) error {
-	// Store the old transport and restore it in the end.
-	oldTransport := o.httpClient.Transport
 	o.oidcTransport.audience = audience
-	o.httpClient.Transport = o.oidcTransport
-
-	defer func() {
-		o.httpClient.Transport = oldTransport
-	}()
 
 	provider, err := o.getProvider(issuer, clientID, scopes)
 	if err != nil {
@@ -300,6 +331,7 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 	}
 
 	o.oidcTransport.deviceAuthorizationEndpoint = provider.GetDeviceAuthorizationEndpoint()
+	o.oidcTransport.tokenEndpoint = provider.OAuthConfig().Endpoint.TokenURL
 
 	resp, err := rp.DeviceAuthorization(context.TODO(), strings.Split(scopes, ","), provider, nil)
 	if err != nil {

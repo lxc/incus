@@ -762,12 +762,20 @@ func (d *qemu) onStop(target string, reason string) error {
 	// Wait up to 5 minutes to allow for flushing any pending data to disk.
 	d.logger.Debug("Waiting for VM process to finish")
 	waitTimeout := time.Minute * 5
-	if d.pidWait(waitTimeout) {
-		d.logger.Debug("VM process finished")
-	} else {
-		// Log a warning, but continue clean up as best we can.
+	if !d.pidWait(waitTimeout) {
+		// Leave the runtime state alone while the process is still alive.
+		err = fmt.Errorf("VM process failed to stop after %s", waitTimeout)
 		d.logger.Error("VM process failed to stop", logger.Ctx{"timeout": waitTimeout})
+
+		if monitor != nil {
+			monitor.Disconnect()
+		}
+
+		op.Done(err)
+		return err
 	}
+
+	d.logger.Debug("VM process finished")
 
 	// Fully cleanup the existing QEMU monitor.
 	if monitor != nil {
@@ -12745,18 +12753,17 @@ func (d *qemu) setNVRAM(store *uefi.Store) error {
 		return nil
 	}
 
-	f, err := os.Create(d.nvramPath())
-	if err != nil {
-		return fmt.Errorf("Failed opening NVRAM file: %w", err)
-	}
-
 	b, err := store.Bytes()
 	if err != nil {
 		return err
 	}
 
-	_, err = f.Write(b)
-	return err
+	err = os.WriteFile(d.nvramPath(), b, 0o600)
+	if err != nil {
+		return fmt.Errorf("Failed writing NVRAM file: %w", err)
+	}
+
+	return nil
 }
 
 // SetNVRAM sets the NVRAM.
