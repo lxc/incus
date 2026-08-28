@@ -81,7 +81,7 @@ func QEMURun(l logger.Logger, instance *api.Instance, cmdArgs *[]string, conf *[
 
 	assertNVRAM := func(name string) error {
 		if nvram == nil {
-			return fmt.Errorf("%s requires a firmware with a NVRAM", name)
+			return fmt.Errorf("%s requires a firmware with an NVRAM", name)
 		}
 
 		return nil
