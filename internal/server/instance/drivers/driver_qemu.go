@@ -2678,7 +2678,7 @@ func (d *qemu) setupNvram() error {
 
 	if !needsNvram {
 		if len(nvramDefaults) > 0 {
-			return errors.New("The selected firmware doesn’t include a NVRAM but NVRAM modifications are required")
+			return errors.New("The selected firmware doesn’t include an NVRAM but NVRAM modifications are required")
 		}
 
 		return nil
@@ -2711,7 +2711,7 @@ func (d *qemu) setupNvram() error {
 	}
 
 	if !efiVarsStore && len(nvramDefaults) > 0 {
-		return errors.New("The selected firmware doesn’t include a NVRAM but NVRAM modifications are required")
+		return errors.New("The selected firmware doesn’t include an NVRAM but NVRAM modifications are required")
 	}
 
 	// Copy the template.
@@ -12733,7 +12733,7 @@ func (d *qemu) checkNVRAM() error {
 	}
 
 	if !firmware.HasNVRAM() {
-		return errors.New("The selected firmware doesn’t include a NVRAM")
+		return errors.New("The selected firmware doesn’t include an NVRAM")
 	}
 
 	return nil

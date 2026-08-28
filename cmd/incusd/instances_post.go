@@ -641,7 +641,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 		return response.SmartError(err)
 	}
 
-	// If "security.secureboot" has changed, force a NVRAM reset (VMs only).
+	// If "security.secureboot" has changed, force an NVRAM reset (VMs only).
 	if source.Type() == instancetype.VM && util.IsTrueOrEmpty(source.ExpandedConfig()["security.secureboot"]) != util.IsTrueOrEmpty(req.Config["security.secureboot"]) {
 		req.Config["volatile.apply_nvram"] = "true"
 	}
