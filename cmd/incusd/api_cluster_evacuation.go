@@ -642,7 +642,13 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 		return fmt.Errorf("Failed to get instance %q: %w", inst.Name(), err)
 	}
 
-	isRunning := apiInst.StatusCode == api.Running
+	// Check for broken instances.
+	if apiInst.StatusCode == api.Error {
+		return fmt.Errorf("Instance %q in project %q is in error state", inst.Name(), inst.Project().Name)
+	}
+
+	// Anything other than a Stopped status needs the instance to be cleanly stopped first.
+	isRunning := apiInst.StatusCode != api.Stopped
 	if isRunning && !liveOrNearLive {
 		_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), inst.Project().Name)})
 
