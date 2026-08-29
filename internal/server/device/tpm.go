@@ -16,6 +16,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
@@ -423,8 +424,21 @@ func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
 	return &runConf, nil
 }
 
-// Remove removes the TPM state file.
+// Remove removes the TPM state directory.
 func (d *tpm) Remove(cleanupDependencies bool) error {
+	// The state lives on the instance volume, which is unmounted while the instance is stopped.
+	pool, err := storagePools.LoadByInstance(d.state, d.inst)
+	if err != nil {
+		return err
+	}
+
+	_, err = pool.MountInstance(d.inst, nil)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(func() error { return pool.UnmountInstance(d.inst, nil) }, "Failed to unmount instance")
+
 	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
 
 	return os.RemoveAll(tpmDevPath)
