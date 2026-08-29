@@ -8,14 +8,16 @@ import (
 type OSType string
 
 const (
-	// Windows represents the Windows OS type.
-	Windows OSType = "windows"
-	// Linux represents the Linux OS type.
-	Linux OSType = "linux"
 	// FreeBSD represents the FreeBSD OS type.
 	FreeBSD OSType = "freebsd"
+	// Linux represents the Linux OS type.
+	Linux OSType = "linux"
 	// MacOS represents the macOS OS type.
 	MacOS OSType = "macos"
+	// NetBSD represents the NetBSD OS type.
+	NetBSD OSType = "netbsd"
+	// Windows represents the Windows OS type.
+	Windows OSType = "windows"
 	// UnknownOS represents all other OS types.
 	UnknownOS OSType = "unknown"
 )
@@ -92,12 +94,16 @@ func DetermineOS(imageOS string) (OSType, Distro) {
 		return Windows, OtherDistro
 	}
 
-	if matches("darwin", "macos", "mac os") {
-		return MacOS, OtherDistro
-	}
-
 	if matches("freebsd", "opnsense", "pfsense") {
 		return FreeBSD, OtherDistro
+	}
+
+	if matches("netbsd") {
+		return NetBSD, OtherDistro
+	}
+
+	if matches("darwin", "macos", "mac os") {
+		return MacOS, OtherDistro
 	}
 
 	// If we're sure it's linux, return it directly.
