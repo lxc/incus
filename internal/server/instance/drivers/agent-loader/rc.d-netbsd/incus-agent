@@ -1,0 +1,85 @@
+#!/bin/sh
+#
+# PROVIDE: incus_agent
+# REQUIRE: mountall
+# KEYWORD: shutdown
+#
+
+. /etc/rc.subr
+
+name=incus_agent
+rcvar=incus_agent
+pidfile="/var/run/$name.pid"
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
+status_cmd="${name}_status"
+extra_commands=status
+
+check_pid()
+{
+	if [ -f "$pidfile" ]; then
+		pid="$(cat "$pidfile")"
+		if [ -n "${pid}" ] && kill -0 "${pid}" 2>/dev/null; then
+			echo "$pid"
+			return 0
+		fi
+
+		return 1
+	fi
+
+	return 1
+}
+
+incus_agent_start()
+{
+	if pid="$(check_pid)"; then
+		echo "$name is already running (PID $pid)"
+		return 1
+	fi
+
+	/usr/libexec/incus-agent-setup || return 1
+	cd /var/run/incus_agent || return 1
+
+	(
+		child_pid=
+		stop()
+		{
+			[ -n "$child_pid" ] && kill "$child_pid"
+			exit 0
+		}
+
+		trap stop TERM INT
+		while :; do
+			/var/run/incus_agent/incus-agent &
+			child_pid="$!"
+			wait "$child_pid"
+			child_pid=
+			sleep 5
+		done
+	)&
+
+	echo $! > "${pidfile}"
+}
+
+incus_agent_stop()
+{
+	if pid="$(check_pid)"; then
+		kill "$pid"
+		rm -f "$pidfile"
+	else
+		echo "$name is not running"
+		return 1
+	fi
+}
+
+incus_agent_status()
+{
+	if pid="$(check_pid)"; then
+		echo "$name is running (PID $pid)"
+	else
+		echo "$name is not running"
+	fi
+}
+
+load_rc_config "$name"
+run_rc_command "$1"
