@@ -14,11 +14,13 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/creack/pty"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
 )
 
 var (
@@ -173,4 +175,57 @@ func osGetListener(port int64) (net.Listener, error) {
 	logger.Info("Started TCP listener")
 
 	return l, nil
+}
+
+// openPty is is the same as linux.OpenPty for BSDs.
+func openPty(uid, gid int64) (*os.File, *os.File, error) {
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	pty, tty, err := pty.Open()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Configure both sides
+	for _, entry := range []*os.File{pty, tty} {
+		// Get termios.
+		t, err := unix.IoctlGetTermios(int(entry.Fd()), unix.TIOCGETA)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set flags.
+		t.Cflag |= unix.IMAXBEL
+		t.Cflag |= unix.BRKINT
+		t.Cflag |= unix.IXANY
+		t.Cflag |= unix.HUPCL
+
+		// Set termios.
+		err = unix.IoctlSetTermios(int(entry.Fd()), unix.TIOCSETA, t)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set the default window size.
+		sz := &unix.Winsize{
+			Col: 80,
+			Row: 25,
+		}
+
+		err = unix.IoctlSetWinsize(int(entry.Fd()), unix.TIOCSWINSZ, sz)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Set CLOEXEC.
+		_, _, errno := unix.Syscall(unix.SYS_FCNTL, uintptr(entry.Fd()), unix.F_SETFD, unix.FD_CLOEXEC)
+		if errno != 0 {
+			return nil, nil, unix.Errno(errno)
+		}
+	}
+
+	reverter.Success()
+
+	return pty, tty, nil
 }
