@@ -22,6 +22,7 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+// sftpSetOwnerMode applies the ownership and mode to a remote path on a best effort basis.
 func sftpSetOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.InstanceFileArgs) error {
 	// Skip if not on UNIX.
 	_, err := sftpConn.StatVFS("/")
@@ -52,7 +53,7 @@ func sftpSetOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.Insta
 
 		err = sftpConn.Chown(targetPath, int(args.UID), int(args.GID))
 		if err != nil {
-			return err
+			logger.Infof("Failed to set owner on %s: %v", targetPath, err)
 		}
 	}
 
@@ -60,11 +61,74 @@ func sftpSetOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.Insta
 	if args.Mode >= 0 {
 		err = sftpConn.Chmod(targetPath, fs.FileMode(args.Mode))
 		if err != nil {
-			return err
+			logger.Infof("Failed to set mode on %s: %v", targetPath, err)
 		}
 	}
 
 	return nil
+}
+
+// sftpSetLocalAttrs applies the remote ownership, mode and timestamps to a local path on a best effort basis.
+func sftpSetLocalAttrs(target string, fInfo os.FileInfo) {
+	fileStat, ok := fInfo.Sys().(*sftp.FileStat)
+
+	// Set owner.
+	if ok {
+		err := os.Lchown(target, int(fileStat.UID), int(fileStat.GID))
+		if err != nil {
+			logger.Infof("Failed to set owner on %s: %v", target, err)
+		}
+	}
+
+	// Set mode (symlinks don't have a mode of their own).
+	if fInfo.Mode()&os.ModeSymlink == 0 {
+		err := os.Chmod(target, fInfo.Mode())
+		if err != nil {
+			logger.Infof("Failed to set mode on %s: %v", target, err)
+		}
+	}
+
+	// Set timestamps.
+	if ok {
+		err := internalIO.Lchtimes(target, fileStat.AccessTime(), fileStat.ModTime())
+		if err != nil {
+			logger.Infof("Failed to set timestamps on %s: %v", target, err)
+		}
+	}
+}
+
+// sftpSetRemoteTimes applies the local modification time to a remote path on a best effort basis.
+func sftpSetRemoteTimes(sftpConn *sftp.Client, targetPath string, fInfo os.FileInfo) {
+	err := sftpConn.Chtimes(targetPath, fInfo.ModTime(), fInfo.ModTime())
+	if err != nil {
+		logger.Infof("Failed to set timestamps on %s: %v", targetPath, err)
+	}
+}
+
+// sftpPushArgs fills in the unset ownership and mode of args from the source, similar to cp.
+// Without archive, only newly created files get the source permission bits, masked by the umask.
+func sftpPushArgs(args *incus.InstanceFileArgs, fInfo os.FileInfo, archive bool, exists bool) {
+	mode, uid, gid := internalIO.GetOwnerMode(fInfo)
+
+	if !archive {
+		if !exists && args.Mode == -1 {
+			args.Mode = int(mode.Perm() &^ internalIO.GetUmask())
+		}
+
+		return
+	}
+
+	if args.UID == -1 {
+		args.UID = int64(uid)
+	}
+
+	if args.GID == -1 {
+		args.GID = int64(gid)
+	}
+
+	if args.Mode == -1 {
+		args.Mode = int(mode)
+	}
 }
 
 func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.InstanceFileArgs, push bool) error {
@@ -124,7 +188,8 @@ func sftpCreateFile(sftpConn *sftp.Client, targetPath string, args incus.Instanc
 	return nil
 }
 
-func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source string, normalizedSource string, targetDir string, quiet bool, dereference bool, createRoot bool) error {
+// sftpRecursivePullFile pulls a remote path into targetDir and, for directories, its content.
+func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source string, normalizedSource string, targetDir string, quiet bool, archive bool, dereference bool, createRoot bool) error {
 	var fileType string
 	if fInfo.IsDir() {
 		fileType = "directory"
@@ -149,12 +214,16 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 
 	switch fileType {
 	case "directory":
-		err := os.Mkdir(target, fInfo.Mode())
+		// Keep the directory writable until its content has been pulled.
+		created := true
+		err := os.Mkdir(target, fInfo.Mode().Perm()|0o700)
 		if err != nil {
 			// If the error isn’t that the path already exists, there’s nothing we can do about it.
 			if !errors.Is(err, os.ErrExist) {
 				return err
 			}
+
+			created = false
 
 			// The error is pretty wide, so we must check whether the existing path it a directory (in
 			// which case we can continue) or not (in which case we must fail).
@@ -183,11 +252,21 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 				return err
 			}
 
-			err = sftpRecursivePullFile(sftpConn, nextInfo, nextP, nextP, target, quiet, dereference, true)
+			err = sftpRecursivePullFile(sftpConn, nextInfo, nextP, nextP, target, quiet, archive, dereference, true)
 			if err != nil {
 				return err
 			}
 		}
+
+		if archive {
+			sftpSetLocalAttrs(target, fInfo)
+		} else if created {
+			err = os.Chmod(target, fInfo.Mode().Perm()&^internalIO.GetUmask())
+			if err != nil {
+				return err
+			}
+		}
+
 	case "file":
 		src, err := sftpConn.Open(normalizedSource)
 		if err != nil {
@@ -196,17 +275,13 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 
 		defer logger.WarnOnErrorExcept(src.Close, []error{os.ErrClosed}, "Failed to close source file")
 
-		dst, err := os.Create(target)
+		// New files get the source permissions (masked by the umask), existing ones keep theirs.
+		dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fInfo.Mode().Perm())
 		if err != nil {
 			return err
 		}
 
 		defer logger.WarnOnErrorExcept(dst.Close, []error{os.ErrClosed}, "Failed to close target file")
-
-		err = os.Chmod(target, fInfo.Mode())
-		if err != nil {
-			return err
-		}
 
 		progress := cli.ProgressRenderer{
 			Format: fmt.Sprintf(i18n.G("Pulling %s from %s: %%s"), normalizedSource, target),
@@ -244,6 +319,10 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 			return err
 		}
 
+		if archive {
+			sftpSetLocalAttrs(target, fInfo)
+		}
+
 		progress.Done("")
 	case "symlink":
 		linkTarget, err := sftpConn.ReadLink(normalizedSource)
@@ -256,6 +335,10 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 			return err
 		}
 
+		if archive {
+			sftpSetLocalAttrs(target, fInfo)
+		}
+
 	default:
 		return fmt.Errorf(i18n.G("Unknown file type '%s'"), fileType)
 	}
@@ -263,7 +346,7 @@ func sftpRecursivePullFile(sftpConn *sftp.Client, fInfo os.FileInfo, source stri
 	return nil
 }
 
-func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source string, target string, args incus.InstanceFileArgs, quiet bool, dereference bool, createRoot bool) error {
+func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source string, target string, args incus.InstanceFileArgs, quiet bool, archive bool, dereference bool, createRoot bool) error {
 	root := ""
 	if createRoot {
 		root = filepath.Base(source)
@@ -273,118 +356,150 @@ func sftpRecursivePushFile(sftpConn *sftp.Client, walkableSource string, source 
 		}
 	}
 
-	isRoot := true
-	sendFile := func(p string, fInfo os.FileInfo, err error) error {
+	return sftpRecursivePushEntry(sftpConn, walkableSource, path.Join(target, root), args, quiet, archive, dereference, true, map[string]struct{}{})
+}
+
+// sftpRecursivePushEntry pushes a local path and, for directories, its content.
+func sftpRecursivePushEntry(sftpConn *sftp.Client, p string, targetPath string, args incus.InstanceFileArgs, quiet bool, archive bool, dereference bool, isRoot bool, ancestors map[string]struct{}) error {
+	fInfo, err := os.Lstat(p)
+	if err != nil {
+		return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), p, err)
+	}
+
+	// Use the attributes of the dereferenced file when following symlinks.
+	if dereference && fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+		fInfo, err = os.Stat(p)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Detect unsupported files
+	if !fInfo.Mode().IsRegular() && !fInfo.Mode().IsDir() && fInfo.Mode()&os.ModeSymlink != os.ModeSymlink {
+		return fmt.Errorf(i18n.G("'%s' isn't a supported file type"), p)
+	}
+
+	// Prepare for file transfer
+	fileArgs := incus.InstanceFileArgs{
+		UID:  args.UID,
+		GID:  args.GID,
+		Mode: -1,
+	}
+
+	// --mode only applies to the root of the transfer.
+	if isRoot {
+		fileArgs.Mode = args.Mode
+	}
+
+	var readCloser io.ReadCloser
+
+	if fInfo.IsDir() {
+		// Directory handling
+		fileArgs.Type = "directory"
+	} else if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+		// Symlink handling
+		symlinkTarget, err := os.Readlink(p)
+		if err != nil {
+			return err
+		}
+
+		fileArgs.Type = "symlink"
+		fileArgs.Content = strings.NewReader(symlinkTarget)
+		readCloser = io.NopCloser(fileArgs.Content)
+	} else {
+		// File handling
+		f, err := os.Open(p)
+		if err != nil {
+			return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), p, err)
+		}
+
+		defer logger.WarnOnError(f.Close, "Failed to close file")
+
+		fileArgs.Type = "file"
+		fileArgs.Content = f
+		readCloser = f
+	}
+
+	progress := cli.ProgressRenderer{
+		Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), p, targetPath),
+		Quiet:  quiet,
+	}
+
+	if fileArgs.Type != "directory" {
+		contentLength, err := fileArgs.Content.Seek(0, io.SeekEnd)
+		if err != nil {
+			return err
+		}
+
+		_, err = fileArgs.Content.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
+		}
+
+		fileArgs.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
+			ReadCloser: readCloser,
+			Tracker: &ioprogress.ProgressTracker{
+				Length: contentLength,
+				Handler: func(percent int64, speed int64) {
+					progress.UpdateProgress(ioprogress.ProgressData{
+						Text: fmt.Sprintf("%d%% (%s/s)", percent,
+							units.GetByteSizeString(speed, 2)),
+					})
+				},
+			},
+		}, fileArgs.Content)
+	}
+
+	// Existing files keep their ownership and mode unless requested otherwise.
+	_, err = sftpConn.Lstat(targetPath)
+	sftpPushArgs(&fileArgs, fInfo, archive, err == nil)
+
+	logger.Infof("Pushing %s to %s (%s)", p, targetPath, fileArgs.Type)
+	err = sftpCreateFile(sftpConn, targetPath, fileArgs, true)
+	if fileArgs.Type != "directory" {
+		progress.Done("")
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if fInfo.IsDir() {
+		// Detect symlink loops when dereferencing.
+		if dereference {
+			realPath, err := filepath.EvalSymlinks(p)
+			if err != nil {
+				return err
+			}
+
+			_, seen := ancestors[realPath]
+			if seen {
+				return fmt.Errorf(i18n.G("Cyclic symbolic link %q"), p)
+			}
+
+			ancestors[realPath] = struct{}{}
+			defer delete(ancestors, realPath)
+		}
+
+		entries, err := os.ReadDir(p)
 		if err != nil {
 			return fmt.Errorf(i18n.G("Failed to walk path for %s: %s"), p, err)
 		}
 
-		// Detect unsupported files
-		if !fInfo.Mode().IsRegular() && !fInfo.Mode().IsDir() && fInfo.Mode()&os.ModeSymlink != os.ModeSymlink {
-			return fmt.Errorf(i18n.G("'%s' isn't a supported file type"), p)
-		}
-
-		// Prepare for file transfer
-		targetPath := path.Join(target, root, filepath.ToSlash(p[len(walkableSource):]))
-		mode, uid, gid := internalIO.GetOwnerMode(fInfo)
-		fileArgs := incus.InstanceFileArgs{
-			UID:  int64(uid),
-			GID:  int64(gid),
-			Mode: int(mode.Perm()),
-		}
-
-		if args.UID != -1 {
-			fileArgs.UID = args.UID
-		}
-
-		if args.GID != -1 {
-			fileArgs.GID = args.GID
-		}
-
-		if isRoot {
-			isRoot = false
-			if args.Mode != -1 {
-				fileArgs.Mode = args.Mode
-			}
-		}
-
-		var readCloser io.ReadCloser
-
-		if fInfo.IsDir() {
-			// Directory handling
-			fileArgs.Type = "directory"
-		} else if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink && !dereference {
-			// Symlink handling
-			symlinkTarget, err := os.Readlink(p)
+		for _, ent := range entries {
+			err = sftpRecursivePushEntry(sftpConn, filepath.Join(p, ent.Name()), path.Join(targetPath, ent.Name()), args, quiet, archive, dereference, false, ancestors)
 			if err != nil {
 				return err
 			}
-
-			fileArgs.Type = "symlink"
-			fileArgs.Content = strings.NewReader(symlinkTarget)
-			readCloser = io.NopCloser(fileArgs.Content)
-		} else {
-			// File handling
-			f, err := os.Open(p)
-			if err != nil {
-				return fmt.Errorf(i18n.G("Failed to open source file %q: %v"), p, err)
-			}
-
-			defer logger.WarnOnError(f.Close, "Failed to close file")
-
-			fileArgs.Type = "file"
-			fileArgs.Content = f
-			readCloser = f
 		}
-
-		progress := cli.ProgressRenderer{
-			Format: fmt.Sprintf(i18n.G("Pushing %s to %s: %%s"), p, targetPath),
-			Quiet:  quiet,
-		}
-
-		if fileArgs.Type != "directory" {
-			contentLength, err := fileArgs.Content.Seek(0, io.SeekEnd)
-			if err != nil {
-				return err
-			}
-
-			_, err = fileArgs.Content.Seek(0, io.SeekStart)
-			if err != nil {
-				return err
-			}
-
-			fileArgs.Content = internalIO.NewReadSeeker(&ioprogress.ProgressReader{
-				ReadCloser: readCloser,
-				Tracker: &ioprogress.ProgressTracker{
-					Length: contentLength,
-					Handler: func(percent int64, speed int64) {
-						progress.UpdateProgress(ioprogress.ProgressData{
-							Text: fmt.Sprintf("%d%% (%s/s)", percent,
-								units.GetByteSizeString(speed, 2)),
-						})
-					},
-				},
-			}, fileArgs.Content)
-		}
-
-		logger.Infof("Pushing %s to %s (%s)", p, targetPath, fileArgs.Type)
-		err = sftpCreateFile(sftpConn, targetPath, fileArgs, true)
-		if err != nil {
-			if fileArgs.Type != "directory" {
-				progress.Done("")
-			}
-
-			return err
-		}
-
-		if fileArgs.Type != "directory" {
-			progress.Done("")
-		}
-
-		return nil
 	}
 
-	return filepath.Walk(walkableSource, sendFile)
+	// Timestamps are set last so they're not changed by the directory content.
+	if archive && fileArgs.Type != "symlink" {
+		sftpSetRemoteTimes(sftpConn, targetPath, fInfo)
+	}
+
+	return nil
 }
 
 func sftpRecursiveMkdir(sftpConn *sftp.Client, p string, mode *os.FileMode, uid int64, gid int64) error {
