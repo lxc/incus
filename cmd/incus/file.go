@@ -380,7 +380,6 @@ func (c *cmdFileEdit) run(cmd *cobra.Command, args []string) error {
 	}
 
 	fileName := parsed[0].RemoteObject.List[1].String
-	c.filePush.noModeChange = true
 
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
@@ -396,10 +395,6 @@ func (c *cmdFileEdit) run(cmd *cobra.Command, args []string) error {
 	fname := f.Name()
 	_ = f.Close()
 	_ = os.Remove(fname)
-
-	// Tell pull/push that they're called from edit.
-	c.filePull.edit = true
-	c.filePush.edit = true
 
 	// Extract current value
 	defer logger.WarnOnError(func() error { return os.Remove(fname) }, "Failed to remove temporary file")
@@ -428,8 +423,6 @@ type cmdFilePull struct {
 	global *cmdGlobal
 	file   *cmdFile
 	puller *pullable
-
-	edit bool
 }
 
 var cmdFilePullUsage = u.Usage{u.MakePath(u.Instance, u.Path).Remote().List(1), u.Target(u.Path)}
@@ -448,6 +441,7 @@ incus file pull foo/etc/hosts -
 	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.file.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
+	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagArchive, "archive|a", i18n.G("Preserve ownership, timestamps and mode (implies --recursive)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))
 	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagFollow, "follow|H", i18n.G("Follow command-line symbolic links in source path"))
@@ -545,7 +539,7 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 
 			// Recursively copy directories.
 			if srcInfo.IsDir() {
-				return sftpRecursivePullFile(sftpConn, srcInfo, filePath, normalizedPath, target, c.global.flagQuiet, c.puller.flagDereference, len(parsedFiles) > 1 || util.PathExists(target))
+				return sftpRecursivePullFile(sftpConn, srcInfo, filePath, normalizedPath, target, c.global.flagQuiet, c.puller.flagArchive, c.puller.flagDereference, len(parsedFiles) > 1 || util.PathExists(target))
 			}
 
 			// Determine the target path.
@@ -569,17 +563,13 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 					return err
 				}
 			} else {
-				f, err = os.Create(targetPath)
+				// New files get the source permissions (masked by the umask), existing ones keep theirs.
+				f, err = os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcInfo.Mode().Perm())
 				if err != nil {
 					return err
 				}
 
 				defer logger.WarnOnError(f.Close, "Failed to close file") // nolint:revive
-
-				err = os.Chmod(targetPath, os.FileMode(srcInfo.Mode()))
-				if err != nil {
-					return err
-				}
 			}
 
 			progress := cli.ProgressRenderer{
@@ -625,6 +615,10 @@ func (c *cmdFilePull) pull(parsedFiles []*u.Parsed, target string) error {
 				}
 			}
 
+			if c.puller.flagArchive && !isStdout(targetPath) {
+				sftpSetLocalAttrs(targetPath, srcInfo)
+			}
+
 			progress.Done("")
 			return nil
 		}()
@@ -656,9 +650,6 @@ type cmdFilePush struct {
 	global *cmdGlobal
 	file   *cmdFile
 	pusher *pushable
-
-	edit         bool
-	noModeChange bool
 }
 
 var cmdFilePushUsage = u.Usage{u.Path.List(1), u.MakePath(u.Instance, u.Target(u.Path)).Remote()}
@@ -680,6 +671,7 @@ echo "Hello world" | incus file push - foo/root/test
 	cli.AddIntFlag(cmd.Flags(), &c.file.flagUID, "uid", i18n.G("Set the files' UIDs on push"), -1)
 	cli.AddIntFlag(cmd.Flags(), &c.file.flagGID, "gid", i18n.G("Set the files' GIDs on push"), -1)
 	cli.AddStringFlag(cmd.Flags(), &c.file.flagMode, "mode", "", "", i18n.G("Set the file's perms on push (in recursive mode, only sets the target directory's permissions)"))
+	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagArchive, "archive|a", i18n.G("Preserve ownership, timestamps and mode (implies --recursive)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagFollow, "follow|H", i18n.G("Follow command-line symbolic links in source path"))
@@ -754,6 +746,7 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 	for _, srcPath := range srcFiles {
 		err := func() error {
 			var f *os.File
+			var srcInfo os.FileInfo
 			var linkTarget string
 			var size int64
 			args := incus.InstanceFileArgs{
@@ -775,14 +768,15 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 				usePercentage = false
 				f = os.Stdin
 			} else {
-				srcInfo, wPath, err := c.pusher.statFile(srcPath)
+				var wPath string
+				srcInfo, wPath, err = c.pusher.statFile(srcPath)
 				if err != nil {
 					return err
 				}
 
 				// Recursively copy directories.
 				if srcInfo.IsDir() {
-					return sftpRecursivePushFile(sftpConn, wPath, srcPath, target, args, c.global.flagQuiet, c.pusher.flagDereference, len(srcFiles) > 1 || targetExists)
+					return sftpRecursivePushFile(sftpConn, wPath, srcPath, target, args, c.global.flagQuiet, c.pusher.flagArchive, c.pusher.flagDereference, len(srcFiles) > 1 || targetExists)
 				}
 
 				if srcInfo.Mode()&os.ModeSymlink != 0 {
@@ -798,20 +792,6 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 
 					size = srcInfo.Size()
 					defer logger.WarnOnError(f.Close, "Failed to close file")
-				}
-
-				dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
-
-				if args.Mode == -1 {
-					args.Mode = int(dMode)
-				}
-
-				if args.UID == -1 {
-					args.UID = int64(dUID)
-				}
-
-				if args.GID == -1 {
-					args.GID = int64(dGID)
 				}
 			}
 
@@ -832,12 +812,10 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 				}
 			}
 
-			// Check if the path already exists.
-			_, err := sftpConn.Stat(targetPath)
-			if err == nil && c.noModeChange {
-				args.UID = -1
-				args.GID = -1
-				args.Mode = -1
+			// Existing files keep their ownership and mode unless requested otherwise.
+			if srcInfo != nil {
+				_, err := sftpConn.Stat(targetPath)
+				sftpPushArgs(&args, srcInfo, c.pusher.flagArchive, err == nil)
 			}
 
 			// Transfer the files.
@@ -869,7 +847,15 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 			logger.Infof("Pushing %s to %s (%s)", srcPath, targetPath, args.Type)
 			err = sftpCreateFile(sftpConn, targetPath, args, true)
 			progress.Done("")
-			return err
+			if err != nil {
+				return err
+			}
+
+			if c.pusher.flagArchive && srcInfo != nil && args.Type != "symlink" {
+				sftpSetRemoteTimes(sftpConn, targetPath, srcInfo)
+			}
+
+			return nil
 		}()
 		if err != nil {
 			errs = append(errs, err)

@@ -459,8 +459,6 @@ func (c *cmdStorageVolumeFileEdit) run(cmd *cobra.Command, args []string) error 
 
 	fPath := parsed[1].List[1].String
 
-	c.filePush.noModeChange = true
-
 	// If stdin isn't a terminal, read text from it
 	if !termios.IsTerminal(getStdinFd()) {
 		return c.filePush.push(os.Stdin.Name(), parsed[0], parsed[1])
@@ -475,10 +473,6 @@ func (c *cmdStorageVolumeFileEdit) run(cmd *cobra.Command, args []string) error 
 	fname := f.Name()
 	_ = f.Close()
 	_ = os.Remove(fname)
-
-	// Tell pull/push that they're called from edit.
-	c.filePull.edit = true
-	c.filePush.edit = true
 
 	// Extract current value
 	defer logger.WarnOnError(func() error { return os.Remove(fname) }, "Failed to remove temporary file")
@@ -509,8 +503,6 @@ type cmdStorageVolumeFilePull struct {
 	storageVolume     *cmdStorageVolume
 	storageVolumeFile *cmdStorageVolumeFile
 	puller            *pullable
-
-	edit bool
 }
 
 var cmdStorageVolumeFilePullUsage = u.Usage{u.Pool.Remote(), u.MakePath(u.Volume, u.Path), u.Target(u.Path)}
@@ -529,6 +521,7 @@ incus file pull local v1 foo/etc/hosts -
 	))
 
 	cli.AddBoolFlag(cmd.Flags(), &c.storageVolumeFile.flagMkdir, "create-dirs|p", i18n.G("Create any directories necessary"))
+	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagArchive, "archive|a", i18n.G("Preserve ownership, timestamps and mode (implies --recursive)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))
 	cli.AddBoolFlag(cmd.Flags(), &c.puller.flagFollow, "follow|H", i18n.G("Follow command-line symbolic links in source path"))
@@ -605,7 +598,7 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 
 	// Recursively copy directories.
 	if srcInfo.IsDir() {
-		return sftpRecursivePullFile(sftpConn, srcInfo, fPath, normalizedPath, target, c.global.flagQuiet, c.puller.flagDereference, util.PathExists(target))
+		return sftpRecursivePullFile(sftpConn, srcInfo, fPath, normalizedPath, target, c.global.flagQuiet, c.puller.flagArchive, c.puller.flagDereference, util.PathExists(target))
 	}
 
 	var targetPath string
@@ -628,17 +621,13 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 			return err
 		}
 	} else {
-		f, err = os.Create(targetPath)
+		// New files get the source permissions (masked by the umask), existing ones keep theirs.
+		f, err = os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, srcInfo.Mode().Perm())
 		if err != nil {
 			return err
 		}
 
 		defer logger.WarnOnError(f.Close, "Failed to close file") // nolint:revive
-
-		err = os.Chmod(targetPath, os.FileMode(srcInfo.Mode()))
-		if err != nil {
-			return err
-		}
 	}
 
 	progress := cli.ProgressRenderer{
@@ -684,6 +673,10 @@ func (c *cmdStorageVolumeFilePull) pull(parsedPool *u.Parsed, parsedPath *u.Pars
 		}
 	}
 
+	if c.puller.flagArchive && !isStdout(targetPath) {
+		sftpSetLocalAttrs(targetPath, srcInfo)
+	}
+
 	progress.Done("")
 	return nil
 }
@@ -704,9 +697,6 @@ type cmdStorageVolumeFilePush struct {
 	storageVolume     *cmdStorageVolume
 	storageVolumeFile *cmdStorageVolumeFile
 	pusher            *pushable
-
-	edit         bool
-	noModeChange bool
 }
 
 var cmdStorageVolumeFilePushUsage = u.Usage{u.Path, u.Pool.Remote(), u.MakePath(u.Volume, u.Target(u.Path))}
@@ -728,6 +718,7 @@ echo "Hello world" | incus storage volume file push - local v1 test
 	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagUID, "uid", i18n.G("Set the file's uid on push"), -1)
 	cli.AddIntFlag(cmd.Flags(), &c.storageVolumeFile.flagGID, "gid", i18n.G("Set the file's gid on push"), -1)
 	cli.AddStringFlag(cmd.Flags(), &c.storageVolumeFile.flagMode, "mode", "", "", i18n.G("Set the file's perms on push"))
+	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagArchive, "archive|a", i18n.G("Preserve ownership, timestamps and mode (implies --recursive)"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagRecursive, "recursive|r", i18n.G("Recursively transfer files"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagNoDereference, "no-dereference|P", i18n.G("Never follow symbolic links in source path"))
 	cli.AddBoolFlag(cmd.Flags(), &c.pusher.flagFollow, "follow|H", i18n.G("Follow command-line symbolic links in source path"))
@@ -753,6 +744,11 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	volName := parsedTarget.List[0].String
 	target, targetIsDir := normalizePath(parsedTarget.List[1].String)
 	targetExists := false
+
+	err := c.pusher.preCheck()
+	if err != nil {
+		return err
+	}
 
 	// Connect to SFTP.
 	sftpConn, err := d.GetStoragePoolVolumeFileSFTP(poolName, "custom", volName)
@@ -790,6 +786,7 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 
 	// Push the files
 	var f *os.File
+	var srcInfo os.FileInfo
 	var linkTarget string
 	var size int64
 	usePercentage := true
@@ -807,14 +804,15 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		f = os.Stdin
 		usePercentage = false
 	} else {
-		srcInfo, wPath, err := c.pusher.statFile(srcFile)
+		var wPath string
+		srcInfo, wPath, err = c.pusher.statFile(srcFile)
 		if err != nil {
 			return err
 		}
 
 		// Recursively copy directories.
 		if srcInfo.IsDir() {
-			return sftpRecursivePushFile(sftpConn, wPath, srcFile, target, args, c.global.flagQuiet, c.pusher.flagDereference, targetExists)
+			return sftpRecursivePushFile(sftpConn, wPath, srcFile, target, args, c.global.flagQuiet, c.pusher.flagArchive, c.pusher.flagDereference, targetExists)
 		}
 
 		if srcInfo.Mode()&os.ModeSymlink != 0 {
@@ -830,20 +828,6 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 
 			size = srcInfo.Size()
 			defer logger.WarnOnError(f.Close, "Failed to close file")
-		}
-
-		dMode, dUID, dGID := internalIO.GetOwnerMode(srcInfo)
-
-		if args.Mode == -1 {
-			args.Mode = int(dMode)
-		}
-
-		if args.UID == -1 {
-			args.UID = int64(dUID)
-		}
-
-		if args.GID == -1 {
-			args.GID = int64(dGID)
 		}
 	}
 
@@ -864,12 +848,10 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		}
 	}
 
-	// Check if the path already exists.
-	_, err = sftpConn.Stat(targetPath)
-	if err == nil && c.noModeChange {
-		args.UID = -1
-		args.GID = -1
-		args.Mode = -1
+	// Existing files keep their ownership and mode unless requested otherwise.
+	if srcInfo != nil {
+		_, err = sftpConn.Stat(targetPath)
+		sftpPushArgs(&args, srcInfo, c.pusher.flagArchive, err == nil)
 	}
 
 	// Transfer the files.
@@ -901,7 +883,15 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 	logger.Infof("Pushing %s to %s (%s)", srcFile, targetPath, args.Type)
 	err = sftpCreateFile(sftpConn, targetPath, args, true)
 	progress.Done("")
-	return err
+	if err != nil {
+		return err
+	}
+
+	if c.pusher.flagArchive && srcInfo != nil && args.Type != "symlink" {
+		sftpSetRemoteTimes(sftpConn, targetPath, srcInfo)
+	}
+
+	return nil
 }
 
 func (c *cmdStorageVolumeFilePush) run(cmd *cobra.Command, args []string) error {
