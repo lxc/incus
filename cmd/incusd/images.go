@@ -1308,6 +1308,14 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 	if !imageUpload && slices.Contains([]string{"container", "instance", "virtual-machine", "snapshot"}, req.Source.Type) {
 		name := req.Source.Name
 		if name != "" {
+			// Check that the caller is allowed to view the source instance.
+			instName, _, _ := api.GetParentAndSnapshotName(name)
+			err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectInstance(projectName, instName), auth.EntitlementCanView)
+			if err != nil {
+				cleanup(builddir, post)
+				return response.SmartError(err)
+			}
+
 			_, err = post.Seek(0, io.SeekStart)
 			if err != nil {
 				return response.InternalError(err)
