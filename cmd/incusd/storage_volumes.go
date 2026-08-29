@@ -965,6 +965,11 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		return clusterCopyCustomVolumeInternal(s, r, nodeAddress, projectName, poolName, &req)
 	}
 
+	// A request with a source volume is a copy even when the source type is omitted.
+	if req.Source.Type == "" && req.Source.Name != "" {
+		req.Source.Type = "copy"
+	}
+
 	switch req.Source.Type {
 	case "":
 		err = validateCreateConfig(req.Config)
