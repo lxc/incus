@@ -3634,7 +3634,7 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 		}
 
 		// rc.d service for incus-agent.
-		agentFile, err := incusAgentLoader.ReadFile("agent-loader/rc.d/incus-agent")
+		agentFile, err := incusAgentLoader.ReadFile("agent-loader/rc.d-freebsd/incus-agent")
 		if err != nil {
 			return err
 		}
