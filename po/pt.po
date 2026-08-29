@@ -8,10 +8,10 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-08-28 22:13-0400\n"
-"PO-Revision-Date: 2026-08-23 12:17+0000\n"
+"PO-Revision-Date: 2026-08-29 22:39+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -742,9 +742,8 @@ msgid "--attributes cannot be used with --format=%s"
 msgstr "--attributes não pode ser usado com --format=%s"
 
 #: cmd/incus/low_level.go:1284
-#, fuzzy
 msgid "--bundle cannot be used with --type"
-msgstr "--data não pode ser usado com --data-file"
+msgstr "--bundle não pode ser usado com --type"
 
 #: cmd/incus/action.go:253
 msgid "--console can't be used while forcing instance shutdown"
@@ -1341,8 +1340,8 @@ msgstr "Salvaguardas:"
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
-"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,"
-"<chave>=<valor>: %s"
+"Má sintaxe de sobreposição de dispositivo, esperando <dispositivo>,<chave>"
+"=<valor>: %s"
 
 #: cmd/incus/query.go:92
 #, c-format
@@ -1547,7 +1546,7 @@ msgstr "Não pode usar ambos --no-expiry e --expiry"
 
 #: cmd/incus/low_level.go:1168
 msgid "Cannot add signature without --bundle"
-msgstr ""
+msgstr "Não pode adicionar assinatura sem --bundle"
 
 #: cmd/incus/remote.go:598
 msgid "Cannot mix HTTPS and Unix URLs"
@@ -1898,6 +1897,8 @@ msgid ""
 "Consider the input as a certificate and signature bundle instead of a "
 "certificate chain"
 msgstr ""
+"Considera a entrada como um certificado e pacote de assinatura em vez de uma "
+"corrente de certificado"
 
 #: cmd/incus/storage_volume.go:608
 msgid "Content type, block or filesystem"
@@ -2563,8 +2564,7 @@ msgstr "Não recebi o nome da nova instância do servidor"
 
 #: cmd/incus/snapshot.go:201
 msgid "Didn't get name of new instance snapshot from the server"
-msgstr ""
-"Não recebi o nome do novo instantâneo de instância a partir do servidor"
+msgstr "Não recebi o nome do novo instantâneo de instância a partir do servidor"
 
 #: cmd/incus/storage_volume_snapshot.go:215
 msgid "Didn't get name of new volume snapshot from the server"
@@ -2670,8 +2670,8 @@ msgstr ""
 "quais atributos da instância a exibir quando mostra em tabela ou em formato\n"
 "compactado.\n"
 "\n"
-"Os argumentos de coluna são pré-definidos de caracteres curtos (veja "
-"abaixo).\n"
+"Os argumentos de coluna são pré-definidos de caracteres curtos (veja abaixo)"
+".\n"
 "As vírgulas entre os caracteres curtos consecutivos são opcionais.\n"
 "\n"
 "Coluna de caracteres curtos:\n"
@@ -3194,9 +3194,8 @@ msgstr ""
 "data em formato `2006/01/02 15:04 MST`)"
 
 #: cmd/incus/low_level.go:1413 cmd/incus/low_level.go:1414
-#, fuzzy
 msgid "Export Secure Boot signatures"
-msgstr "Lista assinaturas de Arranque Seguro"
+msgstr "Exporta assinaturas de Arranque Seguro"
 
 #: cmd/incus/low_level.go:216
 msgid "Export a virtual machine's memory state"
@@ -3619,8 +3618,7 @@ msgstr "Falhou ao analisar resposta de despejo: %w"
 
 #: cmd/incus/low_level.go:1199
 msgid "Failed to parse input file as either PEM or DER certificate"
-msgstr ""
-"Falhou ao analisar ficheiro de entrada seja como certificado PEM ou DER"
+msgstr "Falhou ao analisar ficheiro de entrada seja como certificado PEM ou DER"
 
 #: cmd/incus/admin_init_preseed.go:39
 #, c-format
@@ -3810,14 +3808,12 @@ msgid "Force evacuation without user confirmation"
 msgstr "Força evacuação sem confirmação do utilizador"
 
 #: cmd/incus/low_level.go:1531
-#, fuzzy
 msgid "Force overwriting existing ESL"
-msgstr "Forçar sobrescrever de ficheiro de salvaguarda existente"
+msgstr "Forçar sobrescrever de ESL existente"
 
 #: cmd/incus/low_level.go:1416
-#, fuzzy
 msgid "Force overwriting existing PEM file"
-msgstr "Forçar sobrescrever de ficheiro de salvaguarda existente"
+msgstr "Forçar sobrescrever de ficheiro PEM existente"
 
 #: cmd/incus/export.go:56 cmd/incus/storage_bucket.go:1310
 #: cmd/incus/storage_volume.go:2273
@@ -3954,8 +3950,8 @@ msgstr "Formato (table|compact)"
 msgid ""
 "Format of memory dump (e.g. elf, win-dmp, kdump-zlib, kdump-raw-zlib, ...)"
 msgstr ""
-"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-"
-"zlib, ...)"
+"Formato de despejo de memória (ex. elf, win-dmp, kdump-zlib, kdump-raw-zlib, "
+"...)"
 
 #: cmd/incus/port_forward.go:30
 msgid "Forward a local TCP port to the instance"
@@ -4473,7 +4469,7 @@ msgstr "Ignorar o estado de instância"
 #: cmd/incus/low_level.go:1186
 #, c-format
 msgid "Ignored %s block"
-msgstr ""
+msgstr "Bloco %s ignorado"
 
 #: cmd/incus/image_alias.go:77
 msgid "Image alias description"
@@ -4513,9 +4509,8 @@ msgid "Immediately attach to the console"
 msgstr "Anexar imediatamente à consola"
 
 #: cmd/incus/low_level.go:1528 cmd/incus/low_level.go:1529
-#, fuzzy
 msgid "Import Secure Boot signatures"
-msgstr "Remove assinaturas de Arranque Seguro"
+msgstr "Importar assinaturas de Arranque Seguro"
 
 #: cmd/incus/import.go:33
 msgid "Import backups of instances including their snapshots."
@@ -5330,12 +5325,12 @@ msgstr ""
 "== Colunas ==\n"
 "A opção -c recebe uma lista separada por vírgulas de argumentos que "
 "controlam\n"
-"quais atributos de equilibrador de carga de rede são incluídos ao mostrar "
-"em \n"
+"quais atributos de equilibrador de carga de rede são incluídos ao mostrar em "
+"\n"
 "tabela ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5383,8 +5378,8 @@ msgstr ""
 "quais atributos de peer de rede são incluídos ao mostrar em tabela ou\n"
 "formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5599,8 +5594,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (alargadas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5652,8 +5647,8 @@ msgstr ""
 "quais atributos de alias de imagem são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5770,8 +5765,8 @@ msgstr ""
 "quais atributos de instantâneos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5914,8 +5909,8 @@ msgstr ""
 "tabela\n"
 "ou csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -5946,8 +5941,8 @@ msgstr ""
 "  f - Impressão digital de Imagem Base (curta)\n"
 "  F - Impressão digital de Imagem Base (longa)\n"
 "\n"
-"Colunas personalizadas são definidas com \"[config:|devices:]key[:name]"
-"[:maxWidth]\":\n"
+"Colunas personalizadas são definidas com "
+"\"[config:|devices:]key[:name][:maxWidth]\":\n"
 "  KEY: A cave (estendida) de configuração ou dispositivos a mostrar. Se "
 "[config:|devices:] for omitido então predefine para a chave de "
 "configuração.\n"
@@ -5998,8 +5993,8 @@ msgstr ""
 "quais atributos de alocações de rede são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6049,8 +6044,8 @@ msgstr ""
 "quais atributos de integrações de rede são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6205,8 +6200,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6253,8 +6248,8 @@ msgstr ""
 "tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6438,8 +6433,8 @@ msgstr ""
 "quais atributos remotos são incluídos ao mostrar em tabela\n"
 "ou formato csv.\n"
 "\n"
-"Os argumentos de coluna são ou caracteres curtos predefinidos (veja "
-"abaixo),\n"
+"Os argumentos de coluna são ou caracteres curtos predefinidos (veja abaixo)"
+",\n"
 "ou chaves de configuração (estendidas).\n"
 "\n"
 "As vírgulas entre caracteres curtos consecutivos são opcionais.\n"
@@ -6571,8 +6566,7 @@ msgstr "Registo (%s):"
 
 #: cmd/incus/monitor.go:82
 msgid "Log level filtering can only be used with pretty formatting"
-msgstr ""
-"Filtragem de nível de relatório só pode ser usada com formatação bonita"
+msgstr "Filtragem de nível de relatório só pode ser usada com formatação bonita"
 
 #: cmd/incus/network.go:990
 msgid "Logical router"
@@ -7514,8 +7508,7 @@ msgstr "Nenhum %s backend de armazenamento disponível"
 #: cmd/incus/config_trust.go:807
 #, c-format
 msgid "No certificate add token for member %s on remote: %s"
-msgstr ""
-"Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
+msgstr "Nenhum testemunho de adição de certificado para membro %s em remoto: %s"
 
 #: cmd/incus/cluster.go:1335
 #, c-format
@@ -7620,7 +7613,7 @@ msgstr "Apenas redes geridas podem ser modificadas"
 #: cmd/incus/low_level.go:1318 cmd/incus/low_level.go:1582
 #, c-format
 msgid "Only one PK certificate can be enrolled; got %d"
-msgstr ""
+msgstr "Apenas um certificado PK pode ser matriculado; obtido %d"
 
 #: cmd/incus/admin_init_auto.go:35
 msgid ""
@@ -9145,8 +9138,8 @@ msgstr "Definir os atributos da variável (requer `--format=base64|binary|hex`)"
 msgid ""
 "Set the variable timestamp (requires `--format=base64|binary|efivarfs|hex`)"
 msgstr ""
-"Definir a marca temporal da variável (requer `--format=base64|binary|"
-"efivarfs|hex`)"
+"Definir a marca temporal da variável (requer `--"
+"format=base64|binary|efivarfs|hex`)"
 
 #: cmd/incus/low_level.go:883
 msgid "Set values for UEFI variables"
@@ -9436,7 +9429,7 @@ msgstr "Tamanho: %s"
 
 #: cmd/incus/low_level.go:1238
 msgid "Skip duplicate signatures"
-msgstr ""
+msgstr "Saltar assinaturas duplicadas"
 
 #: cmd/incus/list.go:472 cmd/incus/list.go:492
 #, c-format
@@ -9454,8 +9447,7 @@ msgstr "Instantâneo de volumes de armazenamento"
 
 #: cmd/incus/storage_volume.go:2040
 msgid "Snapshots are read-only and can't have their configuration changed"
-msgstr ""
-"Os instantâneos são só leitura e não se pode alterar a sua configuração"
+msgstr "Os instantâneos são só leitura e não se pode alterar a sua configuração"
 
 #: cmd/incus/info.go:834 cmd/incus/storage_volume.go:1394
 msgid "Snapshots:"
@@ -9783,8 +9775,7 @@ msgstr "A bandeira --show-log só é suportada pelo tipo de saída 'console'"
 
 #: cmd/incus/network_allocations.go:171
 msgid "The --summary flag cannot be used with custom columns (-c)"
-msgstr ""
-"A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
+msgstr "A bandeira --summary não pode ser usada com colunas personalizadas (-c)"
 
 #: cmd/incus/admin_init_interactive.go:524
 msgid "The LVM thin provisioning tools couldn't be found on the system"
@@ -9852,7 +9843,7 @@ msgstr "Os seguintes volumes desconhecidos foram encontrados:"
 
 #: cmd/incus/low_level.go:1599
 msgid "The given ESL already exists; use --force to override"
-msgstr ""
+msgstr "O ESL fornecido já existe; use --force para o sobrepor"
 
 #: cmd/incus/low_level.go:1375
 msgid "The given certificate is already present in this ESL"
@@ -9877,8 +9868,7 @@ msgstr ""
 
 #: cmd/incus/create.go:432
 msgid "The instance you are starting doesn't have any network attached to it."
-msgstr ""
-"A instância que você está a iniciar não tem nenhuma rede anexada a ela."
+msgstr "A instância que você está a iniciar não tem nenhuma rede anexada a ela."
 
 #: cmd/incus/cluster_group.go:863
 #, c-format
@@ -10366,9 +10356,9 @@ msgid "Unexpected input size"
 msgstr "Tamanho de entrada inesperado"
 
 #: cmd/incus/low_level.go:1180
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected signature length %d"
-msgstr "Tamanho de entrada inesperado"
+msgstr "Comprimento de assinatura inesperado %d"
 
 #: cmd/incus/action.go:340 cmd/incus/action.go:348
 #, c-format
@@ -10440,8 +10430,7 @@ msgstr "Desconfigurar variáveis UEFI"
 
 #: cmd/incus/cluster_group.go:962
 msgid "Unset a cluster group's configuration keys"
-msgstr ""
-"Retira definições das chaves de configuração de um grupo de agrupamento"
+msgstr "Retira definições das chaves de configuração de um grupo de agrupamento"
 
 #: cmd/incus/cluster.go:592
 msgid "Unset a cluster member's configuration keys"
@@ -10911,8 +10900,7 @@ msgstr "Servidor Web a correr em: %s"
 
 #: cmd/incus/cluster.go:1679
 msgid "What IP address or DNS name should be used to reach this server?"
-msgstr ""
-"Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
+msgstr "Que endereço IP ou nome DNS deve ser usado para alcançar este servidor?"
 
 #: cmd/incus/admin_init_interactive.go:171
 msgid "What IPv4 address should be used?"
