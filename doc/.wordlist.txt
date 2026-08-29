@@ -196,6 +196,7 @@ namespaces
 NATed
 natively
 NDP
+NetBSD
 netmask
 NFS
 NIC
