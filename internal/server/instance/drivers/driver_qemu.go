@@ -389,7 +389,7 @@ func (d *qemu) getAgentClient() (*http.Client, error) {
 	}
 
 	// Only Linux and Windows support VirtIO vsock.
-	if slices.Contains([]osinfo.OSType{osinfo.FreeBSD, osinfo.MacOS}, d.GuestOS()) {
+	if slices.Contains([]osinfo.OSType{osinfo.FreeBSD, osinfo.MacOS, osinfo.NetBSD}, d.GuestOS()) {
 		// Get known network details.
 		networks, err := d.getNetworkState()
 		if err != nil {
@@ -3535,9 +3535,12 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 
 			// Legacy support.
 			_ = os.Remove(filepath.Join(configDrivePath, "lxd-agent"))
-			err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
-			if err != nil {
-				return err
+			if guestOS != osinfo.NetBSD {
+				// NetBSD has a bug in its 9p driver when dealing with symbolic links.
+				err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
+				if err != nil {
+					return err
+				}
 			}
 		} else if agentSrcPath != "" {
 			// Install agent into config drive dir if found.
@@ -3595,9 +3598,12 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 
 			// Legacy support.
 			_ = os.Remove(filepath.Join(configDrivePath, "lxd-agent"))
-			err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
-			if err != nil {
-				return err
+			if guestOS != osinfo.NetBSD {
+				// NetBSD has a bug in its 9p driver when dealing with symbolic links.
+				err = os.Symlink("incus-agent", filepath.Join(configDrivePath, "lxd-agent"))
+				if err != nil {
+					return err
+				}
 			}
 		} else {
 			d.logger.Warn("incus-agent not found, skipping its inclusion in the VM config drive", logger.Ctx{"err": err})
@@ -3766,6 +3772,48 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 		}
 
 		err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0o700)
+		if err != nil {
+			return err
+		}
+
+	case osinfo.NetBSD:
+		// rc.d service.
+		err = os.MkdirAll(filepath.Join(configDrivePath, "rc.d"), 0o500)
+		if err != nil {
+			return err
+		}
+
+		// rc.d service for incus-agent.
+		agentFile, err := incusAgentLoader.ReadFile("agent-loader/rc.d-netbsd/incus-agent")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "rc.d", "incus-agent"), agentFile, 0o500)
+		if err != nil {
+			return err
+		}
+
+		// Setup script for incus-agent that is executed by the incus-agent service before starting.
+		// The script sets up a temporary mount point, copies data from the mount (including incus-agent binary),
+		// and then unmounts it. It also ensures appropriate permissions for the Incus agent's runtime directory.
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/incus-agent-setup-netbsd")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "incus-agent-setup"), agentFile, 0o500)
+		if err != nil {
+			return err
+		}
+
+		// Install script for manual installs.
+		agentFile, err = incusAgentLoader.ReadFile("agent-loader/install-netbsd.sh")
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(filepath.Join(configDrivePath, "install.sh"), agentFile, 0o500)
 		if err != nil {
 			return err
 		}
@@ -7509,7 +7557,7 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 	if curSizeMB == newSizeMB {
 		return nil
 	} else if baseSizeMB < newSizeMB {
-		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) || d.GuestOS() == osinfo.FreeBSD {
+		if util.IsFalse(d.expandedConfig["limits.memory.hotplug"]) || slices.Contains([]osinfo.OSType{osinfo.FreeBSD, osinfo.NetBSD}, d.GuestOS()) {
 			return fmt.Errorf("Memory hotplug feature is disabled")
 		}
 
