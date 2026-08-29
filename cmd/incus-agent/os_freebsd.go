@@ -12,7 +12,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"unsafe"
 
 	"github.com/shirou/gopsutil/v4/disk"
 	"golang.org/x/sys/unix"
@@ -20,7 +19,6 @@ import (
 	"github.com/lxc/incus/v7/internal/server/metrics"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/osarch"
-	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -155,83 +153,6 @@ func osGetOSState() *api.InstanceStateOSInfo {
 	return osInfo
 }
 
-// openPty is is the same as linux.OpenPty for FreeBSD.
-func openPty(uid, gid int64) (*os.File, *os.File, error) {
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	fd, err := unix.Open("/dev/ptmx", unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ptx := os.NewFile(uintptr(fd), "/dev/pts/ptmx")
-	reverter.Add(func() { _ = ptx.Close() })
-
-	// Get the pty side.
-	id := 0
-	_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(ptx.Fd()), unix.TIOCGPTN, uintptr(unsafe.Pointer(&id)))
-	if errno != 0 {
-		return nil, nil, unix.Errno(errno)
-	}
-
-	ptyPath := fmt.Sprintf("/dev/pts/%d", id)
-	ptyFd, err := unix.Open(ptyPath, unix.O_NOCTTY|unix.O_CLOEXEC|os.O_RDWR, 0)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	pty := os.NewFile(uintptr(ptyFd), ptyPath)
-	reverter.Add(func() { _ = pty.Close() })
-
-	// Configure both sides
-	for _, entry := range []*os.File{ptx, pty} {
-		// Get termios.
-		t, err := unix.IoctlGetTermios(int(entry.Fd()), unix.TIOCGETA)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// Set flags.
-		t.Cflag |= unix.IMAXBEL
-		t.Cflag |= unix.BRKINT
-		t.Cflag |= unix.IXANY
-		t.Cflag |= unix.HUPCL
-
-		// Set termios.
-		err = unix.IoctlSetTermios(int(entry.Fd()), unix.TIOCSETA, t)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// Set the default window size.
-		sz := &unix.Winsize{
-			Col: 80,
-			Row: 25,
-		}
-
-		err = unix.IoctlSetWinsize(int(entry.Fd()), unix.TIOCSWINSZ, sz)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// Set CLOEXEC.
-		_, _, errno = unix.Syscall(unix.SYS_FCNTL, uintptr(entry.Fd()), unix.F_SETFD, unix.FD_CLOEXEC)
-		if errno != 0 {
-			return nil, nil, unix.Errno(errno)
-		}
-	}
-
-	// Fix the ownership of the pty side.
-	err = unix.Fchown(int(pty.Fd()), int(uid), int(gid))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	reverter.Success()
-
-	return ptx, pty, nil
-}
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 	// Set default value for PATH.

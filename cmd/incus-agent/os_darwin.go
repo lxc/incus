@@ -11,14 +11,12 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"unsafe"
 
 	"github.com/shirou/gopsutil/v4/disk"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/internal/server/metrics"
 	"github.com/lxc/incus/v7/shared/api"
-	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
 )
 
@@ -256,88 +254,6 @@ func osGetOSState() *api.InstanceStateOSInfo {
 	}
 
 	return osInfo
-}
-
-// openPty is is the same as linux.OpenPty for Darwin.
-func openPty(uid, gid int64) (*os.File, *os.File, error) {
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	fd, err := unix.Open("/dev/ptmx", unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ptx := os.NewFile(uintptr(fd), "")
-	reverter.Add(func() { _ = ptx.Close() })
-
-	// Unlock the ptx and pty.
-	_, _, errno := unix.Syscall(unix.SYS_IOCTL, uintptr(ptx.Fd()), unix.TIOCPTYUNLK, 0)
-	if errno != 0 {
-		return nil, nil, unix.Errno(errno)
-	}
-
-	var ptyName [256]byte
-	_, _, errno = unix.Syscall(unix.SYS_IOCTL, uintptr(ptx.Fd()), unix.TIOCPTYGNAME, uintptr(unsafe.Pointer(&ptyName)))
-	if errno != 0 {
-		return nil, nil, unix.Errno(errno)
-	}
-
-	pty, err := os.OpenFile(parseBytes(ptyName[:]), unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOCTTY, 0)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	reverter.Add(func() { _ = pty.Close() })
-
-	// Configure both sides
-	for _, entry := range []*os.File{ptx, pty} {
-		// Get termios.
-		t, err := unix.IoctlGetTermios(int(entry.Fd()), unix.TIOCGETA)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// Set flags.
-		t.Cflag |= unix.IMAXBEL
-		t.Cflag |= unix.IUTF8
-		t.Cflag |= unix.BRKINT
-		t.Cflag |= unix.IXANY
-		t.Cflag |= unix.HUPCL
-
-		// Set termios.
-		err = unix.IoctlSetTermios(int(entry.Fd()), unix.TIOCSETA, t)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// Set the default window size.
-		sz := &unix.Winsize{
-			Col: 80,
-			Row: 25,
-		}
-
-		err = unix.IoctlSetWinsize(int(entry.Fd()), unix.TIOCSWINSZ, sz)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// Set CLOEXEC.
-		_, _, errno = unix.Syscall(unix.SYS_FCNTL, uintptr(entry.Fd()), unix.F_SETFD, unix.FD_CLOEXEC)
-		if errno != 0 {
-			return nil, nil, unix.Errno(errno)
-		}
-	}
-
-	// Fix the ownership of the pty side.
-	err = unix.Fchown(int(pty.Fd()), int(uid), int(gid))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	reverter.Success()
-
-	return ptx, pty, nil
 }
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
