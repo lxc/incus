@@ -48,6 +48,7 @@ type ImageInfo struct {
 	BackingFilename string         `json:"backing-filename"`
 	Format          string         `json:"format"`
 	VirtualSize     int            `json:"virtual-size"`
+	ClusterSize     int            `json:"cluster-size"`
 	FormatSpecific  FormatSpecific `json:"format-specific"`
 }
 
