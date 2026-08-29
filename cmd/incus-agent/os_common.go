@@ -1,4 +1,4 @@
-//go:build darwin || freebsd || windows
+//go:build darwin || freebsd || netbsd || windows
 
 package main
 
