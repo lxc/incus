@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-08-27 15:11+0200\n"
+"POT-Creation-Date: 2026-08-28 22:13-0400\n"
 "PO-Revision-Date: 2026-08-22 19:08+0000\n"
 "Last-Translator: Dklfajsjfi49wefklsf32 "
 "<nlincus@users.noreply.hosted.weblate.org>\n"
@@ -682,8 +682,8 @@ msgstr "%s (%s) (%d beschikbaar)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (backend=%q, source=%q)"
 
-#: cmd/incus/file.go:729 cmd/incus/storage_volume_file.go:773
-#: cmd/incus/utils_copy.go:96 cmd/incus/utils_sftp.go:410
+#: cmd/incus/file.go:721 cmd/incus/storage_volume_file.go:769
+#: cmd/incus/utils_copy.go:102 cmd/incus/utils_sftp.go:525
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s is geen directory"
@@ -693,7 +693,7 @@ msgstr "%s is geen directory"
 msgid "%s the %s syntax is deprecated; %s\n"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:284
+#: cmd/incus/utils_sftp.go:379
 #, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' is geen ondersteund bestandstype"
@@ -775,7 +775,7 @@ msgid "--console only works with a single instance"
 msgstr ""
 "--console werkt alleen als het een enkele instantiatie (instance) betreft"
 
-#: cmd/incus/query.go:126
+#: cmd/incus/query.go:125
 #, fuzzy
 msgid "--data cannot be used with --data-file"
 msgstr "--target kan niet gebruikt worden met: instances"
@@ -793,12 +793,12 @@ msgstr ""
 msgid "--network-port can't be used without --network-address"
 msgstr "--network-port kan niet gebruikt worden zonder --network-address"
 
-#: cmd/incus/utils_copy.go:65
+#: cmd/incus/utils_copy.go:71
 #, fuzzy
 msgid "--no-dereference/-P cannot be used together with stdout as a target"
 msgstr "--no-profiles kan niet gebruikt worden met --refresh"
 
-#: cmd/incus/utils_copy.go:40
+#: cmd/incus/utils_copy.go:46
 msgid ""
 "--no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive"
 msgstr ""
@@ -827,15 +827,15 @@ msgstr ""
 msgid "--owner and --type require --all to be set"
 msgstr ""
 
-#: cmd/incus/query.go:122
+#: cmd/incus/query.go:121
 msgid "--project cannot be used with the query command"
 msgstr "--project kan niet gebruikt worden met de query command"
 
-#: cmd/incus/utils_copy.go:101
+#: cmd/incus/utils_copy.go:107
 msgid "--recursive/-r is required when pulling directories"
 msgstr ""
 
-#: cmd/incus/utils_copy.go:146
+#: cmd/incus/utils_copy.go:152
 msgid "--recursive/-r is required when pushing directories"
 msgstr ""
 
@@ -889,7 +889,7 @@ msgstr ""
 msgid "A client certificate is already present"
 msgstr "Een client certificaat is al aanwezig"
 
-#: cmd/incus/file.go:771 cmd/incus/storage_volume_file.go:804
+#: cmd/incus/file.go:764 cmd/incus/storage_volume_file.go:801
 msgid ""
 "A target file name must be specified when pushing from stdin; the target is "
 "a directory"
@@ -916,7 +916,7 @@ msgstr "ALIAS"
 msgid "ALIASES"
 msgstr "ALIASSEN"
 
-#: cmd/incus/query.go:37
+#: cmd/incus/query.go:36
 msgid "API path"
 msgstr ""
 
@@ -957,11 +957,11 @@ msgstr "Toegang tot de geëxpandeerde configuratie"
 msgid "Acknowledge warning"
 msgstr "Bevestig de waarschuwing"
 
-#: cmd/incus/query.go:58
+#: cmd/incus/query.go:57
 msgid "Action"
 msgstr ""
 
-#: cmd/incus/query.go:135
+#: cmd/incus/query.go:134
 #, c-format
 msgid "Action %q isn't supported by this tool"
 msgstr "Actie %q is niet ondersteund door dit programma"
@@ -1177,12 +1177,12 @@ msgstr "Alle server adressen zijn onbeschikbaar"
 msgid "Alternative certificate name"
 msgstr "Alternatieve certificaat naam"
 
-#: cmd/incus/file.go:454 cmd/incus/file.go:686
-#: cmd/incus/storage_volume_file.go:535 cmd/incus/storage_volume_file.go:734
+#: cmd/incus/file.go:448 cmd/incus/file.go:678
+#: cmd/incus/storage_volume_file.go:528 cmd/incus/storage_volume_file.go:725
 msgid "Always follow symbolic links in source path"
 msgstr ""
 
-#: cmd/incus/file.go:978
+#: cmd/incus/file.go:964
 #, c-format
 msgid "An instance path is required for %s"
 msgstr ""
@@ -2086,9 +2086,9 @@ msgstr ""
 msgid "Create and start instances from images"
 msgstr ""
 
-#: cmd/incus/file.go:111 cmd/incus/file.go:450 cmd/incus/file.go:679
-#: cmd/incus/storage_volume_file.go:107 cmd/incus/storage_volume_file.go:531
-#: cmd/incus/storage_volume_file.go:727
+#: cmd/incus/file.go:111 cmd/incus/file.go:443 cmd/incus/file.go:670
+#: cmd/incus/storage_volume_file.go:107 cmd/incus/storage_volume_file.go:523
+#: cmd/incus/storage_volume_file.go:717
 msgid "Create any directories necessary"
 msgstr ""
 
@@ -2229,6 +2229,11 @@ msgstr ""
 #: cmd/incus/info.go:155 cmd/incus/info.go:264
 #, c-format
 msgid "Current number of VFs: %d"
+msgstr ""
+
+#: cmd/incus/utils_sftp.go:477
+#, c-format
+msgid "Cyclic symbolic link %q"
 msgstr ""
 
 #: cmd/incus/network_forward.go:145
@@ -2546,7 +2551,7 @@ msgstr ""
 msgid "Directory to run the command in (default /root)"
 msgstr ""
 
-#: cmd/incus/file.go:926 cmd/incus/storage_volume_file.go:350
+#: cmd/incus/file.go:912 cmd/incus/storage_volume_file.go:350
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr ""
 
@@ -3176,8 +3181,8 @@ msgstr ""
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr ""
 
-#: cmd/incus/file.go:996 cmd/incus/storage_volume_file.go:407
-#: cmd/incus/storage_volume_file.go:596 cmd/incus/storage_volume_file.go:760
+#: cmd/incus/file.go:982 cmd/incus/storage_volume_file.go:407
+#: cmd/incus/storage_volume_file.go:589 cmd/incus/storage_volume_file.go:756
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr ""
@@ -3449,18 +3454,18 @@ msgstr ""
 msgid "Failed to load configuration: %s"
 msgstr ""
 
-#: cmd/incus/query.go:157
+#: cmd/incus/query.go:156
 #, fuzzy, c-format
 msgid "Failed to open input file %q: %w"
 msgstr "Backup aan het maken van instantiatie (instance): %s"
 
-#: cmd/incus/file.go:796 cmd/incus/storage_volume_file.go:828
-#: cmd/incus/utils_sftp.go:330
+#: cmd/incus/file.go:790 cmd/incus/storage_volume_file.go:826
+#: cmd/incus/utils_sftp.go:413
 #, c-format
 msgid "Failed to open source file %q: %v"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:75
+#: cmd/incus/utils_sftp.go:139
 #, c-format
 msgid "Failed to open target file %q: %w"
 msgstr ""
@@ -3598,7 +3603,7 @@ msgstr "Backup aan het maken van instantiatie (instance): %s"
 msgid "Failed to update cluster member state: %w"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:279
+#: cmd/incus/utils_sftp.go:366 cmd/incus/utils_sftp.go:486
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr ""
@@ -3636,8 +3641,8 @@ msgstr ""
 msgid "Flags:"
 msgstr ""
 
-#: cmd/incus/file.go:453 cmd/incus/file.go:685
-#: cmd/incus/storage_volume_file.go:534 cmd/incus/storage_volume_file.go:733
+#: cmd/incus/file.go:447 cmd/incus/file.go:677
+#: cmd/incus/storage_volume_file.go:527 cmd/incus/storage_volume_file.go:724
 msgid "Follow command-line symbolic links in source path"
 msgstr ""
 
@@ -4094,7 +4099,7 @@ msgstr ""
 msgid "HOSTNAME"
 msgstr ""
 
-#: cmd/incus/query.go:61
+#: cmd/incus/query.go:60
 msgid ""
 "Header to set, an empty value removes it (e.g. \"X-Incus-mode: 0644\") (may "
 "be passed multiple times)"
@@ -4380,11 +4385,11 @@ msgstr ""
 msgid "Infiniband:"
 msgstr ""
 
-#: cmd/incus/query.go:59
+#: cmd/incus/query.go:58
 msgid "Input data"
 msgstr ""
 
-#: cmd/incus/query.go:60
+#: cmd/incus/query.go:59
 msgid "Input data file (\"-\" for stdin)"
 msgstr ""
 
@@ -4415,7 +4420,7 @@ msgstr ""
 msgid "Instance name is: %s"
 msgstr ""
 
-#: cmd/incus/file.go:983
+#: cmd/incus/file.go:969
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr ""
 
@@ -6054,7 +6059,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr ""
 
-#: cmd/incus/file.go:732
+#: cmd/incus/file.go:724
 msgid "Missing target directory"
 msgstr ""
 
@@ -6087,7 +6092,7 @@ msgstr ""
 msgid "More than one device matches, specify the device name"
 msgstr ""
 
-#: cmd/incus/file.go:498
+#: cmd/incus/file.go:492
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 
@@ -6108,11 +6113,11 @@ msgid ""
 "If no target path is provided, start an SSH SFTP listener instead."
 msgstr ""
 
-#: cmd/incus/file.go:912
+#: cmd/incus/file.go:898
 msgid "Mount files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:913
+#: cmd/incus/file.go:899
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -6503,8 +6508,8 @@ msgstr ""
 msgid "Network zone record %s deleted"
 msgstr ""
 
-#: cmd/incus/file.go:452 cmd/incus/file.go:684
-#: cmd/incus/storage_volume_file.go:533 cmd/incus/storage_volume_file.go:732
+#: cmd/incus/file.go:446 cmd/incus/file.go:676
+#: cmd/incus/storage_volume_file.go:526 cmd/incus/storage_volume_file.go:723
 msgid "Never follow symbolic links in source path"
 msgstr ""
 
@@ -6838,6 +6843,11 @@ msgstr "Backup aan het maken van instantiatie (instance): %s"
 msgid "Pre-seed mode, expects YAML config from stdin"
 msgstr ""
 
+#: cmd/incus/file.go:444 cmd/incus/file.go:674
+#: cmd/incus/storage_volume_file.go:524 cmd/incus/storage_volume_file.go:721
+msgid "Preserve ownership, timestamps and mode (implies --recursive)"
+msgstr ""
+
 #: cmd/incus/top.go:435
 msgid "Press 'd' + ENTER to change delay"
 msgstr ""
@@ -6882,7 +6892,7 @@ msgstr ""
 msgid "Print or retrieve the client certificate used by this Incus client"
 msgstr "Een client certificaat is al aanwezig"
 
-#: cmd/incus/query.go:57
+#: cmd/incus/query.go:56
 msgid "Print the raw response"
 msgstr ""
 
@@ -7044,37 +7054,37 @@ msgstr ""
 msgid "Publishing instance: %s"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:521 cmd/incus/storage_volume_file.go:522
+#: cmd/incus/storage_volume_file.go:513 cmd/incus/storage_volume_file.go:514
 #, fuzzy
 msgid "Pull files from custom volumes"
 msgstr "Kopieer aangepaste opslag volumes"
 
-#: cmd/incus/file.go:440 cmd/incus/file.go:441
+#: cmd/incus/file.go:433 cmd/incus/file.go:434
 msgid "Pull files from instances"
 msgstr ""
 
-#: cmd/incus/file.go:586 cmd/incus/storage_volume_file.go:645
-#: cmd/incus/utils_sftp.go:212
+#: cmd/incus/file.go:576 cmd/incus/storage_volume_file.go:634
+#: cmd/incus/utils_sftp.go:287
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:717 cmd/incus/storage_volume_file.go:718
+#: cmd/incus/storage_volume_file.go:707 cmd/incus/storage_volume_file.go:708
 #, fuzzy
 msgid "Push files into custom volumes"
 msgstr "Verwijder aangepaste opslag volumes (storage volume)"
 
-#: cmd/incus/file.go:669 cmd/incus/file.go:670
+#: cmd/incus/file.go:660 cmd/incus/file.go:661
 msgid "Push files into instances"
 msgstr ""
 
-#: cmd/incus/file.go:845 cmd/incus/storage_volume_file.go:877
-#: cmd/incus/utils_sftp.go:341
+#: cmd/incus/file.go:823 cmd/incus/storage_volume_file.go:859
+#: cmd/incus/utils_sftp.go:424
 #, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr ""
 
-#: cmd/incus/query.go:140
+#: cmd/incus/query.go:139
 msgid "Query path must start with /"
 msgstr ""
 
@@ -7150,8 +7160,8 @@ msgid ""
 "database records."
 msgstr ""
 
-#: cmd/incus/file.go:451 cmd/incus/file.go:683
-#: cmd/incus/storage_volume_file.go:532 cmd/incus/storage_volume_file.go:731
+#: cmd/incus/file.go:445 cmd/incus/file.go:675
+#: cmd/incus/storage_volume_file.go:525 cmd/incus/storage_volume_file.go:722
 msgid "Recursively transfer files"
 msgstr ""
 
@@ -7628,7 +7638,7 @@ msgstr ""
 msgid "Select next boot entry: "
 msgstr ""
 
-#: cmd/incus/query.go:42 cmd/incus/query.go:43
+#: cmd/incus/query.go:41 cmd/incus/query.go:42
 msgid "Send a raw query to the server"
 msgstr ""
 
@@ -7700,7 +7710,7 @@ msgstr ""
 msgid "Set a keepalive timeout for a remote"
 msgstr ""
 
-#: cmd/incus/file.go:927 cmd/incus/storage_volume_file.go:351
+#: cmd/incus/file.go:913 cmd/incus/storage_volume_file.go:351
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr ""
 
@@ -7926,7 +7936,7 @@ msgstr ""
 msgid "Set the file's gid on create"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:729
+#: cmd/incus/storage_volume_file.go:719
 msgid "Set the file's gid on push"
 msgstr ""
 
@@ -7934,11 +7944,11 @@ msgstr ""
 msgid "Set the file's perms on create"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:730
+#: cmd/incus/storage_volume_file.go:720
 msgid "Set the file's perms on push"
 msgstr ""
 
-#: cmd/incus/file.go:682
+#: cmd/incus/file.go:673
 msgid ""
 "Set the file's perms on push (in recursive mode, only sets the target "
 "directory's permissions)"
@@ -7948,15 +7958,15 @@ msgstr ""
 msgid "Set the file's uid on create"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:728
+#: cmd/incus/storage_volume_file.go:718
 msgid "Set the file's uid on push"
 msgstr ""
 
-#: cmd/incus/file.go:681
+#: cmd/incus/file.go:672
 msgid "Set the files' GIDs on push"
 msgstr ""
 
-#: cmd/incus/file.go:680
+#: cmd/incus/file.go:671
 msgid "Set the files' UIDs on push"
 msgstr ""
 
@@ -8053,7 +8063,7 @@ msgstr ""
 msgid "Set values for UEFI variables."
 msgstr ""
 
-#: cmd/incus/file.go:925 cmd/incus/storage_volume_file.go:349
+#: cmd/incus/file.go:911 cmd/incus/storage_volume_file.go:349
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr ""
 
@@ -8613,11 +8623,11 @@ msgstr ""
 msgid "Target path %q already exists"
 msgstr "Alias %s bestaat al"
 
-#: cmd/incus/file.go:973 cmd/incus/storage_volume_file.go:401
+#: cmd/incus/file.go:959 cmd/incus/storage_volume_file.go:401
 msgid "Target path and --listen flag cannot be used together"
 msgstr ""
 
-#: cmd/incus/file.go:967 cmd/incus/storage_volume_file.go:396
+#: cmd/incus/file.go:953 cmd/incus/storage_volume_file.go:396
 msgid "Target path must be a directory"
 msgstr ""
 
@@ -9142,7 +9152,7 @@ msgstr ""
 msgid "Unable to connect to any of the cluster members specified in join token"
 msgstr ""
 
-#: cmd/incus/file.go:393 cmd/incus/storage_volume_file.go:472
+#: cmd/incus/file.go:392 cmd/incus/storage_volume_file.go:470
 #, c-format
 msgid "Unable to create a temporary file: %v"
 msgstr ""
@@ -9227,7 +9237,7 @@ msgstr ""
 msgid "Unknown console type %q"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:260
+#: cmd/incus/utils_sftp.go:343
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr ""
@@ -9668,7 +9678,7 @@ msgid ""
 "  containers."
 msgstr ""
 
-#: cmd/incus/query.go:56
+#: cmd/incus/query.go:55
 msgid "Wait for the operation to complete"
 msgstr ""
 
@@ -10097,7 +10107,7 @@ msgid ""
 "    Create and start a virtual machine, overriding the disk size and bus"
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:523
+#: cmd/incus/storage_volume_file.go:515
 msgid ""
 "incus custom volume file pull local v1/foo/etc/hosts .\n"
 "   To pull /etc/hosts from the custom volume and write it to the current "
@@ -10135,7 +10145,7 @@ msgid ""
 "   To create a symlink /bar in instance foo whose target is baz."
 msgstr ""
 
-#: cmd/incus/file.go:917
+#: cmd/incus/file.go:903
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -10144,7 +10154,7 @@ msgid ""
 "   To start an SSH SFTP listener for the root filesystem of instance foo."
 msgstr ""
 
-#: cmd/incus/file.go:442
+#: cmd/incus/file.go:435
 msgid ""
 "incus file pull foo/etc/hosts .\n"
 "   To pull /etc/hosts from the instance and write it to the current "
@@ -10155,7 +10165,7 @@ msgid ""
 "output."
 msgstr ""
 
-#: cmd/incus/file.go:671
+#: cmd/incus/file.go:662
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -10426,7 +10436,7 @@ msgid ""
 "    Update a project using the content of project.yaml"
 msgstr ""
 
-#: cmd/incus/query.go:46
+#: cmd/incus/query.go:45
 msgid ""
 "incus query -X DELETE --wait /1.0/instances/c1\n"
 "    Delete local instance \"c1\".\n"
@@ -10576,7 +10586,7 @@ msgid ""
 "mypool."
 msgstr ""
 
-#: cmd/incus/storage_volume_file.go:719
+#: cmd/incus/storage_volume_file.go:709
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -10843,7 +10853,7 @@ msgstr "sshfs is gestopt"
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs koppelen van %q op %q"
 
-#: cmd/incus/file.go:767
+#: cmd/incus/file.go:760
 #, fuzzy
 msgid "stdin can only be used once, with no other source arguments"
 msgstr "--target kan niet gebruikt worden met: instances"

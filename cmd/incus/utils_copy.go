@@ -14,6 +14,7 @@ import (
 
 // fileCopiable abstracts commands that pull files.
 type fileCopiable struct {
+	flagArchive       bool
 	flagRecursive     bool
 	flagNoDereference bool
 	flagFollow        bool
@@ -22,6 +23,11 @@ type fileCopiable struct {
 
 // preCheck performs flag validation.
 func (f *fileCopiable) preCheck() error {
+	// --archive/-a implies --recursive/-r, like cp.
+	if f.flagArchive {
+		f.flagRecursive = true
+	}
+
 	// --no-dereference/-P, --follow/-H, and --dereference/-L are mutually exclusive.
 	found := 0
 	if f.flagNoDereference {

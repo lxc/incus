@@ -94,7 +94,20 @@ test_storage_volume_filemanip() {
     incus storage volume file pull "${pool}" vol1/pull_file "${TEST_DIR}"/pull_test
     [ "$(cat "${TEST_DIR}"/pull_test)" = "pull" ]
 
+    # Without --archive, ownership isn't preserved but permissions are.
     incus storage volume file push -p -r "${TEST_DIR}"/source "${pool}" vol1/tmp/ptest/source
+
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /v1/tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /v1/tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /v1/tmp/ptest/source/another_level)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /v1/tmp/ptest/source/another_level)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /v1/tmp/ptest/source)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- readlink /v1/tmp/ptest/source/baz)" = "bar" ]
+
+    incus storage volume file delete -f "${pool}" vol1/tmp/ptest/source
+
+    # With --archive, ownership is preserved.
+    incus storage volume file push -p -a "${TEST_DIR}"/source "${pool}" vol1/tmp/ptest/source
 
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /v1/tmp/ptest/source)" = "$(id -u)" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /v1/tmp/ptest/source)" = "$(id -g)" ]
