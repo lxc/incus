@@ -512,7 +512,8 @@ test_clustering_containers() {
         INCUS_DIR="${INCUS_TWO_DIR}" incus exec egg -- umount /dev/.incus-mounts
         INCUS_DIR="${INCUS_TWO_DIR}" incus move egg --target node1
         INCUS_DIR="${INCUS_ONE_DIR}" incus info egg | grep -q "Location: node1"
-        INCUS_DIR="${INCUS_TWO_DIR}" incus move egg --target node3 --stateless
+        ! INCUS_DIR="${INCUS_TWO_DIR}" incus move egg --target node3 --stateless || false
+        INCUS_DIR="${INCUS_ONE_DIR}" incus info egg | grep -q "Location: node1"
         INCUS_DIR="${INCUS_TWO_DIR}" incus stop -f egg
     fi
 
