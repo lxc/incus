@@ -1787,9 +1787,13 @@ func askClustering(asker ask.Asker, config *api.InitPreseed, cluster incus.Insta
 				return err
 			}
 
-			config.Cluster.ClusterAddress = clusterURL.Host
-			config.Cluster.ClusterCertificate = connectInfo.Certificate
 			config.Cluster.ClusterToken = joinToken.String()
+
+			// Unix socket connections (local or keepalive proxy) have no usable address, let the join token resolve it.
+			if clusterURL.Scheme == "https" {
+				config.Cluster.ClusterAddress = clusterURL.Host
+				config.Cluster.ClusterCertificate = connectInfo.Certificate
+			}
 		}
 
 		// Confirm wiping.
