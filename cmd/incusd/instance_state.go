@@ -182,8 +182,14 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Requests forwarded from another member carry the original protocol.
+	protocol := r.Context().Value(request.CtxForwardedProtocol)
+	if protocol == nil || protocol == "" {
+		protocol = r.Context().Value(request.CtxProtocol)
+	}
+
 	// Check if the cluster member is evacuated.
-	if s.ServerClustered && req.Action != "stop" && r.Context().Value(request.CtxProtocol) != "cluster" && s.DB.Cluster.LocalNodeIsEvacuated() {
+	if s.ServerClustered && req.Action != "stop" && protocol != "cluster" && s.DB.Cluster.LocalNodeIsEvacuated() {
 		return response.Forbidden(errors.New("Cluster member is evacuated"))
 	}
 
