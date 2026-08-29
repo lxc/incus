@@ -304,3 +304,32 @@ func GetMountinfo(path string) ([]string, error) {
 
 	return nil, errors.New("No mountinfo entry found")
 }
+
+// MountNoSymlinkFollow bind-mounts path over itself with nosymfollow set so that nothing writing
+// under it can be redirected through a symlink. Returns a function undoing the mount.
+func MountNoSymlinkFollow(path string) (func() error, error) {
+	err := unix.Mount(path, path, "", unix.MS_BIND, "")
+	if err != nil {
+		return nil, fmt.Errorf("Failed to bind mount %q: %w", path, err)
+	}
+
+	unmount := func() error {
+		return unix.Unmount(path, 0)
+	}
+
+	fd, err := unix.Open(path, unix.O_PATH|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		_ = unmount()
+		return nil, fmt.Errorf("Failed to open %q: %w", path, err)
+	}
+
+	defer func() { _ = unix.Close(fd) }()
+
+	err = unix.MountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{Attr_set: unix.MOUNT_ATTR_NOSYMFOLLOW})
+	if err != nil {
+		_ = unmount()
+		return nil, fmt.Errorf("Failed to set nosymfollow on %q: %w", path, err)
+	}
+
+	return unmount, nil
+}

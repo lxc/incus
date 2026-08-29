@@ -330,6 +330,14 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 
 	args = append(args, []string{".", path}...)
 
+	// Never follow symlinks under the target so the sender can't redirect writes outside of it.
+	unmount, err := linux.MountNoSymlinkFollow(path)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(unmount, "Failed to unmount rsync target", logger.Ctx{"path": path})
+
 	cmd := exec.Command("rsync", args...)
 
 	// Call the wrapper if defined.

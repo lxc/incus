@@ -622,7 +622,8 @@ func (d *btrfs) receiveSubVolume(r io.Reader, receivePath string, tracker *iopro
 		}
 	}
 
-	err = subprocess.RunCommandWithFds(context.TODO(), stdin, nil, "btrfs", "receive", "-e", receivePath)
+	// Confine the receiver to the target so the stream can't redirect writes outside of it.
+	err = subprocess.RunCommandWithFds(context.TODO(), stdin, nil, "btrfs", "receive", "--chroot", "-e", receivePath)
 	if err != nil {
 		return "", err
 	}

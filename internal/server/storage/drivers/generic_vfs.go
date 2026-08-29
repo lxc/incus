@@ -335,6 +335,18 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 			wrapper = localMigration.ProgressTracker(op, "block_progress", volName)
 		}
 
+		// The filesystem stream may have replaced a block file inside the volume with a symlink.
+		if strings.HasPrefix(path, internalUtil.AddSlash(vol.MountPath())) {
+			fi, err := os.Lstat(path)
+			if err != nil {
+				return err
+			}
+
+			if !fi.Mode().IsRegular() {
+				return fmt.Errorf("Block volume file %q isn't a regular file", path)
+			}
+		}
+
 		// Reset the disk.
 		err := linux.ClearBlock(path, 0)
 		if err != nil {
