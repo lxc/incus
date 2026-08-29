@@ -83,16 +83,35 @@ test_filemanip() {
     echo "bar" > "${TEST_DIR}"/source/bar
     ln -s bar "${TEST_DIR}"/source/baz
 
+    # Without --archive, ownership isn't preserved but permissions are.
+    chmod 4750 "${TEST_DIR}"/source/foo
     incus file push -p -r "${TEST_DIR}"/source filemanip/tmp/ptest/source
+
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/another_level)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/another_level)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "750" ]
+    [ "$(incus exec filemanip --project=test -- readlink /tmp/ptest/source/baz)" = "bar" ]
+
+    incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+
+    # With --archive, ownership, timestamps and special mode bits are preserved.
+    touch -d @1000000000 "${TEST_DIR}"/source/foo
+    incus file push -p -a "${TEST_DIR}"/source filemanip/tmp/ptest/source
 
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "$(id -u)" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "$(id -g)" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/another_level)" = "1000" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/another_level)" = "1000" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "4750" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%Y" /tmp/ptest/source/foo)" = "1000000000" ]
     [ "$(incus exec filemanip --project=test -- readlink /tmp/ptest/source/baz)" = "bar" ]
 
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
+    chmod 644 "${TEST_DIR}"/source/foo
 
     # Test pushing/pulling a file with spaces
     echo "foo" > "${TEST_DIR}/source/file with spaces"
@@ -121,14 +140,14 @@ test_filemanip() {
 
     incus file push -r source filemanip/tmp/ptest
 
-    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "$(id -u)" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "0" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
 
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
 
     # Special case where we are overriding combinations of UID/GID and mode, for both recursive and
-    # non-recursive operations.
+    # non-recursive operations. Without --archive, ownership defaults to the volume's writer (root).
 
     incus file push -r --uid=1234 --gid=5678 source filemanip/tmp/ptest
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "1234" ]
@@ -141,11 +160,11 @@ test_filemanip() {
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
 
     incus file push -r --mode=751 source filemanip/tmp/ptest
-    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "$(id -u)" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "0" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "751" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "0" ]
     # The mode is NOT applied recursively.
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "644" ]
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
@@ -173,8 +192,8 @@ test_filemanip() {
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "0" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "0" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "$(id -u)" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source/foo)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source/foo)" = "0" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source/foo)" = "751" ]
     incus exec filemanip --project=test -- rm -rf /tmp/ptest/source
 
@@ -191,7 +210,7 @@ test_filemanip() {
     # created.
     cd source
 
-    incus file push -r ./ filemanip/tmp/ptest
+    incus file push -a ./ filemanip/tmp/ptest
 
     [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/another_level)" = "1000" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/another_level)" = "1000" ]
@@ -200,22 +219,41 @@ test_filemanip() {
 
     incus file push -r ../source filemanip/tmp/ptest
 
-    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "$(id -u)" ]
-    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "$(id -g)" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%u" /tmp/ptest/source)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c "%g" /tmp/ptest/source)" = "0" ]
     [ "$(incus exec filemanip --project=test -- stat -c "%a" /tmp/ptest/source)" = "755" ]
 
     # Switch back to old working directory.
     cd "${oldcwd}"
 
     mkdir "${TEST_DIR}"/dest
+    incus exec filemanip --project=test -- chown 1000:1000 /tmp/ptest/source/foo
+    incus exec filemanip --project=test -- chmod 4750 /tmp/ptest/source/foo
+    incus exec filemanip --project=test -- touch -d @1000000000 /tmp/ptest/source/foo
     incus file pull -r filemanip/tmp/ptest/source "${TEST_DIR}"/dest
 
     [ "$(cat "${TEST_DIR}"/dest/source/foo)" = "foo" ]
     [ "$(cat "${TEST_DIR}"/dest/source/bar)" = "bar" ]
 
+    # Without --archive, ownership isn't preserved but permissions are.
     [ "$(stat -c "%u" "${TEST_DIR}"/dest/source)" = "$(id -u)" ]
     [ "$(stat -c "%g" "${TEST_DIR}"/dest/source)" = "$(id -g)" ]
     [ "$(stat -c "%a" "${TEST_DIR}"/dest/source)" = "755" ]
+    [ "$(stat -c "%u" "${TEST_DIR}"/dest/source/foo)" = "$(id -u)" ]
+    [ "$(stat -c "%a" "${TEST_DIR}"/dest/source/foo)" = "750" ]
+    rm -rf "${TEST_DIR}"/dest
+
+    # With --archive, ownership, timestamps and special mode bits are preserved.
+    mkdir "${TEST_DIR}"/dest
+    incus file pull -a filemanip/tmp/ptest/source "${TEST_DIR}"/dest
+
+    [ "$(stat -c "%u" "${TEST_DIR}"/dest/source)" = "0" ]
+    [ "$(stat -c "%g" "${TEST_DIR}"/dest/source)" = "0" ]
+    [ "$(stat -c "%a" "${TEST_DIR}"/dest/source)" = "755" ]
+    [ "$(stat -c "%u" "${TEST_DIR}"/dest/source/foo)" = "1000" ]
+    [ "$(stat -c "%g" "${TEST_DIR}"/dest/source/foo)" = "1000" ]
+    [ "$(stat -c "%a" "${TEST_DIR}"/dest/source/foo)" = "4750" ]
+    [ "$(stat -c "%Y" "${TEST_DIR}"/dest/source/foo)" = "1000000000" ]
 
     incus file push -p "${TEST_DIR}"/source/foo local:filemanip/tmp/this/is/a/nonexistent/directory/
     incus file pull local:filemanip/tmp/this/is/a/nonexistent/directory/foo "${TEST_DIR}"
