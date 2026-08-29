@@ -111,7 +111,7 @@ The list of supported clouds and instance types can be found at [`https://images
 ### Launch a VM that boots from an ISO
 
 ```{note}
-When creating a Windows, macOS, or FreeBSD virtual machine, make sure to set the `image.os` property to something starting with `Windows`, `macOS`, or `FreeBSD` respectively.
+When creating a FreeBSD, macOS, NetBSD, or Windows virtual machine, make sure to set the `image.os` property to something starting with `FreeBSD`, `macOS`, `NetBSD`, or `Windows` respectively.
 Doing so will tell Incus to expect the correct OS to be running inside of the virtual machine and to tweak behavior accordingly.
 
 This notably will cause:
@@ -121,7 +121,7 @@ This notably will cause:
    - The {abbr}`RTC (Real Time Clock)` clock to be based on system local time rather than UTC
    - IOMMU handling to switch to an Intel IOMMU controller
 
- - On FreeBSD:
+ - On FreeBSD and NetBSD:
 
    - Memory hotplug to be disabled
 ```
@@ -178,7 +178,7 @@ The virtual machine images from the [images](https://images.linuxcontainers.org)
 For other virtual machines, you may want to manually install the agent.
 
 ```{note}
-The Incus Agent is currently available only on Linux, Windows, macOS, and FreeBSD virtual machines.
+The Incus Agent is currently available only on Linux, FreeBSD, macOS, NetBSD, and Windows virtual machines.
 ```
 
 Incus provides the agent primarily through a remote `9p` file system with mount name `config`.
@@ -212,6 +212,34 @@ The first line will mount the remote file system on the mount point `/mnt`.
 The subsequent commands will run the installation script `install.sh` to install and run the Incus Agent.
 ```
 
+#### On FreeBSD
+
+For FreeBSD systems, the agent can manually be installed using a `9p` mount by running the following commands **as root** (running `kldload virtio_p9fs` beforehand may be necessary if this module is not loaded):
+
+    mount -t p9fs config /mnt
+    cd /mnt
+    ./install.sh
+
+```{warning}
+Due to how the FreeBSD kernel works, non-interactive commands run in interactive mode with `incus exec` may see their output cut before the end. Non-interactive commands should thus be run with `-T`/`--force-noninteractive`.
+```
+
+#### On macOS
+
+For macOS systems, the agent can manually be installed using a `9p` mount by opening a terminal **as root** and running the following commands:
+
+    mount_9p config
+    cd /Volumes/config
+    ./install.sh
+
+#### On NetBSD
+
+For NetBSD systems, the agent can manually be installed using a `9p` mount by running the following commands **as root**:
+
+    mount_9p -cu "/dev/$(dmesg | grep -o 'vio9p.*: tagged as config' | cut -d: -f1 | head -n1)" /mnt
+    cd /mnt
+    ./install.sh
+
 #### On Windows
 
 For Windows systems, the virtual CD-ROM drive must be used.
@@ -229,27 +257,11 @@ Otherwise, the agent can manually be started by opening a terminal and running (
     d:\
     .\incus-agent.exe
 
-#### On macOS
-
-For macOS systems, the agent can manually be installed using a `9p` mount by opening a terminal **as root** and running the following commands:
-
-    mount_9p config
-    cd /Volumes/config
-    ./install.sh
-
 ```{warning}
 Apple's Transparency, Consent, Control daemon requires you to allow full disk access to `sh` for the agent to be automatically started.
 This reduces the overall security of the system, by relaxing some of Apple's additional security restrictions.
 This does not in any way bypass UNIX permissions, however, if you are not comfortable with that, you will need to manually run `incus-agent` each time.
 ```
-
-#### On FreeBSD
-
-For FreeBSD systems, the agent can manually be installed using a `9p` mount by running the following commands **as root** (running `kldload virtio_p9fs` beforehand may be necessary if this module is not loaded):
-
-    mount -t p9fs config /mnt
-    cd /mnt
-    ./install.sh
 
 ### Configure the Incus Agent
 By default the Incus Agent will have all features enabled.
