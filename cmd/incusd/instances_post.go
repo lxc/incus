@@ -1491,24 +1491,24 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 				return err
 			}
 
-			// If no architectures have been ascertained from the source then use the default
-			// architecture from project or global config if available.
-			if len(architectures) < 1 {
-				defaultArch := targetProject.Config["images.default_architecture"]
-				if defaultArch == "" {
-					defaultArch = s.GlobalConfig.ImagesDefaultArchitecture()
+			// Use the default architecture from project or global config when the source
+			// doesn't dictate one or offers several (multi-architecture image aliases).
+			defaultArch := targetProject.Config["images.default_architecture"]
+			if defaultArch == "" {
+				defaultArch = s.GlobalConfig.ImagesDefaultArchitecture()
+			}
+
+			if defaultArch != "" {
+				defaultArchID, err := osarch.ArchitectureID(defaultArch)
+				if err != nil {
+					return err
 				}
 
-				if defaultArch != "" {
-					defaultArchID, err := osarch.ArchitectureID(defaultArch)
-					if err != nil {
-						return err
-					}
-
-					architectures = append(architectures, defaultArchID)
-				} else {
-					architectures = nil // Don't exclude candidate members based on architecture.
+				if len(architectures) < 1 || slices.Contains(architectures, defaultArchID) {
+					architectures = []int{defaultArchID}
 				}
+			} else if len(architectures) < 1 {
+				architectures = nil // Don't exclude candidate members based on architecture.
 			}
 
 			clusterGroupsAllowed := project.GetRestrictedClusterGroups(targetProject)
