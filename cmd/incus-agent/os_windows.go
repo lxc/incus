@@ -631,7 +631,26 @@ func osStartExecCommand(ctx context.Context, cmd *exec.Cmd, pty io.ReadWriteClos
 
 func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, proc execProcess, l logger.Logger) {
 	if control.Command == "signal" {
-		// Windows has no signals, treat them all as a request to terminate the process.
+		sig := windows.Signal(control.Signal)
+
+		// Interactive SIGINT is delivered as a Ctrl-C through the pseudo console.
+		cp, ok := pty.(*conPty)
+		if sig == windows.SIGINT && s.interactive && ok {
+			_, err := cp.Write([]byte{0x03})
+			if err != nil {
+				l.Debug("Failed forwarding Ctrl-C", logger.Ctx{"err": err})
+				return
+			}
+
+			l.Info("Forwarded Ctrl-C")
+			return
+		}
+
+		// Windows has no signals, only handle those requesting termination.
+		if !slices.Contains([]windows.Signal{windows.SIGHUP, windows.SIGINT, windows.SIGQUIT, windows.SIGABRT, windows.SIGKILL, windows.SIGTERM}, sig) {
+			return
+		}
+
 		err := proc.Kill()
 		if err != nil {
 			l.Debug("Failed to terminate process", logger.Ctx{"err": err, "signal": control.Signal})
