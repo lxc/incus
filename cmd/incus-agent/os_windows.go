@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -10,10 +11,16 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
+	"unsafe"
 
 	"github.com/FuturFusion/vsock"
 	"github.com/shirou/gopsutil/v4/disk"
@@ -29,6 +36,7 @@ import (
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/revert"
 )
 
 var (
@@ -308,8 +316,295 @@ func osGetOSState() *api.InstanceStateOSInfo {
 	return osInfo
 }
 
+// cprRegex matches a terminal cursor position report.
+var cprRegex = regexp.MustCompile(`\x1b\[[0-9]+;[0-9]+R`)
+
+// conPty is a Windows pseudo console.
+type conPty struct {
+	console windows.Handle
+	input   *os.File
+	output  *os.File
+	closed  chan struct{}
+
+	mu       sync.Mutex
+	cprTimer *time.Timer
+}
+
+// conPtyConsole releases the pseudo console, ending the conPty output stream.
+type conPtyConsole struct {
+	pty *conPty
+}
+
+// conPtyProcess is a process attached to a pseudo console.
+type conPtyProcess struct {
+	handle windows.Handle
+	pid    int
+	mu     sync.Mutex
+	done   bool
+}
+
+func newConPty(width int, height int) (*conPty, error) {
+	if width <= 0 || height <= 0 {
+		width = 80
+		height = 25
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	inputRead, inputWrite, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	// The child ends of the pipes are duplicated into conhost, we don't need them past creation.
+	defer inputRead.Close()
+	reverter.Add(func() { _ = inputWrite.Close() })
+
+	outputRead, outputWrite, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+
+	defer outputWrite.Close()
+	reverter.Add(func() { _ = outputRead.Close() })
+
+	var console windows.Handle
+
+	// Inherit the cursor position so the terminal isn't cleared on start.
+	err = windows.CreatePseudoConsole(windows.Coord{X: int16(width), Y: int16(height)}, windows.Handle(inputRead.Fd()), windows.Handle(outputWrite.Fd()), windows.PSEUDOCONSOLE_INHERIT_CURSOR, &console)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create pseudo console: %w", err)
+	}
+
+	reverter.Success()
+
+	return &conPty{console: console, input: inputWrite, output: outputRead, closed: make(chan struct{})}, nil
+}
+
+// Read reads the pseudo console output.
+func (c *conPty) Read(p []byte) (int, error) {
+	n, err := c.output.Read(p)
+
+	// Conhost requests the cursor position on startup and blocks until it gets a report.
+	// Answer it ourselves if the client isn't a terminal and doesn't reply in time.
+	if bytes.Contains(p[:n], []byte("\x1b[6n")) {
+		c.mu.Lock()
+		c.cprTimer = time.AfterFunc(time.Second, func() {
+			c.mu.Lock()
+			defer c.mu.Unlock()
+
+			if c.cprTimer == nil {
+				return
+			}
+
+			c.cprTimer = nil
+			_, _ = c.input.Write([]byte("\x1b[1;1R"))
+		})
+		c.mu.Unlock()
+	}
+
+	return n, err
+}
+
+// Write writes to the pseudo console input.
+func (c *conPty) Write(p []byte) (int, error) {
+	c.mu.Lock()
+	if c.cprTimer != nil && cprRegex.Match(p) {
+		c.cprTimer.Stop()
+		c.cprTimer = nil
+	}
+
+	c.mu.Unlock()
+
+	return c.input.Write(p)
+}
+
+// Close drains the pseudo console output, waits for its release and closes the pipes.
+func (c *conPty) Close() error {
+	c.mu.Lock()
+	if c.cprTimer != nil {
+		c.cprTimer.Stop()
+		c.cprTimer = nil
+	}
+
+	c.mu.Unlock()
+
+	// Conhost blocks on a full output pipe and can't exit until it's drained.
+	_, _ = io.Copy(io.Discard, c.output)
+	<-c.closed
+
+	_ = c.input.Close()
+
+	return c.output.Close()
+}
+
+// resize changes the pseudo console dimensions.
+func (c *conPty) resize(width int, height int) error {
+	return windows.ResizePseudoConsole(c.console, windows.Coord{X: int16(width), Y: int16(height)})
+}
+
+// start runs the command attached to the pseudo console.
+func (c *conPty) start(ctx context.Context, cmd *exec.Cmd) (execProcess, error) {
+	if cmd.Err != nil {
+		return nil, cmd.Err
+	}
+
+	attrs, err := windows.NewProcThreadAttributeList(1)
+	if err != nil {
+		return nil, err
+	}
+
+	defer attrs.Delete()
+
+	// The attribute value is the pseudo console handle itself, not a pointer to it.
+	err = attrs.Update(windows.PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, *(*unsafe.Pointer)(unsafe.Pointer(&c.console)), unsafe.Sizeof(c.console))
+	if err != nil {
+		return nil, err
+	}
+
+	// Resolve extensions the same way exec.Cmd does on Windows.
+	path, err := exec.LookPath(cmd.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	appName, err := windows.UTF16PtrFromString(path)
+	if err != nil {
+		return nil, err
+	}
+
+	args := make([]string, 0, len(cmd.Args))
+	for _, arg := range cmd.Args {
+		args = append(args, syscall.EscapeArg(arg))
+	}
+
+	cmdLine, err := windows.UTF16PtrFromString(strings.Join(args, " "))
+	if err != nil {
+		return nil, err
+	}
+
+	var dir *uint16
+	if cmd.Dir != "" {
+		dir, err = windows.UTF16PtrFromString(cmd.Dir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	env, err := envBlock(cmd.Environ())
+	if err != nil {
+		return nil, err
+	}
+
+	si := windows.StartupInfoEx{ProcThreadAttributeList: attrs.List()}
+	si.Cb = uint32(unsafe.Sizeof(si))
+
+	var pi windows.ProcessInformation
+
+	err = windows.CreateProcess(appName, cmdLine, nil, nil, false, windows.EXTENDED_STARTUPINFO_PRESENT|windows.CREATE_UNICODE_ENVIRONMENT, &env[0], dir, &si.StartupInfo, &pi)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to start %q: %w", path, err)
+	}
+
+	_ = windows.CloseHandle(pi.Thread)
+
+	proc := &conPtyProcess{handle: pi.Process, pid: int(pi.ProcessId)}
+	context.AfterFunc(ctx, func() { _ = proc.Kill() })
+
+	return proc, nil
+}
+
+// envBlock builds a sorted UTF-16 environment block from KEY=VALUE strings.
+func envBlock(env []string) ([]uint16, error) {
+	slices.SortFunc(env, func(a string, b string) int {
+		keyA, _, _ := strings.Cut(a, "=")
+		keyB, _, _ := strings.Cut(b, "=")
+
+		return strings.Compare(strings.ToUpper(keyA), strings.ToUpper(keyB))
+	})
+
+	block := []uint16{}
+	for _, kv := range env {
+		encoded, err := windows.UTF16FromString(kv)
+		if err != nil {
+			return nil, err
+		}
+
+		block = append(block, encoded...)
+	}
+
+	return append(block, 0), nil
+}
+
+// Read always returns EOF as the console side isn't readable.
+func (c *conPtyConsole) Read(p []byte) (int, error) {
+	return 0, io.EOF
+}
+
+// Write always fails as the console side isn't writable.
+func (c *conPtyConsole) Write(p []byte) (int, error) {
+	return 0, io.ErrClosedPipe
+}
+
+// Close releases the pseudo console, flushing its output and closing the output pipe.
+func (c *conPtyConsole) Close() error {
+	// This blocks until the output has been drained, which happens in conPty.Close.
+	go func() {
+		windows.ClosePseudoConsole(c.pty.console)
+		close(c.pty.closed)
+	}()
+
+	return nil
+}
+
+// Pid returns the process ID.
+func (p *conPtyProcess) Pid() int {
+	return p.pid
+}
+
+// Wait waits for the process to exit and returns its exit code.
+func (p *conPtyProcess) Wait() (int, error) {
+	_, err := windows.WaitForSingleObject(p.handle, windows.INFINITE)
+	if err != nil {
+		return -1, err
+	}
+
+	var code uint32
+
+	err = windows.GetExitCodeProcess(p.handle, &code)
+
+	p.mu.Lock()
+	p.done = true
+	_ = windows.CloseHandle(p.handle)
+	p.mu.Unlock()
+
+	if err != nil {
+		return -1, err
+	}
+
+	return int(code), nil
+}
+
+// Kill terminates the process if it's still running.
+func (p *conPtyProcess) Kill() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.done {
+		return os.ErrProcessDone
+	}
+
+	return windows.TerminateProcess(p.handle, 1)
+}
+
 func osGetInteractiveConsole(s *execWs) (io.ReadWriteCloser, io.ReadWriteCloser, error) {
-	return nil, nil, errors.New("Only non-interactive exec sessions are currently supported on Windows")
+	cp, err := newConPty(s.width, s.height)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cp, &conPtyConsole{pty: cp}, nil
 }
 
 func osPrepareExecCommand(s *execWs, cmd *exec.Cmd) {
@@ -320,13 +615,93 @@ func osPrepareExecCommand(s *execWs, cmd *exec.Cmd) {
 	return
 }
 
-func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, cmd *exec.Cmd, l logger.Logger) {
-	// Ignore control messages.
-	return
+func osStartExecCommand(ctx context.Context, cmd *exec.Cmd, pty io.ReadWriteCloser) (execProcess, error) {
+	cp, ok := pty.(*conPty)
+	if ok {
+		return cp.start(ctx, cmd)
+	}
+
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	return &cmdProcess{cmd: cmd}, nil
+}
+
+func osHandleExecControl(control api.InstanceExecControl, s *execWs, pty io.ReadWriteCloser, proc execProcess, l logger.Logger) {
+	if control.Command == "signal" {
+		sig := windows.Signal(control.Signal)
+
+		// Interactive SIGINT is delivered as a Ctrl-C through the pseudo console.
+		cp, ok := pty.(*conPty)
+		if sig == windows.SIGINT && s.interactive && ok {
+			_, err := cp.Write([]byte{0x03})
+			if err != nil {
+				l.Debug("Failed forwarding Ctrl-C", logger.Ctx{"err": err})
+				return
+			}
+
+			l.Info("Forwarded Ctrl-C")
+			return
+		}
+
+		// Windows has no signals, only handle those requesting termination.
+		if !slices.Contains([]windows.Signal{windows.SIGHUP, windows.SIGINT, windows.SIGQUIT, windows.SIGABRT, windows.SIGKILL, windows.SIGTERM}, sig) {
+			return
+		}
+
+		err := proc.Kill()
+		if err != nil {
+			l.Debug("Failed to terminate process", logger.Ctx{"err": err, "signal": control.Signal})
+			return
+		}
+
+		l.Info("Terminated process", logger.Ctx{"signal": control.Signal})
+		return
+	}
+
+	if control.Command != "window-resize" || !s.interactive {
+		return
+	}
+
+	winchWidth, err := strconv.Atoi(control.Args["width"])
+	if err != nil {
+		l.Debug("Unable to extract window width", logger.Ctx{"err": err})
+		return
+	}
+
+	winchHeight, err := strconv.Atoi(control.Args["height"])
+	if err != nil {
+		l.Debug("Unable to extract window height", logger.Ctx{"err": err})
+		return
+	}
+
+	cp, ok := pty.(*conPty)
+	if !ok {
+		return
+	}
+
+	err = cp.resize(winchWidth, winchHeight)
+	if err != nil {
+		l.Debug("Failed to set window size", logger.Ctx{"err": err, "width": winchWidth, "height": winchHeight})
+		return
+	}
 }
 
 func osExitStatus(err error) (int, error) {
-	return 0, err
+	if err == nil {
+		return 0, nil
+	}
+
+	var exitErr *exec.ExitError
+
+	// Detect and extract ExitError to check the embedded exit status.
+	if errors.As(err, &exitErr) {
+		return exitErr.ExitCode(), nil
+	}
+
+	return -1, err // Not able to extract an exit status.
 }
 
 func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
@@ -359,7 +734,7 @@ func osSetEnv(post *api.InstanceExecPost, env map[string]string) {
 	// Miscellaneous
 	env["COMPUTERNAME"] = ""
 	env["PATH"] = fmt.Sprintf("%s;%s;%s\\WindowsPowerShell\\v1.0", system32, env["WINDIR"], system32)
-	env["PATHEXT"] = "COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL"
+	env["PATHEXT"] = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL"
 
 	env["ProgramData"] = fmt.Sprintf("%s\\ProgramData", env["SystemDrive"])
 	env["ALLUSERSPROFILE"] = env["ProgramData"]
