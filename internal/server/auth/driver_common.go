@@ -277,6 +277,16 @@ func (c *commonAuthorizer) RenameNetworkIntegration(ctx context.Context, oldNetw
 	return nil
 }
 
+// AddNetworkPeerGroup is a no-op.
+func (c *commonAuthorizer) AddNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error {
+	return nil
+}
+
+// DeleteNetworkPeerGroup is a no-op.
+func (c *commonAuthorizer) DeleteNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error {
+	return nil
+}
+
 // AddNetworkACL is a no-op.
 func (c *commonAuthorizer) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	return nil
