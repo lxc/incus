@@ -458,6 +458,16 @@ func (rt *Router) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegr
 	})
 }
 
+// AddNetworkPeerGroup notifies every loaded driver of a new network peer group.
+func (rt *Router) AddNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error {
+	return rt.fanout(func(a Authorizer) error { return a.AddNetworkPeerGroup(ctx, networkPeerGroupName) })
+}
+
+// DeleteNetworkPeerGroup notifies every loaded driver of a deleted network peer group.
+func (rt *Router) DeleteNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error {
+	return rt.fanout(func(a Authorizer) error { return a.DeleteNetworkPeerGroup(ctx, networkPeerGroupName) })
+}
+
 // AddNetworkACL notifies every loaded driver of a new network ACL.
 func (rt *Router) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	return rt.fanout(func(a Authorizer) error { return a.AddNetworkACL(ctx, projectName, networkACLName) })

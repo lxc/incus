@@ -117,6 +117,7 @@ var objectValidators = map[ObjectType]objectValidator{
 	ObjectTypeNetworkACL:         {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetworkAddressSet:  {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeNetworkIntegration: {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
+	ObjectTypeNetworkPeerGroup:   {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
 	ObjectTypeNetworkZone:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeProfile:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeStorageBucket:      {minIdentifierElements: 2, maxIdentifierElements: 3, requireProject: true},
@@ -313,6 +314,12 @@ func ObjectNetworkAddressSet(projectName string, networkAddressSetName string) O
 // ObjectNetworkIntegration represents a network integration.
 func ObjectNetworkIntegration(networkIntegrationName string) Object {
 	object, _ := NewObject(ObjectTypeNetworkIntegration, "", networkIntegrationName)
+	return object
+}
+
+// ObjectNetworkPeerGroup represents a network peer group.
+func ObjectNetworkPeerGroup(networkPeerGroupName string) Object {
+	object, _ := NewObject(ObjectTypeNetworkPeerGroup, "", networkPeerGroupName)
 	return object
 }
 
