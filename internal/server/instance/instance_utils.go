@@ -653,6 +653,20 @@ func SuitableArchitectures(ctx context.Context, s *state.State, tx *db.ClusterTx
 			// Look for a matching alias.
 			entries, err := remote.GetImageAliasArchitectures(string(req.Type), sourceImageRef)
 			if err != nil {
+				if req.Type != "" {
+					// If no match was found for the requested type, check whether
+					// the other instance type has one to give a more helpful hint.
+					otherType := api.InstanceTypeVM
+					if req.Type == api.InstanceTypeVM {
+						otherType = api.InstanceTypeContainer
+					}
+
+					_, otherErr := remote.GetImageAliasArchitectures(string(otherType), sourceImageRef)
+					if otherErr == nil {
+						return nil, fmt.Errorf("The requested image couldn't be found for instance type %q, but one was found for instance type %q", req.Type, otherType)
+					}
+				}
+
 				// Look for a matching image by fingerprint.
 				img, _, err := remote.GetImage(sourceImageRef)
 				if err != nil {
