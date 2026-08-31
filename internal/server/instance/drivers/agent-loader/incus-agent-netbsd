@@ -1,0 +1,33 @@
+#!/bin/sh
+set -eu
+PREFIX=/var/run/incus_agent
+
+mkdir -p "${PREFIX}/.mnt"
+
+fail() {
+    echo "$1, failing"
+    exit 1
+}
+
+# Mount the agent share.
+mount_9p -o ro -cu "/dev/$(dmesg | grep -o 'vio9p.*: tagged as agent' | cut -d: -f1 | head -n1)" "${PREFIX}/.mnt" >/dev/null 2>&1 || fail "Couldn't mount 9p"
+
+# Guess a Linux-style architecture.
+ARCH="$(uname -m)"
+if [ "$ARCH" = amd64 ]; then
+    ARCH=x86_64
+elif [ "$ARCH" = arm64 ]; then
+    ARCH=aarch64
+fi
+
+# Transfer the agent binary.
+rm -f "${PREFIX}/incus-agent"
+cp -a "${PREFIX}/.mnt/incus-agent.netbsd.$ARCH" "${PREFIX}/incus-agent"
+chown root:wheel "${PREFIX}/incus-agent"
+
+# Unmount the temporary mount.
+umount "${PREFIX}/.mnt"
+rmdir "${PREFIX}/.mnt"
+
+# Re-exec the agent.
+exec "${PREFIX}/incus-agent" "$@"

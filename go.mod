@@ -15,6 +15,7 @@ require (
 	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/checkpoint-restore/go-criu/v8 v8.4.0
 	github.com/cowsql/go-cowsql v1.22.1-0.20260810140515-ae0d26981bfc
+	github.com/creack/pty v1.1.24
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/dustinkirkland/golang-petname v0.0.0-20260215035315-f0c533e9ce9b
 	github.com/fatih/color v1.19.0
