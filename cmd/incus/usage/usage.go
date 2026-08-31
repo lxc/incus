@@ -841,6 +841,7 @@ var (
 	Member             = placeholder{i18n.G("member")}
 	Network            = placeholder{i18n.G("network")}
 	NetworkIntegration = placeholder{i18n.G("network integration")}
+	NetworkPeerGroup   = placeholder{i18n.G("network peer group")}
 	Operation          = placeholder{i18n.G("operation")}
 	Path               = placeholder{i18n.G("path")}
 	Peer               = placeholder{i18n.G("peer")}

@@ -131,6 +131,10 @@ func (c *cmdNetwork) command() *cobra.Command {
 	networkPeerCmd := cmdNetworkPeer{global: c.global}
 	cmd.AddCommand(networkPeerCmd.command())
 
+	// Peer group
+	networkPeerGroupCmd := cmdNetworkPeerGroup{global: c.global}
+	cmd.AddCommand(networkPeerGroupCmd.command())
+
 	// Zone
 	networkZoneCmd := cmdNetworkZone{global: c.global}
 	cmd.AddCommand(networkZoneCmd.command())
