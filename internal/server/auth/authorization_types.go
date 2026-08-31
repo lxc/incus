@@ -20,6 +20,9 @@ const (
 	// EntitlementCanCreateNetworkIntegrations is the entitlement to create network integrations.
 	EntitlementCanCreateNetworkIntegrations Entitlement = "can_create_network_integrations"
 
+	// EntitlementCanCreateNetworkPeerGroups is the entitlement to create network peer groups.
+	EntitlementCanCreateNetworkPeerGroups Entitlement = "can_create_network_peer_groups"
+
 	// EntitlementCanCreateProjects is the entitlement to create projects.
 	EntitlementCanCreateProjects Entitlement = "can_create_projects"
 
@@ -153,6 +156,9 @@ const (
 
 	// ObjectTypeNetworkIntegration represents a network integration.
 	ObjectTypeNetworkIntegration ObjectType = "network_integration"
+
+	// ObjectTypeNetworkPeerGroup represents a network peer group.
+	ObjectTypeNetworkPeerGroup ObjectType = "network_peer_group"
 
 	// ObjectTypeNetworkZone represents a network zone.
 	ObjectTypeNetworkZone ObjectType = "network_zone"

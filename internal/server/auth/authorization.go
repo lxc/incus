@@ -94,6 +94,9 @@ type Authorizer interface {
 	DeleteNetworkIntegration(ctx context.Context, networkIntegrationName string) error
 	RenameNetworkIntegration(ctx context.Context, oldNetworkIntegrationName string, newNetworkIntegrationName string) error
 
+	AddNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error
+	DeleteNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error
+
 	AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error
 	DeleteNetworkACL(ctx context.Context, projectName string, networkACLName string) error
 	RenameNetworkACL(ctx context.Context, projectName string, oldNetworkACLName string, newNetworkACLName string) error
@@ -139,6 +142,7 @@ type Resources struct {
 	NetworkACLObjects         []Object
 	NetworkAddressSetObjects  []Object
 	NetworkIntegrationObjects []Object
+	NetworkPeerGroupObjects   []Object
 	NetworkZoneObjects        []Object
 	ProfileObjects            []Object
 	StoragePoolVolumeObjects  []Object
