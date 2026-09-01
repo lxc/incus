@@ -6331,9 +6331,10 @@ func (d *qemu) pid() (int, error) {
 		return 0, nil // Process has gone.
 	}
 
-	qemuSearchString := []byte("qemu-system")
+	// The QEMU binary name varies by distribution (e.g. qemu-kvm on EL systems).
+	isQemu := bytes.Contains(cmdLine, []byte("qemu-system")) || bytes.Contains(cmdLine, []byte("qemu-kvm"))
 	instUUID := []byte(d.localConfig["volatile.uuid"])
-	if !bytes.Contains(cmdLine, qemuSearchString) || !bytes.Contains(cmdLine, instUUID) {
+	if !isQemu || !bytes.Contains(cmdLine, instUUID) {
 		return -1, errors.New("PID doesn't match the running process")
 	}
 
