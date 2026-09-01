@@ -528,6 +528,19 @@ type BTRFSMetaDataHeader struct {
 	Subvolumes []BTRFSSubVolume `json:"subvolumes" yaml:"subvolumes"` // Sub volumes inside the volume (including the top level ones).
 }
 
+// validate ensures every subvolume path stays within the volume once joined to its mount path.
+// It must be called on any header decoded from untrusted input (backup tarballs, migration wire).
+func (h *BTRFSMetaDataHeader) validate() error {
+	for _, subVol := range h.Subvolumes {
+		rel := strings.TrimPrefix(subVol.Path, string(filepath.Separator))
+		if rel != "" && !filepath.IsLocal(rel) {
+			return fmt.Errorf("Invalid subvolume path %q", subVol.Path)
+		}
+	}
+
+	return nil
+}
+
 // restorationHeader scans the volume and any specified snapshots, returning a header containing subvolume metadata
 // for use in restoring a volume and its snapshots onto another system. The metadata returned represents how the
 // subvolumes should be restored, not necessarily how they are on disk now. Most of the time this is the same,
@@ -596,6 +609,11 @@ func (d *btrfs) loadOptimizedBackupHeader(r io.ReadSeeker, mountPath string) (*B
 			err = yaml.NewDecoder(localUtil.MaxBytesReader(tr, 1024*1024)).Decode(&header)
 			if err != nil {
 				return nil, fmt.Errorf("Error parsing optimized backup header file: %w", err)
+			}
+
+			err = header.validate()
+			if err != nil {
+				return nil, err
 			}
 
 			cancelFunc()

@@ -529,6 +529,11 @@ func (d *btrfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, v
 			return fmt.Errorf("Failed decoding BTRFS migration header: %w", err)
 		}
 
+		err = migrationHeader.validate()
+		if err != nil {
+			return err
+		}
+
 		d.logger.Debug("Received BTRFS migration meta data header", logger.Ctx{"name": vol.name})
 	} else {
 		// Populate the migrationHeader subvolumes with root volumes only to support older sources.
@@ -1460,6 +1465,11 @@ func (d *btrfs) MigrateVolume(vol Volume, conn io.ReadWriteCloser, volSrcArgs *l
 		err = json.Unmarshal(buf, &migrationHeader)
 		if err != nil {
 			return fmt.Errorf("Failed decoding BTRFS migration header: %w", err)
+		}
+
+		err = migrationHeader.validate()
+		if err != nil {
+			return err
 		}
 
 		d.logger.Debug("Received BTRFS migration meta data header", logger.Ctx{"name": vol.name})
