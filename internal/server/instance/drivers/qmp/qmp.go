@@ -22,7 +22,7 @@ import (
 type qemuMachineProtocol struct {
 	oobSupported bool            // Out of band support or not
 	uc           *net.UnixConn   // Underlying unix socket connection
-	mu           sync.Mutex      // Serialize running command
+	commandLock  chan struct{}   // Serialize running command (bounded acquisition)
 	replies      sync.Map        // Replies channels
 	events       <-chan qmpEvent // Events channel
 	listeners    atomic.Uint32   // Listeners number
@@ -126,6 +126,8 @@ func (qmp *qemuMachineProtocol) qmpIncreaseID() uint32 {
 
 // connect sets up a QMP connection.
 func (qmp *qemuMachineProtocol) connect() error {
+	qmp.commandLock = make(chan struct{}, 1)
+
 	enc := json.NewEncoder(qmp.uc)
 	dec := json.NewDecoder(qmp.uc)
 
@@ -268,17 +270,26 @@ func (qmp *qemuMachineProtocol) listen(r io.Reader, events chan<- qmpEvent, repl
 	replies.Clear()
 }
 
-// defaultCommandTimeout is how long we wait for a QMP reply before giving up.
+// defaultCommandTimeout bounds queries so instance state rendering can't hang on a silent QEMU.
 const defaultCommandTimeout = 2 * time.Second
 
-// blockCommandTimeout is used for block commands that do blocking storage I/O.
-const blockCommandTimeout = 5 * time.Second
+// operationCommandTimeout is the hard cap for state-changing commands which can be legitimately slow.
+const operationCommandTimeout = 2 * time.Minute
 
-// heavyCommandTimeout is used for commands that require I/O flush or VFIO operations.
-const heavyCommandTimeout = 30 * time.Second
+// commandTimeout holds the reply deadline and an optional slow-command warning threshold.
+type commandTimeout struct {
+	warn  time.Duration
+	limit time.Duration
+}
 
-// commandTimeouts overrides defaultCommandTimeout for synchronous slow commands.
-var commandTimeouts = map[string]time.Duration{
+// Operational commands warn past their expected duration but only fail at the hard cap.
+var (
+	blockCommandTimeout = commandTimeout{warn: 5 * time.Second, limit: operationCommandTimeout}
+	heavyCommandTimeout = commandTimeout{warn: 30 * time.Second, limit: operationCommandTimeout}
+)
+
+// commandTimeouts overrides defaultCommandTimeout for slow synchronous commands.
+var commandTimeouts = map[string]commandTimeout{
 	"block-commit":              blockCommandTimeout,
 	"block-dirty-bitmap-remove": blockCommandTimeout,
 	"block-export-add":          blockCommandTimeout,
@@ -290,7 +301,12 @@ var commandTimeouts = map[string]time.Duration{
 	"change-backing-file":       blockCommandTimeout,
 	"job-complete":              blockCommandTimeout,
 	"job-dismiss":               blockCommandTimeout,
-	"query-block-jobs":          blockCommandTimeout,
+	"migrate":                   blockCommandTimeout,
+	"migrate-continue":          blockCommandTimeout,
+	"migrate-incoming":          blockCommandTimeout,
+	"migrate-set-capabilities":  blockCommandTimeout,
+	"migrate-set-parameters":    blockCommandTimeout,
+	"migrate_cancel":            blockCommandTimeout,
 	"nbd-server-start":          blockCommandTimeout,
 	"nbd-server-stop":           blockCommandTimeout,
 	"transaction":               blockCommandTimeout,
@@ -304,8 +320,9 @@ var commandTimeouts = map[string]time.Duration{
 	"object-add":                heavyCommandTimeout,
 	"stop":                      heavyCommandTimeout,
 	"system_reset":              heavyCommandTimeout,
-	"query-migrate":             heavyCommandTimeout,
-	"screendump":                10 * time.Second,
+	"query-block-jobs":          {limit: 5 * time.Second},
+	"query-migrate":             {limit: 30 * time.Second},
+	"screendump":                {limit: 10 * time.Second},
 }
 
 // commandName extracts the command name from a marshalled QMP request.
@@ -331,7 +348,7 @@ func (qmp *qemuMachineProtocol) run(command []byte, id uint32) ([]byte, error) {
 
 func (qmp *qemuMachineProtocol) qmpWriteMsg(b []byte, file *os.File, timeout time.Duration) error {
 	// A write only blocks once the socket buffer is full, meaning QEMU stopped
-	// reading the monitor a long time ago. Time out rather than hold qmp.mu forever.
+	// reading the monitor a long time ago. Time out rather than hold the command lock forever.
 	err := qmp.uc.SetWriteDeadline(time.Now().Add(timeout))
 	if err != nil {
 		return err
@@ -359,11 +376,6 @@ func (qmp *qemuMachineProtocol) qmpWriteMsg(b []byte, file *os.File, timeout tim
 
 // runWithFile executes for passing a file through out-of-band data.
 func (qmp *qemuMachineProtocol) runWithFile(command []byte, file *os.File, id uint32) ([]byte, error) {
-	// Only allow a single command to be run at a time to ensure that responses
-	// to a command cannot be mixed with responses from another command
-	qmp.mu.Lock()
-	defer qmp.mu.Unlock()
-
 	if id == 0 {
 		id = qmp.qmpIncreaseID()
 		b, err := qmp.qmpInjectID(command, id)
@@ -376,28 +388,64 @@ func (qmp *qemuMachineProtocol) runWithFile(command []byte, file *os.File, id ui
 
 	// Pick the timeout for this command.
 	cmd := commandName(command)
-	timeout := defaultCommandTimeout
-	override, ok := commandTimeouts[cmd]
-	if ok {
-		timeout = override
+	timeout, ok := commandTimeouts[cmd]
+	if !ok {
+		timeout = commandTimeout{limit: defaultCommandTimeout}
 	}
+
+	deadline := time.NewTimer(timeout.limit)
+	defer deadline.Stop()
+
+	// Only allow a single command in flight, giving up at the deadline so
+	// short queries don't queue behind a slow command.
+	select {
+	case qmp.commandLock <- struct{}{}:
+	case <-deadline.C:
+		return nil, fmt.Errorf("%w: %q after %s", ErrMonitorBusy, cmd, timeout.limit)
+	}
+
+	defer func() { <-qmp.commandLock }()
 
 	repCh := make(chan rawResponse, 1)
 	qmp.replies.Store(id, repCh)
 
-	err := qmp.qmpWriteMsg(command, file, timeout)
+	err := qmp.qmpWriteMsg(command, file, timeout.limit)
 	if err != nil {
 		qmp.replies.Delete(id)
 		return nil, err
 	}
 
+	// Warn once past the expected duration (warnCh stays nil, i.e. disabled, for queries).
+	var warnCh <-chan time.Time
+	if timeout.warn > 0 {
+		warnTimer := time.NewTimer(timeout.warn)
+		defer warnTimer.Stop()
+		warnCh = warnTimer.C
+	}
+
 	// Wait for a response, error or timeout.
+	started := time.Now()
+	warned := false
+
 	var res rawResponse
-	select {
-	case res = <-repCh:
-	case <-time.After(timeout):
-		qmp.replies.Delete(id)
-		return nil, fmt.Errorf("%w: %q after %s", ErrMonitorTimeout, cmd, timeout)
+
+wait:
+	for {
+		select {
+		case res = <-repCh:
+			break wait
+		case <-warnCh:
+			warnCh = nil
+			warned = true
+			logger.Warn("QMP command taking longer than expected", logger.Ctx{"command": cmd, "expected": timeout.warn})
+		case <-deadline.C:
+			qmp.replies.Delete(id)
+			return nil, fmt.Errorf("%w: %q after %s", ErrMonitorTimeout, cmd, timeout.limit)
+		}
+	}
+
+	if warned {
+		logger.Warn("Slow QMP command completed", logger.Ctx{"command": cmd, "duration": time.Since(started)})
 	}
 
 	if res.err != nil {

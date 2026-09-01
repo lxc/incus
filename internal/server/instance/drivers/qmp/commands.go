@@ -1513,6 +1513,8 @@ func (m *Monitor) blockJobDismiss(jobID string) error {
 // its final state or is missing. Concluded jobs are dismissed and their error, if any, is
 // returned. The returned boolean is true when the job concluded rather than turned ready.
 func (m *Monitor) blockJobWait(jobID string, waitReady bool, exitOnNotFound bool) (bool, error) {
+	queryDeadline := time.Now().Add(2 * time.Minute)
+
 	for {
 		var resp struct {
 			Return []struct {
@@ -1525,8 +1527,16 @@ func (m *Monitor) blockJobWait(jobID string, waitReady bool, exitOnNotFound bool
 
 		err := m.Run("query-block-jobs", nil, &resp)
 		if err != nil {
+			// Tolerate timeouts for a while as QEMU's main loop may be busy with I/O.
+			if errors.Is(err, ErrMonitorTimeout) && time.Now().Before(queryDeadline) {
+				time.Sleep(time.Second)
+				continue
+			}
+
 			return false, err
 		}
+
+		queryDeadline = time.Now().Add(2 * time.Minute)
 
 		found := false
 		for _, job := range resp.Return {
