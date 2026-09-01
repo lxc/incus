@@ -249,6 +249,11 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 				}
 			}
 
+			// A stateless move to another member would leave the instance running on the source.
+			if target != "" && target != inst.Location() && !req.Live && !req.Refresh {
+				return response.BadRequest(errors.New("Instance must be stopped for a stateless move to another cluster member"))
+			}
+
 			// Storage pool changes require a target flag.
 			if req.Pool != "" {
 				if inst.Type() != instancetype.VM {
