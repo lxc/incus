@@ -10726,6 +10726,11 @@ func (d *qemu) statusCode() api.StatusCode {
 
 	status, err := monitor.Status()
 	if err != nil {
+		// A busy monitor means QEMU is alive but processing a slow command.
+		if errors.Is(err, qmp.ErrMonitorBusy) {
+			return api.Running
+		}
+
 		if errors.Is(err, qmp.ErrMonitorDisconnect) {
 			// If cannot connect to monitor, but qemu process in pid file still exists, then likely
 			// qemu is unresponsive and this instance is in an error state.
