@@ -736,7 +736,7 @@ func (c *cmdImageImport) packImageDir(path string) (string, error) {
 		return "", err
 	}
 
-	defer logger.WarnOnError(outFile.Close, "Failed to close file")
+	defer logger.WarnOnErrorExcept(outFile.Close, []error{os.ErrClosed}, "Failed to close file")
 
 	outFileName := outFile.Name()
 	_, err = subprocess.RunCommand("tar", "-C", path, "--numeric-owner", "--restrict", "--force-local", "--xattrs", "-cJf", outFileName, "rootfs", "templates", "metadata.yaml")
@@ -807,7 +807,8 @@ func (c *cmdImageImport) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
-		defer logger.WarnOnError(meta.Close, "Failed to close file")
+		// For unified images the file is handed to the HTTP transport which closes it.
+		defer logger.WarnOnErrorExcept(meta.Close, []error{os.ErrClosed}, "Failed to close file")
 
 		// Open rootfs
 		if hasRootfsFile {
