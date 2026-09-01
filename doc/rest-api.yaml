@@ -3842,6 +3842,88 @@ definitions:
         title: NetworkPeer used for displaying a network peering.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
+    NetworkPeerGroup:
+        properties:
+            description:
+                description: Description of the network peer group
+                example: Peer group for region1
+                type: string
+                x-go-name: Description
+            name:
+                description: The name of the network peer group
+                example: region1
+                type: string
+                x-go-name: Name
+            networks:
+                description: List of OVN networks that are members of this network peer group
+                example:
+                    - name: ovn1
+                      project: default
+                items:
+                    $ref: '#/definitions/NetworkPeerGroupNetwork'
+                type: array
+                x-go-name: Networks
+        title: NetworkPeerGroup represents a network peer group.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
+    NetworkPeerGroupNetwork:
+        properties:
+            name:
+                description: The name of the network
+                example: ovn1
+                type: string
+                x-go-name: Name
+            project:
+                description: The project the network belongs to
+                example: default
+                type: string
+                x-go-name: Project
+        title: NetworkPeerGroupNetwork represents a network that is a member of a network peer group.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
+    NetworkPeerGroupPut:
+        description: NetworkPeerGroupPut represents the modifiable fields of a network peer group
+        properties:
+            description:
+                description: Description of the network peer group
+                example: Peer group for region1
+                type: string
+                x-go-name: Description
+            networks:
+                description: List of OVN networks that are members of this network peer group
+                example:
+                    - name: ovn1
+                      project: default
+                items:
+                    $ref: '#/definitions/NetworkPeerGroupNetwork'
+                type: array
+                x-go-name: Networks
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
+    NetworkPeerGroupsPost:
+        description: NetworkPeerGroupsPost represents the fields of a new network peer group
+        properties:
+            description:
+                description: Description of the network peer group
+                example: Peer group for region1
+                type: string
+                x-go-name: Description
+            name:
+                description: The name of the network peer group
+                example: region1
+                type: string
+                x-go-name: Name
+            networks:
+                description: List of OVN networks that are members of this network peer group
+                example:
+                    - name: ovn1
+                      project: default
+                items:
+                    $ref: '#/definitions/NetworkPeerGroupNetwork'
+                type: array
+                x-go-name: Networks
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
     NetworkPeerPut:
         description: NetworkPeerPut represents the modifiable fields of a network peering
         properties:
@@ -15745,6 +15827,224 @@ paths:
             summary: Get the network integrations
             tags:
                 - network-integrations
+    /1.0/network-peer-groups:
+        get:
+            description: Returns a list of network peer groups (URLs).
+            operationId: network_peer_groups_get
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of endpoints
+                                example:
+                                    - /1.0/network-peer-groups/region1
+                                    - /1.0/network-peer-groups/region2
+                                items:
+                                    type: string
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the network peer groups
+            tags:
+                - network-peer-groups
+        post:
+            consumes:
+                - application/json
+            description: |-
+                Creates a new network peer group. This provisions the underlying OVN
+                Logical_Switch and Logical_Router used to peer networks together, and
+                attaches any networks listed in the request to it (see
+                PUT /1.0/network-peer-groups/{name} for details on network attachment).
+            operationId: network_peer_groups_post
+            parameters:
+                - description: Network peer group
+                  in: body
+                  name: network_peer_group
+                  required: true
+                  schema:
+                    $ref: '#/definitions/NetworkPeerGroupsPost'
+            produces:
+                - application/json
+            responses:
+                "201":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "409":
+                    $ref: '#/responses/Conflict'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Add a network peer group
+            tags:
+                - network-peer-groups
+    /1.0/network-peer-groups/{name}:
+        delete:
+            description: |-
+                Detaches any remaining member networks (reversing what
+                PUT /1.0/network-peer-groups/{name} set up for them), then removes the
+                network peer group along with its underlying OVN Logical_Switch and Logical_Router.
+            operationId: network_peer_group_delete
+            parameters:
+                - description: Network peer group name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Delete the network peer group
+            tags:
+                - network-peer-groups
+        get:
+            description: Gets a specific network peer group.
+            operationId: network_peer_group_get
+            parameters:
+                - description: Network peer group name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Network peer group
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                $ref: '#/definitions/NetworkPeerGroup'
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the network peer group
+            tags:
+                - network-peer-groups
+        put:
+            consumes:
+                - application/json
+            description: |-
+                Updates the network peer group description and its list of member OVN networks.
+
+                Adding a network attaches its router to the network peer group's switch and
+                sets up routes so it can reach the group's other members. It must
+                already exist, have a configured subnet, and that subnet must not
+                overlap with any other member's. Removing a network reverses this.
+            operationId: network_peer_group_put
+            parameters:
+                - description: Network peer group name
+                  in: path
+                  name: name
+                  required: true
+                  type: string
+                - description: Network peer group configuration
+                  in: body
+                  name: network_peer_group
+                  required: true
+                  schema:
+                    $ref: '#/definitions/NetworkPeerGroupPut'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    $ref: '#/responses/EmptySyncResponse'
+                "400":
+                    $ref: '#/responses/BadRequest'
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "404":
+                    $ref: '#/responses/NotFound'
+                "412":
+                    $ref: '#/responses/PreconditionFailed'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Update the network peer group
+            tags:
+                - network-peer-groups
+    /1.0/network-peer-groups?recursion=1:
+        get:
+            description: Returns a list of network peer groups (structs).
+            operationId: network_peer_groups_get_recursion1
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: API endpoints
+                    schema:
+                        description: Sync response
+                        properties:
+                            metadata:
+                                description: List of network peer groups
+                                items:
+                                    $ref: '#/definitions/NetworkPeerGroup'
+                                type: array
+                            status:
+                                description: Status description
+                                example: Success
+                                type: string
+                            status_code:
+                                description: Status code
+                                example: 200
+                                type: integer
+                            type:
+                                description: Response type
+                                example: sync
+                                type: string
+                        type: object
+                "403":
+                    $ref: '#/responses/Forbidden'
+                "500":
+                    $ref: '#/responses/InternalServerError'
+            summary: Get the network peer groups
+            tags:
+                - network-peer-groups
     /1.0/network-zones:
         get:
             description: Returns a list of network zones (URLs).
