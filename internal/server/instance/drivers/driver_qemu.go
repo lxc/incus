@@ -8801,7 +8801,7 @@ func (d *qemu) createEphemeralSnapshot(diskName string, diskSize int64) (func(),
 // sendMigrationSnapshot transfers the snapshot to the target.
 // If finalize is true, it performs cleanup after migration.
 // Otherwise, it returns a finalize function that can be called later.
-func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWriteCloser, finalize bool) (func() error, error) {
+func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, filesystemConn io.ReadWriteCloser, finalize bool) (func() error, error) {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return nil, err
@@ -8820,6 +8820,52 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 
 	defer logger.WarnOnError(listener.Close, "Failed to close listener")
 
+	// NBD servers speak first, so wait for the target's greeting rather than
+	// blocking inside blockdev-add as the target can take minutes to get ready.
+	greeting := make([]byte, 4096)
+	greetingLen := 0
+	chGreeting := make(chan error, 1)
+
+	go func() {
+		barriers := 0
+
+		for {
+			n, err := filesystemConn.Read(greeting)
+			if err != nil {
+				// Tolerate the odd stray barrier from the preceding transfer phase.
+				if errors.Is(err, io.EOF) && n == 0 && barriers < 3 {
+					barriers++
+					continue
+				}
+
+				chGreeting <- err
+				return
+			}
+
+			if n > 0 {
+				greetingLen = n
+				chGreeting <- nil
+				return
+			}
+		}
+	}()
+
+	d.logger.Debug("Waiting for migration NBD server greeting", logger.Ctx{"diskName": diskName})
+
+	var errGreeting error
+
+	select {
+	case errGreeting = <-chGreeting:
+	case <-ctx.Done():
+		errGreeting = ctx.Err()
+	case <-time.After(10 * time.Minute):
+		errGreeting = errors.New("Timed out")
+	}
+
+	if errGreeting != nil {
+		return nil, fmt.Errorf("Failed waiting for migration NBD server: %w", errGreeting)
+	}
+
 	g, _ := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
@@ -8832,6 +8878,13 @@ func (d *qemu) sendMigrationSnapshot(diskName string, filesystemConn io.ReadWrit
 		defer logger.WarnOnError(nbdConn.Close, "Failed to close connection")
 
 		d.logger.Debug("NBD connection on source started")
+
+		// Replay the NBD server greeting received during the readiness wait.
+		_, err = nbdConn.Write(greeting[:greetingLen])
+		if err != nil {
+			return fmt.Errorf("Failed forwarding NBD server greeting: %w", err)
+		}
+
 		go func() { _, _ = util.SafeCopy(filesystemConn, nbdConn) }()
 
 		_, _ = util.SafeCopy(nbdConn, filesystemConn)
@@ -9101,7 +9154,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 	var finalizeRootTransfer func() error
 	if !sameSharedStorage {
-		finalizeRootTransfer, err = d.sendMigrationSnapshot(rootDiskName, filesystemConn, false)
+		finalizeRootTransfer, err = d.sendMigrationSnapshot(ctx, rootDiskName, filesystemConn, false)
 		if err != nil {
 			return fmt.Errorf("Failed transferring snapshot disk: %w", err)
 		}
@@ -9196,7 +9249,7 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		for _, vol := range volSourceArgs.DependentVolumes {
 			diskName := d.blockNodeName(linux.PathNameEncode(vol.DeviceName))
 
-			_, err = d.sendMigrationSnapshot(diskName, filesystemConn, true)
+			_, err = d.sendMigrationSnapshot(ctx, diskName, filesystemConn, true)
 			if err != nil {
 				return fmt.Errorf("Failed transferring snapshot disk: %w", err)
 			}
