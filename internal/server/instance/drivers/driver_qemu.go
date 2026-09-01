@@ -9130,7 +9130,11 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	// On failure, cancel the migration and resume the guest.
 	reverter.Add(func() {
 		_ = monitor.MigrateCancel()
-		_ = monitor.Start()
+
+		err := monitor.Start()
+		if err != nil {
+			d.logger.Error("Failed resuming instance after failed migration", logger.Ctx{"err": err})
+		}
 	})
 
 	// Start monitoring the migration progress.
