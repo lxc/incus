@@ -14,6 +14,7 @@ import (
 
 	"github.com/lxc/incus/v7/cmd/generate-database/file"
 	"github.com/lxc/incus/v7/cmd/generate-database/lex"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // Stmt generates a particular database query statement.
@@ -216,7 +217,12 @@ func (s *Stmt) objectsBy(buf *file.Buffer) error {
 			// Ensure filters operate on the coalesced value for fields using coalesce setting.
 			where = append(where, fmt.Sprintf("coalesce(%s, %s) = ? ", column, coalesce[0]))
 		} else {
-			where = append(where, fmt.Sprintf("%s = ? ", column))
+			match := fmt.Sprintf("%s = ? ", column)
+			if util.IsNeitherFalseNorEmpty(field.Config.Get("nullable")) {
+				match = fmt.Sprintf("(%s = ? OR ( %s IS NULL AND ? IS NULL)) ", column, column)
+			}
+
+			where = append(where, match)
 		}
 	}
 
@@ -535,7 +541,12 @@ func (s *Stmt) delete(buf *file.Buffer) error {
 				continue
 			}
 
-			conditions = append(conditions, fmt.Sprintf("%s = %s", column, value))
+			match := fmt.Sprintf("%s = %s", column, value)
+			if util.IsNeitherFalseNorEmpty(mapping.FieldByName(field.Name).Config.Get("nullable")) && !field.IsScalar() && value == "?" {
+				match = fmt.Sprintf("(%s = ? OR ( %s IS NULL AND ? IS NULL)) ", column, column)
+			}
+
+			conditions = append(conditions, match)
 		}
 
 		where = strings.Join(conditions, " AND ")
