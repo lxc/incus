@@ -211,6 +211,22 @@ CREATE TABLE "instances_snapshots_devices_config" (
     FOREIGN KEY (instance_snapshot_device_id) REFERENCES "instances_snapshots_devices" (id) ON DELETE CASCADE,
     UNIQUE (instance_snapshot_device_id, key)
 );
+CREATE TABLE network_peer_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    UNIQUE (name)
+);
+CREATE TABLE network_peer_groups_networks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_peer_group_id INTEGER NOT NULL,
+    network_id INTEGER NOT NULL,
+    link_index INTEGER NOT NULL,
+    UNIQUE (network_peer_group_id, network_id),
+    UNIQUE (network_peer_group_id, link_index),
+    FOREIGN KEY (network_peer_group_id) REFERENCES network_peer_groups (id) ON DELETE CASCADE,
+    FOREIGN KEY (network_id) REFERENCES networks (id) ON DELETE CASCADE
+);
 CREATE TABLE "networks" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     project_id INTEGER NOT NULL,
@@ -675,5 +691,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (77, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (78, strftime("%s"))
 `

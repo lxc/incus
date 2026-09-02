@@ -152,6 +152,7 @@ func (n *ovn) Info() Info {
 	info.AddressForwards = true
 	info.LoadBalancers = true
 	info.Peering = true
+	info.PeerGroups = true
 
 	return info
 }
@@ -8310,6 +8311,107 @@ func (n *ovn) forPeers(f func(targetOVNNet *ovn) error) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// PeerGroupSubnets returns the network's own configured IPv4 and/or IPv6 subnet (nil for a family
+// that isn't configured).
+func (n *ovn) PeerGroupSubnets() (*net.IPNet, *net.IPNet, error) {
+	_, ipv4Net, err := n.parseRouterIntPortIPv4Net()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed parsing IPv4 subnet: %w", err)
+	}
+
+	_, ipv6Net, err := n.parseRouterIntPortIPv6Net()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed parsing IPv6 subnet: %w", err)
+	}
+
+	return ipv4Net, ipv6Net, nil
+}
+
+// PeerGroupJoin creates a router port on this network's router and a matching "router"-type switch
+// port on the given peer group switch. linkIPv4/linkIPv6 (at least one must be set) are addresses
+// from the peer group's own internal addressing scheme, not this network's subnet(s).
+func (n *ovn) PeerGroupJoin(routerPortName string, switchPortName string, peerGroupSwitch string, linkIPv4 *net.IPNet, linkIPv6 *net.IPNet) error {
+	ovnRouterPortName := networkOVN.OVNRouterPort(routerPortName)
+	ovnSwitchPortName := networkOVN.OVNSwitchPort(switchPortName)
+	ovnPeerGroupSwitch := networkOVN.OVNSwitch(peerGroupSwitch)
+
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	routerMAC, err := n.getRouterMAC()
+	if err != nil {
+		return fmt.Errorf("Failed getting router MAC address: %w", err)
+	}
+
+	linkIPs := make([]*net.IPNet, 0, 2)
+	if linkIPv4 != nil {
+		linkIPs = append(linkIPs, linkIPv4)
+	}
+
+	if linkIPv6 != nil {
+		linkIPs = append(linkIPs, linkIPv6)
+	}
+
+	err = n.ovnnb.CreateLogicalRouterPort(context.TODO(), n.getRouterName(), ovnRouterPortName, routerMAC, 0, linkIPs, "", false)
+	if err != nil {
+		return fmt.Errorf("Failed creating peer group router port: %w", err)
+	}
+
+	reverter.Add(func() { _ = n.ovnnb.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), ovnRouterPortName) })
+
+	err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), ovnPeerGroupSwitch, ovnSwitchPortName, &networkOVN.OVNSwitchPortOpts{RouterPort: ovnRouterPortName}, false)
+	if err != nil {
+		return fmt.Errorf("Failed creating peer group switch port: %w", err)
+	}
+
+	reverter.Success()
+
+	return nil
+}
+
+// PeerGroupLeave removes the router port and switch port created by PeerGroupJoin. Callers must
+// remove any routes using routerPortName (via PeerGroupRemoveRoute) first, since OVN won't.
+func (n *ovn) PeerGroupLeave(routerPortName string, switchPortName string, peerGroupSwitch string) error {
+	err := n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), networkOVN.OVNSwitch(peerGroupSwitch), networkOVN.OVNSwitchPort(switchPortName))
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+		return fmt.Errorf("Failed deleting peer group switch port: %w", err)
+	}
+
+	err = n.ovnnb.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), networkOVN.OVNRouterPort(routerPortName))
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+		return fmt.Errorf("Failed deleting peer group router port: %w", err)
+	}
+
+	return nil
+}
+
+// PeerGroupAddRoute adds a static route on this network's router for the given subnet via the
+// given next-hop address, using routerPortName (created by PeerGroupJoin) as the route's output
+// port.
+func (n *ovn) PeerGroupAddRoute(routerPortName string, subnet net.IPNet, nextHop net.IP) error {
+	err := n.ovnnb.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{
+		Prefix:  subnet,
+		NextHop: nextHop,
+		Port:    networkOVN.OVNRouterPort(routerPortName),
+	})
+	if err != nil {
+		return fmt.Errorf("Failed adding peer group route: %w", err)
+	}
+
+	return nil
+}
+
+// PeerGroupRemoveRoute removes the static route on this network's router for the given subnet (as
+// added by PeerGroupAddRoute).
+func (n *ovn) PeerGroupRemoveRoute(subnet net.IPNet) error {
+	err := n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), subnet)
+	if err != nil {
+		return fmt.Errorf("Failed removing peer group route: %w", err)
 	}
 
 	return nil

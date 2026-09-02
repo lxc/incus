@@ -344,6 +344,7 @@ run_standalone_network() {
     run_test test_network_ovn_load_balancer "OVN network load balancers"
     run_test test_network_ovn_nested_vlan "OVN network nested VLANs"
     run_test test_network_ovn_peering "OVN network peering"
+    run_test test_network_peer_groups "network peer groups"
     run_test test_network_peers "network peers"
     run_test test_network_zone "network DNS zones"
     run_test test_oidc "OpenID Connect"

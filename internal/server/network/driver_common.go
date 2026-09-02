@@ -40,6 +40,7 @@ type Info struct {
 	AddressForwards    bool // Indicates if driver supports address forwards.
 	LoadBalancers      bool // Indicates if driver supports load balancers.
 	Peering            bool // Indicates if the driver supports network peering.
+	PeerGroups         bool // Indicates if the driver supports network peer groups.
 }
 
 // forwardTarget represents a single port forward target.
@@ -1539,6 +1540,31 @@ func (n *common) PeerUpdate(peerName string, newPeer api.NetworkPeerPut) error {
 
 // PeerDelete returns ErrNotImplemented for drivers that do not support forwards.
 func (n *common) PeerDelete(peerName string) error {
+	return ErrNotImplemented
+}
+
+// PeerGroupSubnets returns ErrNotImplemented for drivers that do not support peer groups.
+func (n *common) PeerGroupSubnets() (*net.IPNet, *net.IPNet, error) {
+	return nil, nil, ErrNotImplemented
+}
+
+// PeerGroupJoin returns ErrNotImplemented for drivers that do not support peer groups.
+func (n *common) PeerGroupJoin(routerPortName string, switchPortName string, peerGroupSwitch string, linkIPv4 *net.IPNet, linkIPv6 *net.IPNet) error {
+	return ErrNotImplemented
+}
+
+// PeerGroupLeave returns ErrNotImplemented for drivers that do not support peer groups.
+func (n *common) PeerGroupLeave(routerPortName string, switchPortName string, peerGroupSwitch string) error {
+	return ErrNotImplemented
+}
+
+// PeerGroupAddRoute returns ErrNotImplemented for drivers that do not support peer groups.
+func (n *common) PeerGroupAddRoute(routerPortName string, subnet net.IPNet, nextHop net.IP) error {
+	return ErrNotImplemented
+}
+
+// PeerGroupRemoveRoute returns ErrNotImplemented for drivers that do not support peer groups.
+func (n *common) PeerGroupRemoveRoute(subnet net.IPNet) error {
 	return ErrNotImplemented
 }
 

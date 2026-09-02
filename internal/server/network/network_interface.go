@@ -74,4 +74,11 @@ type Network interface {
 	PeerUpdate(peerName string, newPeer api.NetworkPeerPut) error
 	PeerDelete(peerName string) error
 	PeerUsedBy(peerName string) ([]string, error)
+
+	// Peer groups.
+	PeerGroupSubnets() (ipv4Net *net.IPNet, ipv6Net *net.IPNet, err error)
+	PeerGroupJoin(routerPortName string, switchPortName string, peerGroupSwitch string, linkIPv4 *net.IPNet, linkIPv6 *net.IPNet) error
+	PeerGroupLeave(routerPortName string, switchPortName string, peerGroupSwitch string) error
+	PeerGroupAddRoute(routerPortName string, subnet net.IPNet, nextHop net.IP) error
+	PeerGroupRemoveRoute(subnet net.IPNet) error
 }

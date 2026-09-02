@@ -61,6 +61,7 @@ The following features are supported for the `ovn` network type:
 - {ref}`network-integrations`
 - {ref}`network-zones`
 - {ref}`network-ovn-peers`
+- {ref}`network-ovn-peer-groups`
 - {ref}`network-load-balancers`
 
 ```{toctree}
@@ -69,5 +70,6 @@ The following features are supported for the `ovn` network type:
 
 Set up OVN </howto/network_ovn_setup>
 Create routing relationships </howto/network_ovn_peers>
+Create grouped routing relationships </howto/network_ovn_peer_groups>
 Configure network load balancers </howto/network_load_balancers>
 ```
