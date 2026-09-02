@@ -125,6 +125,7 @@ Tag                         | Description
 `marshal=<yes/json>`        | Marshal/Unmarshal data into the field. The column must be a TEXT column. If `marshal=yes`, then the type must implement both `Marshal` and `Unmarshal`. If `marshal=json`, the type is marshaled to JSON using the standard library ([json.Marshal](https://pkg.go.dev/encoding/json#Marshal)). This works for entity tables only, and not for association or mapping tables.
 `create_timestamp`          | Automatically set the value of this column to the current time (UTC) when the respective record is created, namely in `Create` and `CreateOrReplace` (regardless if the record is actually created or updated).
 `update_timestamp`          | Automatically set the value of this column to the current time (UTC) for every operation altering the record, namely `Create`, `CreateOrReplace`, `Rename` and `Update`.
+`nullable=yes`              | Modify filters for this field to handle null types like `sql.Null*` by changing `field = ?` to `(field = ? OR ( field IS NULL AND ? IS NULL ))`.
 
 ### Go Function Generation
 
