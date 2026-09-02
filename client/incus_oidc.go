@@ -3,6 +3,7 @@ package incus
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -63,6 +64,7 @@ type oidcTransport struct {
 	deviceAuthorizationEndpoint string
 	tokenEndpoint               string
 	audience                    string
+	codeVerifier                string
 }
 
 // Transport returns the underlying *http.Transport used for the Incus server.
@@ -99,6 +101,10 @@ func (o *oidcTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 	if isDeviceAuthorization && o.audience != "" {
 		r.Form.Add("audience", o.audience)
+	}
+
+	if isToken && o.codeVerifier != "" {
+		r.Form.Set("code_verifier", o.codeVerifier)
 	}
 
 	// Drop empty parameters as some providers reject an empty client_secret.
@@ -333,7 +339,24 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 	o.oidcTransport.deviceAuthorizationEndpoint = provider.GetDeviceAuthorizationEndpoint()
 	o.oidcTransport.tokenEndpoint = provider.OAuthConfig().Endpoint.TokenURL
 
-	resp, err := rp.DeviceAuthorization(context.TODO(), strings.Split(scopes, ","), provider, nil)
+	var authFn httphelper.FormAuthorization
+
+	if provider.IsPKCE() {
+		codeVerifierBytes := make([]byte, 32)
+		_, err = rand.Read(codeVerifierBytes)
+		if err != nil {
+			return err
+		}
+
+		o.oidcTransport.codeVerifier = base64.RawURLEncoding.EncodeToString(codeVerifierBytes)
+
+		authFn = func(form url.Values) {
+			form.Set("code_challenge", oidc.NewSHACodeChallenge(o.oidcTransport.codeVerifier))
+			form.Set("code_challenge_method", "S256")
+		}
+	}
+
+	resp, err := rp.DeviceAuthorization(context.TODO(), strings.Split(scopes, ","), provider, authFn)
 	if err != nil {
 		return err
 	}
