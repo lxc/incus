@@ -416,7 +416,11 @@ func (m *Method) getMany(buf *file.Buffer) error {
 						m.ifErrNotNil(buf, true, "nil", "err")
 						fmt.Fprintf(&args, "marshaledFilter%s,", name)
 					} else if name == field.Name {
-						fmt.Fprintf(&args, "filter.%s,", name)
+						if util.IsNeitherFalseNorEmpty(field.Config.Get("nullable")) {
+							fmt.Fprintf(&args, "filter.%s,filter.%s,", name, name)
+						} else {
+							fmt.Fprintf(&args, "filter.%s,", name)
+						}
 					}
 				}
 			}
@@ -1424,8 +1428,16 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 			}
 		}
 
+		filterArgs := make([]*Field, 0, len(activeFilters))
+		for _, f := range activeFilters {
+			filterArgs = append(filterArgs, f)
+			if util.IsNeitherFalseNorEmpty(f.Config.Get("nullable")) {
+				filterArgs = append(filterArgs, f)
+			}
+		}
+
 		m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "delete", FieldNames(activeFilters)...)))
-		buf.L("result, err := stmt.Exec(%s)", mapping.FieldParamsMarshal(activeFilters))
+		buf.L("result, err := stmt.Exec(%s)", mapping.FieldParamsMarshal(filterArgs))
 		m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Delete \"%s\": %%w", err)`, entityTable(m.entity, m.config["table"])))
 	}
 
