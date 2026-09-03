@@ -3864,6 +3864,14 @@ User keys can be used in search.
 
 ```
 
+```{config:option} dns.include_hosts network_bridge-common
+:condition: "-"
+:default: "`true`"
+:shortdesc: "Whether to serve records from the host's `/etc/hosts` file"
+:type: "bool"
+
+```
+
 ```{config:option} dns.mode network_bridge-common
 :condition: "-"
 :default: "`managed`"

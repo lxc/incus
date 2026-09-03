@@ -4296,6 +4296,15 @@
 						}
 					},
 					{
+						"dns.include_hosts": {
+							"condition": "-",
+							"default": "`true`",
+							"longdesc": "",
+							"shortdesc": "Whether to serve records from the host's `/etc/hosts` file",
+							"type": "bool"
+						}
+					},
+					{
 						"dns.mode": {
 							"condition": "-",
 							"default": "`managed`",
