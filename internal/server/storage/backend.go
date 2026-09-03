@@ -10009,6 +10009,12 @@ func (b *backend) volumeUsedByRunningInstance(vol *db.StorageVolume, projectName
 
 // createDependentVolumesFromBackup creates dependent volumes from a backup.
 func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcData io.ReadSeeker, op *operations.Operation) error {
+	// Dependent volumes always live in the instance's project, ignore the project stored in the backup.
+	volProject, err := project.StorageVolumeProject(b.state.DB.Cluster, srcBackup.Project, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
 	devicesMap := map[string]string{}
 	for devName, dev := range srcBackup.Config.Container.ExpandedDevices {
 		if dev["type"] != "disk" || util.IsFalseOrEmpty(dev["dependent"]) || dev["path"] == "/" || dev["pool"] == "" {
@@ -10033,7 +10039,7 @@ func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcDat
 		optimizedHeader := srcBackup.OptimizedHeader
 
 		// Validate the volume and snapshot names to avoid path traversal when used as path segments.
-		err := validate.IsAPIName(disk.Volume.Name, false)
+		err = validate.IsAPIName(disk.Volume.Name, false)
 		if err != nil {
 			return fmt.Errorf("Invalid dependent volume name: %w", err)
 		}
@@ -10053,7 +10059,7 @@ func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcDat
 		}
 
 		bInfo := backup.Info{
-			Project:          disk.Volume.Project,
+			Project:          volProject,
 			Name:             disk.Volume.Name,
 			Backend:          disk.Pool.Driver,
 			Pool:             disk.Pool.Name,
