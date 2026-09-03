@@ -187,6 +187,7 @@ func (n *physical) Validate(config map[string]string, clientType request.ClientT
 		"ovn.ingress_mode": validate.Optional(validate.IsOneOf("l2proxy", "routed")),
 
 		"volatile.last_state.created": validate.Optional(validate.IsBool),
+		"volatile.last_state.mtu":     validate.Optional(validate.IsNetworkMTU),
 	}
 
 	// gendoc:generate(entity=network_physical, group=bgp, key=bgp.peers.NAME.address)
@@ -381,6 +382,7 @@ func (n *physical) setup(oldConfig map[string]string) error {
 
 	var err error
 	created := false
+	volatileChanged := false
 	if !bridgeVLAN {
 		created, err = VLANInterfaceCreate(n.config["parent"], hostName, n.config["vlan"], util.IsTrue(n.config["gvrp"]))
 		if err != nil {
@@ -398,11 +400,30 @@ func (n *physical) setup(oldConfig map[string]string) error {
 				return fmt.Errorf("Invalid MTU %q: %w", n.config["mtu"], err)
 			}
 
+			// Record the original MTU so it can be restored on stop.
+			if n.config["volatile.last_state.mtu"] == "" {
+				link, err := ip.LinkByName(hostName)
+				if err != nil {
+					return fmt.Errorf("Failed getting MTU of %q: %w", hostName, err)
+				}
+
+				n.config["volatile.last_state.mtu"] = fmt.Sprintf("%d", link.MTU)
+				volatileChanged = true
+			}
+
 			phyLink := &ip.Link{Name: hostName}
 			err = phyLink.SetMTU(uint32(mtu))
 			if err != nil {
 				return fmt.Errorf("Failed setting MTU %q on %q: %w", n.config["mtu"], phyLink.Name, err)
 			}
+		} else if n.config["volatile.last_state.mtu"] != "" {
+			// Restore the original MTU now that the override is gone.
+			err = n.restoreMTU(hostName)
+			if err != nil {
+				return err
+			}
+
+			volatileChanged = true
 		}
 	}
 
@@ -410,6 +431,10 @@ func (n *physical) setup(oldConfig map[string]string) error {
 	// so it can be removed on stop. This way we won't overwrite the setting on daemon restart.
 	if util.IsFalseOrEmpty(n.config["volatile.last_state.created"]) {
 		n.config["volatile.last_state.created"] = fmt.Sprintf("%t", created)
+		volatileChanged = true
+	}
+
+	if volatileChanged {
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			return tx.UpdateNetwork(ctx, n.project, n.name, n.description, n.config)
 		})
@@ -428,7 +453,29 @@ func (n *physical) setup(oldConfig map[string]string) error {
 	return nil
 }
 
-// Stop stops is a no-op.
+// restoreMTU restores the MTU recorded in volatile.last_state.mtu and clears the key.
+func (n *physical) restoreMTU(hostName string) error {
+	if n.config["volatile.last_state.mtu"] == "" {
+		return nil
+	}
+
+	mtu, err := strconv.ParseUint(n.config["volatile.last_state.mtu"], 10, 32)
+	if err != nil {
+		return fmt.Errorf("Invalid MTU %q: %w", n.config["volatile.last_state.mtu"], err)
+	}
+
+	link := &ip.Link{Name: hostName}
+	err = link.SetMTU(uint32(mtu))
+	if err != nil {
+		return fmt.Errorf("Failed setting MTU %d on %q: %w", mtu, link.Name, err)
+	}
+
+	delete(n.config, "volatile.last_state.mtu")
+
+	return nil
+}
+
+// Stop stops the network.
 func (n *physical) Stop() error {
 	n.logger.Debug("Stop")
 
@@ -448,18 +495,17 @@ func (n *physical) Stop() error {
 		}
 	}
 
-	// Reset MTU back to 1500 if overridden in config.
-	if n.config["mtu"] != "" && InterfaceExists(hostName) {
-		var resetMTU uint32 = 1500
-		link := &ip.Link{Name: hostName}
-		err := link.SetMTU(1500)
+	// Restore the original MTU if overridden in config.
+	if InterfaceExists(hostName) {
+		err = n.restoreMTU(hostName)
 		if err != nil {
-			return fmt.Errorf("Failed setting MTU %d on %q: %w", resetMTU, link.Name, err)
+			return err
 		}
 	}
 
 	// Remove last state config.
 	delete(n.config, "volatile.last_state.created")
+	delete(n.config, "volatile.last_state.mtu")
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		return tx.UpdateNetwork(ctx, n.project, n.name, n.description, n.config)
 	})
@@ -523,6 +569,7 @@ func (n *physical) Update(newNetwork api.NetworkPut, targetNode string, clientTy
 
 		// Remove the volatile last state from submitted new config if present.
 		delete(newNetwork.Config, "volatile.last_state.created")
+		delete(newNetwork.Config, "volatile.last_state.mtu")
 	}
 
 	// Define a function which reverts everything.
