@@ -48,7 +48,7 @@ func Retry(ctx context.Context, f func(ctx context.Context) error) error {
 			break
 		}
 
-		if i == maxRetries {
+		if i == maxRetries-1 {
 			logger.Warn("Database error, giving up", logger.Ctx{"attempt": i, "err": err})
 			break
 		}
