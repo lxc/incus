@@ -14,6 +14,13 @@ test_network() {
     dig @"${v4_addr}" def0.incus
     incus delete -f 0abc
     incus delete -f def0
+
+    # Test disabling host /etc/hosts records
+    dnsmasq_pid="$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")"
+    ! tr '\0' ' ' < "/proc/${dnsmasq_pid}/cmdline" | grep -q -- "--no-hosts" || false
+    incus network set inct$$ dns.include_hosts=false
+    dnsmasq_pid="$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")"
+    tr '\0' ' ' < "/proc/${dnsmasq_pid}/cmdline" | grep -q -- "--no-hosts"
     incus network delete inct$$
 
     # Standard bridge with random subnet and a bunch of options

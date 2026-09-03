@@ -527,6 +527,15 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  shortdesc: Domain to advertise to DHCP clients and use for DNS resolution
 		"dns.domain": validate.IsAny,
 
+		// gendoc:generate(entity=network_bridge, group=common, key=dns.include_hosts)
+		//
+		// ---
+		//  type: bool
+		//  condition: -
+		//  default: `true`
+		//  shortdesc: Whether to serve records from the host's `/etc/hosts` file
+		"dns.include_hosts": validate.Optional(validate.IsBool),
+
 		// gendoc:generate(entity=network_bridge, group=common, key=dns.mode)
 		//
 		// ---
@@ -1930,6 +1939,11 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 			dnsmasqCmd = append(dnsmasqCmd, "-s", dnsDomain)
 			dnsmasqCmd = append(dnsmasqCmd, "--interface-name", fmt.Sprintf("_gateway.%s,%s", dnsDomain, n.name))
 			dnsmasqCmd = append(dnsmasqCmd, "-S", fmt.Sprintf("/%s/", dnsDomain))
+		}
+
+		// Don't serve the host's /etc/hosts entries.
+		if util.IsFalse(n.config["dns.include_hosts"]) {
+			dnsmasqCmd = append(dnsmasqCmd, "--no-hosts")
 		}
 
 		// Create a config file to contain additional config (and to prevent dnsmasq from reading /etc/dnsmasq.conf)
