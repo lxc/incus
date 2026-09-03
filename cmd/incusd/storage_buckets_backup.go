@@ -483,7 +483,10 @@ func storagePoolBucketBackupsPost(d *Daemon, r *http.Request) response.Response 
 			// In order to actually fail piped exports, we use a dirty trick where we close the reader.
 			// This doesn't provide a clean error message in the case of direct backups, but it is a
 			// convenient tradeoff ensuring that the client reports an error.
-			_ = reader.Close()
+			if reader != nil {
+				_ = reader.Close()
+			}
+
 			return err
 		}
 
