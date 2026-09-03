@@ -212,6 +212,11 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Pool and project changes are always migrations.
+	if req.Pool != "" || req.Project != "" {
+		req.Migration = true
+	}
+
 	// Handle simple instance renaming.
 	if !req.Migration {
 		run := func(op *operations.Operation) error {
