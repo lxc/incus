@@ -5,6 +5,7 @@ test_server_config() {
 
     test_server_config_access
     test_server_config_storage
+    test_server_config_defaults
 
     kill_incus "${INCUS_SERVERCONFIG_DIR}"
 }
@@ -102,4 +103,26 @@ test_server_config_storage() {
     incus storage volume delete "${pool}" backups
     incus storage volume delete "${pool}" images
     incus delete -f foo
+}
+
+test_server_config_defaults() {
+    # Explicitly setting a key to its default value is kept.
+    incus config set images.compression_algorithm=gzip
+    incus config show | grep -qF "images.compression_algorithm: gzip"
+    incus admin sql global "SELECT key FROM config" | grep -qF images.compression_algorithm
+
+    # It survives unrelated changes.
+    incus config set user.foo=bar
+    incus config show | grep -qF "images.compression_algorithm: gzip"
+    incus config unset user.foo
+
+    # Clearing it removes it entirely.
+    incus config unset images.compression_algorithm
+    ! incus config show | grep -qF images.compression_algorithm || false
+    ! incus admin sql global "SELECT key FROM config" | grep -qF images.compression_algorithm || false
+
+    # Clearing a non-default value doesn't pin the default.
+    incus config set images.compression_algorithm=xz
+    incus config unset images.compression_algorithm
+    ! incus admin sql global "SELECT key FROM config" | grep -qF images.compression_algorithm || false
 }
