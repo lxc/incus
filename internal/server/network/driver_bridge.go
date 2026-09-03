@@ -1812,8 +1812,10 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 			err := gretap.Add()
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed creating tunnel interface %q: %w", tunName, err)
 			}
+
+			reverter.Add(func() { _ = gretap.Delete() })
 		} else if tunProtocol == "vxlan" {
 			tunGroup := net.ParseIP(getConfig("group"))
 			tunInterface := getConfig("interface")
@@ -1877,26 +1879,28 @@ func (n *bridge) setup(oldConfig map[string]string) error {
 
 			err := vxlan.Add()
 			if err != nil {
-				return err
+				return fmt.Errorf("Failed creating tunnel interface %q: %w", tunName, err)
 			}
+
+			reverter.Add(func() { _ = vxlan.Delete() })
 		}
 
 		// Bridge it and bring up.
 		err = AttachInterface(n.state, n.name, tunName)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed attaching tunnel interface %q: %w", tunName, err)
 		}
 
 		tunLink := &ip.Link{Name: tunName}
 		err = tunLink.SetMTU(bridge.MTU)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed setting MTU %d on tunnel interface %q: %w", bridge.MTU, tunName, err)
 		}
 
 		// Bring up tunnel interface.
 		err = tunLink.SetUp()
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed bringing up tunnel interface %q: %w", tunName, err)
 		}
 
 		// Bring up network interface.
@@ -3576,7 +3580,13 @@ func (n *bridge) deleteChildren() error {
 			continue
 		}
 
-		if l.Master != n.name || slices.Contains(externalInterfaces, iface.Name) || !slices.Contains(kinds, l.Kind) {
+		if slices.Contains(externalInterfaces, iface.Name) || !slices.Contains(kinds, l.Kind) {
+			continue
+		}
+
+		// Also remove detached devices left behind by a failed start.
+		orphan := l.Master == "" && strings.HasPrefix(iface.Name, n.name+"-")
+		if l.Master != n.name && !orphan {
 			continue
 		}
 
