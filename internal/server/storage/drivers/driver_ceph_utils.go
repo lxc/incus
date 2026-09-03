@@ -1318,28 +1318,22 @@ func (d *ceph) getRBDKernelMappedDevPath(rbdName string) (string, error) {
 
 // getRBDNbdImageSpec returns the QEMU image specification used to access the given RBD image through librbd.
 func (d *ceph) getRBDNbdImageSpec(rbdName string) string {
-	// Resolve any symlinks to config path.
+	// Keep the path unresolved as librados derives the cluster name from the file name.
 	confPath := fmt.Sprintf("/etc/ceph/%s.conf", d.config["ceph.cluster_name"])
-	target, err := filepath.EvalSymlinks(confPath)
-	if err == nil {
-		confPath = target
-	}
 
 	// Configuration values containing :, @, or = can be escaped with a leading \ character.
 	optEscaper := strings.NewReplacer(":", `\:`, "@", `\@`, "=", `\=`)
 
 	imageName, snapName, _ := strings.Cut(rbdName, "@")
-	poolName := d.config["ceph.osd.pool_name"]
 
-	spec := fmt.Sprintf("rbd:%s/%s", optEscaper.Replace(poolName), optEscaper.Replace(imageName))
+	spec := fmt.Sprintf("rbd:%s/%s", optEscaper.Replace(d.config["ceph.osd.pool_name"]), optEscaper.Replace(imageName))
 	if snapName != "" {
 		spec = fmt.Sprintf("%s@%s", spec, optEscaper.Replace(snapName))
 	}
 
+	// Only "id" and "conf" are valid here, anything else is passed to rados_conf_set and rejected.
 	opts := []string{
 		fmt.Sprintf("id=%s", optEscaper.Replace(d.config["ceph.user.name"])),
-		fmt.Sprintf("pool=%s", optEscaper.Replace(poolName)),
-		fmt.Sprintf("cluster=%s", optEscaper.Replace(d.config["ceph.cluster_name"])),
 		fmt.Sprintf("conf=%s", optEscaper.Replace(confPath)),
 	}
 
