@@ -141,7 +141,7 @@ func Bootstrap(s *state.State, gateway *Gateway, serverName string) error {
 		s.Endpoints.NetworkUpdateCert(clusterCert)
 	}
 
-	// Re-initialize the gateway. This will create a new raft factory an
+	// Re-initialize the gateway. This will create a new raft factory and
 	// cowsql driver instance, which will be exposed over gRPC by the
 	// gateway handlers.
 	err = gateway.init(true)
@@ -401,7 +401,7 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 		return fmt.Errorf("Failed to remove existing raft data: %w", err)
 	}
 
-	// Re-initialize the gateway. This will create a new raft factory an
+	// Re-initialize the gateway. This will create a new raft factory and
 	// cowsql driver instance, which will be exposed over gRPC by the
 	// gateway handlers.
 	gateway.networkCert = networkCert
@@ -587,7 +587,7 @@ func Join(s *state.State, gateway *Gateway, networkCert *localtls.CertInfo, serv
 func NotifyHeartbeat(s *state.State, gateway *Gateway) {
 	// If a heartbeat round is already running (and implicitly this means we are the leader), then cancel it
 	// so we can distribute the fresh member state info.
-	heartbeatCancel := gateway.HearbeatCancelFunc()
+	heartbeatCancel := gateway.HeartbeatCancelFunc()
 	if heartbeatCancel != nil {
 		heartbeatCancel()
 
@@ -597,7 +597,7 @@ func NotifyHeartbeat(s *state.State, gateway *Gateway) {
 		gateway.HeartbeatLock.Unlock() //nolint:staticcheck
 	}
 
-	hbState := NewAPIHearbeat(s.DB.Cluster)
+	hbState := NewAPIHeartbeat(s.DB.Cluster)
 	hbState.Time = time.Now().UTC()
 
 	var err error
@@ -661,7 +661,7 @@ func NotifyHeartbeat(s *state.State, gateway *Gateway) {
 		}(member.Address)
 	}
 
-	// Wait until all members have been notified (or at least have had a change to be notified).
+	// Wait until all members have been notified (or at least have had a chance to be notified).
 	wg.Wait()
 }
 
@@ -847,7 +847,7 @@ func Assign(s *state.State, gateway *Gateway, nodes []db.RaftNode) error {
 		return fmt.Errorf("Failed to remove existing raft data: %w", err)
 	}
 
-	// Re-initialize the gateway. This will create a new raft factory an
+	// Re-initialize the gateway. This will create a new raft factory and
 	// cowsql driver instance, which will be exposed over gRPC by the
 	// gateway handlers.
 	err = gateway.init(false)
@@ -989,7 +989,7 @@ func Leave(s *state.State, gateway *Gateway, name string, force bool, pending bo
 			}
 		}
 
-		// Check that the node is eligeable for leaving.
+		// Check that the node is eligible for leaving.
 		if !force {
 			err := membershipCheckClusterStateForLeave(ctx, tx, node.ID)
 			if err != nil {
@@ -1044,9 +1044,9 @@ func Leave(s *state.State, gateway *Gateway, name string, force bool, pending bo
 	return address, nil
 }
 
-// Handover looks for a non-voter member that can be promoted to replace a the
+// Handover looks for a non-voter member that can be promoted to replace the
 // member with the given address, which is shutting down. It returns the
-// address of such member along with an updated list of nodes, with the ne role
+// address of such member along with an updated list of nodes, with the new role
 // set.
 //
 // It should be called only by the current leader.
