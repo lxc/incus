@@ -1878,6 +1878,32 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 	// If uplink is a native bridge, then use a separate OVS bridge with veth pair connection to native bridge.
 	vars := n.uplinkPortBridgeVars(uplinkNet)
 
+	// Ensure that the veth interfaces inherit the uplink bridge's MTU (which the OVS bridge also inherits).
+	uplinkNetConfig := uplinkNet.Config()
+
+	// Uplink may have type "bridge" or "physical"
+	uplinkNetMTU := uplinkNetConfig["bridge.mtu"]
+	if uplinkNetMTU == "" {
+		uplinkNetMTU = uplinkNetConfig["mtu"]
+	}
+
+	var mtu uint32
+	if uplinkNetMTU != "" {
+		parsedMTU, err := strconv.ParseUint(uplinkNetMTU, 10, 32)
+		if err != nil {
+			return fmt.Errorf("Invalid uplink MTU %q: %w", uplinkNetMTU, err)
+		}
+
+		mtu = uint32(parsedMTU)
+	} else {
+		// Sample the bridge's current MTU before the veth pair can lower it.
+		var err error
+		mtu, err = GetDevMTU(bridgeDevice)
+		if err != nil {
+			return fmt.Errorf("Failed getting MTU of uplink bridge %q: %w", bridgeDevice, err)
+		}
+	}
+
 	// Create veth pair if needed.
 	if !InterfaceExists(vars.uplinkEnd) && !InterfaceExists(vars.ovsEnd) {
 		veth := &ip.Veth{
@@ -1897,32 +1923,16 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 		reverter.Add(func() { _ = veth.Delete() })
 	}
 
-	// Ensure that the veth interfaces inherit the uplink bridge's MTU (which the OVS bridge also inherits).
-	uplinkNetConfig := uplinkNet.Config()
-
-	// Uplink may have type "bridge" or "physical"
-	uplinkNetMTU, hasBridgeMTU := uplinkNetConfig["bridge.mtu"]
-	if !hasBridgeMTU {
-		uplinkNetMTU = uplinkNetConfig["mtu"]
+	uplinkEndLink := &ip.Link{Name: vars.uplinkEnd}
+	err := uplinkEndLink.SetMTU(mtu)
+	if err != nil {
+		return fmt.Errorf("Failed setting MTU %d on %q: %w", mtu, uplinkEndLink.Name, err)
 	}
 
-	if uplinkNetMTU != "" {
-		mtu, err := strconv.ParseUint(uplinkNetMTU, 10, 32)
-		if err != nil {
-			return fmt.Errorf("Invalid uplink MTU %q: %w", uplinkNetMTU, err)
-		}
-
-		uplinkEndLink := &ip.Link{Name: vars.uplinkEnd}
-		err = uplinkEndLink.SetMTU(uint32(mtu))
-		if err != nil {
-			return fmt.Errorf("Failed setting MTU %q on %q: %w", uplinkNetMTU, uplinkEndLink.Name, err)
-		}
-
-		ovsEndLink := &ip.Link{Name: vars.ovsEnd}
-		err = ovsEndLink.SetMTU(uint32(mtu))
-		if err != nil {
-			return fmt.Errorf("Failed setting MTU %q on %q: %w", uplinkNetMTU, ovsEndLink.Name, err)
-		}
+	ovsEndLink := &ip.Link{Name: vars.ovsEnd}
+	err = ovsEndLink.SetMTU(mtu)
+	if err != nil {
+		return fmt.Errorf("Failed setting MTU %d on %q: %w", mtu, ovsEndLink.Name, err)
 	}
 
 	// Ensure correct sysctls are set on uplink veth interfaces to avoid getting IPv6 link-local addresses.
@@ -1940,7 +1950,7 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 
 	// Connect uplink end of veth pair to uplink bridge and bring up.
 	link := &ip.Link{Name: vars.uplinkEnd}
-	err := link.SetMaster(bridgeDevice)
+	err = link.SetMaster(bridgeDevice)
 	if err != nil {
 		return fmt.Errorf("Failed to connect uplink veth interface %q to uplink bridge %q: %w", vars.uplinkEnd, bridgeDevice, err)
 	}
