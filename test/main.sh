@@ -289,6 +289,7 @@ run_standalone_storage() {
     run_test test_storage_buckets_drivers "storage buckets on all local drivers"
     run_test test_storage_driver_btrfs "btrfs storage driver"
     run_test test_storage_driver_ceph "ceph storage driver"
+    run_test test_storage_driver_ceph_librbd "ceph storage driver (librbd)"
     run_test test_storage_driver_cephfs "cephfs storage driver"
     run_test test_storage_driver_linstor "linstor storage driver"
     run_test test_storage_driver_truenas "truenas storage driver"

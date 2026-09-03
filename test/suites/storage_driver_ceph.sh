@@ -145,3 +145,89 @@ test_storage_driver_ceph() {
     # shellcheck disable=SC2031
     kill_incus "${INCUS_STORAGE_DIR}"
 }
+
+test_storage_driver_ceph_librbd() {
+    # shellcheck disable=2039,3043
+    local INCUS_STORAGE_DIR incus_backend
+
+    # shellcheck disable=SC2031
+    incus_backend=$(storage_backend "$INCUS_DIR")
+    if [ "$incus_backend" != "ceph" ]; then
+        return
+    fi
+
+    if ! command -v qemu-nbd > /dev/null 2>&1 || ! qemu-img --help | grep -qw rbd; then
+        echo "==> SKIP: qemu-nbd with librbd support needed"
+        export TEST_UNMET_REQUIREMENT="qemu-nbd with librbd support needed"
+        return
+    fi
+
+    INCUS_STORAGE_DIR=$(mktemp -d -p "${TEST_DIR}" XXXXXXXXX)
+    chmod +x "${INCUS_STORAGE_DIR}"
+    spawn_incus "${INCUS_STORAGE_DIR}" false
+
+    (
+        set -e
+        # shellcheck disable=2030
+        INCUS_DIR="${INCUS_STORAGE_DIR}"
+
+        poolName="incustest-$(basename "${INCUS_DIR}")-librbd"
+
+        incus storage create "${poolName}" ceph ceph.rbd.backend=librbd volume.size=25MiB ceph.osd.pg_num=16
+        incus profile device add default root disk path="/" pool="${poolName}"
+        ensure_import_testimage
+
+        # Image unpack and the container rootfs both go through qemu-nbd.
+        incus launch testimage c1
+        findmnt -n -o SOURCE "${INCUS_DIR}/storage-pools/${poolName}/containers/c1" | grep -q "^/dev/nbd"
+        pgrep -af "qemu-nbd.*rbd:${poolName}/"
+
+        # Custom volumes.
+        incus storage volume create "${poolName}" vol1
+        incus storage volume attach "${poolName}" vol1 c1 vol1 /mnt
+        findmnt -n -o SOURCE "${INCUS_DIR}/storage-pools/${poolName}/custom/default_vol1" | grep -q "^/dev/nbd"
+        incus exec c1 -- sh -c "echo foo > /mnt/foo"
+        incus storage volume snapshot create "${poolName}" vol1 snap0
+        incus exec c1 -- rm /mnt/foo
+        incus storage volume detach "${poolName}" vol1 c1
+        incus storage volume snapshot restore "${poolName}" vol1 snap0
+        incus storage volume attach "${poolName}" vol1 c1 vol1 /mnt
+        incus exec c1 -- cat /mnt/foo | grep -Fx foo
+        incus storage volume detach "${poolName}" vol1 c1
+
+        # Snapshots and copies.
+        incus exec c1 -- touch /root/foo
+        incus snapshot create c1 snap0
+        incus exec c1 -- rm /root/foo
+        incus snapshot restore c1 snap0
+        incus exec c1 -- test -e /root/foo
+        incus copy c1 c2
+        incus start c2
+        incus exec c2 -- test -e /root/foo
+        incus copy c1/snap0 c3
+        incus start c3
+        incus exec c3 -- test -e /root/foo
+
+        # Export mounts snapshots read-only.
+        incus export c1 "${INCUS_DIR}/c1.tar.gz"
+        incus import "${INCUS_DIR}/c1.tar.gz" c4
+        incus start c4
+        incus exec c4 -- test -e /root/foo
+
+        # Stopping releases the NBD devices.
+        incus stop -f c1 c2 c3 c4
+        ! pgrep -af "qemu-nbd.*rbd:${poolName}/" || false
+        incus start c1
+        incus exec c1 -- test -e /root/foo
+
+        incus delete -f c1 c2 c3 c4
+        incus storage volume delete "${poolName}" vol1
+        incus image delete testimage
+        incus profile device remove default root
+        incus storage delete "${poolName}"
+        ! pgrep -af "qemu-nbd.*rbd:${poolName}/" || false
+    )
+
+    # shellcheck disable=SC2031
+    kill_incus "${INCUS_STORAGE_DIR}"
+}
