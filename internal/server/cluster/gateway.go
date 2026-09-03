@@ -371,7 +371,7 @@ func (g *Gateway) IsCowsqlNode() bool {
 		panic("gateway cowsql server but no node identity")
 	}
 
-	return true
+	return false
 }
 
 // DialFunc returns a dial function that can be used to connect to one of the
