@@ -196,6 +196,7 @@ func (hbState *APIHeartbeat) Send(ctx context.Context, networkCert *localtls.Cer
 			// Ensure only update nodes that exist in Members already.
 			hbNode, existing := hbState.Members[nodeID]
 			if !existing {
+				heartbeatData.Unlock()
 				return
 			}
 
