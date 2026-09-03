@@ -266,6 +266,13 @@ The builds for other operating systems include only the client, not the server.
 
 ````{tabs}
 
+```{group-tab} FreeBSD
+
+The Incus client is packaged in FreeBSD Ports and can be installed with:
+
+    pkg install incus-client
+```
+
 ```{group-tab} macOS
 
 **Homebrew**
@@ -317,8 +324,9 @@ To install it using Chocolatey or Winget, follow the instructions below:
 You can also find native builds of the Incus client on [GitHub](https://github.com/lxc/incus/actions):
 
 - Incus client for Linux: [`bin.linux.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.aarch64), [`bin.linux.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.linux.incus.x86_64)
-- Incus client for Windows: [`bin.windows.incus.aarch64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.aarch64.exe), [`bin.windows.incus.x86_64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.x86_64.exe)
+- Incus client for FreeBSD: [`bin.freebsd.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.freebsd.incus.aarch64), [`bin.freebsd.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.freebsd.incus.x86_64)
 - Incus client for macOS: [`bin.macos.incus.aarch64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.aarch64), [`bin.macos.incus.x86_64`](https://github.com/lxc/incus/releases/latest/download/bin.macos.incus.x86_64)
+- Incus client for Windows: [`bin.windows.incus.aarch64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.aarch64.exe), [`bin.windows.incus.x86_64.exe`](https://github.com/lxc/incus/releases/latest/download/bin.windows.incus.x86_64.exe)
 
 (installing_from_source)=
 ## Install Incus from source
