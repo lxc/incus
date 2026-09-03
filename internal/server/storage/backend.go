@@ -62,6 +62,7 @@ import (
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
+	"github.com/lxc/incus/v7/shared/validate"
 )
 
 var (
@@ -10031,10 +10032,21 @@ func (b *backend) createDependentVolumesFromBackup(srcBackup backup.Info, srcDat
 		optimizedStorage := srcBackup.OptimizedStorage
 		optimizedHeader := srcBackup.OptimizedHeader
 
+		// Validate the volume and snapshot names to avoid path traversal when used as path segments.
+		err := validate.IsAPIName(disk.Volume.Name, false)
+		if err != nil {
+			return fmt.Errorf("Invalid dependent volume name: %w", err)
+		}
+
 		snapshots := []string{}
 		for _, snap := range disk.VolumeSnapshots {
 			if snap == nil {
 				return errors.New("Bad dependent volume snapshot definition found in index")
+			}
+
+			err = validate.IsAPIName(snap.Name, false)
+			if err != nil {
+				return fmt.Errorf("Invalid dependent volume snapshot name: %w", err)
 			}
 
 			snapshots = append(snapshots, snap.Name)
