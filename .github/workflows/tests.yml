@@ -414,7 +414,7 @@ jobs:
 
           sudo apt-get install --no-install-recommends -y snapd
           sudo snap install microceph --channel=quincy/stable
-          sudo apt-get install --no-install-recommends -y ceph-common
+          sudo apt-get install --no-install-recommends -y ceph-common qemu-block-extra qemu-utils
           sudo microceph cluster bootstrap
           sudo microceph.ceph config set global osd_pool_default_size 1
           sudo microceph.ceph config set global mon_allow_pool_delete true
