@@ -1092,7 +1092,20 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	if ovnChanged {
 		err := d.setupOVN()
 		if err != nil {
-			return err
+			// Ignore the failure when the OVN connection is being unset and no OVN network exists.
+			value, ok := clusterChanged["network.ovn.northbound_connection"]
+			if !ok || value != "" {
+				return err
+			}
+
+			hasOVN, dbErr := d.hasOVNNetworks()
+			if dbErr != nil {
+				return dbErr
+			}
+
+			if hasOVN {
+				return err
+			}
 		}
 	}
 
