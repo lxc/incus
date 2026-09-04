@@ -115,7 +115,7 @@ func (m *Monitor) start() error {
 		// Extract the last entry.
 		entries := strings.Split(resp.Return, "\n")
 		if len(entries) > 1 {
-			status := entries[len(entries)-2]
+			status := strings.TrimSuffix(entries[len(entries)-2], "\r")
 			var instanceState *api.InstanceState
 			if len(entries) > 2 {
 				var s api.InstanceState
@@ -125,7 +125,7 @@ func (m *Monitor) start() error {
 					instanceState = &s
 				}
 
-				status = entries[len(entries)-3]
+				status = strings.TrimSuffix(entries[len(entries)-3], "\r")
 			}
 
 			m.SetInstanceState(instanceState)
