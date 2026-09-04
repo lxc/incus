@@ -44,6 +44,7 @@ var (
 	osBaseWorkingDirectory = "C:\\"
 	osAgentConfigPath      = "C:\\Program Files\\Incus-Agent\\incus-agent.yml"
 	osVioSerialPath        = `\\.\org.linuxcontainers.incus`
+	osShutdownSignal       = os.Interrupt
 )
 
 // Check for the VirtioSocketWSP service for vsock support.

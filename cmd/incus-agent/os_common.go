@@ -7,7 +7,6 @@ import (
 	"io"
 	"math"
 	"net"
-	"os"
 	"sort"
 	"strconv"
 
@@ -22,7 +21,6 @@ import (
 )
 
 var (
-	osShutdownSignal   = os.Interrupt
 	osMetricsSupported = true
 	osGuestAPISupport  = false
 )
