@@ -144,7 +144,7 @@ func (m *incusAgentService) Execute(args []string, r <-chan svc.ChangeRequest, c
 		if err != nil {
 			changes <- svc.Status{State: svc.StopPending}
 			elog.Error(1, fmt.Sprintf("Failed to start HTTP server: %s", err))
-			return
+			return ssec, errno
 		}
 	}
 
@@ -175,7 +175,7 @@ loop:
 
 	changes <- svc.Status{State: svc.StopPending}
 
-	return
+	return ssec, errno
 }
 
 func runService(name string, agentCmd *cmdAgent) error {
