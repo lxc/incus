@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/fs"
 	"net"
-	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
@@ -341,12 +340,7 @@ func (c *cmdConsole) vga(d incus.InstanceServer, name string) error {
 			return err
 		}, "Failed to remove temporary file")
 
-		spiceURL := &url.URL{
-			Scheme: "spice+unix",
-			Path:   path.Name(),
-		}
-
-		socket = spiceURL.String()
+		socket = fmt.Sprintf("spice+unix://%s", path.Name())
 	} else {
 		listener, err = net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
