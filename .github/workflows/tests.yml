@@ -880,6 +880,8 @@ jobs:
           - test: storage_vm
             driver: ceph
           - test: storage_vm
+            driver: ceph-librbd
+          - test: storage_vm
             driver: linstor
           - test: storage_volumes_vm
             driver: dir
@@ -893,6 +895,8 @@ jobs:
             driver: zfs
           - test: storage_volumes_vm
             driver: ceph
+          - test: storage_volumes_vm
+            driver: ceph-librbd
           - test: storage_volumes_vm
             driver: linstor
     # Runs on ephemeral Debian VMs with nested virtualization (amd64 only).
@@ -926,6 +930,7 @@ jobs:
             curl \
             dnsmasq-base \
             dosfstools \
+            gdisk \
             genisoimage \
             gettext \
             git \
@@ -966,7 +971,7 @@ jobs:
           curl -sL https://pkgs.zabbly.com/get/zfs-stable | sudo DEBIAN_FRONTEND=noninteractive sh
 
       - name: Setup MicroCeph
-        if: matrix.driver == 'ceph'
+        if: matrix.driver == 'ceph' || matrix.driver == 'ceph-librbd'
         run: |
           set -x
 
