@@ -22,7 +22,7 @@ test_storage_vm() {
     GiB=1073741823
 
     for poolDriver in ${poolDriverList}; do
-        if ! storage_backend_available "${poolDriver%-thin}"; then
+        if ! storage_backend_available "${poolDriver%%-*}"; then
             # Fail when an explicitly requested driver isn't available.
             if [ -n "${INCUS_VM_STORAGE_DRIVERS:-}" ]; then
                 echo "==> FAIL: Storage driver ${poolDriver} not available"
@@ -40,6 +40,8 @@ test_storage_vm() {
 
         if [ "${poolDriver}" = "dir" ] || [ "${poolDriver}" = "ceph" ]; then
             incus storage create "${poolName}" "${poolDriver}"
+        elif [ "${poolDriver}" = "ceph-librbd" ]; then
+            incus storage create "${poolName}" ceph ceph.rbd.backend=librbd
         elif [ "${poolDriver}" = "linstor" ]; then
             incus storage create "${poolName}" "${poolDriver}" linstor.resource_group.place_count=1
         elif [ "${poolDriver}" = "lvm" ]; then
@@ -317,6 +319,8 @@ test_storage_vm() {
         echo "==> Copy to different storage pool with same driver and check size"
         if [ "${poolDriver}" = "dir" ] || [ "${poolDriver}" = "ceph" ]; then
             incus storage create "${poolName}2" "${poolDriver}"
+        elif [ "${poolDriver}" = "ceph-librbd" ]; then
+            incus storage create "${poolName}2" ceph ceph.rbd.backend=librbd
         elif [ "${poolDriver}" = "linstor" ]; then
             incus storage create "${poolName}2" "${poolDriver}" linstor.resource_group.place_count=1
         elif [ "${poolDriver}" = "lvm" ]; then

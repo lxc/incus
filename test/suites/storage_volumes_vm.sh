@@ -27,7 +27,7 @@ test_storage_volumes_vm() {
     poolName="vmpool$$"
 
     for poolDriver in ${poolDriverList}; do
-        if ! storage_backend_available "${poolDriver%-thin}"; then
+        if ! storage_backend_available "${poolDriver%%-*}"; then
             # Fail when an explicitly requested driver isn't available.
             if [ -n "${INCUS_VM_STORAGE_DRIVERS:-}" ]; then
                 echo "==> FAIL: Storage driver ${poolDriver} not available"
@@ -47,6 +47,8 @@ test_storage_volumes_vm() {
             incus storage create "${poolName}" "${poolDriver}" volume.size=5GB
         elif [ "${poolDriver}" = "ceph" ]; then
             incus storage create "${poolName}" "${poolDriver}" source="${poolName}" volume.size=5GB
+        elif [ "${poolDriver}" = "ceph-librbd" ]; then
+            incus storage create "${poolName}" ceph source="${poolName}" ceph.rbd.backend=librbd volume.size=5GB
         elif [ "${poolDriver}" = "linstor" ]; then
             incus storage create "${poolName}" "${poolDriver}" linstor.resource_group.place_count=1 volume.size=5GB
         elif [ "${poolDriver}" = "lvm" ]; then
@@ -156,7 +158,7 @@ test_storage_volumes_vm() {
 
         echo "==> Publishing VM to image"
         # Daemon storage volumes aren't allowed on clustered storage pools.
-        if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "linstor" ]; then
+        if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "ceph-librbd" ] && [ "${poolDriver}" != "linstor" ]; then
             incus storage volume create "${poolName}" images --project=default
             incus config set storage.images_volume "${poolName}"/images
         fi
@@ -167,7 +169,7 @@ test_storage_volumes_vm() {
         incus delete v2 -f
         incus image delete v1image
 
-        if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "linstor" ]; then
+        if [ "${poolDriver}" != "ceph" ] && [ "${poolDriver}" != "ceph-librbd" ] && [ "${poolDriver}" != "linstor" ]; then
             incus config unset storage.images_volume
             incus storage volume delete "${poolName}" images --project=default
         fi
