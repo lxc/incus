@@ -17,6 +17,11 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+var (
+	osAgentConfigPath = "/usr/local/etc/incus-agent.yml"
+	osVioSerialPath   = "/dev/vtcon/org.linuxcontainers.incus"
+)
+
 func osMountShared(src string, dst string, fstype string, opts []string) error {
 	if fstype != "9p" {
 		return errors.New("Only 9p shares are supported on common BSDs")
