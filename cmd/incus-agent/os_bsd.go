@@ -24,11 +24,7 @@ import (
 	"github.com/lxc/incus/v7/shared/revert"
 )
 
-var (
-	osBaseWorkingDirectory = "/"
-	osAgentConfigPath      = "/usr/local/etc/incus-agent.yml"
-	osVioSerialPath        = "/dev/virtio-ports/org.linuxcontainers.incus"
-)
+var osBaseWorkingDirectory = "/"
 
 func runService(name string, agentCmd *cmdAgent) error {
 	return errors.New("Not implemented.")

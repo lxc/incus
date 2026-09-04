@@ -18,6 +18,11 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+var (
+	osAgentConfigPath = "/etc/incus-agent.yml"
+	osVioSerialPath   = "/dev/ttyVI00"
+)
+
 var sharesMapping map[string]string
 
 func osMountShared(src string, dst string, fstype string, opts []string) error {
