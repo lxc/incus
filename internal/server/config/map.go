@@ -61,18 +61,19 @@ func (m *Map) Change(changes map[string]string) (map[string]string, error) {
 	}
 
 	// Any key not explicitly set, is considered unset.
-	for name, key := range m.schema {
+	for name := range m.schema {
 		_, ok := values[name]
 		if !ok {
-			values[name] = key.Default
+			values[name] = ""
 		}
 	}
 
 	names, err := m.update(values)
 
+	// Unset keys are reported with an empty value.
 	changed := map[string]string{}
 	for _, name := range names {
-		changed[name] = m.GetRaw(name)
+		changed[name] = m.values[name]
 	}
 
 	return changed, err
@@ -80,20 +81,13 @@ func (m *Map) Change(changes map[string]string) (map[string]string, error) {
 
 // Dump the current configuration held by this Map.
 //
-// Keys that match their default value will not be included in the dump.
+// Only explicitly set keys are included, even when they match their default.
 func (m *Map) Dump() map[string]string {
 	values := map[string]string{}
 
 	for name, value := range m.values {
-		key, ok := m.schema[name]
-		if ok {
-			// Schema key
-			value := m.GetRaw(name)
-			if value != key.Default {
-				values[name] = value
-			}
-		} else if internalInstance.IsUserConfig(name) {
-			// User key, just include it as is
+		_, ok := m.schema[name]
+		if ok || internalInstance.IsUserConfig(name) {
 			values[name] = value
 		}
 	}
@@ -198,9 +192,10 @@ func (m *Map) update(values map[string]string) ([]string, error) {
 	return names, err
 }
 
-// Set or change an individual key. Empty string means delete this value and
-// effectively revert it to the default. Return a boolean indicating whether
-// the value has changed, and error if something went wrong.
+// Set or change an individual key. Empty string means unset the key so it
+// follows the default, while an explicit value is kept even when it matches
+// the default. Return a boolean indicating whether the value has changed, and
+// error if something went wrong.
 func (m *Map) set(name string, value string, initial bool) (bool, error) {
 	// Bypass schema for user.* keys
 	if internalInstance.IsUserConfig(name) {
@@ -240,10 +235,16 @@ func (m *Map) set(name string, value string, initial bool) (bool, error) {
 		return false, errors.New("unknown key")
 	}
 
-	// When unsetting a config key, the value argument will be empty.
-	// This ensures that the default value is set if the provided value is empty.
+	current, isSet := m.values[name]
+
+	// Unset the key, the default takes over.
 	if value == "" {
-		value = key.Default
+		if !isSet {
+			return false, nil
+		}
+
+		delete(m.values, name)
+		return true, nil
 	}
 
 	err := key.validate(value)
@@ -252,7 +253,6 @@ func (m *Map) set(name string, value string, initial bool) (bool, error) {
 	}
 
 	// Normalize boolan values, so the comparison below works fine.
-	current := m.GetRaw(name)
 	if key.Type == Bool {
 		value = normalizeBool(value)
 		current = normalizeBool(current)
@@ -260,7 +260,7 @@ func (m *Map) set(name string, value string, initial bool) (bool, error) {
 
 	// Compare the new value with the current one, and return now if they
 	// are equal.
-	if value == current {
+	if isSet && value == current {
 		return false, nil
 	}
 

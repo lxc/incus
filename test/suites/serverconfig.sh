@@ -5,6 +5,8 @@ test_server_config() {
 
     test_server_config_access
     test_server_config_storage
+    test_server_config_defaults
+    test_server_config_ovn
 
     kill_incus "${INCUS_SERVERCONFIG_DIR}"
 }
@@ -102,4 +104,43 @@ test_server_config_storage() {
     incus storage volume delete "${pool}" backups
     incus storage volume delete "${pool}" images
     incus delete -f foo
+}
+
+test_server_config_defaults() {
+    # Explicitly setting a key to its default value is kept.
+    incus config set images.compression_algorithm=gzip
+    incus config show | grep -qF "images.compression_algorithm: gzip"
+    incus admin sql global "SELECT key FROM config" | grep -qF images.compression_algorithm
+
+    # It survives unrelated changes.
+    incus config set user.foo=bar
+    incus config show | grep -qF "images.compression_algorithm: gzip"
+    incus config unset user.foo
+
+    # Clearing it removes it entirely.
+    incus config unset images.compression_algorithm
+    ! incus config show | grep -qF images.compression_algorithm || false
+    ! incus admin sql global "SELECT key FROM config" | grep -qF images.compression_algorithm || false
+
+    # Clearing a non-default value doesn't pin the default.
+    incus config set images.compression_algorithm=xz
+    incus config unset images.compression_algorithm
+    ! incus admin sql global "SELECT key FROM config" | grep -qF images.compression_algorithm || false
+}
+
+test_server_config_ovn() {
+    # Configuring OVN must fail when it can't be reached and leave no trace in the database.
+    ! INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus config set network.ovn.northbound_connection=tcp:127.0.0.1:1 || false
+    [ "$(INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus config get network.ovn.northbound_connection)" = "" ]
+    ! INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus admin sql global "SELECT key FROM config" | grep -qF network.ovn.northbound_connection || false
+
+    # Clearing the key must work without OVN as long as no OVN network exists.
+    # The daemon caches the global config so it must be restarted after the direct database write.
+    INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus admin sql global "INSERT INTO config (key, value) VALUES ('network.ovn.northbound_connection', 'tcp:127.0.0.1:1')"
+    shutdown_incus "${INCUS_SERVERCONFIG_DIR}"
+    respawn_incus "${INCUS_SERVERCONFIG_DIR}" true
+    [ "$(INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus config get network.ovn.northbound_connection)" = "tcp:127.0.0.1:1" ]
+    INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus config unset network.ovn.northbound_connection
+    [ "$(INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus config get network.ovn.northbound_connection)" = "" ]
+    ! INCUS_DIR="${INCUS_SERVERCONFIG_DIR}" incus admin sql global "SELECT key FROM config" | grep -qF network.ovn.northbound_connection || false
 }

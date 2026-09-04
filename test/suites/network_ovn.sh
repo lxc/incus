@@ -494,6 +494,7 @@ test_network_ovn_basic() {
     # Test physical uplinks using native bridge.
     incus project switch default
     ip link add dummybr0 type bridge # Create dummy uplink bridge.
+    ip link set dummybr0 mtu 9000 # Jumbo MTU set outside of Incus.
     ip address add 192.0.2.1/24 dev dummybr0
     ip address add 2001:db8:1:1::1/64 dev dummybr0
     ip link set dummybr0 up
@@ -506,6 +507,9 @@ test_network_ovn_basic() {
     sleep 2
     bridge link show | grep -cF dummybr0 | grep -xF 1 # Check we have one port connected to the uplink bridge.
     ovs-vsctl list-br | grep -cF ovn | grep -xF 1 # Check we have one OVS bridge.
+    grep -xF 9000 /sys/class/net/incusovn*a/mtu # Check the uplink veth pair inherited the bridge MTU.
+    grep -xF 9000 /sys/class/net/incusovn*b/mtu
+    grep -xF 9000 /sys/class/net/dummybr0/mtu # Check the uplink bridge MTU was not lowered.
     ovnIPv4="$(incus network get ovn-virtual-network volatile.network.ipv4.address)"
     ovnIPv6="$(incus network get ovn-virtual-network volatile.network.ipv6.address)"
     ping -c1 -4 "${ovnIPv4}" # Check IPv4 connectivity over dummy bridge to OVN router.

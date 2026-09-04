@@ -137,7 +137,7 @@ func TestChange(t *testing.T) {
 		{
 			`multiple values are all mutated`,
 			map[string]string{"foo": "x", "bar": "hey", "egg": "0"},
-			map[string]string{"foo": "x", "bar": "HEY", "egg": ""},
+			map[string]string{"foo": "x", "bar": "HEY", "egg": "false"},
 		},
 	}
 
@@ -183,12 +183,12 @@ func TestMap_ChangeReturnsChangedKeys(t *testing.T) {
 		{
 			`unset value`,
 			map[string]string{"foo": ""},
-			map[string]string{"foo": "false"},
+			map[string]string{"foo": ""},
 		},
 		{
-			`unchanged value, since it matches the default`,
+			`explicitly set to the default value`,
 			map[string]string{"foo": "true", "bar": "egg"},
-			map[string]string{},
+			map[string]string{"bar": "egg"},
 		},
 		{
 			`multiple changes`,
@@ -207,6 +207,32 @@ func TestMap_ChangeReturnsChangedKeys(t *testing.T) {
 			assert.Equal(t, c.changed, changed)
 		})
 	}
+}
+
+// Unsetting a key differs from explicitly setting it to its default.
+func TestMap_ChangeUnsetVsDefault(t *testing.T) {
+	schema := config.Schema{
+		"bar": {Default: "egg"},
+	}
+
+	m, err := config.Load(schema, map[string]string{"bar": "baz"})
+	require.NoError(t, err)
+
+	changed, err := m.Change(map[string]string{"bar": ""})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"bar": ""}, changed)
+	assert.Equal(t, "egg", m.GetString("bar"))
+	assert.Equal(t, map[string]string{}, m.Dump())
+
+	changed, err = m.Change(map[string]string{"bar": "egg"})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"bar": "egg"}, changed)
+	assert.Equal(t, map[string]string{"bar": "egg"}, m.Dump())
+
+	changed, err = m.Change(map[string]string{})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"bar": ""}, changed)
+	assert.Equal(t, map[string]string{}, m.Dump())
 }
 
 // If some keys fail to load, an ErrorList with the offending issues is
@@ -250,11 +276,12 @@ func TestMap_ChangeError(t *testing.T) {
 	}
 }
 
-// A Map dump contains only values that differ from their default.
+// A Map dump contains all explicitly set values, including those matching their default.
 func TestMap_Dump(t *testing.T) {
 	schema := config.Schema{
 		"foo": {},
 		"bar": {Default: "x"},
+		"egg": {Default: "y"},
 	}
 
 	values := map[string]string{
@@ -265,11 +292,7 @@ func TestMap_Dump(t *testing.T) {
 	m, err := config.Load(schema, values)
 	assert.NoError(t, err)
 
-	dump := map[string]string{
-		"foo": "hello",
-	}
-
-	assert.Equal(t, dump, m.Dump())
+	assert.Equal(t, values, m.Dump())
 }
 
 // The various GetXXX methods return typed values.

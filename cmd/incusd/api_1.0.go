@@ -816,9 +816,18 @@ func doAPI10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) re
 
 	// Update the daemon config.
 	d.globalConfigMu.Lock()
+	oldGlobalConfig := d.globalConfig
+	oldLocalConfig := d.localConfig
 	d.globalConfig = newClusterConfig
 	d.localConfig = newNodeConfig
 	d.globalConfigMu.Unlock()
+
+	reverter.Add(func() {
+		d.globalConfigMu.Lock()
+		d.globalConfig = oldGlobalConfig
+		d.localConfig = oldLocalConfig
+		d.globalConfigMu.Unlock()
+	})
 
 	// Run any update triggers.
 	err = doAPI10UpdateTriggers(d, nodeChanged, clusterChanged, newNodeConfig, newClusterConfig)
@@ -1083,7 +1092,20 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 	if ovnChanged {
 		err := d.setupOVN()
 		if err != nil {
-			return err
+			// Ignore the failure when the OVN connection is being unset and no OVN network exists.
+			value, ok := clusterChanged["network.ovn.northbound_connection"]
+			if !ok || value != "" {
+				return err
+			}
+
+			hasOVN, dbErr := d.hasOVNNetworks()
+			if dbErr != nil {
+				return dbErr
+			}
+
+			if hasOVN {
+				return err
+			}
 		}
 	}
 
