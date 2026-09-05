@@ -189,6 +189,7 @@ MITM
 MTU
 Mullvad
 multicast
+multiport
 MyST
 namespace
 namespaced
