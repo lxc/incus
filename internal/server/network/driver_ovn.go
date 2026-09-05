@@ -156,6 +156,7 @@ func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Ne
 		if err == nil && parentNet.Type() == "ovn" {
 			n.parentID = parentNet.ID()
 			n.parentUplink = parentNet.Config()["network"]
+			n.bgpNextHopConfig = parentNet.Config()
 		}
 	}
 
@@ -1401,6 +1402,68 @@ func (n *ovn) getRouterOwnerID() int64 {
 // getRouterNetworkPrefix returns OVN network prefix of the network owning our logical router.
 func (n *ovn) getRouterNetworkPrefix() string {
 	return acl.OVNNetworkPrefix(n.getRouterOwnerID())
+}
+
+// routerExtPortIPs returns the addresses of the external port of our logical router.
+func (n *ovn) routerExtPortIPs() (net.IP, net.IP, error) {
+	config := n.config
+
+	if n.parentID != 0 {
+		parentNet, err := n.parentNetwork()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		config = parentNet.config
+	}
+
+	return net.ParseIP(config[ovnVolatileUplinkIPv4]), net.ParseIP(config[ovnVolatileUplinkIPv6]), nil
+}
+
+// checkRelatedListenAddress returns an error if another network on our logical router uses the listen address.
+func (n *ovn) checkRelatedListenAddress(listenAddress string) error {
+	related, err := n.relatedNetworks()
+	if err != nil {
+		return err
+	}
+
+	if len(related) < 2 {
+		return nil
+	}
+
+	return n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, member := range related {
+			if member.ID() == n.ID() {
+				continue
+			}
+
+			memberID := member.ID()
+
+			dbForwards, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{NetworkID: &memberID})
+			if err != nil {
+				return fmt.Errorf("Failed loading network forwards: %w", err)
+			}
+
+			for _, dbForward := range dbForwards {
+				if dbForward.ListenAddress == listenAddress {
+					return api.StatusErrorf(http.StatusConflict, "Network %q already uses that listen address", member.Name())
+				}
+			}
+
+			dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{NetworkID: &memberID})
+			if err != nil {
+				return fmt.Errorf("Failed loading network load balancers: %w", err)
+			}
+
+			for _, dbLoadBalancer := range dbLoadBalancers {
+				if dbLoadBalancer.ListenAddress == listenAddress {
+					return api.StatusErrorf(http.StatusConflict, "Network %q already uses that listen address", member.Name())
+				}
+			}
+		}
+
+		return nil
+	})
 }
 
 // UplinkName returns the name of the uplink network, which for a child network is its parent's uplink.
@@ -3099,13 +3162,10 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	if n.parentID != 0 {
-		parentNet, err := n.parentNetwork()
+		routerExtPortIPv4, routerExtPortIPv6, err = n.routerExtPortIPs()
 		if err != nil {
 			return err
 		}
-
-		routerExtPortIPv4 = net.ParseIP(parentNet.config[ovnVolatileUplinkIPv4])
-		routerExtPortIPv6 = net.ParseIP(parentNet.config[ovnVolatileUplinkIPv6])
 	}
 
 	routerIntPortIPv4, routerIntPortIPv4Net, err := n.parseRouterIntPortIPv4Net()
@@ -4303,8 +4363,8 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	}
 
 	// Notify the DNS peers of the uplink zone change (uplink address released).
-	if clientType == request.ClientTypeNormal && n.config["network"] != "" {
-		uplink, err := LoadByName(n.state, api.ProjectDefaultName, n.config["network"])
+	if clientType == request.ClientTypeNormal && n.UplinkName() != "" {
+		uplink, err := LoadByName(n.state, api.ProjectDefaultName, n.UplinkName())
 		if err == nil {
 			DNSNotifyZones(n.state, uplink.Config())
 		}
@@ -6793,6 +6853,11 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			return api.StatusErrorf(http.StatusConflict, "A forward for that listen address already exists")
 		}
 
+		err = n.checkRelatedListenAddress(forward.ListenAddress)
+		if err != nil {
+			return err
+		}
+
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			listenIP := net.ParseIP(forward.ListenAddress)
 
@@ -6805,8 +6870,10 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 				return err
 			}
 
-			networkIPv4 := net.ParseIP(n.config[ovnVolatileUplinkIPv4])
-			networkIPv6 := net.ParseIP(n.config[ovnVolatileUplinkIPv6])
+			networkIPv4, networkIPv6, err := n.routerExtPortIPs()
+			if err != nil {
+				return err
+			}
 
 			for _, usedIP := range allAllocatedIPv4 {
 				// Skip our own network because its a valid overlap.
@@ -7302,6 +7369,11 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			return api.StatusErrorf(http.StatusConflict, "A load balancer for that listen address already exists")
 		}
 
+		err = n.checkRelatedListenAddress(loadBalancer.ListenAddress)
+		if err != nil {
+			return err
+		}
+
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			listenIP := net.ParseIP(loadBalancer.ListenAddress)
 
@@ -7314,8 +7386,10 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 				return err
 			}
 
-			networkIPv4 := net.ParseIP(n.config[ovnVolatileUplinkIPv4])
-			networkIPv6 := net.ParseIP(n.config[ovnVolatileUplinkIPv6])
+			networkIPv4, networkIPv6, err := n.routerExtPortIPs()
+			if err != nil {
+				return err
+			}
 
 			for _, usedIP := range allAllocatedIPv4 {
 				// Skip our own network because its a valid overlap.
@@ -8223,6 +8297,11 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 
 // PeerCreate creates a network peering.
 func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
+	// A peering connects two logical routers, and a child network has none of its own.
+	if n.parentID != 0 {
+		return api.StatusErrorf(http.StatusBadRequest, "Network peers must be configured on the parent network")
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -8242,6 +8321,12 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 		// Target network name is required.
 		if peer.TargetNetwork == "" {
 			return api.StatusErrorf(http.StatusBadRequest, "Target network is required")
+		}
+
+		// The target may not exist yet when setting up a mutual peering, so only check it if it does.
+		targetNet, err := LoadByName(n.state, peer.TargetProject, peer.TargetNetwork)
+		if err == nil && targetNet.Config()["parent"] != "" {
+			return api.StatusErrorf(http.StatusBadRequest, "Target network %q is a child network, peer with %q instead", peer.TargetNetwork, targetNet.Config()["parent"])
 		}
 
 	case "remote":
