@@ -25,7 +25,7 @@ incus_agent_prestart()
 incus_agent_start()
 {
 	cd /var/run/incus_agent || return 1
-	/usr/sbin/daemon -P "${pidfile}" -r -f /var/run/incus_agent/incus-agent
+	/usr/sbin/daemon -P "$pidfile" -S -T "$name" -r -f /var/run/incus_agent/incus-agent
 }
 
 run_rc_command "$1"
