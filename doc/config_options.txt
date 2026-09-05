@@ -4633,6 +4633,12 @@ User keys can be used in search.
 
 ```
 
+```{config:option} parent network_ovn-common
+:shortdesc: "Parent OVN network whose logical router and uplink to share"
+:type: "string"
+
+```
+
 ```{config:option} security.acls network_ovn-common
 :shortdesc: "Comma-separated list of Network ACLs to apply to NICs connected to this network"
 :type: "string"
