@@ -1993,7 +1993,7 @@ func networkStartup(s *state.State) error {
 		}
 
 		// Update network start priority based on dependencies.
-		if netConfig["parent"] != "" && priority != networkPriorityPhysical {
+		if netConfig["parent"] != "" && n.Type() != "ovn" && priority != networkPriorityPhysical {
 			// Start networks that depend on physical interfaces existing after
 			// non-dependent networks.
 			initNetworksMu.Lock()
@@ -2002,7 +2002,7 @@ func networkStartup(s *state.State) error {
 			initNetworksMu.Unlock()
 
 			return nil
-		} else if netConfig["network"] != "" && priority != networkPriorityLogical {
+		} else if (netConfig["network"] != "" || netConfig["parent"] != "") && priority != networkPriorityLogical {
 			// Start networks that depend on other logical networks after networks after
 			// non-dependent networks and networks that depend on physical interfaces.
 			initNetworksMu.Lock()
