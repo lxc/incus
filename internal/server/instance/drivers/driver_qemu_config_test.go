@@ -142,7 +142,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			opts     qemuSerialOpts
 			expected string
 		}{{
-			qemuSerialOpts{qemuDevOpts{"pci", "qemu_pcie0", "00.5", false}, "qemu_serial-chardev", 32, true},
+			qemuSerialOpts{qemuDevOpts{"pci", "qemu_pcie0", "00.5", false}, "qemu_serial-chardev", 32, true, true},
 			`# Virtual serial bus
 			[device "dev-qemu_serial"]
 			addr = "00.5"
@@ -188,7 +188,7 @@ func TestQemuConfigTemplates(t *testing.T) {
 			name = "org.spice-space.webdav.0"
 			`,
 		}, {
-			qemuSerialOpts{qemuDevOpts{"pci", "qemu_pcie0", "00.5", false}, "qemu_serial-chardev", 32, false},
+			qemuSerialOpts{qemuDevOpts{"pci", "qemu_pcie0", "00.5", false}, "qemu_serial-chardev", 32, false, true},
 			`# Virtual serial bus
 			[device "dev-qemu_serial"]
 			addr = "00.5"
@@ -210,6 +210,25 @@ func TestQemuConfigTemplates(t *testing.T) {
 			bus = "dev-qemu_serial.0"
 			driver = "virtserialport"
 			name = "org.linuxcontainers.lxd"
+			`,
+		}, {
+			qemuSerialOpts{qemuDevOpts{"pci", "qemu_pcie0", "00.5", false}, "qemu_serial-chardev", 32, false, false},
+			`# Virtual serial bus
+			[device "dev-qemu_serial"]
+			addr = "00.5"
+			bus = "qemu_pcie0"
+			driver = "virtio-serial-pci"
+			max_ports = "1"
+
+			# Serial identifier
+			[chardev "qemu_serial-chardev"]
+			backend = "ringbuf"
+			size = "32B"
+
+			[device "qemu_serial"]
+			bus = "dev-qemu_serial.0"
+			chardev = "qemu_serial-chardev"
+			driver = "virtconsole"
 			`,
 		}}
 		for _, tc := range testCases {
