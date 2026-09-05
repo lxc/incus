@@ -50,7 +50,7 @@ incus_agent_start()
 
 		trap stop TERM INT
 		while :; do
-			/var/run/incus_agent/incus-agent &
+			/var/run/incus_agent/incus-agent 2>&1 | /usr/bin/logger -t "$name" -p daemon.info &
 			child_pid="$!"
 			wait "$child_pid"
 			child_pid=
