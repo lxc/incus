@@ -4259,7 +4259,9 @@ func (d *qemu) gpuNativeContextConfig(devConfs []*deviceConfig.RunConfig) (bool,
 func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
-	isWindows := d.GuestOS() == osinfo.Windows
+	guestOS := d.GuestOS()
+	isNetBSD := guestOS == osinfo.NetBSD
+	isWindows := guestOS == osinfo.Windows
 	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), bs.MachineType})
 
 	// Set OS Specific qemu args.
@@ -4419,6 +4421,10 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	_, virtioSound := info.Features["virtio-sound"]
 	_, virtioVGA := info.Features["virtio-vga"]
 
+	// NetBSD doesn’t support multiport VirtIO serial, and thus doesn’t support SPICE over a
+	// serial port.
+	spice = spice && !isNetBSD
+
 	if spice {
 		spiceConf, err := d.spiceConfig(fdFiles)
 		if err != nil {
@@ -4439,6 +4445,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		charDevName:      qemuSerialChardevName,
 		ringbufSizeBytes: qmp.RingbufSize,
 		spice:            spice,
+		multiPort:        !isNetBSD,
 	}
 
 	conf = append(conf, qemuSerial(&serialOpts)...)
