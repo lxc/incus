@@ -20,6 +20,11 @@ import (
 	"github.com/lxc/incus/v7/shared/subprocess"
 )
 
+var (
+	osAgentConfigPath = "/usr/local/etc/incus-agent.yml"
+	osVioSerialPath   = "/dev/cu.org.linuxcontainers.incus"
+)
+
 func osLoadModules() error {
 	// No OS drivers to load by default.
 	return nil

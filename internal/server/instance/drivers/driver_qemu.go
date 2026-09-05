@@ -516,15 +516,35 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 		switch event {
 		case qmp.EventAgentStarted:
 			d.logger.Debug("Instance agent started")
+
+			volatileSet := make(map[string]string)
+			localConfig := d.LocalConfig()
+			if localConfig["volatile.last_state.agent"] != instance.AgentStateStarted {
+				volatileSet["volatile.last_state.agent"] = instance.AgentStateStarted
+			}
+
+			// At that point, we consider that the agent has applied the template if it was provided. This
+			// is ignored if the agent has already been started and not rebooted since.
+			if util.IsFalseOrEmpty(localConfig["volatile.last_state.agent.once"]) {
+				volatileSet["volatile.last_state.agent.once"] = "true"
+				if localConfig["volatile.apply_template"] != "" {
+					// Record that the instance devices got modified and a full reset will be needed to get a
+					// consistent state.
+					volatileSet["volatile.apply_template"] = ""
+					volatileSet["volatile.vm.needs_reset"] = "true"
+				}
+			}
+
+			if len(volatileSet) > 0 {
+				err = d.VolatileSet(volatileSet)
+				if err != nil {
+					d.logger.Error("Failed recording last agent state", logger.Ctx{"err": err})
+				}
+			}
+
 			err := d.advertiseVsockAddress()
 			if err != nil {
 				d.logger.Warn("Failed to advertise vsock address to instance agent", logger.Ctx{"err": err})
-				return
-			}
-
-			err = d.VolatileSet(map[string]string{"volatile.last_state.agent": instance.AgentStateStarted})
-			if err != nil {
-				d.logger.Error("Failed recording last agent state", logger.Ctx{"err": err})
 			}
 
 			s.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
@@ -1594,6 +1614,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	volatileSet := make(map[string]string)
 
 	if !stateful {
+		volatileSet["volatile.last_state.agent.once"] = ""
 		volatileSet["volatile.vm.needs_reset"] = ""
 	}
 
@@ -1622,7 +1643,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// running guest relies on the current content and the source may still hold its own
 	// mount of a shared config volume.
 	if d.migrationReceiveStateful == nil {
-		err = d.generateConfigShare(volatileSet)
+		err = d.generateConfigShare()
 		if err != nil {
 			op.Done(err)
 			return err
@@ -3546,7 +3567,7 @@ func (d *qemu) spiceConfig(fdFiles *[]*os.File) ([]cfg.Section, error) {
 // a 9P share. Due to the unknown size of templates inside the images this directory is created
 // inside the VM's config volume so that it can be restricted by quota.
 // Requires the instance be mounted before calling this function.
-func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
+func (d *qemu) generateConfigShare() error {
 	configDrivePath := filepath.Join(d.Path(), "config")
 
 	// Create config drive dir if doesn't exist, if it does exist, leave it around so we don't regenerate all
@@ -3899,17 +3920,12 @@ func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
 	}
 
 	// Template anything that needs templating.
-	key := "volatile.apply_template"
-	if d.localConfig[key] != "" {
+	if d.localConfig["volatile.apply_template"] != "" {
 		// Run any template that needs running.
-		err = d.templateApplyNow(instance.TemplateTrigger(d.localConfig[key]), templateFilesPath)
+		err = d.templateApplyNow(instance.TemplateTrigger(d.localConfig["volatile.apply_template"]), templateFilesPath)
 		if err != nil {
 			return err
 		}
-
-		// Record that the instance devices got modified and a full reset will be needed to get a consistent state.
-		volatileSet[key] = ""
-		volatileSet["volatile.vm.needs_reset"] = "true"
 	}
 
 	err = d.templateApplyNow("start", templateFilesPath)
@@ -4259,7 +4275,9 @@ func (d *qemu) gpuNativeContextConfig(devConfs []*deviceConfig.RunConfig) (bool,
 func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.MountInfo, busName string, vsockFD int, devConfs []*deviceConfig.RunConfig, fdFiles *[]*os.File) ([]monitorHook, error) {
 	var monHooks []monitorHook
 
-	isWindows := d.GuestOS() == osinfo.Windows
+	guestOS := d.GuestOS()
+	isNetBSD := guestOS == osinfo.NetBSD
+	isWindows := guestOS == osinfo.Windows
 	conf := qemuBase(&qemuBaseOpts{d.Architecture(), util.IsTrue(d.expandedConfig["security.iommu"]), bs.MachineType})
 
 	// Set OS Specific qemu args.
@@ -4419,6 +4437,10 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 	_, virtioSound := info.Features["virtio-sound"]
 	_, virtioVGA := info.Features["virtio-vga"]
 
+	// NetBSD doesn’t support multiport VirtIO serial, and thus doesn’t support SPICE over a
+	// serial port.
+	spice = spice && !isNetBSD
+
 	if spice {
 		spiceConf, err := d.spiceConfig(fdFiles)
 		if err != nil {
@@ -4439,6 +4461,7 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		charDevName:      qemuSerialChardevName,
 		ringbufSizeBytes: qmp.RingbufSize,
 		spice:            spice,
+		multiPort:        !isNetBSD,
 	}
 
 	conf = append(conf, qemuSerial(&serialOpts)...)

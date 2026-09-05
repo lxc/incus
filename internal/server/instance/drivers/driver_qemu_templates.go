@@ -228,6 +228,7 @@ type qemuSerialOpts struct {
 	charDevName      string
 	ringbufSizeBytes int
 	spice            bool
+	multiPort        bool
 }
 
 func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
@@ -237,11 +238,13 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 		ccwName: "virtio-serial-ccw",
 	}
 
-	sections := []cfg.Section{{
+	serialBus := cfg.Section{
 		Name:    `device "dev-qemu_serial"`,
 		Comment: "Virtual serial bus",
 		Entries: qemuDeviceEntries(&entriesOpts),
-	}, {
+	}
+
+	ringBuf := cfg.Section{
 		// Ring buffer used by the incus agent to report (write) its status to. Incus server will read
 		// its content via QMP using "ringbuf-read" command.
 		Name:    fmt.Sprintf(`chardev "%s"`, opts.charDevName),
@@ -250,16 +253,27 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 			"backend": "ringbuf",
 			"size":    fmt.Sprintf("%dB", opts.ringbufSizeBytes),
 		},
-	}, {
+	}
+
+	serialPort := cfg.Section{
 		// QEMU serial device connected to the above ring buffer.
 		Name: `device "qemu_serial"`,
 		Entries: map[string]string{
-			"driver":  "virtserialport",
-			"name":    "org.linuxcontainers.incus",
 			"chardev": opts.charDevName,
 			"bus":     "dev-qemu_serial.0",
 		},
-	}, {
+	}
+
+	sections := []cfg.Section{serialBus, ringBuf, serialPort}
+	if !opts.multiPort {
+		serialBus.Entries["max_ports"] = "1"
+		serialPort.Entries["driver"] = "virtconsole"
+		return sections
+	}
+
+	serialPort.Entries["driver"] = "virtserialport"
+	serialPort.Entries["name"] = "org.linuxcontainers.incus"
+	sections = append(sections, cfg.Section{
 		// Legacy QEMU serial device, not connected to any ring buffer. Its purpose is to
 		// create a symlink in /dev/virtio-ports/, triggering a udev rule to start incus-agent.
 		// This is necessary for backward compatibility with virtual machines lacking the
@@ -270,7 +284,7 @@ func qemuSerial(opts *qemuSerialOpts) []cfg.Section {
 			"name":   "org.linuxcontainers.lxd",
 			"bus":    "dev-qemu_serial.0",
 		},
-	}}
+	})
 
 	if opts.spice {
 		sections = append(sections, []cfg.Section{{
