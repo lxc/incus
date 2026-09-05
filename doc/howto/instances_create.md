@@ -115,15 +115,20 @@ When creating a FreeBSD, macOS, NetBSD, or Windows virtual machine, make sure to
 Doing so will tell Incus to expect the correct OS to be running inside of the virtual machine and to tweak behavior accordingly.
 
 This notably will cause:
+ - On FreeBSD:
+
+   - Memory hotplug to be disabled
+
+ - On NetBSD:
+
+   - Memory hotplug to be disabled
+   - Multiport VirtIO serial and SPICE to be disabled
+
  - On Windows:
 
    - Some unsupported virtual devices to be disabled
    - The {abbr}`RTC (Real Time Clock)` clock to be based on system local time rather than UTC
    - IOMMU handling to switch to an Intel IOMMU controller
-
- - On FreeBSD and NetBSD:
-
-   - Memory hotplug to be disabled
 ```
 
 To launch a VM that boots from an ISO, you must first create a VM.
