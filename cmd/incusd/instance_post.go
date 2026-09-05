@@ -1076,7 +1076,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 				err = tx.CreateInstanceConfig(ctx, int(id), map[string]string{"volatile.cluster.group": targetGroupName})
 				if err != nil {
-					return fmt.Errorf("Failed to set volatile.apply_template config key: %w", err)
+					return fmt.Errorf("Failed to set volatile.cluster.group config key: %w", err)
 				}
 			} else if targetMemberInfo != nil {
 				config, err := dbCluster.GetInstanceConfig(ctx, tx.Tx(), inst.ID())
