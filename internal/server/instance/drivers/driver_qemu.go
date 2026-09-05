@@ -1643,7 +1643,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 	// running guest relies on the current content and the source may still hold its own
 	// mount of a shared config volume.
 	if d.migrationReceiveStateful == nil {
-		err = d.generateConfigShare(volatileSet)
+		err = d.generateConfigShare()
 		if err != nil {
 			op.Done(err)
 			return err
@@ -3567,7 +3567,7 @@ func (d *qemu) spiceConfig(fdFiles *[]*os.File) ([]cfg.Section, error) {
 // a 9P share. Due to the unknown size of templates inside the images this directory is created
 // inside the VM's config volume so that it can be restricted by quota.
 // Requires the instance be mounted before calling this function.
-func (d *qemu) generateConfigShare(volatileSet map[string]string) error {
+func (d *qemu) generateConfigShare() error {
 	configDrivePath := filepath.Join(d.Path(), "config")
 
 	// Create config drive dir if doesn't exist, if it does exist, leave it around so we don't regenerate all
