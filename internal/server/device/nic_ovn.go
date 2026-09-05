@@ -44,6 +44,7 @@ import (
 type ovnNet interface {
 	network.Network
 
+	UplinkName() string
 	InstanceDevicePortValidateExternalRoutes(deviceInstance instance.Instance, deviceName string, externalRoutes []*net.IPNet) error
 	InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error
 	InstanceDevicePortStart(opts *network.OVNInstanceNICSetupOpts, securityACLsRemove []string) (ovn.OVNSwitchPort, []net.IP, error)
@@ -821,7 +822,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 	saveData["host_name"] = d.config["host_name"]
 
 	// Load uplink network config.
-	uplinkNetworkName := d.network.Config()["network"]
+	uplinkNetworkName := d.network.UplinkName()
 	var uplink *api.Network
 	var uplinkConfig map[string]string
 
@@ -1219,7 +1220,7 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		// Setup the logical port with new ACLs if running.
 		if isRunning {
 			// Load uplink network config.
-			uplinkNetworkName := d.network.Config()["network"]
+			uplinkNetworkName := d.network.UplinkName()
 			var uplink *api.Network
 			var uplinkConfig map[string]string
 
