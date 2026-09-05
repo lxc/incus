@@ -51,6 +51,32 @@ The extended format is `<interfaceName>/<parentInterfaceName>/<vlanId>`.
 When the external interface is added to the list with the extended format, the system will automatically create the interface upon the network's creation and subsequently delete it when the network is terminated. The system verifies that the `<interfaceName>` does not already exist. If the interface name is in use with a different parent or VLAN ID, or if the creation of the interface is unsuccessful, the system will revert with an error message.
 ```
 
+(network-ovn-child)=
+## Child networks
+
+An OVN network can be created with a `parent` pointing at another OVN network in the same project.
+Instead of creating a logical router of its own, the child attaches its own logical switch and subnet to the logical router of its parent:
+
+    incus network create net1 --type=ovn network=UPLINK ipv4.address=192.0.2.1/24
+    incus network create net2 --type=ovn parent=net1 ipv4.address=198.51.100.1/24
+    incus launch images:debian/13 c1 --network net2
+
+This allows several internal subnets to be routed by a single logical router and to share its uplink.
+
+A child network keeps its own switch, subnet, DHCP, DNS records, ACLs and instance ports.
+It has no uplink of its own, reaching the outside through the external port of its parent's router, and it can enable NAT independently of its parent so that one subnet can be translated while another is routed natively on the same router.
+
+The following applies to child networks:
+
+- Instances on networks sharing a logical router can reach each other by default, as they are all routed by it.
+  Use {ref}`network-acls` to restrict this.
+- In ACL rules, the traffic of another network on the same router matches `@external` rather than `@internal`, because `@internal` only ever covers the addresses of the network the rule is applied to.
+- The uplink, the external port, the chassis group and any network peers belong to the parent.
+  A child cannot set `network`, `parent` (networks can only be nested one level deep), `bridge.hwaddr`, `bridge.external_interfaces`, `bridge.multicast_relay`, `ipv4.nat.address`, `ipv6.nat.address` or any `tunnel.*` option, and cannot take part in a peering.
+- The subnets of a child must not overlap those of its parent or of the other children of that parent.
+- `parent` can only be set when the network is created.
+- A parent network cannot be renamed or deleted while it still has children.
+
 (network-ovn-features)=
 ## Supported features
 
