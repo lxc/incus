@@ -539,8 +539,15 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//
 	// ---
 	//  type: string
-	//  shortdesc: Instance agent state as of last host shutdown
+	//  shortdesc: Last recorded instance agent state
 	"volatile.last_state.agent": validate.IsAny,
+
+	// gendoc:generate(entity=instance, group=volatile, key=volatile.last_state.agent.once)
+	//
+	// ---
+	//  type: bool
+	//  shortdesc: Whether the agent has been seen at least once since last boot
+	"volatile.last_state.agent.once": validate.IsBool,
 
 	// gendoc:generate(entity=instance, group=volatile, key=volatile.rebalance.last_move)
 	//
