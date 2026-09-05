@@ -3952,8 +3952,15 @@
 					{
 						"volatile.last_state.agent": {
 							"longdesc": "",
-							"shortdesc": "Instance agent state as of last host shutdown",
+							"shortdesc": "Last recorded instance agent state",
 							"type": "string"
+						}
+					},
+					{
+						"volatile.last_state.agent.once": {
+							"longdesc": "",
+							"shortdesc": "Whether the agent has been seen at least once since last boot",
+							"type": "bool"
 						}
 					},
 					{
