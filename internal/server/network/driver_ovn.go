@@ -110,6 +110,9 @@ type ovn struct {
 
 	ovnnb *networkOVN.NB
 	ovnsb *networkOVN.SB
+
+	// ID of the parent network owning our logical router (0 if we own it).
+	parentID int64
 }
 
 func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) error {
@@ -136,7 +139,23 @@ func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Ne
 		n.ovnsb = ovnsb
 	}
 
-	return n.common.init(s, id, projectName, netInfo, netNodes)
+	err := n.common.init(s, id, projectName, netInfo, netNodes)
+	if err != nil {
+		return err
+	}
+
+	if s != nil && n.config["parent"] != "" {
+		parentNet, err := LoadByName(s, projectName, n.config["parent"])
+		if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
+			return fmt.Errorf("Failed loading parent network %q: %w", n.config["parent"], err)
+		}
+
+		if err == nil && parentNet.Type() == "ovn" {
+			n.parentID = parentNet.ID()
+		}
+	}
+
+	return nil
 }
 
 // DBType returns the network type DB ID.
@@ -1332,14 +1351,112 @@ func (n *ovn) getNetworkPrefix() string {
 	return acl.OVNNetworkPrefix(n.id)
 }
 
+// getRouterOwnerID returns the ID of the network owning our logical router.
+func (n *ovn) getRouterOwnerID() int64 {
+	if n.parentID != 0 {
+		return n.parentID
+	}
+
+	return n.id
+}
+
+// getRouterNetworkPrefix returns OVN network prefix of the network owning our logical router.
+func (n *ovn) getRouterNetworkPrefix() string {
+	return acl.OVNNetworkPrefix(n.getRouterOwnerID())
+}
+
+// parentNetwork returns the network owning our logical router, or nil if we own it.
+func (n *ovn) parentNetwork() (*ovn, error) {
+	if n.parentID == 0 {
+		return nil, nil
+	}
+
+	parentNet, err := LoadByName(n.state, n.project, n.config["parent"])
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading parent network %q: %w", n.config["parent"], err)
+	}
+
+	ovnParent, ok := parentNet.(*ovn)
+	if !ok {
+		return nil, fmt.Errorf("Parent network %q isn't an OVN network", n.config["parent"])
+	}
+
+	return ovnParent, nil
+}
+
+// childNetworks returns the networks sharing our logical router as their parent.
+func (n *ovn) childNetworks() ([]*ovn, error) {
+	if n.parentID != 0 {
+		return nil, nil
+	}
+
+	var childNames []string
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		networks, err := tx.GetCreatedNetworksByProject(ctx, n.project)
+		if err != nil {
+			return err
+		}
+
+		for _, network := range networks {
+			if network.Type == "ovn" && network.Config["parent"] == n.name {
+				childNames = append(childNames, network.Name)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading child networks: %w", err)
+	}
+
+	children := make([]*ovn, 0, len(childNames))
+	for _, childName := range childNames {
+		childNet, err := LoadByName(n.state, n.project, childName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed loading child network %q: %w", childName, err)
+		}
+
+		ovnChild, ok := childNet.(*ovn)
+		if !ok {
+			return nil, fmt.Errorf("Child network %q isn't an OVN network", childName)
+		}
+
+		children = append(children, ovnChild)
+	}
+
+	return children, nil
+}
+
+// relatedNetworks returns the networks sharing our logical router, starting with its owner.
+func (n *ovn) relatedNetworks() ([]*ovn, error) {
+	owner := n
+
+	if n.parentID != 0 {
+		parentNet, err := n.parentNetwork()
+		if err != nil {
+			return nil, err
+		}
+
+		owner = parentNet
+	}
+
+	children, err := owner.childNetworks()
+	if err != nil {
+		return nil, err
+	}
+
+	return append([]*ovn{owner}, children...), nil
+}
+
 // getChassisGroup returns OVN chassis group name to use.
 func (n *ovn) getChassisGroupName() networkOVN.OVNChassisGroup {
-	return networkOVN.OVNChassisGroup(n.getNetworkPrefix())
+	return networkOVN.OVNChassisGroup(n.getRouterNetworkPrefix())
 }
 
 // getRouterName returns OVN logical router name to use.
 func (n *ovn) getRouterName() networkOVN.OVNRouter {
-	return networkOVN.OVNRouter(fmt.Sprintf("%s-lr", n.getNetworkPrefix()))
+	return networkOVN.OVNRouter(fmt.Sprintf("%s-lr", n.getRouterNetworkPrefix()))
 }
 
 // getRouterExtPortName returns OVN logical router external port name to use.
@@ -1349,6 +1466,10 @@ func (n *ovn) getRouterExtPortName() networkOVN.OVNRouterPort {
 
 // getRouterIntPortName returns OVN logical router internal port name to use.
 func (n *ovn) getRouterIntPortName() networkOVN.OVNRouterPort {
+	if n.parentID != 0 {
+		return networkOVN.OVNRouterPort(fmt.Sprintf("%s-lrp-int-net%d", n.getRouterName(), n.id))
+	}
+
 	return networkOVN.OVNRouterPort(fmt.Sprintf("%s-lrp-int", n.getRouterName()))
 }
 
@@ -2635,6 +2756,10 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	n.logger.Debug("Setting up network")
+
+	if n.config["parent"] != "" && n.parentID == 0 {
+		return fmt.Errorf("Parent network %q isn't available", n.config["parent"])
+	}
 
 	reverter := revert.New()
 	defer reverter.Fail()
