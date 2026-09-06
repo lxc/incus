@@ -787,6 +787,11 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 		return nil, nil, err
 	}
 
+	// Nothing for the scriptlet to choose from, so stop the instance in place.
+	if len(candidateMembers) == 0 {
+		return nil, nil, api.StatusErrorf(http.StatusNotFound, "Couldn't find a cluster member for instance %q in project %q", inst.Name(), inst.Project().Name)
+	}
+
 	// Run instance placement scriptlet if enabled.
 	if s.GlobalConfig.InstancesPlacementScriptlet() != "" {
 		leaderAddress, err := s.Cluster.LeaderAddress()
@@ -829,12 +834,8 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 
 	// If target member not specified yet, then find the least loaded cluster member which
 	// supports the instance's architecture.
-	if targetMemberInfo == nil && len(candidateMembers) > 0 {
-		targetMemberInfo = &candidateMembers[0]
-	}
-
 	if targetMemberInfo == nil {
-		return nil, nil, api.StatusErrorf(http.StatusNotFound, "Couldn't find a cluster member for instance %q in project %q", inst.Name(), inst.Project().Name)
+		targetMemberInfo = &candidateMembers[0]
 	}
 
 	return sourceMemberInfo, targetMemberInfo, nil
