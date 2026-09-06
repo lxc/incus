@@ -8601,15 +8601,42 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		offerHeader.Criu = migration.CRIUType_VM_QEMU.Enum()
 	}
 
-	// When moving between cluster members on shared storage, the target will mount the
-	// config volume while we still have it mounted. Sync it first so the target doesn't
-	// find a dirty journal.
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Write the local TPM and UEFI state back so the volume is complete before it's shared or sent.
+	if args.Live {
+		err = mirror.Pause(d.RunPath())
+		if err == nil {
+			reverter.Add(func() { _ = mirror.Resume(d.RunPath()) })
+		}
+	} else {
+		err = mirror.Flush(d.RunPath())
+	}
+
+	if err != nil {
+		err := fmt.Errorf("Failed saving local instance state: %w", err)
+		op.Done(err)
+		return err
+	}
+
+	// When moving between cluster members on shared storage, the target mounts the config
+	// volume while we still have it mounted. Make it read-only so it's clean and stays so.
+	configReadOnly := false
 	if args.Live && remoteClusterMove && !storageMove {
-		err = linux.SyncFS(d.Path())
+		err = linux.SetMountReadOnly(d.Path(), true)
 		if err != nil {
-			err := fmt.Errorf("Failed syncing config volume: %w", err)
-			op.Done(err)
-			return err
+			d.logger.Warn("Failed making config volume read-only, syncing it instead", logger.Ctx{"err": err})
+
+			err = linux.SyncFS(d.Path())
+			if err != nil {
+				err := fmt.Errorf("Failed syncing config volume: %w", err)
+				op.Done(err)
+				return err
+			}
+		} else {
+			configReadOnly = true
+			reverter.Add(func() { _ = linux.SetMountReadOnly(d.Path(), false) })
 		}
 	}
 
@@ -8768,6 +8795,14 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		} else {
 			// Perform stateful stop if live state transfer is not supported by target.
 			if args.Live {
+				// The state file is written to the config volume.
+				if configReadOnly {
+					err = linux.SetMountReadOnly(d.Path(), false)
+					if err != nil {
+						return fmt.Errorf("Failed making config volume writable: %w", err)
+					}
+				}
+
 				err = d.Stop(true)
 				if err != nil {
 					return fmt.Errorf("Failed statefully stopping instance: %w", err)
@@ -8796,6 +8831,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 			d.logger.Warn("Ignoring migration error received after hand-over", logger.Ctx{"err": err})
 		}
 
+		reverter.Success()
 		op.Done(nil)
 
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceMigrated.Event(d, nil))
