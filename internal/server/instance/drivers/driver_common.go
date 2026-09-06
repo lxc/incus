@@ -66,6 +66,23 @@ var ErrInstanceIsStopped error = api.StatusErrorf(http.StatusBadRequest, "The in
 // muNUMA is used to serialize NUMA node selection.
 var muNUMA sync.Mutex
 
+// numaReservation records the NUMA nodes and memory claimed by an instance until the database shows it running here.
+type numaReservation struct {
+	nodes  []uint64
+	memory int64
+}
+
+// numaReservations holds the pending NUMA reservations, keyed by project and name and guarded by muNUMA.
+var numaReservations = map[string]numaReservation{}
+
+// numaReservationClear drops the NUMA reservation of an instance that stopped before the database saw it.
+func (d *common) numaReservationClear() {
+	muNUMA.Lock()
+	defer muNUMA.Unlock()
+
+	delete(numaReservations, project.Instance(d.project.Name, d.name))
+}
+
 // deviceManager is an interface that allows managing device lifecycle.
 type deviceManager interface {
 	deviceAdd(dev device.Device, instanceRunning bool) error
@@ -1624,7 +1641,7 @@ func (d *common) balanceNUMANodes() error {
 		return err
 	}
 
-	// Record the memory committed to each NUMA node by running (or starting) instances.
+	// Record the memory committed to each NUMA node by running instances.
 	committed := map[uint64]int64{}
 	usage := map[uint64]int{}
 	for _, inst := range insts {
@@ -1639,6 +1656,9 @@ func (d *common) balanceNUMANodes() error {
 		if !inst.IsRunning() {
 			continue
 		}
+
+		// The database is authoritative from here on.
+		delete(numaReservations, project.Instance(inst.Project().Name, inst.Name()))
 
 		// Parse the used NUMA nodes.
 		instNodes := conf["limits.cpu.nodes"]
@@ -1668,6 +1688,19 @@ func (d *common) balanceNUMANodes() error {
 		for _, numaNode := range numaNodeSet {
 			usage[uint64(numaNode)]++
 			committed[uint64(numaNode)] += instMemory / int64(len(numaNodeSet))
+		}
+	}
+
+	// Add instances that are still starting or being migrated in, which the database doesn't show as running here.
+	selfKey := project.Instance(d.project.Name, d.name)
+	for key, reservation := range numaReservations {
+		if key == selfKey {
+			continue
+		}
+
+		for _, numaNode := range reservation.nodes {
+			usage[numaNode]++
+			committed[numaNode] += reservation.memory / int64(len(reservation.nodes))
 		}
 	}
 
@@ -1704,6 +1737,7 @@ func (d *common) balanceNUMANodes() error {
 	}
 
 	// Never split anything at or below the default memory size.
+	reservedMemory := limitsMemory
 	defaultMemory, _ := ParseMemoryStr(qemudefault.MemSize)
 	if limitsMemory <= defaultMemory {
 		limitsMemory = 0
@@ -1729,6 +1763,8 @@ func (d *common) balanceNUMANodes() error {
 	}
 
 	d.logger.Debug("Balanced NUMA node selection", logger.Ctx{"nodes": selectedNumaNodes, "memory": limitsMemory, "cpu": limitsCPU, "committed": committed})
+
+	numaReservations[selfKey] = numaReservation{nodes: nodes[:numaNodesToUse], memory: reservedMemory}
 
 	return d.VolatileSet(map[string]string{"volatile.cpu.nodes": strings.Join(selectedNumaNodes, ",")})
 }

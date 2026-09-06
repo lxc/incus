@@ -814,6 +814,7 @@ func (d *qemu) onStop(target string, reason string) error {
 	}
 
 	// Cleanup.
+	d.numaReservationClear()
 	d.cleanupDevices() // Must be called before unmount.
 
 	err = d.stopNvramMirror()
@@ -1545,15 +1546,6 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		}
 	}
 
-	// Assign NUMA node(s) if needed.
-	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
-		err := d.balanceNUMANodes()
-		if err != nil {
-			op.Done(err)
-			return err
-		}
-	}
-
 	// Ensure the correct vhost_vsock kernel module is loaded before establishing the vsock.
 	err = linux.LoadModule("vhost_vsock")
 	if err != nil {
@@ -1563,6 +1555,17 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	reverter := revert.New()
 	defer reverter.Fail()
+
+	// Assign NUMA node(s) if needed.
+	if d.expandedConfig["limits.cpu.nodes"] == "balanced" {
+		err := d.balanceNUMANodes()
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		reverter.Add(d.numaReservationClear)
+	}
 
 	// Rotate the log files.
 	for _, logfile := range []string{d.LogFilePath(), d.ConsoleBufferLogPath(), d.QMPLogFilePath()} {
