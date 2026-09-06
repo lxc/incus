@@ -3,6 +3,7 @@ package drivers
 import (
 	"archive/tar"
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -329,6 +330,41 @@ func deleteParentSnapshotDirIfEmpty(poolName string, volType VolumeType, volName
 	}
 
 	return nil
+}
+
+// fsckIfErrors repairs an ext4 filesystem whose superblock records errors before it's mounted.
+func fsckIfErrors(devPath string, fsType string) {
+	if fsType != "ext4" {
+		return
+	}
+
+	f, err := os.Open(devPath)
+	if err != nil {
+		return
+	}
+
+	defer func() { _ = f.Close() }()
+
+	// Superblock s_state field, EXT2_ERROR_FS is bit 1.
+	state := make([]byte, 2)
+	_, err = f.ReadAt(state, 1024+58)
+	if err != nil || binary.LittleEndian.Uint16(state)&0x2 == 0 {
+		return
+	}
+
+	logger.Warn("Filesystem errors recorded, running e2fsck", logger.Ctx{"dev": devPath})
+
+	_, err = subprocess.RunCommand("e2fsck", "-f", "-p", devPath)
+	if err != nil {
+		// Exit codes 1 and 2 mean errors were corrected.
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() <= 2 {
+			logger.Info("Filesystem errors repaired", logger.Ctx{"dev": devPath})
+			return
+		}
+
+		logger.Error("Failed repairing filesystem", logger.Ctx{"dev": devPath, "err": err})
+	}
 }
 
 // ensureSparseFile creates a sparse empty file at specified location with specified size.
