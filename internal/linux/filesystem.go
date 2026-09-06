@@ -233,6 +233,24 @@ func ResolveMountOptions(options []string) (uintptr, string) {
 	return mountFlags, strings.Join(mountOptions, ",")
 }
 
+// SetMountReadOnly remounts the mount at path read-only or read-write, keeping its other flags.
+func SetMountReadOnly(path string, readOnly bool) error {
+	tokens, err := GetMountinfo(path)
+	if err != nil {
+		return err
+	}
+
+	flags, _ := ResolveMountOptions(strings.Split(tokens[5], ","))
+	flags |= unix.MS_REMOUNT
+	if readOnly {
+		flags |= unix.MS_RDONLY
+	} else {
+		flags &^= unix.MS_RDONLY
+	}
+
+	return unix.Mount("", path, "", flags, "")
+}
+
 // GetAllXattr retrieves all extended attributes associated with a file, directory or symbolic link.
 func GetAllXattr(path string) (map[string]string, error) {
 	xattrNames, err := xattr.LList(path)
