@@ -66,6 +66,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
 	"github.com/lxc/incus/v7/internal/server/metrics"
 	localMigration "github.com/lxc/incus/v7/internal/server/migration"
+	"github.com/lxc/incus/v7/internal/server/mirror"
 	"github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
@@ -814,6 +815,12 @@ func (d *qemu) onStop(target string, reason string) error {
 
 	// Cleanup.
 	d.cleanupDevices() // Must be called before unmount.
+
+	err = d.stopNvramMirror()
+	if err != nil {
+		d.logger.Error("Failed saving UEFI variables", logger.Ctx{"err": err})
+	}
+
 	_ = os.Remove(d.pidFilePath())
 	_ = os.Remove(d.monitorPath())
 	_ = os.Remove(d.spicePath())
@@ -1698,6 +1705,17 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		volatileSet["volatile.apply_nvram"] = ""
 	}
 
+	// Run QEMU on a local copy of the UEFI variables so the instance volume sees no writes while running.
+	if d.architectureSupportsUEFI(d.architecture) {
+		err = d.startNvramMirror(true)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
+		reverter.Add(func() { _ = d.stopNvramMirror() })
+	}
+
 	// Apply any volatile changes that need to be made.
 	err = d.VolatileSet(volatileSet)
 	if err != nil {
@@ -2014,7 +2032,7 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			qemuArgs = append(qemuArgs, "-runas", d.state.OS.UnprivUser)
 		}
 
-		nvRAMPath := d.nvramPath()
+		nvRAMPath, _ := d.nvramRunPath()
 		if d.architectureSupportsUEFI(d.architecture) && util.PathExists(nvRAMPath) {
 			// Ensure UEFI nvram file is writable by the QEMU process.
 			// This is needed when doing stateful snapshots because the QEMU process will reopen the
@@ -2682,6 +2700,12 @@ func (d *qemu) setupNvram() error {
 		}
 	}
 
+	// Drop the local copies too so the mirror doesn't restore the old variables on stop.
+	err = d.removeNvramRunCopies()
+	if err != nil {
+		return err
+	}
+
 	// Determine expected firmware.
 	firmwares, err = d.firmwarePairs()
 	if err != nil {
@@ -2759,6 +2783,14 @@ func (d *qemu) setupNvram() error {
 		err = os.Symlink(efiVarsName, nvramPath)
 		if err != nil {
 			return err
+		}
+	}
+
+	// Seed the local copy again when the VM runs on it.
+	if mirror.Active(d.RunPath()) {
+		err = mirror.CopyFile(filepath.Join(d.Path(), efiVarsName), filepath.Join(d.RunPath(), efiVarsName))
+		if err != nil {
+			return fmt.Errorf("Failed copying NVRAM file: %w", err)
 		}
 	}
 
@@ -2923,6 +2955,13 @@ func (d *qemu) qemuArchConfig(arch int) (string, string, error) {
 // RegisterDevices calls the Register() function on all of the instance's devices.
 func (d *qemu) RegisterDevices() {
 	d.devicesRegister(d)
+
+	if d.IsRunning() {
+		err := d.startNvramMirror(false)
+		if err != nil {
+			d.logger.Error("Failed mirroring UEFI variables", logger.Ctx{"err": err})
+		}
+	}
 }
 
 func (d *qemu) saveConnectionInfo(connInfo *agentAPI.API10Put) error {
@@ -3524,6 +3563,111 @@ func (d *qemu) monitorPath() string {
 
 func (d *qemu) nvramPath() string {
 	return filepath.Join(d.Path(), "qemu.nvram")
+}
+
+// nvramRunPath returns the local copy of the UEFI variables used while the VM runs.
+func (d *qemu) nvramRunPath() (string, error) {
+	target, err := os.Readlink(d.nvramPath())
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(d.RunPath(), filepath.Base(target)), nil
+}
+
+// nvramEditPath returns the copy of the UEFI variables that reads and writes must go through.
+func (d *qemu) nvramEditPath() string {
+	runPath, err := d.nvramRunPath()
+	if err == nil && mirror.Active(d.RunPath()) && util.PathExists(runPath) {
+		return runPath
+	}
+
+	return d.nvramPath()
+}
+
+// nvramRunNames returns the possible file names of the local copy of the UEFI variables.
+func (d *qemu) nvramRunNames() ([]string, error) {
+	firmwares, err := edk2.GetArchitectureFirmwarePairs(d.architecture)
+	if err != nil {
+		return nil, err
+	}
+
+	names := []string{}
+	for _, firmware := range firmwares {
+		if firmware.Vars == "" {
+			continue
+		}
+
+		name := filepath.Base(firmware.Vars)
+		if !slices.Contains(names, name) {
+			names = append(names, name)
+		}
+	}
+
+	return names, nil
+}
+
+// removeNvramRunCopies deletes every local copy of the UEFI variables.
+func (d *qemu) removeNvramRunCopies() error {
+	names, err := d.nvramRunNames()
+	if err != nil {
+		return err
+	}
+
+	for _, name := range names {
+		err = os.Remove(filepath.Join(d.RunPath(), name))
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// startNvramMirror mirrors the local copy of the UEFI variables back to the instance volume.
+func (d *qemu) startNvramMirror(seed bool) error {
+	_, err := os.Lstat(d.nvramPath())
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	runPath, err := d.nvramRunPath()
+	if err != nil {
+		return err
+	}
+
+	if seed {
+		err = mirror.CopyFile(d.nvramPath(), runPath)
+		if err != nil {
+			return fmt.Errorf("Failed copying NVRAM file: %w", err)
+		}
+	} else if !util.PathExists(runPath) {
+		// Started by a version that ran QEMU directly on the instance volume.
+		return nil
+	}
+
+	// Match every firmware variable file as the selected firmware may change while running.
+	names, err := d.nvramRunNames()
+	if err != nil {
+		return err
+	}
+
+	return mirror.Start(d.RunPath(), d.Path(), func(fileName string) bool { return slices.Contains(names, fileName) })
+}
+
+// stopNvramMirror writes the UEFI variables back to the instance volume and drops the local copy.
+func (d *qemu) stopNvramMirror() error {
+	// Skip the final write when the volume is already read-only (live migration hand-over).
+	err := mirror.Stop(d.RunPath())
+	if err != nil && !errors.Is(err, unix.EROFS) {
+		return err
+	}
+
+	return d.removeNvramRunCopies()
 }
 
 func (d *qemu) consolePath() string {
@@ -4317,7 +4461,12 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		if firmware.Vars != "" {
 			// Open the UEFI NVRAM file and pass it via file descriptor to QEMU.
 			// This is so the QEMU process can still read/write the file after it has dropped its user privs.
-			nvRAMFile, err := os.Open(d.nvramPath())
+			nvRAMPath, err := d.nvramRunPath()
+			if err != nil {
+				return nil, fmt.Errorf("Failed resolving NVRAM file: %w", err)
+			}
+
+			nvRAMFile, err := os.Open(nvRAMPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
 			}
@@ -12840,7 +12989,7 @@ func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.M
 // getNVRAM gets the NVRAM assuming the config volume is mounted and the NVRAM already has been
 // initialized.
 func (d *qemu) getNVRAM() (*uefi.Store, error) {
-	nvRAM, err := os.ReadFile(d.nvramPath())
+	nvRAM, err := os.ReadFile(d.nvramEditPath())
 	if err != nil {
 		return nil, fmt.Errorf("Failed opening NVRAM file: %w", err)
 	}
@@ -12902,7 +13051,7 @@ func (d *qemu) setNVRAM(store *uefi.Store) error {
 		return err
 	}
 
-	err = os.WriteFile(d.nvramPath(), b, 0o600)
+	err = os.WriteFile(d.nvramEditPath(), b, 0o600)
 	if err != nil {
 		return fmt.Errorf("Failed writing NVRAM file: %w", err)
 	}
