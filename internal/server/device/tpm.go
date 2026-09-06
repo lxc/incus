@@ -12,10 +12,13 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/lxc/incus/v7/internal/linux"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/mirror"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
@@ -23,6 +26,11 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
 )
+
+// tpmStateFile accepts swtpm state files, skipping its lock and temporary files.
+func tpmStateFile(name string) bool {
+	return !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "TMP")
+}
 
 type tpm struct {
 	deviceCommon
@@ -55,6 +63,16 @@ func swtpmHasMigrationSupport() bool {
 // CanMigrate returns whether the device can be migrated to any other cluster member.
 func (d *tpm) CanMigrate() bool {
 	return true
+}
+
+// statePath returns the persistent TPM state directory on the instance volume.
+func (d *tpm) statePath() string {
+	return filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
+}
+
+// runPath returns the local TPM state directory used while a VM runs.
+func (d *tpm) runPath() string {
+	return filepath.Join(d.inst.RunPath(), fmt.Sprintf("tpm.%s", d.name))
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -125,7 +143,7 @@ func (d *tpm) Start() (*deviceConfig.RunConfig, error) {
 		return nil, fmt.Errorf("Failed to validate environment: %w", err)
 	}
 
-	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
+	tpmDevPath := d.statePath()
 
 	if !util.PathExists(tpmDevPath) {
 		err := os.Mkdir(tpmDevPath, 0o700)
@@ -222,7 +240,7 @@ func (d *tpm) maybeProvision(tpmDevPath string) error {
 }
 
 func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
-	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
+	tpmDevPath := d.statePath()
 	logFileName := fmt.Sprintf("tpm.%s.log", d.name)
 	logPath := filepath.Join(d.inst.LogPath(), logFileName)
 
@@ -317,7 +335,8 @@ func (d *tpm) startContainer() (*deviceConfig.RunConfig, error) {
 }
 
 func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
-	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
+	tpmDevPath := d.statePath()
+	runPath := d.runPath()
 
 	socketName := fmt.Sprintf("swtpm-%s.sock", linux.PathNameEncode(d.name))
 	socketPath := filepath.Join(d.inst.DevicesPath(), socketName)
@@ -328,11 +347,39 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 		},
 	}
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
+	// Run swtpm on a local copy of the state so the instance volume sees no writes while running.
+	err := os.RemoveAll(runPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to clear TPM run path %q: %w", runPath, err)
+	}
+
+	err = os.MkdirAll(runPath, 0o700)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create TPM run path %q: %w", runPath, err)
+	}
+
+	reverter.Add(func() { _ = os.RemoveAll(runPath) })
+
+	err = mirror.Seed(tpmDevPath, runPath, tpmStateFile)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to load TPM state for device %q: %w", d.name, err)
+	}
+
+	err = mirror.Start(runPath, tpmDevPath, tpmStateFile)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to mirror TPM state for device %q: %w", d.name, err)
+	}
+
+	reverter.Add(func() { _ = mirror.Stop(runPath) })
+
 	// Delete any leftover socket, including at the previous location.
 	_ = os.Remove(socketPath)
 	_ = os.Remove(filepath.Join(tpmDevPath, fmt.Sprintf("swtpm-%s.sock", d.name)))
 
-	args := []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", tpmDevPath), "--ctrl", fmt.Sprintf("type=unixio,path=%s", socketName)}
+	args := []string{"socket", "--tpm2", "--tpmstate", fmt.Sprintf("dir=%s", runPath), "--ctrl", fmt.Sprintf("type=unixio,path=%s", socketName)}
 
 	// When starting from a live migration, the TPM state comes with the migration stream.
 	if swtpmHasMigrationSupport() {
@@ -346,7 +393,8 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 		args = append(args, "--migration", migrationOpts)
 	}
 
-	proc, err := subprocess.NewProcess("swtpm", args, "", "")
+	logPath := filepath.Join(d.inst.LogPath(), fmt.Sprintf("tpm.%s.log", d.name))
+	proc, err := subprocess.NewProcess("swtpm", args, logPath, logPath)
 	if err != nil {
 		return nil, err
 	}
@@ -359,9 +407,6 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to start swtpm for device %q: %w", d.name, err)
 	}
-
-	reverter := revert.New()
-	defer reverter.Fail()
 
 	reverter.Add(func() { _ = proc.Stop() })
 
@@ -392,6 +437,15 @@ func (d *tpm) startVM() (*deviceConfig.RunConfig, error) {
 	return &runConf, nil
 }
 
+// Register re-attaches the state mirror of a running VM, e.g. after a daemon restart.
+func (d *tpm) Register() error {
+	if d.inst.Type() != instancetype.VM || !util.PathExists(d.runPath()) {
+		return nil
+	}
+
+	return mirror.Start(d.runPath(), d.statePath(), tpmStateFile)
+}
+
 // Stop terminates the TPM emulator.
 func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
 	pidPath := filepath.Join(d.inst.DevicesPath(), fmt.Sprintf("%s.pid", linux.PathNameEncode(d.name)))
@@ -411,6 +465,20 @@ func (d *tpm) Stop() (*deviceConfig.RunConfig, error) {
 		err = proc.Stop()
 		if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
 			return nil, fmt.Errorf("Failed to stop imported process %q: %w", pidPath, err)
+		}
+	}
+
+	runPath := d.runPath()
+	if d.inst.Type() == instancetype.VM && util.PathExists(runPath) {
+		// Write the final state back, unless the volume is already read-only (live migration hand-over).
+		err := mirror.Stop(runPath)
+		if err != nil && !errors.Is(err, unix.EROFS) {
+			return nil, fmt.Errorf("Failed to save TPM state for device %q: %w", d.name, err)
+		}
+
+		err = os.RemoveAll(runPath)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to remove TPM run path %q: %w", runPath, err)
 		}
 	}
 
@@ -439,7 +507,7 @@ func (d *tpm) Remove(cleanupDependencies bool) error {
 
 	defer logger.WarnOnError(func() error { return pool.UnmountInstance(d.inst, nil) }, "Failed to unmount instance")
 
-	tpmDevPath := filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
+	_ = os.RemoveAll(d.runPath())
 
-	return os.RemoveAll(tpmDevPath)
+	return os.RemoveAll(d.statePath())
 }
