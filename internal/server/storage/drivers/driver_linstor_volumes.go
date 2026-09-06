@@ -772,6 +772,11 @@ func (d *linstor) MountVolume(vol Volume, op *operations.Operation) error {
 				}
 			}
 
+			// VM config volumes are small and unmounted while stopped, so repair them when needed.
+			if vol.volType == VolumeTypeVM {
+				fsckIfErrors(volDevPath, fsType)
+			}
+
 			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
 			l.Debug("Will try mount", logger.Ctx{"mountFlags": mountFlags, "mountOptions": mountOptions})
 			err = TryMount(volDevPath, mountPath, fsType, mountFlags, mountOptions)
