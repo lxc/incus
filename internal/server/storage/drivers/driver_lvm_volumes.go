@@ -615,7 +615,12 @@ func (d *lvm) GetVolumeUsage(vol Volume) (int64, error) {
 		// For non-snapshot thin pool block volumes we can calculate an approximate usage using the space
 		// allocated to the volume from the thin pool.
 		volPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
-		_, usedSize, err := d.thinPoolVolumeUsage(volPath)
+
+		_, usedSize, ok, err := d.getCachedThinPoolVolumeUsage(volPath)
+		if !ok {
+			_, usedSize, err = d.thinPoolVolumeUsage(volPath)
+		}
+
 		if err != nil {
 			return -1, err
 		}

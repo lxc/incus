@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/linux"
@@ -922,26 +923,76 @@ func (d *lvm) thinPoolVolumeUsage(volDevPath string) (uint64, uint64, error) {
 		return 0, 0, errors.New("Unexpected output from lvs command")
 	}
 
-	total, err := strconv.ParseUint(parts[0], 10, 64)
+	return parseThinPoolVolumeUsage(parts[0], parts[1])
+}
+
+// parseThinPoolVolumeUsage converts the lvs size and data percentage fields into total and used bytes.
+func parseThinPoolVolumeUsage(size string, dataPercent string) (uint64, uint64, error) {
+	total, err := strconv.ParseUint(size, 10, 64)
 	if err != nil {
-		return 0, 0, fmt.Errorf("Failed parsing thin volume total size (%q): %w", parts[0], err)
+		return 0, 0, fmt.Errorf("Failed parsing thin volume total size (%q): %w", size, err)
 	}
 
-	totalSize := total
-
 	// Used percentage is not available if thin volume isn't activated.
-	if parts[1] == "" {
+	if dataPercent == "" {
 		return 0, 0, ErrNotSupported
 	}
 
-	dataPerc, err := strconv.ParseFloat(parts[1], 64)
+	dataPerc, err := strconv.ParseFloat(dataPercent, 64)
 	if err != nil {
-		return 0, 0, fmt.Errorf("Failed parsing thin volume used percentage (%q): %w", parts[1], err)
+		return 0, 0, fmt.Errorf("Failed parsing thin volume used percentage (%q): %w", dataPercent, err)
 	}
 
 	usedSize := uint64(float64(total) * (dataPerc / 100))
 
-	return totalSize, usedSize, nil
+	return total, usedSize, nil
+}
+
+// getCachedThinPoolVolumeUsage returns the total and used bytes of a thin volume from the cache.
+func (d *lvm) getCachedThinPoolVolumeUsage(volDevPath string) (uint64, uint64, bool, error) {
+	fill := func(paths []string) (map[string]map[string]string, error) {
+		args := []string{
+			"--noheadings",
+			"--units", "b",
+			"--nosuffix",
+			"--separator", ",",
+			"-o", "lv_full_name,lv_size,data_percent",
+		}
+
+		args = append(args, paths...)
+
+		out, err := subprocess.RunCommand("lvs", args...)
+		if err != nil {
+			return nil, err
+		}
+
+		results := map[string]map[string]string{}
+		for line := range strings.SplitSeq(out, "\n") {
+			fields := util.SplitNTrimSpace(line, ",", -1, false)
+			if len(fields) != 3 {
+				continue
+			}
+
+			results[fields[0]] = map[string]string{"lv_size": fields[1], "data_percent": fields[2]}
+		}
+
+		return results, nil
+	}
+
+	cache := getPropertyCache("lvm", 100*time.Millisecond, 15*time.Second)
+
+	size, ok := cache.get(volDevPath, "lv_size", fill)
+	if !ok {
+		return 0, 0, false, nil
+	}
+
+	dataPercent, ok := cache.lookup(volDevPath, "data_percent")
+	if !ok {
+		return 0, 0, false, nil
+	}
+
+	total, used, err := parseThinPoolVolumeUsage(size, dataPercent)
+	return total, used, true, err
 }
 
 // snapshotNeedsCoWGrow returns whether a snapshot lacks the CoW capacity needed for a full restore.
