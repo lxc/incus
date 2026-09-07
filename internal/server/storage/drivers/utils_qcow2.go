@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/linux"
@@ -16,7 +17,11 @@ import (
 	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/subprocess"
+	"github.com/lxc/incus/v7/shared/util"
 )
+
+// nbdMu serializes NBD device allocation so concurrent callers don't pick the same free device.
+var nbdMu sync.Mutex
 
 // Type of the block volume.
 const (
@@ -420,11 +425,37 @@ func getFreeNbd() (string, error) {
 
 // ConnectQemuNbd exports a QCOW2 volume using the NBD protocol via qemu-nbd.
 func ConnectQemuNbd(devPath string, format string, detectZeroes string, readOnly bool) (string, error) {
+	nbdMu.Lock()
+	defer nbdMu.Unlock()
+
 	nbdPath, err := getFreeNbd()
 	if err != nil {
 		return "", err
 	}
 
+	err = connectQemuNbdDevice(nbdPath, devPath, format, detectZeroes, readOnly)
+	if err != nil {
+		return "", err
+	}
+
+	return nbdPath, nil
+}
+
+// ReconnectQemuNbd re-exports a volume on the NBD device already serving it, so that size changes are picked up.
+func ReconnectQemuNbd(nbdPath string, devPath string, format string, detectZeroes string, readOnly bool) error {
+	nbdMu.Lock()
+	defer nbdMu.Unlock()
+
+	err := DisconnectQemuNbdWait(nbdPath)
+	if err != nil {
+		return err
+	}
+
+	return connectQemuNbdDevice(nbdPath, devPath, format, detectZeroes, readOnly)
+}
+
+// connectQemuNbdDevice exports devPath on the given NBD device and waits for it to become usable.
+func connectQemuNbdDevice(nbdPath string, devPath string, format string, detectZeroes string, readOnly bool) error {
 	args := []string{fmt.Sprintf("--connect=%s", nbdPath)}
 
 	if detectZeroes != "" {
@@ -445,9 +476,9 @@ func ConnectQemuNbd(devPath string, format string, detectZeroes string, readOnly
 
 	args = append(args, devPath)
 
-	_, err = subprocess.RunCommand("qemu-nbd", args...)
+	_, err := subprocess.RunCommand("qemu-nbd", args...)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// It can take a little while before the /dev/nbdX device is fully mapped.
@@ -457,7 +488,7 @@ func ConnectQemuNbd(devPath string, format string, detectZeroes string, readOnly
 		if err != nil {
 			_ = DisconnectQemuNbd(nbdPath)
 
-			return "", err
+			return err
 		}
 
 		if sz > 0 {
@@ -470,10 +501,51 @@ func ConnectQemuNbd(devPath string, format string, detectZeroes string, readOnly
 	if sz == 0 {
 		_ = DisconnectQemuNbd(nbdPath)
 
-		return "", fmt.Errorf("NBD device %q not correctly mapped after 2s", nbdPath)
+		return fmt.Errorf("NBD device %q not correctly mapped after 2s", nbdPath)
 	}
 
-	return nbdPath, nil
+	return nil
+}
+
+// DisconnectQemuNbdWait disconnects the NBD device at nbdPath and waits for its qemu-nbd process to exit.
+func DisconnectQemuNbdWait(nbdPath string) error {
+	// Get the qemu-nbd process for the device so we can wait for it to exit.
+	pidData, err := os.ReadFile(fmt.Sprintf("/sys/class/block/%s/pid", filepath.Base(nbdPath)))
+	if err != nil {
+		// Not connected.
+		return nil
+	}
+
+	pid := strings.TrimSpace(string(pidData))
+
+	// The kernel records the thread driving the device, get the process it belongs to.
+	status, err := os.ReadFile(fmt.Sprintf("/proc/%s/status", pid))
+	if err == nil {
+		for line := range strings.SplitSeq(string(status), "\n") {
+			tgid, found := strings.CutPrefix(line, "Tgid:")
+			if found {
+				pid = strings.TrimSpace(tgid)
+				break
+			}
+		}
+	}
+
+	err = DisconnectQemuNbd(nbdPath)
+	if err != nil {
+		return err
+	}
+
+	// The device only becomes reusable once qemu-nbd has fully exited (it removes its control socket on the way out).
+	waitUntil := time.Now().Add(30 * time.Second)
+	for util.PathExists(fmt.Sprintf("/proc/%s", pid)) {
+		if time.Now().After(waitUntil) {
+			return fmt.Errorf("Timed out waiting for qemu-nbd to release %q", nbdPath)
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return nil
 }
 
 // DisconnectQemuNbd disconnects the NBD device at nbdPath.
