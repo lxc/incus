@@ -512,6 +512,11 @@ func (d *linstor) getVolumeUsage(vol Volume) (int64, error) {
 		return 0, err
 	}
 
+	usage, ok := d.getCachedVolumeUsage(vol)
+	if ok {
+		return usage, nil
+	}
+
 	resourceDefinition, err := d.getResourceDefinition(vol, false)
 	if err != nil {
 		return 0, err
