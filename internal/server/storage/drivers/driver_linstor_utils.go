@@ -457,15 +457,7 @@ func (d *linstor) getLinstorDevPath(vol Volume) (string, error) {
 		return "", fmt.Errorf("Unable to get Linstor volumes: %w", err)
 	}
 
-	volumeIndex := 0
-	if len(volumes) == 2 {
-		// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
-		if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
-			volumeIndex = 1
-		}
-	}
-
-	return volumes[volumeIndex].DevicePath, nil
+	return volumes[d.getVolumeIndex(vol, len(volumes))].DevicePath, nil
 }
 
 // deleteDisklessResource deletes the diskless resource for the given volume in the current node if one exists.
@@ -551,15 +543,17 @@ func (d *linstor) getVolumeUsage(vol Volume) (int64, error) {
 
 	volumes := resource.Volumes
 
-	volumeIndex := 0
-	if len(volumes) == 2 {
-		// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
-		if (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
-			volumeIndex = 1
-		}
+	return volumes[d.getVolumeIndex(vol, len(volumes))].AllocatedSizeKib, nil
+}
+
+// getVolumeIndex returns the index of the volume within its LINSTOR resource.
+func (d *linstor) getVolumeIndex(vol Volume, volumeCount int) int {
+	// For VM volumes, the associated filesystem volume is a second volume on the same LINSTOR resource.
+	if volumeCount == 2 && (vol.volType == VolumeTypeVM || vol.volType == VolumeTypeImage) && vol.contentType == ContentTypeFS {
+		return 1
 	}
 
-	return volumes[volumeIndex].AllocatedSizeKib, nil
+	return 0
 }
 
 // getSatelliteName returns the local LINSTOR satellite name.
