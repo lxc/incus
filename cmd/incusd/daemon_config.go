@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"maps"
+	"net/http"
 
 	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/node"
+	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/proxy"
 )
@@ -33,6 +35,15 @@ func daemonConfigRender(s *state.State) (map[string]string, error) {
 	}
 
 	return config, nil
+}
+
+// daemonConfigETag returns the config used for ETag checks, excluding node-local keys on untargeted cluster requests.
+func daemonConfigETag(s *state.State, r *http.Request) (map[string]string, error) {
+	if s.ServerClustered && request.QueryParam(r, "target") == "" {
+		return s.GlobalConfig.Dump(), nil
+	}
+
+	return daemonConfigRender(s)
 }
 
 func daemonConfigSetProxy(d *Daemon, config *clusterConfig.Config) {
