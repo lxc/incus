@@ -968,46 +968,6 @@ func IsContentBlock(contentType ContentType) bool {
 	return contentType == ContentTypeBlock || contentType == ContentTypeISO
 }
 
-// NewSparseFileWrapper returns a SparseFileWrapper for the provided io.File.
-func NewSparseFileWrapper(w *os.File) *SparseFileWrapper {
-	return &SparseFileWrapper{w: w}
-}
-
-// SparseFileWrapper wraps os.File to create sparse Files.
-type SparseFileWrapper struct {
-	w *os.File
-}
-
-// Write performs the write but skips null bytes.
-func (sfw *SparseFileWrapper) Write(p []byte) (n int, err error) {
-	// We only support comparing up to 4MB at a time.
-	if len(p) > 4*1024*1024 {
-		return sfw.w.Write(p)
-	}
-
-	// Check if all zeroes.
-	isZero := true
-	for _, v := range p {
-		if v != 0 {
-			isZero = false
-			break
-		}
-	}
-
-	// If not all zero, use normal writer.
-	if !isZero {
-		return sfw.w.Write(p)
-	}
-
-	// Otherwise, poke a hole in the target file.
-	_, err = sfw.w.Seek(int64(len(p)), io.SeekCurrent)
-	if err != nil {
-		return -1, err
-	}
-
-	return len(p), nil
-}
-
 // sliceAny returns true when any element in a slice satisfy a predicate.
 func sliceAny[T any](slice []T, predicate func(T) bool) bool {
 	return slices.ContainsFunc(slice, predicate)
@@ -1316,7 +1276,7 @@ func UnpackVolume(d Driver, vol Volume, r io.ReadSeeker, tarArgs []string, unpac
 			// Copy the data.
 			toPipe := io.Writer(to)
 			if !d.Info().ZeroUnpack {
-				toPipe = NewSparseFileWrapper(to)
+				toPipe = linux.NewSparseFileWrapper(to)
 			}
 
 			d.Logger().Debug(logMsg, logger.Ctx{"source": srcFile, "target": targetPath})
