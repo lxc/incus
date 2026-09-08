@@ -9450,7 +9450,7 @@ func (b *backend) qcow2CreateVolumeFromMigration(vol drivers.Volume, projectName
 
 		toPipe := io.Writer(to)
 		if !b.driver.Info().ZeroUnpack {
-			toPipe = drivers.NewSparseFileWrapper(to)
+			toPipe = linux.NewSparseFileWrapper(to)
 		}
 
 		_, err = util.SafeCopy(toPipe, fromPipe)
