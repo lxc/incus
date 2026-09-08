@@ -1148,6 +1148,15 @@ func (d *zfs) CreateVolumeFromMigration(vol Volume, conn io.ReadWriteCloser, vol
 			}
 		}
 
+		// A full stream can't be received over an existing encrypted dataset,
+		// so remove the existing volume ahead of a full transfer.
+		if !volTargetArgs.Refresh {
+			err = d.DeleteVolume(vol, op)
+			if err != nil {
+				return err
+			}
+		}
+
 		migrationHeader = ZFSMetaDataHeader{}
 		migrationHeader.SnapshotDatasets = respSnapshots
 
