@@ -21,6 +21,14 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+// xattrFilterArgs restricts rsync to xattrs that can be set without CAP_SYS_ADMIN.
+// It is enforced by the receiver regardless of what the sender provides.
+var xattrFilterArgs = []string{
+	"--filter=+x user.*",
+	"--filter=+x security.capability",
+	"--filter=-x *",
+}
+
 // Debug controls additional debugging in rsync output.
 var Debug bool
 
@@ -86,7 +94,8 @@ func LocalCopy(source string, dest string, bwlimit string, xattrs bool, rsyncArg
 	}
 
 	if xattrs {
-		args = append(args, "--xattrs", "--filter=-x security.selinux")
+		args = append(args, "--xattrs")
+		args = append(args, xattrFilterArgs...)
 	}
 
 	if bwlimit != "" {
@@ -417,7 +426,8 @@ func Recv(path string, conn io.ReadWriteCloser, tracker *ioprogress.ProgressTrac
 func rsyncFeatureArgs(features []string) []string {
 	args := []string{}
 	if slices.Contains(features, "xattrs") {
-		args = append(args, "--xattrs", "--filter=-x security.selinux")
+		args = append(args, "--xattrs")
+		args = append(args, xattrFilterArgs...)
 	}
 
 	if slices.Contains(features, "delete") {
