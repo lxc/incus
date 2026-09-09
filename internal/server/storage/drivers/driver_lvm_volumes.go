@@ -1060,6 +1060,11 @@ func (d *lvm) MountVolume(vol Volume, op *operations.Operation) error {
 				return err
 			}
 
+			// VM config volumes are small and unmounted while stopped, so repair them when needed.
+			if vol.volType == VolumeTypeVM {
+				fsckIfErrors(volDevPath, fsType)
+			}
+
 			mountFlags, mountOptions := linux.ResolveMountOptions(strings.Split(vol.ConfigBlockMountOptions(), ","))
 			err = TryMount(volDevPath, mountPath, fsType, mountFlags, mountOptions)
 			if err != nil {

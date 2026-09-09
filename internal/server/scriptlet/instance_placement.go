@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"slices"
 
 	"go.starlark.net/starlark"
 
@@ -233,6 +235,50 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 				instanceList = append(instanceList, *instance)
 			}
 
+			// Account for moves that have been decided but not completed yet.
+			for _, placement := range instancePlacementPending(project) {
+				isPlacement := func(inst api.Instance) bool {
+					return inst.Project == placement.project && inst.Name == placement.name
+				}
+
+				if location == "" {
+					for i := range instanceList {
+						if isPlacement(instanceList[i]) {
+							instanceList[i].Location = placement.target
+						}
+					}
+
+					continue
+				}
+
+				if placement.target != location {
+					instanceList = slices.DeleteFunc(instanceList, isPlacement)
+					continue
+				}
+
+				obj, err := dbCluster.GetInstance(ctx, tx.Tx(), placement.project, placement.name)
+				if api.StatusErrorCheck(err, http.StatusNotFound) {
+					continue
+				}
+
+				if err != nil {
+					return err
+				}
+
+				devices, err := dbCluster.GetDevices(ctx, tx.Tx(), "instances", "instance", dbCluster.DeviceFilter{ReferenceID: []int{obj.ID}})
+				if err != nil {
+					return err
+				}
+
+				instance, err := obj.ToAPI(ctx, tx.Tx(), devices, nil, nil)
+				if err != nil {
+					return err
+				}
+
+				instance.Location = placement.target
+				instanceList = append(instanceList, *instance)
+			}
+
 			return nil
 		})
 		if err != nil {
@@ -265,6 +311,17 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		})
 		if err != nil {
 			return nil, err
+		}
+
+		// Account for moves that have been decided but not completed yet.
+		if locationName != "" {
+			for _, placement := range instancePlacementPending(projectName) {
+				if placement.target == locationName {
+					count++
+				} else if placement.source == locationName {
+					count--
+				}
+			}
 		}
 
 		rv, err := scriptlet.StarlarkMarshal(count)

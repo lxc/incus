@@ -437,6 +437,8 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 		return err
 	}
 
+	defer scriptlet.InstancePlacementPendingClear(instProject.Name, inst.Name())
+
 	// Start migrating the instance.
 	_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Migrating %q in project %q to %q", inst.Name(), instProject.Name, targetMemberInfo.Name)})
 
@@ -752,9 +754,15 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 	return nil
 }
 
+// evacuatePlacementMu serializes target selection so each placement sees the moves already decided.
+var evacuatePlacementMu sync.Mutex
+
 func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst instance.Instance) (*db.NodeInfo, *db.NodeInfo, error) {
 	var sourceMemberInfo *db.NodeInfo
 	var targetMemberInfo *db.NodeInfo
+
+	evacuatePlacementMu.Lock()
+	defer evacuatePlacementMu.Unlock()
 
 	// Get candidate cluster members to move instances to.
 	var candidateMembers []db.NodeInfo
@@ -785,6 +793,11 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 	})
 	if err != nil {
 		return nil, nil, err
+	}
+
+	// Nothing for the scriptlet to choose from, so stop the instance in place.
+	if len(candidateMembers) == 0 {
+		return nil, nil, api.StatusErrorf(http.StatusNotFound, "Couldn't find a cluster member for instance %q in project %q", inst.Name(), inst.Project().Name)
 	}
 
 	// Run instance placement scriptlet if enabled.
@@ -829,13 +842,12 @@ func evacuateClusterSelectTarget(ctx context.Context, s *state.State, inst insta
 
 	// If target member not specified yet, then find the least loaded cluster member which
 	// supports the instance's architecture.
-	if targetMemberInfo == nil && len(candidateMembers) > 0 {
+	if targetMemberInfo == nil {
 		targetMemberInfo = &candidateMembers[0]
 	}
 
-	if targetMemberInfo == nil {
-		return nil, nil, api.StatusErrorf(http.StatusNotFound, "Couldn't find a cluster member for instance %q in project %q", inst.Name(), inst.Project().Name)
-	}
+	// Let later placements account for this move until it completes.
+	scriptlet.InstancePlacementPendingSet(inst.Project().Name, inst.Name(), sourceMemberInfo.Name, targetMemberInfo.Name)
 
 	return sourceMemberInfo, targetMemberInfo, nil
 }

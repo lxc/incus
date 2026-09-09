@@ -359,7 +359,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 
 		toPipe := io.Writer(to)
 		if !d.Info().ZeroUnpack {
-			toPipe = NewSparseFileWrapper(to)
+			toPipe = linux.NewSparseFileWrapper(to)
 		}
 
 		_, err = util.SafeCopy(toPipe, fromPipe)
