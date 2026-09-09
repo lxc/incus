@@ -2564,6 +2564,11 @@ type internalRaftNode struct {
 func internalClusterPostRebalance(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
+	// The cluster database isn't available until startup completes.
+	if s.DB.Cluster == nil {
+		return response.Unavailable(errors.New("Daemon is starting up"))
+	}
+
 	// Redirect all requests to the leader, which is the one with with
 	// up-to-date knowledge of what nodes are part of the raft cluster.
 	localClusterAddress := s.LocalConfig.ClusterAddress()
@@ -2844,6 +2849,12 @@ type internalClusterPostAssignRequest struct {
 // Used to to transfer the responsibilities of a member to another one.
 func internalClusterPostHandover(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
+
+	// The cluster database isn't available until startup completes.
+	if s.DB.Cluster == nil {
+		return response.Unavailable(errors.New("Daemon is starting up"))
+	}
+
 	req := internalClusterPostHandoverRequest{}
 
 	// Parse the request
