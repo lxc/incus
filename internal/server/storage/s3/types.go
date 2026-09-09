@@ -15,6 +15,9 @@ const ErrorCodeInternalError = "InternalError"
 // ErrorCodeInvalidAccessKeyID means there was an invalid access key provided.
 const ErrorCodeInvalidAccessKeyID = "InvalidAccessKeyId"
 
+// ErrorCodeAccessDenied means the request isn't permitted.
+const ErrorCodeAccessDenied = "AccessDenied"
+
 // ErrorInvalidRequest means there was an invalid request.
 const ErrorInvalidRequest = "InvalidRequest"
 
@@ -28,6 +31,7 @@ var errorHTTPStatusCodes = map[string]int{
 	ErrorCodeNoSuchBucket:       http.StatusNotFound,
 	ErrorCodeInternalError:      http.StatusInternalServerError,
 	ErrorCodeInvalidAccessKeyID: http.StatusForbidden,
+	ErrorCodeAccessDenied:       http.StatusForbidden,
 	ErrorInvalidRequest:         http.StatusBadRequest,
 	ErrorCodePreconditionFailed: http.StatusPreconditionFailed,
 	ErrorCodeNotImplemented:     http.StatusNotImplemented,
