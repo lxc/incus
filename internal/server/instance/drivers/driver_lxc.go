@@ -8923,6 +8923,8 @@ func (d *lxc) removeUnixDevices() error {
 		return err
 	}
 
+	var errs []error
+
 	// Go through all the unix devices
 	for _, f := range dents {
 		// Skip non-Unix devices
@@ -8930,15 +8932,21 @@ func (d *lxc) removeUnixDevices() error {
 			continue
 		}
 
-		// Remove the entry
+		// Detach bind mounts left behind by a failed restore before removing their mountpoints.
 		devicePath := filepath.Join(d.DevicesPath(), f.Name())
-		err := os.Remove(devicePath)
-		if err != nil {
-			d.logger.Error("Failed removing unix device", logger.Ctx{"err": err, "path": devicePath})
+		err := unix.Unmount(devicePath, unix.MNT_DETACH)
+		if err != nil && !errors.Is(err, unix.EINVAL) && !errors.Is(err, unix.ENOENT) {
+			errs = append(errs, fmt.Errorf("Failed unmounting unix device %q: %w", devicePath, err))
+			continue
+		}
+
+		err = os.Remove(devicePath)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			errs = append(errs, fmt.Errorf("Failed removing unix device %q: %w", devicePath, err))
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 // FillNetworkDevice takes a nic or infiniband device type and enriches it with automatically
