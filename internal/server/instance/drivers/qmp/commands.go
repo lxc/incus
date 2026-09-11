@@ -1869,6 +1869,12 @@ func (m *Monitor) RingbufRead(device string) (string, error) {
 	for {
 		err := m.Run("ringbuf-read", args, &readResp)
 		if err != nil {
+			// The device may have been swapped to a socket since the check above, return what was read.
+			var qmpErr *qmpError
+			if errors.As(err, &qmpErr) && strings.HasSuffix(qmpErr.Desc, "is not a ringbuf device") {
+				return sb.String(), ErrNotARingbuf
+			}
+
 			return "", err
 		}
 
