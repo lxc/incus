@@ -343,7 +343,7 @@ func CephFsid(cluster string, client string) (string, error) {
 // EnsureClientPrefix returns the given client string with the "client" prefix added,
 // but only if it does not already start with that prefix.
 func EnsureClientPrefix(client string) string {
-	if strings.Contains(client, ".") {
+	if strings.HasPrefix(client, "client.") {
 		return client
 	}
 
