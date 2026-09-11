@@ -53,7 +53,8 @@ func (o *SB) DeleteMACBindings(ctx context.Context, portName OVNRouterPort, ips 
 	var operations []ovsdb.Operation
 	for _, ip := range ips {
 		mb := ovnSB.MACBinding{}
-		ops, err := o.client.WhereAll(&mb,
+		ops, err := o.client.WhereAll(
+			&mb,
 			ovsModel.Condition{Field: &mb.LogicalPort, Function: ovsdb.ConditionEqual, Value: string(portName)},
 			ovsModel.Condition{Field: &mb.IP, Function: ovsdb.ConditionEqual, Value: ip.String()},
 		).Delete()
