@@ -267,7 +267,7 @@ func (c *ClusterTx) GetNetworkNameAndProjectWithID(ctx context.Context, networkI
 
 // CreateNetworkConfig adds a new entry in the networks_config table.
 func (c *ClusterTx) CreateNetworkConfig(networkID, nodeID int64, config map[string]string) error {
-	return networkConfigAdd(c.tx, networkID, nodeID, config)
+	return c.networkConfigAdd(networkID, nodeID, config)
 }
 
 // NetworkNodeJoin adds a new entry in the networks_nodes table.
@@ -738,6 +738,27 @@ func networkFillType(network *api.Network, netType NetworkType) {
 	}
 }
 
+// getNetworkType returns the type of the network with the given ID.
+func (c *ClusterTx) getNetworkType(ctx context.Context, id int64) (string, error) {
+	stmt := "SELECT type FROM networks WHERE id=?"
+	types, err := query.SelectIntegers(ctx, c.tx, stmt, id)
+	if err != nil {
+		return "", err
+	}
+
+	switch len(types) {
+	case 0:
+		return "", api.StatusErrorf(http.StatusNotFound, "Network not found")
+	case 1:
+		network := api.Network{}
+		networkFillType(&network, NetworkType(types[0]))
+
+		return network.Type, nil
+	default:
+		return "", errors.New("More than one network has the given id")
+	}
+}
+
 // getNetworkConfig populates the config map of the Network with the given ID.
 func (c *ClusterTx) getNetworkConfig(ctx context.Context, tx *ClusterTx, networkID int64, network *api.Network) error {
 	q := `
@@ -790,7 +811,7 @@ func (c *ClusterTx) CreateNetwork(ctx context.Context, projectName string, name 
 		return -1, err
 	}
 
-	err = networkConfigAdd(c.tx, id, c.nodeID, config)
+	err = c.networkConfigAdd(id, c.nodeID, config)
 	if err != nil {
 		return -1, err
 	}
@@ -815,7 +836,7 @@ func (c *ClusterTx) UpdateNetwork(ctx context.Context, project string, name, des
 		return err
 	}
 
-	err = networkConfigAdd(c.tx, id, c.nodeID, config)
+	err = c.networkConfigAdd(id, c.nodeID, config)
 	if err != nil {
 		return err
 	}
@@ -829,14 +850,19 @@ func (c *ClusterTx) UpdateNetworkDescription(id int64, description string) error
 	return err
 }
 
-func networkConfigAdd(tx *sql.Tx, networkID, nodeID int64, config map[string]string) error {
+func (c *ClusterTx) networkConfigAdd(networkID, nodeID int64, config map[string]string) error {
 	str := "INSERT INTO networks_config (network_id, node_id, key, value) VALUES(?, ?, ?, ?)"
-	stmt, err := tx.Prepare(str)
+	stmt, err := c.tx.Prepare(str)
 	if err != nil {
 		return err
 	}
 
 	defer logger.WarnOnError(stmt.Close, "Failed to close statement")
+
+	netType, err := c.getNetworkType(context.Background(), networkID)
+	if err != nil {
+		return err
+	}
 
 	for k, v := range config {
 		if v == "" {
@@ -844,7 +870,7 @@ func networkConfigAdd(tx *sql.Tx, networkID, nodeID int64, config map[string]str
 		}
 
 		var nodeIDValue any
-		if !IsNodeSpecificNetworkConfig(k) {
+		if !IsNodeSpecificNetworkConfig(netType, k) {
 			nodeIDValue = nil
 		} else {
 			nodeIDValue = nodeID
@@ -898,9 +924,9 @@ func (c *ClusterTx) RenameNetwork(ctx context.Context, project string, oldName s
 }
 
 // IsNodeSpecificNetworkConfig returns true for a given network config key, if
-// the key is node-specific. Otherwise false is returned.
-func IsNodeSpecificNetworkConfig(key string) bool {
-	if slices.Contains(nodeSpecificNetworkConfig, key) {
+// the key is node-specific for the network type. Otherwise false is returned.
+func IsNodeSpecificNetworkConfig(netType string, key string) bool {
+	if slices.Contains(nodeSpecificNetworkConfig(netType), key) {
 		return true
 	}
 
@@ -913,11 +939,11 @@ func IsNodeSpecificNetworkConfig(key string) bool {
 
 // StripNodeSpecificNetworkConfig returns a new network config map with all the
 // node-specific keys removed. The source map is left unchanged.
-func StripNodeSpecificNetworkConfig(config map[string]string) map[string]string {
+func StripNodeSpecificNetworkConfig(netType string, config map[string]string) map[string]string {
 	strippedConfig := make(map[string]string, len(config))
 
 	for key, value := range config {
-		if IsNodeSpecificNetworkConfig(key) {
+		if IsNodeSpecificNetworkConfig(netType, key) {
 			continue
 		}
 
@@ -928,11 +954,18 @@ func StripNodeSpecificNetworkConfig(config map[string]string) map[string]string 
 }
 
 // nodeSpecificNetworkConfig lists all static network config keys which are node-specific.
-var nodeSpecificNetworkConfig = []string{
-	"bgp.ipv4.nexthop",
-	"bgp.ipv6.nexthop",
-	"bridge.external_interfaces",
-	"parent",
+func nodeSpecificNetworkConfig(netType string) []string {
+	configKeys := []string{
+		"bgp.ipv4.nexthop",
+		"bgp.ipv6.nexthop",
+		"bridge.external_interfaces",
+	}
+
+	if netType != "ovn" {
+		configKeys = append(configKeys, "parent")
+	}
+
+	return configKeys
 }
 
 // nodeSpecificNetworkConfigRe lists dynamic network config keys which are node-specific.
