@@ -9,7 +9,12 @@ import (
 func AppArmorProfile() string {
 	contents, err := os.ReadFile("/proc/self/attr/current")
 	if err == nil {
-		return strings.TrimSpace(string(contents))
+		profile := strings.TrimSpace(string(contents))
+		if strings.HasSuffix(profile, " (unconfined)") {
+			return "unconfined"
+		}
+
+		return profile
 	}
 
 	return ""
