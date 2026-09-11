@@ -7001,9 +7001,9 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	}()
 
 	// Start filesystem transfer routine and initialize a channel that is closed when the routine finishes.
-	fsTransferDone := make(chan struct{})
-	g.Go(func() error {
-		defer close(fsTransferDone)
+	fsTransfer := &migrationReceiveTransfer{done: make(chan struct{})}
+	g.Go(func() (retErr error) {
+		defer func() { fsTransfer.complete(retErr) }()
 
 		d.logger.Debug("Migrate receive filesystem transfer started")
 		defer d.logger.Debug("Migrate receive filesystem transfer finished")
@@ -7171,13 +7171,13 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	// Start live state transfer routine (if required) and initialize a channel that is closed when the
 	// routine finishes. It is never closed if the routine is not started.
-	stateTransferDone := make(chan struct{})
+	stateTransfer := &migrationReceiveTransfer{done: make(chan struct{})}
 	if args.Live {
-		g.Go(func() error {
+		g.Go(func() (retErr error) {
 			d.logger.Debug("Migrate receive state transfer started")
 			defer d.logger.Debug("Migrate receive state transfer finished")
 
-			defer close(stateTransferDone)
+			defer func() { stateTransfer.complete(retErr) }()
 
 			imagesDir, err := os.MkdirTemp("", "incus_restore_")
 			if err != nil {
@@ -7249,10 +7249,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 			}
 
 			// Wait until filesystem transfer is done before starting final state sync and restore.
-			<-fsTransferDone
-
-			// But only proceed if no errors have occurred thus far.
-			err = ctx.Err()
+			err = fsTransfer.wait(ctx)
 			if err != nil {
 				return err
 			}
@@ -7281,14 +7278,14 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 	{
 		// Wait until the filesystem transfer and state transfer routines have finished.
-		<-fsTransferDone
+		fsTransferErr := fsTransfer.wait(ctx)
+		var stateTransferErr error
 		if args.Live {
-			<-stateTransferDone
+			stateTransferErr = stateTransfer.wait(ctx)
 		}
 
-		// If context is cancelled by this stage, then an error has occurred.
-		// Wait for all routines to finish and collect the first error that occurred.
-		if ctx.Err() != nil {
+		// Completion can precede errgroup cancellation, so also check the published results.
+		if fsTransferErr != nil || stateTransferErr != nil || ctx.Err() != nil {
 			err := g.Wait()
 
 			// Send failure response to source.
