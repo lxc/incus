@@ -1386,15 +1386,13 @@ test_network_ovn_peering() {
     # Check cannot delete peer used by ACL.
     ! incus network peer delete ovn1 ovn1foo --project=prj-ovn1 || false
 
-    # Cleanup.
-    incus network acl delete ovn1 --project=prj-ovn1
-    incus network peer delete ovn1 ovn1foo --project=prj-ovn1
-    incus network delete ovn1 --project=prj-ovn1
-    incus network delete ovn2 --project=prj-ovn2
-    incus network delete incusbr0
+    # Check forced project deletion handles the ACL, peer and network.
+    echo yes | incus project delete -f prj-ovn1
+    incus network peer ls ovn2 --project=prj-ovn2 | grep ovn2foo | grep ERRORED
 
-    incus project delete prj-ovn1
-    incus project delete prj-ovn2
+    # Cleanup.
+    echo yes | incus project delete -f prj-ovn2
+    incus network delete incusbr0
 }
 
 test_network_ovn_dhcp_reservation() {
