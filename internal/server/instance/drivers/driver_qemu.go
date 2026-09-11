@@ -11905,10 +11905,18 @@ func (d *qemu) postCPUHotplug(monitor *qmp.Monitor) error {
 
 // ConsoleLog returns all output sent to the instance's console's ring buffer since startup.
 func (d *qemu) ConsoleLog() (string, error) {
-	// Setup a new operation.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionConsoleRetrieve, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
-	if err != nil {
-		return "", err
+	// Setup a new operation, retrying if a concurrent retrieval just completed.
+	var op *operationlock.InstanceOperation
+	for {
+		var err error
+		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionConsoleRetrieve, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
+		if err == nil {
+			break
+		}
+
+		if !errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
+			return "", err
+		}
 	}
 
 	// Only mark the operation as done if only processing the console retrieval.
@@ -11922,15 +11930,10 @@ func (d *qemu) ConsoleLog() (string, error) {
 		return "", err
 	}
 
+	// The console isn't a ring buffer while a console session is attached (or being attached), or
+	// if the VM was started by an older Incus. Keep whatever was read and fall back to the log file.
 	logString, err := monitor.RingbufRead("console")
-	if err != nil {
-		// If a VM was started by an older version of Incus which was then upgraded, its
-		// console device won't be a ring buffer. We don't want to cause an error in this
-		// case, so just return an empty string.
-		if errors.Is(err, qmp.ErrNotARingbuf) {
-			return "", nil
-		}
-
+	if err != nil && !errors.Is(err, qmp.ErrNotARingbuf) {
 		return "", err
 	}
 
