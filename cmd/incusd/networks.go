@@ -527,7 +527,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		// A targetNode was specified, let's just define the node's network without actually creating it.
 		// Check that only NodeSpecificNetworkConfig keys are specified.
 		for key := range req.Config {
-			if !db.IsNodeSpecificNetworkConfig(key) {
+			if !db.IsNodeSpecificNetworkConfig(netType.Type(), key) {
 				return response.BadRequest(fmt.Errorf("Config key %q may not be used as member-specific key", key))
 			}
 		}
@@ -751,7 +751,7 @@ func networkPartiallyCreated(netInfo *api.Network) bool {
 	// If the network has global config keys, then it has previously been created by having its global config
 	// inserted, and this means it is partialled created.
 	for key := range netInfo.Config {
-		if !db.IsNodeSpecificNetworkConfig(key) {
+		if !db.IsNodeSpecificNetworkConfig(netInfo.Type, key) {
 			return true
 		}
 	}
@@ -765,7 +765,7 @@ func networkPartiallyCreated(netInfo *api.Network) bool {
 func networksPostCluster(ctx context.Context, s *state.State, projectName string, netInfo *api.Network, req api.NetworksPost, clientType clusterRequest.ClientType, netType network.Type) error {
 	// Check that no node-specific config key has been supplied in request.
 	for key := range req.Config {
-		if db.IsNodeSpecificNetworkConfig(key) {
+		if db.IsNodeSpecificNetworkConfig(netType.Type(), key) {
 			return fmt.Errorf("Config key %q is cluster member specific", key)
 		}
 	}
@@ -859,7 +859,7 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 	logger.Debug("Created network on local cluster member", logger.Ctx{"project": projectName, "network": req.Name, "config": netConfig})
 
 	// Remove this node's node specific config keys.
-	netConfig = db.StripNodeSpecificNetworkConfig(netConfig)
+	netConfig = db.StripNodeSpecificNetworkConfig(n.Type(), netConfig)
 
 	// Notify other nodes to create the network.
 	err = notifier(func(client incus.InstanceServer) error {
@@ -1158,7 +1158,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 
 		// If no member is specified, we omit the node-specific fields.
 		if allNodes {
-			apiNet.Config = db.StripNodeSpecificNetworkConfig(apiNet.Config)
+			apiNet.Config = db.StripNodeSpecificNetworkConfig(n.Type(), apiNet.Config)
 		}
 	} else if osInfo != nil && int(osInfo.Flags&net.FlagLoopback) > 0 {
 		apiNet.Type = "loopback"
@@ -1594,7 +1594,7 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 	// the e-tag can be generated correctly. This is because the GET request used to populate the request
 	// will also remove node-specific keys when no target is specified.
 	if targetNode == "" && s.ServerClustered {
-		etagConfig = db.StripNodeSpecificNetworkConfig(etagConfig)
+		etagConfig = db.StripNodeSpecificNetworkConfig(n.Type(), etagConfig)
 	}
 
 	// Validate the ETag.
@@ -1629,14 +1629,14 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 		if targetNode == "" {
 			// If no target is specified, then ensure only non-node-specific config keys are changed.
 			for k := range changedConfig {
-				if db.IsNodeSpecificNetworkConfig(k) {
+				if db.IsNodeSpecificNetworkConfig(n.Type(), k) {
 					return response.BadRequest(fmt.Errorf("Config key %q is cluster member specific", k))
 				}
 			}
 		} else {
 			// If a target is specified, then ensure only node-specific config keys are changed.
 			for k := range changedConfig {
-				if !db.IsNodeSpecificNetworkConfig(k) {
+				if !db.IsNodeSpecificNetworkConfig(n.Type(), k) {
 					return response.BadRequest(fmt.Errorf("Config key %q may not be used as member-specific key", k))
 				}
 			}
@@ -1720,7 +1720,7 @@ func doNetworkUpdate(s *state.State, n network.Network, req api.NetworkPut, targ
 		// node-specific network config with the submitted config to allow validation.
 		// This allows removal of non-node specific keys when they are absent from request config.
 		for k, v := range n.Config() {
-			if db.IsNodeSpecificNetworkConfig(k) {
+			if db.IsNodeSpecificNetworkConfig(n.Type(), k) {
 				req.Config[k] = v
 			}
 		}

@@ -397,7 +397,7 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 			sendNetwork.Config = make(map[string]string)
 
 			// Don't forward node specific keys (these will be merged in on recipient node).
-			sendNetwork.Config = db.StripNodeSpecificNetworkConfig(applyNetwork.Config)
+			sendNetwork.Config = db.StripNodeSpecificNetworkConfig(n.netType, applyNetwork.Config)
 
 			err = notifier(func(client incus.InstanceServer) error {
 				return client.UseProject(n.project).UpdateNetwork(n.name, sendNetwork, "")
