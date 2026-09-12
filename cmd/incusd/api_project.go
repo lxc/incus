@@ -1292,6 +1292,40 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			count--
 		}
 
+		// Clear network ACL rules so they no longer reference network peers.
+		for _, networkACLName := range entries["network-acls"] {
+			networkACL, _, err := target.GetNetworkACL(networkACLName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			if len(networkACL.Ingress) == 0 && len(networkACL.Egress) == 0 {
+				continue
+			}
+
+			networkACL.Ingress = nil
+			networkACL.Egress = nil
+			err = target.UpdateNetworkACL(networkACLName, networkACL.Writable(), "")
+			if err != nil {
+				return response.InternalError(err)
+			}
+		}
+
+		// Delete network peers.
+		for _, networkName := range entries["networks"] {
+			peerNames, err := target.GetNetworkPeerNames(networkName)
+			if err != nil {
+				return response.InternalError(err)
+			}
+
+			for _, peerName := range peerNames {
+				err := target.DeleteNetworkPeer(networkName, peerName)
+				if err != nil {
+					return response.InternalError(err)
+				}
+			}
+		}
+
 		// Delete networks.
 		for _, networkName := range entries["networks"] {
 			err := target.DeleteNetwork(networkName)

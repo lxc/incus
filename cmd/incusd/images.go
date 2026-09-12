@@ -4633,9 +4633,10 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	var imgInfo *api.Image
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Check if the image exists
-		_, _, err = tx.GetImage(ctx, fingerprint, dbCluster.ImageFilter{Project: &projectName})
+		_, imgInfo, err = tx.GetImage(ctx, fingerprint, dbCluster.ImageFilter{Project: &projectName})
 
 		return err
 	})
@@ -4647,7 +4648,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		response.SmartError(err)
+		return response.SmartError(err)
 	}
 
 	// Connect to the target and push the image
@@ -4670,7 +4671,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 	var imageCreateOp incus.Operation
 
 	run := func(op *operations.Operation) error {
-		createArgs := &incus.ImageCreateArgs{}
+		createArgs := &incus.ImageCreateArgs{Type: imgInfo.Type}
 		imageMetaPath := internalUtil.VarPath("images", fingerprint)
 		imageRootfsPath := internalUtil.VarPath("images", fingerprint+".rootfs")
 
