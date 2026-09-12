@@ -4647,7 +4647,7 @@ func imageExportPost(d *Daemon, r *http.Request) response.Response {
 
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		response.SmartError(err)
+		return response.SmartError(err)
 	}
 
 	// Connect to the target and push the image
