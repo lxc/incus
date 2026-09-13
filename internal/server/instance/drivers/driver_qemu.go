@@ -10335,11 +10335,21 @@ func (d *qemu) Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, s
 	}
 
 	args := incus.InstanceExecArgs{
-		Stdin:    stdin,
-		Stdout:   stdout,
-		Stderr:   stderr,
 		DataDone: dataDone,
 		Control:  controlHandler,
+	}
+
+	// Only set the streams when provided, a nil *os.File would otherwise be a non-nil interface.
+	if stdin != nil {
+		args.Stdin = stdin
+	}
+
+	if stdout != nil {
+		args.Stdout = stdout
+	}
+
+	if stderr != nil {
+		args.Stderr = stderr
 	}
 
 	// Always needed for VM exec, as even for non-websocket requests from the client we need to connect the
