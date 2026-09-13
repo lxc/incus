@@ -132,6 +132,19 @@ func waitForOperations(ctx context.Context, clusterDB *db.Cluster, consoleShutdo
 
 // API functions
 
+// operationCheckTokenAccess restricts operations carrying server access
+// tokens to callers allowed to create those tokens.
+func operationCheckTokenAccess(s *state.State, r *http.Request, op *operations.Operation) error {
+	switch op.Type() {
+	case operationtype.CertificateAddToken:
+		return s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanCreateCertificates)
+	case operationtype.ClusterJoinToken:
+		return s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectServer(), auth.EntitlementCanEdit)
+	}
+
+	return nil
+}
+
 // operationCheckPermission checks the caller against the permission the
 // operation requires on each of its resources.
 func operationCheckPermission(s *state.State, r *http.Request, op *operations.Operation) error {
@@ -180,12 +193,17 @@ func operationCheckPermission(s *state.State, r *http.Request, op *operations.Op
 // itself requires, so that users scoped to a single resource can follow
 // their own operations.
 func operationCheckViewAccess(s *state.State, r *http.Request, op *operations.Operation) error {
+	err := operationCheckTokenAccess(s, r, op)
+	if err != nil {
+		return err
+	}
+
 	projectName := op.Project()
 	if projectName == "" {
 		projectName = api.ProjectDefaultName
 	}
 
-	err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanViewOperations)
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanViewOperations)
 	if err == nil {
 		return nil
 	}
@@ -608,6 +626,10 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 				continue
 			}
 
+			if operationCheckTokenAccess(s, r, v) != nil {
+				continue
+			}
+
 			status := strings.ToLower(v.Status().String())
 			_, ok := body[status]
 			if !ok {
@@ -633,6 +655,10 @@ func operationsGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			if !userHasPermission(auth.ObjectProject(v.Project())) {
+				continue
+			}
+
+			if operationCheckTokenAccess(s, r, v) != nil {
 				continue
 			}
 
