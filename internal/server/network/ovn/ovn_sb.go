@@ -113,18 +113,22 @@ func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 		return nil, err
 	}
 
-	err = ovn.Connect(context.TODO())
+	// Bound the initial connection and monitor setup.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err = ovn.Connect(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ovn.Echo(context.TODO())
+	err = ovn.Echo(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set up monitor for the tables we use.
-	monitorCookie, err := ovn.Monitor(context.TODO(), ovn.NewMonitor(
+	monitorCookie, err := ovn.Monitor(ctx, ovn.NewMonitor(
 		ovsdbClient.WithTable(&ovnSB.Chassis{}),
 		ovsdbClient.WithTable(&ovnSB.PortBinding{}),
 		ovsdbClient.WithTable(&ovnSB.ServiceMonitor{}),
@@ -184,7 +188,7 @@ func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 
 	// Create the SB struct.
 	client := &SB{
-		client: &timeoutClient{Client: ovn},
+		client: &timeoutClient{Client: ovn, name: "southbound"},
 		cookie: monitorCookie,
 	}
 
