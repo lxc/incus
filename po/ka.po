@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-08-28 22:13-0400\n"
-"PO-Revision-Date: 2026-08-29 22:41+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-09-12 04:51+0000\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <https://hosted.weblate.org/projects/incus/cli/ka/>\n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.10.dev0\n"
 
 #: cmd/incus/info.go:457
 msgid "  Chassis:"
@@ -697,9 +697,8 @@ msgid "Acknowledge warning"
 msgstr "გაფრთხილების დადასტურება"
 
 #: cmd/incus/query.go:57
-#, fuzzy
 msgid "Action"
-msgstr "მდგომარეობა"
+msgstr "ქმედება"
 
 #: cmd/incus/query.go:134
 #, c-format
@@ -3528,7 +3527,7 @@ msgstr ""
 
 #: cmd/incus/remote.go:1185
 msgid "GLOBAL"
-msgstr ""
+msgstr "გლობალური"
 
 #: cmd/incus/info.go:564
 msgid "GPU:"
@@ -3881,11 +3880,11 @@ msgstr ""
 
 #: cmd/incus/list.go:535 cmd/incus/network.go:1084
 msgid "IPV4"
-msgstr ""
+msgstr "IPv4"
 
 #: cmd/incus/list.go:536 cmd/incus/network.go:1085
 msgid "IPV6"
-msgstr ""
+msgstr "IPv6"
 
 #: cmd/incus/network.go:998
 msgid "IPv4 uplink address"
@@ -5923,9 +5922,8 @@ msgid "NBD listening on %v"
 msgstr ""
 
 #: cmd/incus/network_allocations.go:88 cmd/incus/network_allocations.go:247
-#, fuzzy
 msgid "NETWORK"
-msgstr "ქსელის ზონა"
+msgstr "ქსელი"
 
 #: cmd/incus/project.go:552
 msgid "NETWORK ZONES"
@@ -6372,7 +6370,7 @@ msgstr ""
 
 #: cmd/incus/action.go:330
 msgid "PATH"
-msgstr ""
+msgstr "ბილიკი"
 
 #: cmd/incus/info.go:119 cmd/incus/info.go:205
 #, c-format
@@ -6434,7 +6432,7 @@ msgstr "პროტოკოლი"
 
 #: cmd/incus/image.go:1118 cmd/incus/remote.go:1183
 msgid "PUBLIC"
-msgstr ""
+msgstr "საჯარო"
 
 #: cmd/incus/info.go:806 cmd/incus/network.go:943
 msgid "Packets received"
@@ -6795,7 +6793,7 @@ msgstr ""
 
 #: cmd/incus/project.go:1083
 msgid "RESOURCE"
-msgstr ""
+msgstr "რესურსი"
 
 #: cmd/incus/config_trust.go:425
 msgid "RESTRICTED"
@@ -8784,7 +8782,7 @@ msgstr ""
 
 #: cmd/incus/project.go:1055
 msgid "UNLIMITED"
-msgstr ""
+msgstr "შეუზღუდავი"
 
 #: cmd/incus/image.go:1121
 msgid "UPLOAD DATE"
@@ -9257,7 +9255,7 @@ msgstr "VLAN-ის გაფილტვრა"
 
 #: cmd/incus/network.go:975
 msgid "VLAN:"
-msgstr ""
+msgstr "VLAN:"
 
 #: cmd/incus/info.go:368 cmd/incus/info.go:381 cmd/incus/info.go:395
 #, c-format
@@ -9632,7 +9630,7 @@ msgstr "ჩართულია"
 
 #: cmd/incus/info.go:684
 msgid "ephemeral"
-msgstr ""
+msgstr "ეფემერული"
 
 #: cmd/incus/action.go:546
 #, c-format
@@ -10401,7 +10399,7 @@ msgstr ""
 #: cmd/incus/config_trust.go:487 cmd/incus/image.go:957 cmd/incus/image.go:962
 #: cmd/incus/image.go:1194
 msgid "no"
-msgstr ""
+msgstr "არა"
 
 #: cmd/incus/default.go:146
 msgid "no_color must be boolean"
@@ -10572,9 +10570,8 @@ msgid "value"
 msgstr "მნიშვნელობა"
 
 #: cmd/incus/usage/usage.go:868
-#, fuzzy
 msgid "variable"
-msgstr "გამორთულია"
+msgstr "ცვლადი"
 
 #: cmd/incus/usage/usage.go:869
 msgid "volume"
