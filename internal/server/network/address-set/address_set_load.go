@@ -331,7 +331,7 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 	}
 
 	var profiles []dbCluster.Profile
-	profileDevices := map[string]map[string]dbCluster.Device{}
+	profileDevices := map[int]map[string]dbCluster.Device{}
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Find networks using the ACLs. Cheapest to do.
@@ -364,9 +364,31 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 		}
 
 		// Look for profiles. Next cheapest to do.
-		profiles, err = dbCluster.GetProfiles(ctx, tx.Tx())
+		// Only profiles in the default project may belong to a different project than the ACL.
+		var profileFilters []dbCluster.ProfileFilter
+		if aclProjectName != api.ProjectDefaultName {
+			profileFilters = append(profileFilters, dbCluster.ProfileFilter{Project: &aclProjectName})
+		}
+
+		allProfiles, err := dbCluster.GetProfiles(ctx, tx.Tx(), profileFilters...)
 		if err != nil {
 			return err
+		}
+
+		// Resolve the effective network project of each profile.
+		projects, err := dbCluster.GetProjects(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		networkProjects := map[string]string{}
+		for _, p := range projects {
+			apiProject, err := p.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			networkProjects[p.Name] = project.NetworkProjectFromRecord(apiProject)
 		}
 
 		// Get all the profile devices.
@@ -375,13 +397,19 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 			return err
 		}
 
-		for _, profile := range profiles {
+		for _, profile := range allProfiles {
+			// Skip profiles whose effective network project doesn't match this Network ACL's project.
+			if networkProjects[profile.Project] != aclProjectName {
+				continue
+			}
+
 			devices := map[string]dbCluster.Device{}
 			for _, dev := range profileDevicesByID[profile.ID] {
 				devices[dev.Name] = dev
 			}
 
-			profileDevices[profile.Name] = devices
+			profiles = append(profiles, profile)
+			profileDevices[profile.ID] = devices
 		}
 
 		return nil
@@ -391,19 +419,8 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 	}
 
 	for _, profile := range profiles {
-		// Get the profiles's effective network project name.
-		profileNetworkProjectName, _, err := project.NetworkProject(s.DB.Cluster, profile.Project)
-		if err != nil {
-			return err
-		}
-
-		// Skip profiles who's effective network project doesn't match this Network ACL's project.
-		if profileNetworkProjectName != aclProjectName {
-			continue
-		}
-
 		// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
-		for devName, devConfig := range deviceConfig.NewDevices(dbCluster.DevicesToAPI(profileDevices[profile.Name])) {
+		for devName, devConfig := range deviceConfig.NewDevices(dbCluster.DevicesToAPI(profileDevices[profile.ID])) {
 			matchedACLNames := ACLisInUseByDevice(devConfig, matchACLNames...)
 			if len(matchedACLNames) > 0 {
 				// Call usageFunc with a list of matched ACLs and info about the instance NIC.
@@ -417,28 +434,14 @@ func ACLUsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context
 		}
 	}
 
-	var aclNames []string
-
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{Project: &aclProjectName})
 		if err != nil {
 			return err
 		}
 
-		aclNames = make([]string, len(acls))
-		for i, acl := range acls {
-			aclNames[i] = acl.Name
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		for _, aclName := range aclNames {
-			_, aclInfo, err := dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, aclName)
+		for _, acl := range acls {
+			_, aclInfo, err := dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), aclProjectName, acl.Name)
 			if err != nil {
 				return err
 			}
