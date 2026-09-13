@@ -7734,14 +7734,24 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 			record.TargetNetworkIntegrationID = id
 
 		case "local":
-			// Check if target peer already exists.
-			peers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), dbCluster.NetworkPeerFilter{
-				Type:                 &record.Type,
-				TargetNetworkProject: &n.project,
-				TargetNetworkName:    &n.name,
-			})
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			// Check if the target network already has a pending peer pointing at us.
+			// A missing target network isn't an error so the peer stays pending.
+			var peers []dbCluster.NetworkPeer
+
+			targetNetID, err := tx.GetNetworkID(ctx, peer.TargetProject, peer.TargetNetwork)
+			if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
 				return err
+			}
+
+			if err == nil {
+				peers, err = dbCluster.GetNetworkPeers(ctx, tx.Tx(), dbCluster.NetworkPeerFilter{
+					NetworkID:            &targetNetID,
+					TargetNetworkProject: &n.project,
+					TargetNetworkName:    &n.name,
+				})
+				if err != nil && !errors.Is(err, sql.ErrNoRows) {
+					return err
+				}
 			}
 
 			if len(peers) == 1 {
@@ -8185,6 +8195,7 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 // PeerDelete deletes a network peering.
 func (n *ovn) PeerDelete(peerName string) error {
 	var peerID int64
+	var targetNetID sql.NullInt64
 	var peer *api.NetworkPeer
 
 	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -8194,6 +8205,7 @@ func (n *ovn) PeerDelete(peerName string) error {
 		}
 
 		peerID = dbPeer.ID
+		targetNetID = dbPeer.TargetNetworkID
 		peer, err = dbPeer.ToAPI(ctx, tx.Tx())
 		if err != nil {
 			return fmt.Errorf("Failed converting network peer DB object to API object: %w", err)
@@ -8231,14 +8243,18 @@ func (n *ovn) PeerDelete(peerName string) error {
 	}
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Deactivate any existing peer.
-		if peer.Type == "local" {
+		// Deactivate the mutual peer on the target network.
+		if peer.Type == "local" && targetNetID.Valid {
 			peers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), dbCluster.NetworkPeerFilter{TargetNetworkID: &n.id})
 			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				return err
 			}
 
 			for _, peer := range peers {
+				if peer.NetworkID != targetNetID.Int64 {
+					continue
+				}
+
 				peer.TargetNetworkID = sql.NullInt64{}
 
 				err = dbCluster.UpdateNetworkPeer(ctx, tx.Tx(), peer.NetworkID, peer.Name, peer)
