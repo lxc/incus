@@ -135,6 +135,75 @@ func waitForOperations(ctx context.Context, cluster *db.Cluster, consoleShutdown
 
 // API functions
 
+// operationCheckPermission checks the caller against the permission the
+// operation requires on each of its resources.
+func operationCheckPermission(s *state.State, r *http.Request, op *operations.Operation) error {
+	objectType, entitlement := op.Permission()
+	if objectType == "" {
+		return api.StatusErrorf(http.StatusForbidden, "Operation has no associated permission")
+	}
+
+	projectName := op.Project()
+	if projectName == "" {
+		projectName = api.ProjectDefaultName
+	}
+
+	for _, v := range op.Resources() {
+		for _, u := range v {
+			// When dealing with specific objects, get the arguments from the URL.
+			var pathArgs []string
+
+			if objectType != auth.ObjectTypeProject {
+				var err error
+
+				_, _, _, pathArgs, err = dbCluster.URLToEntityType(u.String())
+				if err != nil {
+					return fmt.Errorf("Unable to parse operation resource URL: %w", err)
+				}
+			}
+
+			// Check that the access is allowed.
+			object, err := auth.NewObject(objectType, projectName, pathArgs...)
+			if err != nil {
+				return fmt.Errorf("Unable to create authorization object for operation: %w", err)
+			}
+
+			err = s.Authorizer.CheckPermission(r.Context(), r, object, entitlement)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// operationCheckViewAccess allows viewing an operation to callers with
+// can_view_operations on its project or with the permission the operation
+// itself requires, so that users scoped to a single resource can follow
+// their own operations.
+func operationCheckViewAccess(s *state.State, r *http.Request, op *operations.Operation) error {
+	projectName := op.Project()
+	if projectName == "" {
+		projectName = api.ProjectDefaultName
+	}
+
+	err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanViewOperations)
+	if err == nil {
+		return nil
+	}
+
+	if !api.StatusErrorCheck(err, http.StatusForbidden) {
+		return err
+	}
+
+	if operationCheckPermission(s, r, op) != nil {
+		return err
+	}
+
+	return nil
+}
+
 // swagger:operation GET /1.0/operations/{id} operations operation_get
 //
 //	Get the operation state
@@ -182,6 +251,11 @@ func operationGet(d *Daemon, r *http.Request) response.Response {
 	// First check if the query is for a local operation from this node
 	op, err := operations.OperationGetInternal(id)
 	if err == nil {
+		err = operationCheckViewAccess(s, r, op)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
 		_, body, err = op.Render()
 		if err != nil {
 			return response.SmartError(err)
@@ -258,33 +332,11 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 			projectName = api.ProjectDefaultName
 		}
 
-		objectType, entitlement := op.Permission()
+		objectType, _ := op.Permission()
 		if objectType != "" {
-			for _, v := range op.Resources() {
-				for _, u := range v {
-					// When dealing with specific objects, get the arguments from the URL.
-					var pathArgs []string
-
-					if objectType != auth.ObjectTypeProject {
-						var err error
-
-						_, _, _, pathArgs, err = dbCluster.URLToEntityType(u.String())
-						if err != nil {
-							return response.InternalError(fmt.Errorf("Unable to parse operation resource URL: %w", err))
-						}
-					}
-
-					// Check that the access is allowed.
-					object, err := auth.NewObject(objectType, projectName, pathArgs...)
-					if err != nil {
-						return response.InternalError(fmt.Errorf("Unable to create authorization object for operation: %w", err))
-					}
-
-					err = s.Authorizer.CheckPermission(r.Context(), r, object, entitlement)
-					if err != nil {
-						return response.SmartError(err)
-					}
-				}
+			err = operationCheckPermission(s, r, op)
+			if err != nil {
+				return response.SmartError(err)
 			}
 		}
 
@@ -941,8 +993,15 @@ func operationWaitGet(d *Daemon, r *http.Request) response.Response {
 	// First check if the query is for a local operation from this node
 	op, err := operations.OperationGetInternal(id)
 	if err == nil {
-		if secret != "" && !util.CompareSecret(op.Metadata()["secret"], secret) {
-			return response.Forbidden(nil)
+		if secret != "" {
+			if !util.CompareSecret(op.Metadata()["secret"], secret) {
+				return response.Forbidden(nil)
+			}
+		} else {
+			err = operationCheckViewAccess(s, r, op)
+			if err != nil {
+				return response.SmartError(err)
+			}
 		}
 
 		var ctx context.Context
