@@ -1028,6 +1028,28 @@ test_projects_restrictions() {
 
     incus delete c1
 
+    # Snapshots can be restored with restricted.containers.lowlevel set to
+    # 'block' even though their server-generated volatile keys differ.
+    incus project set p1 restricted.containers.lowlevel=block
+    incus project set p1 restricted.snapshots=allow
+    incus init testimage c1
+    incus snapshot create c1 snap0
+    incus start c1
+    incus stop c1 --force
+    incus snapshot restore c1 snap0
+    incus snapshot restore c1 snap0
+    incus delete c1
+
+    # Restoring a snapshot with a low-level option is still refused.
+    incus project set p1 restricted.containers.lowlevel=allow
+    incus init testimage c1 -c "raw.idmap=both 0 0"
+    incus snapshot create c1 snap0
+    incus config unset c1 raw.idmap
+    incus project set p1 restricted.containers.lowlevel=block
+    ! incus snapshot restore c1 snap0 || false
+    incus delete c1
+    incus project unset p1 restricted.snapshots
+
     # Setting restricted.containers.privilege to 'allow' makes it possible to create
     # privileged containers.
     incus project set p1 restricted.containers.privilege=allow
