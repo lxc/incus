@@ -272,6 +272,14 @@ test_clustering_membership() {
     INCUS_DIR="${INCUS_TWO_DIR}" incus cluster list
     INCUS_DIR="${INCUS_TWO_DIR}" incus cluster show node3 | grep -q "status: Offline"
 
+    # Check cluster member metrics.
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -Fx 'incus_cluster_member_status{member="node3",status="offline"} 1'
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -Fx 'incus_cluster_member_status{member="node2",status="online"} 1'
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -Fx 'incus_cluster_member_role{member="node1",role="database-leader"} 1'
+    ! INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -F 'incus_cluster_member_role{member="node5",role="database-leader"}' || false
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -Fx 'incus_cluster_member_group{group="default",member="node1"} 1'
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /1.0/metrics | grep -F 'incus_cluster_member{architecture="' | grep -F 'failure_domain="default",member="node1"} 1'
+
     # Gracefully remove a node and check trust certificate is removed.
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster list | grep node4
     INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global 'SELECT name FROM certificates WHERE type = 2' | grep node4
