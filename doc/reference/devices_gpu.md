@@ -29,6 +29,8 @@ It supports hotplugging only for containers, not for VMs.
 
 A `physical` GPU device passes an entire GPU through into the instance.
 
+To allow peer-to-peer DMA between NVIDIA GPUs passed through to the same VM, set the same `nvidia.clique` value on each of those GPU devices.
+
 ### Device options
 
 GPU devices of type `physical` have the following device options:
