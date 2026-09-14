@@ -113,23 +113,27 @@ func NewICNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 		return nil, err
 	}
 
-	err = ovn.Connect(context.TODO())
+	// Bound the initial connection and monitor setup.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err = ovn.Connect(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = ovn.Echo(context.TODO())
+	err = ovn.Echo(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	monitorCookie, err := ovn.MonitorAll(context.TODO())
+	monitorCookie, err := ovn.MonitorAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add the client to the struct.
-	client.client = &timeoutClient{Client: ovn}
+	client.client = &timeoutClient{Client: ovn, name: "interconnect northbound"}
 	client.cookie = monitorCookie
 
 	// Set finalizer to stop the monitor.
