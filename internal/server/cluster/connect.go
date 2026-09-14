@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -71,6 +72,14 @@ func Connect(address string, networkCert *localtls.CertInfo, serverCert *localtl
 			val, ok = ctx.Value(request.CtxProtocol).(string)
 			if ok {
 				req.Header.Add(request.HeaderForwardedProtocol, val)
+			}
+
+			claims, ok := ctx.Value(request.CtxClaims).(map[string]any)
+			if ok && len(claims) > 0 {
+				encoded, err := json.Marshal(claims)
+				if err == nil {
+					req.Header.Add(request.HeaderForwardedClaims, string(encoded))
+				}
 			}
 
 			req.Header.Add(request.HeaderForwardedAddress, r.RemoteAddr)
