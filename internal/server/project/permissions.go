@@ -234,7 +234,7 @@ func getInstanceCountLimit(info *projectInfo, instanceType instancetype.Type) (i
 
 // Check restrictions on setting volatile.* keys.
 func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instancetype.Type, instanceName string, config, currentConfig map[string]string, strip bool) error {
-	if project.Config["restrict"] == "false" {
+	if util.IsFalseOrEmpty(project.Config["restricted"]) {
 		return nil
 	}
 
