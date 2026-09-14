@@ -162,6 +162,15 @@ func starlarkMarshal(input any, parent *starlark.Dict) (starlark.Value, error) {
 				continue
 			}
 
+			// Dereference embedded pointers so their fields get flattened into the parent.
+			if field.Anonymous && fieldValue.Kind() == reflect.Pointer {
+				if fieldValue.IsNil() {
+					continue
+				}
+
+				fieldValue = fieldValue.Elem()
+			}
+
 			if field.Anonymous && fieldValue.Kind() == reflect.Struct {
 				// If anonymous struct field's value is another struct then pass the the current
 				// starlark dictionary to starlarkMarshal so its fields will be set on the parent.
