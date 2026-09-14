@@ -576,6 +576,7 @@ var APIExtensions = []string{
 	"device_queue_disc",
 	"network_bridge_dns_include_hosts",
 	"gpu_physical_clique",
+	"authorization_scriptlet_claims",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
