@@ -129,6 +129,9 @@ const qemuSparseUSBPorts = 8
 
 var errQemuAgentOffline = errors.New("VM agent isn't currently running")
 
+// qemuStopHooks tracks instances with a stop hook in progress.
+var qemuStopHooks sync.Map
+
 type monitorHook func(m *qmp.Monitor) error
 
 // qemuLoad creates a Qemu instance from the supplied InstanceArgs.
@@ -758,6 +761,16 @@ func (d *qemu) pidWait(timeout time.Duration) bool {
 func (d *qemu) onStop(target string, reason string) error {
 	d.logger.Debug("onStop hook started", logger.Ctx{"target": target, "reason": reason})
 	defer d.logger.Debug("onStop hook finished", logger.Ctx{"target": target, "reason": reason})
+
+	// Only run one stop hook at a time, a duplicate would race the cleanup and restart.
+	hookKey := project.Instance(d.Project().Name, d.Name())
+	_, running := qemuStopHooks.LoadOrStore(hookKey, struct{}{})
+	if running {
+		d.logger.Warn("Ignoring duplicate stop hook", logger.Ctx{"target": target, "reason": reason})
+		return nil
+	}
+
+	defer qemuStopHooks.Delete(hookKey)
 
 	// Create/pick up operation.
 	op, err := d.onStopOperationSetup(target)
