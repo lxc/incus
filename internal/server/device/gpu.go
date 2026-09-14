@@ -11,18 +11,19 @@ import (
 func gpuValidationRules(requiredFields []string, optionalFields []string) map[string]func(value string) error {
 	// Define a set of default validators for each field name.
 	defaultValidators := map[string]func(value string) error{
-		"vendorid":  validate.Optional(validate.IsDeviceID),
-		"productid": validate.Optional(validate.IsDeviceID),
-		"id":        validate.IsAny,
-		"pci":       validate.IsPCIAddress,
-		"uid":       unixValidUserID,
-		"gid":       unixValidUserID,
-		"mode":      unixValidOctalFileMode,
-		"mig.gi":    validate.IsUint8,
-		"mig.ci":    validate.IsUint8,
-		"mig.uuid":  gpuValidMigUUID,
-		"mdev":      validate.IsAny,
-		"blob.size": validate.Optional(validate.IsSize),
+		"vendorid":      validate.Optional(validate.IsDeviceID),
+		"productid":     validate.Optional(validate.IsDeviceID),
+		"id":            validate.IsAny,
+		"pci":           validate.IsPCIAddress,
+		"uid":           unixValidUserID,
+		"gid":           unixValidUserID,
+		"mode":          unixValidOctalFileMode,
+		"mig.gi":        validate.IsUint8,
+		"mig.ci":        validate.IsUint8,
+		"mig.uuid":      gpuValidMigUUID,
+		"mdev":          validate.IsAny,
+		"blob.size":     validate.Optional(validate.IsSize),
+		"nvidia.clique": validate.IsInRange(0, 15),
 	}
 
 	validators := map[string]func(value string) error{}
