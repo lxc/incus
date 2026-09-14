@@ -1182,6 +1182,37 @@ test_network_ovn_peering() {
     incus network peer create ovn2 ovn2foo prj-ovn1/ovn1 --project=prj-ovn2
     incus network peer ls ovn2 --project=prj-ovn2 | grep ovn2foo | grep CREATED
 
+    # Check peering one network with several networks.
+    incus network create ovn3 --type=ovn network=incusbr0 --project=prj-ovn2
+    incus network create ovn4 --type=ovn network=incusbr0 --project=prj-ovn2
+    incus network peer create ovn3 ovn3foo prj-ovn1/ovn1 --project=prj-ovn2
+    incus network peer create ovn1 ovn1bar prj-ovn2/ovn3 --project=prj-ovn1
+    incus network peer create ovn4 ovn4foo prj-ovn1/ovn1 --project=prj-ovn2
+    incus network peer create ovn1 ovn1baz prj-ovn2/ovn4 --project=prj-ovn1
+    incus network peer ls ovn3 --project=prj-ovn2 | grep ovn3foo | grep CREATED
+    incus network peer ls ovn4 --project=prj-ovn2 | grep ovn4foo | grep CREATED
+
+    # Check deleting a peer only deactivates its own mutual peer.
+    incus network peer delete ovn1 ovn1bar --project=prj-ovn1
+    incus network peer ls ovn3 --project=prj-ovn2 | grep ovn3foo | grep ERRORED
+    incus network peer ls ovn4 --project=prj-ovn2 | grep ovn4foo | grep CREATED
+    incus network peer ls ovn2 --project=prj-ovn2 | grep ovn2foo | grep CREATED
+    incus network peer delete ovn1 ovn1baz --project=prj-ovn1
+    incus network peer delete ovn3 ovn3foo --project=prj-ovn2
+    incus network peer delete ovn4 ovn4foo --project=prj-ovn2
+
+    # Check completing a peering while several peers are pending on the same network.
+    incus network peer create ovn3 ovn3foo prj-ovn1/ovn1 --project=prj-ovn2
+    incus network peer create ovn4 ovn4foo prj-ovn1/ovn1 --project=prj-ovn2
+    incus network peer create ovn1 ovn1bar prj-ovn2/ovn3 --project=prj-ovn1
+    incus network peer ls ovn3 --project=prj-ovn2 | grep ovn3foo | grep CREATED
+    incus network peer ls ovn4 --project=prj-ovn2 | grep ovn4foo | grep PENDING
+    incus network peer delete ovn1 ovn1bar --project=prj-ovn1
+    incus network peer delete ovn3 ovn3foo --project=prj-ovn2
+    incus network peer delete ovn4 ovn4foo --project=prj-ovn2
+    incus network delete ovn3 --project=prj-ovn2
+    incus network delete ovn4 --project=prj-ovn2
+
     # Test that pinging now works between networks.
     sleep 5
 
