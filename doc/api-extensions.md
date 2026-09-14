@@ -3463,3 +3463,9 @@ Adds a new `nvidia.clique` configuration key to `gpu` devices of type `physical`
 when used with virtual machines. It sets the NVIDIA GPUDirect P2P clique ID
 (0 to 15) advertised to the guest driver, allowing peer-to-peer DMA between
 GPUs passed through to the same virtual machine when they share a clique ID.
+
+## `authorization_scriptlet_claims`
+
+This adds a `Claims` field to the `details` argument of the authorization
+scriptlet, holding the validated OIDC token claims of the client as a
+dictionary. This allows writing rules based on claims such as `groups`.
