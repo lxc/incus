@@ -68,6 +68,7 @@ type Monitor struct {
 	disconnected   bool
 	chDisconnect   chan struct{}
 	eventHandler   func(name string, data map[string]any)
+	handlerCleared bool
 	serialCharDev  string
 	initialized    bool
 	expectingReset bool
@@ -516,9 +517,17 @@ func (m *Monitor) IsInitialized() bool {
 }
 
 // setEventHandler sets the current event handler (prevents race with getEventHandler).
+// setEventHandler sets the event handler. Clearing it is sticky so that the
+// caller taking over the shutdown of this QEMU isn't raced by re-arming connections.
 func (m *Monitor) setEventHandler(handler func(name string, data map[string]any)) {
 	m.stateMu.Lock()
 	defer m.stateMu.Unlock()
+
+	if handler == nil {
+		m.handlerCleared = true
+	} else if m.handlerCleared {
+		return
+	}
 
 	m.eventHandler = handler
 }
