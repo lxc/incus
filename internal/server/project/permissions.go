@@ -232,10 +232,10 @@ func getInstanceCountLimit(info *projectInfo, instanceType instancetype.Type) (i
 	return instanceCount, -1, nil
 }
 
-// Check restrictions on setting volatile.* keys.
-func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instancetype.Type, instanceName string, config, currentConfig map[string]string, strip bool) error {
-	if project.Config["restrict"] == "false" {
-		return nil
+// isVolatileConfigRestricted returns whether the project restricts setting volatile.* keys.
+func isVolatileConfigRestricted(project api.Project, instanceType instancetype.Type) bool {
+	if util.IsFalseOrEmpty(project.Config["restricted"]) {
+		return false
 	}
 
 	var restrictedLowLevel string
@@ -246,31 +246,32 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 		restrictedLowLevel = "restricted.virtual-machines.lowlevel"
 	}
 
-	if project.Config[restrictedLowLevel] == "allow" {
-		return nil
+	return project.Config[restrictedLowLevel] != "allow"
+}
+
+// isSafeVolatileKey returns whether a volatile.* key may be set in restricted projects.
+func isSafeVolatileKey(key string) bool {
+	if slices.Contains([]string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power", "volatile.selinux.context"}, key) {
+		return true
 	}
 
-	// Checker for safe volatile keys.
-	isSafeKey := func(key string) bool {
-		if slices.Contains([]string{"volatile.apply_template", "volatile.base_image", "volatile.last_state.power"}, key) {
+	if strings.HasPrefix(key, instance.ConfigVolatilePrefix) {
+		if strings.HasSuffix(key, ".apply_quota") {
 			return true
 		}
 
-		if key == "volatile.selinux.context" {
+		if strings.HasSuffix(key, ".hwaddr") {
 			return true
 		}
+	}
 
-		if strings.HasPrefix(key, instance.ConfigVolatilePrefix) {
-			if strings.HasSuffix(key, ".apply_quota") {
-				return true
-			}
+	return false
+}
 
-			if strings.HasSuffix(key, ".hwaddr") {
-				return true
-			}
-		}
-
-		return false
+// Check restrictions on setting volatile.* keys.
+func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instancetype.Type, instanceName string, config, currentConfig map[string]string, strip bool) error {
+	if !isVolatileConfigRestricted(project, instanceType) {
+		return nil
 	}
 
 	for key, value := range config {
@@ -279,7 +280,7 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 		}
 
 		// Allow given safe volatile keys to be set
-		if isSafeKey(key) {
+		if isSafeVolatileKey(key) {
 			continue
 		}
 
@@ -299,6 +300,32 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 	}
 
 	return nil
+}
+
+// Replace unsafe volatile.* keys that can't be restored from a snapshot with the instance's current values.
+func restoreRestrictedVolatileConfig(project api.Project, instanceType instancetype.Type, config, currentConfig map[string]string) {
+	if !isVolatileConfigRestricted(project, instanceType) {
+		return
+	}
+
+	for key := range config {
+		if !strings.HasPrefix(key, instance.ConfigVolatilePrefix) || isSafeVolatileKey(key) {
+			continue
+		}
+
+		// Idmap keys describe the on-disk state of the snapshot and so must come from it.
+		if strings.HasPrefix(key, "volatile.idmap.") || key == "volatile.last_state.idmap" {
+			continue
+		}
+
+		currentValue, ok := currentConfig[key]
+		if !ok {
+			delete(config, key)
+			continue
+		}
+
+		config[key] = currentValue
+	}
 }
 
 // AllowVolumeCreation returns an error if any project-specific limit or
@@ -1078,6 +1105,15 @@ func isVMLowLevelOptionForbidden(key string) bool {
 // AllowInstanceUpdate returns an error if any project-specific limit or
 // restriction is violated when updating an existing instance.
 func AllowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req api.InstancePut, currentConfig map[string]string) error {
+	return allowInstanceUpdate(tx, projectName, instanceName, req, currentConfig, false)
+}
+
+// AllowSnapshotRestore checks project limits and restrictions for a snapshot restore, replacing unsafe volatile.* keys in req.Config.
+func AllowSnapshotRestore(tx *db.ClusterTx, projectName, instanceName string, req api.InstancePut, currentConfig map[string]string) error {
+	return allowInstanceUpdate(tx, projectName, instanceName, req, currentConfig, true)
+}
+
+func allowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req api.InstancePut, currentConfig map[string]string, restore bool) error {
 	var updatedInstance *api.Instance
 	info, err := fetchProject(tx, projectName, true)
 	if err != nil {
@@ -1103,6 +1139,11 @@ func AllowInstanceUpdate(tx *db.ClusterTx, projectName, instanceName string, req
 	instType, err := instancetype.New(updatedInstance.Type)
 	if err != nil {
 		return err
+	}
+
+	// Snapshots carry server-generated volatile.* keys that legitimately differ from the instance.
+	if restore {
+		restoreRestrictedVolatileConfig(info.Project, instType, req.Config, currentConfig)
 	}
 
 	// Special case restriction checks on volatile.* keys, since we want to
