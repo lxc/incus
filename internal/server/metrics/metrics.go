@@ -12,6 +12,10 @@ import (
 
 // ProcsTotal is a gauge according to the OpenMetrics spec as its value can decrease.
 var metricTypeGauges = []MetricType{
+	ClusterMemberGroup,
+	ClusterMemberInfo,
+	ClusterMemberRole,
+	ClusterMemberStatus,
 	CPUs,
 	GoGoroutines,
 	GoHeapObjects,
