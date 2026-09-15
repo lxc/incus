@@ -112,6 +112,20 @@ test_idmap() {
     [ "$(incus exec idmap1 -- cat /proc/self/uid_map | awk '{print $3}')" = "65536" ]
     [ "$(incus exec idmap1 -- cat /proc/self/gid_map | awk '{print $3}')" = "65536" ]
 
+    # Reject a fixed range overlapping another isolated container.
+    FIXED_BASE=$(incus config get idmap1 volatile.idmap.base)
+    ! incus init testimage idmap-overlap -c security.idmap.isolated=true -c security.idmap.base="${FIXED_BASE}" || false
+    ! incus config set idmap security.idmap.base="${FIXED_BASE}" || false
+
+    # A fixed range can be retained by its owner and its snapshots.
+    incus config set idmap1 security.idmap.base="${FIXED_BASE}"
+    incus snapshot create idmap1 fixed-idmap
+    incus delete idmap1/fixed-idmap
+    ! incus copy idmap1 idmap-fixed-copy || false
+    incus copy idmap1 idmap-fixed-copy -c security.idmap.base="$((FIXED_BASE + 65536))"
+    incus delete idmap-fixed-copy
+    incus config unset idmap1 security.idmap.base
+
     # Validate non-overlapping maps
     incus exec idmap -- touch /a
     ! incus exec idmap -- chown 65536 /a || false
