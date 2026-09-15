@@ -112,6 +112,15 @@ test_idmap() {
     [ "$(incus exec idmap1 -- cat /proc/self/uid_map | awk '{print $3}')" = "65536" ]
     [ "$(incus exec idmap1 -- cat /proc/self/gid_map | awk '{print $3}')" = "65536" ]
 
+    # Reuse an exact-sized gap between two isolated containers.
+    incus init testimage idmap-gap -c security.idmap.isolated=true
+    GAP_BASE=$(incus config get idmap-gap volatile.idmap.base)
+    incus init testimage idmap-after-gap -c security.idmap.isolated=true
+    incus delete idmap-gap
+    incus init testimage idmap-gap -c security.idmap.isolated=true
+    [ "$(incus config get idmap-gap volatile.idmap.base)" = "${GAP_BASE}" ]
+    incus delete idmap-gap idmap-after-gap
+
     # Validate non-overlapping maps
     incus exec idmap -- touch /a
     ! incus exec idmap -- chown 65536 /a || false
