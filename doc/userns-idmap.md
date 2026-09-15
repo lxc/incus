@@ -68,6 +68,12 @@ To select a specific map, the `security.idmap.base` key will let you
 override the auto-detection mechanism and tell Incus what host UID/GID you
 want to use as the base for the container.
 
+For isolated containers, a fixed range must not overlap another isolated
+container's allocated range on the same server. Snapshots can retain their
+parent's range. When copying a container with a fixed range on the same server,
+choose a different base for the copy or unset the fixed base to allocate it
+automatically.
+
 These properties require a container reboot to take effect.
 
 ## Custom idmaps
