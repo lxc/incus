@@ -112,6 +112,27 @@ test_idmap() {
     [ "$(incus exec idmap1 -- cat /proc/self/uid_map | awk '{print $3}')" = "65536" ]
     [ "$(incus exec idmap1 -- cat /proc/self/gid_map | awk '{print $3}')" = "65536" ]
 
+    # Concurrent creations must receive distinct isolated ranges.
+    IDMAP_PIDS=""
+    for i in $(seq 1 8); do
+        incus init testimage "idmap-concurrent-${i}" -c security.idmap.isolated=true &
+        IDMAP_PIDS="${IDMAP_PIDS} $!"
+    done
+
+    for pid in ${IDMAP_PIDS}; do
+        wait "${pid}"
+    done
+
+    IDMAP_BASES=""
+    for i in $(seq 1 8); do
+        IDMAP_BASES="${IDMAP_BASES} $(incus config get "idmap-concurrent-${i}" volatile.idmap.base)"
+    done
+
+    [ "$(echo "${IDMAP_BASES}" | tr ' ' '\n' | sed '/^$/d' | sort -u | wc -l)" -eq 8 ]
+    for i in $(seq 1 8); do
+        incus delete "idmap-concurrent-${i}"
+    done
+
     # Validate non-overlapping maps
     incus exec idmap -- touch /a
     ! incus exec idmap -- chown 65536 /a || false
