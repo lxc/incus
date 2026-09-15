@@ -495,7 +495,7 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// If the instance needs to move, make sure it doesn't have backups.
-	if targetMemberInfo != nil && targetMemberInfo.Name != inst.Location() {
+	if req.Project != "" || (targetMemberInfo != nil && targetMemberInfo.Name != inst.Location()) {
 		// Check if instance has backups.
 		var backups []string
 		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
