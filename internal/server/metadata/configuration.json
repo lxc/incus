@@ -469,6 +469,14 @@
 						}
 					},
 					{
+						"nvidia.clique": {
+							"longdesc": "",
+							"required": "no",
+							"shortdesc": "NVIDIA GPUDirect P2P clique ID (0 to 15) shared by GPUs allowed to DMA to each other (VM only)",
+							"type": "int"
+						}
+					},
+					{
 						"pci": {
 							"longdesc": "",
 							"required": "no",

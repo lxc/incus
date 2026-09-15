@@ -101,6 +101,16 @@ func (d *gpuPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		optionalFields = append(optionalFields, "uid", "gid", "mode")
 	}
 
+	if instConf.Type() == instancetype.VM || instConf.Type() == instancetype.Any {
+		// gendoc:generate(entity=devices, group=gpu_physical, key=nvidia.clique)
+		//
+		// ---
+		//  type: int
+		//  required: no
+		//  shortdesc: NVIDIA GPUDirect P2P clique ID (0 to 15) shared by GPUs allowed to DMA to each other (VM only)
+		optionalFields = append(optionalFields, "nvidia.clique")
+	}
+
 	err := d.config.Validate(gpuValidationRules(nil, optionalFields))
 	if err != nil {
 		return err
@@ -343,6 +353,10 @@ func (d *gpuPhysical) startVM() (*deviceConfig.RunConfig, error) {
 			{Key: "devName", Value: d.name},
 			{Key: "pciSlotName", Value: saveData["last_state.pci.slot.name"]},
 		}...)
+
+	if d.config["nvidia.clique"] != "" {
+		runConf.GPUDevice = append(runConf.GPUDevice, deviceConfig.RunConfigItem{Key: "clique", Value: d.config["nvidia.clique"]})
+	}
 
 	err = d.volatileSet(saveData)
 	if err != nil {

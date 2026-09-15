@@ -911,6 +911,7 @@ type qemuGPUDevPhysicalOpts struct {
 	pciSlotName string
 	vgpu        string
 	vga         bool
+	clique      string
 }
 
 func qemuGPUDevPhysical(opts *qemuGPUDevPhysicalOpts) []cfg.Section {
@@ -931,6 +932,10 @@ func qemuGPUDevPhysical(opts *qemuGPUDevPhysicalOpts) []cfg.Section {
 
 	if opts.vga {
 		entries["x-vga"] = "on"
+	}
+
+	if opts.clique != "" {
+		entries["x-nv-gpudirect-clique"] = opts.clique
 	}
 
 	return []cfg.Section{{

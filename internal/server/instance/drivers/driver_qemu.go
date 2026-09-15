@@ -6279,7 +6279,7 @@ func (d *qemu) addPCIDevConfig(conf *[]cfg.Section, bus *qemuBus, pciConfig []de
 
 // addGPUDevConfig adds the qemu config required for adding a GPU device.
 func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []deviceConfig.RunConfigItem) error {
-	var devName, pciSlotName, vgpu, gpuType string
+	var devName, pciSlotName, vgpu, gpuType, clique string
 	for _, gpuItem := range gpuConfig {
 		switch gpuItem.Key {
 		case "devName":
@@ -6290,6 +6290,8 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 			vgpu = gpuItem.Value
 		case "gpuType":
 			gpuType = gpuItem.Value
+		case "clique":
+			clique = gpuItem.Value
 		}
 	}
 
@@ -6336,6 +6338,7 @@ func (d *qemu) addGPUDevConfig(conf *[]cfg.Section, bus *qemuBus, gpuConfig []de
 		pciSlotName: pciSlotName,
 		vga:         vgaMode,
 		vgpu:        vgpu,
+		clique:      clique,
 	}
 
 	// Add main GPU device in VGA mode to qemu config.
