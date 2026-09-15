@@ -265,6 +265,30 @@ EOF
     INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c5
     INCUS_DIR="${INCUS_ONE_DIR}" incus project delete proj1
 
+    # A live project change needs a target member and an unchanged device set.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project create sameprofiles -c features.profiles=false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project create ownprofiles
+    INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c6 --target node1
+
+    INCUS_DIR="${INCUS_ONE_DIR}" incus move c6 --target-project sameprofiles 2>&1 | grep -q "Live project changes require the instance be moved to another cluster member"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus move c6 --target node2 --target-project ownprofiles 2>&1 | grep -q "which a live migration can't apply"
+
+    INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c6
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project delete ownprofiles
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project delete sameprofiles
+
+    # A dependent volume follows the instance across members and projects.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project create depproject
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume create data depvol --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c7 --target node1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus config device add c7 dsk disk pool=data source=depvol path=/mnt dependent=true
+    INCUS_DIR="${INCUS_ONE_DIR}" incus move c7 --target node2 --target-project depproject
+    INCUS_DIR="${INCUS_ONE_DIR}" incus info c7 --project depproject | grep -q "Location: node2"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume show data depvol --project depproject > /dev/null # Verify the volume moved.
+    ! INCUS_DIR="${INCUS_ONE_DIR}" incus storage volume show data depvol > /dev/null 2>&1 || false      # Verify it left the source project.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c7 --project depproject
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project delete depproject
+
     # Perform near-live migration tests.
     if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ]; then
         INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c4 --target node1
