@@ -564,20 +564,6 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 		return nil, 0, err
 	}
 
-	if d.expandedConfig["security.idmap.base"] != "" {
-		offset, err := strconv.ParseInt(d.expandedConfig["security.idmap.base"], 10, 64)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		set, err := mkIdmap(offset, size)
-		if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
-			return nil, 0, err
-		}
-
-		return set, offset, nil
-	}
-
 	idmapLock.Lock()
 	defer idmapLock.Unlock()
 
@@ -591,6 +577,10 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 	mapentries := idmap.ByHostID{}
 	for _, container := range cts {
 		if container.Type() != instancetype.Container {
+			continue
+		}
+
+		if container.IsSnapshot() {
 			continue
 		}
 
@@ -622,6 +612,28 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 		}
 
 		mapentries.Entries = append(mapentries.Entries, idmap.Entry{HostID: int64(cBase), MapRange: cSize})
+	}
+
+	if d.expandedConfig["security.idmap.base"] != "" {
+		offset, err := strconv.ParseInt(d.expandedConfig["security.idmap.base"], 10, 64)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		if !d.IsSnapshot() {
+			for _, entry := range mapentries.Entries {
+				if offset < entry.HostID+entry.MapRange && entry.HostID < offset+size {
+					return nil, 0, errors.New("Requested isolated ID map overlaps an existing instance range")
+				}
+			}
+		}
+
+		set, err := mkIdmap(offset, size)
+		if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
+			return nil, 0, err
+		}
+
+		return set, offset, nil
 	}
 
 	sort.Sort(mapentries)
