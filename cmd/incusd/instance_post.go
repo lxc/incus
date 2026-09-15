@@ -716,7 +716,8 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 	}
 
 	// Handle pool and project moves for stopped instances.
-	if (req.Project != "" || req.Pool != "") && !req.Live && (targetMemberInfo == nil || inst.Location() == targetMemberInfo.Name) {
+	sameMember := targetMemberInfo == nil || inst.Location() == targetMemberInfo.Name
+	if !req.Live && (req.Project != "" || (req.Pool != "" && sameMember)) {
 		// Get a local client.
 		args := &incus.ConnectionArgs{
 			SkipGetServer: true,
@@ -740,6 +741,10 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		target = target.UseProject(targetProject)
+
+		// The copy gets a new instance record, so its cluster group is set after the move.
+		instGroupName := targetInstInfo.Config["volatile.cluster.group"]
+		delete(targetInstInfo.Config, "volatile.cluster.group")
 
 		// Check if we have a root disk in local config.
 		_, _, err = internalInstance.GetRootDiskDevice(targetInstInfo.Devices)
@@ -880,6 +885,35 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		inst, err = instance.LoadByProjectAndName(s, targetProject, inst.Name())
 		if err != nil {
 			return err
+		}
+
+		// Keep the recorded cluster group only if the new member is still part of it.
+		if targetGroupName != "" {
+			instGroupName = targetGroupName
+		} else if instGroupName != "" && targetMemberInfo != nil {
+			var groupMembers []string
+
+			err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+
+				groupMembers, err = tx.GetClusterGroupNodes(ctx, instGroupName)
+
+				return err
+			})
+			if err != nil {
+				return err
+			}
+
+			if !slices.Contains(groupMembers, targetMemberInfo.Name) {
+				instGroupName = ""
+			}
+		}
+
+		if instGroupName != "" {
+			err = inst.VolatileSet(map[string]string{"volatile.cluster.group": instGroupName})
+			if err != nil {
+				return err
+			}
 		}
 
 		// Clear the pool and project part of the request.
