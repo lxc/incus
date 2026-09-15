@@ -520,7 +520,7 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 	l.Debug("Source instance deleted")
 
 	// Remove the dependent volumes that were transferred.
-	err = cleanupDependentDisks(s, inst, deviceOverrides, op)
+	err = cleanupDependentDisks(s, inst, deviceOverrides, "", op)
 	if err != nil {
 		return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
 	}
