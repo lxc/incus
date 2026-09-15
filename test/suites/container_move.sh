@@ -79,6 +79,59 @@ test_container_move() {
     [ "$(incus config get c8 user.test --project ${project})" = "success" ] # Verify new local config entry.
     incus delete -f c8 --project "${project}"
 
+    # An attached custom volume can't follow the instance into another volume project.
+    incus storage volume create "${pool}" vol1
+    incus init "${image}" c20
+    incus config device add c20 d1 disk pool="${pool}" source=vol1 path=/mnt
+    ! incus move c20 --target-project "${project}" || false # Err: volume isn't available in the target project
+    incus config device remove c20 d1
+    incus move c20 --target-project "${project}"
+    [ "$(incus ls --project ${project} --format csv --columns n)" = "c20" ] # Verify new project.
+    incus delete -f c20 --project "${project}"
+
+    # It can when both projects share the default volume project.
+    incus project create novolproject -c features.storage.volumes=false
+    incus init "${image}" c21
+    incus config device add c21 d1 disk pool="${pool}" source=vol1 path=/mnt
+    incus move c21 --target-project novolproject
+    incus storage volume show "${pool}" vol1 --project novolproject > /dev/null # Verify same volume.
+    incus start c21 --project novolproject
+    incus delete -f c21 --project novolproject
+    incus project delete novolproject
+    incus storage volume delete "${pool}" vol1
+
+    # An instance with backups can't change project.
+    incus init "${image}" c22
+    incus query -X POST --wait -d '{\"name\":\"bak0\"}' /1.0/instances/c22/backups
+    ! incus move c22 --target-project "${project}" || false # Err: Instances with backups cannot be moved
+    incus delete -f c22
+
+    # A dependent volume follows the instance into a project with its own volumes.
+    incus storage volume create "${pool}" dvol
+    incus init "${image}" c24
+    incus config device add c24 dsk disk pool="${pool}" source=dvol path=/mnt dependent=true
+    incus move c24 --target-project "${project}"
+    incus storage volume show "${pool}" dvol --project "${project}" > /dev/null # Verify the volume moved.
+    ! incus storage volume show "${pool}" dvol > /dev/null 2>&1 || false        # Verify it left the source project.
+    incus start c24 --project "${project}"
+    incus stop -f c24 --project "${project}"
+    incus delete -f c24 --project "${project}"
+
+    # It can't when both projects share their storage volumes.
+    incus project create sharedvolumes -c features.storage.volumes=false
+    incus storage volume create "${pool}" dvol2
+    incus init "${image}" c25
+    incus config device add c25 dsk disk pool="${pool}" source=dvol2 path=/mnt dependent=true
+    incus move c25 --target-project sharedvolumes 2>&1 | grep -q "as both projects share their storage volumes"
+    incus delete -f c25
+    incus project delete sharedvolumes
+
+    # A live project change needs a cluster and a target member.
+    incus launch "${image}" c23
+    incus move c23 --target-project "${project}" 2>&1 | grep -q "Live project changes aren't supported on standalone systems"
+    incus move c23 --target-project "${project}" --stateless 2>&1 | grep -q "Instance must be stopped for a stateless move across projects"
+    incus delete -f c23
+
     # Near-live migration.
     incus launch "${image}" c9
     incus config set c9 boot.host_shutdown_timeout=1
