@@ -1263,7 +1263,12 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 // cleanupDependentDisks removes dependent volumes from the source after migration if needed.
 func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrides api.DevicesMap, op *operations.Operation) error {
-	err := inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+	volProject, err := project.StorageVolumeProject(s.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 		diskPool, err := storagePools.LoadByName(s, dev.Config["pool"])
 		if err != nil {
 			return fmt.Errorf("Failed loading storage pool: %w", err)
@@ -1276,7 +1281,7 @@ func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrid
 		if ok {
 			overrideVolName, _ := internalInstance.SplitVolumeSource(override["source"])
 			if (override["source"] != "" && overrideVolName != volName) || (override["pool"] != "" && override["pool"] != dev.Config["pool"]) {
-				_ = diskPool.DeleteCustomVolume(inst.Project().Name, volName, op)
+				_ = diskPool.DeleteCustomVolume(volProject, volName, op)
 			}
 		}
 
@@ -1285,7 +1290,7 @@ func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrid
 			return nil
 		}
 
-		_ = diskPool.DeleteCustomVolume(inst.Project().Name, volName, op)
+		_ = diskPool.DeleteCustomVolume(volProject, volName, op)
 
 		return nil
 	})
