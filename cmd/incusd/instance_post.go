@@ -897,7 +897,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			}
 		}
 
-		err = cleanupDependentDisks(s, inst, req.Devices, op)
+		err = cleanupDependentDisks(s, inst, req.Devices, req.Project, op)
 		if err != nil {
 			return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
 		}
@@ -1234,7 +1234,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			}
 		}
 
-		err = cleanupDependentDisks(s, inst, req.Devices, op)
+		err = cleanupDependentDisks(s, inst, req.Devices, req.Project, op)
 		if err != nil {
 			return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
 		}
@@ -1262,10 +1262,21 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 }
 
 // cleanupDependentDisks removes dependent volumes from the source after migration if needed.
-func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrides api.DevicesMap, op *operations.Operation) error {
+func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrides api.DevicesMap, targetProject string, op *operations.Operation) error {
 	volProject, err := project.StorageVolumeProject(s.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
 	if err != nil {
 		return err
+	}
+
+	// A volume only left the source project if the two projects have separate storage volumes.
+	volumeProjectChanged := false
+	if targetProject != "" {
+		targetVolProject, err := project.StorageVolumeProject(s.DB.Cluster, targetProject, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		volumeProjectChanged = targetVolProject != volProject
 	}
 
 	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
@@ -1285,8 +1296,8 @@ func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrid
 			}
 		}
 
-		// Volumes on remote pools cannot be removed.
-		if diskPool.Driver().Info().Remote {
+		// Volumes on remote pools cannot be removed, unless they were copied into another project.
+		if diskPool.Driver().Info().Remote && !volumeProjectChanged {
 			return nil
 		}
 
@@ -1313,13 +1324,32 @@ func checkProjectMove(s *state.State, inst instance.Instance, targetProject stri
 		return err
 	}
 
+	dependentDisks := []string{}
+	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		dependentDisks = append(dependentDisks, dev.Name)
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// A dependent volume needs a volume project of its own to follow the instance into.
 	if srcVolProject == dstVolProject {
+		if len(dependentDisks) > 0 {
+			return fmt.Errorf("Dependent disk %q can't follow the instance, as both projects share their storage volumes", dependentDisks[0])
+		}
+
 		return nil
 	}
 
-	// Attached custom volumes are left behind when the volume project changes.
+	// Other attached custom volumes are left behind when the volume project changes.
 	for _, dev := range inst.ExpandedDevices().Sorted() {
 		if dev.Config["type"] != "disk" || dev.Config["path"] == "/" || dev.Config["pool"] == "" || dev.Config["source"] == "" {
+			continue
+		}
+
+		if slices.Contains(dependentDisks, dev.Name) {
 			continue
 		}
 
@@ -1331,14 +1361,6 @@ func checkProjectMove(s *state.State, inst instance.Instance, targetProject stri
 
 // checkProjectMoveLive validates that a running instance can be handed over to the target project unchanged.
 func checkProjectMoveLive(ctx context.Context, s *state.State, inst instance.Instance, targetProject string, req api.InstancePost) error {
-	// Dependent volumes can't follow an instance across projects yet.
-	err := inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
-		return fmt.Errorf("Dependent disk %q can't be moved across projects", dev.Name)
-	})
-	if err != nil {
-		return err
-	}
-
 	profileNames := req.Profiles
 	if profileNames == nil {
 		profileNames = make([]string, 0, len(inst.Profiles()))
@@ -1349,7 +1371,7 @@ func checkProjectMoveLive(ctx context.Context, s *state.State, inst instance.Ins
 
 	profiles := make([]api.Profile, 0, len(profileNames))
 
-	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		dbProfiles, err := dbCluster.GetProfilesIfEnabled(ctx, tx.Tx(), targetProject, profileNames)
 		if err != nil {
 			return err

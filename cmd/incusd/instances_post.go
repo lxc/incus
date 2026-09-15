@@ -554,10 +554,25 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 }
 
 // validateDependentVolumes validates dependent volumes during copy.
-func validateDependentVolumes(source instance.Instance, req *api.InstancesPost) error {
+func validateDependentVolumes(s *state.State, source instance.Instance, targetProject string, req *api.InstancesPost) error {
+	srcVolProject, err := project.StorageVolumeProject(s.DB.Cluster, source.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	dstVolProject, err := project.StorageVolumeProject(s.DB.Cluster, targetProject, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	// Volume names can't collide when the two projects have separate storage volumes.
+	if srcVolProject != dstVolProject {
+		return nil
+	}
+
 	// Fetch all dependent devices belonging to the instance.
 	dependentVolumes := []string{}
-	err := source.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+	err = source.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 		dependentVolumes = append(dependentVolumes, dev.Name)
 		return nil
 	})
@@ -646,7 +661,7 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 		req.Config["volatile.apply_nvram"] = "true"
 	}
 
-	err = validateDependentVolumes(source, req)
+	err = validateDependentVolumes(s, source, targetProject, req)
 	if err != nil {
 		return response.SmartError(err)
 	}
