@@ -647,7 +647,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 		}
 
 		offset = mapentries.Entries[i-1].HostID + mapentries.Entries[i-1].MapRange
-		if offset+size < mapentries.Entries[i].HostID {
+		if offset+size <= mapentries.Entries[i].HostID {
 			set, err := mkIdmap(offset, size)
 			if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
 				return nil, 0, err
