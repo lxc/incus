@@ -333,6 +333,15 @@ func qemuCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDevi
 
 		reverter.Add(func() { _ = d.state.Authorizer.DeleteInstance(d.state.ShutdownCtx, d.project.Name, d.Name()) })
 
+		// Add the security tags to the authorizer.
+		tags := util.SplitNTrimSpace(d.expandedConfig["security.tags"], ",", -1, true)
+		if len(tags) > 0 {
+			err = d.state.Authorizer.SetInstanceSecurityTags(d.state.ShutdownCtx, d.project.Name, d.Name(), tags)
+			if err != nil {
+				logger.Error("Failed to add instance security tags to authorizer", logger.Ctx{"name": d.Name(), "project": d.project.Name, "error": err})
+			}
+		}
+
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceCreated.Event(d, map[string]any{
 			"type":         api.InstanceTypeVM,
 			"storage-pool": d.storagePool.Name(),
@@ -7732,6 +7741,14 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	// Update the security tags in the authorizer.
+	if !d.isSnapshot && slices.Contains(changedConfig, "security.tags") {
+		err = d.state.Authorizer.SetInstanceSecurityTags(d.state.ShutdownCtx, d.project.Name, d.Name(), util.SplitNTrimSpace(d.expandedConfig["security.tags"], ",", -1, true))
+		if err != nil {
+			d.logger.Error("Failed to update instance security tags in authorizer", logger.Ctx{"err": err})
 		}
 	}
 
