@@ -1454,6 +1454,14 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 		config = srcConfig.Volume.Config
 	}
 
+	// Check project restrictions against the effective config.
+	err = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowVolumeConfig(tx, projectName, b.name, config)
+	})
+	if err != nil {
+		return err
+	}
+
 	// Use the source volume's description if not supplied.
 	if desc == "" {
 		desc = srcConfig.Volume.Description
@@ -5504,6 +5512,14 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 	// Use the source volume's config if not supplied.
 	if config == nil {
 		config = srcConfig.Volume.Config
+	}
+
+	// Check project restrictions against the effective config.
+	err = b.state.DB.Cluster.Transaction(b.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowVolumeConfig(tx, projectName, b.name, config)
+	})
+	if err != nil {
+		return err
 	}
 
 	// Use the source volume's description if not supplied.
