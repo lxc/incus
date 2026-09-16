@@ -427,6 +427,40 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 	return nil
 }
 
+// AllowVolumeMove returns an error if moving the given custom volume into the target project would
+// violate the project's limits or restrictions.
+func AllowVolumeMove(tx *db.ClusterTx, srcProjectName string, srcPoolName string, projectName string, poolName string, vol *api.StorageVolume, newName string) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil {
+		return nil
+	}
+
+	// Drop the source volume from the totals when moving within the same project.
+	if srcProjectName == projectName {
+		info.Volumes = slices.DeleteFunc(info.Volumes, func(v db.StorageVolumeArgs) bool {
+			return v.Name == vol.Name && v.PoolName == srcPoolName
+		})
+	}
+
+	// Add the volume being moved.
+	info.Volumes = append(info.Volumes, db.StorageVolumeArgs{
+		Name:     newName,
+		Config:   vol.Config,
+		PoolName: poolName,
+	})
+
+	err = checkRestrictionsAndAggregateLimits(tx, info)
+	if err != nil {
+		return fmt.Errorf("Failed checking if volume move allowed: %w", err)
+	}
+
+	return nil
+}
+
 // GetImageSpaceBudget returns how much disk space is left in the given project
 // for writing images.
 //
