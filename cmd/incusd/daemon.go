@@ -2189,15 +2189,16 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, tl
 				return err
 			}
 
-			err = query.Scan(ctx, tx.Tx(), "SELECT instances.name, projects.name FROM instances JOIN projects ON projects.id=instances.project_id", func(scan func(dest ...any) error) error {
-				var instanceName string
-				var projectName string
-				err := scan(&instanceName, &projectName)
-				if err != nil {
-					return err
+			resources.InstanceSecurityTags = map[auth.Object][]string{}
+			err = tx.InstanceList(ctx, func(dbInst db.InstanceArgs, p api.Project) error {
+				instanceObject := auth.ObjectInstance(dbInst.Project, dbInst.Name)
+				resources.InstanceObjects = append(resources.InstanceObjects, instanceObject)
+
+				tags := util.SplitNTrimSpace(db.ExpandInstanceConfig(dbInst.Config, dbInst.Profiles)["security.tags"], ",", -1, true)
+				if len(tags) > 0 {
+					resources.InstanceSecurityTags[instanceObject] = tags
 				}
 
-				resources.InstanceObjects = append(resources.InstanceObjects, auth.ObjectInstance(projectName, instanceName))
 				return nil
 			})
 			if err != nil {
