@@ -333,6 +333,15 @@ func (op *operation) setupListener() error {
 			return
 		}
 
+		// Websocket operations can't be resumed as their data connections are gone too.
+		if op.Class == api.OperationClassWebsocket {
+			op.Err = fmt.Sprintf("Lost connection to the event listener: %v", listener.err)
+			op.closeChActive()
+			op.handlerLock.Unlock()
+
+			return
+		}
+
 		// The connection failed, get ready for a reconnection attempt.
 		op.listener = nil
 		op.handlerReady = false
