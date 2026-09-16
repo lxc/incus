@@ -47,6 +47,13 @@ func (s *objectSuite) TestObjectInstance() {
 	})
 }
 
+func (s *objectSuite) TestObjectSecurityTag() {
+	s.Assert().NotPanics(func() {
+		o := ObjectSecurityTag("tag_name")
+		s.Equal("security_tag:tag_name", string(o))
+	})
+}
+
 func (s *objectSuite) TestObjectNetwork() {
 	s.Assert().NotPanics(func() {
 		o := ObjectNetwork("default", "network_name")

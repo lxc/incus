@@ -121,6 +121,7 @@ var objectValidators = map[ObjectType]objectValidator{
 	ObjectTypeProfile:            {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: true},
 	ObjectTypeStorageBucket:      {minIdentifierElements: 2, maxIdentifierElements: 3, requireProject: true},
 	ObjectTypeStorageVolume:      {minIdentifierElements: 3, maxIdentifierElements: 4, requireProject: true},
+	ObjectTypeSecurityTag:        {minIdentifierElements: 1, maxIdentifierElements: 1, requireProject: false},
 }
 
 // NewObject returns an Object of the given type. The passed in arguments must be in the correct
@@ -325,6 +326,12 @@ func ObjectNetworkZone(projectName string, networkZoneName string) Object {
 // ObjectProfile represents a profile.
 func ObjectProfile(projectName string, profileName string) Object {
 	object, _ := NewObject(ObjectTypeProfile, projectName, profileName)
+	return object
+}
+
+// ObjectSecurityTag represents a security tag.
+func ObjectSecurityTag(tagName string) Object {
+	object, _ := NewObject(ObjectTypeSecurityTag, "", tagName)
 	return object
 }
 
