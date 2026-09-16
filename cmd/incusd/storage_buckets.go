@@ -53,7 +53,7 @@ var storagePoolBucketCmd = APIEndpoint{
 var storagePoolBucketKeysCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}/keys",
 
-	Get:  APIEndpointAction{Handler: storagePoolBucketKeysGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName", "location")},
+	Get:  APIEndpointAction{Handler: storagePoolBucketKeysGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
 	Post: APIEndpointAction{Handler: storagePoolBucketKeysPost, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
 }
 
@@ -61,7 +61,7 @@ var storagePoolBucketKeyCmd = APIEndpoint{
 	Path: "storage-pools/{poolName}/buckets/{bucketName}/keys/{keyName}",
 
 	Delete: APIEndpointAction{Handler: storagePoolBucketKeyDelete, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
-	Get:    APIEndpointAction{Handler: storagePoolBucketKeyGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanView, "poolName", "bucketName", "location")},
+	Get:    APIEndpointAction{Handler: storagePoolBucketKeyGet, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
 	Put:    APIEndpointAction{Handler: storagePoolBucketKeyPut, AccessHandler: allowPermission(auth.ObjectTypeStorageBucket, auth.EntitlementCanEdit, "poolName", "bucketName", "location")},
 }
 
