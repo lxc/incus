@@ -257,6 +257,11 @@ func (c *commonAuthorizer) RenameInstance(ctx context.Context, projectName strin
 	return nil
 }
 
+// SetInstanceSecurityTags is a no-op.
+func (c *commonAuthorizer) SetInstanceSecurityTags(ctx context.Context, projectName string, instanceName string, tags []string) error {
+	return nil
+}
+
 // AddNetwork is a no-op.
 func (c *commonAuthorizer) AddNetwork(ctx context.Context, projectName string, networkName string) error {
 	return nil
