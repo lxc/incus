@@ -3306,6 +3306,14 @@ This system call allows setting a limited subset of restricted extended attribut
 This system call can be used to get cgroup-based resource usage information.
 ```
 
+```{config:option} security.tags instance-security
+:liveupdate: "yes"
+:shortdesc: "Comma-separated list of security tags for the authorization backend"
+:type: "string"
+Tags are made of lowercase letters, digits, dots, dashes and underscores and are at most 64 characters long.
+They are exposed to the authorization backend but don't affect Incus' own authorization decisions.
+```
+
 <!-- config group instance-security end -->
 <!-- config group instance-snapshots start -->
 ```{config:option} snapshots.expiry instance-snapshots

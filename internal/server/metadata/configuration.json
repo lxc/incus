@@ -3659,6 +3659,14 @@
 							"shortdesc": "Whether to handle the `sysinfo` system call",
 							"type": "bool"
 						}
+					},
+					{
+						"security.tags": {
+							"liveupdate": "yes",
+							"longdesc": "Tags are made of lowercase letters, digits, dots, dashes and underscores and are at most 64 characters long.\nThey are exposed to the authorization backend but don't affect Incus' own authorization decisions.",
+							"shortdesc": "Comma-separated list of security tags for the authorization backend",
+							"type": "string"
+						}
 					}
 				]
 			},
