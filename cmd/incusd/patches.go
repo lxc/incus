@@ -110,6 +110,7 @@ var patches = []patch{
 	{name: "auth_openfga_shared_networks", stage: patchPostNetworks, run: patchGenericAuthorization},
 	{name: "storage_cephobject_endpoint_cert", stage: patchPreDaemonStorage, run: patchStorageCephObjectEndpointCert},
 	{name: "network_ovn_acl_address_sets", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNACLAddressSets)},
+	{name: "auth_openfga_security_tags", stage: patchPostNetworks, run: patchGenericAuthorization},
 }
 
 type patchRun func(name string, d *Daemon) error
