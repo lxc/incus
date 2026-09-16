@@ -47,8 +47,8 @@ func (e AuthError) Unwrap() error {
 	return e.Err
 }
 
-// Auth extracts the token, validates it and returns the user information.
-func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
+// Auth extracts the token, validates it and returns the user name and validated claims.
+func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, map[string]any, error) {
 	var token string
 
 	auth := r.Header.Get("Authorization")
@@ -61,7 +61,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		// Both returned errors contain information which are needed for the client to authenticate.
 		parts := strings.Split(auth, "Bearer ")
 		if len(parts) != 2 {
-			return "", &AuthError{errors.New("Bad authorization token, expected a Bearer token")}
+			return "", nil, &AuthError{errors.New("Bad authorization token, expected a Bearer token")}
 		}
 
 		token = parts[1]
@@ -69,7 +69,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		// When not using a Bearer token, fetch the equivalent from a cookie and move on with it.
 		cookie, err := r.Cookie("oidc_access")
 		if err != nil {
-			return "", &AuthError{err}
+			return "", nil, &AuthError{err}
 		}
 
 		token = cookie.Value
@@ -80,7 +80,7 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 		o.accessTokenVerifier, err = getAccessTokenVerifier(o.issuer)
 		if err != nil {
-			return "", &AuthError{err}
+			return "", nil, &AuthError{err}
 		}
 	}
 
@@ -89,13 +89,13 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		// See if we can refresh the access token.
 		cookie, cookieErr := r.Cookie("oidc_refresh")
 		if cookieErr != nil {
-			return "", &AuthError{err}
+			return "", nil, &AuthError{err}
 		}
 
 		// Get the provider.
 		provider, err := o.getProvider(r)
 		if err != nil {
-			return "", &AuthError{err}
+			return "", nil, &AuthError{err}
 		}
 
 		// Attempt the refresh.
@@ -106,13 +106,13 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 				o.clearCookies(w)
 			}
 
-			return "", &AuthError{err}
+			return "", nil, &AuthError{err}
 		}
 
 		// Validate the refreshed token.
 		claims, err = o.VerifyAccessToken(ctx, r, tokens.AccessToken)
 		if err != nil {
-			return "", &AuthError{err}
+			return "", nil, &AuthError{err}
 		}
 
 		// If we have a ResponseWriter, refresh the cookies.
@@ -125,21 +125,21 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		claim := claims.Claims[o.claim]
 		username, ok := claim.(string)
 		if claim == nil || !ok || username == "" {
-			return "", fmt.Errorf("OIDC user is missing required claim %q", o.claim)
+			return "", nil, fmt.Errorf("OIDC user is missing required claim %q", o.claim)
 		}
 
-		return username, nil
+		return username, claims.Claims, nil
 	}
 
 	user, ok := claims.Claims["email"]
 	if ok && user != nil {
 		email, ok := user.(string)
 		if ok && email != "" {
-			return email, nil
+			return email, claims.Claims, nil
 		}
 	}
 
-	return claims.Subject, nil
+	return claims.Subject, claims.Claims, nil
 }
 
 // Login starts the OIDC login flow by redirecting the client to the provider's authorization endpoint.
