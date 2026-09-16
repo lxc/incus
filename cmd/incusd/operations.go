@@ -975,7 +975,7 @@ func operationWaitGet(d *Daemon, r *http.Request) response.Response {
 
 	secret := r.FormValue("secret")
 
-	trusted, _, _, _ := d.Authenticate(nil, r)
+	trusted, _, _, _, _ := d.Authenticate(nil, r)
 	if !trusted && secret == "" {
 		return response.Forbidden(nil)
 	}
