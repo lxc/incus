@@ -79,6 +79,7 @@ type Authorizer interface {
 	AddInstance(ctx context.Context, projectName string, instanceName string) error
 	DeleteInstance(ctx context.Context, projectName string, instanceName string) error
 	RenameInstance(ctx context.Context, projectName string, oldInstanceName string, newInstanceName string) error
+	SetInstanceSecurityTags(ctx context.Context, projectName string, instanceName string, tags []string) error
 
 	AddNetwork(ctx context.Context, projectName string, networkName string) error
 	DeleteNetwork(ctx context.Context, projectName string, networkName string) error
@@ -132,6 +133,7 @@ type Resources struct {
 	ImageObjects              []Object
 	ImageAliasObjects         []Object
 	InstanceObjects           []Object
+	InstanceSecurityTags      map[Object][]string
 	NetworkObjects            []Object
 	NetworkShareObjects       map[string][]Object
 	NetworkACLObjects         []Object

@@ -406,6 +406,11 @@ func (rt *Router) RenameInstance(ctx context.Context, projectName string, oldIns
 	return rt.fanout(func(a Authorizer) error { return a.RenameInstance(ctx, projectName, oldInstanceName, newInstanceName) })
 }
 
+// SetInstanceSecurityTags notifies every loaded driver of an instance's security tags.
+func (rt *Router) SetInstanceSecurityTags(ctx context.Context, projectName string, instanceName string, tags []string) error {
+	return rt.fanout(func(a Authorizer) error { return a.SetInstanceSecurityTags(ctx, projectName, instanceName, tags) })
+}
+
 // AddNetwork notifies every loaded driver of a new network.
 func (rt *Router) AddNetwork(ctx context.Context, projectName string, networkName string) error {
 	return rt.fanout(func(a Authorizer) error { return a.AddNetwork(ctx, projectName, networkName) })
