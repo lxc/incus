@@ -1104,6 +1104,20 @@ func TestQemuConfigTemplates(t *testing.T) {
 			driver = "vfio-pci"
 			multifunction = "on"
 			sysfsdev = "/sys/bus/mdev/devices/vgpu-dev"`,
+		}, {
+			qemuGPUDevPhysicalOpts{
+				dev:         qemuDevOpts{"pci", "qemu_pcie1", "00.0", false},
+				devName:     "gpu-name",
+				pciSlotName: "gpu-slot",
+				clique:      "3",
+			},
+			`# GPU card ("gpu-name" device)
+			[device "dev-incus_gpu-name"]
+			addr = "00.0"
+			bus = "qemu_pcie1"
+			driver = "vfio-pci"
+			host = "gpu-slot"
+			x-nv-gpudirect-clique = "3"`,
 		}}
 		for _, tc := range testCases {
 			runTest(tc.expected, qemuGPUDevPhysical(&tc.opts))

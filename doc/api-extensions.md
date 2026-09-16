@@ -3456,3 +3456,10 @@ Adds a new `dns.include_hosts` configuration key to `bridge` networks,
 controlling whether the network's `dnsmasq` serves records from the host's
 `/etc/hosts` file. Setting it to `false` avoids exposing host-only entries
 to instances while keeping AppArmor confinement.
+
+## `gpu_physical_clique`
+
+Adds a new `nvidia.clique` configuration key to `gpu` devices of type `physical`
+when used with virtual machines. It sets the NVIDIA GPUDirect P2P clique ID
+(0 to 15) advertised to the guest driver, allowing peer-to-peer DMA between
+GPUs passed through to the same virtual machine when they share a clique ID.
