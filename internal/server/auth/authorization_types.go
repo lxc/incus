@@ -165,10 +165,14 @@ const (
 
 	// ObjectTypeStorageVolume represents a storage volume.
 	ObjectTypeStorageVolume ObjectType = "storage_volume"
+
+	// ObjectTypeSecurityTag represents a security tag.
+	ObjectTypeSecurityTag ObjectType = "security_tag"
 )
 
 const (
 	relationServer     = "server"
 	relationProject    = "project"
 	relationSharedWith = "shared_with"
+	relationTag        = "tag"
 )
