@@ -1882,6 +1882,14 @@ func storagePoolVolumeTypePostMove(s *state.State, r *http.Request, poolName str
 		return response.SmartError(err)
 	}
 
+	// Check the target project's limits and restrictions.
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowVolumeMove(tx, requestProjectName, pool.Name(), projectName, newPool.Name(), vol, newVol.Name)
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	run := func(op *operations.Operation) error {
 		reverter := revert.New()
 		defer reverter.Fail()
