@@ -3484,3 +3484,10 @@ This adds cluster member metrics to the `/1.0/metrics` endpoint:
 * `incus_cluster_member_status` with one sample per possible status
 * `incus_cluster_member_role` with one sample per role held
 * `incus_cluster_member_group` with one sample per group the member belongs to
+
+## `instance_security_tags`
+
+Adds a new `security.tags` configuration key to instances, holding a
+comma-separated list of tags. The tags are exposed to the authorization
+backend, with OpenFGA maintaining a `security_tag` object for each tag
+along with a `tag` relation to every instance carrying it.
