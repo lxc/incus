@@ -103,6 +103,60 @@ test_openfga() {
     user_is_not_project_admin
     user_is_not_project_operator
 
+    echo "==> Checking security tags..."
+    fga_tuple_count() {
+        fga tuple read --store-id "${OPENFGA_STORE_ID}" "${@}" | jq '.tuples | length'
+    }
+
+    # Invalid tags are rejected.
+    ! incus init testimage tagged-foo -c security.tags="Bad Tag" || false
+    ! incus init testimage tagged-foo -c security.tags="foo,foo" || false
+
+    # Tags are exposed on creation.
+    incus init testimage tagged-foo -c security.tags=foo,bar
+    [ "$(fga_tuple_count --object instance:default/tagged-foo --relation tag)" = "2" ]
+    [ "$(fga_tuple_count --user security_tag:foo --relation tag --object instance:default/tagged-foo)" = "1" ]
+    [ "$(fga_tuple_count --user security_tag:bar --relation tag --object instance:default/tagged-foo)" = "1" ]
+    [ "$(fga_tuple_count --user server:incus --relation server --object security_tag:foo)" = "1" ]
+    [ "$(fga_tuple_count --user server:incus --relation server --object security_tag:bar)" = "1" ]
+
+    # Tags are updated and unused ones pruned.
+    incus config set tagged-foo security.tags=foo,baz
+    [ "$(fga_tuple_count --object instance:default/tagged-foo --relation tag)" = "2" ]
+    [ "$(fga_tuple_count --user security_tag:bar --relation tag --object instance:default/tagged-foo)" = "0" ]
+    [ "$(fga_tuple_count --user security_tag:baz --relation tag --object instance:default/tagged-foo)" = "1" ]
+    [ "$(fga_tuple_count --user server:incus --relation server --object security_tag:bar)" = "0" ]
+    [ "$(fga_tuple_count --user server:incus --relation server --object security_tag:baz)" = "1" ]
+
+    # Tags follow renames.
+    incus rename tagged-foo tagged-bar
+    [ "$(fga_tuple_count --object instance:default/tagged-foo --relation tag)" = "0" ]
+    [ "$(fga_tuple_count --object instance:default/tagged-bar --relation tag)" = "2" ]
+
+    # Tags are removed on unset.
+    incus config unset tagged-bar security.tags
+    [ "$(fga_tuple_count --object instance:default/tagged-bar --relation tag)" = "0" ]
+    [ "$(fga_tuple_count --user server:incus --relation server --object security_tag:foo)" = "0" ]
+
+    # Tags coming from profiles are included and follow profile updates.
+    incus profile create tagged
+    incus profile set tagged security.tags=prof
+    incus profile add tagged-bar tagged
+    [ "$(fga_tuple_count --user security_tag:prof --relation tag --object instance:default/tagged-bar)" = "1" ]
+    incus profile set tagged security.tags=prof2
+    [ "$(fga_tuple_count --user security_tag:prof --relation tag --object instance:default/tagged-bar)" = "0" ]
+    [ "$(fga_tuple_count --user security_tag:prof2 --relation tag --object instance:default/tagged-bar)" = "1" ]
+    incus profile remove tagged-bar tagged
+    [ "$(fga_tuple_count --object instance:default/tagged-bar --relation tag)" = "0" ]
+    [ "$(fga_tuple_count --user server:incus --relation server --object security_tag:prof2)" = "0" ]
+    incus profile delete tagged
+
+    # Tags are removed on deletion.
+    incus config set tagged-bar security.tags=foo
+    incus delete tagged-bar
+    [ "$(fga_tuple_count --object instance:default/tagged-bar --relation tag)" = "0" ]
+    [ "$(fga_tuple_count --user server:incus --relation server --object security_tag:foo)" = "0" ]
+
     # Unset config keys.
     kill_oidc
     incus config unset oidc.issuer
