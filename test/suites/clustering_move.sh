@@ -247,6 +247,24 @@ EOF
     # Cleanup
     INCUS_DIR="${INCUS_ONE_DIR}" incus config unset instances.placement.scriptlet
 
+    # Perform cross-project move tests.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project create proj1
+    INCUS_DIR="${INCUS_ONE_DIR}" incus init testimage c5 --target node1
+
+    # A project change requested alongside a member change must apply both.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus move c5 --target node2 --target-project proj1
+    ! INCUS_DIR="${INCUS_ONE_DIR}" incus info c5 || false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus --project proj1 info c5 | grep -q "Location: node2"
+
+    # The same in the other direction, targeting a cluster group.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus --project proj1 move c5 --target @foobar3 --target-project default
+    ! INCUS_DIR="${INCUS_ONE_DIR}" incus --project proj1 info c5 || false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus info c5 | grep -q "Location: node3"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus config get c5 volatile.cluster.group | grep -Fx "foobar3"
+
+    INCUS_DIR="${INCUS_ONE_DIR}" incus delete -f c5
+    INCUS_DIR="${INCUS_ONE_DIR}" incus project delete proj1
+
     # Perform near-live migration tests.
     if [ "${poolDriver}" = "zfs" ] || [ "${poolDriver}" = "btrfs" ]; then
         INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c4 --target node1
