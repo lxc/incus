@@ -579,6 +579,7 @@ var APIExtensions = []string{
 	"authorization_scriptlet_claims",
 	"instance_project_move_live",
 	"metrics_cluster_members",
+	"instance_security_tags",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
