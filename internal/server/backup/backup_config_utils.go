@@ -3,6 +3,8 @@ package backup
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/osarch"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // ConfigToInstanceDBArgs converts the instance config in the backup config to DB InstanceArgs.
@@ -122,10 +125,32 @@ func updateRootDevicePool(devices map[string]map[string]string, poolName string)
 func UpdateInstanceConfig(c *db.Cluster, b Info, mountPath string) error {
 	backupFilePath := filepath.Join(mountPath, "backup.yaml")
 
-	// Read in the backup.yaml file.
-	backup, err := ParseConfigYamlFile(backupFilePath)
-	if err != nil {
+	// Read in the backup.yaml file, falling back to the config embedded in the index.
+	var backup *config.Config
+	fi, err := os.Lstat(backupFilePath)
+	if errors.Is(err, fs.ErrNotExist) && b.Config != nil {
+		backup = &config.Config{}
+
+		err = util.DeepCopy(b.Config, backup)
+		if err != nil {
+			return err
+		}
+	} else if err != nil {
 		return err
+	} else {
+		// The file comes from the backup, so refuse anything that could block or exhaust memory.
+		if !fi.Mode().IsRegular() {
+			return fmt.Errorf("Backup config %q isn't a regular file", backupFilePath)
+		}
+
+		if fi.Size() > 1024*1024 {
+			return fmt.Errorf("Backup config %q is too large", backupFilePath)
+		}
+
+		backup, err = ParseConfigYamlFile(backupFilePath)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Update instance information in the backup.yaml.
