@@ -365,6 +365,10 @@ test_backup_import_with_project() {
     fi
 
     incus export c1 "${INCUS_DIR}/c1.tar.gz" --instance-only
+
+    # Export without backup.yaml in the tarball, relying on the index config.
+    incus export c1 "${INCUS_DIR}/c1-noconfig.tar" --instance-only --compression none
+    tar --delete -f "${INCUS_DIR}/c1-noconfig.tar" backup/container/backup.yaml
     incus delete --force c1
 
     # import backup, and ensure it's valid and runnable
@@ -373,6 +377,13 @@ test_backup_import_with_project() {
     incus start c1
     incus delete --force c1
     rm "${INCUS_DIR}/c1.tar.gz"
+
+    # import backup relying on the config embedded in the index
+    incus import "${INCUS_DIR}/c1-noconfig.tar"
+    incus info c1
+    incus start c1
+    incus delete --force c1
+    rm "${INCUS_DIR}/c1-noconfig.tar"
 
     if [ "$incus_backend" = "btrfs" ] || [ "$incus_backend" = "zfs" ]; then
         incus import "${INCUS_DIR}/c1-optimized.tar.gz"
