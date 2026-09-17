@@ -1889,7 +1889,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 		// Full shutdown requested.
 		if sig == unix.SIGPWR {
 			if !evacuated {
-				instancesShutdown(instances)
+				instancesShutdown(ctx, instances, s.GlobalConfig.ShutdownTimeout())
 
 				logger.Info("Stopping networks")
 				networkShutdown(s)
