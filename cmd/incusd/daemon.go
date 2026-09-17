@@ -140,6 +140,9 @@ type Daemon struct {
 	shutdownCancel context.CancelFunc // Cancels the shutdownCtx to indicate shutdown starting.
 	shutdownDoneCh chan error         // Receives the result of the d.Stop() function and tells the daemon to end.
 
+	shutdownForceCtx    context.Context    // Cancelled when the shutdown should stop waiting on operations and instances.
+	shutdownForceCancel context.CancelFunc // Cancels the shutdownForceCtx to force the shutdown.
+
 	// Device monitor for watching filesystem events
 	devmonitor fsmonitor.FSMonitor
 
@@ -194,6 +197,7 @@ func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
 	incusEvents := events.NewServer(daemon.Debug, daemon.Verbose, cluster.EventHubPush)
 	devIncusEvents := events.NewDevIncusServer(daemon.Debug, daemon.Verbose)
 	shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
+	shutdownForceCtx, shutdownForceCancel := context.WithCancel(context.Background())
 
 	d := &Daemon{
 		clientCerts:    &certificate.Cache{},
@@ -207,7 +211,10 @@ func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
 		shutdownCtx:    shutdownCtx,
 		shutdownCancel: shutdownCancel,
 		shutdownDoneCh: make(chan error),
-		apiExtensions:  len(version.APIExtensions),
+
+		shutdownForceCtx:    shutdownForceCtx,
+		shutdownForceCancel: shutdownForceCancel,
+		apiExtensions:       len(version.APIExtensions),
 	}
 
 	d.serverCert = func() *localtls.CertInfo { return d.serverCertInt }
@@ -1883,6 +1890,8 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 		select {
 		case <-time.After(time.Minute):
 			logger.Error("Timed out waiting for image and backup volume")
+		case <-ctx.Done():
+			logger.Warn("Forced shutdown, no longer waiting for image and backup volume")
 		case <-done:
 		}
 
