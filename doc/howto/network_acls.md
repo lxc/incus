@@ -90,7 +90,7 @@ ACL rules have the following properties:
 
 | Property           | Type   | Required | Description                                                                                                                |
 | :---               | :---   | :---     | :---                                                                                                                       |
-| `action`           | string | yes      | Action to take for matching traffic (`allow`, `allow-stateless`, `reject`, or `drop`)                                      |
+| `action`           | string | yes      | Action to take for matching traffic (`allow`, `allow-stateless`, `reject`, or `drop`), `allow-stateless` is only supported on OVN networks |
 | `state`            | string | yes      | State of the rule (`enabled`, `disabled` or `logged`), defaulting to `enabled` if not specified                            |
 | `description`      | string | no       | Description of the rule                                                                                                    |
 | `source`           | string | no       | Comma-separated list of CIDR or IP ranges, source subject name selectors (for ingress rules), or empty for any             |
