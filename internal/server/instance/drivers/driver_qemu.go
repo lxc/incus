@@ -1706,8 +1706,12 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return err
 		}
 
+		// Detect a symlink whose variables file is gone.
+		_, err = os.Stat(d.nvramPath())
+		dangling := fi != nil && errors.Is(err, fs.ErrNotExist)
+
 		// Generate new NVRAM if missing, or if requested by the user or if the NVRAM file is of an invalid format (needs to be a valid symlink).
-		if util.IsTrue(d.localConfig["volatile.apply_nvram"]) || fi == nil || fi.Mode()&os.ModeSymlink != os.ModeSymlink {
+		if util.IsTrue(d.localConfig["volatile.apply_nvram"]) || fi == nil || fi.Mode()&os.ModeSymlink != os.ModeSymlink || dangling {
 			err = d.setupNvram()
 			if err != nil {
 				op.Done(err)
