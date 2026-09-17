@@ -155,6 +155,27 @@ func TestStarlarkMarshal(t *testing.T) {
 			return ret
 		}(),
 	}, {
+		from: struct{ *DummyEmbeddedStruct }{DummyEmbeddedStruct: &DummyEmbeddedStruct{A: "a"}},
+		to: func() starlark.Value {
+			d1 := starlark.NewDict(1)
+			assert.NoError(t, d1.SetKey(starlark.String("A"), starlark.String("a")))
+			ret := &starlarkObject{d: d1}
+
+			return ret
+		}(),
+	}, {
+		from: struct {
+			*DummyEmbeddedStruct
+			B string
+		}{B: "b"},
+		to: func() starlark.Value {
+			d1 := starlark.NewDict(1)
+			assert.NoError(t, d1.SetKey(starlark.String("B"), starlark.String("b")))
+			ret := &starlarkObject{d: d1}
+
+			return ret
+		}(),
+	}, {
 		from: struct{ fmt.Stringer }{Stringer: DummyStringer(0xbaa)},
 		to: func() starlark.Value {
 			d1 := starlark.NewDict(1)

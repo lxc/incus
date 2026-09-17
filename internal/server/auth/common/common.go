@@ -6,4 +6,5 @@ type RequestDetails struct {
 	Protocol             string
 	IsAllProjectsRequest bool
 	ProjectName          string
+	Claims               map[string]any
 }

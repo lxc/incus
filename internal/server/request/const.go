@@ -20,6 +20,9 @@ const (
 	// CtxProtocol is the protocol field in request context.
 	CtxProtocol CtxKey = "protocol"
 
+	// CtxClaims is the validated OIDC claims field in request context.
+	CtxClaims CtxKey = "claims"
+
 	// CtxUnixIsRoot reports whether the request was made by the root user over the local unix socket.
 	CtxUnixIsRoot CtxKey = "unix_is_root"
 
@@ -31,6 +34,9 @@ const (
 
 	// CtxForwardedProtocol is the forwarded protocol field in request context.
 	CtxForwardedProtocol CtxKey = "forwarded_protocol"
+
+	// CtxForwardedClaims is the forwarded OIDC claims field in request context.
+	CtxForwardedClaims CtxKey = "forwarded_claims"
 )
 
 // Headers.
@@ -43,4 +49,7 @@ const (
 
 	// HeaderForwardedProtocol is the forwarded protocol field in request header.
 	HeaderForwardedProtocol = "X-Incus-forwarded-protocol"
+
+	// HeaderForwardedClaims is the forwarded OIDC claims field (JSON) in request header.
+	HeaderForwardedClaims = "X-Incus-forwarded-claims"
 )

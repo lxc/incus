@@ -102,6 +102,7 @@ To use scriptlet authorization, you can write a scriptlet in the `authorization.
    - `ProjectName`: the project name
    - `Chain`: the certificate chain as a list of dissected x509 certificates
    - `Certificate`: the certificate data stored in the database
+   - `Claims`: the validated OIDC token claims as a dictionary (empty for non-OIDC clients)
 - `object`, the object on which the user requests authorization
 - `entitlement`, the authorization level asked by the user
 
