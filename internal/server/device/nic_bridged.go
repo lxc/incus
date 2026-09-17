@@ -613,9 +613,23 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			return fmt.Errorf("Failed loading network project name: %w", err)
 		}
 
-		err = acl.Exists(d.state, networkProjectName, util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)...)
+		aclNames := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
+
+		err = acl.Exists(d.state, networkProjectName, aclNames...)
 		if err != nil {
 			return err
+		}
+
+		err = acl.ValidateFirewallACLs(d.state, networkProjectName, aclNames...)
+		if err != nil {
+			return err
+		}
+
+		for _, direction := range []string{"ingress", "egress"} {
+			err = acl.ValidateFirewallAction(d.config[fmt.Sprintf("security.acls.default.%s.action", direction)])
+			if err != nil {
+				return err
+			}
 		}
 	}
 
