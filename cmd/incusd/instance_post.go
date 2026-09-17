@@ -217,13 +217,6 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		req.Migration = true
 	}
 
-	if req.Project != "" {
-		err = checkProjectMove(s, inst, req.Project)
-		if err != nil {
-			return response.BadRequest(err)
-		}
-	}
-
 	// Handle simple instance renaming.
 	if !req.Migration {
 		run := func(op *operations.Operation) error {
@@ -506,6 +499,15 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 	// Check that we're not requested to move to the same location we're currently on.
 	if target != "" && targetMemberInfo.Name == inst.Location() {
 		return response.BadRequest(errors.New("Requested target server is the same as current server"))
+	}
+
+	if req.Project != "" {
+		memberChange := targetMemberInfo != nil && targetMemberInfo.Name != inst.Location()
+
+		err = checkProjectMove(s, inst, req.Project, memberChange)
+		if err != nil {
+			return response.BadRequest(err)
+		}
 	}
 
 	// If the instance needs to move, make sure it doesn't have backups.
@@ -1313,7 +1315,7 @@ func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrid
 }
 
 // checkProjectMove validates that an instance can be moved to the given project.
-func checkProjectMove(s *state.State, inst instance.Instance, targetProject string) error {
+func checkProjectMove(s *state.State, inst instance.Instance, targetProject string, memberChange bool) error {
 	srcVolProject, err := project.StorageVolumeProject(s.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
 	if err != nil {
 		return err
@@ -1324,9 +1326,25 @@ func checkProjectMove(s *state.State, inst instance.Instance, targetProject stri
 		return err
 	}
 
+	sharedVolumes := srcVolProject == dstVolProject
+
 	dependentDisks := []string{}
 	err = inst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 		dependentDisks = append(dependentDisks, dev.Name)
+
+		if !sharedVolumes {
+			return nil
+		}
+
+		// With a shared volume project, only a volume on a local pool can follow, onto another member.
+		diskPool, err := storagePools.LoadByName(s, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		if diskPool.Driver().Info().Remote || !memberChange {
+			return fmt.Errorf("Dependent disk %q can't follow the instance, as both projects share their storage volumes", dev.Name)
+		}
 
 		return nil
 	})
@@ -1334,12 +1352,7 @@ func checkProjectMove(s *state.State, inst instance.Instance, targetProject stri
 		return err
 	}
 
-	// A dependent volume needs a volume project of its own to follow the instance into.
-	if srcVolProject == dstVolProject {
-		if len(dependentDisks) > 0 {
-			return fmt.Errorf("Dependent disk %q can't follow the instance, as both projects share their storage volumes", dependentDisks[0])
-		}
-
+	if sharedVolumes {
 		return nil
 	}
 
