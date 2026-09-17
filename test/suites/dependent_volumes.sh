@@ -90,6 +90,18 @@ test_dependent_volumes() {
     incus delete --force c1
     [ "$(incus storage volume ls "${storage_pool}" "${storage_volume}" --format json | jq 'length == 0')" = "true" ]
 
+    # Dependent volumes work in a project using the default project's storage volumes
+    storage_volume3="${storage_pool}-vol3"
+    incus project create depvols -c features.storage.volumes=false -c features.images=false -c features.profiles=false
+    incus init testimage c3 --project depvols
+    incus storage volume create "${storage_pool}" "${storage_volume3}" --project depvols
+    incus config device add c3 vol3 disk pool="${storage_pool}" source="${storage_volume3}" path=/mnt dependent=true --project depvols
+    incus snapshot create c3 snap0 --project depvols
+    [ "$(incus storage volume snapshot ls "${storage_pool}" "${storage_volume3}" --format json | jq 'length == 1')" = "true" ]
+    incus delete --force c3 --project depvols
+    [ "$(incus storage volume ls "${storage_pool}" "${storage_volume3}" --format json | jq 'length == 0')" = "true" ]
+    incus project delete depvols
+
     # Cleanup
     rm "${INCUS_DIR}/c1.tar.gz"
     incus storage volume delete "${storage_pool}" "${storage_volume2}"
