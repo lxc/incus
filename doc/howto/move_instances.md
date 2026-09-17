@@ -55,8 +55,7 @@ A live migration within a cluster can also move the instance to another project,
 The instance must move to a different cluster member, and its devices must resolve to the same
 set in the target project, because a running instance can't be given a different device set.
 Attached custom volumes don't follow the instance and must be moved separately, except for those
-marked `dependent`, which move with it as long as the two projects don't share their storage
-volumes.
+marked `dependent`, which move with it.
 
 (live-migration-containers)=
 ### Live migration for containers
