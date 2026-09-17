@@ -15,6 +15,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
@@ -33,9 +34,10 @@ type dependentDiskTransfer struct {
 	sourceMemberInfo *db.NodeInfo
 	op               *operations.Operation
 
-	devs       []deviceConfig.DeviceNamed
-	snapPrefix string
-	snapshots  []string
+	devs               []deviceConfig.DeviceNamed
+	storageProjectName string
+	snapPrefix         string
+	snapshots          []string
 }
 
 // start collects the dependent disks on local storage and moves them to the target member while the
@@ -61,6 +63,11 @@ func (t *dependentDiskTransfer) start(ctx context.Context, reverter *revert.Reve
 		return nil
 	}
 
+	t.storageProjectName, err = project.StorageVolumeProject(t.s.DB.Cluster, t.inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
 	t.snapPrefix, err = instance.MoveTemporaryName(t.inst)
 	if err != nil {
 		return err
@@ -75,7 +82,7 @@ func (t *dependentDiskTransfer) start(ctx context.Context, reverter *revert.Reve
 			diskPool, err := storagePools.LoadByName(t.s, poolName)
 			if err == nil {
 				for _, snapName := range t.snapshots {
-					err := diskPool.DeleteCustomVolumeSnapshot(t.inst.Project().Name, fmt.Sprintf("%s/%s", volName, snapName), t.op)
+					err := diskPool.DeleteCustomVolumeSnapshot(t.storageProjectName, fmt.Sprintf("%s/%s", volName, snapName), t.op)
 					if err != nil && !response.IsNotFoundError(err) {
 						logger.Warn("Failed removing pre-copy snapshot from dependent volume", logger.Ctx{"project": t.inst.Project().Name, "instance": t.inst.Name(), "volume": volName, "snapshot": snapName, "err": err})
 					}
@@ -129,7 +136,7 @@ func (t *dependentDiskTransfer) transfer(ctx context.Context, snapName string, r
 
 		// Snapshot the volume.
 		if snapName != "" {
-			err = diskPool.CreateCustomVolumeSnapshot(projectName, volName, snapName, time.Time{}, false, t.op)
+			err = diskPool.CreateCustomVolumeSnapshot(t.storageProjectName, volName, snapName, time.Time{}, false, t.op)
 			if err != nil {
 				return fmt.Errorf("Failed creating pre-copy snapshot %q for volume %q: %w", snapName, volName, err)
 			}
@@ -141,7 +148,7 @@ func (t *dependentDiskTransfer) transfer(ctx context.Context, snapName string, r
 		}
 
 		run := func(_ *operations.Operation) error {
-			return srcMigration.DoStorage(t.s, projectName, poolName, volName, t.op)
+			return srcMigration.DoStorage(t.s, t.storageProjectName, poolName, volName, t.op)
 		}
 
 		cancel := func(_ *operations.Operation) error {
