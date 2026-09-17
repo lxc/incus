@@ -612,10 +612,55 @@ func (d *common) validatePorts(ports []string) error {
 	return nil
 }
 
+// validateFirewallUsage returns an error if the rules can't be applied by the non-OVN networks using the ACL.
+func (d *common) validateFirewallUsage(config *api.NetworkACLPut) error {
+	var firewallErr error
+	for _, rule := range append(config.Ingress, config.Egress...) {
+		if rule.State == "disabled" {
+			continue
+		}
+
+		firewallErr = ValidateFirewallAction(rule.Action)
+		if firewallErr != nil {
+			break
+		}
+	}
+
+	if firewallErr == nil {
+		return nil
+	}
+
+	aclNets := map[string]NetworkACLUsage{}
+	err := NetworkUsage(d.state, d.projectName, []string{d.info.Name}, aclNets)
+	if err != nil {
+		return fmt.Errorf("Failed getting ACL network usage: %w", err)
+	}
+
+	for _, aclNet := range aclNets {
+		if aclNet.Type == "ovn" {
+			continue
+		}
+
+		if aclNet.DeviceName != "" {
+			return fmt.Errorf("ACL is used by device %q of instance %q: %w", aclNet.DeviceName, aclNet.InstanceName, firewallErr)
+		}
+
+		return fmt.Errorf("ACL is used by network %q: %w", aclNet.Name, firewallErr)
+	}
+
+	return nil
+}
+
 // Update applies the supplied config to the ACL.
 func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType) error {
 	// Validate the configuration.
 	err := d.validateConfig(config)
+	if err != nil {
+		return err
+	}
+
+	// Check that the rules can be applied by every network using the ACL.
+	err = d.validateFirewallUsage(config)
 	if err != nil {
 		return err
 	}
