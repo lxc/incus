@@ -858,12 +858,13 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpo
 		// Return Unavailable Error (503) if daemon is shutting down.
 		// There are some exceptions:
 		// - internal calls, e.g. shutdown
+		// - OS calls, so the host can still be rebooted
 		// - events endpoint as this is accessed when running `shutdown`
 		// - /1.0 endpoint
 		// - /1.0/operations endpoints
 		// - GET queries
 		allowedDuringShutdown := func() bool {
-			if apiVersion == "internal" {
+			if slices.Contains([]string{"internal", "os"}, apiVersion) {
 				return true
 			}
 
