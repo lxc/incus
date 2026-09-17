@@ -22,6 +22,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -293,6 +294,8 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 	}
 
 	resultErrListAppend := func(inst db.Instance, err error) {
+		logger.Warn("Failed rendering instance", logger.Ctx{"project": inst.Project, "instance": inst.Name, "err": err})
+
 		instFull := &api.InstanceFull{
 			Instance: api.Instance{
 				Name:       inst.Name,
