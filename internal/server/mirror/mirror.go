@@ -57,7 +57,8 @@ func Start(local string, persistent string, filter func(name string) bool) error
 		pending:    map[string]struct{}{},
 	}
 
-	err := m.syncAll()
+	// The local directory was just seeded, so don't treat missing files as deletions.
+	err := m.syncAll(false)
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func Stop(local string) error {
 
 	m.unwatch()
 
-	return m.syncAll()
+	return m.syncAll(true)
 }
 
 // Active returns whether local is being replicated.
@@ -101,7 +102,7 @@ func Active(local string) bool {
 // Flush syncs the files of every mirror whose local directory is under prefix.
 func Flush(prefix string) error {
 	for _, m := range find(prefix) {
-		err := m.syncAll()
+		err := m.syncAll(true)
 		if err != nil {
 			return err
 		}
@@ -115,7 +116,7 @@ func Pause(prefix string) error {
 	for _, m := range find(prefix) {
 		m.unwatch()
 
-		err := m.syncAll()
+		err := m.syncAll(true)
 		if err != nil {
 			return err
 		}
@@ -127,7 +128,7 @@ func Pause(prefix string) error {
 // Resume syncs and restarts watching every paused mirror whose local directory is under prefix.
 func Resume(prefix string) error {
 	for _, m := range find(prefix) {
-		err := m.syncAll()
+		err := m.syncAll(true)
 		if err != nil {
 			return err
 		}
@@ -254,8 +255,8 @@ func (m *Mirror) syncPending() {
 	}
 }
 
-// syncAll replicates every matching local file and removes persistent files that no longer exist locally.
-func (m *Mirror) syncAll() error {
+// syncAll replicates every matching local file, removing persistent files missing locally when prune is set.
+func (m *Mirror) syncAll(prune bool) error {
 	m.syncMu.Lock()
 	defer m.syncMu.Unlock()
 
@@ -273,6 +274,10 @@ func (m *Mirror) syncAll() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if !prune {
+		return nil
 	}
 
 	persistentNames, err := m.list(m.persistent)
