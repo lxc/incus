@@ -301,35 +301,40 @@ func lxcCreate(s *state.State, args db.InstanceArgs, p api.Project, partialDevic
 		return nil, nil, errors.New("Storage pool does not support instance type")
 	}
 
-	// Setup the initial idmap config.
-	var idmapSet *idmap.Set
-	base := int64(0)
-	if !d.IsPrivileged() {
-		idmapSet, base, err = d.findIdmap()
-		if err != nil {
-			return nil, nil, err
+	// Setup the initial idmap config, keeping the allocation locked until it's persisted.
+	err = func() error {
+		idmapLock.Lock()
+		defer idmapLock.Unlock()
+
+		var idmapSet *idmap.Set
+		base := int64(0)
+		if !d.IsPrivileged() {
+			idmapSet, base, err = d.findIdmap()
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	idmapSetJSON, err := idmapSet.ToJSON()
-	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to encode ID map: %w", err)
-	}
+		idmapSetJSON, err := idmapSet.ToJSON()
+		if err != nil {
+			return fmt.Errorf("Failed to encode ID map: %w", err)
+		}
 
-	v := map[string]string{
-		"volatile.idmap.next": idmapSetJSON,
-		"volatile.idmap.base": fmt.Sprintf("%v", base),
-	}
+		v := map[string]string{
+			"volatile.idmap.next": idmapSetJSON,
+			"volatile.idmap.base": fmt.Sprintf("%v", base),
+		}
 
-	// Invalidate the idmap cache.
-	d.idmapset = nil
+		// Invalidate the idmap cache.
+		d.idmapset = nil
 
-	// Set last_state if not currently set.
-	if d.localConfig["volatile.last_state.idmap"] == "" {
-		v["volatile.last_state.idmap"] = "[]"
-	}
+		// Set last_state if not currently set.
+		if d.localConfig["volatile.last_state.idmap"] == "" {
+			v["volatile.last_state.idmap"] = "[]"
+		}
 
-	err = d.VolatileSet(v)
+		return d.VolatileSet(v)
+	}()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -477,6 +482,7 @@ type lxc struct {
 
 var idmapLock sync.Mutex
 
+// findIdmap selects the ID map for the instance, the caller must hold idmapLock until the base is persisted.
 func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 	if d.state.OS.IdmapSet == nil {
 		return nil, 0, errors.New("System doesn't have a functional idmap setup")
@@ -577,9 +583,6 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 
 		return set, offset, nil
 	}
-
-	idmapLock.Lock()
-	defer idmapLock.Unlock()
 
 	cts, err := instance.LoadNodeAll(d.state, instancetype.Container)
 	if err != nil {
@@ -2082,23 +2085,33 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 
 		// Check if we need to change idmap.
 		if nextMap != nil && d.state.OS.IdmapSet != nil && !d.state.OS.IdmapSet.Includes(nextMap) {
-			// Update the idmap.
-			idmapSet, base, err := d.findIdmap()
-			if err != nil {
-				return "", nil, fmt.Errorf("Failed to get ID map: %w", err)
-			}
+			// Update the idmap, keeping the allocation locked until it's persisted.
+			err = func() error {
+				idmapLock.Lock()
+				defer idmapLock.Unlock()
 
-			idmapSetJSON, err := idmapSet.ToJSON()
-			if err != nil {
-				return "", nil, fmt.Errorf("Failed to encode ID map: %w", err)
-			}
+				idmapSet, base, err := d.findIdmap()
+				if err != nil {
+					return fmt.Errorf("Failed to get ID map: %w", err)
+				}
 
-			err = d.VolatileSet(map[string]string{
-				"volatile.idmap.next": idmapSetJSON,
-				"volatile.idmap.base": fmt.Sprintf("%v", base),
-			})
+				idmapSetJSON, err := idmapSet.ToJSON()
+				if err != nil {
+					return fmt.Errorf("Failed to encode ID map: %w", err)
+				}
+
+				err = d.VolatileSet(map[string]string{
+					"volatile.idmap.next": idmapSetJSON,
+					"volatile.idmap.base": fmt.Sprintf("%v", base),
+				})
+				if err != nil {
+					return fmt.Errorf("Failed to update volatile idmap: %w", err)
+				}
+
+				return nil
+			}()
 			if err != nil {
-				return "", nil, fmt.Errorf("Failed to update volatile idmap: %w", err)
+				return "", nil, err
 			}
 
 			// Invalidate the idmap cache.
@@ -5231,6 +5244,10 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	if slices.Contains(changedConfig, "security.idmap.isolated") || slices.Contains(changedConfig, "security.idmap.base") || slices.Contains(changedConfig, "security.idmap.size") || slices.Contains(changedConfig, "raw.idmap") || slices.Contains(changedConfig, "security.privileged") {
+		// Keep the allocation locked until the config is written to the database below.
+		idmapLock.Lock()
+		defer idmapLock.Unlock()
+
 		var idmapSet *idmap.Set
 		base := int64(0)
 		if !d.IsPrivileged() {
