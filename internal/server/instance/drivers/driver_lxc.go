@@ -4658,6 +4658,11 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 			}
 
 			if cleanupDependencies {
+				storageProjectName, err := project.StorageVolumeProject(d.state.DB.Cluster, d.Project().Name, db.StoragePoolVolumeTypeCustom)
+				if err != nil {
+					return err
+				}
+
 				// Delete all dependent volumes associated with this instance.
 				err = d.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
 					// Load the pool for the disk.
@@ -4667,7 +4672,7 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 					}
 
 					volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
-					err = diskPool.DeleteCustomVolume(d.Project().Name, volName, nil)
+					err = diskPool.DeleteCustomVolume(storageProjectName, volName, nil)
 					if err != nil {
 						return err
 					}
