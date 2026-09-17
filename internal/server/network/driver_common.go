@@ -694,6 +694,12 @@ func (n *common) bgpClear(config map[string]string) error {
 		return err
 	}
 
+	// Clear existing load balancer prefixes for network.
+	err = n.state.BGP.RemovePrefixByOwner(fmt.Sprintf("network_%d_load_balancer", n.id))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
