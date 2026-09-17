@@ -162,6 +162,28 @@ test_container_devices_nic_bridged_acl() {
     # Check can't delete ACL that is in use.
     ! incus network acl delete "${brName}A" || false
 
+    # Check a failed ACL update doesn't leave a bridged NIC unfiltered.
+    incus network acl create "${brName}C"
+    incus config device override "${ctPrefix}A" eth0 security.acls="${brName}C" security.acls.default.ingress.action=drop security.acls.default.egress.action=drop
+    nft -nn list chain bridge incus "in.${ctPrefix}A.eth0" | grep -c "drop" | grep -v "^0$"
+    ! incus network acl rule add "${brName}C" egress action=allow-stateless protocol=tcp destination_port=2222 || false
+    ! incus network acl show "${brName}C" | grep -F "allow-stateless" || false
+    nft -nn list chain bridge incus "in.${ctPrefix}A.eth0" | grep -c "drop" | grep -v "^0$"
+
+    # Check stateless rules and default actions are rejected on bridge networks and NICs.
+    incus network acl create "${brName}D"
+    incus network acl rule add "${brName}D" egress action=allow-stateless protocol=tcp destination_port=2222
+    ! incus config device set "${ctPrefix}A" eth0 security.acls="${brName}D" || false
+    ! incus config device set "${ctPrefix}A" eth0 security.acls.default.egress.action=allow-stateless || false
+    ! incus network set "${brName}" security.acls="${brName}A,${brName}D" || false
+    ! incus network set "${brName}" security.acls.default.egress.action=allow-stateless || false
+
+    # Check the NIC filters are removed when its ACL is unset.
+    incus config device set "${ctPrefix}A" eth0 security.acls=
+    ! nft -nn list chain bridge incus "in.${ctPrefix}A.eth0" || false
+    incus network acl delete "${brName}C"
+    incus network acl delete "${brName}D"
+
     incus delete -f "${ctPrefix}A"
     incus profile delete "${ctPrefix}"
     incus network delete "${brName}"
