@@ -657,6 +657,26 @@ func instanceExecPost(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
+	// Then fall back to the image environment of application containers.
+	if util.IsTrue(inst.ExpandedConfig()["volatile.container.oci"]) {
+		spec, err := instance.OCISpec(inst.Path())
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		ociEnv, err := instance.OCIEnvironment(spec)
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		for k, v := range ociEnv {
+			_, found := post.Environment[k]
+			if !found {
+				post.Environment[k] = v
+			}
+		}
+	}
+
 	// Set default value for PATH.
 	_, ok := post.Environment["PATH"]
 	if !ok {
