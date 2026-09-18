@@ -765,11 +765,9 @@ func (d Nftables) aclRuleToNftRules(hostNameQuoted string, rule ACLRule) ([]stri
 		if err != nil {
 			return nil, nil, nil, err
 		}
+	}
 
-		if len(nft6Rules) == 0 {
-			return nil, nil, nil, errors.New("Invalid empty rule generated")
-		}
-	} else if len(nft4Rules) == 0 {
+	if len(nft4Rules) == 0 && len(nft6Rules) == 0 {
 		return nil, nil, nil, errors.New("Invalid empty rule generated")
 	}
 
@@ -1080,15 +1078,16 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 		}
 
 		if len(matchFragments) == 0 {
-			overallPartial = true
-		} else {
-			// For each fragment generated from the source criteria,
-			// start a new rule fragment beginning with the base arguments.
-			for _, frag := range matchFragments {
-				// if fragment contain IP address sets of different family than icmp drop fragment
-				// This is ok for icmp only as we may apply both ipv4 and ipv6 restriction in match field for tcp/udp
-				ruleFragments = append(ruleFragments, append(slices.Clone(baseArgs), frag))
-			}
+			// The rule can't match this IP version, don't render a wider rule from the destination alone.
+			return nil, true, nil
+		}
+
+		// For each fragment generated from the source criteria,
+		// start a new rule fragment beginning with the base arguments.
+		for _, frag := range matchFragments {
+			// if fragment contain IP address sets of different family than icmp drop fragment
+			// This is ok for icmp only as we may apply both ipv4 and ipv6 restriction in match field for tcp/udp
+			ruleFragments = append(ruleFragments, append(slices.Clone(baseArgs), frag))
 		}
 	}
 
@@ -1102,37 +1101,38 @@ func (d Nftables) aclRuleCriteriaToRules(networkName string, ipVersion uint, rul
 		}
 
 		if len(matchFragments) == 0 {
-			overallPartial = true
-		} else {
-			if len(ruleFragments) > 0 {
-				// Combine each existing fragment with each destination fragment.
-				var combined [][]string
-				contains := func(fragMap [][]string, item []string) bool {
-					for _, s := range fragMap {
-						if strings.Join(s, " ") == strings.Join(item, " ") {
-							return true
-						}
-					}
+			// The rule can't match this IP version, don't render a wider rule from the source alone.
+			return nil, true, nil
+		}
 
-					return false
-				}
-
-				for _, frag := range ruleFragments {
-					for _, df := range matchFragments {
-						newRule := append(slices.Clone(frag), df)
-
-						if !contains(combined, newRule) {
-							combined = append(combined, newRule)
-						}
+		if len(ruleFragments) > 0 {
+			// Combine each existing fragment with each destination fragment.
+			var combined [][]string
+			contains := func(fragMap [][]string, item []string) bool {
+				for _, s := range fragMap {
+					if strings.Join(s, " ") == strings.Join(item, " ") {
+						return true
 					}
 				}
 
-				ruleFragments = combined
-			} else {
-				// If no source criteria were provided, start with baseArgs and add destination fragments.
+				return false
+			}
+
+			for _, frag := range ruleFragments {
 				for _, df := range matchFragments {
-					ruleFragments = append(ruleFragments, append(slices.Clone(baseArgs), df))
+					newRule := append(slices.Clone(frag), df)
+
+					if !contains(combined, newRule) {
+						combined = append(combined, newRule)
+					}
 				}
+			}
+
+			ruleFragments = combined
+		} else {
+			// If no source criteria were provided, start with baseArgs and add destination fragments.
+			for _, df := range matchFragments {
+				ruleFragments = append(ruleFragments, append(slices.Clone(baseArgs), df))
 			}
 		}
 	}
