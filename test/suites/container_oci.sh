@@ -12,6 +12,23 @@ test_container_oci() {
 
     incus launch docker:caddy caddy --network=inct$$
     incus info caddy | grep -q RUNNING
+
+    # The image environment is exported without being copied into the instance config.
+    [ "$(incus config get caddy environment.CADDY_VERSION)" = "" ]
+    incus exec caddy -- printenv CADDY_VERSION | grep -q .
+
+    # Instance config overrides the image environment.
+    incus config set caddy environment.CADDY_VERSION=custom
+    [ "$(incus exec caddy -- printenv CADDY_VERSION)" = "custom" ]
+
+    # Rebuilding keeps the overrides and exports the rest from the image.
+    incus stop -f caddy
+    incus rebuild docker:caddy caddy
+    [ "$(incus config get caddy environment.CADDY_VERSION)" = "custom" ]
+    [ "$(incus config get caddy environment.XDG_CONFIG_HOME)" = "" ]
+    incus start caddy
+    [ "$(incus exec caddy -- printenv CADDY_VERSION)" = "custom" ]
+    incus exec caddy -- printenv XDG_CONFIG_HOME | grep -q .
     incus delete -f caddy
 
     incus network delete inct$$
