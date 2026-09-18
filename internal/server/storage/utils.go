@@ -1341,6 +1341,11 @@ func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, 
 		return result, nil
 	}
 
+	storageProjectName, err := project.StorageVolumeProject(s.DB.Cluster, projectName, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return nil, err
+	}
+
 	devicesMap := DevicesMapFromBackupConfig(config)
 
 	for _, volConfig := range config.DependentVolumes {
@@ -1371,7 +1376,7 @@ func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, 
 			continue
 		}
 
-		volStorageName := project.StorageVolume(projectName, volName)
+		volStorageName := project.StorageVolume(storageProjectName, volName)
 		vol := pool.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(contentType), volStorageName, volConfig.Volume.Config)
 
 		// The volume changes pool when the device override points it elsewhere.
