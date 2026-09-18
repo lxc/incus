@@ -121,6 +121,25 @@ test_idmap() {
     [ "$(incus config get idmap-gap volatile.idmap.base)" = "${GAP_BASE}" ]
     incus delete idmap-gap idmap-after-gap
 
+    # Check that concurrent creations get distinct isolated ranges.
+    pids=""
+    for i in 1 2 3 4 5 6 7 8; do
+        incus init testimage "idmap-parallel-${i}" -c security.idmap.isolated=true &
+        pids="${pids} $!"
+    done
+
+    for pid in ${pids}; do
+        wait "${pid}"
+    done
+
+    bases=""
+    for i in 1 2 3 4 5 6 7 8; do
+        bases="${bases} $(incus config get "idmap-parallel-${i}" volatile.idmap.base)"
+        incus delete "idmap-parallel-${i}"
+    done
+
+    [ "$(echo "${bases}" | tr ' ' '\n' | sed '/^$/d' | sort -u | wc -l)" = "8" ]
+
     # Validate non-overlapping maps
     incus exec idmap -- touch /a
     ! incus exec idmap -- chown 65536 /a || false
