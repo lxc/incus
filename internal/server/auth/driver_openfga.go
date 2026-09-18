@@ -761,6 +761,32 @@ func (f *FGA) RenameNetworkIntegration(ctx context.Context, oldNetworkIntegratio
 	return f.updateTuples(ctx, writes, deletions)
 }
 
+// AddNetworkPeerGroup adds a network peer group to the authorizer.
+func (f *FGA) AddNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error {
+	writes := []client.ClientTupleKey{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkPeerGroup(networkPeerGroupName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, writes, nil)
+}
+
+// DeleteNetworkPeerGroup deletes a network peer group from the authorizer.
+func (f *FGA) DeleteNetworkPeerGroup(ctx context.Context, networkPeerGroupName string) error {
+	deletions := []client.ClientTupleKeyWithoutCondition{
+		{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   ObjectNetworkPeerGroup(networkPeerGroupName).String(),
+		},
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
+}
+
 // AddNetworkACL adds a network ACL in the authorizer.
 func (f *FGA) AddNetworkACL(ctx context.Context, projectName string, networkACLName string) error {
 	writes := []client.ClientTupleKey{
@@ -1144,6 +1170,22 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 
 	// Compare with local network integrations.
 	err = diffObjects(relationServer, networkIntegrationsResp.GetObjects(), resources.NetworkIntegrationObjects)
+	if err != nil {
+		return err
+	}
+
+	// List the network peer groups we have added to OpenFGA already.
+	networkPeerGroupsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+		User:     ObjectServer().String(),
+		Relation: relationServer,
+		Type:     string(ObjectTypeNetworkPeerGroup),
+	}).Execute()
+	if err != nil {
+		return err
+	}
+
+	// Compare with local network peer groups.
+	err = diffObjects(relationServer, networkPeerGroupsResp.GetObjects(), resources.NetworkPeerGroupObjects)
 	if err != nil {
 		return err
 	}

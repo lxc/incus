@@ -68,6 +68,12 @@ type network_integration
     define can_edit: [user, group#member] or admin from server
     define can_view: viewer from server
 
+type network_peer_group
+  relations
+    define server: [server]
+    define can_edit: [user, group#member] or admin from server
+    define can_view: viewer from server
+
 type network_zone
   relations
     define project: [project]
@@ -111,6 +117,7 @@ type server
     define authenticated: [user:*]
     define can_create_certificates: [user, group#member] or admin
     define can_create_network_integrations: [user, group#member] or admin
+    define can_create_network_peer_groups: [user, group#member] or admin
     define can_create_projects: [user, group#member] or admin
     define can_create_storage_pools: [user, group#member] or admin
     define can_edit: admin

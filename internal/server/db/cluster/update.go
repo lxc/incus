@@ -114,6 +114,35 @@ var updates = map[int]schema.Update{
 	75: updateFromV74,
 	76: updateFromV75,
 	77: updateFromV76,
+	78: updateFromV77,
+}
+
+// updateFromV77 adds the network_peer_groups and network_peer_groups_networks tables.
+func updateFromV77(ctx context.Context, tx *sql.Tx) error {
+	q := `
+CREATE TABLE network_peer_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    UNIQUE (name)
+);
+CREATE TABLE network_peer_groups_networks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    network_peer_group_id INTEGER NOT NULL,
+    network_id INTEGER NOT NULL,
+    link_index INTEGER NOT NULL,
+    UNIQUE (network_peer_group_id, network_id),
+    UNIQUE (network_peer_group_id, link_index),
+    FOREIGN KEY (network_peer_group_id) REFERENCES network_peer_groups (id) ON DELETE CASCADE,
+    FOREIGN KEY (network_id) REFERENCES networks (id) ON DELETE CASCADE
+);
+`
+	_, err := tx.Exec(q)
+	if err != nil {
+		return fmt.Errorf("Failed adding network_peer_groups tables: %w", err)
+	}
+
+	return nil
 }
 
 func updateFromV76(ctx context.Context, tx *sql.Tx) error {

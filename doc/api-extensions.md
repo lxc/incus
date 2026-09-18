@@ -3475,3 +3475,25 @@ dictionary. This allows writing rules based on claims such as `groups`.
 This allows a running instance to change project as part of a live migration
 to another cluster member. It also lets instances with `dependent` disks
 attached change project.
+
+## `network_peer_groups`
+
+Adds the concept of network peer groups, which provision the OVN resources
+needed to peer networks together.
+
+New API:
+
+* `/1.0/network-peer-groups` (GET, POST)
+* `/1.0/network-peer-groups/NAME` (GET, PUT, DELETE)
+
+Each network peer group is made of:
+
+* name
+* description
+* networks (list of existing OVN networks that are members of the group)
+
+Existing OVN networks can be added to (or removed from) a network peer group
+by setting the `networks` list through `PUT /1.0/network-peer-groups/NAME`. A
+network being added must have at least one configured subnet, and
+that subnet must not overlap with any other current member's subnet.
+

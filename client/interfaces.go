@@ -299,6 +299,14 @@ type InstanceServer interface {
 	RenameNetworkIntegration(name string, integration api.NetworkIntegrationPost) (err error)
 	DeleteNetworkIntegration(name string) (err error)
 
+	// Network peer group functions ("network_peer_groups" API extension)
+	GetNetworkPeerGroupNames() (names []string, err error)
+	GetNetworkPeerGroups() (groups []api.NetworkPeerGroup, err error)
+	GetNetworkPeerGroup(name string) (group *api.NetworkPeerGroup, ETag string, err error)
+	CreateNetworkPeerGroup(group api.NetworkPeerGroupsPost) (err error)
+	UpdateNetworkPeerGroup(name string, group api.NetworkPeerGroupPut, ETag string) (err error)
+	DeleteNetworkPeerGroup(name string) (err error)
+
 	// Operation functions
 	GetOperationUUIDs() (uuids []string, err error)
 	GetOperations() (operations []api.Operation, err error)
