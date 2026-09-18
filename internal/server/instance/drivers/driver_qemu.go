@@ -8590,6 +8590,17 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	// Filesystem volumes are shared over 9p, which QEMU can't live migrate.
+	if args.Live {
+		for _, vol := range dependentVolumesOffer {
+			if vol.GetContentType() != string(storageDrivers.ContentTypeBlock) {
+				err := fmt.Errorf("Live migration isn't supported for dependent disk %q with a filesystem volume", vol.GetDeviceName())
+				op.Done(err)
+				return err
+			}
+		}
+	}
+
 	offerHeader.DependentVolumes = dependentVolumesOffer
 
 	contentType := storagePools.InstanceContentType(d)
@@ -8917,6 +8928,10 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 	blockDevs, err := d.fetchBlockDeviceChain(monitor, diskName)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("Failed fetching block device chain: %w", err)
+	}
+
+	if len(blockDevs) == 0 {
+		return "", "", nil, fmt.Errorf("No block device found for disk %q", diskName)
 	}
 
 	blockDevName := blockDevs[len(blockDevs)-1]
