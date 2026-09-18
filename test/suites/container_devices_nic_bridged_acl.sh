@@ -21,6 +21,15 @@ test_container_devices_nic_bridged_acl() {
     nft -nn list chain inet incus "aclfwd.${brName}" | grep -c "jump acl.${brName}" | grep 2
     nft -nn list chain inet incus "acl.${brName}" | grep -c "reject" | grep 2
 
+    # Check a rule mixing an IPv4 literal with an address set isn't widened for IPv6.
+    incus network address-set create "${brName}set"
+    incus network address-set add "${brName}set" 192.0.2.9 2001:db8::9
+    incus network acl rule add "${brName}A" ingress action=allow protocol=tcp source=192.0.2.1 "destination=\\\$${brName}set" destination_port=443
+    nft -nn list chain inet incus "acl.${brName}" | grep -q "@${brName}set_ipv4"
+    ! nft -nn list chain inet incus "acl.${brName}" | grep -q "@${brName}set_ipv6" || false
+    incus network acl rule remove "${brName}A" ingress protocol=tcp source=192.0.2.1 "destination=\\\$${brName}set"
+    incus network address-set delete "${brName}set"
+
     # Unset ACLs and check the firewall config is cleaned up.
     incus network unset "${brName}" security.acls
     ! nft -nn list chain inet incus "aclin.${brName}" || false
