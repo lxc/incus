@@ -490,8 +490,14 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 	return instances, nil
 }
 
-func instancesShutdown(instances []instance.Instance) {
+func instancesShutdown(ctx context.Context, instances []instance.Instance, forceTimeout time.Duration) {
 	sort.Sort(instanceStopList(instances))
+
+	// A shutdown forced from the start still gets the regular timeouts.
+	forceCh := ctx.Done()
+	if ctx.Err() != nil {
+		forceCh = nil
+	}
 
 	// Limit shutdown concurrency to number of instances or number of CPU cores (which ever is less).
 	var wg sync.WaitGroup
@@ -512,8 +518,11 @@ func instancesShutdown(instances []instance.Instance) {
 					timeoutSeconds, _ = strconv.Atoi(value)
 				}
 
-				// Shutdown the instance.
-				func() {
+				// Shutdown the instance without waiting past the timeouts on an unresponsive instance.
+				done := make(chan struct{})
+				go func() {
+					defer close(done)
+
 					// Save and restore the ephemeral bit (if DB is available).
 					if inst.ID() > 0 {
 						ephemeral := inst.IsEphemeral()
@@ -569,6 +578,27 @@ func instancesShutdown(instances []instance.Instance) {
 						}
 					}
 				}()
+
+				forced := false
+				select {
+				case <-done:
+				case <-time.After(time.Second*time.Duration(timeoutSeconds) + forceTimeout):
+					logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+					forced = true
+				case <-forceCh:
+					logger.Warn("Forced shutdown, forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+					forced = true
+				}
+
+				// Take over the wedged stop without waiting on it any further.
+				if forced {
+					go func() {
+						err := inst.Stop(false)
+						if err != nil {
+							logger.Error("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+						}
+					}()
+				}
 
 				if inst.ID() > 0 {
 					// If DB was available then the instance shutdown process will have set

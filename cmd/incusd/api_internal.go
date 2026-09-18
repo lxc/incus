@@ -304,22 +304,26 @@ func internalShutdown(d *Daemon, r *http.Request) response.Response {
 	logger.Info("Asked to shutdown by API", logger.Ctx{"force": force})
 
 	if d.State().ShutdownCtx.Err() != nil {
+		// Let a forced request stop the in-progress shutdown from waiting on operations and instances.
+		if force == "true" {
+			logger.Info("Forcing the shutdown already in progress")
+			d.shutdownForceCancel()
+
+			return response.EmptySyncResponse
+		}
+
 		return response.SmartError(api.StatusErrorf(http.StatusTooManyRequests, "Shutdown already in progress"))
 	}
 
-	forceCtx, forceCtxCancel := context.WithCancel(context.Background())
-
 	if force == "true" {
-		forceCtxCancel() // Don't wait for operations to finish.
+		d.shutdownForceCancel() // Don't wait for operations to finish.
 	}
 
 	return response.ManualResponse(func(w http.ResponseWriter) error {
-		defer forceCtxCancel()
-
 		<-d.setupChan // Wait for daemon to start.
 
 		// Run shutdown sequence synchronously.
-		stopErr := d.Stop(forceCtx, unix.SIGPWR)
+		stopErr := d.Stop(d.shutdownForceCtx, unix.SIGPWR)
 		err := response.SmartError(stopErr).Render(w)
 		if err != nil {
 			return err
