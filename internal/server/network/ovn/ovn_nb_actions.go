@@ -3834,7 +3834,7 @@ func (o *NB) CreateLoadBalancer(ctx context.Context, loadBalancerName OVNLoadBal
 				}
 
 				// Skip existing entries.
-				_, ok := lb.IPPortMappings[target]
+				_, ok := lb.IPPortMappings[ipToString(net.ParseIP(target))]
 				if ok {
 					continue
 				}
@@ -4037,8 +4037,14 @@ func (o *NB) GetLoadBalancersByStatusUpdate(ctx context.Context, mon ovnSB.Servi
 			return false
 		}
 
+		// IPv6 addresses are stored bracketed in the mappings but not in the service monitor.
 		for k, v := range lb.IPPortMappings {
-			if k == mon.IP && v == fmt.Sprintf("%s:%s", mon.LogicalPort, mon.SrcIP) {
+			if strings.Trim(k, "[]") != mon.IP {
+				continue
+			}
+
+			port, srcIP, ok := strings.Cut(v, ":")
+			if ok && port == mon.LogicalPort && strings.Trim(srcIP, "[]") == mon.SrcIP {
 				return true
 			}
 		}
