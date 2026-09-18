@@ -337,6 +337,10 @@ func (o *oidcClient) authenticate(issuer string, clientID string, audience strin
 	}
 
 	o.oidcTransport.deviceAuthorizationEndpoint = provider.GetDeviceAuthorizationEndpoint()
+	if o.oidcTransport.deviceAuthorizationEndpoint == "" {
+		return errors.New("OIDC provider doesn't advertise a device authorization endpoint")
+	}
+
 	o.oidcTransport.tokenEndpoint = provider.OAuthConfig().Endpoint.TokenURL
 
 	var authFn httphelper.FormAuthorization
