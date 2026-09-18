@@ -33,7 +33,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/kballard/go-shellquote"
 	liblxc "github.com/lxc/go-lxc"
-	ociSpecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/sftp"
 	yaml "go.yaml.in/yaml/v4"
 	"golang.org/x/sync/errgroup"
@@ -2476,21 +2475,28 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 	}
 
 	// Handle application containers.
-	if util.PathExists(filepath.Join(d.Path(), "config.json")) {
-		// Parse the OCI config.
-		data, err := os.ReadFile(filepath.Join(d.Path(), "config.json"))
+	config, err := instance.OCISpec(d.Path())
+	if err != nil {
+		return "", nil, err
+	}
+
+	if config != nil {
+		// Export the image environment unless overridden by the instance config.
+		env, err := instance.OCIEnvironment(config)
 		if err != nil {
 			return "", nil, err
 		}
 
-		var config ociSpecs.Spec
-		err = json.Unmarshal([]byte(data), &config)
-		if err != nil {
-			return "", nil, fmt.Errorf("Failed parsing OCI config: %w", err)
-		}
+		for k, v := range env {
+			_, ok := d.expandedConfig[fmt.Sprintf("environment.%s", k)]
+			if ok {
+				continue
+			}
 
-		if config.Process == nil {
-			return "", nil, errors.New("Failed parsing OCI config: Missing process section")
+			err = lxcSetConfigItem(cc, "lxc.environment", fmt.Sprintf("\"%s=%s\"", k, v))
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
 		// Mark the container as an OCI container if not already set.
@@ -3118,6 +3124,26 @@ func (d *lxc) Start(stateful bool) error {
 		after, ok := strings.CutPrefix(k, "environment.")
 		if ok {
 			envDict[after] = v
+		}
+	}
+
+	// Add the image environment of application containers.
+	spec, err := instance.OCISpec(d.Path())
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
+	ociEnv, err := instance.OCIEnvironment(spec)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
+	for k, v := range ociEnv {
+		_, ok := envDict[k]
+		if !ok {
+			envDict[k] = v
 		}
 	}
 
