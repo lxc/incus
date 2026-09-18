@@ -3469,3 +3469,9 @@ GPUs passed through to the same virtual machine when they share a clique ID.
 This adds a `Claims` field to the `details` argument of the authorization
 scriptlet, holding the validated OIDC token claims of the client as a
 dictionary. This allows writing rules based on claims such as `groups`.
+
+## `instance_project_move_live`
+
+This allows a running instance to change project as part of a live migration
+to another cluster member. It also lets instances with `dependent` disks
+attached change project.
