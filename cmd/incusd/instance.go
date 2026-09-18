@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -203,73 +203,7 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 
 	// If dealing with an OCI image, parse the configuration.
 	if args.Type == instancetype.Container && inst.LocalConfig()["image.type"] == "oci" {
-		// Reset the config to the post-generation one.
-		args.Config = inst.LocalConfig()
-		expandedConfig := inst.ExpandedConfig()
-
-		// Mount the instance.
-		_, err = pool.MountInstance(inst, nil)
-		if err != nil {
-			return err
-		}
-
-		// Parse the OCI config.
-		data, err := os.ReadFile(filepath.Join(inst.Path(), "config.json"))
-		if err != nil {
-			return err
-		}
-
-		var config ociSpecs.Spec
-		err = json.Unmarshal([]byte(data), &config)
-		if err != nil {
-			return fmt.Errorf("Failed parsing OCI config: %w", err)
-		}
-
-		if config.Process == nil {
-			return errors.New("Failed parsing OCI config: Missing process section")
-		}
-
-		// Unmount the instance.
-		err = pool.UnmountInstance(inst, nil)
-		if err != nil {
-			return err
-		}
-
-		// Update the config for the environment variables.
-		args.Config["volatile.container.oci"] = "true"
-		for _, env := range config.Process.Env {
-			fields := strings.SplitN(env, "=", 2)
-			if len(fields) != 2 {
-				return fmt.Errorf("Bad OCI environment variable: %s", env)
-			}
-
-			key := fmt.Sprintf("environment.%s", fields[0])
-			value := fields[1]
-
-			_, ok := expandedConfig[key]
-			if !ok {
-				args.Config[key] = value
-			}
-		}
-
-		// Set the entrypoint configuration options.
-		if len(config.Process.Args) > 0 && expandedConfig["oci.entrypoint"] == "" {
-			args.Config["oci.entrypoint"] = shellquote.Join(config.Process.Args...)
-		}
-
-		if config.Process.Cwd != "" && expandedConfig["oci.cwd"] == "" {
-			args.Config["oci.cwd"] = config.Process.Cwd
-		}
-
-		if expandedConfig["oci.uid"] == "" {
-			args.Config["oci.uid"] = fmt.Sprintf("%d", config.Process.User.UID)
-		}
-
-		if expandedConfig["oci.gid"] == "" {
-			args.Config["oci.gid"] = fmt.Sprintf("%d", config.Process.User.GID)
-		}
-
-		err = inst.Update(args, false)
+		err = instanceApplyOCIConfig(inst, pool)
 		if err != nil {
 			return err
 		}
@@ -282,6 +216,75 @@ func instanceCreateFromImage(ctx context.Context, s *state.State, img *api.Image
 
 	reverter.Success()
 	return nil
+}
+
+// ociDefaults returns the instance config keys derived from an OCI config.
+func ociDefaults(spec *ociSpecs.Spec) map[string]string {
+	defaults := map[string]string{}
+	if spec == nil {
+		return defaults
+	}
+
+	if len(spec.Process.Args) > 0 {
+		defaults["oci.entrypoint"] = shellquote.Join(spec.Process.Args...)
+	}
+
+	if spec.Process.Cwd != "" {
+		defaults["oci.cwd"] = spec.Process.Cwd
+	}
+
+	defaults["oci.uid"] = fmt.Sprintf("%d", spec.Process.User.UID)
+	defaults["oci.gid"] = fmt.Sprintf("%d", spec.Process.User.GID)
+
+	return defaults
+}
+
+// instanceApplyOCIConfig sets the config keys derived from the instance's OCI image that aren't set yet.
+func instanceApplyOCIConfig(inst instance.Instance, pool storagePools.Pool) error {
+	// Parse the OCI config.
+	_, err := pool.MountInstance(inst, nil)
+	if err != nil {
+		return err
+	}
+
+	spec, err := instance.OCISpec(inst.Path())
+	if err != nil {
+		_ = pool.UnmountInstance(inst, nil)
+		return err
+	}
+
+	err = pool.UnmountInstance(inst, nil)
+	if err != nil {
+		return err
+	}
+
+	config := maps.Clone(inst.LocalConfig())
+	profileConfig := db.ExpandInstanceConfig(nil, inst.Profiles())
+
+	if spec != nil {
+		config["volatile.container.oci"] = "true"
+	}
+
+	// Set the missing keys from the image.
+	for key, value := range ociDefaults(spec) {
+		if config[key] == "" && profileConfig[key] == "" {
+			config[key] = value
+		}
+	}
+
+	args := db.InstanceArgs{
+		Architecture: inst.Architecture(),
+		Config:       config,
+		Description:  inst.Description(),
+		Devices:      inst.LocalDevices(),
+		Ephemeral:    inst.IsEphemeral(),
+		Profiles:     inst.Profiles(),
+		Project:      inst.Project().Name,
+		Type:         inst.Type(),
+		Snapshot:     inst.IsSnapshot(),
+	}
+
+	return inst.Update(args, false)
 }
 
 func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Request, inst instance.Instance, img *api.Image, op *operations.Operation) error {
@@ -303,6 +306,19 @@ func instanceRebuildFromImage(ctx context.Context, s *state.State, r *http.Reque
 	err = inst.Rebuild(img, op)
 	if err != nil {
 		return fmt.Errorf("Failed rebuilding instance from image: %w", err)
+	}
+
+	// Set any missing config derived from the OCI image.
+	if inst.Type() == instancetype.Container && img.Properties["type"] == "oci" {
+		pool, err := storagePools.LoadByInstance(s, inst)
+		if err != nil {
+			return err
+		}
+
+		err = instanceApplyOCIConfig(inst, pool)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
