@@ -10,6 +10,9 @@ test_container_devices_gpu() {
     ctName="ct$$"
     incus launch testimage "${ctName}"
 
+    # Unknown GPU types must be refused rather than treated as passthrough.
+    ! incus config device add "${ctName}" gpu-bogus gpu gputype=bogus || false
+
     # Check adding all cards creates the correct device mounts and cleans up on removal.
     startMountCount=$(incus exec "${ctName}" -- mount | wc -l)
     startDevCount=$(find "${INCUS_DIR}"/devices/"${ctName}" -type c | wc -l)
