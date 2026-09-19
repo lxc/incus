@@ -2017,10 +2017,15 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 
 	defer release()
 
+	reverter := revert.New()
+	defer reverter.Fail()
+
 	err = d.renameLogicalVolume(volPath, newVolPath)
 	if err != nil {
 		return fmt.Errorf("Error renaming LVM logical volume: %w", err)
 	}
+
+	reverter.Add(func() { _ = d.renameLogicalVolume(newVolPath, volPath) })
 
 	oldPath := snapVol.MountPath()
 	newPath := GetVolumeMountPath(d.name, snapVol.volType, newSnapVolName)
@@ -2030,8 +2035,20 @@ func (d *lvm) RenameVolumeSnapshot(snapVol Volume, newSnapshotName string, op *o
 		if err != nil {
 			return fmt.Errorf("Error renaming snapshot mount path from %q to %q: %w", oldPath, newPath, err)
 		}
+
+		reverter.Add(func() { _ = os.Rename(newPath, oldPath) })
 	}
 
+	// For VMs, also rename the snapshot filesystem volume.
+	if snapVol.IsVMBlock() {
+		fsVol := snapVol.NewVMBlockFilesystemVolume()
+		err = d.RenameVolumeSnapshot(fsVol, newSnapshotName, op)
+		if err != nil {
+			return err
+		}
+	}
+
+	reverter.Success()
 	return nil
 }
 
