@@ -1368,15 +1368,6 @@ func (d *nicBridged) setupHostFilters(oldConfig deviceConfig.Device) (revert.Hoo
 	reverter := revert.New()
 	defer reverter.Fail()
 
-	// Check br_netfilter kernel module is loaded and enabled for IPv6 before clearing existing rules.
-	// We won't try to load it as its default mode can cause unwanted traffic blocking.
-	if util.IsTrue(d.config["security.ipv6_filtering"]) {
-		err := network.BridgeNetfilterEnabled(6)
-		if err != nil {
-			return nil, fmt.Errorf("security.ipv6_filtering requires bridge netfilter: %w", err)
-		}
-	}
-
 	oldFiltering := oldConfig != nil && filteringEnabled(oldConfig)
 	newFiltering := filteringEnabled(d.config)
 
