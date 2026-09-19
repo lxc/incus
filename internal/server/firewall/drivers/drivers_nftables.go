@@ -1475,40 +1475,21 @@ func (d Nftables) NetworkApplyAddressSets(sets []AddressSet, nftTable string) er
 			return fmt.Errorf("Failed to create table %q: %w", nftTable, err)
 		}
 	}
+
 	for _, set := range sets {
 		var ipv4Addrs, ipv6Addrs, ethAddrs []string
-		name := set.Name
-		addresses := set.Addresses
-		// Flush current addresses in set if set exists
-		for _, suffix := range []string{"ipv4", "ipv6", "eth"} {
-			flush := &strings.Builder{}
-			setName := fmt.Sprintf("%s_%s", name, suffix)
-			exists, err := d.NamedAddressSetExists(setName, nftTable)
-			if err != nil {
-				return fmt.Errorf("Failed to check existence of set %q: %w", setName, err)
-			}
 
-			if exists {
-				// Append a flush command for this set.
-				fmt.Fprintf(flush, " flush set %s %s %s\n", nftTable, nftablesNamespace, setName)
-				err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(flush.String()), nil, "nft", "-f", "-")
-				if err != nil {
-					return fmt.Errorf("Failed to flush nft set for address set %q: %w", setName, err)
-				}
-			}
-		}
-
-		for _, addr := range addresses {
+		for _, addr := range set.Addresses {
 			// Try IP first.
 			ip := net.ParseIP(addr)
 			if ip != nil {
 				if ip.To4() != nil {
 					ipv4Addrs = append(ipv4Addrs, addr)
-					continue
 				} else {
 					ipv6Addrs = append(ipv6Addrs, addr)
-					continue
 				}
+
+				continue
 			}
 
 			// Try to parse as CIDR.
@@ -1533,94 +1514,38 @@ func (d Nftables) NetworkApplyAddressSets(sets []AddressSet, nftTable string) er
 			return fmt.Errorf("unsupported address format: %q", addr)
 		}
 
-		// Build NFT config.
-		configv4 := &strings.Builder{}
-		configv6 := &strings.Builder{}
-		configeth := &strings.Builder{}
-
-		if len(ipv4Addrs) >= 0 {
-			// Create v4 named set
-			fmt.Fprintf(configv4, "add set %s %s ", nftTable, nftablesNamespace)
-			setExtendedName := fmt.Sprintf("%s_ipv4", name)
-			if len(ipv4Addrs) == 0 {
-				// Create empty set to avoid errors
-				fmt.Fprintf(configv4, " %s {\n    type ipv4_addr;\n  flags interval;\n}\n", setExtendedName)
-			} else {
-				fmt.Fprintf(configv4, " %s {\n    type ipv4_addr;\n  flags interval;\n  elements = { %s }\n  }\n", setExtendedName, strings.Join(ipv4Addrs, ", "))
+		// Replace the content of every set in a single transaction so a rejected change keeps the old members.
+		config := &strings.Builder{}
+		for _, family := range []struct {
+			suffix string
+			flags  string
+			addrs  []string
+		}{
+			{"ipv4", "type ipv4_addr; flags interval;", ipv4Addrs},
+			{"ipv6", "type ipv6_addr; flags interval;", ipv6Addrs},
+			{"eth", "type ether_addr;", ethAddrs},
+		} {
+			// MAC address sets are only created when used.
+			if family.suffix == "eth" && len(family.addrs) == 0 {
+				continue
 			}
 
-			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv4.String()), nil, "nft", "-f", "-")
-			if err != nil {
-				return fmt.Errorf("Failed to apply nft sets for address set %q: %w", name, err)
-			}
-		}
+			setName := fmt.Sprintf("%s_%s", set.Name, family.suffix)
+			fmt.Fprintf(config, "add set %s %s %s { %s }\n", nftTable, nftablesNamespace, setName, family.flags)
+			fmt.Fprintf(config, "flush set %s %s %s\n", nftTable, nftablesNamespace, setName)
 
-		if len(ipv6Addrs) >= 0 {
-			fmt.Fprintf(configv6, "add set %s %s ", nftTable, nftablesNamespace)
-			setExtendedName := fmt.Sprintf("%s_ipv6", name)
-			// Create v6 named set
-			if len(ipv6Addrs) == 0 {
-				// Create empty set to avoid errors
-				fmt.Fprintf(configv6, " %s {\n    type ipv6_addr;\n  flags interval;\n}\n", setExtendedName)
-			} else {
-				fmt.Fprintf(configv6, " %s {\n    type ipv6_addr;\n  flags interval;\n  elements = { %s }\n  }\n", setExtendedName, strings.Join(ipv6Addrs, ", "))
-			}
-
-			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv6.String()), nil, "nft", "-f", "-")
-			if err != nil {
-				return fmt.Errorf("Failed to apply nft sets for address set %q: %w", name, err)
+			if len(family.addrs) > 0 {
+				fmt.Fprintf(config, "add element %s %s %s { %s }\n", nftTable, nftablesNamespace, setName, strings.Join(family.addrs, ", "))
 			}
 		}
 
-		// Should be >= but since we do not support it for now leave it as a dead portion
-		if len(ethAddrs) > 0 {
-			fmt.Fprintf(configeth, "add set %s %s ", nftTable, nftablesNamespace)
-			setExtendedName := fmt.Sprintf("%s_eth", name)
-			// Create eth named set perhaps future support
-			if len(ethAddrs) == 0 {
-				fmt.Fprintf(configeth, "  set %s {\n    type ether_addr;\n}\n", setExtendedName)
-			} else {
-				fmt.Fprintf(configeth, "  set %s {\n    type ether_addr;\n    elements = { %s }\n  }\n", setExtendedName, strings.Join(ethAddrs, ", "))
-			}
-
-			err := subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(configv6.String()), nil, "nft", "-f", "-")
-			if err != nil {
-				return fmt.Errorf("Failed to apply nft sets for address set %q: %w", name, err)
-			}
+		err = subprocess.RunCommandWithFds(context.TODO(), strings.NewReader(config.String()), nil, "nft", "-f", "-")
+		if err != nil {
+			return fmt.Errorf("Failed to apply nft sets for address set %q: %w", set.Name, err)
 		}
 	}
 
 	return nil
-}
-
-// NamedAddressSetExists checks if a named set exists in nftables.
-// It returns true if the set exists in the nftables namespace.
-func (d Nftables) NamedAddressSetExists(setName string, family string) (bool, error) {
-	// Execute the nft command with JSON output using subprocess.
-	output, err := subprocess.RunCommand("nft", "-j", "list", "sets")
-	if err != nil {
-		return false, fmt.Errorf("Failed to execute nft command: %w", err)
-	}
-
-	var setsOutput NftListSetsOutput
-	err = json.Unmarshal([]byte(output), &setsOutput)
-	if err != nil {
-		return false, fmt.Errorf("Failed to parse nft command output: %w", err)
-	}
-
-	// Iterate through the sets to find a match.
-	for _, entry := range setsOutput.Nftables {
-		if entry.Set != nil {
-			if strings.EqualFold(entry.Set.Name, setName) &&
-				strings.EqualFold(entry.Set.Family, family) &&
-				strings.EqualFold(entry.Set.Table, nftablesNamespace) {
-				return true, nil
-			}
-		}
-	}
-
-	// Set not found.
-	return false, nil
 }
 
 // RemoveIncusAddressSets remove every address set in incus namespace.
