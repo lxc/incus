@@ -1822,75 +1822,96 @@ func (d *lvm) RestoreVolume(vol Volume, snapshotName string, op *operations.Oper
 	// 1. Rename the original volume to a temporary name (so we can revert later if needed).
 	// 2. Create a writable snapshot with the original name from the snapshot being restored.
 	// 3. Delete the renamed original volume.
+	// For VMs both the block and filesystem volumes go through steps 1 and 2 before any original is deleted.
 	if d.usesThinpool() {
-		_, err = d.UnmountVolume(vol, false, op)
-		if err != nil {
-			return fmt.Errorf("Error unmounting LVM logical volume: %w", err)
-		}
-
-		originalVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
-		tmpVolName := fmt.Sprintf("%s%s", vol.name, tmpVolSuffix)
-		tmpVolPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, tmpVolName)
-
-		// Rename original logical volume to temporary new name so we can revert if needed.
-		err = d.renameLogicalVolume(originalVolPath, tmpVolPath)
-		if err != nil {
-			return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
-		}
-
-		reverter.Add(func() {
-			// Rename the original volume back to the original name.
-			_ = d.renameLogicalVolume(tmpVolPath, originalVolPath)
-		})
-
-		// Create writable snapshot from source snapshot named as target volume.
-		_, err = d.createLogicalVolumeSnapshot(d.config["lvm.vg_name"], snapVol, vol, false, true)
-		if err != nil {
-			return fmt.Errorf("Error restoring LVM logical volume snapshot: %w", err)
-		}
-
-		volPath := d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, vol.name)
-
-		reverter.Add(func() {
-			_ = d.removeLogicalVolume(volPath)
-		})
-
-		// If the volume's filesystem needs to have its UUID regenerated to allow mount then do so now.
-		if vol.contentType == ContentTypeFS && renegerateFilesystemUUIDNeeded(vol.ConfigBlockFilesystem()) {
-			_, err = d.activateVolume(vol)
-			if err != nil {
-				return err
-			}
-
-			d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": volPath, "fs": vol.ConfigBlockFilesystem()})
-
-			volDevPath, err := d.lvmDevPath(volPath)
-			if err != nil {
-				return err
-			}
-
-			err = regenerateFilesystemUUID(vol.ConfigBlockFilesystem(), volDevPath)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Finally remove the original logical volume. Should always be the last step to allow revert.
-		err = d.removeLogicalVolume(d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, tmpVolName))
-		if err != nil {
-			return fmt.Errorf("Error removing original LVM logical volume: %w", err)
-		}
-
-		// For VMs, also restore the filesystem volume.
+		vols := []Volume{vol}
 		if vol.IsVMBlock() {
-			fsVol := vol.NewVMBlockFilesystemVolume()
-			err := d.RestoreVolume(fsVol, snapshotName, op)
+			vols = append(vols, vol.NewVMBlockFilesystemVolume())
+		}
+
+		// Check that every snapshot volume exists before touching the original volumes.
+		for _, v := range vols {
+			snapVolPath := d.lvmPath(d.config["lvm.vg_name"], v.volType, v.contentType, snapVol.name)
+			exists, err := d.logicalVolumeExists(snapVolPath)
 			if err != nil {
 				return err
 			}
+
+			if !exists {
+				return fmt.Errorf("Snapshot LVM logical volume %q not found", snapVolPath)
+			}
 		}
 
+		tmpVolPaths := []string{}
+		for _, v := range vols {
+			_, err = d.UnmountVolume(v, false, op)
+			if err != nil {
+				return fmt.Errorf("Error unmounting LVM logical volume: %w", err)
+			}
+
+			originalVolPath := d.lvmPath(d.config["lvm.vg_name"], v.volType, v.contentType, v.name)
+			tmpVolPath := d.lvmPath(d.config["lvm.vg_name"], v.volType, v.contentType, fmt.Sprintf("%s%s", v.name, tmpVolSuffix))
+
+			// Rename original logical volume to temporary new name so we can revert if needed.
+			err = d.renameLogicalVolume(originalVolPath, tmpVolPath)
+			if err != nil {
+				return fmt.Errorf("Error temporarily renaming original LVM logical volume: %w", err)
+			}
+
+			reverter.Add(func() {
+				// Rename the original volume back to the original name.
+				_ = d.renameLogicalVolume(tmpVolPath, originalVolPath)
+			})
+
+			tmpVolPaths = append(tmpVolPaths, tmpVolPath)
+
+			// Create writable snapshot from source snapshot named as target volume.
+			vSnapVol, err := v.NewSnapshot(snapshotName)
+			if err != nil {
+				return err
+			}
+
+			_, err = d.createLogicalVolumeSnapshot(d.config["lvm.vg_name"], vSnapVol, v, false, true)
+			if err != nil {
+				return fmt.Errorf("Error restoring LVM logical volume snapshot: %w", err)
+			}
+
+			reverter.Add(func() {
+				_ = d.removeLogicalVolume(originalVolPath)
+			})
+
+			// If the volume's filesystem needs to have its UUID regenerated to allow mount then do so now.
+			if v.contentType == ContentTypeFS && renegerateFilesystemUUIDNeeded(v.ConfigBlockFilesystem()) {
+				_, err = d.activateVolume(v)
+				if err != nil {
+					return err
+				}
+
+				d.logger.Debug("Regenerating filesystem UUID", logger.Ctx{"dev": originalVolPath, "fs": v.ConfigBlockFilesystem()})
+
+				volDevPath, err := d.lvmDevPath(originalVolPath)
+				if err != nil {
+					return err
+				}
+
+				err = regenerateFilesystemUUID(v.ConfigBlockFilesystem(), volDevPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// The restore is complete, a leftover temporary volume is preferable to reverting from here.
 		reverter.Success()
+
+		// Finally remove the original logical volumes.
+		for _, tmpVolPath := range tmpVolPaths {
+			err = d.removeLogicalVolume(tmpVolPath)
+			if err != nil {
+				return fmt.Errorf("Error removing original LVM logical volume: %w", err)
+			}
+		}
+
 		return nil
 	}
 
