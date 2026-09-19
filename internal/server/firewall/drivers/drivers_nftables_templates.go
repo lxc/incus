@@ -5,6 +5,9 @@ import (
 )
 
 var nftablesCommonTable = template.Must(template.New("nftablesCommonTable").Parse(`
+{{ range .preamble }}
+{{.}}
+{{ end }}
 table {{.family}} {{.namespace}} {
 	{{ template "nftablesContent" . }}
 }

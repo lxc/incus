@@ -613,9 +613,23 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 			return fmt.Errorf("Failed loading network project name: %w", err)
 		}
 
-		err = acl.Exists(d.state, networkProjectName, util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)...)
+		aclNames := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
+
+		err = acl.Exists(d.state, networkProjectName, aclNames...)
 		if err != nil {
 			return err
+		}
+
+		err = acl.ValidateFirewallACLs(d.state, networkProjectName, aclNames...)
+		if err != nil {
+			return err
+		}
+
+		for _, direction := range []string{"ingress", "egress"} {
+			err = acl.ValidateFirewallAction(d.config[fmt.Sprintf("security.acls.default.%s.action", direction)])
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -1363,25 +1377,43 @@ func (d *nicBridged) setupHostFilters(oldConfig deviceConfig.Device) (revert.Hoo
 		}
 	}
 
-	// Remove any old network filters if non-empty oldConfig supplied as part of update.
-	if oldConfig != nil && (util.IsTrue(oldConfig["security.mac_filtering"]) || util.IsTrue(oldConfig["security.ipv4_filtering"]) || util.IsTrue(oldConfig["security.ipv6_filtering"]) || oldConfig["security.acls"] != "") {
+	oldFiltering := oldConfig != nil && filteringEnabled(oldConfig)
+	newFiltering := filteringEnabled(d.config)
+
+	// Filters are replaced in place, so only remove the old ones when no longer needed.
+	if oldFiltering && !newFiltering {
 		d.removeFilters(oldConfig)
 	}
 
 	// Setup network filters.
-	if util.IsTrue(d.config["security.mac_filtering"]) || util.IsTrue(d.config["security.ipv4_filtering"]) || util.IsTrue(d.config["security.ipv6_filtering"]) || d.config["security.acls"] != "" {
-		err := d.setFilters()
+	if newFiltering {
+		err := d.setFilters(d.config)
 		if err != nil {
 			return nil, err
 		}
 
-		reverter.Add(func() { d.removeFilters(d.config) })
+		if oldFiltering {
+			// Restore the previous filters, keeping the new ones rather than none if that fails.
+			reverter.Add(func() {
+				err := d.setFilters(oldConfig)
+				if err != nil {
+					d.logger.Error("Failed restoring previous network filters", logger.Ctx{"err": err})
+				}
+			})
+		} else {
+			reverter.Add(func() { d.removeFilters(d.config) })
+		}
 	}
 
 	cleanup := reverter.Clone().Fail
 	reverter.Success()
 
 	return cleanup, nil
+}
+
+// filteringEnabled returns whether the device config enables any network filtering.
+func filteringEnabled(m deviceConfig.Device) bool {
+	return util.IsTrue(m["security.mac_filtering"]) || util.IsTrue(m["security.ipv4_filtering"]) || util.IsTrue(m["security.ipv6_filtering"]) || m["security.acls"] != ""
 }
 
 // removeFilters removes any network level filters defined for the instance.
@@ -1467,42 +1499,42 @@ func (d *nicBridged) removeFilters(m deviceConfig.Device) {
 
 // setFilters sets up any network level filters defined for the instance.
 // These are controlled by the security.mac_filtering, security.ipv4_Filtering, security.ipv6_filtering and security.acls config keys.
-func (d *nicBridged) setFilters() (err error) {
-	if d.config["hwaddr"] == "" {
+func (d *nicBridged) setFilters(m deviceConfig.Device) (err error) {
+	if m["hwaddr"] == "" {
 		return errors.New("Failed to set network filters: require hwaddr defined")
 	}
 
-	if d.config["host_name"] == "" {
+	if m["host_name"] == "" {
 		return errors.New("Failed to set network filters: require host_name defined")
 	}
 
-	if d.config["parent"] == "" {
+	if m["parent"] == "" {
 		return errors.New("Failed to set network filters: require parent defined")
 	}
 
 	// Parse device config.
-	mac, err := net.ParseMAC(d.config["hwaddr"])
+	mac, err := net.ParseMAC(m["hwaddr"])
 	if err != nil {
 		return fmt.Errorf("Invalid hwaddr: %w", err)
 	}
 
 	// Parse static IPs, relies on invalid IPs being set to nil.
-	IPv4 := net.ParseIP(nicAddressIP(d.config["ipv4.address"]))
-	IPv6 := net.ParseIP(nicAddressIP(d.config["ipv6.address"]))
+	IPv4 := net.ParseIP(nicAddressIP(m["ipv4.address"]))
+	IPv6 := net.ParseIP(nicAddressIP(m["ipv6.address"]))
 
 	// If parent bridge is unmanaged check that a manually specified IP is available if IP filtering enabled.
 	if d.network == nil {
-		if util.IsTrue(d.config["security.ipv4_filtering"]) && d.config["ipv4.address"] == "" {
+		if util.IsTrue(m["security.ipv4_filtering"]) && m["ipv4.address"] == "" {
 			return errors.New("IPv4 filtering requires a manually specified ipv4.address when using an unmanaged parent bridge")
 		}
 
-		if util.IsTrue(d.config["security.ipv6_filtering"]) && d.config["ipv6.address"] == "" {
+		if util.IsTrue(m["security.ipv6_filtering"]) && m["ipv6.address"] == "" {
 			return errors.New("IPv6 filtering requires a manually specified ipv6.address when using an unmanaged parent bridge")
 		}
 	}
 
 	// Use a clone of the config. This can be amended with the allocated IPs so that the correct ones are added to the firewall.
-	config := d.config.Clone()
+	config := m.Clone()
 
 	// If parent bridge is managed, allocate the static IPs (if needed).
 	if d.network != nil && (IPv4 == nil || IPv6 == nil) {
@@ -1545,12 +1577,6 @@ func (d *nicBridged) setFilters() (err error) {
 			return err
 		}
 	}
-
-	// If anything goes wrong, clean up so we don't leave orphaned rules.
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	reverter.Add(func() { d.removeFilters(config) })
 
 	ipv4Nets, ipv6Nets, err := allowedIPNets(config)
 	if err != nil {
@@ -1606,7 +1632,7 @@ func (d *nicBridged) setFilters() (err error) {
 			return err
 		}
 
-		aclRules, err = acl.FirewallACLRules(d.state, d.name, networkProjectName, d.config)
+		aclRules, err = acl.FirewallACLRules(d.state, d.name, networkProjectName, m)
 		if err != nil {
 			return err
 		}
@@ -1619,14 +1645,8 @@ func (d *nicBridged) setFilters() (err error) {
 		}
 	}
 
-	err = d.state.Firewall.InstanceSetupBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, d.config["parent"], d.config["host_name"], d.config["hwaddr"], ipv4Nets, ipv6Nets, ipv4DNS, ipv6DNS, d.network != nil, util.IsTrue(config["security.mac_filtering"]), aclRules)
-	if err != nil {
-		return err
-	}
-
-	reverter.Success()
-
-	return nil
+	// Filters are replaced atomically, so a failure leaves any existing rules in place.
+	return d.state.Firewall.InstanceSetupBridgeFilter(d.inst.Project().Name, d.inst.Name(), d.name, m["parent"], m["host_name"], m["hwaddr"], ipv4Nets, ipv6Nets, ipv4DNS, ipv6DNS, d.network != nil, util.IsTrue(config["security.mac_filtering"]), aclRules)
 }
 
 // allowedIPNets accepts a device config. For each IP version it returns nil if all addresses should be allowed,

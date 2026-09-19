@@ -898,9 +898,23 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 
 	// Check Security ACLs are supported and exist.
 	if config["security.acls"] != "" {
-		err = acl.Exists(n.state, n.Project(), util.SplitNTrimSpace(config["security.acls"], ",", -1, true)...)
+		aclNames := util.SplitNTrimSpace(config["security.acls"], ",", -1, true)
+
+		err = acl.Exists(n.state, n.Project(), aclNames...)
 		if err != nil {
 			return err
+		}
+
+		err = acl.ValidateFirewallACLs(n.state, n.Project(), aclNames...)
+		if err != nil {
+			return err
+		}
+
+		for _, direction := range []string{"ingress", "egress"} {
+			err = acl.ValidateFirewallAction(config[fmt.Sprintf("security.acls.default.%s.action", direction)])
+			if err != nil {
+				return err
+			}
 		}
 	}
 

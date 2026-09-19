@@ -23,6 +23,40 @@ func FirewallApplyACLRules(s *state.State, l logger.Logger, aclProjectName strin
 	return s.Firewall.NetworkApplyACLRules(aclNet.Name, rules)
 }
 
+// ValidateFirewallAction returns an error if the action can't be applied by the host firewall.
+func ValidateFirewallAction(action string) error {
+	if action == "allow-stateless" {
+		return fmt.Errorf("Action %q is only supported on OVN networks", action)
+	}
+
+	return nil
+}
+
+// ValidateFirewallACLs returns an error if any of the ACLs contain a rule that can't be applied by the host firewall.
+func ValidateFirewallACLs(s *state.State, projectName string, aclNames ...string) error {
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		for _, aclName := range aclNames {
+			_, aclInfo, err := dbCluster.GetNetworkACLAPI(ctx, tx.Tx(), projectName, aclName)
+			if err != nil {
+				return fmt.Errorf("Failed loading ACL %q: %w", aclName, err)
+			}
+
+			for _, rule := range append(aclInfo.Ingress, aclInfo.Egress...) {
+				if rule.State == "disabled" {
+					continue
+				}
+
+				err = ValidateFirewallAction(rule.Action)
+				if err != nil {
+					return fmt.Errorf("Invalid ACL %q: %w", aclName, err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
 // FirewallACLRules returns ACL rules for network firewall.
 func FirewallACLRules(s *state.State, aclDeviceName string, aclProjectName string, config map[string]string) ([]firewallDrivers.ACLRule, error) {
 	var dropRules []firewallDrivers.ACLRule
