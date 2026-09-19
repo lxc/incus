@@ -62,6 +62,8 @@ func newByType(s *state.State, projectName string, conf deviceConfig.Device) (de
 
 	case "gpu":
 		switch conf["gputype"] {
+		case "", "physical":
+			dev = &gpuPhysical{}
 		case "mig":
 			dev = &gpuMIG{}
 		case "mdev":
@@ -71,7 +73,7 @@ func newByType(s *state.State, projectName string, conf deviceConfig.Device) (de
 		case "native-context":
 			dev = &gpuNativeContext{}
 		default:
-			dev = &gpuPhysical{}
+			return nil, fmt.Errorf("Unsupported GPU type %q", conf["gputype"])
 		}
 
 	case "proxy":
