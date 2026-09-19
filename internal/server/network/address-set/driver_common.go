@@ -164,7 +164,62 @@ func (d *common) validateAddresses(addresses []string) error {
 		return fmt.Errorf("Unsupported address format %q at index %d", addr, i)
 	}
 
+	// Interval sets refuse overlapping members, so catch those before nftables does.
+	nets := []*net.IPNet{}
+	for _, addr := range addresses {
+		addrNets, err := addressNets(addr)
+		if err != nil {
+			return err
+		}
+
+		for _, addrNet := range addrNets {
+			for _, existing := range nets {
+				if existing.Contains(addrNet.IP) || addrNet.Contains(existing.IP) {
+					return fmt.Errorf("Address %q overlaps with %q", addrNet.String(), existing.String())
+				}
+			}
+
+			nets = append(nets, addrNet)
+		}
+	}
+
 	return nil
+}
+
+// addressNets returns the networks covered by an address set member.
+func addressNets(addr string) ([]*net.IPNet, error) {
+	ip := net.ParseIP(addr)
+	if ip != nil {
+		return []*net.IPNet{ipToNet(ip)}, nil
+	}
+
+	_, ipNet, err := net.ParseCIDR(addr)
+	if err == nil {
+		return []*net.IPNet{ipNet}, nil
+	}
+
+	// Ranges were already validated, they only expand to individual addresses.
+	ips, err := expandIPRange(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	nets := make([]*net.IPNet, 0, len(ips))
+	for _, rangeIP := range ips {
+		nets = append(nets, ipToNet(net.ParseIP(rangeIP)))
+	}
+
+	return nets, nil
+}
+
+// ipToNet returns the single address network for an IP.
+func ipToNet(ip net.IP) *net.IPNet {
+	bits := 128
+	if ip.To4() != nil {
+		bits = 32
+	}
+
+	return &net.IPNet{IP: ip, Mask: net.CIDRMask(bits, bits)}
 }
 
 // expandIPRange expands a "start-end" IP range into its individual addresses.
