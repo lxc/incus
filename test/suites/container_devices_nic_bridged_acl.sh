@@ -110,6 +110,9 @@ test_container_devices_nic_bridged_acl() {
     # Allow ICMP to bridge host.
     incus network acl rule add "${brName}A" egress action=allow destination=192.0.2.1/32 protocol=icmp4 icmp_type=8
     incus network acl rule add "${brName}A" egress action=allow destination=2001:db8::1/128 protocol=icmp6 icmp_type=128
+
+    # ICMPv6 must be matched behind extension headers, not on the fixed header.
+    ! nft -nn list chain inet incus "acl.${brName}" | grep -q "nexthdr" || false
     incus exec "${ctPrefix}A" -- ping -c2 -4 -W5 192.0.2.1
     incus exec "${ctPrefix}A" -- ping -c2 -6 -W5 2001:db8::1
 
