@@ -1010,13 +1010,14 @@ func (d Nftables) buildRemainingRuleParts(rule *ACLRule, ipVersion uint) (string
 	} else if slices.Contains([]string{"icmp4", "icmp6"}, rule.Protocol) {
 		var protoName string
 
+		// Match on l4proto rather than the IP header so ICMPv6 behind extension headers (MLD) is seen.
 		switch rule.Protocol {
 		case "icmp4":
 			protoName = "icmp"
-			args = append(args, "ip", "protocol", protoName)
+			args = append(args, "meta", "protocol", "ip", "meta", "l4proto", "icmp")
 		case "icmp6":
 			protoName = "icmpv6"
-			args = append(args, "ip6", "nexthdr", protoName)
+			args = append(args, "meta", "protocol", "ip6", "meta", "l4proto", "ipv6-icmp")
 		}
 
 		if rule.ICMPType != "" {
