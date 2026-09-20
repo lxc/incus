@@ -503,10 +503,21 @@ func (d *zfs) delegateDataset(vol Volume, pid int) error {
 
 // resetDelegatedDataset restores the host-facing properties of a delegated dataset.
 func (d *zfs) resetDelegatedDataset(dataset string) error {
-	// Drop any per-dataset override of the systemd ignore flag.
-	_, err := subprocess.RunCommand("zfs", "inherit", "-r", "org.openzfs.systemd:ignore", dataset)
+	// Find the datasets overriding the systemd ignore flag, skipping snapshots as the recursive inherit is very slow on them.
+	out, err := subprocess.RunCommand("zfs", "get", "-H", "-r", "-t", "filesystem,volume", "-s", "local", "-o", "name", "org.openzfs.systemd:ignore", dataset)
 	if err != nil {
 		return err
+	}
+
+	for name := range strings.SplitSeq(strings.TrimSpace(out), "\n") {
+		if name == "" {
+			continue
+		}
+
+		_, err = subprocess.RunCommand("zfs", "inherit", "org.openzfs.systemd:ignore", name)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Hide the dataset from the host's mount tooling before clearing zoned.
