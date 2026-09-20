@@ -443,6 +443,19 @@ func (d Nftables) InstanceSetupBridgeFilter(projectName string, instanceName str
 	tplFields["dnsIPv4"] = IPv4DNS
 	tplFields["dnsIPv6"] = IPv6DNS
 
+	// Replace any existing chains in the same transaction so a failure leaves them untouched.
+	existingChains, err := d.findChains([]string{"bridge"}, deviceLabel, "in", "fwd", "out")
+	if err != nil {
+		return err
+	}
+
+	preamble := []string{}
+	for _, chain := range existingChains {
+		preamble = append(preamble, fmt.Sprintf("flush chain %s %s %s", chain.Family, nftablesNamespace, chain.Name), fmt.Sprintf("delete chain %s %s %s", chain.Family, nftablesNamespace, chain.Name))
+	}
+
+	tplFields["preamble"] = preamble
+
 	err = d.applyNftConfig(nftablesInstanceBridgeFilter, tplFields)
 	if err != nil {
 		return fmt.Errorf("Failed adding bridge filter rules for instance device %q (%s): %w", deviceLabel, tplFields["family"], err)
@@ -802,12 +815,12 @@ func (d Nftables) applyNftConfig(tpl *template.Template, tplFields map[string]an
 	return nil
 }
 
-// removeChains removes the specified chains from the specified families.
+// findChains returns the specified chains that exist in the specified families, in the order they were requested.
 // If not empty, chain suffix is appended to each chain name, separated with "_".
-func (d Nftables) removeChains(families []string, chainSuffix string, chains ...string) error {
+func (d Nftables) findChains(families []string, chainSuffix string, chains ...string) ([]nftGenericItem, error) {
 	ruleset, err := d.nftParseRuleset()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fullChains := chains
@@ -828,13 +841,27 @@ func (d Nftables) removeChains(families []string, chainSuffix string, chains ...
 		}
 	}
 
-	// Delete the chains in the order specified in chains slice (to avoid dependency issues).
+	items := []nftGenericItem{}
 	for _, fullChain := range fullChains {
 		item, found := foundChains[fullChain]
-		if !found {
-			continue
+		if found {
+			items = append(items, item)
 		}
+	}
 
+	return items, nil
+}
+
+// removeChains removes the specified chains from the specified families.
+// If not empty, chain suffix is appended to each chain name, separated with "_".
+func (d Nftables) removeChains(families []string, chainSuffix string, chains ...string) error {
+	items, err := d.findChains(families, chainSuffix, chains...)
+	if err != nil {
+		return err
+	}
+
+	// Delete the chains in the order specified in chains slice (to avoid dependency issues).
+	for _, item := range items {
 		_, err = subprocess.RunCommand("nft", "flush", "chain", item.Family, nftablesNamespace, item.Name, ";", "delete", "chain", item.Family, nftablesNamespace, item.Name)
 		if err != nil {
 			return fmt.Errorf("Failed deleting nftables chain %q (%s): %w", item.Name, item.Family, err)
