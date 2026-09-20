@@ -47,6 +47,7 @@ profile "{{ .name }}" flags=(attach_disconnected,mediate_deleted) {
   {{ $element }}/**                         kr,
 {{- end }}
   /usr/share/qemu/**                        kr,
+  /usr/local/share/qemu/**                  kr,
   /usr/share/seabios/**                     kr,
   /etc/nsswitch.conf                        r,
   /etc/passwd                               r,

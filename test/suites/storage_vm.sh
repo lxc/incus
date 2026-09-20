@@ -75,14 +75,15 @@ test_storage_vm() {
         echo "foo" | incus exec v1 -- tee /root/foo.txt
         incus exec v1 -- sync
         incus snapshot create v1
+        incus snapshot rename v1 snap0 snap1
 
         echo "==> Checking restore VM snapshot"
-        incus snapshot restore v1 snap0
+        incus snapshot restore v1 snap1
         incus wait v1 agent --timeout=90 --interval=1
         incus exec v1 -- cat /root/foo.txt | grep -Fx "foo"
 
         echo "==> Checking running copied VM snapshot"
-        incus copy v1/snap0 v2
+        incus copy v1/snap1 v2
         incus start v2
         incus wait v2 agent --timeout=90 --interval=1
         incus exec v2 -- cat /root/foo.txt | grep -Fx "foo"
@@ -90,7 +91,7 @@ test_storage_vm() {
         echo "==> Checking VM snapshot copy root disk size is 10GiB"
         [ $(($(incus exec v2 -- blockdev --getsize64 /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_root) / GiB)) -eq "10" ]
         incus delete -f v2
-        incus snapshot delete v1 snap0
+        incus snapshot delete v1 snap1
 
         echo "==> Check QEMU crash behavior and recovery"
         incus exec v1 -- fsfreeze --freeze /
