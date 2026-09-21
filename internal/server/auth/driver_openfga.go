@@ -583,24 +583,64 @@ func (f *FGA) AddInstance(ctx context.Context, projectName string, instanceName 
 
 // DeleteInstance deletes an instance from the authorizer.
 func (f *FGA) DeleteInstance(ctx context.Context, projectName string, instanceName string) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.isOnline() {
+		return nil
+	}
+
+	instanceObject := ObjectInstance(projectName, instanceName)
+
+	// Get the security tags currently applied to the instance.
+	tagObjectStrs, err := f.instanceSecurityTags(ctx, instanceObject)
+	if err != nil {
+		return err
+	}
+
 	deletions := []client.ClientTupleKeyWithoutCondition{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectInstance(projectName, instanceName).String(),
+			Object:   instanceObject.String(),
 		},
 	}
 
-	return f.updateTuples(ctx, nil, deletions)
+	for _, tagObjectStr := range tagObjectStrs {
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   instanceObject.String(),
+		})
+	}
+
+	err = f.updateTuples(ctx, nil, deletions)
+	if err != nil {
+		return err
+	}
+
+	return f.pruneSecurityTags(ctx, tagObjectStrs)
 }
 
 // RenameInstance renames an instance in the authorizer.
 func (f *FGA) RenameInstance(ctx context.Context, projectName string, oldInstanceName string, newInstanceName string) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.isOnline() {
+		return nil
+	}
+
+	oldInstanceObject := ObjectInstance(projectName, oldInstanceName)
+	newInstanceObject := ObjectInstance(projectName, newInstanceName)
+
+	// Get the security tags currently applied to the instance.
+	tagObjectStrs, err := f.instanceSecurityTags(ctx, oldInstanceObject)
+	if err != nil {
+		return err
+	}
+
 	writes := []client.ClientTupleKey{
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectInstance(projectName, newInstanceName).String(),
+			Object:   newInstanceObject.String(),
 		},
 	}
 
@@ -608,11 +648,172 @@ func (f *FGA) RenameInstance(ctx context.Context, projectName string, oldInstanc
 		{
 			User:     ObjectProject(projectName).String(),
 			Relation: relationProject,
-			Object:   ObjectInstance(projectName, oldInstanceName).String(),
+			Object:   oldInstanceObject.String(),
 		},
 	}
 
+	for _, tagObjectStr := range tagObjectStrs {
+		writes = append(writes, client.ClientTupleKey{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   newInstanceObject.String(),
+		})
+
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   oldInstanceObject.String(),
+		})
+	}
+
 	return f.updateTuples(ctx, writes, deletions)
+}
+
+// SetInstanceSecurityTags sets the security tags of an instance in the authorizer.
+func (f *FGA) SetInstanceSecurityTags(ctx context.Context, projectName string, instanceName string, tags []string) error {
+	// If offline, skip updating as a full sync will happen after connection.
+	if !f.isOnline() {
+		return nil
+	}
+
+	instanceObject := ObjectInstance(projectName, instanceName)
+
+	// Get the security tags currently applied to the instance.
+	remoteTagObjectStrs, err := f.instanceSecurityTags(ctx, instanceObject)
+	if err != nil {
+		return err
+	}
+
+	// Get the security tags known to OpenFGA.
+	knownTagObjectStrs, err := f.securityTags(ctx)
+	if err != nil {
+		return err
+	}
+
+	var writes []client.ClientTupleKey
+	var deletions []client.ClientTupleKeyWithoutCondition
+
+	localTagObjectStrs := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		tagObjectStr := ObjectSecurityTag(tag).String()
+		localTagObjectStrs = append(localTagObjectStrs, tagObjectStr)
+
+		if slices.Contains(remoteTagObjectStrs, tagObjectStr) {
+			continue
+		}
+
+		// Register the security tag if it's new.
+		if !slices.Contains(knownTagObjectStrs, tagObjectStr) {
+			writes = append(writes, client.ClientTupleKey{
+				User:     ObjectServer().String(),
+				Relation: relationServer,
+				Object:   tagObjectStr,
+			})
+
+			knownTagObjectStrs = append(knownTagObjectStrs, tagObjectStr)
+		}
+
+		writes = append(writes, client.ClientTupleKey{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   instanceObject.String(),
+		})
+	}
+
+	removedTagObjectStrs := []string{}
+	for _, tagObjectStr := range remoteTagObjectStrs {
+		if slices.Contains(localTagObjectStrs, tagObjectStr) {
+			continue
+		}
+
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Object:   instanceObject.String(),
+		})
+
+		removedTagObjectStrs = append(removedTagObjectStrs, tagObjectStr)
+	}
+
+	err = f.updateTuples(ctx, writes, deletions)
+	if err != nil {
+		return err
+	}
+
+	return f.pruneSecurityTags(ctx, removedTagObjectStrs)
+}
+
+// instanceSecurityTags returns the security tag objects currently applied to an instance in OpenFGA.
+func (f *FGA) instanceSecurityTags(ctx context.Context, instanceObject Object) ([]string, error) {
+	object := instanceObject.String()
+	relation := relationTag
+
+	tagObjectStrs := []string{}
+	opts := client.ClientReadOptions{}
+	for {
+		resp, err := f.client.Read(ctx).Body(client.ClientReadRequest{Object: &object, Relation: &relation}).Options(opts).Execute()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, tuple := range resp.GetTuples() {
+			tagObjectStrs = append(tagObjectStrs, tuple.Key.User)
+		}
+
+		continuationToken := resp.GetContinuationToken()
+		if continuationToken == "" {
+			break
+		}
+
+		opts.ContinuationToken = &continuationToken
+	}
+
+	return tagObjectStrs, nil
+}
+
+// securityTags returns the security tag objects known to OpenFGA.
+func (f *FGA) securityTags(ctx context.Context) ([]string, error) {
+	resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+		User:     ObjectServer().String(),
+		Relation: relationServer,
+		Type:     string(ObjectTypeSecurityTag),
+	}).Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.GetObjects(), nil
+}
+
+// pruneSecurityTags removes the given security tags from OpenFGA if no instance uses them anymore.
+func (f *FGA) pruneSecurityTags(ctx context.Context, tagObjectStrs []string) error {
+	var deletions []client.ClientTupleKeyWithoutCondition
+
+	// Make sure we see the effect of the deletions we just made.
+	consistency := openfga.CONSISTENCYPREFERENCE_HIGHER_CONSISTENCY
+
+	for _, tagObjectStr := range tagObjectStrs {
+		resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Type:     string(ObjectTypeInstance),
+		}).Options(client.ClientListObjectsOptions{Consistency: &consistency}).Execute()
+		if err != nil {
+			return err
+		}
+
+		if len(resp.GetObjects()) > 0 {
+			continue
+		}
+
+		deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+			User:     ObjectServer().String(),
+			Relation: relationServer,
+			Object:   tagObjectStr,
+		})
+	}
+
+	return f.updateTuples(ctx, nil, deletions)
 }
 
 // AddNetwork adds a network to the authorizer.
@@ -975,6 +1176,14 @@ func (f *FGA) DeleteStorageBucket(ctx context.Context, projectName string, stora
 	return f.updateTuples(ctx, nil, deletions)
 }
 
+// isOnline returns whether the OpenFGA connection is currently usable.
+func (f *FGA) isOnline() bool {
+	f.onlineMu.Lock()
+	defer f.onlineMu.Unlock()
+
+	return f.online
+}
+
 // updateTuples sends an object update to OpenFGA if it's currently online.
 func (f *FGA) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
 	// If offline, skip updating as a full sync will happen after connection.
@@ -1213,6 +1422,74 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 	err = diffObjects(relationProject, remoteProjectResourceObjectStrs, localProjectObjects)
 	if err != nil {
 		return err
+	}
+
+	// Compose the local security tags and the instances using them.
+	localTagObjects := []Object{}
+	localTagInstances := map[string][]string{}
+	for instanceObject, tags := range resources.InstanceSecurityTags {
+		for _, tag := range tags {
+			tagObject := ObjectSecurityTag(tag)
+			if !slices.Contains(localTagObjects, tagObject) {
+				localTagObjects = append(localTagObjects, tagObject)
+			}
+
+			localTagInstances[tagObject.String()] = append(localTagInstances[tagObject.String()], instanceObject.String())
+		}
+	}
+
+	// List the security tags we have added to OpenFGA already.
+	remoteTagObjectStrs, err := f.securityTags(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Compare with local security tags.
+	err = diffObjects(relationServer, remoteTagObjectStrs, localTagObjects)
+	if err != nil {
+		return err
+	}
+
+	// Perform a per-tag diff of the tagged instances.
+	allTagObjectStrs := slices.Clone(remoteTagObjectStrs)
+	for _, localTagObject := range localTagObjects {
+		if !slices.Contains(allTagObjectStrs, localTagObject.String()) {
+			allTagObjectStrs = append(allTagObjectStrs, localTagObject.String())
+		}
+	}
+
+	for _, tagObjectStr := range allTagObjectStrs {
+		remoteInstancesResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
+			User:     tagObjectStr,
+			Relation: relationTag,
+			Type:     string(ObjectTypeInstance),
+		}).Execute()
+		if err != nil {
+			return err
+		}
+
+		remoteInstanceStrs := remoteInstancesResp.GetObjects()
+		localInstanceStrs := localTagInstances[tagObjectStr]
+
+		for _, localInstanceStr := range localInstanceStrs {
+			if !slices.Contains(remoteInstanceStrs, localInstanceStr) {
+				writes = append(writes, client.ClientTupleKey{
+					User:     tagObjectStr,
+					Relation: relationTag,
+					Object:   localInstanceStr,
+				})
+			}
+		}
+
+		for _, remoteInstanceStr := range remoteInstanceStrs {
+			if !slices.Contains(localInstanceStrs, remoteInstanceStr) {
+				deletions = append(deletions, client.ClientTupleKeyWithoutCondition{
+					User:     tagObjectStr,
+					Relation: relationTag,
+					Object:   remoteInstanceStr,
+				})
+			}
+		}
 	}
 
 	// Compose the union of local and remote project names for the network share diff.
