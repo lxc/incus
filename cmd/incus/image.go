@@ -1390,6 +1390,10 @@ func (c *cmdImageList) run(cmd *cobra.Command, args []string) error {
 		data = append(data, row)
 	}
 
+	if len(data) == 0 {
+		u.HintMissingSpace(args, i18n.G("No matching image found"))
+	}
+
 	sort.Sort(cli.StringList(data))
 
 	rawData := make([]*api.Image, len(images))

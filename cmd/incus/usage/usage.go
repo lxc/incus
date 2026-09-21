@@ -952,3 +952,14 @@ func MakeRemote(atom Atom, optional bool) remote {
 
 // Usage is the type of CLI usages.
 type Usage []Atom
+
+// HintMissingSpace prints a warning when the user may have missed a space after a remote.
+func HintMissingSpace(args []string, message string) {
+	if len(args) > 0 {
+		arg := args[0]
+		colons := strings.Count(arg, ":")
+		if colons > 1 || colons == 1 && !strings.HasSuffix(arg, ":") {
+			fmt.Fprintf(os.Stderr, cliColor.WarningPrefix+" "+i18n.G("%s; did you forget a space in %s?\n"), message, quote(arg))
+		}
+	}
+}
