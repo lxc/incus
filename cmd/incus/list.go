@@ -515,6 +515,10 @@ func (c *cmdList) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if len(data) == 0 {
+		u.HintMissingSpace(args, i18n.G("No matching instance found"))
+	}
+
 	sort.Sort(cli.SortColumnsNaturally(data))
 
 	headers := []string{}
