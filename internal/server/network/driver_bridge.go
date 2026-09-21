@@ -2316,6 +2316,9 @@ func (n *bridge) Update(newNetwork api.NetworkPut, targetNode string, clientType
 		n.notifyDependentNetworks(changedKeys)
 	}
 
+	// Notify the DNS peers of the zone change.
+	DNSNotifyZones(n.state, n.config)
+
 	return nil
 }
 
