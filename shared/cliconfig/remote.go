@@ -119,7 +119,7 @@ func (c *Config) ParseRemote(raw string) (string, string, error) {
 			return c.DefaultRemote, raw, nil
 		}
 
-		return "", "", fmt.Errorf("The remote \"%s\" doesn't exist", result[0])
+		return result[0], result[1], fmt.Errorf("The remote \"%s\" doesn't exist", result[0])
 	}
 
 	return result[0], result[1], nil
