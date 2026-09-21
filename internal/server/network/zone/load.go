@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	incus "github.com/lxc/incus/v7/client"
+	serverCluster "github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/state"
@@ -163,6 +165,22 @@ func Create(s *state.State, projectName string, zoneInfo *api.NetworkZonesPost) 
 	if err != nil {
 		return err
 	}
+
+	// Have the other cluster members refresh their TSIG entries too.
+	notifier, err := serverCluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), serverCluster.NotifyAll)
+	if err != nil {
+		return err
+	}
+
+	err = notifier(func(client incus.InstanceServer) error {
+		return client.UseProject(projectName).UpdateNetworkZone(zoneInfo.Name, zoneInfo.NetworkZonePut, "")
+	})
+	if err != nil {
+		return err
+	}
+
+	// Notify the DNS peers of the new zone.
+	s.DNS.NotifyZone(zoneInfo.Name)
 
 	return nil
 }
