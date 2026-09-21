@@ -295,11 +295,21 @@ func VolumeDBCreate(pool Pool, projectName string, volumeName string, volumeDesc
 		// Create the database entry for the storage volume.
 		if snapshot {
 			_, err = tx.CreateStorageVolumeSnapshot(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), creationDate, expiryDate)
-		} else {
-			_, err = tx.CreateStoragePoolVolume(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
+			return err
 		}
 
-		return err
+		_, err = tx.CreateStoragePoolVolume(ctx, projectName, volumeName, volumeDescription, volDBType, pool.ID(), vol.Config(), volDBContentType, creationDate)
+		if err != nil {
+			return err
+		}
+
+		// Re-check project limits now that the volume is recorded, so concurrent creations
+		// can't all pass the earlier check.
+		if volumeType == drivers.VolumeTypeCustom {
+			return project.CheckLimits(tx, projectName)
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("Error inserting volume %q for project %q in pool %q of type %q into database: %w", volumeName, projectName, pool.Name(), volumeType, err)
