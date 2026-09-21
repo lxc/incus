@@ -40,3 +40,9 @@ It supports a variety of providers for those runners, including [Incus](https://
 
 [The Cluster API provider for Incus](https://capn.linuxcontainers.org) is an Infrastructure Provider for Cluster API, which enables deploying Kubernetes clusters on infrastructure operated by Incus.
 The provider can be used in single-node development environments for evaluation and testing, but also work with multi-node Incus clusters to deploy and manage production Kubernetes clusters.
+
+## Incant
+[Incant](https://github.com/lnussbaum/incant) is a frontend for
+Incus that provides a declarative way to define and manage development
+environments. It simplifies the creation, configuration, and provisioning
+of Incus instances using YAML-based configuration files.
