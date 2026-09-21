@@ -499,7 +499,7 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 	idmapSize := func(size string) (int64, error) {
 		var idMapSize int64
 		if size == "" || size == "auto" {
-			if util.IsTrue(d.expandedConfig["security.idmap.isolated"]) {
+			if util.IsTrue(d.expandedConfig["security.idmap.isolated"]) || d.expandedConfig["security.idmap.base"] != "" {
 				idMapSize = 65536
 			} else {
 				if len(d.state.OS.IdmapSet.Entries) != 2 {
@@ -542,6 +542,26 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 	}
 
 	if !util.IsTrue(d.expandedConfig["security.idmap.isolated"]) {
+		// A fixed base selects a range that may be shared with other instances.
+		if d.expandedConfig["security.idmap.base"] != "" {
+			offset, err := strconv.ParseInt(d.expandedConfig["security.idmap.base"], 10, 64)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			size, err := idmapSize(d.expandedConfig["security.idmap.size"])
+			if err != nil {
+				return nil, 0, err
+			}
+
+			set, err := mkIdmap(offset, size)
+			if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
+				return nil, 0, err
+			}
+
+			return set, offset, nil
+		}
+
 		// Create a new set based from the global one.
 		newIdmapset := idmap.Set{Entries: make([]idmap.Entry, len(d.state.OS.IdmapSet.Entries))}
 		copy(newIdmapset.Entries, d.state.OS.IdmapSet.Entries)
@@ -578,20 +598,6 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 		return nil, 0, err
 	}
 
-	if d.expandedConfig["security.idmap.base"] != "" {
-		offset, err := strconv.ParseInt(d.expandedConfig["security.idmap.base"], 10, 64)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		set, err := mkIdmap(offset, size)
-		if err != nil && errors.Is(err, idmap.ErrHostIDIsSubID) {
-			return nil, 0, err
-		}
-
-		return set, offset, nil
-	}
-
 	cts, err := instance.LoadNodeAll(d.state, instancetype.Container)
 	if err != nil {
 		return nil, 0, err
@@ -614,15 +620,20 @@ func (d *lxc) findIdmap() (*idmap.Set, int64, error) {
 			continue
 		}
 
-		if util.IsFalseOrEmpty(container.ExpandedConfig()["security.idmap.isolated"]) {
-			continue
+		// Fixed ranges of non-isolated containers are reserved too.
+		base := container.ExpandedConfig()["security.idmap.base"]
+		if base == "" {
+			if util.IsFalseOrEmpty(container.ExpandedConfig()["security.idmap.isolated"]) {
+				continue
+			}
+
+			base = container.ExpandedConfig()["volatile.idmap.base"]
+			if base == "" {
+				continue
+			}
 		}
 
-		if container.ExpandedConfig()["volatile.idmap.base"] == "" {
-			continue
-		}
-
-		cBase, err := strconv.ParseInt(container.ExpandedConfig()["volatile.idmap.base"], 10, 64)
+		cBase, err := strconv.ParseInt(base, 10, 64)
 		if err != nil {
 			return nil, 0, err
 		}
