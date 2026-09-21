@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/seccomp"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
@@ -269,14 +270,14 @@ func AllowedUnprivilegedOnlyMap(rawIdmap string) error {
 
 // LoadByID loads an instance by ID.
 func LoadByID(s *state.State, id int) (Instance, error) {
-	var project string
+	var projectName string
 	var name string
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Get the DB record
-		project, name, err = tx.GetInstanceProjectAndName(ctx, id)
+		projectName, name, err = tx.GetInstanceProjectAndName(ctx, id)
 		if err != nil {
 			return fmt.Errorf("Failed getting instance project and name: %w", err)
 		}
@@ -287,11 +288,11 @@ func LoadByID(s *state.State, id int) (Instance, error) {
 		return nil, err
 	}
 
-	return LoadByProjectAndName(s, project, name)
+	return LoadByProjectAndName(s, projectName, name)
 }
 
 // LoadInstanceDatabaseObject loads a db.Instance object, accounting for snapshots.
-func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, project, name string) (*cluster.Instance, error) {
+func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, projectName, name string) (*cluster.Instance, error) {
 	var container *cluster.Instance
 	var err error
 
@@ -300,22 +301,22 @@ func LoadInstanceDatabaseObject(ctx context.Context, tx *db.ClusterTx, project, 
 		instanceName := parts[0]
 		snapshotName := parts[1]
 
-		inst, err := cluster.GetInstance(ctx, tx.Tx(), project, instanceName)
+		inst, err := cluster.GetInstance(ctx, tx.Tx(), projectName, instanceName)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to fetch instance %q in project %q: %w", name, project, err)
+			return nil, fmt.Errorf("Failed to fetch instance %q in projectName %q: %w", name, projectName, err)
 		}
 
-		snapshot, err := cluster.GetInstanceSnapshot(ctx, tx.Tx(), project, instanceName, snapshotName)
+		snapshot, err := cluster.GetInstanceSnapshot(ctx, tx.Tx(), projectName, instanceName, snapshotName)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to fetch snapshot %q of instance %q in project %q: %w", snapshotName, instanceName, project, err)
+			return nil, fmt.Errorf("Failed to fetch snapshot %q of instance %q in projectName %q: %w", snapshotName, instanceName, projectName, err)
 		}
 
 		c := snapshot.ToInstance(inst.Name, inst.Node, inst.Type, inst.Architecture)
 		container = &c
 	} else {
-		container, err = cluster.GetInstance(ctx, tx.Tx(), project, name)
+		container, err = cluster.GetInstance(ctx, tx.Tx(), projectName, name)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to fetch instance %q in project %q: %w", name, project, err)
+			return nil, fmt.Errorf("Failed to fetch instance %q in projectName %q: %w", name, projectName, err)
 		}
 	}
 
@@ -465,13 +466,13 @@ func DeviceNextInterfaceHWAddr(pattern string) (string, error) {
 }
 
 // BackupLoadByName load an instance backup from the database.
-func BackupLoadByName(s *state.State, project, name string) (*backup.InstanceBackup, error) {
+func BackupLoadByName(s *state.State, projectName, name string) (*backup.InstanceBackup, error) {
 	var args db.InstanceBackup
 
 	// Get the backup database record
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
-		args, err = tx.GetInstanceBackup(ctx, project, name)
+		args, err = tx.GetInstanceBackup(ctx, projectName, name)
 		return err
 	})
 	if err != nil {
@@ -973,6 +974,15 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		err = cluster.UpdateInstanceProfiles(ctx, tx.Tx(), int(instanceID), dbInst.Project, profileNames)
 		if err != nil {
 			return err
+		}
+
+		// Re-check project limits now that the instance is recorded, so concurrent creations
+		// can't all pass the earlier check.
+		if !args.Snapshot {
+			err = project.CheckLimits(tx, args.Project)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Read back the instance, to get ID and creation time.
