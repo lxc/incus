@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-09-21 15:20+0000\n"
-"PO-Revision-Date: 2026-08-31 01:51+0000\n"
+"PO-Revision-Date: 2026-09-21 19:35+0000\n"
 "Last-Translator: Américo Monteiro <a_monteiro@gmx.com>\n"
-"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/"
-">\n"
+"Language-Team: Portuguese <https://hosted.weblate.org/projects/incus/cli/pt/>"
+"\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2026.9.dev0\n"
+"X-Generator: Weblate 2026.10.dev0\n"
 
 #: cmd/incus/info.go:457
 msgid "  Chassis:"
@@ -684,7 +684,7 @@ msgstr "%s a sintaxe de %s está descontinuada; %s\n"
 #: cmd/incus/usage/usage.go:962
 #, c-format
 msgid "%s; did you forget a space in %s?\n"
-msgstr ""
+msgstr "%s; esqueceu-se de um espaço em %s?\n"
 
 #: cmd/incus/utils_sftp.go:379
 #, c-format
@@ -7536,61 +7536,52 @@ msgid "No load-balancer health information available"
 msgstr "Nenhuma informação sobre a saúde do balanceador de carga disponível"
 
 #: cmd/incus/image_alias.go:341
-#, fuzzy
 msgid "No matching alias found"
-msgstr "Nenhuma regra(s) correspondente encontrada"
+msgstr "Nenhum nome alternativo correspondente encontrado"
 
 #: cmd/incus/network_load_balancer.go:941
 msgid "No matching backend found"
 msgstr "Nenhum backend correspondente encontrado"
 
 #: cmd/incus/config_trust.go:544
-#, fuzzy
 msgid "No matching client found"
-msgstr "Nenhum backend correspondente encontrado"
+msgstr "Nenhum cliente correspondente encontrado"
 
 #: cmd/incus/image.go:1394
-#, fuzzy
 msgid "No matching image found"
-msgstr "Nenhum backend correspondente encontrado"
+msgstr "Nenhuma imagem correspondente encontrada"
 
 #: cmd/incus/list.go:519
-#, fuzzy
 msgid "No matching instance found"
-msgstr "Nenhum backend correspondente encontrado"
+msgstr "Nenhuma instância correspondente encontrada"
 
 #: cmd/incus/cluster.go:315
-#, fuzzy
 msgid "No matching member found"
-msgstr "Nenhum backend correspondente encontrado"
+msgstr "Nenhum membro correspondente encontrado"
 
 #: cmd/incus/network.go:1201
-#, fuzzy
 msgid "No matching network found"
-msgstr "Nenhuns porto(s) correspondente encontrados"
+msgstr "Nenhuma rede correspondente encontrada"
 
 #: cmd/incus/network_forward.go:986 cmd/incus/network_load_balancer.go:1113
 msgid "No matching port(s) found"
 msgstr "Nenhuns porto(s) correspondente encontrados"
 
 #: cmd/incus/profile.go:838
-#, fuzzy
 msgid "No matching profile found"
-msgstr "Nenhuma regra(s) correspondente encontrada"
+msgstr "Nenhum perfil correspondente encontrado"
 
 #: cmd/incus/project.go:688
-#, fuzzy
 msgid "No matching project found"
-msgstr "Nenhuns porto(s) correspondente encontrados"
+msgstr "Nenhum projeto correspondente encontrado"
 
 #: cmd/incus/network_acl.go:1057
 msgid "No matching rule(s) found"
 msgstr "Nenhuma regra(s) correspondente encontrada"
 
 #: cmd/incus/storage.go:776
-#, fuzzy
 msgid "No matching storage pool found"
-msgstr "Nenhum backend correspondente encontrado"
+msgstr "Nenhum pool de armazenamento correspondente encontrado"
 
 #: cmd/incus/low_level.go:1949
 msgid "No signature matches"
@@ -8251,9 +8242,8 @@ msgid "Remote names may not contain colons"
 msgstr "Nomes remotos podem não conter dois pontos"
 
 #: cmd/incus/remote.go:1355
-#, fuzzy
 msgid "Remote names may not contain colons or equal signs"
-msgstr "Nomes remotos podem não conter dois pontos"
+msgstr "Nomes remotos não podem conter dois pontos nem sinais de igual"
 
 #: cmd/incus/remote.go:508
 msgid "Remote names may not contain colons; please provide an explicit one"
@@ -8261,9 +8251,8 @@ msgstr ""
 "Nomes remotos podem não conter dois pontos; por favor forneça um explícito"
 
 #: cmd/incus/remote.go:515
-#, fuzzy
 msgid "Remote names may not contain equal signs"
-msgstr "Nomes remotos podem não conter dois pontos"
+msgstr "Nomes remotos não podem conter sinais de igual"
 
 #: cmd/incus/remote.go:152
 msgid "Remote trust token"
@@ -11172,15 +11161,17 @@ msgid "bucket"
 msgstr "balde"
 
 #: cmd/incus/usage/parse.go:87
-#, fuzzy, c-format
+#, c-format
 msgid "cannot parse this argument, unexpected %s"
-msgstr "não posso analisar este argumento; %s inesperado"
+msgstr "não posso analisar este argumento, %s inesperado"
 
 #: cmd/incus/usage/parse.go:90
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "cannot parse this argument, unexpected %s in %s; did you forget a space?"
-msgstr "não posso analisar este argumento; %s em %s inesperado"
+msgstr ""
+"não posso analisar este argumento, %s em %s inesperado; esqueceu-se de um "
+"espaço?"
 
 #: cmd/incus/admin_update_certificate.go:24 cmd/incus/cluster.go:1348
 #: cmd/incus/config_trust.go:163
