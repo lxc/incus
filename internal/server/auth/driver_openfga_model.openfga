@@ -27,6 +27,7 @@ type image_alias
 type instance
   relations
     define project: [project]
+    define tag: [security_tag]
     define admin: [user, group#member] or admin from project
     define operator: [user, group#member] or admin or operator from project
     define user: [user, group#member] or operator or user from project
@@ -101,6 +102,10 @@ type project
     define can_view_events: [user, group#member] or user
     define can_view_operations: [user, group#member] or user
     define can_view: viewer
+
+type security_tag
+  relations
+    define server: [server]
 
 type server
   relations
