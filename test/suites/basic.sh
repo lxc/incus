@@ -297,6 +297,10 @@ test_basic_usage() {
 
     # Test randomly named container creation
     incus launch testimage
+    # A name glued to the remote is a parse error rather than a filter on the default remote.
+    ! incus list local:foo || false
+    incus list local: foo
+
     RDNAME=$(incus list --format csv --columns n)
     incus delete -f "${RDNAME}"
 
