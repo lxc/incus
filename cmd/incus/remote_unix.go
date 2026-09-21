@@ -11,7 +11,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -32,7 +31,7 @@ type cmdRemoteProxy struct {
 	flagTimeout int
 }
 
-var cmdRemoteProxyUsage = u.Usage{u.Colon(u.Remote), u.Target(u.Placeholder(i18n.G("unix socket file")))}
+var cmdRemoteProxyUsage = u.Usage{u.RemoteColon, u.Target(u.Placeholder(i18n.G("unix socket file")))}
 
 func (c *cmdRemoteProxy) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -55,7 +54,7 @@ func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	remoteName := strings.TrimSuffix(parsed[0].String, ":")
+	remoteName := parsed[0].RemoteName
 	path := parsed[1].String
 
 	remote := c.global.conf.Remotes[remoteName]

@@ -511,6 +511,10 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New(i18n.G("Remote names may not contain colons"))
 	}
 
+	if strings.Contains(server, "=") {
+		return errors.New(i18n.G("Remote names may not contain equal signs"))
+	}
+
 	// Check for existing remote
 	remote, ok := conf.Remotes[server]
 	if ok {
@@ -1345,6 +1349,11 @@ func (c *cmdRemoteRename) run(cmd *cobra.Command, args []string) error {
 
 	remoteName := parsed[0].String
 	newRemoteName := parsed[1].String
+
+	// Validate the new remote name.
+	if strings.Contains(newRemoteName, ":") || strings.Contains(newRemoteName, "=") {
+		return errors.New(i18n.G("Remote names may not contain colons or equal signs"))
+	}
 
 	// Rename the remote
 	rc, ok := conf.Remotes[remoteName]
