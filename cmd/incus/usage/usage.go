@@ -691,6 +691,11 @@ func (r remote) Parse(conf Config, servers map[string]incus.InstanceServer, args
 	// From here, we soft-fail if the remote is of the form `[<remote>:]` and hard-fail otherwise.
 	if r.suffix == nil {
 		if rest != "" {
+			// A known remote followed by more data is a mistake, don't silently fall back to the default remote.
+			if strings.HasPrefix(arg, remoteName+":") {
+				return nil, &argumentNotFullyConsumedError{rest, arg}
+			}
+
 			// Because this atom is skipped, we fallback to the default remote.
 			remoteServer, serverErr := getInstanceServer(conf, servers, conf.CLIConfig.DefaultRemote)
 			if serverErr != nil {
