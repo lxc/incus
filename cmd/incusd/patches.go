@@ -111,6 +111,7 @@ var patches = []patch{
 	{name: "storage_cephobject_endpoint_cert", stage: patchPreDaemonStorage, run: patchStorageCephObjectEndpointCert},
 	{name: "network_ovn_acl_address_sets", stage: patchPostDaemonStorage, run: patchGenericNetwork(patchNetworkOVNACLAddressSets)},
 	{name: "auth_openfga_security_tags", stage: patchPostNetworks, run: patchGenericAuthorization},
+	{name: "instance_idmap_base_non_isolated", stage: patchPostDaemonStorage, run: patchInstanceIdmapBaseNonIsolated},
 }
 
 type patchRun func(name string, d *Daemon) error
@@ -457,6 +458,81 @@ PRAGMA legacy_alter_table = OFF; -- So views check integrity again.
 `)
 
 	return err
+}
+
+// patchInstanceIdmapBaseNonIsolated turns off isolation on containers using a fixed ID map base.
+func patchInstanceIdmapBaseNonIsolated(_ string, d *Daemon) error {
+	s := d.State()
+
+	return s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		// Profiles setting both keys.
+		profiles, err := dbCluster.GetProfiles(ctx, tx.Tx())
+		if err != nil {
+			return err
+		}
+
+		for _, profile := range profiles {
+			config, err := dbCluster.GetProfileConfig(ctx, tx.Tx(), profile.ID)
+			if err != nil {
+				return err
+			}
+
+			if config["security.idmap.base"] == "" || !util.IsTrue(config["security.idmap.isolated"]) {
+				continue
+			}
+
+			logger.Debugf("Disabling isolation for fixed ID map base on profile %q (Project %q)", profile.Name, profile.Project)
+			config["security.idmap.isolated"] = "false"
+			err = dbCluster.UpdateProfileConfig(ctx, tx.Tx(), int64(profile.ID), config)
+			if err != nil {
+				return fmt.Errorf("Failed disabling isolation on profile %q (Project %q): %w", profile.Name, profile.Project, err)
+			}
+		}
+
+		// Only patch the local instances, the other members patch their own.
+		filter := dbCluster.InstanceFilter{}
+		if s.ServerName != "" {
+			serverName := s.ServerName
+			filter.Node = &serverName
+		}
+
+		return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
+			if inst.Type != instancetype.Container {
+				return nil
+			}
+
+			expanded := db.ExpandInstanceConfig(inst.Config, inst.Profiles)
+			if expanded["security.idmap.base"] != "" && util.IsTrue(expanded["security.idmap.isolated"]) {
+				logger.Debugf("Disabling isolation for fixed ID map base on container %q (Project %q)", inst.Name, inst.Project)
+				err := tx.UpdateInstanceConfig(inst.ID, map[string]string{"security.idmap.isolated": "false"})
+				if err != nil {
+					return fmt.Errorf("Failed disabling isolation on container %q (Project %q): %w", inst.Name, inst.Project, err)
+				}
+			}
+
+			snaps, err := tx.GetInstanceSnapshotsWithName(ctx, inst.Project, inst.Name)
+			if err != nil {
+				return err
+			}
+
+			for _, snap := range snaps {
+				config, err := dbCluster.GetInstanceSnapshotConfig(ctx, tx.Tx(), snap.ID)
+				if err != nil {
+					return err
+				}
+
+				expanded = db.ExpandInstanceConfig(config, inst.Profiles)
+				if expanded["security.idmap.base"] != "" && util.IsTrue(expanded["security.idmap.isolated"]) {
+					err = tx.UpdateInstanceSnapshotConfig(snap.ID, map[string]string{"security.idmap.isolated": "false"})
+					if err != nil {
+						return fmt.Errorf("Failed disabling isolation on snapshot %q of container %q (Project %q): %w", snap.Name, inst.Name, inst.Project, err)
+					}
+				}
+			}
+
+			return nil
+		}, filter)
+	})
 }
 
 // patchVMRenameUUIDKey renames the volatile.vm.uuid key to volatile.uuid in instance and snapshot configs.
