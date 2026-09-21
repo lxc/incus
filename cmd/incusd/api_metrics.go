@@ -167,6 +167,14 @@ func metricsGet(d *Daemon, r *http.Request) response.Response {
 		intMetrics.AddSamples(metrics.StoragePoolSizeBytes, metrics.Sample{Labels: labels, Value: float64(res.Space.Total)})
 	}
 
+	// Add cluster member metrics.
+	if s.ServerClustered {
+		err = clusterMemberMetrics(r.Context(), s, intMetrics)
+		if err != nil {
+			logger.Warn("Failed getting cluster member metrics", logger.Ctx{"err": err})
+		}
+	}
+
 	// invalidProjectFilters returns project filters which are either not in cache or have expired.
 	invalidProjectFilters := func(projectNames []string) []dbCluster.InstanceFilter {
 		metricsCacheLock.Lock()
@@ -357,6 +365,106 @@ func getFilteredMetrics(s *state.State, r *http.Request, compress bool, metricSe
 	metricSet.FilterSamples(userHasPermission)
 
 	return response.SyncResponsePlain(true, compress, metricSet.String())
+}
+
+// clusterMemberMetrics adds info, status and role metrics for every cluster member.
+func clusterMemberMetrics(ctx context.Context, s *state.State, out *metrics.MetricSet) error {
+	// Without a known leader, still report the members but without a leader role.
+	leaderAddress, err := s.Cluster.LeaderAddress()
+	if err != nil {
+		leaderAddress = ""
+	}
+
+	var raftNodes []db.RaftNode
+	err = s.DB.Node.Transaction(ctx, func(ctx context.Context, tx *db.NodeTx) error {
+		raftNodes, err = tx.GetRaftNodes(ctx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	var members []api.ClusterMember
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		failureDomains, err := tx.GetFailureDomainsNames(ctx)
+		if err != nil {
+			return err
+		}
+
+		memberFailureDomains, err := tx.GetNodesFailureDomains(ctx)
+		if err != nil {
+			return err
+		}
+
+		nodes, err := tx.GetNodes(ctx)
+		if err != nil {
+			return err
+		}
+
+		maxVersion, err := tx.GetNodeMaxVersion(ctx)
+		if err != nil {
+			return err
+		}
+
+		args := db.NodeInfoArgs{
+			LeaderAddress:        leaderAddress,
+			FailureDomains:       failureDomains,
+			MemberFailureDomains: memberFailureDomains,
+			OfflineThreshold:     s.GlobalConfig.OfflineThreshold(),
+			MaxMemberVersion:     maxVersion,
+			RaftNodes:            raftNodes,
+		}
+
+		members = make([]api.ClusterMember, 0, len(nodes))
+		for _, node := range nodes {
+			member, err := node.ToAPI(ctx, tx, args)
+			if err != nil {
+				return err
+			}
+
+			members = append(members, *member)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, member := range members {
+		out.AddSamples(metrics.ClusterMemberInfo, metrics.Sample{
+			Labels: map[string]string{"member": member.ServerName, "architecture": member.Architecture, "failure_domain": member.FailureDomain},
+			Value:  1,
+		})
+
+		for _, status := range []string{"online", "offline", "blocked", "evacuated", "evacuating", "restoring"} {
+			value := float64(0)
+			if strings.EqualFold(member.Status, status) {
+				value = 1
+			}
+
+			out.AddSamples(metrics.ClusterMemberStatus, metrics.Sample{
+				Labels: map[string]string{"member": member.ServerName, "status": status},
+				Value:  value,
+			})
+		}
+
+		for _, role := range member.Roles {
+			out.AddSamples(metrics.ClusterMemberRole, metrics.Sample{
+				Labels: map[string]string{"member": member.ServerName, "role": role},
+				Value:  1,
+			})
+		}
+
+		for _, group := range member.Groups {
+			out.AddSamples(metrics.ClusterMemberGroup, metrics.Sample{
+				Labels: map[string]string{"member": member.ServerName, "group": group},
+				Value:  1,
+			})
+		}
+	}
+
+	return nil
 }
 
 func internalMetrics(ctx context.Context, s *state.State, tx *db.ClusterTx) *metrics.MetricSet {

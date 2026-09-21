@@ -3475,3 +3475,12 @@ dictionary. This allows writing rules based on claims such as `groups`.
 This allows a running instance to change project as part of a live migration
 to another cluster member. It also lets instances with `dependent` disks
 attached change project.
+
+## `metrics_cluster_members`
+
+This adds cluster member metrics to the `/1.0/metrics` endpoint:
+
+* `incus_cluster_member` with the member's architecture and failure domain
+* `incus_cluster_member_status` with one sample per possible status
+* `incus_cluster_member_role` with one sample per role held
+* `incus_cluster_member_group` with one sample per group the member belongs to

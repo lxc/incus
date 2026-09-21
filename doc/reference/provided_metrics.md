@@ -121,6 +121,14 @@ The following internal metrics are provided:
 
 * - Metric
   - Description
+* - `incus_cluster_member{member="<member>",architecture="<arch>",failure_domain="<domain>"}`
+  - Information about a cluster member (always `1`)
+* - `incus_cluster_member_group{member="<member>",group="<group>"}`
+  - Set to `1` for every cluster group the member belongs to
+* - `incus_cluster_member_role{member="<member>",role="<role>"}`
+  - Set to `1` for every role the cluster member holds
+* - `incus_cluster_member_status{member="<member>",status="<status>"}`
+  - Whether the cluster member is in the given status (`1` or `0`)
 * - `incus_go_alloc_bytes_total`
   - Total number of bytes allocated (even if freed)
 * - `incus_go_alloc_bytes`

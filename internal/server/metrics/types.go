@@ -159,11 +159,23 @@ const (
 	GoOtherSysBytes
 	// GoNextGCBytes represents the number of heap bytes when next garbage collection will take place.
 	GoNextGCBytes
+	// ClusterMemberInfo represents static information about a cluster member.
+	ClusterMemberInfo
+	// ClusterMemberStatus represents the status of a cluster member.
+	ClusterMemberStatus
+	// ClusterMemberRole represents the roles of a cluster member.
+	ClusterMemberRole
+	// ClusterMemberGroup represents the groups of a cluster member.
+	ClusterMemberGroup
 )
 
 // MetricNames associates a metric type to its name.
 var MetricNames = map[MetricType]string{
 	BootTimeSeconds:             "incus_boot_time_seconds",
+	ClusterMemberGroup:          "incus_cluster_member_group",
+	ClusterMemberInfo:           "incus_cluster_member",
+	ClusterMemberRole:           "incus_cluster_member_role",
+	ClusterMemberStatus:         "incus_cluster_member_status",
 	CPUSecondsTotal:             "incus_cpu_seconds_total",
 	CPUs:                        "incus_cpu_effective_total",
 	DiskReadBytesTotal:          "incus_disk_read_bytes_total",
@@ -239,6 +251,10 @@ var MetricNames = map[MetricType]string{
 // MetricHeaders represents the metric headers which contain help messages as specified by OpenMetrics.
 var MetricHeaders = map[MetricType]string{
 	BootTimeSeconds:             "# HELP incus_boot_time_seconds The unix epoch at the time of the instance start.",
+	ClusterMemberGroup:          "# HELP incus_cluster_member_group Whether a cluster member belongs to a given group.",
+	ClusterMemberInfo:           "# HELP incus_cluster_member Information about a cluster member.",
+	ClusterMemberRole:           "# HELP incus_cluster_member_role Whether a cluster member holds a given role.",
+	ClusterMemberStatus:         "# HELP incus_cluster_member_status Whether a cluster member is in a given status.",
 	CPUSecondsTotal:             "# HELP incus_cpu_seconds_total The total number of CPU time used in seconds.",
 	CPUs:                        "# HELP incus_cpu_effective_total The total number of effective CPUs.",
 	DiskReadBytesTotal:          "# HELP incus_disk_read_bytes_total The total number of bytes read.",
