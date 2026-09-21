@@ -971,12 +971,12 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	"security.guestapi.images": validate.Optional(validate.IsBool),
 
 	// gendoc:generate(entity=instance, group=security, key=security.idmap.base)
-	// Setting this option overrides auto-detection.
+	// The range can be shared by other containers using the same base and can't be combined with `security.idmap.isolated`.
 	// ---
 	//  type: integer
 	//  liveupdate: no
 	//  condition: unprivileged container
-	//  shortdesc: The base host ID to use for the allocation
+	//  shortdesc: The base host ID to use for the ID map
 	"security.idmap.base": validate.Optional(validate.IsUint32),
 
 	// gendoc:generate(entity=instance, group=security, key=security.idmap.isolated)
