@@ -43,12 +43,17 @@ do_zfs_delegate() {
     [ "$(zfs get -H -o value zoned "${zfs_pool}/containers/c1")" = "on" ]
     [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1")" = "on" ]
 
-    # Confirm the properties are restored after being changed from inside the container.
+    # Confirm the properties are restored after being changed from inside the container, including on children.
     nsenter -t "${PID}" -U -- zfs set org.openzfs.systemd:ignore=off "${zfs_pool}/containers/c1"
+    nsenter -t "${PID}" -U -- zfs create -o org.openzfs.systemd:ignore=off "${zfs_pool}/containers/c1/child"
+    nsenter -t "${PID}" -U -- zfs snapshot "${zfs_pool}/containers/c1/child@snap"
     [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1")" = "off" ]
+    [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1/child")" = "off" ]
     incus stop -f c1
     [ "$(zfs get -H -o value zoned "${zfs_pool}/containers/c1")" = "off" ]
     [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1")" = "on" ]
+    [ "$(zfs get -H -o value org.openzfs.systemd:ignore "${zfs_pool}/containers/c1/child")" = "on" ]
+    zfs destroy -r "${zfs_pool}/containers/c1/child"
 
     # Confirm that ZFS dataset is empty when off.
     incus storage volume unset "${storage_pool}" container/c1 zfs.delegate
