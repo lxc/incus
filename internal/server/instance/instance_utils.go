@@ -108,6 +108,10 @@ func ValidConfig(sysOS *sys.OS, config map[string]string, expanded bool, instanc
 		}
 	}
 
+	if util.IsTrue(config["security.idmap.isolated"]) && config["security.idmap.base"] != "" {
+		return errors.New("security.idmap.base can't be used with security.idmap.isolated")
+	}
+
 	_, rawSeccomp := config["raw.seccomp"]
 	_, isAllow, err := exclusiveConfigKeys("security.syscalls.allow", "security.syscalls.whitelist", config)
 	if err != nil {
