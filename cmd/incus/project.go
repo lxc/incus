@@ -684,6 +684,10 @@ func (c *cmdProjectList) run(cmd *cobra.Command, args []string) error {
 		data = append(data, line)
 	}
 
+	if len(data) == 0 {
+		u.HintMissingSpace(args, i18n.G("No matching project found"))
+	}
+
 	sort.Sort(cli.SortColumnsNaturally(data))
 
 	header := []string{}

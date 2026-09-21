@@ -57,7 +57,7 @@ type cmdList struct {
 	shorthandFilters map[string]func(*api.Instance, *api.InstanceState, string) bool
 }
 
-var cmdListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
+var cmdListUsage = u.Usage{u.Either(u.RemoteColonOpt, u.Flag("all-remotes")), u.Filter.List(0)}
 
 func (c *cmdList) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -513,6 +513,10 @@ func (c *cmdList) run(cmd *cobra.Command, args []string) error {
 
 			data = append(data, col)
 		}
+	}
+
+	if len(data) == 0 {
+		u.HintMissingSpace(args, i18n.G("No matching instance found"))
 	}
 
 	sort.Sort(cli.SortColumnsNaturally(data))
