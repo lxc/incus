@@ -117,3 +117,14 @@ When setting the `bridge.mtu` option on an Incus managed bridge network, Incus w
 That interface will never be used to carry traffic but it has the requested MTU set to it and is bridged into the network bridge.
 
 This has the effect of forcing the bridge to adopt that MTU and avoids issues where the bridge's configured MTU would change as interfaces get added to it.
+
+## Where is the source?
+
+<!-- not obvious when published as https://linuxcontainers.org/incus/docs/main/faq/ -->
+
+Source of these webpages are in the _git repository_
+at https://github.com/lxc/incus.git
+under directory `doc`.
+
+For https://linuxcontainers.org/ you find the source
+at https://github.com/lxc/linuxcontainers.org.git
