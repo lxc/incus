@@ -30,6 +30,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/operations"
+	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/seccomp"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storageDrivers "github.com/lxc/incus/v7/internal/server/storage/drivers"
@@ -973,6 +974,15 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		err = cluster.UpdateInstanceProfiles(ctx, tx.Tx(), int(instanceID), dbInst.Project, profileNames)
 		if err != nil {
 			return err
+		}
+
+		// Re-check project limits now that the instance is recorded, so concurrent creations
+		// can't all pass the earlier check.
+		if !args.Snapshot {
+			err = project.CheckLimits(tx, args.Project)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Read back the instance, to get ID and creation time.
