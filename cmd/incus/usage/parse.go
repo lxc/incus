@@ -84,10 +84,10 @@ type argumentNotFullyConsumedError struct {
 
 func (a *argumentNotFullyConsumedError) Error() string {
 	if a.rest == a.parent {
-		return fmt.Sprintf(i18n.G("cannot parse this argument; unexpected %s"), quote(a.rest))
+		return fmt.Sprintf(i18n.G("cannot parse this argument, unexpected %s"), quote(a.rest))
 	}
 
-	return fmt.Sprintf(i18n.G("cannot parse this argument; unexpected %s in %s"), quote(a.rest), quote(a.parent))
+	return fmt.Sprintf(i18n.G("cannot parse this argument, unexpected %s in %s; did you forget a space?"), quote(a.rest), quote(a.parent))
 }
 
 type argumentMismatchError struct {

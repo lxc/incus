@@ -676,17 +676,14 @@ func (r remote) Parse(conf Config, servers map[string]incus.InstanceServer, args
 		return nil, &notEnoughArgumentsError{r}
 	}
 
-	remoteName, rest, err := conf.CLIConfig.ParseRemote(arg)
-	if err != nil {
-		return nil, err
-	}
-
+	remoteName, rest, remoteErr := conf.CLIConfig.ParseRemote(arg)
 	restArgs := []string{}
 	if rest != "" {
 		restArgs = append(restArgs, rest)
 	}
 
 	var p *Parsed
+	var err error
 
 	// From here, we soft-fail if the remote is of the form `[<remote>:]` and hard-fail otherwise.
 	if r.suffix == nil {
@@ -724,6 +721,11 @@ func (r remote) Parse(conf Config, servers map[string]incus.InstanceServer, args
 
 	if len(restArgs) != 0 {
 		return nil, &argumentNotFullyConsumedError{restArgs[0], arg}
+	}
+
+	// If the remote doesn’t exist, we fail here.
+	if remoteErr != nil {
+		return nil, remoteErr
 	}
 
 	remoteServer, err := getInstanceServer(conf, servers, remoteName)
