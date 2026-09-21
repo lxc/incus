@@ -132,6 +132,7 @@ ICMP
 idmap
 idmapped
 idmaps
+Incant
 incrementing
 Incus
 Incus'
