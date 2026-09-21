@@ -57,7 +57,7 @@ type cmdList struct {
 	shorthandFilters map[string]func(*api.Instance, *api.InstanceState, string) bool
 }
 
-var cmdListUsage = u.Usage{u.RemoteColonOpt, u.Filter.List(0)}
+var cmdListUsage = u.Usage{u.Either(u.RemoteColonOpt, u.Flag("all-remotes")), u.Filter.List(0)}
 
 func (c *cmdList) command() *cobra.Command {
 	cmd := &cobra.Command{}
