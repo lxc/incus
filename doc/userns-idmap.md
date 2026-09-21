@@ -64,9 +64,12 @@ size. Isolated containers without this property set default to a ID range of
 size 65536; this allows for POSIX compliance and a `nobody` user inside the
 container.
 
-To select a specific map, the `security.idmap.base` key will let you
-override the auto-detection mechanism and tell Incus what host UID/GID you
-want to use as the base for the container.
+To use a specific map, the `security.idmap.base` key will let you tell Incus
+what host UID/GID to use as the base for the container, with the range size
+coming from `security.idmap.size` (defaulting to 65536). Such a range is not
+isolated and can be shared by any number of containers using the same base,
+it therefore can't be combined with `security.idmap.isolated`. Isolated
+containers are allocated their range away from those fixed ranges.
 
 These properties require a container reboot to take effect.
 
