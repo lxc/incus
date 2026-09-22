@@ -77,7 +77,11 @@ test_idmap() {
     [ "$(incus exec idmap -- cat /proc/self/uid_map | awk '{print $3}')" = "100000" ]
     [ "$(incus exec idmap -- cat /proc/self/gid_map | awk '{print $3}')" = "100000" ]
 
+    # A fixed base isn't compatible with isolation.
+    ! incus config set idmap security.idmap.base $((UID_BASE + 12345)) || false
+
     # Test using a custom base
+    incus config unset idmap security.idmap.isolated
     incus config set idmap security.idmap.base $((UID_BASE + 12345))
     incus config set idmap security.idmap.size 110000
     incus restart idmap --force
@@ -86,9 +90,16 @@ test_idmap() {
     [ "$(incus exec idmap -- cat /proc/self/uid_map | awk '{print $3}')" = "110000" ]
     [ "$(incus exec idmap -- cat /proc/self/gid_map | awk '{print $3}')" = "110000" ]
 
+    # A fixed range can be shared and is avoided by isolated containers.
+    incus launch testimage idmap-shared -c security.idmap.base=$((UID_BASE + 12345)) -c security.idmap.size=110000
+    [ "$(incus exec idmap-shared -- cat /proc/self/uid_map | awk '{print $2}')" = "$((UID_BASE + 12345))" ]
+    [ "$(incus exec idmap-shared -- cat /proc/self/uid_map | awk '{print $3}')" = "110000" ]
+    incus init testimage idmap-iso -c security.idmap.isolated=true
+    [ "$(incus config get idmap-iso volatile.idmap.base)" -ge "$((UID_BASE + 12345 + 110000))" ]
+    incus delete -f idmap-shared idmap-iso
+
     # Switch back to full Incus range
     incus config unset idmap security.idmap.base
-    incus config unset idmap security.idmap.isolated
     incus config unset idmap security.idmap.size
     incus restart idmap --force
     [ "$(incus exec idmap -- cat /proc/self/uid_map | awk '{print $2}')" = "${UID_BASE}" ]

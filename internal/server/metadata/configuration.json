@@ -3353,8 +3353,8 @@
 						"security.idmap.base": {
 							"condition": "unprivileged container",
 							"liveupdate": "no",
-							"longdesc": "Setting this option overrides auto-detection.",
-							"shortdesc": "The base host ID to use for the allocation",
+							"longdesc": "The range can be shared by other containers using the same base and can't be combined with `security.idmap.isolated`.",
+							"shortdesc": "The base host ID to use for the ID map",
 							"type": "integer"
 						}
 					},

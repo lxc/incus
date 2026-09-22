@@ -3018,9 +3018,9 @@ See {ref}`dev-incus` for more information.
 ```{config:option} security.idmap.base instance-security
 :condition: "unprivileged container"
 :liveupdate: "no"
-:shortdesc: "The base host ID to use for the allocation"
+:shortdesc: "The base host ID to use for the ID map"
 :type: "integer"
-Setting this option overrides auto-detection.
+The range can be shared by other containers using the same base and can't be combined with `security.idmap.isolated`.
 ```
 
 ```{config:option} security.idmap.isolated instance-security
