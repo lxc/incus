@@ -484,6 +484,8 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 		}
 
 		return g.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			now := time.Now()
+
 			for _, node := range hbState.Members {
 				if !node.updated {
 					// If member has not been updated during this heartbeat round it means
@@ -494,7 +496,7 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 					continue
 				}
 
-				err := tx.SetNodeHeartbeat(node.Address, node.LastHeartbeat)
+				err := tx.SetNodeHeartbeat(node.Address, now)
 				if err != nil && !response.IsNotFoundError(err) {
 					return fmt.Errorf("Failed updating heartbeat time for member %q: %w", node.Address, err)
 				}
