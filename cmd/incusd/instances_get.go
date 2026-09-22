@@ -18,6 +18,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/instance"
+	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/version"
@@ -396,7 +397,16 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 
 			// Get the local instances.
 			localInstancesByID := make(map[int64]instance.Instance)
-			for _, projectName := range filteredProjects {
+			if allProjects {
+				insts, err := instance.LoadNodeAll(s, instancetype.Any)
+				if err != nil {
+					return response.InternalError(fmt.Errorf("Failed loading instances: %w", err))
+				}
+
+				for _, inst := range insts {
+					localInstancesByID[int64(inst.ID())] = inst
+				}
+			} else {
 				insts, err := instanceLoadNodeProjectAll(r.Context(), s, projectName)
 				if err != nil {
 					return response.InternalError(fmt.Errorf("Failed loading instances for project %q: %w", projectName, err))
