@@ -9240,6 +9240,22 @@ func (d *qemu) sendMigrationSnapshot(ctx context.Context, diskName string, files
 	return finalizeFunc, nil
 }
 
+// cancelMigrationSnapshot stops a snapshot transfer, leaving the snapshot attached so it can be merged.
+func (d *qemu) cancelMigrationSnapshot(monitor *qmp.Monitor, diskName string) {
+	// Cancel the mirror job first as its filter node blocks the merge.
+	err := monitor.BlockJobCancelWait(ephemeralSnapshotName(diskName))
+	if err != nil {
+		d.logger.Warn("Failed cancelling migration storage snapshot transfer", logger.Ctx{"diskName": diskName, "err": err})
+	}
+
+	time.Sleep(time.Second) // Wait for it to be released.
+
+	err = monitor.RemoveBlockDevice(migrationNBDTarget(diskName))
+	if err != nil {
+		d.logger.Warn("Failed removing NBD storage target device", logger.Ctx{"diskName": diskName, "err": err})
+	}
+}
+
 // migrateSendLive performs live migration send process.
 func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool) error {
 	monitor, err := d.qmpConnect()
@@ -9264,6 +9280,8 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 	reverter := revert.New()
 	defer reverter.Fail()
+
+	rootTransferDone := false
 
 	// Non-shared storage snapshot setup.
 	if !sameSharedStorage || dependentVolumeMove {
@@ -9304,7 +9322,12 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				return fmt.Errorf("Failed creating migration snapshot: %w", err)
 			}
 
-			reverter.Add(cleanup)
+			// The snapshot is gone once its transfer has been finalized.
+			reverter.Add(func() {
+				if !rootTransferDone {
+					cleanup()
+				}
+			})
 		}
 
 		for _, vol := range volSourceArgs.DependentVolumes {
@@ -9410,6 +9433,13 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 		if err != nil {
 			return fmt.Errorf("Failed transferring snapshot disk: %w", err)
 		}
+
+		// Abort the transfer on failure so the snapshot can be merged back.
+		reverter.Add(func() {
+			if !rootTransferDone {
+				d.cancelMigrationSnapshot(monitor, rootDiskName)
+			}
+		})
 	}
 
 	d.logger.Debug("Stateful migration checkpoint send starting")
@@ -9496,6 +9526,8 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 			if err != nil {
 				return fmt.Errorf("Failed transferring root snapshot disk: %w", err)
 			}
+
+			rootTransferDone = true
 		}
 
 		for _, vol := range volSourceArgs.DependentVolumes {
