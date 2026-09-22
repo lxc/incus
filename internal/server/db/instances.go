@@ -153,8 +153,9 @@ type Instance struct {
 // The member address of instances running on the local member is set to the empty string, to distinguish it from
 // remote nodes. Instances whose member is down are added to the special address "0.0.0.0".
 // If localOnly is set, only instances on the local member are returned.
-func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThreshold time.Duration, projects []string, localOnly bool) (map[string][]Instance, error) {
-	args := make([]any, 0, len(projects)+1)
+// If nameLike is set, only instances whose name matches that SQL LIKE pattern (backslash escaped) are returned.
+func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThreshold time.Duration, projects []string, localOnly bool, nameLike string) (map[string][]Instance, error) {
+	args := make([]any, 0, len(projects)+2)
 	var q strings.Builder
 
 	q.WriteString(`SELECT
@@ -175,6 +176,11 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 	if localOnly {
 		q.WriteString(" AND instances.node_id = ?")
 		args = append(args, c.nodeID)
+	}
+
+	if nameLike != "" {
+		q.WriteString(" AND instances.name LIKE ? ESCAPE '\\'")
+		args = append(args, nameLike)
 	}
 
 	q.WriteString(" ORDER BY instances.id")
