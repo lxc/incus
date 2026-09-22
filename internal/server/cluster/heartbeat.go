@@ -339,6 +339,8 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 		}
 	}()
 
+	startTime := time.Now()
+
 	raftNodes, err := g.currentRaftNodes()
 	if err != nil {
 		if errors.Is(err, ErrNotLeader) {
@@ -398,8 +400,6 @@ func (g *Gateway) heartbeat(ctx context.Context, mode heartbeatMode) {
 		logger.Error("No local address set, aborting heartbeat round", logger.Ctx{"mode": modeStr})
 		return
 	}
-
-	startTime := time.Now()
 
 	heartbeatInterval := g.heartbeatInterval()
 
