@@ -63,6 +63,14 @@ The full Incus OpenFGA authorization model is defined in `internal/server/auth/d
 :language: none
 ```
 
+(openfga-security-tags)=
+### Security tags
+
+Instances can be tagged through the `security.tags` configuration key, which holds a comma-separated list of tags.
+Incus does not use those tags in its own authorization decisions.
+Instead, every tag is exposed in OpenFGA as a `security_tag` object related to the server and holding a `tag` relation with every instance carrying it (for example, `security_tag:pci tag instance:default/web1`).
+This makes the tags visible to external tooling working directly with the OpenFGA store.
+
 ```{important}
 Users that you do not trust with root access to the host should not be granted the following relations:
 

@@ -359,6 +359,15 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	//  shortdesc: Prevents the instance from being started
 	"security.protection.start": validate.Optional(validate.IsBool),
 
+	// gendoc:generate(entity=instance, group=security, key=security.tags)
+	// Tags are made of lowercase letters, digits, dots, dashes and underscores and are at most 64 characters long.
+	// They are exposed to the authorization backend but don't affect Incus' own authorization decisions.
+	// ---
+	//  type: string
+	//  liveupdate: yes
+	//  shortdesc: Comma-separated list of security tags for the authorization backend
+	"security.tags": validate.Optional(validate.IsSecurityTagList),
+
 	// gendoc:generate(entity=instance, group=security, key=security.selinux.type)
 	// Override the SELinux file type used for labeling instance storage.
 	// ---

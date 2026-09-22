@@ -548,6 +548,27 @@ func IsNetworkPortRange(value string) error {
 	return nil
 }
 
+// IsSecurityTagList validates a comma-separated list of unique security tags.
+func IsSecurityTagList(value string) error {
+	tagRegex := regexp.MustCompile(`^[a-z0-9]([a-z0-9._-]{0,62}[a-z0-9])?$`)
+
+	seen := []string{}
+	for tag := range strings.SplitSeq(value, ",") {
+		tag = strings.TrimSpace(tag)
+		if !tagRegex.MatchString(tag) {
+			return fmt.Errorf("Invalid security tag %q", tag)
+		}
+
+		if slices.Contains(seen, tag) {
+			return fmt.Errorf("Duplicate security tag %q", tag)
+		}
+
+		seen = append(seen, tag)
+	}
+
+	return nil
+}
+
 // IsDHCPRouteList validates a comma-separated list of alternating CIDR networks and IP addresses.
 func IsDHCPRouteList(value string) error {
 	parts := strings.Split(value, ",")
