@@ -437,6 +437,73 @@ func TestGetInstancesByMemberAddress(t *testing.T) {
 	)
 }
 
+func TestGetNICConflictCandidateIDs(t *testing.T) {
+	tx, cleanup := db.NewTestClusterTx(t)
+	defer cleanup()
+
+	nodeID1 := int64(1) // This is the default local member
+
+	nodeID2, err := tx.CreateNode("node2", "1.2.3.4:666")
+	require.NoError(t, err)
+
+	addContainer(t, tx, nodeID1, "c1")
+	addContainer(t, tx, nodeID1, "c2")
+	addContainer(t, tx, nodeID2, "c3")
+	addContainer(t, tx, nodeID1, "Web")
+
+	addContainerConfig(t, tx, "c1", "volatile.eth0.hwaddr", "AA:BB:CC:DD:EE:01")
+	addContainerDevice(t, tx, "c2", "eth0", "nic", map[string]string{"hwaddr": "aa:bb:cc:dd:ee:02", "ipv4.address": "10.0.0.2/24"})
+	addContainerConfig(t, tx, "c3", "volatile.eth0.hwaddr", "aa:bb:cc:dd:ee:01")
+
+	_, err = tx.Tx().Exec("INSERT INTO profiles(name, project_id, description) VALUES ('p1', 1, '')")
+	require.NoError(t, err)
+
+	_, err = tx.Tx().Exec("INSERT INTO profiles_devices(profile_id, name, type) VALUES ((SELECT id FROM profiles WHERE name = 'p1'), 'eth0', 1)")
+	require.NoError(t, err)
+
+	_, err = tx.Tx().Exec("INSERT INTO profiles_devices_config(profile_device_id, key, value) VALUES ((SELECT id FROM profiles_devices WHERE name = 'eth0'), 'hwaddr', 'aa:bb:cc:dd:ee:03')")
+	require.NoError(t, err)
+
+	_, err = tx.Tx().Exec("INSERT INTO instances_profiles(instance_id, profile_id, apply_order) VALUES (?, (SELECT id FROM profiles WHERE name = 'p1'), 1)", getContainerID(t, tx, "Web"))
+	require.NoError(t, err)
+
+	ids, err := tx.GetNICConflictCandidateIDs(context.Background(), "none", "", "aa:bb:cc:dd:ee:01", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []int{1}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "none", "", "aa:bb:cc:dd:ee:02", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []int{2}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "none", "", "", []string{"10.0.0.2"})
+	require.NoError(t, err)
+	assert.Equal(t, []int{2}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "none", "", "", []string{"10.0.0.2/24"})
+	require.NoError(t, err)
+	assert.Equal(t, []int{2}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "none", "web", "", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []int{4}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "none", "", "aa:bb:cc:dd:ee:03", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []int{4}, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "none", "", "aa:bb:cc:dd:ee:09", []string{"10.0.0.9"})
+	require.NoError(t, err)
+	assert.Empty(t, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "none", "", "", nil)
+	require.NoError(t, err)
+	assert.Empty(t, ids)
+
+	ids, err = tx.GetNICConflictCandidateIDs(context.Background(), "node2", "", "aa:bb:cc:dd:ee:01", nil)
+	require.NoError(t, err)
+	assert.Equal(t, []int{3}, ids)
+}
+
 func TestGetInstancePool(t *testing.T) {
 	dbCluster, cleanup := db.NewTestCluster(t)
 	defer cleanup()
