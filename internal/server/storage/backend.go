@@ -6649,7 +6649,8 @@ func (b *backend) GetCustomVolumeUsage(projectName, volName string) (*VolumeUsag
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, volName)
 
-	// There's no need to pass config as it's not needed when getting the volume usage.
+	// There's no need to pass config as it's not needed when getting the volume usage (the total size is
+	// read from the DB record below instead).
 	vol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(volume.ContentType), volStorageName, nil)
 
 	// Get the usage.
@@ -6665,7 +6666,7 @@ func (b *backend) GetCustomVolumeUsage(projectName, volName string) (*VolumeUsag
 	}
 
 	// Get the total size.
-	sizeStr, ok := vol.Config()["size"]
+	sizeStr, ok := volume.Config["size"]
 	if ok {
 		total, err := units.ParseByteSizeString(sizeStr)
 		if err != nil {
