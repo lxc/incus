@@ -152,8 +152,9 @@ type Instance struct {
 // GetInstancesByMemberAddress returns the instances associated to each cluster member address.
 // The member address of instances running on the local member is set to the empty string, to distinguish it from
 // remote nodes. Instances whose member is down are added to the special address "0.0.0.0".
-func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThreshold time.Duration, projects []string) (map[string][]Instance, error) {
-	args := make([]any, 0, 2) // Expect up to 2 filters.
+// If localOnly is set, only instances on the local member are returned.
+func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThreshold time.Duration, projects []string, localOnly bool) (map[string][]Instance, error) {
+	args := make([]any, 0, len(projects)+1)
 	var q strings.Builder
 
 	q.WriteString(`SELECT
@@ -169,6 +170,11 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 	fmt.Fprintf(&q, "WHERE projects.name IN %s", query.Params(len(projects)))
 	for _, project := range projects {
 		args = append(args, project)
+	}
+
+	if localOnly {
+		q.WriteString(" AND instances.node_id = ?")
+		args = append(args, c.nodeID)
 	}
 
 	q.WriteString(" ORDER BY instances.id")
