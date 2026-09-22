@@ -731,14 +731,51 @@ func (d *nicBridged) checkAddressConflict() error {
 
 	ourNICMAC, _ := net.ParseMAC(d.configOrVolatile("hwaddr"))
 
-	// Check if any instance devices use this network.
-	// Managed bridge networks have a per-server DHCP daemon so perform a node level search.
-	filter := cluster.InstanceFilter{Node: &node}
-
 	// Set network name for comparison (needs to support connecting to unmanaged networks).
 	networkName := d.config["parent"]
 	if d.network != nil {
 		networkName = d.network.Name()
+	}
+
+	// Only load the instances on this member that could conflict.
+	dnsName := ""
+	if d.network != nil && d.network.Config()["dns.mode"] != "none" {
+		dnsName = d.inst.Name()
+	}
+
+	hwaddr := ""
+	if ourNICMAC != nil {
+		hwaddr = ourNICMAC.String()
+	}
+
+	addresses := []string{}
+	for key, address := range ourNICIPs {
+		if d.config[key] == "" || address == nil {
+			continue
+		}
+
+		addresses = append(addresses, strings.ToLower(address.String()), strings.ToLower(nicAddressIP(d.config[key])))
+	}
+
+	var candidateIDs []int
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+
+		candidateIDs, err = tx.GetNICConflictCandidateIDs(ctx, node, dnsName, hwaddr, addresses)
+
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(candidateIDs) == 0 {
+		return nil
+	}
+
+	filters := make([]cluster.InstanceFilter, 0, len(candidateIDs))
+	for _, id := range candidateIDs {
+		filters = append(filters, cluster.InstanceFilter{ID: &id})
 	}
 
 	// Bridge networks are always in the default project.
@@ -793,7 +830,7 @@ func (d *nicBridged) checkAddressConflict() error {
 		}
 
 		return nil
-	}, filter)
+	}, filters...)
 }
 
 // validateEnvironment checks the runtime environment for correctness.
