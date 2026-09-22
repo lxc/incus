@@ -231,7 +231,13 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Invalid filter: %w", err))
 	}
 
-	mustLoadObjects := recursion > 0 || (recursion == 0 && clauses != nil && len(clauses.Clauses) > 0)
+	// Push a simple name filter down to the database.
+	nameLike := ""
+	if clauses != nil && len(clauses.Clauses) == 1 && clauses.Clauses[0].Field == "name" && !clauses.Clauses[0].Not && clauses.Clauses[0].Operator == clauses.Ops.Equals {
+		nameLike, _ = filter.RegexpToLike(clauses.Clauses[0].Value)
+	}
+
+	mustLoadObjects := recursion > 0 || (clauses != nil && len(clauses.Clauses) > 0 && nameLike == "")
 
 	// Detect project mode.
 	projectName := request.QueryParam(r, "project")
@@ -263,7 +269,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 
 		offlineThreshold := s.GlobalConfig.OfflineThreshold()
 
-		memberAddressInstances, err = tx.GetInstancesByMemberAddress(ctx, offlineThreshold, filteredProjects, isClusterNotification(r))
+		memberAddressInstances, err = tx.GetInstancesByMemberAddress(ctx, offlineThreshold, filteredProjects, isClusterNotification(r), nameLike)
 		if err != nil {
 			return fmt.Errorf("Failed getting instances by member address: %w", err)
 		}

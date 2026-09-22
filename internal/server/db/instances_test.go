@@ -425,7 +425,7 @@ func TestGetInstancesByMemberAddress(t *testing.T) {
 	addContainer(t, tx, nodeID3, "c3")
 	addContainer(t, tx, nodeID2, "c4")
 
-	result, err := tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"}, false)
+	result, err := tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"}, false, "")
 	require.NoError(t, err)
 	assert.Equal(
 		t,
@@ -435,6 +435,24 @@ func TestGetInstancesByMemberAddress(t *testing.T) {
 			"0.0.0.0":     {{ID: 3, Project: api.ProjectDefaultName, Name: "c3", Location: "node3"}},
 		}, result,
 	)
+
+	result, err = tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"}, true, "")
+	require.NoError(t, err)
+	assert.Equal(t, map[string][]db.Instance{"": {{ID: 2, Project: api.ProjectDefaultName, Name: "c2", Location: "none"}}}, result)
+
+	result, err = tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"}, false, "C_")
+	require.NoError(t, err)
+	assert.Len(t, result[""], 1)
+	assert.Len(t, result["1.2.3.4:666"], 2)
+	assert.Len(t, result["0.0.0.0"], 1)
+
+	result, err = tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"}, false, "c\\_")
+	require.NoError(t, err)
+	assert.Empty(t, result)
+
+	result, err = tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"}, false, "c4%")
+	require.NoError(t, err)
+	assert.Equal(t, map[string][]db.Instance{"1.2.3.4:666": {{ID: 4, Project: api.ProjectDefaultName, Name: "c4", Location: "node2"}}}, result)
 }
 
 func TestGetNICConflictCandidateIDs(t *testing.T) {
