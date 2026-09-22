@@ -156,6 +156,10 @@ test_container_devices_nic_bridged_filtering() {
             echo "IPv4 ARP filter not applied as part of ipv4_filtering in nftables (${table}.${ctPrefix}A.eth0)"
             false
         fi
+        if ! nft -nn list chain bridge incus "${table}.${ctPrefix}A.eth0" | grep -e "iifname \"${ctAHost}\" ip saddr 0.0.0.0 ip daddr 255.255.255.255 udp dport 67 accept"; then
+            echo "DHCPv4 exception not applied as part of ipv4_filtering in nftables (${table}.${ctPrefix}A.eth0)"
+            false
+        fi
     done
 
     # Check DHCPv4 allocation still works.

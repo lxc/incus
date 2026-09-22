@@ -98,6 +98,12 @@ EOF
     incus network acl rule add allowping ingress action=allow protocol=icmp4 destination='\$testAS' # single quote to avoid expansion
     incus network set "${brName}" security.acls="allowping"
     ping -c2 192.0.2.2 > /dev/null
+
+    # A rejected overlapping member leaves the applied set untouched.
+    ! incus network address-set add testAS 192.0.2.0/24 || false
+    nft list set inet incus testAS_ipv4 | grep -q "192.0.2.2"
+    ping -c2 192.0.2.2 > /dev/null
+
     incus network address-set remove testAS 192.0.2.2
     incus network set "${brName}" security.acls=""
     incus network acl delete allowping
