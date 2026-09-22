@@ -262,7 +262,7 @@ func instancesGet(d *Daemon, r *http.Request) response.Response {
 
 		offlineThreshold := s.GlobalConfig.OfflineThreshold()
 
-		memberAddressInstances, err = tx.GetInstancesByMemberAddress(ctx, offlineThreshold, filteredProjects)
+		memberAddressInstances, err = tx.GetInstancesByMemberAddress(ctx, offlineThreshold, filteredProjects, isClusterNotification(r))
 		if err != nil {
 			return fmt.Errorf("Failed getting instances by member address: %w", err)
 		}

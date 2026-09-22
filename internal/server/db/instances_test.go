@@ -425,7 +425,7 @@ func TestGetInstancesByMemberAddress(t *testing.T) {
 	addContainer(t, tx, nodeID3, "c3")
 	addContainer(t, tx, nodeID2, "c4")
 
-	result, err := tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"})
+	result, err := tx.GetInstancesByMemberAddress(context.Background(), time.Duration(db.DefaultOfflineThreshold)*time.Second, []string{"default"}, false)
 	require.NoError(t, err)
 	assert.Equal(
 		t,
