@@ -130,6 +130,25 @@ Note that you cannot use initial volume configurations with custom volume option
 
 In all cases, `initial.uid` and `initial.gid` default to `0` and `initial.mode` defaults to `0711` (octal).
 
+(devices-disk-initial-copy)=
+## `initial.copy`
+
+`initial.copy` applies to custom volume disks attached to containers.
+
+When set to `true`, the content found at `path` inside the container's own file system is copied into the volume when the container starts, if the volume (or its sub-path) is empty.
+This matches the behavior expected by application containers that ship data in the directories they later mount volumes onto.
+
+The copy only ever happens once per volume, it is recorded in the volume's `volatile.initial.copied` key.
+A volume that is already populated is left untouched, and so is one that was emptied after the copy.
+Ownership, permissions, timestamps and extended attributes are preserved and translated to the container's ID map, symbolic links are copied as-is and device nodes are skipped.
+
+The copy is only performed when starting a stopped container, so the device can't be added with `initial.copy` to a running container.
+
+For example:
+
+    incus storage volume create <pool_name> <volume_name>
+    incus config device add <instance_name> <device_name> disk pool=<pool_name> source=<volume_name> path=/var/lib/mysql initial.copy=true
+
 ## Device options
 
 `disk` devices have the following device options:
