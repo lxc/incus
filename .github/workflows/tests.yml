@@ -531,6 +531,8 @@ jobs:
           - nested_vlan
           - acl
           - l3only
+          - parent
+          - parent_snat
 
     steps:
       - name: Performance tuning

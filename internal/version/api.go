@@ -580,6 +580,7 @@ var APIExtensions = []string{
 	"instance_project_move_live",
 	"metrics_cluster_members",
 	"instance_security_tags",
+	"network_ovn_parent",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

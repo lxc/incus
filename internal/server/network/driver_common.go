@@ -98,6 +98,9 @@ type common struct {
 	status      string
 	managed     bool
 	nodes       map[int64]db.NetworkNode
+
+	// Config to source the BGP next hop from when another network provides our uplink.
+	bgpNextHopConfig map[string]string
 }
 
 // init initialize internal variables.
@@ -397,7 +400,7 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 			sendNetwork.Config = make(map[string]string)
 
 			// Don't forward node specific keys (these will be merged in on recipient node).
-			sendNetwork.Config = db.StripNodeSpecificNetworkConfig(applyNetwork.Config)
+			sendNetwork.Config = db.StripNodeSpecificNetworkConfig(n.netType, applyNetwork.Config)
 
 			err = notifier(func(client incus.InstanceServer) error {
 				return client.UseProject(n.project).UpdateNetwork(n.name, sendNetwork, "")
@@ -773,7 +776,12 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 func (n *common) bgpNextHopAddress(ipVersion uint) net.IP {
 	nextHopAddr := net.ParseIP(n.config[fmt.Sprintf("bgp.ipv%d.nexthop", ipVersion)])
 	if nextHopAddr == nil {
-		nextHopAddr = net.ParseIP(n.config[fmt.Sprintf("volatile.network.ipv%d.address", ipVersion)])
+		uplinkConfig := n.config
+		if n.bgpNextHopConfig != nil {
+			uplinkConfig = n.bgpNextHopConfig
+		}
+
+		nextHopAddr = net.ParseIP(uplinkConfig[fmt.Sprintf("volatile.network.ipv%d.address", ipVersion)])
 		if nextHopAddr == nil {
 			if ipVersion == 4 {
 				nextHopAddr = net.ParseIP("0.0.0.0")

@@ -3491,3 +3491,8 @@ Adds a new `security.tags` configuration key to instances, holding a
 comma-separated list of tags. The tags are exposed to the authorization
 backend, with OpenFGA maintaining a `security_tag` object for each tag
 along with a `tag` relation to every instance carrying it.
+
+## `network_ovn_parent`
+
+Adds a new `parent` configuration key to `ovn` networks, referencing another
+`ovn` network in the same project.

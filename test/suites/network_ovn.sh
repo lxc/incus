@@ -2046,3 +2046,207 @@ test_network_ovn_l3only() {
     incus network delete ovn1
     incus network delete incusbr0
 }
+
+test_network_ovn_parent() {
+    if ! network_ovn_supported; then
+        return
+    fi
+
+    poolName=$(incus profile device get default root pool)
+    instanceImage="images:debian/13"
+
+    incus network create incusbr0 \
+        ipv4.address=10.10.10.1/24 ipv4.nat=true \
+        ipv4.dhcp.ranges=10.10.10.2-10.10.10.199 \
+        ipv4.ovn.ranges=10.10.10.200-10.10.10.254 \
+        ipv4.routes=10.10.13.0/24 \
+        ipv6.address=fd42:4242:4242:1010::1/64 ipv6.nat=true \
+        ipv6.ovn.ranges=fd42:4242:4242:1010::200-fd42:4242:4242:1010::254 \
+        ipv6.routes=fd42:4242:4242:1013::/64
+
+    # Create the parent network and two children sharing its logical router.
+    incus network create ovn1 --type=ovn \
+        network=incusbr0 \
+        ipv4.address=10.10.11.1/24 ipv4.nat=true \
+        ipv6.address=fd42:4242:4242:1011::1/64 ipv6.nat=true
+
+    incus network create ovn2 --type=ovn parent=ovn1 \
+        ipv4.address=10.10.12.1/24 ipv4.nat=true \
+        ipv6.address=fd42:4242:4242:1012::1/64 ipv6.nat=true
+
+    # A child can route natively while its sibling is NATed on the same router.
+    incus network create ovn3 --type=ovn parent=ovn1 \
+        ipv4.address=10.10.13.1/24 ipv4.nat=false \
+        ipv6.address=fd42:4242:4242:1013::1/64 ipv6.nat=false
+
+    sleep 2
+    incus network list | grep ovn2
+
+    echo "==> Check the children share the parent's logical router but keep their own switch"
+    parentRouter="$(incus network info ovn1 | awk '/Logical router:/ {print $NF}')"
+    [ -n "${parentRouter}" ]
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "${parentRouter}" ]
+    [ "$(incus network info ovn3 | awk '/Logical router:/ {print $NF}')" = "${parentRouter}" ]
+
+    parentSwitch="$(incus network info ovn1 | awk '/Logical switch:/ {print $NF}')"
+    [ "$(incus network info ovn2 | awk '/Logical switch:/ {print $NF}')" != "${parentSwitch}" ]
+    [ "$(incus network info ovn3 | awk '/Logical switch:/ {print $NF}')" != "$(incus network info ovn2 | awk '/Logical switch:/ {print $NF}')" ]
+
+    echo "==> Check the shared router has one internal port per network"
+    [ "$(ovn-nbctl --format=csv --bare --columns=name find logical_router_port | grep -cE "^${parentRouter}-lrp-int")" = "3" ]
+
+    echo "==> Check only the NAT enabled networks have a SNAT rule"
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.11.0/24,snat"
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+    ! ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.13.0/24,snat" || false
+
+    echo "==> Check a child advertises the uplink's DNS servers, not its own router address"
+    ovn-nbctl --format=csv --bare --column=options find dhcp_option cidr=10.10.12.0/24 | grep -F "dns_server={10.10.10.1}"
+    ! ovn-nbctl --format=csv --bare --column=options find dhcp_option cidr=10.10.12.0/24 | grep -F "dns_server={10.10.12.1}" || false
+
+    incus network set ovn2 dns.nameservers=192.0.2.53
+    sleep 2
+    ovn-nbctl --format=csv --bare --column=options find dhcp_option cidr=10.10.12.0/24 | grep -F "dns_server={192.0.2.53}"
+
+    incus network unset ovn2 dns.nameservers
+    sleep 2
+    ovn-nbctl --format=csv --bare --column=options find dhcp_option cidr=10.10.12.0/24 | grep -F "dns_server={10.10.10.1}"
+
+    echo "==> Check instances on sibling networks get their own subnet and can reach each other"
+    incus launch "${instanceImage}" u1 -s "${poolName}" -n ovn2
+    incus launch "${instanceImage}" u2 -s "${poolName}" -n ovn3
+
+    sleep 5
+    incus ls
+
+    U1_IPV4="$(incus list u1 -c4 --format=csv | cut -d' ' -f1)"
+    U1_IPV6="$(incus list u1 -c6 --format=csv | cut -d' ' -f1)"
+    U2_IPV4="$(incus list u2 -c4 --format=csv | cut -d' ' -f1)"
+    U2_IPV6="$(incus list u2 -c6 --format=csv | cut -d' ' -f1)"
+
+    echo "${U1_IPV4}" | grep -F 10.10.12.
+    echo "${U2_IPV4}" | grep -F 10.10.13.
+
+    # Networks sharing a logical router are routed to each other.
+    incus exec u1 -- ping -c1 -w5 -4 "${U2_IPV4}"
+    incus exec u1 -- ping -c1 -w5 -6 "${U2_IPV6}"
+    incus exec u2 -- ping -c1 -w5 -4 "${U1_IPV4}"
+
+    # Each network's own gateway and the shared uplink gateway are reachable.
+    incus exec u1 -- ping -c1 -w5 -4 10.10.12.1
+    incus exec u1 -- ping -c1 -w5 -4 10.10.10.1
+    incus exec u1 -- ping -c1 -w5 -6 fd42:4242:4242:1010::1
+
+    incus delete -f u2
+
+    echo "==> Check invalid parent configurations are rejected"
+    ! incus network create ovn4 --type=ovn parent=incusbr0 ipv4.address=10.10.14.1/24 || false          # Parent isn't an OVN network.
+    ! incus network create ovn4 --type=ovn parent=ovn2 ipv4.address=10.10.14.1/24 || false              # Only one level of nesting.
+    ! incus network create ovn4 --type=ovn parent=ovn1 network=incusbr0 ipv4.address=10.10.14.1/24 || false
+    ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.14.1/24 ipv4.nat.address=192.0.2.1 || false
+    ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.11.5/24 || false              # Overlaps the parent.
+    ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.12.5/24 || false              # Overlaps a sibling.
+    ! incus network create ovn4 --type=ovn parent=ovn4 ipv4.address=10.10.14.1/24 || false              # Own parent.
+
+    # A natively routed subnet must be allowed by the uplink of the parent.
+    ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.14.1/24 ipv4.nat=false ipv6.address=none || false
+
+    echo "==> Check deleting a rejected child keeps the SNAT rules of the family"
+    ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.12.5/24 ipv6.address=none || false
+    incus network delete ovn4 || true
+    sleep 2
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.11.0/24,snat"
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+    incus exec u1 -- ping -c1 -w5 -4 10.10.10.1
+
+    # The parent is fixed once the network exists.
+    ! incus network set ovn2 parent=ovn3 || false
+
+    # Peerings belong to the network owning the logical router.
+    ! incus network peer create ovn2 childpeer default/ovn1 || false
+
+    echo "==> Check a parent can't be renamed or deleted while it has children"
+    ! incus network delete ovn1 || false
+    ! incus network rename ovn1 ovn1new || false
+
+    echo "==> Check deleting a child leaves the rest of the family working"
+    incus network delete ovn3
+    sleep 2
+    [ "$(ovn-nbctl --format=csv --bare --columns=name find logical_router_port | grep -cE "^${parentRouter}-lrp-int")" = "2" ]
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+    incus exec u1 -- ping -c1 -w5 -4 10.10.10.1
+    incus delete -f u1
+
+    ! incus network delete ovn1 || false
+    incus network delete ovn2
+    incus network delete ovn1
+    incus network delete incusbr0
+}
+
+test_network_ovn_parent_snat() {
+    if ! network_ovn_supported; then
+        return
+    fi
+
+    poolName=$(incus profile device get default root pool)
+    instanceImage="images:debian/13"
+
+    incus network create incusbr0 \
+        ipv4.address=10.10.10.1/24 ipv4.nat=true \
+        ipv4.routes=192.0.2.0/24,10.10.11.0/24 \
+        ipv4.dhcp.ranges=10.10.10.2-10.10.10.199 \
+        ipv4.ovn.ranges=10.10.10.200-10.10.10.254
+
+    incus network create ovn1 --type=ovn \
+        network=incusbr0 \
+        ipv4.address=10.10.11.1/24 ipv4.nat=true \
+        ipv6.address=none
+
+    incus network create ovn2 --type=ovn parent=ovn1 \
+        ipv4.address=10.10.12.1/24 ipv4.nat=true \
+        ipv6.address=none
+
+    sleep 2
+
+    echo "==> Check updating the parent leaves the child's SNAT rule alone"
+    incus network set ovn1 dns.domain=example.net
+    sleep 2
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+
+    echo "==> Check disabling NAT on the parent only removes the parent's SNAT rule"
+    incus network set ovn1 ipv4.nat=false
+    sleep 2
+    ! ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.11.0/24,snat" || false
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+
+    incus network set ovn1 ipv4.nat=true
+    sleep 2
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.11.0/24,snat"
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+
+    echo "==> Check changing a subnet doesn't leave the previous SNAT rule behind"
+    incus network set ovn2 ipv4.address=10.10.13.1/24
+    sleep 2
+    ! ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat" || false
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.13.0/24,snat"
+
+    echo "==> Check a network update keeps the per-NIC egress SNAT rules"
+    incus network forward create ovn1 192.0.2.1
+    incus launch "${instanceImage}" u1 -s "${poolName}" -n ovn1
+    sleep 5
+
+    incus config device set u1 eth0 ipv4.address.external=192.0.2.1
+    sleep 2
+    ovn-nbctl --bare --format=csv --columns=external_ip,type find nat | grep -xF "192.0.2.1,snat"
+
+    # Rewriting the network config used to remove every SNAT rule on the router, including this one.
+    incus network set ovn1 dns.domain=example.org
+    sleep 2
+    ovn-nbctl --bare --format=csv --columns=external_ip,type find nat | grep -xF "192.0.2.1,snat"
+
+    incus delete -f u1
+    incus network forward delete ovn1 192.0.2.1
+    incus network delete ovn2
+    incus network delete ovn1
+    incus network delete incusbr0
+}

@@ -1114,7 +1114,7 @@ func clusterInitMember(d incus.InstanceServer, client incus.InstanceServer, memb
 						continue
 					}
 
-					if !db.IsNodeSpecificNetworkConfig(config.Key) {
+					if !db.IsNodeSpecificNetworkConfig(network.Type, config.Key) {
 						logger.Warnf("Ignoring config key %q for network %q in project %q", config.Key, config.Name, p.Name)
 						continue
 					}
@@ -3020,8 +3020,8 @@ func clusterCheckNetworksMatch(ctx context.Context, clusterDB *db.Cluster, reqNe
 					}
 
 					// Exclude the keys which are node-specific.
-					networkConfigWithoutNodeSpecific := db.StripNodeSpecificNetworkConfig(network.Config)
-					reqNetworkConfigwithoutNodeSpecific := db.StripNodeSpecificNetworkConfig(reqNetwork.Config)
+					networkConfigWithoutNodeSpecific := db.StripNodeSpecificNetworkConfig(network.Type, network.Config)
+					reqNetworkConfigwithoutNodeSpecific := db.StripNodeSpecificNetworkConfig(reqNetwork.Type, reqNetwork.Config)
 					err = localUtil.CompareConfigs(networkConfigWithoutNodeSpecific, reqNetworkConfigwithoutNodeSpecific, nil)
 					if err != nil {
 						return fmt.Errorf("Mismatching config for network %q in project %q: %w", network.Name, networkProjectName, err)
