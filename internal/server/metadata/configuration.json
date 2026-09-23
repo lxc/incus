@@ -97,7 +97,7 @@
 					},
 					{
 						"initial.*": {
-							"longdesc": "For root disk devices, this is used to override the storage pool's default volume\nconfiguration when creating the instance's root volume.\n\nFor custom volumes, only `initial.uid`, `initial.gid` and `initial.mode` are\naccepted and they are used when auto-creating sub-directories inside the custom\nvolume (when the `source` includes a sub-path that doesn't exist).\n\n`initial.uid`, `initial.gid` and `initial.mode` are also used to set the ownership\nand mode of the file system when the `source` is `tmpfs:` or `tmpfs-overlay:`.",
+							"longdesc": "For root disk devices, this is used to override the storage pool's default volume\nconfiguration when creating the instance's root volume.\n\nFor custom volumes, only `initial.uid`, `initial.gid`, `initial.mode` and\n`initial.copy` are accepted. The first three are used when auto-creating\nsub-directories inside the custom volume (when the `source` includes a sub-path\nthat doesn't exist). `initial.copy` copies the container's existing content at\n`path` into the volume the first time it's used, if the volume is empty.\n\n`initial.uid`, `initial.gid` and `initial.mode` are also used to set the ownership\nand mode of the file system when the `source` is `tmpfs:` or `tmpfs-overlay:`.",
 							"required": "no",
 							"shortdesc": "Initial volume configuration for instance root disk devices",
 							"type": "string"
