@@ -554,6 +554,7 @@ func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error
 	if vol.ContentType() == drivers.ContentTypeFS {
 		rules["volatile.idmap.last"] = validate.IsAny
 		rules["volatile.idmap.next"] = validate.IsAny
+		rules["volatile.initial.copied"] = validate.Optional(validate.IsBool)
 	}
 
 	// block.mount_options and block.filesystem settings are only relevant for drivers that are block backed
