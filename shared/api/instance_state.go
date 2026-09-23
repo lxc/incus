@@ -87,6 +87,11 @@ type InstanceStateDisk struct {
 	//
 	// API extension: instances_state_total
 	Total int64 `json:"total" yaml:"total"`
+
+	// Disk I/O counters
+	//
+	// API extension: instance_state_disk_counters
+	Counters *InstanceStateDiskCounters `json:"counters,omitempty" yaml:"counters,omitempty"`
 }
 
 // InstanceStateCPU represents the cpu information section of an instance's state.
@@ -230,6 +235,30 @@ type InstanceStateNetworkCounters struct {
 	// Number of inbound packets dropped
 	// Example: 179
 	PacketsDroppedInbound int64 `json:"packets_dropped_inbound" yaml:"packets_dropped_inbound"`
+}
+
+// InstanceStateDiskCounters represents I/O counters as part of the disk section of an
+// instance's state.
+//
+// swagger:model
+//
+// API extension: instance_state_disk_counters.
+type InstanceStateDiskCounters struct {
+	// Number of bytes read
+	// Example: 3567021
+	BytesRead int64 `json:"bytes_read" yaml:"bytes_read"`
+
+	// Number of bytes written
+	// Example: 1748969
+	BytesWritten int64 `json:"bytes_written" yaml:"bytes_written"`
+
+	// Number of read operations completed
+	// Example: 3844
+	ReadsCompleted int64 `json:"reads_completed" yaml:"reads_completed"`
+
+	// Number of write operations completed
+	// Example: 2071
+	WritesCompleted int64 `json:"writes_completed" yaml:"writes_completed"`
 }
 
 // InstanceStateOSInfo represents the operating system information section of an instance's state.
