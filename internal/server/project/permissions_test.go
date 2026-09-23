@@ -190,6 +190,36 @@ func TestAllowProfileCreation_Restricted(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+// Pull mode migration is refused in a restricted project.
+func TestAllowInstanceMigrationSource_Restricted(t *testing.T) {
+	tx, cleanup := db.NewTestClusterTx(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	id, err := cluster.CreateProject(ctx, tx.Tx(), cluster.Project{Name: "p1"})
+	require.NoError(t, err)
+
+	err = cluster.CreateProjectConfig(ctx, tx.Tx(), id, map[string]string{"restricted": "true"})
+	require.NoError(t, err)
+
+	req := api.InstancesPost{
+		Name: "c1",
+		Type: api.InstanceTypeContainer,
+		Source: api.InstanceSource{
+			Type:    "migration",
+			Mode:    "pull",
+			Refresh: true,
+		},
+	}
+
+	err = project.AllowInstanceMigrationSource(tx, "p1", req)
+	assert.EqualError(t, err, "Restricted projects aren't allowed to use pull mode migration")
+
+	req.Source.Mode = "push"
+	err = project.AllowInstanceMigrationSource(tx, "p1", req)
+	assert.NoError(t, err)
+}
+
 // If a direct targeting is blocked, the check fails.
 func TestCheckClusterTargetRestriction_RestrictedTrue(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)

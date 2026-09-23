@@ -104,9 +104,9 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	}
 
 	if util.IsTrue(info.Project.Config["restricted"]) {
-		// Restricted projects aren't allowed to use pull migration.
-		if req.Source.Type == "migration" && req.Source.Mode == "pull" {
-			return errors.New("Restricted projects aren't allowed to use pull mode migration")
+		err = checkMigrationSource(info.Project, req)
+		if err != nil {
+			return err
 		}
 
 		// Check if we have image server restrictions.
@@ -158,6 +158,30 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	err = checkRestrictionsAndAggregateLimits(tx, info)
 	if err != nil {
 		return fmt.Errorf("Failed checking if instance creation allowed: %w", err)
+	}
+
+	return nil
+}
+
+// AllowInstanceMigrationSource checks that the project restrictions allow the migration source of the request.
+func AllowInstanceMigrationSource(tx *db.ClusterTx, projectName string, req api.InstancesPost) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil {
+		return nil
+	}
+
+	return checkMigrationSource(info.Project, req)
+}
+
+// checkMigrationSource refuses pull mode migration in restricted projects, as the server would connect
+// to an arbitrary remote URL.
+func checkMigrationSource(project api.Project, req api.InstancesPost) error {
+	if util.IsTrue(project.Config["restricted"]) && req.Source.Type == "migration" && req.Source.Mode == "pull" {
+		return errors.New("Restricted projects aren't allowed to use pull mode migration")
 	}
 
 	return nil
