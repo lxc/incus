@@ -360,6 +360,14 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
+	// Check project restrictions and limits.
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowProfileCreation(tx, p.Name, req)
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	// Update DB entry.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		devices, err := dbCluster.APIToDevices(req.Devices)

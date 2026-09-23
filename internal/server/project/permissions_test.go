@@ -163,6 +163,33 @@ func TestAllowInstanceCreation_AboveInstances(t *testing.T) {
 	assert.EqualError(t, err, `Reached maximum number of instances in project "p1"`)
 }
 
+// A profile with a forbidden low-level key can't be created in a restricted project.
+func TestAllowProfileCreation_Restricted(t *testing.T) {
+	tx, cleanup := db.NewTestClusterTx(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	id, err := cluster.CreateProject(ctx, tx.Tx(), cluster.Project{Name: "p1"})
+	require.NoError(t, err)
+
+	err = cluster.CreateProjectConfig(ctx, tx.Tx(), id, map[string]string{"restricted": "true"})
+	require.NoError(t, err)
+
+	req := api.ProfilesPost{
+		Name: "evil",
+		ProfilePut: api.ProfilePut{
+			Config: map[string]string{"raw.lxc": "lxc.hook.pre-start=/bin/true"},
+		},
+	}
+
+	err = project.AllowProfileCreation(tx, "p1", req)
+	assert.ErrorContains(t, err, `Use of low-level config "raw.lxc" on profile "evil"`)
+
+	req.Config = map[string]string{"limits.cpu": "1"}
+	err = project.AllowProfileCreation(tx, "p1", req)
+	assert.NoError(t, err)
+}
+
 // If a direct targeting is blocked, the check fails.
 func TestCheckClusterTargetRestriction_RestrictedTrue(t *testing.T) {
 	tx, cleanup := db.NewTestClusterTx(t)

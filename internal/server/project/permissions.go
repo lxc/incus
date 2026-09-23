@@ -1084,6 +1084,32 @@ func AllowVolumeUpdate(tx *db.ClusterTx, projectName, volumeName string, req api
 	return nil
 }
 
+// AllowProfileCreation checks that project limits and restrictions are not
+// violated when creating a profile.
+func AllowProfileCreation(tx *db.ClusterTx, projectName string, req api.ProfilesPost) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil {
+		return nil
+	}
+
+	// Add the profile being created.
+	info.Profiles = append(info.Profiles, api.Profile{
+		Name:       req.Name,
+		ProfilePut: req.ProfilePut,
+	})
+
+	err = checkRestrictionsAndAggregateLimits(tx, info)
+	if err != nil {
+		return fmt.Errorf("Failed checking if profile creation allowed: %w", err)
+	}
+
+	return nil
+}
+
 // AllowProfileUpdate checks that project limits and restrictions are not
 // violated when changing a profile.
 func AllowProfileUpdate(tx *db.ClusterTx, projectName, profileName string, req api.ProfilePut) error {
