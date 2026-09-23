@@ -253,9 +253,14 @@ migration() {
     [ "$(incus info udssr | grep -c snap)" -eq 2 ]
     incus delete udssr
 
-    if [ "$incus_backend" = "zfs" ] || [ "$incus_backend" = "truenas" ]; then
-        # Test container only copies when zfs|truenas.clone_copy is set to false.
-        incus storage set "incustest-$(basename "${INCUS_DIR}")" "${incus_backend}.clone_copy" false
+    if [ "$incus_backend" = "zfs" ] || [ "$incus_backend" = "truenas" ] || [ "$incus_backend" = "ceph" ]; then
+        # Test container only copies when clone_copy is set to false.
+        clone_copy_key="${incus_backend}.clone_copy"
+        if [ "$incus_backend" = "ceph" ]; then
+            clone_copy_key="ceph.rbd.clone_copy"
+        fi
+
+        incus storage set "incustest-$(basename "${INCUS_DIR}")" "${clone_copy_key}" false
         incus init testimage cccp
         incus snapshot create cccp
         incus snapshot create cccp
@@ -271,7 +276,7 @@ migration() {
         incus delete cccp
         incus delete udssr
 
-        incus storage unset "incustest-$(basename "${INCUS_DIR}")" "${incus_backend}.clone_copy"
+        incus storage unset "incustest-$(basename "${INCUS_DIR}")" "${clone_copy_key}"
     fi
 
     incus_remote init testimage l1:c1
