@@ -152,8 +152,10 @@ type Instance struct {
 // GetInstancesByMemberAddress returns the instances associated to each cluster member address.
 // The member address of instances running on the local member is set to the empty string, to distinguish it from
 // remote nodes. Instances whose member is down are added to the special address "0.0.0.0".
-func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThreshold time.Duration, projects []string) (map[string][]Instance, error) {
-	args := make([]any, 0, 2) // Expect up to 2 filters.
+// If localOnly is set, only instances on the local member are returned.
+// If nameLike is set, only instances whose name matches that SQL LIKE pattern (backslash escaped) are returned.
+func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThreshold time.Duration, projects []string, localOnly bool, nameLike string) (map[string][]Instance, error) {
+	args := make([]any, 0, len(projects)+2)
 	var q strings.Builder
 
 	q.WriteString(`SELECT
@@ -169,6 +171,16 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 	fmt.Fprintf(&q, "WHERE projects.name IN %s", query.Params(len(projects)))
 	for _, project := range projects {
 		args = append(args, project)
+	}
+
+	if localOnly {
+		q.WriteString(" AND instances.node_id = ?")
+		args = append(args, c.nodeID)
+	}
+
+	if nameLike != "" {
+		q.WriteString(" AND instances.name LIKE ? ESCAPE '\\'")
+		args = append(args, nameLike)
 	}
 
 	q.WriteString(" ORDER BY instances.id")
@@ -207,6 +219,64 @@ func (c *ClusterTx) GetInstancesByMemberAddress(ctx context.Context, offlineThre
 	}
 
 	return memberAddressInstances, nil
+}
+
+// GetNICConflictCandidateIDs returns the IDs of instances on the given member that may conflict with a NIC
+// using the supplied instance name, MAC address or static addresses, either directly or through a profile.
+// The supplied values must be lower case.
+func (c *ClusterTx) GetNICConflictCandidateIDs(ctx context.Context, member string, name string, hwaddr string, addresses []string) ([]int, error) {
+	conditions := []string{}
+	args := []any{member}
+
+	if name != "" {
+		conditions = append(conditions, "lower(instances.name) = lower(?)")
+		args = append(args, name)
+	}
+
+	if hwaddr != "" {
+		conditions = append(conditions, "EXISTS (SELECT 1 FROM instances_config WHERE instances_config.instance_id = instances.id AND instances_config.key LIKE 'volatile.%.hwaddr' AND lower(instances_config.value) = ?)")
+		args = append(args, hwaddr)
+	}
+
+	deviceCondition := func(table string) (string, []any) {
+		parts := []string{}
+		partArgs := []any{}
+
+		if hwaddr != "" {
+			parts = append(parts, fmt.Sprintf("(%s.key = 'hwaddr' AND lower(%s.value) = ?)", table, table))
+			partArgs = append(partArgs, hwaddr)
+		}
+
+		if len(addresses) > 0 {
+			params := query.Params(len(addresses))
+			parts = append(parts, fmt.Sprintf("(%s.key IN ('ipv4.address', 'ipv6.address') AND (lower(%s.value) IN %s OR lower(substr(%s.value, 1, instr(%s.value, '/') - 1)) IN %s))", table, table, params, table, table, params))
+			for range 2 {
+				for _, address := range addresses {
+					partArgs = append(partArgs, address)
+				}
+			}
+		}
+
+		return strings.Join(parts, " OR "), partArgs
+	}
+
+	if hwaddr != "" || len(addresses) > 0 {
+		condition, conditionArgs := deviceCondition("instances_devices_config")
+		conditions = append(conditions, "EXISTS (SELECT 1 FROM instances_devices JOIN instances_devices_config ON instances_devices_config.instance_device_id = instances_devices.id WHERE instances_devices.instance_id = instances.id AND ("+condition+"))")
+		args = append(args, conditionArgs...)
+
+		condition, conditionArgs = deviceCondition("profiles_devices_config")
+		conditions = append(conditions, "EXISTS (SELECT 1 FROM instances_profiles JOIN profiles_devices ON profiles_devices.profile_id = instances_profiles.profile_id JOIN profiles_devices_config ON profiles_devices_config.profile_device_id = profiles_devices.id WHERE instances_profiles.instance_id = instances.id AND ("+condition+"))")
+		args = append(args, conditionArgs...)
+	}
+
+	if len(conditions) == 0 {
+		return nil, nil
+	}
+
+	stmt := "SELECT instances.id FROM instances JOIN nodes ON nodes.id = instances.node_id WHERE nodes.name = ? AND (" + strings.Join(conditions, " OR ") + ")"
+
+	return query.SelectIntegers(ctx, c.tx, stmt, args...)
 }
 
 // ErrInstanceListStop used as return value from InstanceList's instanceFunc when prematurely stopping the search.
