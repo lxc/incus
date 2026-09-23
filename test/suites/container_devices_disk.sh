@@ -12,8 +12,77 @@ test_container_devices_disk() {
     test_container_devices_disk_socket
     test_container_devices_disk_char
     test_container_devices_disk_tmpfs
+    test_container_devices_disk_initial_copy
 
     incus delete -f foo
+}
+
+test_container_devices_disk_initial_copy() {
+    POOL=$(incus profile device get default root pool)
+
+    # Populate a directory inside the container.
+    incus launch testimage foo-copy
+    incus exec foo-copy -- mkdir -p /opt/data/sub
+    echo hello | incus file push - foo-copy/opt/data/hello
+    echo nested | incus file push - foo-copy/opt/data/sub/nested
+    incus exec foo-copy -- ln -s hello /opt/data/link
+    incus exec foo-copy -- chown 1000:1000 /opt/data/sub/nested
+    incus exec foo-copy -- chmod 4750 /opt/data/sub/nested
+    incus exec foo-copy -- chown 1000:1000 /opt/data
+    incus exec foo-copy -- chmod 750 /opt/data
+
+    # Validation.
+    ! incus config device add foo-copy data disk source=/tmp path=/opt/data initial.copy=true || false
+    incus storage volume create "${POOL}" foo-copy
+
+    # Can't be added to a running container.
+    ! incus config device add foo-copy data disk pool="${POOL}" source=foo-copy path=/opt/data initial.copy=true || false
+    incus stop -f foo-copy
+
+    # Copy on first start.
+    incus config device add foo-copy data disk pool="${POOL}" source=foo-copy path=/opt/data initial.copy=true
+    incus start foo-copy
+    [ "$(incus storage volume get "${POOL}" foo-copy volatile.initial.copied)" = "true" ]
+    [ "$(incus exec foo-copy -- cat /opt/data/hello)" = "hello" ]
+    [ "$(incus exec foo-copy -- cat /opt/data/sub/nested)" = "nested" ]
+    [ "$(incus exec foo-copy -- readlink /opt/data/link)" = "hello" ]
+    [ "$(incus exec foo-copy -- stat -c '%u %g %a' /opt/data)" = "1000 1000 750" ]
+    [ "$(incus exec foo-copy -- stat -c '%u %g %a' /opt/data/sub/nested)" = "1000 1000 4750" ]
+    [ "$(incus exec foo-copy -- stat -c '%u %g %a' /opt/data/hello)" = "0 0 644" ]
+
+    # Updating the device on the running container is fine once copied.
+    incus config device set foo-copy data readonly=true
+    ! incus exec foo-copy -- touch /opt/data/readonly || false
+    [ "$(incus exec foo-copy -- cat /opt/data/hello)" = "hello" ]
+    incus config device unset foo-copy data readonly
+    incus exec foo-copy -- touch /opt/data/writable
+    incus exec foo-copy -- rm /opt/data/writable
+
+    # Never copied again, even once emptied.
+    incus exec foo-copy -- rm -rf /opt/data/hello /opt/data/sub /opt/data/link
+    incus restart -f foo-copy
+    [ "$(incus exec foo-copy -- ls /opt/data | grep -cv lost+found)" = "0" ]
+
+    # Nor when attached to another container.
+    incus init testimage foo-copy2
+    echo other | incus file push -p - foo-copy2/opt/other/file
+    incus config device add foo-copy2 data disk pool="${POOL}" source=foo-copy path=/opt/other initial.copy=true
+    incus start foo-copy2
+    [ "$(incus exec foo-copy2 -- ls /opt/other | grep -cv lost+found)" = "0" ]
+
+    # A sub-path is populated when it's empty too.
+    incus storage volume create "${POOL}" foo-copy-sub
+    incus init testimage foo-copy3
+    echo subpath | incus file push -p - foo-copy3/opt/data/file
+    incus config device add foo-copy3 data disk pool="${POOL}" source=foo-copy-sub/some/sub path=/opt/data initial.copy=true
+    incus start foo-copy3
+    [ "$(incus exec foo-copy3 -- cat /opt/data/file)" = "subpath" ]
+    [ "$(incus storage volume get "${POOL}" foo-copy-sub volatile.initial.copied)" = "true" ]
+
+    # Cleanup.
+    incus delete -f foo-copy foo-copy2 foo-copy3
+    incus storage volume delete "${POOL}" foo-copy
+    incus storage volume delete "${POOL}" foo-copy-sub
 }
 
 test_container_devices_disk_shift() {
