@@ -699,6 +699,10 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		return fmt.Errorf("Missing source path %q for disk %q", d.config["source"], d.name)
 	}
 
+	if d.config["initial.copy"] != "" && d.config["pool"] == "" {
+		return errors.New(`The "initial.copy" property can only be used with custom storage volumes`)
+	}
+
 	if d.config["pool"] != "" {
 		if d.config["shift"] != "" {
 			return errors.New(`The "shift" property cannot be used with custom storage volumes (set "security.shifted=true" on the volume instead)`)
@@ -876,9 +880,11 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 				// For root disk devices, this is used to override the storage pool's default volume
 				// configuration when creating the instance's root volume.
 				//
-				// For custom volumes, only `initial.uid`, `initial.gid` and `initial.mode` are
-				// accepted and they are used when auto-creating sub-directories inside the custom
-				// volume (when the `source` includes a sub-path that doesn't exist).
+				// For custom volumes, only `initial.uid`, `initial.gid`, `initial.mode` and
+				// `initial.copy` are accepted. The first three are used when auto-creating
+				// sub-directories inside the custom volume (when the `source` includes a sub-path
+				// that doesn't exist). `initial.copy` copies the container's existing content at
+				// `path` into the volume the first time it's used, if the volume is empty.
 				//
 				// `initial.uid`, `initial.gid` and `initial.mode` are also used to set the ownership
 				// and mode of the file system when the `source` is `tmpfs:` or `tmpfs-overlay:`.
@@ -895,10 +901,21 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 			if len(initialConfig) > 0 {
 				if !internalInstance.IsRootDiskDevice(d.config) {
 					// For non-root disks, only allow initial.uid/gid/mode (used for auto-creating
-					// missing sub-directories on custom volumes).
+					// missing sub-directories on custom volumes) and initial.copy.
 					for k := range initialConfig {
-						if k != "uid" && k != "gid" && k != "mode" {
-							return fmt.Errorf("Non-root disk device only supports initial.uid, initial.gid and initial.mode configuration, not %q", "initial."+k)
+						if k != "uid" && k != "gid" && k != "mode" && k != "copy" {
+							return fmt.Errorf("Non-root disk device only supports initial.uid, initial.gid, initial.mode and initial.copy configuration, not %q", "initial."+k)
+						}
+					}
+
+					if initialConfig["copy"] != "" {
+						err := validate.IsBool(initialConfig["copy"])
+						if err != nil {
+							return fmt.Errorf(`Invalid "initial.copy" value: %w`, err)
+						}
+
+						if instConf.Type() == instancetype.VM {
+							return errors.New(`The "initial.copy" property is only supported on containers`)
 						}
 					}
 				} else {
@@ -1394,6 +1411,14 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 		}
 
 		reverter.Add(revertFunc)
+
+		// Populate an empty custom volume with the instance's existing content.
+		if d.config["pool"] != "" && util.IsTrue(d.config["initial.copy"]) {
+			err = d.initialCopy(srcPath)
+			if err != nil {
+				return nil, err
+			}
+		}
 
 		if isFile {
 			options = append(options, "create=file")
