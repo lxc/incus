@@ -721,8 +721,8 @@ func InstanceNeedsIntercept(s *state.State, c Instance) (bool, error) {
 func MakePidFd(pid int) (int, *os.File, error) {
 	pidFdFile, err := linux.PidFdOpen(pid, 0)
 	if err != nil {
-		// The kernel requires PIDFD_THREAD for non-leader threads.
-		if !errors.Is(err, unix.EINVAL) {
+		// Non-leader threads require PIDFD_THREAD (EINVAL before Linux 6.16, ENOENT since).
+		if !errors.Is(err, unix.EINVAL) && !errors.Is(err, unix.ENOENT) {
 			return -1, nil, err
 		}
 
