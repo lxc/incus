@@ -147,7 +147,8 @@ func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Ne
 		return err
 	}
 
-	if s != nil && n.config["parent"] != "" {
+	// Skip a self-referencing parent, validation rejects it and loading it would recurse forever.
+	if s != nil && n.config["parent"] != "" && n.config["parent"] != n.name {
 		parentNet, err := LoadByName(s, projectName, n.config["parent"])
 		if err != nil && !api.StatusErrorCheck(err, http.StatusNotFound) {
 			return fmt.Errorf("Failed loading parent network %q: %w", n.config["parent"], err)
