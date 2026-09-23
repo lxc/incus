@@ -10629,12 +10629,7 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 
 	// If VM is stopped or errored, we're done here.
 	if d.isErrorStatusCode(statusCode) || !d.isRunningStatusCode(statusCode) {
-		diskState, err := d.diskState()
-		if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
-			d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
-		}
-
-		status.Disk = diskState
+		status.Disk = d.diskState()
 
 		return status, nil
 	}
@@ -10689,12 +10684,7 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 	}
 
 	// Populate the disk information.
-	diskState, err := d.diskState()
-	if err != nil && !errors.Is(err, storageDrivers.ErrNotSupported) {
-		d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
-	}
-
-	status.Disk = diskState
+	status.Disk = d.diskState()
 
 	// Populate the CPU time allocation.
 	limitsCPU, ok := d.expandedConfig["limits.cpu"]
@@ -10735,6 +10725,9 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 	// Populate the process information.
 	pid, _ := d.pid()
 	status.Pid = int64(pid)
+
+	var err error
+
 	status.StartedAt, err = d.processStartedAt(d.InitPID())
 	if err != nil {
 		return status, err
@@ -10749,30 +10742,61 @@ func (d *qemu) RenderState(hostInterfaces []net.Interface) (*api.InstanceState, 
 }
 
 // diskState gets disk usage info.
-func (d *qemu) diskState() (map[string]api.InstanceStateDisk, error) {
-	pool, err := d.getStoragePool()
-	if err != nil {
-		return nil, err
-	}
-
-	// Get the root disk device config.
-	rootDiskName, _, err := d.getRootDiskDevice()
-	if err != nil {
-		return nil, err
-	}
-
-	usage, err := pool.GetInstanceUsage(d)
-	if err != nil {
-		return nil, err
-	}
-
+func (d *qemu) diskState() map[string]api.InstanceStateDisk {
 	disk := map[string]api.InstanceStateDisk{}
-	disk[rootDiskName] = api.InstanceStateDisk{
-		Usage: usage.Used,
-		Total: usage.Total,
+
+	for _, dev := range d.expandedDevices.Sorted() {
+		if dev.Config["type"] != "disk" {
+			continue
+		}
+
+		var usage *storagePools.VolumeUsage
+
+		if internalInstance.IsRootDiskDevice(dev.Config) {
+			pool, err := d.getStoragePool()
+			if err != nil {
+				d.logger.Error("Error loading storage pool", logger.Ctx{"err": err})
+				continue
+			}
+
+			usage, err = pool.GetInstanceUsage(d)
+			if err != nil {
+				if !errors.Is(err, storageDrivers.ErrNotSupported) {
+					d.logger.Error("Error getting disk usage", logger.Ctx{"err": err})
+				}
+
+				continue
+			}
+		} else if dev.Config["pool"] != "" {
+			pool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
+			if err != nil {
+				d.logger.Error("Error loading storage pool", logger.Ctx{"poolName": dev.Config["pool"], "err": err})
+				continue
+			}
+
+			volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+			usage, err = pool.GetCustomVolumeUsage(d.Project().Name, volName)
+			if err != nil {
+				if !errors.Is(err, storageDrivers.ErrNotSupported) {
+					d.logger.Error("Error getting volume usage", logger.Ctx{"volume": dev.Config["source"], "err": err})
+				}
+
+				continue
+			}
+		} else {
+			continue
+		}
+
+		diskState := api.InstanceStateDisk{}
+		if usage != nil {
+			diskState.Usage = usage.Used
+			diskState.Total = usage.Total
+		}
+
+		disk[dev.Name] = diskState
 	}
 
-	return disk, nil
+	return disk
 }
 
 // agentGetState connects to the agent inside of the VM and does
