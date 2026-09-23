@@ -3509,3 +3509,14 @@ the container is copied into the volume the first time the volume is used, if it
 This adds `/internal/debug/pprof/` to the API, serving the same `pprof`
 profiles as the `core.debug_address` listener but over the regular
 listeners, restricted to trusted clients with server administration rights.
+## `instance_state_disk_counters`
+
+Adds a `counters` field to each entry of the `disk` section of an instance's
+state, holding `bytes_read`, `bytes_written`, `reads_completed` and
+`writes_completed`.
+
+These are only populated for virtual machines, using the block I/O
+statistics reported by QEMU. Containers do not report them because cgroup
+I/O accounting is keyed by host block device rather than by Incus device
+name, and a container's root file system and custom volumes routinely share
+a single host block device, making per-device attribution impossible.
