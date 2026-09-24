@@ -1,10 +1,17 @@
 package device
 
 import (
+	"cmp"
 	"context"
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -21,6 +28,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/mirror"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
+	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
 	"github.com/lxc/incus/v7/shared/subprocess"
@@ -69,6 +77,114 @@ func (d *tpm) CanMigrate() bool {
 // statePath returns the persistent TPM state directory on the instance volume.
 func (d *tpm) statePath() string {
 	return filepath.Join(d.inst.Path(), fmt.Sprintf("tpm.%s", d.name))
+}
+
+// TPMState returns the state of the TPM device stored in the instance at instPath.
+func TPMState(instPath string, name string) (*api.InstanceStateTPM, error) {
+	state := api.InstanceStateTPM{EndorsementKeys: []api.InstanceStateTPMKey{}}
+
+	// The state directory lives on the instance volume, so never follow symlinks in it.
+	instRoot, err := os.OpenRoot(instPath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open instance path %q: %w", instPath, err)
+	}
+
+	defer func() { _ = instRoot.Close() }()
+
+	stateDir := fmt.Sprintf("tpm.%s", name)
+	info, err := instRoot.Lstat(stateDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return &state, nil
+		}
+
+		return nil, fmt.Errorf("Failed to stat TPM state directory %q: %w", stateDir, err)
+	}
+
+	if !info.IsDir() {
+		return nil, fmt.Errorf("TPM state path %q is not a directory", stateDir)
+	}
+
+	stateRoot, err := instRoot.OpenRoot(stateDir)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open TPM state directory %q: %w", stateDir, err)
+	}
+
+	defer func() { _ = stateRoot.Close() }()
+
+	dir, err := stateRoot.Open(".")
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open TPM state directory %q: %w", stateDir, err)
+	}
+
+	entries, err := dir.ReadDir(-1)
+	_ = dir.Close()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to read TPM state directory %q: %w", stateDir, err)
+	}
+
+	// The endorsement key certificates are written by swtpm_setup during provisioning.
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() || !strings.HasPrefix(entry.Name(), "ek-") || !strings.HasSuffix(entry.Name(), ".crt") {
+			continue
+		}
+
+		// Refuse symlinks and special files, and bound the read to a sane certificate size.
+		f, err := stateRoot.OpenFile(entry.Name(), os.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to open %q: %w", entry.Name(), err)
+		}
+
+		info, err := f.Stat()
+		if err != nil {
+			_ = f.Close()
+			return nil, fmt.Errorf("Failed to stat %q: %w", entry.Name(), err)
+		}
+
+		if !info.Mode().IsRegular() || info.Size() > 64*1024 {
+			_ = f.Close()
+			return nil, fmt.Errorf("Unexpected file %q in TPM state directory", entry.Name())
+		}
+
+		der, err := io.ReadAll(io.LimitReader(f, info.Size()))
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("Failed to read %q: %w", entry.Name(), err)
+		}
+
+		cert, err := x509.ParseCertificate(der)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse %q: %w", entry.Name(), err)
+		}
+
+		key := api.InstanceStateTPMKey{}
+		switch pub := cert.PublicKey.(type) {
+		case *rsa.PublicKey:
+			key.Type = "rsa"
+			key.Size = pub.N.BitLen()
+		case *ecdsa.PublicKey:
+			key.Type = "ecc"
+			key.Size = pub.Curve.Params().BitSize
+		default:
+			continue
+		}
+
+		pub, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to encode public key from %q: %w", entry.Name(), err)
+		}
+
+		key.Fingerprint = fmt.Sprintf("%x", sha256.Sum256(pub))
+		key.PublicKey = string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pub}))
+		state.EndorsementKeys = append(state.EndorsementKeys, key)
+	}
+
+	// Keep the output stable regardless of file order.
+	slices.SortFunc(state.EndorsementKeys, func(a, b api.InstanceStateTPMKey) int {
+		return cmp.Or(strings.Compare(a.Type, b.Type), cmp.Compare(a.Size, b.Size))
+	})
+
+	return &state, nil
 }
 
 // runPath returns the local TPM state directory used while a VM runs.
@@ -230,6 +346,7 @@ func (d *tpm) maybeProvision(tpmDevPath string) error {
 		"--create-platform-cert",
 		"--lock-nvram",
 		"--config", setupConfPath,
+		"--write-ek-cert-files", tpmDevPath,
 	)
 	if err != nil {
 		return fmt.Errorf("Failed provisioning TPM: %w", err)
