@@ -3476,23 +3476,28 @@ This allows a running instance to change project as part of a live migration
 to another cluster member. It also lets instances with `dependent` disks
 attached change project.
 
-## `metrics_cluster_members`
-
-This adds cluster member metrics to the `/1.0/metrics` endpoint:
-
-* `incus_cluster_member` with the member's architecture and failure domain
-* `incus_cluster_member_status` with one sample per possible status
-* `incus_cluster_member_role` with one sample per role held
-* `incus_cluster_member_group` with one sample per group the member belongs to
-
-## `instance_security_tags`
-
-Adds a new `security.tags` configuration key to instances, holding a
-comma-separated list of tags. The tags are exposed to the authorization
-backend, with OpenFGA maintaining a `security_tag` object for each tag
-along with a `tag` relation to every instance carrying it.
-
 ## `network_ovn_parent`
 
 Adds a new `parent` configuration key to `ovn` networks, referencing another
 `ovn` network in the same project.
+
+## `network_peer_groups`
+
+Adds the concept of network peer groups, which provision the OVN resources
+needed to peer networks together.
+
+New API:
+
+* `/1.0/network-peer-groups` (GET, POST)
+* `/1.0/network-peer-groups/NAME` (GET, PUT, DELETE)
+
+Each network peer group is made of:
+
+* name
+* description
+* networks (list of existing OVN networks that are members of the group)
+
+Existing OVN networks can be added to (or removed from) a network peer group
+by setting the `networks` list through `PUT /1.0/network-peer-groups/NAME`. A
+network being added must have at least one configured subnet, and
+that subnet must not overlap with any other current member's subnet.

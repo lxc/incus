@@ -347,6 +347,7 @@ run_standalone_network() {
     run_test test_network_ovn_parent "OVN network parent"
     run_test test_network_ovn_parent_snat "OVN network parent SNAT handling"
     run_test test_network_ovn_peering "OVN network peering"
+    run_test test_network_peer_groups "network peer groups"
     run_test test_network_peers "network peers"
     run_test test_network_zone "network DNS zones"
     run_test test_oidc "OpenID Connect"
