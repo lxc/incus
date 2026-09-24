@@ -38,6 +38,7 @@ type ociInfo struct {
 	LayersData   []struct {
 		Size int64 `json:"Size"`
 	} `json:"LayersData"`
+	Labels map[string]string `json:"Labels"`
 }
 
 // Get the proxy host value.
@@ -117,6 +118,14 @@ func (r *ProtocolOCI) GetImage(fingerprint string) (*api.Image, string, error) {
 		Type:         string(api.InstanceTypeContainer),
 		CreatedAt:    info.Created,
 		UploadedAt:   info.Created,
+	}
+
+	// Expose the standard OCI image labels as "oci.*" properties.
+	for k, v := range info.Labels {
+		name, ok := strings.CutPrefix(k, "org.opencontainers.image.")
+		if ok {
+			img.Properties["oci."+name] = v
+		}
 	}
 
 	var size int64
