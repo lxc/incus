@@ -965,6 +965,11 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		return clusterCopyCustomVolumeInternal(s, r, nodeAddress, projectName, poolName, &req)
 	}
 
+	// A request with a source volume is a copy even when the source type is omitted.
+	if req.Source.Type == "" && req.Source.Name != "" {
+		req.Source.Type = "copy"
+	}
+
 	switch req.Source.Type {
 	case "":
 		err = validateCreateConfig(req.Config)
@@ -2413,7 +2418,7 @@ func storagePoolVolumePut(d *Daemon, r *http.Request) response.Response {
 		if req.Config != nil || req.Restore == "" {
 			// Possibly check if project limits are honored.
 			err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return project.AllowVolumeUpdate(tx, projectName, volumeName, req, dbVolume.Config)
+				return project.AllowVolumeUpdate(tx, projectName, poolName, volumeName, req, dbVolume.Config)
 			})
 			if err != nil {
 				return response.SmartError(err)

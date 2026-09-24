@@ -106,6 +106,11 @@ func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 		bodyHash = unsignedPayload
 	}
 
+	s3Err := checkSignedAmzHeaders(r, parsed.signedHeaders)
+	if s3Err != nil {
+		return "", s3Err
+	}
+
 	canonical := canonicalRequest(r, r.URL.Query(), parsed.signedHeaders, bodyHash)
 
 	stringToSign := strings.Join([]string{
@@ -210,6 +215,11 @@ func (s *Server) authenticatePresignedV4(r *http.Request) (Role, *s3.Error) {
 
 	sort.Strings(signedHeaders)
 
+	s3Err := checkSignedAmzHeaders(r, signedHeaders)
+	if s3Err != nil {
+		return "", s3Err
+	}
+
 	// The canonical query string covers every query parameter except the
 	// signature itself.
 	canonicalQuery := make(url.Values, len(q))
@@ -295,13 +305,14 @@ func (s *Server) authenticatePresignedV2(r *http.Request) (Role, *s3.Error) {
 	}
 
 	// SigV2 string-to-sign for a query-string authenticated request:
-	// VERB \n Content-MD5 \n Content-Type \n Expires \n CanonicalizedResource.
+	// VERB \n Content-MD5 \n Content-Type \n Expires \n
+	// CanonicalizedAmzHeaders CanonicalizedResource.
 	stringToSign := strings.Join([]string{
 		r.Method,
 		r.Header.Get("Content-MD5"),
 		r.Header.Get("Content-Type"),
 		expiresStr,
-		resource.String(),
+		canonicalizedAmzHeaders(r.Header) + resource.String(),
 	}, "\n")
 
 	mac := hmac.New(sha1.New, []byte(secret))
@@ -461,6 +472,57 @@ func parseAuthorizationHeader(h string) (*parsedAuthorization, error) {
 	}
 
 	return out, nil
+}
+
+// amzHeaderNames returns the lower-cased names of all x-amz-* headers on h.
+func amzHeaderNames(h http.Header) []string {
+	names := make([]string, 0)
+	for name := range h {
+		lower := strings.ToLower(name)
+		if strings.HasPrefix(lower, "x-amz-") {
+			names = append(names, lower)
+		}
+	}
+
+	sort.Strings(names)
+
+	return names
+}
+
+// checkSignedAmzHeaders rejects requests carrying x-amz-* headers that aren't
+// covered by the signature, as those headers alter how the request is handled.
+func checkSignedAmzHeaders(r *http.Request, signedHeaders []string) *s3.Error {
+	signed := make(map[string]struct{}, len(signedHeaders))
+	for _, name := range signedHeaders {
+		signed[strings.ToLower(name)] = struct{}{}
+	}
+
+	for _, name := range amzHeaderNames(r.Header) {
+		_, ok := signed[name]
+		if !ok {
+			return &s3.Error{Code: s3.ErrorCodeAccessDenied, Message: fmt.Sprintf("Header %q must be signed.", name)}
+		}
+	}
+
+	return nil
+}
+
+// canonicalizedAmzHeaders builds the SigV2 CanonicalizedAmzHeaders string.
+func canonicalizedAmzHeaders(h http.Header) string {
+	var sb strings.Builder
+	for _, name := range amzHeaderNames(h) {
+		values := h.Values(name)
+		for i, v := range values {
+			values[i] = strings.TrimSpace(v)
+		}
+
+		sb.WriteString(name)
+		sb.WriteByte(':')
+		sb.WriteString(strings.Join(values, ","))
+		sb.WriteByte('\n')
+	}
+
+	return sb.String()
 }
 
 // canonicalRequest builds the canonical request string defined by SigV4.
