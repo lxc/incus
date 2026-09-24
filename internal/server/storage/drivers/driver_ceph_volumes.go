@@ -426,6 +426,8 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 				if err != nil {
 					return err
 				}
+
+				reverter.Add(func() { _ = d.rbdDeleteVolumeSnapshot(srcVol, snapshotName) })
 			}
 
 			// Protect volume so we can create clones of it.
@@ -463,6 +465,15 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 				err := d.rbdFlattenVolume(vol)
 				if err != nil {
 					d.logger.Warn("Failed flattening volume", logger.Ctx{"volume": vol.name, "err": err})
+					return
+				}
+
+				// The source snapshot is only needed while clones depend on it.
+				if srcVol.volType != VolumeTypeImage {
+					err = d.rbdReleaseVolumeSnapshot(parentVol, snapshotName)
+					if err != nil {
+						d.logger.Warn("Failed releasing source snapshot", logger.Ctx{"volume": parentVol.name, "snapshot": snapshotName, "err": err})
+					}
 				}
 			}()
 		}

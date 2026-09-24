@@ -21,6 +21,7 @@ import (
 
 	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/server/db"
+	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/ioprogress"
@@ -1704,4 +1705,35 @@ func (d *ceph) rbdFlattenVolume(vol Volume) error {
 // flattenLockName returns the lock held while a volume is being flattened in the background.
 func (d *ceph) flattenLockName(vol Volume) string {
 	return OperationLockName("FlattenVolume", d.name, vol.volType, vol.contentType, vol.name)
+}
+
+// rbdReleaseVolumeSnapshot unprotects a snapshot that no clone depends on anymore, deleting it if it's a zombie.
+func (d *ceph) rbdReleaseVolumeSnapshot(vol Volume, snapshotName string) error {
+	// Serialize with clone deletions cleaning up the same parent.
+	unlock, err := locking.Lock(context.TODO(), OperationLockName("DeleteVolume", d.name, vol.volType, vol.contentType, vol.name))
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	clones, err := d.rbdListSnapshotClones(vol, snapshotName)
+	if err != nil && !response.IsNotFoundError(err) {
+		return err
+	}
+
+	if len(clones) > 0 {
+		return nil
+	}
+
+	err = d.rbdUnprotectVolumeSnapshot(vol, snapshotName)
+	if err != nil {
+		return err
+	}
+
+	if !strings.HasPrefix(snapshotName, "zombie_") {
+		return nil
+	}
+
+	return d.rbdDeleteVolumeSnapshot(vol, snapshotName)
 }
