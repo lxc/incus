@@ -33,6 +33,9 @@ For remote peering through a network integration:
 
     incus network peer create <network1> <peering_name> <integration name> [configuration_options] --type=remote
 
+A network with {ref}`child networks <network-ovn-child>` peers on behalf of all of them.
+The peering routes the subnets of the parent and of its children, and the children cannot be peered on their own.
+
 ```{important}
 If the project or the network name is incorrect, the command will not return any error indicating that the respective project/network does not exist, and the routing relationship will remain in pending state.
 This behavior prevents users in a different project from discovering whether a project and network exists.
