@@ -3503,3 +3503,9 @@ This adds the `initial.copy` property to `disk` devices backed by a custom stora
 
 When set to `true` on a container, the content already present at the device `path` inside
 the container is copied into the volume the first time the volume is used, if it's empty.
+
+## `internal_debug_pprof`
+
+This adds `/internal/debug/pprof/` to the API, serving the same `pprof`
+profiles as the `core.debug_address` listener but over the regular
+listeners, restricted to trusted clients with server administration rights.
