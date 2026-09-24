@@ -3,9 +3,7 @@
 package resources
 
 import (
-	"errors"
 	"fmt"
-	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -713,53 +711,26 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 func GetNetworkCounters(name string) (*api.NetworkStateCounters, error) {
 	counters := api.NetworkStateCounters{}
 
-	// Get counters
-	content, err := os.ReadFile("/proc/net/dev")
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return &counters, nil
-		}
-
-		return nil, err
+	statsPath := filepath.Join("/sys/class/net", name, "statistics")
+	if !sysfsExists(statsPath) {
+		return &counters, nil
 	}
 
-	for line := range strings.SplitSeq(string(content), "\n") {
-		fields := strings.Fields(line)
-
-		if len(fields) != 17 {
-			continue
-		}
-
-		intName := strings.TrimSuffix(fields[0], ":")
-		if intName != name {
-			continue
-		}
-
-		rxBytes, err := strconv.ParseInt(fields[1], 10, 64)
+	for _, entry := range []struct {
+		file  string
+		value *int64
+	}{
+		{"rx_bytes", &counters.BytesReceived},
+		{"rx_packets", &counters.PacketsReceived},
+		{"tx_bytes", &counters.BytesSent},
+		{"tx_packets", &counters.PacketsSent},
+	} {
+		value, err := readInt(filepath.Join(statsPath, entry.file))
 		if err != nil {
 			return nil, err
 		}
 
-		rxPackets, err := strconv.ParseInt(fields[2], 10, 64)
-		if err != nil {
-			return nil, err
-		}
-
-		txBytes, err := strconv.ParseInt(fields[9], 10, 64)
-		if err != nil {
-			return nil, err
-		}
-
-		txPackets, err := strconv.ParseInt(fields[10], 10, 64)
-		if err != nil {
-			return nil, err
-		}
-
-		counters.BytesSent = txBytes
-		counters.BytesReceived = rxBytes
-		counters.PacketsSent = txPackets
-		counters.PacketsReceived = rxPackets
-		break
+		*entry.value = value
 	}
 
 	return &counters, nil
