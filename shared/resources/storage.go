@@ -132,6 +132,32 @@ func storageAddDriveInfo(devicePath string, disk *api.ResourcesStorageDisk) erro
 	return nil
 }
 
+// udevLinks maps the resolved target of every symlink in dir to the last link name pointing to it.
+func udevLinks(dir string) (map[string]string, error) {
+	links := map[string]string{}
+
+	if !sysfsExists(dir) {
+		return links, nil
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to list the links in %q: %w", dir, err)
+	}
+
+	for _, entry := range entries {
+		target, err := filepath.EvalSymlinks(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			// Skip broken udev symlinks.
+			continue
+		}
+
+		links[target] = entry.Name()
+	}
+
+	return links, nil
+}
+
 // GetStorage returns a filled api.ResourcesStorage struct ready for use by Incus.
 func GetStorage() (*api.ResourcesStorage, error) {
 	storage := api.ResourcesStorage{}
@@ -142,6 +168,17 @@ func GetStorage() (*api.ResourcesStorage, error) {
 		entries, err := os.ReadDir(sysClassBlock)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to list %q: %w", sysClassBlock, err)
+		}
+
+		// Resolve the udev symlinks once rather than for every disk.
+		linksByPath, err := udevLinks(devDiskByPath)
+		if err != nil {
+			return nil, err
+		}
+
+		linksByID, err := udevLinks(devDiskByID)
+		if err != nil {
+			return nil, err
 		}
 
 		// Iterate and add to our list
@@ -161,7 +198,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 			// Firmware revision
 			if sysfsExists(filepath.Join(devicePath, "firmware_rev")) {
-				firmwareRevision, err := os.ReadFile(filepath.Join(devicePath, "firmware_rev"))
+				firmwareRevision, err := readKernelFile(filepath.Join(devicePath, "firmware_rev"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "firmware_rev"), err)
 				}
@@ -170,7 +207,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 			}
 
 			// Device node
-			diskDev, err := os.ReadFile(filepath.Join(entryPath, "dev"))
+			diskDev, err := readKernelFile(filepath.Join(entryPath, "dev"))
 			if err != nil {
 				if errors.Is(err, fs.ErrNotExist) {
 					// This happens on multipath devices, just skip as we only care about the main node.
@@ -216,7 +253,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 			// Disk model
 			if sysfsExists(filepath.Join(devicePath, "model")) {
-				diskModel, err := os.ReadFile(filepath.Join(devicePath, "model"))
+				diskModel, err := readKernelFile(filepath.Join(devicePath, "model"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "model"), err)
 				}
@@ -265,7 +302,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 			// WWN
 			if sysfsExists(filepath.Join(entryPath, "wwid")) {
-				diskWWN, err := os.ReadFile(filepath.Join(entryPath, "wwid"))
+				diskWWN, err := readKernelFile(filepath.Join(entryPath, "wwid"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "wwid"), err)
 				}
@@ -310,7 +347,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 				partition.Partition = partitionNumber
 
 				// Device node
-				partitionDev, err := os.ReadFile(filepath.Join(subEntryPath, "dev"))
+				partitionDev, err := readKernelFile(filepath.Join(subEntryPath, "dev"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(subEntryPath, "dev"), err)
 				}
@@ -337,51 +374,9 @@ func GetStorage() (*api.ResourcesStorage, error) {
 				disk.Partitions = append(disk.Partitions, partition)
 			}
 
-			// Try to find the udev device path
-			if sysfsExists(devDiskByPath) {
-				links, err := os.ReadDir(devDiskByPath)
-				if err != nil {
-					return nil, fmt.Errorf("Failed to list the links in %q: %w", devDiskByPath, err)
-				}
-
-				for _, link := range links {
-					linkName := link.Name()
-					linkPath := filepath.Join(devDiskByPath, linkName)
-
-					linkTarget, err := filepath.EvalSymlinks(linkPath)
-					if err != nil {
-						// Skip broken udev symlinks.
-						continue
-					}
-
-					if linkTarget == filepath.Join("/dev", entryName) {
-						disk.DevicePath = linkName
-					}
-				}
-			}
-
-			// Try to find the udev device id
-			if sysfsExists(devDiskByID) {
-				links, err := os.ReadDir(devDiskByID)
-				if err != nil {
-					return nil, fmt.Errorf("Failed to list the links in %q: %w", devDiskByID, err)
-				}
-
-				for _, link := range links {
-					linkName := link.Name()
-					linkPath := filepath.Join(devDiskByID, linkName)
-
-					linkTarget, err := filepath.EvalSymlinks(linkPath)
-					if err != nil {
-						// Skip broken udev symlinks.
-						continue
-					}
-
-					if linkTarget == filepath.Join("/dev", entryName) {
-						disk.DeviceID = linkName
-					}
-				}
-			}
+			// Try to find the udev device path and id
+			disk.DevicePath = linksByPath[filepath.Join("/dev", entryName)]
+			disk.DeviceID = linksByID[filepath.Join("/dev", entryName)]
 
 			// Pull direct disk information
 			err = storageAddDriveInfo(filepath.Join("/dev", entryName), &disk)

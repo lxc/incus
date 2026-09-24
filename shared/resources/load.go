@@ -36,7 +36,7 @@ func GetLoad() (*api.ResourcesLoad, error) {
 func getLoadAvgs() ([]float64, error) {
 	loadAvgs := make([]float64, 3)
 
-	loadAvgsBuf, err := os.ReadFile("/proc/loadavg")
+	loadAvgsBuf, err := readKernelFile("/proc/loadavg")
 	if err != nil {
 		return nil, err
 	}
@@ -63,21 +63,31 @@ func getLoadAvgs() ([]float64, error) {
 
 // getProcessCount returns the count of all processes on the system.
 func getProcessCount() (int, error) {
-	dirEntries, err := os.ReadDir("/proc")
+	f, err := os.Open("/proc")
+	if err != nil {
+		return 0, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	// Only read the names, the numeric entries are the processes.
+	names, err := f.Readdirnames(-1)
 	if err != nil {
 		return 0, err
 	}
 
 	total := 0
-	for _, entry := range dirEntries {
-		if entry.IsDir() {
-			_, err := strconv.Atoi(entry.Name())
-			if err != nil {
-				continue
-			} else {
-				total += 1
-			}
+	for _, name := range names {
+		if name[0] < '0' || name[0] > '9' {
+			continue
 		}
+
+		_, err := strconv.Atoi(name)
+		if err != nil {
+			continue
+		}
+
+		total++
 	}
 
 	return total, nil

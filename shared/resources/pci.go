@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jaypipes/pcidb"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/shared/api"
@@ -25,14 +24,11 @@ func GetPCI() (*api.ResourcesPCI, error) {
 	}
 
 	// Load PCI database
-	pciDB, err := pcidb.New()
-	if err != nil {
-		pciDB = nil
-	}
+	pciDB := loadPCIDB()
 
 	// Get uname for driver version
 	uname := unix.Utsname{}
-	err = unix.Uname(&uname)
+	err := unix.Uname(&uname)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get uname: %w", err)
 	}
@@ -60,7 +56,7 @@ func GetPCI() (*api.ResourcesPCI, error) {
 			device.Driver = filepath.Base(linkTarget)
 
 			// Try to get the version, fallback to kernel version
-			out, err := os.ReadFile(filepath.Join(driverPath, "module", "version"))
+			out, err := readKernelFile(filepath.Join(driverPath, "module", "version"))
 			if err == nil {
 				device.DriverVersion = strings.TrimSpace(string(out))
 			} else {
@@ -86,7 +82,7 @@ func GetPCI() (*api.ResourcesPCI, error) {
 		// Get product ID node
 		deviceDevicePath := filepath.Join(devicePath, "device")
 		if sysfsExists(deviceDevicePath) {
-			id, err := os.ReadFile(deviceDevicePath)
+			id, err := readKernelFile(deviceDevicePath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", deviceDevicePath, err)
 			}
@@ -97,7 +93,7 @@ func GetPCI() (*api.ResourcesPCI, error) {
 		// Get vendor ID node
 		deviceVendorPath := filepath.Join(devicePath, "vendor")
 		if sysfsExists(deviceVendorPath) {
-			id, err := os.ReadFile(deviceVendorPath)
+			id, err := readKernelFile(deviceVendorPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", deviceVendorPath, err)
 			}
@@ -140,7 +136,7 @@ func GetPCI() (*api.ResourcesPCI, error) {
 		// Get VPD info
 		vpdSysPath := filepath.Join(devicePath, "vpd")
 		if sysfsExists(vpdSysPath) {
-			data, err := os.ReadFile(vpdSysPath)
+			data, err := readKernelFile(vpdSysPath)
 
 			// If the file is readable, parse the VPD data.
 			if err == nil {

@@ -73,6 +73,9 @@ type consoleWs struct {
 	protocol string
 }
 
+// consoleConnectTimeout is how long to wait for the client to connect its websockets.
+const consoleConnectTimeout = 10 * time.Second
+
 func (s *consoleWs) metadata() any {
 	fds := jmap.Map{}
 	for fd, secret := range s.fds {
@@ -120,7 +123,7 @@ func (s *consoleWs) connectConsole(r *http.Request, w http.ResponseWriter) error
 			s.connsLock.Unlock()
 
 			if fd == -1 {
-				s.controlConnected <- true
+				s.notify(s.controlConnected)
 				return nil
 			}
 
@@ -133,7 +136,7 @@ func (s *consoleWs) connectConsole(r *http.Request, w http.ResponseWriter) error
 			}
 			s.connsLock.Unlock()
 
-			s.allConnected <- true
+			s.notify(s.allConnected)
 			return nil
 		}
 	}
@@ -166,7 +169,7 @@ func (s *consoleWs) connectVGA(r *http.Request, w http.ResponseWriter) error {
 			s.conns[fd] = conn
 			s.connsLock.Unlock()
 
-			s.controlConnected <- true
+			s.notify(s.controlConnected)
 
 			// Emit a single instance-console event per session here. SPICE clients open one
 			// dynamic websocket per channel (display, cursor, inputs, ...) and emitting from the
@@ -178,7 +181,7 @@ func (s *consoleWs) connectVGA(r *http.Request, w http.ResponseWriter) error {
 
 		logger.Debug("VGA dynamic websocket connected")
 
-		console, _, err := s.instance.Console("vga")
+		console, consoleDisconnectCh, err := s.instance.Console("vga")
 		if err != nil {
 			_ = conn.Close()
 			return err
@@ -197,6 +200,7 @@ func (s *consoleWs) connectVGA(r *http.Request, w http.ResponseWriter) error {
 			l.Debug("Finished mirroring console to websocket")
 			_ = conn.Close()
 			<-writeDone
+			close(consoleDisconnectCh)
 		}()
 
 		s.connsLock.Lock()
@@ -226,7 +230,20 @@ func (s *consoleWs) do(op *operations.Operation) error {
 
 func (s *consoleWs) doConsole() error {
 	defer logger.Debug("Console websocket finished")
-	<-s.allConnected
+
+	// Once this function ends ensure that any connected websockets are closed.
+	defer s.closeConns()
+
+	// Wait for the client to connect to the console websocket.
+	select {
+	case <-s.allConnected:
+	case <-time.After(consoleConnectTimeout):
+		return errors.New("Timed out waiting for websockets to connect")
+	}
+
+	// Signal the control websocket goroutine to end once the console is done.
+	finishedCh := make(chan struct{})
+	defer close(finishedCh)
 
 	// Get console from instance.
 	console, consoleDisconnectCh, err := s.instance.Console(s.protocol)
@@ -249,8 +266,10 @@ func (s *consoleWs) doConsole() error {
 	// Wait for control socket to connect and then read messages from the remote side in a loop.
 	go func() {
 		defer logger.Debugf("Console control websocket finished")
-		res := <-s.controlConnected
-		if !res {
+
+		select {
+		case <-s.controlConnected:
+		case <-finishedCh:
 			return
 		}
 
@@ -335,24 +354,6 @@ func (s *consoleWs) doConsole() error {
 		close(consoleDisconnectCh)
 	}
 
-	// Once this function ends ensure that any connected websockets are closed.
-	defer func() {
-		s.connsLock.Lock()
-
-		consoleConn := s.conns[0]
-		ctrlConn := s.conns[-1]
-
-		if consoleConn != nil {
-			_ = consoleConn.Close()
-		}
-
-		if ctrlConn != nil {
-			_ = ctrlConn.Close()
-		}
-
-		s.connsLock.Unlock()
-	}()
-
 	// Write a reset escape sequence to the console to cancel any ongoing reads to the handle
 	// and then close it. This ordering is important, close the console before closing the
 	// websocket to ensure console doesn't get stuck reading.
@@ -363,55 +364,61 @@ func (s *consoleWs) doConsole() error {
 		return err
 	}
 
-	// Indicate to the control socket go routine to end if not already.
-	close(s.controlConnected)
 	return nil
 }
 
 func (s *consoleWs) doVGA() error {
 	defer logger.Debug("VGA websocket finished")
 
-	consoleDoneCh := make(chan struct{})
+	// Once this function ends ensure that any connected websockets are closed.
+	defer s.closeConns()
 
 	// The control socket is used to terminate the operation.
-	go func() {
-		defer logger.Debugf("VGA control websocket finished")
-		res := <-s.controlConnected
-		if !res {
-			return
-		}
+	select {
+	case <-s.controlConnected:
+	case <-time.After(consoleConnectTimeout):
+		return errors.New("Timed out waiting for control websocket to connect")
+	}
 
-		for {
-			s.connsLock.Lock()
-			conn := s.conns[-1]
-			s.connsLock.Unlock()
-
-			_, _, err := conn.NextReader()
-			if err != nil {
-				logger.Debugf("Got error getting next reader: %v", err)
-				close(consoleDoneCh)
-				return
-			}
-		}
-	}()
-
-	// Wait until the control channel is done.
-	<-consoleDoneCh
 	s.connsLock.Lock()
 	control := s.conns[-1]
 	s.connsLock.Unlock()
-	err := control.Close()
 
-	// Close all dynamic connections.
+	// Wait until the control channel is done.
+	for {
+		_, _, err := control.NextReader()
+		if err != nil {
+			logger.Debugf("Got error getting next reader: %v", err)
+			break
+		}
+	}
+
+	return nil
+}
+
+// notify signals a connection channel without blocking on duplicate or late connections.
+func (s *consoleWs) notify(ch chan bool) {
+	select {
+	case ch <- true:
+	default:
+	}
+}
+
+// closeConns closes every websocket and dynamic console connection.
+func (s *consoleWs) closeConns() {
+	s.connsLock.Lock()
+	defer s.connsLock.Unlock()
+
+	for _, conn := range s.conns {
+		if conn != nil {
+			_ = conn.Close()
+		}
+	}
+
 	for conn, console := range s.dynamic {
 		_ = conn.Close()
 		_ = console.Close()
 	}
-
-	// Indicate to the control socket go routine to end if not already.
-	close(s.controlConnected)
-
-	return err
 }
 
 // Cancel is responsible for closing websocket connections.

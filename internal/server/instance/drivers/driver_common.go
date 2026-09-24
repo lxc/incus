@@ -1785,14 +1785,30 @@ func (d *common) processStartedAt(pid int) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	startedAt, err := stat.StartTime()
+	bootTime, err := systemBootTime()
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	seconds, fraction := math.Modf(startedAt)
-	return time.Unix(int64(seconds), int64(fraction*float64(time.Second))), nil
+	// Process start time is expressed in clock ticks (USER_HZ, always 100) since boot.
+	seconds, fraction := math.Modf(float64(stat.Starttime) / 100)
+	return time.Unix(int64(bootTime)+int64(seconds), int64(fraction*float64(time.Second))), nil
 }
+
+// systemBootTime returns the system boot time, parsing /proc/stat only once.
+var systemBootTime = sync.OnceValues(func() (uint64, error) {
+	fs, err := procfs.NewDefaultFS()
+	if err != nil {
+		return 0, err
+	}
+
+	stat, err := fs.Stat()
+	if err != nil {
+		return 0, err
+	}
+
+	return stat.BootTime, nil
+})
 
 // ETag returns the instance configuration ETag data for pre-condition validation.
 func (d *common) ETag() []any {

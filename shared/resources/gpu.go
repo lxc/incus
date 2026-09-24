@@ -212,7 +212,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 		// Vendor and product
 		deviceVendorPath := filepath.Join(devicePath, "vendor")
 		if sysfsExists(deviceVendorPath) {
-			id, err := os.ReadFile(deviceVendorPath)
+			id, err := readKernelFile(deviceVendorPath)
 			if err != nil {
 				return fmt.Errorf("Failed to read %q: %w", deviceVendorPath, err)
 			}
@@ -222,7 +222,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 
 		deviceDevicePath := filepath.Join(devicePath, "device")
 		if sysfsExists(deviceDevicePath) {
-			id, err := os.ReadFile(deviceDevicePath)
+			id, err := readKernelFile(deviceDevicePath)
 			if err != nil {
 				return fmt.Errorf("Failed to read %q: %w", deviceDevicePath, err)
 			}
@@ -258,7 +258,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 		card.Driver = filepath.Base(linkTarget)
 
 		// Try to get the version, fallback to kernel version
-		out, err := os.ReadFile(filepath.Join(driverPath, "module", "version"))
+		out, err := readKernelFile(filepath.Join(driverPath, "module", "version"))
 		if err == nil {
 			card.DriverVersion = strings.TrimSpace(string(out))
 		} else {
@@ -304,7 +304,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 					return fmt.Errorf("Failed to parse card number: %w", err)
 				}
 
-				dev, err := os.ReadFile(filepath.Join(entryPath, "dev"))
+				dev, err := readKernelFile(filepath.Join(entryPath, "dev"))
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "dev"), err)
 				}
@@ -315,7 +315,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 			}
 
 			if strings.HasPrefix(entryName, "controlD") {
-				dev, err := os.ReadFile(filepath.Join(entryPath, "dev"))
+				dev, err := readKernelFile(filepath.Join(entryPath, "dev"))
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "dev"), err)
 				}
@@ -325,7 +325,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 			}
 
 			if strings.HasPrefix(entryName, "renderD") {
-				dev, err := os.ReadFile(filepath.Join(entryPath, "dev"))
+				dev, err := readKernelFile(filepath.Join(entryPath, "dev"))
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "dev"), err)
 				}
@@ -358,7 +358,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 			// API
 			apiPath := filepath.Join(entryPath, "device_api")
 			if sysfsExists(apiPath) {
-				deviceAPI, err := os.ReadFile(apiPath)
+				deviceAPI, err := readKernelFile(apiPath)
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", apiPath, err)
 				}
@@ -380,7 +380,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 			// Description
 			descriptionPath := filepath.Join(entryPath, "description")
 			if sysfsExists(descriptionPath) {
-				description, err := os.ReadFile(descriptionPath)
+				description, err := readKernelFile(descriptionPath)
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", descriptionPath, err)
 				}
@@ -405,7 +405,7 @@ func gpuAddDeviceInfo(devicePath string, nvidiaCards map[string]*api.ResourcesGP
 			// Name
 			namePath := filepath.Join(entryPath, "name")
 			if sysfsExists(namePath) {
-				name, err := os.ReadFile(namePath)
+				name, err := readKernelFile(namePath)
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", namePath, err)
 				}
@@ -433,10 +433,7 @@ func GetGPU() (*api.ResourcesGPU, error) {
 	}
 
 	// Load PCI database
-	pciDB, err := pcidb.New()
-	if err != nil {
-		pciDB = nil
-	}
+	pciDB := loadPCIDB()
 
 	// Load NVIDIA information
 	nvidiaCards, err := loadNvidiaContainer()
@@ -544,7 +541,7 @@ func GetGPU() (*api.ResourcesGPU, error) {
 				continue
 			}
 
-			class, err := os.ReadFile(filepath.Join(devicePath, "class"))
+			class, err := readKernelFile(filepath.Join(devicePath, "class"))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "class"), err)
 			}
