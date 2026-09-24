@@ -1123,6 +1123,11 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 			return err
 		}
 
+		relatedNames, err := n.relatedNetworkNames(config)
+		if err != nil {
+			return err
+		}
+
 		// Check if uplink has routed ingress anycast mode enabled, as this relaxes the overlap checks.
 		ipv4UplinkAnycast := n.uplinkHasIngressRoutedAnycastIPv4(uplink)
 		ipv6UplinkAnycast := n.uplinkHasIngressRoutedAnycastIPv6(uplink)
@@ -1182,6 +1187,11 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 				// Because we may want to specify the SNAT address as the same address as one of
 				// the NICs in our network.
 				if externalSubnetUser.networkProject == n.project && externalSubnetUser.networkName == n.name {
+					continue
+				}
+
+				// The same goes for the NICs on the other networks sharing our logical router.
+				if externalSubnetUser.usageType == subnetUsageInstance && externalSubnetUser.networkProject == n.project && slices.Contains(relatedNames, externalSubnetUser.networkName) {
 					continue
 				}
 
@@ -2862,7 +2872,7 @@ func (n *ovn) validateParentNetwork(config map[string]string) error {
 		return errors.New("Network can't be its own parent")
 	}
 
-	for _, key := range []string{"network", "bridge.hwaddr", "bridge.external_interfaces", "bridge.multicast_relay", "ipv4.nat.address", "ipv6.nat.address"} {
+	for _, key := range []string{"network", "bridge.hwaddr", "bridge.external_interfaces", "bridge.multicast_relay"} {
 		if config[key] != "" {
 			return fmt.Errorf("Option %q can't be used on a network with a parent", key)
 		}
@@ -2918,6 +2928,40 @@ func (n *ovn) validateParentNetwork(config map[string]string) error {
 	}
 
 	return nil
+}
+
+// relatedNetworkNames returns the names of the networks sharing the logical router described by the config, including our own.
+func (n *ovn) relatedNetworkNames(config map[string]string) ([]string, error) {
+	ownerName := config["parent"]
+	if ownerName == "" {
+		ownerName = n.name
+	}
+
+	names := []string{n.name}
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		networks, err := tx.GetCreatedNetworksByProject(ctx, n.project)
+		if err != nil {
+			return err
+		}
+
+		for _, network := range networks {
+			if network.Type != "ovn" || network.Name == n.name {
+				continue
+			}
+
+			if network.Name == ownerName || network.Config["parent"] == ownerName {
+				names = append(names, network.Name)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading the networks sharing the logical router: %w", err)
+	}
+
+	return names, nil
 }
 
 // relatedNetworkSubnets returns the internal subnets of the other networks on the parent's logical router.
@@ -5283,6 +5327,11 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 		return err
 	}
 
+	relatedNames, err := n.relatedNetworkNames(n.config)
+	if err != nil {
+		return err
+	}
+
 	// Get project restricted routes.
 	projectRestrictedSubnets, err := n.projectRestrictedSubnets(p, n.UplinkName())
 	if err != nil {
@@ -5312,8 +5361,8 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 
 		// Check the external port route doesn't fall within any existing OVN network external subnets.
 		for _, externalSubnetUser := range externalSubnetsInUse {
-			// Skip our own network's SNAT address (as it can be used for NICs in the network).
-			if externalSubnetUser.usageType == subnetUsageNetworkSNAT && externalSubnetUser.networkProject == n.project && externalSubnetUser.networkName == n.name {
+			// Skip the SNAT addresses of the networks sharing our logical router (as they can be used for NICs in those networks).
+			if externalSubnetUser.usageType == subnetUsageNetworkSNAT && externalSubnetUser.networkProject == n.project && slices.Contains(relatedNames, externalSubnetUser.networkName) {
 				continue
 			}
 
