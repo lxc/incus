@@ -52,6 +52,7 @@ import (
 
 var apiInternal = []APIEndpoint{
 	internalBGPStateCmd,
+	internalDebugPprofCmd,
 	internalClusterAcceptCmd,
 	internalClusterAssignCmd,
 	internalClusterHandoverCmd,
