@@ -6385,7 +6385,9 @@ Note that the claim must be contained in the access token.
 :scope: "global"
 :shortdesc: "Whether to use RBD lightweight clones rather than full dataset copies"
 :type: "bool"
-
+When disabled, new volumes are still cloned from their source but flattened in the
+background right after creation, so the source can only be fully removed once that
+has completed.
 ```
 
 ```{config:option} ceph.rbd.du storage_ceph-common
