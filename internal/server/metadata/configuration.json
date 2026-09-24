@@ -7160,7 +7160,7 @@
 					{
 						"ceph.rbd.clone_copy": {
 							"default": "`true`",
-							"longdesc": "",
+							"longdesc": "When disabled, new volumes are still cloned from their source but flattened in the\nbackground right after creation, so the source can only be fully removed once that\nhas completed.",
 							"scope": "global",
 							"shortdesc": "Whether to use RBD lightweight clones rather than full dataset copies",
 							"type": "bool"
