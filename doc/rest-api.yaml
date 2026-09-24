@@ -7486,6 +7486,9 @@ definitions:
             listen_address:
                 type: string
                 x-go-name: ListenAddress
+            persistent:
+                type: boolean
+                x-go-name: Persistent
             trusted_client_certificates:
                 items:
                     type: string
@@ -7690,9 +7693,28 @@ definitions:
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemLoggingConfig:
         properties:
+            journal_upload:
+                $ref: '#/definitions/SystemLoggingJournalUpload'
             syslog:
                 $ref: '#/definitions/SystemLoggingSyslog'
         title: SystemLoggingConfig holds the modifiable part of the logging data.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemLoggingJournalUpload:
+        properties:
+            tls_ca_certificate:
+                type: string
+                x-go-name: TLSCACertificate
+            tls_client_certificate:
+                type: string
+                x-go-name: TLSClientCertificate
+            tls_client_key:
+                type: string
+                x-go-name: TLSClientKey
+            url:
+                type: string
+                x-go-name: URL
+        title: SystemLoggingJournalUpload contains the configuration options for uploading the journal to a remote server.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemLoggingState:
@@ -8154,6 +8176,9 @@ definitions:
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemNetworkRoute:
         properties:
+            onlink:
+                type: boolean
+                x-go-name: OnLink
             to:
                 type: string
                 x-go-name: To
@@ -8485,6 +8510,9 @@ definitions:
             scrub_schedule:
                 type: string
                 x-go-name: ScrubSchedule
+            trim_schedule:
+                type: string
+                x-go-name: TrimSchedule
         title: SystemStorageConfig represents additional configuration for the system's local storage.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
@@ -8611,6 +8639,13 @@ definitions:
         x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemStoragePool:
         properties:
+            alignment:
+                description: |-
+                    Optionally, configure the sector alignment size for the pool; defaults to 4096 byte sectors.
+                    Must be a power of two. Can only be specified when initially creating the pool.
+                format: int64
+                type: integer
+                x-go-name: Alignment
             allow_mixed_dev_sizes:
                 description: If true, allow creation of a pool with devices of different sizes.
                 type: boolean
@@ -8641,6 +8676,8 @@ definitions:
                 x-go-name: EncryptionKeyStatus
             last_scrub:
                 $ref: '#/definitions/SystemStoragePoolScrubStatus'
+            last_trim:
+                $ref: '#/definitions/SystemStoragePoolTrimStatus'
             log:
                 items:
                     type: string
@@ -8754,6 +8791,28 @@ definitions:
         title: SystemStoragePoolSpecial defines a struct that is used to create or update a pool's special vdev.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemStoragePoolTrimState:
+        title: SystemStoragePoolTrimState represents the state of a trim in a pool.
+        type: string
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    SystemStoragePoolTrimStatus:
+        properties:
+            errors:
+                format: int64
+                type: integer
+                x-go-name: Errors
+            last_action_time:
+                format: date-time
+                type: string
+                x-go-name: LastActionTime
+            progress:
+                type: string
+                x-go-name: Progress
+            state:
+                $ref: '#/definitions/SystemStoragePoolTrimState'
+        title: SystemStoragePoolTrimStatus represents the status of a trim in a pool.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     SystemStoragePoolVolume:
         properties:
             name:
@@ -8793,11 +8852,6 @@ definitions:
                     $ref: '#/definitions/SystemStorageDrive'
                 type: array
                 x-go-name: Drives
-            pools:
-                items:
-                    $ref: '#/definitions/SystemStoragePool'
-                type: array
-                x-go-name: Pools
             root_partition:
                 $ref: '#/definitions/SystemStorageRootPartition'
         title: SystemStorageState represents additional state for the system's local storage.
