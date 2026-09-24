@@ -765,7 +765,7 @@ func (d *Daemon) createCmd(restAPI *http.ServeMux, apiVersion string, c APIEndpo
 				}
 
 				// Allow select endpoints (unstable API but CLI supported).
-				if slices.Contains([]string{"recover/import", "recover/validate", "sql"}, c.Path) {
+				if slices.Contains([]string{"debug/pprof/{name...}", "recover/import", "recover/validate", "sql"}, c.Path) {
 					return true
 				}
 
