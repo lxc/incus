@@ -13,7 +13,9 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/drivers/qmp"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/metrics"
+	"github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/shared/logger"
+	"github.com/lxc/incus/v7/shared/resources"
 	"github.com/lxc/incus/v7/shared/units"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -48,25 +50,11 @@ func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
 		out.Disk = diskStats
 	}
 
-	networkState, err := d.getNetworkState()
+	networkStats, err := d.getQemuNetworkMetrics()
 	if err != nil {
 		d.logger.Warn("Failed to get network metrics", logger.Ctx{"err": err})
 	} else {
-		out.Network = make([]metrics.NetworkMetrics, 0, len(networkState))
-
-		for name, state := range networkState {
-			out.Network = append(out.Network, metrics.NetworkMetrics{
-				Device:          name,
-				ReceiveBytes:    uint64(state.Counters.BytesReceived),
-				ReceiveDrop:     uint64(state.Counters.PacketsDroppedInbound),
-				ReceiveErrors:   uint64(state.Counters.ErrorsReceived),
-				ReceivePackets:  uint64(state.Counters.PacketsReceived),
-				TransmitBytes:   uint64(state.Counters.BytesSent),
-				TransmitDrop:    uint64(state.Counters.PacketsDroppedOutbound),
-				TransmitErrors:  uint64(state.Counters.ErrorsSent),
-				TransmitPackets: uint64(state.Counters.PacketsSent),
-			})
-		}
+		out.Network = networkStats
 	}
 
 	metricSet, err := metrics.MetricSetFromAPI(&out, map[string]string{"project": d.project.Name, "name": d.name, "type": instancetype.VM.String()})
@@ -75,6 +63,38 @@ func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
 	}
 
 	return metricSet, nil
+}
+
+// getQemuNetworkMetrics reads the host side counters of every NIC without instantiating the devices.
+func (d *qemu) getQemuNetworkMetrics() ([]metrics.NetworkMetrics, error) {
+	out := []metrics.NetworkMetrics{}
+
+	for name, config := range d.ExpandedDevices() {
+		if config["type"] != "nic" || config["nested"] != "" {
+			continue
+		}
+
+		hostName := d.localConfig[fmt.Sprintf("volatile.%s.host_name", name)]
+		if hostName == "" || !network.InterfaceExists(hostName) {
+			continue
+		}
+
+		// The counters are reported from the instance's point of view, so reverse the host ones.
+		hostCounters, err := resources.GetNetworkCounters(hostName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting network interface counters for %q: %w", name, err)
+		}
+
+		out = append(out, metrics.NetworkMetrics{
+			Device:          name,
+			ReceiveBytes:    uint64(hostCounters.BytesSent),
+			ReceivePackets:  uint64(hostCounters.PacketsSent),
+			TransmitBytes:   uint64(hostCounters.BytesReceived),
+			TransmitPackets: uint64(hostCounters.PacketsReceived),
+		})
+	}
+
+	return out, nil
 }
 
 func (d *qemu) getQemuDiskMetrics(monitor *qmp.Monitor) ([]metrics.DiskMetrics, error) {
@@ -178,15 +198,16 @@ func (d *qemu) getQemuCPUMetrics(monitor *qmp.Monitor) ([]metrics.CPUMetrics, er
 		return nil, err
 	}
 
+	pid, err := os.ReadFile(d.pidFilePath())
+	if err != nil {
+		return nil, err
+	}
+
+	taskPath := filepath.Join("/proc", strings.TrimSpace(string(pid)), "task")
 	cpuMetrics := make([]metrics.CPUMetrics, 0, len(threadIDs))
 
 	for i, threadID := range threadIDs {
-		pid, err := os.ReadFile(d.pidFilePath())
-		if err != nil {
-			return nil, err
-		}
-
-		statFile := filepath.Join("/proc", strings.TrimSpace(string(pid)), "task", strconv.Itoa(threadID), "stat")
+		statFile := filepath.Join(taskPath, strconv.Itoa(threadID), "stat")
 
 		if !util.PathExists(statFile) {
 			continue
