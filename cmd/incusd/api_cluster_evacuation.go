@@ -637,6 +637,9 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 		return fmt.Errorf("Failed to connect to source: %w", err)
 	}
 
+	// Close the event listener connections once done.
+	defer source.Disconnect()
+
 	source = source.UseProject(inst.Project().Name)
 
 	apiInst, _, err := source.GetInstance(inst.Name())
