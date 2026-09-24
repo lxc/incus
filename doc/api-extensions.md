@@ -3496,3 +3496,10 @@ along with a `tag` relation to every instance carrying it.
 
 Adds a new `parent` configuration key to `ovn` networks, referencing another
 `ovn` network in the same project.
+
+## `disk_initial_copy`
+
+This adds the `initial.copy` property to `disk` devices backed by a custom storage volume.
+
+When set to `true` on a container, the content already present at the device `path` inside
+the container is copied into the volume the first time the volume is used, if it's empty.

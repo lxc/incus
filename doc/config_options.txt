@@ -88,9 +88,11 @@ User keys can be used in search.
 For root disk devices, this is used to override the storage pool's default volume
 configuration when creating the instance's root volume.
 
-For custom volumes, only `initial.uid`, `initial.gid` and `initial.mode` are
-accepted and they are used when auto-creating sub-directories inside the custom
-volume (when the `source` includes a sub-path that doesn't exist).
+For custom volumes, only `initial.uid`, `initial.gid`, `initial.mode` and
+`initial.copy` are accepted. The first three are used when auto-creating
+sub-directories inside the custom volume (when the `source` includes a sub-path
+that doesn't exist). `initial.copy` copies the container's existing content at
+`path` into the volume the first time it's used, if the volume is empty.
 
 `initial.uid`, `initial.gid` and `initial.mode` are also used to set the ownership
 and mode of the file system when the `source` is `tmpfs:` or `tmpfs-overlay:`.
