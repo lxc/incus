@@ -161,7 +161,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 			// Firmware revision
 			if sysfsExists(filepath.Join(devicePath, "firmware_rev")) {
-				firmwareRevision, err := os.ReadFile(filepath.Join(devicePath, "firmware_rev"))
+				firmwareRevision, err := readKernelFile(filepath.Join(devicePath, "firmware_rev"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "firmware_rev"), err)
 				}
@@ -170,7 +170,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 			}
 
 			// Device node
-			diskDev, err := os.ReadFile(filepath.Join(entryPath, "dev"))
+			diskDev, err := readKernelFile(filepath.Join(entryPath, "dev"))
 			if err != nil {
 				if errors.Is(err, fs.ErrNotExist) {
 					// This happens on multipath devices, just skip as we only care about the main node.
@@ -216,7 +216,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 			// Disk model
 			if sysfsExists(filepath.Join(devicePath, "model")) {
-				diskModel, err := os.ReadFile(filepath.Join(devicePath, "model"))
+				diskModel, err := readKernelFile(filepath.Join(devicePath, "model"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "model"), err)
 				}
@@ -265,7 +265,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 
 			// WWN
 			if sysfsExists(filepath.Join(entryPath, "wwid")) {
-				diskWWN, err := os.ReadFile(filepath.Join(entryPath, "wwid"))
+				diskWWN, err := readKernelFile(filepath.Join(entryPath, "wwid"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "wwid"), err)
 				}
@@ -310,7 +310,7 @@ func GetStorage() (*api.ResourcesStorage, error) {
 				partition.Partition = partitionNumber
 
 				// Device node
-				partitionDev, err := os.ReadFile(filepath.Join(subEntryPath, "dev"))
+				partitionDev, err := readKernelFile(filepath.Join(subEntryPath, "dev"))
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(subEntryPath, "dev"), err)
 				}

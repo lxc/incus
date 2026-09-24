@@ -53,7 +53,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 
 		devClassFile := filepath.Join(devicePath, "bDeviceClass")
 		if sysfsExists(devClassFile) {
-			content, err := os.ReadFile(devClassFile)
+			content, err := readKernelFile(devClassFile)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", devClassFile, err)
 			}
@@ -86,7 +86,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 		// Get serial number
 		deviceSerialPath := filepath.Join(devicePath, "iSerial")
 		if sysfsExists(deviceSerialPath) {
-			content, err := os.ReadFile(deviceSerialPath)
+			content, err := readKernelFile(deviceSerialPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", deviceSerialPath, err)
 			}
@@ -99,7 +99,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 
 		deviceProductIDPath := filepath.Join(devicePath, "idProduct")
 		if sysfsExists(deviceProductIDPath) {
-			content, err := os.ReadFile(deviceProductIDPath)
+			content, err := readKernelFile(deviceProductIDPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", deviceProductIDPath, err)
 			}
@@ -117,7 +117,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 
 		deviceVendorIDPath := filepath.Join(devicePath, "idVendor")
 		if sysfsExists(deviceVendorIDPath) {
-			content, err := os.ReadFile(deviceVendorIDPath)
+			content, err := readKernelFile(deviceVendorIDPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", deviceVendorIDPath, err)
 			}
@@ -133,7 +133,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 		// Get vendor and product name
 		deviceProductPath := filepath.Join(devicePath, "product")
 		if sysfsExists(deviceProductPath) {
-			content, err := os.ReadFile(deviceProductPath)
+			content, err := readKernelFile(deviceProductPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", deviceProductPath, err)
 			}
@@ -157,7 +157,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 		// Get speed
 		deviceSpeedPath := filepath.Join(devicePath, "speed")
 		if sysfsExists(deviceSpeedPath) {
-			content, err := os.ReadFile(deviceSpeedPath)
+			content, err := readKernelFile(deviceSpeedPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", deviceSpeedPath, err)
 			}
@@ -190,7 +190,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 
 			interfaceClassPath := filepath.Join(subDevicePath, "bInterfaceClass")
 			if sysfsExists(interfaceClassPath) {
-				content, err := os.ReadFile(interfaceClassPath)
+				content, err := readKernelFile(interfaceClassPath)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", interfaceClassPath, err)
 				}
@@ -211,7 +211,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 			// Get subclass ID
 			interfaceSubClassPath := filepath.Join(subDevicePath, "bInterfaceSubClass")
 			if sysfsExists(interfaceSubClassPath) {
-				content, err := os.ReadFile(interfaceSubClassPath)
+				content, err := readKernelFile(interfaceSubClassPath)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", interfaceSubClassPath, err)
 				}
@@ -232,7 +232,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 			// Get number
 			interfaceNumber := filepath.Join(subDevicePath, "bInterfaceNumber")
 			if sysfsExists(interfaceNumber) {
-				content, err := os.ReadFile(interfaceNumber)
+				content, err := readKernelFile(interfaceNumber)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to read %q: %w", interfaceNumber, err)
 				}
@@ -254,7 +254,7 @@ func GetUSB() (*api.ResourcesUSB, error) {
 				iface.Driver = filepath.Base(linkTarget)
 
 				// Try to get the version, fallback to kernel version
-				out, err := os.ReadFile(filepath.Join(driverPath, "module", "version"))
+				out, err := readKernelFile(filepath.Join(driverPath, "module", "version"))
 				if err == nil {
 					iface.DriverVersion = strings.TrimSpace(string(out))
 				} else {

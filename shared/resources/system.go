@@ -45,7 +45,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	// Product UUID
 	productUUIDPath := filepath.Join(sysClassDMIID, "product_uuid")
 	if sysfsExists(productUUIDPath) {
-		content, err := os.ReadFile(productUUIDPath)
+		content, err := readKernelFile(productUUIDPath)
 		if err != nil && !os.IsPermission(err) {
 			return nil, fmt.Errorf("Failed to read %q: %w", productUUIDPath, err)
 		}
@@ -56,7 +56,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	// Vendor
 	vendorPath := filepath.Join(sysClassDMIID, "sys_vendor")
 	if sysfsExists(vendorPath) {
-		content, err := os.ReadFile(vendorPath)
+		content, err := readKernelFile(vendorPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", vendorPath, err)
 		}
@@ -67,7 +67,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	// Product name
 	productNamePath := filepath.Join(sysClassDMIID, "product_name")
 	if sysfsExists(productNamePath) {
-		content, err := os.ReadFile(productNamePath)
+		content, err := readKernelFile(productNamePath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", productNamePath, err)
 		}
@@ -78,7 +78,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	// Product family
 	productFamilyPath := filepath.Join(sysClassDMIID, "product_family")
 	if sysfsExists(productFamilyPath) {
-		content, err := os.ReadFile(productFamilyPath)
+		content, err := readKernelFile(productFamilyPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", productFamilyPath, err)
 		}
@@ -89,7 +89,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	// Product version
 	productVersion := filepath.Join(sysClassDMIID, "product_version")
 	if sysfsExists(productVersion) {
-		content, err := os.ReadFile(productVersion)
+		content, err := readKernelFile(productVersion)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", productVersion, err)
 		}
@@ -100,7 +100,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	// Product SKU
 	productSKUPath := filepath.Join(sysClassDMIID, "product_sku")
 	if sysfsExists(productSKUPath) {
-		content, err := os.ReadFile(productSKUPath)
+		content, err := readKernelFile(productSKUPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", productSKUPath, err)
 		}
@@ -111,7 +111,7 @@ func GetSystem() (*api.ResourcesSystem, error) {
 	// Product serial
 	productSerialPath := filepath.Join(sysClassDMIID, "product_serial")
 	if sysfsExists(productSerialPath) {
-		content, err := os.ReadFile(productSerialPath)
+		content, err := readKernelFile(productSerialPath)
 		if err != nil && !os.IsPermission(err) {
 			return nil, fmt.Errorf("Failed to read %q: %w", productSerialPath, err)
 		}
@@ -258,7 +258,7 @@ func systemGetFirmware() (*api.ResourcesSystemFirmware, error) {
 	// Firmware vendor
 	biosVendorPath := filepath.Join(sysClassDMIID, "bios_vendor")
 	if sysfsExists(biosVendorPath) {
-		content, err := os.ReadFile(biosVendorPath)
+		content, err := readKernelFile(biosVendorPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", biosVendorPath, err)
 		}
@@ -269,7 +269,7 @@ func systemGetFirmware() (*api.ResourcesSystemFirmware, error) {
 	// Firmware date
 	biosDatePath := filepath.Join(sysClassDMIID, "bios_date")
 	if sysfsExists(biosDatePath) {
-		content, err := os.ReadFile(biosDatePath)
+		content, err := readKernelFile(biosDatePath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", biosDatePath, err)
 		}
@@ -280,7 +280,7 @@ func systemGetFirmware() (*api.ResourcesSystemFirmware, error) {
 	// Firmware version
 	biosVersionPath := filepath.Join(sysClassDMIID, "bios_version")
 	if sysfsExists(biosVersionPath) {
-		content, err := os.ReadFile(biosVersionPath)
+		content, err := readKernelFile(biosVersionPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", biosVersionPath, err)
 		}
@@ -297,7 +297,7 @@ func systemGetChassis() (*api.ResourcesSystemChassis, error) {
 	// Chassis vendor
 	chassisVendorPath := filepath.Join(sysClassDMIID, "chassis_vendor")
 	if sysfsExists(chassisVendorPath) {
-		content, err := os.ReadFile(chassisVendorPath)
+		content, err := readKernelFile(chassisVendorPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", chassisVendorPath, err)
 		}
@@ -359,7 +359,7 @@ func systemGetChassis() (*api.ResourcesSystemChassis, error) {
 	// Chassis serial
 	chassisSerialPath := filepath.Join(sysClassDMIID, "chassis_serial")
 	if sysfsExists(chassisSerialPath) {
-		content, err := os.ReadFile(chassisSerialPath)
+		content, err := readKernelFile(chassisSerialPath)
 		if err != nil && !os.IsPermission(err) {
 			return nil, fmt.Errorf("Failed to read %q: %w", chassisSerialPath, err)
 		}
@@ -370,7 +370,7 @@ func systemGetChassis() (*api.ResourcesSystemChassis, error) {
 	// Chassis version
 	chassisVersionPath := filepath.Join(sysClassDMIID, "chassis_version")
 	if sysfsExists(chassisVersionPath) {
-		content, err := os.ReadFile(chassisVersionPath)
+		content, err := readKernelFile(chassisVersionPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", chassisVersionPath, err)
 		}
@@ -387,7 +387,7 @@ func systemGetMotherboard() (*api.ResourcesSystemMotherboard, error) {
 	// Motherboard vendor name
 	boardVendorPath := filepath.Join(sysClassDMIID, "board_vendor")
 	if sysfsExists(boardVendorPath) {
-		content, err := os.ReadFile(boardVendorPath)
+		content, err := readKernelFile(boardVendorPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", boardVendorPath, err)
 		}
@@ -398,7 +398,7 @@ func systemGetMotherboard() (*api.ResourcesSystemMotherboard, error) {
 	// Motherboard product name
 	boardNamePath := filepath.Join(sysClassDMIID, "board_name")
 	if sysfsExists(boardNamePath) {
-		content, err := os.ReadFile(boardNamePath)
+		content, err := readKernelFile(boardNamePath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", boardNamePath, err)
 		}
@@ -409,7 +409,7 @@ func systemGetMotherboard() (*api.ResourcesSystemMotherboard, error) {
 	// Motherboard serial
 	boardSerialPath := filepath.Join(sysClassDMIID, "board_serial")
 	if sysfsExists(boardSerialPath) {
-		content, err := os.ReadFile(boardSerialPath)
+		content, err := readKernelFile(boardSerialPath)
 		if err != nil && !os.IsPermission(err) {
 			return nil, fmt.Errorf("Failed to read %q: %w", boardSerialPath, err)
 		}
@@ -420,7 +420,7 @@ func systemGetMotherboard() (*api.ResourcesSystemMotherboard, error) {
 	// Motherboard version
 	boardVersionPath := filepath.Join(sysClassDMIID, "board_version")
 	if sysfsExists(boardVersionPath) {
-		content, err := os.ReadFile(boardVersionPath)
+		content, err := readKernelFile(boardVersionPath)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to read %q: %w", boardVersionPath, err)
 		}

@@ -147,7 +147,7 @@ func getMemoryBlockSizeBytes() uint64 {
 	}
 
 	// Get block size
-	content, err := os.ReadFile(memoryBlockSizePath)
+	content, err := readKernelFile(memoryBlockSizePath)
 	if err != nil {
 		return 0
 	}
@@ -187,7 +187,7 @@ func getTotalMemory(sysDevicesBase string) uint64 {
 			continue
 		}
 
-		content, err := os.ReadFile(filepath.Join(entryPath, "online"))
+		content, err := readKernelFile(filepath.Join(entryPath, "online"))
 		if err != nil {
 			return 0
 		}

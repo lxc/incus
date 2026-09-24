@@ -78,7 +78,7 @@ func enrichSerialDeviceInfo(deviceTable map[string]*api.ResourcesSerialDevice) e
 		// Get the device major/minor.
 		devFile := filepath.Join(sysPath, "dev")
 		if sysfsExists(devFile) {
-			data, err := os.ReadFile(devFile)
+			data, err := readKernelFile(devFile)
 			if err != nil {
 				return fmt.Errorf("Failed to read dev file %s: %w", devFile, err)
 			}
@@ -127,7 +127,7 @@ func getSerialUSBVendorAndProduct(dev *api.ResourcesSerialDevice, absDevPath str
 	// Get the vendor ID.
 	idVendor := filepath.Join(usbDevicePath, "idVendor")
 	if sysfsExists(idVendor) {
-		data, err := os.ReadFile(idVendor)
+		data, err := readKernelFile(idVendor)
 		if err != nil {
 			return fmt.Errorf("Failed to read vendor ID file %s: %w", idVendor, err)
 		}
@@ -138,7 +138,7 @@ func getSerialUSBVendorAndProduct(dev *api.ResourcesSerialDevice, absDevPath str
 	// Get the product ID.
 	idProduct := filepath.Join(usbDevicePath, "idProduct")
 	if sysfsExists(idProduct) {
-		data, err := os.ReadFile(idProduct)
+		data, err := readKernelFile(idProduct)
 		if err != nil {
 			return fmt.Errorf("Failed to read product ID file %s: %w", idProduct, err)
 		}

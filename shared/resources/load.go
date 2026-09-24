@@ -36,7 +36,7 @@ func GetLoad() (*api.ResourcesLoad, error) {
 func getLoadAvgs() ([]float64, error) {
 	loadAvgs := make([]float64, 3)
 
-	loadAvgsBuf, err := os.ReadFile("/proc/loadavg")
+	loadAvgsBuf, err := readKernelFile("/proc/loadavg")
 	if err != nil {
 		return nil, err
 	}
