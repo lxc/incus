@@ -113,7 +113,7 @@ func (m *MetricSet) Merge(metricSet *MetricSet) {
 
 func (m *MetricSet) String() string {
 	var out strings.Builder
-	metricTypes := []MetricType{}
+	metricTypes := make([]MetricType, 0, len(m.set))
 
 	// Sort output by metric type name
 	for metricType := range m.set {
@@ -124,12 +124,14 @@ func (m *MetricSet) String() string {
 		return int(metricTypes[i]) < int(metricTypes[j])
 	})
 
+	// Reuse the same buffers across samples.
+	var labelNames []string
+	var value []byte
+
 	for _, metricType := range metricTypes {
 		// Add HELP message as specified by OpenMetrics
-		_, err := out.WriteString(MetricHeaders[metricType] + "\n")
-		if err != nil {
-			return ""
-		}
+		out.WriteString(MetricHeaders[metricType])
+		out.WriteString("\n")
 
 		metricTypeName := ""
 
@@ -142,55 +144,48 @@ func (m *MetricSet) String() string {
 		}
 
 		// Add TYPE message as specified by OpenMetrics
-		_, err = fmt.Fprintf(&out, "# TYPE %s %s\n", MetricNames[metricType], metricTypeName)
-		if err != nil {
-			return ""
-		}
+		out.WriteString("# TYPE ")
+		out.WriteString(MetricNames[metricType])
+		out.WriteString(" ")
+		out.WriteString(metricTypeName)
+		out.WriteString("\n")
 
 		for _, sample := range m.set[metricType] {
-			firstLabel := true
-			var labels strings.Builder
-			labelNames := []string{}
+			out.WriteString(MetricNames[metricType])
 
 			// Add and sort labels if there are any
-			for labelName := range sample.Labels {
-				labelNames = append(labelNames, labelName)
-			}
-
-			sort.Strings(labelNames)
-
-			for _, labelName := range labelNames {
-				if !firstLabel {
-					labels.WriteString(",")
+			if len(sample.Labels) > 0 {
+				labelNames = labelNames[:0]
+				for labelName := range sample.Labels {
+					labelNames = append(labelNames, labelName)
 				}
 
-				fmt.Fprintf(&labels, `%s="%s"`, labelName, sample.Labels[labelName])
-				firstLabel = false
+				sort.Strings(labelNames)
+
+				out.WriteString("{")
+				for i, labelName := range labelNames {
+					if i > 0 {
+						out.WriteString(",")
+					}
+
+					out.WriteString(labelName)
+					out.WriteString("=\"")
+					out.WriteString(sample.Labels[labelName])
+					out.WriteString("\"")
+				}
+
+				out.WriteString("}")
 			}
 
-			valueStr := strconv.FormatFloat(sample.Value, 'g', -1, 64)
-
-			if labels.String() != "" {
-				_, err = fmt.Fprintf(&out, "%s{%s} %s\n", MetricNames[metricType], labels.String(), valueStr)
-			} else {
-				_, err = fmt.Fprintf(&out, "%s %s\n", MetricNames[metricType], valueStr)
-			}
-
-			if err != nil {
-				return ""
-			}
+			out.WriteString(" ")
+			value = strconv.AppendFloat(value[:0], sample.Value, 'g', -1, 64)
+			out.Write(value)
+			out.WriteString("\n")
 		}
 	}
 
-	_, err := out.Write(m.suffix)
-	if err != nil {
-		return ""
-	}
-
-	_, err = out.WriteString("# EOF\n")
-	if err != nil {
-		return ""
-	}
+	out.Write(m.suffix)
+	out.WriteString("# EOF\n")
 
 	return out.String()
 }
