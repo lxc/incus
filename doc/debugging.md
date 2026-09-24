@@ -70,6 +70,28 @@ openssl pkcs12 -clcerts -inkey client.key -in client.crt -export -out client.pfx
 
 After that, opening [`https://127.0.0.1:8443/1.0`](https://127.0.0.1:8443/1.0) should work as expected.
 
+## Profiling `incusd`
+
+The Go `pprof` profiles of `incusd` are available in two ways:
+
+- Setting `core.debug_address` starts a plain HTTP listener serving them under `/debug/pprof/`.
+  It has no authentication, so only bind it to a trusted address.
+- The API serves the same profiles under `/internal/debug/pprof/` on every listener, restricted to clients allowed to administer the server.
+  This works at any time, over HTTPS, without changing the server configuration.
+
+For example, to save the heap profile of a remote server through the `incus` client and open it locally:
+
+```bash
+incus query --raw my-remote:/internal/debug/pprof/heap > heap.pprof
+go tool pprof heap.pprof
+```
+
+The upstream [`pprof`](https://github.com/google/pprof) tool can also fetch the profiles directly with the client certificate (`go tool pprof` doesn't support client certificates):
+
+```bash
+pprof -tls_cert ~/.config/incus/client.crt -tls_key ~/.config/incus/client.key "https+insecure://192.0.2.10:8443/internal/debug/pprof/profile?seconds=30"
+```
+
 ## Debug the Incus database
 
 The files of the global {ref}`database <database>` are stored under the `./database/global`
