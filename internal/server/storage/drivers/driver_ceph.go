@@ -379,7 +379,9 @@ func (d *ceph) Validate(config map[string]string) error {
 		"ceph.rbd.backend": validate.Optional(validate.IsOneOf("krbd", "librbd")),
 
 		// gendoc:generate(entity=storage_ceph, group=common, key=ceph.rbd.clone_copy)
-		//
+		// When disabled, new volumes are still cloned from their source but flattened in the
+		// background right after creation, so the source can only be fully removed once that
+		// has completed.
 		// ---
 		//  type: bool
 		//  scope: global
