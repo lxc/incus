@@ -10370,11 +10370,13 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 
 	_ = conn.Close()
 
-	// Handle disconnections.
-	go func() {
-		<-chDisconnect
-		_ = d.consoleSwapSocketWithRB()
-	}()
+	// Swap the text console back to the ring buffer on disconnection.
+	if protocol == instance.ConsoleTypeConsole {
+		go func() {
+			<-chDisconnect
+			_ = d.consoleSwapSocketWithRB()
+		}()
+	}
 
 	// Only emit a lifecycle event for the text console here. SPICE clients open one socket per channel
 	// (display, cursor, inputs, ...) and would otherwise produce a flurry of instance-console events
