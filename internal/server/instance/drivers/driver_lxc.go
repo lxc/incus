@@ -4257,6 +4257,7 @@ func (d *lxc) renderState(statusCode api.StatusCode, hostInterfaces []net.Interf
 	}
 
 	status.Disk = d.diskState()
+	status.TPM = d.tpmState()
 
 	d.release()
 
