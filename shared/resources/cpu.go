@@ -29,7 +29,7 @@ func GetCPUIsolated() []int64 {
 
 	isolatedCpusInt := []int64{}
 	if sysfsExists(isolatedPath) {
-		buf, err := os.ReadFile(isolatedPath)
+		buf, err := readKernelFile(isolatedPath)
 		if err != nil {
 			return isolatedCpusInt
 		}
@@ -139,7 +139,7 @@ func getCPUCache(path string) ([]api.ResourcesCPUCache, error) {
 		cache.Level = cacheLevel
 
 		// Get the cache size
-		content, err := os.ReadFile(filepath.Join(entryPath, "size"))
+		content, err := readKernelFile(filepath.Join(entryPath, "size"))
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) {
 				return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "size"), err)
@@ -163,7 +163,7 @@ func getCPUCache(path string) ([]api.ResourcesCPUCache, error) {
 		}
 
 		// Get the cache type
-		cacheType, err := os.ReadFile(filepath.Join(entryPath, "type"))
+		cacheType, err := readKernelFile(filepath.Join(entryPath, "type"))
 		if err != nil {
 			if !errors.Is(err, fs.ErrNotExist) {
 				return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(entryPath, "type"), err)
@@ -461,7 +461,7 @@ func GetCPU() (*api.ResourcesCPU, error) {
 		// isn't unique on ARM big.LITTLE systems where it restarts in every cluster.
 		coreIndex := ""
 		for _, name := range []string{"thread_siblings_list", "core_cpus_list"} {
-			value, err := os.ReadFile(filepath.Join(entryPath, "topology", name))
+			value, err := readKernelFile(filepath.Join(entryPath, "topology", name))
 			if err == nil {
 				coreIndex = strings.TrimSpace(string(value))
 				break

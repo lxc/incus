@@ -106,7 +106,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 	// Vendor and product
 	deviceVendorPath := filepath.Join(deviceDeviceDir, "vendor")
 	if sysfsExists(deviceVendorPath) {
-		id, err := os.ReadFile(deviceVendorPath)
+		id, err := readKernelFile(deviceVendorPath)
 		if err != nil {
 			return fmt.Errorf("Failed to read %q: %w", deviceVendorPath, err)
 		}
@@ -116,7 +116,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 
 	deviceDevicePath := filepath.Join(deviceDeviceDir, "device")
 	if sysfsExists(deviceDevicePath) {
-		id, err := os.ReadFile(deviceDevicePath)
+		id, err := readKernelFile(deviceDevicePath)
 		if err != nil {
 			return fmt.Errorf("Failed to read %q: %w", deviceDevicePath, err)
 		}
@@ -151,7 +151,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 		card.Driver = filepath.Base(linkTarget)
 
 		// Try to get the version, fallback to kernel version
-		out, err := os.ReadFile(filepath.Join(driverPath, "module", "version"))
+		out, err := readKernelFile(filepath.Join(driverPath, "module", "version"))
 		if err == nil {
 			card.DriverVersion = strings.TrimSpace(string(out))
 		} else {
@@ -193,7 +193,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 
 			// Add MAC address
 			if info.Address == "" && sysfsExists(filepath.Join(interfacePath, "address")) {
-				address, err := os.ReadFile(filepath.Join(interfacePath, "address"))
+				address, err := readKernelFile(filepath.Join(interfacePath, "address"))
 				if err != nil {
 					return fmt.Errorf("Failed to read %q: %w", filepath.Join(interfacePath, "address"), err)
 				}
@@ -239,7 +239,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 							continue
 						}
 
-						dev, err := os.ReadFile(filepath.Join(madPath, entryName, "dev"))
+						dev, err := readKernelFile(filepath.Join(madPath, entryName, "dev"))
 						if err != nil {
 							return fmt.Errorf("Failed to read %q: %w", filepath.Join(madPath, entryName, "dev"), err)
 						}
@@ -271,7 +271,7 @@ func networkAddDeviceInfo(devicePath string, pciDB *pcidb.PCIDB, uname unix.Utsn
 							continue
 						}
 
-						dev, err := os.ReadFile(filepath.Join(verbsPath, verbName, "dev"))
+						dev, err := readKernelFile(filepath.Join(verbsPath, verbName, "dev"))
 						if err != nil {
 							return fmt.Errorf("Failed to read %q: %w", filepath.Join(verbsPath, verbName, "dev"), err)
 						}
@@ -416,7 +416,7 @@ func GetNetwork() (*api.ResourcesNetwork, error) {
 				continue
 			}
 
-			class, err := os.ReadFile(filepath.Join(devicePath, "class"))
+			class, err := readKernelFile(filepath.Join(devicePath, "class"))
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read %q: %w", filepath.Join(devicePath, "class"), err)
 			}
@@ -554,13 +554,13 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 		bonding := api.NetworkStateBond{}
 
 		// Bond mode.
-		strValue, err := os.ReadFile(filepath.Join(bondPath, "mode"))
+		strValue, err := readKernelFile(filepath.Join(bondPath, "mode"))
 		if err == nil {
 			bonding.Mode = strings.Split(strings.TrimSpace(string(strValue)), " ")[0]
 		}
 
 		// Bond transmit policy.
-		strValue, err = os.ReadFile(filepath.Join(bondPath, "xmit_hash_policy"))
+		strValue, err = readKernelFile(filepath.Join(bondPath, "xmit_hash_policy"))
 		if err == nil {
 			bonding.TransmitPolicy = strings.Split(strings.TrimSpace(string(strValue)), " ")[0]
 		}
@@ -584,13 +584,13 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 		}
 
 		// MII state.
-		strValue, err = os.ReadFile(filepath.Join(bondPath, "mii_status"))
+		strValue, err = readKernelFile(filepath.Join(bondPath, "mii_status"))
 		if err == nil {
 			bonding.MIIState = strings.TrimSpace(string(strValue))
 		}
 
 		// Lower devices.
-		strValue, err = os.ReadFile(filepath.Join(bondPath, "slaves"))
+		strValue, err = readKernelFile(filepath.Join(bondPath, "slaves"))
 		if err == nil {
 			bonding.LowerDevices = strings.Split(strings.TrimSpace(string(strValue)), " ")
 		}
@@ -604,7 +604,7 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 		bridge := api.NetworkStateBridge{}
 
 		// Bridge ID.
-		strValue, err := os.ReadFile(filepath.Join(bridgePath, "bridge_id"))
+		strValue, err := readKernelFile(filepath.Join(bridgePath, "bridge_id"))
 		if err == nil {
 			bridge.ID = strings.TrimSpace(string(strValue))
 		}
@@ -658,7 +658,7 @@ func GetNetworkState(name string) (*api.NetworkState, error) {
 
 	vlanPath := "/proc/net/vlan/config"
 	if sysfsExists(vlanPath) {
-		entries, err := os.ReadFile(vlanPath)
+		entries, err := readKernelFile(vlanPath)
 		if err != nil {
 			return nil, err
 		}

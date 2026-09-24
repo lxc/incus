@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -28,8 +29,37 @@ func isDir(name string) bool {
 	return stat.IsDir()
 }
 
+// readKernelFile reads a small sysfs or procfs file. Those report a size of 4096 bytes regardless of
+// their content, so avoid the large allocation os.ReadFile would make based on that size.
+func readKernelFile(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() { _ = f.Close() }()
+
+	var buf [512]byte
+	n, err := io.ReadFull(f, buf[:])
+	if err == nil {
+		// The file is larger than the buffer, read the rest the usual way.
+		rest, err := io.ReadAll(f)
+		if err != nil {
+			return nil, err
+		}
+
+		return append(buf[:n:n], rest...), nil
+	}
+
+	if !errors.Is(err, io.EOF) && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, err
+	}
+
+	return append([]byte(nil), buf[:n]...), nil
+}
+
 func readUint(path string) (uint64, error) {
-	content, err := os.ReadFile(path)
+	content, err := readKernelFile(path)
 	if err != nil {
 		return 0, err
 	}
@@ -43,7 +73,7 @@ func readUint(path string) (uint64, error) {
 }
 
 func readInt(path string) (int64, error) {
-	content, err := os.ReadFile(path)
+	content, err := readKernelFile(path)
 	if err != nil {
 		return -1, err
 	}
