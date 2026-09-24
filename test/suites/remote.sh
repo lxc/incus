@@ -157,6 +157,11 @@ test_remote_admin() {
     incus_remote remote add foo "${INCUS_ADDR}" --accept-certificate --token "${token}"
     incus_remote remote list | grep 'foo'
 
+    # The pprof profiles are served to trusted clients only.
+    incus_remote query --raw "foo:/internal/debug/pprof/heap?debug=1" | grep -F "heap profile:"
+    incus_remote query --raw foo:/internal/debug/pprof/ | grep -F "goroutine"
+    [ "$(curl -k -s "https://${INCUS_ADDR}/internal/debug/pprof/heap" | jq '.error_code')" -eq 403 ]
+
     incus_remote remote set-default foo
     [ "$(incus_remote remote get-default)" = "foo" ]
 
