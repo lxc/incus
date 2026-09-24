@@ -582,6 +582,7 @@ var APIExtensions = []string{
 	"instance_security_tags",
 	"network_ovn_parent",
 	"disk_initial_copy",
+	"internal_debug_pprof",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
