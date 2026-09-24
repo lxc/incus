@@ -17,10 +17,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/api"
+	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 )
 
@@ -61,6 +63,7 @@ type LokiLogger struct {
 	quit    chan struct{}
 	once    sync.Once
 	entries chan entry
+	dropped atomic.Uint64
 	wg      sync.WaitGroup
 }
 
@@ -112,7 +115,7 @@ func NewLokiLogger(s *state.State, name string) (*LokiLogger, error) {
 		},
 		client:  &http.Client{},
 		ctx:     s.ShutdownCtx,
-		entries: make(chan entry),
+		entries: make(chan entry, 1024), // Queue while a batch is being sent.
 		quit:    make(chan struct{}),
 	}
 
@@ -199,6 +202,11 @@ func (l *LokiLogger) sendBatch(batch *batch) {
 			// Try to send the message.
 			status, err = l.send(l.ctx, buf)
 			if err == nil {
+				dropped := l.dropped.Swap(0)
+				if dropped > 0 {
+					logger.Warn("Dropped log entries as Loki couldn't keep up", logger.Ctx{"logger": l.name, "count": dropped})
+				}
+
 				return
 			}
 
@@ -410,7 +418,12 @@ func (l *LokiLogger) HandleEvent(event api.Event) {
 		entry.Line = message.String()
 	}
 
-	l.entries <- entry
+	// Drop the entry rather than block event delivery when Loki can't keep up.
+	select {
+	case l.entries <- entry:
+	default:
+		l.dropped.Add(1)
+	}
 }
 
 func buildNestedContext(prefix string, m map[string]any) map[string]string {
