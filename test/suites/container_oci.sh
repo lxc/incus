@@ -13,6 +13,9 @@ test_container_oci() {
     incus launch docker:caddy caddy --network=inct$$
     incus info caddy | grep -q RUNNING
 
+    # The OCI image labels are exposed as image properties.
+    incus config get caddy image.oci.version | grep -q .
+
     # The image environment is exported without being copied into the instance config.
     [ "$(incus config get caddy environment.CADDY_VERSION)" = "" ]
     incus exec caddy -- printenv CADDY_VERSION | grep -q .
