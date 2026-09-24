@@ -65,6 +65,7 @@ This allows several internal subnets to be routed by a single logical router and
 
 A child network keeps its own switch, subnet, DHCP, DNS records, ACLs and instance ports.
 It has no uplink of its own, reaching the outside through the external port of its parent's router, and it can enable NAT independently of its parent so that one subnet can be translated while another is routed natively on the same router.
+A child can also set `ipv4.nat.address` and `ipv6.nat.address` to translate to an address of its own rather than to the external address of the shared router.
 
 The following applies to child networks:
 
@@ -72,7 +73,8 @@ The following applies to child networks:
   Use {ref}`network-acls` to restrict this.
 - In ACL rules, the traffic of another network on the same router matches `@external` rather than `@internal`, because `@internal` only ever covers the addresses of the network the rule is applied to.
 - The uplink, the external port, the chassis group and any network peers belong to the parent.
-  A child cannot set `network`, `parent` (networks can only be nested one level deep), `bridge.hwaddr`, `bridge.external_interfaces`, `bridge.multicast_relay`, `ipv4.nat.address`, `ipv6.nat.address` or any `tunnel.*` option, and cannot take part in a peering.
+  A child cannot set `network`, `parent` (networks can only be nested one level deep), `bridge.hwaddr`, `bridge.external_interfaces`, `bridge.multicast_relay` or any `tunnel.*` option, and cannot take part in a peering.
+  A peering of the parent routes the subnets of its children as well, and ACL rules referring to that peering match their traffic.
 - The subnets of a child must not overlap those of its parent or of the other children of that parent.
 - `parent` can only be set when the network is created.
 - A parent network cannot be renamed or deleted while it still has children.

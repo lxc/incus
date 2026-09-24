@@ -572,6 +572,13 @@ test_network_ovn_basic() {
     ovn-nbctl list nat | grep -F 198.51.100.1
     ovn-nbctl list nat | grep -F 2001:db8:1:2::1
 
+    # A child network can NAT to an address of its own on the shared router.
+    incus network create ovn-virtual-child --type=ovn parent=ovn-virtual-network ipv4.address=10.10.200.1/24 ipv4.nat=true ipv6.address=none
+    ! incus network set ovn-virtual-child ipv4.nat.address=198.51.100.1 || false # Used by the parent.
+    incus network set ovn-virtual-child ipv4.nat.address=198.51.100.2
+    ovn-nbctl --bare --format=csv --columns=logical_ip,external_ip,type find nat | grep -xF "10.10.200.0/24,198.51.100.2,snat"
+    ! incus network set ovn-virtual-network ipv4.nat.address=198.51.100.2 || false # Used by the child.
+
     # Add a static route to SNAT address on uplink to OVN network's router (simulating BGP route advert to uplink).
     ovnIPv4="$(incus network get ovn-virtual-network volatile.network.ipv4.address)"
     ovnIPv6="$(incus network get ovn-virtual-network volatile.network.ipv6.address)"
@@ -591,6 +598,11 @@ test_network_ovn_basic() {
     # Check a NIC in the same OVN network can use a subnet containing the SNAT address in its external routes.
     incus config device set u1 eth0 ipv4.routes.external=198.51.100.0/24
     incus config device set u1 eth0 ipv6.routes.external=2001:db8:1:2::/64
+
+    # And a child can pick a SNAT address within that route as the NIC shares its router.
+    incus network set ovn-virtual-child ipv4.nat.address=198.51.100.3
+    incus network set ovn-virtual-child ipv4.nat.address=198.51.100.2
+
     incus config device unset u1 eth0 ipv4.routes.external
     incus config device unset u1 eth0 ipv6.routes.external
 
@@ -598,7 +610,9 @@ test_network_ovn_basic() {
     incus network create ovn-virtual-network2 --type=ovn network=dummy
     ! incus network set ovn-virtual-network2 ipv4.nat.address=198.51.100.1 || false
     ! incus network set ovn-virtual-network2 ipv6.nat.address=2001:db8:1:2::1 || false
+    ! incus network set ovn-virtual-network2 ipv4.nat.address=198.51.100.2 || false
     incus network delete ovn-virtual-network2
+    incus network delete ovn-virtual-child
 
     # Remove external SNAT address and check normal SNAT operation returns connectivity.
     incus network unset ovn-virtual-network ipv4.nat.address
@@ -2137,13 +2151,74 @@ test_network_ovn_parent() {
     incus exec u1 -- ping -c1 -w5 -4 10.10.10.1
     incus exec u1 -- ping -c1 -w5 -6 fd42:4242:4242:1010::1
 
+    echo "==> Check a peering of the parent covers its children"
+    incus network create ovn4 --type=ovn \
+        network=incusbr0 \
+        ipv4.address=10.10.14.1/24 ipv4.nat=true \
+        ipv6.address=fd42:4242:4242:1014::1/64 ipv6.nat=true
+    sleep 2
+
+    incus network peer create ovn1 peer4 ovn4
+    incus network peer create ovn4 peer1 ovn1
+    incus network peer ls ovn4 | grep peer1 | grep CREATED
+
+    # The peer routes the subnets of the parent and of its children.
+    peerRouter="$(incus network info ovn4 | awk '/Logical router:/ {print $NF}')"
+    ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.11.0/24"
+    ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.12.0/24"
+    ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.13.0/24"
+    ovn-nbctl lr-route-list "${peerRouter}" | grep -F "fd42:4242:4242:1012::/64"
+    ovn-nbctl lr-route-list "${parentRouter}" | grep -F "10.10.14.0/24"
+
+    # The peer drops uplink traffic spoofing any of them.
+    [ "$(ovn-nbctl lr-policy-list "${peerRouter}" | grep -c 'lrp-ext"')" = "6" ]
+
+    incus launch "${instanceImage}" u3 -s "${poolName}" -n ovn4
+    sleep 5
+    U3_IPV4="$(incus list u3 -c4 --format=csv | cut -d' ' -f1)"
+    incus exec u3 -- ping -c1 -w5 -4 "${U1_IPV4}"
+    incus exec u3 -- ping -c1 -w5 -6 "${U1_IPV6}"
+    incus exec u1 -- ping -c1 -w5 -4 "${U3_IPV4}"
+
+    # ACL rules referring to the peering match the children too.
+    incus network acl create peer1
+    incus config device set u3 eth0 security.acls=peer1
+    ! incus exec u3 -- ping -c1 -w5 -4 "${U1_IPV4}" || false
+    incus network acl rule add peer1 egress destination=@ovn4/peer1 action=allow
+    incus exec u3 -- ping -c1 -w5 -4 "${U1_IPV4}"
+    incus exec u3 -- ping -c1 -w5 -6 "${U1_IPV6}"
+    incus config device unset u3 eth0 security.acls
+    incus network acl delete peer1
+
+    # A child created after the peering is routed by the peer, follows subnet changes and goes away with it.
+    incus network create ovn5 --type=ovn parent=ovn1 \
+        ipv4.address=10.10.15.1/24 ipv4.nat=true \
+        ipv6.address=fd42:4242:4242:1015::1/64 ipv6.nat=true
+    sleep 2
+    ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.15.0/24"
+    ovn-nbctl lr-route-list "${peerRouter}" | grep -F "fd42:4242:4242:1015::/64"
+
+    incus network set ovn5 ipv4.address=10.10.16.1/24
+    sleep 2
+    ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.16.0/24"
+    ! ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.15.0/24" || false
+
+    incus network delete ovn5
+    sleep 2
+    ! ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.16.0/24" || false
+    ! ovn-nbctl lr-route-list "${peerRouter}" | grep -F "fd42:4242:4242:1015::/64" || false
+
+    incus delete -f u3
+    incus network peer delete ovn4 peer1
+    incus network peer delete ovn1 peer4
+    incus network delete ovn4
+
     incus delete -f u2
 
     echo "==> Check invalid parent configurations are rejected"
     ! incus network create ovn4 --type=ovn parent=incusbr0 ipv4.address=10.10.14.1/24 || false          # Parent isn't an OVN network.
     ! incus network create ovn4 --type=ovn parent=ovn2 ipv4.address=10.10.14.1/24 || false              # Only one level of nesting.
     ! incus network create ovn4 --type=ovn parent=ovn1 network=incusbr0 ipv4.address=10.10.14.1/24 || false
-    ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.14.1/24 ipv4.nat.address=192.0.2.1 || false
     ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.11.5/24 || false              # Overlaps the parent.
     ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.12.5/24 || false              # Overlaps a sibling.
     ! incus network create ovn4 --type=ovn parent=ovn4 ipv4.address=10.10.14.1/24 || false              # Own parent.
@@ -2151,7 +2226,7 @@ test_network_ovn_parent() {
     # A natively routed subnet must be allowed by the uplink of the parent.
     ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.14.1/24 ipv4.nat=false ipv6.address=none || false
 
-    echo "==> Check deleting a rejected child keeps the SNAT rules of the family"
+    echo "==> Check deleting a rejected child keeps the SNAT rules of the other networks on the router"
     ! incus network create ovn4 --type=ovn parent=ovn1 ipv4.address=10.10.12.5/24 ipv6.address=none || false
     incus network delete ovn4 || true
     sleep 2
@@ -2169,7 +2244,7 @@ test_network_ovn_parent() {
     ! incus network delete ovn1 || false
     ! incus network rename ovn1 ovn1new || false
 
-    echo "==> Check deleting a child leaves the rest of the family working"
+    echo "==> Check deleting a child leaves the other networks on the router working"
     incus network delete ovn3
     sleep 2
     [ "$(ovn-nbctl --format=csv --bare --columns=name find logical_router_port | grep -cE "^${parentRouter}-lrp-int")" = "2" ]

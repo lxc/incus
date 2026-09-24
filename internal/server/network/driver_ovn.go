@@ -1123,6 +1123,11 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 			return err
 		}
 
+		relatedNames, err := n.relatedNetworkNames(config)
+		if err != nil {
+			return err
+		}
+
 		// Check if uplink has routed ingress anycast mode enabled, as this relaxes the overlap checks.
 		ipv4UplinkAnycast := n.uplinkHasIngressRoutedAnycastIPv4(uplink)
 		ipv6UplinkAnycast := n.uplinkHasIngressRoutedAnycastIPv6(uplink)
@@ -1182,6 +1187,11 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 				// Because we may want to specify the SNAT address as the same address as one of
 				// the NICs in our network.
 				if externalSubnetUser.networkProject == n.project && externalSubnetUser.networkName == n.name {
+					continue
+				}
+
+				// The same goes for the NICs on the other networks sharing our logical router.
+				if externalSubnetUser.usageType == subnetUsageInstance && externalSubnetUser.networkProject == n.project && slices.Contains(relatedNames, externalSubnetUser.networkName) {
 					continue
 				}
 
@@ -1539,17 +1549,20 @@ func (n *ovn) childNetworks() ([]*ovn, error) {
 	return children, nil
 }
 
+// routerOwner returns the network owning our logical router, which is our parent if we have one.
+func (n *ovn) routerOwner() (*ovn, error) {
+	if n.parentID == 0 {
+		return n, nil
+	}
+
+	return n.parentNetwork()
+}
+
 // relatedNetworks returns the networks sharing our logical router, starting with its owner.
 func (n *ovn) relatedNetworks() ([]*ovn, error) {
-	owner := n
-
-	if n.parentID != 0 {
-		parentNet, err := n.parentNetwork()
-		if err != nil {
-			return nil, err
-		}
-
-		owner = parentNet
+	owner, err := n.routerOwner()
+	if err != nil {
+		return nil, err
 	}
 
 	children, err := owner.childNetworks()
@@ -2763,6 +2776,14 @@ func (n *ovn) Create(clientType request.ClientType) error {
 		if err != nil {
 			return err
 		}
+
+		// Our subnets are routed by the peers of our parent.
+		if n.parentID != 0 {
+			err = n.peerRebuild()
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -2851,7 +2872,7 @@ func (n *ovn) validateParentNetwork(config map[string]string) error {
 		return errors.New("Network can't be its own parent")
 	}
 
-	for _, key := range []string{"network", "bridge.hwaddr", "bridge.external_interfaces", "bridge.multicast_relay", "ipv4.nat.address", "ipv6.nat.address"} {
+	for _, key := range []string{"network", "bridge.hwaddr", "bridge.external_interfaces", "bridge.multicast_relay"} {
 		if config[key] != "" {
 			return fmt.Errorf("Option %q can't be used on a network with a parent", key)
 		}
@@ -2907,6 +2928,40 @@ func (n *ovn) validateParentNetwork(config map[string]string) error {
 	}
 
 	return nil
+}
+
+// relatedNetworkNames returns the names of the networks sharing the logical router described by the config, including our own.
+func (n *ovn) relatedNetworkNames(config map[string]string) ([]string, error) {
+	ownerName := config["parent"]
+	if ownerName == "" {
+		ownerName = n.name
+	}
+
+	names := []string{n.name}
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		networks, err := tx.GetCreatedNetworksByProject(ctx, n.project)
+		if err != nil {
+			return err
+		}
+
+		for _, network := range networks {
+			if network.Type != "ovn" || network.Name == n.name {
+				continue
+			}
+
+			if network.Name == ownerName || network.Config["parent"] == ownerName {
+				names = append(names, network.Name)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Failed loading the networks sharing the logical router: %w", err)
+	}
+
+	return names, nil
 }
 
 // relatedNetworkSubnets returns the internal subnets of the other networks on the parent's logical router.
@@ -4098,19 +4153,28 @@ func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.NB, excludePeers ...int
 			return nil // Don't setup rules for this peer network connection.
 		}
 
-		targetAddrSetPrefix := acl.OVNIntSwitchPortGroupAddressSetPrefix(targetOVNNet.ID())
+		// The peer routes every network sharing its logical router.
+		targetRelated, err := targetOVNNet.relatedNetworks()
+		if err != nil {
+			return err
+		}
 
 		// Associate the rules with the local peering port so we can identify them later if needed.
 		comment := related[0].getLogicalRouterPeerPortName(targetOVNNet.ID())
-		policies = append(policies, networkOVN.OVNRouterPolicy{
-			Priority: ovnRouterPolicyPeerDropPriority,
-			Match:    fmt.Sprintf(`(inport == "%s" && ip6 && ip6.src == $%s_ip6) // %s`, extRouterPort, targetAddrSetPrefix, comment),
-			Action:   "drop",
-		}, networkOVN.OVNRouterPolicy{
-			Priority: ovnRouterPolicyPeerDropPriority,
-			Match:    fmt.Sprintf(`(inport == "%s" && ip4 && ip4.src == $%s_ip4) // %s`, extRouterPort, targetAddrSetPrefix, comment),
-			Action:   "drop",
-		})
+
+		for _, targetMember := range targetRelated {
+			targetAddrSetPrefix := acl.OVNIntSwitchPortGroupAddressSetPrefix(targetMember.ID())
+
+			policies = append(policies, networkOVN.OVNRouterPolicy{
+				Priority: ovnRouterPolicyPeerDropPriority,
+				Match:    fmt.Sprintf(`(inport == "%s" && ip6 && ip6.src == $%s_ip6) // %s`, extRouterPort, targetAddrSetPrefix, comment),
+				Action:   "drop",
+			}, networkOVN.OVNRouterPolicy{
+				Priority: ovnRouterPolicyPeerDropPriority,
+				Match:    fmt.Sprintf(`(inport == "%s" && ip4 && ip4.src == $%s_ip4) // %s`, extRouterPort, targetAddrSetPrefix, comment),
+				Action:   "drop",
+			})
+		}
 
 		return nil
 	})
@@ -4413,6 +4477,26 @@ func (n *ovn) deleteRouterNetworkConfig() error {
 	if len(routePrefixes) > 0 {
 		err = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), routePrefixes...)
 		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+			return err
+		}
+
+		// The peers of our parent route our subnets too.
+		var owner *ovn
+
+		owner, err = n.routerOwner()
+		if err != nil {
+			return err
+		}
+
+		err = owner.forPeers(func(targetOVNNet *ovn) error {
+			err := n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), targetOVNNet.getRouterName(), routePrefixes...)
+			if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+				return fmt.Errorf("Failed deleting static routes from peer network %q in project %q: %w", targetOVNNet.Name(), targetOVNNet.Project(), err)
+			}
+
+			return nil
+		})
+		if err != nil {
 			return err
 		}
 	}
@@ -5085,19 +5169,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 		if rebuildPeers {
 			// Rebuild peering config.
-			opts, err := n.peerGetLocalOpts(localNICRoutes)
-			if err != nil {
-				return err
-			}
-
-			err = n.forPeers(func(targetOVNNet *ovn) error {
-				err = n.peerSetup(n.ovnnb, targetOVNNet, *opts)
-				if err != nil {
-					return err
-				}
-
-				return nil
-			})
+			err = n.peerRebuild()
 			if err != nil {
 				return err
 			}
@@ -5255,6 +5327,11 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 		return err
 	}
 
+	relatedNames, err := n.relatedNetworkNames(n.config)
+	if err != nil {
+		return err
+	}
+
 	// Get project restricted routes.
 	projectRestrictedSubnets, err := n.projectRestrictedSubnets(p, n.UplinkName())
 	if err != nil {
@@ -5284,8 +5361,8 @@ func (n *ovn) InstanceDevicePortValidateExternalRoutes(deviceInstance instance.I
 
 		// Check the external port route doesn't fall within any existing OVN network external subnets.
 		for _, externalSubnetUser := range externalSubnetsInUse {
-			// Skip our own network's SNAT address (as it can be used for NICs in the network).
-			if externalSubnetUser.usageType == subnetUsageNetworkSNAT && externalSubnetUser.networkProject == n.project && externalSubnetUser.networkName == n.name {
+			// Skip the SNAT addresses of the networks sharing our logical router (as they can be used for NICs in those networks).
+			if externalSubnetUser.usageType == subnetUsageNetworkSNAT && externalSubnetUser.networkProject == n.project && slices.Contains(relatedNames, externalSubnetUser.networkName) {
 				continue
 			}
 
@@ -5812,20 +5889,26 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			_ = n.ovnnb.UpdateAddressSetRemove(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
 		})
 
-		routerIntPortIPv4, _, err := n.parseRouterIntPortIPv4Net()
+		// The peerings and their router ports belong to the owner of the logical router.
+		owner, err := n.routerOwner()
+		if err != nil {
+			return "", nil, err
+		}
+
+		routerIntPortIPv4, _, err := owner.parseRouterIntPortIPv4Net()
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed parsing local router's peering port IPv4 Net: %w", err)
 		}
 
-		routerIntPortIPv6, _, err := n.parseRouterIntPortIPv6Net()
+		routerIntPortIPv6, _, err := owner.parseRouterIntPortIPv6Net()
 		if err != nil {
 			return "", nil, fmt.Errorf("Failed parsing local router's peering port IPv6 Net: %w", err)
 		}
 
 		// Add routes to peer routers, and security policies for each peer port on local router.
-		err = n.forPeers(func(targetOVNNet *ovn) error {
+		err = owner.forPeers(func(targetOVNNet *ovn) error {
 			targetRouterName := targetOVNNet.getRouterName()
-			targetRouterPort := targetOVNNet.getLogicalRouterPeerPortName(n.ID())
+			targetRouterPort := targetOVNNet.getLogicalRouterPeerPortName(owner.ID())
 			targetRouterRoutes := make([]networkOVN.OVNRouterRoute, 0, len(routes))
 			for _, route := range routes {
 				nexthop := routerIntPortIPv4
@@ -6277,7 +6360,12 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		}
 
 		// Delete routes from peer routers.
-		err = n.forPeers(func(targetOVNNet *ovn) error {
+		owner, err := n.routerOwner()
+		if err != nil {
+			return err
+		}
+
+		err = owner.forPeers(func(targetOVNNet *ovn) error {
 			targetRouterName := targetOVNNet.getRouterName()
 			err = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), targetRouterName, removeRoutes...)
 			if err != nil {
@@ -8056,29 +8144,6 @@ func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
 		return fmt.Errorf("Failed applying local router security policy: %w", err)
 	}
 
-	activeLocalNICPorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), n.getIntSwitchName())
-	if err != nil {
-		return fmt.Errorf("Failed getting active NIC ports: %w", err)
-	}
-
-	var localNICRoutes []net.IPNet
-
-	// Get routes on instance NICs connected to local network to be added as routes to target network.
-	err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
-		instancePortName := n.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
-		_, found := activeLocalNICPorts[instancePortName]
-		if !found {
-			return nil // Don't add config for instance NICs that aren't started.
-		}
-
-		localNICRoutes = append(localNICRoutes, n.instanceNICGetRoutes(nicConfig)...)
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("Failed getting instance NIC routes on local network: %w", err)
-	}
-
 	targetNet, err := LoadByName(n.state, peer.TargetProject, peer.TargetNetwork)
 	if err != nil {
 		return fmt.Errorf("Failed loading target network: %w", err)
@@ -8089,15 +8154,9 @@ func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
 		return errors.New("Target network is not ovn interface type")
 	}
 
-	opts, err := n.peerGetLocalOpts(localNICRoutes)
+	opts, err := n.peerGetLocalOpts()
 	if err != nil {
 		return err
-	}
-
-	// Ensure local subnets and all active NIC routes are present in internal switch's address set.
-	err = n.ovnnb.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), opts.TargetRouterRoutes...)
-	if err != nil {
-		return fmt.Errorf("Failed adding active NIC routes to switch address set: %w", err)
 	}
 
 	err = n.peerSetup(n.ovnnb, targetOVNNet, *opts)
@@ -8521,18 +8580,97 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 	return nil
 }
 
-// peerGetLocalOpts returns peering options prefilled with local router and local NIC routes config.
+// peerRoutes returns the subnets and active NIC routes a peer needs to reach every network sharing our logical router, syncing each network's address set.
+func (n *ovn) peerRoutes() ([]net.IPNet, error) {
+	related, err := n.relatedNetworks()
+	if err != nil {
+		return nil, err
+	}
+
+	var routes []net.IPNet
+
+	for _, member := range related {
+		var memberRoutes []net.IPNet
+
+		for _, parseSubnet := range []func() (net.IP, *net.IPNet, error){member.parseRouterIntPortIPv4Net, member.parseRouterIntPortIPv6Net} {
+			_, subnet, err := parseSubnet()
+			if err != nil {
+				return nil, fmt.Errorf("Failed parsing subnet of network %q: %w", member.Name(), err)
+			}
+
+			if subnet != nil {
+				memberRoutes = append(memberRoutes, *subnet)
+			}
+		}
+
+		// Get list of active switch ports (avoids repeated querying of OVN NB).
+		activeNICPorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), member.getIntSwitchName())
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting active NIC ports: %w", err)
+		}
+
+		// Get routes on the started instance NICs.
+		err = UsedByInstanceDevices(n.state, member.Project(), member.Name(), member.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+			instancePortName := member.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
+			_, found := activeNICPorts[instancePortName]
+			if !found {
+				return nil // Don't add config for instance NICs that aren't started.
+			}
+
+			memberRoutes = append(memberRoutes, member.instanceNICGetRoutes(nicConfig)...)
+
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting instance NIC routes on network %q: %w", member.Name(), err)
+		}
+
+		// Ensure the subnets and all active NIC routes are present in the network's address set.
+		err = n.ovnnb.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(member.ID()), memberRoutes...)
+		if err != nil {
+			return nil, fmt.Errorf("Failed adding switch address set entries for network %q: %w", member.Name(), err)
+		}
+
+		routes = append(routes, memberRoutes...)
+	}
+
+	return routes, nil
+}
+
+// peerRebuild re-applies every peering of our logical router with the current routes of the networks sharing it.
+func (n *ovn) peerRebuild() error {
+	owner, err := n.routerOwner()
+	if err != nil {
+		return err
+	}
+
+	opts, err := owner.peerGetLocalOpts()
+	if err != nil {
+		return err
+	}
+
+	return owner.forPeers(func(targetOVNNet *ovn) error {
+		return owner.peerSetup(owner.ovnnb, targetOVNNet, *opts)
+	})
+}
+
+// peerGetLocalOpts returns peering options prefilled with local router config and the routes to the local networks.
 // It can then be modified with the target peering network options.
-func (n *ovn) peerGetLocalOpts(localNICRoutes []net.IPNet) (*networkOVN.OVNRouterPeering, error) {
+func (n *ovn) peerGetLocalOpts() (*networkOVN.OVNRouterPeering, error) {
 	localRouterPortMAC, err := n.getRouterMAC()
 	if err != nil {
 		return nil, fmt.Errorf("Failed getting router MAC address: %w", err)
 	}
 
+	targetRouterRoutes, err := n.peerRoutes()
+	if err != nil {
+		return nil, err
+	}
+
 	opts := networkOVN.OVNRouterPeering{
 		LocalRouter:        n.getRouterName(),
 		LocalRouterPortMAC: localRouterPortMAC,
-		TargetRouterRoutes: localNICRoutes, // Pre-fill with local NIC routes.
+		TargetRouterRoutes: targetRouterRoutes,
 	}
 
 	routerIntPortIPv4, routerIntPortIPv4Net, err := n.parseRouterIntPortIPv4Net()
@@ -8541,9 +8679,6 @@ func (n *ovn) peerGetLocalOpts(localNICRoutes []net.IPNet) (*networkOVN.OVNRoute
 	}
 
 	if routerIntPortIPv4 != nil && routerIntPortIPv4Net != nil {
-		// Add a copy of the CIDR subnet to the target router's routes.
-		opts.TargetRouterRoutes = append(opts.TargetRouterRoutes, *routerIntPortIPv4Net)
-
 		// Convert the IPNet to include the specific router IP with a single host subnet.
 		routerIntPortIPv4Net.IP = routerIntPortIPv4
 		routerIntPortIPv4Net.Mask = net.CIDRMask(32, 32)
@@ -8556,9 +8691,6 @@ func (n *ovn) peerGetLocalOpts(localNICRoutes []net.IPNet) (*networkOVN.OVNRoute
 	}
 
 	if routerIntPortIPv6 != nil && routerIntPortIPv6Net != nil {
-		// Add a copy of the CIDR subnet to the target router's routers.
-		opts.TargetRouterRoutes = append(opts.TargetRouterRoutes, *routerIntPortIPv6Net)
-
 		// Convert the IPNet to include the specific router IP with a single host subnet.
 		routerIntPortIPv6Net.IP = routerIntPortIPv6
 		routerIntPortIPv6Net.Mask = net.CIDRMask(128, 128)
@@ -8582,15 +8714,18 @@ func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN
 	opts.TargetRouterPort = targetOVNNet.getLogicalRouterPeerPortName(n.ID())
 	opts.TargetRouterPortMAC = targetRouterMAC
 
+	// Routes to the networks sharing the target router.
+	opts.LocalRouterRoutes, err = targetOVNNet.peerRoutes()
+	if err != nil {
+		return err
+	}
+
 	routerIntPortIPv4, routerIntPortIPv4Net, err := targetOVNNet.parseRouterIntPortIPv4Net()
 	if err != nil {
 		return fmt.Errorf("Failed parsing target router's peering port IPv4 net: %w", err)
 	}
 
 	if routerIntPortIPv4 != nil && routerIntPortIPv4Net != nil {
-		// Add a copy of the CIDR subnet to the local router's routers.
-		opts.LocalRouterRoutes = append(opts.LocalRouterRoutes, *routerIntPortIPv4Net)
-
 		// Convert the IPNet to include the specific router IP with a single host subnet.
 		routerIntPortIPv4Net.IP = routerIntPortIPv4
 		routerIntPortIPv4Net.Mask = net.CIDRMask(32, 32)
@@ -8603,41 +8738,10 @@ func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN
 	}
 
 	if routerIntPortIPv6 != nil && routerIntPortIPv6Net != nil {
-		// Add a copy of the CIDR subnet to the local router's routers.
-		opts.LocalRouterRoutes = append(opts.LocalRouterRoutes, *routerIntPortIPv6Net)
-
 		// Convert the IPNet to include the specific router IP with a single host subnet.
 		routerIntPortIPv6Net.IP = routerIntPortIPv6
 		routerIntPortIPv6Net.Mask = net.CIDRMask(128, 128)
 		opts.TargetRouterPortIPs = append(opts.TargetRouterPortIPs, *routerIntPortIPv6Net)
-	}
-
-	// Get list of active switch ports (avoids repeated querying of OVN NB).
-	activeTargetNICPorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), targetOVNNet.getIntSwitchName())
-	if err != nil {
-		return fmt.Errorf("Failed getting active NIC ports: %w", err)
-	}
-
-	// Get routes on instance NICs connected to target network to be added as routes to local network.
-	err = UsedByInstanceDevices(n.state, targetOVNNet.Project(), targetOVNNet.Name(), targetOVNNet.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
-		instancePortName := targetOVNNet.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
-		_, found := activeTargetNICPorts[instancePortName]
-		if !found {
-			return nil // Don't add config for instance NICs that aren't started.
-		}
-
-		opts.LocalRouterRoutes = append(opts.LocalRouterRoutes, n.instanceNICGetRoutes(nicConfig)...)
-
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("Failed getting instance NIC routes on target network: %w", err)
-	}
-
-	// Ensure routes are added to target switch address sets.
-	err = n.ovnnb.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(targetOVNNet.ID()), opts.LocalRouterRoutes...)
-	if err != nil {
-		return fmt.Errorf("Failed adding target switch subnet address set entries: %w", err)
 	}
 
 	err = targetOVNNet.logicalRouterPolicySetup(n.ovnnb)
