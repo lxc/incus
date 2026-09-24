@@ -383,17 +383,6 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 			return err
 		}
 
-		if util.IsFalse(d.config["ceph.rbd.clone_copy"]) {
-			// If clone_copy is false, flatten image to detach it from source snapshot
-			// Missing the error on failure is acceptable, as instance creation can still continue
-			go func() {
-				err := d.flattenImage(context.TODO(), d.getRBDVolumeName(vol, "", true))
-				if err != nil {
-					logger.Warnf("Failed to flatten image %s: %v", d.getRBDVolumeName(vol, "", true), err)
-				}
-			}()
-		}
-
 		return nil
 	}
 
@@ -458,6 +447,24 @@ func (d *ceph) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots boo
 		err = postCreateTasks(vol)
 		if err != nil {
 			return err
+		}
+
+		// Without lightweight clones, detach the copy from its source in the background.
+		if util.IsFalse(d.config["ceph.rbd.clone_copy"]) {
+			// Hold the lock until the flatten is done so a deletion waits for it.
+			unlock, err := locking.Lock(context.TODO(), d.flattenLockName(vol))
+			if err != nil {
+				return err
+			}
+
+			go func() {
+				defer unlock()
+
+				err := d.rbdFlattenVolume(vol)
+				if err != nil {
+					d.logger.Warn("Failed flattening volume", logger.Ctx{"volume": vol.name, "err": err})
+				}
+			}()
 		}
 
 		reverter.Success()
@@ -737,8 +744,16 @@ func (d *ceph) DeleteVolume(vol Volume, op *operations.Operation) error {
 			}
 		}
 	} else {
+		// Wait for any background flatten of the volume to finish.
+		unlock, err := locking.Lock(context.TODO(), d.flattenLockName(vol))
+		if err != nil {
+			return err
+		}
+
+		defer unlock()
+
 		// Unmount and unmap.
-		_, err := d.UnmountVolume(vol, false, op)
+		_, err = d.UnmountVolume(vol, false, op)
 		if err != nil {
 			return err
 		}
@@ -1536,7 +1551,15 @@ func (d *ceph) RenameVolume(vol Volume, newVolName string, op *operations.Operat
 		reverter := revert.New()
 		defer reverter.Fail()
 
-		err := d.rbdRenameVolume(vol, newVolName)
+		// Wait for any background flatten of the volume to finish.
+		unlock, err := locking.Lock(context.TODO(), d.flattenLockName(vol))
+		if err != nil {
+			return err
+		}
+
+		defer unlock()
+
+		err = d.rbdRenameVolume(vol, newVolName)
 		if err != nil {
 			if isRBDNotFoundExitError(err) {
 				return api.StatusErrorf(http.StatusNotFound, "Ceph RBD volume not found")

@@ -1687,14 +1687,21 @@ func (d *ceph) resizeVolume(vol Volume, sizeBytes int64, allowShrink bool) error
 	return err
 }
 
-func (d *ceph) flattenImage(ctx context.Context, targetVol string) error {
-	_, err := subprocess.RunCommandContext(
-		ctx,
+// rbdFlattenVolume detaches a cloned RBD volume from its parent snapshot.
+func (d *ceph) rbdFlattenVolume(vol Volume) error {
+	_, err := subprocess.RunCommand(
 		"rbd",
 		"--id", d.config["ceph.user.name"],
 		"--cluster", d.config["ceph.cluster_name"],
+		"--pool", d.config["ceph.osd.pool_name"],
 		"flatten",
-		targetVol,
+		"--no-progress",
+		d.getRBDVolumeName(vol, "", false),
 	)
 	return err
+}
+
+// flattenLockName returns the lock held while a volume is being flattened in the background.
+func (d *ceph) flattenLockName(vol Volume) string {
+	return OperationLockName("FlattenVolume", d.name, vol.volType, vol.contentType, vol.name)
 }
