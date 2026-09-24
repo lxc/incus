@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -821,6 +823,19 @@ func (c *cmdInfo) instanceInfo(d incus.InstanceServer, name string, showLog stri
 		if networkInfo.String() != "" {
 			fmt.Printf("  %s\n", i18n.G("Network usage:"))
 			fmt.Print(networkInfo.String())
+		}
+	}
+
+	// TPM devices
+	if len(inst.State.TPM) > 0 {
+		fmt.Println("\n" + i18n.G("TPM devices:"))
+
+		for _, name := range slices.Sorted(maps.Keys(inst.State.TPM)) {
+			fmt.Printf("  %s:\n", name)
+
+			for _, key := range inst.State.TPM[name].EndorsementKeys {
+				fmt.Printf("    "+i18n.G("Endorsement key (%s %d): %s")+"\n", key.Type, key.Size, key.Fingerprint)
+			}
 		}
 	}
 
