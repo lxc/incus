@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jaypipes/pcidb"
 	"golang.org/x/sys/unix"
 
 	"github.com/lxc/incus/v7/shared/api"
@@ -25,14 +24,11 @@ func GetPCI() (*api.ResourcesPCI, error) {
 	}
 
 	// Load PCI database
-	pciDB, err := pcidb.New()
-	if err != nil {
-		pciDB = nil
-	}
+	pciDB := loadPCIDB()
 
 	// Get uname for driver version
 	uname := unix.Utsname{}
-	err = unix.Uname(&uname)
+	err := unix.Uname(&uname)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get uname: %w", err)
 	}

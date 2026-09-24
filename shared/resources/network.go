@@ -322,10 +322,7 @@ func GetNetwork() (*api.ResourcesNetwork, error) {
 	}
 
 	// Load PCI database
-	pciDB, err := pcidb.New()
-	if err != nil {
-		pciDB = nil
-	}
+	pciDB := loadPCIDB()
 
 	// Temporary variables
 	pciKnown := []string{}
