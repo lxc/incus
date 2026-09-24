@@ -433,10 +433,7 @@ func GetGPU() (*api.ResourcesGPU, error) {
 	}
 
 	// Load PCI database
-	pciDB, err := pcidb.New()
-	if err != nil {
-		pciDB = nil
-	}
+	pciDB := loadPCIDB()
 
 	// Load NVIDIA information
 	nvidiaCards, err := loadNvidiaContainer()

@@ -12,6 +12,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
+
+	"github.com/jaypipes/pcidb"
 )
 
 var sysBusPci = "/sys/bus/pci/devices"
@@ -52,6 +55,16 @@ func readInt(path string) (int64, error) {
 
 	return value, nil
 }
+
+// loadPCIDB parses the PCI ID database once and returns it, or nil if unavailable.
+var loadPCIDB = sync.OnceValue(func() *pcidb.PCIDB {
+	db, err := pcidb.New()
+	if err != nil {
+		return nil
+	}
+
+	return db
+})
 
 func sysfsExists(path string) bool {
 	_, err := os.Lstat(path)
