@@ -88,6 +88,7 @@ const (
 	EventLifecycleNetworkLoadBalancerCreated        = "network-load-balancer-created"
 	EventLifecycleNetworkLoadBalancerDeleted        = "network-load-balancer-deleted"
 	EventLifecycleNetworkLoadBalancerUpdated        = "network-load-balancer-updated"
+	EventLifecycleNetworkLoadBalancerHealthChanged  = "network-load-balancer-health-changed"
 	EventLifecycleNetworkPeerCreated                = "network-peer-created"
 	EventLifecycleNetworkPeerDeleted                = "network-peer-deleted"
 	EventLifecycleNetworkPeerUpdated                = "network-peer-updated"
