@@ -48,24 +48,7 @@ func ResolveWarningsByNodeOlderThan(dbCluster *db.Cluster, nodeName string, date
 // ResolveWarningsByNodeAndType resolves warnings with the given node and type code.
 func ResolveWarningsByNodeAndType(dbCluster *db.Cluster, nodeName string, typeCode warningtype.Type) error {
 	err := dbCluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		filter := cluster.WarningFilter{
-			TypeCode: &typeCode,
-			Node:     &nodeName,
-		}
-
-		warnings, err := cluster.GetWarnings(ctx, tx.Tx(), filter)
-		if err != nil {
-			return err
-		}
-
-		for _, w := range warnings {
-			err = tx.UpdateWarningStatus(w.UUID, warningtype.StatusResolved)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return tx.ResolveWarningsByNodeAndType(ctx, nodeName, typeCode)
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to resolve warnings: %w", err)
@@ -107,27 +90,7 @@ func ResolveWarningsByNodeAndProjectAndType(dbCluster *db.Cluster, nodeName stri
 // ResolveWarningsByNodeAndProjectAndTypeAndEntity resolves warnings with the given node, project, type code, and entity.
 func ResolveWarningsByNodeAndProjectAndTypeAndEntity(dbCluster *db.Cluster, nodeName string, projectName string, typeCode warningtype.Type, entityTypeCode int, entityID int) error {
 	err := dbCluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		filter := cluster.WarningFilter{
-			TypeCode:       &typeCode,
-			Node:           &nodeName,
-			Project:        &projectName,
-			EntityTypeCode: &entityTypeCode,
-			EntityID:       &entityID,
-		}
-
-		warnings, err := cluster.GetWarnings(ctx, tx.Tx(), filter)
-		if err != nil {
-			return err
-		}
-
-		for _, w := range warnings {
-			err = tx.UpdateWarningStatus(w.UUID, warningtype.StatusResolved)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return tx.ResolveWarningsByNodeAndProjectAndTypeAndEntity(ctx, nodeName, projectName, typeCode, entityTypeCode, entityID)
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to resolve warnings: %w", err)
