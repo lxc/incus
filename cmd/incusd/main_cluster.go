@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/cowsql/go-cowsql/client"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
 	"golang.org/x/sys/unix"
@@ -102,11 +101,9 @@ type ClusterConfig struct {
 // ToRaftNode converts a ClusterConfig struct to a RaftNode struct.
 func (c ClusterMember) ToRaftNode() (*db.RaftNode, error) {
 	raftNode := &db.RaftNode{
-		NodeInfo: client.NodeInfo{
-			ID:      c.ID,
-			Address: c.Address,
-		},
-		Name: c.Name,
+		ID:      c.ID,
+		Address: c.Address,
+		Name:    c.Name,
 	}
 
 	var role db.RaftRole

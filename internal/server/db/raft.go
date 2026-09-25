@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/cowsql/go-cowsql/client"
+	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/shared/api"
@@ -18,10 +19,7 @@ import (
 //
 // This is just a convenience alias for the equivalent data structure in the
 // cowsql client package.
-type RaftNode struct {
-	client.NodeInfo
-	Name string
-}
+type RaftNode = cowsqldb.RaftNode
 
 // RaftRole captures the role of cowsql/raft node.
 type RaftRole = client.NodeRole
