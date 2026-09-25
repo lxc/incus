@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
@@ -63,38 +64,11 @@ const (
 	ClusterMemberStateRestoring  = 4
 )
 
+type NodeInfo = cowsqldb.NodeInfo
+
 // NodeInfo holds information about a single member in a cluster.
-type NodeInfo struct {
-	ID            int64             // Stable node identifier
-	Name          string            // User-assigned name of the node
-	Address       string            // Network address of the node
-	Description   string            // Node description (optional)
-	Schema        int               // Schema version of the daemon running the member
-	APIExtensions int               // Number of API extensions of the daemon running the member
-	Heartbeat     time.Time         // Timestamp of the last heartbeat
-	Roles         []ClusterRole     // List of cluster roles
-	Architecture  int               // Node architecture
-	State         int               // Node state
-	Config        map[string]string // Configuration for the node
-	Groups        []string          // Cluster groups
-
-	// heartbeatRefTime is the time at which the node row was read from the
-	// database. It is used as the reference time for IsOffline so that a
-	// long-running transaction (during which the heartbeat snapshot cannot be
-	// refreshed) doesn't incorrectly classify members as offline just because
-	// the transaction has been open longer than the offline threshold.
-	heartbeatRefTime time.Time
-}
-
-// IsOffline returns true if the last successful heartbeat time of the node is
-// older than the given threshold.
-//
-// The check uses the time at which this NodeInfo was read from the database as
-// the reference point (if known), rather than time.Now(). This avoids false
-// positives when the caller is operating inside a long-running transaction
-// where the heartbeat snapshot can't be refreshed.
-func (n NodeInfo) IsOffline(threshold time.Duration) bool {
-	return nodeIsOffline(threshold, n.Heartbeat, n.heartbeatRefTime)
+type APINodeInfo struct {
+	NodeInfo
 }
 
 // NodeInfoArgs provides information about the cluster environment for use with NodeInfo.ToAPI().
@@ -108,7 +82,7 @@ type NodeInfoArgs struct {
 }
 
 // ToAPI returns an API entry.
-func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (*api.ClusterMember, error) {
+func (n APINodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (*api.ClusterMember, error) {
 	var err error
 	var failureDomain string
 
@@ -205,7 +179,7 @@ func (n NodeInfo) ToAPI(ctx context.Context, tx *ClusterTx, args NodeInfoArgs) (
 
 // Version returns the node's version, composed by its schema level and
 // number of extensions.
-func (n NodeInfo) Version() [2]int {
+func (n APINodeInfo) Version() [2]int {
 	return [2]int{n.Schema, n.APIExtensions}
 }
 
@@ -374,7 +348,7 @@ func (c *ClusterTx) NodeIsOutdated(ctx context.Context) (bool, error) {
 	ver := [2]int{}
 	for _, node := range nodes {
 		if node.ID == c.nodeID {
-			ver = node.Version()
+			ver = APINodeInfo{NodeInfo: node}.Version()
 		}
 	}
 	if ver[0] == 0 || ver[1] == 0 {
@@ -387,7 +361,7 @@ func (c *ClusterTx) NodeIsOutdated(ctx context.Context) (bool, error) {
 			continue
 		}
 
-		n, err := localUtil.CompareVersions(node.Version(), ver, true)
+		n, err := localUtil.CompareVersions(APINodeInfo{NodeInfo: node}.Version(), ver, true)
 		if err != nil {
 			return false, fmt.Errorf("Failed to compare with version of member %s: %w", node.Name, err)
 		}
@@ -553,7 +527,8 @@ JOIN cluster_groups ON cluster_groups.id = nodes_cluster_groups.group_id`
 	refTime := time.Now()
 	nodes := []NodeInfo{}
 	err = query.Scan(ctx, c.tx, stmt, func(scan func(dest ...any) error) error {
-		node := NodeInfo{heartbeatRefTime: refTime}
+		node := NodeInfo{}
+		node.SetHeartbeatRefTime(refTime)
 		err := scan(&node.ID, &node.Name, &node.Address, &node.Description, &node.Schema, &node.APIExtensions, &node.Heartbeat, &node.Architecture, &node.State)
 		if err != nil {
 			return err
@@ -571,7 +546,10 @@ JOIN cluster_groups ON cluster_groups.id = nodes_cluster_groups.group_id`
 	for i, node := range nodes {
 		roles, ok := nodeRoles[node.ID]
 		if ok {
-			nodes[i].Roles = roles
+			nodes[i].Roles = make([]string, 0, len(roles))
+			for _, r := range roles {
+				nodes[i].Roles = append(nodes[i].Roles, string(r))
+			}
 		}
 	}
 
