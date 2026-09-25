@@ -64,12 +64,18 @@ definitions:
         description: Certificate represents a certificate
         properties:
             certificate:
-                description: The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
+                description: |-
+                    The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
+
+                    API extension: certificate_self_renewal
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
             description:
-                description: Certificate description
+                description: |-
+                    Certificate description
+
+                    API extension: certificate_description
                 example: X509 certificate
                 type: string
                 x-go-name: Description
@@ -85,7 +91,10 @@ definitions:
                 type: string
                 x-go-name: Name
             projects:
-                description: List of allowed projects (applies when restricted)
+                description: |-
+                    List of allowed projects (applies when restricted)
+
+                    API extension: certificate_project
                 example:
                     - default
                     - foo
@@ -95,7 +104,10 @@ definitions:
                 type: array
                 x-go-name: Projects
             restricted:
-                description: Whether to limit the certificate to listed projects
+                description: |-
+                    Whether to limit the certificate to listed projects
+
+                    API extension: certificate_project
                 example: true
                 type: boolean
                 x-go-name: Restricted
@@ -144,12 +156,18 @@ definitions:
         description: CertificatePut represents the modifiable fields of a certificate
         properties:
             certificate:
-                description: The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
+                description: |-
+                    The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
+
+                    API extension: certificate_self_renewal
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
             description:
-                description: Certificate description
+                description: |-
+                    Certificate description
+
+                    API extension: certificate_description
                 example: X509 certificate
                 type: string
                 x-go-name: Description
@@ -159,7 +177,10 @@ definitions:
                 type: string
                 x-go-name: Name
             projects:
-                description: List of allowed projects (applies when restricted)
+                description: |-
+                    List of allowed projects (applies when restricted)
+
+                    API extension: certificate_project
                 example:
                     - default
                     - foo
@@ -169,7 +190,10 @@ definitions:
                 type: array
                 x-go-name: Projects
             restricted:
-                description: Whether to limit the certificate to listed projects
+                description: |-
+                    Whether to limit the certificate to listed projects
+
+                    API extension: certificate_project
                 example: true
                 type: boolean
                 x-go-name: Restricted
@@ -184,12 +208,18 @@ definitions:
         description: CertificatesPost represents the fields of a new certificate
         properties:
             certificate:
-                description: The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
+                description: |-
+                    The certificate itself, as PEM encoded X509 (or as base64 encoded X509 on POST)
+
+                    API extension: certificate_self_renewal
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
             description:
-                description: Certificate description
+                description: |-
+                    Certificate description
+
+                    API extension: certificate_description
                 example: X509 certificate
                 type: string
                 x-go-name: Description
@@ -199,7 +229,10 @@ definitions:
                 type: string
                 x-go-name: Name
             projects:
-                description: List of allowed projects (applies when restricted)
+                description: |-
+                    List of allowed projects (applies when restricted)
+
+                    API extension: certificate_project
                 example:
                     - default
                     - foo
@@ -209,12 +242,18 @@ definitions:
                 type: array
                 x-go-name: Projects
             restricted:
-                description: Whether to limit the certificate to listed projects
+                description: |-
+                    Whether to limit the certificate to listed projects
+
+                    API extension: certificate_project
                 example: true
                 type: boolean
                 x-go-name: Restricted
             token:
-                description: Whether to create a certificate add token
+                description: |-
+                    Whether to create a certificate add token
+
+                    API extension: certificate_token
                 example: true
                 type: boolean
                 x-go-name: Token
@@ -238,7 +277,10 @@ definitions:
                 type: boolean
                 x-go-name: Enabled
             member_config:
-                description: List of member configuration keys (used during join)
+                description: |-
+                    List of member configuration keys (used during join)
+
+                    API extension: clustering_join
                 example: []
                 items:
                     $ref: '#/definitions/ClusterMemberConfigKey'
@@ -289,7 +331,10 @@ definitions:
                 type: string
                 x-go-name: Name
             used_by:
-                description: List of URLs of objects using this cluster group
+                description: |-
+                    List of URLs of objects using this cluster group
+
+                    API extension: cluster_group_usedby.
                 example:
                     - /1.0/cluster/members/server01
                     - /1.0/project/default
@@ -357,33 +402,41 @@ definitions:
     ClusterMember:
         properties:
             architecture:
-                description: The primary architecture of the cluster member
+                description: |-
+                    The primary architecture of the cluster member
+
+                    API extension: clustering_architecture
                 example: x86_64
                 type: string
                 x-go-name: Architecture
             config:
-                description: Additional configuration information
-                example:
-                    scheduler.instance: all
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             database:
                 description: Whether the cluster member is a database server
                 example: true
                 type: boolean
                 x-go-name: Database
             description:
-                description: Cluster member description
+                description: |-
+                    Cluster member description
+
+                    API extension: clustering_description
                 example: AMD Epyc 32c/64t
                 type: string
                 x-go-name: Description
             failure_domain:
-                description: Name of the failure domain for this cluster member
+                description: |-
+                    Name of the failure domain for this cluster member
+
+                    API extension: clustering_failure_domains
                 example: rack1
                 type: string
                 x-go-name: FailureDomain
             groups:
-                description: List of cluster groups this member belongs to
+                description: |-
+                    List of cluster groups this member belongs to
+
+                    API extension: clustering_groups
                 example:
                     - group1
                     - group2
@@ -397,7 +450,10 @@ definitions:
                 type: string
                 x-go-name: Message
             roles:
-                description: List of roles held by this cluster member
+                description: |-
+                    List of roles held by this cluster member
+
+                    API extension: clustering_roles
                 example:
                     - database
                 items:
@@ -506,23 +562,28 @@ definitions:
         description: ClusterMemberPut represents the modifiable fields of a cluster member
         properties:
             config:
-                description: Additional configuration information
-                example:
-                    scheduler.instance: all
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Cluster member description
+                description: |-
+                    Cluster member description
+
+                    API extension: clustering_description
                 example: AMD Epyc 32c/64t
                 type: string
                 x-go-name: Description
             failure_domain:
-                description: Name of the failure domain for this cluster member
+                description: |-
+                    Name of the failure domain for this cluster member
+
+                    API extension: clustering_failure_domains
                 example: rack1
                 type: string
                 x-go-name: FailureDomain
             groups:
-                description: List of cluster groups this member belongs to
+                description: |-
+                    List of cluster groups this member belongs to
+
+                    API extension: clustering_groups
                 example:
                     - group1
                     - group2
@@ -531,7 +592,10 @@ definitions:
                 type: array
                 x-go-name: Groups
             roles:
-                description: List of roles held by this cluster member
+                description: |-
+                    List of roles held by this cluster member
+
+                    API extension: clustering_roles
                 example:
                     - database
                 items:
@@ -560,7 +624,10 @@ definitions:
                 type: string
                 x-go-name: Action
             mode:
-                description: Override the configured evacuation mode.
+                description: |-
+                    Override the configured evacuation mode.
+
+                    API extension: clustering_evacuate_mode
                 example: stop
                 type: string
                 x-go-name: Mode
@@ -633,7 +700,10 @@ definitions:
                 type: string
                 x-go-name: ClusterCertificate
             cluster_token:
-                description: The cluster join token for the cluster you're trying to join
+                description: |-
+                    The cluster join token for the cluster you're trying to join
+
+                    API extension: clustering_join
                 example: blah
                 type: string
                 x-go-name: ClusterToken
@@ -643,14 +713,20 @@ definitions:
                 type: boolean
                 x-go-name: Enabled
             member_config:
-                description: List of member configuration keys (used during join)
+                description: |-
+                    List of member configuration keys (used during join)
+
+                    API extension: clustering_join
                 example: []
                 items:
                     $ref: '#/definitions/ClusterMemberConfigKey'
                 type: array
                 x-go-name: MemberConfig
             server_address:
-                description: The local address to use for cluster communication
+                description: |-
+                    The local address to use for cluster communication
+
+                    API extension: clustering_join
                 example: 10.0.0.2:8443
                 type: string
                 x-go-name: ServerAddress
@@ -663,8 +739,6 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     ConfigMap:
-        additionalProperties:
-            type: string
         description: |-
             ConfigMap type is used to hold incus config. In contrast to plain
             map[string]string it provides unmarshal methods for JSON and YAML, which
@@ -672,10 +746,6 @@ definitions:
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     DevicesMap:
-        additionalProperties:
-            additionalProperties:
-                type: string
-            type: object
         description: |-
             DevicesMap type is used to hold incus devices configurations. In contrast to
             plain map[string]map[string]string it provides unmarshal methods for JSON and
@@ -686,20 +756,22 @@ definitions:
         description: Event represents an event entry (over websocket)
         properties:
             location:
-                description: Originating cluster member
+                description: |-
+                    Originating cluster member
+
+                    API extension: event_location
                 example: server01
                 type: string
                 x-go-name: Location
             metadata:
                 description: JSON encoded metadata (see EventLogging, EventLifecycle or Operation)
-                example:
-                    action: instance-started
-                    context: {}
-                    source: /1.0/instances/c1
-                type: object
+                example: '{"action": "instance-started", "source": "/1.0/instances/c1", "context": {}}'
                 x-go-name: Metadata
             project:
-                description: Project the event belongs to.
+                description: |-
+                    Project the event belongs to.
+
+                    API extension: event_project
                 example: default
                 type: string
                 x-go-name: Project
@@ -747,7 +819,10 @@ definitions:
                 type: string
                 x-go-name: CreatedAt
             expires_at:
-                description: When the image becomes obsolete
+                description: |-
+                    When the image becomes obsolete
+
+                    API extension: images_expiry
                 example: "2025-03-23T20:00:00-04:00"
                 format: date-time
                 type: string
@@ -769,7 +844,10 @@ definitions:
                 type: string
                 x-go-name: LastUsedAt
             profiles:
-                description: List of profiles to use when creating from this image (if none provided by user)
+                description: |-
+                    List of profiles to use when creating from this image (if none provided by user)
+
+                    API extension: image_profiles
                 example:
                     - default
                 items:
@@ -777,7 +855,10 @@ definitions:
                 type: array
                 x-go-name: Profiles
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: images_all_projects
                 example: project1
                 type: string
                 x-go-name: Project
@@ -803,7 +884,10 @@ definitions:
                 type: integer
                 x-go-name: Size
             type:
-                description: Type of image (container or virtual-machine)
+                description: |-
+                    Type of image (container or virtual-machine)
+
+                    API extension: image_types
                 example: container
                 type: string
                 x-go-name: Type
@@ -851,7 +935,10 @@ definitions:
                 type: string
                 x-go-name: Target
             type:
-                description: Alias type (container or virtual-machine)
+                description: |-
+                    Alias type (container or virtual-machine)
+
+                    API extension: image_types
                 example: container
                 type: string
                 x-go-name: Type
@@ -901,7 +988,10 @@ definitions:
                 type: string
                 x-go-name: Target
             type:
-                description: Alias type (container or virtual-machine)
+                description: |-
+                    Alias type (container or virtual-machine)
+
+                    API extension: image_types
                 example: container
                 type: string
                 x-go-name: Type
@@ -922,7 +1012,10 @@ definitions:
                 type: string
                 x-go-name: Certificate
             profiles:
-                description: List of profiles to use
+                description: |-
+                    List of profiles to use
+
+                    API extension: image_copy_profile
                 example:
                     - default
                 items:
@@ -930,7 +1023,10 @@ definitions:
                 type: array
                 x-go-name: Profiles
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: image_target_project
                 example: project1
                 type: string
                 x-go-name: Project
@@ -993,12 +1089,18 @@ definitions:
                 type: boolean
                 x-go-name: CreateOnly
             gid:
-                description: The file owner gid.
+                description: |-
+                    The file owner gid.
+
+                    API extension: image_template_permissions
                 example: "1000"
                 type: string
                 x-go-name: GID
             mode:
-                description: The file permissions.
+                description: |-
+                    The file permissions.
+
+                    API extension: image_template_permissions
                 example: "644"
                 type: string
                 x-go-name: Mode
@@ -1016,7 +1118,10 @@ definitions:
                 type: string
                 x-go-name: Template
             uid:
-                description: The file owner uid.
+                description: |-
+                    The file owner uid.
+
+                    API extension: image_template_permissions
                 example: "1000"
                 type: string
                 x-go-name: UID
@@ -1038,13 +1143,19 @@ definitions:
                 type: boolean
                 x-go-name: AutoUpdate
             expires_at:
-                description: When the image becomes obsolete
+                description: |-
+                    When the image becomes obsolete
+
+                    API extension: images_expiry
                 example: "2025-03-23T20:00:00-04:00"
                 format: date-time
                 type: string
                 x-go-name: ExpiresAt
             profiles:
-                description: List of profiles to use when creating from this image (if none provided by user)
+                description: |-
+                    List of profiles to use when creating from this image (if none provided by user)
+
+                    API extension: image_profiles
                 example:
                     - default
                 items:
@@ -1082,7 +1193,10 @@ definitions:
                 type: string
                 x-go-name: Certificate
             image_type:
-                description: Type of image (container or virtual-machine)
+                description: |-
+                    Type of image (container or virtual-machine)
+
+                    API extension: image_types
                 example: container
                 type: string
                 x-go-name: ImageType
@@ -1102,7 +1216,10 @@ definitions:
         description: ImagesPost represents the fields available for a new image
         properties:
             aliases:
-                description: Aliases to add to the image
+                description: |-
+                    Aliases to add to the image
+
+                    API extension: image_create_aliases
                 example:
                     - name: foo
                     - name: bar
@@ -1116,12 +1233,18 @@ definitions:
                 type: boolean
                 x-go-name: AutoUpdate
             compression_algorithm:
-                description: Compression algorithm to use when turning an instance into an image
+                description: |-
+                    Compression algorithm to use when turning an instance into an image
+
+                    API extension: image_compression_algorithm
                 example: gzip
                 type: string
                 x-go-name: CompressionAlgorithm
             expires_at:
-                description: When the image becomes obsolete
+                description: |-
+                    When the image becomes obsolete
+
+                    API extension: images_expiry
                 example: "2025-03-23T20:00:00-04:00"
                 format: date-time
                 type: string
@@ -1132,12 +1255,18 @@ definitions:
                 type: string
                 x-go-name: Filename
             format:
-                description: Type of image format
+                description: |-
+                    Type of image format
+
+                    API extension: instance_publish_split
                 example: split
                 type: string
                 x-go-name: Format
             profiles:
-                description: List of profiles to use when creating from this image (if none provided by user)
+                description: |-
+                    List of profiles to use when creating from this image (if none provided by user)
+
+                    API extension: image_profiles
                 example:
                     - default
                 items:
@@ -1182,7 +1311,10 @@ definitions:
                 type: string
                 x-go-name: Fingerprint
             image_type:
-                description: Type of image (container or virtual-machine)
+                description: |-
+                    Type of image (container or virtual-machine)
+
+                    API extension: image_types
                 example: container
                 type: string
                 x-go-name: ImageType
@@ -1197,7 +1329,10 @@ definitions:
                 type: string
                 x-go-name: Name
             project:
-                description: Source project name
+                description: |-
+                    Source project name
+
+                    API extension: image_source_project
                 example: project1
                 type: string
                 x-go-name: Project
@@ -1246,7 +1381,10 @@ definitions:
                 type: string
                 x-go-name: ClusterCertificatePath
             cluster_token:
-                description: The cluster join token for the cluster you're trying to join
+                description: |-
+                    The cluster join token for the cluster you're trying to join
+
+                    API extension: clustering_join
                 example: blah
                 type: string
                 x-go-name: ClusterToken
@@ -1256,14 +1394,20 @@ definitions:
                 type: boolean
                 x-go-name: Enabled
             member_config:
-                description: List of member configuration keys (used during join)
+                description: |-
+                    List of member configuration keys (used during join)
+
+                    API extension: clustering_join
                 example: []
                 items:
                     $ref: '#/definitions/ClusterMemberConfigKey'
                 type: array
                 x-go-name: MemberConfig
             server_address:
-                description: The local address to use for cluster communication
+                description: |-
+                    The local address to use for cluster communication
+
+                    API extension: clustering_join
                 example: 10.0.0.2:8443
                 type: string
                 x-go-name: ServerAddress
@@ -1278,7 +1422,10 @@ definitions:
     InitLocalPreseed:
         properties:
             certificates:
-                description: Certificates to add
+                description: |-
+                    Certificates to add
+
+                    API extension: init_preseed_certificates.
                 example: PEM encoded certificate
                 items:
                     $ref: '#/definitions/CertificatesPost'
@@ -1294,11 +1441,7 @@ definitions:
                 type: array
                 x-go-name: ClusterGroups
             config:
-                description: Server configuration map (refer to doc/server.md)
-                example:
-                    core.https_address: :8443
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             networks:
                 description: Networks by project to add
                 example: Network on the "default" project
@@ -1328,7 +1471,10 @@ definitions:
                 type: array
                 x-go-name: StoragePools
             storage_volumes:
-                description: Storage Volumes to add
+                description: |-
+                    Storage Volumes to add
+
+                    API extension: init_preseed_storage_volumes.
                 example: local dir storage volume
                 items:
                     $ref: '#/definitions/InitStorageVolumesProjectPost'
@@ -1341,18 +1487,15 @@ definitions:
         properties:
             Project:
                 description: Project in which the network will reside
-                example: '"default"'
+                example: default
                 type: string
             config:
-                description: Network configuration map (refer to doc/networks.md)
-                example:
-                    ipv4.address: 10.0.0.1/24
-                    ipv4.nat: "true"
-                    ipv6.address: none
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the profile
+                description: |-
+                    Description of the profile
+
+                    API extension: entity_description
                 example: My new bridge
                 type: string
                 x-go-name: Description
@@ -1372,7 +1515,10 @@ definitions:
     InitPreseed:
         properties:
             certificates:
-                description: Certificates to add
+                description: |-
+                    Certificates to add
+
+                    API extension: init_preseed_certificates.
                 example: PEM encoded certificate
                 items:
                     $ref: '#/definitions/CertificatesPost'
@@ -1390,11 +1536,7 @@ definitions:
                 type: array
                 x-go-name: ClusterGroups
             config:
-                description: Server configuration map (refer to doc/server.md)
-                example:
-                    core.https_address: :8443
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             networks:
                 description: Networks by project to add
                 example: Network on the "default" project
@@ -1424,7 +1566,10 @@ definitions:
                 type: array
                 x-go-name: StoragePools
             storage_volumes:
-                description: Storage Volumes to add
+                description: |-
+                    Storage Volumes to add
+
+                    API extension: init_preseed_storage_volumes.
                 example: local dir storage volume
                 items:
                     $ref: '#/definitions/InitStorageVolumesProjectPost'
@@ -1437,33 +1582,17 @@ definitions:
         properties:
             Project:
                 description: Project in which the profile will reside
-                example: '"default"'
+                example: default
                 type: string
             config:
-                description: Instance configuration map (refer to doc/instances.md)
-                example:
-                    limits.cpu: "4"
-                    limits.memory: 4GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the profile
                 example: Medium size instances
                 type: string
                 x-go-name: Description
             devices:
-                description: List of devices
-                example:
-                    eth0:
-                        name: eth0
-                        network: mybr0
-                        type: nic
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             name:
                 description: The name of the new profile
                 example: foo
@@ -1476,26 +1605,27 @@ definitions:
         properties:
             Pool:
                 description: Storage pool in which the volume will reside
-                example: '"default"'
+                example: default
                 type: string
             Project:
                 description: Project in which the volume will reside
-                example: '"default"'
+                example: default
                 type: string
             config:
-                description: Storage volume configuration map (refer to doc/storage.md)
-                example:
-                    size: 50GiB
-                    zfs.remove_snapshots: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             content_type:
-                description: Volume content type (filesystem or block)
+                description: |-
+                    Volume content type (filesystem or block)
+
+                    API extension: custom_block_volumes
                 example: filesystem
                 type: string
                 x-go-name: ContentType
             description:
-                description: Description of the storage volume
+                description: |-
+                    Description of the storage volume
+
+                    API extension: entity_description
                 example: My custom volume
                 type: string
                 x-go-name: Description
@@ -1505,7 +1635,10 @@ definitions:
                 type: string
                 x-go-name: Name
             restore:
-                description: Name of a snapshot to restore
+                description: |-
+                    Name of a snapshot to restore
+
+                    API extension: storage_api_volume_snapshots
                 example: snap0
                 type: string
                 x-go-name: Restore
@@ -1527,11 +1660,7 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                description: Instance configuration (see doc/instances.md)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             created_at:
                 description: Instance creation timestamp
                 example: "2021-03-23T20:00:00-04:00"
@@ -1544,14 +1673,7 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                description: Instance devices (see doc/instances.md)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             disk_only:
                 description: Whether only the instances disk should be restored
                 example: false
@@ -1563,20 +1685,9 @@ definitions:
                 type: boolean
                 x-go-name: Ephemeral
             expanded_config:
-                description: Expanded configuration (all profiles and local config merged)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: ExpandedConfig
+                $ref: '#/definitions/ConfigMap'
             expanded_devices:
-                description: Expanded devices (all profiles and local devices merged)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: ExpandedDevices
+                $ref: '#/definitions/DevicesMap'
             last_used_at:
                 description: Last start timestamp
                 example: "2021-03-23T20:00:00-04:00"
@@ -1602,7 +1713,10 @@ definitions:
                 type: array
                 x-go-name: Profiles
             project:
-                description: Instance project name
+                description: |-
+                    Instance project name
+
+                    API extension: instance_all_projects
                 example: foo
                 type: string
                 x-go-name: Project
@@ -1676,7 +1790,10 @@ definitions:
     InstanceBackupsPost:
         properties:
             compression_algorithm:
-                description: What compression algorithm to use
+                description: |-
+                    What compression algorithm to use
+
+                    API extension: backup_compression_algorithm
                 example: gzip
                 type: string
                 x-go-name: CompressionAlgorithm
@@ -1709,7 +1826,10 @@ definitions:
     InstanceConsolePost:
         properties:
             force:
-                description: Forces a connection to the console
+                description: |-
+                    Forces a connection to the console
+
+                    API extension: console_force
                 example: true
                 type: boolean
                 x-go-name: Force
@@ -1720,7 +1840,10 @@ definitions:
                 type: integer
                 x-go-name: Height
             type:
-                description: Type of console to attach to (console or vga)
+                description: |-
+                    Type of console to attach to (console or vga)
+
+                    API extension: console_vga_type
                 example: console
                 type: string
                 x-go-name: Type
@@ -1821,11 +1944,7 @@ definitions:
                 type: array
                 x-go-name: Backups
             config:
-                description: Instance configuration (see doc/instances.md)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             created_at:
                 description: Instance creation timestamp
                 example: "2021-03-23T20:00:00-04:00"
@@ -1838,14 +1957,7 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                description: Instance devices (see doc/instances.md)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             disk_only:
                 description: Whether only the instances disk should be restored
                 example: false
@@ -1857,20 +1969,9 @@ definitions:
                 type: boolean
                 x-go-name: Ephemeral
             expanded_config:
-                description: Expanded configuration (all profiles and local config merged)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: ExpandedConfig
+                $ref: '#/definitions/ConfigMap'
             expanded_devices:
-                description: Expanded devices (all profiles and local devices merged)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: ExpandedDevices
+                $ref: '#/definitions/DevicesMap'
             last_used_at:
                 description: Last start timestamp
                 example: "2021-03-23T20:00:00-04:00"
@@ -1896,7 +1997,10 @@ definitions:
                 type: array
                 x-go-name: Profiles
             project:
-                description: Instance project name
+                description: |-
+                    Instance project name
+
+                    API extension: instance_all_projects
                 example: foo
                 type: string
                 x-go-name: Project
@@ -1936,27 +2040,24 @@ definitions:
     InstancePost:
         properties:
             Config:
-                description: Instance configuration file.
-                example:
-                    security.nesting: "true"
-                type: object
+                $ref: '#/definitions/ConfigMap'
             Devices:
-                description: Instance devices.
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
+                $ref: '#/definitions/DevicesMap'
             Profiles:
-                description: List of profiles applied to the instance.
+                description: |-
+                    List of profiles applied to the instance.
+
+                    API extension: instance_move_config
                 example:
                     - default
                 items:
                     type: string
                 type: array
             allow_inconsistent:
-                description: AllowInconsistent allow inconsistent copies when migrating.
+                description: |-
+                    AllowInconsistent allow inconsistent copies when migrating.
+
+                    API extension: instance_allow_inconsistent_copy
                 example: false
                 type: boolean
                 x-go-name: AllowInconsistent
@@ -1981,12 +2082,18 @@ definitions:
                 type: string
                 x-go-name: Name
             pool:
-                description: Target pool for local cross-pool move
+                description: |-
+                    Target pool for local cross-pool move
+
+                    API extension: instance_pool_move
                 example: baz
                 type: string
                 x-go-name: Pool
             project:
-                description: Target project for local cross-project move
+                description: |-
+                    Target project for local cross-project move
+
+                    API extension: instance_project_move
                 example: foo
                 type: string
                 x-go-name: Project
@@ -2027,25 +2134,14 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                description: Instance configuration (see doc/instances.md)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Instance description
                 example: My test instance
                 type: string
                 x-go-name: Description
             devices:
-                description: Instance devices (see doc/instances.md)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             disk_only:
                 description: Whether only the instances disk should be restored
                 example: false
@@ -2092,11 +2188,7 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                description: Instance configuration (see doc/instances.md)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             created_at:
                 description: Instance creation timestamp
                 example: "2021-03-23T20:00:00-04:00"
@@ -2109,34 +2201,16 @@ definitions:
                 type: string
                 x-go-name: Description
             devices:
-                description: Instance devices (see doc/instances.md)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             ephemeral:
                 description: Whether the instance is ephemeral (deleted on shutdown)
                 example: false
                 type: boolean
                 x-go-name: Ephemeral
             expanded_config:
-                description: Expanded configuration (all profiles and local config merged)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: ExpandedConfig
+                $ref: '#/definitions/ConfigMap'
             expanded_devices:
-                description: Expanded devices (all profiles and local devices merged)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: ExpandedDevices
+                $ref: '#/definitions/DevicesMap'
             expires_at:
                 description: When the snapshot expires (gets auto-deleted)
                 example: "2021-03-23T17:38:37.753398689-04:00"
@@ -2163,7 +2237,10 @@ definitions:
                 type: array
                 x-go-name: Profiles
             size:
-                description: Size of the snapshot in bytes
+                description: |-
+                    Size of the snapshot in bytes
+
+                    API extension: snapshot_disk_usage
                 example: 143360
                 format: int64
                 type: integer
@@ -2212,7 +2289,10 @@ definitions:
     InstanceSnapshotsPost:
         properties:
             expires_at:
-                description: When the snapshot expires (gets auto-deleted)
+                description: |-
+                    When the snapshot expires (gets auto-deleted)
+
+                    API extension: snapshot_expiry_creation
                 example: "2021-03-23T17:38:37.753398689-04:00"
                 format: date-time
                 type: string
@@ -2238,7 +2318,10 @@ definitions:
                 type: string
                 x-go-name: Alias
             allow_inconsistent:
-                description: Whether to ignore errors when copying (e.g. for volatile files)
+                description: |-
+                    Whether to ignore errors when copying (e.g. for volatile files)
+
+                    API extension: instance_allow_inconsistent_copy
                 example: false
                 type: boolean
                 x-go-name: AllowInconsistent
@@ -2303,7 +2386,10 @@ definitions:
                 type: boolean
                 x-go-name: Refresh
             refresh_exclude_older:
-                description: Whether to exclude source snapshots earlier than latest target snapshot
+                description: |-
+                    Whether to exclude source snapshots earlier than latest target snapshot
+
+                    API extension: custom_volume_refresh_exclude_older_snapshots
                 example: false
                 type: boolean
                 x-go-name: RefreshExcludeOlder
@@ -2392,7 +2478,10 @@ definitions:
     InstanceStateCPU:
         properties:
             allocated_time:
-                description: CPU time available per second, in nanoseconds
+                description: |-
+                    CPU time available per second, in nanoseconds
+
+                    API extension: instance_state_cpu_time
                 example: 4000000000
                 format: int64
                 type: integer
@@ -2409,7 +2498,10 @@ definitions:
     InstanceStateDisk:
         properties:
             total:
-                description: Total size in bytes
+                description: |-
+                    Total size in bytes
+
+                    API extension: instances_state_total
                 example: 502239232
                 format: int64
                 type: integer
@@ -2438,7 +2530,10 @@ definitions:
                 type: integer
                 x-go-name: SwapUsagePeak
             total:
-                description: Total memory size in bytes
+                description: |-
+                    Total memory size in bytes
+
+                    API extension: instances_state_total
                 example: 12297557
                 format: int64
                 type: integer
@@ -2647,25 +2742,14 @@ definitions:
                 type: string
                 x-go-name: Architecture
             config:
-                description: Instance configuration (see doc/instances.md)
-                example:
-                    security.nesting: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Instance description
                 example: My test instance
                 type: string
                 x-go-name: Description
             devices:
-                description: Instance devices (see doc/instances.md)
-                example:
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             disk_only:
                 description: Whether only the instances disk should be restored
                 example: false
@@ -2702,7 +2786,10 @@ definitions:
             source:
                 $ref: '#/definitions/InstanceSource'
             start:
-                description: Whether to start the instance after creation
+                description: |-
+                    Whether to start the instance after creation
+
+                    API extension: instance_create_start
                 example: true
                 type: boolean
                 x-go-name: Start
@@ -2763,17 +2850,17 @@ definitions:
                 x-go-name: Condition
             defaultdesc:
                 description: DefaultDesc specify default value for configuration
-                example: '"`DHCP on eth0`"'
+                example: '`DHCP on eth0`'
                 type: string
                 x-go-name: Default
             liveupdate:
                 description: LiveUpdate specifies whether the server must be restarted for the option to be updated
-                example: '"no"'
+                example: "no"
                 type: string
                 x-go-name: LiveUpdate
             longdesc:
                 description: LongDesc provides long description for the option
-                example: '"Specify the kernel modules as a comma-separated list."'
+                example: Specify the kernel modules as a comma-separated list.
                 type: string
                 x-go-name: LongDescription
             scope:
@@ -2783,7 +2870,7 @@ definitions:
                 x-go-name: Scope
             shortdesc:
                 description: ShortDesc provides short description for the configuration
-                example: '"Kernel modules to load before starting the instance"'
+                example: Kernel modules to load before starting the instance
                 type: string
                 x-go-name: Description
             type:
@@ -2804,20 +2891,20 @@ definitions:
         description: Network represents a network
         properties:
             config:
-                description: Network configuration map (refer to doc/networks.md)
-                example:
-                    ipv4.address: 10.0.0.1/24
-                    ipv4.nat: "true"
-                    ipv6.address: none
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the profile
+                description: |-
+                    Description of the profile
+
+                    API extension: entity_description
                 example: My new bridge
                 type: string
                 x-go-name: Description
             locations:
-                description: Cluster members on which the network has been defined
+                description: |-
+                    Cluster members on which the network has been defined
+
+                    API extension: clustering
                 example:
                     - server01
                     - server02
@@ -2828,7 +2915,10 @@ definitions:
                 type: array
                 x-go-name: Locations
             managed:
-                description: Whether this is a managed network
+                description: |-
+                    Whether this is a managed network
+
+                    API extension: network
                 example: true
                 readOnly: true
                 type: boolean
@@ -2840,12 +2930,18 @@ definitions:
                 type: string
                 x-go-name: Name
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: networks_all_projects
                 example: project1
                 type: string
                 x-go-name: Project
             status:
-                description: The state of the network (for managed network in clusters)
+                description: |-
+                    The state of the network (for managed network in clusters)
+
+                    API extension: clustering
                 example: Created
                 readOnly: true
                 type: string
@@ -2871,11 +2967,7 @@ definitions:
     NetworkACL:
         properties:
             config:
-                description: ACL configuration map (refer to doc/network-acls.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the ACL
                 example: Web servers
@@ -2899,7 +2991,10 @@ definitions:
                 type: string
                 x-go-name: Name
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: network_acls_all_projects
                 example: project1
                 type: string
                 x-go-name: Project
@@ -2930,11 +3025,7 @@ definitions:
     NetworkACLPut:
         properties:
             config:
-                description: ACL configuration map (refer to doc/network-acls.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the ACL
                 example: Web servers
@@ -3014,11 +3105,7 @@ definitions:
     NetworkACLsPost:
         properties:
             config:
-                description: ACL configuration map (refer to doc/network-acls.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the ACL
                 example: Web servers
@@ -3057,11 +3144,7 @@ definitions:
                 type: array
                 x-go-name: Addresses
             config:
-                description: Address set configuration map (refer to doc/network-address-sets.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the address set
                 example: Web servers
@@ -3069,7 +3152,7 @@ definitions:
                 x-go-name: Description
             name:
                 description: The new name of the address set
-                example: '"bar"'
+                example: bar
                 type: string
                 x-go-name: Name
             project:
@@ -3095,7 +3178,7 @@ definitions:
         properties:
             name:
                 description: The new name of the address set
-                example: '"bar"'
+                example: bar
                 type: string
                 x-go-name: Name
         title: NetworkAddressSetPost used for renaming an address set.
@@ -3113,11 +3196,7 @@ definitions:
                 type: array
                 x-go-name: Addresses
             config:
-                description: Address set configuration map (refer to doc/network-address-sets.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the address set
                 example: Web servers
@@ -3138,11 +3217,7 @@ definitions:
                 type: array
                 x-go-name: Addresses
             config:
-                description: Address set configuration map (refer to doc/network-address-sets.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the address set
                 example: Web servers
@@ -3150,7 +3225,7 @@ definitions:
                 x-go-name: Description
             name:
                 description: The new name of the address set
-                example: '"bar"'
+                example: bar
                 type: string
                 x-go-name: Name
         title: NetworkAddressSetsPost used for creating a new address set.
@@ -3187,11 +3262,7 @@ definitions:
     NetworkForward:
         properties:
             config:
-                description: Forward configuration map (refer to doc/network-forwards.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the forward listen IP
                 example: My public IP forward
@@ -3235,7 +3306,10 @@ definitions:
                 type: string
                 x-go-name: Protocol
             snat:
-                description: SNAT controls whether to apply a matching SNAT rule to new outgoing traffic from the target
+                description: |-
+                    SNAT controls whether to apply a matching SNAT rule to new outgoing traffic from the target
+
+                    API extension: network_forward_snat
                 example: false
                 type: boolean
                 x-go-name: SNAT
@@ -3255,11 +3329,7 @@ definitions:
         description: NetworkForwardPut represents the modifiable fields of a network address forward
         properties:
             config:
-                description: Forward configuration map (refer to doc/network-forwards.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the forward listen IP
                 example: My public IP forward
@@ -3277,11 +3347,7 @@ definitions:
         description: NetworkForwardsPost represents the fields of a new network address forward
         properties:
             config:
-                description: Forward configuration map (refer to doc/network-forwards.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the forward listen IP
                 example: My public IP forward
@@ -3303,11 +3369,7 @@ definitions:
     NetworkIntegration:
         properties:
             config:
-                description: Integration configuration map (refer to doc/network-integrations.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the network integration
                 example: OVN interconnection for region1
@@ -3350,11 +3412,7 @@ definitions:
         description: NetworkIntegrationPut represents the modifiable fields of a network integration
         properties:
             config:
-                description: Integration configuration map (refer to doc/network-integrations.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the network integration
                 example: OVN interconnection for region1
@@ -3366,11 +3424,7 @@ definitions:
         description: NetworkIntegrationsPost represents the fields of a new network integration
         properties:
             config:
-                description: Integration configuration map (refer to doc/network-integrations.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the network integration
                 example: OVN interconnection for region1
@@ -3407,7 +3461,10 @@ definitions:
                 type: string
                 x-go-name: Hwaddr
             location:
-                description: What cluster member this record was found on
+                description: |-
+                    What cluster member this record was found on
+
+                    API extension: network_leases_location
                 example: server01
                 type: string
                 x-go-name: Location
@@ -3428,11 +3485,7 @@ definitions:
                 type: array
                 x-go-name: Backends
             config:
-                description: Load balancer configuration map (refer to doc/network-load-balancers.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the load balancer listen IP
                 example: My public IP load balancer
@@ -3520,11 +3573,7 @@ definitions:
                 type: array
                 x-go-name: Backends
             config:
-                description: Load balancer configuration map (refer to doc/network-load-balancers.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the load balancer listen IP
                 example: My public IP load balancer
@@ -3586,11 +3635,7 @@ definitions:
                 type: array
                 x-go-name: Backends
             config:
-                description: Load balancer configuration map (refer to doc/network-load-balancers.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the load balancer listen IP
                 example: My public IP load balancer
@@ -3612,11 +3657,7 @@ definitions:
     NetworkPeer:
         properties:
             config:
-                description: Peer configuration map (refer to doc/network-peers.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the peer
                 example: Peering with network1 in project1
@@ -3635,7 +3676,10 @@ definitions:
                 type: string
                 x-go-name: Status
             target_integration:
-                description: Name of the target integration
+                description: |-
+                    Name of the target integration
+
+                    API extension: network_integrations.
                 example: ovn-ic1
                 type: string
                 x-go-name: TargetIntegration
@@ -3652,7 +3696,10 @@ definitions:
                 type: string
                 x-go-name: TargetProject
             type:
-                description: Type of peer
+                description: |-
+                    Type of peer
+
+                    API extension: network_integrations.
                 example: local
                 type: string
                 x-go-name: Type
@@ -3673,11 +3720,7 @@ definitions:
         description: NetworkPeerPut represents the modifiable fields of a network peering
         properties:
             config:
-                description: Peer configuration map (refer to doc/network-peers.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the peer
                 example: Peering with network1 in project1
@@ -3689,11 +3732,7 @@ definitions:
         description: NetworkPeersPost represents the fields of a new network peering
         properties:
             config:
-                description: Peer configuration map (refer to doc/network-peers.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the peer
                 example: Peering with network1 in project1
@@ -3705,7 +3744,10 @@ definitions:
                 type: string
                 x-go-name: Name
             target_integration:
-                description: Name of the target integration
+                description: |-
+                    Name of the target integration
+
+                    API extension: network_integrations.
                 example: ovn-ic1
                 type: string
                 x-go-name: TargetIntegration
@@ -3720,7 +3762,10 @@ definitions:
                 type: string
                 x-go-name: TargetProject
             type:
-                description: Type of peer
+                description: |-
+                    Type of peer
+
+                    API extension: network_integrations.
                 example: local
                 type: string
                 x-go-name: Type
@@ -3740,15 +3785,12 @@ definitions:
         description: NetworkPut represents the modifiable fields of a network
         properties:
             config:
-                description: Network configuration map (refer to doc/networks.md)
-                example:
-                    ipv4.address: 10.0.0.1/24
-                    ipv4.nat: "true"
-                    ipv6.address: none
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the profile
+                description: |-
+                    Description of the profile
+
+                    API extension: entity_description
                 example: My new bridge
                 type: string
                 x-go-name: Description
@@ -3947,23 +3989,35 @@ definitions:
                 type: string
                 x-go-name: Chassis
             logical_router:
-                description: OVN logical router name
+                description: |-
+                    OVN logical router name
+
+                    API extension: network_state_ovn_lr
                 example: incus-net1-lr
                 type: string
                 x-go-name: LogicalRouter
             logical_switch:
-                description: OVN logical switch name
+                description: |-
+                    OVN logical switch name
+
+                    API extension: network_state_ovn_ls
                 example: incus-net1-ls-int
                 type: string
                 x-go-name: LogicalSwitch
             uplink_ipv4:
-                description: OVN network uplink ipv4 address
+                description: |-
+                    OVN network uplink ipv4 address
+
+                    API extension: network_ovn_state_addresses
                 example: 10.0.0.1
                 type: string
                 x-go-name: UplinkIPv4
             uplink_ipv6:
-                description: OVN network uplink ipv6 address
-                example: 2001:0000:130F:0000:0000:09C0:876A:130B.
+                description: |-
+                    OVN network uplink ipv6 address
+
+                    API extension: network_ovn_state_addresses
+                example: 2001:0000:130F:0000:0000:09C0:876A:130B
                 type: string
                 x-go-name: UplinkIPv6
         type: object
@@ -3987,11 +4041,7 @@ definitions:
     NetworkZone:
         properties:
             config:
-                description: Zone configuration map (refer to doc/network-zones.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the network zone
                 example: Internal domain
@@ -4003,7 +4053,10 @@ definitions:
                 type: string
                 x-go-name: Name
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: network_zones_all_projects
                 example: project1
                 type: string
                 x-go-name: Project
@@ -4024,11 +4077,7 @@ definitions:
         description: NetworkZonePut represents the modifiable fields of a network zone
         properties:
             config:
-                description: Zone configuration map (refer to doc/network-zones.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the network zone
                 example: Internal domain
@@ -4039,11 +4088,7 @@ definitions:
     NetworkZoneRecord:
         properties:
             config:
-                description: Advanced configuration for the record
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the record
                 example: SPF record
@@ -4088,11 +4133,7 @@ definitions:
         description: NetworkZoneRecordPut represents the modifiable fields of a network zone record
         properties:
             config:
-                description: Advanced configuration for the record
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the record
                 example: SPF record
@@ -4110,11 +4151,7 @@ definitions:
         description: NetworkZoneRecordsPost represents the fields of a new network zone record
         properties:
             config:
-                description: Advanced configuration for the record
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the record
                 example: SPF record
@@ -4137,11 +4174,7 @@ definitions:
         description: NetworkZonesPost represents the fields of a new network zone
         properties:
             config:
-                description: Zone configuration map (refer to doc/network-zones.md)
-                example:
-                    user.mykey: foo
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the network zone
                 example: Internal domain
@@ -4158,15 +4191,12 @@ definitions:
         description: NetworksPost represents the fields of a new network
         properties:
             config:
-                description: Network configuration map (refer to doc/networks.md)
-                example:
-                    ipv4.address: 10.0.0.1/24
-                    ipv4.nat: "true"
-                    ipv6.address: none
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the profile
+                description: |-
+                    Description of the profile
+
+                    API extension: entity_description
                 example: My new bridge
                 type: string
                 x-go-name: Description
@@ -4212,7 +4242,10 @@ definitions:
                 type: string
                 x-go-name: ID
             location:
-                description: What cluster member this record was found on
+                description: |-
+                    What cluster member this record was found on
+
+                    API extension: operation_location
                 example: server01
                 type: string
                 x-go-name: Location
@@ -4269,30 +4302,14 @@ definitions:
         description: Profile represents a profile
         properties:
             config:
-                description: Instance configuration map (refer to doc/instances.md)
-                example:
-                    limits.cpu: "4"
-                    limits.memory: 4GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the profile
                 example: Medium size instances
                 type: string
                 x-go-name: Description
             devices:
-                description: List of devices
-                example:
-                    eth0:
-                        name: eth0
-                        network: mybr0
-                        type: nic
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             name:
                 description: The profile name
                 example: foo
@@ -4300,12 +4317,18 @@ definitions:
                 type: string
                 x-go-name: Name
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: profiles_all_projects
                 example: project1
                 type: string
                 x-go-name: Project
             used_by:
-                description: List of URLs of objects using this profile
+                description: |-
+                    List of URLs of objects using this profile
+
+                    API extension: profile_usedby
                 example:
                     - /1.0/instances/c1
                     - /1.0/instances/v1
@@ -4330,60 +4353,28 @@ definitions:
         description: ProfilePut represents the modifiable fields of a profile
         properties:
             config:
-                description: Instance configuration map (refer to doc/instances.md)
-                example:
-                    limits.cpu: "4"
-                    limits.memory: 4GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the profile
                 example: Medium size instances
                 type: string
                 x-go-name: Description
             devices:
-                description: List of devices
-                example:
-                    eth0:
-                        name: eth0
-                        network: mybr0
-                        type: nic
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     ProfilesPost:
         description: ProfilesPost represents the fields of a new profile
         properties:
             config:
-                description: Instance configuration map (refer to doc/instances.md)
-                example:
-                    limits.cpu: "4"
-                    limits.memory: 4GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the profile
                 example: Medium size instances
                 type: string
                 x-go-name: Description
             devices:
-                description: List of devices
-                example:
-                    eth0:
-                        name: eth0
-                        network: mybr0
-                        type: nic
-                    root:
-                        path: /
-                        pool: default
-                        type: disk
-                type: object
-                x-go-name: Devices
+                $ref: '#/definitions/DevicesMap'
             name:
                 description: The name of the new profile
                 example: foo
@@ -4395,12 +4386,7 @@ definitions:
         description: Project represents a project
         properties:
             config:
-                description: Project configuration map (refer to doc/projects.md)
-                example:
-                    features.networks: "false"
-                    features.profiles: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the project
                 example: My new project
@@ -4441,12 +4427,7 @@ definitions:
         description: ProjectPut represents the modifiable fields of a project
         properties:
             config:
-                description: Project configuration map (refer to doc/projects.md)
-                example:
-                    features.networks: "false"
-                    features.profiles: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the project
                 example: My new project
@@ -4492,12 +4473,7 @@ definitions:
         description: ProjectsPost represents the fields of a new project
         properties:
             config:
-                description: Project configuration map (refer to doc/projects.md)
-                example:
-                    features.networks: "false"
-                    features.profiles: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
                 description: Description of the project
                 example: My new project
@@ -4539,7 +4515,10 @@ definitions:
         description: ResourcesCPU represents the cpu resources available on the system
         properties:
             architecture:
-                description: Architecture name
+                description: |-
+                    Architecture name
+
+                    API extension: resources_v2
                 example: x86_64
                 type: string
                 x-go-name: Architecture
@@ -4602,13 +4581,19 @@ definitions:
                 type: integer
                 x-go-name: Core
             die:
-                description: What die the CPU is a part of (for chiplet designs)
+                description: |-
+                    What die the CPU is a part of (for chiplet designs)
+
+                    API extension: resources_cpu_core_die
                 example: 0
                 format: uint64
                 type: integer
                 x-go-name: Die
             flags:
-                description: List of CPU flags
+                description: |-
+                    List of CPU flags
+
+                    API extension: resources_cpu_flags
                 example: []
                 items:
                     type: string
@@ -4691,7 +4676,10 @@ definitions:
                 type: integer
                 x-go-name: ID
             isolated:
-                description: Whether the thread has been isolated (outside of normal scheduling)
+                description: |-
+                    Whether the thread has been isolated (outside of normal scheduling)
+
+                    API extension: resource_cpu_isolated
                 example: false
                 type: boolean
                 x-go-name: Isolated
@@ -4749,7 +4737,10 @@ definitions:
             mdev:
                 additionalProperties:
                     $ref: '#/definitions/ResourcesGPUCardMdev'
-                description: Map of available mediated device profiles
+                description: |-
+                    Map of available mediated device profiles
+
+                    API extension: resources_gpu_mdev
                 example: null
                 type: object
                 x-go-name: Mdev
@@ -4779,7 +4770,10 @@ definitions:
             sriov:
                 $ref: '#/definitions/ResourcesGPUCardSRIOV'
             usb_address:
-                description: USB address (for USB cards)
+                description: |-
+                    USB address (for USB cards)
+
+                    API extension: resources_gpu_usb
                 example: "2:7"
                 type: string
                 x-go-name: USBAddress
@@ -4885,12 +4879,18 @@ definitions:
                 type: string
                 x-go-name: Brand
             card_device:
-                description: Card device number
+                description: |-
+                    Card device number
+
+                    API extension: resources_v2
                 example: "195:0"
                 type: string
                 x-go-name: CardDevice
             card_name:
-                description: Card device name
+                description: |-
+                    Card device name
+
+                    API extension: resources_v2
                 example: nvidia0
                 type: string
                 x-go-name: CardName
@@ -4987,7 +4987,10 @@ definitions:
                 type: integer
                 x-go-name: HugepagesUsed
             nodes:
-                description: List of NUMA memory nodes
+                description: |-
+                    List of NUMA memory nodes
+
+                    API extension: resources_v2
                 example: null
                 items:
                     $ref: '#/definitions/ResourcesMemoryNode'
@@ -5073,7 +5076,10 @@ definitions:
                 type: string
                 x-go-name: DriverVersion
             firmware_version:
-                description: Current firmware version
+                description: |-
+                    Current firmware version
+
+                    API extension: resources_network_firmware
                 example: 3.1.100
                 type: string
                 x-go-name: FirmwareVersion
@@ -5107,7 +5113,10 @@ definitions:
             sriov:
                 $ref: '#/definitions/ResourcesNetworkCardSRIOV'
             usb_address:
-                description: USB address (for USB cards)
+                description: |-
+                    USB address (for USB cards)
+
+                    API extension: resources_network_usb
                 example: "2:7"
                 type: string
                 x-go-name: USBAddress
@@ -5115,7 +5124,7 @@ definitions:
                 $ref: '#/definitions/ResourcesNetworkCardVDPA'
             vendor:
                 description: Name of the vendor
-                example: Aquantia Corp.
+                example: Aquantia Corp
                 type: string
                 x-go-name: Vendor
             vendor_id:
@@ -5307,7 +5316,10 @@ definitions:
                 type: string
                 x-go-name: DriverVersion
             iommu_group:
-                description: IOMMU group number
+                description: |-
+                    IOMMU group number
+
+                    API extension: resources_pci_iommu
                 example: 20
                 format: uint64
                 type: integer
@@ -5335,7 +5347,7 @@ definitions:
                 x-go-name: ProductID
             vendor:
                 description: Name of the vendor
-                example: Matrox Electronics Systems Ltd.
+                example: Matrox Electronics Systems Ltd
                 type: string
                 x-go-name: Vendor
             vendor_id:
@@ -5452,7 +5464,10 @@ definitions:
         description: ResourcesStorageDisk represents a disk
         properties:
             block_size:
-                description: Block size
+                description: |-
+                    Block size
+
+                    API extension: resources_disk_sata
                 example: 512
                 format: uint64
                 type: integer
@@ -5463,17 +5478,26 @@ definitions:
                 type: string
                 x-go-name: Device
             device_id:
-                description: Device by-id identifier
+                description: |-
+                    Device by-id identifier
+
+                    API extension: resources_disk_id
                 example: nvme-eui.0000000001000000e4d25cafae2e4c00
                 type: string
                 x-go-name: DeviceID
             device_path:
-                description: Device by-path identifier
+                description: |-
+                    Device by-path identifier
+
+                    API extension: resources_disk_sata
                 example: pci-0000:05:00.0-nvme-1
                 type: string
                 x-go-name: DevicePath
             firmware_version:
-                description: Current firmware version
+                description: |-
+                    Current firmware version
+
+                    API extension: resources_disk_sata
                 example: PSF121C
                 type: string
                 x-go-name: FirmwareVersion
@@ -5500,7 +5524,10 @@ definitions:
                 type: array
                 x-go-name: Partitions
             pci_address:
-                description: PCI address
+                description: |-
+                    PCI address
+
+                    API extension: resources_disk_address
                 example: "0000:05:00.0"
                 type: string
                 x-go-name: PCIAddress
@@ -5515,13 +5542,19 @@ definitions:
                 type: boolean
                 x-go-name: Removable
             rpm:
-                description: Rotation speed (RPM)
+                description: |-
+                    Rotation speed (RPM)
+
+                    API extension: resources_disk_sata
                 example: 0
                 format: uint64
                 type: integer
                 x-go-name: RPM
             serial:
-                description: Serial number
+                description: |-
+                    Serial number
+
+                    API extension: resources_disk_sata
                 example: BTPY63440ARH256D
                 type: string
                 x-go-name: Serial
@@ -5537,7 +5570,10 @@ definitions:
                 type: string
                 x-go-name: Type
             usb_address:
-                description: USB address
+                description: |-
+                    USB address
+
+                    API extension: resources_disk_address
                 example: "3:5"
                 type: string
                 x-go-name: USBAddress
@@ -5794,7 +5830,10 @@ definitions:
                 type: string
                 x-go-name: ProductID
             serial:
-                description: USB serial number
+                description: |-
+                    USB serial number
+
+                    API extension: device_usb_serial.
                 example: DAE005fp
                 type: string
                 x-go-name: Serial
@@ -5893,7 +5932,10 @@ definitions:
                 type: string
                 x-go-name: Auth
             auth_methods:
-                description: List of supported authentication methods
+                description: |-
+                    List of supported authentication methods
+
+                    API extension: macaroon_authentication
                 example:
                     - tls
                 items:
@@ -5902,23 +5944,25 @@ definitions:
                 type: array
                 x-go-name: AuthMethods
             auth_user_method:
-                description: The current API user login method
+                description: |-
+                    The current API user login method
+
+                    API extension: auth_user
                 example: unix
                 readOnly: true
                 type: string
                 x-go-name: AuthUserMethod
             auth_user_name:
-                description: The current API user identifier
+                description: |-
+                    The current API user identifier
+
+                    API extension: auth_user
                 example: uid=201105
                 readOnly: true
                 type: string
                 x-go-name: AuthUserName
             config:
-                description: Server configuration map (refer to doc/server.md)
-                example:
-                    core.https_address: :8443
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             environment:
                 $ref: '#/definitions/ServerEnvironment'
             public:
@@ -5969,7 +6013,10 @@ definitions:
                 type: string
                 x-go-name: DriverVersion
             firewall:
-                description: Current firewall driver
+                description: |-
+                    Current firewall driver
+
+                    API extension: firewall_driver
                 example: nftables
                 type: string
                 x-go-name: Firewall
@@ -5986,7 +6033,10 @@ definitions:
             kernel_features:
                 additionalProperties:
                     type: string
-                description: Map of kernel features that were tested on startup
+                description: |-
+                    Map of kernel features that were tested on startup
+
+                    API extension: kernel_features
                 example:
                     netnsid_getifaddrs: "true"
                     seccomp_listener: "true"
@@ -6000,7 +6050,10 @@ definitions:
             lxc_features:
                 additionalProperties:
                     type: string
-                description: Map of LXC features that were tested on startup
+                description: |-
+                    Map of LXC features that were tested on startup
+
+                    API extension: lxc_features
                 example:
                     cgroup2: "true"
                     devpts_fd: "true"
@@ -6008,17 +6061,26 @@ definitions:
                 type: object
                 x-go-name: LXCFeatures
             os_name:
-                description: Name of the operating system (Linux distribution)
+                description: |-
+                    Name of the operating system (Linux distribution)
+
+                    API extension: api_os
                 example: Ubuntu
                 type: string
                 x-go-name: OSName
             os_version:
-                description: Version of the operating system (Linux distribution)
+                description: |-
+                    Version of the operating system (Linux distribution)
+
+                    API extension: api_os
                 example: "22.04"
                 type: string
                 x-go-name: OSVersion
             project:
-                description: Current project name
+                description: |-
+                    Current project name
+
+                    API extension: projects
                 example: default
                 type: string
                 x-go-name: Project
@@ -6028,7 +6090,10 @@ definitions:
                 type: string
                 x-go-name: Server
             server_clustered:
-                description: Whether the server is part of a cluster
+                description: |-
+                    Whether the server is part of a cluster
+
+                    API extension: clustering
                 example: false
                 type: boolean
                 x-go-name: ServerClustered
@@ -6036,11 +6101,16 @@ definitions:
                 description: |-
                     Mode that the event distribution subsystem is operating in on this server.
                     Either "full-mesh", "hub-server" or "hub-client".
+
+                    API extension: event_hub
                 example: full-mesh
                 type: string
                 x-go-name: ServerEventMode
             server_name:
-                description: Server hostname
+                description: |-
+                    Server hostname
+
+                    API extension: clustering
                 example: castiana
                 type: string
                 x-go-name: ServerName
@@ -6078,26 +6148,31 @@ definitions:
         description: ServerPut represents the modifiable fields of a server configuration
         properties:
             config:
-                description: Server configuration map (refer to doc/server.md)
-                example:
-                    core.https_address: :8443
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
         type: object
         x-go-package: github.com/lxc/incus/v6/shared/api
     ServerStorageDriverInfo:
         description: ServerStorageDriverInfo represents the read-only info about a storage driver
         properties:
             Name:
-                description: Name of the driver
+                description: |-
+                    Name of the driver
+
+                    API extension: server_supported_storage_drivers
                 example: zfs
                 type: string
             Remote:
-                description: Whether the driver has remote volumes
+                description: |-
+                    Whether the driver has remote volumes
+
+                    API extension: server_supported_storage_drivers
                 example: false
                 type: boolean
             Version:
-                description: Version of the driver
+                description: |-
+                    Version of the driver
+
+                    API extension: server_supported_storage_drivers
                 example: 0.8.4-1ubuntu11
                 type: string
         type: object
@@ -6136,7 +6211,10 @@ definitions:
                 type: string
                 x-go-name: Auth
             auth_methods:
-                description: List of supported authentication methods
+                description: |-
+                    List of supported authentication methods
+
+                    API extension: macaroon_authentication
                 example:
                     - tls
                 items:
@@ -6145,11 +6223,7 @@ definitions:
                 type: array
                 x-go-name: AuthMethods
             config:
-                description: Server configuration map (refer to doc/server.md)
-                example:
-                    core.https_address: :8443
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             public:
                 description: Whether the server is public-only (only public endpoints are implemented)
                 example: false
@@ -6167,33 +6241,44 @@ definitions:
         description: StorageBucket represents the fields of a storage pool bucket
         properties:
             config:
-                description: Storage bucket configuration map
-                example:
-                    size: 50GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage bucket
+                description: |-
+                    Description of the storage bucket
+
+                    API extension: storage_buckets
                 example: My custom bucket
                 type: string
                 x-go-name: Description
             location:
-                description: What cluster member this record was found on
+                description: |-
+                    What cluster member this record was found on
+
+                    API extension: storage_buckets
                 example: server01
                 type: string
                 x-go-name: Location
             name:
-                description: Bucket name
+                description: |-
+                    Bucket name
+
+                    API extension: storage_buckets
                 example: foo
                 type: string
                 x-go-name: Name
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: storage_buckets_all_projects
                 example: project1
                 type: string
                 x-go-name: Project
             s3_url:
-                description: Bucket S3 URL
+                description: |-
+                    Bucket S3 URL
+
+                    API extension: storage_buckets
                 example: https://127.0.0.1:8080/foo
                 type: string
                 x-go-name: S3URL
@@ -6261,13 +6346,12 @@ definitions:
                 type: array
                 x-go-name: Backups
             config:
-                description: Storage bucket configuration map
-                example:
-                    size: 50GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage bucket
+                description: |-
+                    Description of the storage bucket
+
+                    API extension: storage_buckets
                 example: My custom bucket
                 type: string
                 x-go-name: Description
@@ -6278,22 +6362,34 @@ definitions:
                 type: array
                 x-go-name: Keys
             location:
-                description: What cluster member this record was found on
+                description: |-
+                    What cluster member this record was found on
+
+                    API extension: storage_buckets
                 example: server01
                 type: string
                 x-go-name: Location
             name:
-                description: Bucket name
+                description: |-
+                    Bucket name
+
+                    API extension: storage_buckets
                 example: foo
                 type: string
                 x-go-name: Name
             project:
-                description: Project name
+                description: |-
+                    Project name
+
+                    API extension: storage_buckets_all_projects
                 example: project1
                 type: string
                 x-go-name: Project
             s3_url:
-                description: Bucket S3 URL
+                description: |-
+                    Bucket S3 URL
+
+                    API extension: storage_buckets
                 example: https://127.0.0.1:8080/foo
                 type: string
                 x-go-name: S3URL
@@ -6304,27 +6400,42 @@ definitions:
         description: StorageBucketKey represents the fields of a storage pool bucket key
         properties:
             access-key:
-                description: Access key
+                description: |-
+                    Access key
+
+                    API extension: storage_buckets
                 example: 33UgkaIBLBIxb7O1
                 type: string
                 x-go-name: AccessKey
             description:
-                description: Description of the storage bucket key
+                description: |-
+                    Description of the storage bucket key
+
+                    API extension: storage_buckets
                 example: My read-only bucket key
                 type: string
                 x-go-name: Description
             name:
-                description: Key name
+                description: |-
+                    Key name
+
+                    API extension: storage_buckets
                 example: my-read-only-key
                 type: string
                 x-go-name: Name
             role:
-                description: Whether the key can perform write actions or not.
+                description: |-
+                    Whether the key can perform write actions or not.
+
+                    API extension: storage_buckets
                 example: read-only
                 type: string
                 x-go-name: Role
             secret-key:
-                description: Secret key
+                description: |-
+                    Secret key
+
+                    API extension: storage_buckets
                 example: kDQD6AOgwHgaQI1UIJBJpPaiLgZuJbq0
                 type: string
                 x-go-name: SecretKey
@@ -6334,22 +6445,34 @@ definitions:
         description: StorageBucketKeyPut represents the modifiable fields of a storage pool bucket key
         properties:
             access-key:
-                description: Access key
+                description: |-
+                    Access key
+
+                    API extension: storage_buckets
                 example: 33UgkaIBLBIxb7O1
                 type: string
                 x-go-name: AccessKey
             description:
-                description: Description of the storage bucket key
+                description: |-
+                    Description of the storage bucket key
+
+                    API extension: storage_buckets
                 example: My read-only bucket key
                 type: string
                 x-go-name: Description
             role:
-                description: Whether the key can perform write actions or not.
+                description: |-
+                    Whether the key can perform write actions or not.
+
+                    API extension: storage_buckets
                 example: read-only
                 type: string
                 x-go-name: Role
             secret-key:
-                description: Secret key
+                description: |-
+                    Secret key
+
+                    API extension: storage_buckets
                 example: kDQD6AOgwHgaQI1UIJBJpPaiLgZuJbq0
                 type: string
                 x-go-name: SecretKey
@@ -6359,27 +6482,42 @@ definitions:
         description: StorageBucketKeysPost represents the fields of a new storage pool bucket key
         properties:
             access-key:
-                description: Access key
+                description: |-
+                    Access key
+
+                    API extension: storage_buckets
                 example: 33UgkaIBLBIxb7O1
                 type: string
                 x-go-name: AccessKey
             description:
-                description: Description of the storage bucket key
+                description: |-
+                    Description of the storage bucket key
+
+                    API extension: storage_buckets
                 example: My read-only bucket key
                 type: string
                 x-go-name: Description
             name:
-                description: Key name
+                description: |-
+                    Key name
+
+                    API extension: storage_buckets
                 example: my-read-only-key
                 type: string
                 x-go-name: Name
             role:
-                description: Whether the key can perform write actions or not.
+                description: |-
+                    Whether the key can perform write actions or not.
+
+                    API extension: storage_buckets
                 example: read-only
                 type: string
                 x-go-name: Role
             secret-key:
-                description: Secret key
+                description: |-
+                    Secret key
+
+                    API extension: storage_buckets
                 example: kDQD6AOgwHgaQI1UIJBJpPaiLgZuJbq0
                 type: string
                 x-go-name: SecretKey
@@ -6389,13 +6527,12 @@ definitions:
         description: StorageBucketPut represents the modifiable fields of a storage pool bucket
         properties:
             config:
-                description: Storage bucket configuration map
-                example:
-                    size: 50GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage bucket
+                description: |-
+                    Description of the storage bucket
+
+                    API extension: storage_buckets
                 example: My custom bucket
                 type: string
                 x-go-name: Description
@@ -6405,18 +6542,20 @@ definitions:
         description: StorageBucketsPost represents the fields of a new storage pool bucket
         properties:
             config:
-                description: Storage bucket configuration map
-                example:
-                    size: 50GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage bucket
+                description: |-
+                    Description of the storage bucket
+
+                    API extension: storage_buckets
                 example: My custom bucket
                 type: string
                 x-go-name: Description
             name:
-                description: Bucket name
+                description: |-
+                    Bucket name
+
+                    API extension: storage_buckets
                 example: foo
                 type: string
                 x-go-name: Name
@@ -6425,14 +6564,12 @@ definitions:
     StoragePool:
         properties:
             config:
-                description: Storage pool configuration map (refer to doc/storage.md)
-                example:
-                    volume.block.filesystem: ext4
-                    volume.size: 50GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage pool
+                description: |-
+                    Description of the storage pool
+
+                    API extension: entity_description
                 example: Local SSD pool
                 type: string
                 x-go-name: Description
@@ -6442,7 +6579,10 @@ definitions:
                 type: string
                 x-go-name: Driver
             locations:
-                description: Cluster members on which the storage pool has been defined
+                description: |-
+                    Cluster members on which the storage pool has been defined
+
+                    API extension: clustering
                 example:
                     - server01
                     - server02
@@ -6458,7 +6598,10 @@ definitions:
                 type: string
                 x-go-name: Name
             status:
-                description: Pool status (Pending, Created, Errored or Unknown)
+                description: |-
+                    Pool status (Pending, Created, Errored or Unknown)
+
+                    API extension: clustering
                 example: Created
                 readOnly: true
                 type: string
@@ -6478,14 +6621,12 @@ definitions:
     StoragePoolPut:
         properties:
             config:
-                description: Storage pool configuration map (refer to doc/storage.md)
-                example:
-                    volume.block.filesystem: ext4
-                    volume.size: 50GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage pool
+                description: |-
+                    Description of the storage pool
+
+                    API extension: entity_description
                 example: Local SSD pool
                 type: string
                 x-go-name: Description
@@ -6505,14 +6646,12 @@ definitions:
         description: StoragePoolsPost represents the fields of a new storage pool
         properties:
             config:
-                description: Storage pool configuration map (refer to doc/storage.md)
-                example:
-                    volume.block.filesystem: ext4
-                    volume.size: 50GiB
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage pool
+                description: |-
+                    Description of the storage pool
+
+                    API extension: entity_description
                 example: Local SSD pool
                 type: string
                 x-go-name: Description
@@ -6531,30 +6670,36 @@ definitions:
     StorageVolume:
         properties:
             config:
-                description: Storage volume configuration map (refer to doc/storage.md)
-                example:
-                    size: 50GiB
-                    zfs.remove_snapshots: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             content_type:
-                description: Volume content type (filesystem or block)
+                description: |-
+                    Volume content type (filesystem or block)
+
+                    API extension: custom_block_volumes
                 example: filesystem
                 type: string
                 x-go-name: ContentType
             created_at:
-                description: Volume creation timestamp
+                description: |-
+                    Volume creation timestamp
+                    API extension: storage_volumes_created_at
                 example: "2021-03-23T20:00:00-04:00"
                 format: date-time
                 type: string
                 x-go-name: CreatedAt
             description:
-                description: Description of the storage volume
+                description: |-
+                    Description of the storage volume
+
+                    API extension: entity_description
                 example: My custom volume
                 type: string
                 x-go-name: Description
             location:
-                description: What cluster member this record was found on
+                description: |-
+                    What cluster member this record was found on
+
+                    API extension: clustering
                 example: server01
                 type: string
                 x-go-name: Location
@@ -6564,12 +6709,18 @@ definitions:
                 type: string
                 x-go-name: Name
             project:
-                description: Project containing the volume.
+                description: |-
+                    Project containing the volume.
+
+                    API extension: storage_volumes_all_projects
                 example: default
                 type: string
                 x-go-name: Project
             restore:
-                description: Name of a snapshot to restore
+                description: |-
+                    Name of a snapshot to restore
+
+                    API extension: storage_api_volume_snapshots
                 example: snap0
                 type: string
                 x-go-name: Restore
@@ -6673,30 +6824,36 @@ definitions:
                 type: array
                 x-go-name: Backups
             config:
-                description: Storage volume configuration map (refer to doc/storage.md)
-                example:
-                    size: 50GiB
-                    zfs.remove_snapshots: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             content_type:
-                description: Volume content type (filesystem or block)
+                description: |-
+                    Volume content type (filesystem or block)
+
+                    API extension: custom_block_volumes
                 example: filesystem
                 type: string
                 x-go-name: ContentType
             created_at:
-                description: Volume creation timestamp
+                description: |-
+                    Volume creation timestamp
+                    API extension: storage_volumes_created_at
                 example: "2021-03-23T20:00:00-04:00"
                 format: date-time
                 type: string
                 x-go-name: CreatedAt
             description:
-                description: Description of the storage volume
+                description: |-
+                    Description of the storage volume
+
+                    API extension: entity_description
                 example: My custom volume
                 type: string
                 x-go-name: Description
             location:
-                description: What cluster member this record was found on
+                description: |-
+                    What cluster member this record was found on
+
+                    API extension: clustering
                 example: server01
                 type: string
                 x-go-name: Location
@@ -6706,12 +6863,18 @@ definitions:
                 type: string
                 x-go-name: Name
             project:
-                description: Project containing the volume.
+                description: |-
+                    Project containing the volume.
+
+                    API extension: storage_volumes_all_projects
                 example: default
                 type: string
                 x-go-name: Project
             restore:
-                description: Name of a snapshot to restore
+                description: |-
+                    Name of a snapshot to restore
+
+                    API extension: storage_api_volume_snapshots
                 example: snap0
                 type: string
                 x-go-name: Restore
@@ -6743,7 +6906,10 @@ definitions:
         description: StorageVolumePost represents the fields required to rename a storage pool volume
         properties:
             migration:
-                description: Initiate volume migration
+                description: |-
+                    Initiate volume migration
+
+                    API extension: storage_api_remote_volume_handling
                 example: false
                 type: boolean
                 x-go-name: Migration
@@ -6753,12 +6919,18 @@ definitions:
                 type: string
                 x-go-name: Name
             pool:
-                description: New storage pool
+                description: |-
+                    New storage pool
+
+                    API extension: storage_api_local_volume_handling
                 example: remote
                 type: string
                 x-go-name: Pool
             project:
-                description: New project name
+                description: |-
+                    New project name
+
+                    API extension: storage_volume_project_move
                 example: foo
                 type: string
                 x-go-name: Project
@@ -6767,7 +6939,10 @@ definitions:
             target:
                 $ref: '#/definitions/StorageVolumePostTarget'
             volume_only:
-                description: Whether snapshots should be discarded (migration only)
+                description: |-
+                    Whether snapshots should be discarded (migration only)
+
+                    API extension: storage_api_remote_volume_snapshots
                 example: false
                 type: boolean
                 x-go-name: VolumeOnly
@@ -6800,19 +6975,20 @@ definitions:
         description: StorageVolumePut represents the modifiable fields of a storage volume
         properties:
             config:
-                description: Storage volume configuration map (refer to doc/storage.md)
-                example:
-                    size: 50GiB
-                    zfs.remove_snapshots: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             description:
-                description: Description of the storage volume
+                description: |-
+                    Description of the storage volume
+
+                    API extension: entity_description
                 example: My custom volume
                 type: string
                 x-go-name: Description
             restore:
-                description: Name of a snapshot to restore
+                description: |-
+                    Name of a snapshot to restore
+
+                    API extension: storage_api_volume_snapshots
                 example: snap0
                 type: string
                 x-go-name: Restore
@@ -6822,19 +6998,19 @@ definitions:
         description: StorageVolumeSnapshot represents a storage volume snapshot
         properties:
             config:
-                description: Storage volume configuration map (refer to doc/storage.md)
-                example:
-                    size: 50GiB
-                    zfs.remove_snapshots: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             content_type:
-                description: The content type (filesystem or block)
+                description: |-
+                    The content type (filesystem or block)
+
+                    API extension: custom_block_volumes
                 example: filesystem
                 type: string
                 x-go-name: ContentType
             created_at:
-                description: Volume snapshot creation timestamp
+                description: |-
+                    Volume snapshot creation timestamp
+                    API extension: storage_volumes_created_at
                 example: "2021-03-23T20:00:00-04:00"
                 format: date-time
                 type: string
@@ -6845,7 +7021,10 @@ definitions:
                 type: string
                 x-go-name: Description
             expires_at:
-                description: When the snapshot expires (gets auto-deleted)
+                description: |-
+                    When the snapshot expires (gets auto-deleted)
+
+                    API extension: custom_volume_snapshot_expiry
                 example: "2021-03-23T17:38:37.753398689-04:00"
                 format: date-time
                 type: string
@@ -6861,7 +7040,10 @@ definitions:
         description: StorageVolumeSnapshotPost represents the fields required to rename/move a storage volume snapshot
         properties:
             migration:
-                description: Initiate volume snapshot migration
+                description: |-
+                    Initiate volume snapshot migration
+
+                    API extension: storage_api_remote_volume_snapshot_copy
                 example: false
                 type: boolean
                 x-go-name: Migration
@@ -6883,7 +7065,10 @@ definitions:
                 type: string
                 x-go-name: Description
             expires_at:
-                description: When the snapshot expires (gets auto-deleted)
+                description: |-
+                    When the snapshot expires (gets auto-deleted)
+
+                    API extension: custom_volume_snapshot_expiry
                 example: "2021-03-23T17:38:37.753398689-04:00"
                 format: date-time
                 type: string
@@ -6894,7 +7079,10 @@ definitions:
         description: StorageVolumeSnapshotsPost represents the fields available for a new storage volume snapshot
         properties:
             expires_at:
-                description: When the snapshot expires (gets auto-deleted)
+                description: |-
+                    When the snapshot expires (gets auto-deleted)
+
+                    API extension: custom_volume_snapshot_expiry
                 example: "2021-03-23T17:38:37.753398689-04:00"
                 format: date-time
                 type: string
@@ -6910,17 +7098,26 @@ definitions:
         description: StorageVolumeSource represents the creation source for a new storage volume
         properties:
             certificate:
-                description: Certificate (for migration)
+                description: |-
+                    Certificate (for migration)
+
+                    API extension: storage_api_remote_volume_handling
                 example: X509 PEM certificate
                 type: string
                 x-go-name: Certificate
             location:
-                description: What cluster member this record was found on
+                description: |-
+                    What cluster member this record was found on
+
+                    API extension: cluster_internal_custom_volume_copy
                 example: server01
                 type: string
                 x-go-name: Location
             mode:
-                description: Whether to use pull or push mode (for migration)
+                description: |-
+                    Whether to use pull or push mode (for migration)
+
+                    API extension: storage_api_remote_volume_handling
                 example: pull
                 type: string
                 x-go-name: Mode
@@ -6930,7 +7127,10 @@ definitions:
                 type: string
                 x-go-name: Name
             operation:
-                description: Remote operation URL (for migration)
+                description: |-
+                    Remote operation URL (for migration)
+
+                    API extension: storage_api_remote_volume_handling
                 example: https://1.2.3.4:8443/1.0/operations/1721ae08-b6a8-416a-9614-3f89302466e1
                 type: string
                 x-go-name: Operation
@@ -6940,24 +7140,36 @@ definitions:
                 type: string
                 x-go-name: Pool
             project:
-                description: Source project name
+                description: |-
+                    Source project name
+
+                    API extension: storage_api_project
                 example: foo
                 type: string
                 x-go-name: Project
             refresh:
-                description: Whether existing destination volume should be refreshed
+                description: |-
+                    Whether existing destination volume should be refreshed
+
+                    API extension: custom_volume_refresh
                 example: false
                 type: boolean
                 x-go-name: Refresh
             refresh_exclude_older:
-                description: Whether to exclude source snapshots earlier than latest target snapshot
+                description: |-
+                    Whether to exclude source snapshots earlier than latest target snapshot
+
+                    API extension: custom_volume_refresh_exclude_older_snapshots
                 example: false
                 type: boolean
                 x-go-name: RefreshExcludeOlder
             secrets:
                 additionalProperties:
                     type: string
-                description: Map of migration websockets (for migration)
+                description: |-
+                    Map of migration websockets (for migration)
+
+                    API extension: storage_api_remote_volume_handling
                 example:
                     rsync: RANDOM-STRING
                 type: object
@@ -6968,7 +7180,10 @@ definitions:
                 type: string
                 x-go-name: Type
             volume_only:
-                description: Whether snapshots should be discarded (for migration)
+                description: |-
+                    Whether snapshots should be discarded (for migration)
+
+                    API extension: storage_api_volume_snapshots
                 example: false
                 type: boolean
                 x-go-name: VolumeOnly
@@ -6985,7 +7200,10 @@ definitions:
         description: StorageVolumeStateUsage represents the disk usage of a volume
         properties:
             total:
-                description: Storage volume size in bytes
+                description: |-
+                    Storage volume size in bytes
+
+                    API extension: storage_volume_state_total
                 example: 5189222192
                 format: int64
                 type: integer
@@ -7002,19 +7220,20 @@ definitions:
         description: StorageVolumesPost represents the fields of a new storage pool volume
         properties:
             config:
-                description: Storage volume configuration map (refer to doc/storage.md)
-                example:
-                    size: 50GiB
-                    zfs.remove_snapshots: "true"
-                type: object
-                x-go-name: Config
+                $ref: '#/definitions/ConfigMap'
             content_type:
-                description: Volume content type (filesystem or block)
+                description: |-
+                    Volume content type (filesystem or block)
+
+                    API extension: custom_block_volumes
                 example: filesystem
                 type: string
                 x-go-name: ContentType
             description:
-                description: Description of the storage volume
+                description: |-
+                    Description of the storage volume
+
+                    API extension: entity_description
                 example: My custom volume
                 type: string
                 x-go-name: Description
@@ -7024,7 +7243,10 @@ definitions:
                 type: string
                 x-go-name: Name
             restore:
-                description: Name of a snapshot to restore
+                description: |-
+                    Name of a snapshot to restore
+
+                    API extension: storage_api_volume_snapshots
                 example: snap0
                 type: string
                 x-go-name: Restore
