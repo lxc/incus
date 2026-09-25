@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster/membership"
+
 	"github.com/lxc/incus/v7/internal/jmap"
 	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/cluster"
@@ -1323,7 +1325,7 @@ func autoRemoveOrphanedOperationsTask(s *state.State) (task.Func, task.Schedule)
 
 		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
-			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			if errors.Is(err, membership.ErrNodeIsNotClustered) {
 				return // No error if not clustered.
 			}
 

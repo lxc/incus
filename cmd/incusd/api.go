@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lxc/incus/v7/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
 	clusterRequest "github.com/lxc/incus/v7/internal/server/cluster/request"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -135,7 +136,7 @@ func restServer(d *Daemon) *http.Server {
 		}
 	})
 
-	for endpoint, f := range d.gateway.HandlerFuncs(d.heartbeatHandler, d.getTrustedCertificates) {
+	for endpoint, f := range d.gateway.HandlerFuncs(d.gatewayAccess) {
 		router.HandleFunc(endpoint, f)
 	}
 
@@ -211,7 +212,7 @@ func metricsServer(d *Daemon) *http.Server {
 		_ = response.SyncResponse(true, []string{"/1.0"}).Render(w)
 	})
 
-	for endpoint, f := range d.gateway.HandlerFuncs(d.heartbeatHandler, d.getTrustedCertificates) {
+	for endpoint, f := range d.gateway.HandlerFuncs(d.gatewayAccess) {
 		router.HandleFunc(endpoint, f)
 	}
 
@@ -496,4 +497,21 @@ func (httpFS documentationHTTPDir) Open(name string) (http.File, error) {
 	}
 
 	return fsFile, err
+}
+
+func (d *Daemon) gatewayAccess(w http.ResponseWriter, r *http.Request) bool {
+	certs, err := d.getTrustedServerCertificates()
+	if err != nil {
+		http.Error(w, "403 failed to read trusted certificate cache", http.StatusForbidden)
+
+		return false
+	}
+
+	if !cluster.CheckCert(r, d.endpoints.NetworkCert(), d.serverCert(), certs) {
+		http.Error(w, "403 invalid client certificate", http.StatusForbidden)
+
+		return false
+	}
+
+	return true
 }

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	linstorClient "github.com/LINBIT/golinstor/client"
+	"github.com/cowsql/go-cowsql/cluster/membership"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -245,8 +246,13 @@ func patchClusteringServerCertTrust(name string, d *Daemon) error {
 	}
 	// Update our own entry in the nodes table.
 	logger.Infof("Adding local server certificate to global trust store for %q patch", name)
+	serverCertx509, err := serverCert.PublicKeyX509()
+	if err != nil {
+		return err
+	}
+
 	err = d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return cluster.EnsureServerCertificateTrusted(serverName, serverCert, tx)
+		return cluster.EnsureServerCertificateTrusted(serverName, serverCertx509, tx)
 	})
 	if err != nil {
 		return err
@@ -412,7 +418,7 @@ func patchDBNodesAutoInc(name string, d *Daemon) error {
 
 		leaderAddress, err := s.Cluster.LeaderAddress()
 		if err != nil {
-			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			if errors.Is(err, membership.ErrNodeIsNotClustered) {
 				break // Apply change on standalone node.
 			}
 
@@ -905,7 +911,7 @@ func patchStorageRenameCustomISOBlockVolumes(_ string, d *Daemon) error {
 	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		// If we're not clustered, we're the leader.
-		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+		if !errors.Is(err, membership.ErrNodeIsNotClustered) {
 			return err
 		}
 
@@ -1472,7 +1478,7 @@ func patchNetworkOVNPortGroups(_ string, d *Daemon) error {
 	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		// If we're not clustered, we're the leader.
-		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+		if !errors.Is(err, membership.ErrNodeIsNotClustered) {
 			return err
 		}
 
@@ -2073,7 +2079,7 @@ func patchNetworkOVNL2ProxyARPProxy(_ string, d *Daemon) error {
 	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		// If we're not clustered, we're the leader.
-		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+		if !errors.Is(err, membership.ErrNodeIsNotClustered) {
 			return err
 		}
 
@@ -2234,7 +2240,7 @@ func patchNetworkOVNACLAddressSets(_ string, d *Daemon) error {
 	leaderAddress, err := s.Cluster.LeaderAddress()
 	if err != nil {
 		// If we're not clustered, we're the leader.
-		if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+		if !errors.Is(err, membership.ErrNodeIsNotClustered) {
 			return err
 		}
 

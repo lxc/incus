@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 
+	cowsqlcluster "github.com/cowsql/go-cowsql/cluster"
+
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/server/acme"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -100,7 +102,7 @@ func clusterCertificatePut(d *Daemon, r *http.Request) response.Response {
 	return response.EmptySyncResponse
 }
 
-func updateClusterCertificate(ctx context.Context, s *state.State, gateway *cluster.Gateway, r *http.Request, req api.ClusterCertificatePut) error {
+func updateClusterCertificate(ctx context.Context, s *state.State, gateway cowsqlcluster.Gateway, r *http.Request, req api.ClusterCertificatePut) error {
 	reverter := revert.New()
 	defer reverter.Fail()
 
