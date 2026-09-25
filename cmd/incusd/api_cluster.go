@@ -2789,9 +2789,9 @@ func handoverMemberRole(s *state.State, gateway cowsqlcluster.Gateway) error {
 		if leader == localClusterAddress {
 			logger.Info("Transferring leadership", logCtx)
 			ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
-			defer cancel()
 
 			err = gateway.TransferLeadership(ctx)
+			cancel()
 			if err != nil {
 				err = fmt.Errorf("Failed to transfer leadership: %w", err)
 

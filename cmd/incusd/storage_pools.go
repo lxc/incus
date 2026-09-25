@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/cowsql/go-cowsql/cluster/membership"
+
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/filter"
 	"github.com/lxc/incus/v7/internal/server/auth"

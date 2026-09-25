@@ -15,6 +15,7 @@ import (
 	"time"
 
 	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
+
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
@@ -64,9 +65,10 @@ const (
 	ClusterMemberStateRestoring  = 4
 )
 
+// NodeInfo is a convenience to avoid explicitly importing cowsqldb everywhere NodeInfo is used.
 type NodeInfo = cowsqldb.NodeInfo
 
-// NodeInfo holds information about a single member in a cluster.
+// APINodeInfo holds information about a single member in a cluster.
 type APINodeInfo struct {
 	NodeInfo
 }

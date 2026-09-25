@@ -36,6 +36,7 @@ type Node struct {
 	dir     string // Reference to the directory where the database file lives.
 }
 
+// BeginTx implements [transaction.DB].
 func (n *Node) BeginTx(ctx context.Context) (transaction.TX, error) {
 	tx, err := query.BeginTx(ctx, n.DB)
 	if err != nil {
@@ -118,12 +119,14 @@ type Cluster struct {
 	closingCtx context.Context
 }
 
+// StartTx records a read lock to manage transaction exclusivity.
 func (c *Cluster) StartTx(exclusive bool) {
 	if !exclusive {
 		c.mu.RLock()
 	}
 }
 
+// ReleaseTx releases the lock obtained by exclusive and non-exclusive transactions.
 func (c *Cluster) ReleaseTx(exclusive bool) {
 	if !exclusive {
 		c.mu.RUnlock()
@@ -132,6 +135,7 @@ func (c *Cluster) ReleaseTx(exclusive bool) {
 	}
 }
 
+// BeginTx implements [transaction.DB].
 func (c *Cluster) BeginTx(ctx context.Context) (transaction.TX, error) {
 	tx, err := query.BeginTx(ctx, c.DB)
 	if err != nil {
