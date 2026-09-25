@@ -5,20 +5,20 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster/membership"
 	"github.com/cowsql/go-cowsql/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lxc/incus/v7/internal/server/certificate"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/endpoints"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
@@ -41,17 +41,8 @@ func TestBootstrap_UnmetPreconditions(t *testing.T) {
 		error string
 	}{
 		{
-			func(f *membershipFixtures) {
-				f.ClusterAddress("1.2.3.4:666")
-				f.RaftNode("5.6.7.8:666")
-				filename := filepath.Join(f.state.OS.VarDir, "cluster.crt")
-				_ = os.WriteFile(filename, []byte{}, 0o644)
-			},
-			"Inconsistent state: found leftover cluster certificate",
-		},
-		{
 			func(*membershipFixtures) {},
-			"No cluster.https_address config is set on this member",
+			"No cluster address config is set on this member",
 		},
 		{
 			func(f *membershipFixtures) {
@@ -64,14 +55,14 @@ func TestBootstrap_UnmetPreconditions(t *testing.T) {
 			func(f *membershipFixtures) {
 				f.RaftNode("5.6.7.8:666")
 			},
-			"Inconsistent state: found leftover entries in raft_nodes",
+			"Inconsistent state: found leftover entries in member cache",
 		},
 		{
 			func(f *membershipFixtures) {
 				f.ClusterAddress("1.2.3.4:666")
 				f.ClusterNode("5.6.7.8:666")
 			},
-			"Inconsistent state: Found leftover entries in cluster members",
+			"Inconsistent state: Found leftover cluster members",
 		},
 	}
 
@@ -86,9 +77,10 @@ func TestBootstrap_UnmetPreconditions(t *testing.T) {
 			state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 			gateway := newGateway(t, state.DB.Node, serverCert, state)
-			defer func() { _ = gateway.Shutdown() }()
+			cluster.SetClusterDB(gateway, state.DB.Cluster)
+			defer func() { _ = gateway.ShutdownServer() }()
 
-			err := cluster.Bootstrap(state, gateway, "buzz")
+			err := membership.Bootstrap(gateway, "buzz")
 			assert.EqualError(t, err, c.error)
 		})
 	}
@@ -102,7 +94,8 @@ func TestBootstrap(t *testing.T) {
 	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, s.DB.Node, serverCert, s)
-	defer func() { _ = gateway.Shutdown() }()
+	cluster.SetClusterDB(gateway, s.DB.Cluster)
+	defer func() { _ = gateway.ShutdownServer() }()
 
 	mux := http.NewServeMux()
 	server := newServer(serverCert, mux)
@@ -112,7 +105,10 @@ func TestBootstrap(t *testing.T) {
 	f := &membershipFixtures{t: t, state: s}
 	f.ClusterAddress(address)
 
-	err := cluster.Bootstrap(s, gateway, "buzz")
+	// Initialize Endpoints so the gateway thinks we're listening.
+	s.Endpoints = &endpoints.Endpoints{}
+
+	err := membership.Bootstrap(gateway, "buzz")
 	require.NoError(t, err)
 
 	// The node-local database has now an entry in the raft_nodes table
@@ -141,15 +137,15 @@ func TestBootstrap(t *testing.T) {
 	assert.True(t, util.PathExists(filepath.Join(s.OS.VarDir, "cluster.crt")))
 
 	// The cowsql driver is now exposed over the network.
-	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
+	for path, handler := range gateway.HandlerFuncs(gatewayAccess(t, gateway, nil)) {
 		mux.HandleFunc(path, handler)
 	}
 
-	count, err := cluster.Count(s)
+	count, err := membership.Count(gateway)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 
-	enabled, err := cluster.Enabled(s.DB.Node)
+	enabled, err := membership.Enabled(gateway.Node())
 	require.NoError(t, err)
 	assert.True(t, enabled)
 }
@@ -200,7 +196,7 @@ func TestAccept_UnmetPreconditions(t *testing.T) {
 			func(f *membershipFixtures) {
 				f.ClusterNode("5.6.7.8:666")
 			},
-			fmt.Sprintf("The joining server version doesn't match (expected %s with DB schema %d)", version.Version, cluster.SchemaVersion-1),
+			fmt.Sprintf("The joining server version doesn't match (expected %s with DB schema %d, got %d)", version.Version, cluster.SchemaVersion, cluster.SchemaVersion-1),
 		},
 		{
 			"buzz",
@@ -223,11 +219,14 @@ func TestAccept_UnmetPreconditions(t *testing.T) {
 			state.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 			gateway := newGateway(t, state.DB.Node, serverCert, state)
-			defer func() { _ = gateway.Shutdown() }()
+			defer func() { _ = gateway.ShutdownServer() }()
 
 			c.setup(&membershipFixtures{t: t, state: state})
 
-			_, err := cluster.Accept(state, gateway, c.name, c.address, c.schema, c.api, osarch.ARCH_64BIT_INTEL_X86)
+			serverCertx509, err := serverCert.PublicKeyX509()
+			require.NoError(t, err)
+
+			_, err = membership.Accept(gateway, serverCertx509, c.name, c.address, c.schema, c.api, osarch.ARCH_64BIT_INTEL_X86)
 			assert.EqualError(t, err, c.error)
 		})
 	}
@@ -242,7 +241,7 @@ func TestAccept(t *testing.T) {
 	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, s.DB.Node, serverCert, s)
-	defer func() { _ = gateway.Shutdown() }()
+	defer func() { _ = gateway.ShutdownServer() }()
 
 	f := &membershipFixtures{t: t, state: s}
 	f.RaftNode("1.2.3.4:666")
@@ -266,8 +265,11 @@ func TestAccept(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	nodes, err := cluster.Accept(
-		s, gateway, "buzz", "5.6.7.8:666", cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
+	serverCertx509, err := serverCert.PublicKeyX509()
+	require.NoError(t, err)
+
+	nodes, err := membership.Accept(
+		gateway, serverCertx509, "buzz", "5.6.7.8:666", cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
 	)
 	assert.NoError(t, err)
 	assert.Len(t, nodes, 2)
@@ -290,20 +292,18 @@ func TestJoin(t *testing.T) {
 	targetState.ServerCert = func() *localtls.CertInfo { return targetCert }
 
 	targetGateway := newGateway(t, targetState.DB.Node, targetCert, targetState)
-	defer func() { _ = targetGateway.Shutdown() }()
+	defer func() { _ = targetGateway.ShutdownServer() }()
 
 	altServerCert := tlstest.TestingAltKeyPair(t)
 	trustedAltServerCert, _ := x509.ParseCertificate(altServerCert.KeyPair().Certificate[0])
 
-	trustedCerts := func() (map[certificate.Type]map[string]x509.Certificate, error) {
-		return map[certificate.Type]map[string]x509.Certificate{
-			certificate.TypeServer: {
-				altServerCert.Fingerprint(): *trustedAltServerCert,
-			},
+	trustedCerts := func() (map[string]x509.Certificate, error) {
+		return map[string]x509.Certificate{
+			altServerCert.Fingerprint(): *trustedAltServerCert,
 		}, nil
 	}
 
-	for path, handler := range targetGateway.HandlerFuncs(nil, trustedCerts) {
+	for path, handler := range targetGateway.HandlerFuncs(gatewayAccess(t, targetGateway, trustedCerts)) {
 		targetMux.HandleFunc(path, handler)
 	}
 
@@ -341,7 +341,8 @@ func TestJoin(t *testing.T) {
 	targetF := &membershipFixtures{t: t, state: targetState}
 	targetF.ClusterAddress(targetAddress)
 
-	err = cluster.Bootstrap(targetState, targetGateway, "buzz")
+	cluster.SetClusterDB(targetGateway, targetState.DB.Cluster)
+	err = membership.Bootstrap(targetGateway, "buzz")
 	require.NoError(t, err)
 
 	err = targetState.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -363,9 +364,9 @@ func TestJoin(t *testing.T) {
 
 	gateway := newGateway(t, s.DB.Node, targetCert, s)
 
-	defer func() { _ = gateway.Shutdown() }()
+	defer func() { _ = gateway.ShutdownServer() }()
 
-	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
+	for path, handler := range gateway.HandlerFuncs(gatewayAccess(t, gateway, nil)) {
 		mux.HandleFunc(path, handler)
 	}
 
@@ -401,21 +402,25 @@ func TestJoin(t *testing.T) {
 	f := &membershipFixtures{t: t, state: s}
 	f.ClusterAddress(address)
 
+	serverCertx509, err := altServerCert.PublicKeyX509()
+	require.NoError(t, err)
+
 	// Accept the joining node.
 	dbCluster.PreparedStmts = targetStmts
-	raftNodes, err := cluster.Accept(
-		targetState, targetGateway, "rusp", address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
+	raftNodes, err := membership.Accept(
+		targetGateway, serverCertx509, "rusp", address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
 	)
 	require.NoError(t, err)
 
 	// Actually join the cluster.
 	dbCluster.PreparedStmts = sourceStmts
-	err = cluster.Join(s, gateway, targetCert, altServerCert, "rusp", raftNodes)
+	cluster.SetClusterDB(gateway, s.DB.Cluster)
+	err = membership.Join[any](gateway, gateway.NetworkCert().KeyPair(), "rusp", raftNodes)
 	require.NoError(t, err)
 
 	// The leader now returns an updated list of raft nodes.
 	// The new node is not included to ensure distributed consensus.
-	raftNodes, err = targetGateway.RaftNodes()
+	raftNodes, err = targetGateway.CurrentRaftNodes(context.TODO())
 	require.NoError(t, err)
 	assert.Len(t, raftNodes, 2)
 	assert.Equal(t, uint64(1), raftNodes[0].ID)
@@ -426,16 +431,16 @@ func TestJoin(t *testing.T) {
 	assert.Equal(t, db.RaftStandBy, raftNodes[1].Role)
 
 	// The Count function returns the number of nodes.
-	count, err := cluster.Count(s)
+	count, err := membership.Count(gateway)
 	require.NoError(t, err)
 	assert.Equal(t, 2, count)
 
 	// Leave the cluster.
-	leaving, err := cluster.Leave(s, targetGateway, "rusp", false /* force */, false)
+	leaving, err := membership.Leave[any](targetGateway, "rusp", false /* force */, false)
 	require.NoError(t, err)
 	assert.Equal(t, address, leaving)
 	dbCluster.PreparedStmts = targetStmts
-	err = cluster.Purge(targetState.DB.Cluster, "rusp", false)
+	err = membership.Purge[any](targetGateway, "rusp", false)
 	require.NoError(t, err)
 
 	// The node has gone from the cluster db.
@@ -448,7 +453,7 @@ func TestJoin(t *testing.T) {
 	require.NoError(t, err)
 
 	// The node has gone from the raft cluster.
-	members, err := targetGateway.RaftNodes()
+	members, err := targetGateway.CurrentRaftNodes(context.TODO())
 	require.NoError(t, err)
 	assert.Len(t, members, 1)
 }

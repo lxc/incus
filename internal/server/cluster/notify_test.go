@@ -30,6 +30,10 @@ func TestNewNotifier(t *testing.T) {
 
 	cert := tlstest.TestingKeyPair(t)
 
+	g := newGateway(t, s.DB.Node, cert, s)
+
+	s.Cluster = g
+
 	f := notifyFixtures{t: t, state: s}
 	nodesCleanup := f.Nodes(cert, 3)
 	defer nodesCleanup()
@@ -79,6 +83,10 @@ func TestNewNotify_NotifyAllError(t *testing.T) {
 
 	cert := tlstest.TestingKeyPair(t)
 
+	g := newGateway(t, s.DB.Node, cert, s)
+
+	s.Cluster = g
+
 	f := notifyFixtures{t: t, state: s}
 	nodesCleanup := f.Nodes(cert, 3)
 	defer nodesCleanup()
@@ -109,6 +117,10 @@ func TestNewNotify_NotifyAlive(t *testing.T) {
 	defer cleanup()
 
 	cert := tlstest.TestingKeyPair(t)
+
+	g := newGateway(t, s.DB.Node, cert, s)
+
+	s.Cluster = g
 
 	f := notifyFixtures{t: t, state: s}
 	nodesCleanup := f.Nodes(cert, 3)
