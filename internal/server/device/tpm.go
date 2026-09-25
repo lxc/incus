@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -145,11 +146,9 @@ func (d *tpm) Start() (*deviceConfig.RunConfig, error) {
 
 	tpmDevPath := d.statePath()
 
-	if !util.PathExists(tpmDevPath) {
-		err := os.Mkdir(tpmDevPath, 0o700)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create device path %q: %w", tpmDevPath, err)
-		}
+	err = d.checkStatePath(true)
+	if err != nil {
+		return nil, err
 	}
 
 	err = d.maybeProvision(tpmDevPath)
@@ -443,7 +442,42 @@ func (d *tpm) Register() error {
 		return nil
 	}
 
+	err := d.checkStatePath(false)
+	if err != nil {
+		return err
+	}
+
 	return mirror.Start(d.runPath(), d.statePath(), tpmStateFile)
+}
+
+// checkStatePath ensures the state directory on the instance volume is a real directory, creating it if allowed.
+func (d *tpm) checkStatePath(create bool) error {
+	tpmDevPath := d.statePath()
+
+	fi, err := os.Lstat(tpmDevPath)
+	if err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("Failed to stat device path %q: %w", tpmDevPath, err)
+		}
+
+		if !create {
+			return fmt.Errorf("Missing device path %q", tpmDevPath)
+		}
+
+		err := os.Mkdir(tpmDevPath, 0o700)
+		if err != nil {
+			return fmt.Errorf("Failed to create device path %q: %w", tpmDevPath, err)
+		}
+
+		return nil
+	}
+
+	// The instance volume may hold anything, don't follow a planted symlink.
+	if !fi.IsDir() {
+		return fmt.Errorf("Device path %q is not a directory", tpmDevPath)
+	}
+
+	return nil
 }
 
 // Stop terminates the TPM emulator.
