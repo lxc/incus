@@ -34,6 +34,13 @@ SELECT certificates.id, certificates.fingerprint, certificates.type, certificate
   ORDER BY certificates.fingerprint
 `)
 
+var certificateObjectsByNameAndType = RegisterStmt(`
+SELECT certificates.id, certificates.fingerprint, certificates.type, certificates.name, certificates.certificate, certificates.restricted, certificates.description
+  FROM certificates
+  WHERE ( certificates.name = ? AND certificates.type = ? )
+  ORDER BY certificates.fingerprint
+`)
+
 var certificateID = RegisterStmt(`
 SELECT certificates.id FROM certificates
   WHERE certificates.fingerprint = ?
@@ -137,7 +144,31 @@ func GetCertificates(ctx context.Context, db dbtx, filters ...CertificateFilter)
 	}
 
 	for i, filter := range filters {
-		if filter.ID != nil && filter.Fingerprint == nil && filter.Name == nil && filter.Type == nil {
+		if filter.Name != nil && filter.Type != nil && filter.ID == nil && filter.Fingerprint == nil {
+			args = append(args, []any{filter.Name, filter.Type}...)
+			if len(filters) == 1 {
+				sqlStmt, err = Stmt(db, certificateObjectsByNameAndType)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to get \"certificateObjectsByNameAndType\" prepared statement: %w", err)
+				}
+
+				break
+			}
+
+			query, err := StmtString(certificateObjectsByNameAndType)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to get \"certificateObjects\" prepared statement: %w", err)
+			}
+
+			parts := strings.SplitN(query, "ORDER BY", 2)
+			if i == 0 {
+				copy(queryParts[:], parts)
+				continue
+			}
+
+			_, where, _ := strings.Cut(parts[0], "WHERE")
+			queryParts[0] += "OR" + where
+		} else if filter.ID != nil && filter.Fingerprint == nil && filter.Name == nil && filter.Type == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
 				sqlStmt, err = Stmt(db, certificateObjectsByID)
