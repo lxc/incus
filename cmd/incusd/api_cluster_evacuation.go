@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster/membership"
 	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -865,7 +866,7 @@ func autoHealClusterTask(d *Daemon) (task.Func, task.Schedule) {
 
 		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
-			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			if errors.Is(err, membership.ErrNodeIsNotClustered) {
 				return // Skip healing if not clustered.
 			}
 
