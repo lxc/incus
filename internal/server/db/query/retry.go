@@ -17,7 +17,7 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 )
 
-const maxRetries = 250
+const MaxRetries = 250
 
 // Retry wraps a function that interacts with the database, and retries it in
 // case a transient error is hit.
@@ -25,7 +25,7 @@ const maxRetries = 250
 // This should by typically used to wrap transactions.
 func Retry(ctx context.Context, f func(ctx context.Context) error) error {
 	var err error
-	for i := range maxRetries {
+	for i := range MaxRetries {
 		err = f(ctx)
 		if err == nil {
 			// The function succeeded, we're done here.
@@ -48,7 +48,7 @@ func Retry(ctx context.Context, f func(ctx context.Context) error) error {
 			break
 		}
 
-		if i == maxRetries-1 {
+		if i == MaxRetries-1 {
 			logger.Warn("Database error, giving up", logger.Ctx{"attempt": i, "err": err})
 			break
 		}

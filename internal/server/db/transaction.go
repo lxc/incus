@@ -3,6 +3,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 )
 
@@ -11,7 +12,7 @@ import (
 // It wraps low-level sql.Tx objects and offers a high-level API to fetch and
 // update data.
 type NodeTx struct {
-	tx *sql.Tx // Handle to a transaction in the node-level SQLite database.
+	*sql.Tx // Handle to a transaction in the node-level SQLite database.
 }
 
 // ClusterTx models a single interaction with a cluster database.
@@ -21,6 +22,30 @@ type NodeTx struct {
 type ClusterTx struct {
 	tx     *sql.Tx // Handle to a transaction in the cluster cowsql database.
 	nodeID int64   // Node ID of this server.
+}
+
+func (c *ClusterTx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	return c.tx.ExecContext(ctx, query, args...)
+}
+
+func (c *ClusterTx) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+	return c.tx.PrepareContext(ctx, query)
+}
+
+func (c *ClusterTx) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	return c.tx.QueryContext(ctx, query, args...)
+}
+
+func (c *ClusterTx) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+	return c.tx.QueryRowContext(ctx, query, args)
+}
+
+func (c *ClusterTx) Commit() error {
+	return c.tx.Commit()
+}
+
+func (c *ClusterTx) Rollback() error {
+	return c.tx.Rollback()
 }
 
 // Tx retrieves the underlying transaction on the cluster database.

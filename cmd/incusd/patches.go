@@ -389,7 +389,7 @@ func patchDBNodesAutoInc(name string, d *Daemon) error {
 	for {
 		// Only apply patch if schema needs it.
 		var schemaSQL string
-		row := s.DB.Cluster.DB().QueryRow("SELECT sql FROM sqlite_master WHERE name = 'nodes'")
+		row := s.DB.Cluster.DB.QueryRow("SELECT sql FROM sqlite_master WHERE name = 'nodes'")
 		err := row.Scan(&schemaSQL)
 		if err != nil {
 			return err
@@ -428,7 +428,7 @@ func patchDBNodesAutoInc(name string, d *Daemon) error {
 	}
 
 	// Apply patch.
-	_, err := s.DB.Cluster.DB().Exec(`
+	_, err := s.DB.Cluster.DB.Exec(`
 PRAGMA foreign_keys=OFF; -- So that integrity doesn't get in the way for now.
 PRAGMA legacy_alter_table = ON; -- So that views referencing this table don't block change.
 
@@ -1436,7 +1436,7 @@ INSERT INTO storage_pools_config(storage_pool_id, node_id, key, value)
 func patchConvertJSONColumn(_ string, d *Daemon) error {
 	s := d.State()
 
-	_, err := s.DB.Cluster.DB().Exec(`
+	_, err := s.DB.Cluster.DB.Exec(`
 UPDATE networks_acls SET egress="null" WHERE egress="";
 UPDATE networks_acls SET ingress="null" WHERE ingress="";
 UPDATE networks_forwards SET ports="null" WHERE ports="";
