@@ -723,19 +723,6 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return fmt.Errorf("Failed request to add member: %w", err)
 		}
 
-		// Update our TLS configuration using the returned cluster certificate.
-		err = internalUtil.WriteCert(s.OS.VarDir, "cluster", info.PublicKey, info.PrivateKey, nil)
-		if err != nil {
-			return fmt.Errorf("Failed to save cluster certificate: %w", err)
-		}
-
-		networkCert, err := internalUtil.LoadClusterCert(s.OS.VarDir)
-		if err != nil {
-			return fmt.Errorf("Failed to parse cluster certificate: %w", err)
-		}
-
-		s.Endpoints.NetworkUpdateCert(networkCert)
-
 		// Add trusted certificates of other members to local trust store.
 		trustedCerts, err := client.GetCertificates()
 		if err != nil {
@@ -2530,7 +2517,37 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	nodes, err := cluster.Accept(s, d.gateway, req.Name, req.Address, req.Schema, req.API, req.Architecture)
+	var serverCert dbCluster.Certificate
+	err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+		certType := certificate.TypeServer
+		certs, err := dbCluster.GetCertificates(ctx, tx.Tx(), dbCluster.CertificateFilter{Name: &req.Name, Type: &certType})
+		if err != nil {
+			return err
+		}
+
+		if len(certs) != 1 {
+			return api.StatusErrorf(http.StatusNotFound, "Failed to find server certificate for member %q", req.Name)
+		}
+
+		serverCert = certs[0]
+
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	certBlock, _ := pem.Decode([]byte(serverCert.Certificate))
+	if certBlock == nil {
+		return response.SmartError(errors.New("Invalid server certificate"))
+	}
+
+	publicKeyx509, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	nodes, err := membership.Accept(d.gateway, publicKeyx509, req.Name, req.Address, req.Schema, req.API, req.Architecture)
 	if err != nil {
 		return response.BadRequest(err)
 	}
