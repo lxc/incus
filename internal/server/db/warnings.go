@@ -131,6 +131,53 @@ func (c *ClusterTx) UpdateWarningState(UUID string, message string, status warni
 	return nil
 }
 
+// ResolveWarningsByNodeAndProjectAndTypeAndEntity resolves warnings with the given node, project, type code, and entity.
+func (c *ClusterTx) ResolveWarningsByNodeAndProjectAndTypeAndEntity(ctx context.Context, nodeName string, projectName string, typeCode warningtype.Type, entityTypeCode int, entityID int) error {
+	filter := cluster.WarningFilter{
+		TypeCode:       &typeCode,
+		Node:           &nodeName,
+		Project:        &projectName,
+		EntityTypeCode: &entityTypeCode,
+		EntityID:       &entityID,
+	}
+
+	warnings, err := cluster.GetWarnings(ctx, c.Tx(), filter)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range warnings {
+		err = c.UpdateWarningStatus(w.UUID, warningtype.StatusResolved)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ResolveWarningsByNodeAndType resolves warnings with the given node and type code.
+func (c *ClusterTx) ResolveWarningsByNodeAndType(ctx context.Context, nodeName string, typeCode warningtype.Type) error {
+	filter := cluster.WarningFilter{
+		TypeCode: &typeCode,
+		Node:     &nodeName,
+	}
+
+	warnings, err := cluster.GetWarnings(ctx, c.Tx(), filter)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range warnings {
+		err = c.UpdateWarningStatus(w.UUID, warningtype.StatusResolved)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // createWarning adds a new warning to the database.
 func (c *ClusterTx) createWarning(ctx context.Context, object cluster.Warning) (int64, error) {
 	// Check if a warning with the same key exists.

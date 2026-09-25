@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster/membership"
+
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -425,7 +427,7 @@ func autoRebalanceCluster(ctx context.Context, d *Daemon) error {
 	// Confirm we should run the rebalance.
 	leader, err := s.Cluster.LeaderAddress()
 	if err != nil {
-		if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+		if errors.Is(err, membership.ErrNodeIsNotClustered) {
 			// Not clustered.
 			return nil
 		}

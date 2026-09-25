@@ -26,6 +26,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster/membership"
 	"github.com/kballard/go-shellquote"
 	"go.yaml.in/yaml/v4"
 
@@ -4992,7 +4993,7 @@ func autoSyncImagesTask(s *state.State) (task.Func, task.Schedule) {
 
 		leader, err := s.Cluster.LeaderAddress()
 		if err != nil {
-			if errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			if errors.Is(err, membership.ErrNodeIsNotClustered) {
 				return // No error if not clustered.
 			}
 

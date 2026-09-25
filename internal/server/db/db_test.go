@@ -20,7 +20,7 @@ func TestNode_Schema(t *testing.T) {
 
 	// The underlying node-level database has exactly one row in the schema
 	// table.
-	dbHandle := node.DB()
+	dbHandle := node.DB
 	tx, err := dbHandle.Begin()
 	require.NoError(t, err)
 	n, err := query.Count(context.Background(), tx, "schema", "")
@@ -39,7 +39,7 @@ func TestCluster_Setup(t *testing.T) {
 
 	// The underlying node-level database has exactly one row in the schema
 	// table.
-	dbHandle := cluster.DB()
+	dbHandle := cluster.DB
 	tx, err := dbHandle.Begin()
 	require.NoError(t, err)
 	n, err := query.Count(context.Background(), tx, "schema", "")

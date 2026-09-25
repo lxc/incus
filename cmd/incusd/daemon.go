@@ -25,6 +25,10 @@ import (
 	"time"
 
 	cowsqlClient "github.com/cowsql/go-cowsql/client"
+	cowsqlcluster "github.com/cowsql/go-cowsql/cluster"
+	cowsqllogging "github.com/cowsql/go-cowsql/cluster/logging"
+	"github.com/cowsql/go-cowsql/cluster/membership"
+	"github.com/cowsql/go-cowsql/cluster/options"
 	"github.com/cowsql/go-cowsql/driver"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
@@ -116,7 +120,7 @@ type Daemon struct {
 
 	config    *DaemonConfig
 	endpoints *endpoints.Endpoints
-	gateway   *cluster.Gateway
+	gateway   cowsqlcluster.Gateway
 	seccomp   *seccomp.Server
 
 	proxy func(req *http.Request) (*url.URL, error)
@@ -145,9 +149,6 @@ type Daemon struct {
 
 	// Device monitor for watching filesystem events
 	devmonitor fsmonitor.FSMonitor
-
-	// Keep track of skews.
-	timeSkew bool
 
 	// Configuration.
 	globalConfig   *clusterConfig.Config
@@ -510,6 +511,15 @@ func (d *Daemon) checkTrustedClient(r *http.Request) error {
 	}
 
 	return nil
+}
+
+func (d *Daemon) getTrustedServerCertificates() (map[string]x509.Certificate, error) {
+	c, err := d.getTrustedCertificates()
+	if err != nil {
+		return nil, err
+	}
+
+	return c[certificate.TypeServer], nil
 }
 
 // getTrustedCertificates returns trusted certificates key on DB type and fingerprint.
@@ -1221,19 +1231,19 @@ func (d *Daemon) init() error {
 		clusterLogLevel = "TRACE"
 	}
 
-	d.gateway, err = cluster.NewGateway(
-		d.shutdownCtx,
-		d.db.Node,
-		networkCert,
-		d.State,
-		cluster.Latency(d.config.RaftLatency),
-		cluster.LogLevel(clusterLogLevel),
+	d.gateway, err = cluster.NewGateway(d.shutdownCtx, d.db.Node, d.State, networkCert, d.serverCert,
+		options.Latency(d.config.RaftLatency),
+		options.LogLevel(clusterLogLevel),
+		options.Version(version.Version),
+		options.MaxStandby(func() int64 { return d.globalConfig.MaxStandBy() }),
+		options.MaxVoters(func() int64 { return d.globalConfig.MaxVoters() }),
+		options.PreUpdateCheck(func() (func() error, error) { return cluster.PreUpdateCheck(d.State()) }),
 	)
 	if err != nil {
 		return err
 	}
 
-	d.gateway.HeartbeatNodeHook = d.nodeRefreshTask
+	d.gateway.SetHeartbeatNodeHook(d.nodeRefreshTask)
 
 	logger.Info("Loading daemon configuration")
 	err = d.db.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
@@ -1299,19 +1309,19 @@ func (d *Daemon) init() error {
 			contextTimeout = time.Minute
 		}
 
-		options := []driver.Option{
+		driverOptions := []driver.Option{
 			driver.WithDialFunc(d.gateway.DialFunc()),
-			driver.WithContext(d.gateway.Context()),
-			driver.WithConnectionTimeout(10 * time.Second),
-			driver.WithContextTimeout(contextTimeout),
-			driver.WithLogFunc(cluster.CowsqlLog),
+			driver.WithContext(d.gateway.Context()),        //nolint:staticcheck
+			driver.WithConnectionTimeout(10 * time.Second), //nolint:staticcheck
+			driver.WithContextTimeout(contextTimeout),      //nolint:staticcheck
+			driver.WithLogFunc(cowsqllogging.CowsqlLog),
 		}
 
 		if slices.Contains(trace, "database") {
-			options = append(options, driver.WithTracing(cowsqlClient.LogDebug))
+			driverOptions = append(driverOptions, driver.WithTracing(cowsqlClient.LogDebug))
 		}
 
-		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.CowsqlSetupTimeout, options...)
+		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.CowsqlSetupTimeout, driverOptions...)
 		if err == nil {
 			logger.Info("Initialized global database")
 			break
@@ -1325,14 +1335,15 @@ func (d *Daemon) init() error {
 			// The only thing we want to still do on this node is
 			// to run the heartbeat task, in case we are the raft
 			// leader.
-			d.gateway.Cluster = d.db.Cluster
+			cluster.SetClusterDB(d.gateway, d.db.Cluster)
 			taskFunc, taskSchedule := cluster.HeartbeatTask(d.gateway)
 			hbGroup := task.Group{}
 			d.taskClusterHeartbeat = hbGroup.Add(taskFunc, taskSchedule)
 			hbGroup.Start(d.shutdownCtx)
 			d.gateway.WaitUpgradeNotification()
 			_ = hbGroup.Stop(time.Second)
-			d.gateway.Cluster = nil
+
+			cluster.SetClusterDB(d.gateway, nil)
 
 			_ = d.db.Cluster.Close()
 
@@ -1353,7 +1364,7 @@ func (d *Daemon) init() error {
 		logger.Warn("Could not notify all nodes of database upgrade", logger.Ctx{"err": err})
 	}
 
-	d.gateway.Cluster = d.db.Cluster
+	cluster.SetClusterDB(d.gateway, d.db.Cluster)
 
 	// Setup the user-agent.
 	if d.serverClustered {
@@ -1456,7 +1467,7 @@ func (d *Daemon) init() error {
 
 	d.proxy = proxy.FromConfig(d.globalConfig.ProxyHTTPS(), d.globalConfig.ProxyHTTP(), d.globalConfig.ProxyIgnoreHosts())
 
-	d.gateway.HeartbeatOfflineThreshold = d.globalConfig.OfflineThreshold()
+	d.gateway.SetHeartbeatOfflineThreshold(d.globalConfig.OfflineThreshold())
 	oidcIssuer, oidcClientID, oidcScope, oidcAudience, oidcClaim := d.globalConfig.OIDCServer()
 	syslogSocketEnabled := d.localConfig.SyslogSocket()
 	instancePlacementScriptlet := d.globalConfig.InstancesPlacementScriptlet()
@@ -1833,7 +1844,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 		err := handoverMemberRole(d.State(), d.gateway)
 		if err != nil {
 			logger.Warn("Could not handover member's responsibilities", logger.Ctx{"err": err})
-			d.gateway.Kill()
+			d.gateway.Cancel()
 
 			if d.db.Cluster != nil {
 				closeGlobalDatabase(d.db.Cluster)
@@ -1856,7 +1867,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 			}
 
 			// Make all future queries fail fast as DB is not available.
-			d.gateway.Kill()
+			d.gateway.Cancel()
 			closeGlobalDatabase(d.db.Cluster)
 		}
 
@@ -1937,7 +1948,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	}
 
 	if d.gateway != nil {
-		d.gateway.Kill()
+		d.gateway.Cancel()
 	}
 
 	errs := []error{}
@@ -1966,7 +1977,7 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 		// Shut down the gateway with a timeout as its raft cleanup can get stuck on unreachable cluster members.
 		gatewayErr := make(chan error, 1)
 		go func() {
-			gatewayErr <- d.gateway.Shutdown()
+			gatewayErr <- d.gateway.ShutdownServer()
 		}()
 
 		select {
@@ -2100,7 +2111,7 @@ func (d *Daemon) setupOpenFGA(apiURL string, apiToken string, storeID string, tl
 
 		leaderAddress, err := d.gateway.LeaderAddress()
 		if err != nil {
-			if !errors.Is(err, cluster.ErrNodeIsNotClustered) {
+			if !errors.Is(err, membership.ErrNodeIsNotClustered) {
 				return nil, err
 			}
 
@@ -2432,125 +2443,6 @@ func initializeDbObject(d *Daemon) error {
 	return nil
 }
 
-// hasMemberStateChanged returns true if the number of members, their addresses or state has changed.
-func (d *Daemon) hasMemberStateChanged(heartbeatData *cluster.APIHeartbeat) bool {
-	// No previous heartbeat data.
-	if d.lastNodeList == nil {
-		return true
-	}
-
-	// Member count has changed.
-	if len(d.lastNodeList.Members) != len(heartbeatData.Members) {
-		return true
-	}
-
-	// Check for member address or state changes.
-	for lastMemberID, lastMember := range d.lastNodeList.Members {
-		if heartbeatData.Members[lastMemberID].Address != lastMember.Address {
-			return true
-		}
-
-		if heartbeatData.Members[lastMemberID].Online != lastMember.Online {
-			return true
-		}
-	}
-
-	return false
-}
-
-// heartbeatHandler handles heartbeat requests from other cluster members.
-func (d *Daemon) heartbeatHandler(w http.ResponseWriter, _ *http.Request, isLeader bool, hbData *cluster.APIHeartbeat) {
-	var err error
-
-	// Look for time skews.
-	now := time.Now().UTC()
-
-	if hbData.Time.Add(5*time.Second).Before(now) || hbData.Time.Add(-5*time.Second).After(now) {
-		if !d.timeSkew {
-			logger.Warn("Time skew detected between leader and local", logger.Ctx{"leaderTime": hbData.Time, "localTime": now})
-
-			if d.db.Cluster != nil {
-				err := d.db.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-					return tx.UpsertWarning(ctx, d.serverName, "", -1, -1, warningtype.ClusterTimeSkew, fmt.Sprintf("leaderTime: %s, localTime: %s", hbData.Time, now))
-				})
-				if err != nil {
-					logger.Warn("Failed to create cluster time skew warning", logger.Ctx{"err": err})
-				}
-			}
-		}
-
-		d.timeSkew = true
-	} else {
-		if d.timeSkew {
-			logger.Warn("Time skew resolved")
-
-			if d.db.Cluster != nil {
-				err := warnings.ResolveWarningsByNodeAndType(d.db.Cluster, d.serverName, warningtype.ClusterTimeSkew)
-				if err != nil {
-					logger.Warn("Failed to resolve cluster time skew warning", logger.Ctx{"err": err})
-				}
-			}
-
-			d.timeSkew = false
-		}
-	}
-
-	// Extract the raft nodes from the heartbeat info.
-	raftNodes := make([]db.RaftNode, 0)
-	for _, member := range hbData.Members {
-		if member.RaftID > 0 {
-			raftNodes = append(raftNodes, db.RaftNode{
-				NodeInfo: cowsqlClient.NodeInfo{
-					ID:      member.RaftID,
-					Address: member.Address,
-					Role:    db.RaftRole(member.RaftRole),
-				},
-				Name: member.Name,
-			})
-		}
-	}
-
-	// Check we have been sent at least 1 raft node before wiping our set.
-	if len(raftNodes) <= 0 {
-		logger.Error("Empty raft member set received")
-		http.Error(w, "400 Empty raft member set received", http.StatusBadRequest)
-		return
-	}
-
-	// Accept raft node list from any heartbeat type so that we get freshest data quickly.
-	logger.Debug("Replace current raft nodes", logger.Ctx{"raftMembers": raftNodes})
-	err = d.db.Node.Transaction(context.TODO(), func(ctx context.Context, tx *db.NodeTx) error {
-		return tx.ReplaceRaftNodes(raftNodes)
-	})
-	if err != nil {
-		logger.Error("Error updating raft members", logger.Ctx{"err": err})
-		http.Error(w, "500 failed to update raft nodes", http.StatusInternalServerError)
-		return
-	}
-
-	if hbData.FullStateList {
-		// If there is an ongoing heartbeat round (and by implication this is the leader), then this could
-		// be a problem because it could be broadcasting the stale member state information which in turn
-		// could lead to incorrect decisions being made. So calling heartbeatRestart will request any
-		// ongoing heartbeat round to cancel itself prematurely and restart another one. If there is no
-		// ongoing heartbeat round or this member isn't the leader then this function call is a no-op and
-		// will return false. If the heartbeat is restarted, then the heartbeat refresh task will be called
-		// at the end of the heartbeat so no need to do it here.
-		if !isLeader || !d.gateway.HeartbeatRestart() {
-			// Run heartbeat refresh task async so heartbeat response is sent to leader straight away.
-			go d.nodeRefreshTask(hbData, isLeader, nil)
-		}
-	} else {
-		if isLeader {
-			logger.Error("Partial heartbeat should not be sent to leader")
-			http.Error(w, "400 Partial heartbeat should not be sent to leader", http.StatusBadRequest)
-			return
-		}
-
-		logger.Debug("Partial heartbeat received")
-	}
-}
-
 // nodeRefreshTask is run when a full state heartbeat is sent (on the leader) or received (by a non-leader member).
 // Is is used to check for member state changes and trigger refreshes of the certificate cache.
 // It also triggers member role promotion when run on the isLeader is true.
@@ -2578,7 +2470,7 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 
 	// If the max version of the cluster has changed, check whether we need to upgrade.
 	if d.lastNodeList == nil || d.lastNodeList.Version.APIExtensions != heartbeatData.Version.APIExtensions || d.lastNodeList.Version.Schema != heartbeatData.Version.Schema {
-		err := cluster.MaybeUpdate(s)
+		err := membership.MaybeUpdate(d.gateway)
 		if err != nil {
 			logger.Error("Error updating", logger.Ctx{"err": err})
 			return
@@ -2592,13 +2484,6 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	if err != nil {
 		stateChangeTaskFailure = true
 		logger.Error("Error restarting OVN networks", logger.Ctx{"err": err})
-	}
-
-	if d.hasMemberStateChanged(heartbeatData) {
-		logger.Info("Cluster status has changed, refreshing")
-
-		// Refresh cluster certificates cached.
-		updateCertificateCache(d)
 	}
 
 	// Refresh event listeners from heartbeat members (after certificates refreshed if needed).
@@ -2641,7 +2526,7 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 				}
 
 				// Check if a 'database-client' node currently has a raft role other than 'spare'.
-				if slices.Contains(member.Roles, db.ClusterRoleDatabaseClient) && member.RaftRole != int(db.RaftSpare) {
+				if slices.Contains(member.Roles, string(db.ClusterRoleDatabaseClient)) && member.RaftRole != int(db.RaftSpare) {
 					hasDbClientToProcess = true
 				}
 			} else if role != db.RaftSpare {
@@ -2659,7 +2544,7 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 			d.clusterMembershipMutex.Lock()
 			logger.Debug("Rebalancing member roles in heartbeat", logger.Ctx{"local": localClusterAddress})
 			err := rebalanceMemberRoles(d.State(), d.gateway, nil, unavailableMembers)
-			if err != nil && !errors.Is(err, cluster.ErrNotLeader) {
+			if err != nil && !errors.Is(err, membership.ErrNotLeader) {
 				logger.Warn("Could not rebalance cluster member roles", logger.Ctx{"err": err, "local": localClusterAddress})
 			}
 
@@ -2670,7 +2555,7 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 			d.clusterMembershipMutex.Lock()
 			logger.Debug("Upgrading members without raft role in heartbeat", logger.Ctx{"local": localClusterAddress})
 			err := upgradeNodesWithoutRaftRole(d.State(), d.gateway)
-			if err != nil && !errors.Is(err, cluster.ErrNotLeader) {
+			if err != nil && !errors.Is(err, membership.ErrNotLeader) {
 				logger.Warn("Failed upgrading raft roles:", logger.Ctx{"err": err, "local": localClusterAddress})
 			}
 

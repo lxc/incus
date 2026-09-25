@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/cowsql/go-cowsql/client"
+	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
 
 	"github.com/lxc/incus/v7/internal/server/db/query"
 	"github.com/lxc/incus/v7/shared/api"
@@ -18,10 +19,7 @@ import (
 //
 // This is just a convenience alias for the equivalent data structure in the
 // cowsql client package.
-type RaftNode struct {
-	client.NodeInfo
-	Name string
-}
+type RaftNode = cowsqldb.RaftNode
 
 // RaftRole captures the role of cowsql/raft node.
 type RaftRole = client.NodeRole
@@ -40,7 +38,7 @@ func (n *NodeTx) GetRaftNodes(ctx context.Context) ([]RaftNode, error) {
 	nodes := []RaftNode{}
 
 	sql := "SELECT id, address, role, name FROM raft_nodes ORDER BY id"
-	err := query.Scan(ctx, n.tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, n.Tx, sql, func(scan func(dest ...any) error) error {
 		node := RaftNode{}
 		err := scan(&node.ID, &node.Address, &node.Role, &node.Name)
 		if err != nil {
@@ -62,14 +60,14 @@ func (n *NodeTx) GetRaftNodes(ctx context.Context) ([]RaftNode, error) {
 // the cowsql Raft cluster (possibly including the local member). If this server
 // is not running in clustered mode, an empty list is returned.
 func (n *NodeTx) GetRaftNodeAddresses(ctx context.Context) ([]string, error) {
-	return query.SelectStrings(ctx, n.tx, "SELECT address FROM raft_nodes")
+	return query.SelectStrings(ctx, n.Tx, "SELECT address FROM raft_nodes")
 }
 
 // GetRaftNodeAddress returns the address of the raft node with the given ID,
 // if any matching row exists.
 func (n *NodeTx) GetRaftNodeAddress(ctx context.Context, id int64) (string, error) {
 	stmt := "SELECT address FROM raft_nodes WHERE id=?"
-	addresses, err := query.SelectStrings(ctx, n.tx, stmt, id)
+	addresses, err := query.SelectStrings(ctx, n.Tx, stmt, id)
 	if err != nil {
 		return "", err
 	}
@@ -94,7 +92,7 @@ func (n *NodeTx) GetRaftNodeAddress(ctx context.Context, id int64) (string, erro
 func (n *NodeTx) CreateFirstRaftNode(address string, name string) error {
 	columns := []string{"id", "address", "name"}
 	values := []any{int64(1), address, name}
-	id, err := query.UpsertObject(n.tx, "raft_nodes", columns, values)
+	id, err := query.UpsertObject(n.Tx, "raft_nodes", columns, values)
 	if err != nil {
 		return err
 	}
@@ -111,13 +109,13 @@ func (n *NodeTx) CreateFirstRaftNode(address string, name string) error {
 func (n *NodeTx) CreateRaftNode(address string, name string) (int64, error) {
 	columns := []string{"address", "name"}
 	values := []any{address, name}
-	return query.UpsertObject(n.tx, "raft_nodes", columns, values)
+	return query.UpsertObject(n.Tx, "raft_nodes", columns, values)
 }
 
 // RemoveRaftNode removes a node from the current list of nodes that are
 // part of the cowsql Raft cluster.
 func (n *NodeTx) RemoveRaftNode(id int64) error {
-	deleted, err := query.DeleteObject(n.tx, "raft_nodes", id)
+	deleted, err := query.DeleteObject(n.Tx, "raft_nodes", id)
 	if err != nil {
 		return err
 	}
@@ -131,7 +129,7 @@ func (n *NodeTx) RemoveRaftNode(id int64) error {
 
 // ReplaceRaftNodes replaces the current list of raft nodes.
 func (n *NodeTx) ReplaceRaftNodes(nodes []RaftNode) error {
-	_, err := n.tx.Exec("DELETE FROM raft_nodes")
+	_, err := n.Exec("DELETE FROM raft_nodes")
 	if err != nil {
 		return err
 	}
@@ -139,10 +137,11 @@ func (n *NodeTx) ReplaceRaftNodes(nodes []RaftNode) error {
 	columns := []string{"id", "address", "role", "name"}
 	for _, node := range nodes {
 		values := []any{node.ID, node.Address, node.Role, node.Name}
-		_, err := query.UpsertObject(n.tx, "raft_nodes", columns, values)
+		_, err := query.UpsertObject(n.Tx, "raft_nodes", columns, values)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

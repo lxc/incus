@@ -2,12 +2,13 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"sync"
-	"time"
+
+	"github.com/cowsql/go-cowsql/cluster"
+	cowsqltls "github.com/cowsql/go-cowsql/cluster/tls"
 
 	incus "github.com/lxc/incus/v7/client"
-	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
@@ -19,107 +20,61 @@ type Notifier func(hook func(incus.InstanceServer) error) error
 
 // NotifierPolicy can be used to tweak the behavior of NewNotifier in case of
 // some nodes are down.
-type NotifierPolicy int
+type NotifierPolicy = cluster.NotifierPolicy
 
 // Possible notification policies.
 const (
-	NotifyAll    NotifierPolicy = iota // Requires that all nodes are up.
-	NotifyAlive                        // Only notifies nodes that are alive
-	NotifyTryAll                       // Attempt to notify all nodes regardless of state.
+	NotifyAll    = cluster.NotifyAll    // Requires that all nodes are up.
+	NotifyAlive  = cluster.NotifyAlive  // Only notifies nodes that are alive
+	NotifyTryAll = cluster.NotifyTryAll // Attempt to notify all nodes regardless of state.
 )
 
-// NewNotifier builds a Notifier that can be used to notify other peers using
-// the given policy.
+// NewNotifier returns a new cluster notifier for the given policy.
 func NewNotifier(s *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, policy NotifierPolicy) (Notifier, error) {
-	localClusterAddress := s.LocalConfig.ClusterAddress()
-
-	// Fast-track the case where we're not clustered at all.
-	if localClusterAddress == "" {
+	if s.Cluster == nil {
 		nullNotifier := func(func(incus.InstanceServer) error) error { return nil }
 		return nullNotifier, nil
 	}
 
-	var err error
-	var members []db.NodeInfo
-	var offlineThreshold time.Duration
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		offlineThreshold, err = tx.GetNodeOfflineThreshold(ctx)
-		if err != nil {
-			return err
-		}
-
-		members, err = tx.GetNodes(ctx)
-		if err != nil {
-			return fmt.Errorf("Failed getting cluster members: %w", err)
-		}
-
-		return nil
-	})
+	notifier, err := s.Cluster.NewNotifier(context.TODO(), networkCert, serverCert, policy)
 	if err != nil {
 		return nil, err
 	}
 
-	peers := []string{}
-	for _, member := range members {
-		if member.Address == localClusterAddress || member.Address == "0.0.0.0" {
-			continue // Exclude ourselves
-		}
-
-		if member.IsOffline(offlineThreshold) {
-			switch policy {
-			case NotifyAll:
-				// Even if the heartbeat timestamp is not recent
-				// enough, let's try to connect to the node, just in
-				// case the heartbeat is lagging behind for some reason
-				// and the node is actually up.
-				if !HasConnectivity(networkCert, serverCert, member.Address, false) {
-					return nil, fmt.Errorf("peer node %s is down", member.Address)
-				}
-
-			case NotifyAlive:
-				continue // Just skip this node
-			case NotifyTryAll:
+	return func(hook func(incus.InstanceServer) error) error {
+		clusterHook := func(ctx context.Context, address string, networkCert, serverCert cowsqltls.CertInfo) error {
+			if networkCert == nil || serverCert == nil {
+				return errors.New("Failed to emit notification, no certificates provided")
 			}
+
+			localNetworkCert := localtls.NewCertInfo(networkCert.KeyPair(), networkCert.CA(), networkCert.CRL())
+			localServerCert := localtls.NewCertInfo(serverCert.KeyPair(), networkCert.CA(), networkCert.CRL())
+			client, err := Connect(address, localNetworkCert, localServerCert, nil, true)
+			if err != nil {
+				return fmt.Errorf("failed to connect to peer %s: %w", address, err)
+			}
+
+			err = hook(client)
+			if err != nil {
+				return fmt.Errorf("failed to notify peer %s: %w", address, err)
+			}
+
+			return nil
 		}
 
-		peers = append(peers, member.Address)
-	}
-
-	notifier := func(hook func(incus.InstanceServer) error) error {
-		errs := make([]error, len(peers))
-		wg := sync.WaitGroup{}
-		wg.Add(len(peers))
-		for i, address := range peers {
-			logger.Debugf("Notify node %s of state changes", address)
-			go func(i int, address string) {
-				defer wg.Done()
-				client, err := Connect(address, networkCert, serverCert, nil, true)
-				if err != nil {
-					errs[i] = fmt.Errorf("failed to connect to peer %s: %w", address, err)
-					return
-				}
-
-				err = hook(client)
-				if err != nil {
-					errs[i] = fmt.Errorf("failed to notify peer %s: %w", address, err)
-				}
-			}(i, address)
-		}
-
-		wg.Wait()
+		errs := notifier(clusterHook)
 		// TODO: aggregate all errors?
-		for i, err := range errs {
+		for _, err := range errs {
 			if err != nil {
 				if localtls.IsConnectionError(err) && policy == NotifyAlive {
-					logger.Warnf("Could not notify node %s", peers[i])
+					logger.Warn("Could not notify node", logger.Ctx{"err": err})
 					continue
 				}
 
 				return err
 			}
 		}
-		return nil
-	}
 
-	return notifier, nil
+		return nil
+	}, nil
 }

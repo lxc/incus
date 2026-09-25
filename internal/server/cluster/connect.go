@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
+
+	cowsqlcluster "github.com/cowsql/go-cowsql/cluster"
 
 	incus "github.com/lxc/incus/v7/client"
 	clusterRequest "github.com/lxc/incus/v7/internal/server/cluster/request"
@@ -20,6 +22,7 @@ import (
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	localtls "github.com/lxc/incus/v7/shared/tls"
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // Set references.
@@ -392,23 +395,5 @@ func HasConnectivity(networkCert *localtls.CertInfo, serverCert *localtls.CertIn
 		return err == nil
 	}
 
-	// Get the transport.
-	transport, cleanup, err := tlsTransport(networkCert, serverCert)
-	if err != nil {
-		return false
-	}
-
-	defer cleanup()
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	var conn net.Conn
-	conn, err = transport.DialTLSContext(ctx, "tcp", address)
-	if err == nil {
-		_ = conn.Close()
-		return true
-	}
-
-	return false
+	return cowsqlcluster.HasConnectivity(networkCert, serverCert, address, util.IsFalseOrEmpty(os.Getenv("INCUS_INSECURE_TLS")))
 }
