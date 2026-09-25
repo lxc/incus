@@ -14,7 +14,7 @@ require (
 	github.com/aws/smithy-go v1.28.2
 	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/checkpoint-restore/go-criu/v8 v8.4.0
-	github.com/cowsql/go-cowsql v1.22.1-0.20260810140515-ae0d26981bfc
+	github.com/cowsql/go-cowsql v1.22.1-0.20260925193515-2ad750a82402
 	github.com/creack/pty v1.1.24
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e
 	github.com/dustinkirkland/golang-petname v0.0.0-20260215035315-f0c533e9ce9b
@@ -125,7 +125,7 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
-	github.com/google/renameio v1.0.1 // indirect
+	github.com/google/renameio/v2 v2.0.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jkeiser/iter v0.0.0-20200628201005-c8aa0ae784d1 // indirect
