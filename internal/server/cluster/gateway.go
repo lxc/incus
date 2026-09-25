@@ -906,6 +906,11 @@ func (g *Gateway) WaitLeadership() error {
 	return fmt.Errorf("RAFT node did not self-elect within %s", time.Duration(n)*sleep)
 }
 
+// IsLeader returns true if this node is the cluster leader.
+func (g *Gateway) IsLeader() (bool, error) {
+	return g.isLeader()
+}
+
 func (g *Gateway) isLeader() (bool, error) {
 	if g.server == nil || g.info.Role != db.RaftVoter {
 		return false, nil
