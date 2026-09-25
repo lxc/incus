@@ -72,14 +72,14 @@ func (n *NodeTx) GetCertificates(ctx context.Context) ([]cluster.Certificate, er
 // ReplaceCertificates removes all existing certificates from the local certificates table and replaces them with
 // the ones provided.
 func (n *NodeTx) ReplaceCertificates(certs []cluster.Certificate) error {
-	_, err := n.Tx.Exec("DELETE FROM certificates")
+	_, err := n.Exec("DELETE FROM certificates")
 	if err != nil {
 		return err
 	}
 
 	sql := "INSERT INTO certificates (fingerprint, type, name, certificate) VALUES(?,?,?,?)"
 	for _, cert := range certs {
-		_, err = n.Tx.Exec(sql, cert.Fingerprint, cert.Type, cert.Name, cert.Certificate)
+		_, err = n.Exec(sql, cert.Fingerprint, cert.Type, cert.Name, cert.Certificate)
 		if err != nil {
 			return err
 		}

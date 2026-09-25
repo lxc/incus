@@ -68,7 +68,7 @@ func (s *dbTestSuite) CreateTestDb() (*Cluster, func()) {
 
 // Enter a transaction on the test in-memory DB.
 func (s *dbTestSuite) CreateTestTx() (*sql.Tx, func()) {
-	tx, err := s.db.DB().Begin()
+	tx, err := s.db.DB.Begin()
 	s.Nil(err)
 	commit := func() {
 		s.Nil(tx.Commit())

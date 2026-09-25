@@ -11,6 +11,7 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 )
 
+// BeginTx begins a transaction.
 func BeginTx(ctx context.Context, db *sql.DB) (*sql.Tx, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {

@@ -12,17 +12,12 @@ import (
 	localtls "github.com/lxc/incus/v7/shared/tls"
 )
 
+// ClusterResources represents non-cowsql related cluster resources.
 type ClusterResources struct {
 	Pools      map[string]map[string]string
 	Networks   map[string]map[string]string
 	Operations []cluster.Operation
 }
-
-// Bootstrap turns a non-clustered server into the first (and leader)
-// member of a new cluster.
-//
-// This instance must already have its cluster.https_address set and be listening
-// on the associated network address.
 
 // EnsureServerCertificateTrusted adds the serverCert to the DB trusted certificates store using the serverName.
 // If a certificate with the same fingerprint is already in the trust store, but is of the wrong type or name then

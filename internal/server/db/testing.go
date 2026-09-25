@@ -45,11 +45,11 @@ func NewTestNodeTx(t *testing.T) (*NodeTx, func()) {
 	var err error
 
 	nodeTx := &NodeTx{}
-	nodeTx.Tx, err = node.DB.Begin()
+	nodeTx.Tx, err = node.Begin()
 	require.NoError(t, err)
 
 	cleanup := func() {
-		require.NoError(t, nodeTx.Tx.Commit())
+		require.NoError(t, nodeTx.Commit())
 		nodeCleanup()
 	}
 

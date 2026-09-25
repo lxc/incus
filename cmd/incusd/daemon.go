@@ -24,12 +24,11 @@ import (
 	"sync"
 	"time"
 
+	cowsqlClient "github.com/cowsql/go-cowsql/client"
 	cowsqlcluster "github.com/cowsql/go-cowsql/cluster"
 	cowsqllogging "github.com/cowsql/go-cowsql/cluster/logging"
 	"github.com/cowsql/go-cowsql/cluster/membership"
 	"github.com/cowsql/go-cowsql/cluster/options"
-
-	cowsqlClient "github.com/cowsql/go-cowsql/client"
 	"github.com/cowsql/go-cowsql/driver"
 	liblxc "github.com/lxc/go-lxc"
 	"golang.org/x/sys/unix"
@@ -150,9 +149,6 @@ type Daemon struct {
 
 	// Device monitor for watching filesystem events
 	devmonitor fsmonitor.FSMonitor
-
-	// Keep track of skews.
-	timeSkew bool
 
 	// Configuration.
 	globalConfig   *clusterConfig.Config
@@ -1313,7 +1309,7 @@ func (d *Daemon) init() error {
 			contextTimeout = time.Minute
 		}
 
-		options := []driver.Option{
+		driverOptions := []driver.Option{
 			driver.WithDialFunc(d.gateway.DialFunc()),
 			driver.WithContext(d.gateway.Context()),        //nolint:staticcheck
 			driver.WithConnectionTimeout(10 * time.Second), //nolint:staticcheck
@@ -1322,10 +1318,10 @@ func (d *Daemon) init() error {
 		}
 
 		if slices.Contains(trace, "database") {
-			options = append(options, driver.WithTracing(cowsqlClient.LogDebug))
+			driverOptions = append(driverOptions, driver.WithTracing(cowsqlClient.LogDebug))
 		}
 
-		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.CowsqlSetupTimeout, options...)
+		d.db.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, localClusterAddress, dir, d.config.CowsqlSetupTimeout, driverOptions...)
 		if err == nil {
 			logger.Info("Initialized global database")
 			break

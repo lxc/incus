@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 )
 
+// MaxRetries is the number of times a failed transaction will be rolled back and retried before giving up.
 const MaxRetries = 250
 
 // Retry wraps a function that interacts with the database, and retries it in

@@ -24,26 +24,32 @@ type ClusterTx struct {
 	nodeID int64   // Node ID of this server.
 }
 
-func (c *ClusterTx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	return c.tx.ExecContext(ctx, query, args...)
-}
-
-func (c *ClusterTx) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
-	return c.tx.PrepareContext(ctx, query)
-}
-
-func (c *ClusterTx) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
-	return c.tx.QueryContext(ctx, query, args...)
-}
-
-func (c *ClusterTx) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
-	return c.tx.QueryRowContext(ctx, query, args)
-}
-
+// Commit implements [transaction.TX].
 func (c *ClusterTx) Commit() error {
 	return c.tx.Commit()
 }
 
+// ExecContext implements [transaction.TX].
+func (c *ClusterTx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	return c.tx.ExecContext(ctx, query, args...)
+}
+
+// PrepareContext implements [transaction.TX].
+func (c *ClusterTx) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
+	return c.tx.PrepareContext(ctx, query)
+}
+
+// QueryContext implements [transaction.TX].
+func (c *ClusterTx) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	return c.tx.QueryContext(ctx, query, args...)
+}
+
+// QueryRowContext implements [transaction.TX].
+func (c *ClusterTx) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+	return c.tx.QueryRowContext(ctx, query, args)
+}
+
+// Rollback implements [transaction.TX].
 func (c *ClusterTx) Rollback() error {
 	return c.tx.Rollback()
 }
