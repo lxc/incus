@@ -22,6 +22,7 @@ import (
 //generate-database:mapper stmt -e certificate objects
 //generate-database:mapper stmt -e certificate objects-by-ID
 //generate-database:mapper stmt -e certificate objects-by-Fingerprint
+//generate-database:mapper stmt -e certificate objects-by-Name-and-Type
 //generate-database:mapper stmt -e certificate id
 //generate-database:mapper stmt -e certificate create struct=Certificate
 //generate-database:mapper stmt -e certificate delete-by-Fingerprint
