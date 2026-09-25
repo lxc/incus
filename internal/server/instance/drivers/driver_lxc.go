@@ -178,6 +178,12 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 	return nil
 }
 
+// forklxcBlockedEnv returns whether an instance or image environment variable must be kept out of
+// the root forklxc process, as it would alter the behavior of the dynamic loader or of glibc.
+func forklxcBlockedEnv(name string) bool {
+	return strings.HasPrefix(name, "LD_") || slices.Contains([]string{"GCONV_PATH", "GLIBC_TUNABLES"}, name)
+}
+
 // isOCI returns whether the container was created from an OCI image.
 func (d *lxc) isOCI() bool {
 	return util.IsTrue(d.expandedConfig["volatile.container.oci"]) || d.localConfig["image.type"] == "oci"
@@ -3214,7 +3220,7 @@ func (d *lxc) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 	for k, v := range d.expandedConfig {
 		after, ok := strings.CutPrefix(k, "environment.")
-		if ok {
+		if ok && !forklxcBlockedEnv(after) {
 			envDict[after] = v
 		}
 	}
@@ -3235,7 +3241,7 @@ func (d *lxc) start(stateful bool, op *operationlock.InstanceOperation) error {
 
 		for k, v := range ociEnv {
 			_, ok := envDict[k]
-			if !ok {
+			if !ok && !forklxcBlockedEnv(k) {
 				envDict[k] = v
 			}
 		}
