@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster/membership"
 	"golang.org/x/sync/errgroup"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -581,7 +582,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Check if we're clustered.
-	count, err := cluster.Count(s)
+	count, err := membership.Count(d.gateway)
 	if err != nil {
 		return response.SmartError(err)
 	}

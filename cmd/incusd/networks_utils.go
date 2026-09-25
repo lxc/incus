@@ -17,7 +17,7 @@ func networkUpdateOVNChassis(s *state.State, heartbeatData *cluster.APIHeartbeat
 	hasOVNChassis := false
 	localOVNChassis := false
 	for _, n := range heartbeatData.Members {
-		if slices.Contains(n.Roles, db.ClusterRoleOVNChassis) {
+		if slices.Contains(n.Roles, string(db.ClusterRoleOVNChassis)) {
 			if n.Address == localAddress {
 				localOVNChassis = true
 			}
