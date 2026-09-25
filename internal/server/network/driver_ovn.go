@@ -4544,7 +4544,7 @@ func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx, members []db
 	enableChassis := -1
 
 	for _, member := range members {
-		hasRole := slices.Contains(member.Roles, db.ClusterRoleOVNChassis)
+		hasRole := slices.Contains(member.Roles, string(db.ClusterRoleOVNChassis))
 
 		if hasRole {
 			if member.ID == memberID {
