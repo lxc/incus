@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
@@ -64,8 +65,13 @@ func (s *stateWrapper) NewClusterCertificate() (cowsqltls.CertInfo, error) {
 
 // SetClusterCertificate implements [state.State].
 func (s *stateWrapper) SetClusterCertificate(i cowsqltls.CertInfo) (cowsqltls.CertInfo, error) {
+	var chain []byte
+	for _, cert := range i.KeyPair().Certificate {
+		chain = append(chain, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert})...)
+	}
+
 	certDir := s.s().OS.VarDir
-	err := os.WriteFile(filepath.Join(certDir, "cluster.crt"), i.PublicKey(), 0o644)
+	err := os.WriteFile(filepath.Join(certDir, "cluster.crt"), chain, 0o644)
 	if err != nil {
 		return nil, err
 	}

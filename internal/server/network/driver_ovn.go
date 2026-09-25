@@ -4690,7 +4690,7 @@ func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx, members []db
 	enableChassis := -1
 
 	for _, member := range members {
-		hasRole := slices.Contains(member.Roles, db.ClusterRoleOVNChassis)
+		hasRole := slices.Contains(member.Roles, string(db.ClusterRoleOVNChassis))
 
 		if hasRole {
 			if member.ID == memberID {
@@ -9456,7 +9456,7 @@ func (n *ovn) loadBalancerHealthEvent(lb ovnNB.LoadBalancer, listenAddress strin
 
 	// Only fire the event on the current cluster leader so that a health change isn't reported once per member.
 	if n.state.ServerClustered {
-		isLeader, err := n.state.Cluster.IsLeader()
+		isLeader, err := n.state.Cluster.IsLeader(context.TODO())
 		if err != nil || !isLeader {
 			return
 		}
