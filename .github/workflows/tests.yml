@@ -317,11 +317,11 @@ jobs:
           sudo apt-get clean
 
           # Download minio.
-          curl -sSfL https://dl.min.io/server/minio/release/linux-$(dpkg --print-architecture)/archive/minio_20240116160738.0.0_$(dpkg --print-architecture).deb --output /tmp/minio.deb
+          curl -sSfL https://github.com/minio/minio/releases/download/RELEASE.2024-01-16T16-07-38Z/minio_20240116160738.0.0_$(dpkg --print-architecture).deb --output /tmp/minio.deb
           sudo apt-get install /tmp/minio.deb --yes
 
           # Download MinIO client
-          curl -sSfL https://dl.min.io/client/mc/release/linux-$(dpkg --print-architecture)/archive/mc.RELEASE.2024-01-16T16-06-34Z --output /tmp/mc
+          curl -sSfL https://github.com/minio/mc/releases/download/RELEASE.2024-01-16T16-06-34Z/mc.linux-$(dpkg --print-architecture).RELEASE.2024-01-16T16-06-34Z --output /tmp/mc
           sudo mv /tmp/mc /usr/local/bin/
           sudo chmod +x /usr/local/bin/mc
 
