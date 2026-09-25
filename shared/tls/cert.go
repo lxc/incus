@@ -32,6 +32,15 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+// NewCertInfo creates a new CertInfo object from the given fields.
+func NewCertInfo(keypair tls.Certificate, ca *x509.Certificate, crl *x509.RevocationList) *CertInfo {
+	return &CertInfo{
+		keypair: keypair,
+		ca:      ca,
+		crl:     crl,
+	}
+}
+
 // KeyPairAndCA returns a CertInfo object with a reference to the key pair and
 // (optionally) CA certificate located in the given directory and having the
 // given name prefix
