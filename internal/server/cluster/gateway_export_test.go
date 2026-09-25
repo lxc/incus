@@ -1,26 +1,27 @@
 package cluster
 
 import (
+	"context"
+	"crypto/x509"
+
+	"github.com/cowsql/go-cowsql/cluster"
+	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
 	"github.com/lxc/incus/v7/internal/server/db"
-	localtls "github.com/lxc/incus/v7/shared/tls"
 )
 
-// IsLeader returns true if this node is the leader.
-func (g *Gateway) IsLeader() (bool, error) {
-	return g.isLeader()
+type TrustedCluster struct {
+	cowsqldb.Cluster
 }
 
-// ServerCert returns the gateway's internal TLS server certificate information.
-func (g *Gateway) ServerCert() *localtls.CertInfo {
-	return g.networkCert
+func SetTrustedClusterDB(gateway cluster.Gateway, c *db.Cluster) {
+	if c != nil {
+		gateway.SetClusterDB(&TrustedCluster{Cluster: cowsqlCluster(c)})
+	} else {
+		gateway.SetClusterDB(nil)
+	}
 }
 
-// NetworkCert returns the gateway's internal TLS NetworkCert certificate information.
-func (g *Gateway) NetworkCert() *localtls.CertInfo {
-	return g.networkCert
-}
-
-// RaftNodes returns the nodes currently part of the raft cluster.
-func (g *Gateway) RaftNodes() ([]db.RaftNode, error) {
-	return g.currentRaftNodes()
+// SetNodeCertificateByName is a wrapper to get past trusted cert validation, as all cluster members use the same cert in tests.
+func (c *TrustedCluster) SetNodeCertificateByName(ctx context.Context, serverName string, serverCert *x509.Certificate) error {
+	return nil
 }

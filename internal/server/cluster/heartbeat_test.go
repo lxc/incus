@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	cowsqlcluster "github.com/cowsql/go-cowsql/cluster"
+	"github.com/cowsql/go-cowsql/cluster/membership"
 	"github.com/cowsql/go-cowsql/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,7 +54,7 @@ func TestHeartbeat(t *testing.T) {
 	require.NoError(t, err)
 
 	// Perform the heartbeat requests.
-	leader.Cluster = leaderState.DB.Cluster
+	cluster.SetTrustedClusterDB(leader, leaderState.DB.Cluster)
 	heartbeat, _ := cluster.HeartbeatTask(leader)
 	ctx := context.Background()
 	heartbeat(ctx)
@@ -77,53 +79,55 @@ func TestHeartbeat(t *testing.T) {
 // Helper for testing heartbeat-related code.
 type heartbeatFixture struct {
 	t        *testing.T
-	gateways map[int]*cluster.Gateway              // node index to gateway
-	states   map[*cluster.Gateway]*state.State     // gateway to its state handle
-	servers  map[*cluster.Gateway]*httptest.Server // gateway to its HTTP server
+	gateways map[int]cowsqlcluster.Gateway              // node index to gateway
+	states   map[cowsqlcluster.Gateway]*state.State     // gateway to its state handle
+	servers  map[cowsqlcluster.Gateway]*httptest.Server // gateway to its HTTP server
 	cleanups []func()
 }
 
 // Bootstrap the first node of the cluster.
-func (f *heartbeatFixture) Bootstrap() *cluster.Gateway {
+func (f *heartbeatFixture) Bootstrap() cowsqlcluster.Gateway {
 	f.t.Logf("create bootstrap node for test cluster")
-	s, gateway, _ := f.node()
+	_, gateway, _ := f.node()
 
-	err := cluster.Bootstrap(s, gateway, "buzz")
+	err := membership.Bootstrap(gateway, "buzz")
 	require.NoError(f.t, err)
 
 	return gateway
 }
 
 // Grow adds a new node to the cluster.
-func (f *heartbeatFixture) Grow() *cluster.Gateway {
+func (f *heartbeatFixture) Grow() cowsqlcluster.Gateway {
 	// Figure out the current leader
 	f.t.Logf("adding another node to the test cluster")
 	target := f.Leader()
-	targetState := f.states[target]
 
-	s, gateway, address := f.node()
+	_, gateway, address := f.node()
 	name := address
 
-	nodes, err := cluster.Accept(
-		targetState, target, name, address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
+	joinerCert, err := gateway.ServerCert().PublicKeyX509()
+	require.NoError(f.t, err)
+
+	nodes, err := membership.Accept(
+		target, joinerCert, name, address, cluster.SchemaVersion, len(version.APIExtensions), osarch.ARCH_64BIT_INTEL_X86,
 	)
 	require.NoError(f.t, err)
 
-	err = cluster.Join(s, gateway, target.NetworkCert(), target.ServerCert(), name, nodes)
+	err = membership.Join[cluster.ClusterResources](gateway, target.NetworkCert().KeyPair(), name, nodes)
 	require.NoError(f.t, err)
 
 	return gateway
 }
 
 // Return the leader gateway in the cluster.
-func (f *heartbeatFixture) Leader() *cluster.Gateway {
+func (f *heartbeatFixture) Leader() cowsqlcluster.Gateway {
 	timeout := time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	for {
 		for _, gateway := range f.gateways {
-			isLeader, err := gateway.IsLeader()
+			isLeader, err := gateway.IsLeader(context.TODO())
 			if err != nil {
 				f.t.Errorf("failed to check leadership: %v", err)
 			}
@@ -145,14 +149,14 @@ func (f *heartbeatFixture) Leader() *cluster.Gateway {
 }
 
 // Return a follower gateway in the cluster.
-func (f *heartbeatFixture) Follower() *cluster.Gateway {
+func (f *heartbeatFixture) Follower() cowsqlcluster.Gateway {
 	timeout := time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	for {
 		for _, gateway := range f.gateways {
-			isLeader, err := gateway.IsLeader()
+			isLeader, err := gateway.IsLeader(context.TODO())
 			if err != nil {
 				f.t.Errorf("failed to check leadership: %v", err)
 			}
@@ -174,7 +178,7 @@ func (f *heartbeatFixture) Follower() *cluster.Gateway {
 }
 
 // Return the cluster index of the given gateway.
-func (f *heartbeatFixture) Index(gateway *cluster.Gateway) int {
+func (f *heartbeatFixture) Index(gateway cowsqlcluster.Gateway) int {
 	for i := range f.gateways {
 		if f.gateways[i] == gateway {
 			return i
@@ -184,23 +188,23 @@ func (f *heartbeatFixture) Index(gateway *cluster.Gateway) int {
 }
 
 // Return the state associated with the given gateway.
-func (f *heartbeatFixture) State(gateway *cluster.Gateway) *state.State {
+func (f *heartbeatFixture) State(gateway cowsqlcluster.Gateway) *state.State {
 	return f.states[gateway]
 }
 
 // Return the HTTP server associated with the given gateway.
-func (f *heartbeatFixture) Server(gateway *cluster.Gateway) *httptest.Server {
+func (f *heartbeatFixture) Server(gateway cowsqlcluster.Gateway) *httptest.Server {
 	return f.servers[gateway]
 }
 
 // Creates a new node, without either bootstrapping or joining it.
 //
 // Return the associated gateway and network address.
-func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
+func (f *heartbeatFixture) node() (*state.State, cowsqlcluster.Gateway, string) {
 	if f.gateways == nil {
-		f.gateways = make(map[int]*cluster.Gateway)
-		f.states = make(map[*cluster.Gateway]*state.State)
-		f.servers = make(map[*cluster.Gateway]*httptest.Server)
+		f.gateways = make(map[int]cowsqlcluster.Gateway)
+		f.states = make(map[cowsqlcluster.Gateway]*state.State)
+		f.servers = make(map[cowsqlcluster.Gateway]*httptest.Server)
 	}
 
 	s, cleanup := state.NewTestState(f.t)
@@ -210,12 +214,13 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(f.t, s.DB.Node, serverCert, s)
-	f.cleanups = append(f.cleanups, func() { _ = gateway.Shutdown() })
+	s.Cluster = gateway
+	f.cleanups = append(f.cleanups, func() { _ = gateway.ShutdownServer() })
 
 	mux := http.NewServeMux()
 	server := newServer(serverCert, mux)
 
-	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
+	for path, handler := range gateway.HandlerFuncs(gatewayAccess(f.t, gateway, nil)) {
 		mux.HandleFunc(path, handler)
 	}
 
@@ -255,6 +260,8 @@ func (f *heartbeatFixture) node() (*state.State, *cluster.Gateway, string) {
 	f.gateways[len(f.gateways)] = gateway
 	f.states[gateway] = s
 	f.servers[gateway] = server
+
+	cluster.SetTrustedClusterDB(gateway, s.DB.Cluster)
 
 	return s, gateway, address
 }

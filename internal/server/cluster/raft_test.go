@@ -29,7 +29,7 @@ func setRaftRole(t *testing.T, database *db.Node, address string) client.NodeSto
 		return err
 	}))
 
-	store := client.NewNodeStore(database.DB(), "main", "raft_nodes", "address")
+	store := client.NewNodeStore(database.DB, "main", "raft_nodes", "address")
 	return store
 }
 

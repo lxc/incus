@@ -6,7 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cowsql/go-cowsql/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -126,8 +125,8 @@ func TestReplaceRaftNodes(t *testing.T) {
 	require.NoError(t, err)
 
 	nodes := []db.RaftNode{
-		{NodeInfo: client.NodeInfo{ID: 2, Address: "2.2.2.2:666"}},
-		{NodeInfo: client.NodeInfo{ID: 3, Address: "3.3.3.3:666"}},
+		{ID: 2, Address: "2.2.2.2:666"},
+		{ID: 3, Address: "3.3.3.3:666"},
 	}
 
 	err = tx.ReplaceRaftNodes(nodes)
