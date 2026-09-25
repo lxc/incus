@@ -3594,14 +3594,24 @@ func (d *qemu) nvramPath() string {
 	return filepath.Join(d.Path(), "qemu.nvram")
 }
 
-// nvramRunPath returns the local copy of the UEFI variables used while the VM runs.
-func (d *qemu) nvramRunPath() (string, error) {
+// nvramFileName returns the name of the UEFI variables file the qemu.nvram symlink points to.
+func (d *qemu) nvramFileName() (string, error) {
 	target, err := os.Readlink(d.nvramPath())
 	if err != nil {
 		return "", err
 	}
 
-	return filepath.Join(d.RunPath(), filepath.Base(target)), nil
+	return filepath.Base(target), nil
+}
+
+// nvramRunPath returns the local copy of the UEFI variables used while the VM runs.
+func (d *qemu) nvramRunPath() (string, error) {
+	name, err := d.nvramFileName()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(d.RunPath(), name), nil
 }
 
 // nvramEditPath returns the copy of the UEFI variables that reads and writes must go through.
@@ -3664,13 +3674,16 @@ func (d *qemu) startNvramMirror(seed bool) error {
 		return err
 	}
 
-	runPath, err := d.nvramRunPath()
+	name, err := d.nvramFileName()
 	if err != nil {
 		return err
 	}
 
+	runPath := filepath.Join(d.RunPath(), name)
+
 	if seed {
-		err = mirror.CopyFile(d.nvramPath(), runPath)
+		// Copy the file itself rather than going through the qemu.nvram symlink.
+		err = mirror.CopyFile(filepath.Join(d.Path(), name), runPath)
 		if err != nil {
 			return fmt.Errorf("Failed copying NVRAM file: %w", err)
 		}
