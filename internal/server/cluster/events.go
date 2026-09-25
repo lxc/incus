@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
+
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/events"
@@ -195,13 +197,18 @@ func EventListenerWait(ctx context.Context, address string) error {
 // hubAddresses returns the addresses of members with event-hub role, and the event mode of the server.
 // The event mode will only be hub-server or hub-client if at least eventHubMinHosts have an event-hub role.
 // Otherwise the mode will be full-mesh.
-func hubAddresses(localAddress string, members map[int64]APIHeartbeatMember) ([]string, EventMode) {
+func hubAddresses(localAddress string, members map[int64]cowsqldb.HeartbeatMember) ([]string, EventMode) {
 	var hubAddresses []string
 	var localHasHubRole bool
 
 	// Do a first pass of members to count the members with event-hub role, and whether we are a hub server.
 	for _, member := range members {
-		if RoleInSlice(db.ClusterRoleEventHub, member.Roles) {
+		roles := make([]db.ClusterRole, 0, len(member.Roles))
+		for _, r := range member.Roles {
+			roles = append(roles, db.ClusterRole(r))
+		}
+
+		if RoleInSlice(db.ClusterRoleEventHub, roles) {
 			hubAddresses = append(hubAddresses, member.Address)
 
 			if member.Address == localAddress {
@@ -223,7 +230,7 @@ func hubAddresses(localAddress string, members map[int64]APIHeartbeatMember) ([]
 }
 
 // EventsUpdateListeners refreshes the cluster event listener connections.
-func EventsUpdateListeners(s *state.State, hbMembers map[int64]APIHeartbeatMember, inject events.InjectFunc) {
+func EventsUpdateListeners(s *state.State, hbMembers map[int64]cowsqldb.HeartbeatMember, inject events.InjectFunc) {
 	listenersUpdateLock.Lock()
 	defer listenersUpdateLock.Unlock()
 
@@ -251,9 +258,9 @@ func EventsUpdateListeners(s *state.State, hbMembers map[int64]APIHeartbeatMembe
 			return
 		}
 
-		hbMembers = make(map[int64]APIHeartbeatMember, len(members))
+		hbMembers = make(map[int64]cowsqldb.HeartbeatMember, len(members))
 		for _, member := range members {
-			hbMembers[member.ID] = APIHeartbeatMember{
+			hbMembers[member.ID] = cowsqldb.HeartbeatMember{
 				ID:            member.ID,
 				Name:          member.Name,
 				Address:       member.Address,
@@ -284,7 +291,12 @@ func EventsUpdateListeners(s *state.State, hbMembers map[int64]APIHeartbeatMembe
 			continue
 		}
 
-		if localEventMode != EventModeFullMesh && !RoleInSlice(db.ClusterRoleEventHub, hbMember.Roles) {
+		roles := make([]db.ClusterRole, 0, len(hbMember.Roles))
+		for _, r := range hbMember.Roles {
+			roles = append(roles, db.ClusterRole(r))
+		}
+
+		if localEventMode != EventModeFullMesh && !RoleInSlice(db.ClusterRoleEventHub, roles) {
 			// No direct connection is made to this member in event-hub mode, so clear any
 			// stale unavailable flag left over from an offline period.
 			listenersLock.Lock()
@@ -323,7 +335,7 @@ func EventsUpdateListeners(s *state.State, hbMembers map[int64]APIHeartbeatMembe
 
 		// Connect to remote concurrently and add to active listeners if successful.
 		wg.Add(1)
-		go func(m APIHeartbeatMember) {
+		go func(m cowsqldb.HeartbeatMember) {
 			defer wg.Done()
 			l := logger.AddContext(logger.Ctx{"local": localAddress, "remote": m.Address})
 
