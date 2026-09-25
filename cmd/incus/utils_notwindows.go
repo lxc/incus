@@ -1,4 +1,4 @@
-//go:build (linux && !appengine) || darwin || freebsd || openbsd
+//go:build (linux && !appengine) || darwin || freebsd || netbsd || openbsd
 
 package main
 
