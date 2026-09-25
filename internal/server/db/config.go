@@ -10,13 +10,13 @@ import (
 
 // Config fetches all server-level config keys.
 func (n *NodeTx) Config(ctx context.Context) (map[string]string, error) {
-	return query.SelectConfig(ctx, n.tx, "config", "")
+	return query.SelectConfig(ctx, n.Tx, "config", "")
 }
 
 // UpdateConfig updates the given server-level configuration keys in the
 // config table. Config keys set to empty values will be deleted.
 func (n *NodeTx) UpdateConfig(values map[string]string) error {
-	return query.UpdateConfig(n.tx, "config", values)
+	return query.UpdateConfig(n.Tx, "config", values)
 }
 
 // Config fetches all cluster config keys.

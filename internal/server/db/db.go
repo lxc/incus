@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster/db/transaction"
 	"github.com/cowsql/go-cowsql/driver"
 
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
@@ -31,8 +32,17 @@ type DB struct {
 
 // Node mediates access to data stored in the node-local SQLite database.
 type Node struct {
-	db  *sql.DB // Handle to the node-local SQLite database file.
-	dir string  // Reference to the directory where the database file lives.
+	*sql.DB        // Handle to the node-local SQLite database file.
+	dir     string // Reference to the directory where the database file lives.
+}
+
+func (n *Node) BeginTx(ctx context.Context) (transaction.TX, error) {
+	tx, err := query.BeginTx(ctx, n.DB)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to begin transaction: %w", err)
+	}
+
+	return &NodeTx{Tx: tx}, nil
 }
 
 // OpenNode creates a new Node object.
@@ -56,7 +66,7 @@ func OpenNode(dir string, fresh func(*Node) error) (*Node, error) {
 	}
 
 	n := &Node{
-		db:  db,
+		DB:  db,
 		dir: dir,
 	}
 
@@ -75,16 +85,7 @@ func OpenNode(dir string, fresh func(*Node) error) (*Node, error) {
 // DirectAccess is a bit of a hack which allows getting a database Node struct from any standard Go sql.DB.
 // This is primarily used to access the "db.bin" read-only copy of the database during startup.
 func DirectAccess(db *sql.DB) *Node {
-	return &Node{db: db}
-}
-
-// DB returns the low level database handle to the node-local SQLite
-// database.
-//
-//	FIXME: this is used for compatibility with some legacy code, and should be
-//		dropped once there are no call sites left.
-func (n *Node) DB() *sql.DB {
-	return n.db
+	return &Node{DB: db}
 }
 
 // Dir returns the directory of the underlying SQLite database file.
@@ -98,23 +99,46 @@ func (n *Node) Dir() string {
 // node-level database, otherwise they are rolled back.
 func (n *Node) Transaction(ctx context.Context, f func(context.Context, *NodeTx) error) error {
 	nodeTx := &NodeTx{}
-	return query.Transaction(ctx, n.db, func(ctx context.Context, tx *sql.Tx) error {
-		nodeTx.tx = tx
+	return query.Transaction(ctx, n.DB, func(ctx context.Context, tx *sql.Tx) error {
+		nodeTx.Tx = tx
 		return f(ctx, nodeTx)
 	})
 }
 
 // Close the database facade.
 func (n *Node) Close() error {
-	return n.db.Close()
+	return n.DB.Close()
 }
 
 // Cluster mediates access to data stored in the cluster cowsql database.
 type Cluster struct {
-	db         *sql.DB // Handle to the cluster cowsql database, gated behind gRPC SQL.
-	nodeID     int64   // Node ID of this server.
+	*sql.DB          // Handle to the cluster cowsql database, gated behind gRPC SQL.
+	nodeID     int64 // Node ID of this server.
 	mu         sync.RWMutex
 	closingCtx context.Context
+}
+
+func (c *Cluster) StartTx(exclusive bool) {
+	if !exclusive {
+		c.mu.RLock()
+	}
+}
+
+func (c *Cluster) ReleaseTx(exclusive bool) {
+	if !exclusive {
+		c.mu.RUnlock()
+	} else {
+		c.mu.Unlock()
+	}
+}
+
+func (c *Cluster) BeginTx(ctx context.Context) (transaction.TX, error) {
+	tx, err := query.BeginTx(ctx, c.DB)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ClusterTx{tx: tx, nodeID: c.nodeID}, nil
 }
 
 // OpenCluster creates a new Cluster object for interacting with the cowsql
@@ -196,7 +220,7 @@ func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore
 
 	if !nodesVersionsMatch {
 		c := &Cluster{
-			db:         db,
+			DB:         db,
 			closingCtx: closingCtx,
 		}
 
@@ -211,7 +235,7 @@ func OpenCluster(closingCtx context.Context, name string, store driver.NodeStore
 	cluster.PreparedStmts = stmts
 
 	clusterDB := &Cluster{
-		db:         db,
+		DB:         db,
 		closingCtx: closingCtx,
 	}
 
@@ -266,7 +290,7 @@ var ErrSomeNodesAreBehind = errors.New("some nodes are behind this node's versio
 // with the legacy patches that need to interact with the database.
 func ForLocalInspection(db *sql.DB) *Cluster {
 	return &Cluster{
-		db:         db,
+		DB:         db,
 		closingCtx: context.Background(),
 	}
 }
@@ -276,7 +300,7 @@ func ForLocalInspection(db *sql.DB) *Cluster {
 func ForLocalInspectionWithPreparedStmts(db *sql.DB) (*Cluster, error) {
 	c := ForLocalInspection(db)
 
-	stmts, err := cluster.PrepareStmts(c.db, true)
+	stmts, err := cluster.PrepareStmts(c.DB, true)
 	if err != nil {
 		return nil, fmt.Errorf("Prepare database statements: %w", err)
 	}
@@ -343,13 +367,13 @@ func (c *Cluster) transaction(ctx context.Context, f func(context.Context, *Clus
 			return f(ctx, clusterTx)
 		}
 
-		err := query.Transaction(ctx, c.db, txFunc)
+		err := query.Transaction(ctx, c.DB, txFunc)
 		if errors.Is(err, context.DeadlineExceeded) {
 			// If the query timed out it likely means that the leader has abruptly become unreachable.
 			// Now that this query has been cancelled, a leader election should have taken place by now.
 			// So let's retry the transaction once more in case the global database is now available again.
 			logger.Debug("Transaction timed out, will be retried", logger.Ctx{"member": c.nodeID, "err": err})
-			return query.Transaction(ctx, c.db, txFunc)
+			return query.Transaction(ctx, c.DB, txFunc)
 		}
 
 		return err
@@ -370,22 +394,14 @@ func (c *Cluster) Close() error {
 		_ = stmt.Close()
 	}
 
-	return c.db.Close()
-}
-
-// DB returns the low level database handle to the cluster database.
-//
-//	FIXME: this is used for compatibility with some legacy code, and should be
-//		dropped once there are no call sites left.
-func (c *Cluster) DB() *sql.DB {
-	return c.db
+	return c.DB.Close()
 }
 
 // Begin a new transaction against the cluster database.
 //
 // FIXME: legacy method.
 func (c *Cluster) Begin() (*sql.Tx, error) {
-	return begin(c.db)
+	return begin(c.DB)
 }
 
 func begin(db *sql.DB) (*sql.Tx, error) {
