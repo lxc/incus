@@ -88,7 +88,6 @@ builds:
     - darwin
     - freebsd
     - linux
-    - netbsd
     - windows
    goarch:
     - amd64
@@ -102,7 +101,6 @@ builds:
     - darwin
     - freebsd
     - linux
-    - netbsd
     - windows
    goarch:
     - amd64
@@ -116,7 +114,6 @@ builds:
     - darwin
     - freebsd
     - linux
-    - netbsd
     - windows
    goarch:
     - amd64
