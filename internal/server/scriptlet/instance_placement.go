@@ -398,7 +398,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 			}
 
 			for i := range allMembers {
-				candidateMemberInfo, err := allMembers[i].ToAPI(ctx, tx, args)
+				candidateMemberInfo, err := db.APINodeInfo{NodeInfo: allMembers[i]}.ToAPI(ctx, tx, args)
 				if err != nil {
 					return err
 				}
@@ -496,7 +496,7 @@ func InstancePlacementRun(ctx context.Context, l logger.Logger, s *state.State, 
 		}
 
 		for i := range candidateMembers {
-			candidateMemberInfo, err := candidateMembers[i].ToAPI(ctx, tx, args)
+			candidateMemberInfo, err := db.APINodeInfo{NodeInfo: candidateMembers[i]}.ToAPI(ctx, tx, args)
 			if err != nil {
 				return err
 			}

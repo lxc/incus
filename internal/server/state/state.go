@@ -8,6 +8,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/cowsql/go-cowsql/cluster"
+	cowsqltls "github.com/cowsql/go-cowsql/cluster/tls"
+
 	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/bgp"
 	clusterConfig "github.com/lxc/incus/v7/internal/server/cluster/config"
@@ -28,7 +31,8 @@ import (
 
 type clusterGateway interface {
 	LeaderAddress() (string, error)
-	IsLeader() (bool, error)
+	IsLeader(ctx context.Context) (bool, error)
+	NewNotifier(ctx context.Context, networkCert cowsqltls.CertInfo, serverCert cowsqltls.CertInfo, policy cluster.NotifierPolicy) (cluster.Notifier, error)
 }
 
 // State is a gateway to the two main stateful components, the database
