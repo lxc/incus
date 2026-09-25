@@ -598,9 +598,9 @@ func internalSQLGet(d *Daemon, r *http.Request) response.Response {
 
 	var dbConn *sql.DB
 	if database == "global" {
-		dbConn = s.DB.Cluster.DB()
+		dbConn = s.DB.Cluster.DB
 	} else {
-		dbConn = s.DB.Node.DB()
+		dbConn = s.DB.Node.DB
 	}
 
 	tx, err := dbConn.BeginTx(r.Context(), nil)
@@ -639,9 +639,9 @@ func internalSQLPost(d *Daemon, r *http.Request) response.Response {
 
 	var dbConn *sql.DB
 	if req.Database == "global" {
-		dbConn = s.DB.Cluster.DB()
+		dbConn = s.DB.Cluster.DB
 	} else {
-		dbConn = s.DB.Node.DB()
+		dbConn = s.DB.Node.DB
 	}
 
 	batch := internalSQL.SQLBatch{}

@@ -45,11 +45,11 @@ func NewTestNodeTx(t *testing.T) (*NodeTx, func()) {
 	var err error
 
 	nodeTx := &NodeTx{}
-	nodeTx.tx, err = node.db.Begin()
+	nodeTx.Tx, err = node.DB.Begin()
 	require.NoError(t, err)
 
 	cleanup := func() {
-		require.NoError(t, nodeTx.tx.Commit())
+		require.NoError(t, nodeTx.Tx.Commit())
 		nodeCleanup()
 	}
 
@@ -87,7 +87,7 @@ func NewTestClusterTx(t *testing.T) (*ClusterTx, func()) {
 	var err error
 
 	clusterTx := &ClusterTx{nodeID: cluster.nodeID}
-	clusterTx.tx, err = cluster.db.Begin()
+	clusterTx.tx, err = cluster.DB.Begin()
 	require.NoError(t, err)
 
 	cleanup := func() {

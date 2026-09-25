@@ -40,7 +40,7 @@ func (n *NodeTx) GetCertificates(ctx context.Context) ([]cluster.Certificate, er
 
 	sql := "SELECT fingerprint, type, name, certificate FROM certificates"
 	dbCerts := []cert{}
-	err := query.Scan(ctx, n.tx, sql, func(scan func(dest ...any) error) error {
+	err := query.Scan(ctx, n.Tx, sql, func(scan func(dest ...any) error) error {
 		dbCert := cert{}
 
 		err := scan(&dbCert.fingerprint, &dbCert.certType, &dbCert.name, &dbCert.certificate)
@@ -72,14 +72,14 @@ func (n *NodeTx) GetCertificates(ctx context.Context) ([]cluster.Certificate, er
 // ReplaceCertificates removes all existing certificates from the local certificates table and replaces them with
 // the ones provided.
 func (n *NodeTx) ReplaceCertificates(certs []cluster.Certificate) error {
-	_, err := n.tx.Exec("DELETE FROM certificates")
+	_, err := n.Tx.Exec("DELETE FROM certificates")
 	if err != nil {
 		return err
 	}
 
 	sql := "INSERT INTO certificates (fingerprint, type, name, certificate) VALUES(?,?,?,?)"
 	for _, cert := range certs {
-		_, err = n.tx.Exec(sql, cert.Fingerprint, cert.Type, cert.Name, cert.Certificate)
+		_, err = n.Tx.Exec(sql, cert.Fingerprint, cert.Type, cert.Name, cert.Certificate)
 		if err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ import (
 // GetAppliedPatches returns the names of all patches currently applied on this node.
 func (n *Node) GetAppliedPatches() ([]string, error) {
 	var response []string
-	err := query.Transaction(context.TODO(), n.db, func(ctx context.Context, tx *sql.Tx) error {
+	err := query.Transaction(context.TODO(), n.DB, func(ctx context.Context, tx *sql.Tx) error {
 		var err error
 		response, err = query.SelectStrings(ctx, tx, "SELECT name FROM patches")
 		return err
@@ -27,6 +27,6 @@ func (n *Node) GetAppliedPatches() ([]string, error) {
 // MarkPatchAsApplied marks the patch with the given name as applied on this node.
 func (n *Node) MarkPatchAsApplied(patch string) error {
 	stmt := `INSERT INTO patches (name, applied_at) VALUES (?, strftime("%s"))`
-	_, err := n.db.Exec(stmt, patch)
+	_, err := n.DB.Exec(stmt, patch)
 	return err
 }
