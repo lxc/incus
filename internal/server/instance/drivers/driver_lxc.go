@@ -163,6 +163,11 @@ func lxcSetConfigItem(c *liblxc.Container, key string, value string) error {
 		return nil
 	}
 
+	// The config file is line based, so a line break in the key or value would inject additional directives.
+	if strings.ContainsAny(key, "\r\n") || strings.ContainsAny(value, "\r\n") {
+		return fmt.Errorf("Failed to set LXC config: %s: Key and value cannot contain line breaks", key)
+	}
+
 	err := c.SetConfigItem(key, value)
 	if err != nil {
 		return fmt.Errorf("Failed to set LXC config: %s=%s", key, value)
