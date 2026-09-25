@@ -28,6 +28,15 @@ func isNvidiaConfigValue(value string) error {
 	return nil
 }
 
+// isOCIConfigValue rejects line breaks that would allow injecting arbitrary lines into the LXC config.
+func isOCIConfigValue(value string) error {
+	if strings.ContainsAny(value, "\r\n") {
+		return errors.New("OCI configuration values cannot contain line breaks")
+	}
+
+	return nil
+}
+
 // isResolvConfValue rejects line breaks that would allow injecting arbitrary lines into the generated resolv.conf.
 func isResolvConfValue(value string) error {
 	if strings.ContainsAny(value, "\r\n") {
@@ -830,7 +839,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: OCI container
 	//  shortdesc: Entry point
-	"oci.entrypoint": validate.IsAny,
+	"oci.entrypoint": isOCIConfigValue,
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.cwd)
 	// Override the working directory of an OCI container.
@@ -839,7 +848,7 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 	//  liveupdate: no
 	//  condition: OCI container
 	//  shortdesc: Working directory
-	"oci.cwd": validate.Optional(validate.IsAbsFilePath),
+	"oci.cwd": validate.Optional(validate.IsAbsFilePath, isOCIConfigValue),
 
 	// gendoc:generate(entity=instance, group=oci, key=oci.gid)
 	// Override the GID of the process run in an OCI container.

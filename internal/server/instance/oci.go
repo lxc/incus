@@ -45,8 +45,12 @@ func OCIEnvironment(spec *ociSpecs.Spec) (map[string]string, error) {
 
 	for _, entry := range spec.Process.Env {
 		key, value, ok := strings.Cut(entry, "=")
-		if !ok {
+		if !ok || key == "" {
 			return nil, fmt.Errorf("Bad OCI environment variable: %s", entry)
+		}
+
+		if strings.ContainsAny(entry, "\r\n") {
+			return nil, fmt.Errorf("Bad OCI environment variable %q: Line breaks aren't allowed", key)
 		}
 
 		env[key] = value
