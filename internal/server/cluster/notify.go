@@ -29,6 +29,7 @@ const (
 	NotifyTryAll = cluster.NotifyTryAll // Attempt to notify all nodes regardless of state.
 )
 
+// NewNotifier returns a new cluster notifier for the given policy.
 func NewNotifier(s *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, policy NotifierPolicy) (Notifier, error) {
 	if s.Cluster == nil {
 		nullNotifier := func(func(incus.InstanceServer) error) error { return nil }

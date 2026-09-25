@@ -129,7 +129,7 @@ func (n *NodeTx) RemoveRaftNode(id int64) error {
 
 // ReplaceRaftNodes replaces the current list of raft nodes.
 func (n *NodeTx) ReplaceRaftNodes(nodes []RaftNode) error {
-	_, err := n.Tx.Exec("DELETE FROM raft_nodes")
+	_, err := n.Exec("DELETE FROM raft_nodes")
 	if err != nil {
 		return err
 	}
@@ -142,5 +142,6 @@ func (n *NodeTx) ReplaceRaftNodes(nodes []RaftNode) error {
 			return err
 		}
 	}
+
 	return nil
 }

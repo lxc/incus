@@ -6,6 +6,7 @@ import (
 
 	"github.com/cowsql/go-cowsql/cluster"
 	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
+
 	"github.com/lxc/incus/v7/internal/server/db"
 )
 
