@@ -407,6 +407,7 @@ run_cluster() {
     run_test test_clustering_projects "clustering projects"
     run_test test_clustering_update_cert "clustering update cert"
     run_test test_clustering_update_cert_reversion "clustering update cert reversion"
+    run_test test_clustering_join_cert_chain "clustering join cert chain"
     run_test test_clustering_address "clustering address"
     run_test test_clustering_image_replication "clustering image replication"
     run_test test_clustering_recover "clustering recovery"
