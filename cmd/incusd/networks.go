@@ -1993,21 +1993,19 @@ func networkStartup(s *state.State) error {
 		}
 
 		// Update network start priority based on dependencies.
-		if netConfig["parent"] != "" && n.Type() != "ovn" && priority != networkPriorityPhysical {
-			// Start networks that depend on physical interfaces existing after
-			// non-dependent networks.
-			initNetworksMu.Lock()
-			delete(initNetworks[priority], pn)
-			initNetworks[networkPriorityPhysical][pn] = struct{}{}
-			initNetworksMu.Unlock()
+		wantedPriority := networkPriorityStandalone
+		if netConfig["parent"] != "" && n.Type() != "ovn" {
+			// Networks that depend on physical interfaces start after non-dependent networks.
+			wantedPriority = networkPriorityPhysical
+		} else if netConfig["network"] != "" || netConfig["parent"] != "" {
+			// Networks that depend on other logical networks start last.
+			wantedPriority = networkPriorityLogical
+		}
 
-			return nil
-		} else if (netConfig["network"] != "" || netConfig["parent"] != "") && priority != networkPriorityLogical {
-			// Start networks that depend on other logical networks after networks after
-			// non-dependent networks and networks that depend on physical interfaces.
+		if priority != wantedPriority {
 			initNetworksMu.Lock()
 			delete(initNetworks[priority], pn)
-			initNetworks[networkPriorityLogical][pn] = struct{}{}
+			initNetworks[wantedPriority][pn] = struct{}{}
 			initNetworksMu.Unlock()
 
 			return nil
