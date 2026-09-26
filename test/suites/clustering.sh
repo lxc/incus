@@ -1669,6 +1669,64 @@ test_clustering_update_cert() {
     kill_incus "${INCUS_TWO_DIR}"
 }
 
+test_clustering_join_cert_chain() {
+    # shellcheck disable=2039,3043
+    local INCUS_DIR
+
+    setup_clustering_bridge
+    prefix="inc$$"
+    bridge="${prefix}"
+
+    # Bootstrap the first node
+    setup_clustering_netns 1
+    INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_ONE_DIR}"
+    ns1="${prefix}1"
+    spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
+
+    # Turn the cluster certificate into a chain by appending an unrelated certificate
+    leaf_path=$(mktemp -p "${TEST_DIR}" XXX)
+    key_path=$(mktemp -p "${TEST_DIR}" XXX)
+    chain_path=$(mktemp -p "${TEST_DIR}" XXX)
+    issuer_cert_path=$(mktemp -p "${TEST_DIR}" XXX)
+    issuer_key_path=$(mktemp -p "${TEST_DIR}" XXX)
+    cp "${INCUS_ONE_DIR}/cluster.crt" "${leaf_path}"
+    cp "${INCUS_ONE_DIR}/cluster.key" "${key_path}"
+    openssl req -x509 -newkey rsa:2048 -sha256 -keyout "${issuer_key_path}" -nodes -out "${issuer_cert_path}" -days 1 -subj "/CN=issuer.local"
+    cat "${leaf_path}" "${issuer_cert_path}" > "${chain_path}"
+
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster update-cert "${chain_path}" "${key_path}" -q
+    cmp -s "${INCUS_ONE_DIR}/cluster.crt" "${chain_path}" || false
+    [ "$(grep -c 'BEGIN CERTIFICATE' "${INCUS_ONE_DIR}/cluster.crt")" = "2" ]
+
+    # Join a second node using only the leaf certificate, as a join token would
+    cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${leaf_path}")
+    setup_clustering_netns 2
+    INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_TWO_DIR}"
+    ns2="${prefix}2"
+    spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
+
+    # The joining member must have received the full chain
+    cmp -s "${INCUS_TWO_DIR}/cluster.crt" "${chain_path}" || false
+    cmp -s "${INCUS_TWO_DIR}/cluster.key" "${key_path}" || false
+
+    INCUS_DIR="${INCUS_ONE_DIR}" incus info --target node2 | grep -q "server_name: node2"
+    INCUS_DIR="${INCUS_TWO_DIR}" incus info --target node1 | grep -q "server_name: node1"
+
+    INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+    sleep 0.5
+    rm -f "${INCUS_TWO_DIR}/unix.socket"
+    rm -f "${INCUS_ONE_DIR}/unix.socket"
+
+    teardown_clustering_netns
+    teardown_clustering_bridge
+
+    kill_incus "${INCUS_ONE_DIR}"
+    kill_incus "${INCUS_TWO_DIR}"
+}
+
 test_clustering_update_cert_reversion() {
     # shellcheck disable=2039,3043
     local INCUS_DIR
