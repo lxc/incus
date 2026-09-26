@@ -10733,12 +10733,12 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 	pid, _ := d.pid()
 	status.Pid = int64(pid)
 
-	var err error
-
-	status.StartedAt, err = d.processStartedAt(d.InitPID())
+	startedAt, err := d.processStartedAt(d.InitPID())
 	if err != nil {
 		return status, err
 	}
+
+	status.StartedAt = startedAt
 
 	return status, nil
 }
@@ -10751,6 +10751,9 @@ func (d *qemu) RenderState(hostInterfaces []net.Interface) (*api.InstanceState, 
 // diskState gets disk usage info.
 func (d *qemu) diskState() map[string]api.InstanceStateDisk {
 	disk := map[string]api.InstanceStateDisk{}
+
+	// Custom volumes may live in another project, resolve it only if needed.
+	volumeProject := ""
 
 	for _, dev := range d.expandedDevices.Sorted() {
 		if dev.Config["type"] != "disk" {
@@ -10781,8 +10784,16 @@ func (d *qemu) diskState() map[string]api.InstanceStateDisk {
 				continue
 			}
 
+			if volumeProject == "" {
+				volumeProject, err = project.StorageVolumeProject(d.state.DB.Cluster, d.Project().Name, db.StoragePoolVolumeTypeCustom)
+				if err != nil {
+					d.logger.Error("Error loading storage volume project", logger.Ctx{"err": err})
+					continue
+				}
+			}
+
 			volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
-			usage, err = pool.GetCustomVolumeUsage(d.Project().Name, volName)
+			usage, err = pool.GetCustomVolumeUsage(volumeProject, volName)
 			if err != nil {
 				if !errors.Is(err, storageDrivers.ErrNotSupported) {
 					d.logger.Error("Error getting volume usage", logger.Ctx{"volume": dev.Config["source"], "err": err})
