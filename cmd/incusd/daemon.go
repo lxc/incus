@@ -2868,13 +2868,18 @@ func (d *Daemon) clusterSyncCertificate() error {
 		return nil
 	}
 
-	// Retrieve the leader's certificate.
-	leaderCert, err := localtls.GetRemoteCertificate(fmt.Sprintf("https://%s", leaderAddress), version.UserAgent)
+	// Retrieve the leader's certificate chain.
+	leaderCerts, err := localtls.GetRemoteCertificates(fmt.Sprintf("https://%s", leaderAddress), version.UserAgent)
 	if err != nil {
 		return fmt.Errorf("Failed to retrieve cluster certificate from leader: %w", err)
 	}
 
-	leaderCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: leaderCert.Raw})
+	leaderCert := leaderCerts[0]
+
+	var leaderCertPEM []byte
+	for _, cert := range leaderCerts {
+		leaderCertPEM = append(leaderCertPEM, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})...)
+	}
 
 	// Skip if the leader certificate doesn't match our private key (full cluster renewal).
 	networkCert := d.endpoints.NetworkCert()
