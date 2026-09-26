@@ -8490,6 +8490,9 @@ func (d *lxc) cpuState() api.InstanceStateCPU {
 func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 	disk := map[string]api.InstanceStateDisk{}
 
+	// Custom volumes may live in another project, resolve it only if needed.
+	volumeProject := ""
+
 	for _, dev := range d.expandedDevices.Sorted() {
 		if dev.Config["type"] != "disk" {
 			continue
@@ -8519,8 +8522,16 @@ func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 				continue
 			}
 
+			if volumeProject == "" {
+				volumeProject, err = project.StorageVolumeProject(d.state.DB.Cluster, d.Project().Name, db.StoragePoolVolumeTypeCustom)
+				if err != nil {
+					d.logger.Error("Error loading storage volume project", logger.Ctx{"err": err})
+					continue
+				}
+			}
+
 			volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
-			usage, err = pool.GetCustomVolumeUsage(d.Project().Name, volName)
+			usage, err = pool.GetCustomVolumeUsage(volumeProject, volName)
 			if err != nil {
 				if !errors.Is(err, storageDrivers.ErrNotSupported) {
 					d.logger.Error("Error getting volume usage", logger.Ctx{"volume": dev.Config["source"], "err": err})
