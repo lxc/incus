@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: incus\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
 "POT-Creation-Date: 2026-09-21 15:20+0000\n"
-"PO-Revision-Date: 2026-09-12 04:51+0000\n"
+"PO-Revision-Date: 2026-09-27 13:51+0000\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <https://hosted.weblate.org/projects/incus/cli/ka/>\n"
 "Language: ka\n"
@@ -453,14 +453,13 @@ msgid "(binary data)"
 msgstr ""
 
 #: cmd/incus/low_level.go:804
-#, fuzzy, c-format
+#, c-format
 msgid "(error: %w)"
-msgstr "შეცდომა: %v"
+msgstr "(შეცდომა: %w)"
 
 #: cmd/incus/low_level.go:791
-#, fuzzy
 msgid "(no timestamp)"
-msgstr "დროის შტამპები:"
+msgstr "(დროის შტამპის გარეშე)"
 
 #: cmd/incus/low_level.go:1724 cmd/incus/low_level.go:1732
 #: cmd/incus/low_level.go:1752 cmd/incus/low_level.go:1760
@@ -501,9 +500,9 @@ msgid "--all cannot be used together with other arguments"
 msgstr ""
 
 #: cmd/incus/low_level.go:949 cmd/incus/low_level.go:973
-#, fuzzy, c-format
+#, c-format
 msgid "--attributes cannot be used with --format=%s"
-msgstr "--no-profiles -ის და --refresh -ის ერთად გამოყენება შეუძლებელია"
+msgstr "პარამეტრებს --attributes და --format=%s ერთად ვერ გამოიყენებთ"
 
 #: cmd/incus/low_level.go:1284
 #, fuzzy
@@ -607,9 +606,9 @@ msgid "--target cannot be used with instances"
 msgstr "--target გაშვებულ ასლებთან ერთად ვერ გამოიყენებთ"
 
 #: cmd/incus/low_level.go:977
-#, fuzzy, c-format
+#, c-format
 msgid "--timestamp cannot be used with --format=%s"
-msgstr "--no-profiles -ის და --refresh -ის ერთად გამოყენება შეუძლებელია"
+msgstr "პარამეტრებს --timestamp და --format=%s ერთად ვერ გამოიყენებთ"
 
 #: cmd/incus/remote.go:535
 msgid "--tls-cert and --tls-key must be used together"
@@ -1377,9 +1376,9 @@ msgid "Client version: %s\n"
 msgstr "კლიენტის ვერსია: %s\n"
 
 #: cmd/incus/info.go:346
-#, fuzzy, c-format
+#, c-format
 msgid "Cluster %d"
-msgstr "კლასტერი ჩართულია"
+msgstr "კლასტერი %d"
 
 #: cmd/incus/cluster_group.go:236
 #, c-format
@@ -3059,9 +3058,9 @@ msgid "Failed to create certificate: %w"
 msgstr ""
 
 #: cmd/incus/move_nearlive.go:86
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to create pre-copy snapshot %q: %w"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "ასლამდელი სწრაფი ასლის %q შექმნა ჩავარდა: %w"
 
 #: cmd/incus/storage_volume.go:2346
 #, c-format
@@ -3084,14 +3083,14 @@ msgid "Failed to delete partial copy of instance %q on the target server: %s"
 msgstr ""
 
 #: cmd/incus/move_nearlive.go:24
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete pre-copy snapshot %q of instance %q: %s"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "ასლამდელი სწრაფი ასლის %q წაშლა გაშვებული ასლისთვის %q ჩავარდა: %s"
 
 #: cmd/incus/low_level.go:987 cmd/incus/low_level.go:1070
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to delete variable %s:%s: %w"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "ცვლადის %s:%s წაშლა ჩავარდა: %w"
 
 #: cmd/incus/low_level.go:249
 #, c-format
@@ -3150,9 +3149,9 @@ msgid "Failed to load configuration: %s"
 msgstr ""
 
 #: cmd/incus/query.go:156
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to open input file %q: %w"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "შეყვანის ფაილის %q გახსნა ჩავარდა: %w"
 
 #: cmd/incus/file.go:790 cmd/incus/storage_volume_file.go:826
 #: cmd/incus/utils_sftp.go:413
@@ -3185,9 +3184,9 @@ msgid "Failed to parse the preseed: %w"
 msgstr ""
 
 #: cmd/incus/low_level.go:1000
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to parse variable %s:%s: %w"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "ცვლადის %s:%s დამუშავება ჩავარდა: %w"
 
 #: cmd/incus/admin_init_preseed.go:30
 #, c-format
@@ -3231,9 +3230,9 @@ msgid "Failed to request dump: %w"
 msgstr ""
 
 #: cmd/incus/move_nearlive.go:140
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to restart instance %q after a failed move: %s"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "გაშვებული ასლია %q გადატვირთვა ჩავარდნილი გადატანის შემდეგ ჩავარდა: %s"
 
 #: cmd/incus/cluster.go:1849
 #, c-format
@@ -3269,14 +3268,14 @@ msgid "Failed to retrieve list of storage pools: %w"
 msgstr ""
 
 #: cmd/incus/low_level.go:574
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to set UEFI variable %s:%s: %s"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "UEFI-ის ცვლადის %s:%s დაყენება ჩავარდა: %s"
 
 #: cmd/incus/low_level.go:968
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to set UEFI variable %s:%s: %w"
-msgstr "sshfs-ის გაშვების შეცდომა: %w"
+msgstr "UEFI-ის ცვლადის %s:%s დაყენება ჩავარდა: %w"
 
 #: cmd/incus/cluster.go:1823
 #, c-format
