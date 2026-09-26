@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/flosch/pongo2/v6"
@@ -33,6 +34,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/dnsmasq/dhcpalloc"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/ip"
+	"github.com/lxc/incus/v7/internal/server/lifecycle"
 	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/network/acl"
 	addressset "github.com/lxc/incus/v7/internal/server/network/address-set"
@@ -116,6 +118,11 @@ type ovn struct {
 
 	// Uplink network of the parent, as a child has none of its own.
 	parentUplink string
+
+	// Track the health state of load balancers (listen address -> online) so that lifecycle events can be
+	// fired when the state changes.
+	loadBalancerHealth     map[string]bool
+	loadBalancerHealthLock sync.Mutex
 }
 
 func (n *ovn) init(s *state.State, id int64, projectName string, netInfo *api.Network, netNodes map[int64]db.NetworkNode) error {
@@ -4698,6 +4705,9 @@ func (n *ovn) Start() error {
 						online = true
 					}
 
+					// Fire a lifecycle event if the load balancer health state changed.
+					n.loadBalancerHealthEvent(lb, listenAddr.String(), online)
+
 					// Prepare advertisement.
 					ipVersion := uint(4)
 					if listenAddr.To4() == nil {
@@ -9120,6 +9130,80 @@ func (n *ovn) forPeers(f func(targetOVNNet *ovn) error) error {
 	}
 
 	return nil
+}
+
+// loadBalancerHealthEvent fires a lifecycle event when the health of a load balancer changes.
+func (n *ovn) loadBalancerHealthEvent(lb ovnNB.LoadBalancer, listenAddress string, online bool) {
+	n.loadBalancerHealthLock.Lock()
+
+	if n.loadBalancerHealth == nil {
+		n.loadBalancerHealth = map[string]bool{}
+	}
+
+	// Skip firing an event for the initial state observed.
+	prevOnline, found := n.loadBalancerHealth[listenAddress]
+	n.loadBalancerHealth[listenAddress] = online
+
+	n.loadBalancerHealthLock.Unlock()
+
+	if !found || prevOnline == online {
+		return
+	}
+
+	status := "unhealthy"
+	if online {
+		status = "healthy"
+	}
+
+	// Only fire the event on the current cluster leader so that a health change isn't reported once per member.
+	if n.state.ServerClustered {
+		isLeader, err := n.state.Cluster.IsLeader()
+		if err != nil || !isLeader {
+			return
+		}
+	}
+
+	ctx := logger.Ctx{"status": status}
+
+	// Include the status of the service monitors for the load balancer's backends.
+	if lb.Protocol != nil {
+		serviceMonitors := []logger.Ctx{}
+
+		for listenAddr, targets := range lb.Vips {
+			_, portStr, err := net.SplitHostPort(listenAddr)
+			if err != nil {
+				continue
+			}
+
+			port, err := strconv.Atoi(portStr)
+			if err != nil {
+				continue
+			}
+
+			for target := range strings.SplitSeq(targets, ",") {
+				host, _, err := net.SplitHostPort(target)
+				if err != nil {
+					continue
+				}
+
+				monitorStatus, err := n.ovnsb.GetServiceHealth(context.TODO(), host, *lb.Protocol, port)
+				if err != nil {
+					continue
+				}
+
+				serviceMonitors = append(serviceMonitors, logger.Ctx{
+					"address":  host,
+					"port":     port,
+					"protocol": *lb.Protocol,
+					"status":   monitorStatus,
+				})
+			}
+		}
+
+		ctx["service_monitors"] = serviceMonitors
+	}
+
+	n.state.Events.SendLifecycle(n.project, lifecycle.NetworkLoadBalancerHealthChanged.Event(n, listenAddress, nil, ctx))
 }
 
 // loadBalancerBGPSetupPrefixes exports external load balancer addresses as prefixes.
