@@ -237,6 +237,12 @@ For macOS systems, the agent can manually be installed using a `9p` mount by ope
     cd /Volumes/config
     ./install.sh
 
+```{warning}
+Apple's Transparency, Consent, Control daemon requires you to allow full disk access to `sh` for the agent to be automatically started.
+This reduces the overall security of the system, by relaxing some of Apple's additional security restrictions.
+This does not in any way bypass UNIX permissions, however, if you are not comfortable with that, you will need to manually run `incus-agent` each time.
+```
+
 #### On NetBSD
 
 For NetBSD systems, the agent can manually be installed using a `9p` mount by running the following commands **as root**:
@@ -261,12 +267,6 @@ Otherwise, the agent can manually be started by opening a terminal and running (
 
     d:\
     .\incus-agent.exe
-
-```{warning}
-Apple's Transparency, Consent, Control daemon requires you to allow full disk access to `sh` for the agent to be automatically started.
-This reduces the overall security of the system, by relaxing some of Apple's additional security restrictions.
-This does not in any way bypass UNIX permissions, however, if you are not comfortable with that, you will need to manually run `incus-agent` each time.
-```
 
 ### Configure the Incus Agent
 By default the Incus Agent will have all features enabled.
