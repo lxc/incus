@@ -7490,6 +7490,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			"security.protection.start",
 			"security.guestapi",
 			"security.secureboot",
+			"security.tags",
 		}
 
 		liveUpdateKeyPrefixes := []string{
