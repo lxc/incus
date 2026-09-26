@@ -584,6 +584,7 @@ var APIExtensions = []string{
 	"disk_initial_copy",
 	"internal_debug_pprof",
 	"instance_state_disk_counters",
+	"instances_state_tpm",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

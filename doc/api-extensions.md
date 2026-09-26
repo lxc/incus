@@ -3509,6 +3509,7 @@ the container is copied into the volume the first time the volume is used, if it
 This adds `/internal/debug/pprof/` to the API, serving the same `pprof`
 profiles as the `core.debug_address` listener but over the regular
 listeners, restricted to trusted clients with server administration rights.
+
 ## `instance_state_disk_counters`
 
 Adds a `counters` field to each entry of the `disk` section of an instance's
@@ -3520,3 +3521,12 @@ statistics reported by QEMU. Containers do not report them because cgroup
 I/O accounting is keyed by host block device rather than by Incus device
 name, and a container's root file system and custom volumes routinely share
 a single host block device, making per-device attribution impossible.
+
+## `instances_state_tpm`
+
+Adds a `tpm` section to the instance state, listing every `tpm` device along
+with its endorsement keys, each with a type, size, SHA-256 fingerprint and
+PEM encoded public key.
+
+The endorsement keys are only known for TPM devices provisioned by Incus, that is
+when `instances.tpm.platform_cert` was set at the time the device was first started.
