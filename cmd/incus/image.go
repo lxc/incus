@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -1001,8 +1002,8 @@ func (c *cmdImageInfo) run(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println(i18n.G("Properties:"))
-	for key, value := range info.Properties {
-		fmt.Printf("    %s: %s\n", key, value)
+	for _, key := range slices.Sorted(maps.Keys(info.Properties)) {
+		fmt.Printf("    %s: %s\n", key, info.Properties[key])
 	}
 
 	fmt.Println(i18n.G("Aliases:"))

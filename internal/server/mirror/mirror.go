@@ -4,6 +4,7 @@ package mirror
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -247,8 +248,19 @@ func (m *Mirror) syncPending() {
 	m.syncMu.Lock()
 	defer m.syncMu.Unlock()
 
+	local, persistent, err := m.roots()
+	if err != nil {
+		m.logger.Warn("Failed mirroring files", logger.Ctx{"err": err})
+		return
+	}
+
+	defer func() {
+		_ = local.Close()
+		_ = persistent.Close()
+	}()
+
 	for name := range pending {
-		err := m.syncFile(name)
+		err := syncFile(local, persistent, name)
 		if err != nil {
 			m.logger.Warn("Failed mirroring file", logger.Ctx{"name": name, "err": err})
 		}
@@ -264,13 +276,23 @@ func (m *Mirror) syncAll(prune bool) error {
 	m.pending = map[string]struct{}{}
 	m.mu.Unlock()
 
-	localNames, err := m.list(m.local)
+	local, persistent, err := m.roots()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = local.Close()
+		_ = persistent.Close()
+	}()
+
+	localNames, err := listRegular(local, m.filter)
 	if err != nil {
 		return err
 	}
 
 	for _, name := range localNames {
-		err := m.syncFile(name)
+		err := syncFile(local, persistent, name)
 		if err != nil {
 			return err
 		}
@@ -280,18 +302,18 @@ func (m *Mirror) syncAll(prune bool) error {
 		return nil
 	}
 
-	persistentNames, err := m.list(m.persistent)
+	persistentNames, err := listRegular(persistent, m.filter)
 	if err != nil {
 		return err
 	}
 
 	for _, name := range persistentNames {
-		_, err := os.Lstat(filepath.Join(m.local, name))
+		_, err := local.Lstat(name)
 		if err == nil {
 			continue
 		}
 
-		err = m.syncFile(name)
+		err = syncFile(local, persistent, name)
 		if err != nil {
 			return err
 		}
@@ -300,34 +322,28 @@ func (m *Mirror) syncAll(prune bool) error {
 	return nil
 }
 
-// list returns the regular files of dir accepted by the filter.
-func (m *Mirror) list(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
+// roots opens the local and persistent directories, confining every file operation to them.
+func (m *Mirror) roots() (*os.Root, *os.Root, error) {
+	local, err := os.OpenRoot(m.local)
 	if err != nil {
-		return nil, fmt.Errorf("Failed reading %q: %w", dir, err)
+		return nil, nil, err
 	}
 
-	names := []string{}
-	for _, entry := range entries {
-		if !entry.Type().IsRegular() || !m.filter(entry.Name()) {
-			continue
-		}
-
-		names = append(names, entry.Name())
+	persistent, err := os.OpenRoot(m.persistent)
+	if err != nil {
+		_ = local.Close()
+		return nil, nil, err
 	}
 
-	return names, nil
+	return local, persistent, nil
 }
 
 // syncFile replicates a single file, removing the persistent copy if it's gone locally.
-func (m *Mirror) syncFile(name string) error {
-	src := filepath.Join(m.local, name)
-	dst := filepath.Join(m.persistent, name)
-
-	fi, err := os.Lstat(src)
-	if errors.Is(err, os.ErrNotExist) {
-		err = os.Remove(dst)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
+func syncFile(local *os.Root, persistent *os.Root, name string) error {
+	fi, err := local.Lstat(name)
+	if errors.Is(err, fs.ErrNotExist) {
+		err = persistent.Remove(name)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 
@@ -342,5 +358,5 @@ func (m *Mirror) syncFile(name string) error {
 		return nil
 	}
 
-	return CopyFile(src, dst)
+	return copyFile(local, name, persistent, name)
 }
