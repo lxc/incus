@@ -1594,8 +1594,9 @@ func (d *nicOVN) State() (*api.InstanceStateNetwork, error) {
 	// When not on a nested NIC, fetch some details from the host.
 	if d.config["nested"] == "" {
 		// Get MTU of host interface that connects to OVN integration bridge if exists.
+		// The host interface is gone while the instance stops or migrates, which isn't worth reporting.
 		iface, err := net.InterfaceByName(d.config["host_name"])
-		if err != nil {
+		if err != nil && network.InterfaceExists(d.config["host_name"]) {
 			d.logger.Warn("Failed getting host interface state for MTU", logger.Ctx{"host_name": d.config["host_name"], "err": err})
 		}
 
