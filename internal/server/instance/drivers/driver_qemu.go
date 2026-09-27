@@ -497,7 +497,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	s := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange}, event) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventAgentTemplated, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -561,6 +561,20 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 			}
 
 			s.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
+
+		case qmp.EventAgentTemplated:
+			d.logger.Debug("Instance agent applied templates")
+
+			// Record it now and force a full restart so the coming reboot regenerates the config drive.
+			if d.LocalConfig()["volatile.apply_template"] != "" {
+				err = d.VolatileSet(map[string]string{
+					"volatile.apply_template": "",
+					"volatile.vm.needs_reset": "true",
+				})
+				if err != nil {
+					d.logger.Error("Failed recording template application", logger.Ctx{"err": err})
+				}
+			}
 
 		case qmp.EventAgentStopped:
 			d.logger.Debug("Instance agent stopped")
