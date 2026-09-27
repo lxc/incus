@@ -319,6 +319,26 @@ func NetworkIntegrationAllowed(reqProjectConfig map[string]string, integrationNa
 	return slices.Contains(allowedRestrictedIntegrations, integrationName)
 }
 
+// ImageProject returns the effective project to use for images based on the requested project.
+func ImageProject(ctx context.Context, c *db.Cluster, projectName string) (string, error) {
+	var p *api.Project
+	err := c.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		dbProject, err := cluster.GetProject(ctx, tx.Tx(), projectName)
+		if err != nil {
+			return err
+		}
+
+		p, err = dbProject.ToAPI(ctx, tx.Tx())
+
+		return err
+	})
+	if err != nil {
+		return "", fmt.Errorf("Failed to load project %q: %w", projectName, err)
+	}
+
+	return ImageProjectFromRecord(p), nil
+}
+
 // ImageProjectFromRecord returns the project name to use for the image based on the supplied project.
 // If the project supplied has the "features.images" flag enabled then the project name is returned,
 // otherwise the default project name is returned.

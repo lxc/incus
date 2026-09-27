@@ -1195,8 +1195,14 @@ func imagesPost(d *Daemon, r *http.Request) response.Response {
 
 	projectName := request.ProjectParam(r)
 
+	// Images may be inherited from the default project, check against the effective project.
+	imageProjectName, err := projectutils.ImageProject(r.Context(), s.DB.Cluster, projectName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	var userCanCreateImages bool
-	err := s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanCreateImages)
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(imageProjectName), auth.EntitlementCanCreateImages)
 	if err == nil {
 		userCanCreateImages = true
 	} else if !api.StatusErrorCheck(err, http.StatusForbidden) {
