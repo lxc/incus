@@ -21,6 +21,7 @@ import (
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
+	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/request"
@@ -593,6 +594,17 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		progressHandler = func(newOp api.Operation) {
 			_ = op.UpdateMetadata(newOp.Metadata)
 		}
+	}
+
+	// Let an in-flight start, stop or restart finish before deciding how to migrate.
+	instOp := operationlock.Get(inst.Project().Name, inst.Name())
+	if instOp != nil && instOp.ActionMatch(operationlock.ActionStart, operationlock.ActionStop, operationlock.ActionRestart) {
+		_ = instOp.Wait(ctx)
+	}
+
+	// A stopped instance can't be migrated live.
+	if req.Live && !inst.IsRunning() {
+		req.Live = false
 	}
 
 	// Load the instance storage pool.
