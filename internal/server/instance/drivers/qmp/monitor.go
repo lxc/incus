@@ -31,6 +31,9 @@ var EventAgentStarted = "AGENT-STARTED"
 // EventAgentStopped is the event sent once the agent has stopped.
 var EventAgentStopped = "AGENT-STOPPED"
 
+// EventAgentTemplated is the event sent once the agent has applied the templates and is about to reboot.
+var EventAgentTemplated = "AGENT-TEMPLATED"
+
 // EventVMReset is the event sent when VM guest reboots.
 var EventVMReset = "RESET"
 
@@ -242,6 +245,10 @@ func (m *Monitor) processAgentStatus(status string) {
 		}
 
 		m.agentStarted = false
+	case "TEMPLATED":
+		if handler != nil {
+			go handler(EventAgentTemplated, nil)
+		}
 	}
 }
 
