@@ -3463,8 +3463,11 @@ func (b *backend) UnmountInstance(inst instance.Instance, op *operations.Operati
 	}
 
 	_, err = b.driver.UnmountVolume(vol, false, op)
+	if err != nil && !errors.Is(err, drivers.ErrInUse) {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 // getInstanceDisk returns the location of the disk.
