@@ -1066,7 +1066,7 @@ func (d *common) canMigrate(inst instance.Instance) string {
 	for _, entry := range d.ExpandedDevices().Sorted() {
 		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
 		if err != nil {
-			logger.Warn("Instance will not be migrated due to a device error", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": dev.Name(), "err": err})
+			logger.Warn("Instance will not be migrated due to a device error", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "device": entry.Name, "err": err})
 			return "stop"
 		}
 
