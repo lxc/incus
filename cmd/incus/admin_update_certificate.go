@@ -1,5 +1,3 @@
-//go:build linux
-
 package main
 
 import (
@@ -9,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/cmd/incus/color"
 	u "github.com/lxc/incus/v7/cmd/incus/usage"
 	"github.com/lxc/incus/v7/internal/i18n"
@@ -21,7 +18,7 @@ type cmdAdminUpdateCertificate struct {
 	global *cmdGlobal
 }
 
-var cmdAdminUpdateCertificateUsage = u.Usage{u.Placeholder(i18n.G("cert.crt")), u.Placeholder(i18n.G("cert.key"))}
+var cmdAdminUpdateCertificateUsage = u.Usage{u.RemoteColonOpt, u.Placeholder(i18n.G("cert.crt")), u.Placeholder(i18n.G("cert.key"))}
 
 func (c *cmdAdminUpdateCertificate) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -50,8 +47,9 @@ func (c *cmdAdminUpdateCertificate) run(cmd *cobra.Command, args []string) error
 		return err
 	}
 
-	certFile := parsed[0].String
-	keyFile := parsed[1].String
+	d := parsed[0].RemoteServer
+	certFile := parsed[1].String
+	keyFile := parsed[2].String
 
 	if !util.PathExists(certFile) {
 		return fmt.Errorf(i18n.G("Could not find certificate file path: %s"), certFile)
@@ -69,15 +67,6 @@ func (c *cmdAdminUpdateCertificate) run(cmd *cobra.Command, args []string) error
 	key, err := os.ReadFile(keyFile)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Could not read certificate key file: %s with error: %v"), keyFile, err)
-	}
-
-	connArgs := &incus.ConnectionArgs{
-		SkipGetServer: true,
-	}
-
-	d, err := incus.ConnectIncusUnix("", connArgs)
-	if err != nil {
-		return err
 	}
 
 	server, _, err := d.GetServer()
