@@ -15,13 +15,12 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
-// NetworkPublicKey returns the public key of the TLS certificate used by the
-// network endpoint.
+// NetworkPublicKey returns the certificate chain used by the network endpoint.
 func (e *Endpoints) NetworkPublicKey() []byte {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	return e.cert.PublicKey()
+	return e.cert.PublicKeyChain()
 }
 
 // NetworkPrivateKey returns the private key of the TLS certificate used by the
