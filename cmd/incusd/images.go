@@ -4870,12 +4870,12 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 
 		err := internalUtil.FileMove(metaFile.Name(), metaPath)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		err = internalUtil.FileMove(rootfsFile.Name(), rootfsPath)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
