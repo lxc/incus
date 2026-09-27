@@ -25,6 +25,7 @@ type meminfo struct {
 	Buffers        uint64
 	Total          uint64
 	Free           uint64
+	Available      uint64
 	Used           uint64
 	HugepagesTotal uint64
 	HugepagesFree  uint64
@@ -82,6 +83,17 @@ func parseMeminfo(path string) (*meminfo, error) {
 			}
 
 			memory.Used = uint64(bytes)
+			continue
+		}
+
+		if key == "MemAvailable" {
+			bytes, err := units.ParseByteSizeString(value)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to parse MemAvailable: %w", err)
+			}
+
+			memory.Available = uint64(bytes)
+
 			continue
 		}
 
@@ -224,7 +236,13 @@ func GetMemory() (*api.ResourcesMemory, error) {
 	memory.HugepagesTotal = info.HugepagesTotal * info.HugepagesSize
 	memory.HugepagesSize = info.HugepagesSize
 
-	memory.Used = info.Total - info.Free - info.Cached - info.Buffers
+	// Prefer the kernel's estimate as Cached includes non-reclaimable shared memory (e.g. VM RAM).
+	if info.Available > 0 && info.Available <= info.Total {
+		memory.Used = info.Total - info.Available
+	} else {
+		memory.Used = info.Total - info.Free - info.Cached - info.Buffers
+	}
+
 	memory.Total = info.Total
 
 	// Get NUMA information
