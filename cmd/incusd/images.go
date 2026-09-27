@@ -4554,6 +4554,10 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	imagePath := internalUtil.VarPath("images", imgInfo.Fingerprint)
 	rootfsPath := imagePath + ".rootfs"
 
+	if !util.PathExists(imagePath) {
+		return response.NotFound(fmt.Errorf("Image %q file is missing on this cluster member", imgInfo.Fingerprint))
+	}
+
 	_, ext, _, err := archive.DetectCompression(imagePath)
 	if err != nil {
 		ext = ""
