@@ -1200,6 +1200,16 @@ func (f *FGA) updateTuples(ctx context.Context, writes []client.ClientTupleKey, 
 	return f.sendTuples(ctx, writes, deletions)
 }
 
+// isTupleConflict returns true when a write or deletion failed because the store already matched it.
+func isTupleConflict(err error) bool {
+	var apiErr openfga.FgaApiValidationError
+	if !errors.As(err, &apiErr) {
+		return false
+	}
+
+	return apiErr.ResponseCode() == openfga.ERRORCODE_WRITE_FAILED_DUE_TO_INVALID_INPUT
+}
+
 // sendTuples directly sends the write/deletion tuples to OpenFGA.
 func (f *FGA) sendTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -1234,12 +1244,22 @@ func (f *FGA) sendTuples(ctx context.Context, writes []client.ClientTupleKey, de
 
 	for _, write := range clientWriteResponse.Writes {
 		if write.Error != nil {
+			// Another writer may have added the tuple since we checked.
+			if isTupleConflict(write.Error) {
+				continue
+			}
+
 			return fmt.Errorf("Failed to write tuple to OpenFGA store (user: %q; relation: %q; object: %q): %w", write.TupleKey.User, write.TupleKey.Relation, write.TupleKey.Object, write.Error)
 		}
 	}
 
 	for _, deletion := range clientWriteResponse.Deletes {
 		if deletion.Error != nil {
+			// Another writer may have removed the tuple since we checked.
+			if isTupleConflict(deletion.Error) {
+				continue
+			}
+
 			return fmt.Errorf("Failed to delete tuple from OpenFGA store (user: %q; relation: %q; object: %q): %w", deletion.TupleKey.User, deletion.TupleKey.Relation, deletion.TupleKey.Object, deletion.Error)
 		}
 	}
