@@ -455,12 +455,14 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 				// Get a new target.
 				targetMemberInfo, err = scriptlet.InstancePlacementRun(r.Context(), logger.Log, s, &req, targetCandidates, leaderAddress)
 				if err != nil {
+					logger.Warn("Instance placement scriptlet refused the move", logger.Ctx{"project": instProject, "instance": name, "err": err})
 					return response.BadRequest(fmt.Errorf("Failed instance placement scriptlet: %w", err))
 				}
 			} else {
 				// Validate the current target.
 				_, err = scriptlet.InstancePlacementRun(r.Context(), logger.Log, s, &req, targetCandidates, leaderAddress)
 				if err != nil {
+					logger.Warn("Instance placement scriptlet refused the move", logger.Ctx{"project": instProject, "instance": name, "err": err})
 					return response.BadRequest(fmt.Errorf("Failed instance placement scriptlet: %w", err))
 				}
 			}
