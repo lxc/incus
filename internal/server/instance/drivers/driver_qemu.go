@@ -497,7 +497,7 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 	s := d.state
 
 	return func(event string, data map[string]any) {
-		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventRTCChange}, event) {
+		if !slices.Contains([]string{qmp.EventVMShutdown, qmp.EventVMReset, qmp.EventAgentStarted, qmp.EventAgentStopped, qmp.EventAgentTemplated, qmp.EventRTCChange}, event) {
 			return // Don't bother loading the instance from DB if we aren't going to handle the event.
 		}
 
@@ -561,6 +561,20 @@ func (d *qemu) getMonitorEventHandler() func(event string, data map[string]any) 
 			}
 
 			s.Events.SendLifecycle(instProject.Name, lifecycle.InstanceAgentStarted.Event(d, nil))
+
+		case qmp.EventAgentTemplated:
+			d.logger.Debug("Instance agent applied templates")
+
+			// Record it now and force a full restart so the coming reboot regenerates the config drive.
+			if d.LocalConfig()["volatile.apply_template"] != "" {
+				err = d.VolatileSet(map[string]string{
+					"volatile.apply_template": "",
+					"volatile.vm.needs_reset": "true",
+				})
+				if err != nil {
+					d.logger.Error("Failed recording template application", logger.Ctx{"err": err})
+				}
+			}
 
 		case qmp.EventAgentStopped:
 			d.logger.Debug("Instance agent stopped")
@@ -6602,11 +6616,11 @@ func (d *qemu) Stop(stateful bool) error {
 	_, _ = d.ConsoleLog()
 
 	// Setup a new operation.
-	// Allow inheriting of ongoing restart or restore operation (we are called from restartCommon and Restore).
+	// Allow inheriting of ongoing restart, restore or own migrate operation (restartCommon, Restore, migration).
 	// Don't allow reuse when creating a new stop operation. This prevents other operations from interfering.
 	// Allow reuse of a reusable ongoing stop operation as Shutdown() may be called first, which allows reuse
 	// of its operations. This allow for Stop() to inherit from Shutdown() where instance is stuck.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, d.stopInheritableActions(), false, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.
