@@ -334,8 +334,8 @@ func clusterRebalanceServers(ctx context.Context, s *state.State, srcServer *Ser
 
 		// Calculate impact of migration.
 		additionalUsage := &ServerUsage{
-			MemoryUsage: uint64(cpuUsage),
-			CPUUsage:    float64(memUsage),
+			MemoryUsage: uint64(memUsage),
+			CPUUsage:    float64(cpuUsage),
 		}
 
 		expectedScore := calculateScore(runningUsage[chosenTarget.Name], additionalUsage)
