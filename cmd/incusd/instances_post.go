@@ -1587,6 +1587,7 @@ func instancesPost(d *Daemon, r *http.Request) response.Response {
 
 			targetMemberInfo, err = scriptlet.InstancePlacementRun(r.Context(), logger.Log, s, &reqExpanded, candidateMembers, leaderAddress)
 			if err != nil {
+				logger.Warn("Instance placement scriptlet refused the instance", logger.Ctx{"project": targetProjectName, "instance": req.Name, "err": err})
 				return response.SmartError(fmt.Errorf("Failed instance placement scriptlet: %w", err))
 			}
 		}
