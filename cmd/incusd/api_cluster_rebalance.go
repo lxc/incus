@@ -350,7 +350,7 @@ func clusterRebalanceServers(ctx context.Context, s *state.State, srcServer *Ser
 			Live:      true,
 		}
 
-		targetClient := srcClient.UseTarget(chosenTarget.Name)
+		targetClient := srcClient.UseProject(inst.Project().Name).UseTarget(chosenTarget.Name)
 
 		migrationOp, err := targetClient.MigrateInstance(inst.Name(), req)
 		if err != nil {
