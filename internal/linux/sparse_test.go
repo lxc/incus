@@ -12,11 +12,13 @@ import (
 )
 
 func TestSparseFileWrapper(t *testing.T) {
-	// Build a buffer of zero and random blocks, including a partial trailing block.
-	src := make([]byte, 0, 20*sparseBlockSize+100)
-	for i := range 20 {
+	// Build a buffer of random blocks separated by long zero runs, including a partial trailing block.
+	// The runs are kept well above any filesystem allocation unit (64KiB pages on some architectures)
+	// so that they can be stored as holes everywhere.
+	src := make([]byte, 0, 4*65*sparseBlockSize+100)
+	for i := range 4 * 65 {
 		block := make([]byte, sparseBlockSize)
-		if i%3 == 0 {
+		if i%65 == 0 {
 			_, _ = rand.Read(block)
 		}
 
