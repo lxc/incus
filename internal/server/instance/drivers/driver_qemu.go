@@ -6602,11 +6602,11 @@ func (d *qemu) Stop(stateful bool) error {
 	_, _ = d.ConsoleLog()
 
 	// Setup a new operation.
-	// Allow inheriting of ongoing restart or restore operation (we are called from restartCommon and Restore).
+	// Allow inheriting of ongoing restart, restore or own migrate operation (restartCommon, Restore, migration).
 	// Don't allow reuse when creating a new stop operation. This prevents other operations from interfering.
 	// Allow reuse of a reusable ongoing stop operation as Shutdown() may be called first, which allows reuse
 	// of its operations. This allow for Stop() to inherit from Shutdown() where instance is stuck.
-	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore, operationlock.ActionMigrate}, false, true)
+	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, d.stopInheritableActions(), false, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
 			// An existing matching operation has now succeeded, return.

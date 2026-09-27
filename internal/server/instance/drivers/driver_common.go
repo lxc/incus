@@ -998,6 +998,19 @@ func (d *common) validateStartup(stateful bool, statusCode api.StatusCode) error
 	return nil
 }
 
+// stopInheritableActions returns the operation locks a stop request may take over.
+func (d *common) stopInheritableActions() []operationlock.Action {
+	actions := []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}
+
+	// Only the migration itself may stop the instance while it's being migrated.
+	op := operationlock.Get(d.Project().Name, d.Name())
+	if op.Action() == operationlock.ActionMigrate && op.GetOperation() == d.op {
+		actions = append(actions, operationlock.ActionMigrate)
+	}
+
+	return actions
+}
+
 // onStopOperationSetup creates or picks up the relevant operation. This is used in the stopns and stop hooks to
 // ensure that a lock on their activities is held before the instance process is stopped. This prevents a start
 // request run at the same time from overlapping with the stop process.
