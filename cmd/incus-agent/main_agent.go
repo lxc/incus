@@ -111,6 +111,17 @@ func (c *cmdAgent) run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
+		// Tell the host the templates were applied as we won't get to report a normal start.
+		for range 10 {
+			if util.PathExists(osVioSerialPath) {
+				break
+			}
+
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		_ = c.writeStatus("TEMPLATED")
+
 		logger.Info("Rebooting")
 		_, _ = subprocess.RunCommand("reboot")
 
