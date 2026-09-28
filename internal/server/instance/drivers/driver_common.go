@@ -35,6 +35,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
+	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/internal/server/selinux"
 	"github.com/lxc/incus/v7/internal/server/state"
 	storagePools "github.com/lxc/incus/v7/internal/server/storage"
@@ -1883,6 +1884,21 @@ func (d *common) setOOMPriority(pid int) error {
 	}
 
 	return nil
+}
+
+// isBeingDeleted returns true when the instance is being deleted or is already gone from the database.
+func (d *common) isBeingDeleted() bool {
+	op := operationlock.Get(d.project.Name, d.name)
+	if op != nil && op.ActionMatch(operationlock.ActionDelete) {
+		return true
+	}
+
+	err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		_, err := dbCluster.GetInstanceID(ctx, tx.Tx(), d.project.Name, d.name)
+		return err
+	})
+
+	return response.IsNotFoundError(err)
 }
 
 // HasDependentDisk checks whether the instance has any dependent volumes.
