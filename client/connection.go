@@ -113,8 +113,6 @@ func ConnectIncusHTTP(args *ConnectionArgs, client *http.Client) (InstanceServer
 
 // ConnectIncusHTTPWithContext lets you connect to a VM agent over a VM socket with context.Context.
 func ConnectIncusHTTPWithContext(ctx context.Context, args *ConnectionArgs, client *http.Client) (InstanceServer, error) {
-	logger.Debug("Connecting to a VM agent over a VM socket")
-
 	// Use empty args if not specified
 	if args == nil {
 		args = &ConnectionArgs{}
