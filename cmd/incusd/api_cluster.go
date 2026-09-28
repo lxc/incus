@@ -776,6 +776,7 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			nodes[i].ID = raftNode.ID
 			nodes[i].Address = raftNode.Address
 			nodes[i].Role = db.RaftRole(raftNode.Role)
+			nodes[i].Name = raftNode.Name
 		}
 
 		keypair, err := tls.X509KeyPair(info.PublicKey, info.PrivateKey)
@@ -2562,6 +2563,7 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 		accepted.RaftNodes[i].ID = raftNode.ID
 		accepted.RaftNodes[i].Address = raftNode.Address
 		accepted.RaftNodes[i].Role = int(raftNode.Role)
+		accepted.RaftNodes[i].Name = raftNode.Name
 	}
 
 	return response.SyncResponse(true, accepted)
