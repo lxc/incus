@@ -4657,6 +4657,11 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 		return err
 	}
 
+	// Run device removal function for each device while the instance volume still exists.
+	if !d.IsSnapshot() {
+		d.devicesRemove(d, cleanupDependencies)
+	}
+
 	pool, err := storagePools.LoadByInstance(d.state, d)
 	if err != nil && !response.IsNotFoundError(err) {
 		return err
@@ -4725,9 +4730,6 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 				return err
 			}
 		}
-
-		// Run device removal function for each device.
-		d.devicesRemove(d, cleanupDependencies)
 
 		// Clean things up.
 		d.cleanup()

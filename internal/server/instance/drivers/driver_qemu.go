@@ -8214,6 +8214,11 @@ func (d *qemu) delete(force bool, cleanupDependencies bool) error {
 		return err
 	}
 
+	// Run device removal function for each device while the instance volume still exists.
+	if !d.IsSnapshot() {
+		d.devicesRemove(d, cleanupDependencies)
+	}
+
 	// Attempt to initialize storage interface for the instance.
 	pool, err := d.getStoragePool()
 	if err != nil && !response.IsNotFoundError(err) {
@@ -8283,9 +8288,6 @@ func (d *qemu) delete(force bool, cleanupDependencies bool) error {
 				return err
 			}
 		}
-
-		// Run device removal function for each device.
-		d.devicesRemove(d, cleanupDependencies)
 
 		// Clean things up.
 		d.cleanup()
