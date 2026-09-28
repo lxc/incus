@@ -771,18 +771,37 @@ func (f *FGA) instanceSecurityTags(ctx context.Context, instanceObject Object) (
 	return tagObjectStrs, nil
 }
 
-// securityTags returns the security tag objects known to OpenFGA.
-func (f *FGA) securityTags(ctx context.Context) ([]string, error) {
-	resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-		User:     ObjectServer().String(),
-		Relation: relationServer,
-		Type:     string(ObjectTypeSecurityTag),
-	}).Execute()
-	if err != nil {
-		return nil, err
+// listObjects returns every object of a type related to the user, reading tuples page by page.
+// The ListObjects API silently caps its results (1000 by default), so it can't be used for syncing.
+func (f *FGA) listObjects(ctx context.Context, user string, relation string, objectType ObjectType, consistency *openfga.ConsistencyPreference) ([]string, error) {
+	object := string(objectType) + ":"
+
+	objectStrs := []string{}
+	opts := client.ClientReadOptions{Consistency: consistency}
+	for {
+		resp, err := f.client.Read(ctx).Body(client.ClientReadRequest{User: &user, Relation: &relation, Object: &object}).Options(opts).Execute()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, tuple := range resp.GetTuples() {
+			objectStrs = append(objectStrs, tuple.Key.Object)
+		}
+
+		continuationToken := resp.GetContinuationToken()
+		if continuationToken == "" {
+			break
+		}
+
+		opts.ContinuationToken = &continuationToken
 	}
 
-	return resp.GetObjects(), nil
+	return objectStrs, nil
+}
+
+// securityTags returns the security tag objects known to OpenFGA.
+func (f *FGA) securityTags(ctx context.Context) ([]string, error) {
+	return f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeSecurityTag, nil)
 }
 
 // pruneSecurityTags removes the given security tags from OpenFGA if no instance uses them anymore.
@@ -793,16 +812,12 @@ func (f *FGA) pruneSecurityTags(ctx context.Context, tagObjectStrs []string) err
 	consistency := openfga.CONSISTENCYPREFERENCE_HIGHER_CONSISTENCY
 
 	for _, tagObjectStr := range tagObjectStrs {
-		resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-			User:     tagObjectStr,
-			Relation: relationTag,
-			Type:     string(ObjectTypeInstance),
-		}).Options(client.ClientListObjectsOptions{Consistency: &consistency}).Execute()
+		instanceStrs, err := f.listObjects(ctx, tagObjectStr, relationTag, ObjectTypeInstance, &consistency)
 		if err != nil {
 			return err
 		}
 
-		if len(resp.GetObjects()) > 0 {
+		if len(instanceStrs) > 0 {
 			continue
 		}
 
@@ -1284,16 +1299,12 @@ func (f *FGA) projectObjects(ctx context.Context, projectName string) ([]string,
 	var allObjects []string
 	projectObjectString := ObjectProject(projectName).String()
 	for _, objectType := range objectTypes {
-		resp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-			User:     projectObjectString,
-			Relation: relationProject,
-			Type:     string(objectType),
-		}).Execute()
+		objectStrs, err := f.listObjects(ctx, projectObjectString, relationProject, objectType, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		allObjects = append(allObjects, resp.GetObjects()...)
+		allObjects = append(allObjects, objectStrs...)
 	}
 
 	return allObjects, nil
@@ -1346,65 +1357,49 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 	}
 
 	// List the certificates we have added to OpenFGA already.
-	certificatesResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-		User:     ObjectServer().String(),
-		Relation: relationServer,
-		Type:     string(ObjectTypeCertificate),
-	}).Execute()
+	certificatesResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeCertificate, nil)
 	if err != nil {
 		return err
 	}
 
 	// Compare with local certificates.
-	err = diffObjects(relationServer, certificatesResp.GetObjects(), resources.CertificateObjects)
+	err = diffObjects(relationServer, certificatesResp, resources.CertificateObjects)
 	if err != nil {
 		return err
 	}
 
 	// List the network integrations we have added to OpenFGA already.
-	networkIntegrationsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-		User:     ObjectServer().String(),
-		Relation: relationServer,
-		Type:     string(ObjectTypeNetworkIntegration),
-	}).Execute()
+	networkIntegrationsResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeNetworkIntegration, nil)
 	if err != nil {
 		return err
 	}
 
 	// Compare with local network integrations.
-	err = diffObjects(relationServer, networkIntegrationsResp.GetObjects(), resources.NetworkIntegrationObjects)
+	err = diffObjects(relationServer, networkIntegrationsResp, resources.NetworkIntegrationObjects)
 	if err != nil {
 		return err
 	}
 
 	// List the storage pools we have added to OpenFGA already.
-	storagePoolsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-		User:     ObjectServer().String(),
-		Relation: relationServer,
-		Type:     string(ObjectTypeStoragePool),
-	}).Execute()
+	storagePoolsResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeStoragePool, nil)
 	if err != nil {
 		return err
 	}
 
 	// Compare with local storage pools.
-	err = diffObjects(relationServer, storagePoolsResp.GetObjects(), resources.StoragePoolObjects)
+	err = diffObjects(relationServer, storagePoolsResp, resources.StoragePoolObjects)
 	if err != nil {
 		return err
 	}
 
 	// List the projects we have added to OpenFGA already.
-	projectsResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-		User:     ObjectServer().String(),
-		Relation: relationServer,
-		Type:     string(ObjectTypeProject),
-	}).Execute()
+	projectsResp, err := f.listObjects(ctx, ObjectServer().String(), relationServer, ObjectTypeProject, nil)
 	if err != nil {
 		return err
 	}
 
 	// Compare with local projects.
-	remoteProjectObjectStrs := projectsResp.GetObjects()
+	remoteProjectObjectStrs := projectsResp
 	err = diffObjects(relationServer, remoteProjectObjectStrs, resources.ProjectObjects)
 	if err != nil {
 		return err
@@ -1479,16 +1474,11 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 	}
 
 	for _, tagObjectStr := range allTagObjectStrs {
-		remoteInstancesResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-			User:     tagObjectStr,
-			Relation: relationTag,
-			Type:     string(ObjectTypeInstance),
-		}).Execute()
+		remoteInstanceStrs, err := f.listObjects(ctx, tagObjectStr, relationTag, ObjectTypeInstance, nil)
 		if err != nil {
 			return err
 		}
 
-		remoteInstanceStrs := remoteInstancesResp.GetObjects()
 		localInstanceStrs := localTagInstances[tagObjectStr]
 
 		for _, localInstanceStr := range localInstanceStrs {
@@ -1531,16 +1521,11 @@ func (f *FGA) syncResources(ctx context.Context, resources Resources) error {
 
 	// Perform a per-project diff of the shared network objects.
 	for _, projectName := range shareProjectNames {
-		remoteSharesResp, err := f.client.ListObjects(ctx).Body(client.ClientListObjectsRequest{
-			User:     ObjectProject(projectName).String(),
-			Relation: relationSharedWith,
-			Type:     string(ObjectTypeNetwork),
-		}).Execute()
+		remoteShareStrs, err := f.listObjects(ctx, ObjectProject(projectName).String(), relationSharedWith, ObjectTypeNetwork, nil)
 		if err != nil {
 			return err
 		}
 
-		remoteShareStrs := remoteSharesResp.GetObjects()
 		localShares := resources.NetworkShareObjects[projectName]
 
 		for _, localShare := range localShares {
