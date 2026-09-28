@@ -129,6 +129,23 @@ const qemuSparseUSBPorts = 8
 
 var errQemuAgentOffline = errors.New("VM agent isn't currently running")
 
+// errQemuPIDMismatch is returned when the recorded PID no longer belongs to this instance's QEMU.
+var errQemuPIDMismatch = errors.New("PID doesn't match the running process")
+
+// monitorGoneErrors are the errors caused by QEMU having gone away, as happens during a restart.
+var monitorGoneErrors = []error{qmp.ErrMonitorDisconnect, unix.ECONNREFUSED, fs.ErrNotExist, errQemuPIDMismatch}
+
+// isMonitorGoneError returns true when the error is one of monitorGoneErrors.
+func isMonitorGoneError(err error) bool {
+	for _, target := range monitorGoneErrors {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // qemuStopHooks tracks instances with a stop hook in progress.
 var qemuStopHooks sync.Map
 
@@ -6566,7 +6583,7 @@ func (d *qemu) pid() (int, error) {
 	isQemu := bytes.Contains(cmdLine, []byte("qemu-system")) || bytes.Contains(cmdLine, []byte("qemu-kvm"))
 	instUUID := []byte(d.localConfig["volatile.uuid"])
 	if !isQemu || !bytes.Contains(cmdLine, instUUID) {
-		return -1, errors.New("PID doesn't match the running process")
+		return -1, errQemuPIDMismatch
 	}
 
 	return pid, nil
@@ -10706,16 +10723,16 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 	if status.Memory.Usage <= 0 {
 		monitor, err := d.qmpConnect()
 		if err != nil {
-			d.logger.Warn("Error getting QEMU monitor", logger.Ctx{"err": err})
+			d.logger.WarnOnErrorExcept(err, monitorGoneErrors, "Error getting QEMU monitor for memory metrics")
+		} else {
+			memoryMetrics, err := d.getQemuMemoryMetrics(monitor)
+			if err != nil {
+				d.logger.WarnOnErrorExcept(err, monitorGoneErrors, "Error getting memory metrics")
+			} else {
+				status.Memory.Total = int64(memoryMetrics.MemTotalBytes)
+				status.Memory.Usage = int64(memoryMetrics.MemTotalBytes - memoryMetrics.MemAvailableBytes)
+			}
 		}
-
-		memoryMetrics, err := d.getQemuMemoryMetrics(monitor)
-		if err != nil {
-			d.logger.Warn("Error getting memory metrics", logger.Ctx{"err": err})
-		}
-
-		status.Memory.Total = int64(memoryMetrics.MemTotalBytes)
-		status.Memory.Usage = int64(memoryMetrics.MemTotalBytes - memoryMetrics.MemAvailableBytes)
 	}
 
 	// Populate the disk information.
@@ -10793,14 +10810,17 @@ func (d *qemu) diskState() map[string]api.InstanceStateDisk {
 		if internalInstance.IsRootDiskDevice(dev.Config) {
 			pool, err := d.getStoragePool()
 			if err != nil {
-				d.logger.Error("Error loading storage pool", logger.Ctx{"err": err})
+				if !d.isBeingDeleted() {
+					d.logger.Warn("Error loading storage pool", logger.Ctx{"err": err})
+				}
+
 				continue
 			}
 
 			usage, err = pool.GetInstanceUsage(d)
 			if err != nil {
-				if !errors.Is(err, storageDrivers.ErrNotSupported) {
-					d.logger.Error("Error getting disk usage", logger.Ctx{"err": err})
+				if !errors.Is(err, storageDrivers.ErrNotSupported) && !d.isBeingDeleted() {
+					d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
 				}
 
 				continue
@@ -10808,7 +10828,10 @@ func (d *qemu) diskState() map[string]api.InstanceStateDisk {
 		} else if dev.Config["pool"] != "" {
 			pool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
 			if err != nil {
-				d.logger.Error("Error loading storage pool", logger.Ctx{"poolName": dev.Config["pool"], "err": err})
+				if !d.isBeingDeleted() {
+					d.logger.Warn("Error loading storage pool", logger.Ctx{"poolName": dev.Config["pool"], "err": err})
+				}
+
 				continue
 			}
 
@@ -11678,18 +11701,26 @@ func (d *qemu) Metrics(hostInterfaces []net.Interface) (*metrics.MetricSet, erro
 	if d.agentMetricsEnabled() {
 		agentMetrics, err := d.getAgentMetrics()
 		if err != nil {
-			if !errors.Is(err, errQemuAgentOffline) {
-				d.logger.Warn("Could not get VM metrics from agent", logger.Ctx{"err": err})
-			}
+			d.logger.WarnOnErrorExcept(err, append([]error{errQemuAgentOffline}, monitorGoneErrors...), "Could not get VM metrics from agent")
 
 			// Fallback data if agent is not reachable.
-			return d.getQemuMetrics()
+			return d.getQemuMetricsOrStopped()
 		}
 
 		return agentMetrics, nil
 	}
 
-	return d.getQemuMetrics()
+	return d.getQemuMetricsOrStopped()
+}
+
+// getQemuMetricsOrStopped reports a QEMU that went away during collection as a stopped instance.
+func (d *qemu) getQemuMetricsOrStopped() (*metrics.MetricSet, error) {
+	metricSet, err := d.getQemuMetrics()
+	if err != nil && isMonitorGoneError(err) {
+		return nil, ErrInstanceIsStopped
+	}
+
+	return metricSet, err
 }
 
 func (d *qemu) getAgentMetrics() (*metrics.MetricSet, error) {
