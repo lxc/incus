@@ -911,6 +911,25 @@ func (c *ClusterTx) GetFailureDomainsNames(ctx context.Context) (map[uint64]stri
 	return domains, nil
 }
 
+// RemoveNodeByName removes the node with the given name.
+func (c *ClusterTx) RemoveNodeByName(name string) error {
+	result, err := c.tx.Exec("DELETE FROM nodes WHERE name=?", name)
+	if err != nil {
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if n != 1 {
+		return fmt.Errorf("query deleted %d rows instead of 1", n)
+	}
+
+	return nil
+}
+
 // RemoveNode removes the node with the given id.
 func (c *ClusterTx) RemoveNode(id int64) error {
 	result, err := c.tx.Exec("DELETE FROM nodes WHERE id=?", id)
