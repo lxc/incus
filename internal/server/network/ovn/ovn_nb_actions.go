@@ -2307,6 +2307,44 @@ func (o *NB) UpdateLogicalSwitchPortEnabled(ctx context.Context, portName OVNSwi
 	return nil
 }
 
+// UpdateLogicalSwitchPortSecurity sets the port security addresses of a logical switch port (empty clears them).
+func (o *NB) UpdateLogicalSwitchPortSecurity(ctx context.Context, portName OVNSwitchPort, portSecurity []string) error {
+	// Get the logical switch port.
+	lsp := ovnNB.LogicalSwitchPort{
+		Name: string(portName),
+	}
+
+	err := o.get(ctx, &lsp)
+	if err != nil {
+		return err
+	}
+
+	if slices.Equal(lsp.PortSecurity, portSecurity) {
+		return nil
+	}
+
+	lsp.PortSecurity = portSecurity
+
+	// Name the column explicitly so that an empty value clears it.
+	operations, err := o.client.Where(&lsp).Update(&lsp, &lsp.PortSecurity)
+	if err != nil {
+		return err
+	}
+
+	// Apply the changes.
+	resp, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(resp, operations)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // UpdateLogicalSwitchPortDNS sets up the switch port DNS records for the DNS name.
 // Returns the DNS record UUID, IPv4 and IPv6 addresses used for DNS records.
 func (o *NB) UpdateLogicalSwitchPortDNS(ctx context.Context, switchName OVNSwitch, portName OVNSwitchPort, dnsName string, dnsIPs []net.IP) (OVNDNSUUID, error) {
