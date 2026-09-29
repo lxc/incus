@@ -70,6 +70,11 @@ type InstanceState struct {
 	//
 	// API extension: instances_state_os_info.
 	OSInfo *InstanceStateOSInfo `json:"os_info" yaml:"os_info"`
+
+	// TPM devices information.
+	//
+	// API extension: instances_state_tpm.
+	TPM map[string]InstanceStateTPM `json:"tpm" yaml:"tpm"`
 }
 
 // InstanceStateDisk represents the disk information section of an instance's state.
@@ -286,4 +291,36 @@ type InstanceStateOSInfo struct {
 	// FQDN of the instance.
 	// Example: myhost.mydomain.local
 	FQDN string `json:"fqdn" yaml:"fqdn"`
+}
+
+// InstanceStateTPM represents the state of a TPM device.
+//
+// swagger:model
+//
+// API extension: instances_state_tpm.
+type InstanceStateTPM struct {
+	// Endorsement keys, when known.
+	EndorsementKeys []InstanceStateTPMKey `json:"endorsement_keys" yaml:"endorsement_keys"`
+}
+
+// InstanceStateTPMKey represents a TPM key.
+//
+// swagger:model
+//
+// API extension: instances_state_tpm.
+type InstanceStateTPMKey struct {
+	// Key type (`rsa` or `ecc`).
+	// Example: rsa
+	Type string `json:"type" yaml:"type"`
+
+	// Key size in bits.
+	// Example: 2048
+	Size int `json:"size" yaml:"size"`
+
+	// SHA-256 fingerprint of the DER encoded public key.
+	// Example: 9ba3cb7ba7ac7f6a45cf0d21c8b5ebc0d1f9e1d3d1d7a4e0f1c1e7d1c3a2b5c6
+	Fingerprint string `json:"fingerprint" yaml:"fingerprint"`
+
+	// PEM encoded public key.
+	PublicKey string `json:"public_key" yaml:"public_key"`
 }

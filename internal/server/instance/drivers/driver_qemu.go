@@ -10662,6 +10662,8 @@ func (d *qemu) renderState(statusCode api.StatusCode) (*api.InstanceState, error
 		StatusCode: statusCode,
 	}
 
+	status.TPM = d.tpmState()
+
 	// If VM is stopped or errored, we're done here.
 	if d.isErrorStatusCode(statusCode) || !d.isRunningStatusCode(statusCode) {
 		status.Disk = d.diskState()

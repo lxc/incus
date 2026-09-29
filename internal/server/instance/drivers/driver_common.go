@@ -1823,6 +1823,31 @@ var systemBootTime = sync.OnceValues(func() (uint64, error) {
 	return stat.BootTime, nil
 })
 
+// tpmState returns the state of the instance's TPM devices, nil if it has none.
+func (d *common) tpmState() map[string]api.InstanceStateTPM {
+	var tpms map[string]api.InstanceStateTPM
+
+	for name, config := range d.ExpandedDevices() {
+		if config["type"] != "tpm" {
+			continue
+		}
+
+		tpmState, err := device.TPMState(d.Path(), name)
+		if err != nil {
+			d.logger.Warn("Failed getting TPM state", logger.Ctx{"device": name, "err": err})
+			continue
+		}
+
+		if tpms == nil {
+			tpms = map[string]api.InstanceStateTPM{}
+		}
+
+		tpms[name] = *tpmState
+	}
+
+	return tpms
+}
+
 // ETag returns the instance configuration ETag data for pre-condition validation.
 func (d *common) ETag() []any {
 	if d.IsSnapshot() {
