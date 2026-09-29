@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"errors"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -55,6 +57,22 @@ func (lw *logWrapper) Debug(msg string, ctx ...Ctx) {
 // Trace logs a trace level message.
 func (lw *logWrapper) Trace(msg string, ctx ...Ctx) {
 	lw.ctxLogger(ctx...).Trace(msg)
+}
+
+// WarnOnErrorExcept logs the error as a warning unless it is nil or matches one of the ignored errors.
+func (lw *logWrapper) WarnOnErrorExcept(err error, ignore []error, msg string, ctx ...Ctx) {
+	if err == nil {
+		return
+	}
+
+	for _, target := range ignore {
+		if errors.Is(err, target) {
+			return
+		}
+	}
+
+	ctx = append(ctx, Ctx{"err": err})
+	lw.Warn(msg, ctx...)
 }
 
 // AddContext returns a sub-logger with the provided context added.
