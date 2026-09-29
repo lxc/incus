@@ -2234,9 +2234,6 @@ test_network_ovn_parent() {
     ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
     incus exec u1 -- ping -c1 -w5 -4 10.10.10.1
 
-    # The parent is fixed once the network exists.
-    ! incus network set ovn2 parent=ovn3 || false
-
     # Peerings belong to the network owning the logical router.
     ! incus network peer create ovn2 childpeer default/ovn1 || false
 
@@ -2251,6 +2248,72 @@ test_network_ovn_parent() {
     ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
     incus exec u1 -- ping -c1 -w5 -4 10.10.10.1
     incus delete -f u1
+
+    echo "==> Check changing the parent of an existing child network"
+    incus network create ovn4 --type=ovn \
+        network=incusbr0 \
+        ipv4.address=10.10.14.1/24 ipv4.nat=true \
+        ipv6.address=fd42:4242:4242:1014::1/64 ipv6.nat=true
+    sleep 2
+
+    echo "==> Check a parent can't be given a parent of its own while it has children"
+    ! incus network set ovn1 parent=ovn4 network= || false
+
+    # Move the child onto a new parent sharing a different logical router.
+    incus network set ovn2 parent=ovn4
+    sleep 2
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "$(incus network info ovn4 | awk '/Logical router:/ {print $NF}')" ]
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" != "${parentRouter}" ]
+    # The old router keeps its own SNAT rule and the child keeps its own subnet.
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.11.0/24,snat"
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+
+    echo "==> Check turning a child into a standalone network"
+    incus network set ovn2 parent= network=incusbr0
+    sleep 2
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" != "$(incus network info ovn4 | awk '/Logical router:/ {print $NF}')" ]
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+
+    echo "==> Check turning a standalone network into a child"
+    incus network set ovn2 parent=ovn1 network=
+    sleep 2
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "${parentRouter}" ]
+    [ "$(ovn-nbctl --format=csv --bare --columns=name find logical_router_port | grep -cE "^${parentRouter}-lrp-int")" = "2" ]
+    ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
+
+    echo "==> Check reparenting a network with instances attached"
+    incus init "${instanceImage}" u1 -s "${poolName}" -n ovn2
+    incus config device set u1 eth0 ipv4.routes=192.0.2.123/32
+    incus start u1
+    sleep 5
+    U1_IPV4="$(incus list u1 -c4 --format=csv | cut -d' ' -f1)"
+    echo "${U1_IPV4}" | grep -F 10.10.12.
+
+    # The instance reaches the uplink before the move.
+    incus exec u1 -- ping -c1 -w5 -4 10.10.10.1
+
+    # Reparenting is refused while a running instance has routes configured.
+    ! incus network set ovn2 parent=ovn4 || false
+
+    # A running instance without routes doesn't block reparenting.
+    incus config device unset u1 eth0 ipv4.routes
+    incus network set ovn2 parent=ovn4
+    sleep 2
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "$(incus network info ovn4 | awk '/Logical router:/ {print $NF}')" ]
+    [ "$(incus list u1 -c4 --format=csv | cut -d' ' -f1)" = "${U1_IPV4}" ]
+
+    # Drop the stale ARP entry for the old gateway so the instance resolves its new one.
+    incus exec u1 -- ip neigh flush all
+    incus exec u1 -- ping -c1 -w10 -4 10.10.10.1
+
+    incus delete -f u1
+
+    # Move the child back onto its original router so the standalone network can be deleted.
+    incus network set ovn2 parent=ovn1
+    sleep 2
+
+    incus network delete ovn4
+    sleep 2
 
     ! incus network delete ovn1 || false
     incus network delete ovn2

@@ -76,8 +76,9 @@ The following applies to child networks:
   A child cannot set `network`, `parent` (networks can only be nested one level deep), `bridge.hwaddr`, `bridge.external_interfaces`, `bridge.multicast_relay` or any `tunnel.*` option, and cannot take part in a peering.
   A peering of the parent routes the subnets of its children as well, and ACL rules referring to that peering match their traffic.
 - The subnets of a child must not overlap those of its parent or of the other children of that parent.
-- `parent` can only be set when the network is created.
-- A parent network cannot be renamed or deleted while it still has children.
+- A network's `parent` can be changed, detaching it from its current parent's logical router and attaching it to the new one, but only while the network has no address forwards, load balancers, peerings, or a running instance with `ipv4.routes`/`ipv6.routes` (such routes would be orphaned on the old logical router).
+  Removing the `parent` turns the network into a standalone network, which then needs a `network` to be set if external access is required.
+- A parent network cannot be renamed, deleted or given a `parent` of its own while it still has children.
 
 (network-ovn-features)=
 ## Supported features
