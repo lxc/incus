@@ -34,6 +34,19 @@ network_ovn_wait_ping() {
     return 1
 }
 
+network_ovn_wait_no_ping() {
+    # Retry until the flows blocking the traffic have been programmed.
+    for _ in 1 2 3 4 5 6; do
+        if ! incus exec "$@"; then
+            return 0
+        fi
+
+        sleep 2
+    done
+
+    return 1
+}
+
 test_network_ovn_basic() {
     if ! network_ovn_supported; then
         return
@@ -134,6 +147,59 @@ test_network_ovn_basic() {
     if [ "${hostHasIPv6Internet}" = "1" ]; then
         incus exec u2 -- ping -c1 -6 -w5 linuxcontainers.org
     fi
+
+    echo "==> Testing port security filtering"
+    U3_MAC="$(incus config get u3 volatile.eth0.hwaddr)"
+    SPOOF_IPV4="$(incus network get ovn-virtual-network ipv4.address | cut -d/ -f1 | sed 's/\.1$/.250/')"
+    SPOOF_IPV6="$(incus network get ovn-virtual-network ipv6.address | cut -d/ -f1 | sed 's/1$/250/')"
+
+    # Spoofed addresses work without filtering.
+    incus exec u3 -- ip -4 addr add "${SPOOF_IPV4}/24" dev eth0
+    incus exec u3 -- ip -6 addr add "${SPOOF_IPV6}/64" dev eth0 nodad
+    network_ovn_wait_ping u3 -- ping -c1 -4 -w5 -I "${SPOOF_IPV4}" "${U2_IPV4}"
+    network_ovn_wait_ping u3 -- ping -c1 -6 -w5 -I "${SPOOF_IPV6}" "${U2_IPV6}"
+
+    # Filtering is mutually exclusive with promiscuous mode.
+    ! incus config device set u3 eth0 security.mac_filtering=true security.promiscuous=true || false
+
+    # MAC filtering alone only pins the MAC address.
+    incus config device set u3 eth0 security.mac_filtering=true
+    ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -xF "${U3_MAC}"
+
+    # Filtering a single family leaves the other one unrestricted.
+    incus config device set u3 eth0 security.mac_filtering=false security.ipv4_filtering=true
+    ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -xF "${U3_MAC} ${U3_IPV4} ::/0"
+    incus config device set u3 eth0 security.ipv4_filtering=false security.ipv6_filtering=true
+    ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -xF "${U3_MAC} 0.0.0.0/0 ${U3_IPV6}"
+
+    # Filtering both families pins the dynamically allocated addresses.
+    incus config device set u3 eth0 security.ipv4_filtering=true security.ipv6_filtering=true
+    ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -xF "${U3_MAC} ${U3_IPV4} ${U3_IPV6}"
+
+    # Legitimate traffic still works and spoofed addresses are dropped (the source is pinned as Linux prefers newer addresses).
+    network_ovn_wait_ping u3 -- ping -c1 -4 -w5 -I "${U3_IPV4}" "${U2_IPV4}"
+    network_ovn_wait_ping u3 -- ping -c1 -6 -w5 -I "${U3_IPV6}" "${U2_IPV6}"
+    network_ovn_wait_no_ping u3 -- ping -c1 -4 -w5 -I "${SPOOF_IPV4}" "${U2_IPV4}"
+    network_ovn_wait_no_ping u3 -- ping -c1 -6 -w5 -I "${SPOOF_IPV6}" "${U2_IPV6}"
+    incus exec u3 -- ip -4 addr del "${SPOOF_IPV4}/24" dev eth0
+    incus exec u3 -- ip -6 addr del "${SPOOF_IPV6}/64" dev eth0
+
+    # Static routes are added to the allowed addresses.
+    incus config device set u3 eth0 ipv4.routes=192.0.2.0/24 ipv6.routes=2001:db8::/64
+    ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -xF "${U3_MAC} ${U3_IPV4} 192.0.2.0/24 ${U3_IPV6} 2001:db8::/64"
+    incus config device unset u3 eth0 ipv4.routes
+    incus config device unset u3 eth0 ipv6.routes
+
+    # Disabling filtering clears the port security.
+    incus config device set u3 eth0 security.ipv4_filtering=false security.ipv6_filtering=false
+    ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -cF "${U3_MAC}" | grep -xF 0
+
+    # Filtering without any address blocks all IP traffic rather than falling back to MAC filtering.
+    incus init "${instanceImage}" u4 -s "${poolName}"
+    incus config device add u4 eth0 nic network=ovn-virtual-network name=eth0 ipv4.address=none ipv6.address=none security.ipv4_filtering=true security.ipv6_filtering=true
+    incus start u4
+    ovn-nbctl --bare --format=csv --column=port_security find logical_switch_port | grep -xF "$(incus config get u4 volatile.eth0.hwaddr) 0.0.0.0"
+    incus delete -f u4
 
     # Check sticky DHCPv4 allocations, so that when deleting an instance with a lower dynamic IP that restarting a
     # later instance doesn't cause it to be allocated the (now available) lower IP and instead it should keep the
