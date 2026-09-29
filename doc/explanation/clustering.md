@@ -5,6 +5,19 @@ To spread the total workload over several servers, Incus can be run in clusterin
 In this scenario, any number of Incus servers share the same distributed database that holds the configuration for the cluster members and their instances.
 The Incus cluster can be managed uniformly using the [`incus`](incus.md) client or the REST API.
 
+(clustering-requirements)=
+## Requirements
+
+A highly available cluster needs at least three members, so that the distributed database keeps its quorum when one member is lost.
+See {ref}`clustering-members` for details.
+
+The network latency between members must not exceed 10 ms.
+The distributed database and the heartbeats between members are not supported over higher latency links.
+
+All cluster members must keep their clocks synchronized, for example through NTP.
+Incus relies on comparable time across members for its heartbeats, the detection of offline members, the validity of certificates and the expiry of join tokens.
+A member with a drifting clock can be wrongly considered offline or fail to join the cluster.
+
 (clustering-members)=
 ## Cluster members
 
