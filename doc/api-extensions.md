@@ -3530,3 +3530,11 @@ PEM encoded public key.
 
 The endorsement keys are only known for TPM devices provisioned by Incus, that is
 when `instances.tpm.platform_cert` was set at the time the device was first started.
+
+## `ovn_nic_security_filtering`
+
+This adds the `security.mac_filtering`, `security.ipv4_filtering` and `security.ipv6_filtering` options to OVN NICs.
+
+They are implemented through OVN port security on the instance's logical switch port,
+restricting the source MAC address and, when IP filtering is enabled, the IP addresses
+(including any static routes) the instance may use.
