@@ -133,7 +133,11 @@ func NewICSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 		return nil, err
 	}
 
-	monitorCookie, err := ovn.MonitorAll(ctx)
+	// Only monitor what we use; OVN 26.03 indexes a column our model lacks.
+	monitorCookie, err := ovn.Monitor(ctx, ovn.NewMonitor(
+		ovsdbClient.WithTable(&ovnICSB.AvailabilityZone{}),
+		ovsdbClient.WithTable(&ovnICSB.Gateway{}),
+	))
 	if err != nil {
 		return nil, err
 	}
