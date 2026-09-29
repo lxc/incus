@@ -5,11 +5,6 @@ import (
 	localtls "github.com/lxc/incus/v7/shared/tls"
 )
 
-// IsLeader returns true if this node is the leader.
-func (g *Gateway) IsLeader() (bool, error) {
-	return g.isLeader()
-}
-
 // ServerCert returns the gateway's internal TLS server certificate information.
 func (g *Gateway) ServerCert() *localtls.CertInfo {
 	return g.networkCert

@@ -10,9 +10,10 @@ type NetworkLoadBalancerAction string
 
 // All supported lifecycle events for network load balancers.
 const (
-	NetworkLoadBalancerCreated = NetworkLoadBalancerAction(api.EventLifecycleNetworkLoadBalancerCreated)
-	NetworkLoadBalancerDeleted = NetworkLoadBalancerAction(api.EventLifecycleNetworkLoadBalancerDeleted)
-	NetworkLoadBalancerUpdated = NetworkLoadBalancerAction(api.EventLifecycleNetworkLoadBalancerUpdated)
+	NetworkLoadBalancerCreated       = NetworkLoadBalancerAction(api.EventLifecycleNetworkLoadBalancerCreated)
+	NetworkLoadBalancerDeleted       = NetworkLoadBalancerAction(api.EventLifecycleNetworkLoadBalancerDeleted)
+	NetworkLoadBalancerUpdated       = NetworkLoadBalancerAction(api.EventLifecycleNetworkLoadBalancerUpdated)
+	NetworkLoadBalancerHealthChanged = NetworkLoadBalancerAction(api.EventLifecycleNetworkLoadBalancerHealthChanged)
 )
 
 // Event creates the lifecycle event for an action on a network load balancer.

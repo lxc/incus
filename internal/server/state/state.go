@@ -28,6 +28,7 @@ import (
 
 type clusterGateway interface {
 	LeaderAddress() (string, error)
+	IsLeader() (bool, error)
 }
 
 // State is a gateway to the two main stateful components, the database
