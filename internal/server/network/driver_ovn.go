@@ -5439,6 +5439,54 @@ func (n *ovn) getInstanceDevicePortName(instanceUUID string, deviceName string) 
 	return networkOVN.OVNSwitchPort(fmt.Sprintf("%s-%s-%s", n.getIntSwitchInstancePortPrefix(), instanceUUID, deviceName))
 }
 
+// instanceDevicePortSecurity returns the OVN port security entries for an instance NIC (nil if filtering is disabled).
+func (n *ovn) instanceDevicePortSecurity(devConfig deviceConfig.Device, mac net.HardwareAddr, ipv4 net.IP, ipv6 net.IP, routes []*net.IPNet) []string {
+	filterIPv4 := util.IsTrue(devConfig["security.ipv4_filtering"])
+	filterIPv6 := util.IsTrue(devConfig["security.ipv6_filtering"])
+
+	if !filterIPv4 && !filterIPv6 && !util.IsTrue(devConfig["security.mac_filtering"]) {
+		return nil
+	}
+
+	entry := []string{mac.String()}
+
+	// OVN blocks an IP family entirely once the other family is listed, so an unfiltered family gets a wildcard.
+	if filterIPv4 {
+		if ipv4 != nil {
+			entry = append(entry, ipv4.String())
+		}
+
+		for _, route := range routes {
+			if route.IP.To4() != nil {
+				entry = append(entry, route.String())
+			}
+		}
+	} else if filterIPv6 {
+		entry = append(entry, "0.0.0.0/0")
+	}
+
+	if filterIPv6 {
+		if ipv6 != nil {
+			entry = append(entry, ipv6.String())
+		}
+
+		for _, route := range routes {
+			if route.IP.To4() == nil {
+				entry = append(entry, route.String())
+			}
+		}
+	} else if filterIPv4 {
+		entry = append(entry, "::/0")
+	}
+
+	// OVN treats a MAC-only entry as allowing any IP, so list the unusable 0.0.0.0 source to block all IP traffic.
+	if filterIPv4 && filterIPv6 && len(entry) == 1 {
+		entry = append(entry, "0.0.0.0")
+	}
+
+	return []string{strings.Join(entry, " ")}
+}
+
 // instanceDevicePortRoutesParse parses the instance NIC device config for internal routes and external routes.
 func (n *ovn) instanceDevicePortRoutesParse(devConfig map[string]string) ([]*net.IPNet, []*net.IPNet, error) {
 	var err error
@@ -5887,6 +5935,13 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		if (dnsIPv4 == nil && dhcpv4Subnet != nil) || (dnsIPv6 == nil && dhcpv6Subnet != nil) {
 			return "", nil, errors.New("Insufficient dynamic addresses allocated")
 		}
+	}
+
+	// Apply port security now that the port's addresses are known.
+	portSecurity := n.instanceDevicePortSecurity(opts.DeviceConfig, portOpts.MAC, dnsIPv4, dnsIPv6, slices.Concat(internalRoutes, externalRoutes))
+	err = n.ovnnb.UpdateLogicalSwitchPortSecurity(context.TODO(), instancePortName, portSecurity)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed setting port security: %w", err)
 	}
 
 	// Remove SNAT rules for external addresses no longer used by the NIC.
