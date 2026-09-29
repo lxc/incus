@@ -80,7 +80,7 @@ func (d *nicOVN) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"security.acls", "limits.ingress", "limits.egress", "limits.max", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "connected", "ipv4.address.external", "ipv6.address.external"}
+	return []string{"security.acls", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "limits.ingress", "limits.egress", "limits.max", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "connected", "ipv4.address.external", "ipv6.address.external"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -276,6 +276,33 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		//  managed: no
 		//  shortdesc: Have OVN send unknown network traffic to this network interface (required for some nesting cases)
 		"security.promiscuous",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.mac_filtering)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Prevent the instance from spoofing another instance's MAC address
+		"security.mac_filtering",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.ipv4_filtering)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)
+		"security.ipv4_filtering",
+
+		// gendoc:generate(entity=devices, group=nic_ovn, key=security.ipv6_filtering)
+		//
+		// ---
+		//  type: bool
+		//  default: false
+		//  managed: no
+		//  shortdesc: Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)
+		"security.ipv6_filtering",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=acceleration)
 		//
@@ -525,6 +552,9 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 	}
 
 	rules := nicValidationRules(requiredFields, optionalFields, instConf)
+	rules["security.mac_filtering"] = validate.Optional(validate.IsBool)
+	rules["security.ipv4_filtering"] = validate.Optional(validate.IsBool)
+	rules["security.ipv6_filtering"] = validate.Optional(validate.IsBool)
 
 	// Override ipv4.address and ipv6.address to allow none value.
 	// A CIDR value is allowed for static address configuration inside OCI containers.
@@ -607,6 +637,11 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		if err != nil {
 			return err
 		}
+	}
+
+	// Port security restricts the destination MAC, which defeats the purpose of promiscuous mode.
+	if util.IsTrue(d.config["security.promiscuous"]) && (util.IsTrue(d.config["security.mac_filtering"]) || util.IsTrue(d.config["security.ipv4_filtering"]) || util.IsTrue(d.config["security.ipv6_filtering"])) {
+		return errors.New("security.promiscuous is mutually exclusive with security.mac_filtering, security.ipv4_filtering and security.ipv6_filtering")
 	}
 
 	// Avoid setting both ingress/egress and max to avoid confusion or implicit behavior.
@@ -1193,8 +1228,11 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 		}
 	}
 
-	// Apply any changes needed when assigned ACLs, external NAT addresses or nic limit changes.
+	// Apply any changes needed when assigned ACLs, filtering, external NAT addresses or nic limit changes.
 	if d.config["security.acls"] != oldConfig["security.acls"] ||
+		d.config["security.mac_filtering"] != oldConfig["security.mac_filtering"] ||
+		d.config["security.ipv4_filtering"] != oldConfig["security.ipv4_filtering"] ||
+		d.config["security.ipv6_filtering"] != oldConfig["security.ipv6_filtering"] ||
 		d.config["ipv4.address.external"] != oldConfig["ipv4.address.external"] ||
 		d.config["ipv6.address.external"] != oldConfig["ipv6.address.external"] ||
 		d.config["limits.ingress"] != oldConfig["limits.ingress"] ||
