@@ -2626,6 +2626,8 @@ definitions:
         x-go-package: github.com/lxc/incus/v7/shared/api
     InstanceStateDisk:
         properties:
+            counters:
+                $ref: '#/definitions/InstanceStateDiskCounters'
             total:
                 description: |-
                     Total size in bytes
@@ -2642,6 +2644,37 @@ definitions:
                 type: integer
                 x-go-name: Usage
         title: InstanceStateDisk represents the disk information section of an instance's state.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
+    InstanceStateDiskCounters:
+        description: |-
+            InstanceStateDiskCounters represents I/O counters as part of the disk section of an
+            instance's state.
+        properties:
+            bytes_read:
+                description: Number of bytes read
+                example: 3567021
+                format: int64
+                type: integer
+                x-go-name: BytesRead
+            bytes_written:
+                description: Number of bytes written
+                example: 1748969
+                format: int64
+                type: integer
+                x-go-name: BytesWritten
+            reads_completed:
+                description: Number of read operations completed
+                example: 3844
+                format: int64
+                type: integer
+                x-go-name: ReadsCompleted
+            writes_completed:
+                description: Number of write operations completed
+                example: 2071
+                format: int64
+                type: integer
+                x-go-name: WritesCompleted
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
     InstanceStateMemory:

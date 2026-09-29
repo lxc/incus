@@ -10783,6 +10783,19 @@ func (d *qemu) diskState() map[string]api.InstanceStateDisk {
 	// Custom volumes may live in another project, resolve it only if needed.
 	volumeProject := ""
 
+	// Get the disk I/O counters from QEMU, best effort as QMP is unavailable when stopped.
+	var blockStats map[string]qmp.BlockStats
+
+	monitor, err := d.qmpConnect()
+	if err != nil {
+		d.logger.Debug("Failed to connect to QMP monitor to get disk I/O counters", logger.Ctx{"err": err})
+	} else {
+		blockStats, err = monitor.GetBlockStats()
+		if err != nil {
+			d.logger.Debug("Failed to get disk I/O counters", logger.Ctx{"err": err})
+		}
+	}
+
 	for _, dev := range d.expandedDevices.Sorted() {
 		if dev.Config["type"] != "disk" {
 			continue
@@ -10837,6 +10850,20 @@ func (d *qemu) diskState() map[string]api.InstanceStateDisk {
 		if usage != nil {
 			diskState.Usage = usage.Used
 			diskState.Total = usage.Total
+		}
+
+		if blockStats != nil {
+			qdevID := qemuDeviceIDPrefix + linux.PathNameEncode(dev.Name)
+
+			stats, ok := blockStats[qdevID]
+			if ok {
+				diskState.Counters = &api.InstanceStateDiskCounters{
+					BytesRead:       int64(stats.BytesRead),
+					BytesWritten:    int64(stats.BytesWritten),
+					ReadsCompleted:  int64(stats.ReadsCompleted),
+					WritesCompleted: int64(stats.WritesCompleted),
+				}
+			}
 		}
 
 		disk[dev.Name] = diskState
