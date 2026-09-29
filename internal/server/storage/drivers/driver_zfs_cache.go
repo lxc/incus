@@ -1,6 +1,7 @@
 package drivers
 
 import (
+	"errors"
 	"slices"
 	"strings"
 	"time"
@@ -10,6 +11,17 @@ import (
 
 // zfsCacheProperties lists the dataset properties served from the cache.
 var zfsCacheProperties = []string{"used", "referenced"}
+
+// zfsOnlyMissingDatasets returns true when every error line reports a dataset that no longer exists.
+func zfsOnlyMissingDatasets(stderr string) bool {
+	for line := range strings.SplitSeq(strings.TrimSpace(stderr), "\n") {
+		if !strings.HasSuffix(line, ": dataset does not exist") {
+			return false
+		}
+	}
+
+	return true
+}
 
 // getCachedProperty returns a dataset property from the cache, prefilling it when needed.
 func (d *zfs) getCachedProperty(dataset string, key string) (string, bool) {
@@ -24,7 +36,13 @@ func (d *zfs) getCachedProperty(dataset string, key string) (string, bool) {
 
 		out, err := subprocess.RunCommand("zfs", args...)
 		if err != nil {
-			return nil, err
+			// Datasets deleted since being queued are reported on stderr while the others are still listed.
+			var runErr subprocess.RunError
+			if !errors.As(err, &runErr) || !zfsOnlyMissingDatasets(runErr.StdErr().String()) {
+				return nil, err
+			}
+
+			out = runErr.StdOut().String()
 		}
 
 		return parsePropertyList(out, zfsCacheProperties), nil
