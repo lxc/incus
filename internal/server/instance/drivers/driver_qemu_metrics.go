@@ -31,21 +31,21 @@ func (d *qemu) getQemuMetrics() (*metrics.MetricSet, error) {
 
 	cpuStats, err := d.getQemuCPUMetrics(monitor)
 	if err != nil {
-		d.logger.Warn("Failed to get CPU metrics", logger.Ctx{"err": err})
+		d.logger.WarnOnErrorExcept(err, monitorGoneErrors, "Failed to get CPU metrics")
 	} else {
 		out.CPU = cpuStats
 	}
 
 	memoryStats, err := d.getQemuMemoryMetrics(monitor)
 	if err != nil {
-		d.logger.Warn("Failed to get memory metrics", logger.Ctx{"err": err})
+		d.logger.WarnOnErrorExcept(err, monitorGoneErrors, "Failed to get memory metrics")
 	} else {
 		out.Memory = memoryStats
 	}
 
 	diskStats, err := d.getQemuDiskMetrics(monitor)
 	if err != nil {
-		d.logger.Warn("Failed to get disk metrics", logger.Ctx{"err": err})
+		d.logger.WarnOnErrorExcept(err, monitorGoneErrors, "Failed to get disk metrics")
 	} else {
 		out.Disk = diskStats
 	}

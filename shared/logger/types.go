@@ -19,6 +19,7 @@ type Logger interface {
 	Info(msg string, args ...Ctx)
 	Debug(msg string, args ...Ctx)
 	Trace(msg string, args ...Ctx)
+	WarnOnErrorExcept(err error, ignore []error, msg string, args ...Ctx)
 	AddContext(Ctx) Logger
 }
 

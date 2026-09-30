@@ -2240,8 +2240,9 @@ func (d *nicBridged) State() (*api.InstanceStateNetwork, error) {
 		addresses = append(addresses, addr)
 	}
 
+	// The host interface is gone while the instance stops or migrates, which isn't worth reporting.
 	mtu, err := d.getHostMTU()
-	if err != nil {
+	if err != nil && network.InterfaceExists(d.config["host_name"]) {
 		d.logger.Warn("Failed getting host interface state for MTU", logger.Ctx{"host_name": d.config["host_name"], "err": err})
 	}
 

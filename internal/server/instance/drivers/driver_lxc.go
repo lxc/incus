@@ -4658,6 +4658,11 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 		return err
 	}
 
+	// Run device removal function for each device while the instance volume still exists.
+	if !d.IsSnapshot() {
+		d.devicesRemove(d, cleanupDependencies)
+	}
+
 	pool, err := storagePools.LoadByInstance(d.state, d)
 	if err != nil && !response.IsNotFoundError(err) {
 		return err
@@ -4726,9 +4731,6 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 				return err
 			}
 		}
-
-		// Run device removal function for each device.
-		d.devicesRemove(d, cleanupDependencies)
 
 		// Clean things up.
 		d.cleanup()
@@ -8504,14 +8506,17 @@ func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 		if internalInstance.IsRootDiskDevice(dev.Config) {
 			pool, err := d.getStoragePool()
 			if err != nil {
-				d.logger.Error("Error loading storage pool", logger.Ctx{"err": err})
+				if !d.isBeingDeleted() {
+					d.logger.Warn("Error loading storage pool", logger.Ctx{"err": err})
+				}
+
 				continue
 			}
 
 			usage, err = pool.GetInstanceUsage(d)
 			if err != nil {
-				if !errors.Is(err, storageDrivers.ErrNotSupported) {
-					d.logger.Error("Error getting disk usage", logger.Ctx{"err": err})
+				if !errors.Is(err, storageDrivers.ErrNotSupported) && !d.isBeingDeleted() {
+					d.logger.Warn("Error getting disk usage", logger.Ctx{"err": err})
 				}
 
 				continue
@@ -8519,7 +8524,10 @@ func (d *lxc) diskState() map[string]api.InstanceStateDisk {
 		} else if dev.Config["pool"] != "" {
 			pool, err := storagePools.LoadByName(d.state, dev.Config["pool"])
 			if err != nil {
-				d.logger.Error("Error loading storage pool", logger.Ctx{"poolName": dev.Config["pool"], "err": err})
+				if !d.isBeingDeleted() {
+					d.logger.Warn("Error loading storage pool", logger.Ctx{"poolName": dev.Config["pool"], "err": err})
+				}
+
 				continue
 			}
 

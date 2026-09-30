@@ -176,7 +176,7 @@ func ethtoolAddCardInfo(name string, info *api.ResourcesNetworkCard) error {
 
 	info.FirmwareVersion = string(bytes.Trim(ethDrvInfo.fwVersion[:], "\x00"))
 
-	return unix.Close(ethtoolFd)
+	return nil
 }
 
 func ethtoolGset(ethtoolFd int, req *ethtoolReq, info *api.ResourcesNetworkCardPort) error {
@@ -418,5 +418,5 @@ func ethtoolAddPortInfo(info *api.ResourcesNetworkCardPort) error {
 		return ethtoolGset(ethtoolFd, &req, info)
 	}
 
-	return unix.Close(ethtoolFd)
+	return nil
 }

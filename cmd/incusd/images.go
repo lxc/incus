@@ -2843,6 +2843,17 @@ func pruneExpiredImage(ctx context.Context, s *state.State, op *operations.Opera
 	var poolNames []string
 
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		// Non-cached copies of the same image in other projects share the files and volumes.
+		remaining, err := dbCluster.GetImages(ctx, tx.Tx(), dbCluster.ImageFilter{Fingerprint: &fingerprint})
+		if err != nil {
+			return err
+		}
+
+		if len(remaining) > 0 {
+			poolIDs = nil
+			return nil
+		}
+
 		// Get the IDs of all storage pools on which a storage volume for the image currently exists.
 		poolIDs, err = tx.GetPoolsWithImage(ctx, fingerprint)
 		if err != nil {
@@ -2858,6 +2869,10 @@ func pruneExpiredImage(ctx context.Context, s *state.State, op *operations.Opera
 		return nil
 	})
 	if err != nil {
+		return nil
+	}
+
+	if poolIDs == nil {
 		return nil
 	}
 
@@ -4539,6 +4554,10 @@ func imageExport(d *Daemon, r *http.Request) response.Response {
 	imagePath := internalUtil.VarPath("images", imgInfo.Fingerprint)
 	rootfsPath := imagePath + ".rootfs"
 
+	if !util.PathExists(imagePath) {
+		return response.NotFound(fmt.Errorf("Image %q file is missing on this cluster member", imgInfo.Fingerprint))
+	}
+
 	_, ext, _, err := archive.DetectCompression(imagePath)
 	if err != nil {
 		ext = ""
@@ -4870,12 +4889,12 @@ func imageImportFromNode(imagesDir string, client incus.InstanceServer, fingerpr
 
 		err := internalUtil.FileMove(metaFile.Name(), metaPath)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		err = internalUtil.FileMove(rootfsFile.Name(), rootfsPath)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
