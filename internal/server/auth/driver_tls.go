@@ -86,8 +86,8 @@ func (t *TLS) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return nil
 	}
 
-	// Also allow read-only access to inherited resources.
-	if object.Project() == api.ProjectDefaultName && entitlement == EntitlementCanView && slices.Contains([]ObjectType{ObjectTypeImage, ObjectTypeProfile, ObjectTypeStorageVolume, ObjectTypeStorageBucket, ObjectTypeNetwork, ObjectTypeNetworkZone}, object.Type()) {
+	// Also allow read-only access to inherited resources, but only when accessed through a project the certificate is trusted for.
+	if object.Project() == api.ProjectDefaultName && entitlement == EntitlementCanView && slices.Contains(projectNames, details.ProjectName) && slices.Contains([]ObjectType{ObjectTypeImage, ObjectTypeProfile, ObjectTypeStorageVolume, ObjectTypeStorageBucket, ObjectTypeNetwork, ObjectTypeNetworkZone}, object.Type()) {
 		return nil
 	}
 
