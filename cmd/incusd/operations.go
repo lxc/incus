@@ -191,6 +191,31 @@ func operationCheckPermission(s *state.State, r *http.Request, op *operations.Op
 	return nil
 }
 
+// operationCheckCancelAccess checks whether the requestor may cancel the operation.
+func operationCheckCancelAccess(s *state.State, r *http.Request, op *operations.Operation) error {
+	err := operationCheckTokenAccess(s, r, op)
+	if err != nil {
+		return err
+	}
+
+	objectType, _ := op.Permission()
+	if objectType != "" {
+		return operationCheckPermission(s, r, op)
+	}
+
+	// Operations without a specific permission can be cancelled by their requestor.
+	if op.IsSameRequestor(r) {
+		return nil
+	}
+
+	projectName := op.Project()
+	if projectName == "" {
+		projectName = api.ProjectDefaultName
+	}
+
+	return s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanEdit)
+}
+
 // operationCheckViewAccess allows viewing an operation to callers with
 // can_view_operations on its project or with the permission the operation
 // itself requires, so that users scoped to a single resource can follow
@@ -350,12 +375,9 @@ func operationDelete(d *Daemon, r *http.Request) response.Response {
 			projectName = api.ProjectDefaultName
 		}
 
-		objectType, _ := op.Permission()
-		if objectType != "" {
-			err = operationCheckPermission(s, r, op)
-			if err != nil {
-				return response.SmartError(err)
-			}
+		err = operationCheckCancelAccess(s, r, op)
+		if err != nil {
+			return response.SmartError(err)
 		}
 
 		_, err = op.Cancel()

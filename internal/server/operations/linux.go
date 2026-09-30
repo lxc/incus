@@ -60,5 +60,15 @@ func (op *Operation) sendEvent(eventMessage any) {
 		return
 	}
 
+	// Token operations carry a secret in their metadata, keep it out of the event stream.
+	if op.class == OperationClassToken {
+		apiOp, ok := eventMessage.(*api.Operation)
+		if ok {
+			opCopy := *apiOp
+			opCopy.Metadata = nil
+			eventMessage = &opCopy
+		}
+	}
+
 	_ = op.events.Send(op.projectName, api.EventTypeOperation, eventMessage)
 }
