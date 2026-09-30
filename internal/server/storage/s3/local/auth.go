@@ -7,7 +7,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"net/http"
 	"net/url"
@@ -30,9 +32,8 @@ const (
 // authenticate verifies the SigV4 signature on the request and returns the
 // matching credential's role on success, or an *s3.Error response on failure.
 //
-// On success, r.Body is replaced with a buffered copy if the body's hash had
-// to be computed for verification. The caller must use r.Body, not the
-// original.
+// On success, r.Body may be wrapped so that the payload is verified as it's
+// read. The caller must use r.Body, not the original.
 func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 	query := r.URL.Query()
 
@@ -74,6 +75,7 @@ func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 	// Resolve the body hash for the canonical request.
 	bodyHash := r.Header.Get("X-Amz-Content-Sha256")
 	streaming := false
+	signedBody := false
 
 	switch bodyHash {
 	case streamingPayload, streamingPayloadTrailer, streamingUnsignedTrailer:
@@ -83,23 +85,8 @@ func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 		// Use the header value as-is for the canonical request.
 
 	default:
-		// A signed body hash was provided. The client claims the body
-		// hashes to bodyHash; we must verify that. Buffer the body, hash
-		// it, compare.
-		if r.Body != nil {
-			buf, readErr := io.ReadAll(r.Body)
-			_ = r.Body.Close()
-			if readErr != nil {
-				return "", &s3.Error{Code: s3.ErrorCodeInternalError, Message: "Failed to read request body."}
-			}
-
-			actual := sha256Hex(buf)
-			if actual != bodyHash {
-				return "", &s3.Error{Code: s3.ErrorInvalidRequest, Message: "Body hash mismatch."}
-			}
-
-			r.Body = io.NopCloser(bytes.NewReader(buf))
-		}
+		// A signed body hash was provided, it's verified as the body is read.
+		signedBody = true
 	}
 
 	if bodyHash == "" {
@@ -134,7 +121,41 @@ func (s *Server) authenticate(r *http.Request) (Role, *s3.Error) {
 		}
 	}
 
+	// The signature is valid, now check the body against the signed hash as it's consumed
+	// rather than buffering it in memory.
+	if signedBody && r.Body != nil {
+		r.Body = &readerCloser{
+			Reader: newHashVerifyReader(r.Body, bodyHash),
+			Closer: r.Body,
+		}
+	}
+
 	return role, nil
+}
+
+// hashVerifyReader hashes the data as it's read and fails at the end if it doesn't match the expected hash.
+type hashVerifyReader struct {
+	reader   io.Reader
+	hasher   hash.Hash
+	expected string
+}
+
+func newHashVerifyReader(r io.Reader, expected string) *hashVerifyReader {
+	return &hashVerifyReader{reader: r, hasher: sha256.New(), expected: expected}
+}
+
+func (h *hashVerifyReader) Read(p []byte) (int, error) {
+	n, err := h.reader.Read(p)
+	_, _ = h.hasher.Write(p[:n])
+
+	if errors.Is(err, io.EOF) {
+		actual := hex.EncodeToString(h.hasher.Sum(nil))
+		if actual != h.expected {
+			return n, errors.New("Body hash mismatch")
+		}
+	}
+
+	return n, err
 }
 
 func (s *Server) lookupCredential(accessKey string) (string, Role, bool) {

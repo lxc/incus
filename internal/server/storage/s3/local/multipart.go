@@ -195,9 +195,10 @@ func (s *Server) completeMultipartUpload(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
+	// The part list is small, don't allow buffering more than 16MiB.
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 16*1024*1024))
 	if err != nil {
-		(&s3.Error{Code: s3.ErrorCodeInternalError, Message: err.Error()}).Response(w)
+		(&s3.Error{Code: s3.ErrorInvalidRequest, Message: err.Error()}).Response(w)
 		return
 	}
 
