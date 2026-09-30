@@ -1312,6 +1312,30 @@ With VMs, this option supports mounting file system disk devices and paths withi
 
 ```
 
+```{config:option} security.ipv4_filtering devices-nic_ovn
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)"
+:type: "bool"
+
+```
+
+```{config:option} security.ipv6_filtering devices-nic_ovn
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)"
+:type: "bool"
+
+```
+
+```{config:option} security.mac_filtering devices-nic_ovn
+:default: "false"
+:managed: "no"
+:shortdesc: "Prevent the instance from spoofing another instance's MAC address"
+:type: "bool"
+
+```
+
 ```{config:option} security.promiscuous devices-nic_ovn
 :default: "false"
 :managed: "no"

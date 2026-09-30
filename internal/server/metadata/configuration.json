@@ -1468,6 +1468,33 @@
 						}
 					},
 					{
+						"security.ipv4_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)",
+							"type": "bool"
+						}
+					},
+					{
+						"security.ipv6_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)",
+							"type": "bool"
+						}
+					},
+					{
+						"security.mac_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's MAC address",
+							"type": "bool"
+						}
+					},
+					{
 						"security.promiscuous": {
 							"default": "false",
 							"longdesc": "",
