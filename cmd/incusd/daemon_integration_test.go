@@ -49,7 +49,6 @@ func newTestDaemon(t *testing.T) (*Daemon, func()) {
 // Create a new DaemonConfig object for testing purposes.
 func newConfig() *DaemonConfig {
 	return &DaemonConfig{
-		RaftLatency:        0.8,
 		Trace:              []string{"dqlite"},
 		CowsqlSetupTimeout: 10 * time.Second,
 	}
