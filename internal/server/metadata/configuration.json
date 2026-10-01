@@ -5135,7 +5135,7 @@
 						"ipv4.nat.address": {
 							"condition": "IPv4 address",
 							"longdesc": "",
-							"shortdesc": "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)",
+							"shortdesc": "The source address used for outbound traffic from the network",
 							"type": "string"
 						}
 					},
@@ -5188,7 +5188,7 @@
 						"ipv6.nat.address": {
 							"condition": "IPv6 address",
 							"longdesc": "",
-							"shortdesc": "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)",
+							"shortdesc": "The source address used for outbound traffic from the network",
 							"type": "string"
 						}
 					},
