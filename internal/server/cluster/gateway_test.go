@@ -223,7 +223,6 @@ func newGateway(t *testing.T, node *db.Node, networkCert *localtls.CertInfo, s *
 	stateFunc := func() *state.State { return s }
 
 	allOpts := []options.Option{
-		options.Latency(0.2),
 		options.Version(version.Version),
 	}
 

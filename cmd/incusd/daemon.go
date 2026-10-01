@@ -190,7 +190,6 @@ type Daemon struct {
 type DaemonConfig struct {
 	Group              string        // Group name the local unix socket should be chown'ed to
 	Trace              []string      // List of sub-systems to trace
-	RaftLatency        float64       // Coarse grain measure of the cluster latency
 	CowsqlSetupTimeout time.Duration // How long to wait for the cluster database to be up
 }
 
@@ -227,7 +226,6 @@ func newDaemon(config *DaemonConfig, osInfo *sys.OS) *Daemon {
 // defaultDaemonConfig returns a DaemonConfig object with default values.
 func defaultDaemonConfig() *DaemonConfig {
 	return &DaemonConfig{
-		RaftLatency:        3.0,
 		CowsqlSetupTimeout: 36 * time.Hour, // Account for snap refresh lag
 	}
 }
@@ -1228,7 +1226,6 @@ func (d *Daemon) init() error {
 
 	/* Setup cowsql */
 	d.gateway, err = cluster.NewGateway(d.shutdownCtx, d.db.Node, d.State, networkCert, d.serverCert,
-		options.Latency(d.config.RaftLatency),
 		options.Logger(slog.New(logger.NewSlogHandler(logger.DefaultSlogLogger("cowsql:")))),
 		options.Version(version.Version),
 		options.MaxStandby(func() int64 { return d.globalConfig.MaxStandBy() }),
