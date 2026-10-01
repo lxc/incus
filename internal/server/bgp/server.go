@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"maps"
 	"net"
+	"slices"
 	"strconv"
 	"sync"
 
@@ -84,7 +85,13 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 	}
 
 	// Setup the logger.
-	logHandler := logger.NewSlogHandler("bgp:", logger.Warn)
+	logHandler := logger.NewSlogHandler(func(lvl logger.SlogLevel, msg string, ctx, attrs logger.Ctx) {
+		if slices.Contains([]logger.SlogLevel{logger.SlogDebug, logger.SlogInfo}, lvl) {
+			return
+		}
+
+		logger.Warn("bgp: "+msg, ctx)
+	})
 	logLevel := &slog.LevelVar{}
 	logLevel.Set(slog.LevelWarn)
 

@@ -1227,14 +1227,9 @@ func (d *Daemon) init() error {
 	}
 
 	/* Setup cowsql */
-	logFunc := logger.Error
-	if slices.Contains(trace, "dqlite") {
-		logFunc = logger.Trace
-	}
-
 	d.gateway, err = cluster.NewGateway(d.shutdownCtx, d.db.Node, d.State, networkCert, d.serverCert,
 		options.Latency(d.config.RaftLatency),
-		options.Logger(slog.New(logger.NewSlogHandler("cowsql:", logFunc))),
+		options.Logger(slog.New(logger.NewSlogHandler(logger.DefaultSlogLogger("cowsql:")))),
 		options.Version(version.Version),
 		options.MaxStandby(func() int64 { return d.globalConfig.MaxStandBy() }),
 		options.MaxVoters(func() int64 { return d.globalConfig.MaxVoters() }),
