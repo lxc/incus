@@ -687,7 +687,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		//
 		// ---
 		//  type: string
-		//  shortdesc: The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)
+		//  shortdesc: The source address used for outbound traffic from the network
 		//  condition: IPv4 address
 		"ipv4.nat.address": validate.Optional(validate.IsNetworkAddressV4),
 
@@ -705,7 +705,7 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		// ---
 		//  type: string
 		//  condition: IPv6 address
-		//  shortdesc: The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)
+		//  shortdesc: The source address used for outbound traffic from the network
 		"ipv6.nat.address": validate.Optional(validate.IsNetworkAddressV6),
 
 		// gendoc:generate(entity=network_ovn, group=common, key=ipv4.l3only)
@@ -1100,15 +1100,11 @@ func (n *ovn) Validate(config map[string]string, clientType request.ClientType) 
 		}
 	}
 
-	// Check SNAT addresses specified are allowed to be used based on uplink's ovn.ingress_mode setting.
+	// Check SNAT addresses specified are within the uplink's routes and don't conflict with other networks/NICs.
 	var externalSNATSubnets []*net.IPNet // Subnets to check for conflicts with other networks/NICs.
 	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
 		snatAddressKey := fmt.Sprintf("%s.nat.address", keyPrefix)
 		if config[snatAddressKey] != "" {
-			if uplink.Config["ovn.ingress_mode"] != "routed" {
-				return fmt.Errorf(`Cannot specify %q when uplink ovn.ingress_mode is not "routed"`, snatAddressKey)
-			}
-
 			subnetSize := 128
 			if keyPrefix == "ipv4" {
 				subnetSize = 32
@@ -3218,6 +3214,9 @@ func (n *ovn) setup(update bool) error {
 	var routerExtPortIPv4, routerExtPortIPv6 net.IP
 	var routerExtPortIPv4Net, routerExtPortIPv6Net *net.IPNet
 
+	// Uplink's ingress mode, used to decide whether to proxy ARP/NDP the NAT address.
+	uplinkIngressMode := "l2proxy"
+
 	// Record updated config so we can store back into DB and n.config variable.
 	updatedConfig := make(map[string]string)
 
@@ -3459,6 +3458,7 @@ func (n *ovn) setup(update bool) error {
 			}
 
 			uplinkConfig := uplinkNetworkObj.Config()
+			uplinkIngressMode = uplinkConfig["ovn.ingress_mode"]
 
 			// Handle IPv4 MAC.
 			if uplinkConfig["ipv4.gateway.hwaddr"] != "" {
@@ -3747,7 +3747,7 @@ func (n *ovn) setup(update bool) error {
 			})
 		}
 
-		err = n.setupRouterSNAT(update, routerIntPortIPv4Net, routerIntPortIPv6Net, routerExtPortIPv4, routerExtPortIPv6)
+		err = n.setupRouterSNAT(update, routerIntPortIPv4Net, routerIntPortIPv6Net, routerExtPortIPv4, routerExtPortIPv6, uplinkIngressMode)
 		if err != nil {
 			return err
 		}
@@ -4070,7 +4070,7 @@ func (n *ovn) getDhcpOptionUUIDs() (v4Uuid networkOVN.OVNDHCPOptionsUUID, v6Uuid
 }
 
 // setupRouterSNAT applies the SNAT rules for our own internal subnets to the logical router.
-func (n *ovn) setupRouterSNAT(update bool, intPortIPv4Net *net.IPNet, intPortIPv6Net *net.IPNet, extPortIPv4 net.IP, extPortIPv6 net.IP) error {
+func (n *ovn) setupRouterSNAT(update bool, intPortIPv4Net *net.IPNet, intPortIPv6Net *net.IPNet, extPortIPv4 net.IP, extPortIPv6 net.IP, uplinkIngressMode string) error {
 	// Remove our own SNAT rules, matched on logical IP so the other rules on the router are left alone.
 	if update {
 		err := n.ovnnb.DeleteLogicalRouterNATByLogicalIP(context.TODO(), n.getRouterName(), "snat", intPortIPv4Net, intPortIPv6Net)
@@ -4079,6 +4079,11 @@ func (n *ovn) setupRouterSNAT(update bool, intPortIPv4Net *net.IPNet, intPortIPv
 		}
 	}
 
+	uplinkIsL2Proxy := slices.Contains([]string{"l2proxy", ""}, uplinkIngressMode)
+
+	// NAT addresses to proxy ARP/NDP on the uplink.
+	var arpProxyIPNets []net.IPNet
+
 	if util.IsTrue(n.config["ipv4.nat"]) && intPortIPv4Net != nil && extPortIPv4 != nil {
 		snatIP := extPortIPv4
 
@@ -4086,6 +4091,10 @@ func (n *ovn) setupRouterSNAT(update bool, intPortIPv4Net *net.IPNet, intPortIPv
 			snatIP = net.ParseIP(n.config["ipv4.nat.address"])
 			if snatIP == nil {
 				return fmt.Errorf("Failed parsing %q", "ipv4.nat.address")
+			}
+
+			if uplinkIsL2Proxy {
+				arpProxyIPNets = append(arpProxyIPNets, IPToNet(snatIP))
 			}
 		}
 
@@ -4103,11 +4112,22 @@ func (n *ovn) setupRouterSNAT(update bool, intPortIPv4Net *net.IPNet, intPortIPv
 			if snatIP == nil {
 				return fmt.Errorf("Failed parsing %q", "ipv6.nat.address")
 			}
+
+			if uplinkIsL2Proxy {
+				arpProxyIPNets = append(arpProxyIPNets, IPToNet(snatIP))
+			}
 		}
 
 		err := n.ovnnb.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", intPortIPv6Net, snatIP, nil, false, update)
 		if err != nil {
 			return fmt.Errorf("Failed adding router IPv6 SNAT rule: %w", err)
+		}
+	}
+
+	if len(arpProxyIPNets) > 0 {
+		err := n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), arpProxyIPNets, nil)
+		if err != nil {
+			return fmt.Errorf("Failed advertising NAT address on uplink network: %w", err)
 		}
 	}
 
@@ -4201,6 +4221,44 @@ func (n *ovn) deleteStaleRouterSNAT(oldConfig map[string]string, newConfig map[s
 	}
 
 	return n.ovnnb.DeleteLogicalRouterNATByLogicalIP(context.TODO(), n.getRouterName(), "snat", staleSubnets...)
+}
+
+// deleteStaleRouterNATAddressARPProxy removes any proxy ARP/NDP entry for a NAT address no longer configured.
+func (n *ovn) deleteStaleRouterNATAddressARPProxy(oldConfig map[string]string, newConfig map[string]string) error {
+	var staleIPNets []net.IPNet
+
+	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+		addressKey := fmt.Sprintf("%s.nat.address", keyPrefix)
+		natKey := fmt.Sprintf("%s.nat", keyPrefix)
+
+		oldAddress := oldConfig[addressKey]
+		if oldAddress == "" {
+			continue
+		}
+
+		// Still advertised under the new config, nothing to remove.
+		if oldAddress == newConfig[addressKey] && util.IsTrue(newConfig[natKey]) {
+			continue
+		}
+
+		ipAddress := net.ParseIP(oldAddress)
+		if ipAddress == nil {
+			continue
+		}
+
+		staleIPNets = append(staleIPNets, IPToNet(ipAddress))
+	}
+
+	if len(staleIPNets) == 0 {
+		return nil
+	}
+
+	err := n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), nil, staleIPNets)
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+		return err
+	}
+
+	return nil
 }
 
 // logicalRouterPolicySetup applies the security policy to the logical router (clearing any existing policies).
@@ -4545,6 +4603,24 @@ func (n *ovn) deleteRouterNetworkConfig() error {
 	err := n.ovnnb.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
 	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 		return err
+	}
+
+	// Remove any NAT address we were advertising via proxy ARP/NDP on this router.
+	var arpProxyIPNets []net.IPNet
+	for _, key := range []string{"ipv4.nat.address", "ipv6.nat.address"} {
+		ipAddress := net.ParseIP(n.config[key])
+		if ipAddress == nil {
+			continue
+		}
+
+		arpProxyIPNets = append(arpProxyIPNets, IPToNet(ipAddress))
+	}
+
+	if len(arpProxyIPNets) > 0 {
+		err = n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), nil, arpProxyIPNets)
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+			return err
+		}
 	}
 
 	_, routerIntPortIPv4Net, err := n.parseRouterIntPortIPv4Net()
@@ -5103,6 +5179,11 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	// Re-setup the logical network after config applied if needed.
 	if len(changedKeys) > 0 && clientType == request.ClientTypeNormal {
 		err = n.deleteStaleRouterSNAT(oldNetwork.Config, newNetwork.Config)
+		if err != nil {
+			return err
+		}
+
+		err = n.deleteStaleRouterNATAddressARPProxy(oldNetwork.Config, newNetwork.Config)
 		if err != nil {
 			return err
 		}
@@ -7044,6 +7125,12 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 		n.logger.Debug("Applying ingress mode changes from uplink network to instance NICs", logger.Ctx{"uplink": uplinkName})
 
 		if slices.Contains([]string{"l2proxy", ""}, uplinkConfig["ovn.ingress_mode"]) {
+			// Re-run network setup to proxy ARP/NDP any configured NAT address.
+			err := n.setup(true)
+			if err != nil {
+				return err
+			}
+
 			// Get list of active switch ports (avoids repeated querying of OVN NB).
 			activePorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), n.getIntSwitchName())
 			if err != nil {
