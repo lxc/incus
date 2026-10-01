@@ -629,14 +629,51 @@ test_network_ovn_basic() {
     incus exec u1 -- ping -c1 -w5 192.0.2.1
     incus exec u1 -- ping -c1 -w5 2001:db8:1:1::1
 
-    # Set external SNAT address on OVN network (and check it only is allowed with uplink routed ingress mode).
-    ! incus network set ovn-virtual-network ipv4.nat.address=198.51.100.1 || false
-    ! incus network set ovn-virtual-network ipv6.nat.address=2001:db8:1:2::1 || false
+    # Set external SNAT address on OVN network under (default) l2proxy uplink ingress mode.
+    incus network set ovn-virtual-network ipv4.nat.address=198.51.100.1
+    incus network set ovn-virtual-network ipv6.nat.address=2001:db8:1:2::1
+    ovn-nbctl list nat | grep -F 198.51.100.1
+    ovn-nbctl list nat | grep -F 2001:db8:1:2::1
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -F "arp_proxy=198.51.100.1/32 2001:db8:1:2::1/128"
+
+    # Check connectivity back to uplink bridge using the SNAT address, which the host only reaches by resolving it through the proxy.
+    ip route add 198.51.100.1/32 dev dummybr0
+    ip -6 route add 2001:db8:1:2::1/128 dev dummybr0
+    incus exec u1 -- ping -c1 -w5 192.0.2.1
+    incus exec u1 -- ping -c1 -w5 2001:db8:1:1::1
+    ip route del 198.51.100.1/32 dev dummybr0
+    ip -6 route del 2001:db8:1:2::1/128 dev dummybr0
+
+    # Remove the SNAT address and check the ARP/NDP proxy entries are cleaned up.
+    incus network unset ovn-virtual-network ipv4.nat.address
+    incus network unset ovn-virtual-network ipv6.nat.address
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
+
+    # Check a child networks own NAT address proxy entry migrates off the parents router.
+    incus network create ovn-virtual-child --type=ovn parent=ovn-virtual-network ipv4.address=10.10.200.1/24 ipv4.nat=true ipv6.address=none
+    incus network set ovn-virtual-child ipv4.nat.address=198.51.100.4
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -F "arp_proxy=198.51.100.4/32"
+    incus network set ovn-virtual-child parent= network=dummy
+    sleep 2
+    [ "$(ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF "arp_proxy=198.51.100.4/32")" = "1" ]
+    incus network delete ovn-virtual-child
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
+
+    # Removing parent and NAT address at the same time must not error.
+    incus network create ovn-virtual-child --type=ovn parent=ovn-virtual-network ipv4.address=10.10.201.1/24 ipv4.nat=true ipv6.address=none
+    incus network set ovn-virtual-child ipv4.nat.address=198.51.100.5
+    incus network set ovn-virtual-child parent= network=dummy ipv4.nat.address=
+    sleep 2
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
+    incus network delete ovn-virtual-child
+
+    # Switch uplink to routed ingress mode, which requires a real route instead of ARP/NDP proxy.
     incus network set dummy ovn.ingress_mode=routed
     incus network set ovn-virtual-network ipv4.nat.address=198.51.100.1
     incus network set ovn-virtual-network ipv6.nat.address=2001:db8:1:2::1
     ovn-nbctl list nat | grep -F 198.51.100.1
     ovn-nbctl list nat | grep -F 2001:db8:1:2::1
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
 
     # A child network can NAT to an address of its own on the shared router.
     incus network create ovn-virtual-child --type=ovn parent=ovn-virtual-network ipv4.address=10.10.200.1/24 ipv4.nat=true ipv6.address=none
@@ -644,6 +681,9 @@ test_network_ovn_basic() {
     incus network set ovn-virtual-child ipv4.nat.address=198.51.100.2
     ovn-nbctl --bare --format=csv --columns=logical_ip,external_ip,type find nat | grep -xF "10.10.200.0/24,198.51.100.2,snat"
     ! incus network set ovn-virtual-network ipv4.nat.address=198.51.100.2 || false # Used by the child.
+
+    # The child's NAT address isn't proxied either under routed ingress mode.
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
 
     # Add a static route to SNAT address on uplink to OVN network's router (simulating BGP route advert to uplink).
     ovnIPv4="$(incus network get ovn-virtual-network volatile.network.ipv4.address)"
@@ -678,6 +718,15 @@ test_network_ovn_basic() {
     ! incus network set ovn-virtual-network2 ipv6.nat.address=2001:db8:1:2::1 || false
     ! incus network set ovn-virtual-network2 ipv4.nat.address=198.51.100.2 || false
     incus network delete ovn-virtual-network2
+
+    # Switching the uplink back to l2proxy advertises the NAT addresses of both the parent and the child.
+    incus network unset dummy ovn.ingress_mode
+    sleep 2
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -F "arp_proxy=198.51.100.1/32 198.51.100.2/32 2001:db8:1:2::1/128"
+    incus network set dummy ovn.ingress_mode=routed
+    sleep 2
+    ovn-nbctl --bare --format=csv --column=options find logical_switch_port | grep -cF arp_proxy | grep -xF 0
+
     incus network delete ovn-virtual-child
 
     # Remove external SNAT address and check normal SNAT operation returns connectivity.
