@@ -2518,19 +2518,22 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	var serverCert dbCluster.Certificate
+	joinerCert, err := localtls.GetRemoteCertificate("https://"+req.Address, version.UserAgent)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	var serverCert *dbCluster.Certificate
 	err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-		certType := certificate.TypeServer
-		certs, err := dbCluster.GetCertificates(ctx, tx.Tx(), dbCluster.CertificateFilter{Name: &req.Name, Type: &certType})
+		var err error
+		serverCert, err = dbCluster.GetCertificate(ctx, tx.Tx(), localtls.CertFingerprint(joinerCert))
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to find server certificate for member %q: %w", req.Name, err)
 		}
 
-		if len(certs) != 1 {
-			return api.StatusErrorf(http.StatusNotFound, "Failed to find server certificate for member %q", req.Name)
+		if serverCert.Type != certificate.TypeServer || serverCert.Name != req.Name {
+			return errors.New("Joiner certificate metadata does not match")
 		}
-
-		serverCert = certs[0]
 
 		return nil
 	})
