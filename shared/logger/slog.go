@@ -3,17 +3,60 @@ package logger
 import (
 	"context"
 	"log/slog"
-	"slices"
+	"maps"
+)
+
+type (
+	// SlogLevel is a convenience for slog.Level.
+	SlogLevel = slog.Level
+
+	// SlogFunc represents the logging function.
+	SlogFunc func(lvl SlogLevel, msg string, ctx Ctx, attrs Ctx)
+)
+
+const (
+	// SlogWarn is a convenience for slog.LevelWarn.
+	SlogWarn SlogLevel = slog.LevelWarn
+
+	// SlogError is a convenience for SlogLevelError.
+	SlogError SlogLevel = slog.LevelError
+
+	// SlogDebug is a convenience for SlogLevelDebug.
+	SlogDebug SlogLevel = slog.LevelDebug
+
+	// SlogInfo is a convenience for SlogLevelInfo.
+	SlogInfo SlogLevel = slog.LevelInfo
 )
 
 // NewSlogHandler returns a slog.Handler implementation that forwards to our own logger.
-func NewSlogHandler(prefix string, target func(msg string, ctx ...Ctx)) slog.Handler {
-	return &slogHandler{attrs: []slog.Attr{}, prefix: prefix, target: target}
+func NewSlogHandler(target SlogFunc) slog.Handler {
+	return &slogHandler{attrs: []slog.Attr{}, target: target}
+}
+
+// DefaultSlogLogger is the default wrapper for slog parameters to our own logger.
+func DefaultSlogLogger(prefix string) SlogFunc {
+	return func(lvl SlogLevel, msg string, ctx Ctx, attrs Ctx) {
+		maps.Copy(ctx, attrs)
+
+		if prefix != "" {
+			msg = prefix + " " + msg
+		}
+
+		switch lvl {
+		case SlogInfo:
+			Info(msg, ctx)
+		case SlogWarn:
+			Warn(msg, ctx)
+		case SlogError:
+			Error(msg, ctx)
+		default:
+			Debug(msg, ctx)
+		}
+	}
 }
 
 type slogHandler struct {
-	prefix string
-	target func(msg string, ctx ...Ctx)
+	target SlogFunc
 	attrs  []slog.Attr
 }
 
@@ -26,15 +69,18 @@ func (s *slogHandler) Enabled(ctx context.Context, lvl slog.Level) bool {
 func (s *slogHandler) Handle(ctx context.Context, rec slog.Record) error {
 	logCtx := Ctx{}
 
-	if slices.Contains([]slog.Level{slog.LevelDebug, slog.LevelInfo}, rec.Level) {
-		return nil
-	}
-
 	for _, attr := range s.attrs {
 		logCtx[attr.Key] = attr.Value
 	}
 
-	s.target(s.prefix+" "+rec.Message, logCtx)
+	attrCtx := Ctx{}
+
+	rec.Attrs(func(a slog.Attr) bool {
+		attrCtx[a.Key] = a.Value.Any()
+		return true
+	})
+
+	s.target(rec.Level, rec.Message, logCtx, attrCtx)
 
 	return nil
 }
@@ -43,7 +89,6 @@ func (s *slogHandler) Handle(ctx context.Context, rec slog.Record) error {
 func (s *slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	sub := &slogHandler{
 		attrs:  append(s.attrs, attrs...),
-		prefix: s.prefix,
 		target: s.target,
 	}
 
