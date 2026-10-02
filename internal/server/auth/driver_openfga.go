@@ -303,9 +303,7 @@ func (f *FGA) CheckPermission(ctx context.Context, r *http.Request, object Objec
 	}
 
 	// If offline, return a clear error to the user.
-	f.onlineMu.Lock()
-	defer f.onlineMu.Unlock()
-	if !f.online {
+	if !f.isOnline() {
 		return api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
 	}
 
@@ -1202,9 +1200,7 @@ func (f *FGA) isOnline() bool {
 // updateTuples sends an object update to OpenFGA if it's currently online.
 func (f *FGA) updateTuples(ctx context.Context, writes []client.ClientTupleKey, deletions []client.ClientTupleKeyWithoutCondition) error {
 	// If offline, skip updating as a full sync will happen after connection.
-	f.onlineMu.Lock()
-	defer f.onlineMu.Unlock()
-	if !f.online {
+	if !f.isOnline() {
 		return nil
 	}
 
