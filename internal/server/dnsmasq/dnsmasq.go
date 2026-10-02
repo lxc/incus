@@ -102,6 +102,12 @@ func Kill(name string, reload bool) error {
 		return fmt.Errorf("Unable to kill dnsmasq: %s", err)
 	}
 
+	// Remove the pid file so a stale PID is never signalled later.
+	err = os.Remove(pidPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("Unable to remove dnsmasq pid file: %w", err)
+	}
+
 	time.Sleep(100 * time.Millisecond) // Give OS time to release sockets.
 
 	return nil
