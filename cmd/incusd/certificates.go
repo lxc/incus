@@ -248,6 +248,11 @@ func certificatesGet(d *Daemon, r *http.Request) response.Response {
 func updateCertificateCache(d *Daemon) {
 	s := d.State()
 
+	if s.DB.Cluster == nil {
+		logger.Debug("Skipping certificate cache refresh, database is initializing")
+		return
+	}
+
 	logger.Debug("Refreshing trusted certificate cache")
 
 	var certs []*api.Certificate
