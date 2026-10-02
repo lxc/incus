@@ -187,3 +187,89 @@ func TestProcessStartWaitExit(t *testing.T) {
 		t.Error("Could not delete file: ", err)
 	}
 }
+
+func TestStalePID(t *testing.T) {
+	if bootID() == "" {
+		t.Skip("Process identity verification requires /proc")
+	}
+
+	// Start a process whose PID will be reused by the imported record.
+	victim, err := NewProcess("sleep", []string{"30"}, "", "")
+	if err != nil {
+		t.Fatal("Failed process creation: ", err)
+	}
+
+	err = victim.Start(context.Background())
+	if err != nil {
+		t.Fatal("Failed to start process: ", err)
+	}
+
+	defer func() { _ = victim.Stop() }()
+
+	pidPath := "testscript/stale.yaml"
+	defer func() { _ = os.Remove(pidPath) }()
+
+	// Record a different process identity under the same PID.
+	stale := &Process{Name: "dnsmasq", Args: []string{"--conf-file=foo"}, PID: victim.PID, StartTime: victim.StartTime + 1, BootID: victim.BootID}
+	err = stale.Save(pidPath)
+	if err != nil {
+		t.Fatal("Failed to save process: ", err)
+	}
+
+	p, err := ImportProcess(pidPath)
+	if err != nil {
+		t.Fatal("Failed to import process: ", err)
+	}
+
+	for _, fn := range []func() error{p.Stop, p.Reload, func() error { return p.Signal(10) }} {
+		err = fn()
+		if err != ErrNotRunning {
+			t.Fatalf("Expected ErrNotRunning for mismatched identity, got %v", err)
+		}
+	}
+
+	// Same with a record lacking the identity but with a different command line.
+	stale.StartTime = 0
+	stale.BootID = ""
+	err = stale.Save(pidPath)
+	if err != nil {
+		t.Fatal("Failed to save process: ", err)
+	}
+
+	p, err = ImportProcess(pidPath)
+	if err != nil {
+		t.Fatal("Failed to import process: ", err)
+	}
+
+	err = p.Stop()
+	if err != ErrNotRunning {
+		t.Fatalf("Expected ErrNotRunning for mismatched command line, got %v", err)
+	}
+
+	// The victim must still be running.
+	_, err = victim.GetPid()
+	if err != nil {
+		t.Fatal("Victim process was signalled: ", err)
+	}
+
+	// A matching record must be able to stop the process.
+	err = victim.Save(pidPath)
+	if err != nil {
+		t.Fatal("Failed to save process: ", err)
+	}
+
+	p, err = ImportProcess(pidPath)
+	if err != nil {
+		t.Fatal("Failed to import process: ", err)
+	}
+
+	err = p.Stop()
+	if err != nil {
+		t.Fatal("Failed to stop process through imported record: ", err)
+	}
+
+	_, err = victim.Wait(context.Background())
+	if err == nil {
+		t.Fatal("Expected process to have been killed")
+	}
+}

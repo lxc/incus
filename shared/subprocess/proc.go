@@ -9,6 +9,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"slices"
+	"strconv"
+	"strings"
 	"syscall"
 
 	"go.yaml.in/yaml/v4"
@@ -25,15 +29,18 @@ type Process struct {
 	chExit     chan struct{}
 	hasMonitor bool
 	closeFds   bool
+	process    *os.Process
 
-	Name     string         `yaml:"name"`
-	Args     []string       `yaml:"args,flow"`
-	Apparmor string         `yaml:"apparmor"`
-	Cwd      string         `yaml:"cwd"`
-	PID      int64          `yaml:"pid"`
-	Stdin    io.ReadCloser  `yaml:"-"`
-	Stdout   io.WriteCloser `yaml:"-"`
-	Stderr   io.WriteCloser `yaml:"-"`
+	Name      string         `yaml:"name"`
+	Args      []string       `yaml:"args,flow"`
+	Apparmor  string         `yaml:"apparmor"`
+	Cwd       string         `yaml:"cwd"`
+	PID       int64          `yaml:"pid"`
+	StartTime uint64         `yaml:"start_time,omitempty"`
+	BootID    string         `yaml:"boot_id,omitempty"`
+	Stdin     io.ReadCloser  `yaml:"-"`
+	Stdout    io.WriteCloser `yaml:"-"`
+	Stderr    io.WriteCloser `yaml:"-"`
 
 	UID       uint32 `yaml:"uid"`
 	GID       uint32 `yaml:"gid"`
@@ -59,14 +66,106 @@ func (p *Process) hasApparmor() bool {
 	return true
 }
 
-// GetPid returns the pid for the given process object.
-func (p *Process) GetPid() (int64, error) {
+// bootID returns the current kernel boot ID (empty when unavailable).
+func bootID() string {
+	data, err := os.ReadFile("/proc/sys/kernel/random/boot_id")
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(data))
+}
+
+// procStartTime returns the start time (in clock ticks since boot) of a process.
+func procStartTime(pid int64) (uint64, error) {
+	data, err := os.ReadFile(fmt.Sprintf("/proc/%d/stat", pid))
+	if err != nil {
+		return 0, err
+	}
+
+	// The command name is enclosed in parentheses and may contain spaces.
+	_, after, found := strings.Cut(string(data), ") ")
+	if !found {
+		return 0, fmt.Errorf("Invalid stat content for process %d", pid)
+	}
+
+	// Start time is the 22nd field (index 19 after the command name).
+	fields := strings.Fields(after)
+	if len(fields) < 20 {
+		return 0, fmt.Errorf("Invalid stat content for process %d", pid)
+	}
+
+	return strconv.ParseUint(fields[19], 10, 64)
+}
+
+// matches checks that the process currently using the PID is the one that was recorded.
+func (p *Process) matches() bool {
+	// Without a boot ID (non-Linux), there is no way to verify the process identity.
+	bootID := bootID()
+	if bootID == "" {
+		return true
+	}
+
+	// Verify the start time and boot ID when they were recorded.
+	if p.StartTime != 0 {
+		if p.BootID != bootID {
+			return false
+		}
+
+		startTime, err := procStartTime(p.PID)
+		if err != nil {
+			return false
+		}
+
+		return startTime == p.StartTime
+	}
+
+	// Fall back to comparing the command line for files written by older versions.
+	data, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", p.PID))
+	if err != nil {
+		return false
+	}
+
+	cmdline := strings.Split(strings.TrimSuffix(string(data), "\x00"), "\x00")
+	if len(cmdline) == 0 || filepath.Base(cmdline[0]) != filepath.Base(p.Name) {
+		return false
+	}
+
+	return slices.Equal(cmdline[1:], p.Args)
+}
+
+// findProcess returns a handle to the process, checking it's the one we recorded.
+func (p *Process) findProcess() (*os.Process, error) {
+	// Use the handle from Start when available as it can't be subject to PID reuse.
+	if p.process != nil {
+		return p.process, nil
+	}
+
+	if p.PID <= 0 {
+		return nil, ErrNotRunning
+	}
+
+	// Get a handle (pidfd on Linux) before checking so the identity can't change afterwards.
 	pr, err := os.FindProcess(int(p.PID))
 	if err != nil {
 		if err == os.ErrProcessDone {
-			return 0, ErrNotRunning
+			return nil, ErrNotRunning
 		}
 
+		return nil, err
+	}
+
+	if !p.matches() {
+		return nil, ErrNotRunning
+	}
+
+	return pr, nil
+}
+
+// GetPid returns the pid for the given process object.
+func (p *Process) GetPid() (int64, error) {
+	pr, err := p.findProcess()
+	if err != nil {
 		return 0, err
 	}
 
@@ -95,14 +194,10 @@ func (p *Process) SetCreds(uid uint32, gid uint32) {
 
 // Stop will stop the given process object.
 func (p *Process) Stop() error {
-	pr, err := os.FindProcess(int(p.PID))
+	pr, err := p.findProcess()
 	if err != nil {
-		if err == os.ErrProcessDone {
-			if p.hasMonitor {
-				<-p.chExit
-			}
-
-			return ErrNotRunning
+		if errors.Is(err, ErrNotRunning) && p.hasMonitor {
+			<-p.chExit
 		}
 
 		return err
@@ -192,6 +287,11 @@ func (p *Process) start(ctx context.Context, fds []*os.File) error {
 	}
 
 	p.PID = int64(cmd.Process.Pid)
+	p.process = cmd.Process
+
+	// Record the process identity so a reused PID is never signalled.
+	p.BootID = bootID()
+	p.StartTime, _ = procStartTime(p.PID)
 
 	// Reset exitCode/exitErr
 	p.exitCode = 0
@@ -242,10 +342,10 @@ func (p *Process) Restart(ctx context.Context) error {
 
 // Reload sends the SIGHUP signal to the given process object.
 func (p *Process) Reload() error {
-	pr, err := os.FindProcess(int(p.PID))
+	pr, err := p.findProcess()
 	if err != nil {
-		if err == os.ErrProcessDone {
-			return ErrNotRunning
+		if errors.Is(err, ErrNotRunning) {
+			return err
 		}
 
 		return fmt.Errorf("Could not reload process: %w", err)
@@ -294,12 +394,8 @@ func (p *Process) Save(path string) error {
 
 // Signal will send a signal to the given process object given a signal value.
 func (p *Process) Signal(signal int64) error {
-	pr, err := os.FindProcess(int(p.PID))
+	pr, err := p.findProcess()
 	if err != nil {
-		if err == os.ErrProcessDone {
-			return ErrNotRunning
-		}
-
 		return err
 	}
 
