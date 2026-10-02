@@ -68,7 +68,7 @@ func forkproxyProfile(sysOS *sys.OS, inst instance, dev device) (string, error) 
 		"varPath":     internalUtil.VarPath(""),
 		"exePath":     execPath,
 		"logPath":     inst.LogPath(),
-		"libraryPath": strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
+		"libraryPath": libraryPaths(),
 		"sockets":     sockets,
 	})
 	if err != nil {

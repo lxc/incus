@@ -160,7 +160,7 @@ func qemuImgProfile(profileName string, imgPath string, dstPath string, allowedC
 		"pathToImg":       imgPath,
 		"dstPath":         dstPath,
 		"allowedCmdPaths": allowedCmdPaths,
-		"libraryPath":     strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
+		"libraryPath":     libraryPaths(),
 	})
 	if err != nil {
 		return "", err

@@ -186,7 +186,7 @@ func rsyncProfile(sysOS *sys.OS, name string, sourcePath string, dstPath string)
 		"dstPath":     dstPath,
 		"dstParents":  dstParents,
 		"logPath":     logPath,
-		"libraryPath": strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
+		"libraryPath": libraryPaths(),
 	})
 	if err != nil {
 		return "", err
