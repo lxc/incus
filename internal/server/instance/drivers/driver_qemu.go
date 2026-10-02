@@ -10995,7 +10995,7 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 
 		if mount.Size > 0 {
 			// Update the size.
-			err = m.UpdateBlockSize(strings.SplitN(devID, "-", 2)[1], mount.Size)
+			err = m.UpdateBlockSize(d.blockNodeName(linux.PathNameEncode(mount.DevName)), mount.Size)
 			if err != nil {
 				return fmt.Errorf("Failed updating disk size %q: %w", mount.DevName, err)
 			}
