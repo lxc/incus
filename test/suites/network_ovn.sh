@@ -1440,6 +1440,88 @@ test_network_ovn_peering() {
     incus network delete incusbr0
 }
 
+test_network_ovn_cluster_retry() {
+    # shellcheck disable=SC2039,SC3043,SC2034
+    local INCUS_DIR
+
+    if ! network_ovn_supported; then
+        return
+    fi
+
+    setup_clustering_bridge
+    prefix="inc$$"
+    bridge="${prefix}"
+
+    setup_clustering_netns 1
+    INCUS_ONE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_ONE_DIR}"
+    ns1="${prefix}1"
+    spawn_incus_and_bootstrap_cluster "${ns1}" "${bridge}" "${INCUS_ONE_DIR}"
+    cert=$(sed ':a;N;$!ba;s/\n/\n\n/g' "${INCUS_ONE_DIR}/cluster.crt")
+
+    setup_clustering_netns 2
+    INCUS_TWO_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_TWO_DIR}"
+    ns2="${prefix}2"
+    spawn_incus_and_join_cluster "${ns2}" "${bridge}" "${cert}" 2 1 "${INCUS_TWO_DIR}" "${INCUS_ONE_DIR}"
+
+    setup_clustering_netns 3
+    INCUS_THREE_DIR=$(mktemp -d -p "${TEST_DIR}" XXX)
+    chmod +x "${INCUS_THREE_DIR}"
+    ns3="${prefix}3"
+    spawn_incus_and_join_cluster "${ns3}" "${bridge}" "${cert}" 3 1 "${INCUS_THREE_DIR}" "${INCUS_ONE_DIR}"
+
+    # Shutdown the third member and wait for it to be detected as offline.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus config set cluster.offline_threshold 11
+    INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+    sleep 12
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node3 | grep -q "status: Offline"
+
+    # Creation fails while a member is offline and leaves the network errored.
+    net="${bridge}-ovn"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.2.1/24 ipv4.nat=false ipv6.address=none 2>&1 | grep -q "is down"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Errored"
+
+    # Retrying reaches the partial creation checks rather than failing on the member records.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn ipv4.address=192.0.3.1/24 2>&1 | grep -q "Please do not specify any global config"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=bridge 2>&1 | grep -q "doesn't match type"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn 2>&1 | grep -q "is down"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}" 2>&1 | grep -q "is down"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${net}" ipv4.address | grep -xF "192.0.2.1/24"
+
+    # Once the member is back, retrying completes the creation with the stored config.
+    respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Created"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network show "${net}" | grep -xF "status: Created"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${net}" ipv4.address | grep -xF "192.0.2.1/24"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn 2>&1 | grep -q "already created"
+
+    # Deletion cleans up OVN and allows the name to be reused.
+    net_id=$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT id FROM networks WHERE name='${net}'" --format=csv)
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
+    ! ovn-nbctl lr-list | grep -F "incus-net${net_id}-" || false
+    ! ovn-nbctl ls-list | grep -F "incus-net${net_id}-" || false
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.3.1/24 ipv4.nat=false ipv6.address=none
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Created"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
+
+    INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+    INCUS_DIR="${INCUS_TWO_DIR}" incus admin shutdown
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin shutdown
+    sleep 0.5
+    rm -f "${INCUS_THREE_DIR}/unix.socket"
+    rm -f "${INCUS_TWO_DIR}/unix.socket"
+    rm -f "${INCUS_ONE_DIR}/unix.socket"
+
+    teardown_clustering_netns
+    teardown_clustering_bridge
+
+    kill_incus "${INCUS_ONE_DIR}"
+    kill_incus "${INCUS_TWO_DIR}"
+    kill_incus "${INCUS_THREE_DIR}"
+}
+
 test_network_ovn_dhcp_reservation() {
     if ! network_ovn_supported; then
         return
