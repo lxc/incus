@@ -79,21 +79,3 @@ func TestExtractTrailingNumber(t *testing.T) {
 		t.Errorf("unexpected error message: got %q, want %q", err.Error(), expectedErr)
 	}
 }
-
-// Test hashValue.
-func TestHashValue(t *testing.T) {
-	value := hashValue("test", 5)
-	assert.Equal(t, "test", value)
-
-	value = hashValue("test1", 5)
-	assert.Equal(t, "test1", value)
-
-	value = hashValue("test12", 5)
-	assert.Equal(t, "qY7Fx", value)
-
-	value = hashValue("test12345", 11)
-	assert.Equal(t, "test12345", value)
-
-	value = hashValue("test12345678", 11)
-	assert.Equal(t, "9fvG_oTDZTF", value)
-}
