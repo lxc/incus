@@ -275,9 +275,18 @@ func (p *Process) Save(path string) error {
 		return fmt.Errorf("Unable to serialize process struct to YAML: %w", err)
 	}
 
-	err = os.WriteFile(path, dat, 0o644)
+	// Write to a temporary file and rename so a partial file is never imported.
+	tmpPath := path + ".tmp"
+	err = os.WriteFile(tmpPath, dat, 0o644)
 	if err != nil {
-		return fmt.Errorf("Unable to write to file '%s': %w", path, err)
+		return fmt.Errorf("Unable to write to file '%s': %w", tmpPath, err)
+	}
+
+	err = os.Rename(tmpPath, path)
+	if err != nil {
+		_ = os.Remove(tmpPath)
+
+		return fmt.Errorf("Unable to rename file '%s': %w", tmpPath, err)
 	}
 
 	return nil
