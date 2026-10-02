@@ -285,7 +285,7 @@ func instanceProfile(sysOS *sys.OS, inst instance, extraBinaries []string) (stri
 			"exePath":          execPath,
 			"extra_config":     extraConfig,
 			"extra_binaries":   extraBinaries,
-			"libraryPath":      strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":"),
+			"libraryPath":      libraryPaths(),
 			"logPath":          logPath,
 			"runPath":          inst.RunPath(),
 			"id":               inst.ID(),
