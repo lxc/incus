@@ -349,6 +349,11 @@ func (f *FGA) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 		return allowFunc(true), nil
 	}
 
+	// If offline, return a clear error to the user.
+	if !f.isOnline() {
+		return nil, api.StatusErrorf(http.StatusForbidden, "The authorization server is currently offline, please try again later")
+	}
+
 	username := f.userForRequest(details)
 	logCtx["username"] = username
 	logCtx["protocol"] = details.Protocol
