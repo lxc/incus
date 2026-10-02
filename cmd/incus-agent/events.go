@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/events"
 	"github.com/lxc/incus/v7/internal/server/response"
 	"github.com/lxc/incus/v7/shared/api"
@@ -145,7 +146,8 @@ func eventsProcess(d *Daemon, event api.Event) {
 		return
 	}
 
-	mntSource := "incus_" + e.Name
+	// Must match mountTagName in the QEMU driver.
+	mntSource := "incus_" + internalInstance.HashName(e.Name, 30)
 
 	if e.Action == "added" {
 		// Attempt to perform the mount.
