@@ -246,3 +246,17 @@ func profileName(prefix string, name string) string {
 
 	return fmt.Sprintf("incus-%s", name)
 }
+
+// libraryPaths returns the entries of LD_LIBRARY_PATH, skipping empty ones.
+func libraryPaths() []string {
+	paths := []string{}
+	for _, path := range strings.Split(os.Getenv("LD_LIBRARY_PATH"), ":") {
+		if path == "" {
+			continue
+		}
+
+		paths = append(paths, path)
+	}
+
+	return paths
+}
