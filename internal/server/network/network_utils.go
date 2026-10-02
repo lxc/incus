@@ -546,15 +546,16 @@ func UpdateDNSMasqStatic(s *state.State, networkName string) error {
 	for _, network := range networks {
 		entries := entries[network]
 
-		// Skip networks we don't manage (or don't have DHCP enabled).
-		if !util.PathExists(internalUtil.VarPath("networks", network, "dnsmasq.pid")) {
-			continue
-		}
-
 		// Pass api.ProjectDefaultName here, as currently dnsmasq (bridged) networks do not support projects.
 		n, err := LoadByName(s, api.ProjectDefaultName, network)
 		if err != nil {
 			return fmt.Errorf("Failed to load network %q in project %q for dnsmasq update: %w", api.ProjectDefaultName, network, err)
+		}
+
+		// Skip networks that don't use dnsmasq (or haven't been set up on this server yet).
+		bridgeNet, ok := n.(*bridge)
+		if !ok || !bridgeNet.UsesDNSMasq() || !util.PathExists(internalUtil.VarPath("networks", network, "dnsmasq.hosts")) {
+			continue
 		}
 
 		config := n.Config()
