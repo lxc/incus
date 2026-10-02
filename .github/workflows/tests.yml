@@ -533,6 +533,7 @@ jobs:
           - l3only
           - parent
           - parent_snat
+          - cluster_retry
 
     steps:
       - name: Performance tuning
