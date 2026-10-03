@@ -1112,6 +1112,7 @@ var ConfigSchema = config.Schema{
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.audience)
 	// This value is required by some providers.
+	// Opaque access tokens are rejected when set as the audience can't be verified on those.
 	// ---
 	//  type: string
 	//  scope: global
@@ -1119,7 +1120,7 @@ var ConfigSchema = config.Schema{
 	"oidc.audience": {},
 
 	// gendoc:generate(entity=server, group=oidc, key=oidc.claim)
-	// Note that the claim must be contained in the access token.
+	// Note that the claim must be contained in the access token or, for opaque access tokens, in the ID token.
 	// ---
 	//  type: string
 	//  scope: global
