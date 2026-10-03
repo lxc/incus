@@ -240,11 +240,18 @@ test_network_ovn_basic() {
     incus network delete ovn-virtual-network --project testovn
 
     # Test we have to specify uplink network if multiple are allowed.
-    incus network create incusbr1 --project default
+    incus network create incusbr1 --project default ipv4.address=10.10.11.1/24 ipv4.dhcp.ranges=10.10.11.2-10.10.11.199 ipv4.ovn.ranges=10.10.11.200-10.10.11.254 ipv6.address=none
     incus project set testovn restricted.networks.uplinks=incusbr0,incusbr1
     ! incus network create ovn-virtual-network --project testovn || false
     incus network create ovn-virtual-network network=incusbr0 --project testovn
     incus network delete ovn-virtual-network --project testovn
+
+    # Test the uplink's OVN bridge mapping is removed on deletion while other mappings remain.
+    incus network create ovn-virtual-network network=incusbr1 --project testovn
+    ovs-vsctl get open_vswitch . external_ids:ovn-bridge-mappings | grep -q "incusbr1:"
+    incus network delete ovn-virtual-network --project testovn
+    ! ovs-vsctl get open_vswitch . external_ids:ovn-bridge-mappings | grep -q "incusbr1:" || false
+    ovs-vsctl get open_vswitch . external_ids:ovn-bridge-mappings | grep -q "incusbr0:"
     incus network delete incusbr1 --project default
 
     # Test networks shared from the default project through restricted.networks.access.
