@@ -630,6 +630,10 @@ func (o *VSwitch) RemoveOVNBridgeMapping(ctx context.Context, bridgeName string,
 
 	// Get the current bridge mappings.
 	val := vSwitch.ExternalIDs["ovn-bridge-mappings"]
+	if val == "" {
+		return nil // No mappings, nothing to do.
+	}
+
 	mappings := strings.Split(val, ",")
 	newMappings := []string{}
 
@@ -643,9 +647,15 @@ func (o *VSwitch) RemoveOVNBridgeMapping(ctx context.Context, bridgeName string,
 		newMappings = append(newMappings, mapping)
 	}
 
+	if len(newMappings) == len(mappings) {
+		return nil // Mapping isn't present, nothing to do.
+	}
+
 	// If no more mappings, remove the key completely.
 	if len(newMappings) == 0 {
 		delete(vSwitch.ExternalIDs, "ovn-bridge-mappings")
+	} else {
+		vSwitch.ExternalIDs["ovn-bridge-mappings"] = strings.Join(newMappings, ",")
 	}
 
 	// Update the record.
