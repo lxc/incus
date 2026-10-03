@@ -152,6 +152,7 @@ iSCSI
 JIT
 jq
 JSON
+JWT
 kB
 kbit
 KiB
