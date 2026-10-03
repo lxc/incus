@@ -19,6 +19,18 @@ test_oidc() {
     [ "$(incus info oidc: | grep ^auth_user_name | sed "s/.*: //g")" = "test-user" ]
     incus remote remove oidc
 
+    # Opaque access tokens are validated through the ID token
+    incus config set "oidc.client.id=device-opaque"
+    BROWSER=curl incus remote add --accept-certificate oidc "${INCUS_ADDR}" --auth-type oidc
+    [ "$(incus info oidc: | grep ^auth_user_name | sed "s/.*: //g")" = "test-user" ]
+    incus remote remove oidc
+
+    # Opaque access tokens are rejected when an audience is configured
+    incus config set "oidc.audience=incus"
+    ! BROWSER=curl incus remote add --accept-certificate oidc "${INCUS_ADDR}" --auth-type oidc || false
+    incus remote remove oidc 2>/dev/null || true
+    incus config unset "oidc.audience"
+
     # Cleanup OIDC
     kill_oidc
     incus config unset oidc.issuer
