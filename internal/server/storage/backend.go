@@ -1369,7 +1369,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 
 			srcDependentVolumes = append(srcDependentVolumes, srcVol)
 
-			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[*volWithType.Volume.DeviceName])
+			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[volWithType.Volume.GetDeviceName()])
 			dstDependentVolumes = append(dstDependentVolumes, vol)
 		}
 
@@ -1966,7 +1966,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 
 			srcDependentVolumes = append(srcDependentVolumes, srcVol)
 
-			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[*volWithType.Volume.DeviceName])
+			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[volWithType.Volume.GetDeviceName()])
 			dstDependentVolumes = append(dstDependentVolumes, vol)
 		}
 
@@ -10390,6 +10390,22 @@ func (b *backend) createDependentVolumesFromMigration(inst instance.Instance, co
 		}
 
 		b.logger.Debug("Creating dependent volume from migration", logger.Ctx{"name": dependentVol.Name, "type": dependentVol.MigrationType, "size": dependentVol.VolumeSize})
+
+		// Validate the volume name as it's used as a path segment.
+		err = validate.IsAPIName(dependentVol.Name, false)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid dependent volume name: %w", err)
+		}
+
+		// Enforce the target project's storage pool restrictions.
+		if !project.StoragePoolAllowed(inst.Project().Config, dependentVol.Pool) {
+			return nil, fmt.Errorf("Storage pool %q not allowed for project %q", dependentVol.Pool, inst.Project().Name)
+		}
+
+		// The offer and index headers both come from the source, don't assume they match.
+		if info == nil || info.Config == nil || len(info.Config.DependentVolumes) <= idx || info.Config.DependentVolumes[idx] == nil || info.Config.DependentVolumes[idx].Volume == nil {
+			return nil, errors.New("Bad dependent volume definition found in index header")
+		}
 
 		// During a refresh only the new snapshots should be received. The root volume's
 		// args.Snapshots list has already been reduced to the snapshots the target is
