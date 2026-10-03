@@ -6992,7 +6992,7 @@
 				"keys": [
 					{
 						"oidc.audience": {
-							"longdesc": "This value is required by some providers.",
+							"longdesc": "This value is required by some providers.\nOpaque access tokens are rejected when set as the audience can't be verified on those.",
 							"scope": "global",
 							"shortdesc": "Expected audience value for the application",
 							"type": "string"
@@ -7000,7 +7000,7 @@
 					},
 					{
 						"oidc.claim": {
-							"longdesc": "Note that the claim must be contained in the access token.",
+							"longdesc": "Note that the claim must be contained in the access token or, for opaque access tokens, in the ID token.",
 							"scope": "global",
 							"shortdesc": "OpenID Connect claim to use as the username",
 							"type": "string"
