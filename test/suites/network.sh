@@ -21,6 +21,24 @@ test_network() {
     incus network set inct$$ dns.include_hosts=false
     dnsmasq_pid="$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")"
     tr '\0' ' ' < "/proc/${dnsmasq_pid}/cmdline" | grep -q -- "--no-hosts"
+
+    # Test that a stale dnsmasq.pid never results in an unrelated process being signalled
+    sleep infinity &
+    victim_pid=$!
+    kill -9 "${dnsmasq_pid}"
+    sed -i "s/^pid: .*/pid: ${victim_pid}/" "${INCUS_DIR}/networks/inct$$/dnsmasq.pid"
+    incus network set inct$$ dns.include_hosts=true
+    kill -0 "${victim_pid}"
+    [ "$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")" != "${victim_pid}" ]
+
+    # Same with a pid file lacking the process identity (written by older versions)
+    dnsmasq_pid="$(awk '/^pid/ {print $2}' "${INCUS_DIR}/networks/inct$$/dnsmasq.pid")"
+    kill -9 "${dnsmasq_pid}"
+    sed -i -e "s/^pid: .*/pid: ${victim_pid}/" -e "/^start_time:/d" -e "/^boot_id:/d" "${INCUS_DIR}/networks/inct$$/dnsmasq.pid"
+    incus network set inct$$ dns.include_hosts=false
+    kill -0 "${victim_pid}"
+    kill -9 "${victim_pid}"
+    wait "${victim_pid}" || true
     incus network delete inct$$
 
     # Standard bridge with random subnet and a bunch of options
