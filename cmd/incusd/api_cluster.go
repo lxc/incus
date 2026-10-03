@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,6 +18,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	cowsqlcluster "github.com/cowsql/go-cowsql/cluster"
+	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
+	"github.com/cowsql/go-cowsql/cluster/membership"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/filter"
@@ -325,7 +332,7 @@ func clusterPutBootstrap(d *Daemon, r *http.Request, req api.ClusterPut) respons
 		// Start clustering tasks
 		d.startClusterTasks()
 
-		err := cluster.Bootstrap(s, d.gateway, req.ServerName)
+		err := membership.Bootstrap(d.gateway, req.ServerName)
 		if err != nil {
 			d.stopClusterTasks()
 			return err
@@ -716,19 +723,6 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 			return fmt.Errorf("Failed request to add member: %w", err)
 		}
 
-		// Update our TLS configuration using the returned cluster certificate.
-		err = internalUtil.WriteCert(s.OS.VarDir, "cluster", info.PublicKey, info.PrivateKey, nil)
-		if err != nil {
-			return fmt.Errorf("Failed to save cluster certificate: %w", err)
-		}
-
-		networkCert, err := internalUtil.LoadClusterCert(s.OS.VarDir)
-		if err != nil {
-			return fmt.Errorf("Failed to parse cluster certificate: %w", err)
-		}
-
-		s.Endpoints.NetworkUpdateCert(networkCert)
-
 		// Add trusted certificates of other members to local trust store.
 		trustedCerts, err := client.GetCertificates()
 		if err != nil {
@@ -777,14 +771,20 @@ func clusterPutJoin(d *Daemon, r *http.Request, req api.ClusterPut) response.Res
 		s.UpdateCertificateCache()
 
 		// Update local setup and possibly join the raft cowsql cluster.
-		nodes := make([]db.RaftNode, len(info.RaftNodes))
+		nodes := make([]cowsqldb.RaftNode, len(info.RaftNodes))
 		for i, raftNode := range info.RaftNodes {
 			nodes[i].ID = raftNode.ID
 			nodes[i].Address = raftNode.Address
 			nodes[i].Role = db.RaftRole(raftNode.Role)
+			nodes[i].Name = raftNode.Name
 		}
 
-		err = cluster.Join(s, d.gateway, networkCert, serverCert, req.ServerName, nodes)
+		keypair, err := tls.X509KeyPair(info.PublicKey, info.PrivateKey)
+		if err != nil {
+			return err
+		}
+
+		err = membership.Join[cluster.ClusterResources](d.gateway, keypair, req.ServerName, nodes)
 		if err != nil {
 			return err
 		}
@@ -953,7 +953,7 @@ func clusterPutDisable(d *Daemon, r *http.Request, req api.ClusterPut) response.
 	s.Events.SendLifecycle(request.ProjectParam(r), lifecycle.ClusterDisabled.Event(req.ServerName, requestor, nil))
 
 	// Stop database cluster connection.
-	d.gateway.Kill()
+	d.gateway.Cancel()
 
 	go func() {
 		<-r.Context().Done() // Wait until request has finished.
@@ -1332,7 +1332,7 @@ func clusterNodesGet(d *Daemon, r *http.Request) response.Response {
 
 		members = make([]api.ClusterMember, 0, len(nodes))
 		for i := range nodes {
-			member, err := nodes[i].ToAPI(ctx, tx, args)
+			member, err := db.APINodeInfo{NodeInfo: nodes[i]}.ToAPI(ctx, tx, args)
 			if err != nil {
 				return err
 			}
@@ -1496,7 +1496,7 @@ func clusterNodesPost(d *Daemon, r *http.Request) response.Response {
 
 		// Filter to online members.
 		for _, member := range members {
-			memberInfo, err := member.ToAPI(ctx, tx, args)
+			memberInfo, err := db.APINodeInfo{NodeInfo: member}.ToAPI(ctx, tx, args)
 			if err != nil {
 				return err
 			}
@@ -1701,7 +1701,7 @@ func clusterNodeGet(d *Daemon, r *http.Request) response.Response {
 			RaftNodes:            raftNodes,
 		}
 
-		memberInfo, err = member.ToAPI(ctx, tx, args)
+		memberInfo, err = db.APINodeInfo{NodeInfo: member}.ToAPI(ctx, tx, args)
 		if err != nil {
 			return err
 		}
@@ -1800,7 +1800,7 @@ func clusterNodePut(d *Daemon, r *http.Request) response.Response {
 }
 
 // updateClusterNode is shared between clusterNodePut and clusterNodePatch.
-func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request, isPatch bool) response.Response {
+func updateClusterNode(s *state.State, gateway cowsqlcluster.Gateway, r *http.Request, isPatch bool) response.Response {
 	name, err := pathVar(r, "name")
 	if err != nil {
 		return response.SmartError(err)
@@ -1856,7 +1856,7 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 			RaftNodes:            raftNodes,
 		}
 
-		memberInfo, err = member.ToAPI(ctx, tx, args)
+		memberInfo, err = db.APINodeInfo{NodeInfo: member}.ToAPI(ctx, tx, args)
 		if err != nil {
 			return err
 		}
@@ -1915,7 +1915,7 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 					continue
 				}
 
-				if slices.Contains(n.Roles, db.ClusterRoleDatabaseClient) {
+				if slices.Contains(n.Roles, string(db.ClusterRoleDatabaseClient)) {
 					clientNodes++
 				}
 			}
@@ -2001,8 +2001,13 @@ func updateClusterNode(s *state.State, gateway *cluster.Gateway, r *http.Request
 	}
 
 	// If cluster roles changed, then distribute the info to all members.
-	if s.Endpoints != nil && clusterRolesChanged(member.Roles, newRoles) {
-		cluster.NotifyHeartbeat(s, gateway)
+	memberRoles := make([]db.ClusterRole, 0, len(member.Roles))
+	for _, r := range member.Roles {
+		memberRoles = append(memberRoles, db.ClusterRole(r))
+	}
+
+	if s.Endpoints != nil && clusterRolesChanged(memberRoles, newRoles) {
+		membership.NotifyHeartbeat(gateway)
 	}
 
 	requestor := request.CreateRequestor(r)
@@ -2346,7 +2351,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 
 	// First check that the node is clear from containers and images and
 	// make it leave the database cluster, if it's part of it.
-	address, err := cluster.Leave(s, d.gateway, name, force == 1, pending == 1)
+	address, err := membership.Leave[cluster.ClusterResources](d.gateway, name, force == 1, pending == 1)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2411,7 +2416,7 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Remove node from the database
-	err = cluster.Purge(s.DB.Cluster, name, pending == 1)
+	err = membership.Purge[cluster.ClusterResources](d.gateway, name, pending == 1)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed to remove member from database: %w", err))
 	}
@@ -2513,7 +2518,40 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	nodes, err := cluster.Accept(s, d.gateway, req.Name, req.Address, req.Schema, req.API, req.Architecture)
+	joinerCert, err := localtls.GetRemoteCertificate("https://"+req.Address, version.UserAgent)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	var serverCert *dbCluster.Certificate
+	err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		serverCert, err = dbCluster.GetCertificate(ctx, tx.Tx(), localtls.CertFingerprint(joinerCert))
+		if err != nil {
+			return fmt.Errorf("Failed to find server certificate for member %q: %w", req.Name, err)
+		}
+
+		if serverCert.Type != certificate.TypeServer || serverCert.Name != req.Name {
+			return errors.New("Joiner certificate metadata does not match")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	certBlock, _ := pem.Decode([]byte(serverCert.Certificate))
+	if certBlock == nil {
+		return response.SmartError(errors.New("Invalid server certificate"))
+	}
+
+	publicKeyx509, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	nodes, err := membership.Accept(d.gateway, publicKeyx509, req.Name, req.Address, req.Schema, req.API, req.Architecture)
 	if err != nil {
 		return response.BadRequest(err)
 	}
@@ -2528,6 +2566,7 @@ func internalClusterPostAccept(d *Daemon, r *http.Request) response.Response {
 		accepted.RaftNodes[i].ID = raftNode.ID
 		accepted.RaftNodes[i].Address = raftNode.Address
 		accepted.RaftNodes[i].Role = int(raftNode.Role)
+		accepted.RaftNodes[i].Name = raftNode.Name
 	}
 
 	return response.SyncResponse(true, accepted)
@@ -2603,13 +2642,13 @@ func internalClusterPostRebalance(d *Daemon, r *http.Request) response.Response 
 
 // Check if there's a cowsql node whose role should be changed, and post a
 // change role request if so.
-func rebalanceMemberRoles(s *state.State, gateway *cluster.Gateway, r *http.Request, unavailableMembers []string) error {
+func rebalanceMemberRoles(s *state.State, gateway cowsqlcluster.Gateway, r *http.Request, unavailableMembers []string) error {
 	if s.ShutdownCtx.Err() != nil {
 		return nil
 	}
 
 again:
-	address, nodes, err := cluster.Rebalance(s, gateway, unavailableMembers)
+	address, nodes, err := membership.Rebalance(gateway, unavailableMembers, []string{string(db.ClusterRoleDatabaseClient)})
 	if err != nil {
 		return err
 	}
@@ -2663,7 +2702,7 @@ again:
 
 // Check if there are nodes not part of the raft configuration and add them in
 // case.
-func upgradeNodesWithoutRaftRole(s *state.State, gateway *cluster.Gateway) error {
+func upgradeNodesWithoutRaftRole(s *state.State, gateway cowsqlcluster.Gateway) error {
 	if s.ShutdownCtx.Err() != nil {
 		return nil
 	}
@@ -2682,12 +2721,12 @@ func upgradeNodesWithoutRaftRole(s *state.State, gateway *cluster.Gateway) error
 		return err
 	}
 
-	return cluster.UpgradeMembersWithoutRole(gateway, members)
+	return membership.UpgradeMembersWithoutRole(gateway, members)
 }
 
 // Post a change role request to the member with the given address. The nodes
 // slice contains details about all members, including the one being changed.
-func changeMemberRole(s *state.State, r *http.Request, address string, nodes []db.RaftNode) error {
+func changeMemberRole(s *state.State, r *http.Request, address string, nodes []cowsqldb.RaftNode) error {
 	post := &internalClusterPostAssignRequest{}
 	for _, raftNode := range nodes {
 		post.RaftNodes = append(post.RaftNodes, internalRaftNode{
@@ -2712,7 +2751,7 @@ func changeMemberRole(s *state.State, r *http.Request, address string, nodes []d
 }
 
 // Try to handover the role of this member to another one.
-func handoverMemberRole(s *state.State, gateway *cluster.Gateway) error {
+func handoverMemberRole(s *state.State, gateway cowsqlcluster.Gateway) error {
 	// If we aren't clustered, there's nothing to do.
 	if !s.ServerClustered {
 		return nil
@@ -2754,12 +2793,15 @@ func handoverMemberRole(s *state.State, gateway *cluster.Gateway) error {
 
 		if leader == localClusterAddress {
 			logger.Info("Transferring leadership", logCtx)
-			err = gateway.TransferLeadership()
+			ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
+
+			err = gateway.TransferLeadership(ctx)
+			cancel()
 			if err != nil {
 				err = fmt.Errorf("Failed to transfer leadership: %w", err)
 
 				// Give up when there is nobody to hand over to.
-				if errors.Is(err, cluster.ErrNoOnlineVoter) {
+				if errors.Is(err, membership.ErrNoOnlineVoter) {
 					return err
 				}
 
@@ -2801,7 +2843,7 @@ func handoverMemberRole(s *state.State, gateway *cluster.Gateway) error {
 		// inconsistent capitalization ("Not leader", "503 not leader", "not leader (10250)"), so
 		// case-insensitive substring matching is the best we can do.
 		errText := strings.ToLower(err.Error())
-		if !strings.Contains(errText, cluster.ErrClusterBusy.Error()) && !strings.Contains(errText, "not leader") && !strings.Contains(errText, "unable to connect") && !strings.Contains(errText, "client.timeout") {
+		if !membership.IsClusterBusyErr(err) && !strings.Contains(errText, "not leader") && !strings.Contains(errText, "unable to connect") && !strings.Contains(errText, "client.timeout") {
 			return err
 		}
 	}
@@ -2811,7 +2853,6 @@ func handoverMemberRole(s *state.State, gateway *cluster.Gateway) error {
 
 // Used to assign a new role to a the local cowsql node.
 func internalClusterPostAssign(d *Daemon, r *http.Request) response.Response {
-	s := d.State()
 	req := internalClusterPostAssignRequest{}
 
 	// Parse the request
@@ -2825,7 +2866,7 @@ func internalClusterPostAssign(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("No raft members provided"))
 	}
 
-	nodes := make([]db.RaftNode, len(req.RaftNodes))
+	nodes := make([]cowsqldb.RaftNode, len(req.RaftNodes))
 	for i, raftNode := range req.RaftNodes {
 		nodes[i].ID = raftNode.ID
 		nodes[i].Address = raftNode.Address
@@ -2833,7 +2874,7 @@ func internalClusterPostAssign(d *Daemon, r *http.Request) response.Response {
 		nodes[i].Name = raftNode.Name
 	}
 
-	err = cluster.Assign(s, d.gateway, nodes)
+	err = membership.Assign(d.gateway, nodes)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -2896,7 +2937,7 @@ func internalClusterPostHandover(d *Daemon, r *http.Request) response.Response {
 	d.clusterMembershipMutex.Lock()
 	defer d.clusterMembershipMutex.Unlock()
 
-	target, nodes, err := cluster.Handover(s, d.gateway, req.Address)
+	target, nodes, err := membership.Handover(d.gateway, req.Address)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -3049,13 +3090,13 @@ func internalClusterRaftNodeDelete(d *Daemon, r *http.Request) response.Response
 		return response.SmartError(err)
 	}
 
-	err = cluster.RemoveRaftNode(d.gateway, address)
+	err = membership.RemoveRaftNode(d.gateway, address)
 	if err != nil {
 		return response.SmartError(err)
 	}
 
 	err = rebalanceMemberRoles(s, d.gateway, r, nil)
-	if err != nil && !errors.Is(err, cluster.ErrNotLeader) {
+	if err != nil && !errors.Is(err, membership.ErrNotLeader) {
 		logger.Warn("Could not rebalance cluster member roles after raft member removal", logger.Ctx{"err": err})
 	}
 

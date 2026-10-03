@@ -2,9 +2,7 @@ package cluster_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cowsql/go-cowsql/client"
+	"github.com/cowsql/go-cowsql/cluster/membership"
+	"github.com/cowsql/go-cowsql/cluster/options"
 	"github.com/cowsql/go-cowsql/driver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +52,8 @@ func TestNotifyUpgradeCompleted(t *testing.T) {
 
 	state0.LocalConfig = nodeConfig
 
-	serverCert0 := gateway0.ServerCert()
+	serverCert0, ok := gateway0.ServerCert().(*localtls.CertInfo)
+	require.True(t, ok)
 	err = cluster.NotifyUpgradeCompleted(state0, serverCert0, serverCert0)
 	require.NoError(t, err)
 
@@ -63,25 +63,13 @@ func TestNotifyUpgradeCompleted(t *testing.T) {
 // The task function checks if the node is out of date and runs whatever is in
 // INCUS_CLUSTER_UPDATE if so.
 func TestMaybeUpdate_Upgrade(t *testing.T) {
-	dir, err := os.MkdirTemp("", "")
-	require.NoError(t, err)
-
-	defer func() { _ = os.RemoveAll(dir) }()
-
-	// Create a stub upgrade script that just touches a stamp file.
-	stamp := filepath.Join(dir, "stamp")
-	script := filepath.Join(dir, "cluster-upgrade")
-	data := fmt.Appendf(nil, "#!/bin/sh\ntouch %s\n", stamp)
-	err = os.WriteFile(script, data, 0o755)
-	require.NoError(t, err)
-
 	s, cleanup := state.NewTestState(t)
 	defer cleanup()
 
 	_ = s.DB.Node.Transaction(context.Background(), func(ctx context.Context, tx *db.NodeTx) error {
 		nodes := []db.RaftNode{
-			{NodeInfo: client.NodeInfo{ID: 1, Address: "0.0.0.0:666"}},
-			{NodeInfo: client.NodeInfo{ID: 2, Address: "1.2.3.4:666"}},
+			{ID: 1, Address: "0.0.0.0:666"},
+			{ID: 2, Address: "1.2.3.4:666"},
 		}
 
 		err := tx.ReplaceRaftNodes(nodes)
@@ -96,7 +84,7 @@ func TestMaybeUpdate_Upgrade(t *testing.T) {
 		node, err := tx.GetNodeByName(ctx, "buzz")
 		require.NoError(t, err)
 
-		version := node.Version()
+		version := db.APINodeInfo{NodeInfo: node}.Version()
 		version[0]++
 
 		err = tx.SetNodeVersion(id, version)
@@ -105,13 +93,19 @@ func TestMaybeUpdate_Upgrade(t *testing.T) {
 		return nil
 	})
 
-	_ = os.Setenv("INCUS_CLUSTER_UPDATE", script)
-	defer func() { _ = os.Unsetenv("INCUS_CLUSTER_UPDATE") }()
+	var update bool
+	preUpdateCheck := options.PreUpdateCheck(func() (func() error, error) {
+		return func() error {
+			update = true
+			return nil
+		}, nil
+	})
 
-	_ = cluster.MaybeUpdate(s)
+	cert := tlstest.TestingKeyPair(t)
+	g := newGateway(t, s.DB.Node, cert, s, preUpdateCheck)
+	_ = membership.MaybeUpdate(g)
 
-	_, err = os.Stat(stamp)
-	require.NoError(t, err)
+	require.True(t, update)
 }
 
 // If the node is up-to-date, nothing is done.
@@ -134,10 +128,19 @@ func TestMaybeUpdate_NothingToDo(t *testing.T) {
 	_ = os.Setenv("INCUS_CLUSTER_UPDATE", script)
 	defer func() { _ = os.Unsetenv("INCUS_CLUSTER_UPDATE") }()
 
-	_ = cluster.MaybeUpdate(s)
+	var update bool
+	preUpdateCheck := options.PreUpdateCheck(func() (func() error, error) {
+		return func() error {
+			update = true
+			return nil
+		}, nil
+	})
 
-	_, err = os.Stat(stamp)
-	require.True(t, errors.Is(err, fs.ErrNotExist))
+	cert := tlstest.TestingKeyPair(t)
+	g := newGateway(t, s.DB.Node, cert, s, preUpdateCheck)
+	_ = membership.MaybeUpdate(g)
+
+	require.False(t, update)
 }
 
 func TestUpgradeMembersWithoutRole(t *testing.T) {
@@ -155,9 +158,9 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	s.ServerCert = func() *localtls.CertInfo { return serverCert }
 
 	gateway := newGateway(t, s.DB.Node, serverCert, s)
-	defer func() { _ = gateway.Shutdown() }()
+	defer func() { _ = gateway.ShutdownServer() }()
 
-	for path, handler := range gateway.HandlerFuncs(nil, trustedCerts) {
+	for path, handler := range gateway.HandlerFuncs(gatewayAccess(t, gateway, nil)) {
 		mux.HandleFunc(path, handler)
 	}
 
@@ -167,7 +170,7 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	dial := gateway.DialFunc()
 	s.DB.Cluster, err = db.OpenCluster(context.Background(), "db.bin", store, address, "/unused/db/dir", 5*time.Second, driver.WithDialFunc(dial))
 	require.NoError(t, err)
-	gateway.Cluster = s.DB.Cluster
+	cluster.SetClusterDB(gateway, s.DB.Cluster)
 
 	// Add a couple of members to the database.
 	var members []db.NodeInfo
@@ -182,11 +185,11 @@ func TestUpgradeMembersWithoutRole(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = cluster.UpgradeMembersWithoutRole(gateway, members)
+	err = membership.UpgradeMembersWithoutRole(gateway, members)
 	require.NoError(t, err)
 
 	// The members have been added to the raft configuration.
-	nodes, err := gateway.RaftNodes()
+	nodes, err := gateway.CurrentRaftNodes(context.TODO())
 	require.NoError(t, err)
 
 	assert.Len(t, nodes, 3)

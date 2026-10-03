@@ -879,7 +879,7 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			}
 
 		case "cluster.offline_threshold":
-			d.gateway.HeartbeatOfflineThreshold = clusterConf.OfflineThreshold()
+			d.gateway.SetHeartbeatOfflineThreshold(clusterConf.OfflineThreshold())
 			d.taskClusterHeartbeat.Reset()
 
 		case "core.bgp_asn":

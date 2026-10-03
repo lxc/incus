@@ -417,7 +417,7 @@ func clusterMemberMetrics(ctx context.Context, s *state.State, out *metrics.Metr
 
 		members = make([]api.ClusterMember, 0, len(nodes))
 		for _, node := range nodes {
-			member, err := node.ToAPI(ctx, tx, args)
+			member, err := db.APINodeInfo{NodeInfo: node}.ToAPI(ctx, tx, args)
 			if err != nil {
 				return err
 			}

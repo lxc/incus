@@ -37,7 +37,7 @@ func TestNodeAdd(t *testing.T) {
 	assert.Equal(t, "1.2.3.4:666", node.Address)
 	assert.Equal(t, cluster.SchemaVersion, node.Schema)
 	assert.Equal(t, len(version.APIExtensions), node.APIExtensions)
-	assert.Equal(t, [2]int{cluster.SchemaVersion, len(version.APIExtensions)}, node.Version())
+	assert.Equal(t, [2]int{cluster.SchemaVersion, len(version.APIExtensions)}, db.APINodeInfo{NodeInfo: node}.Version())
 	assert.False(t, node.IsOffline(20*time.Second))
 
 	node, err = tx.GetNodeByName(context.Background(), "buzz")

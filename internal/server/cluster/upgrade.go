@@ -1,23 +1,67 @@
 package cluster
 
 import (
-	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cowsql/go-cowsql/client"
+	cowsqlapi "github.com/cowsql/go-cowsql/cluster/api"
+	cowsqldb "github.com/cowsql/go-cowsql/cluster/db"
 
 	incus "github.com/lxc/incus/v7/client"
-	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	localtls "github.com/lxc/incus/v7/shared/tls"
 )
+
+// The API endpoint path that gets routed to a cowsql server handler for
+// performing SQL queries against the cowsql server running on this node.
+const databaseEndpoint = "/internal/database"
+
+// PreUpdateCheck checks for the INCUS_CLUSTER_UPDATE env var and returns the resulting executable path.
+func PreUpdateCheck(s *state.State) (func() error, error) {
+	// If on IncusOS, start by trying an automatic update.
+	if s.OS.IncusOS != nil {
+		err := s.OS.IncusOS.TriggerSystemUpdateCheck()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	updateExecutable := os.Getenv("INCUS_CLUSTER_UPDATE")
+	if updateExecutable == "" {
+		logger.Debug("No INCUS_CLUSTER_UPDATE variable set, skipping auto-update")
+		return nil, nil
+	}
+
+	return func() error {
+		// Wait a random amount of seconds (up to 30) in order to avoid
+		// restarting all cluster members at the same time, and make the
+		// upgrade more graceful.
+		wait := time.Duration(rand.Intn(30)) * time.Second
+		slog.Info("Triggering cluster auto-update soon", "wait", wait, "updateExecutable", updateExecutable)
+		time.Sleep(wait)
+
+		slog.Info("Triggering cluster auto-update now")
+		_, err := subprocess.RunCommand(updateExecutable)
+		if err != nil {
+			slog.Error("Triggering cluster update failed", "err", err)
+			return err
+		}
+
+		slog.Info("Triggering cluster auto-update succeeded")
+
+		return nil
+	}, nil
+}
 
 // NotifyUpgradeCompleted sends a notification to all other nodes in the
 // cluster that any possible pending database update has been applied, and any
@@ -41,7 +85,7 @@ func NotifyUpgradeCompleted(s *state.State, networkCert *localtls.CertInfo, serv
 			return fmt.Errorf("failed to create database notify upgrade request: %w", err)
 		}
 
-		setCowsqlVersionHeader(request)
+		cowsqlapi.SetCOWSQLVersionHeader(request)
 
 		httpClient, err := client.GetHTTPClient()
 		if err != nil {
@@ -62,156 +106,34 @@ func NotifyUpgradeCompleted(s *state.State, networkCert *localtls.CertInfo, serv
 	})
 }
 
-// MaybeUpdate Check this node's version and possibly run INCUS_CLUSTER_UPDATE.
-func MaybeUpdate(s *state.State) error {
-	shouldUpdate := false
-
-	enabled, err := Enabled(s.DB.Node)
-	if err != nil {
-		return fmt.Errorf("Failed to check clustering is enabled: %w", err)
+func createReconfigurePatch(database cowsqldb.Node, nodes []client.NodeInfo) error {
+	var content strings.Builder
+	for _, raftNode := range nodes {
+		fmt.Fprintf(&content, "UPDATE nodes SET address = %q WHERE id = %d;\n", raftNode.Address, raftNode.ID)
 	}
 
-	if !enabled {
-		return nil
-	}
-
-	if s.DB.Cluster == nil {
-		return errors.New("Failed checking cluster update, state not initialized yet")
-	}
-
-	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		outdated, err := tx.NodeIsOutdated(ctx)
+	if len(content.String()) > 0 {
+		filePath := filepath.Join(filepath.Dir(database.GlobalDatabaseDir()), "patch.global.sql")
+		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			return err
 		}
 
-		shouldUpdate = outdated
-		return nil
-	})
-	if err != nil {
-		// Just log the error and return.
-		return fmt.Errorf("Failed to check if this node is out-of-date: %w", err)
-	}
+		defer func() {
+			err := file.Close()
+			if err != nil && !errors.Is(err, os.ErrClosed) {
+				slog.Warn("Failed to close file", "err", err)
+			}
+		}()
 
-	if !shouldUpdate {
-		logger.Debugf("Cluster node is up-to-date")
-		return nil
-	}
-
-	return triggerUpdate(s)
-}
-
-func triggerUpdate(s *state.State) error {
-	logger.Warn("Member is out-of-date with respect to other cluster members")
-
-	// If on IncusOS, start by trying an automatic update.
-	if s.OS.IncusOS != nil {
-		err := s.OS.IncusOS.TriggerSystemUpdateCheck()
+		_, err = file.Write([]byte(content.String()))
 		if err != nil {
 			return err
 		}
-	}
 
-	updateExecutable := os.Getenv("INCUS_CLUSTER_UPDATE")
-	if updateExecutable == "" {
-		logger.Debug("No INCUS_CLUSTER_UPDATE variable set, skipping auto-update")
-		return nil
-	}
-
-	// Wait a random amount of seconds (up to 30) in order to avoid
-	// restarting all cluster members at the same time, and make the
-	// upgrade more graceful.
-	wait := time.Duration(rand.Intn(30)) * time.Second
-	logger.Info("Triggering cluster auto-update soon", logger.Ctx{"wait": wait, "updateExecutable": updateExecutable})
-	time.Sleep(wait)
-
-	logger.Info("Triggering cluster auto-update now")
-	_, err := subprocess.RunCommand(updateExecutable)
-	if err != nil {
-		logger.Error("Triggering cluster update failed", logger.Ctx{"err": err})
-		return err
-	}
-
-	logger.Info("Triggering cluster auto-update succeeded")
-
-	return nil
-}
-
-// UpgradeMembersWithoutRole assigns the Spare raft role to all cluster members that are not currently part of the
-// raft configuration. It's used for upgrading a cluster from a version without roles support.
-func UpgradeMembersWithoutRole(gateway *Gateway, members []db.NodeInfo) error {
-	nodes, err := gateway.currentRaftNodes()
-	if errors.Is(err, ErrNotLeader) {
-		return nil
-	}
-
-	if err != nil {
-		return fmt.Errorf("Failed to get current raft members: %w", err)
-	}
-
-	// Convert raft node list to map keyed on ID.
-	raftNodeIDs := map[uint64]bool{}
-	for _, node := range nodes {
-		raftNodeIDs[node.ID] = true
-	}
-
-	cowsqlClient, err := gateway.getClient()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to local cowsql member: %w", err)
-	}
-
-	defer logger.WarnOnError(cowsqlClient.Close, "Failed to close client")
-
-	// Check that each member is present in the raft configuration, and add it if not.
-	for _, member := range members {
-		found := false
-		for _, node := range nodes {
-			if member.ID == 1 && node.ID == 1 || member.Address == node.Address {
-				found = true
-				break
-			}
-		}
-		if found {
-			continue
-		}
-
-		// Try to use the same ID as the node, but it might not be possible if it's use.
-		id := uint64(member.ID)
-		_, ok := raftNodeIDs[id]
-		if ok {
-			for _, other := range members {
-				_, ok := raftNodeIDs[uint64(other.ID)]
-				if !ok {
-					id = uint64(other.ID) // Found unused raft ID for member.
-					break
-				}
-			}
-
-			// This can't really happen (but has in the past) since there are always at least as many
-			// members as there are nodes, and all of them have different IDs.
-			if id == uint64(member.ID) {
-				logger.Error("No available raft ID for cluster member", logger.Ctx{"memberID": member.ID, "members": members, "raftMembers": nodes})
-				return fmt.Errorf("No available raft ID for cluster member ID %d", member.ID)
-			}
-		}
-		raftNodeIDs[id] = true
-
-		info := db.RaftNode{
-			NodeInfo: client.NodeInfo{
-				ID:      id,
-				Address: member.Address,
-				Role:    db.RaftSpare,
-			},
-			Name: "",
-		}
-
-		logger.Info("Add spare cowsql node", logger.Ctx{"id": info.ID, "address": info.Address})
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err = cowsqlClient.Add(ctx, info.NodeInfo)
-		cancel()
+		err = file.Close()
 		if err != nil {
-			return fmt.Errorf("Failed to add cowsql member: %w", err)
+			return err
 		}
 	}
 

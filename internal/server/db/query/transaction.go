@@ -11,11 +11,8 @@ import (
 	"github.com/lxc/incus/v7/shared/logger"
 )
 
-// Transaction executes the given function within a database transaction with a 30s context timeout.
-func Transaction(ctx context.Context, db *sql.DB, f func(context.Context, *sql.Tx) error) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-	defer cancel()
-
+// BeginTx begins a transaction.
+func BeginTx(ctx context.Context, db *sql.DB) (*sql.Tx, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		// If there is a leftover transaction let's try to rollback,
@@ -24,7 +21,20 @@ func Transaction(ctx context.Context, db *sql.DB, f func(context.Context, *sql.T
 			_, _ = db.Exec("ROLLBACK")
 		}
 
-		return fmt.Errorf("Failed to begin transaction: %w", err)
+		return nil, fmt.Errorf("Failed to begin transaction: %w", err)
+	}
+
+	return tx, nil
+}
+
+// Transaction executes the given function within a database transaction with a 30s context timeout.
+func Transaction(ctx context.Context, db *sql.DB, f func(context.Context, *sql.Tx) error) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
+
+	tx, err := BeginTx(ctx, db)
+	if err != nil {
+		return err
 	}
 
 	err = f(ctx, tx)
