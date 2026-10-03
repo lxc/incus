@@ -6,7 +6,7 @@ import (
 )
 
 // IncusDeviceClient creates a device client suitable for Incus.
-func IncusDeviceClient(id string) *Client {
+func IncusDeviceClient(id string, accessTokenType op.AccessTokenType) *Client {
 	return &Client{
 		id:              id,
 		redirectURIs:    nil,
@@ -14,6 +14,6 @@ func IncusDeviceClient(id string) *Client {
 		authMethod:      oidc.AuthMethodNone,
 		responseTypes:   []oidc.ResponseType{oidc.ResponseTypeCode},
 		grantTypes:      []oidc.GrantType{oidc.GrantTypeDeviceCode, oidc.GrantTypeRefreshToken},
-		accessTokenType: op.AccessTokenTypeJWT,
+		accessTokenType: accessTokenType,
 	}
 }
