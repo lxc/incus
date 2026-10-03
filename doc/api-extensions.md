@@ -3557,3 +3557,10 @@ This additionally adds a `boot.pxe` VM configuration key, defaulting to `false`,
 
 Allows `ipv4.nat.address` and `ipv6.nat.address` on an `ovn` network whose uplink uses
 `ovn.ingress_mode=l2proxy`, previously only supported with `ovn.ingress_mode=routed`.
+
+## `oidc_id_token`
+
+This adds support for OIDC providers that issue opaque (non-JWT) access tokens.
+
+When the access token isn't a JWT, Incus verifies the ID token instead, checking that it was issued by the configured issuer for the configured client ID.
+Clients send the ID token alongside the opaque access token through the `X-Incus-OIDC-idtoken` header.
