@@ -9548,6 +9548,13 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	// The target can only negotiate types for the volumes we offered, not redefine them.
+	err = storagePools.ValidateDependentVolumesAgainstOffer(offerHeader.DependentVolumes, respHeader.DependentVolumes)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
 	volumesWithTypes, err := storagePools.DependentVolumesMatchMigrationType(d.state, respHeader, args.Snapshots, nil, true, clusterMove)
 	if err != nil {
 		err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
@@ -10608,7 +10615,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	dependentVolumes := []localMigration.DependentVolumeArgs{}
 	for _, volWithType := range volumesWithTypes {
 		respHeader.DependentVolumes = append(respHeader.DependentVolumes, volWithType.Volume)
-		vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], localDevices[*volWithType.Volume.DeviceName])
+		vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], localDevices[volWithType.Volume.GetDeviceName()])
 		dependentVolumes = append(dependentVolumes, vol)
 	}
 
