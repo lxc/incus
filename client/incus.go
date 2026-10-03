@@ -197,7 +197,7 @@ func (r *ProtocolIncus) addClientHeaders(req *http.Request) {
 	}
 
 	if r.oidcClient != nil {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.oidcClient.getAccessToken()))
+		r.oidcClient.setAuthHeaders(req.Header)
 	}
 }
 

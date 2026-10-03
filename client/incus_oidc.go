@@ -157,6 +157,17 @@ func (o *oidcClient) getAccessToken() string {
 	return o.tokens.AccessToken
 }
 
+// setAuthHeaders sets the authentication headers, including the ID token when the access token is opaque.
+func (o *oidcClient) setAuthHeaders(header http.Header) {
+	token := o.getAccessToken()
+	header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	// Opaque access tokens can't be verified by the server, so send the ID token alongside.
+	if o.tokens.IDToken != "" && strings.Count(token, ".") != 2 {
+		header.Set("X-Incus-OIDC-idtoken", o.tokens.IDToken)
+	}
+}
+
 // do function executes an HTTP request using the oidcClient's http client, and manages authorization by refreshing or authenticating as needed.
 // If the request fails with an HTTP Unauthorized status, it attempts to refresh the access token, or perform an OIDC authentication if refresh fails.
 func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
@@ -200,8 +211,8 @@ func (o *oidcClient) do(req *http.Request) (*http.Response, error) {
 		return resp, ErrOIDCExpired
 	}
 
-	// Set the new access token in the header.
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", o.tokens.AccessToken))
+	// Set the new tokens in the header.
+	o.setAuthHeaders(req.Header)
 
 	// Reset the request body.
 	if req.GetBody != nil {
@@ -257,8 +268,8 @@ func (o *oidcClient) dial(dialer websocket.Dialer, uri string, req *http.Request
 		}
 	}
 
-	// Set the new access token in the header.
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", o.tokens.AccessToken))
+	// Set the new tokens in the header.
+	o.setAuthHeaders(req.Header)
 
 	return dialer.Dial(uri, req.Header)
 }
@@ -317,6 +328,10 @@ func (o *oidcClient) refresh(issuer string, clientID string, scopes string) erro
 	o.tokens.AccessToken = oauthTokens.AccessToken
 	o.tokens.TokenType = oauthTokens.TokenType
 	o.tokens.Expiry = oauthTokens.Expiry
+
+	if oauthTokens.IDToken != "" {
+		o.tokens.IDToken = oauthTokens.IDToken
+	}
 
 	if oauthTokens.RefreshToken != "" {
 		o.tokens.RefreshToken = oauthTokens.RefreshToken
