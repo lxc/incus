@@ -20,7 +20,8 @@ import (
 
 func init() {
 	storage.RegisterClients(
-		storage.IncusDeviceClient("device"),
+		storage.IncusDeviceClient("device", op.AccessTokenTypeJWT),
+		storage.IncusDeviceClient("device-opaque", op.AccessTokenTypeBearer),
 	)
 }
 
