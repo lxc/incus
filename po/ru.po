@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-09-21 15:37-0400\n"
+"POT-Creation-Date: 2026-10-04 08:25-0400\n"
 "PO-Revision-Date: 2026-04-27 17:09+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -183,7 +183,7 @@ msgstr ""
 "###\n"
 "### Обратите внимание, что имя отображается, но не может быть изменено"
 
-#: cmd/incus/image.go:422
+#: cmd/incus/image.go:423
 msgid ""
 "### This is a YAML representation of the image properties.\n"
 "### Any line starting with a '# will be ignored.\n"
@@ -653,7 +653,7 @@ msgstr "%q не является IP адресом"
 msgid "%s %q on pool %q in project %q (includes %d snapshots)"
 msgstr "%s %q на пуле %q в проекте %q (включая %d сников)"
 
-#: cmd/incus/image.go:1166
+#: cmd/incus/image.go:1167
 #, c-format
 msgid "%s (%d more)"
 msgstr "%s (%d более)"
@@ -669,7 +669,7 @@ msgid "%s (backend=%q, source=%q)"
 msgstr "%s (бэкенд=%q, источник=%q)"
 
 #: cmd/incus/file.go:721 cmd/incus/storage_volume_file.go:769
-#: cmd/incus/utils_copy.go:102 cmd/incus/utils_sftp.go:525
+#: cmd/incus/utils_copy.go:102 cmd/incus/utils_sftp.go:547
 #, c-format
 msgid "%s is not a directory"
 msgstr "%s это не директория"
@@ -684,7 +684,7 @@ msgstr ""
 msgid "%s; did you forget a space in %s?\n"
 msgstr ""
 
-#: cmd/incus/utils_sftp.go:379
+#: cmd/incus/utils_sftp.go:401
 #, c-format
 msgid "'%s' isn't a supported file type"
 msgstr "'%s' неподдерживаемый тип файла"
@@ -841,7 +841,7 @@ msgstr "--refresh может использоваться только с экз
 msgid "--refresh can only be used with instances"
 msgstr "--refresh может использоваться только с экземплярами"
 
-#: cmd/incus/image.go:224
+#: cmd/incus/image.go:225
 msgid "--reuse requires --copy-aliases"
 msgstr ""
 
@@ -903,11 +903,11 @@ msgstr "Адрес"
 msgid "ADDRESSES"
 msgstr "Адреса"
 
-#: cmd/incus/alias.go:155 cmd/incus/image.go:1117 cmd/incus/image_alias.go:248
+#: cmd/incus/alias.go:155 cmd/incus/image.go:1118 cmd/incus/image_alias.go:248
 msgid "ALIAS"
 msgstr "ПСЕВДОНИМ"
 
-#: cmd/incus/image.go:1118
+#: cmd/incus/image.go:1119
 msgid "ALIASES"
 msgstr "ПСЕВДОНИМЫ"
 
@@ -919,7 +919,7 @@ msgstr "путь к API"
 msgid "APP"
 msgstr "Приложение"
 
-#: cmd/incus/cluster.go:200 cmd/incus/image.go:1112 cmd/incus/list.go:541
+#: cmd/incus/cluster.go:200 cmd/incus/image.go:1113 cmd/incus/list.go:541
 msgid "ARCHITECTURE"
 msgstr "АРХИТЕКТУРА"
 
@@ -1142,7 +1142,7 @@ msgstr "Псевдоним %s уже существует"
 msgid "Alias %s doesn't exist"
 msgstr "Псевдоним %s не существует"
 
-#: cmd/incus/image.go:1024
+#: cmd/incus/image.go:1025
 #, c-format
 msgid "Alias: %s"
 msgstr "Псевдоним: %s"
@@ -1152,7 +1152,7 @@ msgstr "Псевдоним: %s"
 msgid "Aliases already exists: %s"
 msgstr "Псевдонимы уже существуют: %s"
 
-#: cmd/incus/image.go:1008 cmd/incus/color/color.go:39
+#: cmd/incus/image.go:1009 cmd/incus/color/color.go:39
 msgid "Aliases:"
 msgstr "Псевдонимы:"
 
@@ -1188,7 +1188,7 @@ msgstr "Всегда переходить по символическим ссы
 msgid "An instance path is required for %s"
 msgstr "Для %s требуется путь к экземпляру"
 
-#: cmd/incus/image.go:980 cmd/incus/info.go:521 cmd/incus/info.go:525
+#: cmd/incus/image.go:981 cmd/incus/info.go:521 cmd/incus/info.go:525
 #: cmd/incus/info.go:689
 #, c-format
 msgid "Architecture: %s"
@@ -1280,11 +1280,11 @@ msgstr "Тип аутентификации \"%s\" не поддерживает
 msgid "Auto negotiation: %v"
 msgstr "Автоматическое согласование: %v"
 
-#: cmd/incus/image.go:220
+#: cmd/incus/image.go:221
 msgid "Auto update is only available in pull mode"
 msgstr "Автоматическое обновление доступно только в режиме вытягивания (pull)"
 
-#: cmd/incus/image.go:1018
+#: cmd/incus/image.go:1019
 #, c-format
 msgid "Auto update: %s"
 msgstr "Авто-обновление: %s"
@@ -1469,7 +1469,7 @@ msgstr "СОЗДАН"
 msgid "CUDA Version: %v"
 msgstr "Версия CUDA: %v"
 
-#: cmd/incus/image.go:1017
+#: cmd/incus/image.go:1018
 #, c-format
 msgid "Cached: %s"
 msgstr "Кэшировано: %s"
@@ -1781,7 +1781,7 @@ msgstr "Кластеризация включена"
 
 #: cmd/incus/cluster.go:172 cmd/incus/cluster.go:1134
 #: cmd/incus/cluster_group.go:443 cmd/incus/config_trust.go:403
-#: cmd/incus/config_trust.go:599 cmd/incus/image.go:1084
+#: cmd/incus/config_trust.go:599 cmd/incus/image.go:1085
 #: cmd/incus/image_alias.go:211 cmd/incus/list.go:154
 #: cmd/incus/low_level.go:721 cmd/incus/low_level.go:1646
 #: cmd/incus/network.go:1054 cmd/incus/network.go:1257
@@ -1874,7 +1874,7 @@ msgstr "Параметр конфигурации должен иметь фор
 #: cmd/incus/cluster.go:945 cmd/incus/cluster_group.go:376
 #: cmd/incus/config.go:269 cmd/incus/config.go:344
 #: cmd/incus/config_metadata.go:148 cmd/incus/config_trust.go:332
-#: cmd/incus/image.go:491 cmd/incus/network.go:766 cmd/incus/network_acl.go:671
+#: cmd/incus/image.go:492 cmd/incus/network.go:766 cmd/incus/network_acl.go:671
 #: cmd/incus/network_address_set.go:525 cmd/incus/network_forward.go:729
 #: cmd/incus/network_integration.go:297 cmd/incus/network_load_balancer.go:709
 #: cmd/incus/network_peer.go:732 cmd/incus/network_zone.go:674
@@ -1932,7 +1932,7 @@ msgstr "api контроля визуализации: %s (%s)"
 msgid "Copy a stateful instance stateless"
 msgstr "Копировать экземпляр с сохранением его состояния"
 
-#: cmd/incus/image.go:177
+#: cmd/incus/image.go:178
 msgid "Copy aliases from source"
 msgstr "Копировать псевдонимы из источника"
 
@@ -1940,11 +1940,11 @@ msgstr "Копировать псевдонимы из источника"
 msgid "Copy custom storage volumes"
 msgstr "Копирование пользовательских томов хранения"
 
-#: cmd/incus/image.go:168
+#: cmd/incus/image.go:169
 msgid "Copy images between servers"
 msgstr "Копирование образов между серверами"
 
-#: cmd/incus/image.go:169
+#: cmd/incus/image.go:170
 msgid ""
 "Copy images between servers\n"
 "\n"
@@ -2007,16 +2007,16 @@ msgstr "Копировать экземпляр без его моменталь
 msgid "Copy the volume without its snapshots"
 msgstr "Копировать том без его моментальных снимков"
 
-#: cmd/incus/copy.go:69 cmd/incus/image.go:183 cmd/incus/move.go:72
+#: cmd/incus/copy.go:69 cmd/incus/image.go:184 cmd/incus/move.go:72
 #: cmd/incus/profile.go:275 cmd/incus/storage_volume.go:399
 msgid "Copy to a project different from the source"
 msgstr "Копировать в проект, отличный от исходного"
 
-#: cmd/incus/image.go:181
+#: cmd/incus/image.go:182
 msgid "Copy virtual machine images"
 msgstr "Копирование образов виртуальных машин"
 
-#: cmd/incus/image.go:309
+#: cmd/incus/image.go:310
 #, c-format
 msgid "Copying the image: %s"
 msgstr "Копирование образа: %s"
@@ -2049,22 +2049,22 @@ msgstr "Не удалось создать каталог сертификата
 msgid "Could not create server cert dir"
 msgstr "Не удалось создать каталог сертификата сервера"
 
-#: cmd/incus/admin_update_certificate.go:57 cmd/incus/cluster.go:1401
+#: cmd/incus/admin_update_certificate.go:55 cmd/incus/cluster.go:1401
 #, c-format
 msgid "Could not find certificate file path: %s"
 msgstr "Не удалось найти путь к файлу сертификата: %s"
 
-#: cmd/incus/admin_update_certificate.go:61 cmd/incus/cluster.go:1405
+#: cmd/incus/admin_update_certificate.go:59 cmd/incus/cluster.go:1405
 #, c-format
 msgid "Could not find certificate key file path: %s"
 msgstr "Не удалось найти путь к файлу ключа сертификата: %s"
 
-#: cmd/incus/admin_update_certificate.go:66 cmd/incus/cluster.go:1410
+#: cmd/incus/admin_update_certificate.go:64 cmd/incus/cluster.go:1410
 #, c-format
 msgid "Could not read certificate file: %s with error: %v"
 msgstr "Не удалось прочитать файл сертификата: %s с ошибкой: %v"
 
-#: cmd/incus/admin_update_certificate.go:71 cmd/incus/cluster.go:1415
+#: cmd/incus/admin_update_certificate.go:69 cmd/incus/cluster.go:1415
 #, c-format
 msgid "Could not read certificate key file: %s with error: %v"
 msgstr "Не удалось прочитать файл ключа сертификата: %s с ошибкой: %v"
@@ -2252,7 +2252,7 @@ msgstr "Создавать новые пользовательские тома 
 msgid "Create the instance with no profiles applied"
 msgstr "Создать экземпляр без применения профилей"
 
-#: cmd/incus/image.go:986 cmd/incus/info.go:700
+#: cmd/incus/image.go:987 cmd/incus/info.go:700
 #: cmd/incus/storage_volume.go:1384
 #, c-format
 msgid "Created: %s"
@@ -2277,7 +2277,7 @@ msgstr "Создание экземпляра"
 msgid "Current number of VFs: %d"
 msgstr "Текущее количество VF: %d"
 
-#: cmd/incus/utils_sftp.go:477
+#: cmd/incus/utils_sftp.go:499
 #, c-format
 msgid "Cyclic symbolic link %q"
 msgstr ""
@@ -2288,7 +2288,7 @@ msgstr "ЦЕЛЕВОЙ АДРЕС ПО УМОЛЧАНИЮ"
 
 #: cmd/incus/action.go:330 cmd/incus/cluster.go:202
 #: cmd/incus/cluster_group.go:469 cmd/incus/config_trust.go:422
-#: cmd/incus/image.go:1113 cmd/incus/image_alias.go:251 cmd/incus/list.go:544
+#: cmd/incus/image.go:1114 cmd/incus/image_alias.go:251 cmd/incus/list.go:544
 #: cmd/incus/network.go:1086 cmd/incus/network_acl.go:163
 #: cmd/incus/network_address_set.go:155 cmd/incus/network_forward.go:144
 #: cmd/incus/network_integration.go:433 cmd/incus/network_load_balancer.go:151
@@ -2375,7 +2375,7 @@ msgstr "Удаление файлов в экземплярах"
 msgid "Delete image aliases"
 msgstr "Удалить псевдонимы образов"
 
-#: cmd/incus/image.go:343 cmd/incus/image.go:344
+#: cmd/incus/image.go:344 cmd/incus/image.go:345
 msgid "Delete images"
 msgstr "Удалить образы"
 
@@ -2593,7 +2593,7 @@ msgstr ""
 msgid "Didn't get name of new volume snapshot from the server"
 msgstr "Не удалось получить имя нового моментального снимка тома с сервера"
 
-#: cmd/incus/image.go:729
+#: cmd/incus/image.go:730
 msgid "Directory import is not available on this platform"
 msgstr "На этой платформе недоступен импорт директорий"
 
@@ -2634,7 +2634,7 @@ msgstr "Диски:"
 msgid "Display clusters from all projects"
 msgstr "Показать кластеры из всех проектов"
 
-#: cmd/incus/image.go:1086
+#: cmd/incus/image.go:1087
 msgid "Display images from all projects"
 msgstr "Показать образы из всех проектов"
 
@@ -2808,7 +2808,7 @@ msgstr "Редактировать файлы в экземплярах"
 msgid "Edit files in storage volumes"
 msgstr "Редактирование файлов в томах хранения"
 
-#: cmd/incus/image.go:398 cmd/incus/image.go:399
+#: cmd/incus/image.go:399 cmd/incus/image.go:400
 msgid "Edit image properties"
 msgstr "Редактировать свойства образа"
 
@@ -2912,7 +2912,7 @@ msgstr "Редактировать конфигураций доверия се�
 
 #: cmd/incus/cluster.go:213 cmd/incus/cluster.go:1163
 #: cmd/incus/cluster_group.go:477 cmd/incus/config_trust.go:434
-#: cmd/incus/config_trust.go:624 cmd/incus/image.go:1131
+#: cmd/incus/config_trust.go:624 cmd/incus/image.go:1132
 #: cmd/incus/image_alias.go:260 cmd/incus/list.go:602
 #: cmd/incus/low_level.go:753 cmd/incus/low_level.go:1684
 #: cmd/incus/network.go:1101 cmd/incus/network.go:1295
@@ -2930,7 +2930,7 @@ msgid "Empty column entry (redundant, leading or trailing command) in '%s'"
 msgstr ""
 "Пустая запись в столбце (избыточная, начальная или конечная команда) в '%s'"
 
-#: cmd/incus/image.go:1137
+#: cmd/incus/image.go:1138
 #, c-format
 msgid "Empty property name in '%s'"
 msgstr ""
@@ -3197,12 +3197,12 @@ msgstr "Ожидалась структура, получен %v"
 msgid "Expires at"
 msgstr "Истекает"
 
-#: cmd/incus/image.go:992
+#: cmd/incus/image.go:993
 #, c-format
 msgid "Expires: %s"
 msgstr "Истекает: %s"
 
-#: cmd/incus/image.go:994
+#: cmd/incus/image.go:995
 msgid "Expires: never"
 msgstr "Бессрочно"
 
@@ -3221,11 +3221,11 @@ msgstr "Удалить дистанционные сервера"
 msgid "Export a virtual machine's memory state"
 msgstr "Экспорт состояния памяти виртуальной машины"
 
-#: cmd/incus/image.go:526
+#: cmd/incus/image.go:527
 msgid "Export and download images"
 msgstr "Экспорт и загрузка образов"
 
-#: cmd/incus/image.go:527
+#: cmd/incus/image.go:528
 msgid ""
 "Export and download images\n"
 "\n"
@@ -3287,7 +3287,7 @@ msgstr "Экспорт резервной копии сегмента храни
 msgid "Exporting the backup: %s"
 msgstr "Экспортирование резервной копии: %s"
 
-#: cmd/incus/image.go:599
+#: cmd/incus/image.go:600
 #, c-format
 msgid "Exporting the image: %s"
 msgstr "Экспортирование образа: %s"
@@ -3301,7 +3301,7 @@ msgid "FILENAME"
 msgstr "ИМЯ ФАЙЛА"
 
 #: cmd/incus/config_trust.go:420 cmd/incus/config_trust.go:421
-#: cmd/incus/image.go:1115 cmd/incus/image.go:1116 cmd/incus/image_alias.go:249
+#: cmd/incus/image.go:1116 cmd/incus/image.go:1117 cmd/incus/image_alias.go:249
 #: cmd/incus/low_level.go:1667 cmd/incus/low_level.go:1668
 msgid "FINGERPRINT"
 msgstr "ОТПЕЧАТОК"
@@ -3452,7 +3452,7 @@ msgstr "Не удалось добавить дистанционный серв
 msgid "Failed to add server cert to cluster: %w"
 msgstr "Не удалось добавить сертификат сервера в кластер: %w"
 
-#: cmd/incus/image.go:290
+#: cmd/incus/image.go:291
 #, fuzzy, c-format
 msgid "Failed to check for existing aliases: %w"
 msgstr "Не удалось создать псевдоним %s: %w"
@@ -3615,7 +3615,7 @@ msgid "Failed to open input file %q: %w"
 msgstr "Не удалось открыть целевой файл %q: %w"
 
 #: cmd/incus/file.go:790 cmd/incus/storage_volume_file.go:826
-#: cmd/incus/utils_sftp.go:413
+#: cmd/incus/utils_sftp.go:435
 #, c-format
 msgid "Failed to open source file %q: %v"
 msgstr "Не удалось открыть исходный файл %q: %v"
@@ -3664,7 +3664,7 @@ msgstr "Не удалось прочитать из стандартного в�
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Не удалось обновить целевой экземпляр '%s': %v"
 
-#: cmd/incus/image.go:296 cmd/incus/utils.go:209
+#: cmd/incus/image.go:297 cmd/incus/utils.go:209
 #, c-format
 msgid "Failed to remove alias %s: %w"
 msgstr "Не удалось удалить псевдоним %s: %w"
@@ -3759,7 +3759,7 @@ msgstr "Не удалось скопировать память экземпля
 msgid "Failed to update cluster member state: %w"
 msgstr "Не удалось обновить состояние участника кластера: %w"
 
-#: cmd/incus/utils_sftp.go:366 cmd/incus/utils_sftp.go:486
+#: cmd/incus/utils_sftp.go:388 cmd/incus/utils_sftp.go:508
 #, c-format
 msgid "Failed to walk path for %s: %s"
 msgstr "Не удалось пройти по пути для %s: %s"
@@ -3788,7 +3788,7 @@ msgstr "Быстрый режим (аналогично --columns=nsacPt)"
 msgid "Fetch instance backup file: %w"
 msgstr "Извлечь файл резервной копии экземпляра: %w"
 
-#: cmd/incus/image.go:978
+#: cmd/incus/image.go:979
 #, c-format
 msgid "Fingerprint: %s"
 msgstr "Отпечаток: %s"
@@ -3934,7 +3934,7 @@ msgstr ""
 #: cmd/incus/admin_sql.go:58 cmd/incus/alias.go:118 cmd/incus/cluster.go:173
 #: cmd/incus/cluster_group.go:444 cmd/incus/config_template.go:272
 #: cmd/incus/config_trust.go:404 cmd/incus/config_trust.go:598
-#: cmd/incus/image.go:1085 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
+#: cmd/incus/image.go:1086 cmd/incus/image_alias.go:210 cmd/incus/list.go:155
 #: cmd/incus/low_level.go:720 cmd/incus/low_level.go:1645
 #: cmd/incus/network.go:1055 cmd/incus/network.go:1256
 #: cmd/incus/network_acl.go:104 cmd/incus/network_allocations.go:71
@@ -4069,11 +4069,11 @@ msgstr ""
 "Это полезно для рабочих процессов дистанционной аутентификации, когда токен "
 "передается на другой сервер Incus."
 
-#: cmd/incus/image.go:1769
+#: cmd/incus/image.go:1770
 msgid "Generate a metadata tarball"
 msgstr "Сгенерировать архив с метаданными"
 
-#: cmd/incus/image.go:1771
+#: cmd/incus/image.go:1772
 msgid ""
 "Generate a metadata tarball\n"
 "\n"
@@ -4124,7 +4124,7 @@ msgstr "Получить текущий статус балансировщик�
 msgid "Get current load-balancer status"
 msgstr "Получить текущее состояние балансировщика нагрузки"
 
-#: cmd/incus/image.go:1564 cmd/incus/image.go:1565
+#: cmd/incus/image.go:1565 cmd/incus/image.go:1566
 msgid "Get image properties"
 msgstr "Получить свойства образа"
 
@@ -4441,7 +4441,7 @@ msgstr "ДАТА ВЫПУСКА"
 msgid "Id: %v"
 msgstr "Идентификатор: %v"
 
-#: cmd/incus/image.go:178
+#: cmd/incus/image.go:179
 #, fuzzy
 msgid "If an alias already exists, delete and recreate it"
 msgstr "Если псевдоним образа уже существует, удалить его и создать новый"
@@ -4457,7 +4457,7 @@ msgstr ""
 "Если команда корректна, вместо её выполнения объяснить её обработанные "
 "аргументы"
 
-#: cmd/incus/image.go:707 cmd/incus/publish.go:46
+#: cmd/incus/image.go:708 cmd/incus/publish.go:46
 msgid "If the image alias already exists, delete and create a new one"
 msgstr "Если псевдоним образа уже существует, удалить его и создать новый"
 
@@ -4503,11 +4503,11 @@ msgstr ""
 msgid "Image alias description"
 msgstr "Описание псевдонима образа"
 
-#: cmd/incus/image.go:1480
+#: cmd/incus/image.go:1481
 msgid "Image already up to date."
 msgstr "Образ уже обновлен."
 
-#: cmd/incus/image.go:326
+#: cmd/incus/image.go:327
 msgid "Image copied successfully!"
 msgstr "Образ успешно скопирован!"
 
@@ -4515,7 +4515,7 @@ msgstr "Образ успешно скопирован!"
 msgid "Image expiration date (format: rfc3339)"
 msgstr "Срок действия образа (формат: rfc3339)"
 
-#: cmd/incus/image.go:675
+#: cmd/incus/image.go:676
 msgid "Image exported successfully!"
 msgstr "Образ успешно экспортирован!"
 
@@ -4523,12 +4523,12 @@ msgstr "Образ успешно экспортирован!"
 msgid "Image format"
 msgstr "Формат образа"
 
-#: cmd/incus/image.go:871
+#: cmd/incus/image.go:872
 #, c-format
 msgid "Image imported with fingerprint: %s"
 msgstr "Импортирован образ с отпечатком: %s"
 
-#: cmd/incus/image.go:1478
+#: cmd/incus/image.go:1479
 msgid "Image refreshed successfully!"
 msgstr "Образ успешно обновлен!"
 
@@ -4557,7 +4557,7 @@ msgstr "Импорт пользовательских томов хранени�
 msgid "Import custom storage volumes."
 msgstr "Импортируйте пользовательские тома хранилища."
 
-#: cmd/incus/image.go:700
+#: cmd/incus/image.go:701
 msgid ""
 "Import image into the image store\n"
 "\n"
@@ -4567,7 +4567,7 @@ msgstr ""
 "\n"
 "Импорт директорий доступен только в Linux и должен выполняться от имени root."
 
-#: cmd/incus/image.go:699
+#: cmd/incus/image.go:700
 msgid "Import images into the image store"
 msgstr "Импортировать образы в хранилище образов"
 
@@ -4856,7 +4856,7 @@ msgstr "Присоединить существующий сервер к кла
 msgid "Joining an existing cluster requires root privileges"
 msgstr "Для присоединения к существующему кластеру требуются root права"
 
-#: cmd/incus/image.go:179
+#: cmd/incus/image.go:180
 msgid "Keep the image up to date after initial copy"
 msgstr ""
 "Поддерживать образ в актуальном состоянии после первоначального копирования"
@@ -4901,12 +4901,12 @@ msgstr "РАЗМЕЩЕНО"
 msgid "Last Used: %s"
 msgstr "Последнее использование: %s"
 
-#: cmd/incus/image.go:998
+#: cmd/incus/image.go:999
 #, c-format
 msgid "Last used: %s"
 msgstr "Последнее использование: %s"
 
-#: cmd/incus/image.go:1000
+#: cmd/incus/image.go:1001
 msgid "Last used: never"
 msgstr "никогда не использовался"
 
@@ -5684,11 +5684,11 @@ msgstr ""
 "  t - Тип\n"
 "  d - Описание"
 
-#: cmd/incus/image.go:1055
+#: cmd/incus/image.go:1056
 msgid "List images"
 msgstr "Вывести образы"
 
-#: cmd/incus/image.go:1056
+#: cmd/incus/image.go:1057
 #, fuzzy
 msgid ""
 "List images\n"
@@ -6692,7 +6692,7 @@ msgstr "MTU: %d"
 msgid "Maintain remote connection for faster commands"
 msgstr "Поддерживать удалённое соединение для более быстрой обработки команд"
 
-#: cmd/incus/image.go:176 cmd/incus/image.go:706
+#: cmd/incus/image.go:177 cmd/incus/image.go:707
 msgid "Make image public"
 msgstr "Опубликовать образ"
 
@@ -6756,11 +6756,11 @@ msgstr "Управление файлами в экземплярах"
 msgid "Manage image aliases"
 msgstr "Управление псевдонимами образов"
 
-#: cmd/incus/image.go:52
+#: cmd/incus/image.go:53
 msgid "Manage images"
 msgstr "Управление образами"
 
-#: cmd/incus/image.go:53
+#: cmd/incus/image.go:54
 msgid ""
 "Manage images\n"
 "\n"
@@ -7152,7 +7152,7 @@ msgid "Multiple rules match. Use --force to remove them all"
 msgstr ""
 "Найдено несколько правил. Используйте параметр --force для удаления их всех"
 
-#: cmd/incus/image.go:731
+#: cmd/incus/image.go:732
 msgid "Must run as root to import from directory"
 msgstr ""
 "Для импорта из директории необходимо запустить программу с правами root"
@@ -7507,7 +7507,7 @@ msgstr "Никогда не переходить по символическим
 msgid "New alias to define at target (may be passed multiple times)"
 msgstr "Новый псевдоним для заданной цели"
 
-#: cmd/incus/image.go:180 cmd/incus/image.go:708
+#: cmd/incus/image.go:181 cmd/incus/image.go:709
 #, fuzzy
 msgid "New aliases to add to the image (may be passed multiple times)"
 msgstr "Новые псевдонимы для добавления к образу"
@@ -7564,7 +7564,7 @@ msgstr "Соответствующих бэкендов не найдено"
 msgid "No matching client found"
 msgstr "Соответствующих бэкендов не найдено"
 
-#: cmd/incus/image.go:1394
+#: cmd/incus/image.go:1395
 #, fuzzy
 msgid "No matching image found"
 msgstr "Соответствующих бэкендов не найдено"
@@ -7672,7 +7672,7 @@ msgid "Only https URLs are supported for oci and simplestreams"
 msgstr ""
 "Для OCI и SimpleStream поддерживаются только URL-адреса по протоколу HTTPS"
 
-#: cmd/incus/image.go:767
+#: cmd/incus/image.go:768
 msgid "Only https:// is supported for remote image import"
 msgstr ""
 "Для импорта образа с другого сервера поддерживается только протокол https://"
@@ -7774,7 +7774,7 @@ msgstr "ПРОЦЕССЫ"
 msgid "PROFILES"
 msgstr "ПРОФИЛИ"
 
-#: cmd/incus/image.go:1114 cmd/incus/list.go:546 cmd/incus/network.go:1080
+#: cmd/incus/image.go:1115 cmd/incus/list.go:546 cmd/incus/network.go:1080
 #: cmd/incus/network_acl.go:168 cmd/incus/network_address_set.go:161
 #: cmd/incus/network_zone.go:144 cmd/incus/profile.go:735
 #: cmd/incus/storage_bucket.go:482 cmd/incus/storage_volume.go:1649
@@ -7790,7 +7790,7 @@ msgstr "ПРОЕКТЫ"
 msgid "PROTOCOL"
 msgstr "ПРОТОКОЛ"
 
-#: cmd/incus/image.go:1119 cmd/incus/remote.go:1187
+#: cmd/incus/image.go:1120 cmd/incus/remote.go:1187
 msgid "PUBLIC"
 msgstr "ПУБЛИЧНЫЙ"
 
@@ -7923,7 +7923,7 @@ msgstr "Нажмите Ctrl+C для завершения"
 #: cmd/incus/cluster.go:946 cmd/incus/cluster_group.go:377
 #: cmd/incus/config.go:270 cmd/incus/config.go:345
 #: cmd/incus/config_metadata.go:149 cmd/incus/config_template.go:234
-#: cmd/incus/config_trust.go:333 cmd/incus/image.go:492
+#: cmd/incus/config_trust.go:333 cmd/incus/image.go:493
 #: cmd/incus/low_level.go:575 cmd/incus/network.go:767
 #: cmd/incus/network_acl.go:672 cmd/incus/network_address_set.go:526
 #: cmd/incus/network_forward.go:730 cmd/incus/network_integration.go:298
@@ -8024,7 +8024,7 @@ msgstr "Профиль %s переименован в %s"
 msgid "Profile description"
 msgstr "Описание профиля"
 
-#: cmd/incus/image.go:184
+#: cmd/incus/image.go:185
 #, fuzzy
 msgid "Profile to apply to the new image (may be passed multiple times)"
 msgstr "Профиль, применяемый к новому образу"
@@ -8044,11 +8044,11 @@ msgstr "Профиль, применяемый к целевому экземп�
 msgid "Profiles %s applied to %s"
 msgstr "Профили %s применены к %s"
 
-#: cmd/incus/image.go:1030
+#: cmd/incus/image.go:1031
 msgid "Profiles:"
 msgstr "Профили:"
 
-#: cmd/incus/image.go:1028
+#: cmd/incus/image.go:1029
 msgid "Profiles: "
 msgstr "Профили: "
 
@@ -8075,15 +8075,15 @@ msgstr "Описание проекта"
 msgid "Project to use for the remote"
 msgstr "Проект для дистанционного сервера"
 
-#: cmd/incus/image.go:1003
+#: cmd/incus/image.go:1004
 msgid "Properties:"
 msgstr "Свойства:"
 
-#: cmd/incus/image.go:1609
+#: cmd/incus/image.go:1610
 msgid "Property not found"
 msgstr "Свойство не найдено"
 
-#: cmd/incus/image.go:1023
+#: cmd/incus/image.go:1024
 #, c-format
 msgid "Protocol: %s"
 msgstr "Протокол: %s"
@@ -8101,7 +8101,7 @@ msgstr "Таймаут прокси (выходит, когда нет соед�
 msgid "Public image server"
 msgstr "Публичный сервер образов"
 
-#: cmd/incus/image.go:982
+#: cmd/incus/image.go:983
 #, c-format
 msgid "Public: %s"
 msgstr "Опубликован: %s"
@@ -8124,7 +8124,7 @@ msgid "Pull files from instances"
 msgstr "Получить файлы из экземпляров"
 
 #: cmd/incus/file.go:576 cmd/incus/storage_volume_file.go:634
-#: cmd/incus/utils_sftp.go:287
+#: cmd/incus/utils_sftp.go:307
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr "Получение %s из %s: %%s"
@@ -8138,7 +8138,7 @@ msgid "Push files into instances"
 msgstr "Отправка файлов в экземпляры"
 
 #: cmd/incus/file.go:823 cmd/incus/storage_volume_file.go:859
-#: cmd/incus/utils_sftp.go:424
+#: cmd/incus/utils_sftp.go:446
 #, c-format
 msgid "Pushing %s to %s: %%s"
 msgstr "Отправка %s в %s: %%s"
@@ -8147,7 +8147,7 @@ msgstr "Отправка %s в %s: %%s"
 msgid "Query path must start with /"
 msgstr "Путь запроса должен начаться с /"
 
-#: cmd/incus/image.go:533 cmd/incus/image.go:918 cmd/incus/image.go:1503
+#: cmd/incus/image.go:534 cmd/incus/image.go:919 cmd/incus/image.go:1504
 msgid "Query virtual machine images"
 msgstr "Запрос образов виртуальных машин"
 
@@ -8240,7 +8240,7 @@ msgstr "Рекурсивно передать файлы"
 msgid "Refresh and update the existing storage volume copies"
 msgstr "Обновить существующие копии томов хранения"
 
-#: cmd/incus/image.go:1423 cmd/incus/image.go:1424
+#: cmd/incus/image.go:1424 cmd/incus/image.go:1425
 msgid "Refresh images"
 msgstr "Обновить образы"
 
@@ -8249,7 +8249,7 @@ msgstr "Обновить образы"
 msgid "Refreshing instance: %s"
 msgstr "Обновление экземпляра: %s"
 
-#: cmd/incus/image.go:1447
+#: cmd/incus/image.go:1448
 #, c-format
 msgid "Refreshing the image: %s"
 msgstr "обновление образа: %s"
@@ -8631,7 +8631,7 @@ msgstr "Запустить во всех проектах"
 msgid "SEVERITY"
 msgstr "ВАЖНОСТЬ"
 
-#: cmd/incus/image.go:1120
+#: cmd/incus/image.go:1121
 msgid "SIZE"
 msgstr "РАЗМЕР"
 
@@ -8783,7 +8783,7 @@ msgstr "Протокол сервера (incus, oci или simplestreams)"
 msgid "Server version: %s\n"
 msgstr "Версия сервера: %s\n"
 
-#: cmd/incus/image.go:1022
+#: cmd/incus/image.go:1023
 #, c-format
 msgid "Server: %s"
 msgstr "Сервер: %s"
@@ -8841,7 +8841,7 @@ msgstr ""
 "ключ конфигурации с помощью команды:\n"
 "    incus profile device set [<remote>:]<profile> <device> <key> <value>"
 
-#: cmd/incus/image.go:1627 cmd/incus/image.go:1628
+#: cmd/incus/image.go:1628 cmd/incus/image.go:1629
 msgid "Set image properties"
 msgstr "Задать свойства образа"
 
@@ -9296,7 +9296,7 @@ msgstr "Показать события из всех проектов"
 msgid "Show full device configuration"
 msgstr "Показать полную конфигурацию устройства"
 
-#: cmd/incus/image.go:1500 cmd/incus/image.go:1501
+#: cmd/incus/image.go:1501 cmd/incus/image.go:1502
 msgid "Show image properties"
 msgstr "Показать свойства образа"
 
@@ -9491,7 +9491,7 @@ msgstr "Показать настройки доверия"
 msgid "Show useful information about a cluster member"
 msgstr "Показать полезную информацию об участнике кластера"
 
-#: cmd/incus/image.go:913 cmd/incus/image.go:914
+#: cmd/incus/image.go:914 cmd/incus/image.go:915
 msgid "Show useful information about images"
 msgstr "Показать полезную информацию о образах"
 
@@ -9507,7 +9507,7 @@ msgstr "Показать предупреждения"
 msgid "Size in GiB of the new loop device"
 msgstr "Размер нового loop устройства в ГиБ"
 
-#: cmd/incus/image.go:979
+#: cmd/incus/image.go:980
 #, c-format
 msgid "Size: %.2fMiB"
 msgstr "Размер: %.2fМиБ"
@@ -9566,7 +9566,7 @@ msgstr ""
 "Источник пула хранения (блочное устройство, группа томов, набор данных, "
 "путь, ... если применимо):"
 
-#: cmd/incus/image.go:1021
+#: cmd/incus/image.go:1022
 msgid "Source:"
 msgstr "Источник:"
 
@@ -9735,7 +9735,7 @@ msgstr "Сохранить состояние экземпляра"
 msgid "Successfully updated cluster certificates"
 msgstr "Сертификаты кластера успешно обновлены"
 
-#: cmd/incus/admin_update_certificate.go:106
+#: cmd/incus/admin_update_certificate.go:95
 #, fuzzy
 msgid "Successfully updated server certificate"
 msgstr "Сертификаты кластера успешно обновлены"
@@ -9795,7 +9795,7 @@ msgstr "--refresh может использоваться только с экз
 msgid "TOKEN"
 msgstr "ТОКЕН"
 
-#: cmd/incus/config_trust.go:418 cmd/incus/image.go:1121
+#: cmd/incus/config_trust.go:418 cmd/incus/image.go:1122
 #: cmd/incus/image_alias.go:250 cmd/incus/list.go:559
 #: cmd/incus/low_level.go:1676 cmd/incus/network.go:1082
 #: cmd/incus/network.go:1283 cmd/incus/network_allocations.go:89
@@ -10190,7 +10190,7 @@ msgstr ""
 "Если вы уже добавили дистанционный сервер, сделайте его сервером по "
 "умолчанию, используя команду \"incus remote switch NAME\"."
 
-#: cmd/incus/admin_update_certificate.go:89
+#: cmd/incus/admin_update_certificate.go:78
 msgid ""
 "This command is not supported on clusters, use \"incus cluster update-"
 "certificate\" instead"
@@ -10228,7 +10228,7 @@ msgstr "Потоки:"
 msgid "Time to wait for the instance to shutdown cleanly"
 msgstr "Время ожидания корректного завершения работы экземпляра"
 
-#: cmd/incus/image.go:983
+#: cmd/incus/image.go:984
 msgid "Timestamps:"
 msgstr "Временные метки:"
 
@@ -10281,7 +10281,7 @@ msgstr "Тип передатчика: %s"
 msgid "Transfer mode, one of pull (default), push or relay"
 msgstr "Режим передачи, один из pull (по умолчанию), push или relay"
 
-#: cmd/incus/copy.go:64 cmd/incus/image.go:182 cmd/incus/move.go:67
+#: cmd/incus/copy.go:64 cmd/incus/image.go:183 cmd/incus/move.go:67
 #: cmd/incus/storage_volume.go:395
 msgid "Transfer mode. One of pull, push or relay"
 msgstr "Режим передачи. Один из pull, push или relay"
@@ -10292,7 +10292,7 @@ msgid ""
 "instance"
 msgstr ""
 
-#: cmd/incus/image.go:779
+#: cmd/incus/image.go:780
 #, c-format
 msgid "Transferring image: %s"
 msgstr "Передача образа: %s"
@@ -10338,7 +10338,7 @@ msgstr ""
 msgid "Type of peer (local or remote)"
 msgstr "Тип точки обмена трафиком (локальная или дистанционная)"
 
-#: cmd/incus/image.go:981 cmd/incus/info.go:291 cmd/incus/info.go:452
+#: cmd/incus/image.go:982 cmd/incus/info.go:291 cmd/incus/info.go:452
 #: cmd/incus/info.go:463 cmd/incus/info.go:687 cmd/incus/network.go:926
 #: cmd/incus/storage_volume.go:1364
 #, c-format
@@ -10359,7 +10359,7 @@ msgstr "Профиль %s удален"
 msgid "UNLIMITED"
 msgstr "НЕОГРАНИЧЕННО"
 
-#: cmd/incus/image.go:1122
+#: cmd/incus/image.go:1123
 msgid "UPLOAD DATE"
 msgstr "ДАТА ВЫГРУЗКИ"
 
@@ -10472,7 +10472,7 @@ msgstr "Неизвестный тип канала связи для клиен�
 
 #: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1169
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:440
-#: cmd/incus/config_trust.go:630 cmd/incus/image.go:1153
+#: cmd/incus/config_trust.go:630 cmd/incus/image.go:1154
 #: cmd/incus/image_alias.go:266 cmd/incus/list.go:620
 #: cmd/incus/low_level.go:759 cmd/incus/low_level.go:1690
 #: cmd/incus/network.go:1107 cmd/incus/network.go:1301
@@ -10494,7 +10494,7 @@ msgstr "Неизвестный сокращенный символ столбц�
 msgid "Unknown console type %q"
 msgstr "Неизвестный тип консоли %q"
 
-#: cmd/incus/utils_sftp.go:343
+#: cmd/incus/utils_sftp.go:365
 #, c-format
 msgid "Unknown file type '%s'"
 msgstr "Неизвестный тип файла '%s"
@@ -10543,7 +10543,7 @@ msgstr ""
 msgid "Unset device configuration keys"
 msgstr "Убрать параметры конфигурации устройства"
 
-#: cmd/incus/image.go:1691 cmd/incus/image.go:1692
+#: cmd/incus/image.go:1692 cmd/incus/image.go:1693
 msgid "Unset image properties"
 msgstr "Убрать свойства образа"
 
@@ -10747,12 +10747,12 @@ msgstr ""
 "Обновить сертификат кластера, используя PEM-сертификат и ключ, считанные из "
 "входных файлов."
 
-#: cmd/incus/admin_update_certificate.go:30
+#: cmd/incus/admin_update_certificate.go:27
 #, fuzzy
 msgid "Update the server certificate"
 msgstr "Обновить сертификат кластера"
 
-#: cmd/incus/admin_update_certificate.go:31
+#: cmd/incus/admin_update_certificate.go:28
 msgid ""
 "Update the server certificate\n"
 "\n"
@@ -10769,7 +10769,7 @@ msgstr "Обновить целевой профиль из источника, 
 msgid "Updated interval to %v"
 msgstr "Обновленный интервал %v"
 
-#: cmd/incus/image.go:989
+#: cmd/incus/image.go:990
 #, c-format
 msgid "Uploaded: %s"
 msgstr "Выгружено: %s"
@@ -11215,12 +11215,12 @@ msgid ""
 "cannot parse this argument, unexpected %s in %s; did you forget a space?"
 msgstr "Не удается обработать этот аргумент; неожиданное значение %s в %s"
 
-#: cmd/incus/admin_update_certificate.go:24 cmd/incus/cluster.go:1348
+#: cmd/incus/admin_update_certificate.go:21 cmd/incus/cluster.go:1348
 #: cmd/incus/config_trust.go:163
 msgid "cert.crt"
 msgstr "cert.crt"
 
-#: cmd/incus/admin_update_certificate.go:24 cmd/incus/cluster.go:1348
+#: cmd/incus/admin_update_certificate.go:21 cmd/incus/cluster.go:1348
 msgid "cert.key"
 msgstr "cert.key"
 
@@ -11264,7 +11264,7 @@ msgstr "устройство"
 msgid "directory"
 msgstr "директория"
 
-#: cmd/incus/image.go:968
+#: cmd/incus/image.go:969
 msgid "disabled"
 msgstr "отключено"
 
@@ -11272,7 +11272,7 @@ msgstr "отключено"
 msgid "driver"
 msgstr "драйвер"
 
-#: cmd/incus/image.go:970
+#: cmd/incus/image.go:971
 msgid "enabled"
 msgstr "включено"
 
@@ -11580,7 +11580,7 @@ msgstr ""
 "    Прочитать \"Hello world\" из стандартного ввода и записать его в /root/"
 "test в экземпляре \"foo\"."
 
-#: cmd/incus/image.go:400
+#: cmd/incus/image.go:401
 msgid ""
 "incus image edit <image>\n"
 "    Launch a text editor to edit the properties\n"
@@ -12429,8 +12429,8 @@ msgstr "сеть или сетевая интеграция"
 msgid "new %s name"
 msgstr "новое название %s"
 
-#: cmd/incus/config_trust.go:487 cmd/incus/image.go:958 cmd/incus/image.go:963
-#: cmd/incus/image.go:1195
+#: cmd/incus/config_trust.go:487 cmd/incus/image.go:959 cmd/incus/image.go:964
+#: cmd/incus/image.go:1196
 msgid "no"
 msgstr "нет"
 
@@ -12512,7 +12512,7 @@ msgstr "сервер"
 msgid "role"
 msgstr "роль"
 
-#: cmd/incus/image.go:694
+#: cmd/incus/image.go:695
 msgid "rootfs tarball"
 msgstr "архив корневой ФС"
 
@@ -12622,8 +12622,8 @@ msgid "y"
 msgstr "да (y)"
 
 #: cmd/incus/cluster.go:731 cmd/incus/config_trust.go:484
-#: cmd/incus/delete.go:56 cmd/incus/image.go:960 cmd/incus/image.go:965
-#: cmd/incus/image.go:1192 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
+#: cmd/incus/delete.go:56 cmd/incus/image.go:961 cmd/incus/image.go:966
+#: cmd/incus/image.go:1193 cmd/incus/project.go:225 cmd/incus/snapshot.go:280
 msgid "yes"
 msgstr "да"
 
