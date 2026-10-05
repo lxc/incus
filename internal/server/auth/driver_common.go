@@ -81,6 +81,10 @@ func (r *requestDetails) actualDetails() *common.RequestDetails {
 		IsAllProjectsRequest: r.IsAllProjectsRequest,
 		ProjectName:          r.ProjectName,
 		Claims:               r.claims(),
+		URL:                  r.URL,
+		Path:                 r.Path,
+		Query:                r.Query,
+		Method:               r.Method,
 	}
 }
 
@@ -159,6 +163,10 @@ func (c *commonAuthorizer) requestDetails(r *http.Request) (*requestDetails, err
 			IsAllProjectsRequest: util.IsTrue(values.Get("all-projects")),
 			ProjectName:          request.ProjectParam(r),
 			Claims:               claims,
+			URL:                  r.URL.RequestURI(),
+			Path:                 r.URL.Path,
+			Query:                r.URL.Query(),
+			Method:               r.Method,
 		},
 
 		forwardedUsername: forwardedUsername,
