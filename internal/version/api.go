@@ -587,6 +587,7 @@ var APIExtensions = []string{
 	"instances_state_tpm",
 	"ovn_nic_security_filtering",
 	"authorization_scriptlet_request",
+	"vm_boot_priority_skip",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

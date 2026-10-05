@@ -3547,3 +3547,8 @@ This adds the following fields to the `details` argument of the authorization sc
 * `Path`, holding the API path requested by the client
 * `Query`, holding the dictionary of query parameters (note: the values are lists of strings and not single strings)
 * `Method`, holding the HTTP method used in the request
+
+## `vm_boot_priority_skip`
+
+This adds the ability to define `boot.priority` to `skip` on NIC and disk devices, to skip them from the boot sequence. The new default for NICs is to be skipped.
+This additionally adds a `boot.pxe` VM configuration key, defaulting to `false`, to enable PXE on all the NICs included in the boot sequence. This doesn’t affect HTTP boot, which is always enabled for those NICs.
