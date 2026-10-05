@@ -73,9 +73,10 @@ func (d *nicPhysical) validateConfig(instConf instance.ConfigReader, partialVali
 		// gendoc:generate(entity=devices, group=nic_physical, key=boot.priority)
 		//
 		// ---
-		//  type: integer
+		//  type: string
+		//  default: `skip`
 		//  managed: no
-		//  shortdesc: Boot priority for VMs (higher value boots first)
+		//  shortdesc: Boot priority for VMs (higher value boots first), `skip` to skip
 		"boot.priority",
 
 		// gendoc:generate(entity=devices, group=nic_physical, key=attached)
@@ -589,6 +590,17 @@ func IsPhysicalNICWithBridge(s *state.State, deviceProjectName string, d deviceC
 	}
 
 	return false
+}
+
+// UpdatableFields returns a list of fields that can be updated without triggering a device remove & add.
+func (d *nicPhysical) UpdatableFields(oldDevice Type) []string {
+	// Check old and new device types match.
+	_, match := oldDevice.(*nicPhysical)
+	if !match {
+		return []string{}
+	}
+
+	return []string{"boot.priority"}
 }
 
 // Update applies configuration changes to a started device.

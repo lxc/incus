@@ -51,9 +51,10 @@ User keys can be used in search.
 ```
 
 ```{config:option} boot.priority devices-disk
+:default: "`0`"
 :required: "no"
-:shortdesc: "Boot priority for VMs (higher value boots first)"
-:type: "integer"
+:shortdesc: "Boot priority for VMs (higher value boots first), `skip` to skip"
+:type: "string"
 
 ```
 
@@ -576,9 +577,10 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} boot.priority devices-nic_bridged
+:default: "`skip`"
 :managed: "no"
-:shortdesc: "Boot priority for VMs (higher value boots first)"
-:type: "integer"
+:shortdesc: "Boot priority for VMs (higher value boots first), `skip` to skip"
+:type: "string"
 
 ```
 
@@ -983,9 +985,10 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} boot.priority devices-nic_macvlan
+:default: "`skip`"
 :managed: "no"
-:shortdesc: "Boot priority for VMs (higher value boots first)"
-:type: "integer"
+:shortdesc: "Boot priority for VMs (higher value boots first), `skip` to skip"
+:type: "string"
 
 ```
 
@@ -1085,9 +1088,10 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} boot.priority devices-nic_ovn
+:default: "`skip`"
 :managed: "no"
-:shortdesc: "Boot priority for VMs (higher value boots first)"
-:type: "integer"
+:shortdesc: "Boot priority for VMs (higher value boots first), `skip` to skip"
+:type: "string"
 
 ```
 
@@ -1362,8 +1366,9 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} boot.priority devices-nic_p2p
-:shortdesc: "Boot priority for VMs (higher value boots first)"
-:type: "integer"
+:default: "`skip`"
+:shortdesc: "Boot priority for VMs (higher value boots first), `skip` to skip"
+:type: "string"
 
 ```
 
@@ -1518,9 +1523,10 @@ With VMs, this option supports mounting file system disk devices and paths withi
 ```
 
 ```{config:option} boot.priority devices-nic_physical
+:default: "`skip`"
 :managed: "no"
-:shortdesc: "Boot priority for VMs (higher value boots first)"
-:type: "integer"
+:shortdesc: "Boot priority for VMs (higher value boots first), `skip` to skip"
+:type: "string"
 
 ```
 
@@ -1857,9 +1863,10 @@ The custom policy routing table ID to add IPv6 static routes to (in addition to 
 ```
 
 ```{config:option} boot.priority devices-nic_sriov
+:default: "`skip`"
 :managed: "no"
-:shortdesc: "Boot priority for VMs (higher value boots first)"
-:type: "integer"
+:shortdesc: "Boot priority for VMs (higher value boots first), `skip` to skip"
+:type: "string"
 
 ```
 
@@ -2331,6 +2338,14 @@ Valid values are: `stop`, `force-stop` or `stateful-stop`
 :shortdesc: "How long to wait for the instance to shut down"
 :type: "integer"
 Number of seconds to wait for the instance to shut down before it is force-stopped.
+```
+
+```{config:option} boot.pxe instance-boot
+:defaultdesc: "no"
+:liveupdate: "yes"
+:shortdesc: "Whether to enable PXE boot"
+:type: "bool"
+
 ```
 
 ```{config:option} boot.stop.priority instance-boot

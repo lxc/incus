@@ -62,10 +62,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`0`",
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -626,10 +627,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1093,10 +1095,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1210,10 +1213,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1526,9 +1530,10 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1707,10 +1712,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -2096,10 +2102,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -2650,6 +2657,15 @@
 							"longdesc": "Number of seconds to wait for the instance to shut down before it is force-stopped.",
 							"shortdesc": "How long to wait for the instance to shut down",
 							"type": "integer"
+						}
+					},
+					{
+						"boot.pxe": {
+							"defaultdesc": "no",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Whether to enable PXE boot",
+							"type": "bool"
 						}
 					},
 					{

@@ -114,9 +114,10 @@ func (d *nicSRIOV) validateConfig(instConf instance.ConfigReader, partialValidat
 		// gendoc:generate(entity=devices, group=nic_sriov, key=boot.priority)
 		//
 		// ---
-		//  type: integer
+		//  type: string
+		//  default: `skip`
 		//  managed: no
-		//  shortdesc: Boot priority for VMs (higher value boots first)
+		//  shortdesc: Boot priority for VMs (higher value boots first), `skip` to skip
 		"boot.priority",
 
 		// gendoc:generate(entity=devices, group=nic_sriov, key=vendorid)
@@ -530,4 +531,15 @@ func nicSelected(device deviceConfig.Device, nic api.ResourcesNetworkCard) bool 
 	}
 
 	return false
+}
+
+// UpdatableFields returns a list of fields that can be updated without triggering a device remove & add.
+func (d *nicSRIOV) UpdatableFields(oldDevice Type) []string {
+	// Check old and new device types match.
+	_, match := oldDevice.(*nicSRIOV)
+	if !match {
+		return []string{}
+	}
+
+	return []string{"boot.priority"}
 }

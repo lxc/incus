@@ -4355,13 +4355,19 @@ func (d *qemu) deviceBootPriorities(base int) (map[string]int, error) {
 	devices := []devicePrios{}
 
 	for _, dev := range d.expandedDevices.Sorted() {
-		if dev.Config["type"] != "disk" && dev.Config["type"] != "nic" {
+		devType := dev.Config["type"]
+		if devType != "disk" && devType != "nic" {
 			continue
 		}
 
 		bootPrio := uint32(0) // Default to lowest priority.
-		if dev.Config["boot.priority"] != "" {
-			prio, err := strconv.ParseInt(dev.Config["boot.priority"], 10, 32)
+		confPrio := dev.Config["boot.priority"]
+		if confPrio == "skip" || confPrio == "" && devType == "nic" {
+			continue
+		}
+
+		if confPrio != "" {
+			prio, err := strconv.ParseInt(confPrio, 10, 32)
 			if err != nil {
 				return nil, fmt.Errorf("Invalid boot.priority for device %q: %w", dev.Name, err)
 			}
@@ -4979,6 +4985,11 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 			return nil, err
 		}
 	}
+
+	// Add `fw_cfg` configuration.
+	conf = append(conf, qemuFWCfg(&qemuFWCfgOpts{
+		pxe: util.IsTrue(d.localConfig["boot.pxe"]),
+	})...)
 
 	// Allocate 8 PCI slots for hotplug devices.
 	for range 8 {

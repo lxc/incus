@@ -1203,6 +1203,15 @@ var InstanceConfigKeysContainer = map[string]func(value string) error{
 
 // InstanceConfigKeysVM is a map of config key to validator. (keys applying to VM only).
 var InstanceConfigKeysVM = map[string]func(value string) error{
+	// gendoc:generate(entity=instance, group=boot, key=boot.pxe)
+	//
+	// ---
+	//  type: bool
+	//  defaultdesc: no
+	//  liveupdate: yes
+	//  shortdesc: Whether to enable PXE boot
+	"boot.pxe": validate.Optional(validate.IsBool),
+
 	// gendoc:generate(entity=instance, group=security, key=initial.secureboot.pk)
 	//
 	// ---
