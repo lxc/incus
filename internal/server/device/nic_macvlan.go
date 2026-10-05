@@ -97,9 +97,10 @@ func (d *nicMACVLAN) validateConfig(instConf instance.ConfigReader, partialValid
 		// gendoc:generate(entity=devices, group=nic_macvlan, key=boot.priority)
 		//
 		// ---
-		//  type: integer
+		//  type: string
+		//  default: `skip`
 		//  managed: no
-		//  shortdesc: Boot priority for VMs (higher value boots first)
+		//  shortdesc: Boot priority for VMs (higher value boots first), `skip` to skip
 		"boot.priority",
 
 		// gendoc:generate(entity=devices, group=nic_macvlan, key=gvrp)
@@ -448,7 +449,7 @@ func (d *nicMACVLAN) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"connected"}
+	return []string{"connected", "boot.priority"}
 }
 
 // Update applies configuration changes to a started device.

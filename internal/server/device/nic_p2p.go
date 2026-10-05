@@ -177,8 +177,9 @@ func (d *nicP2P) validateConfig(instConf instance.ConfigReader, partialValidatio
 		// gendoc:generate(entity=devices, group=nic_p2p, key=boot.priority)
 		//
 		// ---
-		//  type: integer
-		//  shortdesc: Boot priority for VMs (higher value boots first)
+		//  type: string
+		//  default: `skip`
+		//  shortdesc: Boot priority for VMs (higher value boots first), `skip` to skip
 		"boot.priority",
 
 		// gendoc:generate(entity=devices, group=nic_p2p, key=io.bus)
@@ -243,7 +244,7 @@ func (d *nicP2P) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "ipv4.routes", "ipv6.routes", "connected"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "ipv4.routes", "ipv6.routes", "connected", "boot.priority"}
 }
 
 // Start is run when the device is added to a running instance or instance is starting up.
