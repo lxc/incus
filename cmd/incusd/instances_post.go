@@ -915,7 +915,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		req = api.InstancesPost{
 			InstancePut: bInfo.Config.Container.InstancePut,
 			Name:        bInfo.Name,
-			Source:      api.InstanceSource{}, // Only relevant for "copy" or "migration", but may not be nil.
+			Source:      api.InstanceSource{Type: "backup"},
 			Type:        api.InstanceType(bInfo.Config.Container.Type),
 		}
 
@@ -1089,7 +1089,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 			req = api.InstancesPost{
 				InstancePut: instStateAPI.Writable(),
 				Name:        inst.Name(),
-				Source:      api.InstanceSource{},
+				Source:      api.InstanceSource{Type: "backup"},
 				Type:        inst.Type().ToAPI(),
 			}
 
@@ -1141,7 +1141,7 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 						Profiles:     snapStateAPI.Profiles,
 					},
 					Name:   inst.Name(),
-					Source: api.InstanceSource{},
+					Source: api.InstanceSource{Type: "backup"},
 					Type:   inst.Type().ToAPI(),
 				}
 
