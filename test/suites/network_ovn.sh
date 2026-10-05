@@ -2445,6 +2445,7 @@ test_network_ovn_parent() {
 
     # A running instance without routes doesn't block reparenting.
     incus config device unset u1 eth0 ipv4.routes
+    sleep 5
     incus network set ovn2 parent=ovn4
     sleep 2
     [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "$(incus network info ovn4 | awk '/Logical router:/ {print $NF}')" ]
