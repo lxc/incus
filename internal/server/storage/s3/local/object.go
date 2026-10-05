@@ -87,7 +87,7 @@ func (s *Server) headObject(w http.ResponseWriter, r *http.Request, key string) 
 	meta, err := loadOrInferMeta(dataPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Object not found."}).Response(w)
+			(&s3.Error{Code: s3.ErrorCodeNoSuchKey, Message: "The specified key does not exist.", Key: key}).Response(w)
 			return
 		}
 
@@ -109,7 +109,7 @@ func (s *Server) getObject(w http.ResponseWriter, r *http.Request, key string) {
 	meta, err := loadOrInferMeta(dataPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Object not found."}).Response(w)
+			(&s3.Error{Code: s3.ErrorCodeNoSuchKey, Message: "The specified key does not exist.", Key: key}).Response(w)
 			return
 		}
 
@@ -262,7 +262,7 @@ func (s *Server) copyObject(w http.ResponseWriter, r *http.Request, key string) 
 	srcMeta, err := loadOrInferMeta(srcPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Source object not found."}).Response(w)
+			(&s3.Error{Code: s3.ErrorCodeNoSuchKey, Message: "The specified source key does not exist.", Key: srcKey}).Response(w)
 			return
 		}
 
@@ -273,7 +273,7 @@ func (s *Server) copyObject(w http.ResponseWriter, r *http.Request, key string) 
 	src, err := os.Open(srcPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Source object not found."}).Response(w)
+			(&s3.Error{Code: s3.ErrorCodeNoSuchKey, Message: "The specified source key does not exist.", Key: srcKey}).Response(w)
 			return
 		}
 
@@ -404,7 +404,7 @@ func (s *Server) handleObjectACL(w http.ResponseWriter, r *http.Request, key str
 		_, err = loadOrInferMeta(dataPath)
 		if err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				(&s3.Error{Code: s3.ErrorCodeNoSuchBucket, Message: "Object not found."}).Response(w)
+				(&s3.Error{Code: s3.ErrorCodeNoSuchKey, Message: "The specified key does not exist.", Key: key}).Response(w)
 				return
 			}
 
