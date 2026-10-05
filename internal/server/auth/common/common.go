@@ -7,4 +7,8 @@ type RequestDetails struct {
 	IsAllProjectsRequest bool
 	ProjectName          string
 	Claims               map[string]any
+	URL                  string
+	Path                 string
+	Query                map[string][]string
+	Method               string
 }
