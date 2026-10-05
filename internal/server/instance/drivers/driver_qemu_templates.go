@@ -1069,3 +1069,30 @@ func qemuVmgen(opts *qemuVmgenIDOpts) []cfg.Section {
 		},
 	}}
 }
+
+type qemuFWCfgOpts struct {
+	pxe bool
+}
+
+func qemuFWCfg(opts *qemuFWCfgOpts) []cfg.Section {
+	pxe := "no"
+	if opts.pxe {
+		pxe = "yes"
+	}
+
+	return []cfg.Section{{
+		Name:    "fw_cfg",
+		Comment: "PXEv4 configuration",
+		Entries: map[string]string{
+			"name":   "opt/org.tianocore/IPv4PXESupport",
+			"string": pxe,
+		},
+	}, {
+		Name:    "fw_cfg",
+		Comment: "PXEv6 configuration",
+		Entries: map[string]string{
+			"name":   "opt/org.tianocore/IPv6PXESupport",
+			"string": pxe,
+		},
+	}}
+}

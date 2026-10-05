@@ -4980,6 +4980,11 @@ func (d *qemu) generateQemuConfig(bs *qemuBootState, mountInfo *storagePools.Mou
 		}
 	}
 
+	// Add `fw_cfg` configuration.
+	conf = append(conf, qemuFWCfg(&qemuFWCfgOpts{
+		pxe: util.IsTrue(d.localConfig["boot.pxe"]),
+	})...)
+
 	// Allocate 8 PCI slots for hotplug devices.
 	for range 8 {
 		bus.allocate(busFunctionGroupNone)
