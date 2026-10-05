@@ -139,8 +139,8 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 	// Special case restriction checks on volatile.* keys.
 	strip := false // nolint:staticcheck
 
-	if slices.Contains([]string{"copy", "migration"}, req.Source.Type) {
-		// Allow stripping volatile keys if dealing with a copy or migration.
+	if slices.Contains([]string{"copy", "migration", "backup"}, req.Source.Type) {
+		// Allow stripping volatile keys if dealing with a copy, migration or backup.
 		strip = true
 	}
 
@@ -375,6 +375,29 @@ func checkRestrictionsOnVolatileConfig(project api.Project, instanceType instanc
 		if currentValue != value {
 			return fmt.Errorf("Changing %q on %s %q in project %q is forbidden", key, instanceType, instanceName, project.Name)
 		}
+	}
+
+	return nil
+}
+
+// StripRestrictedVolatileConfig drops the unsafe volatile.* keys of an imported backup in restricted projects, keeping the on-disk idmap state.
+func StripRestrictedVolatileConfig(tx *db.ClusterTx, projectName string, instanceType instancetype.Type, config map[string]string) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil {
+		return nil
+	}
+
+	lastIdmap, ok := config["volatile.last_state.idmap"]
+
+	// Never fails when stripping.
+	_ = checkRestrictionsOnVolatileConfig(info.Project, instanceType, "", config, nil, true)
+
+	if ok {
+		config["volatile.last_state.idmap"] = lastIdmap
 	}
 
 	return nil
