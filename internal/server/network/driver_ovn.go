@@ -4459,6 +4459,18 @@ func (n *ovn) deleteChassisGroupEntry() error {
 func (n *ovn) Delete(clientType request.ClientType) error {
 	n.logger.Debug("Delete", logger.Ctx{"clientType": clientType})
 
+	// Refuse before touching anything so a refused delete leaves the network running.
+	if clientType == request.ClientTypeNormal && n.parentID == 0 {
+		children, err := n.childNetworks()
+		if err != nil {
+			return err
+		}
+
+		if len(children) > 0 {
+			return fmt.Errorf("Network is the parent of %d other network(s)", len(children))
+		}
+	}
+
 	// Don't fail on stop errors as that would prevent the northbound database cleanup below.
 	err := n.Stop()
 	if err != nil {
@@ -4473,17 +4485,6 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 				return err
 			}
 		} else {
-			var children []*ovn
-
-			children, err = n.childNetworks()
-			if err != nil {
-				return err
-			}
-
-			if len(children) > 0 {
-				return fmt.Errorf("Network is the parent of %d other network(s)", len(children))
-			}
-
 			// Delete the router and anything tied to it (router ports, static routes, policies, nat, ...).
 			err = n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName())
 			if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
