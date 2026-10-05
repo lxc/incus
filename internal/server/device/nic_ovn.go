@@ -80,7 +80,7 @@ func (d *nicOVN) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"security.acls", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "limits.ingress", "limits.egress", "limits.max", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "connected", "ipv4.address.external", "ipv6.address.external"}
+	return []string{"security.acls", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "limits.ingress", "limits.egress", "limits.max", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "connected", "ipv4.address.external", "ipv6.address.external", "boot.priority"}
 }
 
 // validateConfig checks the supplied config for correctness.
@@ -219,9 +219,10 @@ func (d *nicOVN) validateConfig(instConf instance.ConfigReader, partialValidatio
 		// gendoc:generate(entity=devices, group=nic_ovn, key=boot.priority)
 		//
 		// ---
-		//  type: integer
+		//  type: string
+		//  default: `skip`
 		//  managed: no
-		//  shortdesc: Boot priority for VMs (higher value boots first)
+		//  shortdesc: Boot priority for VMs (higher value boots first), `skip` to skip
 		"boot.priority",
 
 		// gendoc:generate(entity=devices, group=nic_ovn, key=security.acls)

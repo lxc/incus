@@ -48,7 +48,7 @@ func nicValidationRules(requiredFields []string, optionalFields []string, instCo
 		"ipv6.address":                         validate.Optional(validate.IsNetworkAddressV6),
 		"ipv4.routes":                          validate.Optional(validate.IsListOf(validate.IsNetworkV4)),
 		"ipv6.routes":                          validate.Optional(validate.IsListOf(validate.IsNetworkV6)),
-		"boot.priority":                        validate.Optional(validate.IsUint32),
+		"boot.priority":                        validate.Optional(validate.Or(validate.IsUint32, validate.IsOneOf("skip"))),
 		"ipv4.gateway":                         networkValidGateway,
 		"ipv6.gateway":                         networkValidGateway,
 		"ipv4.host_address":                    validate.Optional(validate.IsNetworkAddressV4),

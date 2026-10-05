@@ -376,9 +376,10 @@ func (d *nicBridged) validateConfig(instConf instance.ConfigReader, partialValid
 		// gendoc:generate(entity=devices, group=nic_bridged, key=boot.priority)
 		//
 		// ---
-		//  type: integer
+		//  type: string
+		//  default: `skip`
 		//  managed: no
-		//  shortdesc: Boot priority for VMs (higher value boots first)
+		//  shortdesc: Boot priority for VMs (higher value boots first), `skip` to skip
 		"boot.priority",
 
 		// gendoc:generate(entity=devices, group=nic_bridged, key=vlan)
@@ -854,7 +855,7 @@ func (d *nicBridged) UpdatableFields(oldDevice Type) []string {
 		return []string{}
 	}
 
-	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged", "connected"}
+	return []string{"limits.ingress", "limits.egress", "limits.max", "limits.ingress.burst", "limits.egress.burst", "limits.max.burst", "limits.ingress.bucket", "limits.egress.bucket", "limits.max.bucket", "limits.priority", "queue.discipline", "queue.discipline.attach", "ipv4.routes", "ipv6.routes", "ipv4.routes.external", "ipv6.routes.external", "ipv4.address", "ipv6.address", "security.mac_filtering", "security.ipv4_filtering", "security.ipv6_filtering", "security.acls", "security.acls.default.egress.action", "security.acls.default.egress.logged", "security.acls.default.ingress.action", "security.acls.default.ingress.logged", "connected", "boot.priority"}
 }
 
 // Add is run when a device is added to a non-snapshot instance whether or not the instance is running.
