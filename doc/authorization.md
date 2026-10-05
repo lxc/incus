@@ -111,6 +111,10 @@ To use scriptlet authorization, you can write a scriptlet in the `authorization.
    - `Chain`: the certificate chain as a list of dissected x509 certificates
    - `Certificate`: the certificate data stored in the database
    - `Claims`: the validated OIDC token claims as a dictionary (empty for non-OIDC clients)
+   - `URL`: the raw client request URL (`<path>?<query>`)
+   - `Path`: the API path requested by the client
+   - `Query`: the dictionary of query parameters (note: the values are lists of strings and not single strings)
+   - `Method`: the HTTP method used in the request
 - `object`, the object on which the user requests authorization
 - `entitlement`, the authorization level asked by the user
 
