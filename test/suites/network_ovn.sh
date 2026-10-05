@@ -2523,6 +2523,23 @@ test_network_ovn_parent() {
     ! incus network delete ovn1 || false
     incus network delete ovn2
     incus network delete ovn1
+
+    echo "==> Check a refused delete of a parent in a project leaves its gateway in place"
+    incus project create testparent -c features.networks=true -c features.images=false -c restricted=true
+    incus project set testparent restricted.networks.uplinks=incusbr0
+    incus network create p1 --project testparent --type=ovn network=incusbr0 ipv4.address=10.10.21.1/24 ipv4.nat=true ipv6.address=none
+    incus network create p2 --project testparent --type=ovn parent=p1 ipv4.address=10.10.22.1/24 ipv4.nat=true ipv6.address=none
+    sleep 2
+    incus network show p1 --project testparent | grep -F "/1.0/networks/p2?project=testparent"
+    projectRouter="$(incus network info p1 --project testparent | awk '/Logical router:/ {print $NF}')"
+    [ -n "$(ovn-nbctl --bare --columns=ha_chassis find ha_chassis_group "name=${projectRouter%-lr}")" ]
+    ! incus network delete p1 --project testparent || false
+    sleep 2
+    [ -n "$(ovn-nbctl --bare --columns=ha_chassis find ha_chassis_group "name=${projectRouter%-lr}")" ]
+    incus network delete p2 --project testparent
+    incus network delete p1 --project testparent
+    incus project delete testparent
+
     incus network delete incusbr0
 }
 
