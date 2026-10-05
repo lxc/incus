@@ -3538,3 +3538,12 @@ This adds the `security.mac_filtering`, `security.ipv4_filtering` and `security.
 They are implemented through OVN port security on the instance's logical switch port,
 restricting the source MAC address and, when IP filtering is enabled, the IP addresses
 (including any static routes) the instance may use.
+
+## `authorization_scriptlet_request`
+
+This adds the following fields to the `details` argument of the authorization scriptlet:
+
+* `URL`, holding the raw client request URL (`<path>?<query>`)
+* `Path`, holding the API path requested by the client
+* `Query`, holding the dictionary of query parameters (note: the values are lists of strings and not single strings)
+* `Method`, holding the HTTP method used in the request
