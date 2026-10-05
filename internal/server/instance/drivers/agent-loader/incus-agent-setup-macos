@@ -30,7 +30,7 @@ fi
 # Setup the mount target.
 umount "$PREFIX" >/dev/null 2>&1 || true
 mkdir -p "$PREFIX"
-mount_tmpfs -s 50M "$PREFIX"
+mount_tmpfs -o nobrowse -s 50M "$PREFIX"
 chmod 0700 "$PREFIX"
 
 # Copy the data.
