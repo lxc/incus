@@ -253,6 +253,7 @@ preseed
 proxied
 proxying
 PTS
+PXE
 qdisc
 QEMU
 qgroup
