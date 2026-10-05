@@ -968,6 +968,26 @@ func internalImportFromBackup(ctx context.Context, s *state.State, projectName s
 		return errors.New("No instance config in backup config")
 	}
 
+	// Drop the volatile keys that restricted projects don't allow, the server regenerates them.
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		err := project.StripRestrictedVolatileConfig(tx, projectName, instanceType, backupConf.Container.Config)
+		if err != nil {
+			return err
+		}
+
+		for _, snap := range backupConf.Snapshots {
+			err = project.StripRestrictedVolatileConfig(tx, projectName, instanceType, snap.Config)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	instDBArgs, err := backup.ConfigToInstanceDBArgs(s, backupConf, projectName, true)
 	if err != nil {
 		return err
