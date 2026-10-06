@@ -1901,6 +1901,13 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 
 			newVolName, _ := internalInstance.SplitVolumeSource(newDevices[dev.Name]["source"])
 			srcVolName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+
+			// Refreshing from an instance snapshot, use the matching volume snapshot.
+			if src.IsSnapshot() {
+				_, snapName, _ := api.GetParentAndSnapshotName(src.Name())
+				srcVolName = fmt.Sprintf("%s/%s", srcVolName, snapName)
+			}
+
 			err = diskPool.RefreshCustomVolume(storageProjectName, srcStorageProjectName, newVolName, "", nil, dev.Config["pool"], srcVolName, snapshots, false, op)
 			if err != nil {
 				return err
@@ -1949,7 +1956,15 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 		srcDependentVolumes := []localMigration.DependentVolumeArgs{}
 		dstDependentVolumes := []localMigration.DependentVolumeArgs{}
 		for _, volWithType := range volumesWithTypes {
-			srcDependentVolumes = append(srcDependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], nil))
+			srcVol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], nil)
+
+			// Refreshing from an instance snapshot, use the matching volume snapshot.
+			if src.IsSnapshot() {
+				_, snapName, _ := api.GetParentAndSnapshotName(src.Name())
+				srcVol.Name = fmt.Sprintf("%s/%s", srcVol.Name, snapName)
+			}
+
+			srcDependentVolumes = append(srcDependentVolumes, srcVol)
 
 			vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], newDevices[*volWithType.Volume.DeviceName])
 			dstDependentVolumes = append(dstDependentVolumes, vol)
