@@ -1346,7 +1346,7 @@ func ClusterWideStorageConfig(driverName string) []string {
 
 // GenerateDependentVolumesOffer creates an offer header containing
 // all information required for dependent volume migration.
-func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, projectName string, snapshots bool, devices api.DevicesMap, skipDisks []string, clusterMove bool) ([]*migration.DependentVolume, error) {
+func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, srcDevices map[string]map[string]string, projectName string, snapshots bool, devices api.DevicesMap, skipDisks []string, clusterMove bool) ([]*migration.DependentVolume, error) {
 	result := make([]*migration.DependentVolume, 0, len(config.DependentVolumes))
 	if len(config.DependentVolumes) == 0 {
 		return result, nil
@@ -1357,7 +1357,11 @@ func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, 
 		return nil, err
 	}
 
+	// The config of a snapshot has no instance section, use the source devices instead.
 	devicesMap := DevicesMapFromBackupConfig(config)
+	if config.Container == nil {
+		devicesMap = DevicesMapFromDevices(srcDevices)
+	}
 
 	for _, volConfig := range config.DependentVolumes {
 		poolName := volConfig.Pool.Name
@@ -1596,8 +1600,17 @@ func DeviceByPoolAndVolume(deviceMap map[string]map[string]string, poolName stri
 
 // DevicesMapFromBackupConfig builds a map of instance devices indexed by pool and volume name.
 func DevicesMapFromBackupConfig(config *backupConfig.Config) map[string]map[string]string {
+	if config.Container == nil {
+		return map[string]map[string]string{}
+	}
+
+	return DevicesMapFromDevices(config.Container.ExpandedDevices)
+}
+
+// DevicesMapFromDevices builds a map of the given devices indexed by pool and volume name.
+func DevicesMapFromDevices(devices map[string]map[string]string) map[string]map[string]string {
 	devicesMap := map[string]map[string]string{}
-	for devName, dev := range config.Container.ExpandedDevices {
+	for devName, dev := range devices {
 		_, hasPool := devicesMap[dev["pool"]]
 		if !hasPool {
 			devicesMap[dev["pool"]] = map[string]string{}
