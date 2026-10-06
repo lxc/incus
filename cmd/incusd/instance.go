@@ -469,8 +469,24 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			}
 		}()
 
+		instDevices := inst.LocalDevices()
 		for _, srcSnap := range snapshots {
 			snapLocalDevices := srcSnap.LocalDevices().Clone()
+
+			// The snapshots refer to the dependent volumes of the new instance rather than the source's.
+			for devName, dev := range snapLocalDevices {
+				if dev["type"] != "disk" || util.IsFalseOrEmpty(dev["dependent"]) || dev["path"] == "/" || dev["pool"] == "" {
+					continue
+				}
+
+				instDev, ok := instDevices[devName]
+				if !ok {
+					continue
+				}
+
+				dev["source"] = instDev["source"]
+				dev["pool"] = instDev["pool"]
+			}
 
 			// Load snap root disk from expanded devices (in case it doesn't have its own root disk).
 			snapExpandedRootDiskDevKey, snapExpandedRootDiskDev, err := internalInstance.GetRootDiskDevice(srcSnap.ExpandedDevices().CloneNative())
