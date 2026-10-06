@@ -67,6 +67,9 @@ A child network keeps its own switch, subnet, DHCP, DNS records, ACLs and instan
 It has no uplink of its own, reaching the outside through the external port of its parent's router, and it can enable NAT independently of its parent so that one subnet can be translated while another is routed natively on the same router.
 A child can also set `ipv4.nat.address` and `ipv6.nat.address` to translate to an address of its own rather than to the external address of the shared router.
 
+With `ovn.ingress_mode` set to `l2proxy` (the default) on the uplink network, a NAT address is advertised on that network with proxy ARP/NDP.
+With `routed`, the uplink network must instead route the NAT address to the external address of the logical router, for example through {ref}`network-bgp`.
+
 The following applies to child networks:
 
 - Instances on networks sharing a logical router can reach each other by default, as they are all routed by it.
