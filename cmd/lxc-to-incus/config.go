@@ -23,6 +23,7 @@ var checkedKeys = []string{
 	"lxc.autodev",
 	"lxc.cap.drop",
 	"lxc.environment",
+	"lxc.environment.runtime",
 	"lxc.haltsignal",
 	"lxc.id_map",
 	"lxc.idmap",
