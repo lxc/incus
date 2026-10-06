@@ -5390,6 +5390,14 @@ func (b *backend) MigrateCustomVolume(projectName string, conn io.ReadWriteClose
 	l.Debug("MigrateCustomVolume started")
 	defer l.Debug("MigrateCustomVolume finished")
 
+	// The refresh target chooses which snapshots to send, so validate the names used as path segments.
+	for _, snapshot := range args.Snapshots {
+		err := validate.IsAPIName(snapshot, false)
+		if err != nil {
+			return fmt.Errorf("Invalid snapshot name: %w", err)
+		}
+	}
+
 	// Get the volume name on storage.
 	volStorageName := project.StorageVolume(projectName, args.Name)
 
@@ -5447,6 +5455,14 @@ func (b *backend) CreateCustomVolumeFromMigration(projectName string, conn io.Re
 	l := b.logger.AddContext(logger.Ctx{"project": projectName, "volName": args.Name, "args": fmt.Sprintf("%+v", args)})
 	l.Debug("CreateCustomVolumeFromMigration started")
 	defer l.Debug("CreateCustomVolumeFromMigration finished")
+
+	// Validate the snapshot names as they're used as path segments.
+	for _, snapshot := range args.Snapshots {
+		err := validate.IsAPIName(snapshot.GetName(), false)
+		if err != nil {
+			return fmt.Errorf("Invalid snapshot name: %w", err)
+		}
+	}
 
 	err := b.isStatusReady()
 	if err != nil {
