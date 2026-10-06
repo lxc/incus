@@ -785,6 +785,26 @@ func createFromBackup(s *state.State, r *http.Request, projectName string, data 
 		}
 	}
 
+	// Snapshots may not be allowed in the project.
+	if len(bInfo.Snapshots) > 0 {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			dbProject, err := dbCluster.GetProject(ctx, tx.Tx(), projectName)
+			if err != nil {
+				return err
+			}
+
+			p, err := dbProject.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			return project.AllowSnapshotCreation(p)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	// Override config.
 	configMap := map[string]string{}
 	if config != "" {
