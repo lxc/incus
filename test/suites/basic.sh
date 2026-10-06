@@ -443,6 +443,14 @@ test_basic_usage() {
     # check that we can set the environment
     incus exec foo -- pwd | grep /root
     incus exec --env BEST_BAND=meshuggah foo -- env | grep meshuggah
+    incus config set foo environment.TEST_VAR=custom
+    [ "$(incus exec foo -- printenv TEST_VAR)" = "custom" ]
+    incus config set foo environment.PATH=/opt/bin
+    [ "$(incus exec foo -- printenv PATH)" = "/opt/bin" ]
+    incus restart foo
+    incus config unset foo environment.PATH
+    incus config unset foo environment.TEST_VAR
+    incus restart foo
     incus exec foo -- ip link show | grep eth0
 
     # check that we can get the return code for a non- wait-for-websocket exec
