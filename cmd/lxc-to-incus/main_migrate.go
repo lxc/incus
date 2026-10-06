@@ -247,6 +247,7 @@ func convertContainer(d incus.InstanceServer, container *liblxc.Container, stora
 	// Convert environment
 	fmt.Println("Processing environment configuration")
 	value = getConfig(conf, "lxc.environment")
+	value = append(value, getConfig(conf, "lxc.environment.runtime")...)
 	for _, env := range value {
 		entry := strings.Split(env, "=")
 		key := strings.TrimSpace(entry[0])
