@@ -502,6 +502,15 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 			}
 		}()
 
+		// Snapshots may not be allowed in the target project.
+		if len(snapshots) > 0 {
+			p := inst.Project()
+			err = project.AllowSnapshotCreation(&p)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		instDevices := inst.LocalDevices()
 		for _, srcSnap := range snapshots {
 			snapLocalDevices := srcSnap.LocalDevices().Clone()

@@ -7340,6 +7340,14 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 		// A zero length Snapshots slice indicates volume only migration in
 		// VolumeTargetArgs. So if VolumeOnly was requested, do not populate them.
 		if args.Snapshots {
+			// Snapshots may not be allowed in the project.
+			if len(snapshots) > 0 && args.ClusterMoveSourceName != d.name {
+				err := project.AllowSnapshotCreation(&d.project)
+				if err != nil {
+					return err
+				}
+			}
+
 			volTargetArgs.Snapshots = make([]*migration.Snapshot, 0, len(snapshots))
 			for _, snap := range snapshots {
 				volTargetArgs.Snapshots = append(volTargetArgs.Snapshots, &migration.Snapshot{Name: snap.Name})
