@@ -111,6 +111,10 @@ func (m *MetricSet) Merge(metricSet *MetricSet) {
 	}
 }
 
+// labelValueEscaper escapes label values as required by the Prometheus text format.
+var labelValueEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`)
+
+// String renders the metric set in the Prometheus text format.
 func (m *MetricSet) String() string {
 	var out strings.Builder
 	metricTypes := make([]MetricType, 0, len(m.set))
@@ -170,7 +174,7 @@ func (m *MetricSet) String() string {
 
 					out.WriteString(labelName)
 					out.WriteString("=\"")
-					out.WriteString(sample.Labels[labelName])
+					out.WriteString(labelValueEscaper.Replace(sample.Labels[labelName]))
 					out.WriteString("\"")
 				}
 
