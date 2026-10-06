@@ -1125,7 +1125,9 @@ func (d *Daemon) init() error {
 
 	// Detect LXC features
 	d.os.LXCFeatures = map[string]bool{}
-	lxcExtensions := []string{}
+	lxcExtensions := []string{
+		"environment_runtime_hooks",
+	}
 
 	for _, extension := range lxcExtensions {
 		d.os.LXCFeatures[extension] = liblxc.HasAPIExtension(extension)
