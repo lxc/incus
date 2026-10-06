@@ -59,6 +59,7 @@ import (
 	"github.com/lxc/incus/v6/shared/revert"
 	"github.com/lxc/incus/v6/shared/units"
 	"github.com/lxc/incus/v6/shared/util"
+	"github.com/lxc/incus/v6/shared/validate"
 )
 
 var (
@@ -7778,6 +7779,16 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 		// (<parent>/<snap>) rather than the expected snapshot name only form, so we need to handle both.
 		if internalInstance.IsSnapshot(snapshot.Name) {
 			_, snapName, _ = api.GetParentAndSnapshotName(snapshot.Name)
+		}
+
+		// The name is used as a path segment and must match the backup content.
+		err = validate.IsAPIName(snapName, false)
+		if err != nil {
+			return fmt.Errorf("Invalid snapshot name: %w", err)
+		}
+
+		if !slices.Contains(srcBackup.Snapshots, snapName) {
+			return fmt.Errorf("Snapshot %q in index doesn't match backup content", snapName)
 		}
 
 		fullSnapName := drivers.GetSnapshotVolumeName(srcBackup.Name, snapName)
