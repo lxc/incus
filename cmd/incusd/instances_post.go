@@ -661,6 +661,38 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 		req.Config["volatile.apply_nvram"] = "true"
 	}
 
+	// When refreshing, the target keeps its own dependent volumes unless the request overrides them.
+	if req.Source.Refresh {
+		target, err := instance.LoadByProjectAndName(s, targetProject, req.Name)
+		if err == nil {
+			sourceDevices := source.LocalDevices()
+			targetDevices := target.LocalDevices()
+
+			err = source.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+				targetDevice, ok := targetDevices[dev.Name]
+				if !ok {
+					return nil
+				}
+
+				reqDevice := req.Devices[dev.Name]
+				if reqDevice != nil && (reqDevice["source"] != sourceDevices[dev.Name]["source"] || reqDevice["pool"] != sourceDevices[dev.Name]["pool"]) {
+					return nil
+				}
+
+				if req.Devices == nil {
+					req.Devices = map[string]map[string]string{}
+				}
+
+				req.Devices[dev.Name] = maps.Clone(targetDevice)
+
+				return nil
+			})
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+	}
+
 	err = validateDependentVolumes(s, source, targetProject, req)
 	if err != nil {
 		return response.SmartError(err)
