@@ -8491,6 +8491,16 @@ func (b *backend) CreateCustomVolumeFromBackup(srcBackup backup.Info, srcData io
 			_, snapName, _ = api.GetParentAndSnapshotName(snapshot.Name)
 		}
 
+		// The name is used as a path segment and must match the backup content.
+		err = validate.IsAPIName(snapName, false)
+		if err != nil {
+			return fmt.Errorf("Invalid snapshot name: %w", err)
+		}
+
+		if !slices.Contains(srcBackup.Snapshots, snapName) {
+			return fmt.Errorf("Snapshot %q in index doesn't match backup content", snapName)
+		}
+
 		fullSnapName := drivers.GetSnapshotVolumeName(srcBackup.Name, snapName)
 		snapVolStorageName := project.StorageVolume(srcBackup.Project, fullSnapName)
 		snapVol := b.GetVolume(drivers.VolumeTypeCustom, drivers.ContentType(srcBackup.Config.Volume.ContentType), snapVolStorageName, snapshot.Config)
