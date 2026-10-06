@@ -11,6 +11,7 @@ Backups <backup>
 Performance tuning <explanation/performance_tuning>
 Benchmarking <howto/benchmark_performance>
 Monitor metrics <metrics>
+Report local health to systemd <systemd_report>
 Recover instances <howto/disaster_recovery>
 Database </database>
 /architectures
