@@ -170,3 +170,17 @@ func TestClusterAddress(t *testing.T) {
 
 	assert.Equal(t, "127.0.0.1:666", nodeConfig.ClusterAddress())
 }
+
+func TestSystemdReport(t *testing.T) {
+	tx, cleanup := db.NewTestNodeTx(t)
+	defer cleanup()
+
+	config, err := node.ConfigLoad(context.Background(), tx)
+
+	require.NoError(t, err)
+	assert.False(t, config.MetricsSystemdReport())
+
+	_, err = config.Replace(map[string]string{"core.metrics.systemd_report": "true"})
+	require.NoError(t, err)
+	assert.True(t, config.MetricsSystemdReport())
+}

@@ -69,6 +69,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/storage/linstor"
 	"github.com/lxc/incus/v7/internal/server/sys"
 	"github.com/lxc/incus/v7/internal/server/syslog"
+	"github.com/lxc/incus/v7/internal/server/systemd_report"
 	"github.com/lxc/incus/v7/internal/server/task"
 	"github.com/lxc/incus/v7/internal/server/ucred"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
@@ -182,6 +183,10 @@ type Daemon struct {
 	// Linstor client.
 	linstor   *linstor.Client
 	linstorMu sync.Mutex
+
+	// Systemd-report server.
+	systemdReportMu     sync.Mutex
+	systemdReportServer *systemd_report.Server
 }
 
 // DaemonConfig holds configuration values for Daemon.
@@ -1725,6 +1730,13 @@ func (d *Daemon) init() error {
 	// Re-balance in case things changed while the daemon was down
 	deviceTaskBalance(d.State())
 
+	if d.localConfig.MetricsSystemdReport() {
+		err = d.startSystemdReportServer()
+		if err != nil {
+			return fmt.Errorf("Failed starting systemd-report metrics: %w", err)
+		}
+	}
+
 	// Unblock incoming requests
 	d.waitReady.Cancel()
 
@@ -1823,6 +1835,11 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 	// Cancelling the context will make everyone aware that we're shutting down.
 	d.shutdownCancel()
 
+	err := d.stopSystemdReportServer()
+	if err != nil {
+		logger.Warn("Failed to stop systemd-report metrics", logger.Ctx{"err": err})
+	}
+
 	if d.loggingController != nil {
 		d.loggingController.Shutdown()
 	}
@@ -1841,7 +1858,6 @@ func (d *Daemon) Stop(ctx context.Context, sig os.Signal) error {
 		}
 	}
 
-	var err error
 	var instances []instance.Instance
 	var instancesLoaded bool // If this is left as false this indicates an error loading instances.
 
