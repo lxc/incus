@@ -46,3 +46,20 @@ If you have a lot of local activity between instances or between the Incus host 
 You can do this by increasing the transmit and receive queue lengths.
 
 See {ref}`network-increase-bandwidth` for instructions.
+
+(performance-tuning-vm-memory)=
+## Virtual machine memory allocation
+
+By default, Incus allocates the memory of a virtual machine as shared memory.
+This is required by `virtiofs` directory shares and similar devices which need the host side to map the memory of the virtual machine, and it allows such devices to be added to a running virtual machine.
+
+Shared memory comes with a performance trade-off on systems where transparent huge pages aren't applied to it, which is the default on most Linux distributions (`/sys/kernel/mm/transparent_hugepage/shmem_enabled` set to `never`).
+Without huge pages, the hypervisor has to handle a lot more page faults, which is particularly visible with nested virtualization where every such fault is far more expensive.
+
+Incus allocates regular (non-shared) memory instead in the following cases, unless a device of the virtual machine requires shared memory when it starts:
+
+* `security.nesting` is explicitly set to `true`, as nested virtualization benefits the most from transparent huge pages.
+* The virtual machine can't use `virtiofs`, for example when `migration.stateful` is set to `true` or when `virtiofsd` isn't available on the host.
+
+A virtual machine started with regular memory can't have a directory share added while it's running, it must be restarted first.
+Setting {config:option}`instance-resource-limits:limits.memory.hugepages` to `true` is another way to get huge pages for the memory of a virtual machine, at the cost of having to reserve them on the host.

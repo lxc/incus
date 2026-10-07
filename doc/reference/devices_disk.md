@@ -10,6 +10,8 @@ Disk devices supply additional storage to instances.
 
 For containers, they are essentially mount points inside the instance (either as a bind-mount of an existing file or directory on the host, or, if the source is a block device, a regular mount).
 Virtual machines share host-side mounts or directories through `9p` or `virtiofs` (if available), or as VirtIO disks for block-based disks.
+`virtiofs` requires the memory of the virtual machine to be shared with the host, which is the default allocation (see {ref}`performance-tuning-vm-memory`).
+A directory share can't be added to a running virtual machine that was started without shared memory.
 
 ```{warning}
 The device name affects the serial generated for the device. If the device name exceeds 14 characters for `nvme` and `virtio-blk`, or 30 characters for `virtio-scsi`, Incus will hash the device value to ensure the generated serial remains within supported length constraints. The device name itself is left unchanged.
