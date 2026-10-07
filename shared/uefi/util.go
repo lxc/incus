@@ -207,3 +207,21 @@ func ParseBootXXXX(name string) (string, uint16, bool) {
 
 	return name[:n-4], uint16(i), true
 }
+
+// ESLGUIDVar gets the GUID and variable name associated to the given ESL.
+func ESLGUIDVar(esl string) (string, string) {
+	var guid, varName string
+	switch esl {
+	case "pk", "kek":
+		guid = EfiGlobalVariableGuid
+		varName = strings.ToUpper(esl)
+	case "db", "dbx", "dbt":
+		guid = EfiImageSecurityDatabaseGuid
+		varName = esl
+	case "mok":
+		guid = ShimLockGuid
+		varName = "MokList"
+	}
+
+	return guid, varName
+}
