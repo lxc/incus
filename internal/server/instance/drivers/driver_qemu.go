@@ -2904,7 +2904,7 @@ func (d *qemu) setupNvram() error {
 					return fmt.Errorf("Invalid base64 value for %q: %q", k, value)
 				}
 			} else if strings.HasPrefix(k, "initial.secureboot.") {
-				guid, varName = util.ESLGUIDVar(parts[2])
+				guid, varName = uefi.ESLGUIDVar(parts[2])
 				var esl uefi.ESL
 				if varName == "MokList" {
 					v.Attributes = []string{"NON_VOLATILE", "BOOTSERVICE_ACCESS"}
