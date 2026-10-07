@@ -1956,6 +1956,9 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			return err
 		}
 
+		// Share the guest memory unless the instance prefers transparent huge pages and no device needs it.
+		memoryTopology.Anonymous = !d.sharedMemoryPreferred() && !d.needsSharedMemory(devConfs)
+
 		bs.MemoryTopology = memoryTopology
 	}
 
@@ -3136,6 +3139,22 @@ func (d *qemu) deviceAttachPath(deviceName string, configCopy map[string]string,
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to QMP monitor: %w", err)
+	}
+
+	// virtiofs needs the guest memory to be shared, which is only set up when starting with a directory share.
+	memDevs, err := monitor.GetMemdev()
+	if err != nil {
+		return fmt.Errorf("Failed to query memory backends: %w", err)
+	}
+
+	for _, memDev := range memDevs {
+		if memDev.ID != "mem0" && memDev.ID != qemuDefaultRAMObject(d.architecture) {
+			continue
+		}
+
+		if !memDev.Share {
+			return errors.New("VM is currently running without shared memory, stop the VM before adding a virtiofs share")
+		}
 	}
 
 	monHook, err := d.addDriveDirConfigVirtiofs(nil, nil, mount)
@@ -5147,6 +5166,34 @@ func (d *qemu) getCPUOpts(cpuInfo *qemuCPUTopology, memSizeBytes int64) (*qemuCP
 	return &cpuOpts, nil
 }
 
+// sharedMemoryPreferred returns whether the guest memory should be shared ahead of any device needing it.
+func (d *qemu) sharedMemoryPreferred() bool {
+	// Nested virtualization suffers the most from shared memory not getting transparent huge pages.
+	if util.IsTrue(d.expandedConfig["security.nesting"]) {
+		return false
+	}
+
+	// Nothing can need shared memory when virtiofs can't be used.
+	_, err := device.DiskVMVirtiofsSupported(d)
+
+	return err == nil
+}
+
+// needsSharedMemory returns whether a device needs the guest memory to be shared with the host (vhost-user).
+func (d *qemu) needsSharedMemory(devConfs []*deviceConfig.RunConfig) bool {
+	for _, runConf := range devConfs {
+		for _, mount := range runConf.Mounts {
+			for _, opt := range mount.Opts {
+				if strings.HasPrefix(opt, device.DiskVirtiofsdSockMountOpt+"=") {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
 // addCPUMemoryConfig adds the qemu config required for setting the number of virtualised CPUs and memory.
 // If sb is nil then no config is written.
 func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, bs *qemuBootState) error {
@@ -5156,6 +5203,7 @@ func (d *qemu) addCPUMemoryConfig(conf *[]cfg.Section, bs *qemuBootState) error 
 	}
 
 	cpuOpts.cpuMaxCpus = bs.MaxCPUs
+	cpuOpts.sharedMemory = !bs.MemoryTopology.Anonymous
 
 	// A fixed topology is written verbatim, either due to CPU pinning or an explicit topology request.
 	cpuFixedTopology := bs.CPUTopology.VCPUs != nil || bs.CPUTopology.Explicit
@@ -7917,6 +7965,10 @@ func (d *qemu) updateMemoryLimit(newLimit string) error {
 			bs, err := d.getBootState()
 			if err != nil {
 				return err
+			}
+
+			if bs.MemoryTopology != nil {
+				memTopology.Anonymous = bs.MemoryTopology.Anonymous
 			}
 
 			bs.MemoryTopology = &memTopology

@@ -126,6 +126,24 @@ test_storage_disks_vm() {
     incus wait v1 agent --timeout=90 --interval=1
     incus exec v1 -- mokutil --sb-state | grep -Fx "SecureBoot disabled"
 
+    echo "==> Memory allocation"
+    # The memory is shared by default as needed by virtiofs.
+    grep -Fq 'qom-type = "memory-backend-memfd"' "${INCUS_DIR}/run/restricted_v1/qemu.conf"
+
+    # Nested virtualization prefers regular memory, which can't take a hot-plugged share.
+    incus stop -f v1
+    incus config device remove v1 d1
+    incus config set v1 security.nesting=true
+    incus start v1
+    grep -Fq 'qom-type = "memory-backend-ram"' "${INCUS_DIR}/run/restricted_v1/qemu.conf"
+    ! incus config device add v1 d1 disk source="${testRoot}/allowed1" path=/mnt || false
+
+    # The memory is shared again when started with a share.
+    incus stop -f v1
+    incus config device add v1 d1 disk source="${testRoot}/allowed1" path=/mnt
+    incus start v1
+    grep -Fq 'qom-type = "memory-backend-memfd"' "${INCUS_DIR}/run/restricted_v1/qemu.conf"
+
     echo "==> Cleanup"
     incus delete -f v1
     incus project switch default
