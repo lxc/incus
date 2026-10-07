@@ -588,6 +588,7 @@ var APIExtensions = []string{
 	"ovn_nic_security_filtering",
 	"authorization_scriptlet_request",
 	"vm_boot_priority_skip",
+	"network_ovn_nat_address_l2proxy",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

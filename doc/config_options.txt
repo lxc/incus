@@ -4608,7 +4608,7 @@ User keys can be used in search.
 
 ```{config:option} ipv4.nat.address network_ovn-common
 :condition: "IPv4 address"
-:shortdesc: "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)"
+:shortdesc: "The source address used for outbound traffic from the network"
 :type: "string"
 
 ```
@@ -4655,7 +4655,7 @@ User keys can be used in search.
 
 ```{config:option} ipv6.nat.address network_ovn-common
 :condition: "IPv6 address"
-:shortdesc: "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)"
+:shortdesc: "The source address used for outbound traffic from the network"
 :type: "string"
 
 ```
