@@ -311,6 +311,35 @@ func virtiofsdHasFeature(cmd string, feature string) bool {
 	return slices.Contains(caps.Features, feature)
 }
 
+// DiskVMVirtiofsSupported checks whether the instance can use virtiofs and returns the path to virtiofsd.
+func DiskVMVirtiofsSupported(inst instance.Instance) (string, error) {
+	// Locate virtiofsd.
+	cmd, err := exec.LookPath("virtiofsd")
+	if err != nil {
+		if util.PathExists("/usr/lib/qemu/virtiofsd") {
+			cmd = "/usr/lib/qemu/virtiofsd"
+		} else if util.PathExists("/usr/libexec/virtiofsd") {
+			cmd = "/usr/libexec/virtiofsd"
+		} else if util.PathExists("/usr/lib/virtiofsd") {
+			cmd = "/usr/lib/virtiofsd"
+		}
+	}
+
+	if cmd == "" {
+		return "", ErrMissingVirtiofsd
+	}
+
+	if util.IsTrue(inst.ExpandedConfig()["migration.stateful"]) {
+		return "", UnsupportedError{"Stateful migration unsupported"}
+	}
+
+	if util.IsTrue(inst.ExpandedConfig()["security.sev"]) || util.IsTrue(inst.ExpandedConfig()["security.sev.policy.es"]) {
+		return "", UnsupportedError{"SEV unsupported"}
+	}
+
+	return cmd, nil
+}
+
 // DiskVMVirtiofsdStart starts a new virtiofsd process.
 // If the idmaps slice is supplied then the proxy process is run inside a user namespace using the supplied maps.
 // Returns UnsupportedError error if the host system or instance does not support virtiosfd, returns normal error
@@ -327,28 +356,10 @@ func DiskVMVirtiofsdStart(execPath string, inst instance.Instance, socketPath st
 	// Remove old socket if needed.
 	_ = os.Remove(socketPath)
 
-	// Locate virtiofsd.
-	cmd, err := exec.LookPath("virtiofsd")
+	// Check virtiofs can be used.
+	cmd, err := DiskVMVirtiofsSupported(inst)
 	if err != nil {
-		if util.PathExists("/usr/lib/qemu/virtiofsd") {
-			cmd = "/usr/lib/qemu/virtiofsd"
-		} else if util.PathExists("/usr/libexec/virtiofsd") {
-			cmd = "/usr/libexec/virtiofsd"
-		} else if util.PathExists("/usr/lib/virtiofsd") {
-			cmd = "/usr/lib/virtiofsd"
-		}
-	}
-
-	if cmd == "" {
-		return nil, nil, ErrMissingVirtiofsd
-	}
-
-	if util.IsTrue(inst.ExpandedConfig()["migration.stateful"]) {
-		return nil, nil, UnsupportedError{"Stateful migration unsupported"}
-	}
-
-	if util.IsTrue(inst.ExpandedConfig()["security.sev"]) || util.IsTrue(inst.ExpandedConfig()["security.sev.policy.es"]) {
-		return nil, nil, UnsupportedError{"SEV unsupported"}
+		return nil, nil, err
 	}
 
 	// Trickery to handle paths > 107 chars.
