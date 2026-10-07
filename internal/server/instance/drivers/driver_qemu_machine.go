@@ -439,9 +439,10 @@ func (d *qemu) cpuType(bs *qemuBootState) (string, error) {
 }
 
 type qemuMemoryTopology struct {
-	Base  int64   `json:"base"`
-	Max   int64   `json:"max"`
-	Extra []int64 `json:"extra"`
+	Base      int64   `json:"base"`
+	Max       int64   `json:"max"`
+	Extra     []int64 `json:"extra"`
+	Anonymous bool    `json:"anonymous,omitempty"`
 }
 
 func (d *qemu) memoryTopology(bs *qemuBootState) (*qemuMemoryTopology, error) {

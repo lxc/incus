@@ -579,6 +579,7 @@ type qemuCPUOpts struct {
 	hugepages        string
 	memory           int64
 	memoryHostNodes  []int64
+	sharedMemory     bool
 }
 
 func qemuCPUNumaHostNode(opts *qemuCPUOpts, index int) []cfg.Section {
@@ -589,8 +590,16 @@ func qemuCPUNumaHostNode(opts *qemuCPUOpts, index int) []cfg.Section {
 		entries["mem-path"] = opts.hugepages
 		entries["prealloc"] = "on"
 		entries["discard-data"] = "on"
-	} else {
+	} else if opts.sharedMemory {
+		// Shared memory for vhost-user devices (virtiofsd), can't use transparent huge pages by default.
 		entries["qom-type"] = "memory-backend-memfd"
+	} else {
+		entries["qom-type"] = "memory-backend-ram"
+	}
+
+	// Shared memory is needed for vhost-user devices to map the guest memory.
+	if opts.hugepages != "" || opts.sharedMemory {
+		entries["share"] = "on"
 	}
 
 	entries["size"] = fmt.Sprintf("%dM", opts.memory)
@@ -626,11 +635,9 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 	}}
 
 	if opts.architecture != osarch.ARCH_64BIT_INTEL_X86 {
-		// Define the main RAM as a shared memory backend so vhost-user devices (virtiofsd) can map it.
-		// It gets attached through the machine's memory-backend property.
+		// Define the main RAM as an explicit memory backend attached through the machine's memory-backend property.
 		ramObject := qemuCPUNumaHostNode(opts, 0)[0]
 		ramObject.Name = fmt.Sprintf("object %q", qemuDefaultRAMObject(opts.architecture))
-		ramObject.Entries["share"] = "on"
 
 		// If NUMA memory restrictions are set, apply them.
 		if len(opts.memoryHostNodes) > 0 {
@@ -649,9 +656,6 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 		// Add one mem and one numa sections with index 0.
 		numaHostNode := qemuCPUNumaHostNode(opts, 0)
 
-		// Unconditionally append "share = "on" to the [object "mem0"] section
-		numaHostNode[0].Entries["share"] = "on"
-
 		// If NUMA memory restrictions are set, apply them.
 		if len(opts.memoryHostNodes) > 0 {
 			numaHostNode[0].Entries["policy"] = "bind"
@@ -669,12 +673,6 @@ func qemuCPU(opts *qemuCPUOpts, pinning bool) []cfg.Section {
 		numaHostNode := qemuCPUNumaHostNode(opts, index)
 
 		numaHostNode[0].Entries["policy"] = "bind"
-
-		if opts.hugepages != "" {
-			// append share = "on" only if hugepages is set
-			numaHostNode[0].Entries["share"] = "on"
-		}
-
 		numaHostNode[0].Entries["host-nodes.0"] = fmt.Sprintf("%d", element)
 		sections = append(sections, numaHostNode...)
 	}
