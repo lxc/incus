@@ -334,6 +334,7 @@ var InstanceConfigKeysAny = map[string]func(value string) error{
 	// gendoc:generate(entity=instance, group=security, key=security.nesting)
 	// For containers, this controls whether Incus (nested) can be run inside of the instance.
 	// For virtual machines, setting this to `false` disables nested virtualization (turns off the `svm` and `vmx` CPU flags).
+	// Explicitly setting this to `true` on a virtual machine also makes it use non-shared memory (allowing transparent huge pages) unless a device requires shared memory, see {ref}`performance-tuning-vm-memory`.
 	// ---
 	//  type: bool
 	//  defaultdesc: `false` (containers), `true` (VMs)
