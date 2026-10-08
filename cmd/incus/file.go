@@ -10,7 +10,6 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/sftp"
@@ -181,16 +180,10 @@ func (c *cmdFileCreate) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if c.file.flagMode != "" {
-		if len(c.file.flagMode) == 3 {
-			c.file.flagMode = "0" + c.file.flagMode
-		}
-
-		m, err := strconv.ParseInt(c.file.flagMode, 0, 0)
+		mode, err = parsePristineMode(c.file.flagMode)
 		if err != nil {
 			return err
 		}
-
-		mode = os.FileMode(m)
 	}
 
 	// Create needed paths if requested
@@ -221,7 +214,7 @@ func (c *cmdFileCreate) run(cmd *cobra.Command, args []string) error {
 		Type:    c.flagType,
 		UID:     int64(uid),
 		GID:     int64(gid),
-		Mode:    int(mode.Perm()),
+		Mode:    int(mode),
 		Content: content,
 	}
 
@@ -724,18 +717,24 @@ func (c *cmdFilePush) push(srcFiles []string, parsedTarget *u.Parsed) error {
 		return errors.New(i18n.G("Missing target directory"))
 	}
 
-	mode := -1
-	if c.file.flagMode != "" {
-		if len(c.file.flagMode) == 3 {
-			c.file.flagMode = "0" + c.file.flagMode
-		}
-
-		m, err := strconv.ParseInt(c.file.flagMode, 0, 0)
+	srcMode := fs.FileMode(0)
+	if len(srcFiles) == 1 && !isStdin(srcFiles[0]) {
+		srcStat, err := os.Stat(srcFiles[0])
 		if err != nil {
 			return err
 		}
 
-		mode = int(os.FileMode(m).Perm())
+		srcMode = srcStat.Mode()
+	}
+
+	mode := -1
+	if c.file.flagMode != "" {
+		m, err := parseMode(c.file.flagMode, srcMode, internalIO.GetUmask(), targetIsDir)
+		if err != nil {
+			return err
+		}
+
+		mode = int(m)
 	}
 
 	var errs []error
