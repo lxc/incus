@@ -1,83 +1,103 @@
 package local
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 )
 
 // xlMetaMagic is the four-byte prefix of every xl.meta file written by minio.
-var xlMetaMagic = [4]byte{'X', 'L', '2', ' '}
+var xlMetaMagic = []byte{'X', 'L', '2', ' '}
 
 // xlInlineData parses a minio xl.meta file and returns the inline data blob
-// for the current object version, if the object is stored inline.
+// for the object, if the object is stored inline.
 //
-// minio's xl-storage-format wraps the inline data inside a msgpack
-// structure whose exact shape varies between format revisions. Rather than
-// decode the entire metadata structure, this function scans the file for
-// minio's stable inline-section signature:
+// The file layout is:
 //
-//	byte 0:  0x01  (inline-section format version)
-//	byte 1+: msgpack map[string][]byte (version-id → object bytes)
-//
-// The first byte position whose tail parses as a non-empty msgpack map
-// with a str key and a bin value is taken as the inline data section,
-// and the value of the first map entry is returned.
+//	bytes 0-3:  "XL2 "
+//	bytes 4-7:  "1   " for format 1.0, otherwise little-endian major and minor
+//	then:       format 1.0 stores the metadata unwrapped and has no inline data
+//	            format 1.1+ wraps the metadata in a msgpack bin
+//	            format 1.2+ follows the metadata with a msgpack uint32 CRC
+//	trailer:    inline data, if any: 0x01 then a msgpack map[string][]byte
 //
 // Returns (nil, nil) if the file is well-formed but contains no inline
-// data section (e.g. the object's data is stored externally as part files).
+// data (e.g. the object's data is stored externally as part files).
 func xlInlineData(b []byte) ([]byte, error) {
-	if len(b) < 12 {
+	if len(b) <= 8 {
 		return nil, errors.New("xl.meta truncated")
 	}
 
-	if [4]byte{b[0], b[1], b[2], b[3]} != xlMetaMagic {
+	if !bytes.Equal(b[:4], xlMetaMagic) {
 		return nil, errors.New("xl.meta bad magic")
 	}
 
-	// Search after the 8-byte header for the inline section's signature.
-	// The CRC trailer occupies the last 4 bytes; nothing useful starts
-	// there.
-	for p := 8; p < len(b)-4; p++ {
-		if b[p] != 0x01 {
-			continue
-		}
+	var major, minor uint16
+	if bytes.Equal(b[4:8], []byte("1   ")) {
+		major, minor = 1, 0
+	} else {
+		major = binary.LittleEndian.Uint16(b[4:6])
+		minor = binary.LittleEndian.Uint16(b[6:8])
+	}
 
-		data, ok := tryReadInlineSection(b[p+1:])
-		if ok {
-			return data, nil
+	if major != 1 {
+		return nil, fmt.Errorf("xl.meta unsupported format version %d.%d", major, minor)
+	}
+
+	if minor == 0 {
+		return nil, nil
+	}
+
+	r := newMsgpReader(b[8:])
+
+	_, err := r.readBin()
+	if err != nil {
+		return nil, fmt.Errorf("xl.meta metadata: %w", err)
+	}
+
+	if minor >= 2 {
+		_, err = r.readUint32()
+		if err != nil {
+			return nil, fmt.Errorf("xl.meta checksum: %w", err)
 		}
 	}
 
-	return nil, nil
-}
+	inline := r.rest()
+	if len(inline) == 0 {
+		return nil, nil
+	}
 
-// tryReadInlineSection attempts to read a msgpack map[string][]byte at the
-// start of b and returns the value of the first entry. It returns (nil,
-// false) on any decoding error.
-func tryReadInlineSection(b []byte) ([]byte, bool) {
-	r := newMsgpReader(b)
+	if inline[0] != 0x01 {
+		return nil, fmt.Errorf("xl.meta unsupported inline data version %d", inline[0])
+	}
+
+	r = newMsgpReader(inline[1:])
 
 	count, err := r.readMapLen()
-	if err != nil || count == 0 {
-		return nil, false
+	if err != nil {
+		return nil, fmt.Errorf("xl.meta inline data: %w", err)
+	}
+
+	if count == 0 {
+		return nil, nil
 	}
 
 	_, err = r.readStr()
 	if err != nil {
-		return nil, false
+		return nil, fmt.Errorf("xl.meta inline data: %w", err)
 	}
 
 	data, err := r.readBin()
 	if err != nil {
-		return nil, false
+		return nil, fmt.Errorf("xl.meta inline data: %w", err)
 	}
 
-	return data, true
+	return data, nil
 }
 
 // msgpReader is a minimal msgpack reader supporting only the type families
-// used by minio xl.meta: bin, str, fixarray, fixmap, array16/32, map16/32.
+// used by minio xl.meta: bin, str, uint32, fixmap, map16/32.
 type msgpReader struct {
 	b []byte
 	i int
@@ -91,6 +111,11 @@ func (r *msgpReader) need(n int) error {
 	}
 
 	return nil
+}
+
+// rest returns the bytes that haven't been consumed yet.
+func (r *msgpReader) rest() []byte {
+	return r.b[r.i:]
 }
 
 func (r *msgpReader) readByte() (byte, error) {
@@ -122,6 +147,19 @@ func (r *msgpReader) readUint(n int) (uint32, error) {
 
 	r.i += n
 	return v, nil
+}
+
+func (r *msgpReader) readUint32() (uint32, error) {
+	c, err := r.readByte()
+	if err != nil {
+		return 0, err
+	}
+
+	if c != 0xce {
+		return 0, fmt.Errorf("not a uint32 (0x%02x)", c)
+	}
+
+	return r.readUint(4)
 }
 
 func (r *msgpReader) readMapLen() (int, error) {
