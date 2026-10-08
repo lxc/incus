@@ -12,6 +12,9 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
+
+	"golang.org/x/net/idna"
 
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
@@ -119,22 +122,35 @@ func RunACMEChallenge(ctx context.Context, dir, caURL, domain, email, challengeT
 	}
 
 	// Load the generated certificate.
-	certData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.crt", domains[0])))
+	certName := legoCertificateName(domains[0])
+	certData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.crt", certName)))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	caData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.issuer.crt", domains[0])))
+	caData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.issuer.crt", certName)))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	keyData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.key", domains[0])))
+	keyData, err := os.ReadFile(filepath.Join(dir, "certificates", fmt.Sprintf("%s.key", certName)))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return appendIssuerChain(certData, caData), keyData, nil
+}
+
+// legoCertificateName returns the file name lego uses for the certificate of a domain (wildcards and IDNA get rewritten).
+func legoCertificateName(domain string) string {
+	safe, err := idna.ToASCII(strings.NewReplacer(":", "-", "*", "_").Replace(domain))
+	if err != nil {
+		safe = domain
+	}
+
+	return strings.Join(strings.FieldsFunc(safe, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsNumber(r) && r != '-' && r != '_' && r != '.' && r != '@'
+	}), "")
 }
 
 // appendIssuerChain appends the issuer certificates to the certificate chain, skipping any already present.
