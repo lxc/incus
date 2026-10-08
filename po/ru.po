@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-09-27 14:33-0400\n"
+"POT-Creation-Date: 2026-10-08 14:37+0000\n"
 "PO-Revision-Date: 2026-08-29 22:38+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/incus/cli/ru/>\n"
@@ -666,7 +666,7 @@ msgstr "%s (%s) (%d доступно)"
 msgid "%s (backend=%q, source=%q)"
 msgstr "%s (бэкенд=%q, источник=%q)"
 
-#: cmd/incus/file.go:721 cmd/incus/storage_volume_file.go:769
+#: cmd/incus/file.go:714 cmd/incus/storage_volume_file.go:762
 #: cmd/incus/utils_copy.go:102 cmd/incus/utils_sftp.go:547
 #, c-format
 msgid "%s is not a directory"
@@ -677,7 +677,7 @@ msgstr "%s это не директория"
 msgid "%s the %s syntax is deprecated; %s\n"
 msgstr "%s Синтаксис %s устарел; %s\n"
 
-#: cmd/incus/usage/usage.go:962
+#: cmd/incus/usage/usage.go:967
 #, c-format
 msgid "%s; did you forget a space in %s?\n"
 msgstr ""
@@ -878,7 +878,7 @@ msgstr ""
 msgid "A client certificate is already present"
 msgstr "Сертификат клиента хранится на сервере"
 
-#: cmd/incus/file.go:764 cmd/incus/storage_volume_file.go:801
+#: cmd/incus/file.go:763 cmd/incus/storage_volume_file.go:800
 msgid ""
 "A target file name must be specified when pushing from stdin; the target is "
 "a directory"
@@ -886,7 +886,7 @@ msgstr ""
 "При отправке данных из стандартного ввода необходимо указать имя целевого "
 "файла; указанная сейчас цель это каталог"
 
-#: cmd/incus/usage/usage.go:815
+#: cmd/incus/usage/usage.go:820
 msgid "ACL"
 msgstr "Список контроля доступа"
 
@@ -1177,12 +1177,12 @@ msgstr "Все адреса сервера недоступны"
 msgid "Alternative certificate name"
 msgstr "Альтернативное имя сертификата"
 
-#: cmd/incus/file.go:448 cmd/incus/file.go:678
-#: cmd/incus/storage_volume_file.go:528 cmd/incus/storage_volume_file.go:725
+#: cmd/incus/file.go:441 cmd/incus/file.go:671
+#: cmd/incus/storage_volume_file.go:521 cmd/incus/storage_volume_file.go:718
 msgid "Always follow symbolic links in source path"
 msgstr "Всегда переходить по символическим ссылкам в пути к источнику"
 
-#: cmd/incus/file.go:964
+#: cmd/incus/file.go:963
 #, c-format
 msgid "An instance path is required for %s"
 msgstr "Для %s требуется путь к экземпляру"
@@ -1345,7 +1345,7 @@ msgstr "Резервная копия успешно экспортирован�
 msgid "Backups:"
 msgstr "Резервные копии:"
 
-#: cmd/incus/utils.go:132
+#: cmd/incus/utils.go:134
 #, c-format
 msgid "Bad device override syntax, expecting <device>,<key>=<value>: %s"
 msgstr ""
@@ -1500,12 +1500,12 @@ msgid "Can't perform local rename without a new instance name"
 msgstr ""
 "Невозможно выполнить локальное переименование без нового имени экземпляра"
 
-#: cmd/incus/utils.go:342
+#: cmd/incus/utils.go:344
 #, c-format
 msgid "Can't read from environment file: %w"
 msgstr "Не удается прочитать из файла окружения: %w"
 
-#: cmd/incus/utils.go:309
+#: cmd/incus/utils.go:311
 #, c-format
 msgid "Can't read from stdin: %w"
 msgstr "Невозможно прочитать из стандартного ввода: %w"
@@ -1577,7 +1577,7 @@ msgstr ""
 msgid "Cannot parse this --override-boot value"
 msgstr ""
 
-#: cmd/incus/utils.go:304
+#: cmd/incus/utils.go:306
 msgid "Cannot read the stdin twice"
 msgstr "Невозможно прочитать из стандартного ввода дважды: %s"
 
@@ -2128,21 +2128,21 @@ msgstr "Создать пустой экземпляр"
 msgid "Create and start instances from images"
 msgstr "Создание и запуск экземпляров из образов"
 
-#: cmd/incus/file.go:111 cmd/incus/file.go:443 cmd/incus/file.go:670
-#: cmd/incus/storage_volume_file.go:107 cmd/incus/storage_volume_file.go:523
-#: cmd/incus/storage_volume_file.go:717
+#: cmd/incus/file.go:110 cmd/incus/file.go:436 cmd/incus/file.go:663
+#: cmd/incus/storage_volume_file.go:106 cmd/incus/storage_volume_file.go:516
+#: cmd/incus/storage_volume_file.go:710
 msgid "Create any directories necessary"
 msgstr "Создать любые необходимые директории"
 
-#: cmd/incus/storage_volume_file.go:95
+#: cmd/incus/storage_volume_file.go:94
 msgid "Create files and directories in custom vollume"
 msgstr "Создать файлы и каталоги в пользовательском томе"
 
-#: cmd/incus/storage_volume_file.go:96
+#: cmd/incus/storage_volume_file.go:95
 msgid "Create files and directories in custom volume"
 msgstr "Создавайте файлы и каталоги в пользовательском томе"
 
-#: cmd/incus/file.go:99 cmd/incus/file.go:100
+#: cmd/incus/file.go:98 cmd/incus/file.go:99
 msgid "Create files and directories in instances"
 msgstr "Создать файлы и каталоги в экземплярах"
 
@@ -2260,7 +2260,7 @@ msgstr "Создан: %s"
 msgid "Creating %s"
 msgstr "Создание %s"
 
-#: cmd/incus/file.go:233 cmd/incus/storage_volume_file.go:226
+#: cmd/incus/file.go:226 cmd/incus/storage_volume_file.go:219
 #, c-format
 msgid "Creating %s: %%s"
 msgstr "Создание %s: %%s"
@@ -2360,11 +2360,11 @@ msgstr "Удалять кластерные группы"
 msgid "Delete custom storage volumes"
 msgstr "Удалить пользовательские тома хранения"
 
-#: cmd/incus/storage_volume_file.go:271 cmd/incus/storage_volume_file.go:272
+#: cmd/incus/storage_volume_file.go:264 cmd/incus/storage_volume_file.go:265
 msgid "Delete files in custom volume"
 msgstr "Удаление файлов в пользовательском томе"
 
-#: cmd/incus/file.go:276 cmd/incus/file.go:277
+#: cmd/incus/file.go:269 cmd/incus/file.go:270
 msgid "Delete files in instances"
 msgstr "Удаление файлов в экземплярах"
 
@@ -2517,7 +2517,7 @@ msgstr "Устройство %s удалено из %s"
 msgid "Device Address: %v"
 msgstr "Адрес устройства: %v"
 
-#: cmd/incus/utils.go:88 cmd/incus/utils.go:112
+#: cmd/incus/utils.go:90 cmd/incus/utils.go:114
 #, c-format
 msgid "Device already exists: %s"
 msgstr "Устройство уже существует: %s"
@@ -2597,7 +2597,7 @@ msgstr "На этой платформе недоступен импорт ди�
 msgid "Directory to run the command in (default /root)"
 msgstr "Директория в которой выполняется команда (по умолчанию /root)"
 
-#: cmd/incus/file.go:912 cmd/incus/storage_volume_file.go:350
+#: cmd/incus/file.go:911 cmd/incus/storage_volume_file.go:343
 msgid "Disable authentication when using SSH SFTP listener"
 msgstr "Отключить аутентификацию при использовании SSH SFTP сервера"
 
@@ -2795,11 +2795,11 @@ msgstr "Редактировать кластерную группу"
 msgid "Edit cluster member configurations as YAML"
 msgstr "Редактировать конфигурации участников кластера в формате YAML"
 
-#: cmd/incus/file.go:360 cmd/incus/file.go:361
+#: cmd/incus/file.go:353 cmd/incus/file.go:354
 msgid "Edit files in instances"
 msgstr "Редактировать файлы в экземплярах"
 
-#: cmd/incus/storage_volume_file.go:438 cmd/incus/storage_volume_file.go:439
+#: cmd/incus/storage_volume_file.go:431 cmd/incus/storage_volume_file.go:432
 msgid "Edit files in storage volumes"
 msgstr "Редактирование файлов в томах хранения"
 
@@ -3005,7 +3005,7 @@ msgstr "Ошибка при создании декодера: %v"
 msgid "Error decoding data: %v"
 msgstr "Ошибка декодирования данных: %v"
 
-#: cmd/incus/publish.go:202 cmd/incus/utils.go:247
+#: cmd/incus/publish.go:202 cmd/incus/utils.go:249
 #, c-format
 msgid "Error retrieving aliases: %w"
 msgstr "Ошибка при получении псевдонимов: %w"
@@ -3317,12 +3317,12 @@ msgstr "ВПЕРВЫЕ ОБНАРУЖЕН"
 msgid "FQDN"
 msgstr "полное доменное имя"
 
-#: cmd/incus/utils.go:651
+#: cmd/incus/utils.go:653
 #, c-format
 msgid "Failed SSH handshake with client %q: %v"
 msgstr "Не удалось установить SSH-соединение с клиентом %q: %v"
 
-#: cmd/incus/utils.go:674
+#: cmd/incus/utils.go:676
 #, c-format
 msgid "Failed accepting channel client %q: %v"
 msgstr "Не удалось принять канал связи клиента %q: %v"
@@ -3332,13 +3332,13 @@ msgstr "Не удалось принять канал связи клиента 
 msgid "Failed checking instance %s exists: %w"
 msgstr "Ошибка проверки существования экземпляра %s : %w"
 
-#: cmd/incus/utils.go:701
+#: cmd/incus/utils.go:703
 #, c-format
 msgid "Failed connecting to instance SFTP for client %q: %v"
 msgstr "Не удалось подключиться к экземпляру SFTP для клиента %q: %v"
 
-#: cmd/incus/file.go:982 cmd/incus/storage_volume_file.go:407
-#: cmd/incus/storage_volume_file.go:589 cmd/incus/storage_volume_file.go:756
+#: cmd/incus/file.go:981 cmd/incus/storage_volume_file.go:400
+#: cmd/incus/storage_volume_file.go:582 cmd/incus/storage_volume_file.go:749
 #, c-format
 msgid "Failed connecting to instance SFTP: %w"
 msgstr "Не удалось подключиться к экземпляру SFTP: %w"
@@ -3370,7 +3370,7 @@ msgstr "Не удалось удалить экземпляр %s из проек
 msgid "Failed deleting source volume after copy: %w"
 msgstr "Не удалось удалить исходный том после копирования: %w"
 
-#: cmd/incus/utils.go:608
+#: cmd/incus/utils.go:610
 #, c-format
 msgid "Failed generating SSH host key: %w"
 msgstr "Не удалось сгенерировать SSH-ключ хоста: %w"
@@ -3410,7 +3410,7 @@ msgstr "Не удалось загрузить профиль %q для пере
 msgid "Failed loading storage pool %q: %w"
 msgstr "Сбой загрузки пула хранения %q: %w"
 
-#: cmd/incus/utils.go:613
+#: cmd/incus/utils.go:615
 #, c-format
 msgid "Failed parsing SSH host key: %w"
 msgstr "Не удалось распознать формат SSH-ключа хоста: %w"
@@ -3435,13 +3435,13 @@ msgstr "Не удалось запустить команду: %w"
 msgid "Failed starting command: %w"
 msgstr "Не удалось запустить команду: %w"
 
-#: cmd/incus/utils.go:521
+#: cmd/incus/utils.go:523
 #, c-format
 msgid "Failed starting sshfs: %w"
 msgstr "Не удалось запустить sshfs: %w"
 
 #: cmd/incus/low_level.go:336 cmd/incus/port_forward.go:128
-#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:639
+#: cmd/incus/storage_volume.go:2673 cmd/incus/utils.go:641
 #, c-format
 msgid "Failed to accept incoming connection: %w"
 msgstr "Не удалось принять входящее соединение: %w"
@@ -3501,7 +3501,7 @@ msgstr "Не удалось подключиться к целевому узл�
 msgid "Failed to create %q: %w"
 msgstr "Не удалось создать %q: %w"
 
-#: cmd/incus/utils.go:220
+#: cmd/incus/utils.go:222
 #, c-format
 msgid "Failed to create alias %s: %w"
 msgstr "Не удалось создать псевдоним %s: %w"
@@ -3604,7 +3604,7 @@ msgid "Failed to list bitmaps: %w"
 msgstr "Не удалось получить список битовых карт: %w"
 
 #: cmd/incus/low_level.go:321 cmd/incus/port_forward.go:114
-#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:624
+#: cmd/incus/storage_volume.go:2665 cmd/incus/utils.go:626
 #, c-format
 msgid "Failed to listen for connection: %w"
 msgstr "Не удалось запустить принятие соединений: %w"
@@ -3619,7 +3619,7 @@ msgstr "Не удалось загрузить конфигурацию: %s"
 msgid "Failed to open input file %q: %w"
 msgstr "Не удалось открыть целевой файл %q: %w"
 
-#: cmd/incus/file.go:790 cmd/incus/storage_volume_file.go:826
+#: cmd/incus/file.go:789 cmd/incus/storage_volume_file.go:825
 #: cmd/incus/utils_sftp.go:435
 #, c-format
 msgid "Failed to open source file %q: %v"
@@ -3669,7 +3669,7 @@ msgstr "Не удалось прочитать из стандартного в�
 msgid "Failed to refresh target instance '%s': %v"
 msgstr "Не удалось обновить целевой экземпляр '%s': %v"
 
-#: cmd/incus/image.go:297 cmd/incus/utils.go:209
+#: cmd/incus/image.go:297 cmd/incus/utils.go:211
 #, c-format
 msgid "Failed to remove alias %s: %w"
 msgstr "Не удалось удалить псевдоним %s: %w"
@@ -3802,8 +3802,8 @@ msgstr "Отпечаток: %s"
 msgid "Flags:"
 msgstr "Флаги:"
 
-#: cmd/incus/file.go:447 cmd/incus/file.go:677
-#: cmd/incus/storage_volume_file.go:527 cmd/incus/storage_volume_file.go:724
+#: cmd/incus/file.go:440 cmd/incus/file.go:670
+#: cmd/incus/storage_volume_file.go:520 cmd/incus/storage_volume_file.go:717
 msgid "Follow command-line symbolic links in source path"
 msgstr "Переходить по символическим ссылкам командной строки в исходном пути"
 
@@ -3815,7 +3815,7 @@ msgstr "Принудительно осуществить определенну
 msgid "Force a particular restoration action"
 msgstr "Принудительное выполнение определенного действия восстановления"
 
-#: cmd/incus/file.go:112 cmd/incus/storage_volume_file.go:108
+#: cmd/incus/file.go:111 cmd/incus/storage_volume_file.go:107
 msgid "Force creating files or directories"
 msgstr "Принудительное создание файлов или каталогов"
 
@@ -3823,7 +3823,7 @@ msgstr "Принудительное создание файлов или кат
 msgid "Force delete the project and everything it contains."
 msgstr "Принудительно удалить проект и все его содержимое."
 
-#: cmd/incus/file.go:279 cmd/incus/storage_volume_file.go:274
+#: cmd/incus/file.go:272 cmd/incus/storage_volume_file.go:267
 msgid "Force deleting files, directories, and subdirectories"
 msgstr "Принудительное удаление файлов, каталогов и подкаталогов"
 
@@ -4354,22 +4354,22 @@ msgstr "Имя хоста"
 msgid "Hugepages:\n"
 msgstr "Большие страницы:\n"
 
-#: cmd/incus/utils.go:724
+#: cmd/incus/utils.go:726
 #, c-format
 msgid "I/O copy from SSH to instance failed: %v"
 msgstr "Ошибка ввода-вывода при копировании данных из SSH в экземпляр: %v"
 
-#: cmd/incus/utils.go:713
+#: cmd/incus/utils.go:715
 #, c-format
 msgid "I/O copy from instance to SSH failed: %v"
 msgstr "Ошибка ввода-вывода при копировании из экземпляра в SSH: %v"
 
-#: cmd/incus/utils.go:545
+#: cmd/incus/utils.go:547
 #, c-format
 msgid "I/O copy from instance to sshfs failed: %v"
 msgstr "Ошибка ввода-вывода при копировании из экземпляра в sshfs: %v"
 
-#: cmd/incus/utils.go:555
+#: cmd/incus/utils.go:557
 #, c-format
 msgid "I/O copy from sshfs to instance failed: %v"
 msgstr "Ошибка ввода-вывода при копировании из sshfs в экземпляр: %v"
@@ -4659,11 +4659,11 @@ msgstr "Только экземпляр"
 msgid "Instance description"
 msgstr "описание экземпляра"
 
-#: cmd/incus/utils.go:547
+#: cmd/incus/utils.go:549
 msgid "Instance disconnected"
 msgstr "Экземпляр отсоединён"
 
-#: cmd/incus/utils.go:715
+#: cmd/incus/utils.go:717
 #, c-format
 msgid "Instance disconnected for client %q"
 msgstr "Клиент %q отключен от экземпляра"
@@ -4673,7 +4673,7 @@ msgstr "Клиент %q отключен от экземпляра"
 msgid "Instance name is: %s"
 msgstr "Название экземпляра: %s"
 
-#: cmd/incus/file.go:969
+#: cmd/incus/file.go:968
 msgid "Instance path cannot be used in SSH SFTP listener mode"
 msgstr "В режиме прослушивания SSH SFTP нельзя использовать путь экземпляра"
 
@@ -4842,7 +4842,7 @@ msgstr "Предоставлен недопустимый тип сортиро�
 msgid "Invalid subnet %q for network %q: %w"
 msgstr "Недопустимая подсеть %q для сети %q: %w"
 
-#: cmd/incus/file.go:144 cmd/incus/storage_volume_file.go:141
+#: cmd/incus/file.go:143 cmd/incus/storage_volume_file.go:140
 #, c-format
 msgid "Invalid type %q"
 msgstr "Недопустимый тип %q"
@@ -6579,12 +6579,12 @@ msgstr "Логический маршрутизатор"
 msgid "Logical switch"
 msgstr "Логический коммутатор"
 
-#: cmd/incus/utils.go:630
+#: cmd/incus/utils.go:632
 #, c-format
 msgid "Login with username %q and password %q"
 msgstr "Войдите в систему, используя имя пользователя %q и пароль %q"
 
-#: cmd/incus/utils.go:632
+#: cmd/incus/utils.go:634
 msgid "Login without username and password"
 msgstr "Вход без имени пользователя и пароля"
 
@@ -6728,11 +6728,11 @@ msgid "Manage dirty bitmaps on virtual machines"
 msgstr ""
 "Управление битовыми картами изменений (dirty bitmaps) для виртуальных машин"
 
-#: cmd/incus/storage_volume_file.go:46 cmd/incus/storage_volume_file.go:47
+#: cmd/incus/storage_volume_file.go:45 cmd/incus/storage_volume_file.go:46
 msgid "Manage files in custom volumes"
 msgstr "Управление файлами в пользовательских томах"
 
-#: cmd/incus/file.go:52 cmd/incus/file.go:53
+#: cmd/incus/file.go:51 cmd/incus/file.go:52
 msgid "Manage files in instances"
 msgstr "Управление файлами в экземплярах"
 
@@ -7003,7 +7003,7 @@ msgstr ""
 msgid "Minimum size is 1GiB"
 msgstr "Минимальный размер 1 ГиБ"
 
-#: cmd/incus/file.go:724
+#: cmd/incus/file.go:717
 msgid "Missing target directory"
 msgstr "Отсутствует целевой каталог"
 
@@ -7039,7 +7039,7 @@ msgstr ""
 msgid "More than one device matches, specify the device name"
 msgstr "Найдено более одного устройства, задайте название устройства"
 
-#: cmd/incus/file.go:492
+#: cmd/incus/file.go:485
 msgid "More than one file to download, but target is not a directory"
 msgstr ""
 "Для загрузки доступно несколько файлов, но целевой объект не является "
@@ -7053,11 +7053,11 @@ msgstr ""
 "Было передано более одной переменной, но на сервере отсутствует обязательное "
 "расширение API «instance_nvram_bulk_update»"
 
-#: cmd/incus/storage_volume_file.go:338
+#: cmd/incus/storage_volume_file.go:331
 msgid "Mount files from custom storage volumes"
 msgstr "Монтирование файлов из пользовательских томов хранения"
 
-#: cmd/incus/storage_volume_file.go:339
+#: cmd/incus/storage_volume_file.go:332
 msgid ""
 "Mount files from custom storage volumes.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -7065,11 +7065,11 @@ msgstr ""
 "Монтировать файлы из пользовательских томов хранения.\n"
 "Если целевой путь не указан, запустить вместо этого SSH SFTP сервер."
 
-#: cmd/incus/file.go:898
+#: cmd/incus/file.go:897
 msgid "Mount files from instances"
 msgstr "Монтирование файлов из экземпляров"
 
-#: cmd/incus/file.go:899
+#: cmd/incus/file.go:898
 msgid ""
 "Mount files from instances.\n"
 "If no target path is provided, start an SSH SFTP listener instead."
@@ -7485,8 +7485,8 @@ msgstr "Создана запись %s сетевой DNS зоны"
 msgid "Network zone record %s deleted"
 msgstr "Удалена запись %s сетевой DNS зоны"
 
-#: cmd/incus/file.go:446 cmd/incus/file.go:676
-#: cmd/incus/storage_volume_file.go:526 cmd/incus/storage_volume_file.go:723
+#: cmd/incus/file.go:439 cmd/incus/file.go:669
+#: cmd/incus/storage_volume_file.go:519 cmd/incus/storage_volume_file.go:716
 msgid "Never follow symbolic links in source path"
 msgstr "Никогда не переходить по символическим ссылкам в исходном пути"
 
@@ -7799,7 +7799,7 @@ msgstr "Разделы:"
 msgid "Password for %s: "
 msgstr "Пароль для %s: "
 
-#: cmd/incus/utils.go:601
+#: cmd/incus/utils.go:603
 #, c-format
 msgid "Password rejected for %q"
 msgstr "Пароль отклонен для %q"
@@ -7886,8 +7886,8 @@ msgstr ""
 "Режим предварительной настройки, ожидает конфигурацию в формате YAML из "
 "стандартного ввода"
 
-#: cmd/incus/file.go:444 cmd/incus/file.go:674
-#: cmd/incus/storage_volume_file.go:524 cmd/incus/storage_volume_file.go:721
+#: cmd/incus/file.go:437 cmd/incus/file.go:667
+#: cmd/incus/storage_volume_file.go:517 cmd/incus/storage_volume_file.go:714
 msgid "Preserve ownership, timestamps and mode (implies --recursive)"
 msgstr ""
 
@@ -7903,7 +7903,7 @@ msgstr "Нажмите 's' + ENTER, для изменения метода со�
 msgid "Press CTRL-C to exit"
 msgstr "Нажмите CTRL-C для выхода"
 
-#: cmd/incus/utils.go:525
+#: cmd/incus/utils.go:527
 msgid "Press ctrl+c to finish"
 msgstr "Нажмите Ctrl+C для завершения"
 
@@ -8102,29 +8102,29 @@ msgstr "Опубликовать экземпляры как образы"
 msgid "Publishing instance: %s"
 msgstr "Публикация экземпляра: %s"
 
-#: cmd/incus/storage_volume_file.go:513 cmd/incus/storage_volume_file.go:514
+#: cmd/incus/storage_volume_file.go:506 cmd/incus/storage_volume_file.go:507
 msgid "Pull files from custom volumes"
 msgstr "Извлечь файлы из пользовательских томов"
 
-#: cmd/incus/file.go:433 cmd/incus/file.go:434
+#: cmd/incus/file.go:426 cmd/incus/file.go:427
 msgid "Pull files from instances"
 msgstr "Получить файлы из экземпляров"
 
-#: cmd/incus/file.go:576 cmd/incus/storage_volume_file.go:634
+#: cmd/incus/file.go:569 cmd/incus/storage_volume_file.go:627
 #: cmd/incus/utils_sftp.go:307
 #, c-format
 msgid "Pulling %s from %s: %%s"
 msgstr "Получение %s из %s: %%s"
 
-#: cmd/incus/storage_volume_file.go:707 cmd/incus/storage_volume_file.go:708
+#: cmd/incus/storage_volume_file.go:700 cmd/incus/storage_volume_file.go:701
 msgid "Push files into custom volumes"
 msgstr "Поместить файлы в пользовательские тома"
 
-#: cmd/incus/file.go:660 cmd/incus/file.go:661
+#: cmd/incus/file.go:653 cmd/incus/file.go:654
 msgid "Push files into instances"
 msgstr "Отправка файлов в экземпляры"
 
-#: cmd/incus/file.go:823 cmd/incus/storage_volume_file.go:859
+#: cmd/incus/file.go:822 cmd/incus/storage_volume_file.go:858
 #: cmd/incus/utils_sftp.go:446
 #, c-format
 msgid "Pushing %s to %s: %%s"
@@ -8217,8 +8217,8 @@ msgstr ""
 "  пулах, но отсутствуют в базе данных. Затем программа предложит воссоздать "
 "эти записи в базе данных."
 
-#: cmd/incus/file.go:445 cmd/incus/file.go:675
-#: cmd/incus/storage_volume_file.go:525 cmd/incus/storage_volume_file.go:722
+#: cmd/incus/file.go:438 cmd/incus/file.go:668
+#: cmd/incus/storage_volume_file.go:518 cmd/incus/storage_volume_file.go:715
 msgid "Recursively transfer files"
 msgstr "Рекурсивно передать файлы"
 
@@ -8650,17 +8650,17 @@ msgstr "ИСТОЧНИК"
 msgid "SR-IOV information:"
 msgstr "SR-IOV информация:"
 
-#: cmd/incus/utils.go:627
+#: cmd/incus/utils.go:629
 #, c-format
 msgid "SSH SFTP listening on %v"
 msgstr "SSH SFTP ожидает соединений на %v"
 
-#: cmd/incus/utils.go:644
+#: cmd/incus/utils.go:646
 #, c-format
 msgid "SSH client connected %q"
 msgstr "SSH-клиент подключен %q"
 
-#: cmd/incus/utils.go:645
+#: cmd/incus/utils.go:647
 #, c-format
 msgid "SSH client disconnected %q"
 msgstr "SSH-клиент отключен %q"
@@ -8798,7 +8798,7 @@ msgstr "Задать параметры конфигурации участни�
 msgid "Set a keepalive timeout for a remote"
 msgstr "Задать время ожидания для удаленного сервера"
 
-#: cmd/incus/file.go:913 cmd/incus/storage_volume_file.go:351
+#: cmd/incus/file.go:912 cmd/incus/storage_volume_file.go:344
 msgid "Set authentication user when using SSH SFTP listener"
 msgstr "Задать пользователя для аутентификации при использовании SSH SFTP"
 
@@ -9107,23 +9107,23 @@ msgstr ""
 msgid "Set the URL(s) for the remote"
 msgstr "Указать URL-адрес(а) дистанционного ресурса"
 
-#: cmd/incus/file.go:113 cmd/incus/storage_volume_file.go:109
+#: cmd/incus/file.go:112 cmd/incus/storage_volume_file.go:108
 msgid "Set the file's gid on create"
 msgstr "Задать идентификатор группы (gid) создаваемых файлов"
 
-#: cmd/incus/storage_volume_file.go:719
+#: cmd/incus/storage_volume_file.go:712
 msgid "Set the file's gid on push"
 msgstr "Задать идентификатор группы (gid) передаваемых файлов"
 
-#: cmd/incus/file.go:115 cmd/incus/storage_volume_file.go:111
+#: cmd/incus/file.go:114 cmd/incus/storage_volume_file.go:110
 msgid "Set the file's perms on create"
 msgstr "Задать права доступа к создаваемым файлам"
 
-#: cmd/incus/storage_volume_file.go:720
+#: cmd/incus/storage_volume_file.go:713
 msgid "Set the file's perms on push"
 msgstr "Задать права доступа на передаваемые файлы"
 
-#: cmd/incus/file.go:673
+#: cmd/incus/file.go:666
 msgid ""
 "Set the file's perms on push (in recursive mode, only sets the target "
 "directory's permissions)"
@@ -9131,19 +9131,19 @@ msgstr ""
 "Задать права доступа на передаваемые файлы (в рекурсивном режиме, задаёт "
 "права только на целевую директорию)"
 
-#: cmd/incus/file.go:114 cmd/incus/storage_volume_file.go:110
+#: cmd/incus/file.go:113 cmd/incus/storage_volume_file.go:109
 msgid "Set the file's uid on create"
 msgstr "Задать идентификатор пользователя (uid) создаваемых файлов"
 
-#: cmd/incus/storage_volume_file.go:718
+#: cmd/incus/storage_volume_file.go:711
 msgid "Set the file's uid on push"
 msgstr "Задать идентификатор пользователя (uid) передаваемых файлов"
 
-#: cmd/incus/file.go:672
+#: cmd/incus/file.go:665
 msgid "Set the files' GIDs on push"
 msgstr "Задать идентификатор группы (GID) на передаваемые файлы"
 
-#: cmd/incus/file.go:671
+#: cmd/incus/file.go:664
 msgid "Set the files' UIDs on push"
 msgstr "Задать идентификатор пользователя (UID) на передаваемые файлы"
 
@@ -9239,7 +9239,7 @@ msgstr "Задать значения для переменных UEFI"
 msgid "Set values for UEFI variables."
 msgstr "Задать значения для переменных UEFI."
 
-#: cmd/incus/file.go:911 cmd/incus/storage_volume_file.go:349
+#: cmd/incus/file.go:910 cmd/incus/storage_volume_file.go:342
 msgid "Setup SSH SFTP listener on address:port instead of mounting"
 msgstr "Настроить SSH SFTP сервер по адресу:порту вместо монтирования"
 
@@ -9767,7 +9767,7 @@ msgstr "Переключить текущий проект"
 msgid "Switch the default remote"
 msgstr "Переключить дистанционный сервер по умолчанию"
 
-#: cmd/incus/file.go:149 cmd/incus/storage_volume_file.go:145
+#: cmd/incus/file.go:148 cmd/incus/storage_volume_file.go:144
 msgid "Symlink target path can only be used for type \"symlink\""
 msgstr "Целевой путь ссылки может использоваться только для типа «symlink»"
 
@@ -9825,11 +9825,11 @@ msgstr "Цель - не кластер"
 msgid "Target path %q already exists"
 msgstr "Целевой путь %q уже существует"
 
-#: cmd/incus/file.go:959 cmd/incus/storage_volume_file.go:401
+#: cmd/incus/file.go:958 cmd/incus/storage_volume_file.go:394
 msgid "Target path and --listen flag cannot be used together"
 msgstr "Целевой путь и флаг --listen не могут использоваться вместе"
 
-#: cmd/incus/file.go:953 cmd/incus/storage_volume_file.go:396
+#: cmd/incus/file.go:952 cmd/incus/storage_volume_file.go:389
 msgid "Target path must be a directory"
 msgstr "Целевой путь должен быть директорией"
 
@@ -10167,7 +10167,7 @@ msgstr "Заданный диск не ссылается на указанны�
 msgid "The specified disk is not in the given pool (found %s)"
 msgstr "Указанный диск не находится в заданном пуле (найден %s)"
 
-#: cmd/incus/file.go:116 cmd/incus/storage_volume_file.go:112
+#: cmd/incus/file.go:115 cmd/incus/storage_volume_file.go:111
 msgid "The type to create (file, symlink, or directory)"
 msgstr "Тип для создания (файл, ссылка или каталог)"
 
@@ -10371,7 +10371,7 @@ msgid "UPLOAD DATE"
 msgstr "ДАТА ВЫГРУЗКИ"
 
 #: cmd/incus/cluster.go:198 cmd/incus/remote.go:1184
-#: cmd/incus/usage/usage.go:868
+#: cmd/incus/usage/usage.go:873
 msgid "URL"
 msgstr "URL"
 
@@ -10414,7 +10414,7 @@ msgstr ""
 "Не получается подключиться к любому из участников кластера, указанных в "
 "токене присоединения"
 
-#: cmd/incus/file.go:392 cmd/incus/storage_volume_file.go:470
+#: cmd/incus/file.go:385 cmd/incus/storage_volume_file.go:463
 #, c-format
 msgid "Unable to create a temporary file: %v"
 msgstr "Невозможно создать временный файл: %v"
@@ -10455,6 +10455,11 @@ msgstr "Дистанционный сервер недоступен"
 msgid "Unexpected input size"
 msgstr "Неожиданный размер входных данных"
 
+#: cmd/incus/utils.go:806
+#, c-format
+msgid "Unexpected mode %s; expected a “-”, “+” or “=” modifier"
+msgstr ""
+
 #: cmd/incus/low_level.go:1180
 #, fuzzy, c-format
 msgid "Unexpected signature length %d"
@@ -10470,10 +10475,23 @@ msgstr "Неизвестный тип вывода %q"
 msgid "Unknown certificate type %q"
 msgstr "Неизвестный тип сертификата %q"
 
-#: cmd/incus/utils.go:667
+#: cmd/incus/utils.go:669
 #, c-format
 msgid "Unknown channel type for client %q: %s"
 msgstr "Неизвестный тип канала связи для клиента %q: %s"
+
+#: cmd/incus/utils.go:865
+#, c-format
+msgid ""
+"Unknown character %c in %s; expected one of “r”, “w”, “x”, “X”, “s” or “t”"
+msgstr ""
+
+#: cmd/incus/utils.go:801
+#, c-format
+msgid ""
+"Unknown character %c in %s; expected one of “u”, “g”, “o”, “a”, “-”, “+” or "
+"“=”"
+msgstr ""
 
 #: cmd/incus/cluster.go:219 cmd/incus/cluster.go:1169
 #: cmd/incus/cluster_group.go:483 cmd/incus/config_trust.go:440
@@ -11167,15 +11185,15 @@ msgstr "Описание DNS зоны"
 msgid "action"
 msgstr "действие"
 
-#: cmd/incus/usage/usage.go:816
+#: cmd/incus/usage/usage.go:821
 msgid "address"
 msgstr "адрес"
 
-#: cmd/incus/usage/usage.go:817
+#: cmd/incus/usage/usage.go:822
 msgid "address set"
 msgstr "Набор адресов"
 
-#: cmd/incus/usage/usage.go:818
+#: cmd/incus/usage/usage.go:823
 msgid "alias"
 msgstr "псевдоним"
 
@@ -11183,11 +11201,11 @@ msgstr "псевдоним"
 msgid "application"
 msgstr "приложение"
 
-#: cmd/incus/usage/usage.go:819
+#: cmd/incus/usage/usage.go:824
 msgid "backend"
 msgstr "бэкенд"
 
-#: cmd/incus/usage/usage.go:820
+#: cmd/incus/usage/usage.go:825
 msgid "backup file"
 msgstr "файл резервной копии"
 
@@ -11197,7 +11215,7 @@ msgstr "файл резервной копии"
 msgid "bitmap"
 msgstr "Битовая карта"
 
-#: cmd/incus/usage/usage.go:821
+#: cmd/incus/usage/usage.go:826
 msgid "bucket"
 msgstr "Сегмент хранилища"
 
@@ -11221,7 +11239,7 @@ msgstr "cert.crt"
 msgid "cert.key"
 msgstr "cert.key"
 
-#: cmd/incus/usage/usage.go:822
+#: cmd/incus/usage/usage.go:827
 msgid "client"
 msgstr "клиент"
 
@@ -11233,7 +11251,7 @@ msgstr "кластер"
 msgid "command"
 msgstr "команда"
 
-#: cmd/incus/usage/usage.go:823
+#: cmd/incus/usage/usage.go:828
 msgid "command-line argument"
 msgstr "аргумент командной строки"
 
@@ -11245,7 +11263,7 @@ msgstr "условие"
 msgid "current"
 msgstr "используемый"
 
-#: cmd/incus/usage/usage.go:824
+#: cmd/incus/usage/usage.go:829
 msgid "default"
 msgstr "По умолчанию"
 
@@ -11253,11 +11271,11 @@ msgstr "По умолчанию"
 msgid "description"
 msgstr "описание"
 
-#: cmd/incus/usage/usage.go:825
+#: cmd/incus/usage/usage.go:830
 msgid "device"
 msgstr "устройство"
 
-#: cmd/incus/usage/usage.go:827
+#: cmd/incus/usage/usage.go:832
 msgid "directory"
 msgstr "директория"
 
@@ -11265,7 +11283,7 @@ msgstr "директория"
 msgid "disabled"
 msgstr "отключено"
 
-#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:828
+#: cmd/incus/storage.go:525 cmd/incus/usage/usage.go:833
 msgid "driver"
 msgstr "драйвер"
 
@@ -11287,27 +11305,27 @@ msgstr "ошибка: %v"
 msgid "expected %s"
 msgstr "ожидалось %s"
 
-#: cmd/incus/usage/usage.go:830
+#: cmd/incus/usage/usage.go:835
 msgid "expiry"
 msgstr "хранить до"
 
-#: cmd/incus/usage/usage.go:831
+#: cmd/incus/usage/usage.go:836
 msgid "file"
 msgstr "файл"
 
-#: cmd/incus/usage/usage.go:832
+#: cmd/incus/usage/usage.go:837
 msgid "filter"
 msgstr "фильтр"
 
-#: cmd/incus/usage/usage.go:833
+#: cmd/incus/usage/usage.go:838
 msgid "fingerprint"
 msgstr "отпечаток"
 
-#: cmd/incus/usage/usage.go:834
+#: cmd/incus/usage/usage.go:839
 msgid "group"
 msgstr "группа"
 
-#: cmd/incus/usage/usage.go:835
+#: cmd/incus/usage/usage.go:840
 msgid "image"
 msgstr "образ"
 
@@ -11470,7 +11488,7 @@ msgstr ""
 "    Создать и запустить виртуальную машину v2, переопределив размер диска и "
 "шину"
 
-#: cmd/incus/storage_volume_file.go:515
+#: cmd/incus/storage_volume_file.go:508
 msgid ""
 "incus custom volume file pull local v1/foo/etc/hosts .\n"
 "   To pull /etc/hosts from the custom volume and write it to the current "
@@ -11517,7 +11535,7 @@ msgstr ""
 "\tСкачать резервную копию в формате архива, которая будет выведена в "
 "стандартный вывод."
 
-#: cmd/incus/file.go:103
+#: cmd/incus/file.go:102
 msgid ""
 "incus file create foo/bar\n"
 "   To create a file /bar in the foo instance.\n"
@@ -11532,7 +11550,7 @@ msgstr ""
 "    Создать символическую ссылку /bar в экземпляре foo, целевым объектом "
 "которой является baz."
 
-#: cmd/incus/file.go:903
+#: cmd/incus/file.go:902
 msgid ""
 "incus file mount foo/root fooroot\n"
 "   To mount /root from the instance foo onto the local fooroot directory.\n"
@@ -11547,7 +11565,7 @@ msgstr ""
 "incus file mount foo\n"
 "    Запуск SSH SFTP-сервера для корневой файловой системы экземпляра foo."
 
-#: cmd/incus/file.go:435
+#: cmd/incus/file.go:428
 msgid ""
 "incus file pull foo/etc/hosts .\n"
 "   To pull /etc/hosts from the instance and write it to the current "
@@ -11564,7 +11582,7 @@ msgstr ""
 "    Извлечь файл /etc/hosts из экземпляра и записать его содержимое в "
 "стандартный поток вывода."
 
-#: cmd/incus/file.go:662
+#: cmd/incus/file.go:655
 msgid ""
 "incus file push /etc/hosts foo/etc/hosts\n"
 "   To push /etc/hosts into the instance \"foo\".\n"
@@ -12196,7 +12214,7 @@ msgstr ""
 "    Изменить пользовательский том хранения \"foo\" в пуле \"default\", "
 "используя содержимое файла volume.yaml"
 
-#: cmd/incus/storage_volume_file.go:99
+#: cmd/incus/storage_volume_file.go:98
 msgid ""
 "incus storage volume file create foo bar/baz\n"
 "   To create a file baz in the bar volume on the foo pool.\n"
@@ -12212,7 +12230,7 @@ msgstr ""
 "    Создаст символическую ссылку qux в томе хранения bar из пула foo, целью "
 "которой является baz."
 
-#: cmd/incus/storage_volume_file.go:343
+#: cmd/incus/storage_volume_file.go:336
 msgid ""
 "incus storage volume file mount mypool myvolume localdir\n"
 "   To mount the storage volume myvolume from pool mypool onto the local "
@@ -12229,7 +12247,7 @@ msgstr ""
 "incus storage volume file mount mypool myvolume\n"
 "    Запустит SSH SFTP сервер для тома хранения myvolume из пула mypool."
 
-#: cmd/incus/storage_volume_file.go:709
+#: cmd/incus/storage_volume_file.go:702
 msgid ""
 "incus storage volume file push /etc/hosts local v1/etc/hosts\n"
 "   To push /etc/hosts into the custom volume \"v1\".\n"
@@ -12381,19 +12399,19 @@ msgstr ""
 msgid "info"
 msgstr "информация"
 
-#: cmd/incus/usage/usage.go:836
+#: cmd/incus/usage/usage.go:841
 msgid "instance"
 msgstr "экземпляр"
 
-#: cmd/incus/usage/usage.go:837
+#: cmd/incus/usage/usage.go:842
 msgid "interface"
 msgstr "интерфейс"
 
-#: cmd/incus/usage/usage.go:840
+#: cmd/incus/usage/usage.go:845
 msgid "keepalive timeout"
 msgstr "Время ожидания активности"
 
-#: cmd/incus/usage/usage.go:841
+#: cmd/incus/usage/usage.go:846
 msgid "key"
 msgstr "параметр"
 
@@ -12401,15 +12419,15 @@ msgstr "параметр"
 msgid "last"
 msgstr "недавний"
 
-#: cmd/incus/usage/usage.go:838
+#: cmd/incus/usage/usage.go:843
 msgid "listen address"
 msgstr "адрес для подключений"
 
-#: cmd/incus/usage/usage.go:839
+#: cmd/incus/usage/usage.go:844
 msgid "listen port"
 msgstr "Порт для подключений"
 
-#: cmd/incus/usage/usage.go:843
+#: cmd/incus/usage/usage.go:848
 msgid "member"
 msgstr "участник"
 
@@ -12421,11 +12439,11 @@ msgstr "нет (n)"
 msgid "name"
 msgstr "название"
 
-#: cmd/incus/usage/usage.go:844
+#: cmd/incus/usage/usage.go:849
 msgid "network"
 msgstr "сеть"
 
-#: cmd/incus/usage/usage.go:845
+#: cmd/incus/usage/usage.go:850
 msgid "network integration"
 msgstr "сетевая интеграция"
 
@@ -12433,7 +12451,7 @@ msgstr "сетевая интеграция"
 msgid "network or integration"
 msgstr "сеть или сетевая интеграция"
 
-#: cmd/incus/usage/usage.go:904
+#: cmd/incus/usage/usage.go:909
 #, c-format
 msgid "new %s name"
 msgstr "новое название %s"
@@ -12461,15 +12479,15 @@ msgstr "принять y(да)/n(нет)/[отпечаток]?"
 msgid "one of %s or %s"
 msgstr "%s или %s"
 
-#: cmd/incus/usage/usage.go:846
+#: cmd/incus/usage/usage.go:851
 msgid "operation"
 msgstr "операция"
 
-#: cmd/incus/usage/usage.go:847
+#: cmd/incus/usage/usage.go:852
 msgid "path"
 msgstr "путь"
 
-#: cmd/incus/usage/usage.go:848
+#: cmd/incus/usage/usage.go:853
 msgid "peer"
 msgstr "точка обмена трафиком"
 
@@ -12481,11 +12499,11 @@ msgstr "Пожалуйста, используйте синтаксис «<па�
 msgid "please use `incus profile`"
 msgstr "пожалуйста, используйте `incus profile`"
 
-#: cmd/incus/usage/usage.go:849
+#: cmd/incus/usage/usage.go:854
 msgid "pool"
 msgstr "пул"
 
-#: cmd/incus/usage/usage.go:850
+#: cmd/incus/usage/usage.go:855
 msgid "port"
 msgstr "порт"
 
@@ -12493,31 +12511,31 @@ msgstr "порт"
 msgid "preseed.yaml"
 msgstr "preseed.yaml"
 
-#: cmd/incus/usage/usage.go:851
+#: cmd/incus/usage/usage.go:856
 msgid "profile"
 msgstr "профиль"
 
-#: cmd/incus/usage/usage.go:852
+#: cmd/incus/usage/usage.go:857
 msgid "project"
 msgstr "проект"
 
-#: cmd/incus/usage/usage.go:853
+#: cmd/incus/usage/usage.go:858
 msgid "protocol"
 msgstr "протокол"
 
-#: cmd/incus/usage/usage.go:854
+#: cmd/incus/usage/usage.go:859
 msgid "query"
 msgstr "запрос"
 
-#: cmd/incus/usage/usage.go:855
+#: cmd/incus/usage/usage.go:860
 msgid "record"
 msgstr "запись"
 
-#: cmd/incus/usage/usage.go:856
+#: cmd/incus/usage/usage.go:861
 msgid "remote"
 msgstr "сервер"
 
-#: cmd/incus/usage/usage.go:860
+#: cmd/incus/usage/usage.go:865
 msgid "role"
 msgstr "роль"
 
@@ -12525,7 +12543,7 @@ msgstr "роль"
 msgid "rootfs tarball"
 msgstr "архив корневой ФС"
 
-#: cmd/incus/usage/usage.go:861
+#: cmd/incus/usage/usage.go:866
 msgid "snapshot"
 msgstr "моментальный снимок"
 
@@ -12533,39 +12551,39 @@ msgstr "моментальный снимок"
 msgid "space used"
 msgstr "использованное пространство"
 
-#: cmd/incus/utils.go:565
+#: cmd/incus/utils.go:567
 msgid "sshfs has stopped"
 msgstr "sshfs остановлен"
 
-#: cmd/incus/utils.go:524
+#: cmd/incus/utils.go:526
 #, c-format
 msgid "sshfs mounting %q on %q"
 msgstr "sshfs монтирует %q в %q"
 
-#: cmd/incus/file.go:760
+#: cmd/incus/file.go:759
 msgid "stdin can only be used once, with no other source arguments"
 msgstr ""
 "Функция stdin может быть использована только один раз, без каких-либо других "
 "аргументов источника"
 
-#: cmd/incus/usage/usage.go:863
+#: cmd/incus/usage/usage.go:868
 msgid "symlink target path"
 msgstr "Целевой путь символической ссылки"
 
-#: cmd/incus/usage/usage.go:864
+#: cmd/incus/usage/usage.go:869
 msgid "tarball"
 msgstr "архив"
 
-#: cmd/incus/usage/usage.go:910
+#: cmd/incus/usage/usage.go:915
 #, c-format
 msgid "target %s"
 msgstr "цель %s"
 
-#: cmd/incus/usage/usage.go:865
+#: cmd/incus/usage/usage.go:870
 msgid "template"
 msgstr "шаблон"
 
-#: cmd/incus/remote.go:129 cmd/incus/usage/usage.go:866
+#: cmd/incus/remote.go:129 cmd/incus/usage/usage.go:871
 msgid "token"
 msgstr "токен"
 
@@ -12578,7 +12596,7 @@ msgstr "Слишком много аргументов; неожиданный %
 msgid "total space"
 msgstr "итого пространства"
 
-#: cmd/incus/usage/usage.go:862 cmd/incus/usage/usage.go:867
+#: cmd/incus/usage/usage.go:867 cmd/incus/usage/usage.go:872
 msgid "type"
 msgstr "тип"
 
@@ -12608,19 +12626,19 @@ msgstr "недостижим"
 msgid "used by"
 msgstr "используется в"
 
-#: cmd/incus/usage/usage.go:869
+#: cmd/incus/usage/usage.go:874
 msgid "value"
 msgstr "значение"
 
-#: cmd/incus/usage/usage.go:870
+#: cmd/incus/usage/usage.go:875
 msgid "variable"
 msgstr "переменная"
 
-#: cmd/incus/usage/usage.go:871
+#: cmd/incus/usage/usage.go:876
 msgid "volume"
 msgstr "Том"
 
-#: cmd/incus/usage/usage.go:872
+#: cmd/incus/usage/usage.go:877
 msgid "warning UUID"
 msgstr "UUID предупреждения"
 
@@ -12634,7 +12652,7 @@ msgstr "да (y)"
 msgid "yes"
 msgstr "да"
 
-#: cmd/incus/usage/usage.go:873
+#: cmd/incus/usage/usage.go:878
 msgid "zone"
 msgstr "DNS зона"
 

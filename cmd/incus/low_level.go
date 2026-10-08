@@ -1261,7 +1261,7 @@ func (c *cmdLowLevelSecureBootAdd) run(cmd *cobra.Command, args []string) error 
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName := util.ESLGUIDVar(parsed[1].String)
+	guid, varName := uefi.ESLGUIDVar(parsed[1].String)
 	fileName := parsed[2].String
 	var input []byte
 	if isStdin(fileName) {
@@ -1440,7 +1440,7 @@ func (c *cmdLowLevelSecureBootExport) run(cmd *cobra.Command, args []string) err
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
 	db := parsed[1].String
-	guid, varName := util.ESLGUIDVar(db)
+	guid, varName := uefi.ESLGUIDVar(db)
 	hasTarget := !parsed[2].Skipped
 	targetName := parsed[2].Get(instanceName + "." + db + ".pem")
 	if hasTarget && !isStdout(targetName) && !c.flagForce && util.PathExists(targetName) {
@@ -1555,7 +1555,7 @@ func (c *cmdLowLevelSecureBootImport) run(cmd *cobra.Command, args []string) err
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName := util.ESLGUIDVar(parsed[1].String)
+	guid, varName := uefi.ESLGUIDVar(parsed[1].String)
 	fileName := parsed[2].String
 	var input []byte
 	if isStdin(fileName) {
@@ -1775,7 +1775,7 @@ func (c *cmdLowLevelSecureBootList) run(cmd *cobra.Command, args []string) error
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName := util.ESLGUIDVar(parsed[1].String)
+	guid, varName := uefi.ESLGUIDVar(parsed[1].String)
 
 	v, _, err := d.GetInstanceNVRAMGUIDVar(instanceName, guid, varName)
 	if err != nil {
@@ -1873,7 +1873,7 @@ func (c *cmdLowLevelSecureBootRemove) run(cmd *cobra.Command, args []string) err
 
 	d := parsed[0].RemoteServer
 	instanceName := parsed[0].RemoteObject.String
-	guid, varName := util.ESLGUIDVar(parsed[1].String)
+	guid, varName := uefi.ESLGUIDVar(parsed[1].String)
 	hasFingerprint := parsed[2].BranchID == 0
 	var fingerprint string
 	if hasFingerprint {

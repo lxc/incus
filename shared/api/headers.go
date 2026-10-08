@@ -3,8 +3,9 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
+
+	"github.com/lxc/incus/v7/shared/util"
 )
 
 // ParseFileHeaders extracts the file ownership, type, mode and operation type from HTTP headers.
@@ -23,14 +24,10 @@ func ParseFileHeaders(headers http.Header) (int64, int64, int, string, string) {
 		gid = -1
 	}
 
-	mode, err := strconv.Atoi(getHeader("mode"))
-	if err != nil {
-		mode = -1
-	} else {
-		rawMode, err := strconv.ParseInt(getHeader("mode"), 0, 0)
-		if err == nil {
-			mode = int(os.FileMode(rawMode) & os.ModePerm)
-		}
+	mode := -1
+	m, err := util.ParseMode(getHeader("mode"))
+	if err == nil {
+		mode = int(m)
 	}
 
 	fileType := getHeader("type")

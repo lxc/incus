@@ -24,9 +24,9 @@ import (
 
 // sftpSetOwnerMode applies the ownership and mode to a remote path on a best effort basis.
 func sftpSetOwnerMode(sftpConn *sftp.Client, targetPath string, args incus.InstanceFileArgs) error {
-	// Skip if not on UNIX.
-	_, err := sftpConn.StatVFS("/")
-	if err != nil {
+	// Skip if on Windows.
+	p, err := sftpConn.RealPath("/")
+	if err != nil || p != "/" {
 		return nil
 	}
 
@@ -562,7 +562,7 @@ func sftpRecursiveMkdir(sftpConn *sftp.Client, p string, mode *os.FileMode, uid 
 
 		modeArg := -1
 		if mode != nil {
-			modeArg = int(mode.Perm())
+			modeArg = int(*mode)
 		}
 
 		args := incus.InstanceFileArgs{

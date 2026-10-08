@@ -1684,7 +1684,7 @@ type cmdImageUnsetProp struct {
 	imageSetProp *cmdImageSetProp
 }
 
-var cmdImageUnsetPropUsage = u.Usage{u.Image.Remote(), u.Key}
+var cmdImageUnsetPropUsage = u.Usage{u.Image.Remote(), u.Key.List(1)}
 
 func (c *cmdImageUnsetProp) command() *cobra.Command {
 	cmd := &cobra.Command{}
