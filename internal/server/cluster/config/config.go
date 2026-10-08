@@ -5,16 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/net/idna"
 
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/server/config"
 	"github.com/lxc/incus/v7/internal/server/db"
 	scriptletLoad "github.com/lxc/incus/v7/internal/server/scriptlet/load"
+	"github.com/lxc/incus/v7/shared/util"
 	"github.com/lxc/incus/v7/shared/validate"
 )
 
@@ -495,12 +498,12 @@ var ConfigSchema = config.Schema{
 	"acme.ca_url": {Default: "https://acme-v02.api.letsencrypt.org/directory"},
 
 	// gendoc:generate(entity=server, group=acme, key=acme.domain)
-	//
+	// Comma separated list of domains, wildcard domains (`*.example.com`) require the `DNS-01` challenge.
 	// ---
 	//  type: string
 	//  scope: global
 	//  shortdesc: Domain for which the certificate is issued
-	"acme.domain": {},
+	"acme.domain": {Validator: validate.Optional(validateACMEDomains)},
 
 	// gendoc:generate(entity=server, group=acme, key=acme.email)
 	//
@@ -1277,6 +1280,28 @@ func rebalanceThresholdValidator(value string) error {
 
 	if n < 10 || n > 100 {
 		return errors.New("Value must be between 10 and 100")
+	}
+
+	return nil
+}
+
+// validateACMEDomains checks that each domain is a valid hostname, optionally starting with a wildcard label.
+func validateACMEDomains(value string) error {
+	labelRegex := regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
+
+	for _, domain := range util.SplitNTrimSpace(value, ",", -1, false) {
+		name, _ := strings.CutPrefix(domain, "*.")
+
+		ascii, err := idna.Lookup.ToASCII(name)
+		if err != nil {
+			return fmt.Errorf("Invalid domain %q: %w", domain, err)
+		}
+
+		for _, label := range strings.Split(ascii, ".") {
+			if !labelRegex.MatchString(label) {
+				return fmt.Errorf("Invalid domain %q", domain)
+			}
+		}
 	}
 
 	return nil
