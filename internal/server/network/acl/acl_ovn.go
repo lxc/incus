@@ -494,8 +494,8 @@ func ovnAddReferencedACLs(info *api.NetworkACL, referencedACLNames map[string]st
 				continue // Skip special reserved subjects that are not ACL names.
 			}
 
-			if validate.IsNetworkAddressCIDR(subject) == nil || validate.IsNetworkRange(subject) == nil {
-				continue // Skip if the subject is an IP CIDR or IP range.
+			if validate.IsNetworkAddress(subject) == nil || validate.IsNetworkAddressCIDR(subject) == nil || validate.IsNetworkRange(subject) == nil {
+				continue // Skip if the subject is an IP address, IP CIDR or IP range.
 			}
 
 			// Anything else must be a referenced ACL name.

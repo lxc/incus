@@ -240,11 +240,18 @@ test_network_ovn_basic() {
     incus network delete ovn-virtual-network --project testovn
 
     # Test we have to specify uplink network if multiple are allowed.
-    incus network create incusbr1 --project default
+    incus network create incusbr1 --project default ipv4.address=10.10.11.1/24 ipv4.dhcp.ranges=10.10.11.2-10.10.11.199 ipv4.ovn.ranges=10.10.11.200-10.10.11.254 ipv6.address=none
     incus project set testovn restricted.networks.uplinks=incusbr0,incusbr1
     ! incus network create ovn-virtual-network --project testovn || false
     incus network create ovn-virtual-network network=incusbr0 --project testovn
     incus network delete ovn-virtual-network --project testovn
+
+    # Test the uplink's OVN bridge mapping is removed on deletion while other mappings remain.
+    incus network create ovn-virtual-network network=incusbr1 --project testovn
+    ovs-vsctl get open_vswitch . external_ids:ovn-bridge-mappings | grep -q "incusbr1:"
+    incus network delete ovn-virtual-network --project testovn
+    ! ovs-vsctl get open_vswitch . external_ids:ovn-bridge-mappings | grep -q "incusbr1:" || false
+    ovs-vsctl get open_vswitch . external_ids:ovn-bridge-mappings | grep -q "incusbr0:"
     incus network delete incusbr1 --project default
 
     # Test networks shared from the default project through restricted.networks.access.
@@ -2516,6 +2523,23 @@ test_network_ovn_parent() {
     ! incus network delete ovn1 || false
     incus network delete ovn2
     incus network delete ovn1
+
+    echo "==> Check a refused delete of a parent in a project leaves its gateway in place"
+    incus project create testparent -c features.networks=true -c features.images=false -c restricted=true
+    incus project set testparent restricted.networks.uplinks=incusbr0
+    incus network create p1 --project testparent --type=ovn network=incusbr0 ipv4.address=10.10.21.1/24 ipv4.nat=true ipv6.address=none
+    incus network create p2 --project testparent --type=ovn parent=p1 ipv4.address=10.10.22.1/24 ipv4.nat=true ipv6.address=none
+    sleep 2
+    incus network show p1 --project testparent | grep -F "/1.0/networks/p2?project=testparent"
+    projectRouter="$(incus network info p1 --project testparent | awk '/Logical router:/ {print $NF}')"
+    [ -n "$(ovn-nbctl --bare --columns=ha_chassis find ha_chassis_group "name=${projectRouter%-lr}")" ]
+    ! incus network delete p1 --project testparent || false
+    sleep 2
+    [ -n "$(ovn-nbctl --bare --columns=ha_chassis find ha_chassis_group "name=${projectRouter%-lr}")" ]
+    incus network delete p2 --project testparent
+    incus network delete p1 --project testparent
+    incus project delete testparent
+
     incus network delete incusbr0
 }
 
