@@ -47,6 +47,15 @@ test_dependent_volumes() {
     # Deleting snapshots on a dependent volume is not allowed
     ! incus storage volume snapshot delete "${storage_pool}" "${storage_volume}" snap-test2 || false
 
+    # Renaming snapshots on a dependent volume is not allowed
+    ! incus storage volume snapshot rename "${storage_pool}" "${storage_volume}" snap-test2 snap-test3 || false
+
+    # Renaming an instance snapshot renames the volume snapshot
+    incus snapshot rename c1 snap-test2 snap-test3
+    snap_name=$(incus storage volume snapshot ls "${storage_pool}" "${storage_volume}" --format json | jq -r '.[1].name')
+    [ "${snap_name}" = "${storage_volume}/snap-test3" ]
+    incus snapshot rename c1 snap-test3 snap-test2
+
     # Deleting an instance snapshot deletes the volume snapshot
     incus snapshot delete c1 snap-test2
     incus snapshot delete c1 snap-test
