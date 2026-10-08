@@ -6123,7 +6123,7 @@
 					},
 					{
 						"acme.domain": {
-							"longdesc": "",
+							"longdesc": "Comma separated list of domains, wildcard domains (`*.example.com`) require the `DNS-01` challenge.",
 							"scope": "global",
 							"shortdesc": "Domain for which the certificate is issued",
 							"type": "string"

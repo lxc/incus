@@ -5474,7 +5474,7 @@ Possible values are `DNS-01` and `HTTP-01`.
 :scope: "global"
 :shortdesc: "Domain for which the certificate is issued"
 :type: "string"
-
+Comma separated list of domains, wildcard domains (`*.example.com`) require the `DNS-01` challenge.
 ```
 
 ```{config:option} acme.eab.hmac server-acme
