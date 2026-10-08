@@ -135,6 +135,11 @@ test_storage_buckets() {
         cmp "${incusTestFile}" "${incusTestFile}.signed"
         rm "${incusTestFile}.signed"
 
+        # A missing object must report NoSuchKey rather than NoSuchBucket.
+        missingURL=$(s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" signurl "s3://${bucketPrefix}.foo/missing" "+60" | tr -d '[:space:]')
+        missingURL="https://${missingURL#http://}"
+        curl -sS -k "${missingURL}" | grep -q "<Code>NoSuchKey</Code>"
+
         # An expired presigned URL must be rejected.
         expiredEpoch=$(($(date +%s) - 60))
         expiredURL=$(s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" signurl "s3://${bucketPrefix}.foo/${incusTestFile}" "${expiredEpoch}" | tr -d '[:space:]')

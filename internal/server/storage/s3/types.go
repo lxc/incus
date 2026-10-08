@@ -9,6 +9,9 @@ import (
 // ErrorCodeNoSuchBucket means the specified bucket does not exist.
 const ErrorCodeNoSuchBucket = "NoSuchBucket"
 
+// ErrorCodeNoSuchKey means the specified object does not exist.
+const ErrorCodeNoSuchKey = "NoSuchKey"
+
 // ErrorCodeInternalError means there was an internal error.
 const ErrorCodeInternalError = "InternalError"
 
@@ -29,6 +32,7 @@ const ErrorCodeNotImplemented = "NotImplemented"
 
 var errorHTTPStatusCodes = map[string]int{
 	ErrorCodeNoSuchBucket:       http.StatusNotFound,
+	ErrorCodeNoSuchKey:          http.StatusNotFound,
 	ErrorCodeInternalError:      http.StatusInternalServerError,
 	ErrorCodeInvalidAccessKeyID: http.StatusForbidden,
 	ErrorCodeAccessDenied:       http.StatusForbidden,
@@ -44,6 +48,7 @@ type Error struct {
 	Resource   string
 	RequestID  string `xml:"RequestId"`
 	BucketName string `xml:"BucketName,omitempty"`
+	Key        string `xml:"Key,omitempty"`
 	HostID     string `xml:"HostId"`
 }
 
