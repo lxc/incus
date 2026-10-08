@@ -100,3 +100,9 @@ func Test_certificateNeedsUpdate(t *testing.T) {
 		})
 	}
 }
+
+func Test_legoCertificateName(t *testing.T) {
+	require.Equal(t, "example.com", legoCertificateName("example.com"))
+	require.Equal(t, "_.example.com", legoCertificateName("*.example.com"))
+	require.Equal(t, "xn--bcher-kva.example.com", legoCertificateName("bücher.example.com"))
+}
