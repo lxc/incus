@@ -562,7 +562,7 @@ func sftpRecursiveMkdir(sftpConn *sftp.Client, p string, mode *os.FileMode, uid 
 
 		modeArg := -1
 		if mode != nil {
-			modeArg = int(mode.Perm())
+			modeArg = int(*mode)
 		}
 
 		args := incus.InstanceFileArgs{
