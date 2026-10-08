@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"math/rand"
 	"net"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"reflect"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -757,4 +759,176 @@ func isStdin(p string) bool {
 // isStdout returns whether the provided path looks like stdout.
 func isStdout(p string) bool {
 	return slices.Contains([]string{"-", "/dev/stdout", "/dev/fd/1"}, p)
+}
+
+// parseMode parses a mode supported by GNU `chmod` into an `fs.FileMode`. It takes a reference
+// mode, a umask, and whether the target is a directory as arguments to properly compute the
+// resulting mode in case a symbolic mode expression is given, to almost fully conform to `chmod`.
+// Where the function differs from `chmod` is in its handling of suid and sgid bits removal: `chmod`
+// explicitly requires adding a 0 in front of a 4-character octal permission to actually remove
+// those bits on directories only: `chmod 00755 dir` vs `chmod 0755 file`. We don’t.
+func parseMode(m string, mode fs.FileMode, umask fs.FileMode, isDir bool) (fs.FileMode, error) {
+	// If the mode can be parsed as an integer, reuse our shared parser.
+	_, err := strconv.ParseUint(m, 8, 12)
+	if err == nil {
+		return util.ParseMode(m)
+	}
+
+	for _, modeSpec := range strings.Split(m, ",") {
+		var user, group, others bool
+		base := fs.FileMode(0)
+		index := -1
+	out:
+		for i, r := range modeSpec {
+			switch r {
+			case 'u':
+				user = true
+			case 'g':
+				group = true
+			case 'o':
+				others = true
+			case 'a':
+				user = true
+				group = true
+				others = true
+			case '+':
+				base = mode
+				fallthrough
+			case '-', '=':
+				index = i
+				break out
+			default:
+				return fs.FileMode(0), fmt.Errorf(i18n.G("Unknown character %c in %s; expected one of “u”, “g”, “o”, “a”, “-”, “+” or “=”"), r, modeSpec)
+			}
+		}
+
+		if index == -1 {
+			return fs.FileMode(0), fmt.Errorf(i18n.G("Unexpected mode %s; expected a “-”, “+” or “=” modifier"), modeSpec)
+		}
+
+		modifier := modeSpec[index]
+		currentUmask := fs.FileMode(0)
+		userSpec := true
+		if !user && !group && !others {
+			user = true
+			group = true
+			others = true
+			currentUmask = umask
+			userSpec = false
+		}
+
+		rest := modeSpec[index+1:]
+
+		// If the rest of the current mode specifier can be parsed as an integer, and no user specifier
+		// was provided, reuse our shared parser. This also ignores the umask.
+		_, err := strconv.ParseUint(rest, 8, 12)
+		if err == nil && !userSpec {
+			base, _ = util.ParseMode(rest)
+			currentUmask = 0
+		} else if len(rest) == 1 && slices.Contains([]byte{'u', 'g', 'o'}, rest[0]) {
+			switch rest[0] {
+			case 'u':
+				base = (mode & 0o700) >> 6
+			case 'g':
+				base = (mode & 0o070) >> 3
+			case 'o':
+				base = mode & 0o007
+			}
+
+			base = base * 0o111
+		} else {
+			for _, r := range rest {
+				switch r {
+				case 'r':
+					base |= 0o444
+				case 'w':
+					base |= 0o222
+				case 'x':
+					base |= 0o111
+				case 'X':
+					if isDir || base&0o111 != 0 {
+						base |= 0o111
+					}
+
+				case 's':
+					if user {
+						base |= fs.ModeSetuid
+					}
+
+					if group {
+						base |= fs.ModeSetgid
+					}
+
+				case 't':
+					if others {
+						base |= fs.ModeSticky
+					}
+
+				default:
+					return fs.FileMode(0), fmt.Errorf(i18n.G("Unknown character %c in %s; expected one of “r”, “w”, “x”, “X”, “s” or “t”"), r, modeSpec)
+				}
+			}
+		}
+
+		base &^= currentUmask
+		if user {
+			switch modifier {
+			case '-':
+				mode &^= base & 0o700
+			case '=':
+				mode &^= 0o700
+				fallthrough
+			case '+':
+				mode |= base & 0o700
+			}
+		}
+
+		if group {
+			switch modifier {
+			case '-':
+				mode &^= base & 0o070
+			case '=':
+				mode &^= 0o070
+				fallthrough
+			case '+':
+				mode |= base & 0o070
+			}
+		}
+
+		if others {
+			switch modifier {
+			case '-':
+				mode &^= base & 0o007
+			case '=':
+				mode &^= 0o007
+				fallthrough
+			case '+':
+				mode |= base & 0o007
+			}
+		}
+
+		mask7000 := fs.ModeSetuid | fs.ModeSetgid | fs.ModeSticky
+
+		// This check is necessary to properly handle the `=` case.
+		if base&mask7000 != 0 {
+			switch modifier {
+			case '-':
+				mode &^= base & mask7000
+			case '=':
+				mode &^= mask7000
+				fallthrough
+			case '+':
+				mode |= base & mask7000
+			}
+		}
+	}
+
+	return mode, nil
+}
+
+// parsePristineMode parses a mode supported by GNU `chmod` into an `fs.FileMode` for a new file.
+// This DOES NOT take into account any umask, making file creation commands as predictable as
+// possible.
+func parsePristineMode(m string) (fs.FileMode, error) {
+	return parseMode(m, fs.FileMode(0), fs.FileMode(0), false)
 }
