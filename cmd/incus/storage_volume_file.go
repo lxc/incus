@@ -10,7 +10,6 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -174,16 +173,10 @@ func (c *cmdStorageVolumeFileCreate) run(cmd *cobra.Command, args []string) erro
 	}
 
 	if c.storageVolumeFile.flagMode != "" {
-		if len(c.storageVolumeFile.flagMode) == 3 {
-			c.storageVolumeFile.flagMode = "0" + c.storageVolumeFile.flagMode
-		}
-
-		m, err := strconv.ParseInt(c.storageVolumeFile.flagMode, 0, 0)
+		mode, err = parsePristineMode(c.storageVolumeFile.flagMode)
 		if err != nil {
 			return err
 		}
-
-		mode = os.FileMode(m)
 	}
 
 	// Create needed paths if requested
@@ -214,7 +207,7 @@ func (c *cmdStorageVolumeFileCreate) run(cmd *cobra.Command, args []string) erro
 		Type:    c.flagType,
 		UID:     int64(uid),
 		GID:     int64(gid),
-		Mode:    int(mode.Perm()),
+		Mode:    int(mode),
 		Content: content,
 	}
 
@@ -770,18 +763,24 @@ func (c *cmdStorageVolumeFilePush) push(srcFile string, parsedPool *u.Parsed, pa
 		}
 	}
 
-	mode := -1
-	if c.storageVolumeFile.flagMode != "" {
-		if len(c.storageVolumeFile.flagMode) == 3 {
-			c.storageVolumeFile.flagMode = "0" + c.storageVolumeFile.flagMode
-		}
-
-		m, err := strconv.ParseInt(c.storageVolumeFile.flagMode, 0, 0)
+	srcMode := fs.FileMode(0)
+	if !isStdin(srcFile) {
+		srcStat, err := os.Stat(srcFile)
 		if err != nil {
 			return err
 		}
 
-		mode = int(os.FileMode(m).Perm())
+		srcMode = srcStat.Mode()
+	}
+
+	mode := -1
+	if c.storageVolumeFile.flagMode != "" {
+		m, err := parseMode(c.storageVolumeFile.flagMode, srcMode, internalIO.GetUmask(), targetIsDir)
+		if err != nil {
+			return err
+		}
+
+		mode = int(m)
 	}
 
 	// Push the files
