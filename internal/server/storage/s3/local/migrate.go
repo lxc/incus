@@ -142,6 +142,12 @@ func walkAndConvert(src, dst string) error {
 
 			target := filepath.Join(dst, rel)
 
+			// Objects extracted by an earlier interrupted pass are complete.
+			_, err = os.Stat(target)
+			if err == nil {
+				return filepath.SkipDir
+			}
+
 			err = os.MkdirAll(filepath.Dir(target), 0o700)
 			if err != nil {
 				return err
