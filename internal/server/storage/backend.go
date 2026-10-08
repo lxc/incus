@@ -1282,6 +1282,11 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 
 			newVolName, _ := internalInstance.SplitVolumeSource(newDevices[dev.Name]["source"])
 			srcVolName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+			if src.IsSnapshot() {
+				_, snapName, _ := api.GetParentAndSnapshotName(src.Name())
+				srcVolName = drivers.GetSnapshotVolumeName(srcVolName, snapName)
+			}
+
 			err = diskPool.CreateCustomVolumeFromCopy(storageProjectName, srcStorageProjectName, newVolName, "", nil, dev.Config["pool"], srcVolName, snapshots, op)
 			if err != nil {
 				return err

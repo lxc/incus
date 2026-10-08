@@ -90,6 +90,21 @@ test_dependent_volumes() {
     incus delete --force c1
     [ "$(incus storage volume ls "${storage_pool}" "${storage_volume}" --format json | jq 'length == 0')" = "true" ]
 
+    # Copying from an instance snapshot takes the dependent volumes from that snapshot
+    storage_volume4="${storage_pool}-vol4"
+    storage_volume5="${storage_pool}-vol5"
+    incus launch testimage c4
+    incus storage volume create "${storage_pool}" "${storage_volume4}"
+    incus config device add c4 vol4 disk pool="${storage_pool}" source="${storage_volume4}" path=/mnt dependent=true
+    incus exec c4 -- touch /mnt/before
+    incus snapshot create c4 snap0
+    incus exec c4 -- touch /mnt/after
+    incus copy c4/snap0 c5 --device "vol4,source=${storage_volume5}"
+    incus start c5
+    incus exec c5 -- test -e /mnt/before
+    ! incus exec c5 -- test -e /mnt/after || false
+    incus delete --force c4 c5
+
     # Dependent volumes work in a project using the default project's storage volumes
     storage_volume3="${storage_pool}-vol3"
     incus project create depvols -c features.storage.volumes=false -c features.images=false -c features.profiles=false
