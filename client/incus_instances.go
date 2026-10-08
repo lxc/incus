@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/sftp"
@@ -1302,11 +1303,32 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 		}
 	}
 
+	// Figure out which websockets are needed.
+	wsNames := []string{}
 	if fds[api.SecretNameControl] != "" {
-		conn, err := r.GetOperationWebsocket(opAPI.ID, fds[api.SecretNameControl])
-		if err != nil {
-			return nil, err
+		wsNames = append(wsNames, api.SecretNameControl)
+	}
+
+	if exec.Interactive {
+		if fds["0"] != "" && args.Stdin != nil && args.Stdout != nil {
+			wsNames = append(wsNames, "0")
 		}
+	} else {
+		for _, name := range []string{"0", "1", "2"} {
+			if fds[name] != "" {
+				wsNames = append(wsNames, name)
+			}
+		}
+	}
+
+	// Connect to all of them concurrently as the server waits for the full set before starting the command.
+	conns, err := r.getExecWebsockets(opAPI.ID, fds, wsNames)
+	if err != nil {
+		return nil, err
+	}
+
+	if conns[api.SecretNameControl] != nil {
+		conn := conns[api.SecretNameControl]
 
 		go func() {
 			_, _, _ = conn.ReadMessage() // Consume pings from server.
@@ -1320,14 +1342,9 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 
 	if exec.Interactive {
 		// Handle interactive sections
-		if args.Stdin != nil && args.Stdout != nil {
-			// Connect to the websocket
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["0"])
-			if err != nil {
-				return nil, err
-			}
-
-			// And attach stdin and stdout to it
+		conn := conns["0"]
+		if conn != nil {
+			// Attach stdin and stdout to it
 			go func() {
 				ws.MirrorRead(conn, args.Stdin)
 				<-ws.MirrorWrite(conn, args.Stdout)
@@ -1337,64 +1354,49 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 					close(args.DataDone)
 				}
 			}()
-		} else {
-			if args.DataDone != nil {
-				close(args.DataDone)
-			}
+		} else if args.DataDone != nil {
+			close(args.DataDone)
 		}
 	} else {
 		// Handle non-interactive sessions
 		dones := make(map[int]chan error)
-		conns := []*websocket.Conn{}
+		stdConns := map[int]*websocket.Conn{}
 
 		// Handle stdin
-		if fds["0"] != "" {
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["0"])
-			if err != nil {
-				return nil, err
-			}
+		if conns["0"] != nil {
+			conn := conns["0"]
 
 			go func() {
 				_, _, _ = conn.ReadMessage() // Consume pings from server.
 			}()
 
-			conns = append(conns, conn)
+			stdConns[0] = conn
 			dones[0] = ws.MirrorRead(conn, args.Stdin)
 		}
 
 		waitConns := 0 // Used for keeping track of when stdout and stderr have finished.
 
 		// Handle stdout
-		if fds["1"] != "" {
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["1"])
-			if err != nil {
-				return nil, err
-			}
-
+		if conns["1"] != nil {
 			// Discard Stdout from remote command if output writer not supplied.
 			if args.Stdout == nil {
 				args.Stdout = io.Discard
 			}
 
-			conns = append(conns, conn)
-			dones[1] = ws.MirrorWrite(conn, args.Stdout)
+			stdConns[1] = conns["1"]
+			dones[1] = ws.MirrorWrite(conns["1"], args.Stdout)
 			waitConns++
 		}
 
 		// Handle stderr
-		if fds["2"] != "" {
-			conn, err := r.GetOperationWebsocket(opAPI.ID, fds["2"])
-			if err != nil {
-				return nil, err
-			}
-
+		if conns["2"] != nil {
 			// Discard Stderr from remote command if output writer not supplied.
 			if args.Stderr == nil {
 				args.Stderr = io.Discard
 			}
 
-			conns = append(conns, conn)
-			dones[2] = ws.MirrorWrite(conn, args.Stderr)
+			stdConns[2] = conns["2"]
+			dones[2] = ws.MirrorWrite(conns["2"], args.Stderr)
 			waitConns++
 		}
 
@@ -1406,21 +1408,21 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 					// Handle stdin finish, but don't wait for it if output channels
 					// have all finished.
 					dones[0] = nil
-					_ = conns[0].Close()
+					_ = stdConns[0].Close()
 				case <-dones[1]:
 					dones[1] = nil
-					_ = conns[1].Close()
+					_ = stdConns[1].Close()
 					waitConns--
 				case <-dones[2]:
 					dones[2] = nil
-					_ = conns[2].Close()
+					_ = stdConns[2].Close()
 					waitConns--
 				}
 
 				if waitConns <= 0 {
 					// Close stdin websocket if defined and not already closed.
 					if dones[0] != nil {
-						conns[0].Close()
+						_ = stdConns[0].Close()
 					}
 
 					break
@@ -1434,6 +1436,48 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 	}
 
 	return op, nil
+}
+
+// getExecWebsockets connects to the named exec websockets concurrently, closing them all on failure.
+func (r *ProtocolIncus) getExecWebsockets(opID string, fds map[string]string, names []string) (map[string]*websocket.Conn, error) {
+	var wg sync.WaitGroup
+	var lock sync.Mutex
+	var firstErr error
+	conns := map[string]*websocket.Conn{}
+
+	for _, name := range names {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			conn, err := r.GetOperationWebsocket(opID, fds[name])
+
+			lock.Lock()
+			defer lock.Unlock()
+
+			if err != nil {
+				if firstErr == nil {
+					firstErr = err
+				}
+
+				return
+			}
+
+			conns[name] = conn
+		}()
+	}
+
+	wg.Wait()
+
+	if firstErr != nil {
+		for _, conn := range conns {
+			_ = conn.Close()
+		}
+
+		return nil, firstErr
+	}
+
+	return conns, nil
 }
 
 // GetInstanceFile retrieves the provided path from the instance.
