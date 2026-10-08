@@ -611,7 +611,8 @@ func (o optional) Remote() Atom {
 
 // placeholder represents a placeholder atom.
 type placeholder struct {
-	element string
+	element    string
+	allowEmpty bool
 }
 
 // List makes the atom accept a list.
@@ -631,6 +632,10 @@ func (p placeholder) Parse(conf Config, servers map[string]incus.InstanceServer,
 	}
 
 	arg := (*args)[0]
+	if arg == "" && !p.allowEmpty {
+		return nil, &notEnoughArgumentsError{p}
+	}
+
 	*args = (*args)[1:]
 	return &Parsed{source: p, String: arg}, nil
 }
@@ -812,65 +817,65 @@ func (v verbatim) Remote() Atom {
 
 // A few strings used throughout the Incus client.
 var (
-	ACL                = placeholder{i18n.G("ACL")}
-	Address            = placeholder{i18n.G("address")}
-	AddressSet         = placeholder{i18n.G("address set")}
-	Alias              = placeholder{i18n.G("alias")}
-	Backend            = placeholder{i18n.G("backend")}
-	BackupFile         = placeholder{i18n.G("backup file")}
-	Bucket             = placeholder{i18n.G("bucket")}
-	Client             = placeholder{i18n.G("client")}
-	CommandLine        = list{placeholder{i18n.G("command-line argument")}, 1, " "}
-	Default            = placeholder{i18n.G("default")}
-	Device             = placeholder{i18n.G("device")}
+	ACL                = placeholder{i18n.G("ACL"), false}
+	Address            = placeholder{i18n.G("address"), false}
+	AddressSet         = placeholder{i18n.G("address set"), false}
+	Alias              = placeholder{i18n.G("alias"), false}
+	Backend            = placeholder{i18n.G("backend"), false}
+	BackupFile         = placeholder{i18n.G("backup file"), false}
+	Bucket             = placeholder{i18n.G("bucket"), false}
+	Client             = placeholder{i18n.G("client"), false}
+	CommandLine        = list{placeholder{i18n.G("command-line argument"), true}, 1, " "}
+	Default            = placeholder{i18n.G("default"), false}
+	Device             = placeholder{i18n.G("device"), false}
 	Direction          = alternative{[]Atom{verbatim{"ingress"}, verbatim{"egress"}}}
-	Directory          = placeholder{i18n.G("directory")}
-	Driver             = placeholder{i18n.G("driver")}
+	Directory          = placeholder{i18n.G("directory"), false}
+	Driver             = placeholder{i18n.G("driver"), false}
 	EndOfFlags         = hide{optional{verbatim{"--"}}, verbatim{"[flags] [--]"}}
-	Expiry             = placeholder{i18n.G("expiry")}
-	File               = placeholder{i18n.G("file")}
-	Filter             = placeholder{i18n.G("filter")}
-	Fingerprint        = placeholder{i18n.G("fingerprint")}
-	Group              = placeholder{i18n.G("group")}
-	Image              = placeholder{i18n.G("image")}
-	Instance           = placeholder{i18n.G("instance")}
-	Interface          = placeholder{i18n.G("interface")}
-	ListenAddress      = placeholder{i18n.G("listen address")}
-	ListenPort         = placeholder{i18n.G("listen port")}
-	KeepaliveTimeout   = placeholder{i18n.G("keepalive timeout")}
-	Key                = placeholder{i18n.G("key")}
+	Expiry             = placeholder{i18n.G("expiry"), false}
+	File               = placeholder{i18n.G("file"), false}
+	Filter             = placeholder{i18n.G("filter"), false}
+	Fingerprint        = placeholder{i18n.G("fingerprint"), false}
+	Group              = placeholder{i18n.G("group"), false}
+	Image              = placeholder{i18n.G("image"), false}
+	Instance           = placeholder{i18n.G("instance"), false}
+	Interface          = placeholder{i18n.G("interface"), false}
+	ListenAddress      = placeholder{i18n.G("listen address"), false}
+	ListenPort         = placeholder{i18n.G("listen port"), false}
+	KeepaliveTimeout   = placeholder{i18n.G("keepalive timeout"), false}
+	Key                = placeholder{i18n.G("key"), false}
 	KV                 = MakeKV(Key, Value)
-	Member             = placeholder{i18n.G("member")}
-	Network            = placeholder{i18n.G("network")}
-	NetworkIntegration = placeholder{i18n.G("network integration")}
-	Operation          = placeholder{i18n.G("operation")}
-	Path               = placeholder{i18n.G("path")}
-	Peer               = placeholder{i18n.G("peer")}
-	Pool               = placeholder{i18n.G("pool")}
-	Port               = placeholder{i18n.G("port")}
-	Profile            = placeholder{i18n.G("profile")}
-	Project            = placeholder{i18n.G("project")}
-	Protocol           = placeholder{i18n.G("protocol")}
-	Query              = placeholder{i18n.G("query")}
-	Record             = placeholder{i18n.G("record")}
-	Remote             = placeholder{i18n.G("remote")}
+	Member             = placeholder{i18n.G("member"), false}
+	Network            = placeholder{i18n.G("network"), false}
+	NetworkIntegration = placeholder{i18n.G("network integration"), false}
+	Operation          = placeholder{i18n.G("operation"), false}
+	Path               = placeholder{i18n.G("path"), true}
+	Peer               = placeholder{i18n.G("peer"), false}
+	Pool               = placeholder{i18n.G("pool"), false}
+	Port               = placeholder{i18n.G("port"), false}
+	Profile            = placeholder{i18n.G("profile"), false}
+	Project            = placeholder{i18n.G("project"), false}
+	Protocol           = placeholder{i18n.G("protocol"), false}
+	Query              = placeholder{i18n.G("query"), false}
+	Record             = placeholder{i18n.G("record"), false}
+	Remote             = placeholder{i18n.G("remote"), false}
 	RemoteColon        = remote{Remote, nil, false}
 	RemoteColonOpt     = remote{Remote, nil, true}
 	RemoteImage        = compound{":", []Atom{optional{Remote}, Image}}
-	Role               = placeholder{i18n.G("role")}
-	Snapshot           = placeholder{i18n.G("snapshot")}
-	StorageVolumeType  = hide{alternative{[]Atom{verbatim{"custom"}, verbatim{"image"}, verbatim{"container"}, verbatim{"virtual-machine"}}}, placeholder{i18n.G("type")}}
-	SymlinkTargetPath  = placeholder{i18n.G("symlink target path")}
-	Tarball            = placeholder{i18n.G("tarball")}
-	Template           = placeholder{i18n.G("template")}
-	Token              = placeholder{i18n.G("token")}
-	Type               = placeholder{i18n.G("type")}
-	URL                = placeholder{i18n.G("URL")}
-	Value              = placeholder{i18n.G("value")}
-	Variable           = placeholder{i18n.G("variable")}
-	Volume             = placeholder{i18n.G("volume")}
-	WarningUUID        = placeholder{i18n.G("warning UUID")}
-	Zone               = placeholder{i18n.G("zone")}
+	Role               = placeholder{i18n.G("role"), false}
+	Snapshot           = placeholder{i18n.G("snapshot"), false}
+	StorageVolumeType  = hide{alternative{[]Atom{verbatim{"custom"}, verbatim{"image"}, verbatim{"container"}, verbatim{"virtual-machine"}}}, placeholder{i18n.G("type"), false}}
+	SymlinkTargetPath  = placeholder{i18n.G("symlink target path"), false}
+	Tarball            = placeholder{i18n.G("tarball"), false}
+	Template           = placeholder{i18n.G("template"), false}
+	Token              = placeholder{i18n.G("token"), false}
+	Type               = placeholder{i18n.G("type"), false}
+	URL                = placeholder{i18n.G("URL"), false}
+	Value              = placeholder{i18n.G("value"), true}
+	Variable           = placeholder{i18n.G("variable"), false}
+	Volume             = placeholder{i18n.G("volume"), false}
+	WarningUUID        = placeholder{i18n.G("warning UUID"), false}
+	Zone               = placeholder{i18n.G("zone"), false}
 )
 
 // Either builds an alternative atom from several atoms.
@@ -892,7 +897,7 @@ func EitherVerbatim(elements ...string) Atom {
 func EitherPlaceholder(elements ...string) Atom {
 	atoms := make([]Atom, len(elements))
 	for i, element := range elements {
-		atoms[i] = placeholder{element}
+		atoms[i] = placeholder{element, false}
 	}
 
 	return alternative{atoms}
@@ -901,13 +906,13 @@ func EitherPlaceholder(elements ...string) Atom {
 // NewName transforms a placeholder (e.g. `<foo>`) into a placeholder suggesting that a new name is
 // requested (e.g. `<new foo name>`).
 func NewName(p placeholder) Atom {
-	return placeholder{fmt.Sprintf(i18n.G("new %s name"), p.element)}
+	return placeholder{fmt.Sprintf(i18n.G("new %s name"), p.element), p.allowEmpty}
 }
 
 // Target transforms a placeholder (e.g. `<foo>`) into a placeholder suggesting that the requested
 // object is the target of an operation (e.g. `<target foo>`).
 func Target(p placeholder) Atom {
-	return placeholder{fmt.Sprintf(i18n.G("target %s"), p.element)}
+	return placeholder{fmt.Sprintf(i18n.G("target %s"), p.element), p.allowEmpty}
 }
 
 // Colon suffixes an atom with `:`.
@@ -927,7 +932,7 @@ func MakeKV(k Atom, v Atom) Atom {
 
 // Placeholder builds a placeholder atom from a string.
 func Placeholder(element string) placeholder {
-	return placeholder{element}
+	return placeholder{element, false}
 }
 
 // Verbatim builds a verbatim atom from a string.
