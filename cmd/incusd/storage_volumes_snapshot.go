@@ -709,13 +709,31 @@ func storagePoolVolumeSnapshotTypePost(d *Daemon, r *http.Request) response.Resp
 		return storagePoolVolumeTypePostMigration(s, r, request.ProjectParam(r), projectName, poolName, fullSnapshotName, req)
 	}
 
-	// Rename the snapshot.
-	snapshotRename := func(op *operations.Operation) error {
-		pool, err := storagePools.LoadByName(s, poolName)
+	pool, err := storagePools.LoadByName(s, poolName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// Get the parent volume.
+	var parentDBVolume *db.StorageVolume
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		parentDBVolume, err = tx.GetStoragePoolVolume(ctx, pool.ID(), projectName, volumeType, volumeName, true)
 		if err != nil {
 			return err
 		}
 
+		return nil
+	})
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	if util.IsTrue(parentDBVolume.Config["dependent"]) {
+		return response.BadRequest(errors.New("Direct snapshot rename is not allowed for dependent volumes"))
+	}
+
+	// Rename the snapshot.
+	snapshotRename := func(op *operations.Operation) error {
 		return pool.RenameCustomVolumeSnapshot(projectName, fullSnapshotName, req.Name, op)
 	}
 
