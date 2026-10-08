@@ -235,7 +235,7 @@ func (s *execWs) Do(op *operations.Operation) error {
 	case <-s.requiredConnectedCtx.Done():
 		//nolint:revive //whyNoLint: this is intentional, the flow should continue if all websockets are connected
 		break
-	case <-time.After(time.Second * 5):
+	case <-time.After(time.Second * 10):
 		return errors.New("Timed out waiting for websockets to connect")
 	}
 
