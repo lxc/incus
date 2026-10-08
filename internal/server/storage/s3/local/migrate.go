@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/lxc/incus/v7/shared/logger"
 )
 
 // minioSubdir is the legacy directory containing data managed by an embedded
@@ -84,12 +86,16 @@ func MigrateMinioBucket(bucketDir, bucketName string) error {
 		return err
 	}
 
+	l := logger.AddContext(logger.Ctx{"bucket": bucketName, "path": bucketDir})
+	l.Info("Migrating storage bucket from the legacy minio layout")
+
 	bucketRoot := filepath.Join(src, bucketName)
 
 	_, err = os.Stat(bucketRoot)
 	if err == nil {
 		err = walkAndConvert(bucketRoot, dataDir)
 		if err != nil {
+			l.Error("Failed migrating storage bucket from the legacy minio layout", logger.Ctx{"err": err})
 			return fmt.Errorf("Failed migrating minio bucket data: %w", err)
 		}
 	} else if !errors.Is(err, fs.ErrNotExist) {
@@ -100,6 +106,8 @@ func MigrateMinioBucket(bucketDir, bucketName string) error {
 	if err != nil {
 		return fmt.Errorf("Failed archiving minio directory: %w", err)
 	}
+
+	l.Info("Migrated storage bucket from the legacy minio layout")
 
 	return nil
 }
