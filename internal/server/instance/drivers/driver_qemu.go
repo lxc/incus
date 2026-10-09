@@ -8701,15 +8701,19 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	offerHeader.IndexHeaderVersion = &indexHeaderVersion
 
 	// For VMs, send block device size hint in offer header so that target can create the volume the same size.
-	blockSize, err := storagePools.InstanceDiskBlockSize(pool, d, d.op)
-	if err != nil {
-		err := fmt.Errorf("Failed getting source disk size: %w", err)
-		op.Done(err)
-		return err
-	}
+	// Skipped on remote cluster moves as the volume is used in place.
+	var blockSize int64
+	if !remoteClusterMove || storageMove {
+		blockSize, err = storagePools.InstanceDiskBlockSize(pool, d, d.op)
+		if err != nil {
+			err := fmt.Errorf("Failed getting source disk size: %w", err)
+			op.Done(err)
+			return err
+		}
 
-	d.logger.Debug("Set migration offer volume size", logger.Ctx{"blockSize": blockSize})
-	offerHeader.VolumeSize = &blockSize
+		d.logger.Debug("Set migration offer volume size", logger.Ctx{"blockSize": blockSize})
+		offerHeader.VolumeSize = &blockSize
+	}
 
 	srcConfig, err := pool.GenerateInstanceBackupConfig(d, args.Snapshots, true, d.op)
 	if err != nil {
