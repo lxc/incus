@@ -9026,8 +9026,28 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 	// by setting the root disk's `size.state` property.
 	snapshotFile := filepath.Join(d.Path(), fmt.Sprintf("%s.qcow2", snapshotDiskName))
 
+	// Find the disk's current top node, the base of the new overlay.
+	blockDevs, err := d.fetchBlockDeviceChain(monitor, diskName)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("Failed fetching block device chain: %w", err)
+	}
+
+	if len(blockDevs) == 0 {
+		return "", "", nil, fmt.Errorf("No block device found for disk %q", diskName)
+	}
+
+	blockDevName := blockDevs[len(blockDevs)-1]
+
+	// A backed overlay must match the size of the node it is backed by.
+	if backed {
+		diskSize, err = monitor.BlockNodeSize(blockDevName)
+		if err != nil {
+			return "", "", nil, fmt.Errorf("Failed fetching size for %q: %w", blockDevName, err)
+		}
+	}
+
 	// Ensure there are no existing migration snapshot files.
-	err := os.Remove(snapshotFile)
+	err = os.Remove(snapshotFile)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return "", "", nil, err
 	}
@@ -9064,18 +9084,6 @@ func (d *qemu) prepareEphemeralSnapshot(monitor *qmp.Monitor, diskName string, d
 	defer logger.WarnOnError(func() error { return monitor.RemoveFDFromFDSet(snapshotDiskName) }, "Failed to remove FD from FD set")
 
 	_ = snapFile.Close() // Don't prevent clean unmount when instance is stopped.
-
-	// Find the disk's current top node, the base of the new overlay.
-	blockDevs, err := d.fetchBlockDeviceChain(monitor, diskName)
-	if err != nil {
-		return "", "", nil, fmt.Errorf("Failed fetching block device chain: %w", err)
-	}
-
-	if len(blockDevs) == 0 {
-		return "", "", nil, fmt.Errorf("No block device found for disk %q", diskName)
-	}
-
-	blockDevName := blockDevs[len(blockDevs)-1]
 
 	blockDev := map[string]any{
 		"driver":    "qcow2",
@@ -13054,12 +13062,7 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 			bitmapNames = append(bitmapNames, b.Name)
 		}
 
-		diskSize, err := monitor.BlockNodeSize(nodeName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("Failed fetching size for %q: %w", devName, err)
-		}
-
-		overlayNode, baseNode, removeOverlay, err := d.prepareEphemeralSnapshot(monitor, nodeName, diskSize, true)
+		overlayNode, baseNode, removeOverlay, err := d.prepareEphemeralSnapshot(monitor, nodeName, 0, true)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Failed creating temporary snapshot for %q: %w", devName, err)
 		}
