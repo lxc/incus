@@ -9315,13 +9315,13 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 		return err
 	}
 
-	// Delete transit switch if empty
+	// Delete transit switch if empty, its local mirror is gone once the transit switch was removed.
 	icSwitch, err := n.ovnnb.GetLogicalSwitch(ctx, tsName)
-	if err != nil {
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 		return err
 	}
 
-	if len(icSwitch.Ports) == 0 {
+	if icSwitch != nil && len(icSwitch.Ports) == 0 {
 		err = icnb.DeleteTransitSwitch(ctx, string(tsName), false)
 		if err != nil && !errors.Is(err, networkOVN.ErrNotManaged) {
 			return err
