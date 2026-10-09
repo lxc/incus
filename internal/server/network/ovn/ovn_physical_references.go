@@ -456,7 +456,7 @@ func (s *physicalReferences) networkReloadInfrastructure(row ovsdb.Row, switchNa
 }
 
 // networkUnused permits only exact infrastructure ports, never a disabled or unknown consumer.
-func (s *physicalReferences) networkUnused(networkID int64, routerPort string) error {
+func (s *physicalReferences) networkUnused(networkID int64, routerPort string, peers ...NetworkPeerPolicy) error {
 	if networkID <= 0 {
 		return errors.New("Invalid numeric network identity")
 	}
@@ -550,6 +550,15 @@ func (s *physicalReferences) networkUnused(networkID int64, routerPort string) e
 		}
 	}
 
+	peerPolicies, err := s.networkPeerPolicies(networkID, peers)
+	if err != nil {
+		return err
+	}
+
+	for id := range peerPolicies {
+		ownPolicies[id] = true
+	}
+
 	for _, suffix := range []string{"_ip4", "_ip6"} {
 		if s.referenced('$', fmt.Sprintf("incus_net%d_routes%s", networkID, suffix), ownPolicies) {
 			return fmt.Errorf("%w: network route set has an external physical rule", ErrPhysicalReference)
@@ -560,13 +569,13 @@ func (s *physicalReferences) networkUnused(networkID int64, routerPort string) e
 }
 
 // CheckNetworkPhysicalUnused runs before any remote notification or local teardown.
-func (o *NB) CheckNetworkPhysicalUnused(ctx context.Context, networkID int64, routerPort string) error {
+func (o *NB) CheckNetworkPhysicalUnused(ctx context.Context, networkID int64, routerPort string, peers ...NetworkPeerPolicy) error {
 	s, err := o.physicalReferenceSnapshot(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = s.networkUnused(networkID, routerPort)
+	err = s.networkUnused(networkID, routerPort, peers...)
 	if err != nil {
 		return err
 	}

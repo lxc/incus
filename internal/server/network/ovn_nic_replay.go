@@ -35,7 +35,12 @@ func OVNCheckPhysicalUnused(ctx context.Context, n Network) error {
 		return api.StatusErrorf(http.StatusBadRequest, "Network is the parent of %d other network(s)", len(children))
 	}
 
-	return driver.ovnnb.WithNetworkTunnelPorts(driver.tunnelLspNames(driver.config)...).CheckNetworkPhysicalUnused(ctx, n.ID(), string(driver.getRouterIntPortName()))
+	peers, err := driver.deletePeerPolicies()
+	if err != nil {
+		return err
+	}
+
+	return driver.ovnnb.WithNetworkTunnelPorts(driver.tunnelLspNames(driver.config)...).CheckNetworkPhysicalUnused(ctx, n.ID(), string(driver.getRouterIntPortName()), peers...)
 }
 
 func (n *ovn) nicConfigCandidate(ctx context.Context, instanceUUID, device string, config map[string]string) (networkOVN.NICConfigPublication, error) {

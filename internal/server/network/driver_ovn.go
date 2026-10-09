@@ -4604,8 +4604,13 @@ func (n *ovn) deleteAttempt(clientType request.ClientType) (err error) {
 			return err
 		}
 
+		peers, err := n.deletePeerPolicies()
+		if err != nil {
+			return err
+		}
+
 		originalNB := n.ovnnb
-		n.ovnnb = originalNB.WithNetworkTunnelPorts(n.tunnelLspNames(n.config)...).GuardNetworkDelete(n.ID(), string(n.getRouterIntPortName()))
+		n.ovnnb = originalNB.WithNetworkTunnelPorts(n.tunnelLspNames(n.config)...).GuardNetworkDelete(n.ID(), string(n.getRouterIntPortName()), peers...)
 		defer func() { n.ovnnb = originalNB }()
 	}
 
@@ -4623,6 +4628,17 @@ func (n *ovn) deleteAttempt(clientType request.ClientType) (err error) {
 		if n.parentID != 0 {
 			// Our logical router belongs to our parent, so only remove what is ours from it.
 			err = n.deleteRouterNetworkConfig()
+			if err != nil {
+				return err
+			}
+
+			peers, err := n.deletePeerPolicies()
+			if err != nil {
+				return err
+			}
+
+			// Withdraw anti-spoof rules only after the corresponding peer routes are gone.
+			err = n.ovnnb.DeleteNetworkPeerPolicies(context.TODO(), n.ID(), string(n.getRouterIntPortName()), peers...)
 			if err != nil {
 				return err
 			}
@@ -4683,7 +4699,18 @@ func (n *ovn) deleteAttempt(clientType request.ClientType) (err error) {
 		// Clean up any now unused port group.
 		securityACLs := util.SplitNTrimSpace(n.config["security.acls"], ",", -1, true)
 		if len(securityACLs) > 0 {
-			err = acl.OVNPortGroupDeleteIfUnused(n.state, n.logger, n.ovnnb, n.project, &api.Network{Name: n.name}, "")
+			var projectID int64
+			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+				projectID, err = dbCluster.GetProjectID(ctx, tx.Tx(), n.Project())
+				return err
+			})
+			if err != nil {
+				return err
+			}
+
+			key := project.NetworkUsageKey{ProjectID: projectID, NetworkID: n.ID()}
+			err = acl.OVNPortGroupDeleteIfUnused(n.state, n.logger, n.ovnnb, n.project, key, "")
 			if err != nil {
 				return fmt.Errorf("Failed removing unused OVN port groups: %w", err)
 			}
@@ -4755,6 +4782,12 @@ func (n *ovn) deleteAttempt(clientType request.ClientType) (err error) {
 
 		err = parentNet.logicalRouterPolicySetup(n.ovnnb)
 		if err != nil {
+			return err
+		}
+
+		// The earlier address-set deletion retained the parent's still-published policy roots.
+		err = n.ovnnb.DeleteAddressSet(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()))
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 	}

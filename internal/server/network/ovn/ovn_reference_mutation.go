@@ -640,8 +640,8 @@ func (o *NB) ReferenceMutationGuarded() bool {
 }
 
 // GuardNetworkDelete rechecks physical references at every router/switch effect transaction.
-func (o *NB) GuardNetworkDelete(networkID int64, routerPort string) *NB {
-	return o.withReferenceMutation(func(s *physicalReferences) error { return s.networkUnused(networkID, routerPort) })
+func (o *NB) GuardNetworkDelete(networkID int64, routerPort string, peers ...NetworkPeerPolicy) *NB {
+	return o.withReferenceMutation(func(s *physicalReferences) error { return s.networkUnused(networkID, routerPort, peers...) })
 }
 
 // GuardExistingPortGroup admits reuse and pins its managed identity through later effects.
