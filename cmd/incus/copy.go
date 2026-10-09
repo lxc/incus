@@ -18,6 +18,56 @@ import (
 	"github.com/lxc/incus/v7/shared/util"
 )
 
+// refreshCopyConfig preserves the target identity and its original OVN host allocations.
+func refreshCopyConfig(source, target map[string]string) map[string]string {
+	result := maps.Clone(source)
+	delete(result, "volatile.uuid")
+	if target["volatile.uuid"] != "" {
+		result["volatile.uuid"] = target["volatile.uuid"]
+	}
+
+	devices := map[string]bool{}
+	for _, config := range []map[string]string{source, target} {
+		for key := range config {
+			for _, suffix := range []string{".last_state.ovn.host", ".last_state.ovn.physical"} {
+				if strings.HasPrefix(key, "volatile.") && strings.HasSuffix(key, suffix) {
+					devices[strings.TrimSuffix(strings.TrimPrefix(key, "volatile."), suffix)] = true
+				}
+			}
+		}
+	}
+
+	for name := range devices {
+		for _, field := range []string{
+			"host_name", "last_state.ovn.host", "last_state.ovn.physical", "last_state.hwaddr", "last_state.mtu", "last_state.created",
+			"last_state.vdpa.name", "last_state.vf.parent", "last_state.vf.id", "last_state.vf.hwaddr", "last_state.vf.vlan",
+			"last_state.vf.spoofcheck", "last_state.vf.trusted", "last_state.pci.driver",
+		} {
+			key := "volatile." + name + "." + field
+			delete(result, key)
+			if target[key] != "" {
+				result[key] = target[key]
+			}
+		}
+	}
+
+	return result
+}
+
+// copyRefreshForMove creates a missing move target with the source identity.
+func copyRefreshForMove(move, refresh bool, lookup func() error) (bool, error) {
+	if !move || !refresh {
+		return refresh, nil
+	}
+
+	err := lookup()
+	if api.StatusErrorCheck(err, 404) {
+		return false, nil
+	}
+
+	return refresh, err
+}
+
 type cmdCopy struct {
 	global *cmdGlobal
 
@@ -356,6 +406,14 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 			return c.nearLiveMoveInstance(srcServer, dstServer, srcInstanceName, dstInstanceName, entry, &args)
 		}
 
+		args.Refresh, err = copyRefreshForMove(move, args.Refresh, func() error {
+			_, _, err := dstServer.GetInstance(dstInstanceName)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
 		op, err = dstServer.CopyInstance(srcServer, *entry, &args)
 		if err != nil {
 			return err
@@ -390,6 +448,8 @@ func (c *cmdCopy) copyOrMove(cmd *cobra.Command, src *u.Parsed, dst *u.Parsed, k
 		if err != nil {
 			return fmt.Errorf(i18n.G("Failed to refresh target instance '%s': %v"), dstInstanceName, err)
 		}
+
+		writable.Config = refreshCopyConfig(writable.Config, inst.Config)
 
 		// Ensure we don't change the target's volatile.idmap.next value.
 		if inst.Config["volatile.idmap.next"] != writable.Config["volatile.idmap.next"] {
