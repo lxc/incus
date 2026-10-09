@@ -2000,9 +2000,31 @@ func (c *ClusterTx) OVNNICMigrationSourceHook(ctx context.Context, instanceID in
 			return "", errors.New("Migration source hook instance UUID is not unique")
 		}
 
-		err = c.EnsureOVNNICOriginalInstance(ctx, instanceID, identity)
+		// Ordinary copies may preserve volatile.uuid without ever owning an OVN allocation.
+		// Hook discovery grants no backend authority; retain the original-owner guard whenever
+		// this identity has a cleanup, migration or host allocation to protect.
+		var ovnState bool
+		err = c.tx.QueryRowContext(ctx, `SELECT
+			EXISTS(SELECT 1 FROM networks_ovn_nic_cleanup WHERE instance_uuid=?) OR
+			EXISTS(SELECT 1 FROM networks_ovn_nic_migrations WHERE instance_uuid=? AND phase IN ('authorized','handover','placed')) OR
+			EXISTS(SELECT 1 FROM instances_config v JOIN instances_config u ON u.instance_id=v.instance_id
+				WHERE u.key='volatile.uuid' AND u.value=? AND v.value<>'' AND
+				(v.key GLOB 'volatile.*.last_state.ovn.host' OR v.key GLOB 'volatile.*.last_state.ovn.physical'))`, identity, identity, identity).Scan(&ovnState)
 		if err != nil {
 			return "", err
+		}
+
+		for key, value := range local {
+			if value != "" && strings.HasPrefix(key, "volatile.") && (strings.HasSuffix(key, ".last_state.ovn.host") || strings.HasSuffix(key, ".last_state.ovn.physical")) {
+				ovnState = true
+			}
+		}
+
+		if ovnState {
+			err = c.EnsureOVNNICOriginalInstance(ctx, instanceID, identity)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
