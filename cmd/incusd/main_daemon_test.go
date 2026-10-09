@@ -63,6 +63,45 @@ func TestDaemonLock(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestDaemonLockWaitsForDescriptorRelease(t *testing.T) {
+	dir := t.TempDir()
+	fd, err := lockDaemon(dir)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		if fd >= 0 {
+			_ = unix.Close(fd)
+		}
+	})
+
+	done := make(chan struct {
+		fd  int
+		err error
+	}, 1)
+	go func() {
+		newFD, lockErr := lockDaemon(dir)
+		done <- struct {
+			fd  int
+			err error
+		}{newFD, lockErr}
+	}()
+
+	select {
+	case result := <-done:
+		if result.fd >= 0 {
+			_ = unix.Close(result.fd)
+		}
+
+		t.Fatalf("Lock attempt returned before descriptor release: %v", result.err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	require.NoError(t, unix.Close(fd))
+	fd = -1
+	result := <-done
+	require.NoError(t, result.err)
+	require.NoError(t, unix.Close(result.fd))
+}
+
 func TestDaemonLockChild(t *testing.T) {
 	dir := os.Getenv("INCUS_TEST_DAEMON_LOCK")
 	if dir == "" {

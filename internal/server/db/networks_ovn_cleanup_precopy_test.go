@@ -133,3 +133,51 @@ func TestOVNNICOrdinaryPrecopyRetirementAndTerminal(t *testing.T) {
 		})
 	}
 }
+
+func TestOVNNICSourceHookOrdinaryPreservedCopy(t *testing.T) {
+	for _, mode := range []string{"ordinary", "original-host-claim", "copied-physical-claim", "moved-copy"} {
+		t.Run(mode, func(t *testing.T) {
+			tx, cleanup := NewTestClusterTx(t)
+			defer cleanup()
+			ctx := context.Background()
+			identity := "85e669ec-0ab4-46a5-8d15-ff39c63a5eb4"
+			ids := []int{}
+			for _, name := range []string{"original", "preserved-copy"} {
+				res, err := tx.tx.ExecContext(ctx, "INSERT INTO instances(node_id,name,architecture,type,description,project_id) VALUES (?, ?, 1,0,'',1)", tx.nodeID, name)
+				require.NoError(t, err)
+				id, err := res.LastInsertId()
+				require.NoError(t, err)
+				ids = append(ids, int(id))
+				for key, value := range map[string]string{"volatile.uuid": identity, "volatile.eth0.host_name": name + "-bridged-host"} {
+					_, err = tx.tx.ExecContext(ctx, "INSERT INTO instances_config(instance_id,key,value) VALUES (?,?,?)", id, key, value)
+					require.NoError(t, err)
+				}
+			}
+			switch mode {
+			case "original-host-claim", "copied-physical-claim":
+				id, key := ids[0], "volatile.eth0.last_state.ovn.host"
+				if mode == "copied-physical-claim" {
+					id, key = ids[1], "volatile.eth0.last_state.ovn.physical"
+				}
+
+				_, err := tx.tx.ExecContext(ctx, "INSERT INTO instances_config(instance_id,key,value) VALUES (?,?,?)", id, key, `{"borrowed":true}`)
+				require.NoError(t, err)
+			case "moved-copy":
+				node, err := tx.CreateNode("foreign-member", "192.0.2.100:8443")
+				require.NoError(t, err)
+				_, err = tx.tx.ExecContext(ctx, "UPDATE instances SET node_id=? WHERE id=?", node, ids[1])
+				require.NoError(t, err)
+			}
+
+			selected, err := tx.OVNNICMigrationSourceHook(ctx, ids[1], identity, nil)
+			if mode == "ordinary" {
+				require.NoError(t, err)
+				require.Empty(t, selected)
+			} else {
+				require.Error(t, err)
+			}
+
+			require.Error(t, tx.EnsureOVNNICOriginalInstance(ctx, ids[1], identity), "hook discovery must never authorize the copy to publish the original OVN identity")
+		})
+	}
+}

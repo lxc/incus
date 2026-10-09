@@ -1365,22 +1365,25 @@ test_network_ovn_peering() {
     incus exec ovn2 --project=prj-ovn2 -- ping -c1 -6 -w5 2001:db8:1:2::2
 
     # Check address set entries added for running instances.
-    ovn-nbctl list address_set | grep -F 198.51.100.1/32
-    ovn-nbctl list address_set | grep -F 2001:db8:1:2::1/128
-    ovn-nbctl list address_set | grep -F 198.51.100.2/32
-    ovn-nbctl list address_set | grep -F 2001:db8:1:2::2/128
+    ovn-nbctl --columns=addresses list address_set | grep -F 198.51.100.1/32
+    ovn-nbctl --columns=addresses list address_set | grep -F 2001:db8:1:2::1/128
+    ovn-nbctl --columns=addresses list address_set | grep -F 198.51.100.2/32
+    ovn-nbctl --columns=addresses list address_set | grep -F 2001:db8:1:2::2/128
 
     # Check address set entries deleted for instance NIC when stopped and added when started again.
     incus stop -f ovn1 --project=prj-ovn1
-    ! ovn-nbctl list address_set | grep -F 198.51.100.1/32 || false
-    ! ovn-nbctl list address_set | grep -F 2001:db8:1:2::1/128 || false
-    ! ovn-nbctl list address_set | grep -F 198.51.100.2/32 || false
-    ! ovn-nbctl list address_set | grep -F 2001:db8:1:2::2/128 || false
+    ! ovn-nbctl --columns=addresses list address_set | grep -F 198.51.100.1/32 || false
+    ! ovn-nbctl --columns=addresses list address_set | grep -F 2001:db8:1:2::1/128 || false
+    ! ovn-nbctl --columns=addresses list address_set | grep -F 198.51.100.2/32 || false
+    ! ovn-nbctl --columns=addresses list address_set | grep -F 2001:db8:1:2::2/128 || false
+    # The peer network's address sets must survive another instance's Stop.
+    ovn-nbctl --columns=addresses list address_set | grep -F "${ovn2NetIPv4%.*}.0/24"
+    ovn-nbctl --columns=addresses list address_set | grep -F "${ovn2NetIPv6%::*}::/64"
     incus start ovn1 --project=prj-ovn1
-    ovn-nbctl list address_set | grep -F 198.51.100.1/32
-    ovn-nbctl list address_set | grep -F 2001:db8:1:2::1/128
-    ovn-nbctl list address_set | grep -F 198.51.100.2/32
-    ovn-nbctl list address_set | grep -F 2001:db8:1:2::2/128
+    ovn-nbctl --columns=addresses list address_set | grep -F 198.51.100.1/32
+    ovn-nbctl --columns=addresses list address_set | grep -F 2001:db8:1:2::1/128
+    ovn-nbctl --columns=addresses list address_set | grep -F 198.51.100.2/32
+    ovn-nbctl --columns=addresses list address_set | grep -F 2001:db8:1:2::2/128
 
     # Check security policies prevent spoofed packets using peer connection.
     sleep 5
@@ -2447,6 +2450,7 @@ test_network_ovn_parent() {
     incus launch "${instanceImage}" u3 -s "${poolName}" -n ovn4
     sleep 5
     U3_IPV4="$(incus list u3 -c4 --format=csv | cut -d' ' -f1)"
+    U3_IPV6="$(incus list u3 -c6 --format=csv | cut -d' ' -f1)"
     incus exec u3 -- ping -c1 -w5 -4 "${U1_IPV4}"
     incus exec u3 -- ping -c1 -w5 -6 "${U1_IPV6}"
     incus exec u1 -- ping -c1 -w5 -4 "${U3_IPV4}"
@@ -2478,6 +2482,12 @@ test_network_ovn_parent() {
     sleep 2
     ! ovn-nbctl lr-route-list "${peerRouter}" | grep -F "10.10.16.0/24" || false
     ! ovn-nbctl lr-route-list "${peerRouter}" | grep -F "fd42:4242:4242:1015::/64" || false
+
+    # Removing a child's peer policies must preserve traffic through the shared parent router.
+    incus exec u3 -- ping -c1 -w5 -4 "${U1_IPV4}"
+    incus exec u3 -- ping -c1 -w5 -6 "${U1_IPV6}"
+    incus exec u1 -- ping -c1 -w5 -4 "${U3_IPV4}"
+    incus exec u1 -- ping -c1 -w5 -6 "${U3_IPV6}"
 
     incus delete -f u3
     incus network peer delete ovn4 peer1

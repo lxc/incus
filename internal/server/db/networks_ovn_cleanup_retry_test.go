@@ -118,8 +118,10 @@ func TestOVNNICOrdinaryNonOVNSourceHookWithPrecopy(t *testing.T) {
 	selected, err := tx.OVNNICMigrationSourceHook(ctx, ids[0], identity, map[string]string{"volatile.uuid": identity, "volatile.eth0.host_name": "bridged-host"})
 	require.NoError(t, err)
 	require.Empty(t, selected)
-	_, err = tx.OVNNICMigrationSourceHook(ctx, ids[1], identity, map[string]string{"volatile.uuid": identity, "volatile.eth0.host_name": "bridged-host"})
-	require.Error(t, err, "the newer target cannot become the original terminal authority")
+	selected, err = tx.OVNNICMigrationSourceHook(ctx, ids[1], identity, map[string]string{"volatile.uuid": identity, "volatile.eth0.host_name": "bridged-host"})
+	require.NoError(t, err, "an ordinary non-OVN copy must still record its own stopped state")
+	require.Empty(t, selected, "ordinary hook discovery grants no original OVN terminal authority")
+	require.Error(t, tx.EnsureOVNNICOriginalInstance(ctx, ids[1], identity))
 }
 
 func TestOVNNICMigrationSourceTerminalRetryReceipt(t *testing.T) {
