@@ -287,8 +287,14 @@ test_network_ovn_basic() {
     incus project unset testovn restricted.networks.access
     incus network delete incusbr-shared --project default
 
-    # Test physical uplink with external IPs.
+    # Deleting a network removes the VLAN interface created from the extended external interface syntax.
     ip link add dummy0 type dummy
+    incus network create ovn-ext --type=ovn network=none bridge.external_interfaces=ovnvlan222/dummy0/222 ipv4.address=10.222.222.1/24 ipv4.nat=false ipv6.address=none
+    ip link show ovnvlan222
+    incus network delete ovn-ext
+    ! ip link show ovnvlan222 || false
+
+    # Test physical uplink with external IPs.
     incus network create dummy --type=physical --project default \
         parent=dummy0 \
         ipv4.gateway=192.0.2.1/24 \
