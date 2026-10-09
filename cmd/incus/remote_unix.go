@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,7 +32,8 @@ type cmdRemoteProxy struct {
 	flagTimeout int
 }
 
-var cmdRemoteProxyUsage = u.Usage{u.RemoteColon, u.Target(u.Placeholder(i18n.G("unix socket file")))}
+// Parse the remote without connecting so the proxy can disable keepalive first.
+var cmdRemoteProxyUsage = u.Usage{u.Colon(u.Remote), u.Target(u.Placeholder(i18n.G("unix socket file")))}
 
 func (c *cmdRemoteProxy) command() *cobra.Command {
 	cmd := &cobra.Command{}
@@ -54,10 +56,14 @@ func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	remoteName := parsed[0].RemoteName
+	remoteName := strings.TrimSuffix(parsed[0].String, ":")
 	path := parsed[1].String
 
-	remote := c.global.conf.Remotes[remoteName]
+	remote, ok := c.global.conf.Remotes[remoteName]
+	if !ok {
+		return fmt.Errorf("The remote \"%s\" doesn't exist", remoteName)
+	}
+
 	remote.KeepAlive = 0
 
 	// Attempt to read stdin for TLS connection details.
