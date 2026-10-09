@@ -45,10 +45,25 @@ type NetworkPut struct {
 	Description string `json:"description" yaml:"description"`
 }
 
-// NetworkStatusPending network is pending creation on other cluster nodes.
+// NetworkStatusPending network creation is pending globally or on the targeted cluster member.
 const NetworkStatusPending = "Pending"
 
-// NetworkStatusCreated network is fully created.
+// NetworkStatusStarting network initialization has started on this member but is not yet complete.
+const NetworkStatusStarting = "Starting"
+
+// NetworkStatusDeleting network deletion has begun and must complete before initialization can resume.
+const NetworkStatusDeleting = "Deleting"
+
+// NetworkStatusPreparing local maintenance cleanup is incomplete.
+const NetworkStatusPreparing = "Preparing"
+
+// NetworkStatusPrepared local cleanup completed for acknowledged maintenance.
+const NetworkStatusPrepared = "Prepared"
+
+// NetworkStatusStopped local effects are stopped and uplink ownership released.
+const NetworkStatusStopped = "Stopped"
+
+// NetworkStatusCreated global creation completed (members can still be pending), or local setup is ready.
 const NetworkStatusCreated = "Created"
 
 // NetworkStatusErrored network is in error status.
@@ -57,7 +72,7 @@ const NetworkStatusErrored = "Errored"
 // NetworkStatusUnknown network is in unknown status.
 const NetworkStatusUnknown = "Unknown"
 
-// NetworkStatusUnavailable network failed to initialize.
+// NetworkStatusUnavailable local availability or OVN readiness is absent, not necessarily due to failed initialization.
 const NetworkStatusUnavailable = "Unavailable"
 
 // Network represents a network
@@ -88,7 +103,13 @@ type Network struct {
 	// API extension: network
 	Managed bool `json:"managed" yaml:"managed"`
 
-	// The state of the network (for managed network in clusters)
+	// The global network state, or local state for a targeted single-network query
+	//
+	// Standalone servers report local state. Cluster network listings report global state even when targeted.
+	// Global Created does not imply that every member initialized or is currently ready.
+	// For OVN, local Pending, Starting, Preparing, Prepared and Stopped report durable lifecycle state.
+	// A stored local Created is reported as Unavailable until the current daemon establishes readiness and the network is available.
+	// Unavailable does not by itself indicate failed initialization. Global Deleting takes precedence over local OVN status.
 	// Read only: true
 	// Example: Created
 	//
