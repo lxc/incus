@@ -130,6 +130,16 @@ func Qcow2Rebase(path string, backingPath string) error {
 	return nil
 }
 
+// Qcow2Flatten merges the backing chain into a qcow2 image and drops the backing file reference.
+func Qcow2Flatten(path string) error {
+	_, err := subprocess.RunCommand("qemu-img", "rebase", "-U", "-f", "qcow2", "-b", "", path)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Qcow2Commit commits changes from a qcow2 image to its immediate backing file.
 func Qcow2Commit(path string) error {
 	_, err := subprocess.RunCommand("qemu-img", "commit", "-f", "qcow2", path)
