@@ -57,6 +57,7 @@ cron
 CSV
 CUDA
 customizable
+datapath
 dataset
 DCO
 dereferenced
@@ -141,6 +142,7 @@ InfluxDB
 init
 initramfs
 integrations
+invalidations
 IOMMU
 IOPS
 IOV
@@ -160,6 +162,7 @@ kibi
 Kibit
 Kubernetes
 KVM
+lifecycle
 LINBIT
 LINSTOR
 LINSTOR's
@@ -266,6 +269,8 @@ RBD
 RDNSS
 README
 reconfiguring
+reconnection
+representor
 requestor
 resolvers
 RESTful
@@ -303,6 +308,7 @@ SSDs
 SSL
 Starlark
 stateful
+statelessly
 stderr
 stdin
 stdout
@@ -356,6 +362,7 @@ unixgram
 unmanaged
 unmount
 unmounting
+untargeted
 uplink
 uptime
 URI
@@ -365,6 +372,7 @@ UUID
 vCPU
 vCPUs
 VDPA
+vDPA
 VFs
 VFS
 VirtIO
@@ -373,6 +381,7 @@ virtualized
 VLAN
 VLANs
 VM
+VM's
 VMs
 VPD
 VPN
