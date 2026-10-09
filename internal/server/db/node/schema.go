@@ -20,6 +20,13 @@ CREATE TABLE "config" (
     value TEXT NOT NULL,
     UNIQUE (key)
 );
+CREATE TABLE networks_ovn_backend (
+    id INTEGER PRIMARY KEY NOT NULL CHECK (id=1),
+    backend_id TEXT NOT NULL UNIQUE,
+    ovs_root TEXT NOT NULL DEFAULT '',
+    nb_root TEXT NOT NULL DEFAULT '',
+    sb_root TEXT NOT NULL DEFAULT ''
+);
 CREATE TABLE patches (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -34,5 +41,5 @@ CREATE TABLE raft_nodes (
     UNIQUE (address)
 );
 
-INSERT INTO schema (version, updated_at) VALUES (43, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (44, strftime("%s"))
 `

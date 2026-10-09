@@ -590,9 +590,14 @@ type NetworkState = cluster.NetworkState
 
 // Network state.
 const (
-	networkPending NetworkState = iota // Network defined but not yet created globally or on specific node.
-	networkCreated                     // Network created globally or on specific node.
-	networkErrored                     // Deprecated (should no longer occur).
+	networkPending   NetworkState = iota // Network defined but not yet created globally or on specific node.
+	networkCreated                       // Network created globally or on specific node.
+	networkErrored                       // Creation failed on one or more members.
+	networkStarting                      // Local initialization has claimed the network before applying side effects.
+	networkDeleting                      // Deletion has begun and initialization must remain gated.
+	networkPreparing                     // Local cleanup has begun but is not yet acknowledged.
+	networkPrepared                      // Local cleanup completed for acknowledged maintenance.
+	networkStopped                       // Local effects were drained; shared uplink ownership has been released.
 )
 
 // NetworkType indicates type of network.
@@ -716,6 +721,16 @@ func NetworkStateToAPIStatus(state NetworkState) string {
 		return api.NetworkStatusCreated
 	case networkErrored:
 		return api.NetworkStatusErrored
+	case networkStarting:
+		return api.NetworkStatusStarting
+	case networkDeleting:
+		return api.NetworkStatusDeleting
+	case networkPreparing:
+		return api.NetworkStatusPreparing
+	case networkPrepared:
+		return api.NetworkStatusPrepared
+	case networkStopped:
+		return api.NetworkStatusStopped
 	default:
 		return api.NetworkStatusUnknown
 	}
@@ -970,3 +985,8 @@ func nodeSpecificNetworkConfig(netType string) []string {
 
 // nodeSpecificNetworkConfigRe lists dynamic network config keys which are node-specific.
 var nodeSpecificNetworkConfigRe = regexp.MustCompile(`^tunnel\.[^.]+\.(interface|local)$`)
+
+// NetworkDeleting persists deletion intent before any member-local or shared cleanup.
+func (c *ClusterTx) NetworkDeleting(project string, name string) error {
+	return c.networkState(project, name, networkDeleting)
+}

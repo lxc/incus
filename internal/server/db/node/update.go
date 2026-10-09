@@ -100,6 +100,7 @@ var updates = map[int]schema.Update{
 	41: updateFromV40,
 	42: updateFromV41,
 	43: updateFromV42,
+	44: updateFromV43,
 }
 
 // UpdateFromPreClustering is the last schema version where clustering support
@@ -107,6 +108,17 @@ var updates = map[int]schema.Update{
 const UpdateFromPreClustering = 36
 
 // Schema updates begin here
+
+func updateFromV43(ctx context.Context, tx *sql.Tx) error {
+	_, err := tx.Exec(`CREATE TABLE networks_ovn_backend (
+    id INTEGER PRIMARY KEY NOT NULL CHECK (id=1),
+    backend_id TEXT NOT NULL UNIQUE,
+    ovs_root TEXT NOT NULL DEFAULT '',
+    nb_root TEXT NOT NULL DEFAULT '',
+    sb_root TEXT NOT NULL DEFAULT ''
+);`)
+	return err
+}
 
 // updateFromV42 ensures key and value fields in config table are TEXT NOT NULL.
 func updateFromV42(ctx context.Context, tx *sql.Tx) error {

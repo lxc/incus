@@ -42,7 +42,7 @@ func selectUnclusteredNodesCount(ctx context.Context, tx *sql.Tx) (int, error) {
 // version and number of api extensions of a node in the cluster.
 func selectNodesVersions(ctx context.Context, tx *sql.Tx) ([][2]int, error) {
 	versions := [][2]int{}
-	stmt, err := tx.Prepare("SELECT schema, api_extensions FROM nodes WHERE state=0")
+	stmt, err := tx.Prepare("SELECT schema, api_extensions FROM nodes WHERE state!=1")
 	if err != nil {
 		// In order to make cluster updates work, let's check for "pending" as well as that's the column's previous name.
 		stmt, err = tx.Prepare("SELECT schema, api_extensions FROM nodes WHERE pending=0")

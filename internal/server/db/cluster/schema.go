@@ -159,6 +159,21 @@ CREATE TABLE "instances_devices_config" (
     UNIQUE (instance_device_id, key)
 );
 CREATE INDEX instances_node_id_idx ON instances (node_id);
+CREATE TABLE instances_profile_reference_apply (
+    instance_id INTEGER PRIMARY KEY NOT NULL REFERENCES instances (id) ON DELETE RESTRICT,
+    project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE RESTRICT,
+    member_id INTEGER NOT NULL,
+    placement_revision INTEGER NOT NULL CHECK (placement_revision > 0),
+    desired_sequence INTEGER NOT NULL DEFAULT 0 CHECK (desired_sequence >= 0),
+    applied_sequence INTEGER NOT NULL DEFAULT 0 CHECK (applied_sequence >= 0 AND applied_sequence <= desired_sequence),
+    applied_snapshot TEXT NOT NULL,
+    desired_snapshot TEXT NOT NULL,
+    active_token TEXT NOT NULL DEFAULT ''
+,
+    contract_version INTEGER NOT NULL DEFAULT 1 CHECK (contract_version IN (1,
+    2)),
+    input_revision INTEGER NOT NULL DEFAULT 0 CHECK (input_revision >= 0),
+    materialized_observation_id INTEGER NOT NULL DEFAULT 0 CHECK (materialized_observation_id >= 0));
 CREATE TABLE "instances_profiles" (
     id INTEGER primary key AUTOINCREMENT NOT NULL,
     instance_id INTEGER NOT NULL,
@@ -330,6 +345,99 @@ CREATE TABLE "networks_nodes" (
     FOREIGN KEY (network_id) REFERENCES "networks" (id) ON DELETE CASCADE,
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE
 );
+CREATE TABLE networks_ovn_local_initialization (
+    network_id INTEGER PRIMARY KEY NOT NULL,
+    FOREIGN KEY (network_id) REFERENCES networks (id) ON DELETE CASCADE
+);
+CREATE TABLE networks_ovn_members (
+    node_id INTEGER PRIMARY KEY NOT NULL,
+    backend_id TEXT NOT NULL UNIQUE,
+    FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE
+);
+CREATE TABLE networks_ovn_nic_cleanup (
+    generation TEXT PRIMARY KEY NOT NULL,
+    source_node_id INTEGER NOT NULL,
+    instance_uuid TEXT NOT NULL,
+    device_name TEXT NOT NULL,
+    version INTEGER NOT NULL CHECK (version = 1),
+    network_ids TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0,
+    1))
+);
+CREATE TABLE networks_ovn_nic_cleanup_networks (
+    generation TEXT NOT NULL REFERENCES networks_ovn_nic_cleanup (generation) ON DELETE RESTRICT,
+    source_node_id INTEGER NOT NULL REFERENCES nodes (id) ON DELETE RESTRICT,
+    network_id INTEGER NOT NULL REFERENCES networks (id) ON DELETE RESTRICT,
+    PRIMARY KEY (generation,
+    network_id)
+);
+CREATE UNIQUE INDEX networks_ovn_nic_cleanup_pending
+    ON networks_ovn_nic_cleanup (source_node_id,
+    instance_uuid,
+    device_name)
+    WHERE completed = 0;
+CREATE TABLE networks_ovn_nic_cleanup_retirement (
+    generation TEXT PRIMARY KEY NOT NULL REFERENCES networks_ovn_nic_cleanup (generation) ON DELETE RESTRICT,
+    cleared_source INTEGER NOT NULL CHECK (cleared_source IN (0,
+    1))
+);
+CREATE TABLE networks_ovn_nic_migration_devices (
+    operation TEXT NOT NULL REFERENCES networks_ovn_nic_migrations (operation) ON DELETE RESTRICT,
+    device_name TEXT NOT NULL,
+    generation TEXT NOT NULL REFERENCES networks_ovn_nic_cleanup (generation) ON DELETE RESTRICT,
+    target_volatile TEXT NOT NULL DEFAULT '{}',
+    shared_plan TEXT NOT NULL DEFAULT '',
+    target_ovs TEXT NOT NULL DEFAULT '',
+    ovs_attempted INTEGER NOT NULL DEFAULT 0 CHECK (ovs_attempted IN (0,
+    1)),
+    ready INTEGER NOT NULL DEFAULT 0 CHECK (ready IN (0,
+    1)),
+    PRIMARY KEY (operation,
+    device_name)
+);
+CREATE TABLE networks_ovn_nic_migration_members (
+    operation TEXT NOT NULL REFERENCES networks_ovn_nic_migrations (operation) ON DELETE RESTRICT,
+    node_id INTEGER NOT NULL REFERENCES nodes (id) ON DELETE RESTRICT,
+    PRIMARY KEY (operation,
+    node_id)
+);
+CREATE TABLE networks_ovn_nic_migrations (
+    operation TEXT PRIMARY KEY NOT NULL,
+    project_id INTEGER NOT NULL,
+    instance_id INTEGER NOT NULL,
+    instance_uuid TEXT NOT NULL,
+    source_node_id INTEGER NOT NULL,
+    target_node_id INTEGER NOT NULL,
+    phase TEXT NOT NULL CHECK (phase IN ('authorized',
+    'handover',
+    'placed',
+    'aborted')),
+    source_terminal TEXT NOT NULL DEFAULT '',
+    CHECK (source_node_id <> target_node_id)
+);
+CREATE UNIQUE INDEX networks_ovn_nic_migrations_active ON networks_ovn_nic_migrations (instance_uuid)
+    WHERE phase <> 'aborted' AND phase <> 'placed';
+CREATE TABLE networks_ovn_notifications (
+    id TEXT PRIMARY KEY NOT NULL,
+    token TEXT NOT NULL,
+    node_id INTEGER NOT NULL DEFAULT 0
+ ,
+    backend_fenced INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE networks_ovn_operations (
+    project_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    node_id INTEGER NOT NULL,
+    token TEXT NOT NULL,
+    operation TEXT NOT NULL,
+    abandoned INTEGER NOT NULL DEFAULT 0,
+    backend_fenced INTEGER NOT NULL DEFAULT 0,
+    ic_integration_id INTEGER REFERENCES networks_integrations (id) ON DELETE RESTRICT,
+    ic_root TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (project_id,
+    name),
+    FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+);
 CREATE TABLE "networks_peers" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     network_id INTEGER NOT NULL,
@@ -438,11 +546,18 @@ CREATE TABLE "operations" (
     FOREIGN KEY (node_id) REFERENCES "nodes" (id) ON DELETE CASCADE,
     FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
+CREATE TABLE ovn_reference_applicability (
+ id INTEGER PRIMARY KEY NOT NULL CHECK (id=1),
+ state TEXT NOT NULL CHECK (state IN ('never','unknown','activating','active')),
+ nb_root TEXT NOT NULL DEFAULT '',
+ CHECK ((state='active' AND nb_root<>'') OR (state<>'active' AND nb_root=''))
+);
 CREATE TABLE "profiles" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
     description TEXT NOT NULL,
     project_id INTEGER NOT NULL,
+    reference_generation INTEGER NOT NULL DEFAULT 0 CHECK (reference_generation >= 0),
     UNIQUE (project_id, name),
     FOREIGN KEY (project_id) REFERENCES "projects" (id) ON DELETE CASCADE
 );
@@ -471,6 +586,99 @@ CREATE TABLE "profiles_devices_config" (
     FOREIGN KEY (profile_device_id) REFERENCES "profiles_devices" (id) ON DELETE CASCADE
 );
 CREATE INDEX profiles_project_id_idx ON profiles (project_id);
+CREATE TABLE profiles_reference_attempts (
+    token TEXT PRIMARY KEY NOT NULL,
+    change_token TEXT REFERENCES profiles_reference_changes (token) ON DELETE RESTRICT,
+    instance_id INTEGER NOT NULL REFERENCES instances (id) ON DELETE RESTRICT,
+    project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE RESTRICT,
+    member_id INTEGER NOT NULL,
+    placement_revision INTEGER NOT NULL,
+    sequence INTEGER NOT NULL,
+    owner TEXT NOT NULL,
+    baseline_snapshot TEXT NOT NULL,
+    target_snapshot TEXT NOT NULL,
+    phase TEXT NOT NULL CHECK (phase IN ('applying',
+    'applied',
+    'recovery',
+    'retryable',
+    'completed')),
+    child_set TEXT NOT NULL DEFAULT '',
+    children_sealed INTEGER NOT NULL DEFAULT 0 CHECK (children_sealed IN (0,
+    1))
+,
+    contract_version INTEGER NOT NULL DEFAULT 1 CHECK (contract_version IN (1,
+    2)),
+    claimed_input_revision INTEGER NOT NULL DEFAULT 0 CHECK (claimed_input_revision >= 0),
+    generation_plan TEXT NOT NULL DEFAULT '',
+    result_snapshot TEXT NOT NULL DEFAULT '',
+    result_input_revision INTEGER NOT NULL DEFAULT 0 CHECK (result_input_revision >= 0),
+    observation_cutoff INTEGER NOT NULL DEFAULT 0 CHECK (observation_cutoff >= 0));
+CREATE TABLE profiles_reference_changes (
+    token TEXT PRIMARY KEY NOT NULL,
+    profile_id INTEGER NOT NULL REFERENCES profiles (id) ON DELETE RESTRICT,
+    project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE RESTRICT,
+    generation INTEGER NOT NULL CHECK (generation > 0),
+    old_profile TEXT NOT NULL,
+    new_profile TEXT NOT NULL,
+    requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0,
+    1)),
+    UNIQUE (profile_id, generation)
+);
+CREATE TABLE profiles_reference_children (
+    attempt_token TEXT NOT NULL REFERENCES profiles_reference_attempts (token) ON DELETE RESTRICT,
+    network_id INTEGER NOT NULL REFERENCES networks (id) ON DELETE RESTRICT,
+    project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE RESTRICT,
+    name TEXT NOT NULL,
+    token TEXT NOT NULL,
+    PRIMARY KEY (attempt_token,
+    network_id)
+);
+CREATE TABLE profiles_reference_consumers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    change_token TEXT NOT NULL REFERENCES profiles_reference_changes (token) ON DELETE RESTRICT,
+    instance_id INTEGER NOT NULL REFERENCES instances (id) ON DELETE RESTRICT,
+    project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE RESTRICT,
+    member_id INTEGER NOT NULL,
+    placement_revision INTEGER NOT NULL,
+    sequence INTEGER NOT NULL CHECK (sequence > 0),
+    before_snapshot TEXT NOT NULL,
+    after_snapshot TEXT NOT NULL,
+    satisfied INTEGER NOT NULL DEFAULT 0 CHECK (satisfied IN (0,
+    1)),
+    UNIQUE (change_token, instance_id),
+    UNIQUE (instance_id, sequence)
+);
+CREATE TABLE profiles_reference_receipts (
+    attempt_token TEXT PRIMARY KEY NOT NULL REFERENCES profiles_reference_attempts (token) ON DELETE RESTRICT,
+    completed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+,
+    result_snapshot TEXT NOT NULL DEFAULT '',
+    post_commit_evidence TEXT NOT NULL DEFAULT '');
+CREATE TABLE profiles_reference_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    consumer_id INTEGER REFERENCES profiles_reference_consumers (id) ON DELETE RESTRICT,
+    attempt_token TEXT REFERENCES profiles_reference_attempts (token) ON DELETE RESTRICT,
+    instance_id INTEGER NOT NULL REFERENCES instances (id) ON DELETE RESTRICT,
+    project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE RESTRICT,
+    member_id INTEGER NOT NULL,
+    placement_revision INTEGER NOT NULL,
+    sequence INTEGER NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('baseline',
+    'before',
+    'after')),
+    device TEXT NOT NULL,
+    network_id INTEGER NOT NULL REFERENCES networks (id) ON DELETE RESTRICT,
+    network_project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE RESTRICT,
+    network_type TEXT NOT NULL,
+    acl_id INTEGER REFERENCES networks_acls (id) ON DELETE RESTRICT,
+    acl_project_id INTEGER REFERENCES projects (id) ON DELETE RESTRICT,
+    config TEXT NOT NULL,
+    CHECK ((consumer_id IS NULL) != (attempt_token IS NULL)),
+    CHECK ((acl_id IS NULL) = (acl_project_id IS NULL))
+);
+CREATE INDEX profiles_reference_usage_acl ON profiles_reference_usage (acl_id);
+CREATE INDEX profiles_reference_usage_network ON profiles_reference_usage (network_id);
 CREATE TABLE "projects" (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
@@ -675,5 +883,5 @@ CREATE TABLE "warnings" (
 );
 CREATE UNIQUE INDEX warnings_unique_node_id_project_id_entity_type_code_entity_id_type_code ON warnings(IFNULL(node_id, -1), IFNULL(project_id, -1), entity_type_code, entity_id, type_code);
 
-INSERT INTO schema (version, updated_at) VALUES (77, strftime("%s"))
+INSERT INTO schema (version, updated_at) VALUES (86, strftime("%s"))
 `
