@@ -25,6 +25,7 @@ import (
 // Verifier holds all information needed to verify an access token offline.
 type Verifier struct {
 	accessTokenVerifier *op.AccessTokenVerifier
+	idTokenVerifier     *rp.IDTokenVerifier
 
 	clientID  string
 	issuer    string
@@ -50,6 +51,7 @@ func (e AuthError) Unwrap() error {
 // Auth extracts the token, validates it and returns the user name and validated claims.
 func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, map[string]any, error) {
 	var token string
+	var idToken string
 
 	auth := r.Header.Get("Authorization")
 	if auth != "" {
@@ -65,6 +67,9 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		}
 
 		token = parts[1]
+
+		// Clients send the ID token alongside an opaque access token.
+		idToken = r.Header.Get("X-Incus-OIDC-idtoken")
 	} else {
 		// When not using a Bearer token, fetch the equivalent from a cookie and move on with it.
 		cookie, err := r.Cookie("oidc_access")
@@ -73,18 +78,14 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		}
 
 		token = cookie.Value
-	}
 
-	if o.accessTokenVerifier == nil {
-		var err error
-
-		o.accessTokenVerifier, err = getAccessTokenVerifier(o.issuer)
-		if err != nil {
-			return "", nil, &AuthError{err}
+		idCookie, err := r.Cookie("oidc_id")
+		if err == nil {
+			idToken = idCookie.Value
 		}
 	}
 
-	claims, err := o.VerifyAccessToken(ctx, r, token)
+	claims, err := o.verifyTokens(ctx, r, token, idToken)
 	if err != nil {
 		// See if we can refresh the access token.
 		cookie, cookieErr := r.Cookie("oidc_refresh")
@@ -109,8 +110,8 @@ func (o *Verifier) Auth(ctx context.Context, w http.ResponseWriter, r *http.Requ
 			return "", nil, &AuthError{err}
 		}
 
-		// Validate the refreshed token.
-		claims, err = o.VerifyAccessToken(ctx, r, tokens.AccessToken)
+		// Validate the refreshed tokens.
+		claims, err = o.verifyTokens(ctx, r, tokens.AccessToken, tokens.IDToken)
 		if err != nil {
 			return "", nil, &AuthError{err}
 		}
@@ -298,25 +299,36 @@ func isTerminalRefreshError(err error) bool {
 	return false
 }
 
-// VerifyAccessToken is a wrapper around op.VerifyAccessToken which avoids having to deal with Go generics elsewhere. It validates the access token (issuer, signature and expiration).
-func (o *Verifier) VerifyAccessToken(ctx context.Context, r *http.Request, token string) (*oidc.AccessTokenClaims, error) {
-	var err error
-
+// verifyTokens validates the access token, or the ID token issued alongside an opaque one, and returns its claims.
+func (o *Verifier) verifyTokens(ctx context.Context, r *http.Request, accessToken string, idToken string) (*oidc.AccessTokenClaims, error) {
 	if o.accessTokenVerifier == nil {
-		o.accessTokenVerifier, err = getAccessTokenVerifier(o.issuer)
+		err := o.discover()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	claims, err := op.VerifyAccessToken[*oidc.AccessTokenClaims](ctx, token, o.accessTokenVerifier)
+	claims, err := op.VerifyAccessToken[*oidc.AccessTokenClaims](ctx, accessToken, o.accessTokenVerifier)
 	if err != nil {
-		return nil, err
-	}
+		// Only fall back to the ID token when the access token isn't a JWT at all.
+		if !errors.Is(err, oidc.ErrParse) || idToken == "" {
+			return nil, err
+		}
 
-	// Check that the token includes the configured audience.
-	audience := claims.GetAudience()
-	if o.audience != "" && !slices.Contains(audience, o.audience) {
+		// The configured audience can't be verified on an opaque access token.
+		if o.audience != "" {
+			return nil, errors.New("Opaque access tokens can't be used with a configured audience")
+		}
+
+		// The ID token is checked for issuer, signature, expiration and the configured client ID as audience.
+		idClaims, err := rp.VerifyIDToken[*oidc.IDTokenClaims](ctx, idToken, o.idTokenVerifier)
+		if err != nil {
+			return nil, err
+		}
+
+		claims = &oidc.AccessTokenClaims{TokenClaims: idClaims.TokenClaims, Claims: idClaims.Claims}
+	} else if o.audience != "" && !slices.Contains(claims.GetAudience(), o.audience) {
+		// Check that the access token includes the configured audience.
 		return nil, errors.New("Provided OIDC token doesn't allow the configured audience")
 	}
 
@@ -419,16 +431,19 @@ func (o *Verifier) getProvider(r *http.Request) (rp.RelyingParty, error) {
 	return provider, nil
 }
 
-// getAccessTokenVerifier calls the OIDC discovery endpoint in order to get the issuer's remote keys which are needed to create an access token verifier.
-func getAccessTokenVerifier(issuer string) (*op.AccessTokenVerifier, error) {
-	discoveryConfig, err := client.Discover(context.TODO(), issuer, http.DefaultClient)
+// discover calls the OIDC discovery endpoint in order to get the issuer's remote keys which are needed to create the token verifiers.
+func (o *Verifier) discover() error {
+	discoveryConfig, err := client.Discover(context.TODO(), o.issuer, http.DefaultClient)
 	if err != nil {
-		return nil, fmt.Errorf("Failed calling OIDC discovery endpoint: %w", err)
+		return fmt.Errorf("Failed calling OIDC discovery endpoint: %w", err)
 	}
 
 	keySet := rp.NewRemoteKeySet(http.DefaultClient, discoveryConfig.JwksURI)
 
-	return op.NewAccessTokenVerifier(issuer, keySet), nil
+	o.accessTokenVerifier = op.NewAccessTokenVerifier(o.issuer, keySet)
+	o.idTokenVerifier = rp.NewIDTokenVerifier(o.issuer, o.clientID, keySet, rp.WithIssuedAtOffset(5*time.Second))
+
+	return nil
 }
 
 // NewVerifier returns a Verifier.
@@ -440,7 +455,7 @@ func NewVerifier(issuer string, clientid string, scope string, audience string, 
 
 	scopes := util.SplitNTrimSpace(scope, ",", -1, false)
 	verifier := &Verifier{issuer: issuer, clientID: clientid, scopes: scopes, audience: audience, cookieKey: cookieKey, claim: claim}
-	verifier.accessTokenVerifier, _ = getAccessTokenVerifier(issuer)
+	_ = verifier.discover()
 
 	return verifier, nil
 }

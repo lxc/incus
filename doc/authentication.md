@@ -160,6 +160,11 @@ To add a remote pointing to an Incus server configured with OIDC authentication,
 You are then prompted to authenticate through your web browser, where you must confirm the device code that Incus uses.
 The Incus client then retrieves and stores the access and refresh tokens and provides those to Incus for all interactions.
 
+Incus verifies JWT access tokens offline using the provider's signing keys.
+Providers that issue opaque access tokens are also supported, in which case Incus verifies the ID token instead and checks that it was issued for the configured client ID.
+The client ID used by Incus must therefore not be shared with any other application registered with the provider.
+Setting `oidc.audience` disables this fallback as the audience can't be verified on an opaque access token.
+
 Incus supports a custom OIDC claim of `incus.allowed_subnets` (list of strings), if the claim is set,
 the user will only be allowed if connecting from an IP address that's part of one of the CIDR subnets listed in the claim.
 

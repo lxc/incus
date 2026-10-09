@@ -6261,13 +6261,14 @@ Beware of the birthday paradox! A single `xx` block leads to a 10% collision pro
 :shortdesc: "Expected audience value for the application"
 :type: "string"
 This value is required by some providers.
+Opaque access tokens are rejected when set as the audience can't be verified on those.
 ```
 
 ```{config:option} oidc.claim server-oidc
 :scope: "global"
 :shortdesc: "OpenID Connect claim to use as the username"
 :type: "string"
-Note that the claim must be contained in the access token.
+Note that the claim must be contained in the access token or, for opaque access tokens, in the ID token.
 ```
 
 ```{config:option} oidc.client.id server-oidc
