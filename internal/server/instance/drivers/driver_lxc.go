@@ -4719,10 +4719,7 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 		d.cleanup()
 	}
 
-	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Remove the database record of the instance or snapshot instance.
-		return tx.DeleteInstance(ctx, d.project.Name, d.Name())
-	})
+	collections, err := d.deleteInstanceRecord()
 	if err != nil {
 		d.logger.Error("Failed deleting instance entry", logger.Ctx{"err": err})
 		return err
@@ -4745,7 +4742,7 @@ func (d *lxc) delete(force bool, cleanupDependencies bool) error {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceDeleted.Event(d, nil))
 	}
 
-	return nil
+	return d.collectDeletedInstanceOVNACLs(collections)
 }
 
 // Rename renames the instance. Accepts an argument to enable applying deferred TemplateTriggerRename.

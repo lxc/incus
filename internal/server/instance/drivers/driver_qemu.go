@@ -8421,10 +8421,7 @@ func (d *qemu) delete(force bool, cleanupDependencies bool) error {
 		d.cleanup()
 	}
 
-	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Remove the database record of the instance or snapshot instance.
-		return tx.DeleteInstance(ctx, d.Project().Name, d.Name())
-	})
+	collections, err := d.deleteInstanceRecord()
 	if err != nil {
 		d.logger.Error("Failed deleting instance entry", logger.Ctx{"project": d.Project().Name})
 		return err
@@ -8447,7 +8444,7 @@ func (d *qemu) delete(force bool, cleanupDependencies bool) error {
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceDeleted.Event(d, nil))
 	}
 
-	return nil
+	return d.collectDeletedInstanceOVNACLs(collections)
 }
 
 // Export publishes the instance.

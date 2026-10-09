@@ -1037,6 +1037,38 @@ func projectPost(d *Daemon, r *http.Request) response.Response {
 	return operations.OperationResponse(op)
 }
 
+// projectDeleteClearNetworkACLRules collects retired network groups before clearing peer references.
+func projectDeleteClearNetworkACLRules(target incus.InstanceServer, aclNames []string, collect func() error) error {
+	if len(aclNames) == 0 {
+		return nil
+	}
+
+	err := collect()
+	if err != nil {
+		return err
+	}
+
+	for _, networkACLName := range aclNames {
+		networkACL, _, err := target.GetNetworkACL(networkACLName)
+		if err != nil {
+			return err
+		}
+
+		if len(networkACL.Ingress) == 0 && len(networkACL.Egress) == 0 {
+			continue
+		}
+
+		networkACL.Ingress = nil
+		networkACL.Egress = nil
+		err = target.UpdateNetworkACL(networkACLName, networkACL.Writable(), "")
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // swagger:operation DELETE /1.0/projects/{name} projects project_delete
 //
 //	Delete the project
@@ -1087,7 +1119,9 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	var id int64
 	var projectConfig map[string]string
 	var usedBy []string
+	var ovnNetworks map[string]int64
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		ovnNetworks = nil
 		project, err := cluster.GetProject(ctx, tx.Tx(), name)
 		if err != nil {
 			return fmt.Errorf("Fetch project %q: %w", name, err)
@@ -1117,6 +1151,20 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 		projectConfig, err = cluster.GetProjectConfig(ctx, tx.Tx(), int(id))
 		if err != nil {
 			return fmt.Errorf("Fetch project config %q: %w", name, err)
+		}
+
+		if force {
+			created, err := tx.GetCreatedNetworksByProject(ctx, name)
+			if err != nil {
+				return err
+			}
+
+			ovnNetworks = make(map[string]int64)
+			for networkID, n := range created {
+				if n.Type == "ovn" {
+					ovnNetworks[n.Name] = networkID
+				}
+			}
 		}
 
 		return projecthelpers.CheckProjectReferenceDeletion(ctx, tx, id)
@@ -1292,23 +1340,19 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			count--
 		}
 
-		// Clear network ACL rules so they no longer reference network peers.
-		for _, networkACLName := range entries["network-acls"] {
-			networkACL, _, err := target.GetNetworkACL(networkACLName)
-			if err != nil {
-				return response.InternalError(err)
+		// Collect unused network ACL groups before clearing their rules and peer references.
+		err = projectDeleteClearNetworkACLRules(target, entries["network-acls"], func() error {
+			for networkName, networkID := range ovnNetworks {
+				err := network.OVNCollectNetworkACLGroups(s, name, networkName, id, networkID)
+				if err != nil {
+					return fmt.Errorf("Failed collecting unused ACL groups for network %q: %w", networkName, err)
+				}
 			}
 
-			if len(networkACL.Ingress) == 0 && len(networkACL.Egress) == 0 {
-				continue
-			}
-
-			networkACL.Ingress = nil
-			networkACL.Egress = nil
-			err = target.UpdateNetworkACL(networkACLName, networkACL.Writable(), "")
-			if err != nil {
-				return response.InternalError(err)
-			}
+			return nil
+		})
+		if err != nil {
+			return response.InternalError(err)
 		}
 
 		// Delete network peers.
