@@ -3564,3 +3564,23 @@ This adds support for OIDC providers that issue opaque (non-JWT) access tokens.
 
 When the access token isn't a JWT, Incus verifies the ID token instead, checking that it was issued by the configured issuer for the configured client ID.
 Clients send the ID token alongside the opaque access token through the `X-Incus-OIDC-idtoken` header.
+
+## `network_ovn_offline`
+
+Cluster members use `POST /1.0/instances/{name}/ovn-migration` for staged live OVN NIC handover. This daemon-to-daemon route requires an authenticated cluster notification and an exact durable migration authorization; it is not a client API. An unavailable route refuses the migration without falling back to ordinary instance creation.
+
+OVN network creation initializes reachable active cluster members while unreachable members remain locally pending. Returning members initialize from current configuration before local use.
+Adds the member statuses `Starting`, `Preparing`, `Prepared`, `Stopped` and the durable deletion status `Deleting`.
+In a cluster, untargeted queries report global status: `Created` does not imply that every member initialized or is currently ready.
+Targeted single-network queries report local status; cluster network listings report global status even when targeted.
+Durable `Pending`, `Starting`, `Preparing`, `Prepared` and `Stopped` states are reported directly.
+A stored local `Created` is reported as `Unavailable` until the current daemon establishes readiness and the network is available.
+This does not by itself indicate failed initialization. Global `Deleting` takes precedence.
+To retry a failed partial creation that retained global configuration, use `incus network create NAME --type=ovn` in the same project, without `--target` or configuration arguments or configuration on standard input.
+The stored type must match, and the saved configuration is reused.
+This retry does not apply to global `Created` or `Deleting`: a locally pending member of a globally created network needs initialization or explicit maintenance restore, while `Deleting` requires deletion repair and retry.
+Acknowledged evacuation of a reachable member prepares OVN networks for temporary maintenance; network deletion can omit prepared evacuated members and members proven never locally initialized under this contract. Offline healing skips network cleanup and cannot certify `Prepared`.
+After a nonempty workload batch is dispatched, a failed evacuation or heal retains maintenance admission even before network preparation; a failed batch does not acknowledge cleanup. Genuine earlier failures can return a previously active member to `Created`. Readiness-dependent OVN updates may remain blocked until preparation or restore completes.
+External snapshot restore operations on clustered members in maintenance fail when stateful restoration is requested or the target is already running. Stopped stateless restores and original internal cluster control retain their existing behavior. Admission is checked within the operation after snapshot and project validation, before restore effects; this is a point-in-time check.
+Other initialized members must be reachable for deletion. Shared updates retain their documented OVN configuration limits, and success does not acknowledge enforcement or BGP convergence on unreachable systems.
+See {ref}`network-ovn-offline` for maintenance, retry and status semantics.

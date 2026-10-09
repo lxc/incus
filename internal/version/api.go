@@ -590,6 +590,7 @@ var APIExtensions = []string{
 	"vm_boot_priority_skip",
 	"network_ovn_nat_address_l2proxy",
 	"oidc_id_token",
+	"network_ovn_offline",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
