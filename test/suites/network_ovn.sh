@@ -1599,25 +1599,56 @@ test_network_ovn_cluster_retry() {
     sleep 12
     INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node3 | grep -q "status: Offline"
 
-    # Creation fails while a member is offline and leaves the network errored.
+    # Creation initializes reachable members and leaves the offline member truthfully Pending.
     net="${bridge}-ovn"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.2.1/24 ipv4.nat=false ipv6.address=none 2>&1 | grep -q "is down"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Errored"
-
-    # Retrying reaches the partial creation checks rather than failing on the member records.
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn ipv4.address=192.0.3.1/24 2>&1 | grep -q "Please do not specify any global config"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=bridge 2>&1 | grep -q "doesn't match type"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn 2>&1 | grep -q "is down"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}" 2>&1 | grep -q "is down"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${net}" ipv4.address | grep -xF "192.0.2.1/24"
-
-    # Once the member is back, retrying completes the creation with the stored config.
-    respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
-    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.2.1/24 ipv4.nat=false ipv6.address=none
     INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Created"
-    INCUS_DIR="${INCUS_THREE_DIR}" incus network show "${net}" | grep -xF "status: Created"
-    INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${net}" ipv4.address | grep -xF "192.0.2.1/24"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global --format=csv "SELECT networks_nodes.state FROM networks_nodes JOIN networks ON networks.id=network_id JOIN nodes ON nodes.id=node_id WHERE networks.name='${net}' AND nodes.name='node3'" | grep -xF "0"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${net}" dns.nameservers=192.0.2.53
+
+    # A never-initialized member does not block deletion or reuse of a new network name.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}-reuse" --type=ovn network=none ipv4.address=192.0.3.1/24 ipv4.nat=false ipv6.address=none
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}-reuse"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}-reuse" --type=ovn network=none ipv4.address=192.0.3.1/24 ipv4.nat=false ipv6.address=none
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}-reuse"
+
+    # The returning member initializes current config before accepting its own update.
+    respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network show "${net}" --target node3 | grep -xF "status: Created"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${net}" dns.nameservers | grep -xF "192.0.2.53"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network set "${net}" ipv4.dhcp.expiry=2h
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${net}" ipv4.dhcp.expiry | grep -xF "2h"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn 2>&1 | grep -q "already created"
+
+    # Shared OVN settings can be changed while a previously initialized member is offline.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network acl create "${net}-acl"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
+    sleep 12
+    INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node3 | grep -q "status: Offline"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${net}" dns.nameservers=192.0.2.53 ipv4.dhcp.expiry=2h security.acls="${net}-acl" security.acls.default.ingress.action=allow
+    INCUS_DIR="${INCUS_TWO_DIR}" incus network get "${net}" dns.nameservers | grep -xF "192.0.2.53"
+    ovn-nbctl --bare --columns=options find DHCP_Options cidr=192.0.2.0/24 | grep -F '192.0.2.53'
+    ovn-nbctl --bare --columns=options find DHCP_Options cidr=192.0.2.0/24 | grep -F '7200'
+
+    # Driver failure after saving the config must revert even while another member is offline.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${net}" dns.nameservers=192.0.2.54 ipv4.dhcp.ranges=198.51.100.10-198.51.100.20 2>&1 | grep -q "does not fall within"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${net}" dns.nameservers | grep -xF "192.0.2.53"
+    [ -z "$(INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${net}" ipv4.dhcp.ranges)" ]
+    ovn-nbctl --bare --columns=options find DHCP_Options cidr=192.0.2.0/24 | grep -F '192.0.2.53'
+
+    # Mixed updates still require every member if any setting changes local network state.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${net}" dns.nameservers=192.0.2.54 bridge.mtu=1400 2>&1 | grep -q "is down"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${net}" dns.nameservers | grep -xF "192.0.2.53"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network get "${net}" bridge.mtu | grep -xF "1442"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}" 2>&1 | grep -q "is down"
+
+    # Removing shared settings and handling another update on the returning member also work.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network unset "${net}" security.acls
+    respawn_incus_cluster_member "${ns3}" "${INCUS_THREE_DIR}"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network get "${net}" dns.nameservers | grep -xF "192.0.2.53"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network set "${net}" ipv4.dhcp.expiry=3h
+    ovn-nbctl --bare --columns=options find DHCP_Options cidr=192.0.2.0/24 | grep -F '10800'
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network acl delete "${net}-acl"
 
     # Deletion cleans up OVN and allows the name to be reused.
     net_id=$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT id FROM networks WHERE name='${net}'" --format=csv)
@@ -1626,6 +1657,32 @@ test_network_ovn_cluster_retry() {
     ! ovn-nbctl ls-list | grep -F "incus-net${net_id}-" || false
     INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.3.1/24 ipv4.nat=false ipv6.address=none
     INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Created"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
+
+    # A successful update initializes members missing local completion for a globally Created network.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.4.1/24 ipv4.nat=false ipv6.address=none
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "UPDATE networks_nodes SET state=0 WHERE network_id=(SELECT id FROM networks WHERE name='${net}') AND node_id IN (SELECT id FROM nodes WHERE name IN ('node2', 'node3'))"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${net}" user.cleanup=probe
+    INCUS_DIR="${INCUS_TWO_DIR}" incus network show "${net}" --target node2 | grep -xF "status: Created"
+    INCUS_DIR="${INCUS_THREE_DIR}" incus network show "${net}" --target node3 | grep -xF "status: Created"
+    [ "$(INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "SELECT COUNT(*) FROM networks_nodes WHERE network_id=(SELECT id FROM networks WHERE name='${net}' AND project_id=(SELECT id FROM projects WHERE name='default')) AND node_id IN (SELECT id FROM nodes WHERE name IN ('node2', 'node3')) AND state=1" --format=csv)" = "2" ]
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /internal/debug/bgp | jq -e '.prefixes[] | select(.prefix == "192.0.4.0/24")'
+    INCUS_DIR="${INCUS_THREE_DIR}" incus query /internal/debug/bgp | jq -e '.prefixes[] | select(.prefix == "192.0.4.0/24")'
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /internal/debug/bgp | jq -e '[.prefixes[] | select(.prefix == "192.0.4.0/24")] | length == 0'
+    INCUS_DIR="${INCUS_THREE_DIR}" incus query /internal/debug/bgp | jq -e '[.prefixes[] | select(.prefix == "192.0.4.0/24")] | length == 0'
+
+    # A cleanup failure must be reported, retain the record for retry, and still clear BGP.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network create "${net}" --type=ovn network=none bridge.mtu=1442 ipv4.address=192.0.5.1/24 ipv4.nat=false ipv6.address=none
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /internal/debug/bgp | jq -e '.prefixes[] | select(.prefix == "192.0.5.0/24")'
+    INCUS_DIR="${INCUS_THREE_DIR}" incus query /internal/debug/bgp | jq -e '.prefixes[] | select(.prefix == "192.0.5.0/24")'
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "UPDATE networks_config SET value='missing-uplink' WHERE network_id=(SELECT id FROM networks WHERE name='${net}') AND key='network'"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}" 2>&1 | grep -q "Failed loading uplink network"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network show "${net}" | grep -xF "status: Deleting"
+    INCUS_DIR="${INCUS_ONE_DIR}" incus network set "${net}" user.cleanup=blocked 2>&1 | grep -q "not in created state"
+    INCUS_DIR="${INCUS_TWO_DIR}" incus query /internal/debug/bgp | jq -e '[.prefixes[] | select(.prefix == "192.0.5.0/24")] | length == 0'
+    INCUS_DIR="${INCUS_THREE_DIR}" incus query /internal/debug/bgp | jq -e '[.prefixes[] | select(.prefix == "192.0.5.0/24")] | length == 0'
+    INCUS_DIR="${INCUS_ONE_DIR}" incus admin sql global "UPDATE networks_config SET value='none' WHERE network_id=(SELECT id FROM networks WHERE name='${net}') AND key='network'"
     INCUS_DIR="${INCUS_ONE_DIR}" incus network delete "${net}"
 
     INCUS_DIR="${INCUS_THREE_DIR}" incus admin shutdown
@@ -1935,6 +1992,16 @@ test_network_ovn_acl() {
     incus exec c1 -- dig @fd42:4242:4242:1010::2 +tcp +timeout=1 -p 5053 incusbr0.test | grep "refused"
     incus exec c1 -- ping -c1 -w5 -4 c2.incus | grep "Host Unreachable"
     incus exec c1 -- ping -c1 -w5 -6 c2.incus | grep "Administratively prohibited"
+
+    # Switching default actions must move running NICs between directional ACL port groups.
+    acl_id=$(incus admin sql global "SELECT id FROM networks_acls WHERE name='incusbr0-ping'" --format=csv)
+    incus network set ovn0 security.acls.default.egress.action=allow
+    [ "$(ovn-nbctl --bare --columns=ports find Port_Group name="incus_acl${acl_id}_egress_reversed" | wc -w)" -eq 2 ]
+    [ "$(ovn-nbctl --bare --columns=ports find Port_Group name="incus_acl${acl_id}_egress" | wc -w)" -eq 0 ]
+    incus network set ovn0 security.acls.default.egress.action=drop
+    [ "$(ovn-nbctl --bare --columns=ports find Port_Group name="incus_acl${acl_id}_egress" | wc -w)" -eq 2 ]
+    [ "$(ovn-nbctl --bare --columns=ports find Port_Group name="incus_acl${acl_id}_egress_reversed" | wc -w)" -eq 0 ]
+    incus network set ovn0 security.acls.default.egress.action=reject
 
     # Test assigning same ACL to NIC directly and unassigning from network.
     incus config device set c1 eth0 security.acls=incusbr0-ping

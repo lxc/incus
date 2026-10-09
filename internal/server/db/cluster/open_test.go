@@ -104,6 +104,50 @@ func TestEnsureSchema_ClusterNotUpgradable(t *testing.T) {
 	}
 }
 
+// All existing members except pending members must be upgraded, including during maintenance.
+func TestEnsureSchema_MemberStates(t *testing.T) {
+	cases := []struct {
+		name   string
+		column string
+		state  int
+	}{
+		{"created", "state", 0},
+		{"pending", "state", 1},
+		{"evacuated", "state", 2},
+		{"evacuating", "state", 3},
+		{"restoring", "state", 4},
+		{"legacy-created", "pending", 0},
+		{"legacy-pending", "pending", 1},
+	}
+
+	for _, c := range cases {
+		for _, behind := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/behind=%t", c.name, behind), func(t *testing.T) {
+				db := newDB(t)
+				t.Cleanup(func() { require.NoError(t, db.Close()) })
+				schema := cluster.SchemaVersion
+				apiExtensions := version.APIExtensionsCount()
+				addNode(t, db, "1", schema, apiExtensions)
+				if behind {
+					schema--
+				}
+
+				addNode(t, db, "2", schema, apiExtensions)
+				_, err := db.Exec("UPDATE nodes SET state=? WHERE address='2'", c.state)
+				require.NoError(t, err)
+				if c.column == "pending" {
+					_, err = db.Exec("ALTER TABLE nodes RENAME COLUMN state TO pending")
+					require.NoError(t, err)
+				}
+
+				ready, err := cluster.EnsureSchema(db, "1", "/unused/db/dir")
+				require.NoError(t, err)
+				require.Equal(t, !behind || c.state == 1, ready)
+			})
+		}
+	}
+}
+
 // Regardless of whether the schema could actually be upgraded or not, the
 // version of this node gets updated.
 func TestEnsureSchema_UpdateNodeVersion(t *testing.T) {
