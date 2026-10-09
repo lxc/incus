@@ -3780,6 +3780,40 @@ func (b *backend) RenameInstanceSnapshot(inst instance.Instance, newName string,
 		})
 	})
 
+	parentInst, err := instance.LoadByProjectAndName(b.state, inst.Project().Name, parentName)
+	if err != nil {
+		return err
+	}
+
+	// Rename the matching snapshots of the dependent volumes.
+	err = parentInst.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		// Load the pool for the disk.
+		diskPool, err := LoadByName(b.state, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		storageProjectName, err := project.StorageVolumeProject(b.state.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+		if err != nil {
+			return err
+		}
+
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+		err = diskPool.RenameCustomVolumeSnapshot(storageProjectName, fmt.Sprintf("%s/%s", volName, oldSnapshotName), newName, op)
+		if err != nil {
+			return fmt.Errorf("Failed to rename snapshot for volume %q: %w", volName, err)
+		}
+
+		reverter.Add(func() {
+			_ = diskPool.RenameCustomVolumeSnapshot(storageProjectName, fmt.Sprintf("%s/%s", volName, newName), oldSnapshotName, op)
+		})
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	// Ensure the backup file reflects current config.
 	err = b.UpdateInstanceBackupFile(inst, true, op)
 	if err != nil {
