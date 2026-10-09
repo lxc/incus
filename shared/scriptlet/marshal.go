@@ -103,7 +103,14 @@ func starlarkMarshal(input any, parent *starlark.Dict) (starlark.Value, error) {
 	case reflect.Array, reflect.Slice:
 		// We treat arrays and slices of bytes as Starlark bytes.
 		if v.Type().Elem().Kind() == reflect.Uint8 {
-			sv = starlark.Bytes(v.Bytes())
+			if v.Type().Kind() == reflect.Slice {
+				sv = starlark.Bytes(v.Bytes())
+			} else {
+				b := make([]byte, v.Len())
+				reflect.Copy(reflect.ValueOf(b), v)
+				sv = starlark.Bytes(b)
+			}
+
 			break
 		}
 
