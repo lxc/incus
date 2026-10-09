@@ -86,3 +86,68 @@ func TestNewNotifierForMembersFiltersBeforeAvailability(t *testing.T) {
 		})
 	}
 }
+
+// A returning member must receive creation even before its next successful heartbeat.
+func TestNewNotifierForMembersAliveWithStaleHeartbeat(t *testing.T) {
+	local, cleanup := db.NewTestNode(t)
+	t.Cleanup(cleanup)
+	database, cleanup := db.NewTestCluster(t)
+	t.Cleanup(cleanup)
+	s := &state.State{DB: &db.DB{Node: local, Cluster: database}, Cluster: selectedNotifierGateway{}}
+	cert := tlstest.TestingKeyPair(t)
+	fixture := notifyFixtures{t: t, state: s}
+	t.Cleanup(fixture.Nodes(cert, 3))
+	fixture.Down(2)
+	ctx := context.Background()
+	var returningID int64
+	require.NoError(t, database.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		member, err := tx.GetNodeByName(ctx, "1")
+		if err != nil {
+			return err
+		}
+
+		returningID = member.ID
+		return tx.SetNodeHeartbeat(member.Address, time.Now().Add(-time.Hour))
+	}))
+	require.NoError(t, local.Transaction(ctx, func(ctx context.Context, tx *db.NodeTx) error {
+		var err error
+		s.LocalConfig, err = node.ConfigLoad(ctx, tx)
+		return err
+	}))
+
+	// Confirm the same authenticated API is reachable while its recorded heartbeat is stale.
+	client, err := cluster.Connect(fixture.Address(1), cert, cert, nil, true)
+	require.NoError(t, err)
+	_, _, err = client.GetServer()
+	require.NoError(t, err)
+
+	var unreachableID int64
+	require.NoError(t, database.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		member, err := tx.GetNodeByName(ctx, "2")
+		if err != nil {
+			return err
+		}
+
+		unreachableID = member.ID
+		return nil
+	}))
+	for _, hookError := range []error{nil, errors.New("local initialization failed")} {
+		notifier, err := cluster.NewNotifierForMembers(s, cert, cert, cluster.NotifyAlive, []int64{returningID, unreachableID})
+		require.NoError(t, err)
+		calls := 0
+		err = notifier(func(client incus.InstanceServer) error {
+			info, err := client.GetConnectionInfo()
+			require.NoError(t, err)
+			require.Equal(t, "https://"+fixture.Address(1), info.URL)
+			calls++
+			return hookError
+		})
+		if hookError == nil {
+			require.NoError(t, err)
+		} else {
+			require.ErrorIs(t, err, hookError)
+		}
+
+		require.Equal(t, 1, calls)
+	}
+}

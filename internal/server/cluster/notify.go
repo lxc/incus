@@ -154,7 +154,11 @@ func newNotifierForMembers(s *state.State, networkCert *localtls.CertInfo, serve
 				}
 
 			case NotifyAlive:
-				continue // Just skip this node
+				// A returning member can serve notifications before its next successful heartbeat.
+				if !HasConnectivity(networkCert, serverCert, member.Address, false) {
+					continue
+				}
+
 			case NotifyTryAll:
 			}
 		}
