@@ -1097,6 +1097,7 @@ func (d *lvm) GetResources() (*api.ResourcesStoragePool, error) {
 	} else {
 		// If thinpools are not in use, calculate used space in volume group.
 		args := []string{
+			"-qq",
 			d.config["lvm.vg_name"],
 			"--noheadings",
 			"--units", "b",
