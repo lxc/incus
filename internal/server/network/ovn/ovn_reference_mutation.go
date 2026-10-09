@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
+	"strconv"
 	"strings"
 
 	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
@@ -547,6 +548,7 @@ func (s *physicalReferences) aclApplicable(projectID, aclID int64, targets map[O
 	}
 
 	prefix := fmt.Sprintf("incus_acl%d", aclID)
+	ownedGroups := map[string]bool{}
 	for _, group := range s.rows["Port_Group"] {
 		name, validName := group["name"].(string)
 		if !validName {
@@ -557,23 +559,107 @@ func (s *physicalReferences) aclApplicable(projectID, aclID int64, targets map[O
 			continue
 		}
 
+		if !aclRuleOwnerGroup(name, prefix) {
+			return fmt.Errorf("%w: group %q has an unknown ACL role", ErrPhysicalReference, name)
+		}
+
+		ownedGroups[name] = true
 		err := s.applicableGroup(group, projectID, targets, originals, infrastructure, capture, networks...)
-		if err != nil {
-			return err
-		}
-
-		ports, err := physicalUUIDs(group["ports"])
-		if err != nil {
-			return err
-		}
-
-		err = s.groupUnusedExcept(name, projectID, ports)
 		if err != nil {
 			return err
 		}
 	}
 
+	// Rule replacement keeps the groups alive, including their owned cross-direction subjects.
+	ownedRules := map[string]bool{}
+	for _, rule := range s.rows["ACL"] {
+		ids, err := nicCleanupStringMap(rule["external_ids"])
+		if err != nil {
+			return err
+		}
+
+		owner := ids[ovnExtIDIncusPortGroup]
+		if !ownedGroups[owner] {
+			continue
+		}
+
+		id, err := nicCleanupRowUUID(rule, "_uuid")
+		if err != nil {
+			return err
+		}
+
+		parents := 0
+		owned := true
+		for _, group := range s.rows["Port_Group"] {
+			acls, err := physicalUUIDs(group["acls"])
+			if err != nil {
+				return err
+			}
+
+			if acls[id] {
+				parents++
+				owned = owned && group["name"] == owner
+			}
+		}
+
+		for _, sw := range s.rows["Logical_Switch"] {
+			acls, err := physicalUUIDs(sw["acls"])
+			if err != nil {
+				return err
+			}
+
+			owned = owned && !acls[id]
+		}
+
+		if owned && parents == 1 {
+			ownedRules[id] = true
+		}
+	}
+
+	for _, group := range s.rows["Port_Group"] {
+		name, validName := group["name"].(string)
+		if !validName {
+			return errors.New("Shared resource backend row has an invalid name")
+		}
+
+		if name != prefix && !strings.HasPrefix(name, prefix+"_") {
+			continue
+		}
+
+		acls, err := physicalUUIDs(group["acls"])
+		if err != nil {
+			return err
+		}
+
+		for id := range acls {
+			if !ownedRules[id] {
+				return fmt.Errorf("%w: group %q has an unowned attached ACL rule", ErrPhysicalReference, name)
+			}
+		}
+
+		if s.referenced('@', name, ownedRules) {
+			return fmt.Errorf("%w: group %q has an unowned ACL subject", ErrPhysicalReference, name)
+		}
+	}
+
 	return nil
+}
+
+// aclRuleOwnerGroup recognizes only groups constructed for this exact security ACL.
+func aclRuleOwnerGroup(name, prefix string) bool {
+	for _, suffix := range []string{"", "_all", "_ingress", "_ingress_reversed", "_egress", "_egress_reversed"} {
+		if name == prefix+suffix {
+			return true
+		}
+	}
+
+	value, ok := strings.CutPrefix(name, prefix+"_net")
+	if !ok {
+		return false
+	}
+
+	id, err := strconv.ParseInt(value, 10, 64)
+	return err == nil && id > 0 && name == fmt.Sprintf("%s_net%d", prefix, id)
 }
 
 // GuardACLReferenceUpdate covers the old physical resource even when Desired omits it.
