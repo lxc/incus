@@ -5391,6 +5391,18 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return err
 	}
 
+	parentChanged := slices.Contains(changedKeys, "parent")
+	oldParent := oldNetwork.Config["parent"]
+	newParent := newNetwork.Config["parent"]
+
+	// Refuse before invalidating NIC producers or registering backend setup rollback.
+	if clientType != request.ClientTypeNotifier && dbUpdateNeeded && n.Status() != api.NetworkStatusPending && parentChanged && oldParent != newParent {
+		err = n.checkReparentAllowed()
+		if err != nil {
+			return err
+		}
+	}
+
 	// An unchanged normal update retries post-commit ACL collection without local setup.
 	if clientType == request.ClientTypeNormal && !dbUpdateNeeded && n.Status() == api.NetworkStatusCreated {
 		var projectID int64
@@ -5406,6 +5418,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return n.collectUnusedACLGroups(projectID)
 	}
 
+	var completeParentPrefixes func(context.Context, networkOVN.OVNSwitch, map[networkOVN.OVNSwitchPort]networkOVN.NICConfigPublication) error
 	var replayTargets map[networkOVN.OVNSwitchPort]networkOVN.NICConfigPublication
 	var replayPorts map[networkOVN.OVNSwitchPort]networkOVN.NICReplayProducer
 	if clientType == request.ClientTypeNormal && dbUpdateNeeded && n.Status() != api.NetworkStatusPending && len(changedKeys) > 0 {
@@ -5449,6 +5462,19 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		}
 
 		defer func() { n.ovnnb = originalNB }()
+
+		if parentChanged && oldParent != "" && newParent != "" && oldParent != newParent && n.UplinkName() != "none" && len(replayPorts) > 0 {
+			plannedNetwork := &ovn{common: n.common}
+			err = plannedNetwork.refreshParent(newNetwork.Config)
+			if err != nil {
+				return err
+			}
+
+			completeParentPrefixes, err = n.ovnnb.PrepareNICParentPrefixReload(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName(), plannedNetwork.getExtSwitchName(), plannedNetwork.getExtSwitchRouterPortName())
+			if err != nil {
+				return fmt.Errorf("Failed selecting original parent NIC prefix provenance: %w", err)
+			}
+		}
 	}
 
 	if n.Status() == api.NetworkStatusCreated {
@@ -5585,18 +5611,6 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 		_ = n.Start()
 	})
-
-	parentChanged := slices.Contains(changedKeys, "parent")
-	oldParent := oldNetwork.Config["parent"]
-	newParent := newNetwork.Config["parent"]
-
-	// Refuse to reparent a network that is still in use.
-	if parentChanged && oldParent != newParent {
-		err = n.checkReparentAllowed()
-		if err != nil {
-			return err
-		}
-	}
 
 	// Stop network before new config applied if uplink network is changing.
 	if slices.Contains(changedKeys, "network") {
@@ -6041,6 +6055,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
 	}
 
+	completed := map[networkOVN.OVNSwitchPort]networkOVN.NICConfigPublication{}
 	for port, target := range replayTargets {
 		_, exists := replayPorts[port]
 		if !exists {
@@ -6054,9 +6069,21 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 		updated.Source = target.Source
 		updated.Phase = replayPorts[port].Publication.Phase
+		if completeParentPrefixes != nil {
+			completed[port] = updated
+			continue
+		}
+
 		err = n.ovnnb.CompleteNICConfigReload(context.TODO(), n.getIntSwitchName(), port, updated)
 		if err != nil {
 			return err
+		}
+	}
+
+	if completeParentPrefixes != nil {
+		err = completeParentPrefixes(context.TODO(), n.getIntSwitchName(), completed)
+		if err != nil {
+			return fmt.Errorf("Failed completing parent NIC prefix publication: %w", err)
 		}
 	}
 

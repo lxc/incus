@@ -1098,52 +1098,61 @@ func (o *NB) CheckNetworkNICReplay(ctx context.Context, networkID int64, routerP
 
 // CompleteNICConfigReload publishes only the same original producer after its enclosing shared reload.
 func (o *NB) CompleteNICConfigReload(ctx context.Context, sw OVNSwitch, port OVNSwitchPort, target NICConfigPublication) error {
+	_, _, p, err := o.nicConfigReloadPublication(ctx, sw, port, target)
+	if err != nil {
+		return err
+	}
+
+	return o.PublishNICConfig(ctx, sw, port, p)
+}
+
+func (o *NB) nicConfigReloadPublication(ctx context.Context, sw OVNSwitch, port OVNSwitchPort, target NICConfigPublication) (NICPortCleanup, ovsdb.Row, NICConfigPublication, error) {
 	guarded, ok := o.client.(*referenceMutationClient)
 	if !ok {
-		return errors.New("Shared reload completion lacks enclosing producer guard")
+		return NICPortCleanup{}, nil, NICConfigPublication{}, errors.New("Shared reload completion lacks enclosing producer guard")
 	}
 
 	original, found := guarded.replay[port]
 	if !found || target.Phase != original.Publication.Phase {
-		return errors.New("Shared reload completion differs from captured original phase")
+		return NICPortCleanup{}, nil, NICConfigPublication{}, errors.New("Shared reload completion differs from captured original phase")
 	}
 
 	plan, row, err := o.publicationPort(ctx, sw, port)
 	if err != nil {
-		return err
+		return NICPortCleanup{}, nil, NICConfigPublication{}, err
 	}
 
 	if row == nil {
-		return errors.New("Shared reload original port disappeared")
+		return NICPortCleanup{}, nil, NICConfigPublication{}, errors.New("Shared reload original port disappeared")
 	}
 
 	ids, err := nicCleanupStringMap(row["external_ids"])
 	if err != nil {
-		return err
+		return NICPortCleanup{}, nil, NICConfigPublication{}, err
 	}
 
 	var p NICConfigPublication
 	err = json.Unmarshal([]byte(ids[nicConfigPublicationKey]), &p)
 	if err != nil {
-		return err
+		return NICPortCleanup{}, nil, NICConfigPublication{}, err
 	}
 
 	err = p.valid(o.backendID)
 	if err != nil {
-		return err
+		return NICPortCleanup{}, nil, NICConfigPublication{}, err
 	}
 
 	if p.Phase != "pending" || p.PortUUID != plan.PortUUID || p.SwitchUUID != plan.SwitchUUID || p.NetworkID != target.NetworkID || p.ProjectID != target.ProjectID || p.InstanceUUID != target.InstanceUUID || p.Device != target.Device || (p.Source != target.Source && original.Enabled) || !nicInputsEqual(p.Input, target.Input) {
-		return errors.New("Shared reload original producer changed")
+		return NICPortCleanup{}, nil, NICConfigPublication{}, errors.New("Shared reload original producer changed")
 	}
 
 	if target.Phase != "add" && target.Phase != "start" {
-		return errors.New("Shared reload completion lacks captured original phase")
+		return NICPortCleanup{}, nil, NICConfigPublication{}, errors.New("Shared reload completion lacks captured original phase")
 	}
 
 	p.Phase = target.Phase
 	p.ACLIDs = maps.Clone(target.ACLIDs)
-	return o.PublishNICConfig(ctx, sw, port, p)
+	return plan, row, p, nil
 }
 
 func decodeNICConfig(wire string) (NICConfigPublication, error) {
