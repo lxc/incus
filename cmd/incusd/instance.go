@@ -371,6 +371,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 	reverter := revert.New()
 	defer reverter.Fail()
 
+	refreshRequested := opts.refresh
 	if opts.refresh {
 		// Load the target instance.
 		inst, err = instance.LoadByProjectAndName(s, opts.targetInstance.Project, opts.targetInstance.Name)
@@ -382,6 +383,7 @@ func instanceCreateAsCopy(s *state.State, opts instanceCreateAsCopyOpts, op *ope
 	// If we are not in refresh mode, then create a new instance as we are in copy mode.
 	if !opts.refresh {
 		// Create the instance.
+		opts.targetInstance.Config = ovnNICNewCopyConfig(opts.targetInstance.Config, opts.sourceInstance.LocalConfig()["volatile.uuid"], refreshRequested)
 		inst, instOp, cleanup, err = instance.CreateInternal(s, opts.targetInstance, op, true, false, true)
 		if err != nil {
 			return nil, fmt.Errorf("Failed creating instance record: %w", err)

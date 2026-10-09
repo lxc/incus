@@ -61,6 +61,15 @@ func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectNa
 
 	// Update all profiles that are using the volume with a device.
 	err = storagePools.VolumeUsedByProfileDevices(s, oldPoolName, projectName, oldVol, func(profileID int64, profile api.Profile, p api.Project, usedByDevices []string) error {
+		expected := profile
+		expected.Devices = map[string]map[string]string{}
+		for name, device := range profile.Devices {
+			expected.Devices[name] = map[string]string{}
+			for key, value := range device {
+				expected.Devices[name][key] = value
+			}
+		}
+
 		for name, dev := range profile.Devices {
 			if slices.Contains(usedByDevices, name) {
 				dev["pool"] = newPoolName
@@ -75,7 +84,7 @@ func storagePoolVolumeUpdateUsers(ctx context.Context, s *state.State, projectNa
 		pUpdate.Config = profile.Config
 		pUpdate.Description = profile.Description
 		pUpdate.Devices = profile.Devices
-		err = doProfileUpdate(ctx, s, p, profile.Name, &profile, pUpdate)
+		err = doProfileUpdate(ctx, s, p, profile.Name, &expected, profileID, pUpdate)
 		if err != nil {
 			return err
 		}

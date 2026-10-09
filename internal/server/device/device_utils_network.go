@@ -237,7 +237,7 @@ func networkRestorePhysicalNIC(hostName string, volatile map[string]string) erro
 // in the supplied config to the newly created peer interface. If mtu is not specified, but parent
 // is supplied in config, then the MTU of the new peer interface will inherit the parent MTU.
 // Accepts the name of the host side interface as a parameter and returns the peer interface name and MTU used.
-func networkCreateVethPair(hostName string, m deviceConfig.Device) (string, uint32, error) {
+func networkCreateVethPair(hostName string, m deviceConfig.Device, claim ...*ip.NICLinkCleanup) (string, uint32, error) {
 	var err error
 
 	veth := &ip.Veth{
@@ -249,6 +249,14 @@ func networkCreateVethPair(hostName string, m deviceConfig.Device) (string, uint
 		Peer: ip.Link{
 			Name: network.RandomDevName("veth"),
 		},
+	}
+
+	if len(claim) > 0 {
+		veth.Alias = claim[0].Alias
+		veth.Address, err = net.ParseMAC(claim[0].HardwareAddr)
+		if err != nil {
+			return "", 0, fmt.Errorf("Invalid original veth host MAC: %w", err)
+		}
 	}
 
 	// Set the MTU on both ends.
@@ -330,12 +338,17 @@ func networkCreateVethPair(hostName string, m deviceConfig.Device) (string, uint
 
 // networkCreateTap creates and configures a TAP device.
 // Returns the MTU used.
-func networkCreateTap(hostName string, m deviceConfig.Device) (uint32, error) {
+func networkCreateTap(hostName string, m deviceConfig.Device, claim ...*ip.NICLinkCleanup) (uint32, error) {
 	tuntap := &ip.Tuntap{
 		Name:       hostName,
 		Mode:       "tap",
 		MultiQueue: true,
 		Master:     m["vrf"],
+	}
+
+	if len(claim) > 0 {
+		tuntap.Alias = claim[0].Alias
+		tuntap.Exclusive = true
 	}
 
 	err := tuntap.Add()
@@ -352,7 +365,10 @@ func networkCreateTap(hostName string, m deviceConfig.Device) (uint32, error) {
 		return 0, fmt.Errorf("Failed to bring up the tap interface %q: %w", hostName, err)
 	}
 
-	reverter.Add(func() { _ = network.InterfaceRemove(hostName) })
+	// The OVN caller owns its exact intent rollback after the creation lock is released.
+	if len(claim) == 0 {
+		reverter.Add(func() { _ = network.InterfaceRemove(hostName) })
+	}
 
 	// Set the MTU on both ends.
 	// The host side should always line up with the bridge to avoid accidentally lowering the bridge MTU.
@@ -1194,11 +1210,22 @@ func networkSRIOVParentVFInfo(vfParent string, vfID int) (ip.VirtFuncInfo, error
 // The useSpoofCheck argument controls whether to use the spoof check feature for the VF on the parent device.
 // If this is false then "security.mac_filtering" must not be enabled.
 // Returns VF PCI device info and IOMMU group number for VMs.
-func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID int, volatile map[string]string) (pcidev.Device, uint64, error) {
+func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID int, volatile map[string]string, beforeEffect ...func() error) (pcidev.Device, uint64, error) {
+	return networkSRIOVSetupVFWithOps(d, vfParent, vfDevice, vfID, volatile, networkSRIOVSetupVFOps{networkSRIOVParentVFInfo, networkSnapshotPhysicalNIC, network.SRIOVGetVFDevicePCISlot, pcidev.DeviceUnbind}, beforeEffect...)
+}
+
+type networkSRIOVSetupVFOps struct {
+	parentInfo func(string, int) (ip.VirtFuncInfo, error)
+	snapshot   func(string, map[string]string) error
+	pciSlot    func(string, string) (pcidev.Device, error)
+	unbind     func(pcidev.Device) error
+}
+
+func networkSRIOVSetupVFWithOps(d deviceCommon, vfParent string, vfDevice string, vfID int, volatile map[string]string, ops networkSRIOVSetupVFOps, beforeEffect ...func() error) (pcidev.Device, uint64, error) {
 	var vfPCIDev pcidev.Device
 
 	// Retrieve VF settings from parent device.
-	vfInfo, err := networkSRIOVParentVFInfo(vfParent, vfID)
+	vfInfo, err := ops.parentInfo(vfParent, vfID)
 	if err != nil {
 		return vfPCIDev, 0, err
 	}
@@ -1223,19 +1250,27 @@ func networkSRIOVSetupVF(d deviceCommon, vfParent string, vfDevice string, vfID 
 	volatile["last_state.created"] = "false" // Indicates don't delete device at stop time.
 
 	// Record properties of VF device.
-	err = networkSnapshotPhysicalNIC(volatile["host_name"], volatile)
+	err = ops.snapshot(volatile["host_name"], volatile)
 	if err != nil {
 		return vfPCIDev, 0, fmt.Errorf("Failed recording NIC %q settings: %w", volatile["host_name"], err)
 	}
 
 	// Get VF device's PCI Slot Name so we can unbind and rebind it from the host.
-	vfPCIDev, err = network.SRIOVGetVFDevicePCISlot(vfParent, volatile["last_state.vf.id"])
+	vfPCIDev, err = ops.pciSlot(vfParent, volatile["last_state.vf.id"])
 	if err != nil {
 		return vfPCIDev, 0, fmt.Errorf("Failed getting PCI slot for VF %q: %w", volatile["last_state.vf.id"], err)
 	}
 
+	// OVN persists the complete original allocation before the first PCI effect.
+	for _, capture := range beforeEffect {
+		err = capture()
+		if err != nil {
+			return vfPCIDev, 0, err
+		}
+	}
+
 	// Unbind VF device from the host so that the settings will take effect when we rebind it.
-	err = pcidev.DeviceUnbind(vfPCIDev)
+	err = ops.unbind(vfPCIDev)
 	if err != nil {
 		return vfPCIDev, 0, err
 	}

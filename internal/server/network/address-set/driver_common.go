@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/cluster/request"
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
+	"github.com/lxc/incus/v7/internal/server/network/ovn"
 	"github.com/lxc/incus/v7/internal/server/state"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
 	"github.com/lxc/incus/v7/internal/version"
@@ -326,9 +327,24 @@ func (d *common) validateConfig(config *api.NetworkAddressSetPut) error {
 }
 
 // Update method is used to update an address set and apply to concerned networks.
-func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.ClientType) error {
+func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.ClientType, beforeOVN func(map[string]int64) error) (retErr error) {
+	var physicalNB *ovn.NB
+	if clientType == request.ClientTypeNormal {
+		var guardErr error
+		physicalNB, guardErr = d.physicalReferenceClient(true)
+		if guardErr != nil {
+			return guardErr
+		}
+	}
+
+	var rollbackErr error
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer func() {
+		reverter.Fail()
+		if rollbackErr != nil {
+			retErr = errors.Join(retErr, fmt.Errorf("Resource catalog rollback refused; published configuration retained: %w", rollbackErr))
+		}
+	}()
 
 	// Validate the new configuration.
 	err := d.validateConfig(config)
@@ -343,6 +359,10 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			var err error
 
+			referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+			if referenceErr != nil {
+				return referenceErr
+			}
 			// Get current record.
 			dbRecord, err = dbCluster.GetNetworkAddressSet(ctx, tx.Tx(), d.projectName, d.info.Name)
 			if err != nil {
@@ -375,7 +395,12 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 		d.init(d.state, d.id, d.projectName, d.info)
 
 		reverter.Add(func() {
-			_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			rollbackErr = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+				if referenceErr != nil {
+					return referenceErr
+				}
+
 				var err error
 
 				// Update database. Its important this occurs before we attempt to apply to networks.
@@ -395,6 +420,10 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 
 				return nil
 			})
+
+			if rollbackErr != nil {
+				return
+			}
 
 			d.info.NetworkAddressSetPut = oldConfig
 			d.init(d.state, d.id, d.projectName, d.info)
@@ -419,6 +448,28 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 		}
 	}
 
+	if len(asOVNNets) > 0 && clientType == request.ClientTypeNormal {
+		if beforeOVN == nil {
+			return errors.New("OVN shared network changes require an operation reservation")
+		}
+
+		networks := make(map[string]int64, len(asOVNNets))
+		for _, usage := range asOVNNets {
+			networks[usage.Name] = int64(usage.ID)
+		}
+
+		err = beforeOVN(networks)
+		if err != nil {
+			return err
+		}
+	}
+
+	if clientType == request.ClientTypeNormal && len(asOVNNets) == 0 && physicalNB != nil {
+		err = physicalNB.CheckAddressSetPhysicalUnused(context.TODO(), int64(d.id))
+		if err != nil {
+			return err
+		}
+	}
 	// Apply address set changes to non-OVN networks on this member.
 	if len(asNets) > 0 {
 		for _, asNet := range asNets {
@@ -442,6 +493,10 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 		ovnnb, _, err := d.state.OVN()
 		if err != nil {
 			return err
+		}
+
+		if physicalNB != nil {
+			ovnnb = physicalNB
 		}
 
 		// Ensure address sets are created or updated in OVN.
@@ -475,7 +530,12 @@ func (d *common) Update(config *api.NetworkAddressSetPut, clientType request.Cli
 
 // Rename is used to rename an address set.
 func (d *common) Rename(newName string) error {
-	err := d.validateName(newName)
+	physicalNB, err := d.physicalReferenceClient(false)
+	if err != nil {
+		return err
+	}
+
+	err = d.validateName(newName)
 	if err != nil {
 		return err
 	}
@@ -496,6 +556,11 @@ func (d *common) Rename(newName string) error {
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+		if referenceErr != nil {
+			return referenceErr
+		}
+
 		return dbCluster.RenameNetworkAddressSet(ctx, tx.Tx(), d.projectName, d.info.Name, newName)
 	})
 	if err != nil {
@@ -508,6 +573,11 @@ func (d *common) Rename(newName string) error {
 
 // Delete is used to delete an address set.
 func (d *common) Delete() error {
+	physicalNB, err := d.physicalReferenceClient(false)
+	if err != nil {
+		return err
+	}
+
 	usedBy, err := d.UsedBy()
 	if err != nil {
 		return err
@@ -518,6 +588,11 @@ func (d *common) Delete() error {
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+		if referenceErr != nil {
+			return referenceErr
+		}
+
 		return dbCluster.DeleteNetworkAddressSet(ctx, tx.Tx(), d.projectName, d.info.Name)
 	})
 	if err != nil {

@@ -245,6 +245,11 @@ func instancePost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(errors.New("Refresh migration can't be used with a stateful migration"))
 	}
 
+	err = instanceOVNLiveProjectMoveAdmission(s, inst, req)
+	if err != nil {
+		return response.BadRequest(err)
+	}
+
 	// Checks for running instances.
 	if inst.IsRunning() {
 		if req.Pool != "" || req.Project != "" || target != "" {
@@ -866,7 +871,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 		defer target.Disconnect()
 
-		// Create the target instance.
+		// Create through the actual staged target handler when authorization exists.
 		destOp, err := target.CreateInstance(api.InstancesPost{
 			Name:        targetInstName,
 			InstancePut: targetInstInfo.Writable(),
@@ -1074,6 +1079,23 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		sourceOp.CopyRequestor(op)
+		if sourceMigration.live && clusterMoveSourceName == inst.Name() && req.Project == "" {
+			capability, ok := inst.(interface {
+				OVNNICMigrationSource(string, int64) error
+				OVNNICMigrationSourceOperation() string
+			})
+			if !ok {
+				return errors.New("Instance lacks original OVN migration staging")
+			}
+
+			err = capability.OVNNICMigrationSource(sourceOp.ID(), targetMemberInfo.ID)
+			if err != nil {
+				return err
+			}
+
+			sourceMigration.nicMigrationOperation = capability.OVNNICMigrationSourceOperation()
+			sourceMigration.nicMigrationTargetNodeID = targetMemberInfo.ID
+		}
 
 		// Start the migration source.
 		err = sourceOp.Start()
@@ -1096,7 +1118,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		defer target.Disconnect()
 
 		// Create the target instance.
-		destOp, err := target.CreateInstance(api.InstancesPost{
+		destOp, err := ovnNICMigrationCreateTarget(target, sourceMigration.nicMigrationOperation, api.InstancesPost{
 			Name:        inst.Name(),
 			InstancePut: targetInstInfo.Writable(),
 			Type:        api.InstanceType(targetInstInfo.Type),
@@ -1106,7 +1128,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 				Operation:   fmt.Sprintf("https://%s%s", sourceMemberInfo.Address, sourceOp.URL()),
 				Websockets:  sourceSecrets,
 				Certificate: string(networkCert.PublicKey()),
-				Live:        req.Live,
+				Live:        sourceMigration.live,
 				Source:      clusterMoveSourceName,
 			},
 		})
@@ -1121,7 +1143,16 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		}
 
 		// Wait for the migration to complete.
-		err = sourceOp.Wait(context.Background())
+		sourceErr := sourceOp.Wait(context.Background())
+		handedOver, err := ovnNICMigrationSourceWait(sourceErr, sourceMigration.nicMigrationOperation, func(operation string) (bool, error) {
+			committed := false
+			err := s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+				committed, err = tx.OVNNICMigrationCommitted(ctx, operation)
+				return err
+			})
+			return committed, err
+		})
 		if err != nil {
 			return fmt.Errorf("Instance move to destination failed on source: %w", err)
 		}
@@ -1129,12 +1160,25 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 		// A live migration on the same shared storage is handed over once the source succeeds,
 		// so the database record must follow the instance even if the destination reported an error.
 		destErr := destOp.Wait()
+		// Only a live move on the same shared storage can follow the instance despite a destination
+		// error; otherwise the source keeps the only safe copy of its data, even after a NIC handover.
 		if destErr != nil && (!req.Live || !sourcePool.Driver().Info().Remote || req.Pool != "" || req.Project != "") {
+			if handedOver {
+				return fmt.Errorf("Instance move to destination failed after the NIC hand-over; the instance and its data remain on the source: %w", destErr)
+			}
+
 			return fmt.Errorf("Instance move to destination failed: %w", destErr)
 		}
 
 		// Update the database post-migration.
 		err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			if handedOver {
+				err := tx.PlaceOVNNICMigration(ctx, sourceOp.ID(), inst.ID(), inst.LocalConfig()["volatile.uuid"], targetMemberInfo.ID)
+				if err != nil {
+					return err
+				}
+			}
+
 			if req.Project == "" {
 				// Update instance DB record to indicate its location on the new cluster member.
 				err = tx.UpdateInstanceNode(ctx, inst.Project().Name, inst.Name(), inst.Name(), targetMemberInfo.Name, sourcePool.ID(), volDBType)
@@ -1201,8 +1245,23 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 
 			return nil
 		})
+		if err != nil && handedOver {
+			placementErr := err
+			err = s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.EnsureOVNNICMigrationPlaced(ctx, sourceOp.ID(), inst.ID(), inst.LocalConfig()["volatile.uuid"], targetMemberInfo.ID)
+			})
+			if err != nil {
+				return errors.Join(placementErr, err)
+			}
+		}
+
 		if err != nil {
 			return err
+		}
+
+		if sourceErr != nil && handedOver {
+			nearLiveReverter.Success()
+			return fmt.Errorf("Instance moved to %q with original source cleanup debt retained: %w", targetMemberInfo.Name, sourceErr)
 		}
 
 		// The instance now belongs to the target member, so restarting the source is no longer the right thing to do on failure.
@@ -1270,8 +1329,8 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			}
 		}
 
-		if destErr != nil {
-			return fmt.Errorf("Instance moved to %q but destination reported an error: %w", targetMemberInfo.Name, destErr)
+		if sourceErr != nil || destErr != nil {
+			return fmt.Errorf("Instance moved to %q with retained migration cleanup error: %w", targetMemberInfo.Name, errors.Join(sourceErr, destErr))
 		}
 	}
 

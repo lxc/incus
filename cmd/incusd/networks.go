@@ -400,16 +400,13 @@ func networksGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networksPost(d *Daemon, r *http.Request) response.Response {
+func networksPost(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
-
-	networkCreateLock.Lock()
-	defer networkCreateLock.Unlock()
 
 	req := api.NetworksPost{}
 
@@ -466,6 +463,55 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(fmt.Errorf("Invalid network name: %w", err))
 	}
 
+	var ovnOperationToken string
+
+	if req.Type == "ovn" {
+		unlock, err := network.LockOVNLifecycle(projectName, req.Name)
+		if isClusterNotification(r) {
+			if unlock != nil {
+				unlock()
+			}
+
+			ctx, cancel := context.WithTimeout(r.Context(), 50*time.Second)
+			defer cancel()
+			unlock, err = network.WaitOVNLifecycle(ctx, projectName, req.Name)
+		}
+
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		defer unlock()
+		if !isClusterNotification(r) {
+			// Connect before any reservation or definition exists, so a replaced Northbound database
+			// of a cluster without OVN networks can be bound without this creation blocking the rebind.
+			_, _, err = s.OVN()
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			release, token, err := networkOVNAcquireOperation(s, projectName, req.Name, "create")
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			// Creations of other networks only hold membership briefly; wait for them instead of failing.
+			membershipRelease, _, err := network.AcquireOVNOperationWait(s, api.ProjectDefaultName, "cluster/ovn-membership", "create")
+			if err != nil {
+				_ = release()
+				return response.SmartError(err)
+			}
+
+			defer networkOVNReleaseResponse(membershipRelease, &result)
+			ovnOperationToken = token
+
+			defer networkOVNReleaseResponse(release, &result)
+		}
+	} else {
+		networkCreateLock.Lock()
+		defer networkCreateLock.Unlock()
+	}
+
 	netTypeInfo := netType.Info()
 	if projectName != api.ProjectDefaultName && !netTypeInfo.Projects {
 		return response.BadRequest(errors.New("Network type does not support non-default projects"))
@@ -509,14 +555,30 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 		}
 
+		if n.Type() == "ovn" {
+			release, err := network.AcceptOVNNotification(s, n, request.QueryParam(r, "ovn-operation"), request.QueryParam(r, "ovn-network-id"), "create", request.QueryParam(r, "ovn-notification"))
+			if err != nil {
+				return response.SmartError(err)
+			}
+
+			defer networkOVNReleaseResponse(release, &result)
+		}
+
+		ovnOperationToken = request.QueryParam(r, "ovn-operation")
+
 		// This is an internal request which triggers the actual creation of the network across all nodes
 		// after they have been previously defined.
-		err = doNetworksCreate(r.Context(), s, n, clientType)
+		err = doNetworksCreate(r.Context(), s, n, clientType, ovnOperationToken)
 		if err != nil {
 			return response.SmartError(err)
 		}
 
 		return resp
+	}
+
+	if req.Type == "ovn" {
+		networkCreateLock.Lock()
+		defer networkCreateLock.Unlock()
 	}
 
 	targetNode := request.QueryParam(r, "target")
@@ -587,6 +649,17 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Refuse a child of a missing or uncreated parent before any definition is written; the
+	// transaction storing the child's configuration checks it again.
+	if req.Type == "ovn" && req.Config["parent"] != "" {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.CheckOVNParentCreated(ctx, projectName, req.Config["parent"])
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	// No targetNode was specified and we're clustered or there is an existing partially created single node
 	// network, either way finalize the config in the db and actually create the network on all cluster nodes.
 	if count > 1 || (netInfo != nil && netInfo.Status != api.NetworkStatusCreated) {
@@ -625,7 +698,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 			}
 		}
 
-		err = networksPostCluster(r.Context(), s, projectName, netInfo, req, clientType, netType)
+		err = networksPostCluster(r.Context(), s, projectName, netInfo, req, clientType, netType, ovnOperationToken)
 		if err != nil {
 			return response.SmartError(err)
 		}
@@ -658,6 +731,13 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		if netType.Type() == "ovn" && req.Config["parent"] != "" {
+			err := tx.CheckOVNParentCreated(ctx, projectName, req.Config["parent"])
+			if err != nil {
+				return err
+			}
+		}
+
 		// Create the database entry.
 		_, err = tx.CreateNetwork(ctx, projectName, req.Name, req.Description, netType.DBType(), req.Config)
 
@@ -678,7 +758,7 @@ func networksPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
 
-	err = doNetworksCreate(r.Context(), s, n, clientType)
+	err = doNetworksCreate(r.Context(), s, n, clientType, ovnOperationToken)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -763,7 +843,7 @@ func networkPartiallyCreated(netInfo *api.Network) bool {
 // networksPostCluster checks that there is a pending network in the database and then attempts to setup the
 // network on each node. If all nodes are successfully setup then the network's state is set to created.
 // Accepts an optional existing network record, which will exist when performing subsequent re-create attempts.
-func networksPostCluster(ctx context.Context, s *state.State, projectName string, netInfo *api.Network, req api.NetworksPost, clientType clusterRequest.ClientType, netType network.Type) error {
+func networksPostCluster(ctx context.Context, s *state.State, projectName string, netInfo *api.Network, req api.NetworksPost, clientType clusterRequest.ClientType, netType network.Type, token ...string) error {
 	// Check that no node-specific config key has been supplied in request.
 	for key := range req.Config {
 		if db.IsNodeSpecificNetworkConfig(netType.Type(), key) {
@@ -776,6 +856,10 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 		// Check network isn't already created.
 		if netInfo.Status == api.NetworkStatusCreated {
 			return errors.New("The network is already created")
+		}
+
+		if netInfo.Status == api.NetworkStatusDeleting {
+			return errors.New("The network is being deleted; retry deletion")
 		}
 
 		// Check the requested network type matches the type created when adding the local member config.
@@ -803,6 +887,13 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 			return err
 		}
 
+		if netType.Type() == "ovn" && (netInfo == nil || netInfo.Status == api.NetworkStatusPending) {
+			err = tx.EnableOVNLocalInitialization(ctx, networkID)
+			if err != nil {
+				return err
+			}
+		}
+
 		// Fetch the node-specific configs and check the network is defined for all nodes.
 		nodeConfigs, err = tx.NetworkNodeConfigs(ctx, networkID)
 		if err != nil {
@@ -813,6 +904,13 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 		err = netType.FillConfig(req.Config)
 		if err != nil {
 			return err
+		}
+
+		if netType.Type() == "ovn" && req.Config["parent"] != "" {
+			err = tx.CheckOVNParentCreated(ctx, projectName, req.Config["parent"])
+			if err != nil {
+				return err
+			}
 		}
 
 		// Insert the global config keys.
@@ -838,21 +936,25 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 		return err
 	}
 
-	// Create notifier for other nodes to create the network.
-	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
-	if err != nil {
-		return err
-	}
-
 	// Load the network from the database for the local member.
 	n, err := network.LoadByName(s, projectName, req.Name)
 	if err != nil {
 		return fmt.Errorf("Failed loading network: %w", err)
 	}
 
+	notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
+	if n.Type() == "ovn" {
+		network.AuthorizeOVNInitialization(n, token...)
+		notifier, err = network.OVNNotifier(s, n, cluster.NotifyAlive)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	netConfig := n.Config()
 
-	err = doNetworksCreate(ctx, s, n, clientType)
+	err = doNetworksCreate(ctx, s, n, clientType, token...)
 	if err != nil {
 		return err
 	}
@@ -864,7 +966,21 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 
 	// Notify other nodes to create the network.
 	err = notifier(func(client incus.InstanceServer) error {
-		server, _, err := client.GetServer()
+		lookupClient := client
+		if n.Type() == "ovn" {
+			contextClient, ok := client.(interface {
+				WithContext(context.Context) incus.InstanceServer
+			})
+			if !ok {
+				return fmt.Errorf("OVN notification client does not support request deadlines")
+			}
+
+			lookupCtx, cancel := context.WithTimeout(s.ShutdownCtx, time.Minute)
+			defer cancel()
+			lookupClient = contextClient.WithContext(lookupCtx)
+		}
+
+		server, _, err := lookupClient.GetServer()
 		if err != nil {
 			return err
 		}
@@ -886,7 +1002,12 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 			Type: n.Type(),
 		}
 
-		err = client.UseProject(n.Project()).CreateNetwork(nodeReq)
+		if n.Type() == "ovn" {
+			err = network.OVNNotify(s, n, client, http.MethodPost, []string{version.APIVersion, "networks"}, nodeReq)
+		} else {
+			err = client.UseProject(n.Project()).CreateNetwork(nodeReq)
+		}
+
 		if err != nil {
 			return err
 		}
@@ -914,9 +1035,11 @@ func networksPostCluster(ctx context.Context, s *state.State, projectName string
 
 // Create the network on the system. The clusterNotification flag is used to indicate whether creation request
 // is coming from a cluster notification (and if so we should not delete the database record on error).
-func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, clientType clusterRequest.ClientType) error {
+func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, clientType clusterRequest.ClientType, token ...string) (err error) {
+	network.AuthorizeOVNInitialization(n, token...)
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer network.OVNRevert(s, n, reverter.Fail)
 
 	validateConfig := n.Config()
 
@@ -934,9 +1057,14 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 	}
 
 	// Validate so that when run on a cluster node the full config (including node specific config) is checked.
-	err := n.Validate(validateConfig, clientType)
+	err = n.Validate(validateConfig, clientType)
 	if err != nil {
 		return err
+	}
+
+	if n.Type() == "ovn" && network.OVNRawLocalStatus(n) == api.NetworkStatusCreated {
+		// Shared creation already succeeded here, but a restarted daemon still needs local setup.
+		return n.Start()
 	}
 
 	if n.LocalStatus() == api.NetworkStatusCreated {
@@ -950,7 +1078,15 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 		return err
 	}
 
-	reverter.Add(func() { _ = n.Delete(clientType) })
+	reverter.Add(func() {
+		cleanupErr := n.Delete(clientType)
+		if cleanupErr != nil {
+			err = errors.Join(err, fmt.Errorf("Failed rolling back network creation: %w", cleanupErr))
+			return
+		}
+
+		network.OVNClearCreateRollback(n)
+	})
 
 	// Only start networks when not doing a cluster pre-join phase (this ensures that networks are only started
 	// once the node has fully joined the clustered database and has consistent config with rest of the nodes).
@@ -961,12 +1097,14 @@ func doNetworksCreate(ctx context.Context, s *state.State, n network.Network, cl
 		}
 	}
 
-	// Mark local as status as networkCreated.
-	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-		return tx.NetworkNodeCreated(n.ID())
-	})
-	if err != nil {
-		return err
+	// OVN Start records success after all local setup, independently of the request deadline.
+	if n.Type() != "ovn" || clientType == clusterRequest.ClientTypeJoiner {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.NetworkNodeCreated(n.ID())
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	logger.Debug("Marked network local status as created", logger.Ctx{"project": n.Project(), "network": n.Name()})
@@ -1246,7 +1384,7 @@ func doNetworkGet(s *state.State, r *http.Request, allNodes bool, projectName st
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkDelete(d *Daemon, r *http.Request) response.Response {
+func networkDelete(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, reqProject, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
@@ -1260,10 +1398,12 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get the existing network.
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "delete", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {
@@ -1271,6 +1411,8 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+
+	var skippedOVNMembers []int64
 
 	clusterNotification := isClusterNotification(r)
 	if !clusterNotification {
@@ -1284,14 +1426,48 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 			return response.BadRequest(errors.New("The network is currently in use"))
 		}
 
+		if n.Type() == "ovn" {
+			err = network.OVNCheckPhysicalUnused(r.Context(), n)
+			if err != nil {
+				return response.SmartError(err)
+			}
+		}
+
 		// If we are clustered, also notify all other nodes, if any.
 		if s.ServerClustered {
 			notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAll)
+			if n.Type() == "ovn" {
+				notifier, skippedOVNMembers, err = network.OVNDeleteNotifier(s, n)
+			}
+
 			if err != nil {
 				return response.SmartError(err)
 			}
 
+			if n.Type() == "ovn" {
+				err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+					// A child defined after the admission check, in any state, still shares the router.
+					children, err := tx.OVNChildNetworks(ctx, projectName, networkName)
+					if err != nil {
+						return err
+					}
+
+					if children > 0 {
+						return api.StatusErrorf(http.StatusBadRequest, "Network is the parent of %d other network(s)", children)
+					}
+
+					return tx.NetworkDeleting(projectName, networkName)
+				})
+				if err != nil {
+					return response.SmartError(err)
+				}
+			}
+
 			err = notifier(func(client incus.InstanceServer) error {
+				if n.Type() == "ovn" {
+					return network.OVNNotify(s, n, client, http.MethodDelete, []string{version.APIVersion, "networks", n.Name()}, nil)
+				}
+
 				return client.UseProject(n.Project()).DeleteNetwork(n.Name())
 			})
 			if err != nil {
@@ -1300,11 +1476,29 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	// Also run the driver deletion for locally pending OVN networks on the client-facing request,
-	// as their cluster-wide state would otherwise be leaked once the DB record is removed below.
+	if !clusterNotification && !s.ServerClustered && n.Type() == "ovn" {
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			children, err := tx.OVNChildNetworks(ctx, projectName, networkName)
+			if err != nil {
+				return err
+			}
+
+			if children > 0 {
+				return api.StatusErrorf(http.StatusBadRequest, "Network is the parent of %d other network(s)", children)
+			}
+
+			return tx.NetworkDeleting(projectName, networkName)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
+	// Pending OVN members can have local state from a partially failed start or an update notification.
+	// Run their cleanup too, including on notification recipients, before removing the database record.
 	// Local-only drivers are still skipped as their deletion could touch host interfaces that were
 	// never created by the daemon.
-	if n.LocalStatus() != api.NetworkStatusPending || (clientType == clusterRequest.ClientTypeNormal && n.Type() == "ovn") {
+	if n.LocalStatus() != api.NetworkStatusPending || n.Type() == "ovn" {
 		err = n.Delete(clientType)
 		if err != nil {
 			return response.InternalError(err)
@@ -1318,6 +1512,13 @@ func networkDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		if n.Type() == "ovn" {
+			err := tx.ValidateOVNDelete(ctx, n.ID(), skippedOVNMembers)
+			if err != nil {
+				return err
+			}
+		}
+
 		// Remove the network from the database.
 		err = tx.DeleteNetwork(ctx, n.Project(), n.Name())
 
@@ -1552,7 +1753,7 @@ func networkPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkPut(d *Daemon, r *http.Request) response.Response {
+func networkPut(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	// If a target was specified, forward the request to the relevant node.
@@ -1572,10 +1773,12 @@ func networkPut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	// Get the existing network.
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "update", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {
@@ -1852,7 +2055,39 @@ func networkLeasesGet(d *Daemon, r *http.Request) response.Response {
 	return response.SyncResponse(true, leases)
 }
 
-func networkStartup(s *state.State) error {
+// networkStartupOrdinary checks maintenance state before automatic network startup.
+// Explicit restore, bootstrap and join retain their separate startup decisions.
+func networkStartupOrdinary(s *state.State, clustered bool) error {
+	if clustered {
+		var maintenance bool
+		err := s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			name, err := tx.GetLocalNodeName(ctx)
+			if err != nil {
+				return err
+			}
+
+			member, err := tx.GetNodeByName(ctx, name)
+			if err != nil {
+				return err
+			}
+
+			maintenance = slices.Contains([]int{db.ClusterMemberStateEvacuating, db.ClusterMemberStateEvacuated, db.ClusterMemberStateRestoring}, member.State)
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to read local cluster member state before network startup: %w", err)
+		}
+
+		if maintenance {
+			return nil
+		}
+	}
+
+	logger.Infof("Initializing networks")
+	return networkStartup(s)
+}
+
+func networkStartup(s *state.State, skipOVN ...bool) error {
 	var err error
 
 	// Cleanup leftover OVS ports.
@@ -1865,7 +2100,52 @@ func networkStartup(s *state.State) error {
 	}
 
 	// Load all created networks from all projects in a single transaction.
-	loadedNetworks, err := network.LoadAllCreated(s.ShutdownCtx, s)
+	var skipTypes []string
+	if len(skipOVN) > 0 && skipOVN[0] {
+		skipTypes = []string{"ovn"}
+	}
+
+	// An unreachable OVN database would otherwise cost a connection timeout for every OVN network
+	// before the daemon is ready; such networks are left to the background retry instead.
+	ovnNetworks := make(map[network.ProjectNetwork]struct{})
+	if len(skipTypes) == 0 {
+		err = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			networksInfo, err := tx.GetCreatedNetworksInfo(ctx)
+			if err != nil {
+				return err
+			}
+
+			for projectName, projectNetworks := range networksInfo {
+				for _, netInfo := range projectNetworks {
+					if netInfo.Info.Type == "ovn" {
+						ovnNetworks[network.ProjectNetwork{ProjectName: projectName, NetworkName: netInfo.Info.Name}] = struct{}{}
+					}
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("Failed to load networks: %w", err)
+		}
+	}
+
+	ovnUnavailable := func() bool {
+		_, _, err := s.OVN()
+		if err != nil {
+			logger.Warn("Deferring OVN network initialization until OVN is reachable", logger.Ctx{"err": err})
+			return true
+		}
+
+		return false
+	}
+
+	deferOVN := len(ovnNetworks) > 0 && ovnUnavailable()
+	if deferOVN {
+		skipTypes = []string{"ovn"}
+	}
+
+	loadedNetworks, err := network.LoadAllCreated(s.ShutdownCtx, s, skipTypes...)
 	if err != nil {
 		return fmt.Errorf("Failed to load networks: %w", err)
 	}
@@ -1883,6 +2163,12 @@ func networkStartup(s *state.State) error {
 	// Assume all networks are networkPriorityStandalone initially.
 	for pn := range loadedNetworks {
 		initNetworks[networkPriorityStandalone][pn] = struct{}{}
+	}
+
+	if deferOVN {
+		for pn := range ovnNetworks {
+			initNetworks[networkPriorityStandalone][pn] = struct{}{}
+		}
 	}
 
 	// Get the current network warnings for the local member so that warning resolution is only
@@ -1922,20 +2208,41 @@ func networkStartup(s *state.State) error {
 	var initNetworksMu sync.Mutex
 
 	initNetwork := func(n network.Network, priority int) error {
-		// Use a local error variable as this runs concurrently.
-		err := n.Start()
-		if err != nil {
-			err = fmt.Errorf("Failed starting: %w", err)
+		started := false
+		if n.Type() == "ovn" {
+			fresh, unlock, err := networkLoadForOperation(s, n.Project(), n.Name(), "", false)
+			if err != nil {
+				return err
+			}
 
-			_ = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.UpsertWarning(ctx, s.ServerName, n.Project(), dbCluster.TypeNetwork, int(n.ID()), warningtype.NetworkUnvailable, err.Error())
-			})
+			defer func() { _ = unlock() }()
+			if fresh.ID() != n.ID() || fresh.Status() != api.NetworkStatusCreated {
+				return fmt.Errorf("OVN network changed before startup")
+			}
 
-			networkWarningsMu.Lock()
-			networkWarnings[int(n.ID())] = struct{}{}
-			networkWarningsMu.Unlock()
+			// A deferred network that another path already started must not be started again; a
+			// repeated Start would roll back the running network's effects on a transient error. It
+			// still counts as initialized here, so it leaves the retry set.
+			started = network.OVNStartedLocally(fresh)
+			n = fresh
+		}
 
-			return err
+		if !started {
+			// Use a local error variable as this runs concurrently.
+			err := n.Start()
+			if err != nil {
+				err = fmt.Errorf("Failed starting: %w", err)
+
+				_ = s.DB.Cluster.Transaction(s.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+					return tx.UpsertWarning(ctx, s.ServerName, n.Project(), dbCluster.TypeNetwork, int(n.ID()), warningtype.NetworkUnvailable, err.Error())
+				})
+
+				networkWarningsMu.Lock()
+				networkWarnings[int(n.ID())] = struct{}{}
+				networkWarningsMu.Unlock()
+
+				return err
+			}
 		}
 
 		logger.Info("Initialized network", logger.Ctx{"project": n.Project(), "name": n.Name()})
@@ -2026,11 +2333,30 @@ func networkStartup(s *state.State) error {
 	initInPriorityOrder := func(firstPass bool) bool {
 		var initialized atomic.Bool
 
+		skipOVNPass := firstPass && deferOVN
+		if !firstPass {
+			pendingOVN := false
+			for _, networks := range initNetworks {
+				for pn := range networks {
+					_, isOVN := ovnNetworks[pn]
+					pendingOVN = pendingOVN || isOVN
+				}
+			}
+
+			skipOVNPass = pendingOVN && ovnUnavailable()
+		}
+
 		for priority := range initNetworks {
 			// No goroutines from a previous iteration are running here (group.Wait
 			// has returned) so the initNetworks map can be read without holding the
 			// mutex.
 			pns := slices.Collect(maps.Keys(initNetworks[priority]))
+			if skipOVNPass {
+				pns = slices.DeleteFunc(pns, func(pn network.ProjectNetwork) bool {
+					_, isOVN := ovnNetworks[pn]
+					return isOVN
+				})
+			}
 
 			group := new(errgroup.Group)
 			group.SetLimit(numParallel)
@@ -2115,7 +2441,7 @@ func networkStartup(s *state.State) error {
 	return nil
 }
 
-func networkShutdown(s *state.State) {
+func networkShutdown(s *state.State, skipOVN ...bool) {
 	var err error
 
 	// Get a list of projects.
@@ -2146,13 +2472,19 @@ func networkShutdown(s *state.State) {
 
 		// Bring them all down.
 		for _, name := range networks {
-			n, err := network.LoadByName(s, projectName, name)
+			n, unlock, err := networkLoadForOperation(s, projectName, name, "", false)
 			if err != nil {
 				logger.Error("Failed shutting down network, couldn't load network", logger.Ctx{"network": name, "project": projectName, "err": err})
 				continue
 			}
 
+			if len(skipOVN) > 0 && skipOVN[0] && n.Type() == "ovn" {
+				_ = unlock()
+				continue
+			}
+
 			err = n.Stop()
+			_ = unlock()
 			if err != nil {
 				logger.Error("Failed to bring down network", logger.Ctx{"err": err, "project": projectName, "name": name})
 			}
@@ -2161,7 +2493,7 @@ func networkShutdown(s *state.State) {
 }
 
 // networkRestartOVN is used to trigger a restart of all OVN networks.
-func networkRestartOVN(s *state.State) error {
+func networkRestartOVN(s *state.State, onlyIDs ...int64) ([]int64, error) {
 	logger.Infof("Restarting OVN networks")
 
 	// Get a list of projects.
@@ -2172,7 +2504,7 @@ func networkRestartOVN(s *state.State) error {
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to load projects: %w", err)
+		return nil, fmt.Errorf("Failed to load projects: %w", err)
 	}
 
 	// Collect all OVN networks across all projects.
@@ -2193,18 +2525,22 @@ func networkRestartOVN(s *state.State) error {
 			return err
 		})
 		if err != nil {
-			return fmt.Errorf("Failed to load networks for project %q: %w", projectName, err)
+			return nil, fmt.Errorf("Failed to load networks for project %q: %w", projectName, err)
 		}
 
 		for _, networkName := range networkNames {
 			// Load the network struct.
 			n, err := network.LoadByName(s, projectName, networkName)
 			if err != nil {
-				return fmt.Errorf("Failed to load network %q in project %q: %w", networkName, projectName, err)
+				return nil, fmt.Errorf("Failed to load network %q in project %q: %w", networkName, projectName, err)
 			}
 
 			// Skip non-OVN networks.
 			if n.DBType() != db.NetworkTypeOVN {
+				continue
+			}
+
+			if len(onlyIDs) > 0 && !slices.Contains(onlyIDs, int64(-1)) && !slices.Contains(onlyIDs, n.ID()) {
 				continue
 			}
 
@@ -2215,12 +2551,22 @@ func networkRestartOVN(s *state.State) error {
 	// Restart networks concurrently with one concurrent start per two runtime threads.
 	numParallel := max(runtime.NumCPU()/2, 1)
 
+	var failedIDs []int64
+	var failedMutex sync.Mutex
 	group := new(errgroup.Group)
 	group.SetLimit(numParallel)
 
 	for _, ovnNet := range ovnNetworks {
-		group.Go(func() error {
-			err := ovnNet.n.Start()
+		group.Go(func() (err error) {
+			defer func() {
+				if err != nil {
+					failedMutex.Lock()
+					failedIDs = append(failedIDs, ovnNet.n.ID())
+					failedMutex.Unlock()
+				}
+			}()
+
+			err = network.RestartOVNLocal(ovnNet.n)
 			if err != nil {
 				return fmt.Errorf("Failed to restart network %q in project %q: %w", ovnNet.networkName, ovnNet.projectName, err)
 			}
@@ -2229,7 +2575,8 @@ func networkRestartOVN(s *state.State) error {
 		})
 	}
 
-	return group.Wait()
+	err = group.Wait()
+	return failedIDs, err
 }
 
 // swagger:operation GET /1.0/networks/{name}/state networks networks_state_get

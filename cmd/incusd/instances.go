@@ -41,6 +41,13 @@ var instancesCmd = APIEndpoint{
 	Put:  APIEndpointAction{Handler: instancesPut, AccessHandler: allowAuthenticated},
 }
 
+// This cluster-only effect route is deliberately distinct from legacy instance creation.
+var instanceOVNMigrationCmd = APIEndpoint{
+	Name: "instanceOVNMigration",
+	Path: "instances/{name}/ovn-migration",
+	Post: APIEndpointAction{Handler: instanceOVNMigrationPost, AccessHandler: allowAuthenticated, LargeRequest: true},
+}
+
 var instanceCmd = APIEndpoint{
 	Name: "instance",
 	Path: "instances/{name}",
@@ -361,8 +368,13 @@ func instanceStart(s *state.State, inst instance.Instance) error {
 }
 
 func instancesStart(s *state.State, instances []instance.Instance) {
-	// Check if the cluster is currently evacuated.
-	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
+	// Establish maintenance state before classifying or dispatching any instances.
+	err := instanceMaintenanceAdmission(s, s.ServerClustered, nil)
+	if err != nil {
+		if !api.StatusErrorCheck(err, http.StatusForbidden) {
+			logger.Error("Failed to admit automatic instance startup", logger.Ctx{"err": err})
+		}
+
 		return
 	}
 

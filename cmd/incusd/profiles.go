@@ -381,6 +381,11 @@ func profilesPost(d *Daemon, r *http.Request) response.Response {
 
 	// Update DB entry.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		err := project.ValidateDeviceNetworkReferences(ctx, tx, p.Name, deviceConfig.NewDevices(req.Devices))
+		if err != nil {
+			return err
+		}
+
 		devices, err := dbCluster.APIToDevices(req.Devices)
 		if err != nil {
 			return err
@@ -604,6 +609,7 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var profile *api.Profile
+	var profileID int64
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		current, err := dbCluster.GetProfile(ctx, tx.Tx(), p.Name, name)
@@ -611,6 +617,7 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Failed to retrieve profile %q: %w", name, err)
 		}
 
+		profileID = int64(current.ID)
 		profile, err = current.ToAPI(ctx, tx.Tx(), nil, nil)
 		if err != nil {
 			return err
@@ -635,7 +642,7 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	err = doProfileUpdate(r.Context(), s, *p, name, profile, req)
+	err = doProfileUpdate(r.Context(), s, *p, name, profile, profileID, req)
 
 	if err == nil && !isClusterNotification(r) {
 		// Notify all other nodes. If a node is down, it will be ignored.
@@ -652,8 +659,10 @@ func profilePut(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(p.Name, lifecycle.ProfileUpdated.Event(name, p.Name, requestor, nil))
+	if err == nil {
+		requestor := request.CreateRequestor(r)
+		s.Events.SendLifecycle(p.Name, lifecycle.ProfileUpdated.Event(name, p.Name, requestor, nil))
+	}
 
 	return response.SmartError(err)
 }
@@ -715,6 +724,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 	}
 
 	var profile *api.Profile
+	var profileID int64
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
 		current, err := dbCluster.GetProfile(ctx, tx.Tx(), p.Name, name)
@@ -722,6 +732,7 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Failed to retrieve profile=%q: %w", name, err)
 		}
 
+		profileID = int64(current.ID)
 		profile, err = current.ToAPI(ctx, tx.Tx(), nil, nil)
 		if err != nil {
 			return err
@@ -790,10 +801,13 @@ func profilePatch(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	requestor := request.CreateRequestor(r)
-	s.Events.SendLifecycle(p.Name, lifecycle.ProfileUpdated.Event(name, p.Name, requestor, nil))
+	err = doProfileUpdate(r.Context(), s, *p, name, profile, profileID, req)
+	if err == nil {
+		requestor := request.CreateRequestor(r)
+		s.Events.SendLifecycle(p.Name, lifecycle.ProfileUpdated.Event(name, p.Name, requestor, nil))
+	}
 
-	return response.SmartError(doProfileUpdate(r.Context(), s, *p, name, profile, req))
+	return response.SmartError(err)
 }
 
 // swagger:operation POST /1.0/profiles/{name} profiles profile_post
@@ -883,7 +897,7 @@ func profilePost(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Profile %q already exists", req.Name)
 		}
 
-		return dbCluster.RenameProfile(ctx, tx.Tx(), p.Name, name, req.Name)
+		return project.RenameProfileWithReferences(ctx, tx, p.Name, name, req.Name)
 	})
 	if err != nil {
 		return response.SmartError(err)
@@ -966,7 +980,7 @@ func profileDelete(d *Daemon, r *http.Request) response.Response {
 			return errors.New("Profile is currently in use")
 		}
 
-		return dbCluster.DeleteProfile(ctx, tx.Tx(), p.Name, name)
+		return project.DeleteProfileWithReferences(ctx, tx, p.Name, name)
 	})
 	if err != nil {
 		return response.SmartError(err)

@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/cowsql/go-cowsql/cluster"
 	cowsqltls "github.com/cowsql/go-cowsql/cluster/tls"
 
 	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/logger"
 	localtls "github.com/lxc/incus/v7/shared/tls"
@@ -41,6 +44,10 @@ func NewNotifier(s *state.State, networkCert *localtls.CertInfo, serverCert *loc
 		return nil, err
 	}
 
+	return wrapNotifier(notifier, policy), nil
+}
+
+func wrapNotifier(notifier cluster.Notifier, policy NotifierPolicy) Notifier {
 	return func(hook func(incus.InstanceServer) error) error {
 		clusterHook := func(ctx context.Context, address string, networkCert, serverCert cowsqltls.CertInfo) error {
 			if networkCert == nil || serverCert == nil {
@@ -76,5 +83,99 @@ func NewNotifier(s *state.State, networkCert *localtls.CertInfo, serverCert *loc
 		}
 
 		return nil
-	}, nil
+	}
+}
+
+// NewNotifierForMembers builds a notifier restricted to the explicitly selected member IDs.
+func NewNotifierForMembers(s *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, policy NotifierPolicy, memberIDs []int64) (Notifier, error) {
+	selected := make(map[int64]struct{}, len(memberIDs))
+	for _, id := range memberIDs {
+		selected[id] = struct{}{}
+	}
+
+	return newNotifierForMembers(s, networkCert, serverCert, policy, selected)
+}
+
+func newNotifierForMembers(s *state.State, networkCert *localtls.CertInfo, serverCert *localtls.CertInfo, policy NotifierPolicy, selected map[int64]struct{}) (Notifier, error) {
+	if s.Cluster == nil {
+		return func(func(incus.InstanceServer) error) error { return nil }, nil
+	}
+
+	localClusterAddress := s.LocalConfig.ClusterAddress()
+
+	// Fast-track the case where we're not clustered at all.
+	if localClusterAddress == "" {
+		nullNotifier := func(func(incus.InstanceServer) error) error { return nil }
+		return nullNotifier, nil
+	}
+
+	var err error
+	var members []db.NodeInfo
+	var offlineThreshold time.Duration
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		offlineThreshold, err = tx.GetNodeOfflineThreshold(ctx)
+		if err != nil {
+			return err
+		}
+
+		members, err = tx.GetNodes(ctx)
+		if err != nil {
+			return fmt.Errorf("Failed getting cluster members: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	peers := []string{}
+	for _, member := range members {
+		if selected != nil {
+			_, included := selected[member.ID]
+			if !included {
+				continue
+			}
+		}
+
+		if member.Address == localClusterAddress || member.Address == "0.0.0.0" {
+			continue // Exclude ourselves
+		}
+
+		if member.IsOffline(offlineThreshold) {
+			switch policy {
+			case NotifyAll:
+				// Even if the heartbeat timestamp is not recent
+				// enough, let's try to connect to the node, just in
+				// case the heartbeat is lagging behind for some reason
+				// and the node is actually up.
+				if !HasConnectivity(networkCert, serverCert, member.Address, false) {
+					return nil, fmt.Errorf("peer node %s is down", member.Address)
+				}
+
+			case NotifyAlive:
+				continue // Just skip this node
+			case NotifyTryAll:
+			}
+		}
+
+		peers = append(peers, member.Address)
+	}
+
+	notifier := func(hook func(context.Context, string, cowsqltls.CertInfo, cowsqltls.CertInfo) error) []error {
+		errs := make([]error, len(peers))
+		wg := sync.WaitGroup{}
+		wg.Add(len(peers))
+		for i, address := range peers {
+			go func(i int, address string) {
+				defer wg.Done()
+				errs[i] = hook(context.TODO(), address, networkCert, serverCert)
+			}(i, address)
+		}
+
+		wg.Wait()
+		return errs
+	}
+
+	return wrapNotifier(notifier, policy), nil
 }

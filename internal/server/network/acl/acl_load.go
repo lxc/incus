@@ -52,7 +52,16 @@ func Create(s *state.State, projectName string, aclInfo *api.NetworkACLsPost) er
 		return err
 	}
 
+	root, err := physicalCreationRoot(s)
+	if err != nil {
+		return err
+	}
+
 	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		referenceErr := tx.CheckOVNReferencePublication(ctx, root)
+		if referenceErr != nil {
+			return referenceErr
+		}
 		// Insert DB record.
 
 		acl := cluster.NetworkACL{
@@ -124,6 +133,64 @@ func Exists(s *state.State, projectName string, name ...string) error {
 	return nil
 }
 
+// aclProfileSnapshot contains the profile data captured by one transaction attempt.
+type aclProfileSnapshot struct {
+	profiles []cluster.Profile
+	devices  map[int]map[string]cluster.Device
+	projects map[string]*api.Project
+}
+
+// collect replaces all profile state together after a successful capture.
+func (s *aclProfileSnapshot) collect(ctx context.Context, tx *db.ClusterTx, aclProjectName string) error {
+	snapshot := aclProfileSnapshot{
+		devices:  map[int]map[string]cluster.Device{},
+		projects: map[string]*api.Project{},
+	}
+
+	// Default-project ACLs can be used by profiles in any project.
+	var profileFilters []cluster.ProfileFilter
+	if aclProjectName != api.ProjectDefaultName {
+		profileFilters = append(profileFilters, cluster.ProfileFilter{Project: &aclProjectName})
+	}
+
+	allProfiles, err := cluster.GetProfiles(ctx, tx.Tx(), profileFilters...)
+	if err != nil {
+		return err
+	}
+
+	// Get all the profile devices.
+	profileDevicesByID, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
+	if err != nil {
+		return err
+	}
+
+	for _, profile := range allProfiles {
+		// Keep the complete owner project for per-network resolution.
+		if snapshot.projects[profile.Project] == nil {
+			dbProject, err := cluster.GetProject(ctx, tx.Tx(), profile.Project)
+			if err != nil {
+				return err
+			}
+
+			snapshot.projects[profile.Project], err = dbProject.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+		}
+
+		devices := map[string]cluster.Device{}
+		for _, dev := range profileDevicesByID[profile.ID] {
+			devices[dev.Name] = dev
+		}
+
+		snapshot.profiles = append(snapshot.profiles, profile)
+		snapshot.devices[profile.ID] = devices
+	}
+
+	*s = snapshot
+	return nil
+}
+
 // UsedBy finds all networks, profiles and instance NICs that use any of the specified ACLs and executes usageFunc
 // once for each resource using one or more of the ACLs with info about the resource and matched ACLs being used.
 func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Context, tx *db.ClusterTx, matchedACLNames []string, usageType any, nicName string, nicConfig map[string]string) error, matchACLNames ...string) error {
@@ -131,8 +198,7 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		return nil
 	}
 
-	var profiles []cluster.Profile
-	profileDevices := map[int]map[string]cluster.Device{}
+	var profileSnapshot aclProfileSnapshot
 
 	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Find networks using the ACLs. Cheapest to do.
@@ -165,65 +231,26 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 		}
 
 		// Look for profiles. Next cheapest to do.
-		// Only profiles in the default project may belong to a different project than the ACL.
-		var profileFilters []cluster.ProfileFilter
-		if aclProjectName != api.ProjectDefaultName {
-			profileFilters = append(profileFilters, cluster.ProfileFilter{Project: &aclProjectName})
-		}
-
-		allProfiles, err := cluster.GetProfiles(ctx, tx.Tx(), profileFilters...)
-		if err != nil {
-			return err
-		}
-
-		// Resolve the effective network project of each profile.
-		projects, err := cluster.GetProjects(ctx, tx.Tx())
-		if err != nil {
-			return err
-		}
-
-		networkProjects := map[string]string{}
-		for _, p := range projects {
-			apiProject, err := p.ToAPI(ctx, tx.Tx())
-			if err != nil {
-				return err
-			}
-
-			networkProjects[p.Name] = project.NetworkProjectFromRecord(apiProject)
-		}
-
-		// Get all the profile devices.
-		profileDevicesByID, err := cluster.GetAllProfileDevices(ctx, tx.Tx())
-		if err != nil {
-			return err
-		}
-
-		for _, profile := range allProfiles {
-			// Skip profiles whose effective network project doesn't match this Network ACL's project.
-			if networkProjects[profile.Project] != aclProjectName {
-				continue
-			}
-
-			devices := map[string]cluster.Device{}
-			for _, dev := range profileDevicesByID[profile.ID] {
-				devices[dev.Name] = dev
-			}
-
-			profiles = append(profiles, profile)
-			profileDevices[profile.ID] = devices
-		}
-
-		return nil
+		return profileSnapshot.collect(ctx, tx, aclProjectName)
 	})
 	if err != nil {
 		return err
 	}
 
-	for _, profile := range profiles {
+	for _, profile := range profileSnapshot.profiles {
+		ownerProject := profileSnapshot.projects[profile.Project]
+		if ownerProject == nil {
+			return fmt.Errorf("Failed to load project %q", profile.Project)
+		}
+
 		// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
-		for devName, devConfig := range deviceConfig.NewDevices(cluster.DevicesToAPI(profileDevices[profile.ID])) {
+		for devName, devConfig := range deviceConfig.NewDevices(cluster.DevicesToAPI(profileSnapshot.devices[profile.ID])) {
 			matchedACLNames := isInUseByDevice(devConfig, matchACLNames...)
 			if len(matchedACLNames) > 0 {
+				if project.NetworkProjectForNameFromRecord(ownerProject, devConfig["network"]) != aclProjectName {
+					continue
+				}
+
 				// Call usageFunc with a list of matched ACLs and info about the instance NIC.
 				err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 					return usageFunc(ctx, tx, matchedACLNames, profile, devName, devConfig)
@@ -280,20 +307,16 @@ func UsedBy(s *state.State, aclProjectName string, usageFunc func(ctx context.Co
 
 		// Find instances using the ACLs. Most expensive to do.
 		err = tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
-			// Get the instance's effective network project name.
-			instNetworkProject := project.NetworkProjectFromRecord(&p)
-
-			// Skip instances who's effective network project doesn't match this Network ACL's project.
-			if instNetworkProject != aclProjectName {
-				return nil
-			}
-
 			devices := db.ExpandInstanceDevices(inst.Devices.Clone(), inst.Profiles)
 
 			// Iterate through each of the instance's devices, looking for NICs that are using any of the ACLs.
 			for devName, devConfig := range devices {
 				matchedACLNames := isInUseByDevice(devConfig, matchACLNames...)
 				if len(matchedACLNames) > 0 {
+					if project.NetworkProjectForNameFromRecord(&p, devConfig["network"]) != aclProjectName {
+						continue
+					}
+
 					// Call usageFunc with a list of matched ACLs and info about the instance NIC.
 					err := usageFunc(ctx, tx, matchedACLNames, inst, devName, devConfig)
 					if err != nil {

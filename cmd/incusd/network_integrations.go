@@ -327,23 +327,25 @@ func networkIntegrationsPost(d *Daemon, r *http.Request) response.Response {
 
 	// Create the DB record.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		dbRecord := dbCluster.NetworkIntegration{
-			Name:        req.Name,
-			Description: req.Description,
-			Type:        dbType,
-		}
+		return tx.WithOVNPeerIntegrationOperation(ctx, func() error {
+			dbRecord := dbCluster.NetworkIntegration{
+				Name:        req.Name,
+				Description: req.Description,
+				Type:        dbType,
+			}
 
-		id, err := dbCluster.CreateNetworkIntegration(ctx, tx.Tx(), dbRecord)
-		if err != nil {
-			return err
-		}
+			id, err := dbCluster.CreateNetworkIntegration(ctx, tx.Tx(), dbRecord)
+			if err != nil {
+				return err
+			}
 
-		err = dbCluster.CreateNetworkIntegrationConfig(ctx, tx.Tx(), id, req.Config)
-		if err != nil {
-			return err
-		}
+			err = dbCluster.CreateNetworkIntegrationConfig(ctx, tx.Tx(), id, req.Config)
+			if err != nil {
+				return err
+			}
 
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return response.SmartError(err)
@@ -401,53 +403,55 @@ func networkIntegrationDelete(d *Daemon, r *http.Request) response.Response {
 
 	// Delete the DB record.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Get UsedBy for the integration.
-		integrationID, err := dbCluster.GetNetworkIntegrationID(ctx, tx.Tx(), integrationName)
-		if err != nil {
-			return fmt.Errorf("Failed to get network integration ID: %w", err)
-		}
-
-		allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
-		if err != nil {
-			return fmt.Errorf("Failed to load network peers: %w", err)
-		}
-
-		usedBy := []string{}
-		for _, peer := range allPeers {
-			if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(integrationID) {
-				// Fetch the network associated with the peer
-				networkName, networkProjectName, err := tx.GetNetworkNameAndProjectWithID(ctx, int(peer.NetworkID))
-				if err != nil {
-					continue
-				}
-
-				_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
-				if err != nil {
-					continue
-				}
-
-				// Fetch the project associated with the network
-				project, err := dbCluster.GetProject(ctx, tx.Tx(), networkProjectName)
-				if err != nil {
-					continue
-				}
-
-				// Construct the URL
-				url := api.NewURL().Path(version.APIVersion, "networks", network.Name, "peers", peer.Name).Project(project.Name).String()
-				usedBy = append(usedBy, url)
+		return tx.WithOVNPeerIntegrationOperation(ctx, func() error {
+			// Get UsedBy for the integration.
+			integrationID, err := dbCluster.GetNetworkIntegrationID(ctx, tx.Tx(), integrationName)
+			if err != nil {
+				return fmt.Errorf("Failed to get network integration ID: %w", err)
 			}
-		}
 
-		if len(usedBy) > 0 {
-			return errors.New("Network integration is currently in use")
-		}
+			allPeers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx()) // Fetch all peers
+			if err != nil {
+				return fmt.Errorf("Failed to load network peers: %w", err)
+			}
 
-		err = dbCluster.DeleteNetworkIntegration(ctx, tx.Tx(), integrationName)
-		if err != nil {
-			return err
-		}
+			usedBy := []string{}
+			for _, peer := range allPeers {
+				if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(integrationID) {
+					// Fetch the network associated with the peer
+					networkName, networkProjectName, err := tx.GetNetworkNameAndProjectWithID(ctx, int(peer.NetworkID))
+					if err != nil {
+						continue
+					}
 
-		return nil
+					_, network, _, err := tx.GetNetworkInAnyState(ctx, networkProjectName, networkName)
+					if err != nil {
+						continue
+					}
+
+					// Fetch the project associated with the network
+					project, err := dbCluster.GetProject(ctx, tx.Tx(), networkProjectName)
+					if err != nil {
+						continue
+					}
+
+					// Construct the URL
+					url := api.NewURL().Path(version.APIVersion, "networks", network.Name, "peers", peer.Name).Project(project.Name).String()
+					usedBy = append(usedBy, url)
+				}
+			}
+
+			if len(usedBy) > 0 {
+				return errors.New("Network integration is currently in use")
+			}
+
+			err = dbCluster.DeleteNetworkIntegration(ctx, tx.Tx(), integrationName)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
 	})
 	if err != nil {
 		return response.SmartError(err)
@@ -792,22 +796,59 @@ func networkIntegrationPut(d *Daemon, r *http.Request) response.Response {
 
 	// Update the database record.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		// Update the description if needed.
-		if dbRecord.Description != req.Description {
-			dbRecord.Description = req.Description
-			err := dbCluster.UpdateNetworkIntegration(ctx, tx.Tx(), integrationName, *dbRecord)
+		return tx.WithOVNPeerIntegrationOperation(ctx, func() error {
+			current, err := dbCluster.GetNetworkIntegration(ctx, tx.Tx(), integrationName)
 			if err != nil {
 				return err
 			}
-		}
 
-		// Update the configuration.
-		err := dbCluster.UpdateNetworkIntegrationConfig(ctx, tx.Tx(), int64(dbRecord.ID), req.Config)
-		if err != nil {
-			return err
-		}
+			currentInfo, err := current.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
 
-		return nil
+			err = localUtil.EtagCheck(r, currentInfo.Writable())
+			if err != nil {
+				return err
+			}
+
+			peers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			inUse := false
+			for _, peer := range peers {
+				if peer.TargetNetworkIntegrationID.Valid && peer.TargetNetworkIntegrationID.Int64 == int64(current.ID) {
+					inUse = true
+					break
+				}
+			}
+
+			err = networkIntegrationValidate(currentInfo.Type, inUse, currentInfo.Config, req.Config)
+			if err != nil {
+				return err
+			}
+
+			dbRecord = current
+
+			// Update the description if needed.
+			if dbRecord.Description != req.Description {
+				dbRecord.Description = req.Description
+				err := dbCluster.UpdateNetworkIntegration(ctx, tx.Tx(), integrationName, *dbRecord)
+				if err != nil {
+					return err
+				}
+			}
+
+			// Update the configuration.
+			err = dbCluster.UpdateNetworkIntegrationConfig(ctx, tx.Tx(), int64(dbRecord.ID), req.Config)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		})
 	})
 	if err != nil {
 		return response.SmartError(err)
@@ -878,12 +919,14 @@ func networkIntegrationPost(d *Daemon, r *http.Request) response.Response {
 
 	// Rename the DB record.
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		err := dbCluster.RenameNetworkIntegration(ctx, tx.Tx(), integrationName, req.Name)
-		if err != nil {
-			return err
-		}
+		return tx.WithOVNPeerIntegrationOperation(ctx, func() error {
+			err := dbCluster.RenameNetworkIntegration(ctx, tx.Tx(), integrationName, req.Name)
+			if err != nil {
+				return err
+			}
 
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return response.SmartError(err)

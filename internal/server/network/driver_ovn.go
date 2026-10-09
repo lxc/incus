@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	"runtime"
 	"slices"
 	"sort"
 	"strconv"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	"github.com/flosch/pongo2/v6"
+	"github.com/google/uuid"
 	"github.com/mdlayher/netx/eui64"
 	ovsClient "github.com/ovn-kubernetes/libovsdb/client"
 	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
@@ -46,6 +48,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/state"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
+	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
@@ -91,6 +94,9 @@ type ovnUplinkPortBridgeVars struct {
 // OVNInstanceNICSetupOpts options for starting an OVN Instance NIC.
 type OVNInstanceNICSetupOpts struct {
 	InstanceUUID             string
+	MigrationOperation       string
+	InstanceID               int
+	NICHostVolatile          map[string]string
 	DeviceName               string
 	DeviceConfig             deviceConfig.Device
 	UplinkConfig             map[string]string
@@ -101,9 +107,15 @@ type OVNInstanceNICSetupOpts struct {
 
 // OVNInstanceNICStopOpts options for stopping an OVN Instance NIC.
 type OVNInstanceNICStopOpts struct {
-	InstanceUUID string
-	DeviceName   string
-	DeviceConfig deviceConfig.Device
+	// CleanupGeneration binds later stages to the already published original source.
+	CleanupGeneration string
+	NetworkID         int64
+	InstanceUUID      string
+	InstanceID        int
+	DeviceName        string
+	DeviceConfig      deviceConfig.Device
+	HostVolatile      map[string]string
+	OVS               *ovs.NICPortCleanup
 }
 
 // ovn represents an OVN network.
@@ -112,6 +124,12 @@ type ovn struct {
 
 	ovnnb *networkOVN.NB
 	ovnsb *networkOVN.SB
+
+	operationAuthorized   bool
+	ovnOperationUncertain bool
+
+	// Exact enclosing NIC update capabilities; never infer ownership from a DB token lookup.
+	ovnNICCleanupTokens map[int64]string
 
 	// ID of the parent network owning our logical router (0 if we own it).
 	parentID int64
@@ -2241,7 +2259,7 @@ func (n *ovn) startUplinkPortBridge(uplinkNet Network) error {
 func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string, vlanID string) error {
 	// Do this after gaining lock so that on failure we revert before release locking.
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	// If uplink is a native bridge, then use a separate OVS bridge with veth pair connection to native bridge.
 	vars := n.uplinkPortBridgeVars(uplinkNet)
@@ -2274,16 +2292,23 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 
 	// Create veth pair if needed.
 	if !InterfaceExists(vars.uplinkEnd) && !InterfaceExists(vars.ovsEnd) {
+		// Preserve the native bridge's current address when adding and removing the owned port.
+		bridgeLink, err := ip.LinkByName(bridgeDevice)
+		if err != nil {
+			return fmt.Errorf("Failed getting address of uplink bridge %q: %w", bridgeDevice, err)
+		}
+
 		veth := &ip.Veth{
 			Link: ip.Link{
-				Name: vars.uplinkEnd,
+				Name:    vars.uplinkEnd,
+				Address: bridgeLink.Address,
 			},
 			Peer: ip.Link{
 				Name: vars.ovsEnd,
 			},
 		}
 
-		err := veth.Add()
+		err = veth.Add()
 		if err != nil {
 			return fmt.Errorf("Failed to create the uplink veth interfaces %q and %q: %w", vars.uplinkEnd, vars.ovsEnd, err)
 		}
@@ -2391,7 +2416,7 @@ func (n *ovn) startUplinkPortBridgeNative(uplinkNet Network, bridgeDevice string
 func (n *ovn) startUplinkPortBridgeOVS(uplinkNet Network, bridgeDevice string) error {
 	// Do this after gaining lock so that on failure we revert before release locking.
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	// If uplink is an openvswitch bridge, have OVN logical provider connect directly to it.
 	vswitch, err := n.state.OVS()
@@ -2460,7 +2485,7 @@ func (n *ovn) pingOVNRouter() {
 func (n *ovn) startUplinkPortPhysical(uplinkNet Network) error {
 	// Do this after gaining lock so that on failure we revert before release locking.
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	uplinkConfig := uplinkNet.Config()
 
@@ -2562,8 +2587,35 @@ func (n *ovn) checkUplinkUse() (bool, error) {
 	var projectNetworks map[string]map[int64]api.Network
 
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		projectNetworks, err = tx.GetCreatedNetworks(ctx)
-		return err
+		names, err := tx.GetNetworksAllProjects(ctx)
+		if err != nil {
+			return err
+		}
+
+		projectNetworks = make(map[string]map[int64]api.Network, len(names))
+		for projectName, networkNames := range names {
+			projectNetworks[projectName] = make(map[int64]api.Network, len(networkNames))
+			for _, name := range networkNames {
+				id, info, nodes, err := tx.GetNetworkInAnyState(ctx, projectName, name)
+				if err != nil {
+					return err
+				}
+
+				enabled, err := tx.OVNLocalInitializationEnabled(ctx, id)
+				if err != nil {
+					return err
+				}
+
+				node, exists := nodes[n.state.DB.Cluster.GetNodeID()]
+				if exists && (db.NetworkStateToAPIStatus(node.State) == api.NetworkStatusPrepared || db.NetworkStateToAPIStatus(node.State) == api.NetworkStatusStopped || (enabled && db.NetworkStateToAPIStatus(node.State) == api.NetworkStatusPending)) {
+					continue
+				}
+
+				projectNetworks[projectName][id] = *info
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return false, fmt.Errorf("Failed to load all networks: %w", err)
@@ -2586,9 +2638,19 @@ func (n *ovn) checkUplinkUse() (bool, error) {
 }
 
 // deleteUplinkPort deletes the uplink connection.
-func (n *ovn) deleteUplinkPort() error {
+func (n *ovn) deleteUplinkPort(drained ...bool) error {
+	publish := func() error {
+		if len(drained) == 0 || !drained[0] {
+			return nil
+		}
+
+		return n.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.OVNLocalStopped(ctx, n.project, n.name, n.id, n.ovnOperationToken)
+		})
+	}
+
 	if n.parentID != 0 || n.config["network"] == "none" {
-		return nil
+		return publish()
 	}
 
 	// Uplink network must be in default project.
@@ -2605,6 +2667,10 @@ func (n *ovn) deleteUplinkPort() error {
 		}
 
 		defer unlock()
+		err = publish()
+		if err != nil {
+			return err
+		}
 
 		switch uplinkNet.Type() {
 		case "bridge":
@@ -2616,7 +2682,7 @@ func (n *ovn) deleteUplinkPort() error {
 		return fmt.Errorf("Failed deleting uplink port, network type %q unsupported as OVN uplink", uplinkNet.Type())
 	}
 
-	return nil
+	return publish()
 }
 
 // deleteUplinkPortBridge disconnects the uplink port from the bridge and performs any cleanup.
@@ -2857,11 +2923,18 @@ func (n *ovn) populateAutoConfig(config map[string]string) error {
 
 // Create sets up network in OVN Northbound database.
 func (n *ovn) Create(clientType request.ClientType) error {
+	n.setLocalState(ovnLocalState{})
+
 	n.logger.Debug("Create", logger.Ctx{"clientType": clientType, "config": n.config})
 
 	// We only need to setup the OVN Northbound database once, not on every clustered node.
 	if clientType == request.ClientTypeNormal {
-		err := n.setup(false)
+		repair, err := n.createRepairable()
+		if err != nil {
+			return err
+		}
+
+		err = n.setup(repair)
 		if err != nil {
 			return err
 		}
@@ -3209,7 +3282,7 @@ func (n *ovn) setup(update bool) error {
 	}
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	var routerExtPortIPv4, routerExtPortIPv6 net.IP
 	var routerExtPortIPv4Net, routerExtPortIPv6Net *net.IPNet
@@ -3654,25 +3727,69 @@ func (n *ovn) setup(update bool) error {
 			}
 
 			lspName := networkOVN.OVNSwitchPort(fmt.Sprintf("%s-external-n%d-%s", n.getNetworkPrefix(), n.state.DB.Cluster.GetNodeID(), entry))
+			ports, err := n.ovnnb.GetLogicalSwitchPorts(context.TODO(), n.getIntSwitchName())
+			if err != nil {
+				return err
+			}
+
+			_, lspExists := ports[lspName]
+			if !lspExists {
+				_, err = n.ovnnb.GetLogicalSwitchPortUUID(context.TODO(), lspName)
+				if err == nil {
+					return fmt.Errorf("External logical switch port %q belongs to another switch", lspName)
+				}
+
+				if !errors.Is(err, networkOVN.ErrNotFound) {
+					return err
+				}
+			}
+
+			integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
+			vswitch, err := n.state.OVS()
+			if err != nil {
+				return fmt.Errorf("Failed to connect to OVS: %w", err)
+			}
+
+			port, err := vswitch.GetBridgePort(context.TODO(), entry)
+			if err != nil && !errors.Is(err, ovsClient.ErrNotFound) {
+				return err
+			}
+
+			portExists := err == nil
+			associated := ""
+			if portExists {
+				bridge, err := vswitch.GetBridge(context.TODO(), integrationBridge)
+				if err != nil {
+					return err
+				}
+
+				if !slices.Contains(bridge.Ports, port.UUID) {
+					return fmt.Errorf("External OVS port %q belongs to another bridge", entry)
+				}
+
+				associated, err = vswitch.GetInterfaceAssociatedOVNSwitchPort(context.TODO(), entry)
+				if err != nil {
+					return err
+				}
+
+				if associated != "" && associated != string(lspName) {
+					return fmt.Errorf("External OVS port %q belongs to another logical port", entry)
+				}
+			}
+
 			err = n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName, &networkOVN.OVNSwitchPortOpts{
 				IPV4:        "none",
 				IPV6:        "none",
 				Promiscuous: true,
-			}, false)
+			}, update)
 			if err != nil {
 				return fmt.Errorf("Failed to create logical switch port for %s: %w", entry, err)
 			}
 
-			reverter.Add(func() {
-				_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName)
-			})
-
-			// Attach host side veth interface to bridge.
-			integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
-
-			vswitch, err := n.state.OVS()
-			if err != nil {
-				return fmt.Errorf("Failed to connect to OVS: %w", err)
+			if !lspExists {
+				reverter.Add(func() {
+					_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName)
+				})
 			}
 
 			err = vswitch.CreateBridgePort(context.TODO(), integrationBridge, entry, true)
@@ -3680,12 +3797,16 @@ func (n *ovn) setup(update bool) error {
 				return err
 			}
 
-			reverter.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, entry) })
+			if !portExists {
+				reverter.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, entry) })
+			}
 
-			// Link OVS port to OVN logical port.
-			err = vswitch.AssociateInterfaceOVNSwitchPort(context.TODO(), entry, string(lspName))
-			if err != nil {
-				return err
+			// Retain an existing association without replacing its interface.
+			if associated != string(lspName) {
+				err = vswitch.AssociateInterfaceOVNSwitchPort(context.TODO(), entry, string(lspName))
+				if err != nil {
+					return err
+				}
 			}
 
 			// Make sure the port is up.
@@ -4298,7 +4419,8 @@ func (n *ovn) logicalRouterPolicySetup(ovnnb *networkOVN.NB, excludePeers ...int
 		intRouterPort := member.getRouterIntPortName()
 		addrSetPrefix := acl.OVNIntSwitchPortGroupAddressSetPrefix(member.ID())
 
-		policies = append(policies,
+		policies = append(
+			policies,
 			networkOVN.OVNRouterPolicy{
 				// Allow IPv6 packets arriving from internal router port with valid source address.
 				Priority: ovnRouterPolicyPeerAllowPriority,
@@ -4457,25 +4579,45 @@ func (n *ovn) deleteChassisGroupEntry() error {
 
 // Delete deletes a network.
 func (n *ovn) Delete(clientType request.ClientType) error {
+	for attempt := 1; ; attempt++ {
+		err := n.deleteAttempt(clientType)
+		// An unrelated backend write can move a whole-table reference guard. That rejects the
+		// guarded transaction before any effect, so re-plan the idempotent deletion steps.
+		if err == nil || attempt >= ovnDeleteGuardAttempts || !networkOVN.PhysicalGuardMoved(err) {
+			return err
+		}
+
+		n.logger.Warn("Retrying OVN network deletion after a concurrent backend change", logger.Ctx{"attempt": attempt, "err": err})
+		time.Sleep(time.Duration(attempt) * 200 * time.Millisecond)
+	}
+}
+
+// ovnDeleteGuardAttempts bounds deletion re-planning after concurrent backend changes.
+const ovnDeleteGuardAttempts = 5
+
+func (n *ovn) deleteAttempt(clientType request.ClientType) (err error) {
 	n.logger.Debug("Delete", logger.Ctx{"clientType": clientType})
 
-	// Refuse before touching anything so a refused delete leaves the network running.
-	if clientType == request.ClientTypeNormal && n.parentID == 0 {
-		children, err := n.childNetworks()
+	if clientType == request.ClientTypeNormal {
+		err = OVNCheckPhysicalUnused(context.TODO(), n)
 		if err != nil {
 			return err
 		}
 
-		if len(children) > 0 {
-			return fmt.Errorf("Network is the parent of %d other network(s)", len(children))
-		}
+		originalNB := n.ovnnb
+		n.ovnnb = originalNB.WithNetworkTunnelPorts(n.tunnelLspNames(n.config)...).GuardNetworkDelete(n.ID(), string(n.getRouterIntPortName()))
+		defer func() { n.ovnnb = originalNB }()
 	}
 
-	// Don't fail on stop errors as that would prevent the northbound database cleanup below.
-	err := n.Stop()
-	if err != nil {
-		n.logger.Warn("Failed stopping network during delete, continuing with deletion", logger.Ctx{"err": err})
-	}
+	n.setLocalState(ovnLocalState{deleting: true})
+
+	// Attempt shared cleanup even if local cleanup fails, but retain the database record for a retry.
+	stopErr := n.Stop()
+	defer func() {
+		if stopErr != nil {
+			err = errors.Join(err, fmt.Errorf("Failed stopping network: %w", stopErr))
+		}
+	}()
 
 	if clientType == request.ClientTypeNormal {
 		if n.parentID != 0 {
@@ -4485,6 +4627,17 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 				return err
 			}
 		} else {
+			var children []*ovn
+
+			children, err = n.childNetworks()
+			if err != nil {
+				return err
+			}
+
+			if len(children) > 0 {
+				return fmt.Errorf("Network is the parent of %d other network(s)", len(children))
+			}
+
 			// Delete the router and anything tied to it (router ports, static routes, policies, nat, ...).
 			err = n.ovnnb.DeleteLogicalRouter(context.TODO(), n.getRouterName())
 			if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
@@ -4617,13 +4770,8 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	return nil
 }
 
-// deleteRouterNetworkConfig removes our own ports, routes and NAT rules from a shared logical router.
-func (n *ovn) deleteRouterNetworkConfig() error {
-	err := n.ovnnb.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
-	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
-		return err
-	}
-
+// deleteRouterNATAddressARPProxy withdraws only our configured NAT contributions.
+func (n *ovn) deleteRouterNATAddressARPProxy() error {
 	// Remove any NAT address we were advertising via proxy ARP/NDP on this router.
 	var arpProxyIPNets []net.IPNet
 	for _, key := range []string{"ipv4.nat.address", "ipv6.nat.address"} {
@@ -4636,10 +4784,25 @@ func (n *ovn) deleteRouterNetworkConfig() error {
 	}
 
 	if len(arpProxyIPNets) > 0 {
-		err = n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), nil, arpProxyIPNets)
+		err := n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), nil, arpProxyIPNets)
 		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// deleteRouterNetworkConfig removes our own ports, routes and NAT rules from a shared logical router.
+func (n *ovn) deleteRouterNetworkConfig() error {
+	err := n.ovnnb.DeleteLogicalRouterPort(context.TODO(), n.getRouterName(), n.getRouterIntPortName())
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+		return err
+	}
+
+	err = n.deleteRouterNATAddressARPProxy()
+	if err != nil {
+		return err
 	}
 
 	_, routerIntPortIPv4Net, err := n.parseRouterIntPortIPv4Net()
@@ -4759,15 +4922,76 @@ func (n *ovn) chassisEnabled(ctx context.Context, tx *db.ClusterTx, members []db
 }
 
 // Start starts adds the local OVS chassis ID to the OVN chass group and starts the local OVS uplink port.
-func (n *ovn) Start() error {
+func (n *ovn) Start() (err error) {
+	if n.state.ShutdownCtx.Err() != nil {
+		return n.state.ShutdownCtx.Err()
+	}
+
+	if n.ovnOperationToken == "" {
+		release, token, err := AcquireOVNOperation(n.state, n.project, n.name, "initialize")
+		if err != nil {
+			return err
+		}
+
+		n.ovnOperationToken = token
+		defer func() {
+			err = errors.Join(err, release())
+			n.ovnOperationToken = ""
+		}()
+	}
+
+	if n.localState().deleting {
+		return api.StatusErrorf(http.StatusConflict, "OVN network %q is awaiting deletion retry", n.name)
+	}
+
+	err = n.reload()
+	if err != nil {
+		return err
+	}
+
+	previousLocal := n.localState()
+	previousConfig := previousLocal.config
+	if previousConfig == nil {
+		previousConfig = n.config
+	}
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.ClaimOVNLocalInitialization(ctx, n.project, n.name, n.id, n.ovnOperationToken)
+	})
+	if err != nil {
+		return err
+	}
+
+	// Refresh the claimed raw Starting row before rollback can inspect maintenance state.
+	err = n.reload()
+	if err != nil {
+		return err
+	}
+
+	err = networkOVN.RemoveOVNSBHandler(fmt.Sprintf("network_%d", n.id))
+	if err != nil {
+		return err
+	}
+
+	n.setLocalState(ovnLocalState{config: util.CloneMap(n.config)})
+
 	n.logger.Debug("Start")
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
-	var err error
+	reverter.Add(func() {
+		_ = n.Stop()
+		n.setUnavailable()
+	})
 
-	reverter.Add(func() { n.setUnavailable() })
+	// Remove owned leftovers from earlier attempts before applying the current tunnel config.
+	if !previousLocal.started || !maps.Equal(previousConfig, n.config) {
+		err = n.deleteLocalTunnels(previousConfig)
+		if err != nil {
+			return err
+		}
+	}
 
 	// Check that uplink network is available.
 	if !util.IsNoneOrEmpty(n.UplinkName()) && !IsAvailable(api.ProjectDefaultName, n.UplinkName()) {
@@ -4835,7 +5059,7 @@ func (n *ovn) Start() error {
 	}
 
 	// Setup BGP.
-	err = n.bgpSetup(nil)
+	err = n.bgpSetup(previousConfig)
 	if err != nil {
 		return err
 	}
@@ -4845,10 +5069,53 @@ func (n *ovn) Start() error {
 		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
 	}
 
+	err = n.updateTunnels(n.config, nil, true)
+	if err != nil {
+		return err
+	}
+
+	err = n.registerSBHandler()
+	if err != nil {
+		return err
+	}
+
+	if n.Status() == api.NetworkStatusCreated || n.operationAuthorized {
+		err = n.recordLocalStarted()
+		if err != nil {
+			return err
+		}
+	}
+
+	n.setLocalState(ovnLocalState{started: true, config: util.CloneMap(n.config)})
+
+	reverter.Success()
+
+	// Ensure network is marked as available now its started.
+	n.setAvailable()
+
+	return nil
+}
+
+// registerSBHandler replaces the local callbacks with handlers using the current configuration.
+func (n *ovn) registerSBHandler() error {
+	current := n
+	n = &ovn{
+		common:       current.common,
+		ovnnb:        current.ovnnb,
+		ovnsb:        current.ovnsb,
+		parentID:     current.parentID,
+		parentUplink: current.parentUplink,
+	}
+
+	n.config = util.CloneMap(current.config)
+
 	// Setup event handler for monitored services.
 	handler := networkOVN.EventHandler{
 		Tables: []string{"Service_Monitor", "Port_Binding"},
 		Hook: func(action string, table string, oldObject ovsdbModel.Model, newObject ovsdbModel.Model) {
+			ctx, cancel := context.WithTimeout(n.state.ShutdownCtx, 30*time.Second)
+			defer cancel()
+
 			// Skip invalid notifications.
 			if oldObject == nil && newObject == nil {
 				return
@@ -4868,14 +5135,14 @@ func (n *ovn) Start() error {
 				}
 
 				// Locate affected load-balancers.
-				lbs, err := n.ovnnb.GetLoadBalancersByStatusUpdate(context.TODO(), *ovnSBObject)
+				lbs, err := n.ovnnb.GetLoadBalancersByStatusUpdate(ctx, *ovnSBObject)
 				if err != nil {
 					return
 				}
 
 				for _, lb := range lbs {
 					// Check for status of all backends on this load-balancer.
-					online, err := n.ovnsb.CheckLoadBalancerOnline(context.TODO(), lb)
+					online, err := n.ovnsb.CheckLoadBalancerOnline(ctx, lb)
 					if err != nil {
 						return
 					}
@@ -4889,7 +5156,7 @@ func (n *ovn) Start() error {
 
 					// Check if we have a matching UDP load-balancer.
 					fields[4] = "udp"
-					lbUDP, _ := n.ovnnb.GetLoadBalancer(context.TODO(), networkOVN.OVNLoadBalancer(strings.Join(fields, "-")))
+					lbUDP, _ := n.ovnnb.GetLoadBalancer(ctx, networkOVN.OVNLoadBalancer(strings.Join(fields, "-")))
 					if lbUDP != nil {
 						// UDP backends can't be checked, so have to assume online.
 						online = true
@@ -4943,7 +5210,7 @@ func (n *ovn) Start() error {
 					return
 				}
 
-				err := n.updateTunnels(n.config, []string{}, true)
+				err := n.updateTunnels(n.config, []string{}, true, ctx)
 				if err != nil {
 					return
 				}
@@ -4951,51 +5218,75 @@ func (n *ovn) Start() error {
 		},
 	}
 
-	err = networkOVN.AddOVNSBHandler(fmt.Sprintf("network_%d", n.id), handler)
+	err := networkOVN.AddOVNSBHandler(fmt.Sprintf("network_%d", n.id), handler)
 	if err != nil {
 		return err
 	}
-
-	reverter.Success()
-
-	// Ensure network is marked as available now its started.
-	n.setAvailable()
 
 	return nil
 }
 
 // Stop deletes the local OVS uplink port (if unused) and deletes the local OVS chassis ID from the
 // OVN chassis group.
-func (n *ovn) Stop() error {
+func (n *ovn) Stop() (err error) {
+	if n.ovnOperationToken == "" {
+		release, token, err := AcquireOVNOperation(n.state, n.project, n.name, "stop")
+		if err != nil {
+			return err
+		}
+
+		n.ovnOperationToken = token
+		defer func() {
+			err = errors.Join(err, release())
+			n.ovnOperationToken = ""
+		}()
+	}
+
+	if n.rawLocalStatus() == api.NetworkStatusPrepared {
+		return nil
+	}
+
 	n.logger.Debug("Stop")
+	local := n.localState()
+	local.started = false
+	local.restoring = false
+	n.setLocalState(local)
+	n.setUnavailable()
+
+	var errs []error
+
+	// Remove the event handler even if another cleanup step fails.
+	err = networkOVN.RemoveOVNSBHandler(fmt.Sprintf("network_%d", n.id))
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	// Remove local tunnels and OVS ports after all previously dispatched callbacks have finished.
+	err = n.deleteLocalTunnels()
+	if err != nil {
+		errs = append(errs, err)
+	}
 
 	// Delete local OVS chassis ID from logical OVN HA chassis group.
 	if n.parentID == 0 {
 		err := n.deleteChassisGroupEntry()
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
 
-	// Delete local uplink port if not used by other OVN networks.
-	err := n.deleteUplinkPort()
-	if err != nil {
-		return err
-	}
-
-	// Clear BGP.
+	// Drain BGP before publishing stopped ownership under the uplink lock.
 	err = n.bgpClear(n.config)
 	if err != nil {
-		return err
+		errs = append(errs, err)
 	}
 
-	// Clear event handler for monitored services.
-	err = networkOVN.RemoveOVNSBHandler(fmt.Sprintf("network_%d", n.id))
+	err = n.deleteUplinkPort(len(errs) == 0)
 	if err != nil {
-		return err
+		errs = append(errs, err)
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 // instanceNICGetRoutes returns list of routes defined in nicConfig.
@@ -5018,14 +5309,48 @@ func (n *ovn) instanceNICGetRoutes(nicConfig map[string]string) []net.IPNet {
 	return routes
 }
 
-// Update updates the network. Accepts notification boolean indicating if this update request is coming from a
-// cluster notification, in which case do not update the database, just apply local changes needed.
-func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
+// updateNotifierPolicy permits offline members only for changes with no member-local configuration.
+func (n *ovn) updateNotifierPolicy(changedKeys []string) cluster.NotifierPolicy {
+	if n.Status() != api.NetworkStatusCreated || n.LocalStatus() != api.NetworkStatusCreated {
+		return cluster.NotifyAll
+	}
+
+	// Updating networks with custom tunnels can also recreate member-local tunnel devices.
+	if len(n.getTunnels(n.config)) > 0 {
+		return cluster.NotifyAll
+	}
+
+	for _, key := range changedKeys {
+		switch key {
+		case "dns.domain", "dns.search", "dns.nameservers", "dns.mode",
+			"ipv4.dhcp", "ipv4.dhcp.gateway", "ipv4.dhcp.expiry", "ipv4.dhcp.ranges", "ipv4.dhcp.routes",
+			"ipv6.dhcp", "ipv6.dhcp.stateful",
+			"security.acls", "security.acls.default.ingress.action", "security.acls.default.egress.action",
+			"security.acls.default.ingress.logged", "security.acls.default.egress.logged":
+			// These settings are applied to the shared OVN database.
+		default:
+			return cluster.NotifyAll
+		}
+	}
+
+	return cluster.NotifyAlive
+}
+
+// Update updates shared configuration or applies local changes for a cluster notification.
+func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType request.ClientType) (err error) {
+	if n.Status() == api.NetworkStatusDeleting {
+		return api.StatusErrorf(http.StatusConflict, "OVN network %q is awaiting deletion retry", n.name)
+	}
+
 	n.logger.Debug("Update", logger.Ctx{"clientType": clientType, "newNetwork": newNetwork})
 
-	err := n.populateAutoConfig(newNetwork.Config)
+	err = n.populateAutoConfig(newNetwork.Config)
 	if err != nil {
 		return fmt.Errorf("Failed generating auto config: %w", err)
+	}
+
+	if clientType == request.ClientTypeNotifier && n.localState().config != nil {
+		n.config = util.CloneMap(n.localState().config)
 	}
 
 	dbUpdateNeeded, changedKeys, oldNetwork, err := n.configChanged(newNetwork)
@@ -5033,15 +5358,96 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return err
 	}
 
+	var replayTargets map[networkOVN.OVNSwitchPort]networkOVN.NICConfigPublication
+	var replayPorts map[networkOVN.OVNSwitchPort]networkOVN.NICReplayProducer
+	if clientType == request.ClientTypeNormal && dbUpdateNeeded && n.Status() != api.NetworkStatusPending && len(changedKeys) > 0 {
+		err = n.retireOrphanInstancePorts()
+		if err != nil {
+			return err
+		}
+
+		replayTargets, err = n.nicReplayCandidates(context.TODO())
+		if err != nil {
+			return err
+		}
+
+		// This network's own current and planned tunnel ports are infrastructure, not NIC consumers.
+		reloadNB := n.ovnnb.WithNetworkTunnelPorts(n.tunnelLspNames(n.config, newNetwork.Config)...)
+		replayPorts, err = reloadNB.CheckNetworkNICReplay(context.TODO(), n.ID(), string(n.getRouterIntPortName()), replayTargets)
+		if err != nil {
+			return err
+		}
+
+		plannedTargets, err := n.nicPlannedReplay(context.TODO(), replayTargets, newNetwork.Config)
+		if err != nil {
+			return err
+		}
+
+		originalNB := n.ovnnb
+		n.ovnnb, err = reloadNB.GuardNetworkNICReplay(context.TODO(), n.ID(), string(n.getRouterIntPortName()), replayTargets, plannedTargets, replayPorts)
+		if err != nil {
+			return err
+		}
+
+		defer func() { n.ovnnb = originalNB }()
+	}
+
+	if n.Status() == api.NetworkStatusCreated {
+		referenceErr := n.ensureLocalStarted()
+		if referenceErr != nil {
+			return referenceErr
+		}
+	}
+
+	err = networkOVN.RemoveOVNSBHandler(fmt.Sprintf("network_%d", n.id))
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if n.localState().started {
+			handlerErr := n.registerSBHandler()
+			if handlerErr != nil {
+				n.setUnavailable()
+				err = errors.Join(err, fmt.Errorf("Failed reinstalling OVN callbacks: %w", handlerErr))
+			}
+
+			local := n.localState()
+			local.config = util.CloneMap(n.config)
+			n.setLocalState(local)
+		}
+	}()
+
 	if clientType == request.ClientTypeNotifier {
+		defer func() {
+			if err == nil {
+				return
+			}
+
+			n.config = oldNetwork.Config
+			n.description = oldNetwork.Description
+			parentErr := n.refreshParent(n.config)
+			bgpErr := n.bgpSetup(newNetwork.Config)
+			lbErr := n.loadBalancerBGPSetupPrefixes()
+			tunnelErr := n.updateTunnels(n.config, changedKeys, false)
+			cleanupErr := errors.Join(parentErr, bgpErr, lbErr, tunnelErr)
+			if cleanupErr != nil {
+				n.setUnavailable()
+				err = errors.Join(err, fmt.Errorf("Failed reverting OVN notification: %w", cleanupErr))
+			}
+		}()
+
+		n.config = newNetwork.Config
+		n.description = newNetwork.Description
+
 		// The parent may have changed, so refresh from the incoming config.
 		err = n.refreshParent(newNetwork.Config)
 		if err != nil {
-			n.logger.Warn("Failed refreshing parent network relationship", logger.Ctx{"err": err})
+			return fmt.Errorf("Failed refreshing parent network relationship: %w", err)
 		}
 
 		// Reload BGP on notifications.
-		err = n.bgpSetup(nil)
+		err = n.bgpSetup(oldNetwork.Config)
 		if err != nil {
 			return err
 		}
@@ -5065,15 +5471,29 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return nil // Nothing changed.
 	}
 
-	// If the network as a whole has not had any previous creation attempts, or the node itself is still
-	// pending, then don't apply the new settings to the node, just to the database record (ready for the
-	// actual global create request to be initiated).
-	if n.Status() == api.NetworkStatusPending || n.LocalStatus() == api.NetworkStatusPending {
+	// Use the same policy when reverting so an offline member cannot prevent restoring shared state.
+	notifierPolicy := n.updateNotifierPolicy(changedKeys)
+
+	// A globally Pending network has no shared OVN setup to update yet.
+	if n.Status() == api.NetworkStatusPending {
 		return n.update(newNetwork, targetNode, clientType)
 	}
 
+	for port := range replayPorts {
+		// Only an upstream-created port needs its selected device to adopt it.
+		var selected []networkOVN.NICConfigPublication
+		if replayPorts[port].Publication.Legacy {
+			selected = append(selected, replayTargets[port])
+		}
+
+		err = n.ovnnb.BeginNICConfigPublication(context.TODO(), n.getIntSwitchName(), port, selected...)
+		if err != nil {
+			return err
+		}
+	}
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	// The parent network owning our logical router before the change, kept around so
 	// its policies can be refreshed once we are no longer one of its networks.
@@ -5091,7 +5511,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		}
 
 		// Reset changes to all nodes and database.
-		_ = n.update(oldNetwork, targetNode, clientType)
+		_ = n.updateWithNotifierPolicyForOVNUpdate(oldNetwork, targetNode, clientType, notifierPolicy, len(changedKeys) == 0)
 
 		// Refresh the policies of the logical router we joined so any leftover references are removed.
 		if parentNewNet != nil {
@@ -5166,7 +5586,7 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	}
 
 	// Apply changes to all nodes and database.
-	err = n.update(newNetwork, targetNode, clientType)
+	err = n.updateWithNotifierPolicyForOVNUpdate(newNetwork, targetNode, clientType, notifierPolicy, len(changedKeys) == 0)
 	if err != nil {
 		return err
 	}
@@ -5279,150 +5699,176 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		addChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
 		removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
 
-		// Get list of active switch ports (avoids repeated querying of OVN NB).
-		activePorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), n.getIntSwitchName())
-		if err != nil {
-			return fmt.Errorf("Failed getting active ports: %w", err)
-		}
-
 		aclConfigChanged := len(addedACLs) > 0 || len(removedACLs) > 0 || len(changedDefaultRuleKeys) > 0
 
 		var localNICRoutes []net.IPNet
 
-		// Apply ACL changes to running instance NICs that use this network.
-		err = UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
-			nicACLs := util.SplitNTrimSpace(nicConfig["security.acls"], ",", -1, true)
+		// Apply ACL changes to all captured instance NIC producers on this network.
 
-			// Get logical port UUID and name.
-			instancePortName := n.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
-
-			portUUID, found := activePorts[instancePortName]
+		for selectedPort, selected := range replayTargets {
+			_, found := replayPorts[selectedPort]
 			if !found {
-				return nil // No need to update a port that isn't started yet.
+				continue
 			}
 
-			// Apply security ACL and default rule changes.
-			if aclConfigChanged {
-				// Update relevant address sets and Remove from removedACL.
-				if len(addedACLs) > 0 {
-					cleanup, err := addressset.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), addedACLs)
+			inst := db.InstanceArgs{Config: map[string]string{"volatile.uuid": selected.InstanceUUID}}
+			nicName := selected.Device
+			nicConfig := maps.Clone(selected.Input)
+			err = func() error {
+				nicACLs := util.SplitNTrimSpace(nicConfig["security.acls"], ",", -1, true)
+
+				// Get logical port UUID and name.
+				instancePortName := n.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
+
+				producer, found := replayPorts[instancePortName]
+				if !found {
+					return nil // No physical producer exists for this candidate.
+				}
+
+				portUUID := networkOVN.OVNSwitchPortUUID(producer.Publication.PortUUID)
+
+				// Apply security ACL and default rule changes.
+				if aclConfigChanged {
+					// Update relevant address sets and Remove from removedACL.
+					if len(addedACLs) > 0 {
+						cleanup, err := addressset.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), addedACLs)
+						if err != nil {
+							return fmt.Errorf("Failed ensuring address sets for added ACLs are configured in OVN for network: %w", err)
+						}
+
+						reverter.Add(cleanup)
+					}
+
+					if len(removedACLs) > 0 {
+						err = addressset.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), removedACLs)
+						if err != nil {
+							return fmt.Errorf("Failed to delete address set for removed ACLs are configured in OVN for network: %w", err)
+						}
+					}
+
+					ingressAction, ingressLogged := n.instanceDeviceACLDefaults(nicConfig, "ingress")
+					egressAction, egressLogged := n.instanceDeviceACLDefaults(nicConfig, "egress")
+
+					// Refresh all effective ACL memberships when defaults change, including NIC-level ACLs.
+					effectiveACLs := slices.Clone(newACLs)
+					for _, nicACL := range nicACLs {
+						if !slices.Contains(effectiveACLs, nicACL) {
+							effectiveACLs = append(effectiveACLs, nicACL)
+						}
+					}
+
+					aclNets := map[string]acl.NetworkACLUsage{n.Name(): {Name: n.Name(), Type: n.Type(), ID: n.ID(), Config: n.Config()}}
+					cleanup, err := addressset.OVNEnsureAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), effectiveACLs)
 					if err != nil {
-						return fmt.Errorf("Failed ensuring address sets for added ACLs are configured in OVN for network: %w", err)
+						return fmt.Errorf("Failed ensuring effective NIC ACL address sets: %w", err)
 					}
 
 					reverter.Add(cleanup)
-				}
-
-				if len(removedACLs) > 0 {
-					err = addressset.OVNDeleteAddressSetsViaACLs(n.state, n.logger, n.ovnnb, n.Project(), removedACLs)
+					cleanup, err = acl.OVNEnsureACLs(n.state, n.logger, n.ovnnb, n.Project(), aclNameIDs, aclNets, effectiveACLs, false)
 					if err != nil {
-						return fmt.Errorf("Failed to delete address set for removed ACLs are configured in OVN for network: %w", err)
-					}
-				}
-
-				ingressAction, ingressLogged := n.instanceDeviceACLDefaults(nicConfig, "ingress")
-				egressAction, egressLogged := n.instanceDeviceACLDefaults(nicConfig, "egress")
-
-				// Check whether we need to add any of the new ACLs to the NIC.
-				for _, addedACL := range addedACLs {
-					if slices.Contains(nicACLs, addedACL) {
-						continue // NIC already has this ACL applied directly, so no need to add.
+						return fmt.Errorf("Failed ensuring effective NIC ACLs for shared reload: %w", err)
 					}
 
-					aclID, found := aclNameIDs[addedACL]
-					if !found {
-						return fmt.Errorf("Cannot find security ACL ID for %q", addedACL)
-					}
+					reverter.Add(cleanup)
 
-					directionalPortGroups := acl.OVNACLDirectionalPortGroups(aclID)
-					// Add NIC port to ACL port group.
-					var ingressPortGroupName networkOVN.OVNPortGroup
-					if ingressAction == "allow" {
-						ingressPortGroupName = directionalPortGroups.IngressReversed
-					} else {
-						ingressPortGroupName = directionalPortGroups.Ingress
-					}
-
-					acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, ingressPortGroupName)
-					n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": addedACL, "portGroup": ingressPortGroupName, "port": instancePortName})
-
-					var egressPortGroupName networkOVN.OVNPortGroup
-					if egressAction == "allow" {
-						egressPortGroupName = directionalPortGroups.EgressReversed
-					} else {
-						egressPortGroupName = directionalPortGroups.Egress
-					}
-
-					acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, egressPortGroupName)
-					n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": addedACL, "portGroup": egressPortGroupName, "port": instancePortName})
-					acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, directionalPortGroups.All)
-					n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": addedACL, "portGroup": directionalPortGroups.All, "port": instancePortName})
-				}
-
-				// Check whether we need to remove any of the removed ACLs from the NIC.
-				for _, removedACL := range removedACLs {
-					if slices.Contains(nicACLs, removedACL) {
-						continue // NIC still has this ACL applied directly, so don't remove.
-					}
-
-					aclID, found := aclNameIDs[removedACL]
-					if !found {
-						return fmt.Errorf("Cannot find security ACL ID for %q", removedACL)
-					}
-
-					// Remove NIC port from ACL port group.
-					directionalPortGroups := acl.OVNACLDirectionalPortGroups(aclID)
-					directionalPortGroups.AddToChangeSet(portUUID, removeChangeSet)
-					n.logger.Debug("Scheduled logical port for ACL port group removal", logger.Ctx{"networkACL": removedACL, "portGroup": directionalPortGroups.Ingress, "port": instancePortName})
-				}
-
-				// If there are no ACLs being applied to the NIC (either from network or NIC) then
-				// we should remove the default rule from the NIC.
-				if len(newACLs) <= 0 && len(nicACLs) <= 0 {
-					err = n.ovnnb.ClearPortGroupPortACLRules(context.TODO(), acl.OVNIntSwitchPortGroupName(n.ID()), instancePortName)
-					if err != nil {
-						return fmt.Errorf("Failed clearing OVN default ACL rules for instance NIC: %w", err)
-					}
-
-					n.logger.Debug("Cleared NIC default rules", logger.Ctx{"port": instancePortName})
-				} else {
-					defaultRuleChange := false
-
-					// If there are ACLs being applied, then decide if the default rule config
-					// has changed materially for the NIC and update it if needed.
-					for _, k := range changedDefaultRuleKeys {
-						_, found := nicConfig[k]
-						if found {
-							continue // Skip if changed key is overridden in NIC.
+					for _, aclName := range effectiveACLs {
+						aclID, found := aclNameIDs[aclName]
+						if !found {
+							return fmt.Errorf("Cannot find security ACL ID for %q", aclName)
 						}
 
-						defaultRuleChange = true
-						break
+						directionalPortGroups := acl.OVNACLDirectionalPortGroups(aclID)
+						// Add NIC port to ACL port group.
+						var ingressPortGroupName networkOVN.OVNPortGroup
+						if ingressAction == "allow" {
+							ingressPortGroupName = directionalPortGroups.IngressReversed
+							acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, directionalPortGroups.Ingress)
+						} else {
+							ingressPortGroupName = directionalPortGroups.Ingress
+							acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, directionalPortGroups.IngressReversed)
+						}
+
+						acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, ingressPortGroupName)
+						n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": aclName, "portGroup": ingressPortGroupName, "port": instancePortName})
+
+						var egressPortGroupName networkOVN.OVNPortGroup
+						if egressAction == "allow" {
+							egressPortGroupName = directionalPortGroups.EgressReversed
+							acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, directionalPortGroups.Egress)
+						} else {
+							egressPortGroupName = directionalPortGroups.Egress
+							acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, directionalPortGroups.EgressReversed)
+						}
+
+						acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, egressPortGroupName)
+						n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": aclName, "portGroup": egressPortGroupName, "port": instancePortName})
+						acl.OVNPortGroupInstanceNICSchedule(portUUID, addChangeSet, directionalPortGroups.All)
+						n.logger.Debug("Scheduled logical port for ACL port group addition", logger.Ctx{"networkACL": aclName, "portGroup": directionalPortGroups.All, "port": instancePortName})
 					}
 
-					// If the default rule config has changed materially for this NIC or the
-					// network previously didn't have any ACLs applied and now does, then add
-					// the default rule to the NIC.
-					if defaultRuleChange || len(oldACLs) <= 0 {
-						// Set the automatic default ACL rule for the port.
-						logPrefix := fmt.Sprintf("%s-%s", inst.Config["volatile.uuid"], nicName)
-						err = acl.OVNApplyInstanceNICDefaultRules(n.ovnnb, acl.OVNIntSwitchPortGroupName(n.ID()), logPrefix, instancePortName, ingressAction, ingressLogged, egressAction, egressLogged)
+					// Check whether we need to remove any of the removed ACLs from the NIC.
+					for _, removedACL := range removedACLs {
+						if slices.Contains(nicACLs, removedACL) {
+							continue // NIC still has this ACL applied directly, so don't remove.
+						}
+
+						aclID, found := aclNameIDs[removedACL]
+						if !found {
+							return fmt.Errorf("Cannot find security ACL ID for %q", removedACL)
+						}
+
+						// Remove NIC port from ACL port group.
+						directionalPortGroups := acl.OVNACLDirectionalPortGroups(aclID)
+						directionalPortGroups.AddToChangeSet(portUUID, removeChangeSet)
+						n.logger.Debug("Scheduled logical port for ACL port group removal", logger.Ctx{"networkACL": removedACL, "portGroup": directionalPortGroups.Ingress, "port": instancePortName})
+					}
+
+					// Remove the default rule when neither the network nor NIC applies any ACL.
+					if len(newACLs) <= 0 && len(nicACLs) <= 0 {
+						err = n.ovnnb.ClearPortGroupPortACLRules(context.TODO(), acl.OVNIntSwitchPortGroupName(n.ID()), instancePortName)
 						if err != nil {
-							return fmt.Errorf("Failed applying OVN default ACL rules for instance NIC: %w", err)
+							return fmt.Errorf("Failed clearing OVN default ACL rules for instance NIC: %w", err)
 						}
 
-						n.logger.Debug("Set NIC default rule", logger.Ctx{"port": instancePortName, "ingressAction": ingressAction, "ingressLogged": ingressLogged, "egressAction": egressAction, "egressLogged": egressLogged})
+						n.logger.Debug("Cleared NIC default rules", logger.Ctx{"port": instancePortName})
+					} else {
+						defaultRuleChange := false
+
+						// Update the NIC default rule when its effective configuration changed.
+						for _, k := range changedDefaultRuleKeys {
+							_, found := nicConfig[k]
+							if found {
+								continue // Skip if changed key is overridden in NIC.
+							}
+
+							defaultRuleChange = true
+							break
+						}
+
+						// Apply the default rule when its configuration changed or the first ACL was added.
+						if defaultRuleChange || len(oldACLs) <= 0 {
+							// Set the automatic default ACL rule for the port.
+							logPrefix := fmt.Sprintf("%s-%s", inst.Config["volatile.uuid"], nicName)
+							err = acl.OVNApplyInstanceNICDefaultRules(n.ovnnb, acl.OVNIntSwitchPortGroupName(n.ID()), logPrefix, instancePortName, ingressAction, ingressLogged, egressAction, egressLogged)
+							if err != nil {
+								return fmt.Errorf("Failed applying OVN default ACL rules for instance NIC: %w", err)
+							}
+
+							n.logger.Debug("Set NIC default rule", logger.Ctx{"port": instancePortName, "ingressAction": ingressAction, "ingressLogged": ingressLogged, "egressAction": egressAction, "egressLogged": egressLogged})
+						}
 					}
 				}
+
+				// Add NIC routes to list.
+				if producer.Enabled {
+					localNICRoutes = append(localNICRoutes, n.instanceNICGetRoutes(nicConfig)...)
+				}
+
+				return nil
+			}()
+			if err != nil {
+				return err
 			}
-
-			// Add NIC routes to list.
-			localNICRoutes = append(localNICRoutes, n.instanceNICGetRoutes(nicConfig)...)
-
-			return nil
-		})
-		if err != nil {
-			return err
 		}
 
 		// Apply add/remove changesets.
@@ -5436,14 +5882,20 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 		// Check if any of the removed ACLs should have any unused port groups deleted.
 		if len(removedACLs) > 0 {
-			err = acl.OVNPortGroupDeleteIfUnused(n.state, n.logger, n.ovnnb, n.project, &api.Network{Name: n.name}, "", newACLs...)
+			retainedACLs, err := acl.OVNRetireNetworkACLGroups(n.state, n.ovnnb, n.project, n.name, n.ID(), n.parentID, n.ovnOperationToken, removedACLs, newACLs)
+			if err != nil {
+				return fmt.Errorf("Failed retiring removed network ACL port groups: %w", err)
+			}
+
+			keepACLs := append(slices.Clone(newACLs), retainedACLs...)
+			err = acl.OVNPortGroupDeleteIfUnused(n.state, n.logger, n.ovnnb, n.project, &api.Network{Name: n.name}, "", keepACLs...)
 			if err != nil {
 				return fmt.Errorf("Failed removing unused OVN port groups: %w", err)
 			}
 		}
 
 		// Ensure all active NIC routes are present in internal switch's address set.
-		err = n.ovnnb.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), localNICRoutes...)
+		err = n.ovnnb.EnsureAddressSetPrefixes(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), localNICRoutes...)
 		if err != nil {
 			return fmt.Errorf("Failed adding active NIC routes to switch address set: %w", err)
 		}
@@ -5480,13 +5932,13 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).UpdateNetwork(n.name, newNetwork, "")
+			return OVNNotify(n.state, n, client, http.MethodPut, []string{version.APIVersion, "networks", n.name}, newNetwork)
 		})
 		if err != nil {
 			return err
@@ -5511,13 +5963,13 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 
 	if len(n.getTunnelsFromChangedKeys(changedKeys)) > 0 {
 		// Notify all other members about tunnels configuration change.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).UpdateNetwork(n.name, newNetwork, "")
+			return OVNNotify(n.state, n, client, http.MethodPut, []string{version.APIVersion, "networks", n.name}, newNetwork)
 		})
 		if err != nil {
 			return err
@@ -5530,8 +5982,32 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return fmt.Errorf("Failed removing unused OVN address sets: %w", err)
 	}
 
+	for port, target := range replayTargets {
+		_, exists := replayPorts[port]
+		if !exists {
+			continue
+		}
+
+		updated, candidateErr := n.nicConfigCandidate(context.TODO(), target.InstanceUUID, target.Device, target.Input)
+		if candidateErr != nil {
+			return candidateErr
+		}
+
+		updated.Source = target.Source
+		updated.Phase = replayPorts[port].Publication.Phase
+		err = n.ovnnb.CompleteNICConfigReload(context.TODO(), n.getIntSwitchName(), port, updated)
+		if err != nil {
+			return err
+		}
+	}
+
 	reverter.Success()
 	return nil
+}
+
+// InstanceDevicePortName returns the switch port name used for an instance device.
+func (n *ovn) InstanceDevicePortName(instanceUUID string, deviceName string) networkOVN.OVNSwitchPort {
+	return n.getInstanceDevicePortName(instanceUUID, deviceName)
 }
 
 // getInstanceDevicePortName returns the switch port name to use for an instance device.
@@ -5803,17 +6279,69 @@ func (n *ovn) instanceDevicePortOpts(instanceUUID string, deviceName string, dev
 	}, nil
 }
 
+// beginNICPublication admits the selected caller. A cold move leaves the original producer of
+// another member on the retained port; it is handed over only once the instance is placed here and
+// every original NIC cleanup for it has been acknowledged.
+func (n *ovn) beginNICPublication(instanceUUID string, port networkOVN.OVNSwitchPort, publication networkOVN.NICConfigPublication) error {
+	err := n.ovnnb.BeginNICConfigPublication(context.TODO(), n.getIntSwitchName(), port, publication)
+	var moved *networkOVN.NICProducerSourceError
+	if !errors.As(err, &moved) || moved.Source == n.state.ServerName {
+		return err
+	}
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var instanceID int
+		err := tx.Tx().QueryRowContext(ctx, "SELECT i.id FROM instances i JOIN instances_config c ON c.instance_id=i.id AND c.key='volatile.uuid' WHERE c.value=? ORDER BY i.id LIMIT 1", instanceUUID).Scan(&instanceID)
+		if err != nil {
+			return err
+		}
+
+		err = tx.EnsureOVNNICOriginalInstance(ctx, instanceID, instanceUUID)
+		if err != nil {
+			return err
+		}
+
+		return tx.EnsureOVNNICTransferSource(ctx, instanceUUID)
+	})
+	if err != nil {
+		return fmt.Errorf("Cannot transfer NIC producer from %q: %w", moved.Source, err)
+	}
+
+	return n.ovnnb.BeginNICConfigPublicationTransfer(context.TODO(), n.getIntSwitchName(), port, publication, moved.Source)
+}
+
 // InstanceDevicePortAdd creates the disabled logical switch port, empty DNS record and any DHCP
 // reservations for an instance device port.
-func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error {
+func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) (err error) {
+	release, err := n.waitOperation("nic")
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+	err = n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	if instanceUUID == "" {
 		return errors.New("Instance UUID is required")
 	}
 
 	instancePortName := n.getInstanceDevicePortName(instanceUUID, deviceName)
 
+	publication, err := n.nicConfigCandidate(context.TODO(), instanceUUID, deviceName, devConfig)
+	if err != nil {
+		return err
+	}
+
+	err = n.beginNICPublication(instanceUUID, instancePortName, publication)
+	if err != nil {
+		return err
+	}
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	dnsUUID, err := n.ovnnb.UpdateLogicalSwitchPortDNS(context.TODO(), n.getIntSwitchName(), instancePortName, "", nil)
 	if err != nil {
@@ -5858,6 +6386,11 @@ func (n *ovn) InstanceDevicePortAdd(instanceUUID string, deviceName string, devC
 		_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), instancePortName)
 	})
 
+	err = n.publishNICAddConfig(context.TODO(), instancePortName, publication, portOpts)
+	if err != nil {
+		return err
+	}
+
 	reverter.Success()
 
 	// Notify the DNS peers of the zone change.
@@ -5880,9 +6413,71 @@ func (n *ovn) hasDHCPv4Reservation(dhcpReservations []iprange.Range, ipAddress n
 // InstanceDevicePortStart sets up and enables an instance device port on the internal logical switch.
 // Accepts a list of ACLs being removed from the NIC device (if called as part of a NIC update).
 // Returns the logical switch port name and a list of IPs that were allocated to the port for DNS.
-func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACLsRemove []string) (networkOVN.OVNSwitchPort, []net.IP, error) {
+func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACLsRemove []string) (port networkOVN.OVNSwitchPort, addresses []net.IP, err error) {
+	effects := false
+	defer func() {
+		// A failure before the first producer publication made no backend effect for this member.
+		if err != nil && !effects && opts != nil && opts.MigrationOperation == "" {
+			err = errors.Join(ErrOVNNICNoBackendEffect, err)
+		}
+	}()
+
+	release, err := n.waitOperation("nic")
+	if err != nil {
+		return "", nil, err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+
+	err = n.ensureLocalStarted()
+	if err != nil {
+		return "", nil, err
+	}
+
+	return n.instanceDevicePortStart(opts, securityACLsRemove, &effects)
+}
+
+// ErrOVNNICPortAbsent reports that a NIC port to retire does not exist.
+var ErrOVNNICPortAbsent = networkOVN.ErrNICRetirementAbsent
+
+// ErrOVNNICNoBackendEffect marks a NIC start that failed before its first backend effect.
+var ErrOVNNICNoBackendEffect = errors.New("OVN NIC start made no backend effect")
+
+// InstanceDevicePortUnpublishedClaim reports whether this member has never published the instance
+// port's original producer, so a host claim it holds cannot own any OVN effect on that port.
+func (n *ovn) InstanceDevicePortUnpublishedClaim(instanceUUID, deviceName string) (bool, error) {
+	source, err := n.ovnnb.NICConfigPublicationSource(context.TODO(), n.getIntSwitchName(), n.getInstanceDevicePortName(instanceUUID, deviceName))
+	if err != nil {
+		return false, err
+	}
+
+	return source != "" && source != n.state.ServerName, nil
+}
+
+func (n *ovn) instanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACLsRemove []string, effects *bool) (port networkOVN.OVNSwitchPort, addresses []net.IP, retErr error) {
 	if opts.InstanceUUID == "" {
 		return "", nil, errors.New("Instance UUID is required")
+	}
+
+	release, err := n.waitOperation("nic")
+	if err != nil {
+		return "", nil, err
+	}
+
+	defer func() { retErr = errors.Join(retErr, release()) }()
+	if opts.MigrationOperation != "" {
+		return n.instanceDevicePortMigrationStart(opts)
+	}
+
+	err = n.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+		if opts.NICHostVolatile != nil {
+			return tx.EnsureOVNNICCleanupStart(ctx, opts.InstanceUUID, opts.DeviceName, n.ID(), opts.NICHostVolatile)
+		}
+
+		return tx.EnsureOVNNICCleanupDebtCompleteForInstance(ctx, opts.InstanceUUID)
+	})
+	if err != nil {
+		return "", nil, err
 	}
 
 	ipv4 := opts.DeviceConfig["ipv4.address"]
@@ -5895,8 +6490,31 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 
 	instancePortName := n.getInstanceDevicePortName(opts.InstanceUUID, opts.DeviceName)
 
+	publication, err := n.nicConfigCandidate(context.TODO(), opts.InstanceUUID, opts.DeviceName, opts.DeviceConfig)
+	if err != nil {
+		return "", nil, err
+	}
+
+	err = n.beginNICPublication(opts.InstanceUUID, instancePortName, publication)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if effects != nil {
+		*effects = true
+	}
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	var prefixRollbackErr error
+	var prefixRollbackPending bool
+	defer func() {
+		OVNRevert(n.state, n, reverter.Fail)
+		if retErr != nil && prefixRollbackPending {
+			retErr = errors.Join(retErr, errors.New("NIC shared-prefix effects retained because rollback was deferred"))
+		}
+
+		retErr = errors.Join(retErr, prefixRollbackErr)
+	}()
 
 	// Check if the persistent port already exists (may be missing after an upgrade or database restore).
 	existingPortUUID, err := n.ovnnb.GetLogicalSwitchPortUUID(context.TODO(), instancePortName)
@@ -6202,16 +6820,41 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		}
 	}
 
-	// Advertise the addresses on the uplink network through the external switch's router port.
-	if len(arpProxyIPNets) > 0 {
-		err = n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), arpProxyIPNets, nil)
-		if err != nil {
-			return "", nil, err
-		}
+	// Publish shared prefixes and their original allocation identity atomically.
+	routePrefixes := make([]net.IPNet, 0, len(routes))
+	for _, route := range routes {
+		routePrefixes = append(routePrefixes, route.Prefix)
+	}
 
-		reverter.Add(func() {
-			_ = n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), nil, arpProxyIPNets)
-		})
+	prefixOwner, err := n.ovnnb.NewNICPrefixOwner(context.TODO(), n.getIntSwitchName(), instancePortName, n.state.ServerName)
+	if err != nil {
+		return "", nil, err
+	}
+
+	var proxyPort networkOVN.OVNSwitchPort
+	var proxySwitch networkOVN.OVNSwitch
+	if n.UplinkName() != "none" {
+		proxyPort = n.getExtSwitchRouterPortName()
+		proxySwitch = n.getExtSwitchName()
+	}
+
+	reverter.Add(func() {
+		prefixRollbackPending = false
+		prefixRollbackErr = n.ovnnb.RollbackNICPrefixes(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes, proxySwitch, proxyPort, arpProxyIPNets, prefixOwner)
+	})
+	var retain []string
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		retain, err = tx.OVNNICMigrationTargetGenerations(ctx, opts.InstanceUUID)
+		return err
+	})
+	if err != nil {
+		return "", nil, err
+	}
+
+	prefixRollbackPending = true
+	err = n.ovnnb.PublishNICPrefixes(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes, proxySwitch, proxyPort, arpProxyIPNets, prefixOwner, retain...)
+	if err != nil {
+		return "", nil, err
 	}
 
 	if len(routes) > 0 {
@@ -6221,23 +6864,8 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 			return "", nil, err
 		}
 
-		routePrefixes := make([]net.IPNet, 0, len(routes))
-		for _, route := range routes {
-			routePrefixes = append(routePrefixes, route.Prefix)
-		}
-
 		reverter.Add(func() {
 			_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), routePrefixes...)
-		})
-
-		// Add routes to internal switch's address set for ACL usage.
-		err = n.ovnnb.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
-		if err != nil {
-			return "", nil, fmt.Errorf("Failed adding switch address set entries: %w", err)
-		}
-
-		reverter.Add(func() {
-			_ = n.ovnnb.UpdateAddressSetRemove(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), routePrefixes...)
 		})
 
 		// The peerings and their router ports belong to the owner of the logical router.
@@ -6556,7 +7184,13 @@ func (n *ovn) InstanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		return "", nil, err
 	}
 
+	err = n.publishNICConfig(context.TODO(), instancePortName, publication, "start", prefixOwner.Generation)
+	if err != nil {
+		return "", nil, err
+	}
+
 	reverter.Success()
+	prefixRollbackPending = false
 
 	// Notify the DNS peers of the zone change.
 	DNSNotifyZones(n.state, n.config)
@@ -6603,6 +7237,50 @@ func (n *ovn) InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]n
 
 // InstanceDevicePortStop disables an instance device port and removes its routes and NAT rules.
 func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort, opts *OVNInstanceNICStopOpts) error {
+	return n.instanceDevicePortStop(ovsExternalOVNPort, opts, false)
+}
+
+// InstanceDevicePortStopCapture durably preserves the original source inputs
+// before host detach. It performs no NIC cleanup and is not a complete receipt.
+func (n *ovn) InstanceDevicePortStopCapture(ovsExternalOVNPort networkOVN.OVNSwitchPort, opts *OVNInstanceNICStopOpts) error {
+	return n.instanceDevicePortStop(ovsExternalOVNPort, opts, true)
+}
+
+func (n *ovn) instanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort, opts *OVNInstanceNICStopOpts, captureOnly bool) (err error) {
+	release, err := n.waitLocalLifecycle()
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+
+	storedSource, storedAttempt, err := n.pendingNICStopSource(context.TODO(), opts.InstanceUUID, opts.DeviceName)
+	if err != nil {
+		return err
+	}
+
+	{
+		err := nicStopCheckGeneration(opts.CleanupGeneration, storedAttempt)
+		if err != nil {
+			return err
+		}
+	}
+
+	if storedSource != nil && !captureOnly {
+		transferred, transferErr := n.nicMigrationPreserveShared(context.TODO(), *storedAttempt, *storedSource)
+		if transferErr != nil {
+			return transferErr
+		}
+
+		if transferred {
+			return nil
+		}
+	}
+
+	if storedSource != nil {
+		opts = &OVNInstanceNICStopOpts{CleanupGeneration: storedAttempt.Generation, InstanceUUID: opts.InstanceUUID, InstanceID: storedSource.InstanceID, DeviceName: opts.DeviceName, DeviceConfig: storedSource.DeviceConfig, HostVolatile: storedSource.HostVolatile, OVS: storedSource.OVS}
+	}
+
 	// Decide whether to use OVS provided OVN port name or internally derived OVN port name.
 	instancePortName := ovsExternalOVNPort
 	source := "OVS"
@@ -6615,14 +7293,22 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 		source = "internal"
 	}
 
-	portLocation, err := n.ovnnb.GetLogicalSwitchPortLocation(context.TODO(), instancePortName)
-	if err != nil {
-		return fmt.Errorf("Failed getting instance switch port options: %w", err)
-	}
+	if storedSource != nil {
+		instancePortName = storedSource.Port.PortName
+	} else {
+		portLocation, err := n.ovnnb.GetLogicalSwitchPortLocation(context.TODO(), instancePortName)
+		if err != nil {
+			return fmt.Errorf("Failed getting instance switch port options: %w", err)
+		}
 
-	// Don't disable logical switch port if already active on another chassis (i.e during live cluster move).
-	if portLocation != "" && portLocation != n.state.ServerName {
-		return nil
+		// Don't disable logical switch port if already active on another chassis (i.e during live cluster move).
+		if portLocation != "" && portLocation != n.state.ServerName {
+			if captureOnly {
+				return errors.New("Cannot capture original NIC cleanup after source ownership has transferred")
+			}
+
+			return nil
+		}
 	}
 
 	n.logger.Debug("Disabling instance port", logger.Ctx{"port": instancePortName, "source": source})
@@ -6633,215 +7319,395 @@ func (n *ovn) InstanceDevicePortStop(ovsExternalOVNPort networkOVN.OVNSwitchPort
 	}
 
 	var uplink *api.Network
+	var dnsIPs []net.IP
+	var removeRoutes []net.IPNet
+	var removeARPProxyIPNets []net.IPNet
+	if storedSource == nil {
+		if n.UplinkName() != "none" {
+			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				// Load uplink network config.
+				_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.UplinkName())
 
-	if n.UplinkName() != "none" {
-		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			// Load uplink network config.
-			_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, n.UplinkName())
+				return err
+			})
+			if err != nil {
+				return fmt.Errorf("Failed to load uplink network %q: %w", n.UplinkName(), err)
+			}
+		}
 
-			return err
-		})
+		// Get DNS records.
+		_, _, dnsIPs, err = n.ovnnb.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
 		if err != nil {
-			return fmt.Errorf("Failed to load uplink network %q: %w", n.UplinkName(), err)
+			return err
+		}
+
+		if len(dnsIPs) > 0 {
+			// When using l3only mode the instance port's IPs are added as static routes to the router.
+			// So try and remove these in case l3only is (or was) being used.
+			for _, dnsIP := range dnsIPs {
+				removeRoutes = append(removeRoutes, IPToNet(dnsIP))
+			}
+
+			// Delete any associated proxy ARP/NDP entries for the DNS IPs.
+			for _, dnsIP := range dnsIPs {
+				removeARPProxyIPNets = append(removeARPProxyIPNets, IPToNet(dnsIP))
+			}
+		}
+
+		// Delete internal routes.
+		if len(internalRoutes) > 0 {
+			for _, internalRoute := range internalRoutes {
+				removeRoutes = append(removeRoutes, *internalRoute)
+			}
+		}
+
+		// Delete external routes.
+		for _, externalRoute := range externalRoutes {
+			removeRoutes = append(removeRoutes, *externalRoute)
+
+			// Remove any proxy ARP/NDP entries the NIC published while the uplink used l2proxy ingress
+			// mode; the uplink may have switched mode since, and only published entries are released.
+			if uplink != nil {
+				removeARPProxyIPNets = append(removeARPProxyIPNets, *externalRoute)
+			}
+		}
+	} else {
+		dnsIPs = storedSource.DNSIPs
+		removeRoutes = storedSource.Prefixes
+		removeARPProxyIPNets = storedSource.ARPPrefixes
+		if storedSource.Uplink {
+			uplink = &api.Network{}
 		}
 	}
 
-	// Get DNS records.
-	_, _, dnsIPs, err := n.ovnnb.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
+	var routeCaptures []ovnNICStopRouteCapture
+	var releaseRouteSet func() error
+	defer func() {
+		if releaseRouteSet != nil {
+			err = errors.Join(err, releaseRouteSet())
+		}
+	}()
+	cleanupTokens := map[int64]string{n.ID(): n.ovnOperationToken}
+	if storedSource != nil {
+		releaseRouteSet, err = n.reserveOriginalNICStopSet(context.TODO(), *storedAttempt)
+		if err != nil {
+			return err
+		}
+	} else if len(removeRoutes) > 0 {
+		owner, peers, reservations, releaseRoutes, err := n.reserveNICStopRouteTargets(context.TODO())
+		if err != nil {
+			return err
+		}
+
+		releaseRouteSet = releaseRoutes
+		for _, reservation := range reservations {
+			cleanupTokens[reservation.NetworkID] = reservation.Token
+		}
+
+		var dnsIPv4, dnsIPv6 net.IP
+		for _, dnsIP := range dnsIPs {
+			if dnsIP.To4() != nil {
+				dnsIPv4 = dnsIP
+			} else {
+				dnsIPv6 = dnsIP
+			}
+		}
+
+		ownerIPv4, _, err := owner.parseRouterIntPortIPv4Net()
+		if err != nil {
+			return err
+		}
+
+		ownerIPv6, _, err := owner.parseRouterIntPortIPv6Net()
+		if err != nil {
+			return err
+		}
+
+		var peerTargets []ovnNICStopRouteTarget
+		for _, peer := range peers {
+			peerTargets = append(peerTargets, ovnNICStopRouteTarget{router: peer.getRouterName(), port: peer.getLogicalRouterPeerPortName(owner.ID()), nextHop4: ownerIPv4, nextHop6: ownerIPv6})
+		}
+
+		routeCaptures, err = nicStopRouteCaptures(removeRoutes, ovnNICStopRouteTarget{router: n.getRouterName(), port: n.getRouterIntPortName(), nextHop4: dnsIPv4, nextHop6: dnsIPv6}, peerTargets)
+		if err != nil {
+			return err
+		}
+	}
+
+	var portCapture networkOVN.NICPortCleanup
+	if storedSource != nil {
+		portCapture = storedSource.Port
+	} else {
+		portCapture, err = n.ovnnb.CaptureNICPortCleanup(context.TODO(), n.getIntSwitchName(), instancePortName, n.state.ServerName)
+		if err != nil {
+			return err
+		}
+	}
+
+	var natCapture *networkOVN.NICNATCleanup
+	if storedSource != nil {
+		natCapture = storedSource.NAT
+	} else {
+		tuples, err := nicStopNATTuples(opts.DeviceConfig, dnsIPs)
+		if err != nil {
+			return err
+		}
+
+		if len(tuples) > 0 {
+			plan, err := n.ovnnb.CaptureNICNATCleanup(context.TODO(), n.getRouterName(), tuples...)
+			if err != nil {
+				return err
+			}
+
+			natCapture = &plan
+		}
+	}
+
+	var macCapture *networkOVN.NICMACBindingCleanup
+	if storedSource != nil {
+		macCapture = storedSource.MACBindings
+	}
+
+	var prefixOwner networkOVN.NICPrefixOwner
+	prefixTransferred := storedSource != nil && storedSource.PrefixOwnerTransferred
+	if storedSource == nil && (len(removeRoutes) > 0 || uplink != nil && len(removeARPProxyIPNets) > 0) {
+		prefixOwner, prefixTransferred, err = n.ovnnb.CaptureNICPrefixOwnerTransferred(context.TODO(), portCapture)
+		if errors.Is(err, networkOVN.ErrNICPrefixLegacy) {
+			// An upstream-created port first adopts its existing shared prefixes, as Start would have published them.
+			var proxyPort networkOVN.OVNSwitchPort
+			var proxySwitch networkOVN.OVNSwitch
+			if n.UplinkName() != "none" {
+				proxyPort = n.getExtSwitchRouterPortName()
+				proxySwitch = n.getExtSwitchName()
+			}
+
+			prefixOwner, err = n.ovnnb.AdoptLegacyNICPrefixes(context.TODO(), portCapture, acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), removeRoutes, proxySwitch, proxyPort, removeARPProxyIPNets)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	var addressSetCapture *networkOVN.NICAddressSetCleanup
+	if storedSource != nil {
+		addressSetCapture = storedSource.AddressSets
+	} else if len(removeRoutes) > 0 {
+		plan, captureErr := n.ovnnb.CaptureNICAddressSetCleanup(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), removeRoutes, prefixOwner)
+		if captureErr != nil {
+			return captureErr
+		}
+
+		addressSetCapture = &plan
+	}
+
+	var arpProxyCapture *networkOVN.NICARPProxyCleanup
+	if storedSource != nil {
+		arpProxyCapture = storedSource.ARPProxy
+	} else if uplink != nil && len(removeARPProxyIPNets) > 0 {
+		plan, captureErr := n.ovnnb.CaptureNICARPProxyCleanup(context.TODO(), n.getExtSwitchName(), n.getExtSwitchRouterPortName(), removeARPProxyIPNets, prefixOwner)
+		if captureErr != nil {
+			return captureErr
+		}
+
+		arpProxyCapture = &plan
+	}
+
+	ctx := context.TODO()
+	beforeRoutes := func() error {
+		// All route identities have been captured before disabling the port.
+		err := n.ovnnb.ApplyNICPortCleanup(ctx, portCapture)
+		if err != nil {
+			return err
+		}
+
+		if macCapture != nil {
+			err = n.ovnsb.ApplyNICMACBindingCleanup(ctx, *macCapture)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	afterRoutes := func() error {
+		if len(removeRoutes) > 0 {
+			if addressSetCapture == nil {
+				return errors.New("Original NIC address-set capture is missing")
+			}
+
+			capturedPrefixes, err := addressSetCapture.CapturedPrefixes()
+			if err != nil {
+				return err
+			}
+
+			err = n.ovnnb.ApplyNICAddressSetCleanup(ctx, *addressSetCapture, acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), capturedPrefixes)
+			if err != nil {
+				return fmt.Errorf("Failed deleting switch address set entries: %w", err)
+			}
+		}
+
+		if uplink != nil && len(removeARPProxyIPNets) > 0 {
+			if arpProxyCapture == nil {
+				return errors.New("Original NIC ARP proxy capture is missing")
+			}
+
+			proxyPort := arpProxyCapture.PortName
+			capturedPrefixes, err := arpProxyCapture.CapturedPrefixes()
+			if err != nil {
+				return err
+			}
+
+			err = n.ovnnb.ApplyNICARPProxyCleanup(ctx, *arpProxyCapture, proxyPort, capturedPrefixes)
+			if err != nil {
+				return err
+			}
+		}
+
+		if natCapture != nil {
+			err := n.ovnnb.ApplyNICNATCleanup(ctx, *natCapture)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Notify the DNS peers of the zone change.
+		notifyConfig := n.config
+		if storedSource != nil {
+			notifyConfig = storedSource.DNSConfig
+		}
+
+		DNSNotifyZones(n.state, notifyConfig)
+
+		return nil
+	}
+
+	if storedSource != nil {
+		if captureOnly {
+			return nil
+		}
+
+		return applyNICCapturedRoutes(ctx, n.ovnnb, storedSource.Routes, beforeRoutes, afterRoutes)
+	}
+
+	publish := func(plans []networkOVN.NICRouteCleanup) error {
+		if len(dnsIPs) > 0 {
+			routerUUID, err := nicStopMACRouterUUID(portCapture.RootUUID, n.getRouterName(), plans)
+			if err != nil {
+				return err
+			}
+
+			plan, err := n.ovnsb.CaptureNICMACBindingCleanup(ctx, portCapture.RootUUID, routerUUID, n.getRouterIntPortName(), dnsIPs...)
+			if err != nil {
+				return err
+			}
+
+			macCapture = &plan
+		}
+
+		dnsConfig := make(map[string]string)
+		for _, key := range []string{"dns.zone.forward", "dns.zone.reverse.ipv4", "dns.zone.reverse.ipv6"} {
+			dnsConfig[key] = n.config[key]
+		}
+
+		source := ovnNICStopSourceSnapshot{ARPProxy: arpProxyCapture, AddressSets: addressSetCapture, Port: portCapture, DNSIPs: dnsIPs, Prefixes: removeRoutes, ARPPrefixes: removeARPProxyIPNets, ProxyPort: n.getExtSwitchRouterPortName(), RouterPort: n.getRouterIntPortName(), Uplink: uplink != nil, DNSConfig: dnsConfig, Routes: plans, NAT: natCapture, MACBindings: macCapture, PrefixOwnerTransferred: prefixTransferred}
+		_, err := n.publishNICStopSource(ctx, opts, source, cleanupTokens)
+		return err
+	}
+
+	if captureOnly {
+		_, err = captureNICStopRoutes(ctx, n.ovnnb, routeCaptures, publish)
+		return err
+	}
+
+	return stopNICCapturedRoutes(ctx, n.ovnnb, routeCaptures, publish, beforeRoutes, afterRoutes)
+}
+
+// retireOrphanInstancePorts retires stopped instance ports of deleted instances whose device removal
+// failed. They would otherwise block every shared reload, and no instance remains to retry them.
+// A port is retired only when no instance has its UUID, no member has pending cleanup for it and
+// its own producer publication names that instance and device; retirement requires it stopped.
+func (n *ovn) retireOrphanInstancePorts() error {
+	ports, err := n.ovnnb.GetLogicalSwitchPorts(context.TODO(), n.getIntSwitchName())
 	if err != nil {
 		return err
 	}
 
-	// Disable the logical switch port.
-	err = n.ovnnb.UpdateLogicalSwitchPortEnabled(context.TODO(), instancePortName, false)
-	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
-		return err
-	}
-
-	var removeRoutes []net.IPNet
-	var removeARPProxyIPNets []net.IPNet
-
-	if len(dnsIPs) > 0 {
-		// When using l3only mode the instance port's IPs are added as static routes to the router.
-		// So try and remove these in case l3only is (or was) being used.
-		for _, dnsIP := range dnsIPs {
-			removeRoutes = append(removeRoutes, IPToNet(dnsIP))
+	prefix := fmt.Sprintf("incus-net%d-instance-", n.ID())
+	for port := range ports {
+		rest, ok := strings.CutPrefix(string(port), prefix)
+		if !ok || len(rest) < 38 || rest[36] != '-' {
+			continue
 		}
 
-		// Delete any associated proxy ARP/NDP entries for the DNS IPs.
-		for _, dnsIP := range dnsIPs {
-			removeARPProxyIPNets = append(removeARPProxyIPNets, IPToNet(dnsIP))
-		}
-
-		// Delete any MAC bindings learned by the router for those IPs.
-		err = n.ovnsb.DeleteMACBindings(context.TODO(), n.getRouterIntPortName(), dnsIPs...)
+		instanceUUID, device := rest[:36], rest[37:]
+		_, err := uuid.Parse(instanceUUID)
 		if err != nil {
-			return err
-		}
-	}
-
-	// Delete internal routes.
-	if len(internalRoutes) > 0 {
-		for _, internalRoute := range internalRoutes {
-			removeRoutes = append(removeRoutes, *internalRoute)
-		}
-	}
-
-	// Delete external routes.
-	for _, externalRoute := range externalRoutes {
-		removeRoutes = append(removeRoutes, *externalRoute)
-
-		// Remove the proxy ARP/NDP entries when using l2proxy ingress mode on uplink.
-		if uplink != nil && slices.Contains([]string{"l2proxy", ""}, uplink.Config["ovn.ingress_mode"]) {
-			removeARPProxyIPNets = append(removeARPProxyIPNets, *externalRoute)
-		}
-	}
-
-	if len(removeRoutes) > 0 {
-		// Delete routes from local router.
-		err = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), removeRoutes...)
-		if err != nil {
-			return err
+			continue
 		}
 
-		// Delete routes from switch address set.
-		err = n.ovnnb.UpdateAddressSetRemove(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(n.ID()), removeRoutes...)
-		if err != nil {
-			return fmt.Errorf("Failed deleting switch address set entries: %w", err)
-		}
-
-		// Delete routes from peer routers.
-		owner, err := n.routerOwner()
-		if err != nil {
-			return err
-		}
-
-		err = owner.forPeers(func(targetOVNNet *ovn) error {
-			targetRouterName := targetOVNNet.getRouterName()
-			err = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), targetRouterName, removeRoutes...)
-			if err != nil {
-				return fmt.Errorf("Failed deleting static routes from peer network %q in project %q: %w", targetOVNNet.Name(), targetOVNNet.Project(), err)
+		orphan := false
+		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var exists bool
+			err := tx.Tx().QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM instances_config WHERE key='volatile.uuid' AND value=?)`, instanceUUID).Scan(&exists)
+			if err != nil || exists {
+				return err
 			}
 
+			err = tx.EnsureOVNNICTransferSource(ctx, instanceUUID)
+			if err != nil {
+				return nil
+			}
+
+			orphan = true
 			return nil
 		})
 		if err != nil {
 			return err
 		}
-	}
 
-	if uplink != nil && len(removeARPProxyIPNets) > 0 {
-		err = n.ovnnb.UpdateLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName(), nil, removeARPProxyIPNets)
-		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
-			return err
-		}
-	}
-
-	// Tear down per‑NIC egress SNAT rules (ipv4/ipv6.address.external)
-	for _, keyPrefix := range []string{"ipv4", "ipv6"} {
-		// Check if the address is present.
-		value := opts.DeviceConfig[fmt.Sprintf("%s.address.external", keyPrefix)]
-		if value == "" {
+		if !orphan {
 			continue
 		}
 
-		// Validate the address.
-		extIP := net.ParseIP(value)
-		if extIP == nil {
-			return fmt.Errorf("Invalid external address %q", value)
+		publication, err := n.ovnnb.NICConfigPublicationOf(context.TODO(), n.getIntSwitchName(), port)
+		if err != nil || publication.InstanceUUID != instanceUUID || publication.Device != device || publication.NetworkID != n.ID() {
+			continue
 		}
 
-		// Remove the NAT entry for the external address.
-		for _, natType := range []string{"snat", "dnat_and_snat"} {
-			err := n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), natType, false, extIP)
-			if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
-				return err
-			}
+		// The deleted instance's static address reservation goes with its port.
+		err = n.ovnnb.RetireNICConfig(context.TODO(), n.getIntSwitchName(), port, publication, true)
+		if err != nil {
+			return fmt.Errorf("Failed retiring orphaned instance port %q: %w", port, err)
 		}
+
+		n.logger.Warn("Retired orphaned OVN instance port of a deleted instance", logger.Ctx{"port": port})
 	}
-
-	// Notify the DNS peers of the zone change.
-	DNSNotifyZones(n.state, n.config)
 
 	return nil
 }
 
 // InstanceDevicePortRemove deletes an instance device port and all its associated OVN config.
-func (n *ovn) InstanceDevicePortRemove(instanceUUID string, devName string, devConfig deviceConfig.Device, hasDuplicate bool) error {
+func (n *ovn) InstanceDevicePortRemove(instanceUUID string, devName string, devConfig deviceConfig.Device, hasDuplicate bool) (err error) {
+	release, err := n.waitOperation("nic", true)
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+
 	instancePortName := n.getInstanceDevicePortName(instanceUUID, devName)
 
-	reverter := revert.New()
-	defer reverter.Fail()
-
-	// If NIC has static IPv4 address then remove the DHCPv4 reservation.
-	if devConfig["ipv4.address"] != "" && !hasDuplicate {
-		ipv4 := net.ParseIP(devConfig["ipv4.address"])
-		if ipv4 != nil {
-			dhcpReservations, err := n.ovnnb.GetLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName())
-			if err != nil {
-				return fmt.Errorf("Failed getting DHCPv4 reservations: %w", err)
-			}
-
-			dhcpReservations = append(dhcpReservations, iprange.Range{Start: ipv4})
-			dhcpReservationsNew := make([]iprange.Range, 0, len(dhcpReservations))
-
-			found := false
-			for _, dhcpReservation := range dhcpReservations {
-				if dhcpReservation.Start.Equal(ipv4) && dhcpReservation.End == nil {
-					found = true
-					continue
-				}
-
-				dhcpReservationsNew = append(dhcpReservationsNew, dhcpReservation)
-			}
-
-			if found {
-				err = n.ovnnb.UpdateLogicalSwitchDHCPv4Revervations(context.TODO(), n.getIntSwitchName(), dhcpReservationsNew)
-				if err != nil {
-					return fmt.Errorf("Failed removing DHCPv4 reservation for %q: %w", ipv4.String(), err)
-				}
-			}
-		}
-	}
-
-	// Remove the port from any port groups it is a member of.
-	portUUID, err := n.ovnnb.GetLogicalSwitchPortUUID(context.TODO(), instancePortName)
-	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
-		return fmt.Errorf("Failed getting logical port UUID for port group removal: %w", err)
-	}
-
-	if portUUID != "" {
-		portGroups, err := n.ovnnb.GetPortGroupsByPort(context.TODO(), portUUID)
-		if err != nil {
-			return fmt.Errorf("Failed getting port groups for instance NIC port: %w", err)
-		}
-
-		if len(portGroups) > 0 {
-			removeChangeSet := map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}
-			for _, pg := range portGroups {
-				acl.OVNPortGroupInstanceNICSchedule(portUUID, removeChangeSet, pg)
-			}
-
-			err = n.ovnnb.UpdatePortGroupMembers(context.TODO(), map[networkOVN.OVNPortGroup][]networkOVN.OVNSwitchPortUUID{}, removeChangeSet)
-			if err != nil {
-				return fmt.Errorf("Failed removing instance NIC port from port groups: %w", err)
-			}
-		}
-	}
-
-	// Get DNS records.
-	dnsUUID, _, _, err := n.ovnnb.GetLogicalSwitchPortDNS(context.TODO(), instancePortName)
+	publication, err := n.nicConfigCandidate(context.TODO(), instanceUUID, devName, devConfig)
 	if err != nil {
 		return err
 	}
 
-	// Cleanup logical switch port and associated config.
-	err = n.ovnnb.CleanupLogicalSwitchPort(context.TODO(), instancePortName, n.getIntSwitchName(), acl.OVNIntSwitchPortGroupName(n.ID()), dnsUUID)
+	err = n.ovnnb.RetireNICConfig(context.TODO(), n.getIntSwitchName(), instancePortName, publication, !hasDuplicate)
 	if err != nil {
 		return err
 	}
-
-	reverter.Success()
 
 	// Notify the DNS peers of the zone change.
 	DNSNotifyZones(n.state, n.config)
@@ -7053,8 +7919,49 @@ func (n *ovn) uplinkHasIngressRoutedAnycastIPv6(uplink *api.Network) bool {
 	return util.IsTrue(uplink.Config["ipv6.routes.anycast"]) && uplink.Config["ovn.ingress_mode"] == "routed"
 }
 
+// withDependencyOperation applies a child change under its own lease and readiness admission.
+func (n *ovn) withDependencyOperation(apply func() error) (err error) {
+	release, token, err := AcquireOVNOperation(n.state, n.project, n.name, "dependency")
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+	unlock, err := LockOVNLifecycle(n.project, n.name)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+	AuthorizeOVNInitialization(n, token)
+	err = n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
+	return apply()
+}
+
 // handleDependencyChange applies changes from uplink network if specific watched keys have changed.
-func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]string, changedKeys []string) error {
+func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]string, changedKeys []string) (err error) {
+	release, token, err := AcquireOVNOperation(n.state, n.project, n.name, "dependency")
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+	unlock, err := LockOVNLifecycle(n.project, n.name)
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+	AuthorizeOVNInitialization(n, token)
+	err = n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	// Detect changes that need to be applied to the network.
 	uplinkKeys := []string{"ipv4.ovn.ranges", "ipv6.ovn.ranges"}
 	uplinkNetwork := n.config["network"]
@@ -7130,7 +8037,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 		}
 
 		for _, child := range children {
-			err = child.setup(true)
+			err = child.withDependencyOperation(func() error { return child.setup(true) })
 			if err != nil {
 				return fmt.Errorf("Failed updating child network %q: %w", child.Name(), err)
 			}
@@ -7157,20 +8064,22 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 			}
 
 			for _, child := range children {
-				err = child.setup(true)
+				err = child.withDependencyOperation(func() error { return child.setup(true) })
 				if err != nil {
 					return fmt.Errorf("Failed updating child network %q: %w", child.Name(), err)
 				}
 			}
 
 			// Get list of active switch ports (avoids repeated querying of OVN NB).
-			activePorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), n.getIntSwitchName())
+			replayPorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), n.getIntSwitchName())
 			if err != nil {
 				return fmt.Errorf("Failed getting active ports: %w", err)
 			}
 
 			// Find all instance NICs that use this network, and re-add the logical OVN instance port.
 			// This will restore the l2proxy proxy ARP/NDP entries.
+			var ports []*OVNInstanceNICSetupOpts
+
 			err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 				return tx.InstanceList(ctx, func(inst db.InstanceArgs, p api.Project) error {
 					// Get the effective network project name for this network name.
@@ -7194,7 +8103,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 						// Check if instance port exists, if not then we can skip.
 						instanceUUID := inst.Config["volatile.uuid"]
 						instancePortName := n.getInstanceDevicePortName(instanceUUID, devName)
-						_, found := activePorts[instancePortName]
+						_, found := replayPorts[instancePortName]
 						if !found {
 							continue // No need to update a port that isn't started yet.
 						}
@@ -7204,19 +8113,13 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 							devConfig["hwaddr"] = inst.Config[fmt.Sprintf("volatile.%s.hwaddr", devName)]
 						}
 
-						// Re-add logical switch port to apply the l2proxy proxy ARP/NDP entries.
-						n.logger.Debug("Re-adding instance OVN NIC port to apply ingress mode changes", logger.Ctx{"project": inst.Project, "instance": inst.Name, "device": devName})
-						_, _, err = n.InstanceDevicePortStart(&OVNInstanceNICSetupOpts{
+						ports = append(ports, &OVNInstanceNICSetupOpts{
 							InstanceUUID: instanceUUID,
 							DNSName:      inst.Name,
 							DeviceName:   devName,
 							DeviceConfig: devConfig,
 							UplinkConfig: uplinkConfig,
-						}, nil)
-						if err != nil {
-							n.logger.Error("Failed re-adding instance OVN NIC port", logger.Ctx{"project": inst.Project, "instance": inst.Name, "err": err})
-							continue
-						}
+						})
 					}
 
 					return nil
@@ -7225,10 +8128,42 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 			if err != nil {
 				return fmt.Errorf("Failed adding instance NIC ingress mode l2proxy rules: %w", err)
 			}
+
+			for _, opts := range ports {
+				_, _, err = n.instanceDevicePortStart(opts, nil, nil)
+				if err != nil {
+					return fmt.Errorf("Failed re-adding instance OVN NIC port: %w", err)
+				}
+			}
 		} else {
-			// Remove all proxy ARP/NDP entries if not using l2proxy ingress mode, as currently we
-			// only use them for this feature so it is safe to do.
-			err := n.ovnnb.ClearLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName())
+			// Refuse outstanding cleanup debt before changing shared proxy contributors.
+			err := n.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.EnsureOVNNICCleanupComplete(ctx, n.ID())
+			})
+			if err != nil {
+				return err
+			}
+
+			// Routed ingress no longer advertises network NAT addresses on the shared router.
+			err = n.deleteRouterNATAddressARPProxy()
+			if err != nil {
+				return err
+			}
+
+			children, err := n.childNetworks()
+			if err != nil {
+				return err
+			}
+
+			for _, child := range children {
+				err = child.withDependencyOperation(child.deleteRouterNATAddressARPProxy)
+				if err != nil {
+					return fmt.Errorf("Failed withdrawing child network %q NAT addresses: %w", child.Name(), err)
+				}
+			}
+
+			// Retire proven NIC proxy entries while retaining unknown and independent contributors.
+			err = n.ovnnb.ClearLogicalSwitchPortARPProxy(context.TODO(), n.getExtSwitchRouterPortName())
 			if err != nil {
 				return fmt.Errorf("Failed clearing instance NIC ingress mode l2proxy entries: %w", err)
 			}
@@ -7292,12 +8227,17 @@ func (n *ovn) forwardApplyDefaultTargetNAT(listenAddress net.IP, targetAddress n
 
 // ForwardCreate creates a network forward.
 func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.ClientType) error {
+	err := n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	if n.UplinkName() == "none" {
 		return errors.New("Isolated OVN network cannot use network forwards")
 	}
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	if clientType == request.ClientTypeNormal {
 		memberSpecific := false // OVN doesn't support per-member forwards.
@@ -7355,6 +8295,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 					return fmt.Errorf("Forward listen address %q overlaps with another network or NIC", forward.ListenAddress)
 				}
 			}
+
 			return err
 		})
 		if err != nil {
@@ -7520,13 +8461,13 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).CreateNetworkForward(n.name, forward)
+			return OVNNotify(n.state, n, client, http.MethodPost, []string{version.APIVersion, "networks", n.name, "forwards"}, forward)
 		})
 		if err != nil {
 			return err
@@ -7534,7 +8475,7 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 	}
 
 	// Refresh exported BGP prefixes on local member.
-	err := n.forwardBGPSetupPrefixes()
+	err = n.forwardBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
 	}
@@ -7545,8 +8486,13 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 
 // ForwardUpdate updates a network forward.
 func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, clientType request.ClientType) error {
+	err := n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	if clientType == request.ClientTypeNormal {
 		var curForwardID int64
@@ -7667,13 +8613,13 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 		})
 
 		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).UpdateNetworkForward(n.name, curForward.ListenAddress, req, "")
+			return OVNNotify(n.state, n, client, http.MethodPut, []string{version.APIVersion, "networks", n.name, "forwards", curForward.ListenAddress}, req)
 		})
 		if err != nil {
 			return err
@@ -7681,7 +8627,7 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 	}
 
 	// Refresh exported BGP prefixes on local member.
-	err := n.forwardBGPSetupPrefixes()
+	err = n.forwardBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
 	}
@@ -7692,6 +8638,11 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 
 // ForwardDelete deletes a network forward.
 func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType) error {
+	err := n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	if clientType == request.ClientTypeNormal {
 		var forwardID int64
 		var forward *api.NetworkForward
@@ -7745,13 +8696,13 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).DeleteNetworkForward(n.name, forward.ListenAddress)
+			return OVNNotify(n.state, n, client, http.MethodDelete, []string{version.APIVersion, "networks", n.name, "forwards", forward.ListenAddress}, nil)
 		})
 		if err != nil {
 			return err
@@ -7759,7 +8710,7 @@ func (n *ovn) ForwardDelete(listenAddress string, clientType request.ClientType)
 	}
 
 	// Refresh exported BGP prefixes on local member.
-	err := n.forwardBGPSetupPrefixes()
+	err = n.forwardBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
 	}
@@ -7807,12 +8758,17 @@ func (n *ovn) loadBalancerFlattenVIPs(listenAddress net.IP, portMaps []*loadBala
 
 // LoadBalancerCreate creates a network load balancer.
 func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clientType request.ClientType) error {
+	err := n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	if n.UplinkName() == "none" {
 		return errors.New("Isolated OVN network cannot use network load balancers")
 	}
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	if clientType == request.ClientTypeNormal {
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -7871,6 +8827,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 					return fmt.Errorf("Load balancer listen address %q overlaps with another network or NIC", loadBalancer.ListenAddress)
 				}
 			}
+
 			return err
 		})
 		if err != nil {
@@ -8034,13 +8991,13 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).CreateNetworkLoadBalancer(n.name, loadBalancer)
+			return OVNNotify(n.state, n, client, http.MethodPost, []string{version.APIVersion, "networks", n.name, "load-balancers"}, loadBalancer)
 		})
 		if err != nil {
 			return err
@@ -8048,7 +9005,7 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 	}
 
 	// Refresh exported BGP prefixes on local member.
-	err := n.loadBalancerBGPSetupPrefixes()
+	err = n.loadBalancerBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
 	}
@@ -8059,8 +9016,13 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 
 // LoadBalancerUpdate updates a network load balancer.
 func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalancerPut, clientType request.ClientType) error {
+	err := n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	if clientType == request.ClientTypeNormal {
 		var curLoadBalancer *api.NetworkLoadBalancer
@@ -8199,13 +9161,13 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 		})
 
 		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).UpdateNetworkLoadBalancer(n.name, curLoadBalancer.ListenAddress, req, "")
+			return OVNNotify(n.state, n, client, http.MethodPut, []string{version.APIVersion, "networks", n.name, "load-balancers", curLoadBalancer.ListenAddress}, req)
 		})
 		if err != nil {
 			return err
@@ -8213,7 +9175,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 	}
 
 	// Refresh exported BGP prefixes on local member.
-	err := n.loadBalancerBGPSetupPrefixes()
+	err = n.loadBalancerBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
 	}
@@ -8279,6 +9241,11 @@ func (n *ovn) LoadBalancerState(lb api.NetworkLoadBalancer) (*api.NetworkLoadBal
 
 // LoadBalancerDelete deletes a network load balancer.
 func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.ClientType) error {
+	err := n.ensureLocalStarted()
+	if err != nil {
+		return err
+	}
+
 	if clientType == request.ClientTypeNormal {
 		var lb *dbCluster.NetworkLoadBalancer
 
@@ -8328,13 +9295,13 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 		}
 
 		// Notify all other members to refresh their BGP prefixes.
-		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+		notifier, err := OVNNotifier(n.state, n, cluster.NotifyAll)
 		if err != nil {
 			return err
 		}
 
 		err = notifier(func(client incus.InstanceServer) error {
-			return client.UseProject(n.project).DeleteNetworkLoadBalancer(n.name, lb.ListenAddress)
+			return OVNNotify(n.state, n, client, http.MethodDelete, []string{version.APIVersion, "networks", n.name, "load-balancers", lb.ListenAddress}, nil)
 		})
 		if err != nil {
 			return err
@@ -8342,7 +9309,7 @@ func (n *ovn) LoadBalancerDelete(listenAddress string, clientType request.Client
 	}
 
 	// Refresh exported BGP prefixes on local member.
-	err := n.loadBalancerBGPSetupPrefixes()
+	err = n.loadBalancerBGPSetupPrefixes()
 	if err != nil {
 		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
 	}
@@ -8477,7 +9444,7 @@ func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
 	ctx := context.TODO()
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	// Get the peer DB record.
 	var peerInfo *api.NetworkPeer
@@ -8539,15 +9506,18 @@ func (n *ovn) localPeerCreate(peer api.NetworkPeersPost) error {
 }
 
 // remotePeerCreate creates a network peering with an OVN-IC.
-func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
+func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) (err error) {
 	ctx := context.TODO()
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer func() {
+		n.ovnOperationUncertain = n.ovnOperationUncertain || networkOVN.IsUncertainTransaction(err)
+		OVNRevert(n.state, n, reverter.Fail)
+	}()
 
 	// Load the project.
 	var p *api.Project
-	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		project, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
 		if err != nil {
 			return err
@@ -8583,10 +9553,13 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 	}
 
 	// Get ICNB.
-	icnb, err := networkOVN.NewICNB(integration.Config["ovn.northbound_connection"], integration.Config["ovn.ca_cert"], integration.Config["ovn.client_cert"], integration.Config["ovn.client_key"])
+	icnb, err := n.newPeerICNB(integration)
 	if err != nil {
 		return err
 	}
+
+	// The client's finalizer closes its connection; keep it alive for every write of this operation.
+	defer runtime.KeepAlive(icnb)
 
 	// Get ICSB.
 	icsb, err := networkOVN.NewICSB(integration.Config["ovn.southbound_connection"], integration.Config["ovn.ca_cert"], integration.Config["ovn.client_cert"], integration.Config["ovn.client_key"])
@@ -8726,14 +9699,21 @@ func (n *ovn) remotePeerCreate(peer api.NetworkPeersPost) error {
 }
 
 // PeerCreate creates a network peering.
-func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
+func (n *ovn) PeerCreate(peer api.NetworkPeersPost) (err error) {
+	release, err := n.acquirePeerOperation("peer-create")
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+
 	// A peering connects two logical routers, and a child network has none of its own.
 	if n.parentID != 0 {
 		return api.StatusErrorf(http.StatusBadRequest, "Network peers must be configured on the parent network")
 	}
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	// Default type is local.
 	if peer.Type == "" {
@@ -8753,6 +9733,11 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 			return api.StatusErrorf(http.StatusBadRequest, "Target network is required")
 		}
 
+		err = n.peerTargetReady(peer.TargetProject, peer.TargetNetwork)
+		if err != nil {
+			return err
+		}
+
 		// The target may not exist yet when setting up a mutual peering, so only check it if it does.
 		targetNet, err := LoadByName(n.state, peer.TargetProject, peer.TargetNetwork)
 		if err == nil && targetNet.Config()["parent"] != "" {
@@ -8769,7 +9754,7 @@ func (n *ovn) PeerCreate(peer api.NetworkPeersPost) error {
 	// Look for an existing entry.
 	var peers map[int64]*api.NetworkPeer
 
-	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		// Use generated function to get peers.
@@ -8996,7 +9981,7 @@ func (n *ovn) peerRoutes() ([]net.IPNet, error) {
 		}
 
 		// Ensure the subnets and all active NIC routes are present in the network's address set.
-		err = n.ovnnb.UpdateAddressSetAdd(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(member.ID()), memberRoutes...)
+		err = n.ovnnb.EnsureAddressSetPrefixes(context.TODO(), acl.OVNIntSwitchPortGroupAddressSetPrefix(member.ID()), memberRoutes...)
 		if err != nil {
 			return nil, fmt.Errorf("Failed adding switch address set entries for network %q: %w", member.Name(), err)
 		}
@@ -9128,14 +10113,21 @@ func (n *ovn) peerSetup(ovnnb *networkOVN.NB, targetOVNNet *ovn, opts networkOVN
 }
 
 // PeerUpdate updates a network peering.
-func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) error {
+func (n *ovn) PeerUpdate(peerName string, req api.NetworkPeerPut) (err error) {
+	release, err := n.acquirePeerOperation("peer-update")
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	var curPeer *api.NetworkPeer
 	var dbCurPeer *dbCluster.NetworkPeer
 
-	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		var err error
 
 		dbCurPeer, err = dbCluster.GetNetworkPeer(ctx, tx.Tx(), n.id, peerName)
@@ -9242,12 +10234,14 @@ func (n *ovn) localPeerDelete(peer *api.NetworkPeer) error {
 }
 
 // remotePeerDelete deletes a network peering with an OVN-IC.
-func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
+func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) (err error) {
+	defer func() { n.ovnOperationUncertain = n.ovnOperationUncertain || networkOVN.IsUncertainTransaction(err) }()
+
 	ctx := context.TODO()
 
 	// Load the integration.
 	var integration *api.NetworkIntegration
-	err := n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+	err = n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		entry, err := dbCluster.GetNetworkIntegration(ctx, tx.Tx(), peer.TargetIntegration)
 		if err != nil {
 			return err
@@ -9262,10 +10256,13 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 	}
 
 	// Get ICNB.
-	icnb, err := networkOVN.NewICNB(integration.Config["ovn.northbound_connection"], integration.Config["ovn.ca_cert"], integration.Config["ovn.client_cert"], integration.Config["ovn.client_key"])
+	icnb, err := n.newPeerICNB(integration)
 	if err != nil {
 		return err
 	}
+
+	// The client's finalizer closes its connection; keep it alive for every write of this operation.
+	defer runtime.KeepAlive(icnb)
 
 	// Get the OVN AZ name.
 	azName, err := n.ovnnb.GetName(ctx)
@@ -9344,12 +10341,19 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 }
 
 // PeerDelete deletes a network peering.
-func (n *ovn) PeerDelete(peerName string) error {
+func (n *ovn) PeerDelete(peerName string) (err error) {
+	release, err := n.acquirePeerOperation("peer-delete")
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+
 	var peerID int64
 	var targetNetID sql.NullInt64
 	var peer *api.NetworkPeer
 
-	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		dbPeer, err := dbCluster.GetNetworkPeer(ctx, tx.Tx(), n.id, peerName)
 		if err != nil {
 			return fmt.Errorf("Failed getting network peer DB object: %w", err)
@@ -9366,6 +10370,13 @@ func (n *ovn) PeerDelete(peerName string) error {
 	})
 	if err != nil {
 		return err
+	}
+
+	if peer.Type == "local" && targetNetID.Valid {
+		err = n.peerTargetReady(peer.TargetProject, peer.TargetNetwork)
+		if err != nil {
+			return err
+		}
 	}
 
 	isUsed, err := n.peerIsUsed(peer.Name)
@@ -9704,6 +10715,25 @@ func (n *ovn) getTunnelFullName(tunnel string, idx int) string {
 	return fmt.Sprintf("%s-%s-%d", n.name, tunnel, idx)
 }
 
+// tunnelLspNames returns the logical switch ports createOVNTunnel uses for these configurations.
+func (n *ovn) tunnelLspNames(configs ...map[string]string) []networkOVN.OVNSwitchPort {
+	var ports []networkOVN.OVNSwitchPort
+	for _, config := range configs {
+		for _, tunnel := range n.getTunnels(config) {
+			count := 1
+			if config[fmt.Sprintf("tunnel.%s.protocol", tunnel)] == "gre" {
+				count = len(strings.Split(config[fmt.Sprintf("tunnel.%s.remote", tunnel)], ","))
+			}
+
+			for idx := range count {
+				ports = append(ports, networkOVN.OVNSwitchPort(n.getTunnelLspName(n.getTunnelFullName(tunnel, idx))))
+			}
+		}
+	}
+
+	return ports
+}
+
 // getTunnelLspName returns a name of a lsp for a tunnel.
 func (n *ovn) getTunnelLspName(tunnel string) string {
 	return fmt.Sprintf("tunnel-%s", tunnel)
@@ -9712,8 +10742,18 @@ func (n *ovn) getTunnelLspName(tunnel string) string {
 // updateTunnels updates the tunnel configuration by removing and recreating all necessary objects.
 // When the 'reinitialize' flag is set, it removes and recreates all tunnels from the configuration,
 // not just those referenced in changedKeys.
-func (n *ovn) updateTunnels(newConfig map[string]string, changedKeys []string, reinitialize bool) error {
-	err := n.deleteTunnels(changedKeys, false, reinitialize)
+func (n *ovn) updateTunnels(newConfig map[string]string, changedKeys []string, reinitialize bool, contexts ...context.Context) error {
+	ctx, cancel := n.tunnelContext(contexts)
+	defer cancel()
+
+	unlock, err := locking.Lock(ctx, "network.ovn.tunnels")
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+
+	err = n.deleteTunnels(changedKeys, false, reinitialize, ctx)
 	if err != nil {
 		return err
 	}
@@ -9730,18 +10770,22 @@ func (n *ovn) updateTunnels(newConfig map[string]string, changedKeys []string, r
 		return nil
 	}
 
-	chassisName, err := n.getActiveChassisName()
+	chassisName, err := n.getActiveChassisName(ctx)
 	if err != nil {
+		if reinitialize && errors.Is(err, networkOVN.ErrNotFound) {
+			return nil
+		}
+
 		return err
 	}
 
 	if chassisName == n.state.ServerName || chassisName == n.state.OS.Hostname {
-		err := n.deleteTunnels(changedKeys, true, reinitialize)
+		err := n.deleteTunnels(changedKeys, true, reinitialize, ctx)
 		if err != nil {
 			return err
 		}
 
-		err = n.createTunnels(newConfig)
+		err = n.createTunnels(newConfig, ctx)
 		if err != nil {
 			return err
 		}
@@ -9751,7 +10795,10 @@ func (n *ovn) updateTunnels(newConfig map[string]string, changedKeys []string, r
 }
 
 // createTunnels creates tunnels specified in the config.
-func (n *ovn) createTunnels(newConfig map[string]string) error {
+func (n *ovn) createTunnels(newConfig map[string]string, contexts ...context.Context) error {
+	ctx, cancel := n.tunnelContext(contexts)
+	defer cancel()
+
 	var err error
 
 	tunnels := n.getTunnels(newConfig)
@@ -9783,21 +10830,12 @@ func (n *ovn) createTunnels(newConfig map[string]string) error {
 					Remote: tunRemote,
 				}
 
-				err := gretap.Add()
-				if err != nil {
-					return err
-				}
-
-				err = gretap.SetUp()
-				if err != nil {
-					return err
-				}
-
-				err = n.createOVNTunnel(tunName)
+				err := n.installOVNTunnel(ctx, tunName, gretap.Add, gretap.SetUp)
 				if err != nil {
 					return err
 				}
 			}
+
 		case "vxlan":
 			tunName := n.getTunnelFullName(tunnel, 0)
 			tunGroup := net.ParseIP(getConfig("group"))
@@ -9850,17 +10888,7 @@ func (n *ovn) createTunnels(newConfig map[string]string) error {
 				}
 			}
 
-			err := vxlan.Add()
-			if err != nil {
-				return err
-			}
-
-			err = vxlan.SetUp()
-			if err != nil {
-				return err
-			}
-
-			err = n.createOVNTunnel(tunName)
+			err := n.installOVNTunnel(ctx, tunName, vxlan.Add, vxlan.SetUp)
 			if err != nil {
 				return err
 			}
@@ -9871,12 +10899,24 @@ func (n *ovn) createTunnels(newConfig map[string]string) error {
 }
 
 // createOVNTunnel creates OVN objects needed for a tunnel.
-func (n *ovn) createOVNTunnel(tunName string) error {
+func (n *ovn) createOVNTunnel(tunName string, contexts ...context.Context) error {
+	ctx, cancel := n.tunnelContext(contexts)
+	defer cancel()
+
+	ours, err := n.localTunnelOwnership(ctx, tunName)
+	if err != nil {
+		return err
+	}
+
+	if !ours {
+		return api.StatusErrorf(http.StatusConflict, "Tunnel interface %q belongs to another OVN network", tunName)
+	}
+
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer OVNRevert(n.state, n, reverter.Fail)
 
 	lspName := networkOVN.OVNSwitchPort(n.getTunnelLspName(tunName))
-	err := n.ovnnb.CreateLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName, &networkOVN.OVNSwitchPortOpts{
+	err = n.ovnnb.CreateLogicalSwitchPort(ctx, n.getIntSwitchName(), lspName, &networkOVN.OVNSwitchPortOpts{
 		IPV4:        "none",
 		IPV6:        "none",
 		Promiscuous: true,
@@ -9886,7 +10926,7 @@ func (n *ovn) createOVNTunnel(tunName string) error {
 	}
 
 	reverter.Add(func() {
-		_ = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName)
+		_ = n.ovnnb.DeleteLogicalSwitchPort(ctx, n.getIntSwitchName(), lspName)
 	})
 
 	integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
@@ -9896,15 +10936,20 @@ func (n *ovn) createOVNTunnel(tunName string) error {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
-	err = vswitch.CreateBridgePort(context.TODO(), integrationBridge, tunName, true)
+	err = vswitch.CreateBridgePort(ctx, integrationBridge, tunName, true)
 	if err != nil {
 		return err
 	}
 
-	reverter.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, tunName) })
+	reverter.Add(func() { _ = vswitch.DeleteBridgePort(ctx, integrationBridge, tunName) })
+
+	err = vswitch.SetInterfaceNetworkOwner(ctx, tunName, strconv.FormatInt(n.id, 10))
+	if err != nil {
+		return err
+	}
 
 	// Link OVS port to OVN logical port.
-	err = vswitch.AssociateInterfaceOVNSwitchPort(context.TODO(), tunName, string(lspName))
+	err = vswitch.AssociateInterfaceOVNSwitchPort(ctx, tunName, string(lspName))
 	if err != nil {
 		return err
 	}
@@ -9913,10 +10958,177 @@ func (n *ovn) createOVNTunnel(tunName string) error {
 	return nil
 }
 
+// deleteLocalTunnels removes configured tunnel devices and OVS ports without changing shared OVN state.
+func (n *ovn) deleteLocalTunnels(configs ...map[string]string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	unlock, err := locking.Lock(ctx, "network.ovn.tunnels")
+	if err != nil {
+		return err
+	}
+
+	defer unlock()
+	tunnels := n.getTunnels(n.config)
+	for _, tunnel := range n.getTunnels(n.localState().config) {
+		if !slices.Contains(tunnels, tunnel) {
+			tunnels = append(tunnels, tunnel)
+		}
+	}
+
+	for _, config := range configs {
+		for _, tunnel := range n.getTunnels(config) {
+			if !slices.Contains(tunnels, tunnel) {
+				tunnels = append(tunnels, tunnel)
+			}
+		}
+	}
+
+	var errs []error
+	ports := []string{}
+	owned := []string{}
+	vswitch, err := n.state.OVS()
+	if err != nil {
+		errs = append(errs, err)
+	} else {
+		owned, err = vswitch.GetNetworkInterfaces(ctx, strconv.FormatInt(n.id, 10))
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		ports, err = vswitch.GetBridgePorts(ctx, n.state.GlobalConfig.NetworkOVNIntegrationBridge())
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	foreign := map[string]bool{}
+	for _, port := range ports {
+		owner, err := vswitch.GetInterfaceNetworkOwner(ctx, port)
+		if err != nil && !errors.Is(err, ovs.ErrNotFound) {
+			errs = append(errs, err)
+			foreign[port] = true
+			continue
+		}
+
+		if owner != "" && owner != strconv.FormatInt(n.id, 10) {
+			foreign[port] = true
+		}
+	}
+
+	for _, name := range ports {
+		matches := false
+		for _, tunnel := range tunnels {
+			if tunnelInterfaceMatches(n.name, tunnel, name) {
+				matches = true
+				break
+			}
+		}
+
+		if !matches || slices.Contains(owned, name) || foreign[name] {
+			continue
+		}
+
+		ours, err := n.localTunnelOwnership(ctx, name)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		if err != nil || !ours {
+			foreign[name] = true
+		}
+	}
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	for _, iface := range interfaces {
+		if slices.Contains(owned, iface.Name) || foreign[iface.Name] {
+			continue
+		}
+
+		// Only configured fallback names require a legacy ownership check.
+		matches := false
+		for _, tunnel := range tunnels {
+			if tunnelInterfaceMatches(n.name, tunnel, iface.Name) {
+				matches = true
+				break
+			}
+		}
+
+		if !matches {
+			continue
+		}
+
+		ours, err := n.localTunnelOwnership(ctx, iface.Name)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		if err != nil || !ours {
+			foreign[iface.Name] = true
+		}
+	}
+
+	for _, iface := range owned {
+		err := vswitch.DeleteBridgePort(ctx, n.state.GlobalConfig.NetworkOVNIntegrationBridge(), iface)
+		if err != nil {
+			errs = append(errs, err)
+		}
+
+		if InterfaceExists(iface) {
+			link := &ip.Link{Name: iface}
+			err = link.Delete()
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	for _, tunnel := range tunnels {
+		prefix := fmt.Sprintf("%s-%s-", n.name, tunnel)
+		matches := func(name string) bool {
+			suffix, found := strings.CutPrefix(name, prefix)
+			if !found {
+				return false
+			}
+
+			index, err := strconv.Atoi(suffix)
+			return err == nil && index >= 0 && strconv.Itoa(index) == suffix
+		}
+
+		for _, port := range ports {
+			if matches(port) && !foreign[port] && !slices.Contains(owned, port) {
+				err := vswitch.DeleteBridgePort(ctx, n.state.GlobalConfig.NetworkOVNIntegrationBridge(), port)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+
+		for _, iface := range interfaces {
+			if matches(iface.Name) && !foreign[iface.Name] && !slices.Contains(owned, iface.Name) {
+				link := &ip.Link{Name: iface.Name}
+				err := link.Delete()
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 // deleteTunnels removes tunnels from the system and OVN (if needed).
 // When the 'deleteAll' flag is set, it removes all tunnels specified in the
 // configuration, not just those listed in changedKeys.
-func (n *ovn) deleteTunnels(config []string, withOVN bool, deleteAll bool) error {
+func (n *ovn) deleteTunnels(config []string, withOVN bool, deleteAll bool, contexts ...context.Context) error {
+	ctx, cancel := n.tunnelContext(contexts)
+	defer cancel()
+
 	var tunnels []string
 
 	if deleteAll {
@@ -9926,13 +11138,13 @@ func (n *ovn) deleteTunnels(config []string, withOVN bool, deleteAll bool) error
 	}
 
 	for _, tunnel := range tunnels {
-		err := n.deleteLinkTunnel(tunnel)
+		err := n.deleteLinkTunnel(tunnel, ctx)
 		if err != nil {
 			return err
 		}
 
 		if withOVN {
-			err = n.deleteOVNTunnel(tunnel)
+			err = n.deleteOVNTunnel(tunnel, ctx)
 			if err != nil {
 				return err
 			}
@@ -9943,75 +11155,285 @@ func (n *ovn) deleteTunnels(config []string, withOVN bool, deleteAll bool) error
 }
 
 // deleteLinkTunnel removes tunnel-related interfaces from the system.
-func (n *ovn) deleteLinkTunnel(tunnel string) error {
-	idx := 0
-	for {
-		tunName := n.getTunnelFullName(tunnel, idx)
+func (n *ovn) deleteLinkTunnel(tunnel string, ctx context.Context) error {
+	vswitch, err := n.state.OVS()
+	if err != nil {
+		return err
+	}
 
-		l, err := ip.LinkByName(tunName)
-		if err != nil {
-			// If interface doesn't exist assume there is no more valid tunnels.
-			return nil
+	integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
+	ports, err := vswitch.GetBridgePorts(ctx, integrationBridge)
+	if err != nil {
+		return err
+	}
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+
+	names := slices.Clone(ports)
+	for _, iface := range interfaces {
+		if !slices.Contains(names, iface.Name) {
+			names = append(names, iface.Name)
+		}
+	}
+
+	for _, name := range names {
+		if !tunnelInterfaceMatches(n.name, tunnel, name) {
+			continue
 		}
 
-		err = l.Delete()
+		ours, err := n.localTunnelOwnership(ctx, name)
 		if err != nil {
 			return err
 		}
 
-		idx += 1
+		if !ours {
+			continue
+		}
+
+		// Remove the OVS port while an untagged legacy link's type can still be verified.
+		if slices.Contains(ports, name) {
+			err = vswitch.DeleteBridgePort(ctx, integrationBridge, name)
+			if err != nil {
+				return err
+			}
+		}
+
+		if InterfaceExists(name) {
+			link := &ip.Link{Name: name}
+			err = link.Delete()
+			if err != nil {
+				return err
+			}
+		}
 	}
+
+	return nil
 }
 
-// deleteOVNTunnel removes tunnel-related objects from OVN.
-func (n *ovn) deleteOVNTunnel(tunnel string) error {
-	idx := 0
-	for {
-		tunName := n.getTunnelFullName(tunnel, idx)
+// deleteOVNTunnel removes network-owned logical tunnel ports, including non-contiguous leftovers.
+func (n *ovn) deleteOVNTunnel(tunnel string, contexts ...context.Context) error {
+	ctx, cancel := n.tunnelContext(contexts)
+	defer cancel()
 
-		integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
-
-		vswitch, err := n.state.OVS()
-		if err != nil {
-			return fmt.Errorf("Failed to connect to OVS: %w", err)
-		}
-
-		ports, err := vswitch.GetBridgePorts(context.TODO(), integrationBridge)
-		if err != nil {
-			return err
-		}
-
-		if !slices.Contains(ports, tunName) {
-			// If logical port doesn't exist assume there is no more valid ports.
-			return nil
-		}
-
-		err = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, tunName)
-		if err != nil {
-			return err
-		}
-
-		lspName := networkOVN.OVNSwitchPort(n.getTunnelLspName(tunName))
-		err = n.ovnnb.DeleteLogicalSwitchPort(context.TODO(), n.getIntSwitchName(), lspName)
-		if err != nil {
-			return err
-		}
-
-		idx += 1
+	ports, err := n.ovnnb.GetLogicalSwitchPorts(ctx, n.getIntSwitchName())
+	if err != nil {
+		return err
 	}
+
+	for port := range ports {
+		name, found := strings.CutPrefix(string(port), "tunnel-")
+		if !found || !tunnelInterfaceMatches(n.name, tunnel, name) {
+			continue
+		}
+
+		err = n.ovnnb.DeleteLogicalSwitchPort(ctx, n.getIntSwitchName(), port)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // getActiveChassisName retrieves the active chassis name.
-func (n *ovn) getActiveChassisName() (string, error) {
+func (n *ovn) getActiveChassisName(contexts ...context.Context) (string, error) {
+	ctx, cancel := n.tunnelContext(contexts)
+	defer cancel()
+
 	if n.UplinkName() == "none" {
 		return "", nil
 	}
 
 	// Get the current active chassis.
-	chassis, err := n.ovnsb.GetLogicalRouterPortActiveChassisHostname(context.TODO(), n.getRouterExtPortName())
+	chassis, err := n.ovnsb.GetLogicalRouterPortActiveChassisHostname(ctx, n.getRouterExtPortName())
 	if err != nil {
 		return "", err
 	}
 
 	return chassis, nil
+}
+
+func (n *ovn) tunnelContext(contexts []context.Context) (context.Context, context.CancelFunc) {
+	parent := n.state.ShutdownCtx
+	if len(contexts) > 0 {
+		parent = contexts[0]
+	}
+
+	return context.WithTimeout(parent, 30*time.Second)
+}
+
+// tunnelInterfaceMatches identifies a configured tunnel without treating partial names as ownership.
+func tunnelInterfaceMatches(networkName string, tunnelName string, interfaceName string) bool {
+	suffix, found := strings.CutPrefix(interfaceName, fmt.Sprintf("%s-%s-", networkName, tunnelName))
+	if !found {
+		return false
+	}
+
+	index, err := strconv.Atoi(suffix)
+	return err == nil && index >= 0 && strconv.Itoa(index) == suffix
+}
+
+// localTunnelOwnership checks tagged ownership first and rejects ambiguous legacy names.
+func (n *ovn) localTunnelOwnership(ctx context.Context, interfaceName string) (bool, error) {
+	vswitch, err := n.state.OVS()
+	if err != nil {
+		return false, err
+	}
+
+	owner, err := vswitch.GetInterfaceNetworkOwner(ctx, interfaceName)
+	if err != nil && !errors.Is(err, ovs.ErrNotFound) {
+		return false, err
+	}
+
+	if owner != "" {
+		return owner == strconv.FormatInt(n.id, 10), nil
+	}
+
+	if InterfaceExists(interfaceName) {
+		link, err := ip.LinkByName(interfaceName)
+		if err != nil {
+			return false, err
+		}
+
+		if link.Kind != "gretap" && link.Kind != "vxlan" {
+			return false, nil
+		}
+	} else if err == nil {
+		return false, api.StatusErrorf(http.StatusConflict, "Untagged OVS interface %q has no verifiable tunnel link; repair ownership before retrying", interfaceName)
+	}
+
+	ambiguous := false
+	err = n.state.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		names, err := tx.GetNetworksAllProjects(ctx)
+		if err != nil {
+			return err
+		}
+
+		for projectName, networkNames := range names {
+			for _, name := range networkNames {
+				id, info, nodes, err := tx.GetNetworkInAnyState(ctx, projectName, name)
+				if err != nil {
+					return err
+				}
+
+				if id == n.id || info.Type != "ovn" {
+					continue
+				}
+
+				node, exists := nodes[n.state.DB.Cluster.GetNodeID()]
+				if exists && (db.NetworkStateToAPIStatus(node.State) == api.NetworkStatusPrepared || db.NetworkStateToAPIStatus(node.State) == api.NetworkStatusStopped) {
+					continue
+				}
+
+				if exists && db.NetworkStateToAPIStatus(node.State) == api.NetworkStatusPending {
+					enabled, err := tx.OVNLocalInitializationEnabled(ctx, id)
+					if err != nil {
+						return err
+					}
+
+					if enabled {
+						continue
+					}
+				}
+
+				ovnLocalStates.Lock()
+				applied := ovnLocalStates.members[id].config
+				ovnLocalStates.Unlock()
+				for _, config := range []map[string]string{info.Config, applied} {
+					for _, tunnel := range n.getTunnels(config) {
+						if tunnelInterfaceMatches(name, tunnel, interfaceName) {
+							ambiguous = true
+							return nil
+						}
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if ambiguous {
+		return false, api.StatusErrorf(http.StatusConflict, "Untagged tunnel interface %q has ambiguous OVN ownership; repair ownership before retrying", interfaceName)
+	}
+
+	return true, nil
+}
+
+// installOVNTunnel proves ownership before creating local effects and rolls back its own new link.
+func (n *ovn) installOVNTunnel(ctx context.Context, name string, create func() error, up func() error) error {
+	ours, err := n.localTunnelOwnership(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	if !ours {
+		return api.StatusErrorf(http.StatusConflict, "Tunnel interface %q belongs to another OVN network", name)
+	}
+
+	err = create()
+	if err != nil {
+		return err
+	}
+
+	reverter := revert.New()
+	defer reverter.Fail()
+	reverter.Add(func() {
+		link := &ip.Link{Name: name}
+		_ = link.Delete()
+	})
+
+	err = up()
+	if err != nil {
+		return err
+	}
+
+	err = n.createOVNTunnel(name, ctx)
+	if err != nil {
+		return err
+	}
+
+	reverter.Success()
+	return nil
+}
+
+// createRepairable identifies shared setup left by an origin that crashed during local initialization.
+func (n *ovn) createRepairable() (bool, error) {
+	if n.Status() != api.NetworkStatusErrored || !n.operationAuthorized || (n.rawLocalStatus() != api.NetworkStatusStarting && n.rawLocalStatus() != api.NetworkStatusStopped) {
+		return false, nil
+	}
+
+	err := n.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+		token, err := tx.OVNNetworkOperationToken(ctx, n.project, n.name)
+		if err != nil {
+			return err
+		}
+
+		operation, err := tx.OVNNetworkOperation(ctx, n.project, n.name)
+		if err != nil {
+			return err
+		}
+
+		if n.ovnOperationToken == "" || token != n.ovnOperationToken || operation != "create" {
+			return api.StatusErrorf(http.StatusConflict, "OVN creation repair operation has ended")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+
+	_, err = n.ovnnb.GetLogicalSwitch(context.TODO(), n.getIntSwitchName())
+	if errors.Is(err, networkOVN.ErrNotFound) {
+		return false, nil
+	}
+
+	return err == nil, err
 }

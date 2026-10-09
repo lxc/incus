@@ -1427,6 +1427,11 @@ func AllowProfileUpdate(tx *db.ClusterTx, projectName, profileName string, req a
 
 // AllowProjectUpdate checks the new config to be set on a project is valid.
 func AllowProjectUpdate(tx *db.ClusterTx, projectName string, config map[string]string, changed []string) error {
+	err := allowProjectReferenceUpdate(context.Background(), tx, projectName, config)
+	if err != nil {
+		return err
+	}
+
 	info, err := fetchProject(tx, projectName, false)
 	if err != nil {
 		return err

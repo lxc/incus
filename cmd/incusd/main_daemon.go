@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
@@ -60,7 +61,19 @@ func (c *cmdDaemon) run(cmd *cobra.Command, args []string) error {
 	conf := defaultDaemonConfig()
 	conf.Group = c.flagGroup
 	conf.Trace = c.global.flagLogTrace
-	d := newDaemon(conf, sys.DefaultOS())
+	osInfo := sys.DefaultOS()
+	err := os.MkdirAll(osInfo.VarDir, 0o711)
+	if err != nil {
+		return err
+	}
+
+	// Keep the raw descriptor until process exit, including any remaining shutdown goroutines.
+	_, err = lockDaemon(osInfo.VarDir)
+	if err != nil {
+		return err
+	}
+
+	d := newDaemon(conf, osInfo)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, unix.SIGPWR)
@@ -71,7 +84,7 @@ func (c *cmdDaemon) run(cmd *cobra.Command, args []string) error {
 	chIgnore := make(chan os.Signal, 1)
 	signal.Notify(chIgnore, unix.SIGHUP)
 
-	err := d.Init()
+	err = d.Init()
 	if err != nil {
 		return err
 	}
@@ -92,4 +105,20 @@ func (c *cmdDaemon) run(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+}
+
+// lockDaemon excludes another daemon for the same data directory independently of listener state.
+func lockDaemon(varDir string) (int, error) {
+	fd, err := unix.Open(filepath.Join(varDir, "daemon.lock"), unix.O_CREAT|unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOFOLLOW, 0o600)
+	if err != nil {
+		return -1, fmt.Errorf("Failed opening daemon lock: %w", err)
+	}
+
+	err = unix.Flock(fd, unix.LOCK_EX|unix.LOCK_NB)
+	if err != nil {
+		_ = unix.Close(fd)
+		return -1, fmt.Errorf("Failed acquiring daemon lock (another daemon may still be running): %w", err)
+	}
+
+	return fd, nil
 }

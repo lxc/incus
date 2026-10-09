@@ -7,8 +7,11 @@ import (
 	"io"
 	"net/url"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
@@ -146,8 +149,10 @@ func (s *migrationSourceWs) do(migrateOp *operations.Operation) error {
 					}
 				}
 			},
-			ClusterMoveSourceName: s.clusterMoveSourceName,
-			StoragePool:           s.storagePool,
+			ClusterMoveSourceName:    s.clusterMoveSourceName,
+			NICMigrationOperation:    s.nicMigrationOperation,
+			NICMigrationTargetNodeID: s.nicMigrationTargetNodeID,
+			StoragePool:              s.storagePool,
 		},
 		AllowInconsistent:    s.allowInconsistent,
 		Devices:              s.devices,
@@ -173,6 +178,7 @@ func newMigrationSink(args *migrationSinkArgs) (*migrationSink, error) {
 			storagePool:  args.StoragePool,
 		},
 		url:                   args.URL,
+		nicMigrationOperation: args.NICMigrationOperation,
 		clusterMoveSourceName: args.ClusterMoveSourceName,
 		push:                  args.Push,
 		refresh:               args.Refresh,
@@ -282,6 +288,7 @@ func (c *migrationSink) do(instOp *operationlock.InstanceOperation) error {
 				}
 			},
 			ClusterMoveSourceName: c.clusterMoveSourceName,
+			NICMigrationOperation: c.nicMigrationOperation,
 			StoragePool:           c.storagePool,
 		},
 		InstanceOperation:   instOp,
@@ -297,4 +304,38 @@ func (c *migrationSink) do(instOp *operationlock.InstanceOperation) error {
 	}
 
 	return nil
+}
+
+// ovnNICMigrationOperationFromURL is used only for authenticated cluster same-name requests.
+func ovnNICMigrationOperationFromURL(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+
+	id := path.Base(u.Path)
+	parsed, err := uuid.Parse(id)
+	if err != nil || parsed == uuid.Nil || parsed.String() != id || path.Dir(u.Path) != "/1.0/operations" || u.Scheme != "https" || u.Host == "" || u.RawQuery != "" || u.Fragment != "" {
+		return "", errors.New("Invalid original cluster migration operation URL")
+	}
+
+	return id, nil
+}
+
+// ovnNICMigrationSourceWait keeps cleanup errors visible while following positive handover.
+func ovnNICMigrationSourceWait(sourceErr error, operation string, read func(string) (bool, error)) (bool, error) {
+	if operation == "" {
+		return false, sourceErr
+	}
+
+	committed, err := read(operation)
+	if err != nil {
+		return false, errors.Join(sourceErr, err)
+	}
+
+	if !committed {
+		return false, errors.Join(sourceErr, errors.New("Staged migration has no positive durable handover"))
+	}
+
+	return committed, nil
 }

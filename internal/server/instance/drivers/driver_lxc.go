@@ -1661,7 +1661,7 @@ func (d *lxc) deviceStop(dev device.Device, instanceRunning bool, stopHookNetnsP
 		}
 	}
 
-	return nil
+	return completeLiveOVNStop(dev, instanceRunning)
 }
 
 // deviceDetachNIC detaches a NIC device from a container.
@@ -3040,6 +3040,16 @@ func (d *lxc) Start(stateful bool) error {
 		return err
 	}
 
+	// Must be run prior to creating the operation lock.
+	if d.statusCode() == api.Stopped {
+		err = d.retryOVNStopBeforeStart(func() error {
+			return d.retryStoppedOVNStop(d, d.backendStatusCode, func(dev device.Device) error { return d.deviceStop(dev, false, "") }, d.cleanupStoppedRuntime, d.ensureOVNNICSourceHookCleanupComplete)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	// Setup a new operation.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
@@ -3227,6 +3237,13 @@ func (d *lxc) Start(stateful bool) error {
 
 		// Return the actual error
 		op.Done(err)
+
+		// No stop hook settles NICs of a container that never spawned.
+		cleanupErr := d.Stop(false)
+		if cleanupErr != nil && !errors.Is(cleanupErr, ErrInstanceIsStopped) {
+			err = errors.Join(err, fmt.Errorf("Failed cleaning up devices after failed start: %w", cleanupErr))
+		}
+
 		return err
 	}
 
@@ -3355,6 +3372,10 @@ func (d *lxc) Stop(stateful bool) error {
 
 	// Must be run prior to creating the operation lock.
 	if !d.IsRunning() {
+		if !stateful && d.statusCode() == api.Stopped {
+			return d.retryStoppedOVNStop(d, d.backendStatusCode, func(dev device.Device) error { return d.deviceStop(dev, false, "") }, d.cleanupStoppedRuntime, d.ensureOVNNICSourceHookCleanupComplete)
+		}
+
 		return ErrInstanceIsStopped
 	}
 
@@ -3379,6 +3400,12 @@ func (d *lxc) Stop(stateful bool) error {
 
 	if op.Action() == "stop" {
 		d.logger.Info("Stopping instance", ctxMap)
+	}
+
+	err = d.captureOVNStopSource(d)
+	if err != nil {
+		op.Done(err)
+		return err
 	}
 
 	// Forcefully stop any forkfile process if running.
@@ -3440,18 +3467,19 @@ func (d *lxc) Stop(stateful bool) error {
 			return err
 		}
 
-		err = op.Wait(context.Background())
-		if err != nil && d.IsRunning() {
-			return err
-		}
+		err = statefulStopCleanupResult(op.Wait(context.Background()), d.IsRunning, func() error {
+			d.stateful = true
+			err := d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.UpdateInstanceStatefulFlag(ctx, d.id, true)
+			})
+			if err != nil {
+				return fmt.Errorf("Failed updating instance stateful flag: %w", err)
+			}
 
-		d.stateful = true
-
-		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-			return tx.UpdateInstanceStatefulFlag(ctx, d.id, true)
+			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("Failed updating instance stateful flag: %w", err)
+			return err
 		}
 
 		d.logger.Info("Stopped instance", ctxMap)
@@ -3502,6 +3530,7 @@ func (d *lxc) Stop(stateful bool) error {
 
 		waitErr := op.Wait(ctx)
 		if waitErr != nil {
+			err = errors.Join(err, waitErr)
 			op.Done(err)
 			return err
 		}
@@ -3545,6 +3574,11 @@ func (d *lxc) Shutdown(timeout time.Duration) error {
 			return fmt.Errorf("The instance cannot be cleanly shutdown as in %s status", statusCode)
 		}
 
+		// An ordinary stop retry still completes outstanding original NIC cleanup.
+		if statusCode == api.Stopped {
+			return d.retryStoppedOVNStop(d, d.backendStatusCode, func(dev device.Device) error { return d.deviceStop(dev, false, "") }, d.cleanupStoppedRuntime, d.ensureOVNNICSourceHookCleanupComplete)
+		}
+
 		return ErrInstanceIsStopped
 	}
 
@@ -3552,10 +3586,16 @@ func (d *lxc) Shutdown(timeout time.Duration) error {
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart}, true, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
-			// An existing matching operation has now succeeded, return.
-			return nil
+			// A prior operation result does not acknowledge pending source debt.
+			return d.ensureOVNStopCleanupComplete()
 		}
 
+		return err
+	}
+
+	err = d.captureOVNStopSource(d)
+	if err != nil {
+		op.Done(err)
 		return err
 	}
 
@@ -3626,25 +3666,12 @@ func (d *lxc) Shutdown(timeout time.Duration) error {
 	// have been cleaned up. However if the operation has failed for another reason we collect the error here.
 	err = op.Wait(ctx)
 	status := d.statusCode()
-	if status != api.Stopped {
-		errPrefix := fmt.Errorf("Failed shutting down instance, status is %q", status)
-
-		if err != nil {
-			return fmt.Errorf("%s: %w", errPrefix.Error(), err)
-		}
-
-		return errPrefix
-	} else if op.Action() == "stop" {
-		// If instance stopped, send lifecycle event (even if there has been an error cleaning up).
+	if status == api.Stopped && op.Action() == "stop" {
+		// This event records the stopped workload even if teardown failed.
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceShutdown.Event(d, nil))
 	}
 
-	// Now handle errors from shutdown sequence and return to caller if wasn't completed cleanly.
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return shutdownCleanupResult(err, status, d.ensureOVNStopCleanupComplete)
 }
 
 // Restart restart the instance.
@@ -3718,10 +3745,9 @@ func (d *lxc) onStopNS(args map[string]string) error {
 	// Stop the DHCP client if any.
 	d.stopDHCPClient()
 
-	// Clean up devices.
-	d.cleanupDevices(false, netns)
-
-	return nil
+	// Return the cleanup result without completing the operation while the
+	// namespace/process stop is still in progress. onStop keeps its lifetime.
+	return d.cleanupDevices(false, netns)
 }
 
 // onStop is triggered by LXC's post-stop hook once a container is shutdown and after the
@@ -3745,15 +3771,13 @@ func (d *lxc) onStop(args map[string]string) error {
 	d.fromHook = true
 
 	// Record power state.
-	err = d.VolatileSet(map[string]string{
-		"volatile.last_state.power": instance.PowerStateStopped,
-		"volatile.last_state.ready": "false",
-	})
+	err = d.recordOVNNICSourceHookStopped()
 	if err != nil {
 		// Don't return an error here as we still want to cleanup the instance even if DB not available.
 		d.logger.Error("Failed recording last power state", logger.Ctx{"err": err})
 	}
 
+	powerErr := err
 	d.numaReservationClear()
 
 	go func(d *lxc, target string, op *operationlock.InstanceOperation) {
@@ -3770,75 +3794,18 @@ func (d *lxc) onStop(args map[string]string) error {
 
 		d.logger.Debug("Instance stopped, cleaning up")
 
-		// Wait for any file operations to complete.
-		// This is to required so we can actually unmount the container.
-		d.stopForkfile(false)
+		cleanupErr := d.acknowledgeOVNNICSourceTerminal(d.cleanupStoppedRuntime())
 
-		// Clean up devices.
-		d.cleanupDevices(false, "")
-
-		// Stop the DHCP client if it's somehow still around.
-		d.stopDHCPClient()
-
-		// Remove directory ownership (to avoid issue if uidmap is reused)
-		err := os.Chown(d.Path(), 0, 0)
-		if err != nil {
-			op.Done(fmt.Errorf("Failed clearing ownership: %w", err))
-			return
+		// Source NIC debt from onStopNS is durable and survives a separately
+		// loaded hook instance. Do not turn it into a restart/delete acknowledgment.
+		if cleanupErr == nil {
+			cleanupErr = d.finishOVNStopCleanupWithBarrier(d.ensureOVNNICSourceHookCleanupComplete)
 		}
 
-		err = os.Chmod(d.Path(), 0o100)
-		if err != nil {
-			op.Done(fmt.Errorf("Failed clearing permissions: %w", err))
+		cleanupErr = errors.Join(powerErr, cleanupErr, d.ensureOVNNICSourceHookCleanupComplete())
+		if cleanupErr != nil {
+			op.Done(cleanupErr)
 			return
-		}
-
-		// Stop the storage for this container
-		err = d.unmount()
-		if err != nil && !errors.Is(err, storageDrivers.ErrInUse) {
-			err = fmt.Errorf("Failed unmounting instance: %w", err)
-			op.Done(err)
-			return
-		}
-
-		// Unload the apparmor profile
-		err = apparmor.InstanceUnload(d.state.OS, d)
-		if err != nil {
-			op.Done(fmt.Errorf("Failed to destroy apparmor namespace: %w", err))
-			return
-		}
-
-		// Clean all the unix devices
-		err = d.removeUnixDevices()
-		if err != nil {
-			op.Done(fmt.Errorf("Failed to remove unix devices: %w", err))
-			return
-		}
-
-		// Clean all the disk devices
-		err = d.removeDiskDevices()
-		if err != nil {
-			op.Done(fmt.Errorf("Failed to remove disk devices: %w", err))
-			return
-		}
-
-		// Stop dedicated LXCFS.
-		if util.PathExists(filepath.Join(d.DevicesPath(), "lxcfs", "proc")) && util.PathExists(filepath.Join(d.RunPath(), "lxcfs.yaml")) {
-			// Import the running LXCFS.
-			lxcfs, err := subprocess.ImportProcess(filepath.Join(d.RunPath(), "lxcfs.yaml"))
-			if err != nil && !os.IsExist(err) {
-				op.Done(fmt.Errorf("Failed to stop LXCFS: %w", err))
-				return
-			}
-
-			// Stop LXCFS.
-			err = lxcfs.Stop()
-			if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
-				op.Done(fmt.Errorf("Failed to stop LXCFS: %w", err))
-				return
-			}
-
-			_ = unix.Unmount(filepath.Join(d.DevicesPath(), "lxcfs"), unix.MNT_DETACH)
 		}
 
 		// Determine if instance should be auto-restarted.
@@ -3905,42 +3872,30 @@ func (d *lxc) onStop(args map[string]string) error {
 // cleanupDevices performs any needed device cleanup steps when container is stopped.
 // Accepts a stopHookNetnsPath argument which is required when run from the onStopNS hook before the
 // container's network namespace is unmounted (which is required for NIC device cleanup).
-func (d *lxc) cleanupDevices(instanceRunning bool, stopHookNetnsPath string) {
-	for _, entry := range d.expandedDevices.Reversed() {
-		// Only stop NIC devices when run from the onStopNS hook, and stop all other devices when run from
-		// the onStop hook. This way disk devices are stopped after the instance has been fully stopped.
-		if (stopHookNetnsPath != "" && entry.Config["type"] != "nic") || (stopHookNetnsPath == "" && entry.Config["type"] == "nic") {
-			continue
-		}
+func (d *lxc) cleanupDevices(instanceRunning bool, stopHookNetnsPath string) error {
+	return d.cleanupStoppedDevices(d.expandedDevices.Reversed(), func(entry deviceConfig.DeviceNamed) bool {
+		// NICs run in onStopNS; all other devices run after namespace closure.
+		return lxcStopCleanupSelect(entry, stopHookNetnsPath)
+	}, func(entry deviceConfig.DeviceNamed) (device.Device, error) {
+		return d.deviceLoad(d, entry.Name, entry.Config, false)
+	}, func(dev device.Device) error {
+		return d.deviceStop(dev, instanceRunning, stopHookNetnsPath)
+	})
+}
 
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
-		if err != nil {
-			if errors.Is(err, device.ErrUnsupportedDevType) {
-				continue // Skip unsupported device (allows for mixed instance type profiles).
-			}
-
-			// Just log an error, but still allow the device to be stopped if usable device returned.
-			d.logger.Error("Failed stop validation for device", logger.Ctx{"device": entry.Name, "err": err})
-		}
-
-		// If a usable device was returned from deviceLoad try to stop anyway, even if validation fails.
-		// This allows for the scenario where a new version has additional validation restrictions
-		// than older versions and we still need to allow previously valid devices to be stopped even if
-		// they are no longer considered valid.
-		if dev != nil {
-			err = d.deviceStop(dev, instanceRunning, stopHookNetnsPath)
-			if err != nil {
-				d.logger.Error("Failed to stop device", logger.Ctx{"device": dev.Name(), "err": err})
-			}
-		}
-	}
+func lxcStopCleanupSelect(entry deviceConfig.DeviceNamed, stopHookNetnsPath string) bool {
+	return (stopHookNetnsPath != "" && entry.Config["type"] == "nic") ||
+		(stopHookNetnsPath == "" && entry.Config["type"] != "nic")
 }
 
 // cleanupFailedMigrationRestore removes devices prepared by startCommon when CRIU restore fails before the stop hooks can run.
 func (d *lxc) cleanupFailedMigrationRestore() {
-	d.cleanupDevices(false, "")
+	err := d.cleanupDevices(false, "")
+	if err != nil {
+		d.logger.Error("Failed cleaning devices after migration restore failure", logger.Ctx{"err": err})
+	}
 
-	err := d.removeUnixDevices()
+	err = d.removeUnixDevices()
 	if err != nil {
 		d.logger.Error("Failed to remove Unix devices after migration restore failure", logger.Ctx{"err": err})
 	}
@@ -4345,6 +4300,13 @@ func (d *lxc) Snapshot(name string, expiry time.Time, stateful bool) error {
 // Restore restores a snapshot.
 func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly bool) error {
 	var ctxMap logger.Ctx
+	wasRunning := d.IsRunning()
+	if !wasRunning {
+		err := d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			return fmt.Errorf("Cannot restore before original OVN NIC cleanup: %w", err)
+		}
+	}
 
 	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
 	if err != nil {
@@ -4352,6 +4314,13 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 	}
 
 	defer op.Done(nil)
+	if !wasRunning {
+		err = d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			op.Done(err)
+			return fmt.Errorf("Cannot restore before original OVN NIC cleanup: %w", err)
+		}
+	}
 
 	// Initialize storage interface for the container.
 	pool, err := storagePools.LoadByInstance(d.state, d)
@@ -4367,7 +4336,6 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 	}
 
 	// Stop the container.
-	wasRunning := d.IsRunning()
 	if wasRunning {
 		ephemeral := d.IsEphemeral()
 		if ephemeral {
@@ -4411,6 +4379,14 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 		}
 
 		defer op.Done(nil)
+	}
+
+	if wasRunning {
+		err = d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			op.Done(err)
+			return fmt.Errorf("Cannot restore before original OVN NIC cleanup: %w", err)
+		}
 	}
 
 	ctxMap = logger.Ctx{
@@ -4471,7 +4447,7 @@ func (d *lxc) Restore(sourceContainer instance.Instance, stateful bool, diskOnly
 		// Restore the configuration.
 		args = db.InstanceArgs{
 			Architecture: sourceContainer.Architecture(),
-			Config:       sourceContainer.LocalConfig(),
+			Config:       normalizeOVNSnapshotConfig(sourceContainer.LocalConfig(), sourceContainer.ExpandedDevices()),
 			Description:  sourceContainer.Description(),
 			Devices:      sourceContainer.LocalDevices(),
 			Ephemeral:    sourceContainer.IsEphemeral(),
@@ -4630,6 +4606,13 @@ func (d *lxc) Delete(force bool, cleanupDependencies bool) error {
 
 // Delete deletes the instance without creating an operation lock.
 func (d *lxc) delete(force bool, cleanupDependencies bool) error {
+	if !d.IsSnapshot() {
+		err := d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			return err
+		}
+	}
+
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -4980,7 +4963,7 @@ func (d *lxc) CGroupSet(key string, value string) error {
 }
 
 // Update applies updated config.
-func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
+func (d *lxc) Update(args db.InstanceArgs, userRequested bool) (err error) {
 	// Setup a new operation
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionCreate, operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
@@ -4988,6 +4971,13 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	defer op.Done(nil)
+	var releaseOVNUpdate func() error
+	ovnUpdateCommitted := false
+	defer func() {
+		if releaseOVNUpdate != nil {
+			err = errors.Join(err, d.finishOVNDeviceUpdate(ovnUpdateCommitted, releaseOVNUpdate))
+		}
+	}()
 
 	// Set sane defaults for unset keys
 	if args.Project == "" {
@@ -5008,6 +4998,20 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 
 	if args.Profiles == nil {
 		args.Profiles = []api.Profile{}
+	}
+
+	if userRequested && !d.IsSnapshot() {
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.ValidateInstanceOVNConfigUpdate(ctx, d.id, args.Config)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	releaseOVNUpdate, err = d.reserveOVNDeviceUpdate(db.ExpandInstanceDevices(args.Devices, args.Profiles))
+	if err != nil {
+		return err
 	}
 
 	if userRequested {
@@ -5470,6 +5474,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 						oldMemswLimit = -1
 					}
 				}
+
 				oldLimit, err := cg.GetMemoryLimit()
 				if err != nil {
 					oldLimit = -1
@@ -5671,7 +5676,7 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	// Re-generate the instance-id if needed.
-	if !d.IsSnapshot() && d.needsNewInstanceID(changedConfig, oldExpandedDevices) {
+	if !d.IsSnapshot() && needsNewInstanceID(changedConfig, oldLocalConfig, d.localConfig, oldExpandedDevices, d.expandedDevices) {
 		err = d.resetInstanceID()
 		if err != nil {
 			return err
@@ -5700,6 +5705,13 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			return err
 		}
 
+		if userRequested {
+			err = tx.ValidateInstanceOVNConfigUpdate(ctx, d.id, d.localConfig)
+			if err != nil {
+				return err
+			}
+		}
+
 		err = cluster.UpdateInstanceConfig(ctx, tx.Tx(), int64(object.ID), d.localConfig)
 		if err != nil {
 			return err
@@ -5725,6 +5737,9 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 	if err != nil {
 		return fmt.Errorf("Failed to update database: %w", err)
 	}
+
+	ovnUpdateCommitted = true
+	undoChanges = false
 
 	err = d.UpdateBackupFile()
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
@@ -5791,9 +5806,6 @@ func (d *lxc) Update(args db.InstanceArgs, userRequested bool) error {
 			}
 		}
 	}
-
-	// Success, update the closure to mark that the changes should be kept.
-	undoChanges = false
 
 	// Update the security tags in the authorizer.
 	if !d.isSnapshot && slices.Contains(changedConfig, "security.tags") {
@@ -6191,7 +6203,12 @@ fi
 }
 
 // MigrateSend sends an instance to a target for migration.
-func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
+func (d *lxc) MigrateSend(args instance.MigrateSendArgs) (resultErr error) {
+	defer func() {
+		if resultErr != nil {
+			resultErr = errors.Join(resultErr, d.abortEmptyOVNNICMigration())
+		}
+	}()
 	d.logger.Debug("Migration send starting")
 	defer d.logger.Debug("Migration send stopped")
 
@@ -6206,6 +6223,30 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionMigrate, nil, false, true)
 	if err != nil {
 		return err
+	}
+
+	if args.NICMigrationOperation != "" && d.ovnMigrationSource != args.NICMigrationOperation {
+		op.Done(errors.New("Migration source operation binding changed"))
+		return errors.New("Migration source operation binding changed")
+	}
+
+	err = requireStagedLXCDelayedHandover(d.ovnMigrationSource, liblxc.RuntimeLiblxcVersionAtLeast(liblxc.Version(), 2, 0, 4))
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+	// Preserve original effects or verify stopped cleanup before cluster ownership moves.
+	if args.ClusterMoveSourceName != "" {
+		if d.IsRunning() {
+			err = d.captureOVNStopSource(d)
+		} else {
+			err = d.ensureOVNStopCleanupComplete()
+		}
+
+		if err != nil {
+			op.Done(err)
+			return err
+		}
 	}
 
 	// If not running, stop any forkfile instance.
@@ -6453,6 +6494,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Don't defer close this one as its needed potentially after this function has ended.
 	dumpSuccess := make(chan error, 1)
+	pendingFinalDump := false
 
 	g.Go(func() error {
 		d.logger.Debug("Migrate send transfer started")
@@ -6605,6 +6647,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 					d.logger.Debug("The other side does not support pre-copy")
 				}
 
+				pendingFinalDump = true
 				go func() {
 					d.logger.Debug("Final CRIU dump started")
 					defer d.logger.Debug("Final CRIU dump stopped")
@@ -6627,6 +6670,7 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 				select {
 				// The checkpoint failed, let's just abort.
 				case err = <-dumpSuccess:
+					pendingFinalDump = false
 					return err
 				// The dump finished, let's continue on to the restore.
 				case <-dumpDone:
@@ -6689,19 +6733,12 @@ func (d *lxc) MigrateSend(args instance.MigrateSendArgs) error {
 
 	{
 		// Wait for routines to finish and collect first error.
-		err := g.Wait()
-
-		if args.Live {
-			restoreSuccess <- err == nil
-
-			if err == nil {
-				err := <-dumpSuccess
-				if err != nil {
-					d.logger.Error("Dump failed after successful restore", logger.Ctx{"err": err})
-				}
-			}
+		transferErr := g.Wait()
+		if transferErr == nil {
+			transferErr = d.commitOVNNICMigrationHandover()
 		}
 
+		err := migrationDumpCleanupResult(args.Live, pendingFinalDump, transferErr, restoreSuccess, dumpSuccess, d.ensureOVNStopCleanupComplete)
 		if err != nil {
 			op.Done(err)
 			return err
@@ -6854,6 +6891,10 @@ func (d *lxc) resetContainerDiskIdmap(srcIdmap *idmap.Set) error {
 
 // MigrateReceive receives an instance being migrated from a source.
 func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
+	if args.NICMigrationOperation != "" && d.ovnMigrationTarget != args.NICMigrationOperation {
+		return errors.New("Migration target operation binding changed")
+	}
+
 	d.logger.Debug("Migration receive starting")
 	defer d.logger.Debug("Migration receive stopped")
 
@@ -7370,6 +7411,7 @@ func (d *lxc) MigrateReceive(args instance.MigrateReceiveArgs) error {
 
 			// Currently we only do a single CRIU pre-dump so we can hardcode "final"
 			// here since we know that "final" is the folder for CRIU's final dump.
+			d.ovnMigrationRestoreAttempted = d.ovnMigrationTarget != ""
 			err = d.migrate(&criuMigrationArgs)
 			if err != nil {
 				d.cleanupFailedMigrationRestore()
@@ -7562,6 +7604,13 @@ func (d *lxc) migrate(args *instance.CriuMigrationArgs) error {
 			}
 		}
 	} else {
+		if args.Cmd == liblxc.MIGRATE_DUMP && args.Stop {
+			err = d.captureOVNStopSource(d)
+			if err != nil {
+				return err
+			}
+		}
+
 		// Load the go-lxc struct
 		var cc *liblxc.Container
 		if d.expandedConfig["raw.lxc"] != "" {
@@ -7850,6 +7899,7 @@ func (d *lxc) templateApplyNow(trigger instance.TemplateTrigger) error {
 					return err
 				}
 			}
+
 			defer logger.WarnOnErrorExcept(w.Close, []error{os.ErrClosed}, "Failed to close file")
 
 			// Read the template
@@ -9378,6 +9428,11 @@ func (d *lxc) statusCode() api.StatusCode {
 		}
 	}
 
+	return d.backendStatusCode()
+}
+
+// backendStatusCode reads the actual instance state, ignoring any ongoing operation.
+func (d *lxc) backendStatusCode() api.StatusCode {
 	lxcState, err := d.getLxcState()
 	if err != nil {
 		return api.Error
@@ -10025,4 +10080,106 @@ func (d *lxc) DeleteBitmap(deviceName string, bitmapName string) error {
 // GetBitmaps fetches dirty bitmaps. Not supported by containers.
 func (d *lxc) GetBitmaps(deviceName string) ([]api.StorageVolumeBitmap, error) {
 	return nil, instance.ErrNotImplemented
+}
+
+// cleanupStoppedRuntime is shared by normal teardown and original-source stopped retry.
+func (d *lxc) cleanupStoppedRuntime() error {
+	// Wait for any file operations to complete.
+	// This is to required so we can actually unmount the container.
+	d.stopForkfile(false)
+
+	// Clean up devices.
+	cleanupErr := d.cleanupDevices(false, "")
+
+	// Stop the DHCP client if it's somehow still around.
+	d.stopDHCPClient()
+
+	// Remove directory ownership (to avoid issue if uidmap is reused)
+	err := os.Chown(d.Path(), 0, 0)
+	if err != nil {
+		return errors.Join(cleanupErr, fmt.Errorf("Failed clearing ownership: %w", err))
+	}
+
+	err = os.Chmod(d.Path(), 0o100)
+	if err != nil {
+		return errors.Join(cleanupErr, fmt.Errorf("Failed clearing permissions: %w", err))
+	}
+
+	// Stop the storage for this container
+	err = d.unmount()
+	if err != nil && !errors.Is(err, storageDrivers.ErrInUse) {
+		err = fmt.Errorf("Failed unmounting instance: %w", err)
+		return errors.Join(cleanupErr, err)
+	}
+
+	// Unload the apparmor profile
+	err = apparmor.InstanceUnload(d.state.OS, d)
+	if err != nil {
+		return errors.Join(cleanupErr, fmt.Errorf("Failed to destroy apparmor namespace: %w", err))
+	}
+
+	// Clean all the unix devices
+	err = d.removeUnixDevices()
+	if err != nil {
+		return errors.Join(cleanupErr, fmt.Errorf("Failed to remove unix devices: %w", err))
+	}
+
+	// Clean all the disk devices
+	err = d.removeDiskDevices()
+	if err != nil {
+		return errors.Join(cleanupErr, fmt.Errorf("Failed to remove disk devices: %w", err))
+	}
+
+	// Stop dedicated LXCFS.
+	if util.PathExists(filepath.Join(d.DevicesPath(), "lxcfs", "proc")) && util.PathExists(filepath.Join(d.RunPath(), "lxcfs.yaml")) {
+		// Import the running LXCFS.
+		lxcfs, err := subprocess.ImportProcess(filepath.Join(d.RunPath(), "lxcfs.yaml"))
+		if err != nil && !os.IsExist(err) {
+			return errors.Join(cleanupErr, fmt.Errorf("Failed to stop LXCFS: %w", err))
+		}
+
+		// Stop LXCFS.
+		err = lxcfs.Stop()
+		if err != nil && !errors.Is(err, subprocess.ErrNotRunning) {
+			return errors.Join(cleanupErr, fmt.Errorf("Failed to stop LXCFS: %w", err))
+		}
+
+		_ = unix.Unmount(filepath.Join(d.DevicesPath(), "lxcfs"), unix.MNT_DETACH)
+	}
+
+	return cleanupErr
+}
+
+// RetryOVNNICCleanup replays original local debt without stopping a transferred target.
+func (d *lxc) RetryOVNNICCleanup() error {
+	plan, err := d.originalOVNCleanupRetry()
+	if err != nil || plan == nil {
+		return err
+	}
+
+	if !plan.Transferred {
+		err = d.Stop(false)
+		if errors.Is(err, ErrInstanceIsStopped) {
+			return nil
+		}
+
+		return err
+	}
+
+	return d.retryTransferredOVNStop(d, *plan, func(source *network.OVNInstanceNICStopOpts) (device.Device, error) {
+		n, err := d.loadOVNStopNetwork(source.NetworkID)
+		if err != nil {
+			return nil, err
+		}
+
+		dev, err := device.NewOVNStopCleanup(d, d.state, n, source)
+		if err != nil {
+			return nil, err
+		}
+
+		err = d.authorizeOVNDeviceUpdate(dev)
+		return dev, err
+	}, func(dev device.Device) error {
+		return d.deviceStop(dev, false, "")
+	})
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
+	serverState "github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 )
@@ -182,15 +183,9 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 		return response.BadRequest(err)
 	}
 
-	// Requests forwarded from another member carry the original protocol.
-	protocol := r.Context().Value(request.CtxForwardedProtocol)
-	if protocol == nil || protocol == "" {
-		protocol = r.Context().Value(request.CtxProtocol)
-	}
-
-	// Check if the cluster member is evacuated.
-	if s.ServerClustered && req.Action != "stop" && protocol != "cluster" && s.DB.Cluster.LocalNodeIsEvacuated() {
-		return response.Forbidden(errors.New("Cluster member is evacuated"))
+	err = instanceStateMaintenanceAdmission(s, r, req.Action, nil)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// Don't mess with instances while in setup mode.
@@ -221,6 +216,16 @@ func instanceStatePut(d *Daemon, r *http.Request) response.Response {
 	}
 
 	return operations.OperationResponse(op)
+}
+
+// instanceStateMaintenanceAdmission preserves the original protocol and stop exemptions.
+func instanceStateMaintenanceAdmission(s *serverState.State, r *http.Request, action string, next func() error) error {
+	protocol := r.Context().Value(request.CtxForwardedProtocol)
+	if protocol == nil || protocol == "" {
+		protocol = r.Context().Value(request.CtxProtocol)
+	}
+
+	return instanceMaintenanceAdmission(s, s.ServerClustered && action != "stop" && protocol != "cluster", next)
 }
 
 func instanceActionToOpType(action string) (operationtype.Type, error) {

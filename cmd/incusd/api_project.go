@@ -875,7 +875,7 @@ func projectChange(ctx context.Context, s *state.State, project *api.Project, re
 				}
 			} else {
 				// Delete the project-specific default profile.
-				err = cluster.DeleteProfile(ctx, tx.Tx(), project.Name, api.ProjectDefaultName)
+				err = projecthelpers.DeleteProfileWithReferences(ctx, tx, project.Name, api.ProjectDefaultName)
 				if err != nil {
 					return fmt.Errorf("Delete project default profile: %w", err)
 				}
@@ -1119,7 +1119,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 			return fmt.Errorf("Fetch project config %q: %w", name, err)
 		}
 
-		return nil
+		return projecthelpers.CheckProjectReferenceDeletion(ctx, tx, id)
 	})
 	if err != nil {
 		return response.SmartError(err)
@@ -1409,7 +1409,7 @@ func projectDelete(d *Daemon, r *http.Request) response.Response {
 	}
 
 	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
-		return cluster.DeleteProject(ctx, tx.Tx(), name)
+		return projecthelpers.DeleteProjectWithReferences(ctx, tx, name, id)
 	})
 	if err != nil {
 		return response.SmartError(err)

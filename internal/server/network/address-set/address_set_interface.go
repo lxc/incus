@@ -23,7 +23,7 @@ type NetworkAddressSet interface {
 	validateConfig(config *api.NetworkAddressSetPut) error
 
 	// Modifications.
-	Update(config *api.NetworkAddressSetPut, clientType request.ClientType) error
+	Update(config *api.NetworkAddressSetPut, clientType request.ClientType, beforeOVN func(map[string]int64) error) error
 	Rename(newName string) error
 	Delete() error
 }

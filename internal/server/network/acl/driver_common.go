@@ -20,9 +20,9 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	addressset "github.com/lxc/incus/v7/internal/server/network/address-set"
+	"github.com/lxc/incus/v7/internal/server/network/ovn"
 	"github.com/lxc/incus/v7/internal/server/state"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
-	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
 	"github.com/lxc/incus/v7/shared/revert"
@@ -128,60 +128,9 @@ func (d *common) Info() *api.NetworkACL {
 }
 
 // usedBy returns a list of API endpoints referencing this ACL.
-// If firstOnly is true then search stops at first result.
+// If firstOnly is true then at most one endpoint is returned.
 func (d *common) usedBy(firstOnly bool) ([]string, error) {
-	usedBy := []string{}
-
-	// Find all networks, profiles and instance NICs that use this Network ACL.
-	err := UsedBy(d.state, d.projectName, func(ctx context.Context, tx *db.ClusterTx, _ []string, usageType any, _ string, _ map[string]string) error {
-		switch u := usageType.(type) {
-		case db.InstanceArgs:
-			uri := fmt.Sprintf("/%s/instances/%s", version.APIVersion, u.Name)
-			if u.Project != api.ProjectDefaultName {
-				uri += fmt.Sprintf("?project=%s", u.Project)
-			}
-
-			usedBy = append(usedBy, uri)
-		case *api.Network:
-			uri := fmt.Sprintf("/%s/networks/%s", version.APIVersion, u.Name)
-			if d.projectName != api.ProjectDefaultName {
-				uri += fmt.Sprintf("?project=%s", d.projectName)
-			}
-
-			usedBy = append(usedBy, uri)
-		case dbCluster.Profile:
-			uri := fmt.Sprintf("/%s/profiles/%s", version.APIVersion, u.Name)
-			if u.Project != api.ProjectDefaultName {
-				uri += fmt.Sprintf("?project=%s", u.Project)
-			}
-
-			usedBy = append(usedBy, uri)
-		case *api.NetworkACL:
-			uri := fmt.Sprintf("/%s/network-acls/%s", version.APIVersion, u.Name)
-			if d.projectName != api.ProjectDefaultName {
-				uri += fmt.Sprintf("?project=%s", d.projectName)
-			}
-
-			usedBy = append(usedBy, uri)
-		default:
-			return fmt.Errorf("Unrecognised usage type %T", u)
-		}
-
-		if firstOnly {
-			return db.ErrInstanceListStop
-		}
-
-		return nil
-	}, d.Info().Name)
-	if err != nil {
-		if errors.Is(err, db.ErrInstanceListStop) {
-			return usedBy, nil
-		}
-
-		return nil, fmt.Errorf("Failed getting ACL usage: %w", err)
-	}
-
-	return usedBy, nil
+	return d.referenceUsedBy(firstOnly)
 }
 
 // UsedBy returns a list of API endpoints referencing this ACL.
@@ -652,7 +601,7 @@ func (d *common) validateFirewallUsage(config *api.NetworkACLPut) error {
 }
 
 // Update applies the supplied config to the ACL.
-func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType) error {
+func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType, beforeOVN func(map[string]int64) error) (retErr error) {
 	// Validate the configuration.
 	err := d.validateConfig(config)
 	if err != nil {
@@ -665,13 +614,32 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		return err
 	}
 
+	var physicalNB *ovn.NB
+	if clientType == request.ClientTypeNormal {
+		var guardErr error
+		physicalNB, guardErr = d.physicalReferenceClient(true)
+		if guardErr != nil {
+			return guardErr
+		}
+	}
+
+	var rollbackErr error
 	reverter := revert.New()
-	defer reverter.Fail()
+	defer func() {
+		reverter.Fail()
+		if rollbackErr != nil {
+			retErr = errors.Join(retErr, fmt.Errorf("Resource catalog rollback refused; published configuration retained: %w", rollbackErr))
+		}
+	}()
 
 	if clientType == request.ClientTypeNormal {
 		oldConfig := d.info.NetworkACLPut
 
 		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+			if referenceErr != nil {
+				return referenceErr
+			}
 			// Update database. Its important this occurs before we attempt to apply to networks using the ACL
 			// as usage functions will inspect the database.
 			return dbCluster.UpdateNetworkACLAPI(ctx, tx.Tx(), d.id, config)
@@ -685,9 +653,18 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		d.init(d.state, d.id, d.projectName, d.info)
 
 		reverter.Add(func() {
-			_ = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			rollbackErr = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+				referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+				if referenceErr != nil {
+					return referenceErr
+				}
+
 				return dbCluster.UpdateNetworkACLAPI(ctx, tx.Tx(), d.id, &oldConfig)
 			})
+
+			if rollbackErr != nil {
+				return
+			}
 
 			d.info.NetworkACLPut = oldConfig
 			d.init(d.state, d.id, d.projectName, d.info)
@@ -719,6 +696,38 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		}
 	}
 
+	if len(aclOVNNets) > 0 && clientType == request.ClientTypeNormal {
+		if beforeOVN == nil {
+			return errors.New("OVN shared network changes require an operation reservation")
+		}
+
+		networks := make(map[string]int64, len(aclOVNNets))
+		for _, usage := range aclOVNNets {
+			networks[usage.Name] = usage.ID
+		}
+
+		err = beforeOVN(networks)
+		if err != nil {
+			return err
+		}
+	}
+
+	if clientType == request.ClientTypeNormal && len(aclOVNNets) == 0 && physicalNB != nil {
+		var physicalProjectID int64
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+			physicalProjectID, err = dbCluster.GetProjectID(ctx, tx.Tx(), d.projectName)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		err = physicalNB.CheckACLPhysicalUnused(context.TODO(), physicalProjectID, d.id)
+		if err != nil {
+			return err
+		}
+	}
 	// Apply ACL changes to non-OVN networks on this member.
 	for _, aclNet := range aclNets {
 		err = addressset.FirewallApplyAddressSetsForACLRules(d.state, "inet", d.projectName, []string{d.info.Name})
@@ -756,6 +765,10 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 		ovnnb, _, err := d.state.OVN()
 		if err != nil {
 			return err
+		}
+
+		if physicalNB != nil {
+			ovnnb = physicalNB
 		}
 
 		var aclNameIDs map[string]int64
@@ -829,7 +842,12 @@ func (d *common) Update(config *api.NetworkACLPut, clientType request.ClientType
 
 // Rename renames the ACL if not in use.
 func (d *common) Rename(newName string) error {
-	_, err := LoadByName(d.state, d.projectName, newName)
+	physicalNB, err := d.physicalReferenceClient(false)
+	if err != nil {
+		return err
+	}
+
+	_, err = LoadByName(d.state, d.projectName, newName)
 	if err == nil {
 		return errors.New("An ACL by that name exists already")
 	}
@@ -849,6 +867,11 @@ func (d *common) Rename(newName string) error {
 	}
 
 	err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+		if referenceErr != nil {
+			return referenceErr
+		}
+
 		idInt := int(d.id)
 		acls, err := dbCluster.GetNetworkACLs(ctx, tx.Tx(), dbCluster.NetworkACLFilter{ID: &idInt})
 		if err != nil {
@@ -873,6 +896,11 @@ func (d *common) Rename(newName string) error {
 
 // Delete deletes the ACL.
 func (d *common) Delete() error {
+	physicalNB, err := d.physicalReferenceClient(false)
+	if err != nil {
+		return err
+	}
+
 	isUsed, err := d.isUsed()
 	if err != nil {
 		return err
@@ -882,7 +910,38 @@ func (d *common) Delete() error {
 		return errors.New("Cannot delete an ACL that is in use")
 	}
 
+	if physicalNB != nil {
+		// Remove this unused ACL's own port groups before releasing its identity, so deletion
+		// leaves no backend inventory. The guarded client refuses groups that still have ports.
+		var projectID int64
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			projectID, err = dbCluster.GetProjectID(ctx, tx.Tx(), d.projectName)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		groups, err := physicalNB.GetPortGroupsByProject(context.TODO(), projectID)
+		if err != nil {
+			return err
+		}
+
+		own := aclOwnPortGroups(d.id, groups)
+		if len(own) > 0 {
+			err = physicalNB.DeletePortGroup(context.TODO(), own...)
+			if err != nil {
+				return fmt.Errorf("Failed deleting OVN port groups of ACL: %w", err)
+			}
+		}
+	}
+
 	return d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		referenceErr := tx.CheckOVNReferencePublication(ctx, physicalPublicationRoot(physicalNB))
+		if referenceErr != nil {
+			return referenceErr
+		}
+
 		return dbCluster.DeleteNetworkACL(ctx, tx.Tx(), int(d.id))
 	})
 }

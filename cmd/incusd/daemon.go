@@ -170,9 +170,11 @@ type Daemon struct {
 	syslogSocketCancel context.CancelFunc
 
 	// OVN clients.
-	ovnnb *ovn.NB
-	ovnsb *ovn.SB
-	ovnMu sync.Mutex
+	ovnnb           *ovn.NB
+	ovnsb           *ovn.SB
+	ovnMu           sync.Mutex
+	ovnBackendID    string
+	ovnPreviousWork *db.OVNPreviousWork // Protected by ovnMu; only identities captured before API readiness.
 
 	// OVS client.
 	ovs   *ovs.VSwitch
@@ -1390,6 +1392,15 @@ func (d *Daemon) init() error {
 
 	d.events.SetLocalLocation(d.serverName)
 
+	err = d.db.Node.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		var err error
+		d.ovnBackendID, err = tx.OVNBackendID(ctx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
 	// Mount the storage pools.
 	logger.Infof("Initializing storage pools")
 	err = storageStartup(d.State())
@@ -1559,14 +1570,38 @@ func (d *Daemon) init() error {
 		logger.Warn("Failed to start network zones watcher", logger.Ctx{"err": err})
 	}
 
-	// Setup the networks.
-	if !d.serverClustered || !d.db.Cluster.LocalNodeIsEvacuated() {
-		logger.Infof("Initializing networks")
-
-		err = networkStartup(d.State())
+	var previousOVNWork db.OVNPreviousWork
+	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		err := tx.ClearLocalOVNBackendConfig(ctx)
 		if err != nil {
 			return err
 		}
+
+		previousOVNWork, err = tx.SnapshotLocalOVNFencedWork(ctx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	// Capture exact old work before admitting requests. Recovery must never clear work
+	// admitted by this daemon while a backend is unavailable.
+	if len(previousOVNWork.OriginTokens) > 0 || len(previousOVNWork.Receipts) > 0 {
+		d.ovnMu.Lock()
+		d.ovnPreviousWork = &previousOVNWork
+		d.ovnMu.Unlock()
+
+		_, _, err = d.getOVN()
+		if err != nil {
+			logger.Warn("Retaining previous OVN work until backend fencing succeeds", logger.Ctx{"err": err})
+			go d.retryPreviousOVNWork()
+		}
+	}
+
+	// Setup the networks.
+	err = networkStartupOrdinary(d.State(), d.serverClustered)
+	if err != nil {
+		return err
 	}
 
 	// Setup tertiary listeners that may use managed network addresses and must be started after networks.
@@ -2424,6 +2459,7 @@ func initializeDbObject(d *Daemon) error {
 				return err
 			}
 		}
+
 		return nil
 	}
 
@@ -2443,6 +2479,12 @@ func initializeDbObject(d *Daemon) error {
 // round (but may not be considered actually offline at this stage). These unavailable members will not be used for
 // role rebalancing.
 func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader bool, unavailableMembers []string) {
+	select {
+	case <-d.setupChan:
+	default:
+		return
+	}
+
 	s := d.State()
 
 	// Don't process the heartbeat until we're fully online.
@@ -2559,13 +2601,119 @@ func (d *Daemon) nodeRefreshTask(heartbeatData *cluster.APIHeartbeat, isLeader b
 	wg.Wait()
 }
 
+func (d *Daemon) registerOVNBackendID() error {
+	if d.ovnBackendID == "" {
+		return fmt.Errorf("OVN backend identity is unavailable")
+	}
+
+	return d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.RegisterOVNBackendID(ctx, d.ovnBackendID)
+	})
+}
+
+// bindOVNBackend prevents a different database from acknowledging work accepted by the previous backend.
+func (d *Daemon) bindOVNBackend(kind string, rootUUID string) error {
+	var previous string
+	err := d.db.Node.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		var err error
+		previous, err = tx.OVNBackendRoot(ctx, kind)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	// Northbound holds the shared references, so its root may only change in a cluster without OVN
+	// definitions or work. Southbound and OVS roots only bind this member's own unresolved plans.
+	var pending bool
+	if previous != "" && previous != rootUUID {
+		err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+			if kind == "nb" {
+				pending, err = tx.OVNBackendRebindBlocked(ctx)
+			} else {
+				pending, err = tx.OVNLocalBackendRebindBlocked(ctx)
+			}
+
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		if kind == "nb" && pending {
+			// A member that missed a cluster-wide switch follows the root the cluster already
+			// accepted, provided it has no unresolved work of its own under its previous root.
+			var follow bool
+			err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+				root, err := tx.OVNReferenceRoot(ctx)
+				if err != nil {
+					return err
+				}
+
+				local, err := tx.OVNLocalBackendRebindBlocked(ctx)
+				follow = root == rootUUID && !local
+				return err
+			})
+			if err != nil {
+				return err
+			}
+
+			if !follow {
+				return errors.New("OVN Northbound database root changed while OVN networks or work exist; restore the original database")
+			}
+
+			pending = false
+		}
+	}
+
+	if kind == "nb" {
+		err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error { return tx.BindOVNReferenceRoot(ctx, rootUUID) })
+		if err != nil {
+			return err
+		}
+	}
+
+	if previous == rootUUID {
+		return nil
+	}
+
+	return d.db.Node.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.NodeTx) error {
+		return tx.BindOVNBackendRoot(ctx, kind, previous, rootUUID, pending)
+	})
+}
+
 func (d *Daemon) setupOVN() error {
+	return d.setupOVNClient(false)
+}
+
+func (d *Daemon) setupOVNClient(reuse bool) error {
 	d.ovnMu.Lock()
 	defer d.ovnMu.Unlock()
 
+	if reuse && d.ovnnb != nil && d.ovnsb != nil {
+		if err := d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.CheckOVNReferencePublication(ctx, d.ovnnb.BackendID())
+		}); err != nil {
+			return err
+		}
+
+		return d.clearPreviousOVNWork()
+	}
+
+	// Durable intent precedes backend construction and any accepted first OVN effects.
+	err := d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error { return tx.BeginOVNReferenceActivation(ctx) })
+	if err != nil {
+		return err
+	}
 	// Clear any existing clients.
 	d.ovnnb = nil
 	d.ovnsb = nil
+
+	err = d.registerOVNBackendID()
+	if err != nil {
+		return err
+	}
 
 	// Connect to OpenVswitch.
 	vswitch, err := d.getOVS()
@@ -2608,13 +2756,32 @@ func (d *Daemon) setupOVN() error {
 	}
 
 	// Get OVN northbound client.
-	ovnnb, err := ovn.NewNB(ovnNBAddr, sslCACert, sslClientCert, sslClientKey)
+	ovnnb, err := ovn.NewNBWithRootAdmission(ovnNBAddr, sslCACert, sslClientCert, sslClientKey, d.ovnBackendID, func(ctx context.Context, root string) error {
+		return d.bindOVNBackend("nb", root)
+	})
+	if err != nil {
+		return err
+	}
+
+	err = d.bindOVNBackend("nb", ovnnb.BackendID())
 	if err != nil {
 		return err
 	}
 
 	// Get OVN southbound client.
-	ovnsb, err := ovn.NewSB(ovnSBAddr, sslCACert, sslClientCert, sslClientKey)
+	ovnsb, err := ovn.NewSB(ovnSBAddr, sslCACert, sslClientCert, sslClientKey, d.ovnBackendID)
+	if err != nil {
+		return err
+	}
+
+	err = d.bindOVNBackend("sb", ovnsb.BackendID())
+	if err != nil {
+		return err
+	}
+
+	// All three backends have acknowledged this daemon's generations and their
+	// retained root identities. Release only the startup snapshot before exposing clients.
+	err = d.clearPreviousOVNWork()
 	if err != nil {
 		return err
 	}
@@ -2626,19 +2793,118 @@ func (d *Daemon) setupOVN() error {
 	return nil
 }
 
+// clearPreviousOVNWork requires ovnMu and acknowledged OVS, NB and SB fences.
+func (d *Daemon) clearPreviousOVNWork() error {
+	if d.ovnPreviousWork == nil {
+		return nil
+	}
+
+	// A remote peer can also have writes waiting in its exact interconnect database.
+	var requirements []db.OVNInterconnectRequirement
+	configs := make(map[string]map[string]string)
+	err := d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		requirements, err = tx.PreviousOVNInterconnectRequirements(ctx, *d.ovnPreviousWork)
+		if err != nil {
+			return err
+		}
+
+		for _, requirement := range requirements {
+			id := int(requirement.IntegrationID)
+			integrations, err := dbCluster.GetNetworkIntegrations(ctx, tx.Tx(), dbCluster.NetworkIntegrationFilter{ID: &id})
+			if err != nil {
+				return err
+			}
+
+			if len(integrations) != 1 || integrations[0].Type != dbCluster.NetworkIntegrationTypeOVN {
+				return fmt.Errorf("Previous OVN work has no matching interconnect integration")
+			}
+
+			configs[requirement.Token], err = dbCluster.GetNetworkIntegrationConfig(ctx, tx.Tx(), id)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, requirement := range requirements {
+		config := configs[requirement.Token]
+		icnb, err := ovn.NewICNB(config["ovn.northbound_connection"], config["ovn.ca_cert"], config["ovn.client_cert"], config["ovn.client_key"], d.ovnBackendID)
+		if err != nil {
+			return fmt.Errorf("Failed fencing previous OVN interconnect work: %w", err)
+		}
+
+		err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.CompleteOVNInterconnectFence(ctx, requirement, icnb.BackendID())
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	err = d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.ClearPreviousOVNFencedWork(ctx, *d.ovnPreviousWork)
+	})
+	if err != nil {
+		return fmt.Errorf("Failed clearing fenced previous OVN work: %w", err)
+	}
+
+	d.ovnPreviousWork = nil
+	return nil
+}
+
+// retryPreviousOVNWork also recovers maintenance members, whose networks must stay stopped.
+// Normal client setup can complete the same exact recovery before this retry runs.
+func (d *Daemon) retryPreviousOVNWork() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-d.shutdownCtx.Done():
+			return
+		case <-ticker.C:
+			d.ovnMu.Lock()
+			pending := d.ovnPreviousWork != nil
+			d.ovnMu.Unlock()
+			if !pending {
+				return
+			}
+
+			_, _, err := d.getOVN()
+			if err != nil {
+				logger.Warn("Retaining previous OVN work until backend fencing succeeds", logger.Ctx{"err": err})
+				continue
+			}
+
+			return
+		}
+	}
+}
+
 // hasOVNNetworks checks whether any project has an OVN network.
 func (d *Daemon) hasOVNNetworks() (bool, error) {
 	found := false
 
 	err := d.db.Cluster.Transaction(d.shutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
-		networks, err := tx.GetCreatedNetworks(ctx)
+		networks, err := tx.GetNetworksAllProjects(ctx)
 		if err != nil {
 			return err
 		}
 
-		for _, projectNetworks := range networks {
-			for _, network := range projectNetworks {
-				if network.Type == "ovn" {
+		for projectName, projectNetworks := range networks {
+			for _, networkName := range projectNetworks {
+				_, networkInfo, _, err := tx.GetNetworkInAnyState(ctx, projectName, networkName)
+				if err != nil {
+					return err
+				}
+
+				if networkInfo.Type == "ovn" {
 					found = true
 					return nil
 				}
@@ -2655,27 +2921,49 @@ func (d *Daemon) hasOVNNetworks() (bool, error) {
 }
 
 func (d *Daemon) getOVN() (*ovn.NB, *ovn.SB, error) {
+	err := d.setupOVNClient(true)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to connect to OVN: %w", err)
+	}
+
+	d.ovnMu.Lock()
+	defer d.ovnMu.Unlock()
 	if d.ovnnb == nil || d.ovnsb == nil {
-		err := d.setupOVN()
-		if err != nil {
-			return nil, nil, fmt.Errorf("Failed to connect to OVN: %w", err)
-		}
+		return nil, nil, fmt.Errorf("OVN client configuration changed during connection")
 	}
 
 	return d.ovnnb, d.ovnsb, nil
 }
 
 func (d *Daemon) setupOVS() error {
+	return d.setupOVSClient(false)
+}
+
+func (d *Daemon) setupOVSClient(reuse bool) error {
 	d.ovsMu.Lock()
 	defer d.ovsMu.Unlock()
+
+	if reuse && d.ovs != nil {
+		return nil
+	}
 
 	// Clear any existing client.
 	d.ovs = nil
 
+	err := d.registerOVNBackendID()
+	if err != nil {
+		return err
+	}
+
 	// Connect to OpenVswitch.
-	vswitch, err := ovs.NewVSwitch(d.localConfig.NetworkOVSConnection())
+	vswitch, err := ovs.NewVSwitch(d.localConfig.NetworkOVSConnection(), d.ovnBackendID)
 	if err != nil {
 		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	err = d.bindOVNBackend("ovs", vswitch.BackendID())
+	if err != nil {
+		return err
 	}
 
 	// Set the client.
@@ -2685,11 +2973,15 @@ func (d *Daemon) setupOVS() error {
 }
 
 func (d *Daemon) getOVS() (*ovs.VSwitch, error) {
+	err := d.setupOVSClient(true)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	d.ovsMu.Lock()
+	defer d.ovsMu.Unlock()
 	if d.ovs == nil {
-		err := d.setupOVS()
-		if err != nil {
-			return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
-		}
+		return nil, fmt.Errorf("OVS client configuration changed during connection")
 	}
 
 	return d.ovs, nil

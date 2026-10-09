@@ -333,7 +333,7 @@ func networkLoadBalancersGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkLoadBalancersPost(d *Daemon, r *http.Request) response.Response {
+func networkLoadBalancersPost(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	resp := forwardedResponseIfTargetIsRemote(s, r)
@@ -360,10 +360,12 @@ func networkLoadBalancersPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "load-balancer", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {
@@ -425,7 +427,7 @@ func networkLoadBalancersPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkLoadBalancerDelete(d *Daemon, r *http.Request) response.Response {
+func networkLoadBalancerDelete(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	resp := forwardedResponseIfTargetIsRemote(s, r)
@@ -443,10 +445,12 @@ func networkLoadBalancerDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "load-balancer", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {
@@ -696,7 +700,7 @@ func networkLoadBalancerGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkLoadBalancerPut(d *Daemon, r *http.Request) response.Response {
+func networkLoadBalancerPut(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	resp := forwardedResponseIfTargetIsRemote(s, r)
@@ -714,10 +718,12 @@ func networkLoadBalancerPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "load-balancer", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {

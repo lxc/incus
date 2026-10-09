@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/google/uuid"
 
 	incus "github.com/lxc/incus/v7/client"
 	"github.com/lxc/incus/v7/internal/server/auth"
@@ -57,6 +60,7 @@ var api10 = []APIEndpoint{
 	instanceBackupsCmd,
 	instanceBitmapsCmd,
 	instanceCmd,
+	instanceOVNMigrationCmd,
 	instanceConsoleCmd,
 	instanceExecCmd,
 	instanceFileCmd,
@@ -611,8 +615,46 @@ func api10Patch(d *Daemon, r *http.Request) response.Response {
 	return doAPI10Update(d, r, req, true)
 }
 
-func doAPI10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) response.Response {
+func doAPI10Update(d *Daemon, r *http.Request, req api.ServerPut, patch bool) (resp response.Response) {
 	s := d.State()
+	// Only an actual change of an OVN/OVS backend setting is serialized with OVN lifecycle work; a full
+	// replacement that leaves them unchanged does not need the reservation.
+	current := map[string]string{}
+	if s.GlobalConfig != nil {
+		current = s.GlobalConfig.Dump()
+	}
+
+	if d.localConfig != nil {
+		maps.Copy(current, d.localConfig.Dump())
+	}
+
+	backendConfig := false
+	for _, key := range []string{"network.ovs.connection", "network.ovn.northbound_connection", "network.ovn.ca_cert", "network.ovn.client_cert", "network.ovn.client_key"} {
+		value, present := req.Config[key]
+		backendConfig = backendConfig || (present || !patch) && value != current[key]
+	}
+
+	if backendConfig {
+		token := uuid.NewString()
+		err := s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.AcquireOVNPeerOperation(ctx, token, "backend-config", true)
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		defer func() {
+			err := s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+				return tx.ReleaseOVNNetworkOperation(ctx, api.ProjectDefaultName, db.OVNPeerOperationName, token)
+			})
+			if err != nil {
+				logger.Error("Failed releasing OVN backend configuration reservation", logger.Ctx{"err": err})
+				if resp == nil || resp.Code() < http.StatusBadRequest {
+					resp = response.SmartError(err)
+				}
+			}
+		}()
+	}
 
 	// First deal with config specific to the local daemon
 	nodeValues := map[string]string{}
@@ -1098,6 +1140,20 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
+	if ovsChanged {
+		err := d.setupOVS()
+		if err != nil {
+			return err
+		}
+
+		hasOVN, err := d.hasOVNNetworks()
+		if err != nil {
+			return err
+		}
+
+		ovnChanged = ovnChanged || hasOVN
+	}
+
 	if ovnChanged {
 		err := d.setupOVN()
 		if err != nil {
@@ -1115,13 +1171,6 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 			if hasOVN {
 				return err
 			}
-		}
-	}
-
-	if ovsChanged {
-		err := d.setupOVS()
-		if err != nil {
-			return err
 		}
 	}
 

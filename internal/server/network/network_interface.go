@@ -35,6 +35,7 @@ type Network interface {
 	Description() string
 	Status() string
 	LocalStatus() string
+	OVNOperationToken() string
 	Config() map[string]string
 	Locations() []string
 	IsUsed(instanceOnly bool) (bool, error)

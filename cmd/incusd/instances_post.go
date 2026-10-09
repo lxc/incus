@@ -95,9 +95,35 @@ func ensureDownloadedImageFitWithinBudget(ctx context.Context, s *state.State, r
 	return imgDownloaded, nil
 }
 
+// instanceImageMaintenanceAdmission retains this creation entry's existing exemptions.
+func instanceImageMaintenanceAdmission(s *state.State, r *http.Request, next func() error) error {
+	return instanceMaintenanceAdmission(s, s.ServerClustered, next)
+}
+
+// instanceNoneMaintenanceAdmission retains this creation entry's existing exemptions.
+func instanceNoneMaintenanceAdmission(s *state.State, r *http.Request, next func() error) error {
+	return instanceMaintenanceAdmission(s, s.ServerClustered, next)
+}
+
+// instanceMigrationMaintenanceAdmission retains this creation entry's existing exemptions.
+func instanceMigrationMaintenanceAdmission(s *state.State, r *http.Request, next func() error) error {
+	return instanceMaintenanceAdmission(s, s.ServerClustered && r != nil && r.Context().Value(request.CtxProtocol) != "cluster", next)
+}
+
+// instanceCopyMaintenanceAdmission retains this creation entry's existing exemptions.
+func instanceCopyMaintenanceAdmission(s *state.State, r *http.Request, next func() error) error {
+	return instanceMaintenanceAdmission(s, s.ServerClustered && r.Context().Value(request.CtxProtocol) != "cluster", next)
+}
+
+// instanceBackupMaintenanceAdmission retains this creation entry's existing exemptions.
+func instanceBackupMaintenanceAdmission(s *state.State, r *http.Request, next func() error) error {
+	return instanceMaintenanceAdmission(s, s.ServerClustered, next)
+}
+
 func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []api.Profile, img *api.Image, imgAlias string, req *api.InstancesPost) response.Response {
-	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
-		return response.Forbidden(errors.New("Cluster member is evacuated"))
+	err := instanceImageMaintenanceAdmission(s, r, nil)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	dbType, err := instancetype.New(string(req.Type))
@@ -159,8 +185,9 @@ func createFromImage(s *state.State, r *http.Request, p api.Project, profiles []
 }
 
 func createFromNone(s *state.State, r *http.Request, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
-	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
-		return response.Forbidden(errors.New("Cluster member is evacuated"))
+	err := instanceNoneMaintenanceAdmission(s, r, nil)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	dbType, err := instancetype.New(string(req.Type))
@@ -212,8 +239,9 @@ func createFromNone(s *state.State, r *http.Request, projectName string, profile
 }
 
 func createFromMigration(ctx context.Context, s *state.State, r *http.Request, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
-	if s.ServerClustered && r != nil && r.Context().Value(request.CtxProtocol) != "cluster" && s.DB.Cluster.LocalNodeIsEvacuated() {
-		return response.Forbidden(errors.New("Cluster member is evacuated"))
+	err := instanceMigrationMaintenanceAdmission(s, r, nil)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// Validate migration mode.
@@ -297,6 +325,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		clusterMoveSourceName = req.Source.Source
 	}
 
+	refreshRequested := req.Source.Refresh
 	// Early check for refresh and cluster same name move to check instance exists.
 	if req.Source.Refresh || (clusterMoveSourceName != "" && clusterMoveSourceName == req.Name) {
 		inst, err = instance.LoadByProjectAndName(s, projectName, req.Name)
@@ -319,6 +348,39 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		return response.Conflict(fmt.Errorf("Instance %q already exists with a different type", req.Name))
 	}
 
+	migrationOperation := ""
+	if r != nil {
+		rawMigration := r.Context().Value(ovnNICMigrationRequestKey{})
+		if rawMigration != nil {
+			var validMigration bool
+			migrationOperation, validMigration = rawMigration.(string)
+			if !validMigration {
+				return response.SmartError(errors.New("Invalid OVN migration target request marker"))
+			}
+		}
+	}
+
+	if migrationOperation != "" {
+		capability, ok := inst.(interface{ OVNNICMigrationTarget(string) error })
+		if !ok {
+			return response.SmartError(errors.New("Instance lacks OVN migration target staging"))
+		}
+
+		err = capability.OVNNICMigrationTarget(migrationOperation)
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
+	if migrationOperation == "" && inst != nil && clusterMoveSourceName == req.Name && req.Source.Live {
+		err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.EnsureOVNNICCleanupCompleteForInstance(ctx, inst.LocalConfig()["volatile.uuid"])
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+	}
+
 	reverter := revert.New()
 	defer reverter.Fail()
 
@@ -334,6 +396,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 		// Note: At this stage we do not yet know if snapshots are going to be received and so we cannot
 		// create their DB records. This will be done if needed in the migrationSink.do() function called
 		// as part of the operation below.
+		args.Config = ovnNICNewCopyConfig(args.Config, args.Config["volatile.uuid"], refreshRequested)
 		inst, instOp, cleanup, err = instance.CreateInternal(s, args, nil, true, false, true)
 		if err != nil {
 			return response.InternalError(fmt.Errorf("Failed creating instance record: %w", err))
@@ -388,6 +451,7 @@ func createFromMigration(ctx context.Context, s *state.State, r *http.Request, p
 
 	migrationArgs := migrationSinkArgs{
 		URL:                   req.Source.Operation,
+		NICMigrationOperation: migrationOperation,
 		Dialer:                dialer,
 		Instance:              inst,
 		Secrets:               req.Source.Websockets,
@@ -636,8 +700,9 @@ func checkVolumesOnRemoteStorage(s *state.State, pool *api.StoragePool, inst ins
 }
 
 func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projectName string, profiles []api.Profile, req *api.InstancesPost) response.Response {
-	if s.ServerClustered && r.Context().Value(request.CtxProtocol) != "cluster" && s.DB.Cluster.LocalNodeIsEvacuated() {
-		return response.Forbidden(errors.New("Cluster member is evacuated"))
+	err := instanceCopyMaintenanceAdmission(s, r, nil)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	if req.Source.Source == "" {
@@ -851,8 +916,9 @@ func createFromCopy(ctx context.Context, s *state.State, r *http.Request, projec
 }
 
 func createFromBackup(s *state.State, r *http.Request, projectName string, data io.Reader, pool string, instanceName string, config string, device string) response.Response {
-	if s.ServerClustered && s.DB.Cluster.LocalNodeIsEvacuated() {
-		return response.Forbidden(errors.New("Cluster member is evacuated"))
+	err := instanceBackupMaintenanceAdmission(s, r, nil)
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	reverter := revert.New()

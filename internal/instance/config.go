@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -16,6 +17,33 @@ import (
 // IsUserConfig returns true if the config key is a user configuration.
 func IsUserConfig(key string) bool {
 	return strings.HasPrefix(key, "user.")
+}
+
+// isOVNNICClaimValue validates the persisted allocation envelope before accepting a config write.
+func isOVNNICClaimValue(value string) error {
+	if value == "" {
+		return nil
+	}
+
+	var claim struct {
+		Version      int
+		NetworkID    int64
+		SourceNodeID int64
+		InstanceUUID string
+		InstanceID   int
+		DeviceName   string
+	}
+
+	err := json.Unmarshal([]byte(value), &claim)
+	if err != nil {
+		return fmt.Errorf("Invalid OVN NIC allocation: %w", err)
+	}
+
+	if claim.Version != 1 || claim.NetworkID <= 0 || claim.SourceNodeID <= 0 || claim.InstanceUUID == "" || claim.InstanceID <= 0 || claim.DeviceName == "" {
+		return errors.New("Invalid OVN NIC allocation envelope")
+	}
+
+	return nil
 }
 
 // isNvidiaConfigValue rejects line breaks that would allow injecting arbitrary directives into the generated LXC configuration.
@@ -1653,6 +1681,24 @@ func ConfigKeyChecker(key string, instanceType api.InstanceType) (func(value str
 		//  shortdesc: Network device original MAC
 		if strings.HasSuffix(key, ".last_state.hwaddr") {
 			return validate.IsAny, nil
+		}
+
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.ovn.host)
+		// The original host interface allocation of an OVN network device, retained until its cleanup is acknowledged.
+		// ---
+		//  type: string
+		//  shortdesc: OVN network device host allocation
+		if strings.HasSuffix(key, ".last_state.ovn.host") {
+			return isOVNNICClaimValue, nil
+		}
+
+		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.ovn.physical)
+		// The original physical device allocation of an accelerated OVN network device, retained until its cleanup is acknowledged.
+		// ---
+		//  type: string
+		//  shortdesc: OVN network device physical allocation
+		if strings.HasSuffix(key, ".last_state.ovn.physical") {
+			return isOVNNICClaimValue, nil
 		}
 
 		// gendoc:generate(entity=instance, group=volatile, key=volatile.<name>.last_state.ip_addresses)

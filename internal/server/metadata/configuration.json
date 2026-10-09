@@ -3826,6 +3826,20 @@
 						}
 					},
 					{
+						"volatile.\u003cname\u003e.last_state.ovn.host": {
+							"longdesc": "The original host interface allocation of an OVN network device, retained until its cleanup is acknowledged.",
+							"shortdesc": "OVN network device host allocation",
+							"type": "string"
+						}
+					},
+					{
+						"volatile.\u003cname\u003e.last_state.ovn.physical": {
+							"longdesc": "The original physical device allocation of an accelerated OVN network device, retained until its cleanup is acknowledged.",
+							"shortdesc": "OVN network device physical allocation",
+							"type": "string"
+						}
+					},
+					{
 						"volatile.\u003cname\u003e.last_state.pci.driver": {
 							"longdesc": "The original host driver for the PCI device.",
 							"shortdesc": "PCI original host driver",

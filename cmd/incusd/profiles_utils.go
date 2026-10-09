@@ -18,7 +18,7 @@ import (
 	"github.com/lxc/incus/v7/shared/api"
 )
 
-func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profileName string, profile *api.Profile, req api.ProfilePut) error {
+func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profileName string, profile *api.Profile, profileID int64, req api.ProfilePut) error {
 	// Check project limits.
 	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
 		return project.AllowProfileUpdate(tx, p.Name, profileName, req)
@@ -88,47 +88,9 @@ func doProfileUpdate(ctx context.Context, s *state.State, p api.Project, profile
 		}
 	}
 
-	// Update the database.
+	// Publish only after the fresh effective-reference check in this same transaction.
 	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
-		devices, err := cluster.APIToDevices(req.Devices)
-		if err != nil {
-			return err
-		}
-
-		err = cluster.UpdateProfile(ctx, tx.Tx(), p.Name, profileName, cluster.Profile{
-			Project:     p.Name,
-			Name:        profileName,
-			Description: req.Description,
-		})
-		if err != nil {
-			return err
-		}
-
-		id, err := cluster.GetProfileID(ctx, tx.Tx(), p.Name, profileName)
-		if err != nil {
-			return err
-		}
-
-		err = cluster.UpdateProfileConfig(ctx, tx.Tx(), id, req.Config)
-		if err != nil {
-			return err
-		}
-
-		err = cluster.UpdateProfileDevices(ctx, tx.Tx(), id, devices)
-		if err != nil {
-			return err
-		}
-
-		newProfiles, err := cluster.GetProfilesIfEnabled(ctx, tx.Tx(), p.Name, []string{profileName})
-		if err != nil {
-			return err
-		}
-
-		if len(newProfiles) != 1 {
-			return fmt.Errorf("Failed to find profile %q in project %q", profileName, p.Name)
-		}
-
-		return nil
+		return project.CommitProfileNetworkUpdate(ctx, tx, p.Name, profileName, profileID, profile.ProfilePut, req)
 	})
 	if err != nil {
 		return err

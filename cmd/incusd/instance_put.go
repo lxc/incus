@@ -137,6 +137,11 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		// Check project limits.
 		apiProfiles := make([]api.Profile, 0, len(configRaw.Profiles))
 		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err := tx.ValidateInstanceOVNConfigUpdate(ctx, inst.ID(), configRaw.Config)
+			if err != nil {
+				return err
+			}
+
 			profiles, err := cluster.GetProfilesIfEnabled(ctx, tx.Tx(), projectName, configRaw.Profiles)
 			if err != nil {
 				return err
@@ -200,7 +205,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 		do = func(op *operations.Operation) error {
 			defer unlock()
 
-			return instanceSnapRestore(s, projectName, name, configRaw.Restore, configRaw.Stateful, configRaw.DiskOnly, op)
+			return instanceSnapRestore(s, r, projectName, name, configRaw.Restore, configRaw.Stateful, configRaw.DiskOnly, op)
 		}
 
 		opType = operationtype.SnapshotRestore
@@ -218,7 +223,7 @@ func instancePut(d *Daemon, r *http.Request) response.Response {
 	return operations.OperationResponse(op)
 }
 
-func instanceSnapRestore(s *state.State, projectName string, name string, snap string, stateful bool, diskOnly bool, op *operations.Operation) error {
+func instanceSnapRestore(s *state.State, r *http.Request, projectName string, name string, snap string, stateful bool, diskOnly bool, op *operations.Operation) error {
 	// normalize snapshot name
 	if !internalInstance.IsSnapshot(snap) {
 		snap = name + internalInstance.SnapshotDelimiter + snap
@@ -256,6 +261,17 @@ func instanceSnapRestore(s *state.State, projectName string, name string, snap s
 			Profiles: profiles,
 		}, inst.LocalConfig())
 	})
+	if err != nil {
+		return err
+	}
+
+	protocol := r.Context().Value(request.CtxForwardedProtocol)
+	if protocol == nil || protocol == "" {
+		protocol = r.Context().Value(request.CtxProtocol)
+	}
+
+	// Restoring a running or stateful instance can start workloads before driver-level checks.
+	err = instanceMaintenanceAdmission(s, s.ServerClustered && protocol != "cluster" && (stateful || inst.IsRunning()), nil)
 	if err != nil {
 		return err
 	}

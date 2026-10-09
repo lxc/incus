@@ -3,9 +3,12 @@ package device
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/mdlayher/netx/eui64"
 
 	"github.com/lxc/incus/v7/internal/linux"
@@ -28,6 +32,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/network/acl"
 	addressset "github.com/lxc/incus/v7/internal/server/network/address-set"
 	"github.com/lxc/incus/v7/internal/server/network/ovn"
+	"github.com/lxc/incus/v7/internal/server/network/ovs"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/state"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
@@ -48,7 +53,11 @@ type ovnNet interface {
 	InstanceDevicePortValidateExternalRoutes(deviceInstance instance.Instance, deviceName string, externalRoutes []*net.IPNet) error
 	InstanceDevicePortAdd(instanceUUID string, deviceName string, devConfig deviceConfig.Device) error
 	InstanceDevicePortStart(opts *network.OVNInstanceNICSetupOpts, securityACLsRemove []string) (ovn.OVNSwitchPort, []net.IP, error)
+	InstanceDevicePortStopSource(ctx context.Context, instanceUUID string, deviceName string) (*network.OVNInstanceNICStopOpts, error)
+	InstanceDevicePortStopCapture(ovsExternalOVNPort ovn.OVNSwitchPort, opts *network.OVNInstanceNICStopOpts) error
 	InstanceDevicePortStop(ovsExternalOVNPort ovn.OVNSwitchPort, opts *network.OVNInstanceNICStopOpts) error
+	InstanceDevicePortStopRetire(ctx context.Context, instanceUUID string, deviceName string, generation string) (bool, error)
+	InstanceDevicePortStopComplete(ctx context.Context, instanceUUID string, deviceName string, generation string) error
 	InstanceDevicePortRemove(instanceUUID string, devName string, devConfig deviceConfig.Device, hasDuplicate bool) error
 	InstanceDevicePortIPs(instanceUUID string, deviceName string) ([]net.IP, error)
 }
@@ -60,6 +69,31 @@ type nicOVN struct {
 
 	ovnnb *ovn.NB
 	ovnsb *ovn.SB
+
+	stopCleanupGeneration string
+	stopCleanupSource     *network.OVNInstanceNICStopOpts
+}
+
+// OVNNetwork exposes the exact loaded network for an enclosing instance update reservation.
+func (d *nicOVN) OVNNetwork() network.Network {
+	return d.network
+}
+
+// OVNStopCleanupSelectGeneration binds a stopped retry to its selected durable
+// attempt. Capture and source read must retain this generation before effects.
+func (d *nicOVN) OVNStopCleanupSelectGeneration(generation string) {
+	d.stopCleanupGeneration = generation
+}
+
+// OVNUndoVolatile captures this device's runtime allocation before the enclosing instance restores its old config.
+func (d *nicOVN) OVNUndoVolatile() func(func() error) error {
+	volatile := d.volatileGet()
+	return func(action func() error) error {
+		get := d.volatileGet
+		d.volatileGet = func() map[string]string { return util.CloneMap(volatile) }
+		defer func() { d.volatileGet = get }()
+		return action()
+	}
 }
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
@@ -785,7 +819,24 @@ func (d *nicOVN) checkAddressConflict() error {
 
 // Add is run when a device is added to a non-snapshot instance whether or not the instance is running.
 func (d *nicOVN) Add() error {
+	original, err := d.hasOriginalInstance()
+	if err != nil || original {
+		return err
+	}
+
 	return d.network.InstanceDevicePortAdd(d.inst.LocalConfig()["volatile.uuid"], d.name, nicNormalizedAddressConfig(d.config))
+}
+
+// hasOriginalInstance keeps a pre-copy record from changing its source's logical port.
+func (d *nicOVN) hasOriginalInstance() (bool, error) {
+	var original bool
+	err := d.state.DB.Cluster.Transaction(d.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		original, err = tx.OVNNICHasOriginalInstance(ctx, d.inst.ID(), d.inst.LocalConfig()["volatile.uuid"])
+		return err
+	})
+
+	return original, err
 }
 
 // PreStartCheck checks the managed parent network is available (if relevant).
@@ -795,8 +846,13 @@ func (d *nicOVN) PreStartCheck() error {
 		return nil
 	}
 
+	err := network.EnsureOVNLocal(d.network)
+	if err != nil {
+		return err
+	}
+
 	// If managed network is not available, don't try and start instance.
-	if d.network.LocalStatus() == api.NetworkStatusUnavailable {
+	if d.network.LocalStatus() != api.NetworkStatusCreated {
 		return api.StatusErrorf(http.StatusServiceUnavailable, "Network %q unavailable on this server", d.network.Name())
 	}
 
@@ -838,6 +894,60 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		return nil, nil
 	}
 
+	return d.startWithCleanupAdmission(d.start)
+}
+
+// startWithCleanupAdmission checks durable local source debt before any new
+// host allocation or volatile write. This point-in-time query is not a claim
+// of atomic lifecycle exclusion or backend absence.
+func (d *nicOVN) startWithCleanupAdmission(start func() (*deviceConfig.RunConfig, error)) (*deviceConfig.RunConfig, error) {
+	if d.state == nil || d.state.ShutdownCtx == nil || d.state.DB == nil || d.state.DB.Cluster == nil || d.inst == nil {
+		return nil, errors.New("NIC start cleanup admission requires local state and context")
+	}
+
+	{
+		refresh, ok := d.inst.(interface{ OVNNICMigrationRefresh() error })
+		if ok {
+			err := refresh.OVNNICMigrationRefresh()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	instanceUUID := d.inst.LocalConfig()["volatile.uuid"]
+	_, err := uuid.Parse(instanceUUID)
+	if err != nil {
+		return nil, fmt.Errorf("NIC start cleanup admission requires instance UUID: %w", err)
+	}
+
+	err = d.state.DB.Cluster.Transaction(d.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+		{
+			operation := d.nicMigrationOperation()
+			if operation != "" {
+				return tx.EnsureOVNNICMigrationStart(ctx, operation, d.inst.ID(), instanceUUID, d.name, 0, nil)
+			}
+		}
+
+		original, err := tx.OVNNICHasOriginalInstance(ctx, d.inst.ID(), instanceUUID)
+		if err != nil {
+			return err
+		}
+
+		if original {
+			return errors.New("Original instance still owns the copied OVN NIC identity")
+		}
+
+		return tx.EnsureOVNNICCleanupStart(ctx, instanceUUID, d.name, 0, nil)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Cannot start NIC before original source cleanup acknowledgment: %w", err)
+	}
+
+	return start()
+}
+
+func (d *nicOVN) start() (result *deviceConfig.RunConfig, resultErr error) {
 	err := d.validateEnvironment()
 	if err != nil {
 		return nil, err
@@ -849,13 +959,65 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 	}
 
 	reverter := revert.New()
-	defer reverter.Fail()
+	var hostRollbackErr error
+	var managedBackendAttempted bool
+	var noBackendEffect bool
+	var virtualHostPlan *ip.NICLinkCleanup
+	var virtualCreateAttempted bool
+	defer func() { reverter.Fail(); resultErr = errors.Join(resultErr, hostRollbackErr) }()
 
 	// Configure the OVN port with the plain address; CIDR addresses are set inside the OCI container.
 	portConfig := nicNormalizedAddressConfig(d.config)
+	{
+		operation := d.nicMigrationOperation()
+		if operation != "" {
+			var m db.OVNNICMigration
+			err = d.state.DB.Cluster.Transaction(d.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+				var err error
+				m, err = tx.OVNNICMigrationDevice(ctx, operation, d.name)
+				return err
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			var original struct {
+				DeviceConfig deviceConfig.Device
+				NetworkID    int64
+			}
+
+			err = json.Unmarshal([]byte(m.Source.Payload), &original)
+			if err != nil {
+				return nil, err
+			}
+
+			target := portConfig.Clone()
+			delete(original.DeviceConfig, "host_name")
+			delete(target, "host_name")
+			if original.NetworkID != d.network.ID() || !maps.Equal(original.DeviceConfig, target) || d.config["nested"] != "" {
+				return nil, errors.New("Migration target requires exact unchanged non-nested OVN guest configuration before allocation")
+			}
+		}
+	}
 
 	saveData := make(map[string]string)
 	saveData["host_name"] = d.config["host_name"]
+	reverter.Add(func() {
+		if virtualHostPlan == nil {
+			return
+		}
+
+		var err error
+		if virtualCreateAttempted {
+			err = ip.ApplyNICLinkCleanup(*virtualHostPlan)
+		}
+
+		if err == nil && (!managedBackendAttempted || noBackendEffect) {
+			err = d.retireNICPreclaim(saveData)
+		}
+
+		hostRollbackErr = errors.Join(hostRollbackErr, err)
+	})
 
 	// Load uplink network config.
 	uplinkNetworkName := d.network.UplinkName()
@@ -920,17 +1082,25 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			}
 
 			// Claim the SR-IOV virtual function (VF) on the parent (PF) and get the PCI information.
-			vfPCIDev, pciIOMMUGroup, err = networkSRIOVSetupVF(d.deviceCommon, vfParent, vfDev, vfID, saveData)
+			reverter.Add(func() {
+				// Retain the marker on failed Start: backend rollback may be uncertain.
+				if saveData["last_state.ovn.physical"] != "" {
+					hostRollbackErr = errors.Join(hostRollbackErr, d.rollbackPhysicalHost(saveData, managedBackendAttempted))
+				}
+			})
+			vfPCIDev, pciIOMMUGroup, err = networkSRIOVSetupVF(d.deviceCommon, vfParent, vfDev, vfID, saveData, func() error {
+				return d.capturePhysicalHostLocked(saveData, vfRepresentor, true)
+			})
 			if err != nil {
 				network.SRIOVVirtualFunctionMutex.Unlock()
 				return nil, fmt.Errorf("Failed setting up VF: %w", err)
 			}
 
-			reverter.Add(func() {
-				_ = networkSRIOVRestoreVF(d.deviceCommon, false, saveData)
-			})
-
+			err = d.capturePhysicalHostLocked(saveData, vfRepresentor, false)
 			network.SRIOVVirtualFunctionMutex.Unlock()
+			if err != nil {
+				return nil, fmt.Errorf("Failed claiming original physical NIC allocation: %w", err)
+			}
 
 			// Setup the guest network interface.
 			if d.inst.Type() == instancetype.Container {
@@ -981,15 +1151,19 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			}
 
 			// Claim the SR-IOV virtual function (VF) on the parent (PF) and get the PCI information.
-			vfPCIDev, pciIOMMUGroup, err = networkSRIOVSetupVF(d.deviceCommon, vfParent, vfDev, vfID, saveData)
+			reverter.Add(func() {
+				// Retain the marker on failed Start: backend rollback may be uncertain.
+				if saveData["last_state.ovn.physical"] != "" {
+					hostRollbackErr = errors.Join(hostRollbackErr, d.rollbackPhysicalHost(saveData, managedBackendAttempted))
+				}
+			})
+			vfPCIDev, pciIOMMUGroup, err = networkSRIOVSetupVF(d.deviceCommon, vfParent, vfDev, vfID, saveData, func() error {
+				return d.capturePhysicalHostLocked(saveData, vfRepresentor, true)
+			})
 			if err != nil {
 				network.SRIOVVirtualFunctionMutex.Unlock()
 				return nil, err
 			}
-
-			reverter.Add(func() {
-				_ = networkSRIOVRestoreVF(d.deviceCommon, false, saveData)
-			})
 
 			// Create the vDPA management device
 			vDPADevice, err = ip.AddVDPADevice(vfPCIDev.SlotName, saveData)
@@ -998,7 +1172,11 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				return nil, err
 			}
 
+			err = d.capturePhysicalHostLocked(saveData, vfRepresentor, false)
 			network.SRIOVVirtualFunctionMutex.Unlock()
+			if err != nil {
+				return nil, fmt.Errorf("Failed claiming original physical NIC allocation: %w", err)
+			}
 
 			// Setup the guest network interface.
 			if d.inst.Type() == instancetype.Container {
@@ -1016,7 +1194,19 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 				}
 
 				integrationBridgeNICName = saveData["host_name"]
-				peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config)
+				intent, err := d.persistVirtualHostIntent(saveData, "veth")
+				virtualHostPlan = &intent
+				if err != nil {
+					return nil, err
+				}
+
+				virtualHostPlan = &intent
+				plan, err := ip.CreateNICLinkCleanup(intent, func() error {
+					virtualCreateAttempted = true
+					peerName, mtu, err = networkCreateVethPair(saveData["host_name"], d.config, &intent)
+					return err
+				})
+				virtualHostPlan = &plan
 				if err != nil {
 					return nil, err
 				}
@@ -1028,13 +1218,41 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 				integrationBridgeNICName = saveData["host_name"]
 				peerName = saveData["host_name"] // VMs use the host_name to link to the TAP FD.
-				mtu, err = networkCreateTap(saveData["host_name"], d.config)
+				intent, err := d.persistVirtualHostIntent(saveData, "tuntap")
+				virtualHostPlan = &intent
+				if err != nil {
+					return nil, err
+				}
+
+				virtualHostPlan = &intent
+				plan, err := ip.CreateNICLinkCleanup(intent, func() error {
+					virtualCreateAttempted = true
+					mtu, err = networkCreateTap(saveData["host_name"], d.config, &intent)
+					return err
+				})
+				virtualHostPlan = &plan
 				if err != nil {
 					return nil, err
 				}
 			}
+		}
+	}
 
-			reverter.Add(func() { _ = network.InterfaceRemove(saveData["host_name"]) })
+	// Publish the captured numeric kernel allocation before backend/driver effects.
+	if d.config["nested"] == "" && d.isVirtualNIC() {
+		if virtualHostPlan == nil {
+			return nil, errors.New("Original virtual allocation was not captured")
+		}
+
+		raw, err := d.encodeVirtualHostClaim(*virtualHostPlan)
+		if err != nil {
+			return nil, err
+		}
+
+		saveData["last_state.ovn.host"] = raw
+		err = d.volatileSet(saveData)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -1053,16 +1271,33 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
+	// Register target compensation before any shared effect attempt.
+	operation := d.nicMigrationOperation()
+	if operation != "" {
+		reverter.Add(func() {
+			rollbackErr := d.rollbackMigrationShared(operation)
+			if rollbackErr == nil {
+				managedBackendAttempted = false
+			}
+
+			hostRollbackErr = errors.Join(hostRollbackErr, rollbackErr)
+		})
+	}
 	// Add new OVN logical switch port for instance.
+	managedBackendAttempted = true
 	logicalPortName, dnsIPs, err := d.network.InstanceDevicePortStart(&network.OVNInstanceNICSetupOpts{
-		InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
-		DNSName:      d.inst.Name(),
-		DeviceName:   d.name,
-		DeviceConfig: portConfig,
-		UplinkConfig: uplinkConfig,
-		LastStateIPs: lastStateIPs, // Pass in volatile last state IPs for use with sticky DHCPv4 hint.
+		InstanceUUID:       d.inst.LocalConfig()["volatile.uuid"],
+		DNSName:            d.inst.Name(),
+		DeviceName:         d.name,
+		DeviceConfig:       portConfig,
+		UplinkConfig:       uplinkConfig,
+		NICHostVolatile:    maps.Clone(saveData),
+		MigrationOperation: d.nicMigrationOperation(),
+		InstanceID:         d.inst.ID(),
+		LastStateIPs:       lastStateIPs, // Pass in volatile last state IPs for use with sticky DHCPv4 hint.
 	}, nil)
 	if err != nil {
+		noBackendEffect = errors.Is(err, network.ErrOVNNICNoBackendEffect)
 		return nil, fmt.Errorf("Failed setting up OVN port: %w", err)
 	}
 
@@ -1080,13 +1315,18 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 	saveData["last_state.ip_addresses"] = dnsIPsStr.String()
 
-	reverter.Add(func() {
-		_ = d.network.InstanceDevicePortStop("", &network.OVNInstanceNICStopOpts{
-			InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
-			DeviceName:   d.name,
-			DeviceConfig: portConfig,
+	if operation == "" {
+		reverter.Add(func() {
+			rollbackErr := d.network.InstanceDevicePortStop("", &network.OVNInstanceNICStopOpts{
+				InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
+				InstanceID:   d.inst.ID(),
+				HostVolatile: v,
+				DeviceName:   d.name,
+				DeviceConfig: portConfig,
+			})
+			hostRollbackErr = errors.Join(hostRollbackErr, rollbackErr)
 		})
-	})
+	}
 
 	// Associated host side interface to OVN logical switch port (if not nested).
 	if integrationBridgeNICName != "" {
@@ -1095,7 +1335,7 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 			return nil, err
 		}
 
-		reverter.Add(cleanup)
+		reverter.Add(func() { hostRollbackErr = errors.Join(hostRollbackErr, cleanup()) })
 	}
 
 	runConf := deviceConfig.RunConfig{}
@@ -1113,6 +1353,10 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 
 	// Add post start hook for setting logical switch port chassis once instance has been started.
 	runConf.PostHooks = append(runConf.PostHooks, func() error {
+		if operation != "" {
+			return nil
+		}
+
 		err := d.ovnnb.UpdateLogicalSwitchPortOptions(context.TODO(), logicalPortName, map[string]string{"requested-chassis": chassisID})
 		if err != nil {
 			return fmt.Errorf("Failed setting logical switch port chassis ID: %w", err)
@@ -1191,6 +1435,15 @@ func (d *nicOVN) Start() (*deviceConfig.RunConfig, error) {
 		}
 	}
 
+	if operation != "" {
+		err = d.state.DB.Cluster.Transaction(d.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.OVNNICMigrationReady(ctx, operation, d.name)
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	reverter.Success()
 
 	return &runConf, nil
@@ -1207,11 +1460,44 @@ func (d *nicOVN) postStart() error {
 }
 
 // Update applies configuration changes to a started device.
-func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
+func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) (err error) {
+	if d.network == nil {
+		return fmt.Errorf("Failed updating OVN port for NIC %q: network %q could not be loaded", d.name, d.config["network"])
+	}
+
+	if !isRunning {
+		original, err := d.hasOriginalInstance()
+		if err != nil || original {
+			return err
+		}
+	}
+
+	release, err := network.AcquireOVNNICOperation(d.network, false)
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+	d.ovnnb, d.ovnsb, err = d.state.OVN()
+	if err != nil {
+		return err
+	}
+
 	oldConfig := oldDevices[d.name]
 
 	// Populate device config with volatile fields if needed.
 	networkVethFillFromVolatile(d.config, d.volatileGet())
+
+	if !isRunning {
+		original := maps.Clone(oldConfig)
+		networkVethFillFromVolatile(original, d.volatileGet())
+		err = d.network.InstanceDevicePortRemove(d.inst.LocalConfig()["volatile.uuid"], d.name, nicNormalizedAddressConfig(original), d.checkAddressConflict() != nil)
+		if err != nil {
+			return fmt.Errorf("Failed retiring stopped original OVN NIC: %w", err)
+		}
+
+		return d.network.InstanceDevicePortAdd(d.inst.LocalConfig()["volatile.uuid"], d.name, nicNormalizedAddressConfig(d.config))
+	}
 
 	// If an IPv6 address has changed, if the instance is running we should bounce the host-side
 	// veth interface to give the instance a chance to detect the change and re-apply for an
@@ -1319,7 +1605,7 @@ func (d *nicOVN) Update(oldDevices deviceConfig.Devices, isRunning bool) error {
 	}
 
 	// If an external address changed, update the BGP advertisements.
-	err := bgpRemovePrefix(&d.deviceCommon, oldConfig)
+	err = bgpRemovePrefix(&d.deviceCommon, oldConfig)
 	if err != nil {
 		return err
 	}
@@ -1362,180 +1648,599 @@ func (d *nicOVN) findRepresentorPort(volatile map[string]string) (string, error)
 	return representorPort, nil
 }
 
-// Stop is run when the device is removed from the instance.
-func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
-	runConf := deviceConfig.RunConfig{
-		PostHooks: []func() error{d.postStop},
+func (d *nicOVN) selectedStopSource(original *network.OVNInstanceNICStopOpts, opts *network.OVNInstanceNICStopOpts) (*network.OVNInstanceNICStopOpts, error) {
+	if original == nil || original.CleanupGeneration == "" || original.InstanceID <= 0 || original.InstanceUUID != opts.InstanceUUID || original.DeviceName != d.name ||
+		(d.stopCleanupGeneration != "" && original.CleanupGeneration != d.stopCleanupGeneration) {
+		return nil, errors.New("Original OVN NIC cleanup source identity is incomplete or changed")
 	}
+
+	if original.DeviceConfig["nested"] == "" {
+		if original.OVS == nil {
+			return nil, errors.New("Original OVN NIC OVS source identity is missing")
+		}
+
+		{
+			err := original.OVS.Validate()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return original, nil
+}
+
+func (d *nicOVN) captureStopSource(port string, opts *network.OVNInstanceNICStopOpts) (*network.OVNInstanceNICStopOpts, error) {
+	if d.state.ShutdownCtx == nil {
+		return nil, errors.New("Source cleanup capture requires a shutdown context")
+	}
+	// Select stored source before consulting current OVS names. In particular,
+	// replay after an acknowledged detach must not recapture a replacement.
+	original, err := d.network.InstanceDevicePortStopSource(d.state.ShutdownCtx, opts.InstanceUUID, d.name)
+	if err == nil {
+		return d.selectedStopSource(original, opts)
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("Failed reading original OVN NIC cleanup before host detach: %w", err)
+	}
+
+	if d.stopCleanupGeneration != "" {
+		return nil, errors.New("Selected original OVN NIC cleanup source is missing")
+	}
+
+	if opts.DeviceConfig["nested"] == "" {
+		{
+			raw := opts.HostVolatile["last_state.ovn.host"]
+			if raw != "" {
+				var claim nicOVNVirtualClaim
+				err = json.Unmarshal([]byte(raw), &claim)
+				if err != nil {
+					return nil, fmt.Errorf("Invalid original virtual NIC claim: %w", err)
+				}
+				// Earlier captured kernel plans have no source envelope. Their
+				// adoption still requires the rooted OVS association below.
+				if claim.NetworkID != 0 || claim.SourceNodeID != 0 || claim.InstanceUUID != "" || claim.InstanceID != 0 || claim.DeviceName != "" {
+					if d.state.DB == nil || d.state.DB.Cluster == nil || claim.NetworkID != d.network.ID() || claim.SourceNodeID != d.state.DB.Cluster.GetNodeID() || claim.InstanceUUID != opts.InstanceUUID || claim.InstanceID != opts.InstanceID || claim.DeviceName != d.name {
+						return nil, errors.New("Original virtual NIC source allocation changed before capture")
+					}
+				}
+			}
+		}
+
+		interfaceName := opts.DeviceConfig["host_name"]
+		if interfaceName == "" {
+			return nil, errors.New("Original OVN NIC host interface identity is missing")
+		}
+
+		// A physical claim from an earlier kernel boot no longer owns its representor: the reboot
+		// may have removed it, its OVS row may have been swept, or the VF may now serve another NIC.
+		earlierPhysical := false
+		if !d.isVirtualNIC() && opts.HostVolatile["last_state.ovn.physical"] != "" {
+			selected := *d
+			selected.config = opts.DeviceConfig.Clone()
+			earlierPhysical, err = selected.physicalClaimFromEarlierBoot(opts.HostVolatile)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if opts.DeviceConfig["acceleration"] == "sriov" || opts.DeviceConfig["acceleration"] == "vdpa" {
+			selected := *d
+			selected.config = opts.DeviceConfig.Clone()
+			interfaceName, err = selected.findRepresentorPort(opts.HostVolatile)
+			if err != nil && !earlierPhysical {
+				return nil, fmt.Errorf("Failed resolving original OVS representor before source capture: %w", err)
+			}
+
+			if err != nil {
+				interfaceName = ""
+			}
+		}
+
+		vswitch, err := d.state.OVS()
+		if err != nil {
+			return nil, fmt.Errorf("Failed reading OVS before source cleanup capture: %w", err)
+		}
+
+		if vswitch == nil {
+			return nil, errors.New("OVS client is missing before source cleanup capture")
+		}
+
+		if interfaceName != "" {
+			port, err = vswitch.GetInterfaceAssociatedOVNSwitchPort(d.state.ShutdownCtx, interfaceName)
+		} else {
+			err = errors.New("Original representor no longer exists")
+		}
+
+		// Only a stale row still bound to this NIC's own OVN port is captured.
+		if err == nil && earlierPhysical {
+			named, ok := d.network.(interface {
+				InstanceDevicePortName(string, string) ovn.OVNSwitchPort
+			})
+			if !ok || string(port) != string(named.InstanceDevicePortName(opts.InstanceUUID, d.name)) {
+				// Its OVN port is another NIC's; capture this NIC's own port as for an absent row.
+				port = ""
+				err = errors.New("Original representor now serves another OVN port")
+			}
+		}
+
+		var absent *ovs.NICPortCleanup
+		if err != nil {
+			var absentErr error
+			absent, absentErr = d.stopSourceHostAbsent(vswitch, opts)
+			if absentErr != nil || absent == nil {
+				return nil, errors.Join(fmt.Errorf("Failed reading original OVS port before source cleanup capture: %w", err), absentErr)
+			}
+
+			// The original host link and OVS association are already gone; only OVN cleanup remains.
+			opts.OVS = absent
+		}
+
+		if absent == nil {
+			plan, err := vswitch.CaptureNICPortCleanup(d.state.ShutdownCtx, d.state.GlobalConfig.NetworkOVNIntegrationBridge(), interfaceName, port)
+			if err != nil {
+				return nil, fmt.Errorf("Failed capturing original OVS rows before source cleanup capture: %w", err)
+			}
+
+			opts.OVS = &plan
+			if !d.isVirtualNIC() {
+				selected := *d
+				selected.config = opts.DeviceConfig.Clone()
+				err = selected.capturePhysicalHost(opts.HostVolatile, interfaceName, false)
+				if err != nil {
+					return nil, fmt.Errorf("Failed capturing original physical NIC allocation: %w", err)
+				}
+			}
+
+			if d.isVirtualNIC() {
+				var expected *ip.NICLinkCleanup
+				raw := opts.HostVolatile["last_state.ovn.host"]
+				if raw != "" {
+					expected = &ip.NICLinkCleanup{}
+					err = json.Unmarshal([]byte(raw), expected)
+					if err != nil {
+						return nil, fmt.Errorf("Invalid original NIC host allocation: %w", err)
+					}
+				}
+
+				kind := "veth"
+				if d.inst.Type() == instancetype.VM {
+					kind = "tuntap"
+				}
+
+				// A claim from an earlier kernel boot has no link left to capture; its stale OVS
+				// row remains when OVS was unreachable for the startup sweep.
+				earlier := false
+				if expected != nil && expected.Index != 0 {
+					earlier, err = ip.NICClaimFromEarlierBoot(*expected)
+					if err != nil {
+						return nil, err
+					}
+				}
+
+				var host ip.NICLinkCleanup
+				if !earlier {
+					host, err = ip.CaptureNICLinkCleanup(interfaceName, kind, expected)
+					if err != nil {
+						return nil, fmt.Errorf("Failed capturing original NIC kernel identity: %w", err)
+					}
+				}
+
+				if !earlier && (expected == nil || expected.Index == 0) {
+					// Adoption follows the actual rooted OVS association, before driver detach.
+					raw, err := d.encodeVirtualHostClaim(host)
+					if err != nil {
+						return nil, err
+					}
+
+					err = d.volatileSet(map[string]string{"last_state.ovn.host": raw})
+					if err != nil {
+						return nil, err
+					}
+
+					opts.HostVolatile["last_state.ovn.host"] = raw
+				}
+			}
+		}
+	}
+
+	opts.CleanupGeneration = d.stopCleanupGeneration
+	err = d.network.InstanceDevicePortStopCapture(ovn.OVNSwitchPort(port), opts)
+	if err != nil {
+		return nil, fmt.Errorf("Failed capturing original OVN NIC cleanup before host detach: %w", err)
+	}
+
+	original, err = d.network.InstanceDevicePortStopSource(d.state.ShutdownCtx, opts.InstanceUUID, d.name)
+	if err != nil {
+		return nil, fmt.Errorf("Failed reading published original OVN NIC cleanup before host detach: %w", err)
+	}
+
+	return d.selectedStopSource(original, opts)
+}
+
+// OVNRetireUnpublishedClaim retires a stopped host claim that never reached the OVN backend: the
+// claimed host link is positively absent, no OVS interface is bound to the port and this member
+// never published the port's producer. Database retirement still refuses pending source debt.
+func (d *nicOVN) OVNRetireUnpublishedClaim() (bool, error) {
+	v := d.volatileGet()
+	raw := v["last_state.ovn.host"]
+	if d.network == nil || !d.isVirtualNIC() || raw == "" || d.nicMigrationOperation() != "" {
+		return false, nil
+	}
+
+	var plan ip.NICLinkCleanup
+	err := json.Unmarshal([]byte(raw), &plan)
+	if err != nil || plan.Index == 0 || ip.NICLinkAbsent(plan) != nil {
+		return false, nil
+	}
+
+	claims, ok := d.network.(interface {
+		InstanceDevicePortName(string, string) ovn.OVNSwitchPort
+		InstanceDevicePortUnpublishedClaim(string, string) (bool, error)
+	})
+	if !ok {
+		return false, nil
+	}
+
+	instanceUUID := d.inst.LocalConfig()["volatile.uuid"]
+	unpublished, err := claims.InstanceDevicePortUnpublishedClaim(instanceUUID, d.name)
+	if err != nil || !unpublished {
+		return false, err
+	}
+
+	vswitch, err := d.state.OVS()
+	if err != nil {
+		return false, err
+	}
+
+	_, err = vswitch.CaptureNICPortAbsence(d.state.ShutdownCtx, d.state.GlobalConfig.NetworkOVNIntegrationBridge(), string(claims.InstanceDevicePortName(instanceUUID, d.name)))
+	if err != nil {
+		return false, nil
+	}
+
+	err = d.retireNICPreclaim(maps.Clone(v))
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// stopSourceHostAbsent accepts a missing OVS association only when the claimed virtual
+// host link is positively absent, returning a rooted proof that no interface remains
+// bound to the OVN port.
+func (d *nicOVN) stopSourceHostAbsent(vswitch *ovs.VSwitch, opts *network.OVNInstanceNICStopOpts) (*ovs.NICPortCleanup, error) {
+	if !d.isVirtualNIC() {
+		return d.stopSourcePhysicalAbsent(vswitch, opts)
+	}
+
+	raw := opts.HostVolatile["last_state.ovn.host"]
+	if raw == "" {
+		return nil, nil
+	}
+
+	var plan ip.NICLinkCleanup
+	err := json.Unmarshal([]byte(raw), &plan)
+	if err != nil || plan.Index == 0 {
+		return nil, nil
+	}
+
+	named, ok := d.network.(interface {
+		InstanceDevicePortName(string, string) ovn.OVNSwitchPort
+	})
+	if !ok {
+		return nil, nil
+	}
+
+	err = ip.NICLinkAbsent(plan)
+	if err != nil {
+		return nil, err
+	}
+
+	absent, err := vswitch.CaptureNICPortAbsence(d.state.ShutdownCtx, d.state.GlobalConfig.NetworkOVNIntegrationBridge(), string(named.InstanceDevicePortName(opts.InstanceUUID, d.name)))
+	if err != nil {
+		return nil, err
+	}
+
+	return &absent, nil
+}
+
+// stopSourcePhysicalAbsent accepts a missing or reassigned representor only for a physical claim
+// from an earlier kernel boot, returning a rooted proof that no interface is bound to the OVN port.
+func (d *nicOVN) stopSourcePhysicalAbsent(vswitch *ovs.VSwitch, opts *network.OVNInstanceNICStopOpts) (*ovs.NICPortCleanup, error) {
+	if opts.HostVolatile["last_state.ovn.physical"] == "" {
+		return nil, nil
+	}
+
+	selected := *d
+	selected.config = opts.DeviceConfig.Clone()
+	earlier, err := selected.physicalClaimFromEarlierBoot(opts.HostVolatile)
+	if err != nil || !earlier {
+		return nil, err
+	}
+
+	named, ok := d.network.(interface {
+		InstanceDevicePortName(string, string) ovn.OVNSwitchPort
+	})
+	if !ok {
+		return nil, nil
+	}
+
+	absent, err := vswitch.CaptureNICPortAbsence(d.state.ShutdownCtx, d.state.GlobalConfig.NetworkOVNIntegrationBridge(), string(named.InstanceDevicePortName(opts.InstanceUUID, d.name)))
+	if err != nil {
+		return nil, err
+	}
+
+	return &absent, nil
+}
+
+// OVNStopCleanupCapture runs before driver effects and publishes the original
+// rooted OVS/NB identities. It never acknowledges teardown by itself.
+func (d *nicOVN) OVNStopCleanupCapture() error {
+	if d.network == nil {
+		return fmt.Errorf("Failed capturing OVN NIC %q: network %q could not be loaded", d.name, d.config["network"])
+	}
+
+	volatile := maps.Clone(d.volatileGet())
+	config := d.config.Clone()
+	networkVethFillFromVolatile(config, volatile)
+	_, err := d.captureStopSource("", &network.OVNInstanceNICStopOpts{
+		InstanceUUID: d.inst.LocalConfig()["volatile.uuid"], InstanceID: d.inst.ID(),
+		DeviceName: d.name, DeviceConfig: nicNormalizedAddressConfig(config), HostVolatile: volatile,
+	})
+	return err
+}
+
+// Stop returns cleanup errors through its host hook so remaining stages still run.
+func (d *nicOVN) Stop() (*deviceConfig.RunConfig, error) {
+	{
+		refresh, ok := d.inst.(interface{ OVNNICMigrationRefresh() error })
+		if ok {
+			err := refresh.OVNNICMigrationRefresh()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	{
+		operation := d.nicMigrationOperation()
+		if operation != "" {
+			var phase string
+			err := d.state.DB.Cluster.Transaction(d.state.ShutdownCtx, func(ctx context.Context, tx *db.ClusterTx) error {
+				m, err := tx.OVNNICMigrationDevice(ctx, operation, d.name)
+				phase = m.Phase
+				return err
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if phase != "placed" {
+				return d.stopMigrationTarget(operation)
+			}
+		}
+	}
+
+	var stopErr error
 
 	v := d.volatileGet()
 
 	var err error
 
-	// Try and retrieve the last associated OVN switch port for the instance interface in the local OVS DB.
-	// If we cannot get this, don't fail, as InstanceDevicePortStop will then try and generate the likely
-	// port name using the same regime it does for new ports. This part is only here in order to allow
-	// instance ports generated under an older regime to be cleaned up properly.
+	// Durable source selection precedes current OVS lookup or host effects.
 	networkVethFillFromVolatile(d.config, v)
-	vswitch, err := d.state.OVS()
-	if err != nil {
-		d.logger.Error("Failed to connect to OVS", logger.Ctx{"err": err})
-	}
-
 	var ovsExternalOVNPort string
-	if d.config["nested"] == "" && vswitch != nil {
-		ovsExternalOVNPort, err = vswitch.GetInterfaceAssociatedOVNSwitchPort(context.TODO(), d.config["host_name"])
+
+	var stopOpts *network.OVNInstanceNICStopOpts
+	if d.network != nil {
+		stopOpts = &network.OVNInstanceNICStopOpts{
+			InstanceUUID: d.inst.LocalConfig()["volatile.uuid"],
+			InstanceID:   d.inst.ID(),
+			HostVolatile: v,
+			DeviceName:   d.name,
+			DeviceConfig: nicNormalizedAddressConfig(d.config),
+		}
+
+		stopOpts, err = d.captureStopSource(ovsExternalOVNPort, stopOpts)
 		if err != nil {
-			d.logger.Warn("Could not find OVN Switch port associated to OVS interface", logger.Ctx{"interface": d.config["host_name"]})
+			return nil, err
 		}
 	}
 
-	integrationBridgeNICName := d.config["host_name"]
-	if d.config["acceleration"] == "sriov" || d.config["acceleration"] == "vdpa" {
-		integrationBridgeNICName, err = d.findRepresentorPort(v)
-		if err != nil {
-			d.logger.Error("Failed finding representor port to detach from OVS integration bridge", logger.Ctx{"err": err})
+	// Keep the current device configuration intact. Host cleanup and BGP must
+	// use the source-member snapshot even if Desired/volatile inputs moved.
+	stopDevice := *d
+	var retireSource *network.OVNInstanceNICStopOpts
+	if stopOpts != nil {
+		stopDevice.config = stopOpts.DeviceConfig.Clone()
+		v = maps.Clone(stopOpts.HostVolatile)
+		selected := *stopOpts
+		selected.DeviceConfig = stopOpts.DeviceConfig.Clone()
+		selected.HostVolatile = maps.Clone(stopOpts.HostVolatile)
+		retireSource = &selected
+		d.stopCleanupSource = &selected
+	}
+
+	var releaseSource func() error
+	if stopOpts != nil {
+		{
+			fence, ok := d.network.(interface {
+				InstanceDevicePortStopFence(context.Context, string, string, string) (func() error, error)
+			})
+			if ok {
+				releaseSource, err = fence.InstanceDevicePortStopFence(d.state.ShutdownCtx, stopOpts.InstanceUUID, stopOpts.DeviceName, stopOpts.CleanupGeneration)
+				if err != nil {
+					return nil, err
+				}
+
+				err = stopDevice.OVNStopCleanupRetryValidate()
+				if err != nil {
+					return nil, errors.Join(err, releaseSource())
+				}
+			}
 		}
 	}
 
-	// If there is integrationBridgeNICName specified, then try and remove it from the OVS integration bridge.
-	// Do this early on during the stop process to prevent any future error from leaving the OVS port present
-	// as if the instance is being migrated, this can cause port conflicts in OVN if the instance comes up on
-	// another host later.
-	if integrationBridgeNICName != "" && vswitch != nil {
-		integrationBridge := d.state.GlobalConfig.NetworkOVNIntegrationBridge()
+	if stopOpts != nil && stopOpts.OVS != nil {
+		ovsExternalOVNPort = stopOpts.OVS.OVNPortName
+		vswitch, ovsErr := d.state.OVS()
+		if ovsErr == nil && vswitch == nil {
+			ovsErr = errors.New("Original OVS cleanup client is missing")
+		}
 
-		// Detach host-side end of veth pair from OVS integration bridge.
-		err = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, integrationBridgeNICName)
-		if err != nil {
-			// Don't fail here as we want the postStop hook to run to clean up the local veth pair.
-			d.logger.Error("Failed detaching interface from OVS integration bridge", logger.Ctx{"interface": integrationBridgeNICName, "bridge": integrationBridge, "err": err})
+		if ovsErr == nil {
+			ovsErr = vswitch.ApplyNICPortCleanup(d.state.ShutdownCtx, *stopOpts.OVS)
+		}
+
+		if ovsErr != nil {
+			// Preserve later host-hook execution and the original source debt.
+			stopErr = errors.Join(stopErr, fmt.Errorf("Failed detaching original NIC interface from OVS: %w", ovsErr))
 		}
 	}
 
 	// The network is nil when the device config failed validation (e.g. network still pending).
 	// Don't fail here either, so that the postStop hook still runs to clean up the local veth pair.
 	if d.network != nil {
-		instanceUUID := d.inst.LocalConfig()["volatile.uuid"]
-		err = d.network.InstanceDevicePortStop(ovn.OVNSwitchPort(ovsExternalOVNPort), &network.OVNInstanceNICStopOpts{
-			InstanceUUID: instanceUUID,
-			DeviceName:   d.name,
-			DeviceConfig: nicNormalizedAddressConfig(d.config),
-		})
+		err = d.network.InstanceDevicePortStop(ovn.OVNSwitchPort(ovsExternalOVNPort), stopOpts)
 		if err != nil {
 			// Don't fail here as we still want the postStop hook to run to clean up the local veth pair.
 			d.logger.Error("Failed to remove OVN device port", logger.Ctx{"err": err})
+			stopErr = errors.Join(stopErr, fmt.Errorf("Failed cleaning original OVN NIC port: %w", err))
 		}
 	} else {
 		d.logger.Error("Skipping OVN device port removal, network could not be loaded", logger.Ctx{"network": d.config["network"]})
+		stopErr = errors.Join(stopErr, fmt.Errorf("Cannot acknowledge OVN NIC cleanup: network %q could not be loaded", d.config["network"]))
 	}
 
 	// Remove BGP announcements.
-	err = bgpRemovePrefix(&d.deviceCommon, d.config)
-	if err != nil {
-		return nil, err
+	if stopOpts != nil {
+		err = nicOVNStopBGP(stopOpts.InstanceID, stopOpts.DeviceName, d.state.BGP.RemovePrefixByOwner)
+	} else {
+		err = bgpRemovePrefix(&d.deviceCommon, d.config)
 	}
 
-	return &runConf, nil
+	if err != nil {
+		stopErr = errors.Join(stopErr, fmt.Errorf("Failed withdrawing original NIC BGP prefixes: %w", err))
+	}
+
+	// Returning a cleanup error here would prevent both drivers from running
+	// the host hook. Report it from that hook, retaining identity until every
+	// required stage succeeds. This is not yet a complete durable acknowledgment.
+	return &deviceConfig.RunConfig{
+		PostHooks: []func() error{func() error {
+			err := nicOVNStopPostHook(stopErr, func() error { return stopDevice.postStopOriginal(v) }, func() error { return d.retireStopVolatile(retireSource) })()
+			if releaseSource != nil {
+				err = errors.Join(err, releaseSource())
+			}
+
+			return err
+		}},
+	}, nil
 }
 
-// postStop is run after the device is removed from the instance.
-func (d *nicOVN) postStop() error {
-	defer func() {
-		_ = d.volatileSet(map[string]string{
-			"host_name":                "",
-			"last_state.hwaddr":        "",
-			"last_state.mtu":           "",
-			"last_state.created":       "",
-			"last_state.vdpa.name":     "",
-			"last_state.vf.parent":     "",
-			"last_state.vf.id":         "",
-			"last_state.vf.hwaddr":     "",
-			"last_state.vf.vlan":       "",
-			"last_state.vf.spoofcheck": "",
-			"last_state.pci.driver":    "",
-		})
-	}()
+// nicOVNStopBGP uses the recorded original instance ID rather than current
+// placement metadata. Other device types keep their existing BGP behavior.
+func nicOVNStopBGP(instanceID int, deviceName string, remove func(string) error) error {
+	owner := fmt.Sprintf("instance_%d_%s", instanceID, deviceName)
+	stopInstanceNeighborScan(owner)
+	return remove(owner)
+}
 
-	v := d.volatileGet()
-
-	networkVethFillFromVolatile(d.config, v)
-
-	if d.config["acceleration"] == "sriov" {
-		// Restoring host-side interface.
-		network.SRIOVVirtualFunctionMutex.Lock()
-		err := networkSRIOVRestoreVF(d.deviceCommon, false, v)
+func nicOVNStopPostHook(stopErr error, cleanup func() error, clearVolatile func() error) func() error {
+	return func() error {
+		err := errors.Join(stopErr, cleanup())
 		if err != nil {
-			network.SRIOVVirtualFunctionMutex.Unlock()
 			return err
 		}
 
-		network.SRIOVVirtualFunctionMutex.Unlock()
+		return clearVolatile()
+	}
+}
 
-		link := &ip.Link{Name: d.config["host_name"]}
-		err = link.SetDown()
-		if err != nil {
-			return fmt.Errorf("Failed to bring down the host interface %s: %w", d.config["host_name"], err)
-		}
-	} else if d.config["acceleration"] == "vdpa" {
-		// Retrieve the last state vDPA device name.
-		network.SRIOVVirtualFunctionMutex.Lock()
-		vDPADevName, ok := v["last_state.vdpa.name"]
-		if !ok {
-			network.SRIOVVirtualFunctionMutex.Unlock()
-			return errors.New("Failed to find PCI slot name for vDPA device")
-		}
-
-		// Delete the vDPA management device.
-		err := ip.DeleteVDPADevice(vDPADevName)
-		if err != nil {
-			network.SRIOVVirtualFunctionMutex.Unlock()
-			return err
-		}
-
-		// Restoring host-side interface.
-		network.SRIOVVirtualFunctionMutex.Lock()
-		err = networkSRIOVRestoreVF(d.deviceCommon, false, v)
-		if err != nil {
-			network.SRIOVVirtualFunctionMutex.Unlock()
-			return err
-		}
-
-		network.SRIOVVirtualFunctionMutex.Unlock()
-
-		link := &ip.Link{Name: d.config["host_name"]}
-		err = link.SetDown()
-		if err != nil {
-			return fmt.Errorf("Failed to bring down the host interface %q: %w", d.config["host_name"], err)
-		}
-	} else if d.config["host_name"] != "" && util.PathExists(fmt.Sprintf("/sys/class/net/%s", d.config["host_name"])) {
-		// Removing host-side end of veth pair will delete the peer end too.
-		err := network.InterfaceRemove(d.config["host_name"])
-		if err != nil {
-			return fmt.Errorf("Failed to remove interface %q: %w", d.config["host_name"], err)
-		}
+// postStopOriginal uses only the recorded original host allocation.
+func (d *nicOVN) postStopOriginal(v map[string]string) error {
+	if d.config["nested"] != "" {
+		return nil
 	}
 
-	return nil
+	if !d.isVirtualNIC() {
+		return d.postStopPhysical(v)
+	}
+
+	var plan ip.NICLinkCleanup
+	err := json.Unmarshal([]byte(v["last_state.ovn.host"]), &plan)
+	if err != nil {
+		return fmt.Errorf("Original NIC kernel cleanup identity is missing or invalid: %w", err)
+	}
+
+	if plan.Name != d.config["host_name"] || plan.Name != v["host_name"] {
+		return errors.New("Original NIC kernel/volatile host identities disagree")
+	}
+
+	return ip.ApplyNICLinkCleanup(plan)
+}
+
+// nicOVNStopVDPA holds the VF lock once across delete and restore. Reacquiring
+// the same non-reentrant lock after a successful delete would deadlock the hook.
+func nicOVNStopVDPA(volatile map[string]string, deleteDevice func(string) error, restoreVF func() error) error {
+	network.SRIOVVirtualFunctionMutex.Lock()
+	defer network.SRIOVVirtualFunctionMutex.Unlock()
+
+	name, ok := volatile["last_state.vdpa.name"]
+	if !ok {
+		return errors.New("Failed to find PCI slot name for vDPA device")
+	}
+
+	err := deleteDevice(name)
+	if err != nil {
+		return err
+	}
+
+	return restoreVF()
 }
 
 // Remove is run when the device is removed from the instance or the instance is deleted.
-func (d *nicOVN) Remove(cleanupDependencies bool) error {
+func (d *nicOVN) Remove(cleanupDependencies bool) (err error) {
+	if d.volatileGet()["last_state.ovn.physical"] != "" || d.volatileGet()["last_state.ovn.host"] != "" {
+		return errors.New("Original NIC allocation remains quarantined; complete its rooted Stop before removing the device")
+	}
 	// The network is nil when the device config failed validation (e.g. network still pending).
 	if d.network == nil {
 		return fmt.Errorf("Failed removing OVN port for NIC %q: network %q could not be loaded", d.name, d.config["network"])
 	}
 
-	// Check for port groups that will become unused (and need deleting) as this NIC is deleted.
+	original, err := d.hasOriginalInstance()
+	if err != nil || original {
+		return err
+	}
+
+	release, err := network.AcquireOVNNICOperation(d.network, true)
+	if err != nil {
+		return err
+	}
+
+	defer func() { err = errors.Join(err, release()) }()
+	d.ovnnb, d.ovnsb, err = d.state.OVN()
+	if err != nil {
+		return err
+	}
+
+	err = d.network.InstanceDevicePortRemove(d.inst.LocalConfig()["volatile.uuid"], d.name, nicNormalizedAddressConfig(d.config), d.checkAddressConflict() != nil)
+	if err != nil {
+		return err
+	}
+	// Collect only after the original port and all memberships have actually been retired.
 	securityACLs := util.SplitNTrimSpace(d.config["security.acls"], ",", -1, true)
-	if len(securityACLs) > 0 {
-		err := acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, d.ovnnb, d.network.Project(), d.inst, d.name)
+	if cleanupDependencies && len(securityACLs) > 0 {
+		err = acl.OVNPortGroupDeleteIfUnused(d.state, d.logger, d.ovnnb, d.network.Project(), d.inst, d.name)
 		if err != nil {
 			return fmt.Errorf("Failed removing unused OVN port groups: %w", err)
 		}
 	}
 
-	return d.network.InstanceDevicePortRemove(d.inst.LocalConfig()["volatile.uuid"], d.name, nicNormalizedAddressConfig(d.config), d.checkAddressConflict() != nil)
+	return nil
 }
 
 // State gets the state of an OVN NIC by querying the OVN Northbound logical switch port record.
@@ -1692,10 +2397,7 @@ func (d *nicOVN) Register() error {
 	return nil
 }
 
-func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (revert.Hook, error) {
-	reverter := revert.New()
-	defer reverter.Fail()
-
+func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (func() error, error) {
 	// Disable IPv6 on host-side veth interface (prevents host-side interface getting link-local address and
 	// accepting router advertisements) as not needed because the host-side interface is connected to a bridge.
 	err := localUtil.SysctlSet(fmt.Sprintf("net/ipv6/conf/%s/disable_ipv6", hostName), "1")
@@ -1717,12 +2419,30 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 		return nil, fmt.Errorf("Failed to connect to OVS: %w", err)
 	}
 
+	operation := d.nicMigrationOperation()
+	var migrationWriter interface {
+		OVNNICMigrationOVS(string, *ovs.NICPortCleanup, bool) error
+	}
+
+	if operation != "" {
+		var ok bool
+		migrationWriter, ok = d.inst.(interface {
+			OVNNICMigrationOVS(string, *ovs.NICPortCleanup, bool) error
+		})
+		if !ok {
+			return nil, errors.New("Migration target OVS writer missing")
+		}
+
+		err = migrationWriter.OVNNICMigrationOVS(d.name, nil, true)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	err = vswitch.CreateBridgePort(context.TODO(), integrationBridge, hostName, true)
 	if err != nil {
 		return nil, err
 	}
-
-	reverter.Add(func() { _ = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, hostName) })
 
 	// Link OVS port to OVN logical port.
 	err = vswitch.AssociateInterfaceOVNSwitchPort(context.TODO(), hostName, string(ovnPortName))
@@ -1730,20 +2450,142 @@ func (d *nicOVN) setupHostNIC(hostName string, ovnPortName ovn.OVNSwitchPort) (r
 		return nil, err
 	}
 
+	plan, err := vswitch.CaptureNICPortCleanup(d.state.ShutdownCtx, integrationBridge, hostName, string(ovnPortName))
+	if err != nil {
+		return nil, err
+	}
+
+	if migrationWriter != nil {
+		err = migrationWriter.OVNNICMigrationOVS(d.name, &plan, true)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	cleanup := func() error {
+		err := vswitch.ApplyNICPortCleanup(d.state.ShutdownCtx, plan)
+		if err == nil && migrationWriter != nil {
+			err = migrationWriter.OVNNICMigrationOVS(d.name, nil, false)
+		}
+
+		return err
+	}
+
 	// Make sure the port is up.
 	link := &ip.Link{Name: hostName}
 	err = link.SetUp()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to bring up the host interface %s: %w", hostName, err)
+		return nil, errors.Join(fmt.Errorf("Failed to bring up the host interface %s: %w", hostName, err), cleanup())
 	}
 
-	cleanup := reverter.Clone().Fail
-	reverter.Success()
-
-	return cleanup, err
+	return cleanup, nil
 }
 
 // isVirtualNIC determines whether the device is non-accelerated.
 func (d *nicOVN) isVirtualNIC() bool {
 	return slices.Contains([]string{"", "none"}, d.config["acceleration"])
+}
+
+// retireStopVolatile replaces the production blind setter with exact durable
+// original-source retirement. Missing synchronization capability refuses before
+// SQL; moved source metadata never clears the target driver's memory.
+func (d *nicOVN) retireStopVolatile(source *network.OVNInstanceNICStopOpts) error {
+	if d.network == nil || source == nil || source.CleanupGeneration == "" || d.state.ShutdownCtx == nil {
+		return errors.New("Original NIC volatile retirement identity is missing")
+	}
+
+	syncSource, ok := d.inst.(interface {
+		OVNStopCleanupVolatileRetired(string, string, map[string]string) error
+	})
+	if !ok {
+		return errors.New("Driver cannot synchronize original NIC volatile retirement")
+	}
+
+	cleared, err := d.network.InstanceDevicePortStopRetire(d.state.ShutdownCtx, source.InstanceUUID, source.DeviceName, source.CleanupGeneration)
+	if err != nil {
+		return err
+	}
+
+	if !cleared {
+		return nil
+	}
+
+	if source.InstanceID <= 0 || d.inst.ID() != source.InstanceID {
+		return errors.New("Original NIC volatile source driver instance ID changed")
+	}
+
+	return syncSource.OVNStopCleanupVolatileRetired(source.InstanceUUID, source.DeviceName, maps.Clone(source.HostVolatile))
+}
+
+// OVNStopCleanupComplete acknowledges a successful live device detach/hook.
+// Whole-instance Stop uses the driver's later terminal teardown boundary.
+func (d *nicOVN) OVNStopCleanupComplete() error {
+	s := d.stopCleanupSource
+	if s == nil || d.network == nil {
+		return errors.New("Original NIC live-detach acknowledgment is missing")
+	}
+
+	return d.network.InstanceDevicePortStopComplete(d.state.ShutdownCtx, s.InstanceUUID, s.DeviceName, s.CleanupGeneration)
+}
+
+// NewOVNStopCleanup loads only a validated durable original-source device.
+// It deliberately bypasses current Desired project/network NIC-type resolution.
+func NewOVNStopCleanup(inst instance.Instance, s *state.State, n network.Network, source *network.OVNInstanceNICStopOpts) (Device, error) {
+	originalNetwork, ok := n.(ovnNet)
+	if !ok || source == nil || s == nil || s.ShutdownCtx == nil || inst == nil || source.NetworkID != n.ID() || source.InstanceUUID != inst.LocalConfig()["volatile.uuid"] || source.InstanceID != inst.ID() {
+		return nil, errors.New("Original NIC source loader identity is incomplete or changed")
+	}
+
+	err := validate.IsAPIName(source.DeviceName, false)
+	if err != nil {
+		return nil, err
+	}
+
+	original, err := originalNetwork.InstanceDevicePortStopSource(s.ShutdownCtx, source.InstanceUUID, source.DeviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	if original.NetworkID != source.NetworkID || original.CleanupGeneration != source.CleanupGeneration || original.InstanceID != source.InstanceID || !maps.Equal(original.DeviceConfig, source.DeviceConfig) || !maps.Equal(original.HostVolatile, source.HostVolatile) {
+		return nil, errors.New("Original NIC source loader attempt changed")
+	}
+
+	if inst.Type() != instancetype.Container && inst.Type() != instancetype.VM {
+		return nil, ErrUnsupportedDevType
+	}
+
+	d := &nicOVN{network: originalNetwork, stopCleanupGeneration: source.CleanupGeneration}
+	volatile := maps.Clone(source.HostVolatile)
+	err = d.init(inst, s, source.DeviceName, source.DeviceConfig.Clone(), func() map[string]string { return maps.Clone(volatile) }, func(map[string]string) error {
+		return errors.New("Original NIC replay requires atomic source retirement")
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return d, nil
+}
+
+// OVNStopCleanupRetryValidate checks the stored host identity before any retry effects.
+func (d *nicOVN) OVNStopCleanupRetryValidate() error {
+	if d.config["nested"] != "" {
+		return nil
+	}
+
+	v := d.volatileGet()
+	if !d.isVirtualNIC() {
+		return d.verifyOriginalPhysicalHost(v)
+	}
+
+	var plan ip.NICLinkCleanup
+	err := json.Unmarshal([]byte(v["last_state.ovn.host"]), &plan)
+	if err != nil {
+		return err
+	}
+
+	if plan.Name != d.config["host_name"] || plan.Name != v["host_name"] {
+		return errors.New("Original NIC retry host identity changed")
+	}
+
+	return ip.VerifyNICVirtualLinkCleanup(plan)
 }

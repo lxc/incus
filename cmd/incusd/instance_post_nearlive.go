@@ -514,6 +514,18 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 		return err
 	}
 
+	err = s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		err := tx.EnsureOVNNICCleanupCompleteForInstance(ctx, inst.LocalConfig()["volatile.uuid"])
+		if err != nil {
+			return err
+		}
+
+		return tx.EnsureOVNNICTransferSource(ctx, inst.LocalConfig()["volatile.uuid"])
+	})
+	if err != nil {
+		return fmt.Errorf("Failed confirming source NIC cleanup before near-live migration: %w", err)
+	}
+
 	l.Debug("Deleting source instance")
 
 	reverter.Success()

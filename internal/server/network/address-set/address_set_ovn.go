@@ -7,8 +7,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/lxc/incus/v7/internal/server/db"
-	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/network/ovn"
 	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/shared/logger"
@@ -27,27 +25,20 @@ func OVNEnsureAddressSetsViaACLs(s *state.State, l logger.Logger, client *ovn.NB
 	return OVNEnsureAddressSets(s, l, client, projectName, setsNames)
 }
 
-// OVNDeleteAddressSetsViaACLs remove address sets used by network ACLS.
+// OVNDeleteAddressSetsViaACLs collects unused sets directly referenced by the supplied ACLs.
 func OVNDeleteAddressSetsViaACLs(s *state.State, l logger.Logger, client *ovn.NB, projectName string, ACLNames []string) error {
-	setsNames, err := GetAddressSetsForACLs(s, projectName, ACLNames)
+	plan, err := selectUnusedAddressSets(context.TODO(), s.DB.Cluster, projectName, addressSetGCRequest{Mode: addressSetGCACLs, ACLNames: ACLNames})
 	if err != nil {
 		return err
 	}
 
-	if len(setsNames) != 0 {
-		for _, setName := range setsNames {
-			addrSet, err := LoadByName(s, projectName, setName)
-			if err != nil {
-				return fmt.Errorf("Failed loading address set %q: %w", setName, err)
-			}
-
-			err = client.DeleteAddressSet(context.TODO(), ovn.OVNAddressSet(fmt.Sprintf("incus_set%d", addrSet.ID())))
-			if err != nil {
-				return fmt.Errorf("Failed removing address set %q from OVN: %w", setName, err)
-			}
-
-			l.Debug("Removed unused address set from OVN", logger.Ctx{"project": projectName, "addressSet": setName})
+	for _, set := range plan {
+		err = client.DeleteAddressSet(context.TODO(), ovn.OVNAddressSet(fmt.Sprintf("incus_set%d", set.Key.AddressSetID)))
+		if err != nil {
+			return fmt.Errorf("Failed removing address set %q from OVN: %w", set.Name, err)
 		}
+
+		l.Debug("Removed unused address set from OVN", logger.Ctx{"project": projectName, "addressSet": set.Name})
 	}
 
 	return nil
@@ -230,74 +221,49 @@ func OVNEnsureAddressSets(s *state.State, l logger.Logger, client *ovn.NB, proje
 }
 
 // OVNAddressSetDeleteIfUnused checks if the specified address set is unused and if so, removes it from OVN.
+// An unknown requested set is an error; query failures never authorize cleanup.
 func OVNAddressSetDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB, projectName string, setName string) error {
-	addrSet, err := LoadByName(s, projectName, setName)
+	plan, err := selectUnusedAddressSets(context.TODO(), s.DB.Cluster, projectName, addressSetGCRequest{Mode: addressSetGCOne, SetName: setName})
 	if err != nil {
-		// If not found, it's either already deleted or doesn't exist, so nothing to do.
-		return nil
+		return err
 	}
 
-	// Get a list of networks that indirectly reference this address set via ACLs.
-	asNets := map[string]AddressSetUsage{}
-	err = AddressSetNetworkUsage(s, projectName, setName, addrSet.Info().Addresses, asNets)
-	if err != nil {
-		return fmt.Errorf("Failed getting address set network usage: %w", err)
-	}
-
-	// Separate out OVN networks from non-OVN networks for different handling.
-	asOVNNets := map[string]AddressSetUsage{}
-	for k, v := range asNets {
-		if v.Type == "ovn" {
-			delete(asNets, k)
-			asOVNNets[k] = v
+	for _, set := range plan {
+		err = client.DeleteAddressSet(context.TODO(), ovn.OVNAddressSet(fmt.Sprintf("incus_set%d", set.Key.AddressSetID)))
+		if err != nil {
+			return fmt.Errorf("Failed removing address set %q from OVN: %w", set.Name, err)
 		}
+
+		l.Debug("Removed unused address set from OVN", logger.Ctx{"project": projectName, "addressSet": set.Name})
 	}
 
-	if len(asOVNNets) > 0 {
-		l.Debug("Address set still in use, skipping removal", logger.Ctx{"project": projectName, "addressSet": setName, "usedByCount": len(asOVNNets)})
-		return nil
-	}
-
-	// Address set is unused by OVN, remove from OVN.
-	err = client.DeleteAddressSet(context.TODO(), ovn.OVNAddressSet(fmt.Sprintf("incus_set%d", addrSet.ID())))
-	if err != nil {
-		return fmt.Errorf("Failed removing address set %q from OVN: %w", setName, err)
-	}
-
-	l.Debug("Removed unused address set from OVN", logger.Ctx{"project": projectName, "addressSet": setName})
 	return nil
 }
 
-// OVNAddressSetsDeleteIfUnused remove all address sets in OVN that are not used.
+// OVNAddressSetsDeleteIfUnused collects unused known project sets in OVN.
 func OVNAddressSetsDeleteIfUnused(s *state.State, l logger.Logger, client *ovn.NB, projectName string) error {
-	var Sets []dbCluster.NetworkAddressSet
-	l.Debug("Removing remaining sets ...")
-	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		var err error
-		Sets, err = dbCluster.GetNetworkAddressSets(ctx, tx.Tx(), dbCluster.NetworkAddressSetFilter{Project: &projectName})
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	plan, err := selectUnusedAddressSets(context.TODO(), s.DB.Cluster, projectName, addressSetGCRequest{Mode: addressSetGCAll})
 	if err != nil {
-		return fmt.Errorf("Failed loading address set names for project %q: %w", projectName, err)
+		return err
 	}
 
-	for _, set := range Sets {
-		_, _, err := client.GetAddressSet(context.TODO(), ovn.OVNAddressSet(fmt.Sprintf("incus_set%d", set.ID)))
-
-		// If address sets do not exist, continue.
+	for _, set := range plan {
+		name := ovn.OVNAddressSet(fmt.Sprintf("incus_set%d", set.Key.AddressSetID))
+		_, _, err := client.GetAddressSet(context.TODO(), name)
 		if errors.Is(err, ovn.ErrNotFound) {
 			continue
 		}
 
-		l.Debug("Trying to remove: ", logger.Ctx{"set": set})
-		err = OVNAddressSetDeleteIfUnused(s, l, client, projectName, set.Name)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed fetching address set %q from OVN: %w", set.Name, err)
 		}
+
+		err = client.DeleteAddressSet(context.TODO(), name)
+		if err != nil {
+			return fmt.Errorf("Failed removing address set %q from OVN: %w", set.Name, err)
+		}
+
+		l.Debug("Removed unused address set from OVN", logger.Ctx{"project": projectName, "addressSet": set.Name})
 	}
 
 	return nil

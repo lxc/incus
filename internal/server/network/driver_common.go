@@ -8,6 +8,7 @@ import (
 	"maps"
 	"math/rand"
 	"net"
+	"net/http"
 	"os"
 	"slices"
 	"strconv"
@@ -17,7 +18,6 @@ import (
 	incus "github.com/lxc/incus/v7/client"
 	internalInstance "github.com/lxc/incus/v7/internal/instance"
 	"github.com/lxc/incus/v7/internal/iprange"
-	"github.com/lxc/incus/v7/internal/server/bgp"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/cluster/request"
 	"github.com/lxc/incus/v7/internal/server/db"
@@ -87,17 +87,18 @@ type externalSubnetUsage struct {
 
 // common represents a generic network.
 type common struct {
-	logger      logger.Logger
-	state       *state.State
-	id          int64
-	project     string
-	name        string
-	netType     string
-	description string
-	config      map[string]string
-	status      string
-	managed     bool
-	nodes       map[int64]db.NetworkNode
+	logger            logger.Logger
+	state             *state.State
+	id                int64
+	project           string
+	name              string
+	netType           string
+	description       string
+	config            map[string]string
+	status            string
+	managed           bool
+	nodes             map[int64]db.NetworkNode
+	ovnOperationToken string
 
 	// Config to source the BGP next hop from when another network provides our uplink.
 	bgpNextHopConfig map[string]string
@@ -381,17 +382,40 @@ func (n *common) DHCPv6Ranges() []iprange.Range {
 
 // update the internal config variables, and if not cluster notification, notifies all nodes and updates database.
 func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientType request.ClientType) error {
+	return n.updateWithNotifierPolicy(applyNetwork, targetNode, clientType, cluster.NotifyAll)
+}
+
+// updateWithNotifierPolicy applies configuration using the driver's required notification policy.
+func (n *common) updateWithNotifierPolicy(applyNetwork api.NetworkPut, targetNode string, clientType request.ClientType, policy cluster.NotifierPolicy) error {
+	return n.updateWithNotifierPolicyForOVNUpdate(applyNetwork, targetNode, clientType, policy, false)
+}
+
+// updateWithNotifierPolicyForOVNUpdate checks initialization for metadata-only OVN updates.
+func (n *common) updateWithNotifierPolicyForOVNUpdate(applyNetwork api.NetworkPut, targetNode string, clientType request.ClientType, policy cluster.NotifierPolicy, metadataOnly bool) error {
 	// Update internal config before database has been updated (so that if update is a notification we apply
 	// the config being supplied and not that in the database).
 	n.description = applyNetwork.Description
 	n.config = applyNetwork.Config
 
-	// If this update isn't coming via a cluster notification itself, then notify all nodes of change and then
+	if n.netType == "ovn" && clientType != request.ClientTypeNotifier {
+		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.UpdateNetwork(ctx, n.project, n.name, applyNetwork.Description, applyNetwork.Config)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	// If this update isn't coming via a cluster notification itself, then notify other nodes of change and then
 	// update the database.
 	if clientType != request.ClientTypeNotifier {
 		if targetNode == "" {
-			// Notify all other nodes to update the network if no target specified.
-			notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
+			// Notify other nodes according to the driver's policy if no target specified.
+			notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), policy)
+			if n.netType == "ovn" {
+				notifier, err = ovnNotifier(n.state, n, policy, metadataOnly)
+			}
+
 			if err != nil {
 				return err
 			}
@@ -403,11 +427,20 @@ func (n *common) update(applyNetwork api.NetworkPut, targetNode string, clientTy
 			sendNetwork.Config = db.StripNodeSpecificNetworkConfig(n.netType, applyNetwork.Config)
 
 			err = notifier(func(client incus.InstanceServer) error {
+				if n.netType == "ovn" {
+					u := []string{version.APIVersion, "networks", n.name}
+					return OVNNotify(n.state, n, client, http.MethodPut, u, sendNetwork)
+				}
+
 				return client.UseProject(n.project).UpdateNetwork(n.name, sendNetwork, "")
 			})
 			if err != nil {
 				return err
 			}
+		}
+
+		if n.netType == "ovn" {
+			return nil
 		}
 
 		err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -679,46 +712,29 @@ func (n *common) bgpSetup(oldConfig map[string]string) error {
 
 // bgpClear clears BGP peers and prefixes.
 func (n *common) bgpClear(config map[string]string) error {
-	// Clear all peers.
+	var errs []error
 	err := n.bgpClearPeers(config)
 	if err != nil {
-		return err
+		errs = append(errs, err)
 	}
 
-	// Clear all prefixes.
-	err = n.state.BGP.RemovePrefixByOwner(fmt.Sprintf("network_%d", n.id))
-	if err != nil {
-		return err
+	for _, owner := range []string{
+		fmt.Sprintf("network_%d", n.id),
+		fmt.Sprintf("network_%d_forward", n.id),
+		fmt.Sprintf("network_%d_load_balancer", n.id),
+	} {
+		err := n.state.BGP.RemovePrefixByOwner(owner)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
 
-	// Clear existing address forward prefixes for network.
-	err = n.state.BGP.RemovePrefixByOwner(fmt.Sprintf("network_%d_forward", n.id))
-	if err != nil {
-		return err
-	}
-
-	// Clear existing load balancer prefixes for network.
-	err = n.state.BGP.RemovePrefixByOwner(fmt.Sprintf("network_%d_load_balancer", n.id))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
 
 // bgpClearPeers removes all BGP peers on the network.
 func (n *common) bgpClearPeers(config map[string]string) error {
-	peers := n.bgpGetPeers(config)
-	for _, peer := range peers {
-		// Remove the peer.
-		fields := strings.Split(peer, ",")
-		err := n.state.BGP.RemovePeer(net.ParseIP(fields[0]), fields[4])
-		if err != nil && !errors.Is(err, bgp.ErrPeerNotFound) {
-			return err
-		}
-	}
-
-	return nil
+	return n.state.BGP.RemovePeersByOwner(fmt.Sprintf("network_%d", n.id))
 }
 
 // bgpSetupPeers updates the list of BGP peers.
@@ -735,7 +751,7 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 
 		// Remove old peer.
 		fields := strings.Split(peer, ",")
-		err := n.state.BGP.RemovePeer(net.ParseIP(fields[0]), fields[4])
+		err := n.state.BGP.RemovePeer(net.ParseIP(fields[0]), fields[4], fmt.Sprintf("network_%d", n.id))
 		if err != nil {
 			return err
 		}
@@ -743,10 +759,6 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 
 	// Add new peers.
 	for _, peer := range newPeers {
-		if slices.Contains(oldPeers, peer) {
-			continue
-		}
-
 		// Add new peer.
 		fields := strings.Split(peer, ",")
 		asn, err := strconv.ParseUint(fields[1], 10, 32)
@@ -762,7 +774,7 @@ func (n *common) bgpSetupPeers(oldConfig map[string]string) error {
 			}
 		}
 
-		err = n.state.BGP.AddPeer(net.ParseIP(fields[0]), fields[4], uint32(asn), fields[2], holdTime)
+		err = n.state.BGP.AddPeer(net.ParseIP(fields[0]), fields[4], uint32(asn), fields[2], holdTime, fmt.Sprintf("network_%d", n.id))
 		if err != nil {
 			return err
 		}
@@ -1743,4 +1755,9 @@ func (n *common) randomHwaddr(r *rand.Rand) string {
 	}
 
 	return ret.String()
+}
+
+// OVNOperationToken identifies the origin operation that owns this loaded network.
+func (n *common) OVNOperationToken() string {
+	return n.ovnOperationToken
 }

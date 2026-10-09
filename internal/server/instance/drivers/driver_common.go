@@ -33,6 +33,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance/operationlock"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
 	"github.com/lxc/incus/v7/internal/server/locking"
+	"github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/response"
@@ -123,7 +124,15 @@ type common struct {
 	storagePool storagePools.Pool
 
 	// volatileSetPersistDisable indicates whether the VolatileSet function should persist changes to the DB.
-	volatileSetPersistDisable bool
+	volatileSetPersistDisable    bool
+	ovnMigrationSource           string
+	ovnMigrationTarget           string
+	ovnMigrationRestoreAttempted bool
+
+	// ovnDeviceUpdateOperations retains NIC reservations until the instance update commits or rolls back.
+	ovnDeviceUpdateOperations map[ovnDeviceNetwork]ovnDeviceOperation
+	ovnDeviceUpdateUndo       []ovnDeviceUndo
+	ovnDeviceUpdateRetain     bool
 }
 
 //
@@ -443,8 +452,23 @@ func (d *common) VolatileSet(changes map[string]string) error {
 		}
 	}
 
+	if d.ovnMigrationTarget != "" {
+		err := d.OVNNICMigrationRefresh()
+		if err != nil {
+			return err
+		}
+	}
+	// Staged target allocation writes must never replace source SQL before placement.
+	if d.ovnMigrationTarget != "" {
+		err := d.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.SetOVNNICMigrationVolatile(ctx, d.ovnMigrationTarget, d.id, d.localConfig["volatile.uuid"], changes)
+		})
+		if err != nil {
+			return err
+		}
+	}
 	// Update the database if required.
-	if !d.volatileSetPersistDisable {
+	if !d.volatileSetPersistDisable && d.ovnMigrationTarget == "" {
 		var err error
 		if d.isSnapshot {
 			err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
@@ -552,6 +576,60 @@ func (d *common) StoragePool() (string, error) {
 // deviceVolatileReset resets a device's volatile data when its removed or updated in such a way
 // that it is removed then added immediately afterwards.
 func (d *common) deviceVolatileReset(devName string, oldConfig, newConfig deviceConfig.Device) error {
+	claimKey := fmt.Sprintf("volatile.%s.last_state.ovn.physical", devName)
+	guard := func(ctx context.Context, tx *db.ClusterTx) error {
+		var claim string
+		err := tx.Tx().QueryRowContext(ctx, "SELECT COALESCE((SELECT value FROM instances_config WHERE instance_id=? AND key IN (?,?) AND value<>'' LIMIT 1),'')", d.id, claimKey, fmt.Sprintf("volatile.%s.last_state.ovn.host", devName)).Scan(&claim)
+		if err != nil {
+			return err
+		}
+
+		if claim != "" {
+			return errors.New("Original NIC claim cannot be erased by device reset; complete its rooted Stop first")
+		}
+
+		return nil
+	}
+	// Refuse before current Desired resolution, even when callers ignore reset errors.
+	if !d.isSnapshot && !d.volatileSetPersistDisable {
+		err := d.state.DB.Cluster.Transaction(context.Background(), guard)
+		if err != nil {
+			return err
+		}
+	} else if d.localConfig[claimKey] != "" || d.localConfig[fmt.Sprintf("volatile.%s.last_state.ovn.host", devName)] != "" {
+		return errors.New("Original NIC claim remains in device volatile state")
+	}
+
+	setVolatile := func(changes map[string]string) error {
+		if d.isSnapshot || d.volatileSetPersistDisable {
+			return d.VolatileSet(changes)
+		}
+		// Check persisted authority and erase in one transaction under the instance operation.
+		err := d.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			err := guard(ctx, tx)
+			if err != nil {
+				return err
+			}
+
+			return tx.UpdateInstanceConfig(d.id, changes)
+		})
+		if err != nil {
+			return err
+		}
+
+		for key, value := range changes {
+			if value == "" {
+				delete(d.localConfig, key)
+				delete(d.expandedConfig, key)
+			} else {
+				d.localConfig[key] = value
+				d.expandedConfig[key] = value
+			}
+		}
+
+		return nil
+	}
+
 	volatileClear := make(map[string]string)
 	devicePrefix := fmt.Sprintf("volatile.%s.", devName)
 
@@ -577,7 +655,7 @@ func (d *common) deviceVolatileReset(devName string, oldConfig, newConfig device
 			volatileClear[k] = ""
 		}
 
-		return d.VolatileSet(volatileClear)
+		return setVolatile(volatileClear)
 	}
 
 	// If the device type remains the same, then just remove any volatile keys that have
@@ -595,7 +673,7 @@ func (d *common) deviceVolatileReset(devName string, oldConfig, newConfig device
 		}
 	}
 
-	return d.VolatileSet(volatileClear)
+	return setVolatile(volatileClear)
 }
 
 // deviceVolatileGetFunc returns a function that retrieves a named device's volatile config and
@@ -610,6 +688,7 @@ func (d *common) deviceVolatileGetFunc(devName string) func() map[string]string 
 				volatile[after] = v
 			}
 		}
+
 		return volatile
 	}
 }
@@ -1180,7 +1259,7 @@ func (d *common) resetInstanceID() error {
 }
 
 // needsNewInstanceID checks the changed data in an Update call to determine if a new instance-id is necessary.
-func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices deviceConfig.Devices) bool {
+func needsNewInstanceID(changedConfig []string, oldLocalConfig, newLocalConfig map[string]string, oldExpandedDevices, newExpandedDevices deviceConfig.Devices) bool {
 	// Look for cloud-init related config changes.
 	for _, key := range []string{
 		"cloud-init.vendor-data",
@@ -1196,7 +1275,7 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 	}
 
 	// Look for changes in network interface names.
-	getNICNames := func(devs deviceConfig.Devices) []string {
+	getNICNames := func(localConfig map[string]string, devs deviceConfig.Devices) []string {
 		names := make([]string, 0, len(devs))
 		for devName, dev := range devs {
 			if dev["type"] != "nic" {
@@ -1209,9 +1288,9 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 			}
 
 			configKey := fmt.Sprintf("volatile.%s.name", devName)
-			volatileName := d.localConfig[configKey]
+			volatileName := localConfig[configKey]
 			if volatileName != "" {
-				names = append(names, dev["name"])
+				names = append(names, volatileName)
 				continue
 			}
 
@@ -1221,8 +1300,8 @@ func (d *common) needsNewInstanceID(changedConfig []string, oldExpandedDevices d
 		return names
 	}
 
-	oldNames := getNICNames(oldExpandedDevices)
-	newNames := getNICNames(d.expandedDevices)
+	oldNames := getNICNames(oldLocalConfig, oldExpandedDevices)
+	newNames := getNICNames(newLocalConfig, newExpandedDevices)
 
 	for _, entry := range oldNames {
 		if !slices.Contains(newNames, entry) {
@@ -1386,6 +1465,7 @@ func (d *common) devicesRegister(inst instance.Instance) {
 func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfig.Devices, addDevices deviceConfig.Devices, updateDevices deviceConfig.Devices, oldExpandedDevices deviceConfig.Devices, instanceRunning bool, userRequested bool) error {
 	reverter := revert.New()
 	defer reverter.Fail()
+	defer d.captureOVNDeviceUndo()
 
 	dm, ok := inst.(deviceManager)
 	if !ok {
@@ -1407,6 +1487,11 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 	for _, entry := range removeDevices.Reversed() {
 		l := d.logger.AddContext(logger.Ctx{"device": entry.Name, "userRequested": userRequested})
 		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
+		authorizeErr := d.authorizeOVNDeviceUpdate(dev)
+		if authorizeErr != nil {
+			return authorizeErr
+		}
+
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -1418,6 +1503,10 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 
 		// If a device was returned from deviceLoad even if validation fails, then try to stop and remove.
 		if dev != nil {
+			d.addOVNDeviceUndo(dev, func() error {
+				return d.restoreOVNDevice(inst, entry.Name, entry.Config, instanceRunning, dm)
+			})
+
 			if instanceRunning {
 				err = dm.deviceStop(dev, instanceRunning, "")
 				if err != nil {
@@ -1444,6 +1533,11 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 	for _, entry := range addDevices.Sorted() {
 		l := d.logger.AddContext(logger.Ctx{"device": entry.Name, "userRequested": userRequested})
 		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
+		authorizeErr := d.authorizeOVNDeviceUpdate(dev)
+		if authorizeErr != nil {
+			return authorizeErr
+		}
+
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -1463,6 +1557,15 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			continue
 		}
 
+		ovnUndo := d.addOVNDeviceCleanupUndo(dev, func() error {
+			err := d.deviceRemove(dev, instanceRunning, true)
+			if errors.Is(err, network.ErrOVNNICPortAbsent) {
+				// The failed add reverted or never created its port under this update's reservation.
+				return nil
+			}
+
+			return err
+		})
 		err = d.deviceAdd(dev, instanceRunning)
 		if err != nil {
 			if userRequested {
@@ -1474,7 +1577,9 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			l.Error("Failed to add device, skipping as non-user requested", logger.Ctx{"err": err})
 		}
 
-		reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning, true) })
+		if !ovnUndo {
+			reverter.Add(func() { _ = d.deviceRemove(dev, instanceRunning, true) })
+		}
 
 		if instanceRunning {
 			err = dev.PreStartCheck()
@@ -1482,12 +1587,18 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 				return fmt.Errorf("Failed pre-start check for device %q: %w", dev.Name(), err)
 			}
 
+			if ovnUndo {
+				d.addOVNDeviceCleanupUndo(dev, func() error { return dm.deviceStop(dev, instanceRunning, "") })
+			}
+
 			_, err := dm.deviceStart(dev, instanceRunning)
 			if err != nil && !errors.Is(err, device.ErrUnsupportedDevType) {
 				return fmt.Errorf("Failed to start device %q: %w", dev.Name(), err)
 			}
 
-			reverter.Add(func() { _ = dm.deviceStop(dev, instanceRunning, "") })
+			if !ovnUndo {
+				reverter.Add(func() { _ = dm.deviceStop(dev, instanceRunning, "") })
+			}
 		}
 
 		// For the root disk, call Update as its size may change.
@@ -1503,6 +1614,11 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 	for _, entry := range updateDevices.Sorted() {
 		l := d.logger.AddContext(logger.Ctx{"device": entry.Name, "userRequested": userRequested})
 		dev, err := d.deviceLoad(inst, entry.Name, entry.Config, false)
+		authorizeErr := d.authorizeOVNDeviceUpdate(dev)
+		if authorizeErr != nil {
+			return authorizeErr
+		}
+
 		if err != nil {
 			if errors.Is(err, device.ErrUnsupportedDevType) {
 				continue // Skip unsupported device (allows for mixed instance type profiles).
@@ -1524,6 +1640,10 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			// invalid non-user requested config that has been applied to DB. The safest thing to do
 			// is to cleanup the device and wait for the config to be corrected.
 			if dev != nil {
+				d.addOVNDeviceUndo(dev, func() error {
+					return d.restoreOVNDevice(inst, entry.Name, oldExpandedDevices[entry.Name], instanceRunning, dm)
+				})
+
 				if instanceRunning {
 					err = dm.deviceStop(dev, instanceRunning, "")
 					if err != nil {
@@ -1540,6 +1660,15 @@ func (d *common) devicesUpdate(inst instance.Instance, removeDevices deviceConfi
 			continue
 		}
 
+		newExpandedDevices := d.expandedDevices.Clone()
+		d.addOVNDeviceUndo(dev, func() error {
+			oldDevice, err := d.loadOVNDeviceUndo(inst, entry.Name, oldExpandedDevices[entry.Name])
+			if err != nil {
+				return err
+			}
+
+			return oldDevice.Update(newExpandedDevices, instanceRunning)
+		})
 		err = dev.Update(oldExpandedDevices, instanceRunning)
 		if err != nil {
 			return fmt.Errorf("Failed to update device %q: %w", dev.Name(), err)

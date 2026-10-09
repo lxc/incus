@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/lxc/incus/v7/internal/filter"
@@ -15,10 +17,12 @@ import (
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
+	"github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/internal/server/network/acl"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/request"
 	"github.com/lxc/incus/v7/internal/server/response"
+	"github.com/lxc/incus/v7/internal/server/state"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
 	"github.com/lxc/incus/v7/internal/version"
 	"github.com/lxc/incus/v7/shared/api"
@@ -309,13 +313,20 @@ func networkACLsGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkACLsPost(d *Daemon, r *http.Request) response.Response {
+func networkACLsPost(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	release, _, err := networkReserveSharedOVN(s, projectName, "acl-config", clusterRequest.ClientTypeNormal)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	req := api.NetworkACLsPost{}
 
@@ -384,7 +395,7 @@ func networkACLsPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkACLDelete(d *Daemon, r *http.Request) response.Response {
+func networkACLDelete(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
@@ -396,6 +407,20 @@ func networkACLDelete(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	// Retire vestigial per-network groups under each network's own reservation, which the shared
+	// ACL reservation below would block. Deletion still refuses an ACL that remains in use.
+	err = networkACLRetireNetworkGroups(s, projectName, aclName)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	release, _, err := networkReserveSharedOVN(s, projectName, "acl-config", clusterRequest.ClientTypeNormal)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	netACL, err := acl.LoadByName(s, projectName, aclName)
 	if err != nil {
@@ -582,13 +607,21 @@ func networkACLGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkACLPut(d *Daemon, r *http.Request) response.Response {
+func networkACLPut(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+	release, beforeOVN, err := networkReserveSharedOVN(s, projectName, "acl-config", clientType)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	aclName, err := pathVar(r, "name")
 	if err != nil {
@@ -626,9 +659,7 @@ func networkACLPut(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
-
-	err = netACL.Update(&req, clientType)
+	err = netACL.Update(&req, clientType, beforeOVN)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -679,7 +710,7 @@ func networkACLPut(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkACLPost(d *Daemon, r *http.Request) response.Response {
+func networkACLPost(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	aclName, err := pathVar(r, "name")
@@ -691,6 +722,13 @@ func networkACLPost(d *Daemon, r *http.Request) response.Response {
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	release, _, err := networkReserveSharedOVN(s, projectName, "acl-config", clusterRequest.ClientTypeNormal)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	req := api.NetworkACLPost{}
 
@@ -790,4 +828,82 @@ func networkACLLogGet(d *Daemon, r *http.Request) response.Response {
 	ent.FileSize = int64(len(log))
 
 	return response.FileResponse(r, []response.FileResponseEntry{ent}, nil)
+}
+
+// networkACLRetireNetworkGroups retires an ACL's per-network OVN groups on the networks that still
+// hold one, each inside that network's normal update reservation.
+func networkACLRetireNetworkGroups(s *state.State, projectName string, aclName string) error {
+	var never bool
+	var aclID, projectID int64
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		never, err = tx.OVNReferencesInapplicable(ctx)
+		if err != nil || never {
+			return err
+		}
+
+		aclID, err = dbCluster.GetNetworkACLID(ctx, tx.Tx(), projectName, aclName)
+		if err != nil {
+			return err
+		}
+
+		projectID, err = dbCluster.GetProjectID(ctx, tx.Tx(), projectName)
+		return err
+	})
+	if err != nil || never {
+		return err
+	}
+
+	client, _, err := s.OVN()
+	if err != nil {
+		return err
+	}
+
+	groups, err := client.GetPortGroupsByProject(context.TODO(), projectID)
+	if err != nil {
+		return err
+	}
+
+	prefix := fmt.Sprintf("incus_acl%d_net", aclID)
+	for _, group := range groups {
+		raw, ok := strings.CutPrefix(string(group), prefix)
+		if !ok {
+			continue
+		}
+
+		networkID, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || networkID <= 0 || acl.OVNACLNetworkPortGroupName(aclID, networkID) != group {
+			continue
+		}
+
+		var networkName, networkProject string
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+			networkName, networkProject, err = tx.GetNetworkNameAndProjectWithID(ctx, int(networkID))
+			return err
+		})
+		if err != nil {
+			if api.StatusErrorCheck(err, http.StatusNotFound) {
+				continue // Network deletion removes its own groups.
+			}
+
+			return err
+		}
+
+		n, err := network.LoadByName(s, networkProject, networkName)
+		if err != nil {
+			return err
+		}
+
+		if n.ID() != networkID {
+			continue
+		}
+
+		err = network.RetireOVNACLNetworkGroups(n, []string{aclName})
+		if err != nil {
+			return fmt.Errorf("Failed retiring OVN port group of network %q: %w", networkName, err)
+		}
+	}
+
+	return nil
 }

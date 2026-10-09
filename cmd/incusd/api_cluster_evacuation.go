@@ -25,6 +25,7 @@ import (
 	"github.com/lxc/incus/v7/internal/server/instance"
 	instanceDrivers "github.com/lxc/incus/v7/internal/server/instance/drivers"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
+	"github.com/lxc/incus/v7/internal/server/locking"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/internal/server/response"
@@ -69,16 +70,17 @@ func evacuationProgressHandler(op *operations.Operation, prefix string) func(new
 }
 
 type evacuateOpts struct {
-	s               *state.State
-	instances       []instance.Instance
-	mode            string
-	srcMemberName   string
-	stopInstance    evacuateStopFunc
-	migrateInstance evacuateMigrateFunc
-	op              *operations.Operation
+	s                     *state.State
+	instances             []instance.Instance
+	mode                  string
+	srcMemberName         string
+	stopInstance          evacuateStopFunc
+	migrateInstance       evacuateMigrateFunc
+	op                    *operations.Operation
+	beforeInstanceActions func()
 }
 
-func evacuateClusterSetState(s *state.State, name string, newState int) error {
+func evacuateClusterSetState(s *state.State, name string, newState int, expected ...int) error {
 	return s.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
 		// Get the node.
 		node, err := tx.GetNodeByName(ctx, name)
@@ -88,6 +90,14 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 
 		if node.State == db.ClusterMemberStatePending {
 			return errors.New("Cannot evacuate or restore a pending cluster member")
+		}
+
+		if len(expected) > 0 && !slices.Contains(expected, node.State) {
+			return api.StatusErrorf(http.StatusConflict, "Cluster member state changed during maintenance")
+		}
+
+		if node.State == newState && (newState == db.ClusterMemberStateEvacuating || newState == db.ClusterMemberStateRestoring) {
+			return nil
 		}
 
 		// Do nothing if the node is already in expected state.
@@ -100,6 +110,18 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 			}
 
 			return errors.New("Cluster member is already in requested state")
+		}
+
+		if newState == db.ClusterMemberStateRestoring && node.State == db.ClusterMemberStateEvacuated {
+			// An active deletion may rely on this member staying prepared until it finishes.
+			deleting, err := tx.OVNDeletionRelyingOnMember(ctx, node.ID)
+			if err != nil {
+				return err
+			}
+
+			if deleting != "" {
+				return api.StatusErrorf(http.StatusConflict, "OVN network %q deletion relies on this member's maintenance state; retry the restore after it finishes", deleting)
+			}
 		}
 
 		// Set node status to requested value.
@@ -246,18 +268,45 @@ func evacuateWaitForOperations(ctx context.Context, op *operations.Operation) er
 }
 
 func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.Operation, name string, mode string, stopInstance evacuateStopFunc, migrateInstance evacuateMigrateFunc) error {
+	unlock, _ := locking.TryLock("cluster.member.maintenance." + name)
+	if unlock == nil {
+		return api.StatusErrorf(http.StatusConflict, "Cluster member has another maintenance operation")
+	}
+
+	defer unlock()
+	var priorState int
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		member, err := tx.GetNodeByName(ctx, name)
+		if err != nil {
+			return err
+		}
+
+		priorState = member.State
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if !slices.Contains([]int{db.ClusterMemberStateCreated, db.ClusterMemberStateEvacuating, db.ClusterMemberStateEvacuated, db.ClusterMemberStateRestoring}, priorState) {
+		return api.StatusErrorf(http.StatusConflict, "Cluster member is not ready for evacuation")
+	}
+
+	preparationStarted := priorState != db.ClusterMemberStateCreated
 	// Setup a reverter.
 	reverter := revert.New()
 	defer reverter.Fail()
 
 	// Set cluster member status to EVACUATING to prevent any new instance from being placed on it.
-	err := evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuating)
+	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuating, priorState)
 	if err != nil {
 		return err
 	}
 
 	reverter.Add(func() {
-		_ = evacuateClusterSetState(s, name, db.ClusterMemberStateCreated)
+		if !preparationStarted {
+			_ = evacuateClusterSetState(s, name, db.ClusterMemberStateCreated, db.ClusterMemberStateEvacuating)
+		}
 	})
 
 	// Wait for ongoing instance operations to complete (skipped when healing an offline member).
@@ -304,6 +353,9 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 		stopInstance:    stopInstance,
 		migrateInstance: migrateInstance,
 		op:              op,
+		beforeInstanceActions: func() {
+			preparationStarted = true
+		},
 	}
 
 	err = evacuateInstances(ctx, opts)
@@ -313,11 +365,24 @@ func evacuateClusterMember(ctx context.Context, s *state.State, op *operations.O
 
 	// Stop networks after evacuation.
 	if mode != "heal" {
-		networkShutdown(s)
+		err = retryOriginalOVNMaintenance(ctx, s, name, func(project, name string) (instance.Instance, error) {
+			return instance.LoadByProjectAndName(s, project, name)
+		}, func() { preparationStarted = true })
+		if err != nil {
+			return err
+		}
+
+		preparationStarted = true
+		err = networkOVNMaintenance(s, false)
+		if err != nil {
+			return err
+		}
+
+		networkShutdown(s, true)
 	}
 
 	// Set cluster member status to EVACUATED.
-	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuated)
+	err = evacuateClusterSetState(s, name, db.ClusterMemberStateEvacuated, db.ClusterMemberStateEvacuating)
 	if err != nil {
 		return err
 	}
@@ -369,6 +434,11 @@ func evacuateInstances(ctx context.Context, opts evacuateOpts) error {
 		return errors.New("Missing migration callback function")
 	}
 
+	// A dispatched workload may change before another action fails. Keep admission closed.
+	if len(opts.instances) > 0 && opts.beforeInstanceActions != nil {
+		opts.beforeInstanceActions()
+	}
+
 	return concurrentInstanceActions(opts.instances, "Failed to evacuate instances", func(inst instance.Instance) error {
 		return evacuateInstancesFunc(ctx, inst, opts)
 	})
@@ -400,6 +470,14 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 
 	// Stop the instance if needed.
 	isRunning := inst.IsRunning()
+	if !isRunning && opts.mode != "heal" && opts.stopInstance != nil {
+		// A stopped instance can still hold an unacknowledged original OVN NIC allocation, for
+		// example from a start that failed as evacuation began. Retry it before moves or preparation.
+		err := inst.Stop(false)
+		if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
+			return fmt.Errorf("Failed retrying cleanup of stopped instance: %w", err)
+		}
+	}
 	if action != "live-migrate" && action != "refresh-migrate" {
 		if opts.stopInstance != nil && isRunning {
 			_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
@@ -529,23 +607,27 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 	}
 
 	run := func(op *operations.Operation) error {
-		// Setup a reverter.
-		reverter := revert.New()
-		defer reverter.Fail()
+		unlock, _ := locking.TryLock("cluster.member.maintenance." + originName)
+		if unlock == nil {
+			return api.StatusErrorf(http.StatusConflict, "Cluster member has another maintenance operation")
+		}
 
+		defer unlock()
+
+		// Keep failed restores gated as Restoring until an explicit retry or evacuation.
 		// Set node status to RESTORING.
-		err := evacuateClusterSetState(s, originName, db.ClusterMemberStateRestoring)
+		err := evacuateClusterSetState(s, originName, db.ClusterMemberStateRestoring, db.ClusterMemberStateEvacuated, db.ClusterMemberStateEvacuating, db.ClusterMemberStateRestoring)
 		if err != nil {
 			return err
 		}
 
-		// Ensure node is put into its previous state if anything fails.
-		reverter.Add(func() {
-			_ = evacuateClusterSetState(s, originName, db.ClusterMemberStateEvacuated)
-		})
-
 		// Restart the networks.
-		err = networkStartup(d.State())
+		err = networkStartup(d.State(), true)
+		if err != nil {
+			return err
+		}
+
+		err = networkOVNMaintenance(s, true)
 		if err != nil {
 			return err
 		}
@@ -565,14 +647,7 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 			// Start the instance.
 			_ = op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Starting %q in project %q", inst.Name(), inst.Project().Name)})
 
-			// If configured for stateful stop, try restoring its state.
-			action := inst.CanMigrate()
-			if action == "stateful-stop" {
-				err = inst.Start(true)
-			} else {
-				err = inst.Start(false)
-			}
-
+			err = restoreLocalInstanceStart(inst)
 			if err != nil {
 				return fmt.Errorf("Failed to start instance %q: %w", inst.Name(), err)
 			}
@@ -587,12 +662,10 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 		}
 
 		// Set node status to CREATED.
-		err = evacuateClusterSetState(s, originName, db.ClusterMemberStateCreated)
+		err = evacuateClusterSetState(s, originName, db.ClusterMemberStateCreated, db.ClusterMemberStateRestoring)
 		if err != nil {
 			return err
 		}
-
-		reverter.Success()
 
 		s.Events.SendLifecycle(api.ProjectDefaultName, lifecycle.ClusterMemberRestored.Event(originName, op.Requestor(), nil))
 
@@ -605,6 +678,23 @@ func restoreClusterMember(d *Daemon, r *http.Request, skipInstances bool) respon
 	}
 
 	return operations.OperationResponse(op)
+}
+
+// restoreLocalInstanceStart starts an evacuated local instance. A failed start records the
+// instance as stopped, so the restore intent is kept for an explicit restore retry.
+func restoreLocalInstanceStart(inst instance.Instance) error {
+	// If configured for stateful stop, try restoring its state.
+	err := inst.Start(inst.CanMigrate() == "stateful-stop")
+	if err == nil {
+		return nil
+	}
+
+	intentErr := inst.VolatileSet(map[string]string{"volatile.last_state.power": instance.PowerStateRunning})
+	if intentErr != nil {
+		return errors.Join(err, fmt.Errorf("Failed keeping restore intent: %w", intentErr))
+	}
+
+	return err
 }
 
 func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, originName string, r *http.Request, s *state.State) error {
@@ -1035,4 +1125,48 @@ func healClusterMember(d *Daemon, op *operations.Operation, name string) error {
 
 	logger.Error("Failed to heal cluster member", logger.Ctx{"server": name, "err": err})
 	return err
+}
+
+// retryOriginalOVNMaintenance selects durable original sources after current placement changes.
+func retryOriginalOVNMaintenance(ctx context.Context, s *state.State, member string, load func(string, string) (instance.Instance, error), beforeEffects func()) error {
+	if member != s.ServerName {
+		return errors.New("Original OVN cleanup must execute on its source member")
+	}
+
+	var plans []db.OVNNICCleanupRetry
+	err := s.DB.Cluster.Transaction(ctx, func(ctx context.Context, tx *db.ClusterTx) error {
+		var err error
+		plans, err = tx.OVNNICCleanupRetries(ctx)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, plan := range plans {
+		inst, err := load(plan.Project, plan.Name)
+		if err != nil {
+			return err
+		}
+
+		if inst.ID() != plan.InstanceID || inst.Project().Name != plan.Project || inst.Name() != plan.Name || inst.LocalConfig()["volatile.uuid"] != plan.InstanceUUID {
+			return errors.New("Original OVN cleanup retry loader identity changed")
+		}
+
+		retry, ok := inst.(interface{ RetryOVNNICCleanup() error })
+		if !ok {
+			return errors.New("Original OVN cleanup retry driver is unsupported")
+		}
+
+		if beforeEffects != nil {
+			beforeEffects()
+		}
+
+		err = retry.RetryOVNNICCleanup()
+		if err != nil {
+			return fmt.Errorf("Failed retrying original OVN cleanup for %s/%s: %w", plan.Project, plan.Name, err)
+		}
+	}
+
+	return nil
 }

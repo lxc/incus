@@ -323,7 +323,7 @@ func networkForwardsGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkForwardsPost(d *Daemon, r *http.Request) response.Response {
+func networkForwardsPost(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	resp := forwardedResponseIfTargetIsRemote(s, r)
@@ -350,10 +350,12 @@ func networkForwardsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "forward", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {
@@ -415,7 +417,7 @@ func networkForwardsPost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkForwardDelete(d *Daemon, r *http.Request) response.Response {
+func networkForwardDelete(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	resp := forwardedResponseIfTargetIsRemote(s, r)
@@ -433,10 +435,12 @@ func networkForwardDelete(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "forward", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {
@@ -701,7 +705,7 @@ func networkForwardGet(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/PreconditionFailed"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func networkForwardPut(d *Daemon, r *http.Request) response.Response {
+func networkForwardPut(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	resp := forwardedResponseIfTargetIsRemote(s, r)
@@ -719,10 +723,12 @@ func networkForwardPut(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
-	n, err := network.LoadByName(s, projectName, networkName)
+	n, unlock, err := networkLoadForOperation(s, projectName, networkName, "forward", isClusterNotification(r), r)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading network: %w", err))
 	}
+
+	defer networkOVNReleaseResponse(unlock, &result)
 
 	// Check if project allows access to network.
 	if !project.NetworkAllowed(reqProject.Config, networkName, n.IsManaged()) {

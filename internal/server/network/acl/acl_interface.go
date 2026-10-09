@@ -26,7 +26,7 @@ type NetworkACL interface {
 	validateConfig(config *api.NetworkACLPut) error
 
 	// Modifications.
-	Update(config *api.NetworkACLPut, clientType request.ClientType) error
+	Update(config *api.NetworkACLPut, clientType request.ClientType, beforeOVN func(map[string]int64) error) error
 	Rename(newName string) error
 	Delete() error
 }

@@ -12,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
+
+	"github.com/google/uuid"
 
 	"github.com/lxc/incus/v7/internal/server/db"
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
@@ -79,6 +82,55 @@ func SRIOVGetHostDevicesInUse(s *state.State) (map[string]struct{}, error) {
 
 			return nil
 		}, filter)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Moving/removing Desired devices must not make original source debt reusable.
+	err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		attempts, err := tx.OVNNICCleanups(ctx)
+		if err != nil {
+			return err
+		}
+
+		err = sriovReserveCleanupDevices(attempts, s.ServerName, reservedDevices)
+		if err != nil {
+			return err
+		}
+
+		rows, err := tx.Tx().QueryContext(ctx, `SELECT m.operation,d.device_name FROM networks_ovn_nic_migrations m JOIN networks_ovn_nic_migration_devices d ON d.operation=m.operation JOIN nodes n ON n.id=m.target_node_id WHERE m.target_node_id=? AND n.name=? AND m.phase IN ('authorized','handover') AND d.target_volatile<>'{}'`, s.DB.Cluster.GetNodeID(), s.ServerName)
+		if err != nil {
+			return err
+		}
+
+		var keys [][2]string
+		for rows.Next() {
+			var key [2]string
+			err = rows.Scan(&key[0], &key[1])
+			if err != nil {
+				break
+			}
+
+			keys = append(keys, key)
+		}
+
+		err = errors.Join(err, rows.Err(), rows.Close())
+		if err != nil {
+			return err
+		}
+
+		var migrations []db.OVNNICMigration
+		for _, key := range keys {
+			m, err := tx.OVNNICMigrationDevice(ctx, key[0], key[1])
+			if err != nil {
+				return err
+			}
+
+			migrations = append(migrations, m)
+		}
+
+		return sriovReserveMigrationDevices(migrations, s.DB.Cluster.GetNodeID(), s.ServerName, reservedDevices)
 	})
 	if err != nil {
 		return nil, err
@@ -440,4 +492,147 @@ func SRIOVFindFreeVFAndRepresentor(s *state.State, ovsBridgeName string) (string
 	}
 
 	return "", "", "", -1, errors.New("No free virtual function and representor port found")
+}
+
+// sriovReserveCleanupDevices keeps the finite captured VF allocations reserved.
+func sriovReserveCleanupDevices(attempts []db.OVNNICCleanup, sourceName string, reserved map[string]struct{}) error {
+	for _, attempt := range attempts {
+		var source struct {
+			Kind         string
+			Version      int
+			DeviceConfig map[string]string
+			HostVolatile map[string]string
+			Port         struct{ Source string }
+		}
+
+		err := json.Unmarshal([]byte(attempt.Payload), &source)
+		if err != nil || source.Kind != "incus-ovn-nic-stop" || source.Version != 1 || source.Port.Source != sourceName {
+			return errors.New("Original NIC cleanup source is invalid; refusing physical allocation")
+		}
+
+		if source.DeviceConfig["acceleration"] != "sriov" && source.DeviceConfig["acceleration"] != "vdpa" {
+			continue
+		}
+
+		name := source.HostVolatile["host_name"]
+		parent := source.HostVolatile["last_state.vf.parent"]
+		id, err := strconv.Atoi(source.HostVolatile["last_state.vf.id"])
+		if name == "" || parent == "" || filepath.Base(parent) != parent || err != nil || id < 0 {
+			return errors.New("Original source VF identity is incomplete; refusing physical allocation")
+		}
+
+		var physical struct {
+			Version int
+			Parent  string
+			VFID    int
+			PFPath  string
+			PFInode uint64
+			VFPath  string
+			VFInode uint64
+		}
+
+		err = json.Unmarshal([]byte(source.HostVolatile["last_state.ovn.physical"]), &physical)
+		if err != nil || physical.Version != 1 || physical.Parent != parent || physical.VFID != id {
+			return errors.New("Original source physical allocation is unproven; refusing VF reuse")
+		}
+
+		pf, err := filepath.EvalSymlinks(filepath.Join(sysClassNet, parent, "device"))
+		if err != nil {
+			return err
+		}
+
+		vf, err := filepath.EvalSymlinks(filepath.Join(pf, fmt.Sprintf("virtfn%d", id)))
+		if err != nil {
+			return err
+		}
+
+		var pfStat, vfStat syscall.Stat_t
+		err = syscall.Stat(pf, &pfStat)
+		if err == nil {
+			err = syscall.Stat(vf, &vfStat)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		if physical.PFPath != pf || physical.PFInode != pfStat.Ino || physical.VFPath != vf || physical.VFInode != vfStat.Ino {
+			return errors.New("Original source PF/VF was replaced; refusing unknown allocation")
+		}
+
+		reserved[name] = struct{}{}
+		// Reserve a renamed host VF too, using the original PF/VF identity.
+		path := filepath.Join(sysClassNet, parent, "device", fmt.Sprintf("virtfn%d", id), "net")
+		entries, err := os.ReadDir(path)
+		if os.IsNotExist(err) {
+			continue
+		}
+
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range entries {
+			reserved[entry.Name()] = struct{}{}
+		}
+	}
+
+	return nil
+}
+
+// Target staging reserves the finite allocation before shared instance placement changes.
+func sriovReserveMigrationDevices(migrations []db.OVNNICMigration, targetID int64, targetName string, reserved map[string]struct{}) error {
+	for _, m := range migrations {
+		op, err := uuid.Parse(m.Operation)
+		if err != nil || op == uuid.Nil || op.String() != m.Operation || m.TargetNodeID != targetID || m.SourceNodeID == targetID || (m.Phase != "authorized" && m.Phase != "handover") || m.Source.Generation == "" || m.Source.SourceNodeID != m.SourceNodeID || m.Source.InstanceUUID != m.InstanceUUID || m.Source.DeviceName != m.DeviceName {
+			return errors.New("Staged target VF authority changed; refusing allocation")
+		}
+
+		generation, err := uuid.Parse(m.Source.Generation)
+		if err != nil || generation == uuid.Nil || generation.String() != m.Source.Generation {
+			return errors.New("Staged target original generation is invalid")
+		}
+
+		var original struct{ DeviceConfig map[string]string }
+		err = json.Unmarshal([]byte(m.Source.Payload), &original)
+		if err != nil {
+			return err
+		}
+
+		if original.DeviceConfig["acceleration"] != "sriov" && original.DeviceConfig["acceleration"] != "vdpa" {
+			continue
+		}
+
+		var claim struct {
+			Version      int
+			NetworkID    int64
+			SourceNodeID int64
+			InstanceID   int
+			InstanceUUID string
+			DeviceName   string
+			Representor  struct{ Alias string }
+		}
+
+		err = json.Unmarshal([]byte(m.TargetVolatile["last_state.ovn.physical"]), &claim)
+		networkOwned := false
+		for _, id := range m.Source.NetworkIDs {
+			networkOwned = networkOwned || id == claim.NetworkID
+		}
+
+		if err != nil || claim.Version != 1 || !networkOwned || claim.SourceNodeID != targetID || claim.InstanceID != m.InstanceID || claim.InstanceUUID != m.InstanceUUID || claim.DeviceName != m.DeviceName || claim.Representor.Alias == "" {
+			return errors.New("Staged target VF claim is incomplete; refusing allocation")
+		}
+
+		payload, err := json.Marshal(map[string]any{"Kind": "incus-ovn-nic-stop", "Version": 1, "DeviceConfig": original.DeviceConfig, "HostVolatile": m.TargetVolatile, "Port": map[string]string{"Source": targetName}})
+		if err != nil {
+			return err
+		}
+
+		err = sriovReserveCleanupDevices([]db.OVNNICCleanup{{Payload: string(payload)}}, targetName, reserved)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

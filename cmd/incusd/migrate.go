@@ -169,9 +169,11 @@ func (c *migrationFields) controlChannel() <-chan *localMigration.ControlRespons
 type migrationSourceWs struct {
 	migrationFields
 
-	clusterMoveSourceName string
-	devices               api.DevicesMap
-	skipDependentVolumes  []string
+	clusterMoveSourceName    string
+	nicMigrationOperation    string
+	nicMigrationTargetNodeID int64
+	devices                  api.DevicesMap
+	skipDependentVolumes     []string
 
 	pushCertificate  string
 	pushOperationURL string
@@ -215,6 +217,7 @@ type migrationSink struct {
 	migrationFields
 
 	url                   string
+	nicMigrationOperation string
 	push                  bool
 	clusterMoveSourceName string
 	refresh               bool
@@ -237,6 +240,7 @@ type migrationSinkArgs struct {
 	Refresh               bool
 	RefreshExcludeOlder   bool
 	ClusterMoveSourceName string
+	NICMigrationOperation string
 	Snapshots             []*migration.Snapshot
 
 	// Storage specific fields

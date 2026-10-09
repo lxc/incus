@@ -35,6 +35,7 @@ import (
 	dbCluster "github.com/lxc/incus/v7/internal/server/db/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
 	"github.com/lxc/incus/v7/internal/server/lifecycle"
+	serverNetwork "github.com/lxc/incus/v7/internal/server/network"
 	"github.com/lxc/incus/v7/internal/server/node"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/request"
@@ -2197,7 +2198,7 @@ func clusterNodePost(d *Daemon, r *http.Request) response.Response {
 //	    $ref: "#/responses/Conflict"
 //	  "500":
 //	    $ref: "#/responses/InternalServerError"
-func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
+func clusterNodeDelete(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	force, err := strconv.Atoi(r.FormValue("force"))
@@ -2349,6 +2350,54 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 		logger.Warn("Failed to sync images")
 	}
 
+	// Exclude OVN creation and reserve existing cleanup before changing raft membership.
+	membershipRelease, _, err := serverNetwork.AcquireOVNOperation(s, api.ProjectDefaultName, "cluster/ovn-membership", "member-remove")
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(membershipRelease, &result)
+	removalNetworks := map[serverNetwork.ProjectNetwork]serverNetwork.Network{}
+	var removalReleases []func() error
+	defer func() {
+		for _, release := range removalReleases {
+			networkOVNReleaseResponse(release, &result)
+		}
+	}()
+	if force != 1 {
+		var networkNames map[string][]string
+		err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+			networkNames, err = tx.GetNetworksAllProjects(ctx)
+			return err
+		})
+		if err != nil {
+			return response.SmartError(err)
+		}
+
+		for projectName, names := range networkNames {
+			for _, name := range names {
+				n, err := serverNetwork.LoadByName(s, projectName, name)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if n.Type() != "ovn" {
+					continue
+				}
+
+				release, token, err := serverNetwork.AcquireOVNOperation(s, projectName, name, "delete")
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				removalReleases = append(removalReleases, release)
+				serverNetwork.AuthorizeOVNInitialization(n, token)
+				removalNetworks[serverNetwork.ProjectNetwork{ProjectName: projectName, NetworkName: name}] = n
+			}
+		}
+	}
+
 	// First check that the node is clear from containers and images and
 	// make it leave the database cluster, if it's part of it.
 	address, err := membership.Leave[cluster.ClusterResources](d.gateway, name, force == 1, pending == 1)
@@ -2388,7 +2437,26 @@ func clusterNodeDelete(d *Daemon, r *http.Request) response.Response {
 			}
 
 			for _, name := range networks {
-				err := client.UseProject(networkProjectName).DeleteNetwork(name)
+				n, err := serverNetwork.LoadByName(s, networkProjectName, name)
+				if err != nil {
+					return response.SmartError(err)
+				}
+
+				if n.Type() == "ovn" {
+					guarded, exists := removalNetworks[serverNetwork.ProjectNetwork{ProjectName: networkProjectName, NetworkName: name}]
+					if !exists {
+						return response.Conflict(fmt.Errorf("OVN network set changed during member removal"))
+					}
+
+					err = serverNetwork.OVNNotify(s, guarded, client, http.MethodDelete, []string{version.APIVersion, "networks", name}, nil)
+					if err != nil {
+						return response.SmartError(err)
+					}
+
+					continue
+				}
+
+				err = client.UseProject(networkProjectName).DeleteNetwork(name)
 				if err != nil {
 					return response.SmartError(err)
 				}

@@ -940,6 +940,11 @@ func CreateInternal(s *state.State, args db.InstanceArgs, op *operations.Operati
 		}
 
 		// Create the instance entry.
+		err = project.ValidateDeviceNetworkReferences(ctx, tx, args.Project, args.Devices)
+		if err != nil {
+			return err
+		}
+
 		dbInst = cluster.Instance{
 			Project:      args.Project,
 			Name:         args.Name,

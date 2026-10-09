@@ -142,6 +142,11 @@ func UsedByInstanceDevices(s *state.State, networkProjectName string, networkNam
 func UsedBy(s *state.State, networkProjectName string, networkID int64, networkName string, networkType string, firstOnly bool) ([]string, error) {
 	var err error
 	var usedBy []string
+	addUsedBy := func(url string) {
+		if !slices.Contains(usedBy, url) {
+			usedBy = append(usedBy, url)
+		}
+	}
 
 	// If managed network being passed in, check if it has any peerings in a created state.
 	if networkID > 0 {
@@ -177,11 +182,46 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 		for _, peer := range peers {
 			if peer.Status == api.NetworkStatusCreated {
 				// Add the target project/network of the peering as using this network.
-				usedBy = append(usedBy, api.NewURL().Path(version.APIVersion, "networks", peer.TargetNetwork).Project(peer.TargetProject).String())
+				addUsedBy(api.NewURL().Path(version.APIVersion, "networks", peer.TargetNetwork).Project(peer.TargetProject).String())
 
 				if firstOnly {
 					return usedBy, nil
 				}
+			}
+		}
+
+		// Retained profile owners protect managed networks until their consumers finish applying.
+		var retained []db.RetainedProfileReference
+		err = s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			resolvedID, err := tx.GetNetworkID(ctx, networkProjectName, networkName)
+			if err != nil {
+				return err
+			}
+
+			if resolvedID != networkID {
+				return fmt.Errorf("Network identity changed while checking usage")
+			}
+
+			projectID, err := cluster.GetProjectID(ctx, tx.Tx(), networkProjectName)
+			if err != nil {
+				return err
+			}
+
+			if projectID <= 0 {
+				return fmt.Errorf("Invalid network project identity while checking usage")
+			}
+
+			retained, err = tx.RetainedProfileReferenceUsage(ctx, db.NetworkReferenceFilter{NetworkID: networkID, NetworkProjectID: projectID})
+			return err
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Failed getting retained network usage: %w", err)
+		}
+
+		for _, owner := range retained {
+			addUsedBy(api.NewURL().Path(version.APIVersion, "instances", owner.InstanceName).Project(owner.InstanceProject).String())
+			if firstOnly {
+				return usedBy, nil
 			}
 		}
 	}
@@ -213,7 +253,7 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 				parentUsed := networkType == "ovn" && network.Type == "ovn" && projectName == networkProjectName && network.Config["parent"] == networkName
 
 				if uplinkUsed || parentUsed {
-					usedBy = append(usedBy, api.NewURL().Path(version.APIVersion, "networks", network.Name).Project(projectName).String())
+					addUsedBy(api.NewURL().Path(version.APIVersion, "networks", network.Name).Project(projectName).String())
 
 					if firstOnly {
 						return usedBy, nil
@@ -259,7 +299,7 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 			}
 
 			if inUse {
-				usedBy = append(usedBy, api.NewURL().Path(version.APIVersion, "profiles", profile.Name).Project(profile.Project).String())
+				addUsedBy(api.NewURL().Path(version.APIVersion, "profiles", profile.Name).Project(profile.Project).String())
 
 				if firstOnly {
 					return nil
@@ -275,7 +315,7 @@ func UsedBy(s *state.State, networkProjectName string, networkID int64, networkN
 
 	// Check if any instance devices use this network.
 	err = UsedByInstanceDevices(s, networkProjectName, networkName, networkType, func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
-		usedBy = append(usedBy, api.NewURL().Path(version.APIVersion, "instances", inst.Name).Project(inst.Project).String())
+		addUsedBy(api.NewURL().Path(version.APIVersion, "instances", inst.Name).Project(inst.Project).String())
 
 		if firstOnly {
 			// No need to consider other devices.

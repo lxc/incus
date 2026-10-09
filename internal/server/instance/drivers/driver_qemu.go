@@ -866,32 +866,35 @@ func (d *qemu) onStop(target string, reason string) error {
 		d.logger.Error("Failed recording last power state", logger.Ctx{"err": err})
 	}
 
-	// Cleanup.
-	d.numaReservationClear()
-	d.cleanupDevices() // Must be called before unmount.
-
-	err = d.stopNvramMirror()
-	if err != nil {
-		d.logger.Error("Failed saving UEFI variables", logger.Ctx{"err": err})
+	sources, sourceErr := d.pendingOVNStopSources()
+	original := map[string]bool{}
+	for _, source := range sources {
+		original[source.DeviceName] = true
 	}
 
-	_ = os.Remove(d.pidFilePath())
-	_ = os.Remove(d.monitorPath())
-	_ = os.Remove(d.spicePath())
-
-	// Stop the storage for the instance.
-	err = d.unmount()
-	if err != nil && !errors.Is(err, storageDrivers.ErrInUse) {
-		err = fmt.Errorf("Failed unmounting instance: %w", err)
-		op.Done(err)
-		return err
+	nicErr := d.cleanupStoppedDevices(d.expandedDevices.Reversed(), func(entry deviceConfig.DeviceNamed) bool {
+		return entry.Config["type"] == "nic" && original[entry.Name]
+	}, func(entry deviceConfig.DeviceNamed) (device.Device, error) {
+		return d.deviceLoad(d, entry.Name, entry.Config, false)
+	}, func(dev device.Device) error { return d.deviceStop(dev, false, "") })
+	configDriveErr := d.configDriveMountPathClear()
+	if configDriveErr != nil {
+		d.logger.Warn("Failed cleaning up config drive mount", logger.Ctx{"err": configDriveErr})
 	}
 
-	// Unload the apparmor profile
-	err = apparmor.InstanceUnload(d.state.OS, d)
-	if err != nil {
-		op.Done(err)
-		return err
+	terminalErr := d.acknowledgeOVNNICSourceTerminal(errors.Join(sourceErr, configDriveErr, d.cleanupStoppedRuntime(false, original)))
+	cleanupErr := errors.Join(nicErr, terminalErr)
+
+	// Preserve normal teardown before reporting failure. Do not acknowledge,
+	// restart or delete an instance with unacknowledged source NIC cleanup.
+	if cleanupErr == nil {
+		cleanupErr = d.finishOVNStopCleanup()
+	}
+
+	cleanupErr = errors.Join(cleanupErr, d.ensureOVNStopCleanupComplete())
+	if cleanupErr != nil {
+		op.Done(cleanupErr)
+		return cleanupErr
 	}
 
 	// Determine if instance should be auto-restarted.
@@ -965,6 +968,11 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 			return fmt.Errorf("The instance cannot be cleanly shutdown as in %s status", statusCode)
 		}
 
+		// An ordinary stop retry still completes outstanding original NIC cleanup.
+		if statusCode == api.Stopped {
+			return d.retryStoppedOVNStop(d, d.backendStatusCode, func(dev device.Device) error { return d.deviceStop(dev, false, "") }, func() error { return d.cleanupStoppedRuntime(false) }, d.ensureOVNNICSourceHookCleanupComplete)
+		}
+
 		return ErrInstanceIsStopped
 	}
 
@@ -982,11 +990,23 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStop, []operationlock.Action{operationlock.ActionRestart}, true, true)
 	if err != nil {
 		if errors.Is(err, operationlock.ErrNonReusuableSucceeded) {
-			// An existing matching operation has now succeeded, return.
-			return nil
+			// A prior operation result does not acknowledge pending source debt.
+			return d.ensureOVNStopCleanupComplete()
 		}
 
 		return err
+	}
+
+	err = d.captureOVNStopSource(d)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
+	// The guest of a paused live migration source already runs on the target; it must not resume to
+	// handle the signal, so stop this copy without it. Stop inherits the reusable stop operation.
+	if util.PathExists(d.handoverUnacknowledgedPath()) {
+		return d.Stop(false)
 	}
 
 	// If frozen, resume so the signal can be handled.
@@ -1008,50 +1028,19 @@ func (d *qemu) Shutdown(timeout time.Duration) error {
 	// to the powerdown request.
 	op.SetInstanceInitiated(true)
 
-	// Send the system_powerdown command.
-	err = monitor.Powerdown()
-	if err != nil {
-		if errors.Is(err, qmp.ErrMonitorDisconnect) {
-			op.Done(nil)
-			return nil
-		}
-
-		op.Done(err)
-		return err
-	}
-
-	// Wait 500ms for the first event to be received by the guest.
-	time.Sleep(500 * time.Millisecond)
-
-	// Attempt to send a second system_powerdown command (required to get Windows to shutdown).
-	_ = monitor.Powerdown()
-
-	d.logger.Debug("Shutdown request sent to instance")
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	// Wait for operation lock to be Done or context to timeout. The operation lock is normally completed by
-	// onStop which picks up the same lock and then marks it as Done after the instance stops and the devices
-	// have been cleaned up. However if the operation has failed for another reason we collect the error here.
-	err = op.Wait(ctx)
-	status := d.statusCode()
-	if status != api.Stopped {
-		errPrefix := fmt.Errorf("Failed shutting down instance, status is %q", status)
-
-		if err != nil {
-			return fmt.Errorf("%s: %w", errPrefix.Error(), err)
-		}
-
-		return errPrefix
-	}
-
-	// Now handle errors from shutdown sequence and return to caller if wasn't completed cleanly.
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// A monitor disconnect leaves the stop hook responsible for operation completion.
+	return shutdownAfterPowerdown(monitor.Powerdown(), op.Done, func() {
+		// Wait for the first event before Windows' second powerdown request.
+		time.Sleep(500 * time.Millisecond)
+		_ = monitor.Powerdown()
+	}, func() error {
+		d.logger.Debug("Shutdown request sent to instance")
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		// onStop finishes this operation after teardown; disconnect is not its ACK.
+		err := op.Wait(ctx)
+		return shutdownCleanupResult(err, d.statusCode(), d.ensureOVNStopCleanupComplete)
+	})
 }
 
 // Restart restart the instance.
@@ -1108,6 +1097,10 @@ func (d *qemu) restoreStateHandle(ctx context.Context, monitor *qmp.Monitor, f *
 	err := monitor.SendFile("migration", f)
 	if err != nil {
 		return err
+	}
+
+	if d.ovnMigrationTarget != "" {
+		d.ovnMigrationRestoreAttempted = true
 	}
 
 	err = monitor.MigrateIncoming(ctx, "migration")
@@ -1572,6 +1565,16 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 		return err
 	}
 
+	// Must be run prior to creating the operation lock.
+	if op == nil && d.statusCode() == api.Stopped {
+		err = d.retryOVNStopBeforeStart(func() error {
+			return d.retryStoppedOVNStop(d, d.backendStatusCode, func(dev device.Device) error { return d.deviceStop(dev, false, "") }, func() error { return d.cleanupStoppedRuntime(false) }, d.ensureOVNNICSourceHookCleanupComplete)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	// Setup a new operation if needed.
 	if op == nil {
 		op, err = operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionStart, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
@@ -1631,6 +1634,8 @@ func (d *qemu) start(stateful bool, op *operationlock.InstanceOperation) error {
 			}
 		}
 	}
+
+	_ = os.Remove(d.handoverUnacknowledgedPath())
 
 	// Remove old pid file if needed.
 	if util.PathExists(d.pidFilePath()) {
@@ -3531,7 +3536,7 @@ func (d *qemu) deviceStop(dev device.Device, instanceRunning bool, _ string) err
 		}
 	}
 
-	return nil
+	return completeLiveOVNStop(dev, instanceRunning)
 }
 
 // deviceDetachNIC detaches a NIC device from a running instance.
@@ -6616,6 +6621,11 @@ func (d *qemu) pidFilePath() string {
 	return filepath.Join(d.RunPath(), "qemu.pid")
 }
 
+// handoverUnacknowledgedPath marks a paused migration source whose guest already runs on the target.
+func (d *qemu) handoverUnacknowledgedPath() string {
+	return filepath.Join(d.RunPath(), "migration-handover-unacknowledged")
+}
+
 // pid gets the PID of the running qemu process. Returns 0 if PID file or process not found, and -1 if err non-nil.
 func (d *qemu) pid() (int, error) {
 	pidStr, err := os.ReadFile(d.pidFilePath())
@@ -6671,6 +6681,10 @@ func (d *qemu) Stop(stateful bool) error {
 	// Also Stop() is called from migrateSendLive in some cases, and instance status will be Frozen then.
 	statusCode := d.statusCode()
 	if !d.isRunningStatusCode(statusCode) && statusCode != api.Error && statusCode != api.Frozen {
+		if !stateful && statusCode == api.Stopped {
+			return d.retryStoppedOVNStop(d, d.backendStatusCode, func(dev device.Device) error { return d.deviceStop(dev, false, "") }, func() error { return d.cleanupStoppedRuntime(false) }, d.ensureOVNNICSourceHookCleanupComplete)
+		}
+
 		return ErrInstanceIsStopped
 	}
 
@@ -6703,6 +6717,12 @@ func (d *qemu) Stop(stateful bool) error {
 			return nil
 		}
 
+		return err
+	}
+
+	err = d.captureOVNStopSource(d)
+	if err != nil {
+		op.Done(err)
 		return err
 	}
 
@@ -6815,6 +6835,10 @@ func (d *qemu) Stop(stateful bool) error {
 
 // Unfreeze restores the instance to running.
 func (d *qemu) Unfreeze() error {
+	if util.PathExists(d.handoverUnacknowledgedPath()) {
+		return api.StatusErrorf(http.StatusConflict, "The guest of this paused instance already runs on its live migration target; it must not be resumed here")
+	}
+
 	// Connect to the monitor.
 	monitor, err := d.qmpConnect()
 	if err != nil {
@@ -6902,12 +6926,27 @@ func (d *qemu) Snapshot(name string, expiry time.Time, stateful bool) error {
 
 // Restore restores an instance snapshot.
 func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) error {
+	wasRunning := d.IsRunning()
+	if !wasRunning {
+		err := d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			return fmt.Errorf("Cannot restore before original OVN NIC cleanup: %w", err)
+		}
+	}
+
 	op, err := operationlock.Create(d.Project().Name, d.Name(), d.op, operationlock.ActionRestore, false, false)
 	if err != nil {
 		return fmt.Errorf("Failed to create instance restore operation: %w", err)
 	}
 
 	defer op.Done(nil)
+	if !wasRunning {
+		err = d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			op.Done(err)
+			return fmt.Errorf("Cannot restore before original OVN NIC cleanup: %w", err)
+		}
+	}
 
 	var ctxMap logger.Ctx
 
@@ -6925,10 +6964,7 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 	}
 
 	// Stop the instance.
-	wasRunning := false
-	if d.IsRunning() {
-		wasRunning = true
-
+	if wasRunning {
 		ephemeral := d.IsEphemeral()
 		if ephemeral {
 			// Unset ephemeral flag.
@@ -6973,6 +7009,14 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 		defer op.Done(nil)
 	}
 
+	if wasRunning {
+		err = d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			op.Done(err)
+			return fmt.Errorf("Cannot restore before original OVN NIC cleanup: %w", err)
+		}
+	}
+
 	ctxMap = logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -6994,7 +7038,7 @@ func (d *qemu) Restore(source instance.Instance, stateful bool, diskOnly bool) e
 		// Restore the configuration.
 		args = db.InstanceArgs{
 			Architecture: source.Architecture(),
-			Config:       source.LocalConfig(),
+			Config:       normalizeOVNSnapshotConfig(source.LocalConfig(), source.ExpandedDevices()),
 			Description:  source.Description(),
 			Devices:      source.LocalDevices(),
 			Ephemeral:    source.IsEphemeral(),
@@ -7293,7 +7337,7 @@ func (d *qemu) detachDisk(name string) error {
 }
 
 // Update the instance config.
-func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
+func (d *qemu) Update(args db.InstanceArgs, userRequested bool) (err error) {
 	// Setup a new operation.
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionUpdate, []operationlock.Action{operationlock.ActionRestart, operationlock.ActionRestore}, false, false)
 	if err != nil {
@@ -7301,6 +7345,13 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	defer op.Done(nil)
+	var releaseOVNUpdate func() error
+	ovnUpdateCommitted := false
+	defer func() {
+		if releaseOVNUpdate != nil {
+			err = errors.Join(err, d.finishOVNDeviceUpdate(ovnUpdateCommitted, releaseOVNUpdate))
+		}
+	}()
 
 	// Setup the reverter.
 	reverter := revert.New()
@@ -7325,6 +7376,20 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 	if args.Profiles == nil {
 		args.Profiles = []api.Profile{}
+	}
+
+	if userRequested && !d.IsSnapshot() {
+		err = d.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+			return tx.ValidateInstanceOVNConfigUpdate(ctx, d.id, args.Config)
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	releaseOVNUpdate, err = d.reserveOVNDeviceUpdate(db.ExpandInstanceDevices(args.Devices, args.Profiles))
+	if err != nil {
+		return err
 	}
 
 	if userRequested {
@@ -7563,12 +7628,6 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 
 	isRunning := d.IsRunning()
 
-	// Use the device interface to apply update changes.
-	err = d.devicesUpdate(d, removeDevices, addDevices, updateDevices, oldExpandedDevices, isRunning, userRequested)
-	if err != nil {
-		return err
-	}
-
 	if isRunning {
 		// Only certain keys can be changed on a running VM.
 		liveUpdateKeys := []string{
@@ -7627,7 +7686,15 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 				return fmt.Errorf("Key %q cannot be updated when VM is running", key)
 			}
 		}
+	}
 
+	// Use the device interface to apply update changes.
+	err = d.devicesUpdate(d, removeDevices, addDevices, updateDevices, oldExpandedDevices, isRunning, userRequested)
+	if err != nil {
+		return err
+	}
+
+	if isRunning {
 		// Mark the VM as needing a full reset on next reboot.
 		err = d.VolatileSet(map[string]string{
 			"volatile.vm.needs_reset": "true",
@@ -7674,6 +7741,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 						return fmt.Errorf("Failed updating memory limit: %w", err)
 					}
 				}
+
 			case "security.csm":
 				// Defer rebuilding nvram until next start.
 				d.localConfig["volatile.apply_nvram"] = "true"
@@ -7725,7 +7793,7 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	}
 
 	// Re-generate the instance-id if needed.
-	if !d.IsSnapshot() && d.needsNewInstanceID(changedConfig, oldExpandedDevices) {
+	if !d.IsSnapshot() && needsNewInstanceID(changedConfig, oldLocalConfig, d.localConfig, oldExpandedDevices, d.expandedDevices) {
 		err = d.resetInstanceID()
 		if err != nil {
 			return err
@@ -7754,6 +7822,13 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 			return err
 		}
 
+		if userRequested {
+			err = tx.ValidateInstanceOVNConfigUpdate(ctx, d.id, d.localConfig)
+			if err != nil {
+				return err
+			}
+		}
+
 		err = dbCluster.UpdateInstanceConfig(ctx, tx.Tx(), int64(object.ID), d.localConfig)
 		if err != nil {
 			return err
@@ -7780,13 +7855,13 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 		return fmt.Errorf("Failed to update database: %w", err)
 	}
 
+	ovnUpdateCommitted = true
+	reverter.Success()
+
 	err = d.UpdateBackupFile()
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to write backup file: %w", err)
 	}
-
-	// Changes have been applied and recorded, do not revert if an error occurs from here.
-	reverter.Success()
 
 	if isRunning {
 		// Send devIncus notifications only for user.* key changes
@@ -8164,35 +8239,18 @@ func (d *qemu) cleanup() {
 
 // cleanupDevices performs any needed device cleanup steps when instance is stopped.
 // Must be called before root volume is unmounted.
-func (d *qemu) cleanupDevices() {
-	// Clear up the config drive mount.
+func (d *qemu) cleanupDevices() error {
+	// Retain the existing config-drive diagnostic/continuation policy.
 	err := d.configDriveMountPathClear()
 	if err != nil {
 		d.logger.Warn("Failed cleaning up config drive mount", logger.Ctx{"err": err})
 	}
 
-	for _, entry := range d.expandedDevices.Reversed() {
-		dev, err := d.deviceLoad(d, entry.Name, entry.Config, false)
-		if err != nil {
-			if errors.Is(err, device.ErrUnsupportedDevType) {
-				continue // Skip unsupported device (allows for mixed instance type profiles).
-			}
-
-			// Just log an error, but still allow the device to be stopped if usable device returned.
-			d.logger.Error("Failed stop validation for device", logger.Ctx{"device": entry.Name, "err": err})
-		}
-
-		// If a usable device was returned from deviceLoad try to stop anyway, even if validation fails.
-		// This allows for the scenario where a new version has additional validation restrictions
-		// than older versions and we still need to allow previously valid devices to be stopped even if
-		// they are no longer considered valid.
-		if dev != nil {
-			err = d.deviceStop(dev, false, "")
-			if err != nil {
-				d.logger.Error("Failed to stop device", logger.Ctx{"device": dev.Name(), "err": err})
-			}
-		}
-	}
+	return d.cleanupStoppedDevices(d.expandedDevices.Reversed(), func(deviceConfig.DeviceNamed) bool { return true },
+		func(entry deviceConfig.DeviceNamed) (device.Device, error) {
+			return d.deviceLoad(d, entry.Name, entry.Config, false)
+		},
+		func(dev device.Device) error { return d.deviceStop(dev, false, "") })
 }
 
 func (d *qemu) init() error {
@@ -8254,6 +8312,13 @@ func (d *qemu) Delete(force bool, cleanupDependencies bool) error {
 
 // Delete the instance without creating an operation lock.
 func (d *qemu) delete(force bool, cleanupDependencies bool) error {
+	if !d.IsSnapshot() {
+		err := d.ensureOVNStopCleanupComplete()
+		if err != nil {
+			return err
+		}
+	}
+
 	ctxMap := logger.Ctx{
 		"created":   d.creationDate,
 		"ephemeral": d.ephemeral,
@@ -8639,7 +8704,12 @@ func (d *qemu) Export(metaWriter io.Writer, rootfsWriter io.Writer, properties m
 }
 
 // MigrateSend is not currently supported.
-func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
+func (d *qemu) MigrateSend(args instance.MigrateSendArgs) (resultErr error) {
+	defer func() {
+		if resultErr != nil {
+			resultErr = errors.Join(resultErr, d.abortEmptyOVNNICMigration())
+		}
+	}()
 	d.logger.Debug("Migration send starting")
 	defer d.logger.Debug("Migration send stopped")
 
@@ -8657,6 +8727,24 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	op, err := operationlock.CreateWaitGet(d.Project().Name, d.Name(), d.op, operationlock.ActionMigrate, nil, false, true)
 	if err != nil {
 		return err
+	}
+
+	if args.NICMigrationOperation != "" && d.ovnMigrationSource != args.NICMigrationOperation {
+		op.Done(errors.New("Migration source operation binding changed"))
+		return errors.New("Migration source operation binding changed")
+	}
+	// Preserve original effects or verify stopped cleanup before cluster ownership moves.
+	if args.ClusterMoveSourceName != "" {
+		if d.IsRunning() {
+			err = d.captureOVNStopSource(d)
+		} else {
+			err = d.ensureOVNStopCleanupComplete()
+		}
+
+		if err != nil {
+			op.Done(err)
+			return err
+		}
 	}
 
 	// Wait for essential migration connections before negotiation.
@@ -8884,7 +8972,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 	// Detect whether the far side has chosen to use QEMU to QEMU live state transfer mode, and if so then
 	// wait for the connection to be established.
 	var stateConn io.ReadWriteCloser
-	if args.Live && respHeader.Criu != nil && *respHeader.Criu == migration.CRIUType_VM_QEMU {
+	if qemuMigrationUsesLiveState(args.Live, respHeader.Criu) {
 		stateConn, err = args.StateConn(connectionsCtx)
 		if err != nil {
 			op.Done(err)
@@ -8892,10 +8980,17 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		}
 	}
 
+	err = requireStagedQEMULiveState(d.ovnMigrationSource, stateConn != nil)
+	if err != nil {
+		op.Done(err)
+		return err
+	}
+
 	g, ctx := errgroup.WithContext(context.Background())
 
 	// Tracks whether a live cluster move completed the state hand-over to the target.
 	committed := false
+	var sourceCleanupErr error
 
 	// Start control connection monitor.
 	g.Go(func() error {
@@ -8959,7 +9054,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 				defer instanceRefClear(d)
 			}
 
-			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs, &committed)
+			err = d.migrateSendLive(ctx, pool, args.ClusterMoveSourceName, args.StoragePool, blockSize, filesystemConn, stateConn, volSourceArgs, &committed, &sourceCleanupErr)
 			if err != nil {
 				return err
 			}
@@ -8991,18 +9086,18 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// Wait for routines to finish and collect first error.
 	{
-		err := g.Wait()
-		if err != nil {
-			if !committed {
-				op.Done(err)
-				return err
-			}
-
-			// Post hand-over errors can't undo the migration, rely on the target's own result instead.
-			d.logger.Warn("Ignoring migration error received after hand-over", logger.Ctx{"err": err})
+		transferErr := g.Wait()
+		if transferErr != nil && committed && sourceCleanupErr == nil {
+			// A committed target result cannot be rolled back by a control disconnect.
+			d.logger.Warn("Ignoring migration error received after hand-over", logger.Ctx{"err": transferErr})
 		}
 
-		reverter.Success()
+		err := migrationSendSourceResult(committed, transferErr, sourceCleanupErr, reverter.Success)
+		if err != nil {
+			op.Done(err)
+			return err
+		}
+
 		op.Done(nil)
 
 		d.state.Events.SendLifecycle(d.project.Name, lifecycle.InstanceMigrated.Event(d, nil))
@@ -9389,7 +9484,7 @@ func (d *qemu) cancelMigrationSnapshot(monitor *qmp.Monitor, diskName string) {
 }
 
 // migrateSendLive performs live migration send process.
-func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool) error {
+func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clusterMoveSourceName string, storagePool string, rootDiskSize int64, filesystemConn io.ReadWriteCloser, stateConn io.ReadWriteCloser, volSourceArgs *localMigration.VolumeSourceArgs, committed *bool, sourceCleanupErr *error) error {
 	monitor, err := d.qmpConnect()
 	if err != nil {
 		return err
@@ -9703,6 +9798,15 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	// The state hand-over is complete, past this point the migration can no longer be reverted.
 	if clusterMoveSourceName != "" {
 		*committed = true
+		reverter.Success()
+		err = d.commitOVNNICMigrationHandover()
+		if err != nil {
+			// The guest now runs on the target. This paused copy shares its storage and must never
+			// resume; stopping it would clean up the NIC the target now uses.
+			markErr := os.WriteFile(d.handoverUnacknowledgedPath(), []byte(clusterMoveSourceName+"\n"), 0o600)
+			*sourceCleanupErr = errors.Join(fmt.Errorf("Migration handover completed but durable NIC outcome is unacknowledged: %w", err), markErr)
+			return *sourceCleanupErr
+		}
 	}
 
 	reverter.Success()
@@ -9710,14 +9814,12 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 	if clusterMoveSourceName != "" {
 		// If doing an intra-cluster member move then we will be deleting the instance on the source,
 		// so lets just stop it after migration is completed.
-		err = d.Stop(false)
-		if err != nil {
-			d.logger.Warn("Failed stopping instance after hand-over, forcing stop", logger.Ctx{"err": err})
-
-			err = d.forceStop()
-			if err != nil {
-				return fmt.Errorf("Failed stopping instance: %w", err)
-			}
+		*sourceCleanupErr = stopAfterMigrationHandover(func() error { return d.Stop(false) }, func() error {
+			d.logger.Warn("Failed stopping instance after hand-over, forcing stop")
+			return d.forceStop()
+		}, d.ensureOVNStopCleanupComplete)
+		if *sourceCleanupErr != nil {
+			return fmt.Errorf("Failed source cleanup after hand-over: %w", *sourceCleanupErr)
 		}
 	} else {
 		// Resume guest.
@@ -9734,6 +9836,10 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 
 // MigrateReceive receives an instance being migrated from a source.
 func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
+	if args.NICMigrationOperation != "" && d.ovnMigrationTarget != args.NICMigrationOperation {
+		return errors.New("Migration target operation binding changed")
+	}
+
 	d.logger.Debug("Migration receive starting")
 	defer d.logger.Debug("Migration receive stopped")
 
@@ -9885,7 +9991,7 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 	// fulfil the "live" part of the request, albeit with longer pause of the instance during the process.
 	poolInfo := pool.Driver().Info()
 	var useStateConn bool
-	if args.Live && offerHeader.Criu != nil && *offerHeader.Criu == migration.CRIUType_VM_QEMU {
+	if qemuMigrationUsesLiveState(args.Live, offerHeader.Criu) {
 		respHeader.Criu = migration.CRIUType_VM_QEMU.Enum()
 		useStateConn = true
 	}
@@ -11051,6 +11157,7 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 						return err
 					}
 				}
+
 			case "remove":
 				for _, usbDev := range runConf.USBDevice {
 					err := d.deviceDetachUSB(usbDev)
@@ -11270,6 +11377,11 @@ func (d *qemu) statusCode() api.StatusCode {
 		}
 	}
 
+	return d.backendStatusCode()
+}
+
+// backendStatusCode reads the actual instance state, ignoring any ongoing operation.
+func (d *qemu) backendStatusCode() api.StatusCode {
 	// Connect to the monitor.
 	monitor, err := d.qmpConnect()
 	if err != nil {
@@ -13441,4 +13553,84 @@ func (d *qemu) ResetNVRAM() error {
 
 	defer logger.WarnOnError(d.unmount, "Failed to unmount instance")
 	return d.setupNvram()
+}
+
+// cleanupStoppedRuntime shares actual terminal teardown with original-source stopped retry.
+func (d *qemu) cleanupStoppedRuntime(allDevices bool, original ...map[string]bool) error {
+	// Cleanup.
+	d.numaReservationClear()
+	var cleanupErr error
+	if allDevices {
+		cleanupErr = d.cleanupDevices()
+	} else {
+		cleanupErr = d.cleanupStoppedDevices(d.expandedDevices.Reversed(), func(entry deviceConfig.DeviceNamed) bool {
+			if len(original) > 0 {
+				return !original[0][entry.Name]
+			}
+
+			return entry.Config["type"] != "nic"
+		}, func(entry deviceConfig.DeviceNamed) (device.Device, error) {
+			return d.deviceLoad(d, entry.Name, entry.Config, false)
+		}, func(dev device.Device) error { return d.deviceStop(dev, false, "") })
+	}
+
+	err := d.stopNvramMirror()
+	if err != nil {
+		cleanupErr = errors.Join(cleanupErr, fmt.Errorf("Failed saving UEFI variables: %w", err))
+	}
+
+	_ = os.Remove(d.pidFilePath())
+	_ = os.Remove(d.monitorPath())
+	_ = os.Remove(d.spicePath())
+	_ = os.Remove(d.handoverUnacknowledgedPath())
+
+	// Stop the storage for the instance.
+	err = d.unmount()
+	if err != nil && !errors.Is(err, storageDrivers.ErrInUse) {
+		err = errors.Join(cleanupErr, fmt.Errorf("Failed unmounting instance: %w", err))
+		return err
+	}
+
+	// Unload the apparmor profile
+	err = apparmor.InstanceUnload(d.state.OS, d)
+	if err != nil {
+		err = errors.Join(cleanupErr, err)
+		return err
+	}
+
+	return cleanupErr
+}
+
+// RetryOVNNICCleanup replays original local debt without stopping a transferred target.
+func (d *qemu) RetryOVNNICCleanup() error {
+	plan, err := d.originalOVNCleanupRetry()
+	if err != nil || plan == nil {
+		return err
+	}
+
+	if !plan.Transferred {
+		err = d.Stop(false)
+		if errors.Is(err, ErrInstanceIsStopped) {
+			return nil
+		}
+
+		return err
+	}
+
+	return d.retryTransferredOVNStop(d, *plan, func(source *network.OVNInstanceNICStopOpts) (device.Device, error) {
+		n, err := d.loadOVNStopNetwork(source.NetworkID)
+		if err != nil {
+			return nil, err
+		}
+
+		dev, err := device.NewOVNStopCleanup(d, d.state, n, source)
+		if err != nil {
+			return nil, err
+		}
+
+		err = d.authorizeOVNDeviceUpdate(dev)
+		return dev, err
+	}, func(dev device.Device) error {
+		return d.deviceStop(dev, false, "")
+	})
 }

@@ -291,13 +291,20 @@ func networkAddressSetsGet(d *Daemon, r *http.Request) response.Response {
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
-func networkAddressSetsPost(d *Daemon, r *http.Request) response.Response {
+func networkAddressSetsPost(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	release, _, err := networkReserveSharedOVN(s, projectName, "address-set-config", clusterRequest.ClientTypeNormal)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	req := api.NetworkAddressSetsPost{}
 
@@ -367,13 +374,20 @@ func networkAddressSetsPost(d *Daemon, r *http.Request) response.Response {
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
-func networkAddressSetDelete(d *Daemon, r *http.Request) response.Response {
+func networkAddressSetDelete(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	release, _, err := networkReserveSharedOVN(s, projectName, "address-set-config", clusterRequest.ClientTypeNormal)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	addrSetName, err := pathVar(r, "name")
 	if err != nil {
@@ -567,13 +581,21 @@ func networkAddressSetGet(d *Daemon, r *http.Request) response.Response {
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
-func networkAddressSetPut(d *Daemon, r *http.Request) response.Response {
+func networkAddressSetPut(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
+	release, beforeOVN, err := networkReserveSharedOVN(s, projectName, "address-set-config", clientType)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	addrSetName, err := pathVar(r, "name")
 	if err != nil {
@@ -609,9 +631,7 @@ func networkAddressSetPut(d *Daemon, r *http.Request) response.Response {
 		}
 	}
 
-	clientType := clusterRequest.UserAgentClientType(r.Header.Get("User-Agent"))
-
-	err = netAddrSet.Update(&req, clientType)
+	err = netAddrSet.Update(&req, clientType, beforeOVN)
 	if err != nil {
 		return response.SmartError(err)
 	}
@@ -663,13 +683,20 @@ func networkAddressSetPut(d *Daemon, r *http.Request) response.Response {
 //    "500":
 //      $ref: "#/responses/InternalServerError"
 
-func networkAddressSetPost(d *Daemon, r *http.Request) response.Response {
+func networkAddressSetPost(d *Daemon, r *http.Request) (result response.Response) {
 	s := d.State()
 
 	projectName, _, err := project.NetworkProject(s.DB.Cluster, request.ProjectParam(r))
 	if err != nil {
 		return response.SmartError(err)
 	}
+
+	release, _, err := networkReserveSharedOVN(s, projectName, "address-set-config", clusterRequest.ClientTypeNormal)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	defer networkOVNReleaseResponse(release, &result)
 
 	addrSetName, err := pathVar(r, "name")
 	if err != nil {
