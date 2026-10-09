@@ -119,7 +119,7 @@ func (d *lvm) isLVMNotFoundExitError(err error) bool {
 
 // sanlockVolumeGroups returns the shared volume groups using the sanlock lock manager, excluding excludeName.
 func (d *lvm) sanlockVolumeGroups(excludeName string) ([]string, error) {
-	output, err := subprocess.RunCommand("vgs", "--noheadings", "-o", "vg_name", "-S", "vg_lock_type=sanlock")
+	output, err := subprocess.RunCommand("vgs", "-qq", "--noheadings", "-o", "vg_name", "-S", "vg_lock_type=sanlock")
 	if err != nil {
 		return nil, fmt.Errorf("Error listing sanlock volume groups: %w", err)
 	}
@@ -158,7 +158,7 @@ func (d *lvm) sanlockHasGlobalLock(vgName string) (bool, error) {
 
 // pysicalVolumeExists checks if an LVM Physical Volume exists.
 func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
-	_, err := subprocess.RunCommandCLocale("pvs", "--noheadings", "-o", "pv_name", pvName)
+	_, err := subprocess.RunCommandCLocale("pvs", "-qq", "--noheadings", "-o", "pv_name", pvName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -172,7 +172,7 @@ func (d *lvm) pysicalVolumeExists(pvName string) (bool, error) {
 
 // volumeGroupExists checks if an LVM Volume Group exists and returns any tags on that volume group.
 func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
-	output, err := subprocess.RunCommandCLocale("vgs", "--noheadings", "-o", "vg_tags", vgName)
+	output, err := subprocess.RunCommandCLocale("vgs", "-qq", "--noheadings", "-o", "vg_tags", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil, nil
@@ -190,6 +190,7 @@ func (d *lvm) volumeGroupExists(vgName string) (bool, []string, error) {
 // getPhysicalDevices lists PVs backing a volume group.
 func (d *lvm) getPhysicalDevices(vgName string) ([]string, error) {
 	args := []string{
+		"-qq",
 		"--noheadings",
 		"-o",
 		"pv_name",
@@ -222,7 +223,7 @@ func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
 		return lvmExtentSize[d.name], nil
 	}
 
-	output, err := subprocess.TryRunCommand("vgs", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_extent_size", vgName)
+	output, err := subprocess.TryRunCommand("vgs", "-qq", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_extent_size", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
@@ -244,7 +245,7 @@ func (d *lvm) volumeGroupExtentSize(vgName string) (int64, error) {
 
 // volumeGroupSize gets the volume group's physical size in bytes.
 func (d *lvm) volumeGroupSize(vgName string) (int64, error) {
-	output, err := subprocess.TryRunCommand("vgs", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_size", vgName)
+	output, err := subprocess.TryRunCommand("vgs", "-qq", "--noheadings", "--nosuffix", "--units", "b", "-o", "vg_size", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
@@ -283,7 +284,7 @@ func (d *lvm) resizePhysicalVolume(devPath string, size int64) error {
 
 // countLogicalVolumes gets the count of volumes (both normal and thin) in a volume group.
 func (d *lvm) countLogicalVolumes(vgName string) (int, error) {
-	output, err := subprocess.TryRunCommand("vgs", "--noheadings", "-o", "lv_count", vgName)
+	output, err := subprocess.TryRunCommand("vgs", "-qq", "--noheadings", "-o", "lv_count", vgName)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
@@ -298,7 +299,7 @@ func (d *lvm) countLogicalVolumes(vgName string) (int, error) {
 
 // countThinVolumes gets the count of thin volumes in a thin pool.
 func (d *lvm) countThinVolumes(vgName, poolName string) (int, error) {
-	output, err := subprocess.TryRunCommand("lvs", "--noheadings", "-o", "thin_count", fmt.Sprintf("%s/%s", vgName, poolName))
+	output, err := subprocess.TryRunCommand("lvs", "-qq", "--noheadings", "-o", "thin_count", fmt.Sprintf("%s/%s", vgName, poolName))
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume group not found")
@@ -313,7 +314,7 @@ func (d *lvm) countThinVolumes(vgName, poolName string) (int, error) {
 
 // thinpoolExists checks whether the specified thinpool exists in a volume group.
 func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
-	output, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
+	output, err := subprocess.RunCommandCLocale("lvs", "-qq", "--noheadings", "-o", "lv_attr", fmt.Sprintf("%s/%s", vgName, poolName))
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -333,7 +334,7 @@ func (d *lvm) thinpoolExists(vgName string, poolName string) (bool, error) {
 
 // logicalVolumeExists checks whether the specified logical volume exists.
 func (d *lvm) logicalVolumeExists(volDevPath string) (bool, error) {
-	_, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "-o", "lv_name", volDevPath)
+	_, err := subprocess.RunCommandCLocale("lvs", "-qq", "--noheadings", "-o", "lv_name", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return false, nil
@@ -689,7 +690,7 @@ func (d *lvm) lvmPath(vgName string, volType VolumeType, contentType ContentType
 // lvmDevPath returns the /dev path for the LV.
 func (d *lvm) lvmDevPath(pathName string) (string, error) {
 	// Get the block dev.
-	output, err := subprocess.TryRunCommand("lvdisplay", "-c", pathName)
+	output, err := subprocess.TryRunCommand("lvdisplay", "-qq", "-c", pathName)
 	if err != nil {
 		return "", err
 	}
@@ -890,7 +891,7 @@ func (d *lvm) copyThinpoolVolume(vol, srcVol Volume, srcSnapshots []Volume, refr
 
 // logicalVolumeSize gets the size in bytes of a logical volume.
 func (d *lvm) logicalVolumeSize(volDevPath string) (int64, error) {
-	output, err := subprocess.RunCommandCLocale("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
+	output, err := subprocess.RunCommandCLocale("lvs", "-qq", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size", volDevPath)
 	if err != nil {
 		if d.isLVMNotFoundExitError(err) {
 			return -1, api.StatusErrorf(http.StatusNotFound, "LVM volume not found")
@@ -905,6 +906,7 @@ func (d *lvm) logicalVolumeSize(volDevPath string) (int64, error) {
 
 func (d *lvm) thinPoolVolumeUsage(volDevPath string) (uint64, uint64, error) {
 	args := []string{
+		"-qq",
 		volDevPath,
 		"--noheadings",
 		"--units", "b",
@@ -952,6 +954,7 @@ func parseThinPoolVolumeUsage(size string, dataPercent string) (uint64, uint64, 
 func (d *lvm) getCachedThinPoolVolumeUsage(volDevPath string) (uint64, uint64, bool, error) {
 	fill := func(paths []string) (map[string]map[string]string, error) {
 		args := []string{
+			"-qq",
 			"--noheadings",
 			"--units", "b",
 			"--nosuffix",
@@ -997,7 +1000,7 @@ func (d *lvm) getCachedThinPoolVolumeUsage(volDevPath string) (uint64, uint64, b
 
 // snapshotNeedsCoWGrow returns whether a snapshot lacks the CoW capacity needed for a full restore.
 func (d *lvm) snapshotNeedsCoWGrow(snapLVPath string) (bool, error) {
-	out, err := subprocess.RunCommand("lvs", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size,origin_size", snapLVPath)
+	out, err := subprocess.RunCommand("lvs", "-qq", "--noheadings", "--nosuffix", "--units", "b", "-o", "lv_size,origin_size", snapLVPath)
 	if err != nil {
 		return false, err
 	}

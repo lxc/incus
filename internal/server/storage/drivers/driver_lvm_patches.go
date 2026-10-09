@@ -10,7 +10,7 @@ import (
 
 // patchStorageSkipActivation set skipactivation=y on all Incus LVM logical volumes (excluding thin pool volumes).
 func (d *lvm) patchStorageSkipActivation() error {
-	out, err := subprocess.RunCommand("lvs", "--noheadings", "-o", "lv_name,lv_attr", d.config["lvm.vg_name"])
+	out, err := subprocess.RunCommand("lvs", "-qq", "--noheadings", "-o", "lv_name,lv_attr", d.config["lvm.vg_name"])
 	if err != nil {
 		return fmt.Errorf("Error getting LVM logical volume list for storage pool %q: %w", d.config["lvm.vg_name"], err)
 	}

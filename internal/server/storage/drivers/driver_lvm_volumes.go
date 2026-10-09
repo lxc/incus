@@ -860,7 +860,7 @@ func (d *lvm) GetVolumeDiskPath(vol Volume) (string, error) {
 func (d *lvm) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
 
-	cmd := exec.Command("lvs", "--noheadings", "-o", "lv_name", d.config["lvm.vg_name"])
+	cmd := exec.Command("lvs", "-qq", "--noheadings", "-o", "lv_name", d.config["lvm.vg_name"])
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
@@ -1767,7 +1767,7 @@ func (d *lvm) VolumeSnapshots(vol Volume, op *operations.Operation) ([]string, e
 	// property of an LVM snapshot can be removed/changed when restoring snapshots, such that they are no
 	// marked as origin of the parent volume. Instead we use prefix matching on the volume names to find the
 	// snapshot volumes.
-	cmd := exec.Command("lvs", "--noheadings", "-o", "lv_name", d.config["lvm.vg_name"])
+	cmd := exec.Command("lvs", "-qq", "--noheadings", "-o", "lv_name", d.config["lvm.vg_name"])
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
