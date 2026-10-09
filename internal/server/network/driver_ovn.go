@@ -6859,7 +6859,7 @@ func (n *ovn) instanceDevicePortStart(opts *OVNInstanceNICSetupOpts, securityACL
 		routePrefixes = append(routePrefixes, route.Prefix)
 	}
 
-	prefixOwner, err := n.ovnnb.NewNICPrefixOwner(context.TODO(), n.getIntSwitchName(), instancePortName, n.state.ServerName)
+	prefixOwner, err := n.ovnnb.NewNICStartPrefixOwner(context.TODO(), n.getIntSwitchName(), instancePortName, n.state.ServerName)
 	if err != nil {
 		return "", nil, err
 	}

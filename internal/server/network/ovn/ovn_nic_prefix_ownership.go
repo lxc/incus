@@ -3,6 +3,7 @@ package ovn
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,8 +30,11 @@ type NICPrefixOwner struct {
 	PortName    OVNSwitchPort
 	Generation  string
 	PortVersion string
-	Source      string
-	Previous    string
+	// StartContent pins the producer snapshot for a normal Start's first publication.
+	// Older and cleanup/migration owners retain their strict PortVersion guard.
+	StartContent string `json:",omitempty"`
+	Source       string
+	Previous     string
 	// Legacy marks an owner that adopted the existing prefixes of an upstream-created port.
 	Legacy bool `json:",omitempty"`
 }
@@ -66,6 +70,13 @@ func nicPrefixLegacy(external map[string]string) bool {
 
 // Validate checks the complete original prefix owner identity.
 func (owner NICPrefixOwner) Validate(root string, port NICPortCleanup) error {
+	if owner.StartContent != "" {
+		content, err := hex.DecodeString(owner.StartContent)
+		if err != nil || len(content) != sha256.Size {
+			return errors.New("NIC Start producer content identity is invalid")
+		}
+	}
+
 	if owner.SwitchName == "" || owner.PortName == "" || owner.Source == "" || port.Source != "" && port.Source != owner.Source || len(owner.Previous) != 64 {
 		return errors.New("NIC prefix allocation names or previous marker are invalid")
 	}
@@ -473,18 +484,30 @@ func (o *NB) nicPrefixPublishOperations(ctx context.Context, publications []nicP
 		return nil, err
 	}
 
-	if external[nicPrefixGeneration] != marker && (nicPrefixDigest(external[nicPrefixGeneration]) != owner.Previous || version != owner.PortVersion) {
+	portChanged := version != owner.PortVersion
+	portGuard := nicPrefixRowWait("Logical_Switch_Port", portRow)
+	if owner.StartContent != "" {
+		content, err := nicStartPortDigest(portRow)
+		if err != nil {
+			return nil, err
+		}
+
+		portChanged = content != owner.StartContent
+		portGuard = nicPublicationRowWait(portRow)
+	}
+
+	if external[nicPrefixGeneration] != marker && (nicPrefixDigest(external[nicPrefixGeneration]) != owner.Previous || portChanged) {
 		return nil, errors.New("NIC allocation generation changed before publication")
 	}
 
-	operations := []ovsdb.Operation{nicCleanupRootWait(o.backendID), nicCleanupPortParentWait(originalPort), nicCleanupPortOwnerWait(originalPort), nicPrefixRowWait("Logical_Switch_Port", portRow)}
+	operations := []ovsdb.Operation{nicCleanupRootWait(o.backendID), nicCleanupPortParentWait(originalPort), nicCleanupPortOwnerWait(originalPort), portGuard}
 
 	external[nicPrefixGeneration] = marker
 	if target != "" {
 		external[ovnExtIDIncusLocation] = target
 	}
 
-	operations = append(operations, ovsdb.Operation{Op: ovsdb.OperationUpdate, Table: "Logical_Switch_Port", Where: nicPrefixRowWait("Logical_Switch_Port", portRow).Where, Row: ovsdb.Row{"external_ids": nicCleanupStringMapWire(external)}})
+	operations = append(operations, ovsdb.Operation{Op: ovsdb.OperationUpdate, Table: "Logical_Switch_Port", Where: portGuard.Where, Row: ovsdb.Row{"external_ids": nicCleanupStringMapWire(external)}})
 	livePorts, err := o.nicPrefixLivePorts(ctx)
 	if err != nil {
 		return nil, err
