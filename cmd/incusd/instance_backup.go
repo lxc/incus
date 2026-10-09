@@ -385,7 +385,7 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 			args.ExpiryDate = req.ExpiresAt
 		}
 
-		uploadRes := make(chan error)
+		uploadRes := make(chan error, 1)
 
 		// Start the upload in the background if requested.
 		if req.Target != nil {
@@ -415,6 +415,14 @@ func instanceBackupsPost(d *Daemon, r *http.Request) response.Response {
 			}
 
 			return err
+		}
+
+		// The upload only completes once the last part has been sent.
+		if req.Target != nil {
+			err = <-uploadRes
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
