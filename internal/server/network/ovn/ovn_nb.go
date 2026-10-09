@@ -14,18 +14,43 @@ import (
 	"github.com/go-logr/logr"
 	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
 	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
+	"github.com/ovn-kubernetes/libovsdb/ovsdb"
 
 	ovnNB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-nb"
+	backendDB "github.com/lxc/incus/v7/internal/server/network/ovsdb"
 )
 
 // NB client.
 type NB struct {
-	client ovsdbClient.Client
-	cookie ovsdbClient.MonitorCookie
+	client      ovsdbClient.Client
+	cookie      ovsdbClient.MonitorCookie
+	backendID   string
+	tunnelPorts map[OVNSwitchPort]bool
+}
+
+// Close releases this client's connections and monitors.
+func (o *NB) Close() { o.client.Close() }
+
+// BackendID returns the root UUID acknowledged at construction, or empty for an unfenced client.
+func (o *NB) BackendID() string {
+	return o.backendID
 }
 
 // NewNB initializes new OVN client for Northbound operations.
-func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*NB, error) {
+func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string, owner ...string) (*NB, error) {
+	return newNB(dbAddr, sslCACert, sslClientCert, sslClientKey, nil, owner...)
+}
+
+// NewNBWithRootAdmission binds durable applicability before constructor fencing writes.
+func NewNBWithRootAdmission(dbAddr, sslCACert, sslClientCert, sslClientKey, owner string, admit func(context.Context, string) error) (*NB, error) {
+	if admit == nil {
+		return nil, errors.New("NB root admission callback is required")
+	}
+
+	return newNB(dbAddr, sslCACert, sslClientCert, sslClientKey, admit, owner)
+}
+
+func newNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string, admit func(context.Context, string) error, owner ...string) (*NB, error) {
 	// Create the NB struct.
 	client := &NB{}
 
@@ -142,8 +167,47 @@ func NewNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 		return nil, err
 	}
 
+	backend := ovn
+	if admit != nil {
+		result, e := ovn.Transact(ctx, ovsdb.Operation{Op: ovsdb.OperationSelect, Table: "NB_Global", Where: []ovsdb.Condition{}})
+		if e != nil {
+			ovn.Close()
+			return nil, e
+		}
+
+		if len(result) != 1 || len(result[0].Rows) != 1 {
+			ovn.Close()
+			return nil, errors.New("NB root admission requires exactly one original NB_Global")
+		}
+
+		root, e := nicCleanupRowUUID(result[0].Rows[0], "_uuid")
+		if e != nil {
+			ovn.Close()
+			return nil, e
+		}
+
+		e = admit(ctx, root)
+		if e != nil {
+			ovn.Close()
+			return nil, e
+		}
+
+		backend = &admittedNBClient{Client: ovn, root: root, invalidate: cancel}
+	}
+
+	if len(owner) > 0 && owner[0] != "" {
+		fenced, err := backendDB.NewFencedClient(ctx, backend, "NB_Global", owner[0])
+		if err != nil {
+			ovn.Close()
+			return nil, err
+		}
+
+		backend = fenced
+		client.backendID = fenced.RootUUID()
+	}
+
 	// Add the client to the struct.
-	client.client = &timeoutClient{Client: ovn, name: "northbound"}
+	client.client = &timeoutClient{Client: backend, name: "northbound"}
 	client.cookie = monitorCookie
 
 	// Set finalizer to stop the monitor.
@@ -206,4 +270,60 @@ func (o *NB) get(ctx context.Context, m ovsdbModel.Model) error {
 
 	reflect.ValueOf(m).Elem().Set(rVal.Index(0))
 	return nil
+}
+
+// admittedNBClient pins the same root even if NB_Global changes before constructor fencing.
+type admittedNBClient struct {
+	ovsdbClient.Client
+	root       string
+	invalidate context.CancelFunc
+}
+
+// Transact checks durable reference admission before backend effects.
+func (c *admittedNBClient) Transact(ctx context.Context, ops ...ovsdb.Operation) ([]ovsdb.OperationResult, error) {
+	mutation := false
+	for _, op := range ops {
+		if op.Op == ovsdb.OperationInsert || op.Op == ovsdb.OperationUpdate || op.Op == ovsdb.OperationMutate || op.Op == ovsdb.OperationDelete {
+			mutation = true
+			break
+		}
+	}
+
+	guard := nicCleanupRootWait(c.root)
+	// Check reads too: the constructor must not adopt a different singleton then repeatedly retry writes.
+	if !mutation {
+		results, err := c.Client.Transact(ctx, append([]ovsdb.Operation{guard}, ops...)...)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(results) < 1 {
+			return nil, errors.New("NB root admission response is incomplete")
+		}
+
+		_, err = ovsdb.CheckOperationResults(results[:1], []ovsdb.Operation{guard})
+		if err != nil {
+			c.invalidate()
+			return nil, err
+		}
+
+		return results[1:], nil
+	}
+
+	results, err := c.Client.Transact(ctx, append([]ovsdb.Operation{guard}, ops...)...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(results) < 1 {
+		return nil, errors.New("NB root admission response is incomplete")
+	}
+
+	_, err = ovsdb.CheckOperationResults(results[:1], []ovsdb.Operation{guard})
+	if err != nil {
+		c.invalidate()
+		return nil, err
+	}
+
+	return results[1:], nil
 }

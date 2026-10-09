@@ -11,6 +11,7 @@ import (
 // Link represents base arguments for link device.
 type Link struct {
 	Name          string
+	Alias         string
 	Kind          string
 	MTU           uint32
 	Parent        string
@@ -33,6 +34,7 @@ func (l *Link) netlinkAttrs() (netlink.LinkAttrs, error) {
 	linkAttrs := netlink.NewLinkAttrs()
 
 	linkAttrs.Name = l.Name
+	linkAttrs.Alias = l.Alias
 
 	if l.MTU != 0 {
 		linkAttrs.MTU = int(l.MTU)

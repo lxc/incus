@@ -49,7 +49,7 @@ type peer struct {
 	asn      uint32
 	password string
 	holdtime uint64
-	count    int
+	owners   map[string]struct{}
 }
 
 // peerKey returns the map key for a peer (its address or interface name).
@@ -154,9 +154,11 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 	// Add existing peers.
 	s.peers = map[string]peer{}
 	for _, peer := range oldPeers {
-		err := s.addPeer(peer.address, peer.iface, peer.asn, peer.password, peer.holdtime)
-		if err != nil {
-			return err
+		for owner := range peer.owners {
+			err := s.addPeer(peer.address, peer.iface, peer.asn, peer.password, peer.holdtime, owner)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -174,21 +176,6 @@ func (s *Server) stop() error {
 	if s.bgp == nil {
 		return nil
 	}
-
-	// Save the peer list.
-	oldPeers := map[string]peer{}
-	maps.Copy(oldPeers, s.peers)
-
-	// Remove all the peers.
-	for _, peer := range s.peers {
-		err := s.removePeer(peer.address, peer.iface)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Restore peer list.
-	s.peers = oldPeers
 
 	// Stop the listener.
 	err := s.bgp.StopBgp(context.Background(), &bgpAPI.StopBgpRequest{})
@@ -480,15 +467,15 @@ func (s *Server) removePrefixByUUID(pathUUID string) error {
 }
 
 // AddPeer adds a new BGP peer.
-func (s *Server) AddPeer(address net.IP, iface string, asn uint32, password string, holdTime uint64) error {
+func (s *Server) AddPeer(address net.IP, iface string, asn uint32, password string, holdTime uint64, owner string) error {
 	// Locking.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.addPeer(address, iface, asn, password, holdTime)
+	return s.addPeer(address, iface, asn, password, holdTime, owner)
 }
 
-func (s *Server) addPeer(address net.IP, iface string, asn uint32, password string, holdTime uint64) error {
+func (s *Server) addPeer(address net.IP, iface string, asn uint32, password string, holdTime uint64, owner string) error {
 	peerName := peerKey(address, iface)
 
 	// Look for an existing peer.
@@ -503,7 +490,7 @@ func (s *Server) addPeer(address net.IP, iface string, asn uint32, password stri
 		}
 
 		// Reuse the existing entry.
-		bgpPeer.count++
+		bgpPeer.owners[owner] = struct{}{}
 		s.peers[peerName] = bgpPeer
 		return nil
 	}
@@ -592,7 +579,7 @@ func (s *Server) addPeer(address net.IP, iface string, asn uint32, password stri
 
 	// Add the peer to the list.
 	if bgpPeerExists {
-		bgpPeer.count++
+		bgpPeer.owners[owner] = struct{}{}
 		s.peers[peerName] = bgpPeer
 	} else {
 		s.peers[peerName] = peer{
@@ -601,7 +588,7 @@ func (s *Server) addPeer(address net.IP, iface string, asn uint32, password stri
 			asn:      asn,
 			password: password,
 			holdtime: holdTime,
-			count:    1,
+			owners:   map[string]struct{}{owner: {}},
 		}
 	}
 
@@ -609,25 +596,30 @@ func (s *Server) addPeer(address net.IP, iface string, asn uint32, password stri
 }
 
 // RemovePeer removes a prefix from the BGP server.
-func (s *Server) RemovePeer(address net.IP, iface string) error {
+func (s *Server) RemovePeer(address net.IP, iface string, owner string) error {
 	// Locking.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.removePeer(address, iface)
+	return s.removePeer(address, iface, owner)
 }
 
-func (s *Server) removePeer(address net.IP, iface string) error {
+func (s *Server) removePeer(address net.IP, iface string, owner string) error {
 	peerName := peerKey(address, iface)
 
 	// Find the peer.
 	bgpPeer, bgpPeerExists := s.peers[peerName]
 	if !bgpPeerExists {
-		return ErrPeerNotFound
+		return nil
+	}
+
+	_, exists := bgpPeer.owners[owner]
+	if !exists {
+		return nil
 	}
 
 	// Remove the peer from the BGP server.
-	if s.bgp != nil && bgpPeer.count == 1 {
+	if s.bgp != nil && len(bgpPeer.owners) == 1 {
 		req := &bgpAPI.DeletePeerRequest{}
 		if address != nil {
 			req.Address = address.String()
@@ -642,14 +634,28 @@ func (s *Server) removePeer(address net.IP, iface string) error {
 	}
 
 	// Update peer list.
-	if bgpPeer.count == 1 {
+	if len(bgpPeer.owners) == 1 {
 		// Delete the peer.
 		delete(s.peers, peerName)
 	} else {
 		// Decrease refcount.
-		bgpPeer.count--
+		delete(bgpPeer.owners, owner)
 		s.peers[peerName] = bgpPeer
 	}
 
 	return nil
+}
+
+// RemovePeersByOwner removes only this owner's references, including peers from an older configuration.
+func (s *Server) RemovePeersByOwner(owner string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var errs []error
+	for _, peer := range s.peers {
+		err := s.removePeer(peer.address, peer.iface, owner)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }

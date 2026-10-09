@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	ovsModel "github.com/ovn-kubernetes/libovsdb/model"
+	"github.com/google/uuid"
 	"github.com/ovn-kubernetes/libovsdb/ovsdb"
 
 	ovnNB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-nb"
@@ -44,29 +44,87 @@ func (o *SB) GetLogicalRouterPortActiveChassisHostname(ctx context.Context, ovnR
 	return chassis.Hostname, nil
 }
 
-// DeleteMACBindings deletes the dynamic MAC bindings for the provided IPs on the specified logical port.
+// DeleteMACBindings invalidates only the captured versions of dynamic MAC bindings on the logical port.
 func (o *SB) DeleteMACBindings(ctx context.Context, portName OVNRouterPort, ips ...net.IP) error {
 	if len(ips) == 0 {
 		return nil
 	}
 
-	var operations []ovsdb.Operation
-	for _, ip := range ips {
-		mb := ovnSB.MACBinding{}
-		ops, err := o.client.WhereAll(
-			&mb,
-			ovsModel.Condition{Field: &mb.LogicalPort, Function: ovsdb.ConditionEqual, Value: string(portName)},
-			ovsModel.Condition{Field: &mb.IP, Function: ovsdb.ConditionEqual, Value: ip.String()},
-		).Delete()
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, ops...)
+	if o.backendID == "" {
+		return errors.New("OVN southbound database identity is unavailable")
 	}
 
-	// Apply the changes.
-	reply, err := o.client.Transact(ctx, operations...)
+	zero := 0
+	root := ovsdb.UUID{GoUUID: o.backendID}
+	guard := ovsdb.Operation{
+		Op: ovsdb.OperationWait, Table: "SB_Global", Timeout: &zero,
+		Where:   []ovsdb.Condition{{Column: "_uuid", Function: ovsdb.ConditionEqual, Value: root}},
+		Columns: []string{"_uuid"}, Until: "==", Rows: []ovsdb.Row{{"_uuid": root}},
+	}
+
+	reads := []ovsdb.Operation{guard}
+	for _, ip := range ips {
+		reads = append(reads, ovsdb.Operation{
+			Op: ovsdb.OperationSelect, Table: "MAC_Binding",
+			Where: []ovsdb.Condition{
+				{Column: "logical_port", Function: ovsdb.ConditionEqual, Value: string(portName)},
+				{Column: "ip", Function: ovsdb.ConditionEqual, Value: ip.String()},
+			},
+			Columns: []string{"_uuid", "_version", "mac"},
+		})
+	}
+
+	reply, err := o.client.Transact(ctx, reads...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(reply, reads)
+	if err != nil {
+		return err
+	}
+
+	if len(reply) != len(reads) {
+		return errors.New("Unexpected OVN MAC binding snapshot result count")
+	}
+
+	operations := []ovsdb.Operation{guard}
+	if o.owner != "" {
+		// This comment is diagnostic provenance, not an authorization or generation prerequisite.
+		comment := "incus:ovn-lifecycle:" + o.owner
+		operations = append(operations, ovsdb.Operation{Op: ovsdb.OperationComment, Comment: &comment})
+	}
+
+	deletes := 0
+	for i, result := range reply[1:] {
+		for _, row := range result.Rows {
+			id, validID := row["_uuid"].(ovsdb.UUID)
+			version, validVersion := row["_version"].(ovsdb.UUID)
+			_, idErr := uuid.Parse(id.GoUUID)
+			_, versionErr := uuid.Parse(version.GoUUID)
+			if !validID || !validVersion || idErr != nil || versionErr != nil {
+				return errors.New("Invalid OVN MAC binding row identity or version")
+			}
+
+			// A delayed delete may invalidate an unchanged old cache entry, but cannot remove a
+			// replacement row or a relearn that changed its MAC. Row versions are server-local
+			// and this write runs on the cluster leader, so the content is guarded instead.
+			operations = append(operations, ovsdb.Operation{Op: ovsdb.OperationDelete, Table: "MAC_Binding", Where: []ovsdb.Condition{
+				{Column: "_uuid", Function: ovsdb.ConditionEqual, Value: id},
+				{Column: "mac", Function: ovsdb.ConditionEqual, Value: row["mac"]},
+				{Column: "logical_port", Function: ovsdb.ConditionEqual, Value: string(portName)},
+				{Column: "ip", Function: ovsdb.ConditionEqual, Value: ips[i].String()},
+			}})
+			deletes++
+		}
+	}
+
+	if deletes == 0 {
+		return nil
+	}
+
+	operations = append(operations, guard)
+	reply, err = o.client.Transact(ctx, operations...)
 	if err != nil {
 		return err
 	}
@@ -74,6 +132,10 @@ func (o *SB) DeleteMACBindings(ctx context.Context, portName OVNRouterPort, ips 
 	_, err = ovsdb.CheckOperationResults(reply, operations)
 	if err != nil {
 		return err
+	}
+
+	if len(reply) != len(operations) {
+		return errors.New("Unexpected OVN MAC binding delete result count")
 	}
 
 	return nil

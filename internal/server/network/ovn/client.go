@@ -10,13 +10,16 @@ import (
 	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
 	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
 	"github.com/ovn-kubernetes/libovsdb/ovsdb"
+
+	backendDB "github.com/lxc/incus/v7/internal/server/network/ovsdb"
 )
 
 // timeoutClient wraps a libovsdb client so operations can't wait forever for a reconnection.
 type timeoutClient struct {
 	ovsdbClient.Client
 
-	name string
+	name            string
+	uncertainWrites bool
 
 	mu          sync.Mutex
 	unreachable bool
@@ -80,7 +83,59 @@ func (c *timeoutClient) Transact(ctx context.Context, operations ...ovsdb.Operat
 	ctx, cancel := c.timeoutContext(ctx)
 	defer cancel()
 
-	resp, err := c.Client.Transact(ctx, operations...)
+	if c.uncertainWrites {
+		err := backendDB.ValidateTransaction(ctx, c.Client, operations...)
+		if err != nil {
+			return nil, c.checkErr(ctx, err)
+		}
+	}
 
-	return resp, c.checkErr(ctx, err)
+	resp, err := c.Client.Transact(ctx, operations...)
+	if c.uncertainWrites && err == nil && (len(resp) < len(operations) || len(resp) > len(operations)+1 || (len(resp) == len(operations)+1 && resp[len(operations)].Error == "")) {
+		err = errors.New("Unexpected OVN interconnect transaction result count")
+	}
+
+	if c.uncertainWrites && err == nil && len(resp) == len(operations)+1 {
+		operationErrors, resultErr := ovsdb.CheckOperationResults(resp, operations)
+		for _, operationErr := range operationErrors {
+			resultErr = errors.Join(resultErr, operationErr)
+		}
+
+		err = resultErr
+	}
+
+	if err == nil {
+		// A complete validated reply is authoritative even if the deadline expired meanwhile;
+		// reporting it as a failure would make callers revert a committed write.
+		c.mu.Lock()
+		c.unreachable = false
+		c.mu.Unlock()
+		return resp, nil
+	}
+
+	uncertain := c.uncertainWrites && !backendDB.IsAwaitingReconnect(ctx, err)
+	err = c.checkErr(ctx, err)
+	if uncertain {
+		return resp, &uncertainTransactionError{err: err}
+	}
+
+	return resp, err
+}
+
+type uncertainTransactionError struct {
+	err error
+}
+
+func (e *uncertainTransactionError) Error() string {
+	return e.err.Error()
+}
+
+func (e *uncertainTransactionError) Unwrap() error {
+	return e.err
+}
+
+// IsUncertainTransaction identifies a dispatched interconnect write whose outcome was not acknowledged.
+func IsUncertainTransaction(err error) bool {
+	var uncertain *uncertainTransactionError
+	return errors.As(err, &uncertain)
 }

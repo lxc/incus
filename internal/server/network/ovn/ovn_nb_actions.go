@@ -17,6 +17,7 @@ import (
 	"github.com/lxc/incus/v7/internal/iprange"
 	ovnNB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-nb"
 	ovnSB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-sb"
+	backendDB "github.com/lxc/incus/v7/internal/server/network/ovsdb"
 	localUtil "github.com/lxc/incus/v7/internal/server/util"
 	"github.com/lxc/incus/v7/shared/util"
 )
@@ -1201,18 +1202,23 @@ func (o *NB) CreateLogicalSwitch(ctx context.Context, switchName OVNSwitch, mayE
 
 // DeleteLogicalSwitch deletes a named logical switch.
 func (o *NB) DeleteLogicalSwitch(ctx context.Context, switchName OVNSwitch) error {
+	guards, err := o.switchDeleteWaits(ctx, switchName)
+	if err != nil {
+		return err
+	}
+
 	ls := ovnNB.LogicalSwitch{
 		Name: string(switchName),
 	}
 
 	// Check if the switch exists.
-	err := o.get(ctx, &ls)
+	err = o.get(ctx, &ls)
 	if err != nil {
 		return err
 	}
 
 	// Delete the switch itself.
-	operations := []ovsdb.Operation{}
+	operations := guards
 
 	deleteOps, err := o.client.Where(&ls).Delete()
 	if err != nil {
@@ -2059,7 +2065,16 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 
 	// Apply the changes.
 	operations := []ovsdb.Operation{}
-	if logicalSwitchPort.UUID != "lsp" {
+	if logicalSwitchPort.UUID != "lsp" && opts == nil {
+		// Only the switch key changes. Writing the whole cached row could drop keys that other
+		// writers, such as NIC prefix ownership and proxy entries, committed meanwhile.
+		updateOps, err := o.logicalSwitchPortMapKeysOps(&logicalSwitchPort, nil, map[string]string{ovnExtIDIncusSwitch: string(switchName)})
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, updateOps...)
+	} else if logicalSwitchPort.UUID != "lsp" {
 		// If it already exists, update it.
 		updateOps, err := o.client.Where(&logicalSwitchPort).Update(&logicalSwitchPort)
 		if err != nil {
@@ -2105,6 +2120,28 @@ func (o *NB) CreateLogicalSwitchPort(ctx context.Context, switchName OVNSwitch, 
 	}
 
 	return nil
+}
+
+// logicalSwitchPortMapKeysOps replaces only the given keys of a port's options and external IDs.
+func (o *NB) logicalSwitchPortMapKeysOps(lsp *ovnNB.LogicalSwitchPort, options map[string]string, externalIDs map[string]string) ([]ovsdb.Operation, error) {
+	mutations := []ovsModel.Mutation{}
+	for _, change := range []struct {
+		field  any
+		values map[string]string
+	}{{&lsp.Options, options}, {&lsp.ExternalIDs, externalIDs}} {
+		if len(change.values) == 0 {
+			continue
+		}
+
+		keys := make([]string, 0, len(change.values))
+		for key := range change.values {
+			keys = append(keys, key)
+		}
+
+		mutations = append(mutations, ovsModel.Mutation{Field: change.field, Mutator: ovsdb.MutateOperationDelete, Value: keys}, ovsModel.Mutation{Field: change.field, Mutator: ovsdb.MutateOperationInsert, Value: change.values})
+	}
+
+	return o.client.Where(lsp).Mutate(lsp, mutations...)
 }
 
 // GetLogicalSwitchPortIPs returns a list of IPs for a switch port.
@@ -2435,6 +2472,18 @@ func (o *NB) UpdateLogicalSwitchPortDNS(ctx context.Context, switchName OVNSwitc
 		}
 
 		operations = append(operations, updateOps...)
+
+		// A failed start detaches the cleared record; reattach it so the updated names are served.
+		attachOps, err := o.client.Where(ls).Mutate(ls, ovsModel.Mutation{
+			Field:   &ls.DNSRecords,
+			Mutator: ovsdb.MutateOperationInsert,
+			Value:   []string{dnsRecord.UUID},
+		})
+		if err != nil {
+			return "", err
+		}
+
+		operations = append(operations, attachOps...)
 	}
 
 	// Apply the changes.
@@ -2705,21 +2754,22 @@ func (o *NB) UpdateLogicalSwitchPortLinkRouter(ctx context.Context, switchPortNa
 		return err
 	}
 
-	// Update the fields.
+	// Update the fields, and only the option keys owned here; other writers keep their keys.
 	lsp.Type = "router"
 	lsp.Addresses = []string{"router"}
-	if lsp.Options == nil {
-		lsp.Options = map[string]string{}
-	}
-
-	lsp.Options["nat-addresses"] = "router"
-	lsp.Options["router-port"] = string(routerPortName)
 
 	// Update the record.
-	operations, err := o.client.Where(&lsp).Update(&lsp)
+	operations, err := o.client.Where(&lsp).Update(&lsp, &lsp.Type, &lsp.Addresses)
 	if err != nil {
 		return err
 	}
+
+	optionOps, err := o.logicalSwitchPortMapKeysOps(&lsp, map[string]string{"nat-addresses": "router", "router-port": string(routerPortName)}, nil)
+	if err != nil {
+		return err
+	}
+
+	operations = append(operations, optionOps...)
 
 	// Apply the changes.
 	resp, err := o.client.Transact(ctx, operations...)
@@ -2737,110 +2787,109 @@ func (o *NB) UpdateLogicalSwitchPortLinkRouter(ctx context.Context, switchPortNa
 
 // UpdateLogicalSwitchPortARPProxy adds and removes entries from a logical switch port's arp_proxy option.
 func (o *NB) UpdateLogicalSwitchPortARPProxy(ctx context.Context, switchPortName OVNSwitchPort, addIPNets []net.IPNet, removeIPNets []net.IPNet) error {
-	// Get the logical switch port.
-	lsp := ovnNB.LogicalSwitchPort{
-		Name: string(switchPortName),
-	}
-
-	err := o.get(ctx, &lsp)
-	if err != nil {
-		return err
-	}
-
-	// Get the current entries.
-	entries := strings.Fields(lsp.Options["arp_proxy"])
-
-	// Apply the requested changes.
-	for _, ipNet := range removeIPNets {
-		entry := ipNet.String()
-		entries = slices.DeleteFunc(entries, func(e string) bool { return e == entry })
-	}
-
-	for _, ipNet := range addIPNets {
-		entry := ipNet.String()
-		if !slices.Contains(entries, entry) {
-			entries = append(entries, entry)
+	for attempt := 0; ; attempt++ {
+		handled, err := o.nicPrefixUnowned(ctx, "Logical_Switch_Port", []string{string(switchPortName)}, addIPNets, removeIPNets, false)
+		if handled {
+			return err
 		}
-	}
 
-	slices.Sort(entries)
+		// Get the logical switch port.
+		lsp := ovnNB.LogicalSwitchPort{
+			Name: string(switchPortName),
+		}
 
-	// Check if anything changed.
-	newValue := strings.Join(entries, " ")
-	if newValue == lsp.Options["arp_proxy"] {
+		err = o.get(ctx, &lsp)
+		if err != nil {
+			return err
+		}
+
+		// A ledger that appeared since the ownership check takes the owned path; the guard below
+		// covers one written after this read.
+		_, owned := lsp.ExternalIDs[nicPrefixMetadata]
+		if owned && attempt < 10 {
+			continue
+		}
+
+		if owned {
+			return errors.New("Logical switch port ownership changed repeatedly during a proxy update")
+		}
+
+		// Get the current entries.
+		entries := strings.Fields(lsp.Options["arp_proxy"])
+
+		// Apply the requested changes.
+		for _, ipNet := range removeIPNets {
+			entry := ipNet.String()
+			entries = slices.DeleteFunc(entries, func(e string) bool { return e == entry })
+		}
+
+		for _, ipNet := range addIPNets {
+			entry := ipNet.String()
+			if !slices.Contains(entries, entry) {
+				entries = append(entries, entry)
+			}
+		}
+
+		slices.Sort(entries)
+
+		// Check if anything changed.
+		newValue := strings.Join(entries, " ")
+		if newValue == lsp.Options["arp_proxy"] {
+			return nil
+		}
+
+		// Change only arp_proxy, and only if the row still matches the cached copy: another writer,
+		// such as a NIC's first ownership publication on a shared port, may have changed it since.
+		zero := 0
+		operations := []ovsdb.Operation{{
+			Op: ovsdb.OperationWait, Table: "Logical_Switch_Port", Timeout: &zero,
+			Where:   []ovsdb.Condition{{Column: "name", Function: ovsdb.ConditionEqual, Value: lsp.Name}},
+			Columns: []string{"options", "external_ids"}, Until: "==",
+			Rows: []ovsdb.Row{{"options": nicCleanupStringMapWire(lsp.Options), "external_ids": nicCleanupStringMapWire(lsp.ExternalIDs)}},
+		}}
+
+		mutations := []ovsModel.Mutation{{Field: &lsp.Options, Mutator: ovsdb.MutateOperationDelete, Value: []string{"arp_proxy"}}}
+		if newValue != "" {
+			mutations = append(mutations, ovsModel.Mutation{Field: &lsp.Options, Mutator: ovsdb.MutateOperationInsert, Value: map[string]string{"arp_proxy": newValue}})
+		}
+
+		mutateOps, err := o.client.Where(&lsp).Mutate(&lsp, mutations...)
+		if err != nil {
+			return err
+		}
+
+		operations = append(operations, mutateOps...)
+
+		// Apply the changes. The fenced client reports the failed row wait as an error.
+		resp, err := o.client.Transact(ctx, operations...)
+		if err != nil {
+			if nicAddPortMoved(err) && attempt < 10 {
+				// The cache lags a concurrent write; reread it.
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+
+			return err
+		}
+
+		if len(resp) > 0 && resp[0].Error == "timed out" && attempt < 10 {
+			// The cache lags a concurrent write; reread it.
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+
+		_, err = ovsdb.CheckOperationResults(resp, operations)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
-
-	// Update the fields.
-	if lsp.Options == nil {
-		lsp.Options = map[string]string{}
-	}
-
-	if newValue != "" {
-		lsp.Options["arp_proxy"] = newValue
-	} else {
-		delete(lsp.Options, "arp_proxy")
-	}
-
-	// Update the record.
-	operations, err := o.client.Where(&lsp).Update(&lsp)
-	if err != nil {
-		return err
-	}
-
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
-	}
-
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
-// ClearLogicalSwitchPortARPProxy removes the arp_proxy option from a logical switch port.
+// ClearLogicalSwitchPortARPProxy clears a logical switch port's arp_proxy option.
 func (o *NB) ClearLogicalSwitchPortARPProxy(ctx context.Context, switchPortName OVNSwitchPort) error {
-	// Get the logical switch port.
-	lsp := ovnNB.LogicalSwitchPort{
-		Name: string(switchPortName),
-	}
-
-	err := o.get(ctx, &lsp)
-	if err != nil {
-		return err
-	}
-
-	// Check if there's anything to clear.
-	_, found := lsp.Options["arp_proxy"]
-	if !found {
-		return nil
-	}
-
-	// Update the fields.
-	delete(lsp.Options, "arp_proxy")
-
-	// Update the record.
-	operations, err := o.client.Where(&lsp).Update(&lsp)
-	if err != nil {
-		return err
-	}
-
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
-	}
-
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return o.ClearNICARPProxyPrefixes(ctx, switchPortName)
 }
 
 // UpdateLogicalSwitchPortLinkProviderNetwork links a logical switch port to a provider network.
@@ -3155,46 +3204,7 @@ func (o *NB) CreatePortGroup(ctx context.Context, projectID int64, portGroupName
 
 // DeletePortGroup deletes port groups along with their ACL rules.
 func (o *NB) DeletePortGroup(ctx context.Context, portGroupNames ...OVNPortGroup) error {
-	operations := []ovsdb.Operation{}
-
-	for _, portGroupName := range portGroupNames {
-		pg := ovnNB.PortGroup{
-			Name: string(portGroupName),
-		}
-
-		err := o.get(ctx, &pg)
-		if err != nil {
-			if errors.Is(err, ErrNotFound) {
-				// Already gone.
-				continue
-			}
-		}
-
-		deleteOps, err := o.client.Where(&pg).Delete()
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, deleteOps...)
-	}
-
-	// Check if we have anything to do.
-	if len(operations) == 0 {
-		return nil
-	}
-
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
-	}
-
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return o.deletePhysicalGroups(ctx, portGroupNames)
 }
 
 // GetPortGroupsByProject finds the port groups that are associated to the project ID.
@@ -4177,237 +4187,144 @@ func (o *NB) CreateAddressSet(ctx context.Context, addressSetPrefix OVNAddressSe
 // If the set is missing, it will get automatically created.
 // The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
 func (o *NB) UpdateAddressSetAdd(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	// Get the address sets.
-	ipv4Set := ovnNB.AddressSet{
-		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
-	}
-
-	err := o.get(ctx, &ipv4Set)
-	if err != nil && !errors.Is(err, ErrNotFound) {
-		return err
-	}
-
-	if ipv4Set.Addresses == nil {
-		ipv4Set.Addresses = []string{}
-	}
-
-	ipv6Set := ovnNB.AddressSet{
-		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
-	}
-
-	err = o.get(ctx, &ipv6Set)
-	if err != nil && !errors.Is(err, ErrNotFound) {
-		return err
-	}
-
-	if ipv6Set.Addresses == nil {
-		ipv6Set.Addresses = []string{}
-	}
-
-	// Add the addresses.
-	for _, address := range addresses {
-		if address.IP.To4() == nil {
-			if !slices.Contains(ipv6Set.Addresses, address.String()) {
-				ipv6Set.Addresses = append(ipv6Set.Addresses, address.String())
-			}
-		} else {
-			if !slices.Contains(ipv4Set.Addresses, address.String()) {
-				ipv4Set.Addresses = append(ipv4Set.Addresses, address.String())
-			}
-		}
-	}
-
-	// Prepare the records.
-	operations := []ovsdb.Operation{}
-
-	if ipv4Set.UUID == "" {
-		createOps, err := o.client.Create(&ipv4Set)
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, createOps...)
-	} else {
-		updateOps, err := o.client.Where(&ipv4Set).Update(&ipv4Set)
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, updateOps...)
-	}
-
-	if ipv6Set.UUID == "" {
-		createOps, err := o.client.Create(&ipv6Set)
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, createOps...)
-	} else {
-		updateOps, err := o.client.Where(&ipv6Set).Update(&ipv6Set)
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, updateOps...)
-	}
-
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
-	}
-
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return o.updateAddressSets(ctx, addressSetPrefix, addresses, nil, true, false)
 }
 
 // UpdateAddressSetRemove removes the supplied addresses from the address set.
 // The address set name used is "<addressSetPrefix>_ip<IP version>", e.g. "foo_ip4".
 func (o *NB) UpdateAddressSetRemove(ctx context.Context, addressSetPrefix OVNAddressSet, addresses ...net.IPNet) error {
-	// Get the address sets.
-	ipv4Set := ovnNB.AddressSet{
-		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
-	}
+	return o.updateAddressSets(ctx, addressSetPrefix, nil, addresses, false, false)
+}
 
-	err := o.get(ctx, &ipv4Set)
-	if err != nil {
-		return err
-	}
+// updateAddressSets applies additions and removals to address sets without ownership records. It
+// changes only their addresses, and only if each set still matches the cached copy it read: another
+// writer, such as a NIC's first ownership publication, fails the guard and the change is retried
+// from a fresh read, which then takes the owned path. An addition, even of no addresses, creates
+// missing sets. With ensure, every pass keeps the visibility repair that adopts no NIC prefixes.
+func (o *NB) updateAddressSets(ctx context.Context, addressSetPrefix OVNAddressSet, add []net.IPNet, remove []net.IPNet, adding bool, ensure bool) error {
+	names := []string{fmt.Sprintf("%s_ip4", addressSetPrefix), fmt.Sprintf("%s_ip6", addressSetPrefix)}
+	for attempt := 0; ; attempt++ {
+		handled, err := o.nicPrefixUnowned(ctx, "Address_Set", names, add, remove, ensure)
+		if handled {
+			return err
+		}
 
-	ipv6Set := ovnNB.AddressSet{
-		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
-	}
-
-	err = o.get(ctx, &ipv6Set)
-	if err != nil {
-		return err
-	}
-
-	// Filter entries.
-	ipv4Addresses := []string{}
-	for _, entry := range ipv4Set.Addresses {
-		found := false
-		for _, address := range addresses {
-			if entry == address.String() {
-				found = true
-				break
+		// Get the address sets.
+		sets := []*ovnNB.AddressSet{{Name: names[0]}, {Name: names[1]}}
+		owned := false
+		for _, set := range sets {
+			err = o.get(ctx, set)
+			if err != nil && (!adding || !errors.Is(err, ErrNotFound)) {
+				return err
 			}
-		}
 
-		if !found {
-			ipv4Addresses = append(ipv4Addresses, entry)
-		}
-	}
-
-	ipv4Set.Addresses = ipv4Addresses
-
-	ipv6Addresses := []string{}
-	for _, entry := range ipv6Set.Addresses {
-		found := false
-		for _, address := range addresses {
-			if entry == address.String() {
-				found = true
-				break
+			if set.Addresses == nil {
+				set.Addresses = []string{}
 			}
+
+			_, ledger := set.ExternalIDs[nicPrefixMetadata]
+			owned = owned || ledger
 		}
 
-		if !found {
-			ipv6Addresses = append(ipv6Addresses, entry)
+		// A ledger that appeared since the ownership check takes the owned path; the guard below
+		// covers one written after this read.
+		if owned && attempt < 10 {
+			continue
 		}
+
+		if owned {
+			return errors.New("Address set ownership changed repeatedly during an update")
+		}
+
+		operations := []ovsdb.Operation{}
+		for i, set := range sets {
+			cached := slices.Clone(set.Addresses)
+			for _, address := range remove {
+				set.Addresses = slices.DeleteFunc(set.Addresses, func(entry string) bool { return entry == address.String() })
+			}
+
+			for _, address := range add {
+				if (address.IP.To4() == nil) == (i == 1) && !slices.Contains(set.Addresses, address.String()) {
+					set.Addresses = append(set.Addresses, address.String())
+				}
+			}
+
+			if set.UUID == "" {
+				createOps, err := o.client.Create(set)
+				if err != nil {
+					return err
+				}
+
+				operations = append(operations, createOps...)
+				continue
+			}
+
+			zero := 0
+			values := make([]any, 0, len(cached))
+			for _, entry := range cached {
+				values = append(values, entry)
+			}
+
+			operations = append(operations, ovsdb.Operation{
+				Op: ovsdb.OperationWait, Table: "Address_Set", Timeout: &zero,
+				Where:   []ovsdb.Condition{{Column: "name", Function: ovsdb.ConditionEqual, Value: set.Name}},
+				Columns: []string{"addresses", "external_ids"}, Until: "==",
+				Rows: []ovsdb.Row{{"addresses": ovsdb.OvsSet{GoSet: values}, "external_ids": nicCleanupStringMapWire(set.ExternalIDs)}},
+			})
+
+			updateOps, err := o.client.Where(set).Update(set, &set.Addresses)
+			if err != nil {
+				return err
+			}
+
+			operations = append(operations, updateOps...)
+		}
+
+		// Apply the changes. The fenced client reports a failed guard as an error.
+		resp, err := o.client.Transact(ctx, operations...)
+		if err != nil {
+			if nbRowGuardFailed(err, "Address_Set") && attempt < 10 {
+				// The cache lags a concurrent write; reread it.
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+
+			return err
+		}
+
+		_, err = ovsdb.CheckOperationResults(resp, operations)
+		if err != nil {
+			var timedOut *ovsdb.TimedOut
+			if errors.As(err, &timedOut) && attempt < 10 {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+
+			return err
+		}
+
+		return nil
+	}
+}
+
+// nbRowGuardFailed reports a failed caller wait on the given table that did not fence the client.
+func nbRowGuardFailed(err error, table string) bool {
+	if errors.Is(err, backendDB.ErrFenced) {
+		return false
 	}
 
-	ipv6Set.Addresses = ipv6Addresses
-
-	// Prepare the records.
-	operations := []ovsdb.Operation{}
-
-	updateOps, err := o.client.Where(&ipv4Set).Update(&ipv4Set)
-	if err != nil {
-		return err
+	var timedOut *ovsdb.TimedOut
+	if !errors.As(err, &timedOut) || timedOut.Operation() == nil {
+		return false
 	}
 
-	operations = append(operations, updateOps...)
-
-	updateOps, err = o.client.Where(&ipv6Set).Update(&ipv6Set)
-	if err != nil {
-		return err
-	}
-
-	operations = append(operations, updateOps...)
-
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
-	}
-
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	op := timedOut.Operation()
+	return op.Op == ovsdb.OperationWait && op.Table == table
 }
 
 // DeleteAddressSet deletes address sets for IP versions 4 and 6 in the format "<addressSetPrefix>_ip<IP version>".
 func (o *NB) DeleteAddressSet(ctx context.Context, addressSetPrefix OVNAddressSet) error {
-	// Get the address sets.
-	ipv4Set := ovnNB.AddressSet{
-		Name: fmt.Sprintf("%s_ip4", addressSetPrefix),
-	}
-
-	err := o.get(ctx, &ipv4Set)
-	if err != nil && !errors.Is(err, ErrNotFound) {
-		return err
-	}
-
-	ipv6Set := ovnNB.AddressSet{
-		Name: fmt.Sprintf("%s_ip6", addressSetPrefix),
-	}
-
-	err = o.get(ctx, &ipv6Set)
-	if err != nil && !errors.Is(err, ErrNotFound) {
-		return err
-	}
-
-	// Delete the records.
-	operations := []ovsdb.Operation{}
-
-	if ipv4Set.UUID != "" {
-		deleteOps, err := o.client.Where(&ipv4Set).Delete()
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, deleteOps...)
-	}
-
-	if ipv6Set.UUID != "" {
-		deleteOps, err := o.client.Where(&ipv6Set).Delete()
-		if err != nil {
-			return err
-		}
-
-		operations = append(operations, deleteOps...)
-	}
-
-	// Apply the changes.
-	resp, err := o.client.Transact(ctx, operations...)
-	if err != nil {
-		return err
-	}
-
-	_, err = ovsdb.CheckOperationResults(resp, operations)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return o.deletePhysicalSet(ctx, addressSetPrefix)
 }
 
 // GetAddressSet gets the two OVN database records (v4 and v6) for the address set.

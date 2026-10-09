@@ -61,7 +61,7 @@ func (s *Server) debug() DebugInfo {
 		entry.Interface = peer.iface
 		entry.ASN = peer.asn
 		entry.Password = peer.password
-		entry.Count = peer.count
+		entry.Count = len(peer.owners)
 		entry.HoldTime = peer.holdtime
 
 		debug.Peers = append(debug.Peers, entry)

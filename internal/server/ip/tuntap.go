@@ -9,6 +9,8 @@ import (
 // Tuntap represents arguments for tuntap manipulation.
 type Tuntap struct {
 	Name       string
+	Alias      string
+	Exclusive  bool
 	Mode       string
 	MultiQueue bool
 	Master     string
@@ -35,6 +37,10 @@ func (t *Tuntap) Add() error {
 		flags = netlink.TUNTAP_DEFAULTS
 	}
 
+	if t.Exclusive {
+		flags |= netlink.TUNTAP_TUN_EXCL
+	}
+
 	tuntap := &netlink.Tuntap{
 		LinkAttrs: netlink.LinkAttrs{
 			Name: t.Name,
@@ -55,6 +61,15 @@ func (t *Tuntap) Add() error {
 	err := netlink.LinkAdd(tuntap)
 	if err != nil {
 		return fmt.Errorf("Failed to create tuntap %q: %w", t.Name, err)
+	}
+
+	if t.Alias != "" {
+		// LinkAdd's TUN ioctl path ignores LinkAttrs.Alias; use its returned index.
+		if tuntap.Index <= 0 {
+			return fmt.Errorf("New TAP numeric identity is missing")
+		}
+
+		return netlink.LinkSetAlias(tuntap, t.Alias)
 	}
 
 	return nil

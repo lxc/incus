@@ -14,16 +14,18 @@ import (
 	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
 
 	ovnICNB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-ic-nb"
+	backendDB "github.com/lxc/incus/v7/internal/server/network/ovsdb"
 )
 
 // ICNB client.
 type ICNB struct {
-	client ovsdbClient.Client
-	cookie ovsdbClient.MonitorCookie
+	client    ovsdbClient.Client
+	cookie    ovsdbClient.MonitorCookie
+	backendID string
 }
 
 // NewICNB initializes new OVN client for Northbound IC operations.
-func NewICNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*ICNB, error) {
+func NewICNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string, owner ...string) (*ICNB, error) {
 	// Create the NB struct.
 	client := &ICNB{}
 
@@ -132,8 +134,20 @@ func NewICNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 		return nil, err
 	}
 
+	backend := ovn
+	if len(owner) > 0 && owner[0] != "" {
+		fenced, err := backendDB.NewFencedClient(ctx, ovn, "IC_NB_Global", owner[0])
+		if err != nil {
+			ovn.Close()
+			return nil, err
+		}
+
+		backend = fenced
+		client.backendID = fenced.RootUUID()
+	}
+
 	// Add the client to the struct.
-	client.client = &timeoutClient{Client: ovn, name: "interconnect northbound"}
+	client.client = &timeoutClient{Client: backend, name: "interconnect northbound", uncertainWrites: client.backendID == ""}
 	client.cookie = monitorCookie
 
 	// Set finalizer to stop the monitor.
@@ -143,4 +157,9 @@ func NewICNB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey
 	})
 
 	return client, nil
+}
+
+// BackendID returns the root identity whose member generation was acknowledged.
+func (o *ICNB) BackendID() string {
+	return o.backendID
 }

@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"runtime"
-	"slices"
 	"strings"
 	"time"
 
@@ -15,18 +14,26 @@ import (
 	ovsdbCache "github.com/ovn-kubernetes/libovsdb/cache"
 	ovsdbClient "github.com/ovn-kubernetes/libovsdb/client"
 	ovsdbModel "github.com/ovn-kubernetes/libovsdb/model"
+	"github.com/ovn-kubernetes/libovsdb/ovsdb"
 
 	ovnSB "github.com/lxc/incus/v7/internal/server/network/ovn/schema/ovn-sb"
 )
 
 // SB client.
 type SB struct {
-	client ovsdbClient.Client
-	cookie ovsdbClient.MonitorCookie
+	client    ovsdbClient.Client
+	cookie    ovsdbClient.MonitorCookie
+	backendID string
+	owner     string
+}
+
+// BackendID returns the database root used to constrain conditional cache invalidations.
+func (o *SB) BackendID() string {
+	return o.backendID
 }
 
 // NewSB initializes new OVN client for Southbound operations.
-func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string) (*SB, error) {
+func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey string, owner ...string) (*SB, error) {
 	// Prepare the OVSDB client.
 	dbSchema, err := ovnSB.FullDatabaseModel()
 	if err != nil {
@@ -140,56 +147,53 @@ func NewSB(dbAddr string, sslCACert string, sslClientCert string, sslClientKey s
 	// Set up event handlers.
 	eventHandler := &ovsdbCache.EventHandlerFuncs{}
 	eventHandler.AddFunc = func(table string, newModel ovsdbModel.Model) {
-		sbEventHandlersMu.Lock()
-		defer sbEventHandlersMu.Unlock()
-
-		if sbEventHandlers == nil {
-			return
-		}
-
-		for _, handler := range sbEventHandlers {
-			if handler.Hook != nil && slices.Contains(handler.Tables, table) {
-				go handler.Hook("add", table, nil, newModel)
-			}
-		}
+		dispatchOVNSBEvent("add", table, nil, newModel)
 	}
 
 	eventHandler.UpdateFunc = func(table string, oldModel ovsdbModel.Model, newModel ovsdbModel.Model) {
-		sbEventHandlersMu.Lock()
-		defer sbEventHandlersMu.Unlock()
-
-		if sbEventHandlers == nil {
-			return
-		}
-
-		for _, handler := range sbEventHandlers {
-			if handler.Hook != nil && slices.Contains(handler.Tables, table) {
-				go handler.Hook("update", table, oldModel, newModel)
-			}
-		}
+		dispatchOVNSBEvent("update", table, oldModel, newModel)
 	}
 
 	eventHandler.DeleteFunc = func(table string, oldModel ovsdbModel.Model) {
-		sbEventHandlersMu.Lock()
-		defer sbEventHandlersMu.Unlock()
-
-		if sbEventHandlers == nil {
-			return
-		}
-
-		for _, handler := range sbEventHandlers {
-			if handler.Hook != nil && slices.Contains(handler.Tables, table) {
-				go handler.Hook("remove", table, oldModel, nil)
-			}
-		}
+		dispatchOVNSBEvent("remove", table, oldModel, nil)
 	}
 
 	ovn.Cache().AddEventHandler(eventHandler)
 
+	// Southbound only invalidates exact MAC cache row versions; it needs no metadata write privilege.
+	ops := []ovsdb.Operation{{Op: ovsdb.OperationSelect, Table: "SB_Global", Where: []ovsdb.Condition{}, Columns: []string{"_uuid"}}}
+	reply, err := ovn.Transact(ctx, ops...)
+	if err != nil {
+		ovn.Close()
+		return nil, err
+	}
+
+	_, err = ovsdb.CheckOperationResults(reply, ops)
+	if err != nil {
+		ovn.Close()
+		return nil, err
+	}
+
+	if len(reply) != 1 || len(reply[0].Rows) != 1 {
+		ovn.Close()
+		return nil, errors.New("Expected one OVN southbound database root")
+	}
+
+	root, ok := reply[0].Rows[0]["_uuid"].(ovsdb.UUID)
+	if !ok || root.GoUUID == "" {
+		ovn.Close()
+		return nil, errors.New("Invalid OVN southbound database root")
+	}
+
 	// Create the SB struct.
 	client := &SB{
-		client: &timeoutClient{Client: ovn, name: "southbound"},
-		cookie: monitorCookie,
+		client:    &timeoutClient{Client: ovn, name: "southbound"},
+		cookie:    monitorCookie,
+		backendID: root.GoUUID,
+	}
+
+	if len(owner) > 0 {
+		client.owner = owner[0]
 	}
 
 	// Set finalizer to stop the monitor.

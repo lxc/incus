@@ -169,6 +169,13 @@ func (o *VSwitch) DeleteBridge(ctx context.Context, bridgeName string) error {
 	return nil
 }
 
+// GetBridgePort returns a port entry.
+func (o *VSwitch) GetBridgePort(ctx context.Context, portName string) (*ovsSwitch.Port, error) {
+	port := &ovsSwitch.Port{Name: portName}
+	err := o.client.Get(ctx, port)
+	return port, err
+}
+
 // CreateBridgePort adds a port to the bridge.
 func (o *VSwitch) CreateBridgePort(ctx context.Context, bridgeName string, portName string, mayExist bool) error {
 	// Get the bridge.
@@ -593,8 +600,14 @@ func (o *VSwitch) AddOVNBridgeMapping(ctx context.Context, bridgeName string, pr
 
 	vSwitch.ExternalIDs["ovn-bridge-mappings"] = strings.Join(mappings, ",")
 
-	// Update the record.
-	operations, err := o.client.Where(vSwitch).Update(vSwitch)
+	// Change only the mapping key, preserving backend fencing and other external IDs.
+	mutations := []ovsdbModel.Mutation{{Field: &vSwitch.ExternalIDs, Mutator: ovsdb.MutateOperationDelete, Value: []string{"ovn-bridge-mappings"}}}
+	value := vSwitch.ExternalIDs["ovn-bridge-mappings"]
+	if value != "" {
+		mutations = append(mutations, ovsdbModel.Mutation{Field: &vSwitch.ExternalIDs, Mutator: ovsdb.MutateOperationInsert, Value: map[string]string{"ovn-bridge-mappings": value}})
+	}
+
+	operations, err := o.client.Where(vSwitch).Mutate(vSwitch, mutations...)
 	if err != nil {
 		return err
 	}
@@ -658,8 +671,14 @@ func (o *VSwitch) RemoveOVNBridgeMapping(ctx context.Context, bridgeName string,
 		vSwitch.ExternalIDs["ovn-bridge-mappings"] = strings.Join(newMappings, ",")
 	}
 
-	// Update the record.
-	operations, err := o.client.Where(vSwitch).Update(vSwitch)
+	// Change only the mapping key, preserving backend fencing and other external IDs.
+	mutations := []ovsdbModel.Mutation{{Field: &vSwitch.ExternalIDs, Mutator: ovsdb.MutateOperationDelete, Value: []string{"ovn-bridge-mappings"}}}
+	value := vSwitch.ExternalIDs["ovn-bridge-mappings"]
+	if value != "" {
+		mutations = append(mutations, ovsdbModel.Mutation{Field: &vSwitch.ExternalIDs, Mutator: ovsdb.MutateOperationInsert, Value: map[string]string{"ovn-bridge-mappings": value}})
+	}
+
+	operations, err := o.client.Where(vSwitch).Mutate(vSwitch, mutations...)
 	if err != nil {
 		return err
 	}
@@ -805,4 +824,58 @@ func (o *VSwitch) GetOVNSouthboundDBRemoteAddress(ctx context.Context) (string, 
 	val := vSwitch.ExternalIDs["ovn-remote"]
 
 	return val, nil
+}
+
+// SetInterfaceNetworkOwner records durable ownership of a managed network tunnel.
+func (o *VSwitch) SetInterfaceNetworkOwner(ctx context.Context, interfaceName string, networkID string) error {
+	iface := &ovsSwitch.Interface{Name: interfaceName}
+	err := o.client.Get(ctx, iface)
+	if err != nil {
+		return err
+	}
+
+	if iface.ExternalIDs == nil {
+		iface.ExternalIDs = map[string]string{}
+	}
+
+	iface.ExternalIDs["incus-network"] = networkID
+	operations, err := o.client.Where(iface).Update(iface, &iface.ExternalIDs)
+	if err != nil {
+		return err
+	}
+
+	results, err := o.client.Transact(ctx, operations...)
+	if err != nil {
+		return err
+	}
+
+	_, err = ovsdb.CheckOperationResults(results, operations)
+	return err
+}
+
+// GetNetworkInterfaces finds owned tunnel interfaces even after configuration or name changes.
+func (o *VSwitch) GetNetworkInterfaces(ctx context.Context, networkID string) ([]string, error) {
+	var interfaces []ovsSwitch.Interface
+	err := o.client.WhereCache(func(iface *ovsSwitch.Interface) bool { return iface.ExternalIDs["incus-network"] == networkID }).List(ctx, &interfaces)
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, 0, len(interfaces))
+	for _, iface := range interfaces {
+		names = append(names, iface.Name)
+	}
+
+	return names, nil
+}
+
+// GetInterfaceNetworkOwner returns durable network ownership, if present.
+func (o *VSwitch) GetInterfaceNetworkOwner(ctx context.Context, interfaceName string) (string, error) {
+	iface := &ovsSwitch.Interface{Name: interfaceName}
+	err := o.client.Get(ctx, iface)
+	if err != nil {
+		return "", err
+	}
+
+	return iface.ExternalIDs["incus-network"], nil
 }
