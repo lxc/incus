@@ -475,6 +475,11 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 	}
 
 	lvFullName := d.lvmFullVolumeName(vol.volType, vol.contentType, vol.name)
+	err = lvmValidateName(vgName, lvFullName)
+	if err != nil {
+		return err
+	}
+
 	logCtx := logger.Ctx{"vg_name": vgName, "lv_name": lvFullName, "size": fmt.Sprintf("%db", lvSizeBytes)}
 
 	args := []string{
@@ -558,6 +563,11 @@ func (d *lvm) createLogicalVolume(vgName, thinPoolName string, vol Volume, makeT
 func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol Volume, readonly bool, makeThinLv bool) (string, error) {
 	srcVolPath := d.lvmPath(vgName, srcVol.volType, srcVol.contentType, srcVol.name)
 	snapLvName := d.lvmFullVolumeName(snapVol.volType, snapVol.contentType, snapVol.name)
+	err := lvmValidateName(vgName, snapLvName)
+	if err != nil {
+		return "", err
+	}
+
 	logCtx := logger.Ctx{"vg_name": vgName, "lv_name": snapLvName, "src_dev": srcVolPath, "thin": makeThinLv}
 	args := []string{"-n", snapLvName, "-s", srcVolPath, "--setactivationskip", "y"}
 
@@ -590,7 +600,7 @@ func (d *lvm) createLogicalVolumeSnapshot(vgName string, srcVol Volume, snapVol 
 		defer release()
 	}
 
-	_, err := subprocess.TryRunCommand("lvcreate", args...)
+	_, err = subprocess.TryRunCommand("lvcreate", args...)
 	if err != nil {
 		return "", err
 	}
@@ -644,12 +654,29 @@ func (d *lvm) removeLogicalVolume(volDevPath string) error {
 
 // renameLogicalVolume renames a logical volume.
 func (d *lvm) renameLogicalVolume(volDevPath string, newVolDevPath string) error {
-	_, err := subprocess.TryRunCommand("lvrename", volDevPath, newVolDevPath)
+	vgName, lvName, _ := strings.Cut(newVolDevPath, "/")
+	err := lvmValidateName(vgName, lvName)
+	if err != nil {
+		return err
+	}
+
+	_, err = subprocess.TryRunCommand("lvrename", volDevPath, newVolDevPath)
 	if err != nil {
 		return err
 	}
 
 	d.logger.Debug("Logical volume renamed", logger.Ctx{"dev": volDevPath, "new_dev": newVolDevPath})
+
+	return nil
+}
+
+// lvmValidateName refuses logical volume names whose device-mapper name would exceed the kernel limit.
+func lvmValidateName(vgName string, lvName string) error {
+	// DM_NAME_LEN is 128 bytes including the terminator and every "-" is escaped as "--".
+	dmName := fmt.Sprintf("%s-%s", strings.ReplaceAll(vgName, "-", "--"), strings.ReplaceAll(lvName, "-", "--"))
+	if len(dmName) > 127 {
+		return fmt.Errorf("Logical volume name %q is too long for device-mapper", lvName)
+	}
 
 	return nil
 }
