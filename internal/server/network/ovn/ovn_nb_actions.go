@@ -1345,7 +1345,7 @@ func (o *NB) UpdateLogicalSwitchIPAllocation(ctx context.Context, switchName OVN
 		delete(logicalSwitch.OtherConfig, "exclude_ips")
 	}
 
-	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch, &logicalSwitch.OtherConfig)
 	if err != nil {
 		return err
 	}
@@ -1379,7 +1379,7 @@ func (o *NB) UpdateLogicalSwitchMulticastSnooping(ctx context.Context, switchNam
 
 	logicalSwitch.OtherConfig["mcast_snoop"] = fmt.Sprintf("%v", snoop)
 
-	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch, &logicalSwitch.OtherConfig)
 	if err != nil {
 		return err
 	}
@@ -1422,7 +1422,7 @@ func (o *NB) UpdateLogicalSwitchDHCPv4Revervations(ctx context.Context, switchNa
 		delete(logicalSwitch.OtherConfig, "exclude_ips")
 	}
 
-	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch)
+	operations, err := o.client.Where(logicalSwitch).Update(logicalSwitch, &logicalSwitch.OtherConfig)
 	if err != nil {
 		return err
 	}
