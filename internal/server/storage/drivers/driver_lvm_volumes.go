@@ -1646,14 +1646,22 @@ func (d *lvm) qcow2CreateMissingConfigSubvolume(devPath string, subvolName strin
 		return false, err
 	}
 
-	defer func() { _ = os.RemoveAll(tmpMountPath) }()
-
 	err = TryMount(devPath, tmpMountPath, "btrfs", 0, "")
 	if err != nil {
+		_ = os.Remove(tmpMountPath)
 		return false, err
 	}
 
-	defer func() { _ = TryUnmount(tmpMountPath, 0) }()
+	// Only remove the directory once unmounted as it otherwise holds the config filesystem.
+	defer func() {
+		err := TryUnmount(tmpMountPath, 0)
+		if err != nil {
+			d.logger.Warn("Failed unmounting temporary config filesystem mount", logger.Ctx{"path": tmpMountPath, "err": err})
+			return
+		}
+
+		_ = os.Remove(tmpMountPath)
+	}()
 
 	path := filepath.Join(tmpMountPath, subvolName)
 
