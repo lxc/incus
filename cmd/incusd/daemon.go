@@ -1559,6 +1559,14 @@ func (d *Daemon) init() error {
 		logger.Warn("Failed to start network zones watcher", logger.Ctx{"err": err})
 	}
 
+	// Revert any evacuation state left by an interrupted operation, those only ever run on the member itself.
+	if d.serverClustered {
+		err = evacuateReconcileState(d.State(), d.serverName)
+		if err != nil {
+			logger.Warn("Failed reconciling cluster member evacuation state", logger.Ctx{"err": err})
+		}
+	}
+
 	// Setup the networks.
 	if !d.serverClustered || !d.db.Cluster.LocalNodeIsEvacuated() {
 		logger.Infof("Initializing networks")
