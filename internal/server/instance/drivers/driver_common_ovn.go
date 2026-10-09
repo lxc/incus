@@ -291,6 +291,16 @@ func (d *common) loadOVNDeviceUndo(inst instance.Instance, name string, config d
 }
 
 func (d *common) restoreOVNDevice(inst instance.Instance, name string, config deviceConfig.Device, running bool, manager deviceManager) error {
+	// Failed validation can erase persisted presentation keys after the original port was removed.
+	// The enclosing rollback restored local config, so persist that identity before publishing again.
+	volatile := d.deviceVolatileGetFunc(name)()
+	identity := map[string]string{"hwaddr": volatile["hwaddr"], "name": volatile["name"]}
+
+	err := d.deviceVolatileSetFunc(name)(identity)
+	if err != nil {
+		return err
+	}
+
 	dev, err := d.loadOVNDeviceUndo(inst, name, config)
 	if err != nil {
 		return err
