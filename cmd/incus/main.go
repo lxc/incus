@@ -701,7 +701,7 @@ func (c *cmdGlobal) defaultConsoleType() string {
 	return c.conf.Defaults.ConsoleType
 }
 
-// Return the default console type if the user configured it, otherwise just return "console".
+// Return the default console type if the user configured it, otherwise just return "".
 func (c *cmdGlobal) defaultConsoleSpiceCommand() string {
 	// Alternative SPICE command.
 	if c.conf == nil || c.conf.Defaults.ConsoleSpiceCommand == "" {
