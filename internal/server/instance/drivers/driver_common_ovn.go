@@ -277,7 +277,17 @@ func (d *common) finishOVNDeviceUpdate(committed bool, release func() error) err
 	}
 
 	d.ovnDeviceUpdateRetain = undoErr != nil
-	return errors.Join(undoErr, release())
+	collections, collectionErr := d.committedOVNACLCollections(committed)
+	releaseErr := release()
+	if undoErr != nil || collectionErr != nil || releaseErr != nil {
+		if committed {
+			return fmt.Errorf("Instance configuration committed; retry unused ACL cleanup with a normal network update: %w", errors.Join(collectionErr, releaseErr))
+		}
+
+		return errors.Join(undoErr, collectionErr, releaseErr)
+	}
+
+	return d.collectCommittedOVNACLs(collections)
 }
 
 func (d *common) loadOVNDeviceUndo(inst instance.Instance, name string, config deviceConfig.Device) (device.Device, error) {

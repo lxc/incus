@@ -71,6 +71,15 @@ func (o *NB) withReferenceMutation(check func(*physicalReferences) error) *NB {
 
 // GuardNetworkNICReplay pins actual producer identities through every shared reload mutation.
 func (o *NB) GuardNetworkNICReplay(ctx context.Context, networkID int64, routerPort string, targets, planned map[OVNSwitchPort]NICConfigPublication, selected ...map[OVNSwitchPort]NICReplayProducer) (*NB, error) {
+	return o.guardNetworkNICReplay(ctx, networkID, routerPort, routerPort, targets, planned, selected...)
+}
+
+// GuardNetworkNICReplayParentChange pins the same router LSP through a selected ordinary parent change.
+func (o *NB) GuardNetworkNICReplayParentChange(ctx context.Context, networkID int64, routerPort, plannedRouterPort string, targets, planned map[OVNSwitchPort]NICConfigPublication, selected ...map[OVNSwitchPort]NICReplayProducer) (*NB, error) {
+	return o.guardNetworkNICReplay(ctx, networkID, routerPort, plannedRouterPort, targets, planned, selected...)
+}
+
+func (o *NB) guardNetworkNICReplay(ctx context.Context, networkID int64, routerPort, plannedRouterPort string, targets, planned map[OVNSwitchPort]NICConfigPublication, selected ...map[OVNSwitchPort]NICReplayProducer) (*NB, error) {
 	snapshot, err := o.physicalReferenceSnapshot(ctx)
 	if err != nil {
 		return nil, err
@@ -82,11 +91,16 @@ func (o *NB) GuardNetworkNICReplay(ctx context.Context, networkID int64, routerP
 	}
 
 	originals := map[OVNSwitchPort]NICReplayProducer{}
+	var routerOriginal ovsdb.Row
+	var routerSwitch any
+	routerSwitches := 0
 	name := fmt.Sprintf("incus-net%d-ls-int", networkID)
 	for _, sw := range snapshot.rows["Logical_Switch"] {
 		if sw["name"] != name {
 			continue
 		}
+
+		routerSwitches++
 
 		ports, err := physicalUUIDs(sw["ports"])
 		if err != nil {
@@ -109,6 +123,20 @@ func (o *NB) GuardNetworkNICReplay(ctx context.Context, networkID int64, routerP
 			}
 
 			if snapshot.networkReloadInfrastructure(row, name, routerPort) {
+				if plannedRouterPort != routerPort && snapshot.networkInfrastructure(row, name, routerPort) {
+					if routerOriginal != nil {
+						return nil, errors.New("Selected parent-change router infrastructure is ambiguous")
+					}
+
+					_, err := nicCleanupRowUUID(sw, "_uuid")
+					if err != nil {
+						return nil, err
+					}
+
+					routerOriginal = maps.Clone(row)
+					routerSwitch = sw["_uuid"]
+				}
+
 				continue
 			}
 
@@ -130,6 +158,10 @@ func (o *NB) GuardNetworkNICReplay(ctx context.Context, networkID int64, routerP
 		}
 	}
 
+	if plannedRouterPort != routerPort && (plannedRouterPort == "" || routerOriginal == nil || routerSwitches != 1) {
+		return nil, errors.New("Selected parent change requires one exact original router port and switch")
+	}
+
 	if len(selected) > 0 && len(selected[0]) != len(originals) {
 		return nil, errors.New("Shared reload selected consumer disappeared before admission")
 	}
@@ -141,6 +173,7 @@ func (o *NB) GuardNetworkNICReplay(ctx context.Context, networkID int64, routerP
 		}
 
 		seen := map[OVNSwitchPort]bool{}
+		routerSeen := routerOriginal == nil
 		for _, sw := range s.rows["Logical_Switch"] {
 			if sw["name"] != name {
 				continue
@@ -166,6 +199,31 @@ func (o *NB) GuardNetworkNICReplay(ctx context.Context, networkID int64, routerP
 					return errors.New("Physical reload consumer has an invalid name")
 				}
 
+				if routerOriginal != nil && row["name"] == routerOriginal["name"] {
+					expected := maps.Clone(routerOriginal)
+					options, err := nicCleanupStringMap(row["options"])
+					if err != nil {
+						return err
+					}
+
+					if options["router-port"] == plannedRouterPort {
+						originalOptions, err := nicCleanupStringMap(expected["options"])
+						if err != nil {
+							return err
+						}
+
+						originalOptions["router-port"] = plannedRouterPort
+						expected["options"] = nicCleanupStringMapWire(originalOptions)
+					}
+
+					if sw["_uuid"] != routerSwitch || !reflect.DeepEqual(expected, row) {
+						return errors.New("Selected parent-change router infrastructure changed")
+					}
+
+					routerSeen = true
+					continue
+				}
+
 				if s.networkReloadInfrastructure(row, name, routerPort) {
 					continue
 				}
@@ -186,6 +244,10 @@ func (o *NB) GuardNetworkNICReplay(ctx context.Context, networkID int64, routerP
 
 				seen[OVNSwitchPort(portName)] = true
 			}
+		}
+
+		if !routerSeen {
+			return errors.New("Selected parent-change router infrastructure disappeared")
 		}
 
 		if len(seen) != len(originals) {
@@ -281,7 +343,7 @@ func (s *physicalReferences) pinnedSharedProducer(row, sw ovsdb.Row, target NICC
 	return nil
 }
 
-func (s *physicalReferences) pinnedGroupInfrastructure(row, group ovsdb.Row, projectID int64, targets map[OVNSwitchPort]NICConfigPublication, infrastructure map[string]ovsdb.Row, capture bool) (bool, error) {
+func (s *physicalReferences) pinnedGroupInfrastructure(row, group ovsdb.Row, projectID int64, targets map[OVNSwitchPort]NICConfigPublication, infrastructure map[string]ovsdb.Row, capture bool, networks ...NetworkReferenceInfrastructure) (bool, error) {
 	ids, err := nicCleanupStringMap(group["external_ids"])
 	if err != nil {
 		return false, err
@@ -293,7 +355,20 @@ func (s *physicalReferences) pinnedGroupInfrastructure(row, group ovsdb.Row, pro
 		return false, errors.New("Shared resource infrastructure has an invalid name")
 	}
 
+	candidates := map[int64]NetworkReferenceInfrastructure{}
 	for _, target := range targets {
+		candidates[target.NetworkID] = NetworkReferenceInfrastructure{ProjectID: target.ProjectID, NetworkID: target.NetworkID}
+	}
+
+	for _, candidate := range networks {
+		if candidate.ProjectID != projectID || candidate.NetworkID <= 0 || candidate.ParentID < 0 || candidate.ParentID == candidate.NetworkID {
+			return false, errors.New("Invalid shared resource network infrastructure candidate")
+		}
+
+		candidates[candidate.NetworkID] = candidate
+	}
+
+	for _, target := range candidates {
 		switchName := fmt.Sprintf("incus-net%d-ls-int", target.NetworkID)
 		if target.ProjectID != projectID || ids[ovnExtIDIncusSwitch] != switchName || !strings.HasSuffix(groupName, fmt.Sprintf("_net%d", target.NetworkID)) {
 			continue
@@ -325,7 +400,7 @@ func (s *physicalReferences) pinnedGroupInfrastructure(row, group ovsdb.Row, pro
 			}
 
 			routerPort := opts["router-port"]
-			if !ports[pid] || !s.networkInfrastructure(row, switchName, routerPort) || routerPort != fmt.Sprintf("incus-net%d-lr-lrp-int", target.NetworkID) {
+			if !ports[pid] || !s.networkInfrastructure(row, switchName, routerPort) || routerPort != target.RouterPort() {
 				continue
 			}
 			// Infrastructure must retain its exact rooted row and switch parent throughout this caller.
@@ -344,7 +419,7 @@ func (s *physicalReferences) pinnedGroupInfrastructure(row, group ovsdb.Row, pro
 	return false, nil
 }
 
-func (s *physicalReferences) applicableGroup(group ovsdb.Row, projectID int64, targets map[OVNSwitchPort]NICConfigPublication, originals map[OVNSwitchPort]NICReplayProducer, infrastructure map[string]ovsdb.Row, capture bool) error {
+func (s *physicalReferences) applicableGroup(group ovsdb.Row, projectID int64, targets map[OVNSwitchPort]NICConfigPublication, originals map[OVNSwitchPort]NICReplayProducer, infrastructure map[string]ovsdb.Row, capture bool, networks ...NetworkReferenceInfrastructure) error {
 	ids, err := nicCleanupStringMap(group["external_ids"])
 	if err != nil || ids[ovnExtIDIncusProjectID] != fmt.Sprint(projectID) {
 		return errors.New("Shared resource group has unknown/foreign project ownership")
@@ -374,7 +449,7 @@ func (s *physicalReferences) applicableGroup(group ovsdb.Row, projectID int64, t
 
 			target, ok := targets[OVNSwitchPort(name)]
 			if !ok {
-				found, err = s.pinnedGroupInfrastructure(row, group, projectID, targets, infrastructure, capture)
+				found, err = s.pinnedGroupInfrastructure(row, group, projectID, targets, infrastructure, capture, networks...)
 				if err != nil {
 					return err
 				}
@@ -410,7 +485,7 @@ func (s *physicalReferences) applicableGroup(group ovsdb.Row, projectID int64, t
 	return nil
 }
 
-func (s *physicalReferences) aclApplicable(projectID, aclID int64, targets map[OVNSwitchPort]NICConfigPublication, originals map[OVNSwitchPort]NICReplayProducer, infrastructure map[string]ovsdb.Row, capture bool) error {
+func (s *physicalReferences) aclApplicable(projectID, aclID int64, targets map[OVNSwitchPort]NICConfigPublication, originals map[OVNSwitchPort]NICReplayProducer, infrastructure map[string]ovsdb.Row, capture bool, networks ...NetworkReferenceInfrastructure) error {
 	for _, row := range s.rows["Logical_Switch_Port"] {
 		ids, err := nicCleanupStringMap(row["external_ids"])
 		if err != nil {
@@ -482,7 +557,7 @@ func (s *physicalReferences) aclApplicable(projectID, aclID int64, targets map[O
 			continue
 		}
 
-		err := s.applicableGroup(group, projectID, targets, originals, infrastructure, capture)
+		err := s.applicableGroup(group, projectID, targets, originals, infrastructure, capture, networks...)
 		if err != nil {
 			return err
 		}
@@ -502,7 +577,7 @@ func (s *physicalReferences) aclApplicable(projectID, aclID int64, targets map[O
 }
 
 // GuardACLReferenceUpdate covers the old physical resource even when Desired omits it.
-func (o *NB) GuardACLReferenceUpdate(ctx context.Context, projectID, aclID int64, targets map[OVNSwitchPort]NICConfigPublication) (*NB, error) {
+func (o *NB) GuardACLReferenceUpdate(ctx context.Context, projectID, aclID int64, targets map[OVNSwitchPort]NICConfigPublication, networks ...NetworkReferenceInfrastructure) (*NB, error) {
 	if projectID <= 0 || aclID <= 0 {
 		return nil, errors.New("Invalid shared ACL identity")
 	}
@@ -511,7 +586,7 @@ func (o *NB) GuardACLReferenceUpdate(ctx context.Context, projectID, aclID int64
 	infrastructure := map[string]ovsdb.Row{}
 	capture := true
 	check := func(s *physicalReferences) error {
-		return s.aclApplicable(projectID, aclID, targets, originals, infrastructure, capture)
+		return s.aclApplicable(projectID, aclID, targets, originals, infrastructure, capture, networks...)
 	}
 
 	snapshot, err := o.physicalReferenceSnapshot(ctx)

@@ -5391,6 +5391,21 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		return err
 	}
 
+	// An unchanged normal update retries post-commit ACL collection without local setup.
+	if clientType == request.ClientTypeNormal && !dbUpdateNeeded && n.Status() == api.NetworkStatusCreated {
+		var projectID int64
+		err = n.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
+			var err error
+			projectID, err = dbCluster.GetProjectID(ctx, tx.Tx(), n.project)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+
+		return n.collectUnusedACLGroups(projectID)
+	}
+
 	var replayTargets map[networkOVN.OVNSwitchPort]networkOVN.NICConfigPublication
 	var replayPorts map[networkOVN.OVNSwitchPort]networkOVN.NICReplayProducer
 	if clientType == request.ClientTypeNormal && dbUpdateNeeded && n.Status() != api.NetworkStatusPending && len(changedKeys) > 0 {
@@ -5417,7 +5432,18 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		}
 
 		originalNB := n.ovnnb
-		n.ovnnb, err = reloadNB.GuardNetworkNICReplay(context.TODO(), n.ID(), string(n.getRouterIntPortName()), replayTargets, plannedTargets, replayPorts)
+		if slices.Contains(changedKeys, "parent") {
+			plannedNetwork := &ovn{common: n.common}
+			err = plannedNetwork.refreshParent(newNetwork.Config)
+			if err != nil {
+				return err
+			}
+
+			n.ovnnb, err = reloadNB.GuardNetworkNICReplayParentChange(context.TODO(), n.ID(), string(n.getRouterIntPortName()), string(plannedNetwork.getRouterIntPortName()), replayTargets, plannedTargets, replayPorts)
+		} else {
+			n.ovnnb, err = reloadNB.GuardNetworkNICReplay(context.TODO(), n.ID(), string(n.getRouterIntPortName()), replayTargets, plannedTargets, replayPorts)
+		}
+
 		if err != nil {
 			return err
 		}
@@ -8171,7 +8197,7 @@ func (n *ovn) handleDependencyChange(uplinkName string, uplinkConfig map[string]
 		} else {
 			// Refuse outstanding cleanup debt before changing shared proxy contributors.
 			err := n.state.DB.Cluster.Transaction(context.Background(), func(ctx context.Context, tx *db.ClusterTx) error {
-				return tx.EnsureOVNNICCleanupComplete(ctx, n.ID())
+				return tx.EnsureOVNNICCleanupDebtComplete(ctx, n.ID())
 			})
 			if err != nil {
 				return err
