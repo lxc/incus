@@ -52,6 +52,7 @@ To do so, ensure the following configuration:
 
 A live migration within a cluster can also move the instance to another project, by combining
 `--target-project` with `--target`.
+Instances with an OVN NIC must be stopped before moving to another project.
 The instance must move to a different cluster member, and its devices must resolve to the same
 set in the target project, because a running instance can't be given a different device set.
 Attached custom volumes don't follow the instance and must be moved separately, except for those

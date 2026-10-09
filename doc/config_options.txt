@@ -3470,6 +3470,18 @@ Comma-separated list of the last used IP addresses of the network device.
 The original MTU that was used when moving a physical device into an instance.
 ```
 
+```{config:option} volatile.<name>.last_state.ovn.host instance-volatile
+:shortdesc: "OVN network device host allocation"
+:type: "string"
+The original host interface allocation of an OVN network device, retained until its cleanup is acknowledged.
+```
+
+```{config:option} volatile.<name>.last_state.ovn.physical instance-volatile
+:shortdesc: "OVN network device physical allocation"
+:type: "string"
+The original physical device allocation of an accelerated OVN network device, retained until its cleanup is acknowledged.
+```
+
 ```{config:option} volatile.<name>.last_state.pci.driver instance-volatile
 :shortdesc: "PCI original host driver"
 :type: "string"

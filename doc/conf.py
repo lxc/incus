@@ -228,3 +228,26 @@ linkcheck_anchors_ignore_for_url = [
 redirects = {
     "howto/instances_snapshots/index": "../instances_backup/",
 }
+
+
+# Override the pinned extension's invalid requestAnimationFrame call.
+def clear_config_options_asset(app, exception):
+    if exception is None and app.builder.format == "html":
+        target = os.path.join(app.outdir, "_static/config-options.js")
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(target)
+
+
+def copy_config_options_override(app, exception):
+    if exception is None and app.builder.format == "html":
+        from sphinx.util.fileutil import copy_asset_file
+
+        source = os.path.join(app.confdir, ".sphinx/overrides/config-options.js")
+        target = os.path.join(app.outdir, "_static/config-options.js")
+        copy_asset_file(source, target, force=True)
+
+
+def setup(app):
+    # The extension copies its original asset at build-finished priority 500.
+    app.connect("build-finished", clear_config_options_asset, priority=400)
+    app.connect("build-finished", copy_config_options_override, priority=600)

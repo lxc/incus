@@ -3136,7 +3136,13 @@ definitions:
                 x-go-name: Project
             status:
                 description: |-
-                    The state of the network (for managed network in clusters)
+                    The global network state, or local state for a targeted single-network query
+
+                    Standalone servers report local state. Cluster network listings report global state even when targeted.
+                    Global Created does not imply that every member initialized or is currently ready.
+                    For OVN, local Pending, Starting, Preparing, Prepared and Stopped report durable lifecycle state.
+                    A stored local Created is reported as Unavailable until the current daemon establishes readiness and the network is available.
+                    Unavailable does not by itself indicate failed initialization. Global Deleting takes precedence over local OVN status.
 
                     API extension: clustering
                 example: Created
