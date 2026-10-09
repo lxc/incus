@@ -117,6 +117,54 @@ test_dependent_volumes() {
     [ "$(incus storage volume ls "${storage_pool}" "${storage_volume3}" --format json | jq 'length == 0')" = "true" ]
     incus project delete depvols
 
+    # Copying an instance from a snapshot takes the dependent volume from the matching snapshot
+    storage_volume4="${storage_pool}-vol4"
+    incus init testimage c4
+    incus storage volume create "${storage_pool}" "${storage_volume4}"
+    incus config device add c4 vol4 disk pool="${storage_pool}" source="${storage_volume4}" path=/mnt/vol4 dependent=true
+    incus start c4
+    incus exec c4 -- sh -c 'echo before > /root/f; echo before > /mnt/vol4/f'
+    incus snapshot create c4 snap-copy
+    incus exec c4 -- sh -c 'echo after > /root/f; echo after > /mnt/vol4/f'
+    incus copy c4/snap-copy c5 -d vol4,source="${storage_volume4}-copy"
+    incus start c5
+    [ "$(incus exec c5 -- cat /root/f)" = "before" ]
+    [ "$(incus exec c5 -- cat /mnt/vol4/f)" = "before" ]
+
+    # Refreshing from the instance keeps the copy's own volume and brings in the snapshot
+    incus stop --force c5
+    incus copy c4 c5 --refresh
+    incus start c5
+    [ "$(incus exec c5 -- cat /root/f)" = "after" ]
+    [ "$(incus exec c5 -- cat /mnt/vol4/f)" = "after" ]
+    incus config device get c5 vol4 source | grep -Fx "${storage_volume4}-copy"
+
+    # The copied snapshot refers to the copied volume and restores it
+    incus stop --force c5
+    incus snapshot restore c5 snap-copy
+    incus start c5
+    [ "$(incus exec c5 -- cat /root/f)" = "before" ]
+    [ "$(incus exec c5 -- cat /mnt/vol4/f)" = "before" ]
+    incus delete --force c5
+    [ "$(incus storage volume ls "${storage_pool}" "${storage_volume4}-copy" --format json | jq 'length == 0')" = "true" ]
+
+    # Same when copying across pools
+    incus storage create "${storage_pool}-dir" dir
+    incus copy c4/snap-copy c6 -s "${storage_pool}-dir" -d vol4,pool="${storage_pool}-dir" -d vol4,source="${storage_volume4}-copy"
+    incus start c6
+    [ "$(incus exec c6 -- cat /root/f)" = "before" ]
+    [ "$(incus exec c6 -- cat /mnt/vol4/f)" = "before" ]
+    incus stop --force c6
+    incus copy c4 c6 --refresh
+    incus start c6
+    [ "$(incus exec c6 -- cat /root/f)" = "after" ]
+    [ "$(incus exec c6 -- cat /mnt/vol4/f)" = "after" ]
+    incus config device get c6 vol4 pool | grep -Fx "${storage_pool}-dir"
+    incus delete --force c6
+    [ "$(incus storage volume ls "${storage_pool}-dir" "${storage_volume4}-copy" --format json | jq 'length == 0')" = "true" ]
+    incus storage delete "${storage_pool}-dir"
+    incus delete --force c4
+
     # Cleanup
     rm "${INCUS_DIR}/c1.tar.gz"
     incus storage volume delete "${storage_pool}" "${storage_volume2}"
