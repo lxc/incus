@@ -93,6 +93,8 @@ jobs:
             libtool \
             libudev-dev \
             make \
+            openvswitch-common \
+            ovn-central \
             pipx \
             pkg-config \
             shellcheck
