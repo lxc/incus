@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -318,6 +319,75 @@ func TestNetworkACLRetirementRetainedOwnershipRefusalsRealBackend(t *testing.T) 
 			require.Error(t, err)
 			require.Nil(t, retained)
 			referenceSameContents(t, want, retirementContents(t, raw))
+		})
+	}
+}
+
+func TestNetworkDeleteOwnedACLRouteSubjectRealBackend(t *testing.T) {
+	for _, control := range []string{"supported", "child", "foreign-group", "sibling-network", "shared-row", "replaced-identity"} {
+		t.Run(control, func(t *testing.T) {
+			parent := int64(0)
+			if control == "child" {
+				parent = 23
+			}
+
+			nb, raw, _ := retirementFixture(t, parent)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_, prefix, err := net.ParseCIDR("192.0.2.0/24")
+			require.NoError(t, err)
+			require.NoError(t, nb.CreateAddressSet(ctx, "incus_net17_routes", *prefix))
+
+			// Network specific @internal rule exactly as the ACL driver expands it for this network.
+			rule := OVNACLRule{Direction: "to-lport", Action: "allow-related", Priority: 1100, Match: "outport == @incus_acl29_ingress && (ip4.src == $@internal_ip4 || ip6.src == $@internal_ip6) && icmp4"}
+			require.NoError(t, nb.UpdatePortGroupACLRules(ctx, "incus_acl29_net17", map[string]string{"$@internal": "$incus_net17_routes"}, rule))
+			foreign := OVNACLRule{Direction: "to-lport", Action: "drop", Priority: 1100, Match: "ip4.src == $incus_net17_routes_ip4"}
+			switch control {
+			case "foreign-group":
+				require.NoError(t, nb.UpdatePortGroupACLRules(ctx, "foreign", nil, foreign))
+			case "sibling-network":
+				require.NoError(t, nb.CreatePortGroup(ctx, 1, "incus_acl29_net19", nil, "incus-net19-ls-int"))
+				require.NoError(t, nb.UpdatePortGroupACLRules(ctx, "incus_acl29_net19", nil, foreign))
+			case "shared-row":
+				owned := referenceExec(t, raw, ovsdb.Operation{Op: ovsdb.OperationSelect, Table: "Port_Group", Where: []ovsdb.Condition{{Column: "name", Function: ovsdb.ConditionEqual, Value: "incus_acl29_net17"}}})[0].Rows[0]["acls"]
+				referenceExec(t, raw, ovsdb.Operation{Op: ovsdb.OperationUpdate, Table: "Port_Group", Where: []ovsdb.Condition{{Column: "name", Function: ovsdb.ConditionEqual, Value: "foreign"}}, Row: ovsdb.Row{"acls": owned}})
+			case "replaced-identity":
+				ids := map[string]string{ovnExtIDIncusProjectID: "1", ovnExtIDIncusSwitch: "incus-net19-ls-int"}
+				referenceExec(t, raw, ovsdb.Operation{Op: ovsdb.OperationUpdate, Table: "Port_Group", Where: []ovsdb.Condition{{Column: "name", Function: ovsdb.ConditionEqual, Value: "incus_acl29_net17"}}, Row: ovsdb.Row{"external_ids": nicCleanupStringMapWire(ids)}})
+			}
+
+			port := "incus-net17-lr-lrp-int"
+			if parent != 0 {
+				port = "incus-net23-lr-lrp-int-net17"
+			}
+
+			before := referenceContents(t, raw)
+			client := nb.GuardNetworkDelete(17, port)
+			if control != "supported" && control != "child" {
+				require.ErrorIs(t, nb.CheckNetworkPhysicalUnused(ctx, 17, port), ErrPhysicalReference)
+				require.ErrorIs(t, client.DeleteLogicalSwitch(ctx, "incus-net17-ls-int"), ErrPhysicalReference)
+				referenceSameContents(t, before, referenceContents(t, raw))
+				return
+			}
+
+			require.NoError(t, nb.CheckNetworkPhysicalUnused(ctx, 17, port))
+			require.NoError(t, client.DeleteLogicalSwitch(ctx, "incus-net17-ls-int"))
+			require.NoError(t, client.DeleteAddressSet(ctx, "incus_net17_routes"))
+
+			// Only the switch, its router port, linked group with its rule and route sets are removed.
+			for table, names := range map[string][]string{"Logical_Switch": {"incus-net17-ls-int"}, "Logical_Switch_Port": {"incus-net17-ls-int-lsp-router"}, "Port_Group": {"incus_acl29_net17"}, "Address_Set": {"incus_net17_routes_ip4", "incus_net17_routes_ip6"}} {
+				for _, row := range before[table] {
+					for _, name := range names {
+						if row["name"] == name {
+							referenceRemoveUUID(before, table, row["_uuid"].(ovsdb.UUID))
+						}
+					}
+				}
+			}
+
+			require.Len(t, before["ACL"], 1)
+			referenceRemoveUUID(before, "ACL", before["ACL"][0]["_uuid"].(ovsdb.UUID))
+			referenceSameContents(t, before, referenceContents(t, raw))
 		})
 	}
 }

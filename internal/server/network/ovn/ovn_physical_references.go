@@ -215,37 +215,9 @@ func (s *physicalReferences) groupUnusedExcept(name string, projectID int64, all
 			return fmt.Errorf("%w: group %q still contains ports", ErrPhysicalReference, name)
 		}
 
-		ownACLs, err := physicalUUIDs(row["acls"])
+		ownACLs, err := s.exclusiveACLs(row)
 		if err != nil {
 			return err
-		}
-
-		for id := range ownACLs {
-			for _, other := range s.rows["Port_Group"] {
-				if other["_uuid"] == row["_uuid"] {
-					continue
-				}
-
-				acls, err := physicalUUIDs(other["acls"])
-				if err != nil {
-					return err
-				}
-
-				if acls[id] {
-					delete(ownACLs, id)
-				}
-			}
-
-			for _, sw := range s.rows["Logical_Switch"] {
-				acls, err := physicalUUIDs(sw["acls"])
-				if err != nil {
-					return err
-				}
-
-				if acls[id] {
-					delete(ownACLs, id)
-				}
-			}
 		}
 
 		if s.referenced('@', name, ownACLs) {
@@ -254,6 +226,44 @@ func (s *physicalReferences) groupUnusedExcept(name string, projectID int64, all
 	}
 
 	return nil
+}
+
+// exclusiveACLs returns the group's ACL rows not also held by any other group or switch.
+func (s *physicalReferences) exclusiveACLs(group ovsdb.Row) (map[string]bool, error) {
+	ownACLs, err := physicalUUIDs(group["acls"])
+	if err != nil {
+		return nil, err
+	}
+
+	for id := range ownACLs {
+		for _, other := range s.rows["Port_Group"] {
+			if other["_uuid"] == group["_uuid"] {
+				continue
+			}
+
+			acls, err := physicalUUIDs(other["acls"])
+			if err != nil {
+				return nil, err
+			}
+
+			if acls[id] {
+				delete(ownACLs, id)
+			}
+		}
+
+		for _, sw := range s.rows["Logical_Switch"] {
+			acls, err := physicalUUIDs(sw["acls"])
+			if err != nil {
+				return nil, err
+			}
+
+			if acls[id] {
+				delete(ownACLs, id)
+			}
+		}
+	}
+
+	return ownACLs, nil
 }
 
 func (s *physicalReferences) setUnused(prefix string) error {
@@ -506,6 +516,7 @@ func (s *physicalReferences) networkUnused(networkID int64, routerPort string, p
 		}
 	}
 
+	ownPolicies := map[string]bool{}
 	for _, row := range s.rows["Port_Group"] {
 		name, validName := row["name"].(string)
 		if !validName {
@@ -519,9 +530,20 @@ func (s *physicalReferences) networkUnused(networkID int64, routerPort string, p
 				return err
 			}
 		}
+
+		// Switch deletion also removes its linked groups, so their exclusive rules are owned.
+		if ids[ovnExtIDIncusSwitch] == switchName {
+			acls, err := s.exclusiveACLs(row)
+			if err != nil {
+				return err
+			}
+
+			for id := range acls {
+				ownPolicies[id] = true
+			}
+		}
 	}
 
-	ownPolicies := map[string]bool{}
 	for _, router := range s.rows["Logical_Router"] {
 		routerName, validRouterName := router["name"].(string)
 		if !validRouterName {
