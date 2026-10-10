@@ -1,8 +1,11 @@
 test_remote_url() {
     # shellcheck disable=2153
     for url in "${INCUS_ADDR}" "https://${INCUS_ADDR}"; do
+        incus_remote remote generate-certificate test
+        ! incus_remote remote generate-certificate test || false
         token="$(incus config trust add foo -q)"
         incus_remote remote add test "${url}" --accept-certificate --token "${token}"
+        ! incus_remote remote generate-certificate test || false
         incus_remote info test:
         incus_remote config trust list -cf -fcsv | while read -r line; do
             incus_remote config trust remove "\"${line}\""
