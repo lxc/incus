@@ -44,6 +44,12 @@ func Transaction(ctx context.Context, db *sql.DB, f func(context.Context, *sql.T
 
 	err = tx.Commit()
 	if errors.Is(err, sql.ErrTxDone) {
+		// A canceled context may already have rolled the transaction back.
+		ctxErr := ctx.Err()
+		if ctxErr != nil {
+			return fmt.Errorf("Transaction was not committed: %w", ctxErr)
+		}
+
 		err = nil // Ignore duplicate commits/rollbacks
 	}
 
