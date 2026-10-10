@@ -8827,7 +8827,8 @@ func (b *backend) qcow2CreateSnapshot(vol drivers.Volume, snapVol drivers.Volume
 
 	err = vol.MountWithSnapshotsTask(func(_ string, _ map[string]string, parentOp *operations.Operation) error {
 		if inst != nil && inst.IsRunning() {
-			imgInfo, err := drivers.Qcow2Info(parentDiskPath)
+			// Use the snapshot's virtual size as the new volume is still blank.
+			imgInfo, err := drivers.Qcow2Info(snapVolDevPath)
 			if err != nil {
 				return err
 			}
