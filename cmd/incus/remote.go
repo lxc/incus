@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 	"software.sslmate.com/src/go-pkcs12"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -857,17 +859,24 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
 type cmdRemoteGenerateCertificate struct {
 	global *cmdGlobal
 	remote *cmdRemote
+
+	flagEncrypt bool
 }
 
-var cmdRemoteGenerateCertificateUsage = u.Usage{}
+var cmdRemoteGenerateCertificateUsage = u.Usage{u.Remote.Optional()}
 
 func (c *cmdRemoteGenerateCertificate) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("generate-certificate", cmdRemoteGenerateCertificateUsage...)
 	cmd.Short = i18n.G("Generate the client certificate")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Manually trigger the generation of a client certificate`,
+		`Manually trigger the generation of a client certificate
+
+When a remote name is provided, generate a certificate and key for that remote.
+The remote must not already be configured.`,
 	))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagEncrypt, "encrypt", i18n.G("Encrypt the private key with a password"))
 
 	cmd.RunE = c.run
 
@@ -876,14 +885,58 @@ func (c *cmdRemoteGenerateCertificate) command() *cobra.Command {
 
 func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) error {
 	conf := c.global.conf
-	_, err := c.global.Parse(cmdRemoteGenerateCertificateUsage, cmd, args)
+	parsed, err := c.global.Parse(cmdRemoteGenerateCertificateUsage, cmd, args)
 	if err != nil {
 		return err
 	}
 
-	// Check if we already have a certificate.
-	if conf.HasClientCertificate() {
-		return errors.New(i18n.G("A client certificate is already present"))
+	remoteName := parsed[0].Get("")
+	certPath := conf.ConfigPath("client.crt")
+	keyPath := conf.ConfigPath("client.key")
+	if remoteName != "" {
+		if strings.Contains(remoteName, ":") {
+			return errors.New(i18n.G("Remote names may not contain colons"))
+		}
+
+		if strings.Contains(remoteName, "=") {
+			return errors.New(i18n.G("Remote names may not contain equal signs"))
+		}
+
+		if strings.ContainsAny(remoteName, `/\`) {
+			return errors.New(i18n.G("Remote names may not contain path separators"))
+		}
+
+		if !filepath.IsLocal(remoteName + ".crt") {
+			return fmt.Errorf(i18n.G("Invalid remote name %q"), remoteName)
+		}
+
+		_, ok := conf.Remotes[remoteName]
+		if ok {
+			return fmt.Errorf(i18n.G("Remote %s already exists"), remoteName)
+		}
+
+		certPath = conf.ConfigPath("clientcerts", remoteName+".crt")
+		keyPath = conf.ConfigPath("clientcerts", remoteName+".key")
+	}
+
+	// Refuse existing files, including incomplete keypairs and symbolic links.
+	for _, path := range []string{certPath, keyPath} {
+		_, err := os.Lstat(path)
+		if err == nil {
+			return errors.New(i18n.G("A client certificate is already present"))
+		}
+
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	password := ""
+	if c.flagEncrypt {
+		password, err = c.global.asker.AskPassword(fmt.Sprintf(i18n.G("Password for %s: "), keyPath))
+		if err != nil {
+			return err
+		}
 	}
 
 	// Generate the certificate.
@@ -891,12 +944,70 @@ func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) er
 		fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
 	}
 
-	err = conf.GenerateClientCertificate()
+	err = c.generateCertificate(certPath, keyPath, password)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (c *cmdRemoteGenerateCertificate) generateCertificate(certPath string, keyPath string, password string) error {
+	certPEM, keyPEM, err := localtls.GenerateMemCert(true, false)
+	if err != nil {
+		return err
+	}
+
+	if password != "" {
+		keypair, err := tls.X509KeyPair(certPEM, keyPEM)
+		if err != nil {
+			return err
+		}
+
+		key, err := ssh.MarshalPrivateKeyWithPassphrase(keypair.PrivateKey, "", []byte(password))
+		if err != nil {
+			return err
+		}
+
+		keyPEM = pem.EncodeToMemory(key)
+	}
+
+	err = os.MkdirAll(filepath.Dir(keyPath), 0o750)
+	if err != nil {
+		return err
+	}
+
+	err = writeClientCertificateFile(keyPath, keyPEM, 0o600)
+	if err != nil {
+		return err
+	}
+
+	err = writeClientCertificateFile(certPath, certPEM, 0o644)
+	if err != nil {
+		_ = os.Remove(keyPath)
+		return err
+	}
+
+	return nil
+}
+
+func writeClientCertificateFile(path string, content []byte, mode os.FileMode) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(content)
+	closeErr := file.Close()
+	if err == nil {
+		err = closeErr
+	}
+
+	if err != nil {
+		_ = os.Remove(path)
+	}
+
+	return err
 }
 
 // Get default.
