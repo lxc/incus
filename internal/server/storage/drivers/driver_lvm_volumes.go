@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -194,7 +195,12 @@ func (d *lvm) CreateVolumeFromCopy(vol Volume, srcVol Volume, copySnapshots bool
 	}
 
 	// Otherwise run the generic copy.
-	return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, false, allowInconsistent, op)
+	err = genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, false, allowInconsistent, op)
+	if err != nil {
+		return err
+	}
+
+	return d.qcow2FixCopiedChain(vol, srcVol, op)
 }
 
 // CreateVolumeFromMigration creates a volume being sent via a migration.
@@ -227,7 +233,102 @@ func (d *lvm) RefreshVolume(vol Volume, srcVol Volume, srcSnapshots []Volume, al
 	}
 
 	// Otherwise run the generic copy.
-	return genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+	err := genericVFSCopyVolume(d, nil, vol, srcVol, srcSnapshots, true, allowInconsistent, op)
+	if err != nil {
+		return err
+	}
+
+	return d.qcow2FixCopiedChain(vol, srcVol, op)
+}
+
+// qcow2FixCopiedChain points a copied qcow2 chain at the volume's own snapshots, merging in any layer that wasn't copied.
+func (d *lvm) qcow2FixCopiedChain(vol Volume, srcVol Volume, op *operations.Operation) error {
+	if !IsQcow2Block(vol) {
+		return nil
+	}
+
+	snapshots, err := d.VolumeSnapshots(vol, op)
+	if err != nil {
+		return err
+	}
+
+	// Backing files refer to the snapshots of the source's parent volume.
+	srcParent := srcVol
+	if srcVol.IsSnapshot() {
+		parentName, _, _ := api.GetParentAndSnapshotName(srcVol.name)
+		srcParent = NewVolume(d, d.name, srcVol.volType, srcVol.contentType, parentName, srcVol.config, srcVol.poolConfig)
+	}
+
+	// Merging a layer reads the source chain.
+	srcSnapshots, err := srcParent.Snapshots(op)
+	if err != nil {
+		return err
+	}
+
+	// Deactivate on return whatever was activated here.
+	activated := []Volume{}
+	defer func() {
+		for _, v := range activated {
+			_, _ = d.deactivateVolume(v)
+		}
+	}()
+
+	for _, srcSnap := range srcSnapshots {
+		ok, err := d.activateVolume(srcSnap)
+		if err != nil {
+			return err
+		}
+
+		if ok {
+			activated = append(activated, srcSnap)
+		}
+	}
+
+	layers := make([]Volume, 0, len(snapshots)+1)
+	for _, snapName := range snapshots {
+		layers = append(layers, NewVolume(d, d.name, vol.volType, vol.contentType, GetSnapshotVolumeName(vol.name, snapName), vol.config, vol.poolConfig))
+	}
+
+	layers = append(layers, vol)
+
+	for _, layer := range layers {
+		ok, err := d.activateVolume(layer)
+		if err != nil {
+			return err
+		}
+
+		if ok {
+			activated = append(activated, layer)
+		}
+
+		layerPath := filepath.Join("/dev", d.lvmPath(d.config["lvm.vg_name"], layer.volType, layer.contentType, layer.name))
+		info, err := Qcow2Info(layerPath)
+		if err != nil {
+			return err
+		}
+
+		// Layers without a backing file or already pointing at our own snapshots are fine.
+		if info.BackingFilename == "" || d.parseLogicalVolumeSnapshot(vol, filepath.Base(info.BackingFilename)) != "" {
+			continue
+		}
+
+		snapName := d.parseLogicalVolumeSnapshot(srcParent, filepath.Base(info.BackingFilename))
+		if snapName == "" {
+			return fmt.Errorf("Unexpected backing file %q for volume %q", info.BackingFilename, layer.name)
+		}
+
+		if slices.Contains(snapshots, snapName) {
+			err = Qcow2Rebase(layerPath, filepath.Join("/dev", d.lvmPath(d.config["lvm.vg_name"], vol.volType, vol.contentType, GetSnapshotVolumeName(vol.name, snapName))))
+		} else {
+			err = Qcow2Flatten(layerPath)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // DeleteVolume deletes a volume of the storage device. If any snapshots of the volume remain then this function
@@ -1646,14 +1747,22 @@ func (d *lvm) qcow2CreateMissingConfigSubvolume(devPath string, subvolName strin
 		return false, err
 	}
 
-	defer func() { _ = os.RemoveAll(tmpMountPath) }()
-
 	err = TryMount(devPath, tmpMountPath, "btrfs", 0, "")
 	if err != nil {
+		_ = os.Remove(tmpMountPath)
 		return false, err
 	}
 
-	defer func() { _ = TryUnmount(tmpMountPath, 0) }()
+	// Only remove the directory once unmounted as it otherwise holds the config filesystem.
+	defer func() {
+		err := TryUnmount(tmpMountPath, 0)
+		if err != nil {
+			d.logger.Warn("Failed unmounting temporary config filesystem mount", logger.Ctx{"path": tmpMountPath, "err": err})
+			return
+		}
+
+		_ = os.Remove(tmpMountPath)
+	}()
 
 	path := filepath.Join(tmpMountPath, subvolName)
 
