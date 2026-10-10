@@ -123,11 +123,23 @@ Note that the generated certificates are not automatically trusted. You must sti
 
 ### Encrypting local keys
 
-The `incus` client also supports encrypted client keys. Keys generated via the methods above can be encrypted with a password, using:
+To generate a client certificate with an encrypted private key, use:
+
+```sh
+incus remote generate-certificate --encrypt
+```
+
+The command prompts for a passphrase and confirmation.
+The private key is encrypted in OpenSSH format before it is written to disk, using the Go SSH library's default of 16 bcrypt rounds.
+You can also supply a remote name to generate an encrypted {ref}`client certificate for that remote <remote-client-certificate>`.
+
+Existing client keys can be encrypted with a password using:
 
 ```
 ssh-keygen -p -o -f .config/incus/client.key
 ```
+
+To change the bcrypt rounds, use `ssh-keygen -p -a <rounds> -f <key-path>` with the path to the shared or per-remote key.
 
 ```{note}
 Unless you enable [`keepalive` mode](remote-keepalive), then every single call to Incus will cause the prompt which may get a bit annoying:
