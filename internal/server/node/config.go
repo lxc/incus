@@ -91,6 +91,10 @@ func (c *Config) MetricsAddress() string {
 	return metricsAddress
 }
 
+func (c *Config) MetricsSystemdReport() bool {
+	return c.m.GetBool("core.metrics.systemd_report")
+}
+
 // NetworkOVSConnection returns the OVS socket path.
 func (c *Config) NetworkOVSConnection() string {
 	return c.m.GetString("network.ovs.connection")
@@ -235,6 +239,17 @@ var ConfigSchema = config.Schema{
 	//  scope: local
 	//  shortdesc: Address to bind the metrics server to (HTTPS)
 	"core.metrics_address": {Validator: validate.Optional(validate.IsListenAddress(true, true, false))},
+
+	// Enable systemd-report metrics
+	//
+	// gendoc:generate(entity=server, group=core, key=core.metrics.systemd_report)
+	// See {ref}`systemd-report`.
+	// ---
+	//  type: bool
+	//  scope: local
+	//  defaultdesc: `false`
+	//  shortdesc: Publish local Incus health metrics to systemd-report
+	"core.metrics.systemd_report": {Validator: validate.Optional(validate.IsBool), Type: config.Bool},
 
 	// Network address for the storage buckets server
 

@@ -1148,5 +1148,20 @@ func doAPI10UpdateTriggers(d *Daemon, nodeChanged, clusterChanged map[string]str
 		}
 	}
 
+	_, ok = nodeChanged["core.metrics.systemd_report"]
+	if ok {
+		if nodeConfig.MetricsSystemdReport() {
+			err := d.startSystemdReportServer()
+			if err != nil {
+				return fmt.Errorf("Failed starting systemd-report metrics: %w", err)
+			}
+		} else {
+			err := d.stopSystemdReportServer()
+			if err != nil {
+				return fmt.Errorf("Failed to stop systemd-report metrics: %w", err)
+			}
+		}
+	}
+
 	return nil
 }

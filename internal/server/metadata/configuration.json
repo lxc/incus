@@ -6495,6 +6495,15 @@
 						}
 					},
 					{
+						"core.metrics.systemd_report": {
+							"defaultdesc": "`false`",
+							"longdesc": "See {ref}`systemd-report`.",
+							"scope": "local",
+							"shortdesc": "Publish local Incus health metrics to systemd-report",
+							"type": "bool"
+						}
+					},
+					{
 						"core.proxy_http": {
 							"longdesc": "If this option is not specified, the daemon falls back to the `HTTP_PROXY` environment variable (if set).",
 							"scope": "global",
