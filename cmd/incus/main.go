@@ -138,6 +138,9 @@ func aliases() []string {
 }
 
 func createApp() (*cobra.Command, *cmdGlobal, error) {
+	// Run persistent hooks from the root command to the selected command.
+	cobra.EnableTraverseRunHooks = true
+
 	// Load config.
 	conf, err := config.LoadConfig("")
 	if err != nil {
@@ -508,6 +511,16 @@ func migrateCacheDir(cacheDir string) {
 	_ = os.Rename(legacyDir, cacheDir)
 }
 
+func isAdminCommand(cmd *cobra.Command) bool {
+	for current := cmd; current != nil; current = current.Parent() {
+		if current.Name() == "admin" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (c *cmdGlobal) preRun(cmd *cobra.Command, _ []string) error {
 	var err error
 
@@ -596,7 +609,7 @@ func (c *cmdGlobal) preRun(cmd *cobra.Command, _ []string) error {
 				flush = true
 			}
 
-			if !slices.Contains([]string{"admin", "create", "launch"}, cmd.Name()) && (cmd.Parent() == nil || cmd.Parent().Name() != "admin") {
+			if !isAdminCommand(cmd) && !slices.Contains([]string{"create", "launch"}, cmd.Name()) {
 				images := []string{"debian/12", "fedora/42", "opensuse/tumbleweed", "ubuntu/24.04"}
 				image := images[rand.Intn(len(images))]
 

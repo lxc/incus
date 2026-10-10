@@ -1,9 +1,12 @@
 package main
 
 import (
+	"io"
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	config "github.com/lxc/incus/v7/shared/cliconfig"
 )
@@ -117,4 +120,59 @@ func TestExpandAliases(t *testing.T) {
 			t.Errorf("%s didn't match %s", result, tc.expected)
 		}
 	}
+}
+
+func TestIsAdminCommand(t *testing.T) {
+	rootCmd := &cobra.Command{Use: "incus"}
+	adminCmd := &cobra.Command{Use: "admin"}
+	osCmd := &cobra.Command{Use: "os"}
+	infoCmd := &cobra.Command{Use: "info"}
+	listCmd := &cobra.Command{Use: "list"}
+
+	rootCmd.AddCommand(adminCmd, listCmd)
+	adminCmd.AddCommand(osCmd)
+	osCmd.AddCommand(infoCmd)
+
+	assert.False(t, isAdminCommand(rootCmd))
+	assert.False(t, isAdminCommand(listCmd))
+	assert.True(t, isAdminCommand(adminCmd))
+	assert.True(t, isAdminCommand(osCmd))
+	assert.True(t, isAdminCommand(infoCmd))
+}
+
+func TestPersistentPreRunHooks(t *testing.T) {
+	t.Setenv("INCUS_CONF", t.TempDir())
+
+	app, _, err := createApp()
+	require.NoError(t, err)
+
+	cmd, _, err := app.Find([]string{"admin", "os", "info"})
+	require.NoError(t, err)
+
+	osCmd := cmd.Parent()
+	require.Equal(t, "os", osCmd.Name())
+
+	run := []string{}
+	app.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
+		run = append(run, "root")
+		return nil
+	}
+
+	app.PersistentPostRunE = nil
+	osCmd.PersistentPreRun = func(_ *cobra.Command, _ []string) {
+		run = append(run, "os")
+	}
+
+	cmd.RunE = func(_ *cobra.Command, _ []string) error {
+		run = append(run, "command")
+		return nil
+	}
+
+	app.SetArgs([]string{"admin", "os", "info"})
+	app.SetOut(io.Discard)
+	app.SetErr(io.Discard)
+
+	err = app.Execute()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"root", "os", "command"}, run)
 }
