@@ -22,6 +22,7 @@ backported
 Backports
 balancer
 balancers
+bcrypt
 benchmarking
 BFD
 BGP
@@ -218,6 +219,7 @@ OIDC
 OpenFGA
 OpenID
 OpenMetrics
+OpenSSH
 OpenSSL
 openSUSE
 OpenSUSE
