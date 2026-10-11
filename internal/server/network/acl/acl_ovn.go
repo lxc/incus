@@ -498,6 +498,10 @@ func ovnAddReferencedACLs(info *api.NetworkACL, referencedACLNames map[string]st
 				continue // Skip if the subject is an IP address, IP CIDR or IP range.
 			}
 
+			if strings.HasPrefix(subject, "$") {
+				continue // Skip address set references.
+			}
+
 			// Anything else must be a referenced ACL name.
 			// Record newly seen referenced ACL into authoritative list.
 			referencedACLNames[subject] = struct{}{}
