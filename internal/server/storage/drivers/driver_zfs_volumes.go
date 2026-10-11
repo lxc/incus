@@ -1703,6 +1703,12 @@ func (d *zfs) deleteVolume(vol Volume, op *operations.Operation) error {
 	}
 
 	if exists {
+		// Unmount any snapshot left mounted as it would otherwise prevent deletion.
+		err = d.unmountStaleSnapshots(vol)
+		if err != nil {
+			return err
+		}
+
 		// Handle clones.
 		clones, err := d.getClones(d.dataset(vol, false))
 		if err != nil {
@@ -3343,28 +3349,42 @@ func (d *zfs) CreateVolumeSnapshot(vol Volume, op *operations.Operation) error {
 func (d *zfs) DeleteVolumeSnapshot(vol Volume, op *operations.Operation) error {
 	parentName, _, _ := api.GetParentAndSnapshotName(vol.name)
 
-	// Attempt to delete the snapshot.
-	_, errDelete := subprocess.RunCommand("zfs", "destroy", "-r", d.dataset(vol, false))
-	if errDelete != nil {
-		// Handle clones.
-		clones, err := d.getClones(d.dataset(vol, false))
+	// Check that we have a snapshot to delete, it may be gone after an interrupted deletion.
+	exists, err := d.datasetExists(d.dataset(vol, false))
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		// Unmount the snapshot if left mounted as it would otherwise prevent deletion.
+		err = d.unmountStaleSnapshot(vol)
 		if err != nil {
 			return err
 		}
 
-		if len(clones) == 0 {
-			return errDelete
-		}
+		// Attempt to delete the snapshot.
+		_, errDelete := subprocess.RunCommand("zfs", "destroy", "-r", d.dataset(vol, false))
+		if errDelete != nil {
+			// Handle clones.
+			clones, err := d.getClones(d.dataset(vol, false))
+			if err != nil {
+				return err
+			}
 
-		// Move to the deleted path.
-		_, err = subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(vol, true))
-		if err != nil {
-			return err
+			if len(clones) == 0 {
+				return errDelete
+			}
+
+			// Move to the deleted path.
+			_, err = subprocess.RunCommand("zfs", "rename", d.dataset(vol, false), d.dataset(vol, true))
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	// Delete the mountpoint.
-	err := os.Remove(vol.MountPath())
+	err = os.Remove(vol.MountPath())
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return fmt.Errorf("Failed to remove '%s': %w", vol.MountPath(), err)
 	}
@@ -3587,6 +3607,85 @@ func (d *zfs) mountVolumeSnapshot(snapVol Volume, snapshotDataset string, mountP
 	cleanup := reverter.Clone().Fail
 	reverter.Success()
 	return cleanup, nil
+}
+
+// unmountStaleSnapshot unmounts a snapshot left mounted on its snapshot path, typically by an
+// operation interrupted by a daemon restart. A snapshot still in use is reported as an error.
+func (d *zfs) unmountStaleSnapshot(snapVol Volume) error {
+	if snapVol.contentType != ContentTypeFS {
+		return nil
+	}
+
+	mountPath := snapVol.MountPath()
+	if !linux.IsMountPoint(mountPath) {
+		return nil
+	}
+
+	if snapVol.MountInUse() {
+		return fmt.Errorf("Snapshot %q is mounted and in use", snapVol.name)
+	}
+
+	_, err := forceUnmount(mountPath)
+	if err != nil {
+		return err
+	}
+
+	d.logger.Warn("Unmounted stale ZFS snapshot", logger.Ctx{"volName": snapVol.name, "path": mountPath})
+
+	// Block-backed snapshots are mounted through a temporary clone, remove it too.
+	if d.isBlockBacked(snapVol) {
+		parent, snapshotOnlyName, _ := api.GetParentAndSnapshotName(snapVol.Name())
+		parentVol := NewVolume(d, d.Name(), snapVol.volType, snapVol.contentType, parent, snapVol.config, snapVol.poolConfig)
+		dataset := fmt.Sprintf("%s_%s%s", d.dataset(parentVol, false), snapshotOnlyName, tmpVolSuffix)
+
+		exists, err := d.datasetExists(dataset)
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			err = d.deleteDatasetRecursive(dataset)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// unmountStaleSnapshots unmounts any snapshot of the volume left mounted on its snapshot path.
+func (d *zfs) unmountStaleSnapshots(vol Volume) error {
+	if vol.contentType != ContentTypeFS {
+		return nil
+	}
+
+	if vol.IsSnapshot() {
+		return d.unmountStaleSnapshot(vol)
+	}
+
+	entries, err := os.ReadDir(GetVolumeSnapshotDir(d.name, vol.volType, vol.name))
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+
+		return err
+	}
+
+	for _, entry := range entries {
+		snapVol, err := vol.NewSnapshot(entry.Name())
+		if err != nil {
+			return err
+		}
+
+		err = d.unmountStaleSnapshot(snapVol)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // UnmountVolumeSnapshot simulates unmounting a volume snapshot.
