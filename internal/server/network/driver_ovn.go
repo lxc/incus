@@ -4455,6 +4455,41 @@ func (n *ovn) deleteChassisGroupEntry() error {
 	return nil
 }
 
+// deleteExternalInterfaces detaches the external interfaces from the integration bridge, removing those created from the extended syntax.
+func (n *ovn) deleteExternalInterfaces() error {
+	vswitch, err := n.state.OVS()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to OVS: %w", err)
+	}
+
+	integrationBridge := n.state.GlobalConfig.NetworkOVNIntegrationBridge()
+	for entry := range strings.SplitSeq(n.config["bridge.external_interfaces"], ",") {
+		entry = strings.TrimSpace(entry)
+		entryParts := strings.Split(entry, "/")
+		if len(entryParts) == 3 {
+			entry = strings.TrimSpace(entryParts[0])
+		}
+
+		if !InterfaceExists(entry) {
+			continue
+		}
+
+		err = vswitch.DeleteBridgePort(context.TODO(), integrationBridge, entry)
+		if err != nil {
+			return fmt.Errorf("Failed detaching external interface %q: %w", entry, err)
+		}
+
+		if len(entryParts) == 3 {
+			err = InterfaceRemove(entry)
+			if err != nil {
+				return fmt.Errorf("Failed removing external interface %q: %w", entry, err)
+			}
+		}
+	}
+
+	return nil
+}
+
 // Delete deletes a network.
 func (n *ovn) Delete(clientType request.ClientType) error {
 	n.logger.Debug("Delete", logger.Ctx{"clientType": clientType})
@@ -4475,6 +4510,14 @@ func (n *ovn) Delete(clientType request.ClientType) error {
 	err := n.Stop()
 	if err != nil {
 		n.logger.Warn("Failed stopping network during delete, continuing with deletion", logger.Ctx{"err": err})
+	}
+
+	// Detach the external interfaces, removing those created from the extended syntax.
+	if n.config["bridge.external_interfaces"] != "" {
+		err = n.deleteExternalInterfaces()
+		if err != nil {
+			n.logger.Warn("Failed cleaning up external interfaces during delete, continuing with deletion", logger.Ctx{"err": err})
+		}
 	}
 
 	if clientType == request.ClientTypeNormal {
@@ -9315,13 +9358,13 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 		return err
 	}
 
-	// Delete transit switch if empty
+	// Delete transit switch if empty, its local mirror is gone once the transit switch was removed.
 	icSwitch, err := n.ovnnb.GetLogicalSwitch(ctx, tsName)
-	if err != nil {
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 		return err
 	}
 
-	if len(icSwitch.Ports) == 0 {
+	if icSwitch != nil && len(icSwitch.Ports) == 0 {
 		err = icnb.DeleteTransitSwitch(ctx, string(tsName), false)
 		if err != nil && !errors.Is(err, networkOVN.ErrNotManaged) {
 			return err
@@ -9335,7 +9378,7 @@ func (n *ovn) remotePeerDelete(peer *api.NetworkPeer) error {
 
 		// Release peering addresses.
 		err = icnb.DeleteTransitSwitchAllocation(ctx, string(tsName), azName)
-		if err != nil {
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
 			return err
 		}
 	}
