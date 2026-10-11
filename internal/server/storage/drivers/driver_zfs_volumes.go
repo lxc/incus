@@ -1758,7 +1758,21 @@ func (d *zfs) deleteVolume(vol Volume, op *operations.Operation) error {
 // HasVolume indicates whether a specific volume exists on the storage pool.
 func (d *zfs) HasVolume(vol Volume) (bool, error) {
 	// Check if the dataset exists.
-	return d.datasetExists(d.dataset(vol, false))
+	exists, err := d.datasetExists(d.dataset(vol, false))
+	if err != nil {
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	// For VMs, a leftover filesystem dataset still needs cleaning up.
+	if vol.IsVMBlock() {
+		return d.datasetExists(d.dataset(vol.NewVMBlockFilesystemVolume(), false))
+	}
+
+	return false, nil
 }
 
 // commonVolumeRules returns validation rules which are common for pool and volume.
