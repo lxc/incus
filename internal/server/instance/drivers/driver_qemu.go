@@ -11097,8 +11097,19 @@ func (d *qemu) DeviceEventHandler(runConf *deviceConfig.RunConfig) error {
 		}
 
 		if mount.Size > 0 {
+			// Resize the active node, which is the top overlay when the disk has snapshots.
+			nodeName := d.blockNodeName(linux.PathNameEncode(mount.DevName))
+			blockDevs, err := d.fetchBlockDeviceChain(m, nodeName)
+			if err != nil {
+				return err
+			}
+
+			if len(blockDevs) > 0 {
+				nodeName = blockDevs[len(blockDevs)-1]
+			}
+
 			// Update the size.
-			err = m.UpdateBlockSize(d.blockNodeName(linux.PathNameEncode(mount.DevName)), mount.Size)
+			err = m.UpdateBlockSize(nodeName, mount.Size)
 			if err != nil {
 				return fmt.Errorf("Failed updating disk size %q: %w", mount.DevName, err)
 			}

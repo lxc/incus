@@ -9261,6 +9261,23 @@ func (b *backend) qcow2Resize(inst instance.Instance, vol drivers.Volume, size s
 		return err
 	}
 
+	// Move the GPT alt header to the end of the guest disk.
+	if vol.IsVMBlock() {
+		nbdPath, err := drivers.ConnectQemuNbd(volDiskPath, "qcow2", "", false)
+		if err != nil {
+			return err
+		}
+
+		defer func() {
+			_ = drivers.DisconnectQemuNbdWait(nbdPath)
+		}()
+
+		err = drivers.MoveGPTAltHeader(b.logger, nbdPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

@@ -8185,11 +8185,25 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 		reverter.Add(func() {
 			// Apply old settings to OVN on failure.
 			portMaps, err := n.loadBalancerValidate(net.ParseIP(curLoadBalancer.ListenAddress), &curLoadBalancer.NetworkLoadBalancerPut)
-			if err == nil {
-				vips := n.loadBalancerFlattenVIPs(net.ParseIP(curLoadBalancer.ListenAddress), portMaps)
-				_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curLoadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
-				_ = n.forwardBGPSetupPrefixes()
+			if err != nil {
+				return
 			}
+
+			vips := n.loadBalancerFlattenVIPs(net.ParseIP(curLoadBalancer.ListenAddress), portMaps)
+
+			healthCheck, err := n.getHealthCheck(curLoadBalancer.NetworkLoadBalancerPut)
+			if err != nil {
+				return
+			}
+
+			if healthCheck != nil {
+				for i := range vips {
+					vips[i].HealthCheck = healthCheck
+				}
+			}
+
+			_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curLoadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
+			_ = n.forwardBGPSetupPrefixes()
 		})
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {

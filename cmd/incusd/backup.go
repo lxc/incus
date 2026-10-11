@@ -163,10 +163,10 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, idmapSet)
 
 	// Setup tar writer go routine, with optional compression.
-	tarWriterRes := make(chan error)
-	var compressErr error
+	tarWriterRes := make(chan error, 1)
 
 	backupProgressWriter := &ioprogress.ProgressWriter{
+		WriteCloser: tarFileWriter,
 		Tracker: &ioprogress.ProgressTracker{
 			Handler: func(value, speed int64) {
 				_ = op.ExtendMetadata(map[string]any{"create_backup_progress": fmt.Sprintf("%s (%s/s)", units.GetByteSizeString(value, 2), units.GetByteSizeString(speed, 2))})
@@ -177,17 +177,17 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	go func(resCh chan<- error) {
 		l.Debug("Started backup tarball writer")
 		defer l.Debug("Finished backup tarball writer")
-		if compress != "none" {
-			backupProgressWriter.WriteCloser = tarFileWriter
-			compressErr = compressFile(compress, tarPipeReader, backupProgressWriter)
 
-			// If a compression error occurred, close the tarPipeWriter to end the export.
-			if compressErr != nil {
-				_ = tarPipeWriter.Close()
-			}
+		var err error
+		if compress != "none" {
+			err = compressFile(compress, tarPipeReader, backupProgressWriter)
 		} else {
-			backupProgressWriter.WriteCloser = tarFileWriter
 			_, err = util.SafeCopy(backupProgressWriter, tarPipeReader)
+		}
+
+		// On failure, fail any further tarball writes to end the export.
+		if err != nil {
+			_ = tarPipeReader.CloseWithError(err)
 		}
 
 		resCh <- err
@@ -196,13 +196,6 @@ func backupCreate(s *state.State, args db.InstanceBackup, sourceInst instance.In
 	// Write index file.
 	l.Debug("Adding backup index file")
 	err = backupWriteIndex(sourceInst, pool, b.OptimizedStorage(), !b.InstanceOnly(), !b.RootOnly(), tarWriter)
-
-	// Check compression errors.
-	if compressErr != nil {
-		return compressErr
-	}
-
-	// Check backupWriteIndex for errors.
 	if err != nil {
 		return fmt.Errorf("Error writing backup index file: %w", err)
 	}
@@ -522,21 +515,22 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, nil)
 
 		// Setup tar writer go routine, with optional compression.
-		tarWriterRes := make(chan error)
-		var compressErr error
+		tarWriterRes := make(chan error, 1)
 
 		go func(resCh chan<- error) {
 			l.Debug("Started backup tarball writer")
 			defer l.Debug("Finished backup tarball writer")
-			if compress != "none" {
-				compressErr = compressFile(compress, tarPipeReader, fileWriter)
 
-				// If a compression error occurred, close the tarPipeWriter to end the export.
-				if compressErr != nil {
-					_ = tarPipeWriter.Close()
-				}
+			var err error
+			if compress != "none" {
+				err = compressFile(compress, tarPipeReader, fileWriter)
 			} else {
 				_, err = util.SafeCopy(fileWriter, tarPipeReader)
+			}
+
+			// On failure, fail any further tarball writes to end the export.
+			if err != nil {
+				_ = tarPipeReader.CloseWithError(err)
 			}
 
 			resCh <- err
@@ -545,13 +539,6 @@ func volumeBackupCreate(s *state.State, args db.StoragePoolVolumeBackup, project
 		// Write index file.
 		l.Debug("Adding backup index file")
 		err = volumeBackupWriteIndex(projectName, volumeName, pool, backupRow.OptimizedStorage, !backupRow.VolumeOnly, tarWriter)
-
-		// Check compression errors.
-		if compressErr != nil {
-			return compressErr
-		}
-
-		// Check backupWriteIndex for errors.
 		if err != nil {
 			return fmt.Errorf("Error writing backup index file: %w", err)
 		}
@@ -781,21 +768,22 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 	tarWriter := instancewriter.NewInstanceTarWriter(tarPipeWriter, nil)
 
 	// Setup tar writer go routine, with optional compression.
-	tarWriterRes := make(chan error)
-	var compressErr error
+	tarWriterRes := make(chan error, 1)
 
 	go func(resCh chan<- error) {
 		l.Debug("Started backup tarball writer")
 		defer l.Debug("Finished backup tarball writer")
-		if compress != "none" {
-			compressErr = compressFile(compress, tarPipeReader, tarFileWriter)
 
-			// If a compression error occurred, close the tarPipeWriter to end the export.
-			if compressErr != nil {
-				_ = tarPipeWriter.Close()
-			}
+		var err error
+		if compress != "none" {
+			err = compressFile(compress, tarPipeReader, tarFileWriter)
 		} else {
 			_, err = util.SafeCopy(tarFileWriter, tarPipeReader)
+		}
+
+		// On failure, fail any further tarball writes to end the export.
+		if err != nil {
+			_ = tarPipeReader.CloseWithError(err)
 		}
 
 		resCh <- err
@@ -804,13 +792,6 @@ func bucketBackupCreate(s *state.State, args db.StoragePoolBucketBackup, project
 	// Write index file.
 	l.Debug("Adding backup index file")
 	err = bucketBackupWriteIndex(projectName, bucketName, pool, tarWriter)
-
-	// Check compression errors.
-	if compressErr != nil {
-		return compressErr
-	}
-
-	// Check backupWriteIndex for errors.
 	if err != nil {
 		return fmt.Errorf("Error writing backup index file: %w", err)
 	}
