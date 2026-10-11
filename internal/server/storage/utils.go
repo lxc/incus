@@ -1637,3 +1637,49 @@ func nbdOperationLock(projectName string, instanceName string) (locking.UnlockFu
 
 	return unlock, nil
 }
+
+// UnmountStaleSnapshots unmounts snapshot mount paths left behind on the pool, typically by an
+// operation interrupted by a daemon restart. It must only run while no snapshot can be in use.
+func UnmountStaleSnapshots(pool Pool) error {
+	for _, volType := range pool.Driver().Info().VolumeTypes {
+		snapshotsDir := drivers.GetVolumeTypeSnapshotsDir(pool.Name(), volType)
+
+		volumes, err := os.ReadDir(snapshotsDir)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			return err
+		}
+
+		for _, volume := range volumes {
+			volumeDir := filepath.Join(snapshotsDir, volume.Name())
+
+			snapshots, err := os.ReadDir(volumeDir)
+			if err != nil {
+				if errors.Is(err, fs.ErrNotExist) {
+					continue
+				}
+
+				return err
+			}
+
+			for _, snapshot := range snapshots {
+				mountPath := filepath.Join(volumeDir, snapshot.Name())
+				if !linux.IsMountPoint(mountPath) {
+					continue
+				}
+
+				err = drivers.TryUnmount(mountPath, 0)
+				if err != nil {
+					return err
+				}
+
+				logger.Warn("Unmounted stale snapshot", logger.Ctx{"pool": pool.Name(), "path": mountPath})
+			}
+		}
+	}
+
+	return nil
+}

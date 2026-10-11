@@ -97,6 +97,12 @@ func storageStartup(s *state.State) error {
 			return false
 		}
 
+		// Clear any snapshot mount left behind by a previous daemon.
+		err = storagePools.UnmountStaleSnapshots(pool)
+		if err != nil {
+			logger.Warn("Failed clearing stale snapshot mounts", logger.Ctx{"pool": poolName, "err": err})
+		}
+
 		logger.Info("Initialized storage pool", logger.Ctx{"pool": poolName})
 		_ = warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(s.DB.Cluster, s.ServerName, "", warningtype.StoragePoolUnvailable, cluster.TypeStoragePool, int(pool.ID()))
 
