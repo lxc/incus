@@ -1272,6 +1272,17 @@ func CalculateVolumeSnapshotSize(projectName string, pool Pool, contentType driv
 	}
 
 	snapVol := pool.GetVolume(volumeType, contentType, fullSnapVolName, dbSnapVol.Config)
+
+	// Ask the driver first as mounting a snapshot can be slow.
+	volSize, err = pool.Driver().GetVolumeDiskSize(snapVol)
+	if err == nil {
+		return volSize, nil
+	}
+
+	if !errors.Is(err, drivers.ErrNotSupported) {
+		return 0, err
+	}
+
 	err = snapVol.MountTask(func(mountPath string, op *operations.Operation) error {
 		poolBackend, ok := pool.(*backend)
 		if !ok {
