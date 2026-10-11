@@ -131,8 +131,8 @@ func (d *lvm) CreateVolume(vol Volume, filler *VolumeFiller, op *operations.Oper
 				}
 			}
 
-			// Move the GPT alt header to end of disk if needed.
-			if vol.IsVMBlock() {
+			// Move the GPT alt header to end of disk if needed (the device holds a qcow2 container when qcow2).
+			if vol.IsVMBlock() && !IsQcow2Block(vol) {
 				err = d.moveGPTAltHeader(devPath)
 				if err != nil {
 					return err
@@ -919,7 +919,8 @@ func (d *lvm) SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op
 
 		// Move the VM GPT alt header to end of disk if needed (not needed in unsafe resize mode as it is
 		// expected the caller will do all necessary post resize actions themselves).
-		if vol.IsVMBlock() && !allowUnsafeResize {
+		// The device holds a qcow2 container when qcow2, not the guest disk.
+		if vol.IsVMBlock() && !allowUnsafeResize && !IsQcow2Block(vol) {
 			// Activate the volume for resizing.
 			activated, err := d.activateVolume(vol)
 			if err != nil {
