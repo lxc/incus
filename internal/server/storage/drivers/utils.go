@@ -275,16 +275,21 @@ func GetPoolMountPath(poolName string) string {
 // whether it is a snapshot or not. For VolumeTypeImage the volName is the image fingerprint.
 func GetVolumeMountPath(poolName string, volType VolumeType, volName string) string {
 	if internalInstance.IsSnapshot(volName) {
-		return internalUtil.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)), volName)
+		return filepath.Join(GetVolumeTypeSnapshotsDir(poolName, volType), volName)
 	}
 
 	return internalUtil.VarPath("storage-pools", poolName, string(volType), volName)
 }
 
+// GetVolumeTypeSnapshotsDir gets the snapshot mount directory for a volume type on the pool.
+func GetVolumeTypeSnapshotsDir(poolName string, volType VolumeType) string {
+	return internalUtil.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)))
+}
+
 // GetVolumeSnapshotDir gets the snapshot mount directory for the parent volume.
 func GetVolumeSnapshotDir(poolName string, volType VolumeType, volName string) string {
 	parent, _, _ := api.GetParentAndSnapshotName(volName)
-	return internalUtil.VarPath("storage-pools", poolName, fmt.Sprintf("%s-snapshots", string(volType)), parent)
+	return filepath.Join(GetVolumeTypeSnapshotsDir(poolName, volType), parent)
 }
 
 // GetSnapshotVolumeName returns the full volume name for a parent volume and snapshot name.
