@@ -697,12 +697,11 @@ func (d *qemu) unmount() error {
 		return err
 	}
 
-	err = pool.UnmountInstance(d, nil)
-	if err != nil {
-		return err
+	if d.IsSnapshot() {
+		return pool.UnmountInstanceSnapshot(d, nil)
 	}
 
-	return nil
+	return pool.UnmountInstance(d, nil)
 }
 
 // generateAgentCert creates the necessary server key and certificate if needed.
