@@ -1958,6 +1958,17 @@ test_network_ovn_acl() {
     incus network acl rule add ingress-ping ingress action=allow protocol=icmp4 destination=10.10.10.1-10.10.11.1
     ! incus exec c2 -- ping -c1 -w5 -4 10.10.11.2 || false
 
+    # Test address set subjects aren't treated as referenced ACLs.
+    incus network address-set create pingset
+    incus network address-set add pingset 10.10.11.2
+    # shellcheck disable=2016
+    incus network acl rule add ingress-ping ingress action=allow protocol=icmp4 destination='\$pingset'
+    incus exec c2 -- ping -c1 -w5 -4 10.10.11.2
+    ! ovn-nbctl --bare --column=name --format=csv find port_group | grep -q incus_acl0_ || false
+    # shellcheck disable=2016
+    incus network acl rule remove ingress-ping ingress action=allow protocol=icmp4 destination='\$pingset'
+    incus network address-set delete pingset
+
     # Test ACL rule referencing our own ACL name as source in rule.
     incus network acl rule remove ingress-ping ingress action=allow protocol=icmp4 destination=10.10.10.1-10.10.11.1
     incus network acl rule add ingress-ping ingress action=allow protocol=icmp4 source=ingress-ping
