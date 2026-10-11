@@ -408,6 +408,11 @@ func (d *common) GetVolumeDiskPath(vol Volume) (string, error) {
 	return "", ErrNotSupported
 }
 
+// GetVolumeDiskSize returns the size in bytes of a block volume or snapshot without mounting it.
+func (d *common) GetVolumeDiskSize(vol Volume) (int64, error) {
+	return -1, ErrNotSupported
+}
+
 // ListVolumes returns a list of volumes in storage pool.
 func (d *common) ListVolumes() ([]Volume, error) {
 	return nil, ErrNotSupported

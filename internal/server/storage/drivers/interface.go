@@ -74,6 +74,7 @@ type Driver interface {
 	GetVolumeUsage(vol Volume) (int64, error)
 	SetVolumeQuota(vol Volume, size string, allowUnsafeResize bool, op *operations.Operation) error
 	GetVolumeDiskPath(vol Volume) (string, error)
+	GetVolumeDiskSize(vol Volume) (int64, error)
 	ListVolumes() ([]Volume, error)
 
 	// ActivateTask is a low-level access function to get to the underlying storage.

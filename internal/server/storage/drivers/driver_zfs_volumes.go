@@ -2351,6 +2351,20 @@ func (d *zfs) GetVolumeDiskPath(vol Volume) (string, error) {
 	return d.tryGetVolumeDiskPathFromDataset(ctx, d.dataset(vol, false))
 }
 
+// GetVolumeDiskSize returns the size in bytes of a block volume or snapshot without mounting it.
+func (d *zfs) GetVolumeDiskSize(vol Volume) (int64, error) {
+	if IsQcow2Block(vol) || (!IsContentBlock(vol.contentType) && !d.isBlockBacked(vol)) {
+		return -1, ErrNotSupported
+	}
+
+	volSize, err := d.getDatasetProperty(d.dataset(vol, false), "volsize")
+	if err != nil {
+		return -1, err
+	}
+
+	return strconv.ParseInt(volSize, 10, 64)
+}
+
 // ListVolumes returns a list of volumes in storage pool.
 func (d *zfs) ListVolumes() ([]Volume, error) {
 	vols := make(map[string]Volume)
