@@ -162,6 +162,23 @@ var architectureInstallations = map[int][]Installation{
 			},
 		},
 	}},
+	osarch.ARCH_64BIT_LOONGARCH: {{
+		Path: "/usr/share/qemu-efi-loongarch64",
+		Usage: map[FirmwareUsage][]FirmwarePair{
+			GENERIC: {
+				{Code: "QEMU_EFI.fd", Vars: "QEMU_VARS.fd"},
+				{Code: "QEMU_EFI.fd", Vars: "qemu.nvram"},
+			},
+		},
+	}, {
+		Path: "/usr/share/edk2/loongarch64",
+		Usage: map[FirmwareUsage][]FirmwarePair{
+			GENERIC: {
+				{Code: "QEMU_EFI.fd", Vars: "QEMU_VARS.fd"},
+				{Code: "QEMU_EFI.fd", Vars: "qemu.nvram"},
+			},
+		},
+	}},
 }
 
 // GetArchitectureInstallations returns an array of installations for a specific host architecture.
