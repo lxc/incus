@@ -2,16 +2,20 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/lxc/incus/v7/internal/server/acme"
+	"github.com/lxc/incus/v7/internal/server/auth"
 	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/db/operationtype"
 	"github.com/lxc/incus/v7/internal/server/operations"
 	"github.com/lxc/incus/v7/internal/server/response"
+	"github.com/lxc/incus/v7/internal/server/state"
 	"github.com/lxc/incus/v7/internal/server/task"
 	"github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/api"
@@ -29,6 +33,108 @@ var acmeChallengeCmd = APIEndpoint{
 	Get: APIEndpointAction{Handler: acmeProvideChallenge, AllowUntrusted: true},
 }
 
+var internalACMEChallengeCmd = APIEndpoint{
+	Path: "acme/challenge",
+
+	Post:   APIEndpointAction{Handler: internalACMEChallengePost, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+	Delete: APIEndpointAction{Handler: internalACMEChallengeDelete, AccessHandler: allowPermission(auth.ObjectTypeServer, auth.EntitlementCanEdit)},
+}
+
+// internalACMEChallengePost starts the HTTP-01 challenge listener on a cluster member.
+func internalACMEChallengePost(d *Daemon, r *http.Request) response.Response {
+	err := acmeChallengeListenerStart(d)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.EmptySyncResponse
+}
+
+// internalACMEChallengeDelete stops the HTTP-01 challenge listener on a cluster member.
+func internalACMEChallengeDelete(d *Daemon, r *http.Request) response.Response {
+	acmeChallengeListenerStop(d, nil)
+
+	return response.EmptySyncResponse
+}
+
+// acmeChallengeListenerStart listens on the ACME HTTP port and forwards challenges to the leader.
+func acmeChallengeListenerStart(d *Daemon) error {
+	s := d.State()
+
+	d.acmeListenerMu.Lock()
+	defer d.acmeListenerMu.Unlock()
+
+	if d.acmeListener != nil {
+		return nil
+	}
+
+	listener, err := net.Listen("tcp", s.GlobalConfig.ACMEHTTP())
+	if err != nil {
+		return err
+	}
+
+	server := &http.Server{
+		ReadHeaderTimeout: 3 * time.Second,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet || !strings.HasPrefix(r.URL.Path, "/.well-known/acme-challenge/") {
+				http.NotFound(w, r)
+				return
+			}
+
+			err := acmeForwardChallenge(s, r).Render(w)
+			if err != nil {
+				_ = response.SmartError(err).Render(w)
+			}
+		}),
+	}
+
+	go func() {
+		_ = server.Serve(listener)
+	}()
+
+	// Stop on our own in case the leader never asks us to.
+	time.AfterFunc(15*time.Minute, func() {
+		acmeChallengeListenerStop(d, server)
+	})
+
+	d.acmeListener = server
+
+	return nil
+}
+
+// acmeChallengeListenerStop stops the HTTP-01 challenge listener (or only the given one).
+func acmeChallengeListenerStop(d *Daemon, server *http.Server) {
+	d.acmeListenerMu.Lock()
+	defer d.acmeListenerMu.Unlock()
+
+	if d.acmeListener == nil || (server != nil && d.acmeListener != server) {
+		return
+	}
+
+	_ = d.acmeListener.Close()
+	d.acmeListener = nil
+}
+
+// acmeForwardChallenge forwards a challenge request to the cluster leader.
+func acmeForwardChallenge(s *state.State, r *http.Request) response.Response {
+	leader, err := s.Cluster.LeaderAddress()
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	// The leader answers through lego itself, never through this listener.
+	if s.LocalConfig.ClusterAddress() == leader {
+		return response.NotFound(errors.New("Challenge isn't being forwarded"))
+	}
+
+	client, err := cluster.Connect(leader, s.Endpoints.NetworkCert(), s.ServerCert(), r, true)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
+	return response.ForwardedResponse(client, r)
+}
+
 func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 	s := d.State()
 
@@ -39,17 +145,8 @@ func acmeProvideChallenge(d *Daemon, r *http.Request) response.Response {
 			return response.SmartError(err)
 		}
 
-		// This gives me the correct value
-		clusterAddress := s.LocalConfig.ClusterAddress()
-
-		if clusterAddress != "" && clusterAddress != leader {
-			// Forward the request to the leader
-			client, err := cluster.Connect(leader, s.Endpoints.NetworkCert(), s.ServerCert(), r, true)
-			if err != nil {
-				return response.SmartError(err)
-			}
-
-			return response.ForwardedResponse(client, r)
+		if s.LocalConfig.ClusterAddress() != leader {
+			return acmeForwardChallenge(s, r)
 		}
 	}
 
@@ -132,6 +229,9 @@ func autoRenewCertificate(ctx context.Context, d *Daemon, force bool) error {
 	}
 
 	opRun := func(op *operations.Operation) error {
+		// Free the HTTP port for lego in case we were forwarding challenges before becoming leader.
+		acmeChallengeListenerStop(d, nil)
+
 		newCert, err := acme.UpdateCertificate(s, challengeType, s.ServerClustered, domain, email, caURL, force)
 		if err != nil {
 			return err
