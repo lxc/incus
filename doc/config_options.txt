@@ -5833,7 +5833,10 @@ Set this option to `true` to enable the syslog unixgram socket to receive log me
 :scope: "global"
 :shortdesc: "Whether to automatically trust clients signed by the CA"
 :type: "bool"
-
+This only applies when a `server.ca` file is present.
+When enabled, any valid client certificate issued by the CA and not listed in `ca.crl` is trusted without being added to the trust store.
+Such certificates get full access to the server unless they are added to the trust store as restricted certificates.
+When disabled, certificates issued by the CA still need to be added to the trust store.
 ```
 
 <!-- config group server-core end -->
