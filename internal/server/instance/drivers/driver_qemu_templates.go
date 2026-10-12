@@ -51,7 +51,7 @@ func qemuMachineType(architecture int) string {
 	switch architecture {
 	case osarch.ARCH_64BIT_INTEL_X86:
 		machineType = "q35"
-	case osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN:
+	case osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN, osarch.ARCH_64BIT_LOONGARCH:
 		machineType = "virt"
 	case osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN:
 		machineType = "pseries"
@@ -70,6 +70,8 @@ func qemuDefaultRAMObject(architecture int) string {
 		return "pc.ram"
 	case osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN:
 		return "mach-virt.ram"
+	case osarch.ARCH_64BIT_LOONGARCH:
+		return "loongarch.ram"
 	case osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN:
 		return "ppc_spapr.ram"
 	case osarch.ARCH_64BIT_S390_BIG_ENDIAN:
