@@ -120,6 +120,15 @@ If the server certificate isn't signed by the CA, the connection will simply go 
 If the server certificate is valid and signed by the CA, then the connection continues without prompting the user for the certificate.
 
 Note that the generated certificates are not automatically trusted. You must still add them to the server in one of the ways described in {ref}`authentication-trusted-clients`.
+In that mode, only client certificates issued by the CA can be added to the trust store.
+
+Alternatively, you can set {config:option}`server-core:core.trust_ca_certificates` to `true` to have the server automatically trust any valid client certificate issued by the CA.
+Such certificates don't need to be added to the trust store and get full access to the server, unless they are added to the trust store as restricted certificates.
+Certificates listed in a `ca.crl` file placed in the server's configuration directory are rejected.
+
+```{caution}
+Only enable `core.trust_ca_certificates` with a CA dedicated to Incus, as anyone holding a certificate issued by that CA can then administer the server.
+```
 
 ### Encrypting local keys
 
