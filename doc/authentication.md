@@ -191,7 +191,9 @@ For `DNS-01`, the relevant {config:option}`server-acme:acme.provider` and {confi
 values can be found directly in the [documentation of `lego`](https://go-acme.github.io/lego/dns/index.html),
 the ACME client that Incus uses behind the scenes.
 
-For `HTTP-01`, Incus will cause `lego` to temporarily listen on port `80` so the the HTTP challenge can go through.
+For `HTTP-01`, Incus will cause `lego` to temporarily listen on port `80` so the HTTP challenge can go through.
+In a cluster, the challenge runs on the leader while the other members temporarily listen on that same port and forward the challenge requests to the leader.
+This allows for a certificate covering the names of all cluster members.
 If your Incus server sits behind a reverse proxy, you'll need that reverse proxy to redirect HTTP traffic to HTTPS.
 
 For ACME services that require External Account Binding (EAB), set both
