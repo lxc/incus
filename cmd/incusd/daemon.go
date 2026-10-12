@@ -184,6 +184,10 @@ type Daemon struct {
 	// Linstor client.
 	linstor   *linstor.Client
 	linstorMu sync.Mutex
+
+	// ACME challenge listener used by non-leader cluster members.
+	acmeListener   *http.Server
+	acmeListenerMu sync.Mutex
 }
 
 // DaemonConfig holds configuration values for Daemon.
