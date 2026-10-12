@@ -50,7 +50,16 @@ func (t *TLS) CheckPermission(ctx context.Context, r *http.Request, object Objec
 		return err
 	}
 
-	if isNotRestricted || (certType == certificate.TypeMetrics && entitlement == EntitlementCanViewMetrics) {
+	// Metrics certificates only ever get metrics access.
+	if certType == certificate.TypeMetrics {
+		if entitlement == EntitlementCanViewMetrics {
+			return nil
+		}
+
+		return api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
+	}
+
+	if isNotRestricted {
 		return nil
 	}
 
@@ -123,15 +132,23 @@ func (t *TLS) GetPermissionChecker(ctx context.Context, r *http.Request, entitle
 		return nil, err
 	}
 
-	if isNotRestricted {
-		return allowFunc(true), nil
-	}
+	// Metrics certificates only ever get metrics access.
+	if certType == certificate.TypeMetrics {
+		if entitlement != EntitlementCanViewMetrics {
+			return nil, api.StatusErrorf(http.StatusForbidden, "Certificate is restricted")
+		}
 
-	// Handle project-restricted metrics access.
-	if certType == certificate.TypeMetrics && entitlement == EntitlementCanViewMetrics {
+		if isNotRestricted {
+			return allowFunc(true), nil
+		}
+
 		return func(o Object) bool {
 			return slices.Contains(projectNames, o.Project())
 		}, nil
+	}
+
+	if isNotRestricted {
+		return allowFunc(true), nil
 	}
 
 	// Check server level object types
@@ -202,7 +219,7 @@ func (t *TLS) certificateDetails(fingerprint string) (certificate.Type, bool, []
 		projectNames, ok := projects[fingerprint]
 		if !ok {
 			// Certificate is not restricted.
-			return certificate.TypeClient, true, nil, nil
+			return certificate.TypeMetrics, true, nil, nil
 		}
 
 		return certificate.TypeMetrics, false, projectNames, nil
