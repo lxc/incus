@@ -153,11 +153,14 @@ func (s *Server) start(address string, asn uint32, routerID net.IP) error {
 
 	// Add existing peers.
 	s.peers = map[string]peer{}
-	for _, peer := range oldPeers {
+	for peerName, peer := range oldPeers {
 		err := s.addPeer(peer.address, peer.iface, peer.asn, peer.password, peer.holdtime)
 		if err != nil {
 			return err
 		}
+
+		// Preserve the reference count for shared peers.
+		s.peers[peerName] = peer
 	}
 
 	// Record the address.
