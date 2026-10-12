@@ -894,7 +894,10 @@ var ConfigSchema = config.Schema{
 	"core.shutdown_timeout": {Type: config.Int64, Default: "5"},
 
 	// gendoc:generate(entity=server, group=core, key=core.trust_ca_certificates)
-	//
+	// This only applies when a `server.ca` file is present.
+	// When enabled, any valid client certificate issued by the CA and not listed in `ca.crl` is trusted without being added to the trust store.
+	// Such certificates get full access to the server unless they are added to the trust store as restricted certificates.
+	// When disabled, certificates issued by the CA still need to be added to the trust store.
 	// ---
 	//  type: bool
 	//  scope: global
