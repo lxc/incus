@@ -41,6 +41,7 @@ Incus only supports running virtual-machines on the following host architectures
 - `aarch64`
 - `ppc64le`
 - `s390x`
+- `loongarch64`
 
 The virtual machine guest architecture can usually be the 32bit personality of the host architecture,
 so long as the virtual machine firmware is capable of booting it.
