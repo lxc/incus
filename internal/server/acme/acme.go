@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 
+	incus "github.com/lxc/incus/v7/client"
+	"github.com/lxc/incus/v7/internal/server/cluster"
 	"github.com/lxc/incus/v7/internal/server/state"
 	internalUtil "github.com/lxc/incus/v7/internal/util"
 	"github.com/lxc/incus/v7/shared/logger"
@@ -101,6 +103,32 @@ func UpdateCertificate(s *state.State, challengeType string, clustered bool, dom
 			logger.Warn("Failed to remove temporary directory", logger.Ctx{"err": err})
 		}
 	}()
+
+	// Have the other cluster members forward HTTP-01 challenges for their own names.
+	if clustered && challengeType == "HTTP-01" {
+		notifier, err := cluster.NewNotifier(s, s.Endpoints.NetworkCert(), s.ServerCert(), cluster.NotifyAlive)
+		if err != nil {
+			return nil, err
+		}
+
+		notify := func(method string) {
+			err := notifier(func(client incus.InstanceServer) error {
+				_, _, err := client.RawQuery(method, "/internal/acme/challenge", nil, "")
+				if err != nil {
+					info, _ := client.GetConnectionInfo()
+					l.Warn("Failed to update the ACME challenge listener on a cluster member", logger.Ctx{"method": method, "member": info.URL, "err": err})
+				}
+
+				return nil
+			})
+			if err != nil {
+				l.Warn("Failed to notify the cluster members of the ACME challenge", logger.Ctx{"method": method, "err": err})
+			}
+		}
+
+		notify("POST")
+		defer notify("DELETE")
+	}
 
 	certBytes, keyBytes, err := incustls.RunACMEChallenge(context.TODO(), tmpDir, caURL, domain, email, challengeType, provider, port, proxy, eabKid, eabHmac, resolvers, environment)
 	if err != nil {
