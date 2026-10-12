@@ -2695,7 +2695,7 @@ func (d *qemu) AgentCertificate() *x509.Certificate {
 }
 
 func (d *qemu) architectureSupportsUEFI(arch int) bool {
-	return slices.Contains([]int{osarch.ARCH_64BIT_INTEL_X86, osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN}, arch)
+	return slices.Contains([]int{osarch.ARCH_64BIT_INTEL_X86, osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN, osarch.ARCH_64BIT_LOONGARCH}, arch)
 }
 
 // firmwarePairs returns the candidate firmware pairs for the instance based on its configuration.
@@ -2986,6 +2986,9 @@ func (d *qemu) qemuArchConfig(arch int) (string, string, error) {
 		bus = "pcie"
 	case osarch.ARCH_64BIT_ARMV8_LITTLE_ENDIAN:
 		qemuCmd = "qemu-system-aarch64"
+		bus = "pcie"
+	case osarch.ARCH_64BIT_LOONGARCH:
+		qemuCmd = "qemu-system-loongarch64"
 		bus = "pcie"
 	case osarch.ARCH_64BIT_POWERPC_LITTLE_ENDIAN:
 		qemuCmd = "qemu-system-ppc64"
