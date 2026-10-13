@@ -252,6 +252,7 @@ pre
 preselects
 preseed
 proxied
+Proxmox
 proxying
 PTS
 PXE
