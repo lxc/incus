@@ -378,6 +378,11 @@ migration() {
     incus_remote copy l1:c1 l2:c2 --refresh
     ! incus_remote config show l2:c2/snap1 || false
 
+    # Refreshing back to the source keeps its matching snapshot.
+    created_at="$(incus_remote query l1:/1.0/instances/c1/snapshots/snap0 | jq -r .created_at)"
+    incus_remote copy l2:c2 l1:c1 --refresh
+    [ "$(incus_remote query l1:/1.0/instances/c1/snapshots/snap0 | jq -r .created_at)" = "${created_at}" ]
+
     incus_remote rm -f l1:c1 l2:c2
 
     # Perform near-live migration tests between two servers.
