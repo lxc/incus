@@ -365,6 +365,7 @@ userspace
 UUID
 vCPU
 vCPUs
+VE
 VDPA
 VFs
 VFS
