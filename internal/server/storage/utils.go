@@ -1224,6 +1224,7 @@ func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []Co
 	// Find the latest creation date among target snapshots.
 	var latestTargetSnapshotTime time.Time
 
+	// Creation dates are compared at second precision, which is all the migration protocol carries.
 	// If target snapshot doesn't exist in source, or its creation date or ID differ,
 	// then mark it for deletion on target.
 	for targetSnapIndex := range targetSnapshots {
@@ -1231,7 +1232,7 @@ func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []Co
 		targetSnapshotsByName[targetSnapshots[targetSnapIndex].Name] = &targetSnapshots[targetSnapIndex]
 
 		sourceSnap, sourceSnapExists := sourceSnapshotsByName[targetSnapshots[targetSnapIndex].Name]
-		if !sourceSnapExists || !sourceSnap.CreationDate.Equal(targetSnapshots[targetSnapIndex].CreationDate) || sourceSnap.ID != targetSnapshots[targetSnapIndex].ID {
+		if !sourceSnapExists || sourceSnap.CreationDate.Unix() != targetSnapshots[targetSnapIndex].CreationDate.Unix() || sourceSnap.ID != targetSnapshots[targetSnapIndex].ID {
 			deleteFromTarget = append(deleteFromTarget, targetSnapIndex)
 		} else if targetSnapshots[targetSnapIndex].CreationDate.After(latestTargetSnapshotTime) {
 			latestTargetSnapshotTime = targetSnapshots[targetSnapIndex].CreationDate
@@ -1242,7 +1243,7 @@ func CompareSnapshots(sourceSnapshots []ComparableSnapshot, targetSnapshots []Co
 	// then mark it for syncing to target.
 	for sourceSnapIndex := range sourceSnapshots {
 		targetSnap, targetSnapExists := targetSnapshotsByName[sourceSnapshots[sourceSnapIndex].Name]
-		if (!targetSnapExists && (!excludeOlder || sourceSnapshots[sourceSnapIndex].CreationDate.After(latestTargetSnapshotTime))) || (targetSnapExists && (!targetSnap.CreationDate.Equal(sourceSnapshots[sourceSnapIndex].CreationDate) || targetSnap.ID != sourceSnapshots[sourceSnapIndex].ID)) {
+		if (!targetSnapExists && (!excludeOlder || sourceSnapshots[sourceSnapIndex].CreationDate.After(latestTargetSnapshotTime))) || (targetSnapExists && (targetSnap.CreationDate.Unix() != sourceSnapshots[sourceSnapIndex].CreationDate.Unix() || targetSnap.ID != sourceSnapshots[sourceSnapIndex].ID)) {
 			syncFromSource = append(syncFromSource, sourceSnapIndex)
 		}
 	}
