@@ -619,13 +619,18 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		return false, "", "", nil, err
 	}
 
+	// The TLS listener only proves possession of the first peer certificate's key, so the rest of
+	// the presented chain is attacker-controlled and must never be matched against the trust store.
+	var peerCert *x509.Certificate
+	if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
+		peerCert = r.TLS.PeerCertificates[0]
+	}
+
 	// Allow internal cluster traffic by checking against the trusted certfificates.
-	if r.TLS != nil {
-		for _, i := range r.TLS.PeerCertificates {
-			trusted, fingerprint := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeServer], d.endpoints.NetworkCert(), false)
-			if trusted {
-				return true, fingerprint, "cluster", nil, nil
-			}
+	if peerCert != nil {
+		trusted, fingerprint := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeServer], d.endpoints.NetworkCert(), false)
+		if trusted {
+			return true, fingerprint, "cluster", nil, nil
 		}
 	}
 
@@ -691,23 +696,21 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 	}
 
 	// Validate metrics TLS certificates.
-	if r.URL.Path == "/1.0/metrics" {
-		for _, i := range r.TLS.PeerCertificates {
-			trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
-			if trusted {
-				return true, username, api.AuthenticationMethodTLS, nil, nil
-			}
+	if r.URL.Path == "/1.0/metrics" && peerCert != nil {
+		trusted, username := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert(), trustCACertificates)
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil, nil
 		}
 
-		trusted, username := localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert())
+		trusted, username = localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert())
 		if trusted {
 			return true, username, api.AuthenticationMethodTLS, nil, nil
 		}
 	}
 
 	// Validate regular TLS certificates.
-	for _, i := range r.TLS.PeerCertificates {
-		trusted, username := localUtil.CheckTrustState(*i, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
+	if peerCert != nil {
+		trusted, username := localUtil.CheckTrustState(*peerCert, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert(), trustCACertificates)
 		if trusted {
 			return true, username, api.AuthenticationMethodTLS, nil, nil
 		}

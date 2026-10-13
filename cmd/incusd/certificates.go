@@ -752,7 +752,7 @@ func certificatesPost(d *Daemon, r *http.Request) response.Response {
 			return response.BadRequest(errors.New("No client certificate provided"))
 		}
 
-		cert = r.TLS.PeerCertificates[len(r.TLS.PeerCertificates)-1]
+		cert = r.TLS.PeerCertificates[0]
 	} else {
 		return response.BadRequest(errors.New("Can't use TLS data on non-TLS link"))
 	}
@@ -1158,12 +1158,8 @@ func doCertificateUpdate(d *Daemon, dbInfo api.Certificate, req api.CertificateP
 				}
 
 				trusted := false
-				for _, i := range r.TLS.PeerCertificates {
-					trusted, _ = localUtil.CheckTrustState(*i, trustedCerts, s.Endpoints.NetworkCert(), false)
-
-					if trusted {
-						break
-					}
+				if len(r.TLS.PeerCertificates) > 0 {
+					trusted, _ = localUtil.CheckTrustState(*r.TLS.PeerCertificates[0], trustedCerts, s.Endpoints.NetworkCert(), false)
 				}
 
 				if !trusted {
@@ -1301,12 +1297,8 @@ func certificateDelete(d *Daemon, r *http.Request) response.Response {
 			}
 
 			trusted := false
-			for _, i := range r.TLS.PeerCertificates {
-				trusted, _ = localUtil.CheckTrustState(*i, trustedCerts, s.Endpoints.NetworkCert(), false)
-
-				if trusted {
-					break
-				}
+			if len(r.TLS.PeerCertificates) > 0 {
+				trusted, _ = localUtil.CheckTrustState(*r.TLS.PeerCertificates[0], trustedCerts, s.Endpoints.NetworkCert(), false)
 			}
 
 			if !trusted {

@@ -5,10 +5,12 @@ import (
 	"crypto/x509"
 	"net/http"
 
+	"github.com/lxc/incus/v7/internal/server/auth/common"
 	"github.com/lxc/incus/v7/internal/server/certificate"
 	authScriptlet "github.com/lxc/incus/v7/internal/server/scriptlet/auth"
 	"github.com/lxc/incus/v7/shared/api"
 	"github.com/lxc/incus/v7/shared/logger"
+	localtls "github.com/lxc/incus/v7/shared/tls"
 )
 
 // Scriptlet represents a scriptlet authorizer.
@@ -29,15 +31,7 @@ func (s *Scriptlet) CheckPermission(ctx context.Context, r *http.Request, object
 	}
 
 	actualDetails := details.actualDetails()
-	peerCertificates := []*x509.Certificate{}
-	var apiCert *api.CertificatePut
-
-	if r.TLS != nil {
-		peerCertificates = r.TLS.PeerCertificates
-		if s.certificates != nil {
-			apiCert = s.certificates.GetAPICertificate(actualDetails.Username)
-		}
-	}
+	peerCertificates, apiCert := s.clientCertificates(r, actualDetails)
 
 	authorized, err := authScriptlet.AuthorizationRun(logger.Log, actualDetails, peerCertificates, apiCert, object.String(), string(entitlement))
 	if err != nil {
@@ -54,6 +48,27 @@ func (s *Scriptlet) CheckPermission(ctx context.Context, r *http.Request, object
 // GetInstanceAccess returns the list of entities who have access to the instance.
 func (s *Scriptlet) GetInstanceAccess(ctx context.Context, projectName string, instanceName string) (*api.Access, error) {
 	return authScriptlet.GetInstanceAccessRun(logger.Log, projectName, instanceName)
+}
+
+// clientCertificates returns the certificate chain and trust-store entry to expose to the scriptlet.
+// Only a genuinely TLS-authenticated client's own certificate is exposed, so a token, OIDC or
+// cluster-forwarded client can't have the scriptlet judge it by a certificate it merely presented.
+func (s *Scriptlet) clientCertificates(r *http.Request, details *common.RequestDetails) ([]*x509.Certificate, *api.CertificatePut) {
+	if r.TLS == nil || details.Protocol != api.AuthenticationMethodTLS || len(r.TLS.PeerCertificates) == 0 {
+		return nil, nil
+	}
+
+	// Only expose the chain when its leaf is the authenticated certificate.
+	if localtls.CertFingerprint(r.TLS.PeerCertificates[0]) != details.Username {
+		return nil, nil
+	}
+
+	var apiCert *api.CertificatePut
+	if s.certificates != nil {
+		apiCert = s.certificates.GetAPICertificate(details.Username)
+	}
+
+	return r.TLS.PeerCertificates, apiCert
 }
 
 // GetPermissionChecker returns a function that can be used to check whether a user has the required entitlement on an authorization object.
@@ -74,15 +89,7 @@ func (s *Scriptlet) GetPermissionChecker(ctx context.Context, r *http.Request, e
 	}
 
 	actualDetails := details.actualDetails()
-	peerCertificates := []*x509.Certificate{}
-	var apiCert *api.CertificatePut
-
-	if r.TLS != nil {
-		peerCertificates = r.TLS.PeerCertificates
-		if s.certificates != nil {
-			apiCert = s.certificates.GetAPICertificate(actualDetails.Username)
-		}
-	}
+	peerCertificates, apiCert := s.clientCertificates(r, actualDetails)
 
 	permissionChecker := func(o Object) bool {
 		authorized, err := authScriptlet.AuthorizationRun(logger.Log, actualDetails, peerCertificates, apiCert, o.String(), string(entitlement))
