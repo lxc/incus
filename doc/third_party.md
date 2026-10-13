@@ -46,3 +46,13 @@ The provider can be used in single-node development environments for evaluation 
 Incus that provides a declarative way to define and manage development
 environments. It simplifies the creation, configuration, and provisioning
 of Incus instances using YAML-based configuration files.
+
+## Community Scripts
+[Community Scripts](https://community-scripts.org) is a collection of installation scripts for self-hosted applications, each creating a container, installing the application and wiring up its service, and later updating it in place.
+The catalog started on Proxmox VE and grew to several hundred applications; the [Incus repository](https://github.com/community-scripts/Incus) provides the same scripts for Incus hosts.
+
+A script describes only what to install. Creating and configuring the instance is done by a shared engine, which talks to Incus through the `incus` CLI, so the scripts run unmodified on a local or remote Incus server:
+
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/Incus/main/ct/debian.sh)"
+
+The website lists every application with its resource defaults and lets you build the install command for your host.

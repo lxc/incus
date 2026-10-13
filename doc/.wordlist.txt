@@ -252,6 +252,7 @@ pre
 preselects
 preseed
 proxied
+Proxmox
 proxying
 PTS
 PXE
@@ -364,6 +365,7 @@ userspace
 UUID
 vCPU
 vCPUs
+VE
 VDPA
 VFs
 VFS
