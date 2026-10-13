@@ -3564,3 +3564,8 @@ This adds support for OIDC providers that issue opaque (non-JWT) access tokens.
 
 When the access token isn't a JWT, Incus verifies the ID token instead, checking that it was issued by the configured issuer for the configured client ID.
 Clients send the ID token alongside the opaque access token through the `X-Incus-OIDC-idtoken` header.
+
+## `certificate_ca_trust`
+
+A CA certificate added to the trust store now also trusts the client certificates it issued.
+Those clients are identified by the CA entry's fingerprint and inherit its type, restrictions and projects.
