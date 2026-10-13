@@ -654,6 +654,11 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 				return true, username, api.AuthenticationMethodTLS, nil, nil
 			}
 		}
+
+		trusted, username := localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeMetrics], d.endpoints.NetworkCert())
+		if trusted {
+			return true, username, api.AuthenticationMethodTLS, nil, nil
+		}
 	}
 
 	// Validate regular TLS certificates.
@@ -662,6 +667,12 @@ func (d *Daemon) Authenticate(w http.ResponseWriter, r *http.Request) (bool, str
 		if trusted {
 			return true, username, api.AuthenticationMethodTLS, nil, nil
 		}
+	}
+
+	// Validate TLS certificates issued by a trusted CA certificate.
+	trusted, username := localUtil.CheckTrustStateIssuer(r.TLS.PeerCertificates, trustedCerts[certificate.TypeClient], d.endpoints.NetworkCert())
+	if trusted {
+		return true, username, api.AuthenticationMethodTLS, nil, nil
 	}
 
 	// Reject unauthorized.
