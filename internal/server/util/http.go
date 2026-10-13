@@ -199,6 +199,52 @@ func CheckTrustState(cert x509.Certificate, trustedCerts map[string]x509.Certifi
 	return false, ""
 }
 
+// CheckTrustStateIssuer checks whether the first certificate in the chain was issued by a CA certificate from
+// the trust store and returns the fingerprint of that trust store entry.
+func CheckTrustStateIssuer(chain []*x509.Certificate, trustedCerts map[string]x509.Certificate, networkCert *localtls.CertInfo) (bool, string) {
+	if len(chain) == 0 {
+		return false, ""
+	}
+
+	// Never trust a certificate that the revocation list rejects.
+	if networkCert != nil {
+		ca := networkCert.CA()
+		crl := networkCert.CRL()
+		if ca != nil && crl != nil && chain[0].CheckSignatureFrom(ca) == nil && crl.CheckSignatureFrom(ca) == nil {
+			for _, revoked := range crl.RevokedCertificateEntries {
+				if chain[0].SerialNumber.Cmp(revoked.SerialNumber) == 0 {
+					return false, ""
+				}
+			}
+		}
+	}
+
+	intermediates := x509.NewCertPool()
+	for _, cert := range chain[1:] {
+		intermediates.AddCert(cert)
+	}
+
+	for fingerprint, v := range trustedCerts {
+		// Only CA certificates can vouch for other certificates.
+		if !v.BasicConstraintsValid || !v.IsCA {
+			continue
+		}
+
+		roots := x509.NewCertPool()
+		roots.AddCert(&v)
+
+		_, err := chain[0].Verify(x509.VerifyOptions{Roots: roots, Intermediates: intermediates, KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}})
+		if err != nil {
+			continue
+		}
+
+		logger.Debug("Matched trusted CA cert", logger.Ctx{"fingerprint": fingerprint, "subject": chain[0].Subject})
+		return true, fingerprint
+	}
+
+	return false, ""
+}
+
 // IsRecursionRequest checks whether the given HTTP request is marked with the
 // "recursion" flag in its form values.
 func IsRecursionRequest(r *http.Request) bool {
