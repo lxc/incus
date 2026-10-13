@@ -1247,6 +1247,7 @@ func (d *disk) startContainer() (*deviceConfig.RunConfig, error) {
 				"/opt/incus/lib/lxc/rootfs/",
 				"/usr/lib/x86_64-linux-gnu/lxc/rootfs/",
 				"/usr/lib/aarch64-linux-gnu/lxc/rootfs/",
+				"/usr/lib/loongarch64-linux-gnu/lxc/rootfs/",
 			}
 
 			rootFsPath := ""
