@@ -24,24 +24,29 @@ func CheckCert(r *http.Request, networkCert *localtls.CertInfo, serverCert *loca
 		return false
 	}
 
-	for _, i := range r.TLS.PeerCertificates {
-		// Trust our own server certificate. This allows Cowsql to start with a connection back to this
-		// member before the database is available. It also allows us to switch the server certificate to
-		// the network certificate during cluster upgrade to per-server certificates, and it be trusted.
-		trustedServerCert, _ := x509.ParseCertificate(serverCert.KeyPair().Certificate[0])
-		trusted, _ := localUtil.CheckTrustState(*i, map[string]x509.Certificate{serverCert.Fingerprint(): *trustedServerCert}, networkCert, false)
-		if trusted {
-			return true
-		}
-
-		// Check the trusted server certificates list provided.
-		trusted, _ = localUtil.CheckTrustState(*i, trustedCerts, networkCert, false)
-		if trusted {
-			return true
-		}
-
-		logger.Errorf("Invalid client certificate %v (%v) from %v", i.Subject, localtls.CertFingerprint(i), r.RemoteAddr)
+	if len(r.TLS.PeerCertificates) == 0 {
+		return false
 	}
+
+	// Only the first peer certificate is proven by the TLS handshake; ignore the rest of the chain.
+	peerCert := r.TLS.PeerCertificates[0]
+
+	// Trust our own server certificate. This allows Cowsql to start with a connection back to this
+	// member before the database is available. It also allows us to switch the server certificate to
+	// the network certificate during cluster upgrade to per-server certificates, and it be trusted.
+	trustedServerCert, _ := x509.ParseCertificate(serverCert.KeyPair().Certificate[0])
+	trusted, _ := localUtil.CheckTrustState(*peerCert, map[string]x509.Certificate{serverCert.Fingerprint(): *trustedServerCert}, networkCert, false)
+	if trusted {
+		return true
+	}
+
+	// Check the trusted server certificates list provided.
+	trusted, _ = localUtil.CheckTrustState(*peerCert, trustedCerts, networkCert, false)
+	if trusted {
+		return true
+	}
+
+	logger.Errorf("Invalid client certificate %v (%v) from %v", peerCert.Subject, localtls.CertFingerprint(peerCert), r.RemoteAddr)
 
 	return false
 }

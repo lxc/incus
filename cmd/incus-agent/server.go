@@ -109,12 +109,10 @@ func createCmd(restAPI *http.ServeMux, version string, c APIEndpoint, cert *x509
 func authenticate(r *http.Request, cert *x509.Certificate) bool {
 	clientCerts := map[string]x509.Certificate{"0": *cert}
 
-	for _, cert := range r.TLS.PeerCertificates {
-		trusted, _ := localUtil.CheckTrustState(*cert, clientCerts, nil, false)
-		if trusted {
-			return true
-		}
+	if len(r.TLS.PeerCertificates) == 0 {
+		return false
 	}
 
-	return false
+	trusted, _ := localUtil.CheckTrustState(*r.TLS.PeerCertificates[0], clientCerts, nil, false)
+	return trusted
 }
