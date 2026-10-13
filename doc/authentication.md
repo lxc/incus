@@ -76,6 +76,17 @@ the client certificate's private key.
 The preferred way to add trusted clients is to directly add their certificates to the trust store on the server.
 To do so, copy the client certificate to the server and register it using [`incus config trust add-certificate <file>`](incus_config_trust_add-certificate.md).
 
+(authentication-ca-certs)=
+#### Trusting a certificate authority
+
+Instead of adding every client certificate, you can add a CA certificate to the trust store.
+Any client certificate issued by that CA is then trusted as if the CA entry itself had been presented: the client is identified by the fingerprint of the CA entry and inherits its type, restrictions and projects.
+The client must present any intermediate certificate between its own certificate and the trusted CA, and its certificate must allow the `clientAuth` extended key usage if it specifies any.
+
+This makes it possible to use short-lived client certificates issued by an internal PKI without updating the trust store on every renewal.
+Revocation lists aren't consulted for such certificates, so remove the CA entry from the trust store to revoke all the certificates it issued.
+Certificates that are directly present in the trust store always take precedence over a matching CA entry.
+
 (authentication-token)=
 #### Adding client certificates using tokens
 
