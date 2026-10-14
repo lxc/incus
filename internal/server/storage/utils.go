@@ -1172,17 +1172,7 @@ func InstanceDiskBlockSize(pool Pool, inst instance.Instance, op *operations.Ope
 
 	vol := pool.GetVolume(volType, InstanceContentType(inst), project.Instance(inst.Project().Name, inst.Name()), dbVol.Config)
 
-	// For qcow2 volumes, use the virtual size as the device is larger to hold the qcow2 metadata.
-	if drivers.IsQcow2Block(vol) {
-		imgInfo, err := drivers.Qcow2Info(mountInfo.DiskPath)
-		if err != nil {
-			return -1, err
-		}
-
-		return int64(imgInfo.VirtualSize), nil
-	}
-
-	blockDiskSize, err := drivers.BlockDiskSizeBytes(mountInfo.DiskPath)
+	blockDiskSize, err := drivers.VolumeBlockSizeBytes(vol, mountInfo.DiskPath)
 	if err != nil {
 		return -1, fmt.Errorf("Error getting block disk size %q: %w", mountInfo.DiskPath, err)
 	}
@@ -1294,7 +1284,7 @@ func CalculateVolumeSnapshotSize(projectName string, pool Pool, contentType driv
 			return err
 		}
 
-		volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+		volSize, err = drivers.VolumeBlockSizeBytes(snapVol, volDiskPath)
 		if err != nil {
 			return err
 		}
@@ -1424,7 +1414,7 @@ func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, 
 					return err
 				}
 
-				volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+				volSize, err = drivers.VolumeBlockSizeBytes(vol, volDiskPath)
 				if err != nil {
 					return err
 				}

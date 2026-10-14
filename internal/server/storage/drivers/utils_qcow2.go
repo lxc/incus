@@ -405,6 +405,20 @@ func IsQcow2Block(vol Volume) bool {
 	return vol.Config()["block.type"] == BlockVolumeTypeQcow2 && vol.ContentType() == ContentTypeBlock
 }
 
+// VolumeBlockSizeBytes returns the size of a block volume, using the virtual size for QCOW2 volumes.
+func VolumeBlockSizeBytes(vol Volume, diskPath string) (int64, error) {
+	if IsQcow2Block(vol) {
+		imgInfo, err := Qcow2Info(diskPath)
+		if err != nil {
+			return -1, err
+		}
+
+		return int64(imgInfo.VirtualSize), nil
+	}
+
+	return BlockDiskSizeBytes(diskPath)
+}
+
 // getFreeNbd returns the first free NBD device.
 func getFreeNbd() (string, error) {
 	nbdIndex := 0
