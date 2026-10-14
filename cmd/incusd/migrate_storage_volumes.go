@@ -121,7 +121,7 @@ func (s *migrationSourceWs) DoStorage(st *state.State, projectName string, poolN
 				return err
 			}
 
-			volSize, err = storageDrivers.BlockDiskSizeBytes(volDiskPath)
+			volSize, err = storageDrivers.VolumeBlockSizeBytes(vol, volDiskPath)
 			if err != nil {
 				return err
 			}
