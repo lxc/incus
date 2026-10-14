@@ -55,7 +55,16 @@ test_nvram_vm() {
     # Break and repair Secure Boot.
     incus low-level secureboot list v1 db --columns=fs --format=csv | grep -i "microsoft.*uefi" | cut -d, -f1 | xargs incus low-level secureboot remove v1 db
     incus start v1
-    sleep 5
+
+    # The firmware refuses to boot the now-untrusted image. Wait for it to log
+    # the rejection rather than assuming a fixed delay, as a loaded host can be
+    # slow to reach that point.
+    retries=60
+    while [ "${retries}" != "0" ]; do
+        incus console --show-log v1 | grep -q "Access Denied" && break
+        sleep 1
+        retries=$((retries - 1))
+    done
     incus console --show-log v1 | grep "Access Denied"
     incus stop -f v1
     curl -L "https://go.microsoft.com/fwlink/?linkid=2239872" | incus low-level secureboot add v1 db - --owner=microsoft
@@ -63,14 +72,23 @@ test_nvram_vm() {
     ! echo "$PK" | incus low-level secureboot add v1 pk - || false
     echo "$PK" | incus low-level secureboot add v1 pk - --skip
     incus start v1
-    sleep 5
-    ! incus console --show-log v1 | grep "Access Denied" || false
+
+    # A successful agent connection proves the repaired image booted past Secure
+    # Boot, so the console log must not then show a rejection.
     incus wait v1 agent
+    ! incus console --show-log v1 | grep "Access Denied" || false
     incus stop v1
 
     # Force our way into and out of the setup menu.
     incus start v1 --override-boot=0
-    sleep 10
+
+    # Wait for the firmware to render the boot menu.
+    retries=60
+    while [ "${retries}" != "0" ]; do
+        incus console --show-log v1 | grep -q "Boot Maintenance Manager" && break
+        sleep 1
+        retries=$((retries - 1))
+    done
     incus console --show-log v1 | grep "Boot Maintenance Manager"
     { sleep 3; printf "\033[A\033[A\r"; } | timeout -p 5 script -efc "incus console v1" /dev/null
     if [ -t 0 ]; then
