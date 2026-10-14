@@ -66,7 +66,9 @@ chain in{{.chainSeparator}}{{.networkName}} {
 	{{ if eq . "ip" }}
 	iifname "{{$.networkName}}" icmp type {3, 11, 12} accept
 	iifname "{{$.networkName}}" udp dport 67 accept
+	{{ if $.udpChecksum }}
 	iifname "{{$.networkName}}" ip protocol udp udp checksum set 0
+	{{ end }}
 	{{ else }}
 	iifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 133, 135, 136, 143} accept
 	iifname "{{$.networkName}}" udp dport 547 accept
@@ -84,7 +86,9 @@ chain out{{.chainSeparator}}{{.networkName}} {
 	{{ if eq . "ip" }}
 	oifname "{{$.networkName}}" icmp type {3, 11, 12} accept
 	oifname "{{$.networkName}}" udp sport 67 accept
+	{{ if $.udpChecksum }}
 	oifname "{{$.networkName}}" ip protocol udp udp checksum set 0
+	{{ end }}
 	{{ else }}
 	oifname "{{$.networkName}}" icmpv6 type {1, 2, 3, 4, 128, 134, 135, 136, 143} accept
 	oifname "{{$.networkName}}" udp sport 547 accept
