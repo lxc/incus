@@ -1106,6 +1106,85 @@ jobs:
           cd test
           sudo --preserve-env=PATH,GOPATH,GITHUB_ACTIONS,INCUS_VERBOSE,INCUS_CEPH_CLUSTER,INCUS_CLI_TIMEOUT,INCUS_LINSTOR_CLUSTER,INCUS_LINSTOR_LOCAL_SATELLITE,INCUS_REQUIRED_TESTS,INCUS_VM_STORAGE_DRIVERS env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ./main.sh ${{ matrix.test }}
 
+  clustering-vm-tests:
+    name: Clustering VM
+    # Runs on ephemeral Debian VMs with nested virtualization (amd64 only).
+    runs-on:
+      - self-hosted
+      - lxc-incus-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Go (stable)
+        uses: actions/setup-go@v7
+        with:
+          go-version: stable
+
+      - name: Install dependencies
+        run: |
+          set -x
+
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+            acl \
+            attr \
+            autoconf \
+            automake \
+            build-essential \
+            curl \
+            genisoimage \
+            gettext \
+            git \
+            jq \
+            libacl1-dev \
+            libcap-dev \
+            libdbus-1-dev \
+            lxc-dev \
+            liblz4-dev \
+            libseccomp-dev \
+            libselinux-dev \
+            libsqlite3-dev \
+            libtool \
+            libudev-dev \
+            libuv1-dev \
+            make \
+            pkg-config
+
+      - name: Install Incus
+        run: |
+          set -x
+
+          curl -fsSL https://pkgs.zabbly.com/get/incus-stable | sudo sh
+          sudo incus admin init --auto
+
+      - name: Download go dependencies
+        run: |
+          go mod download
+
+      - name: Build cowsql and raft
+        run: |
+          set -x
+          make deps
+
+          raft_path="$(go env GOPATH)/deps/raft"
+          cowsql_path="$(go env GOPATH)/deps/cowsql"
+          {
+            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
+            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
+            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
+            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+          } >> "$GITHUB_ENV"
+
+      - name: Run Incus build
+        run: |
+          make
+
+      - name: Run clustering VM tests
+        run: |
+          sudo --preserve-env=PATH,GOPATH env INCUS_BIN_DIR="$(go env GOPATH)/bin" ./test/clustering-vm.sh
+
   client:
     name: Client
     strategy:
