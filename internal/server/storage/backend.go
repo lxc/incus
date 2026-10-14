@@ -1628,7 +1628,7 @@ func (b *backend) RefreshCustomVolume(projectName string, srcProjectName string,
 					return err
 				}
 
-				volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+				volSize, err = drivers.VolumeBlockSizeBytes(srcVol, volDiskPath)
 				if err != nil {
 					return err
 				}
@@ -5728,7 +5728,7 @@ func (b *backend) CreateCustomVolumeFromCopy(projectName string, srcProjectName 
 				return err
 			}
 
-			volSize, err = drivers.BlockDiskSizeBytes(volDiskPath)
+			volSize, err = drivers.VolumeBlockSizeBytes(srcVol, volDiskPath)
 			if err != nil {
 				return err
 			}
