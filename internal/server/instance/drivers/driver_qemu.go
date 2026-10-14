@@ -9549,7 +9549,13 @@ func (d *qemu) migrateSendLive(ctx context.Context, pool storagePools.Pool, clus
 				ClusterMove: true,
 			}
 
-			vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeBlock, project.StorageVolume(storageProjectName, dev.Config["source"]), nil)
+			volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+			dbVol, err := storagePools.VolumeDBGet(diskPool, storageProjectName, volName, storageDrivers.VolumeTypeCustom)
+			if err != nil {
+				return fmt.Errorf("Failed loading custom volume for device %q: %w", dev.Name, err)
+			}
+
+			vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentType(dbVol.ContentType), project.StorageVolume(storageProjectName, volName), dbVol.Config)
 
 			// Call MigrateVolume on the source.
 			err = diskPool.Driver().MigrateVolume(vol, nil, extraSourceArgs, nil)
@@ -10121,7 +10127,13 @@ func (d *qemu) MigrateReceive(args instance.MigrateReceiveArgs) error {
 					StoragePool:           args.StoragePool,
 				}
 
-				vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentTypeBlock, project.StorageVolume(storageProjectName, dev.Config["source"]), nil)
+				volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+				dbVol, err := storagePools.VolumeDBGet(diskPool, storageProjectName, volName, storageDrivers.VolumeTypeCustom)
+				if err != nil {
+					return fmt.Errorf("Failed loading custom volume for device %q: %w", dev.Name, err)
+				}
+
+				vol := diskPool.GetVolume(storageDrivers.VolumeTypeCustom, storageDrivers.ContentType(dbVol.ContentType), project.StorageVolume(storageProjectName, volName), dbVol.Config)
 
 				// Call CreateVolumeFromMigration on the target.
 				err = diskPool.Driver().CreateVolumeFromMigration(vol, nil, extraTargetArgs, nil, nil)
