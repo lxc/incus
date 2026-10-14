@@ -799,6 +799,39 @@ definitions:
         title: DebugKernelModule represents a loaded kernel module.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugReport:
+        properties:
+            media_type:
+                type: string
+                x-go-name: MediaType
+            metrics:
+                items:
+                    $ref: '#/definitions/DebugReportMetric'
+                type: array
+                x-go-name: Metrics
+            timestamp:
+                type: string
+                x-go-name: Timestamp
+        title: DebugReport represents a systemd-report report.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugReportMetric:
+        properties:
+            fields:
+                additionalProperties: {}
+                type: object
+                x-go-name: Fields
+            name:
+                type: string
+                x-go-name: Name
+            object:
+                type: string
+                x-go-name: Object
+            value:
+                x-go-name: Value
+        title: DebugReportMetric represents a single metric from a systemd-report report.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     DevicesMap:
         description: |-
             DevicesMap type is used to hold incus devices configurations. In contrast to
@@ -7939,6 +7972,13 @@ definitions:
                     specified timeout has elapsed unless those changes are confirmed before then.
                 type: string
                 x-go-name: ConfirmationTimeout
+            default_confirmation_timeout:
+                description: |-
+                    If defined and no confirmation timeout provided, automatically roll
+                    back the new network changes after the specified timeout has elapsed unless those
+                    changes are confirmed before then.
+                type: string
+                x-go-name: DefaultConfirmationTimeout
             dns:
                 $ref: '#/definitions/SystemNetworkDNS'
             interfaces:
@@ -8690,6 +8730,10 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: SeekErrorRate
+            temperature_celsius:
+                format: int64
+                type: integer
+                x-go-name: TemperatureCelsius
         title: SystemStorageDriveSMART defines a struct to return basic SMART information about a specific device.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
@@ -8814,6 +8858,9 @@ definitions:
             encryption_key:
                 type: string
                 x-go-name: EncryptionKey
+            force:
+                type: boolean
+                x-go-name: Force
             name:
                 type: string
                 x-go-name: Name
