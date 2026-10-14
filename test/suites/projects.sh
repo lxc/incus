@@ -943,6 +943,13 @@ test_projects_restrictions() {
     # Enable all restrictions.
     incus project set p1 restricted=true
 
+    # Restricting image servers still allows local images and refuses other servers.
+    incus project set p1 restricted.images.servers=images.example.net
+    incus init testimage c1
+    incus delete c1
+    incus query -X POST "/1.0/instances?project=p1" -d '{\"name\":\"c1\",\"source\":{\"type\":\"image\",\"server\":\"https://other.example.net\",\"protocol\":\"simplestreams\",\"alias\":\"foo\"}}' 2>&1 | grep -F "Image server \"other.example.net\" isn't allowed in this project"
+    incus project unset p1 restricted.images.servers
+
     # It's not possible to create nested containers.
     ! incus profile set default security.nesting=true || false
     ! incus init testimage c1 -c security.nesting=true || false
