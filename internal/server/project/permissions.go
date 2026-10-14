@@ -104,8 +104,8 @@ func AllowInstanceCreation(tx *db.ClusterTx, projectName string, req api.Instanc
 			return err
 		}
 
-		// Check if we have image server restrictions.
-		if req.Source.Type == "image" && info.Project.Config["restricted.images.servers"] != "" {
+		// Check if we have image server restrictions (local images have no server).
+		if req.Source.Type == "image" && req.Source.Server != "" && info.Project.Config["restricted.images.servers"] != "" {
 			u, err := url.Parse(req.Source.Server)
 			if err != nil {
 				return err
