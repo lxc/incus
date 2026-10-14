@@ -2504,10 +2504,16 @@ test_clustering_rebalance() {
     # since cowsql uses pre-vote.
     respawn_incus_cluster_member "${ns2}" "${INCUS_TWO_DIR}"
 
-    # Local readiness does not imply that the leader has received a heartbeat yet.
+    # Local readiness does not imply that the leader has received a heartbeat
+    # yet, nor that the member has been promoted back to a database role, which
+    # only propagates to the leader's view on a subsequent heartbeat.
     retries=30
     while [ "${retries}" != "0" ]; do
-        INCUS_CLI_TIMEOUT=2 INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2 | grep -q "status: Online" && break
+        member="$(INCUS_CLI_TIMEOUT=2 INCUS_DIR="${INCUS_ONE_DIR}" incus cluster show node2)"
+        if echo "${member}" | grep -q "status: Online" && echo "${member}" | grep -q "database: true"; then
+            break
+        fi
+
         sleep 1
         retries=$((retries - 1))
     done
