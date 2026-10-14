@@ -42,6 +42,27 @@ test_tls_restrictions() {
     # Confirm inability to change certificate type
     ! incus query "/1.0/certificates/${FINGERPRINT}" -X PATCH -d '{"type": "server"}' || false
 
+    # Certificates issued by a trusted CA certificate are trusted as the CA's entry.
+    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 -sha384 -keyout "${INCUS_CONF}/ca.key" -nodes -out "${INCUS_CONF}/ca.crt" -days 1 -subj "/CN=ca.local"
+    openssl req -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 -nodes -keyout "${INCUS_CONF}/leaf.key" -out "${INCUS_CONF}/leaf.csr" -subj "/CN=leaf.local"
+    openssl x509 -req -in "${INCUS_CONF}/leaf.csr" -CA "${INCUS_CONF}/ca.crt" -CAkey "${INCUS_CONF}/ca.key" -CAcreateserial -sha384 -days 1 -out "${INCUS_CONF}/leaf.crt"
+    CA_FINGERPRINT="$(cert_fingerprint "${INCUS_CONF}/ca.crt")"
+
+    curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" "https://${INCUS_ADDR}/1.0/projects" | grep -F '"error_code":403'
+    incus config trust add-certificate "${INCUS_CONF}/ca.crt" --name ca.local --restricted --projects blah
+    curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" "https://${INCUS_ADDR}/1.0" | grep -F "\"auth_user_name\":\"${CA_FINGERPRINT}\""
+    curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" "https://${INCUS_ADDR}/1.0/projects" | grep -F '"/1.0/projects/blah"'
+    ! curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" "https://${INCUS_ADDR}/1.0/projects" | grep -F '"/1.0/projects/default"' || false
+
+    # The issued certificate cannot alter or renew the CA entry.
+    curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" -X PATCH -d '{"restricted": false}' "https://${INCUS_ADDR}/1.0/certificates/${CA_FINGERPRINT}" | grep -F '"error_code":403'
+    curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" -X PATCH -d "{\"certificate\":\"$(sed ':a;N;$!ba;s/\n/\\n/g' "${INCUS_CONF}/leaf.crt")\"}" "https://${INCUS_ADDR}/1.0/certificates/${CA_FINGERPRINT}" | grep -F '"error_code":403'
+    curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" -X DELETE "https://${INCUS_ADDR}/1.0/certificates/${CA_FINGERPRINT}" | grep -F '"error_code":403'
+
+    incus config trust remove "${CA_FINGERPRINT}"
+    curl -k -s --cert "${INCUS_CONF}/leaf.crt" --key "${INCUS_CONF}/leaf.key" "https://${INCUS_ADDR}/1.0/projects" | grep -F '"error_code":403'
+    rm -f "${INCUS_CONF}/ca.key" "${INCUS_CONF}/ca.crt" "${INCUS_CONF}/ca.srl" "${INCUS_CONF}/leaf.key" "${INCUS_CONF}/leaf.csr" "${INCUS_CONF}/leaf.crt"
+
     # Cleanup
     incus config trust show "${FINGERPRINT}" | sed -e "s/restricted: true/restricted: false/" | incus config trust edit "${FINGERPRINT}"
     incus project delete blah
