@@ -772,8 +772,15 @@ func (d *btrfs) createVolumeFromMigrationOptimized(vol Volume, conn io.ReadWrite
 			return err
 		}
 
-		// Clear the target for the subvol to use.
-		_ = os.Remove(op.dest)
+		// Clear the target. os.Remove can't remove an existing same-named subvolume.
+		if d.isSubvolume(op.dest) {
+			err = d.deleteSubvolume(op.dest, true)
+			if err != nil {
+				return err
+			}
+		} else {
+			_ = os.Remove(op.dest)
+		}
 
 		err = os.Rename(op.src, op.dest)
 		if err != nil {
