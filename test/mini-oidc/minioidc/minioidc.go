@@ -61,22 +61,25 @@ func Run(port string) error {
 func RunTest(t *testing.T, storageOpts []storage.Option, configOpts []Option) string {
 	t.Helper()
 
-	iport, err := getFreePort()
+	// Keep the listener open, so no other process can take the port before the
+	// server starts.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		t.Fatalf("minioidc get free port: %v", err)
+		t.Fatalf("minioidc listen: %v", err)
 	}
 
-	port := strconv.Itoa(iport)
+	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
 
 	server, err := setup(port, storageOpts, configOpts)
 	if err != nil {
+		_ = listener.Close()
 		t.Fatalf("minioidc setup: %v", err)
 	}
 
 	go func() {
-		err = server.ListenAndServe()
+		err := server.Serve(listener)
 		if err != nil && err != http.ErrServerClosed {
-			t.Errorf("minioidc listen and serve: %v", err)
+			t.Errorf("minioidc serve: %v", err)
 		}
 	}()
 
@@ -139,20 +142,6 @@ func setup(port string, storageOpts []storage.Option, configOpts []Option) (*htt
 	}
 
 	return server, nil
-}
-
-func getFreePort() (port int, err error) {
-	var a *net.TCPAddr
-	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
-		var l *net.TCPListener
-		if l, err = net.ListenTCP("tcp", a); err == nil {
-			defer l.Close() // nolint: errcheck
-
-			return l.Addr().(*net.TCPAddr).Port, nil
-		}
-	}
-
-	return port, err
 }
 
 func userCodeHandler(storageBackend *storage.Storage, w http.ResponseWriter, r *http.Request) {
