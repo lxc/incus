@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mdlayher/netx/eui64"
 
+	"github.com/lxc/incus/v7/internal/linux"
 	"github.com/lxc/incus/v7/internal/server/project"
 	"github.com/lxc/incus/v7/shared/subprocess"
 	"github.com/lxc/incus/v7/shared/util"
@@ -221,6 +222,7 @@ func (d Nftables) networkSetupICMPDHCPDNSAccess(networkName string, ipVersions [
 		"networkName":    networkName,
 		"family":         "inet",
 		"ipFamilies":     ipFamilies,
+		"udpChecksum":    !linux.RunningInUserNS(),
 	}
 
 	err := d.applyNftConfig(nftablesNetICMPDHCPDNS, tplFields)
