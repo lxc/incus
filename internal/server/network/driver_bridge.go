@@ -194,6 +194,16 @@ func (n *bridge) Validate(config map[string]string, clientType request.ClientTyp
 		//  shortdesc: Override the next-hop for advertised prefixes
 		"bgp.ipv6.nexthop": validate.Optional(validate.IsNetworkAddressV6),
 
+		// gendoc:generate(entity=network_bridge, group=common, key=bgp.communities)
+		//
+		// ---
+		//  type: string
+		//  scope: global
+		//  condition: BGP server
+		//  default: -
+		//  shortdesc: Comma-separated BGP communities to attach to advertised prefixes
+		"bgp.communities": validate.Optional(validate.IsListOf(validate.IsBGPCommunity)),
+
 		// gendoc:generate(entity=network_bridge, group=common, key=bgp.ipv4.instances)
 		//
 		// ---
