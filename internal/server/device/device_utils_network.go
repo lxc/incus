@@ -19,6 +19,7 @@ import (
 	"github.com/mdlayher/ndp"
 	"golang.org/x/sys/unix"
 
+	"github.com/lxc/incus/v7/internal/server/bgp"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	pcidev "github.com/lxc/incus/v7/internal/server/device/pci"
 	"github.com/lxc/incus/v7/internal/server/instance"
@@ -952,6 +953,12 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 		}
 	}
 
+	// Parse the communities.
+	communities, err := bgp.ParseCommunities(n.Config()["bgp.communities"])
+	if err != nil {
+		return err
+	}
+
 	// Add the prefixes.
 	bgpOwner := fmt.Sprintf("instance_%d_%s", d.inst.ID(), d.name)
 	if config["ipv4.routes.external"] != "" {
@@ -961,7 +968,7 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 				return err
 			}
 
-			err = d.state.BGP.AddPrefix(*prefixNet, nexthopV4, bgpOwner)
+			err = d.state.BGP.AddPrefix(*prefixNet, nexthopV4, bgpOwner, communities)
 			if err != nil {
 				return err
 			}
@@ -975,7 +982,7 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 				return err
 			}
 
-			err = d.state.BGP.AddPrefix(*prefixNet, nexthopV6, bgpOwner)
+			err = d.state.BGP.AddPrefix(*prefixNet, nexthopV6, bgpOwner, communities)
 			if err != nil {
 				return err
 			}
@@ -983,7 +990,7 @@ func bgpAddPrefix(d *deviceCommon, n network.Network, config map[string]string) 
 	}
 
 	// Advertise the instance's own addresses if enabled on the network.
-	err := bgpAddInstancePrefixes(d, n, config, map[uint]net.IP{4: nexthopV4, 6: nexthopV6}, bgpOwner)
+	err = bgpAddInstancePrefixes(d, n, config, map[uint]net.IP{4: nexthopV4, 6: nexthopV6}, bgpOwner, communities)
 	if err != nil {
 		return err
 	}
@@ -1093,7 +1100,7 @@ func stopInstanceNeighborScan(owner string) {
 }
 
 // bgpAddInstancePrefixes advertises the instance's own addresses over BGP when enabled on the network.
-func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[string]string, nexthops map[uint]net.IP, bgpOwner string) error {
+func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[string]string, nexthops map[uint]net.IP, bgpOwner string, communities []uint32) error {
 	// Check which address families have instance advertisement enabled.
 	scanVersions := []uint{}
 	for _, ipVersion := range []uint{4, 6} {
@@ -1119,7 +1126,7 @@ func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[strin
 				return err
 			}
 
-			err = d.state.BGP.AddPrefix(*prefix, nexthops[ipVersion], bgpOwner)
+			err = d.state.BGP.AddPrefix(*prefix, nexthops[ipVersion], bgpOwner, communities)
 			if err != nil {
 				return err
 			}
@@ -1147,14 +1154,14 @@ func bgpAddInstancePrefixes(d *deviceCommon, n network.Network, config map[strin
 	}
 
 	// The managed bridge interface is named after the network.
-	bgpStartInstanceScan(d, n.Name(), hwAddr, nexthops, scanVersions, bgpOwner)
+	bgpStartInstanceScan(d, n.Name(), hwAddr, nexthops, scanVersions, bgpOwner, communities)
 
 	return nil
 }
 
 // bgpStartInstanceScan advertises the instance's addresses found in the neighbor table, waiting up
 // to 10s for containers and 30s for VMs (which are slower to bring up their network).
-func bgpStartInstanceScan(d *deviceCommon, bridgeName string, hwAddr net.HardwareAddr, nexthops map[uint]net.IP, scanVersions []uint, bgpOwner string) {
+func bgpStartInstanceScan(d *deviceCommon, bridgeName string, hwAddr net.HardwareAddr, nexthops map[uint]net.IP, scanVersions []uint, bgpOwner string, communities []uint32) {
 	scanTimeout := 10 * time.Second
 	if d.inst.Type() == instancetype.VM {
 		scanTimeout = 30 * time.Second
@@ -1174,7 +1181,7 @@ func bgpStartInstanceScan(d *deviceCommon, bridgeName string, hwAddr net.Hardwar
 				continue
 			}
 
-			err = d.state.BGP.AddPrefix(*prefix, nexthops[ipVersion], bgpOwner)
+			err = d.state.BGP.AddPrefix(*prefix, nexthops[ipVersion], bgpOwner, communities)
 			if err != nil {
 				d.logger.Warn("Failed to advertise instance address over BGP", logger.Ctx{"address": addr.String(), "err": err})
 			}
