@@ -3569,3 +3569,8 @@ Clients send the ID token alongside the opaque access token through the `X-Incus
 
 A CA certificate added to the trust store now also trusts the client certificates it issued.
 Those clients are identified by the CA entry's fingerprint and inherit its type, restrictions and projects.
+
+## `network_bgp_communities`
+This adds a `bgp.communities` network configuration key for `bridge` and `ovn` networks.
+It takes a comma-separated list of standard BGP communities (`ASN:value`)
+which are attached to all prefixes advertised by the network.
