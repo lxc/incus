@@ -58,6 +58,14 @@ By default, the next-hop is set to the address used for the BGP session.
 
 To configure a different address, set `bgp.ipv4.nexthop` or `bgp.ipv6.nexthop`.
 
+### Attach BGP communities (`bridge` and `ovn`)
+
+To attach standard BGP communities to every prefix advertised by a network, set `bgp.communities` to a comma-separated list of `ASN:value` pairs.
+
+```bash
+incus network set incusbr0 bgp.communities=65000:100,65000:200
+```
+
 ### Advertise individual instance addresses (`bridge` only)
 
 By default, a bridge network only advertises its own subnets (or NAT addresses).
