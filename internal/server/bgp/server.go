@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
@@ -464,7 +465,7 @@ func (s *Server) removePrefixByUUID(pathUUID string) error {
 		}
 
 		err = s.bgp.DeletePath(bgpAPIutil.DeletePathRequest{UUIDs: []uuid.UUID{nativeUUID}})
-		if err != nil && err.Error() != "can't find a specified path" {
+		if err != nil && !strings.HasPrefix(err.Error(), "can't find a specified path") {
 			return err
 		}
 	}
