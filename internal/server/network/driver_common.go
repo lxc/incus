@@ -794,6 +794,13 @@ func (n *common) bgpNextHopAddress(ipVersion uint) net.IP {
 	return nextHopAddr
 }
 
+// bgpCommunities returns the BGP communities to attach to the network's advertised prefixes.
+func (n *common) bgpCommunities() []uint32 {
+	communities, _ := bgp.ParseCommunities(n.config["bgp.communities"])
+
+	return communities
+}
+
 // bgpSetupPrefixes refreshes the prefix list for the network.
 func (n *common) bgpSetupPrefixes(oldConfig map[string]string) error {
 	// Clear existing prefixes.
@@ -823,7 +830,7 @@ func (n *common) bgpSetupPrefixes(oldConfig map[string]string) error {
 					return err
 				}
 
-				err = n.state.BGP.AddPrefix(*subnet, nextHopAddr, bgpOwner)
+				err = n.state.BGP.AddPrefix(*subnet, nextHopAddr, bgpOwner, n.bgpCommunities())
 				if err != nil {
 					return err
 				}
@@ -836,7 +843,7 @@ func (n *common) bgpSetupPrefixes(oldConfig map[string]string) error {
 				return fmt.Errorf("Failed parsing network address %q: %w", netAddress, err)
 			}
 
-			err = n.state.BGP.AddPrefix(*subnet, nextHopAddr, bgpOwner)
+			err = n.state.BGP.AddPrefix(*subnet, nextHopAddr, bgpOwner, n.bgpCommunities())
 			if err != nil {
 				return err
 			}
@@ -1169,7 +1176,7 @@ func (n *common) forwardBGPSetupPrefixes() error {
 				return err
 			}
 
-			err = n.state.BGP.AddPrefix(*ipRouteSubnet, nextHopAddr, bgpOwner)
+			err = n.state.BGP.AddPrefix(*ipRouteSubnet, nextHopAddr, bgpOwner, n.bgpCommunities())
 			if err != nil {
 				return err
 			}
