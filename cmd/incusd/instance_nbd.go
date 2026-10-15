@@ -18,9 +18,9 @@ import (
 
 // swagger:operation GET /1.0/instances/{name}/nbd instances instance_nbd_get
 //
-//	Get an NBD connection for all of the instance's disks
+//	Get an NBD connection for the instance's root and dependent disks
 //
-//	Upgrades the request to an NBD connection exposing all of the instance's block devices.
+//	Upgrades the request to an NBD connection exposing the instance's root disk and dependent disks.
 //	Each disk is exported under an NBD export named after its Incus device name.
 //
 //	This is only available on running virtual machines. For stopped instances, access the disks
