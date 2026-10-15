@@ -3250,6 +3250,12 @@ func (d *qemu) deviceDetachBlockDevice(deviceName string, rawConfig deviceConfig
 		}
 	}
 
+	// Release the data file of the metadata image, if any.
+	err = monitor.RemoveFDFromFDSet(blockDevName + "_raw")
+	if err != nil {
+		return err
+	}
+
 	err = monitor.RemoveDevice(deviceID)
 	if err != nil {
 		return err
@@ -5225,6 +5231,37 @@ func (d *qemu) imageMetadataPath(devName string) string {
 	return filepath.Join(d.imageMetadataDir(), fmt.Sprintf("%s.qcow2", devName))
 }
 
+// isDependentDisk checks whether the named device is a dependent disk.
+func (d *qemu) isDependentDisk(devName string) bool {
+	found := false
+	_ = d.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		if dev.Name == devName {
+			found = true
+		}
+
+		return nil
+	})
+
+	return found
+}
+
+// removeImageMetadata deletes a device's metadata image and its persistent bitmaps.
+func (d *qemu) removeImageMetadata(devName string) error {
+	_, err := d.mount()
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = d.unmount() }()
+
+	err = os.Remove(d.imageMetadataPath(devName))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+
+	return nil
+}
+
 // ensureMetadataImage creates the metadata file if needed.
 func (d *qemu) ensureMetadataImage(rawPath string, devName string) (string, string, error) {
 	if rawPath == "" {
@@ -5630,6 +5667,20 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			}
 
 			driveConf.DevPath = fmt.Sprintf("/proc/self/fd/%d", fd)
+
+			// Dependent disks get a metadata image like the root disk so they can hold persistent bitmaps.
+			if d.isDependentDisk(driveConf.DevName) && driveConf.FSType != "iso9660" && !slices.Contains(driveConf.Opts, "ro") {
+				qcow2Path, dataFilePath, err := d.ensureMetadataImage(srcDevPath, driveConf.DevName)
+				if err != nil {
+					return nil, err
+				}
+
+				if dataFilePath != "" {
+					driveConf.DevPath = qcow2Path
+					driveConf.DataFilePath = dataFilePath
+					srcDevPath = qcow2Path
+				}
+			}
 		} else if driveConf.TargetPath != "/" {
 			// Only the root disk device is allowed to pass local devices to us without using an FD.
 			return nil, fmt.Errorf("Invalid device path format %q", driveConf.DevPath)
@@ -7518,6 +7569,23 @@ func (d *qemu) Update(args db.InstanceArgs, userRequested bool) error {
 	err = d.devicesUpdate(d, removeDevices, addDevices, updateDevices, oldExpandedDevices, isRunning, userRequested)
 	if err != nil {
 		return err
+	}
+
+	// Drop the metadata image of removed volumes so a reused device name starts without bitmaps.
+	for name, oldConf := range removeDevices {
+		if oldConf["type"] != "disk" || oldConf["path"] == "/" || oldConf["pool"] == "" {
+			continue
+		}
+
+		newConf, replaced := addDevices[name]
+		if replaced && newConf["pool"] == oldConf["pool"] && newConf["source"] == oldConf["source"] {
+			continue
+		}
+
+		err = d.removeImageMetadata(name)
+		if err != nil {
+			return err
+		}
 	}
 
 	if isRunning {
