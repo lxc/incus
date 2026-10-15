@@ -105,7 +105,7 @@ func (c *cmdLowLevelBitmapsCreate) command() *cobra.Command {
 	cmd.Use = cli.U("create", cmdLowLevelBitmapsCreateUsage...)
 	cmd.Short = i18n.G("Create a dirty bitmap on a virtual machine")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Create a dirty bitmap on all the disks of a running virtual machine`,
+		`Create a dirty bitmap on the root and dependent disks of a running virtual machine`,
 	))
 
 	cmd.RunE = c.run
@@ -269,13 +269,13 @@ var cmdLowLevelNBDUsage = u.Usage{u.Instance.Remote()}
 func (c *cmdLowLevelNBD) command() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Use = cli.U("nbd", cmdLowLevelNBDUsage...)
-	cmd.Short = i18n.G("NBD access to all of a virtual machine's disks")
+	cmd.Short = i18n.G("NBD access to a virtual machine's root and dependent disks")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`NBD access to all of a virtual machine's disks
+		`NBD access to a virtual machine's root and dependent disks
 
-This exposes all the disks of a running virtual machine over a local NBD
-server, with each disk reachable as an NBD export named after its Incus
-device name.`,
+This exposes the root and dependent disks of a running virtual machine over
+a local NBD server, with each disk reachable as an NBD export named after
+its Incus device name.`,
 	))
 
 	cli.AddStringFlag(cmd.Flags(), &c.flagAddress, "address", "", "", i18n.G("Specific address to listen on"))
