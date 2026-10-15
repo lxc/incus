@@ -12915,12 +12915,24 @@ func (d *qemu) ConnectNBDAllDisks(reuse bool) (net.Conn, func(), error) {
 		nodeSet[n] = struct{}{}
 	}
 
-	deviceNames := []string{}
-	for devName, devConf := range d.ExpandedDevices() {
-		if devConf["type"] != "disk" {
-			continue
-		}
+	// Only export the root and dependent disks, independent volumes have their own endpoint.
+	rootDiskName, _, err := internalInstance.GetRootDiskDevice(d.ExpandedDevices().CloneNative())
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed getting instance root disk: %w", err)
+	}
 
+	candidates := []string{rootDiskName}
+	err = d.ForEachDependentDiskType(func(dev deviceConfig.DeviceNamed) error {
+		candidates = append(candidates, dev.Name)
+
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	deviceNames := []string{}
+	for _, devName := range candidates {
 		// Only block-backed disks have a matching QEMU block node, this filters out filesystem
 		// shares (e.g. virtiofs) which can't be exported over NBD.
 		nodeName := d.blockNodeName(linux.PathNameEncode(devName))
