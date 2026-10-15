@@ -354,6 +354,7 @@ run_standalone_network() {
     run_test test_oidc "OpenID Connect"
     run_test test_openfga "OpenFGA"
     run_test test_remote_admin "remote administration"
+    run_test test_remote_generate_certificate "remote certificate generation"
     run_test test_remote_url "remote url handling"
     run_test test_remote_usage "remote usage"
     run_test test_list_all_remotes "list all remotes"
