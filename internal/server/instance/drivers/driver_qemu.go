@@ -5597,6 +5597,8 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		aioMode = "io_uring"
 	}
 
+	defaultAioMode := aioMode
+
 	var isBlockDev bool
 	var srcDevPath string
 
@@ -5633,46 +5635,23 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 			return nil, fmt.Errorf("Invalid device path format %q", driveConf.DevPath)
 		}
 
-		srcDevPathInfo, err := os.Stat(srcDevPath)
+		var err error
+
+		isBlockDev, aioMode, cacheMode, err = d.driveIOMode(driveConf, srcDevPath, aioMode, cacheMode)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid source path %q: %w", srcDevPath, err)
+			return nil, err
 		}
+	}
 
-		isBlockDev = linux.IsBlockdev(srcDevPathInfo.Mode())
+	// The data file of a metadata image lives on different storage than the image, so probe it on its own.
+	dataAioMode := defaultAioMode
+	dataCacheMode := "none"
+	if driveConf.DataFilePath != "" {
+		var err error
 
-		// Handle I/O mode configuration.
-		if !isBlockDev {
-			// Disk dev path is a file, check what the backing filesystem is.
-			fsType, err := linux.DetectFilesystem(srcDevPath)
-			if err != nil {
-				return nil, fmt.Errorf("Failed detecting filesystem type of %q: %w", srcDevPath, err)
-			}
-
-			// If backing FS is ZFS or BTRFS, avoid using direct I/O and use host page cache only.
-			// We've seen ZFS lock up and BTRFS checksum issues when using direct I/O on image files.
-			if fsType == "zfs" || fsType == "btrfs" {
-				aioMode = "threads"
-				cacheMode = "writeback" // Use host cache, with neither O_DSYNC nor O_DIRECT semantics.
-			} else {
-				// Use host cache, with neither O_DSYNC nor O_DIRECT semantics if filesystem
-				// doesn't support Direct I/O.
-				f, err := os.OpenFile(srcDevPath, unix.O_DIRECT|unix.O_RDONLY, 0)
-				if err != nil {
-					cacheMode = "writeback"
-				} else {
-					_ = f.Close() // Don't leak FD.
-				}
-			}
-
-			if cacheMode == "writeback" && driveConf.FSType != "iso9660" {
-				// Only warn about using writeback cache if the drive image is writable.
-				d.logger.Warn("Using writeback cache I/O", logger.Ctx{"device": driveConf.DevName, "devPath": srcDevPath, "fsType": fsType})
-			}
-		} else if !slices.Contains(driveConf.Opts, device.DiskDirectIO) {
-			// If drive config indicates we need to use unsafe I/O then use it.
-			d.logger.Warn("Using unsafe cache I/O", logger.Ctx{"device": driveConf.DevName, "devPath": srcDevPath})
-			aioMode = "threads"
-			cacheMode = "unsafe" // Use host cache, but ignore all sync requests from guest.
+		_, dataAioMode, dataCacheMode, err = d.driveIOMode(driveConf, driveConf.DataFilePath, dataAioMode, dataCacheMode)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -5699,6 +5678,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 		}
 
 		cacheMode = strings.TrimPrefix(opt, "cache=")
+		dataCacheMode = cacheMode
 		break
 	}
 
@@ -5714,18 +5694,9 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 	}
 
 	// QMP uses two separate values for the cache.
-	directCache := true   // Bypass host cache, use O_DIRECT semantics by default.
-	noFlushCache := false // Don't ignore any flush requests for the device.
-
-	switch cacheMode {
-	case "unsafe":
-		aioMode = "threads"
-		directCache = false
-		noFlushCache = true
-	case "writeback":
-		aioMode = "threads"
-		directCache = false
-	}
+	var directCache, noFlushCache, dataDirectCache, dataNoFlushCache bool
+	aioMode, directCache, noFlushCache = qemuCacheFlags(cacheMode, aioMode)
+	dataAioMode, dataDirectCache, dataNoFlushCache = qemuCacheFlags(dataCacheMode, dataAioMode)
 
 	escapedDeviceName := linux.PathNameEncode(driveConf.DevName)
 
@@ -5882,15 +5853,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 
 			blockDev["key-secret"] = secretID
 		} else {
-			permissions := unix.O_RDWR
-
-			if readonly {
-				permissions = unix.O_RDONLY
-			}
-
-			if directCache {
-				permissions |= unix.O_DIRECT
-			}
+			permissions := driveOpenFlags(readonly, directCache)
 
 			f, err := os.OpenFile(driveConf.DevPath, permissions, 0)
 			if err != nil {
@@ -5967,7 +5930,7 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 				// If the qcow2 has data-file set, add that file to the FD set and
 				// configure the qcow2 blockdev to use /dev/fdset/<x> path.
 				if driveConf.DataFilePath != "" {
-					dataDev, err := buildDataFileInfo(nodeName, m, driveConf, permissions, readonly, aioMode, directCache, noFlushCache)
+					dataDev, err := buildDataFileInfo(nodeName, m, driveConf, driveOpenFlags(readonly, dataDirectCache), readonly, dataAioMode, dataDirectCache, dataNoFlushCache)
 					if err != nil {
 						return err
 					}
@@ -13264,6 +13227,85 @@ func (d *qemu) selinuxLabelFiles(contextIsNew bool) error {
 }
 
 // buildDataFileInfo builds the "data-file" field for block device options.
+// driveIOMode probes a disk path and returns whether it's a block device and the aio and cache modes to use.
+func (d *qemu) driveIOMode(driveConf deviceConfig.MountEntryItem, devPath string, aioMode string, cacheMode string) (bool, string, string, error) {
+	devPathInfo, err := os.Stat(devPath)
+	if err != nil {
+		return false, "", "", fmt.Errorf("Invalid source path %q: %w", devPath, err)
+	}
+
+	isBlockDev := linux.IsBlockdev(devPathInfo.Mode())
+
+	// The metadata image only holds bitmaps, the guest data lives in its data file.
+	isMetadataImage := driveConf.DataFilePath != "" && devPath != driveConf.DataFilePath
+
+	// Handle I/O mode configuration.
+	if !isBlockDev {
+		// Disk dev path is a file, check what the backing filesystem is.
+		fsType, err := linux.DetectFilesystem(devPath)
+		if err != nil {
+			return false, "", "", fmt.Errorf("Failed detecting filesystem type of %q: %w", devPath, err)
+		}
+
+		// If backing FS is ZFS or BTRFS, avoid using direct I/O and use host page cache only.
+		// We've seen ZFS lock up and BTRFS checksum issues when using direct I/O on image files.
+		if fsType == "zfs" || fsType == "btrfs" {
+			aioMode = "threads"
+			cacheMode = "writeback" // Use host cache, with neither O_DSYNC nor O_DIRECT semantics.
+		} else {
+			// Use host cache, with neither O_DSYNC nor O_DIRECT semantics if filesystem
+			// doesn't support Direct I/O.
+			f, err := os.OpenFile(devPath, unix.O_DIRECT|unix.O_RDONLY, 0)
+			if err != nil {
+				cacheMode = "writeback"
+			} else {
+				_ = f.Close() // Don't leak FD.
+			}
+		}
+
+		if cacheMode == "writeback" && driveConf.FSType != "iso9660" && !isMetadataImage {
+			// Only warn about using writeback cache if the drive image is writable.
+			d.logger.Warn("Using writeback cache I/O", logger.Ctx{"device": driveConf.DevName, "devPath": devPath, "fsType": fsType})
+		}
+	} else if !slices.Contains(driveConf.Opts, device.DiskDirectIO) {
+		// If drive config indicates we need to use unsafe I/O then use it.
+		d.logger.Warn("Using unsafe cache I/O", logger.Ctx{"device": driveConf.DevName, "devPath": devPath})
+		aioMode = "threads"
+		cacheMode = "unsafe" // Use host cache, but ignore all sync requests from guest.
+	}
+
+	return isBlockDev, aioMode, cacheMode, nil
+}
+
+// qemuCacheFlags converts a cache mode into the aio mode and the QMP cache flags.
+func qemuCacheFlags(cacheMode string, aioMode string) (string, bool, bool) {
+	switch cacheMode {
+	case "unsafe":
+		// Use host cache, but ignore all sync requests from guest.
+		return "threads", false, true
+	case "writeback":
+		// Use host cache, with neither O_DSYNC nor O_DIRECT semantics.
+		return "threads", false, false
+	}
+
+	// Bypass host cache, use O_DIRECT semantics by default.
+	return aioMode, true, false
+}
+
+// driveOpenFlags returns the flags to open a drive file with.
+func driveOpenFlags(readonly bool, directCache bool) int {
+	flags := unix.O_RDWR
+	if readonly {
+		flags = unix.O_RDONLY
+	}
+
+	if directCache {
+		flags |= unix.O_DIRECT
+	}
+
+	return flags
+}
+
 func buildDataFileInfo(nodeName string, m *qmp.Monitor, driveConf deviceConfig.MountEntryItem, permissions int, readonly bool, aioMode string, directCache bool, noFlushCache bool) (map[string]any, error) {
 	if driveConf.DataFilePath == "" {
 		return nil, nil
