@@ -591,6 +591,7 @@ var APIExtensions = []string{
 	"network_ovn_nat_address_l2proxy",
 	"oidc_id_token",
 	"certificate_ca_trust",
+	"network_bgp_communities",
 }
 
 // APIExtensionsCount returns the number of available API extensions.
