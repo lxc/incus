@@ -30,6 +30,169 @@ test_remote_url() {
     done
 }
 
+test_remote_generate_certificate() {
+    # shellcheck disable=SC2039,3043
+    local INCUS_CONF token target extension
+
+    # Use separate configurations to preserve the suite's client credentials.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    export INCUS_CONF
+
+    # Generate and use an unencrypted shared key.
+    incus_remote remote generate-certificate
+
+    [ -f "${INCUS_CONF}/client.crt" ]
+    [ "$(stat -c '%a' "${INCUS_CONF}/client.key")" = 600 ]
+    cp "${INCUS_CONF}/client.crt" "${INCUS_CONF}/original.crt"
+    cp "${INCUS_CONF}/client.key" "${INCUS_CONF}/original.key"
+
+    ! incus_remote remote generate-certificate --encrypt \
+        > "${INCUS_CONF}/existing.out" 2>&1 || false
+    grep -F "A client certificate is already present" "${INCUS_CONF}/existing.out"
+
+    token="$(incus config trust add foo -q)"
+    incus_remote remote add test "https://${INCUS_ADDR}" \
+        --accept-certificate --token "${token}"
+
+    incus_remote list test:
+    cmp "${INCUS_CONF}/client.crt" "${INCUS_CONF}/original.crt"
+    cmp "${INCUS_CONF}/client.key" "${INCUS_CONF}/original.key"
+
+    incus config trust remove "$(cert_fingerprint "${INCUS_CONF}/client.crt")"
+    incus_remote remote remove test
+
+    # Generate and import an unencrypted key from an arbitrary path.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    target="$(mktemp -d -p "${TEST_DIR}" XXX)/client"
+    incus_remote remote generate-certificate --target "${target}"
+
+    [ ! -e "${INCUS_CONF}/client.key" ]
+    [ "$(stat -c '%a' "${target}.key")" = 600 ]
+    cp "${target}.crt" "${INCUS_CONF}/original.crt"
+    cp "${target}.key" "${INCUS_CONF}/original.key"
+
+    ! incus_remote remote generate-certificate --target "${target}" || false
+
+    token="$(incus config trust add foo -q)"
+    incus_remote remote add test "https://${INCUS_ADDR}" \
+        --accept-certificate --token "${token}" \
+        --tls-cert "${target}.crt" --tls-key "${target}.key"
+
+    incus_remote list test:
+
+    cmp "${target}.crt" "${INCUS_CONF}/clientcerts/test.crt"
+    cmp "${target}.key" "${INCUS_CONF}/clientcerts/test.key"
+    cmp "${target}.crt" "${INCUS_CONF}/original.crt"
+    cmp "${target}.key" "${INCUS_CONF}/original.key"
+
+    incus config trust remove "$(cert_fingerprint "${target}.crt")"
+    incus_remote remote remove test
+
+    # Generate and use an encrypted shared key.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    printf '%s\n' test-password test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote generate-certificate --encrypt" /dev/null
+
+    grep -Fx -- "-----BEGIN OPENSSH PRIVATE KEY-----" "${INCUS_CONF}/client.key"
+    [ "$(stat -c '%a' "${INCUS_CONF}/client.key")" = 600 ]
+    cp "${INCUS_CONF}/client.crt" "${INCUS_CONF}/original.crt"
+    cp "${INCUS_CONF}/client.key" "${INCUS_CONF}/original.key"
+
+    ! incus_remote remote generate-certificate --encrypt \
+        > "${INCUS_CONF}/existing.out" 2>&1 || false
+    grep -F "A client certificate is already present" "${INCUS_CONF}/existing.out"
+
+    token="$(incus config trust add foo -q)"
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote add test 'https://${INCUS_ADDR}' --accept-certificate --token '${token}'" \
+            /dev/null
+
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus list test:" /dev/null
+
+    cmp "${INCUS_CONF}/client.crt" "${INCUS_CONF}/original.crt"
+    cmp "${INCUS_CONF}/client.key" "${INCUS_CONF}/original.key"
+
+    incus config trust remove "$(cert_fingerprint "${INCUS_CONF}/client.crt")"
+    incus_remote remote remove test
+
+    # Generate and import an encrypted key from an arbitrary path.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    target="$(mktemp -d -p "${TEST_DIR}" XXX)/keys/client"
+    printf '%s\n' test-password test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote generate-certificate --target '${target}' --encrypt" /dev/null
+
+    [ ! -e "${INCUS_CONF}/client.key" ]
+    grep -Fx -- "-----BEGIN OPENSSH PRIVATE KEY-----" "${target}.key"
+    [ "$(stat -c '%a' "${target}.key")" = 600 ]
+    cp "${target}.crt" "${INCUS_CONF}/original.crt"
+    cp "${target}.key" "${INCUS_CONF}/original.key"
+
+    ! incus_remote remote generate-certificate --target "${target}" --encrypt \
+        > "${INCUS_CONF}/existing.out" 2>&1 || false
+    grep -F "A client certificate is already present" "${INCUS_CONF}/existing.out"
+
+    ! printf '%s\n' wrong-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote add test 'https://${INCUS_ADDR}' --accept-certificate --tls-cert '${target}.crt' --tls-key '${target}.key'" \
+            /dev/null || false
+    [ ! -e "${INCUS_CONF}/clientcerts/test.key" ]
+
+    token="$(incus config trust add foo -q)"
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote add test '${token}' --tls-cert '${target}.crt' --tls-key '${target}.key'" \
+            /dev/null
+
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus list test:" /dev/null
+
+    cmp "${target}.crt" "${INCUS_CONF}/clientcerts/test.crt"
+    cmp "${target}.key" "${INCUS_CONF}/clientcerts/test.key"
+    [ "$(stat -c '%a' "${INCUS_CONF}/clientcerts/test.key")" = 600 ]
+    cmp "${target}.crt" "${INCUS_CONF}/original.crt"
+    cmp "${target}.key" "${INCUS_CONF}/original.key"
+
+    incus config trust remove "$(cert_fingerprint "${target}.crt")"
+    incus_remote remote remove test
+
+    # Reject positional arguments and partial credential pairs without replacing files.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    ! incus_remote remote generate-certificate test || false
+    [ ! -e "${INCUS_CONF}/client.key" ]
+
+    target="${INCUS_CONF}/client"
+    for extension in crt key; do
+        printf '%s\n' "existing credentials" > "${target}.${extension}"
+
+        ! incus_remote remote generate-certificate --target "${target}" \
+            > "${INCUS_CONF}/existing.out" 2>&1 || false
+        grep -F "A client certificate is already present" "${INCUS_CONF}/existing.out"
+        [ "$(cat "${target}.${extension}")" = "existing credentials" ]
+
+        rm "${target}.${extension}"
+
+        ln -s "${INCUS_CONF}/missing" "${target}.${extension}"
+        ! incus_remote remote generate-certificate --target "${target}" || false
+        [ -L "${target}.${extension}" ]
+        [ ! -e "${INCUS_CONF}/missing" ]
+        rm "${target}.${extension}"
+    done
+
+    # Resolve relative targets from the working directory.
+    (
+        cd "${INCUS_CONF}" || exit 1
+        incus_remote remote generate-certificate --target "nested/client"
+    )
+    [ -f "${INCUS_CONF}/nested/client.crt" ]
+    [ "$(stat -c '%a' "${INCUS_CONF}/nested/client.key")" = 600 ]
+}
+
 test_remote_url_with_token() {
     # Try adding remote using a correctly constructed but invalid token
     invalid_token="eyJjbGllbnRfbmFtZSI6IiIsImZpbmdlcnByaW50IjoiMWM0MmMzOTgxOWIyNGJiYjQxNGFhYTY2NDUwNzlmZGY2NDQ4MTUzMDcxNjA0YTFjODJjMjVhN2JhNjBkZmViMCIsImFkZHJlc3NlcyI6WyIxOTIuMTY4LjE3OC4yNDo4NDQzIiwiWzIwMDM6Zjc6MzcxMToyMzAwOmQ5ZmY6NWRiMDo3ZTA2OmQ1ODldOjg0NDMiLCIxMC41OC4yLjE6ODQ0MyIsIjEwLjAuMy4xOjg0NDMiLCIxOTIuMTY4LjE3OC43MDo4NDQzIiwiWzIwMDM6Zjc6MzcxMToyMzAwOjQwMTY6ODVkNDo2M2FlOjNhYWVdOjg0NDMiLCIxMC4xMjQuODYuMTo4NDQzIiwiW2ZkNDI6ZTY5Zjo3OTczOjIyMjU6OjFdOjg0NDMiXSwic2VjcmV0IjoiODVlMGU5YmViODk0ZTFhMTU3YmYxODI4YTk0Y2IwYTdjY2YxMzQ4NzMyN2ZjMTY3MDcyY2JlNjQ3NmVmOGJkMiJ9"

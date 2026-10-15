@@ -34,6 +34,38 @@ See {ref}`server-expose` for more information.
    :end-before: <!-- Include end add remotes -->
 ```
 
+(remote-client-certificate)=
+## Generate a client certificate
+
+To generate a client certificate and key at a chosen path, use `--target` with a file prefix:
+
+```sh
+incus remote generate-certificate --target ./my-client
+```
+
+Add `--encrypt` to protect the newly generated private key with a passphrase:
+
+```sh
+incus remote generate-certificate --target ./my-client --encrypt
+```
+
+The command writes `./my-client.crt` and `./my-client.key`.
+Neither file may already exist, to prevent replacing credentials that a server may already trust.
+You can use the certificate to preseed a server before adding it as a remote.
+
+To add a remote with the generated credentials, supply them along with its trust token:
+
+```sh
+incus remote add my-remote <token> --tls-cert ./my-client.crt --tls-key ./my-client.key
+```
+
+The credentials are copied into the Incus configuration directory for that remote.
+Encrypted keys remain encrypted on disk, and Incus prompts for their passphrase when needed.
+
+Without `--target`, `generate-certificate` generates the shared `client.crt` and `client.key` in the Incus configuration directory.
+Neither shared credential file may already exist.
+See {ref}`authentication-trusted-clients` for other ways to register a client certificate.
+
 ## Select a default remote
 
 The Incus command-line client is pre-configured with the `local` remote, which is the local Incus daemon.
