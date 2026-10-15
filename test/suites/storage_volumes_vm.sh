@@ -80,6 +80,25 @@ test_storage_volumes_vm() {
         incus exec v1 -- /bin/sh -c 'for i in \$(seq 30); do mkfs.ext4 /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 && exit 0; sleep 1; done; ls -l /dev/disk/by-id/; cat /proc/mounts; exit 1'
         incus exec v1 -- /bin/sh -c "mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 /mnt && echo foo > /mnt/bar && umount /mnt"
 
+        echo "==> Create a persistent bitmap on the VM and its dependent volume"
+        incus storage volume create "${poolName}" vol7 --type=block size=10MB
+        incus config device add v1 vol7 disk pool="${poolName}" source=vol7 dependent=true
+        incus low-level bitmaps create v1 bm1 --persistent
+        incus storage volume bitmap list "${poolName}" virtual-machine/v1 -f csv -c n | grep -xF bm1
+        incus storage volume bitmap list "${poolName}" vol7 -f csv -c n | grep -xF bm1
+        ! incus storage volume bitmap list "${poolName}" vol1 -f csv -c n | grep -xF bm1 || false
+
+        echo "==> Check the bitmap survives a restart"
+        incus stop v1
+        incus start v1
+        incus wait v1 agent --timeout=90 --interval=1
+        incus storage volume bitmap list "${poolName}" virtual-machine/v1 -f csv -c n | grep -xF bm1
+        incus storage volume bitmap list "${poolName}" vol7 -f csv -c n | grep -xF bm1
+
+        echo "==> Detach the dependent volume from the running VM"
+        incus config device remove v1 vol7
+        incus storage volume delete "${poolName}" vol7
+
         echo "==> Stop VM and detach custom volumes"
         incus stop -f v1
         incus storage volume detach "${poolName}" vol1 v1
