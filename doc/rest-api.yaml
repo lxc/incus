@@ -13267,7 +13267,7 @@ paths:
     /1.0/instances/{name}/nbd:
         get:
             description: |-
-                Upgrades the request to an NBD connection exposing all of the instance's block devices.
+                Upgrades the request to an NBD connection exposing the instance's root disk and dependent disks.
                 Each disk is exported under an NBD export named after its Incus device name.
 
                 This is only available on running virtual machines. For stopped instances, access the disks
@@ -13308,7 +13308,7 @@ paths:
                     $ref: '#/responses/Conflict'
                 "500":
                     $ref: '#/responses/InternalServerError'
-            summary: Get an NBD connection for all of the instance's disks
+            summary: Get an NBD connection for the instance's root and dependent disks
             tags:
                 - instances
     /1.0/instances/{name}/nvram:
