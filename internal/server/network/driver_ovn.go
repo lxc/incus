@@ -5169,9 +5169,12 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 			return err
 		}
 
-		// Remove volatile keys associated with old network in new config.
-		delete(newNetwork.Config, ovnVolatileUplinkIPv4)
-		delete(newNetwork.Config, ovnVolatileUplinkIPv6)
+		// Remove volatile keys associated with old network in new config, unless explicitly changed.
+		for _, key := range []string{ovnVolatileUplinkIPv4, ovnVolatileUplinkIPv6} {
+			if newNetwork.Config[key] == oldNetwork.Config[key] {
+				delete(newNetwork.Config, key)
+			}
+		}
 	}
 
 	// When the parent is changing, detach from the logical router we are attached to
