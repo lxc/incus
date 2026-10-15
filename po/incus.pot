@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: incus\n"
         "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-        "POT-Creation-Date: 2026-10-08 14:37+0000\n"
+        "POT-Creation-Date: 2026-10-15 08:40-0400\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1355,11 +1355,11 @@ msgstr  ""
 msgid   "Columns"
 msgstr  ""
 
-#: cmd/incus/main.go:153
+#: cmd/incus/main.go:156
 msgid   "Command line client for Incus"
 msgstr  ""
 
-#: cmd/incus/main.go:154
+#: cmd/incus/main.go:157
 msgid   "Command line client for Incus\n"
         "\n"
         "All of Incus's features can be driven through the various commands below.\n"
@@ -1591,7 +1591,7 @@ msgid   "Create a dirty bitmap on a virtual machine"
 msgstr  ""
 
 #: cmd/incus/low_level.go:107
-msgid   "Create a dirty bitmap on all the disks of a running virtual machine"
+msgid   "Create a dirty bitmap on the root and dependent disks of a running virtual machine"
 msgstr  ""
 
 #: cmd/incus/admin_init_interactive.go:385
@@ -2150,7 +2150,7 @@ msgstr  ""
 msgid   "Don't require user confirmation for using --force"
 msgstr  ""
 
-#: cmd/incus/main.go:177
+#: cmd/incus/main.go:180
 msgid   "Don't show progress information"
 msgstr  ""
 
@@ -2407,7 +2407,7 @@ msgstr  ""
 msgid   "Error updating template file: %s"
 msgstr  ""
 
-#: cmd/incus/main.go:442
+#: cmd/incus/main.go:445
 #, c-format
 msgid   "Error while executing alias expansion: %s\n"
 msgstr  ""
@@ -2881,7 +2881,7 @@ msgstr  ""
 msgid   "Failed to listen for connection: %w"
 msgstr  ""
 
-#: cmd/incus/main.go:144 cmd/incus/main_aliases.go:225
+#: cmd/incus/main.go:147 cmd/incus/main_aliases.go:225
 #, c-format
 msgid   "Failed to load configuration: %s"
 msgstr  ""
@@ -3124,7 +3124,7 @@ msgstr  ""
 msgid   "Force the removal of running instances"
 msgstr  ""
 
-#: cmd/incus/main.go:173
+#: cmd/incus/main.go:176
 msgid   "Force using the local unix socket"
 msgstr  ""
 
@@ -3608,7 +3608,7 @@ msgstr  ""
 msgid   "If an instance is running, stop it and then rebuild it"
 msgstr  ""
 
-#: cmd/incus/main.go:179
+#: cmd/incus/main.go:182
 msgid   "If the command is valid, explain its parsed arguments instead of running it"
 msgstr  ""
 
@@ -3620,7 +3620,7 @@ msgstr  ""
 msgid   "If the snapshot name already exists, delete and create a new one"
 msgstr  ""
 
-#: cmd/incus/main.go:595
+#: cmd/incus/main.go:608
 msgid   "If this is your first time running Incus on this machine, you should also run: incus admin init"
 msgstr  ""
 
@@ -5483,15 +5483,15 @@ msgid   "NBD access to a block storage volume"
 msgstr  ""
 
 #: cmd/incus/low_level.go:272
-msgid   "NBD access to all of a virtual machine's disks"
+msgid   "NBD access to a virtual machine's root and dependent disks"
 msgstr  ""
 
 #: cmd/incus/low_level.go:273
-msgid   "NBD access to all of a virtual machine's disks\n"
+msgid   "NBD access to a virtual machine's root and dependent disks\n"
         "\n"
-        "This exposes all the disks of a running virtual machine over a local NBD\n"
-        "server, with each disk reachable as an NBD export named after its Incus\n"
-        "device name."
+        "This exposes the root and dependent disks of a running virtual machine over\n"
+        "a local NBD server, with each disk reachable as an NBD export named after\n"
+        "its Incus device name."
 msgstr  ""
 
 #: cmd/incus/low_level.go:342 cmd/incus/storage_volume.go:2678
@@ -5973,7 +5973,7 @@ msgstr  ""
 msgid   "Optimized Storage"
 msgstr  ""
 
-#: cmd/incus/main.go:174
+#: cmd/incus/main.go:177
 msgid   "Override the source project"
 msgstr  ""
 
@@ -6055,7 +6055,7 @@ msgstr  ""
 msgid   "Partitions:"
 msgstr  ""
 
-#: cmd/incus/main.go:555 cmd/incus/remote.go:229 cmd/incus/remote.go:1014
+#: cmd/incus/main.go:568 cmd/incus/remote.go:229 cmd/incus/remote.go:1014
 #, c-format
 msgid   "Password for %s: "
 msgstr  ""
@@ -6169,7 +6169,7 @@ msgstr  ""
 msgid   "Pretty rendering (short for --format=pretty)"
 msgstr  ""
 
-#: cmd/incus/main.go:172
+#: cmd/incus/main.go:175
 msgid   "Print help"
 msgstr  ""
 
@@ -6181,7 +6181,7 @@ msgstr  ""
 msgid   "Print the raw response"
 msgstr  ""
 
-#: cmd/incus/main.go:171
+#: cmd/incus/main.go:174
 msgid   "Print version number"
 msgstr  ""
 
@@ -6315,7 +6315,7 @@ msgstr  ""
 msgid   "Provided certificate path doesn't exist: %s"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:46
+#: cmd/incus/remote_unix.go:48
 msgid   "Proxy timeout (exits when no connections)"
 msgstr  ""
 
@@ -6444,7 +6444,7 @@ msgstr  ""
 msgid   "Refresh images"
 msgstr  ""
 
-#: cmd/incus/copy.go:413
+#: cmd/incus/copy.go:436
 #, c-format
 msgid   "Refreshing instance: %s"
 msgstr  ""
@@ -6770,11 +6770,11 @@ msgstr  ""
 msgid   "Rule description"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:39
+#: cmd/incus/remote_unix.go:41
 msgid   "Run a local API proxy"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:40
+#: cmd/incus/remote_unix.go:42
 msgid   "Run a local API proxy for the remote"
 msgstr  ""
 
@@ -7300,11 +7300,11 @@ msgstr  ""
 msgid   "Show a summary of used IP ranges per subnet"
 msgstr  ""
 
-#: cmd/incus/main.go:175
+#: cmd/incus/main.go:178
 msgid   "Show all debug messages"
 msgstr  ""
 
-#: cmd/incus/main.go:176
+#: cmd/incus/main.go:179
 msgid   "Show all information messages"
 msgstr  ""
 
@@ -7356,7 +7356,7 @@ msgstr  ""
 msgid   "Show instance snapshot configuration"
 msgstr  ""
 
-#: cmd/incus/main.go:381 cmd/incus/main.go:382
+#: cmd/incus/main.go:384 cmd/incus/main.go:385
 msgid   "Show less common commands"
 msgstr  ""
 
@@ -8113,7 +8113,7 @@ msgstr  ""
 msgid   "There is no config key to set on an instance snapshot."
 msgstr  ""
 
-#: cmd/incus/main.go:433
+#: cmd/incus/main.go:436
 msgid   "This client hasn't been configured to use a remote server yet.\n"
         "As your platform can't run native Linux instances, you must connect to a remote server.\n"
         "\n"
@@ -8168,7 +8168,7 @@ msgstr  ""
 msgid   "To detach from the console, press: <ctrl>+a q"
 msgstr  ""
 
-#: cmd/incus/main.go:603
+#: cmd/incus/main.go:616
 #, c-format
 msgid   "To start your first container, try: incus launch images:%s\n"
         "Or for a virtual machine: incus launch images:%s --vm"
@@ -8368,7 +8368,7 @@ msgstr  ""
 msgid   "Unknown channel type for client %q: %s"
 msgstr  ""
 
-#: cmd/incus/utils.go:865
+#: cmd/incus/utils.go:868
 #, c-format
 msgid   "Unknown character %c in %s; expected one of “r”, “w”, “x”, “X”, “s” or “t”"
 msgstr  ""
@@ -8660,7 +8660,7 @@ msgstr  ""
 msgid   "Use storage driver optimized format (can only be restored on a similar pool, ignored for ISO storage volumes)"
 msgstr  ""
 
-#: cmd/incus/main.go:178
+#: cmd/incus/main.go:181
 msgid   "Use with help or --help to view sub-commands"
 msgstr  ""
 
@@ -9854,7 +9854,7 @@ msgstr  ""
 msgid   "unexpected end of argument; did you forget a suffix?"
 msgstr  ""
 
-#: cmd/incus/remote_unix.go:34
+#: cmd/incus/remote_unix.go:36
 msgid   "unix socket file"
 msgstr  ""
 
