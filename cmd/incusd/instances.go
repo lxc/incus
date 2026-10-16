@@ -490,7 +490,7 @@ func instancesOnDisk(s *state.State) ([]instance.Instance, error) {
 	return instances, nil
 }
 
-func instancesShutdown(ctx context.Context, instances []instance.Instance, forceTimeout time.Duration) {
+func instancesShutdown(ctx context.Context, s *state.State, instances []instance.Instance, forceTimeout time.Duration) {
 	sort.Sort(instanceStopList(instances))
 
 	// A shutdown forced from the start still gets the regular timeouts.
@@ -519,6 +519,17 @@ func instancesShutdown(ctx context.Context, instances []instance.Instance, force
 				}
 
 				timeout := time.Second * time.Duration(timeoutSeconds)
+
+				// Record a forced stop, blocking the clean stop path from resolving the warning.
+				var forcedMu sync.Mutex
+				forced := false
+				markForced := func(message string) {
+					forcedMu.Lock()
+					defer forcedMu.Unlock()
+
+					forced = true
+					instanceForcedStopWarn(s, inst, message)
+				}
 
 				// Shutdown the instance without waiting past the timeouts on an unresponsive instance.
 				done := make(chan struct{})
@@ -561,6 +572,7 @@ func instancesShutdown(ctx context.Context, instances []instance.Instance, force
 						err := inst.Shutdown(timeout)
 						if err != nil {
 							logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout, "err": err})
+							markForced(fmt.Sprintf("Didn't shut down within %s during server shutdown", timeout))
 							err = inst.Stop(false)
 							if err != nil {
 								logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
@@ -585,21 +597,31 @@ func instancesShutdown(ctx context.Context, instances []instance.Instance, force
 					default:
 						shutdown()
 					}
+
+					// Clear any earlier warning once the configured action completed on its own.
+					forcedMu.Lock()
+					defer forcedMu.Unlock()
+
+					if !forced {
+						instanceForcedStopResolve(s, inst)
+					}
 				}()
 
-				forced := false
+				wedged := false
 				select {
 				case <-done:
 				case <-time.After(timeout + forceTimeout):
 					logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout})
-					forced = true
+					markForced(fmt.Sprintf("Stop didn't complete within %s during server shutdown", timeout+forceTimeout))
+					wedged = true
 				case <-forceCh:
 					logger.Warn("Forced shutdown, forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
-					forced = true
+					markForced("Server shutdown was forced before the instance stopped")
+					wedged = true
 				}
 
 				// Take over the wedged stop without waiting on it any further.
-				if forced {
+				if wedged {
 					go func() {
 						err := inst.Stop(false)
 						if err != nil {
@@ -650,21 +672,54 @@ func instancesShutdown(ctx context.Context, instances []instance.Instance, force
 const instanceShutdownDefaultTimeout = 30
 
 // instanceShutdownOrForceStop cleanly shuts the instance down, falling back to a forced stop if that fails.
-func instanceShutdownOrForceStop(inst instance.Instance) error {
+func instanceShutdownOrForceStop(s *state.State, inst instance.Instance, during string) error {
 	val, err := strconv.Atoi(inst.ExpandedConfig()["boot.host_shutdown_timeout"])
 	if err != nil {
 		val = instanceShutdownDefaultTimeout
 	}
 
-	err = inst.Shutdown(time.Duration(val) * time.Second)
+	timeout := time.Duration(val) * time.Second
+
+	err = inst.Shutdown(timeout)
 	if err != nil {
-		logger.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+		logger.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": timeout, "err": err})
+		instanceForcedStopWarn(s, inst, fmt.Sprintf("Didn't shut down within %s during %s", timeout, during))
 
 		err = inst.Stop(false)
 		if err != nil && !errors.Is(err, instanceDrivers.ErrInstanceIsStopped) {
 			return fmt.Errorf("Failed to stop instance %q in project %q: %w", inst.Name(), inst.Project().Name, err)
 		}
+
+		return nil
 	}
 
+	instanceForcedStopResolve(s, inst)
+
 	return nil
+}
+
+// instanceForcedStopWarn records that the instance had to be forcefully stopped.
+func instanceForcedStopWarn(s *state.State, inst instance.Instance, message string) {
+	if inst.ID() <= 0 {
+		return
+	}
+
+	err := s.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return tx.UpsertWarning(ctx, inst.Location(), inst.Project().Name, cluster.TypeInstance, inst.ID(), warningtype.InstanceForcedStop, message)
+	})
+	if err != nil {
+		logger.Warn("Failed to record forced stop warning", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+	}
+}
+
+// instanceForcedStopResolve resolves any forced stop warning after the instance stopped cleanly.
+func instanceForcedStopResolve(s *state.State, inst instance.Instance) {
+	if inst.ID() <= 0 {
+		return
+	}
+
+	err := warnings.ResolveWarningsByNodeAndProjectAndTypeAndEntity(s.DB.Cluster, inst.Location(), inst.Project().Name, warningtype.InstanceForcedStop, cluster.TypeInstance, inst.ID())
+	if err != nil {
+		logger.Warn("Failed to resolve forced stop warning", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+	}
 }
