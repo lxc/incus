@@ -522,6 +522,37 @@ migration() {
     incus_remote storage volume delete l2:"$remote_pool2" bar
     incus_remote storage unset l1:"$remote_pool1" rsync.compression
 
+    # Test block volume migration through the generic transport
+    incus_remote storage create l1:"${remote_pool1}-dir" dir
+    incus_remote storage create l2:"${remote_pool2}-dir" dir
+    incus_remote storage volume create l1:"${remote_pool1}-dir" blockvol --type=block size=16MiB
+
+    block_vol1="${INCUS_DIR}/storage-pools/${remote_pool1}-dir/custom/default_blockvol/root.img"
+    block_vol2="${incus2_dir}/storage-pools/${remote_pool2}-dir/custom/default_blockvol/root.img"
+    dd if=/dev/urandom of="${block_vol1}" bs=1M seek=2 count=1 conv=notrunc
+    dd if=/dev/urandom of="${block_vol1}" bs=1M seek=12 count=1 conv=notrunc
+    incus_remote storage volume snapshot create l1:"${remote_pool1}-dir" blockvol snap0
+    dd if=/dev/urandom of="${block_vol1}" bs=1M seek=7 count=1 conv=notrunc
+
+    incus_remote storage volume copy l1:"${remote_pool1}-dir/blockvol" l2:"${remote_pool2}-dir/blockvol"
+    cmp "${block_vol1}" "${block_vol2}"
+    cmp "${INCUS_DIR}/storage-pools/${remote_pool1}-dir/custom-snapshots/default_blockvol/snap0/root.img" "${incus2_dir}/storage-pools/${remote_pool2}-dir/custom-snapshots/default_blockvol/snap0/root.img"
+    incus_remote storage volume delete l2:"${remote_pool2}-dir" blockvol
+
+    incus_remote storage volume copy l1:"${remote_pool1}-dir/blockvol" l2:"${remote_pool2}-dir/blockvol" --mode=push --volume-only
+    cmp "${block_vol1}" "${block_vol2}"
+    incus_remote storage volume delete l2:"${remote_pool2}-dir" blockvol
+
+    # Same transfer without compression
+    incus_remote storage set l1:"${remote_pool1}-dir" rsync.compression false
+    incus_remote storage volume copy l1:"${remote_pool1}-dir/blockvol" l2:"${remote_pool2}-dir/blockvol" --volume-only
+    cmp "${block_vol1}" "${block_vol2}"
+    incus_remote storage volume delete l2:"${remote_pool2}-dir" blockvol
+
+    incus_remote storage volume delete l1:"${remote_pool1}-dir" blockvol
+    incus_remote storage delete l1:"${remote_pool1}-dir"
+    incus_remote storage delete l2:"${remote_pool2}-dir"
+
     # Test some migration between projects
     incus_remote project create l1:proj -c features.images=false -c features.profiles=false
     incus_remote project switch l1:proj
