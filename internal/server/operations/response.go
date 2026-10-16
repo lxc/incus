@@ -28,7 +28,8 @@ func (r *operationResponse) Render(w http.ResponseWriter) error {
 		return err
 	}
 
-	url, md, err := r.op.Render()
+	// The create response is the one-time delivery of websocket secrets to the creator.
+	url, md, err := r.op.render(true)
 	if err != nil {
 		return err
 	}
