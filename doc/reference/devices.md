@@ -6,6 +6,9 @@ Devices are attached to an instance (see {ref}`instances-configure-devices`) or 
 They include, for example, network interfaces, mount points, USB and GPU devices.
 These devices can have instance device options, depending on the type of the instance device.
 
+Device names must start and end with a letter or digit and may only contain letters, digits, dots, dashes and underscores.
+A device name also can't extend another device's name with one of its volatile key namespaces, such as `eth0.last_state` next to `eth0`.
+
 Incus supports the following device types:
 
 | ID (database) | Name                                   | Condition | Description                     |
