@@ -6994,6 +6994,12 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			return err
 		}
 
+		// Load before the transaction as a child network loads its parent from the database.
+		networkIPv4, networkIPv6, err := n.routerExtPortIPs()
+		if err != nil {
+			return err
+		}
+
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			listenIP := net.ParseIP(forward.ListenAddress)
 
@@ -7002,11 +7008,6 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			}
 
 			allAllocatedIPv4, allAllocatedIPv6, err := n.uplinkAllAllocatedIPs(ctx, tx, n.UplinkName())
-			if err != nil {
-				return err
-			}
-
-			networkIPv4, networkIPv6, err := n.routerExtPortIPs()
 			if err != nil {
 				return err
 			}
@@ -7510,6 +7511,12 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			return err
 		}
 
+		// Load before the transaction as a child network loads its parent from the database.
+		networkIPv4, networkIPv6, err := n.routerExtPortIPs()
+		if err != nil {
+			return err
+		}
+
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 			listenIP := net.ParseIP(loadBalancer.ListenAddress)
 
@@ -7518,11 +7525,6 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			}
 
 			allAllocatedIPv4, allAllocatedIPv6, err := n.uplinkAllAllocatedIPs(ctx, tx, n.UplinkName())
-			if err != nil {
-				return err
-			}
-
-			networkIPv4, networkIPv6, err := n.routerExtPortIPs()
 			if err != nil {
 				return err
 			}
