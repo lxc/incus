@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/lxc/incus/v7/internal/linux"
 	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
@@ -404,7 +405,7 @@ func (d *usb) loadRawValues(p string) (map[string]string, error) {
 // device unidentifiable when using hotplugging. Including the bus and device number makes the
 // device identifiable.
 func (d *usb) getUniqueDeviceNameFromUSBEvent(e USBEvent) string {
-	return fmt.Sprintf("%s-%03d-%03d", d.name, e.BusNum, e.DevNum)
+	return fmt.Sprintf("%s-%03d-%03d", linux.PathNameEncode(d.name), e.BusNum, e.DevNum)
 }
 
 // CanHotPlug returns whether the device can be managed whilst the instance is running.
