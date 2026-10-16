@@ -872,6 +872,8 @@ func relayWarn(action string, err error) {
 }
 
 func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
+	defer close(ch)
+
 	dataBuf := make([]byte, 4096)
 	oobBuf := make([]byte, 4096)
 
