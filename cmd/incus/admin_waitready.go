@@ -45,7 +45,7 @@ func (c *cmdAdminWaitready) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	finger := make(chan error, 1)
+	finger := make(chan struct{})
 	var errLast error
 	go func() {
 		for i := 0; ; i++ {
@@ -89,7 +89,7 @@ func (c *cmdAdminWaitready) run(cmd *cobra.Command, args []string) error {
 				continue
 			}
 
-			finger <- nil
+			close(finger)
 			return
 		}
 	}()
