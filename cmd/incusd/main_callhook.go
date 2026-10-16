@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	incus "github.com/lxc/incus/v7/client"
+	internalUtil "github.com/lxc/incus/v7/internal/util"
 )
 
 type cmdCallhook struct {
@@ -70,7 +71,11 @@ func (c *cmdCallhook) run(cmd *cobra.Command, args []string) error {
 	// Connect to daemon.
 	socket := os.Getenv("INCUS_SOCKET")
 	if socket == "" {
-		socket = filepath.Join(path, "unix.socket")
+		if path == "" || path == internalUtil.VarPath("") {
+			socket, _ = incus.ResolveUnixSocket("")
+		} else {
+			socket = filepath.Join(path, "unix.socket")
+		}
 	}
 
 	clientArgs := incus.ConnectionArgs{
