@@ -9015,9 +9015,17 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 		return err
 	}
 
+	_, srcSnapName, _ := api.GetParentAndSnapshotName(d.name)
 	dependentVolumes := []localMigration.DependentVolumeArgs{}
 	for _, volWithType := range volumesWithTypes {
-		dependentVolumes = append(dependentVolumes, localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], nil))
+		vol := localMigration.ProtobufToDependentVolume(volWithType.Volume, volWithType.VolumeTypes[0], nil)
+
+		// Copying from an instance snapshot, send the matching volume snapshots.
+		if d.IsSnapshot() {
+			vol.Name = fmt.Sprintf("%s/%s", vol.Name, srcSnapName)
+		}
+
+		dependentVolumes = append(dependentVolumes, vol)
 	}
 
 	volSourceArgs := &localMigration.VolumeSourceArgs{
