@@ -848,14 +848,9 @@ func genericRelay(dst net.Conn, src net.Conn) {
 
 	select {
 	case errSnd := <-chSend:
-		if daemon.Debug && errSnd != nil {
-			fmt.Printf("Warning: Error while sending data: %v\n", errSnd)
-		}
-
+		relayWarn("sending", errSnd)
 	case errRcv := <-chRecv:
-		if daemon.Debug && errRcv != nil {
-			fmt.Printf("Warning: Error while reading data: %v\n", errRcv)
-		}
+		relayWarn("reading", errRcv)
 	}
 
 	_ = src.Close()
@@ -863,9 +858,17 @@ func genericRelay(dst net.Conn, src net.Conn) {
 
 	// Empty the channels
 	if !isUDP {
-		<-chSend
+		relayWarn("sending", <-chSend)
 	}
-	<-chRecv
+
+	relayWarn("reading", <-chRecv)
+}
+
+// relayWarn reports a relay error when running in debug mode.
+func relayWarn(action string, err error) {
+	if daemon.Debug && err != nil {
+		fmt.Printf("Warning: Error while %s data: %v\n", action, err)
+	}
 }
 
 func unixRelayer(src *net.UnixConn, dst *net.UnixConn, ch chan error) {
@@ -941,22 +944,17 @@ func unixRelay(dst io.ReadWriteCloser, src io.ReadWriteCloser) {
 
 	select {
 	case errSnd := <-chSend:
-		if daemon.Debug && errSnd != nil {
-			fmt.Printf("Warning: Error while sending data: %v\n", errSnd)
-		}
-
+		relayWarn("sending", errSnd)
 	case errRcv := <-chRecv:
-		if daemon.Debug && errRcv != nil {
-			fmt.Printf("Warning: Error while reading data: %v\n", errRcv)
-		}
+		relayWarn("reading", errRcv)
 	}
 
 	_ = src.Close()
 	_ = dst.Close()
 
 	// Empty the channels
-	<-chSend
-	<-chRecv
+	relayWarn("sending", <-chSend)
+	relayWarn("reading", <-chRecv)
 }
 
 func tryListen(protocol string, addr string) (net.Listener, error) {
