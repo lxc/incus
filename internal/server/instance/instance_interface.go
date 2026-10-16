@@ -136,7 +136,7 @@ type Instance interface {
 	PortForwardConn(address string, port int) (net.Conn, error)
 
 	// Console - Allocate and run a console tty or a spice Unix socket.
-	Console(protocol string) (*os.File, chan error, error)
+	Console(protocol string) (*os.File, chan struct{}, error)
 	Exec(req api.InstanceExecPost, stdin *os.File, stdout *os.File, stderr *os.File) (Cmd, error)
 
 	// Status

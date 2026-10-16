@@ -191,15 +191,15 @@ func (s *consoleWs) connectVGA(r *http.Request, w http.ResponseWriter) error {
 		go func() {
 			l := logger.AddContext(logger.Ctx{"address": conn.RemoteAddr().String()})
 
-			defer l.Debug("Finished mirroring websocket to console")
-
 			l.Debug("Started mirroring websocket")
 			readDone, writeDone := ws.Mirror(conn, console)
 
-			<-readDone
-			l.Debug("Finished mirroring console to websocket")
+			readErr := <-readDone
+			l.Debug("Finished mirroring console to websocket", logger.Ctx{"err": readErr})
 			_ = conn.Close()
-			<-writeDone
+
+			writeErr := <-writeDone
+			l.Debug("Finished mirroring websocket to console", logger.Ctx{"err": writeErr})
 			close(consoleDisconnectCh)
 		}()
 
@@ -334,15 +334,16 @@ func (s *consoleWs) doConsole() error {
 		s.connsLock.Unlock()
 
 		l := logger.AddContext(logger.Ctx{"address": conn.RemoteAddr().String()})
-		defer l.Debug("Finished mirroring websocket to console")
 
 		l.Debug("Started mirroring websocket")
 		readDone, writeDone := ws.Mirror(conn, console)
 
-		<-readDone
-		l.Debug("Finished mirroring console to websocket")
+		readErr := <-readDone
+		l.Debug("Finished mirroring console to websocket", logger.Ctx{"err": readErr})
 		_ = conn.Close()
-		<-writeDone
+
+		writeErr := <-writeDone
+		l.Debug("Finished mirroring websocket to console", logger.Ctx{"err": writeErr})
 		close(mirrorDoneCh)
 	}()
 

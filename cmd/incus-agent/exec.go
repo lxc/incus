@@ -401,7 +401,6 @@ func (s *execWs) Do(op *operations.Operation) error {
 	if s.interactive {
 		wgEOF.Go(func() {
 			l.Debug("Exec mirror websocket started", logger.Ctx{"number": 0})
-			defer l.Debug("Exec mirror websocket finished", logger.Ctx{"number": 0})
 
 			s.connsLock.Lock()
 			conn := s.conns[0]
@@ -409,30 +408,35 @@ func (s *execWs) Do(op *operations.Operation) error {
 
 			readDone, writeDone := ws.Mirror(conn, osExecWrapper(waitAttachedChildIsDead, ptys[0]))
 
-			<-readDone
-			<-writeDone
+			readErr := <-readDone
+			writeErr := <-writeDone
 			_ = conn.Close()
+
+			l.Debug("Exec mirror websocket finished", logger.Ctx{"number": 0, "readErr": readErr, "writeErr": writeErr})
 		})
 	} else {
 		wgEOF.Add(len(ttys) - 1)
 		for i := range ttys {
 			go func(i int) {
+				var err error
 				l.Debug("Exec mirror websocket started", logger.Ctx{"number": i})
-				defer l.Debug("Exec mirror websocket finished", logger.Ctx{"number": i})
+				defer func() {
+					l.Debug("Exec mirror websocket finished", logger.Ctx{"number": i, "err": err})
+				}()
 
 				if i == 0 {
 					s.connsLock.Lock()
 					conn := s.conns[i]
 					s.connsLock.Unlock()
 
-					<-ws.MirrorWrite(conn, ttys[i])
+					err = <-ws.MirrorWrite(conn, ttys[i])
 					_ = ttys[i].Close()
 				} else {
 					s.connsLock.Lock()
 					conn := s.conns[i]
 					s.connsLock.Unlock()
 
-					<-ws.MirrorRead(conn, ptys[i])
+					err = <-ws.MirrorRead(conn, ptys[i])
 					_ = ptys[i].Close()
 					wgEOF.Done()
 				}
