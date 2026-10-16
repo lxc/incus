@@ -1230,15 +1230,6 @@ func (d *linstor) getSnapshots(resourceDefinitionName string) ([]linstorClient.S
 // rsyncMigrationType returns the migration types to use for a given content type.
 func (d *linstor) rsyncMigrationType(contentType ContentType) localMigration.Type {
 	var rsyncTransportType migration.MigrationFSType
-	var rsyncFeatures []string
-
-	// Do not pass compression argument to rsync if the associated
-	// config key, that is rsync.compression, is set to false.
-	if util.IsFalse(d.Config()["rsync.compression"]) {
-		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
-	} else {
-		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
-	}
 
 	if IsContentBlock(contentType) {
 		rsyncTransportType = migration.MigrationFSType_BLOCK_AND_RSYNC
@@ -1248,7 +1239,7 @@ func (d *linstor) rsyncMigrationType(contentType ContentType) localMigration.Typ
 
 	return localMigration.Type{
 		FSType:   rsyncTransportType,
-		Features: rsyncFeatures,
+		Features: genericVFSMigrationFeatures(d.Config(), rsyncTransportType),
 	}
 }
 

@@ -157,6 +157,21 @@ func genericVFSRenameVolumeSnapshot(d Driver, snapVol Volume, newSnapshotName st
 	return nil
 }
 
+// genericVFSMigrationFeatures returns the features to offer for the rsync and block transports.
+func genericVFSMigrationFeatures(config map[string]string, fsType migration.MigrationFSType) []string {
+	// Don't offer any compression if rsync.compression is set to false.
+	if util.IsFalse(config["rsync.compression"]) {
+		return []string{"xattrs", "delete", "bidirectional"}
+	}
+
+	features := []string{"xattrs", "delete", "compress", "bidirectional"}
+	if fsType == migration.MigrationFSType_BLOCK_AND_RSYNC {
+		features = append(features, migration.BlockFeatureCompress)
+	}
+
+	return features
+}
+
 // genericVFSMigrateVolume is a generic MigrateVolume implementation for VFS-only drivers.
 func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	bwlimit := d.Config()["rsync.bwlimit"]
