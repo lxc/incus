@@ -67,3 +67,17 @@ func MirrorWrite(conn *websocket.Conn, wc io.Writer) chan error {
 
 	return chDone
 }
+
+// MirrorDone returns a channel that closes once the mirror behind ch has finished, its error being logged by the mirror.
+func MirrorDone(ch chan error) <-chan struct{} {
+	chDone := make(chan struct{})
+
+	go func() {
+		for range ch {
+		}
+
+		close(chDone)
+	}()
+
+	return chDone
+}
