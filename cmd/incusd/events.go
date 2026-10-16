@@ -23,7 +23,7 @@ import (
 
 var (
 	eventTypes           = []string{api.EventTypeLogging, api.EventTypeOperation, api.EventTypeLifecycle, api.EventTypeNetworkACL}
-	privilegedEventTypes = []string{api.EventTypeLogging}
+	privilegedEventTypes = []string{api.EventTypeLogging, api.EventTypeNetworkACL}
 )
 
 var eventsCmd = APIEndpoint{
@@ -103,8 +103,12 @@ func eventsSocket(s *state.State, r *http.Request, w http.ResponseWriter) error 
 		}
 	}
 
-	if slices.Contains(types, api.EventTypeLogging) && !canViewPrivilegedEvents {
-		return api.StatusErrorf(http.StatusForbidden, "Forbidden")
+	if !canViewPrivilegedEvents {
+		for _, entry := range types {
+			if slices.Contains(privilegedEventTypes, entry) {
+				return api.StatusErrorf(http.StatusForbidden, "Forbidden")
+			}
+		}
 	}
 
 	l := logger.AddContext(logger.Ctx{"remote": r.RemoteAddr})
