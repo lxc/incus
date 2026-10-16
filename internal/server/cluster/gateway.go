@@ -1175,8 +1175,8 @@ func cowsqlProxy(name string, stopCh chan struct{}, remote net.Conn, local net.C
 		}
 	}
 
-	remoteToLocal := make(chan error)
-	localToRemote := make(chan error)
+	remoteToLocal := make(chan error, 1)
+	localToRemote := make(chan error, 1)
 
 	// Start copying data back and forth until either the client or the
 	// server get closed or hit an error.
@@ -1197,8 +1197,6 @@ func cowsqlProxy(name string, stopCh chan struct{}, remote net.Conn, local net.C
 		// Force closing, ignore errors.
 		_ = remote.Close()
 		_ = local.Close()
-		<-remoteToLocal
-		<-localToRemote
 	case err := <-remoteToLocal:
 		if err != nil {
 			errs[0] = fmt.Errorf("remote -> local: %w", err)
