@@ -570,7 +570,7 @@ func instancesShutdown(ctx context.Context, instances []instance.Instance, force
 					default:
 						err := inst.Shutdown(time.Second * time.Duration(timeoutSeconds))
 						if err != nil {
-							logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
+							logger.Warn("Failed shutting down instance, forcefully stopping", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": time.Duration(timeoutSeconds) * time.Second, "err": err})
 							err = inst.Stop(false)
 							if err != nil {
 								logger.Warn("Failed forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "err": err})
@@ -583,7 +583,7 @@ func instancesShutdown(ctx context.Context, instances []instance.Instance, force
 				select {
 				case <-done:
 				case <-time.After(time.Second*time.Duration(timeoutSeconds) + forceTimeout):
-					logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
+					logger.Error("Timed out stopping instance, forcefully stopping it", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name(), "timeout": time.Duration(timeoutSeconds) * time.Second})
 					forced = true
 				case <-forceCh:
 					logger.Warn("Forced shutdown, forcefully stopping instance", logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
