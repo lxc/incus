@@ -108,6 +108,11 @@ var devIncusImageExport = devIncusHandler{"/1.0/images/{fingerprint}/export", fu
 	// Use by security checks to distinguish /dev/incus vs REST APs
 	r.RemoteAddr = "@dev_incus"
 
+	// Pin the project to the instance's own so the guest can't export other projects' images.
+	query := r.URL.Query()
+	query.Set("project", c.Project().Name)
+	r.URL.RawQuery = query.Encode()
+
 	resp := imageExport(d, r)
 
 	err := resp.Render(w)
