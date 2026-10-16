@@ -799,6 +799,39 @@ definitions:
         title: DebugKernelModule represents a loaded kernel module.
         type: object
         x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugReport:
+        properties:
+            media_type:
+                type: string
+                x-go-name: MediaType
+            metrics:
+                items:
+                    $ref: '#/definitions/DebugReportMetric'
+                type: array
+                x-go-name: Metrics
+            timestamp:
+                type: string
+                x-go-name: Timestamp
+        title: DebugReport represents a systemd-report report.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
+    DebugReportMetric:
+        properties:
+            fields:
+                additionalProperties: {}
+                type: object
+                x-go-name: Fields
+            name:
+                type: string
+                x-go-name: Name
+            object:
+                type: string
+                x-go-name: Object
+            value:
+                x-go-name: Value
+        title: DebugReportMetric represents a single metric from a systemd-report report.
+        type: object
+        x-go-package: github.com/lxc/incus-os/incus-osd/api
     DevicesMap:
         description: |-
             DevicesMap type is used to hold incus devices configurations. In contrast to
