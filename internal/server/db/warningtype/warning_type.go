@@ -58,6 +58,8 @@ const (
 	UnableToUpdateClusterCertificate
 	// SELinuxNotAvailable represents the SELinux not available warning.
 	SELinuxNotAvailable
+	// InstanceForcedStop represents an instance that had to be forcefully stopped.
+	InstanceForcedStop
 )
 
 // TypeNames associates a warning code to its name.
@@ -87,6 +89,7 @@ var TypeNames = map[Type]string{
 	StoragePoolUnvailable:             "Storage pool unavailable",
 	UnableToUpdateClusterCertificate:  "Unable to update cluster certificate",
 	SELinuxNotAvailable:               "SELinux support has been disabled",
+	InstanceForcedStop:                "Instance forcefully stopped",
 }
 
 // Severity returns the severity of the warning type.
@@ -145,4 +148,9 @@ func (t Type) Severity() Severity {
 	}
 
 	return SeverityLow
+}
+
+// SurvivesRestart returns whether the warning stays relevant across a daemon restart.
+func (t Type) SurvivesRestart() bool {
+	return t == InstanceForcedStop
 }
