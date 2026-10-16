@@ -9367,8 +9367,9 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 	}
 
 	_, volName := project.StorageVolumeParts(vol.Name())
+	parentVolName, _, _ := api.GetParentAndSnapshotName(volName)
 
-	inst, diskName, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, volName, volumeDbType)
+	inst, diskName, err := InstanceByVolumeName(b.state, vol.Pool(), projectName, parentVolName, volumeDbType)
 	if err != nil && !errors.Is(err, ErrVolumeNotAttachedToRunningInstance) {
 		return err
 	}
@@ -9472,6 +9473,40 @@ func (b *backend) qcow2MigrateVolume(s *state.State, vol drivers.Volume, project
 		}
 
 		return nil
+	}
+
+	// Send a snapshot on its own, read through its backing chain.
+	if vol.IsSnapshot() {
+		parentName, _, _ := api.GetParentAndSnapshotName(vol.Name())
+		parentVol := b.GetVolume(vol.Type(), vol.ContentType(), parentName, vol.Config())
+
+		volSnaps, err := VolumeDBSnapshotsGet(b, projectName, parentVolName, vol.Type())
+		if err != nil {
+			return err
+		}
+
+		snapIndex := slices.IndexFunc(volSnaps, func(snap db.StorageVolumeArgs) bool { return snap.Name == volName })
+		if snapIndex < 0 {
+			return fmt.Errorf("Snapshot %q not found", volName)
+		}
+
+		return parentVol.MountWithSnapshotsTask(func(_ string, snapshotMountPaths map[string]string, op *operations.Operation) error {
+			if vol.ContentType() != drivers.ContentTypeBlock || vol.Type() != drivers.VolumeTypeCustom {
+				err := sendFSVol(vol, conn, snapshotMountPaths[vol.Name()])
+				if err != nil {
+					return err
+				}
+			}
+
+			if vol.IsVMBlock() || (vol.ContentType() == drivers.ContentTypeBlock && vol.Type() == drivers.VolumeTypeCustom) {
+				err := sendBlockVol(vol, conn, snapIndex)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}, op)
 	}
 
 	// blockIndex identifies the block device by position rather than name.
