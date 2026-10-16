@@ -2634,6 +2634,15 @@ definitions:
                 x-go-name: Status
             status_code:
                 $ref: '#/definitions/StatusCode'
+            tpm:
+                additionalProperties:
+                    $ref: '#/definitions/InstanceStateTPM'
+                description: |-
+                    TPM devices information.
+
+                    API extension: instances_state_tpm.
+                type: object
+                x-go-name: TPM
         title: InstanceState represents an instance's state.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
@@ -2659,6 +2668,8 @@ definitions:
         x-go-package: github.com/lxc/incus/v7/shared/api
     InstanceStateDisk:
         properties:
+            counters:
+                $ref: '#/definitions/InstanceStateDiskCounters'
             total:
                 description: |-
                     Total size in bytes
@@ -2675,6 +2686,37 @@ definitions:
                 type: integer
                 x-go-name: Usage
         title: InstanceStateDisk represents the disk information section of an instance's state.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
+    InstanceStateDiskCounters:
+        description: |-
+            InstanceStateDiskCounters represents I/O counters as part of the disk section of an
+            instance's state.
+        properties:
+            bytes_read:
+                description: Number of bytes read
+                example: 3567021
+                format: int64
+                type: integer
+                x-go-name: BytesRead
+            bytes_written:
+                description: Number of bytes written
+                example: 1748969
+                format: int64
+                type: integer
+                x-go-name: BytesWritten
+            reads_completed:
+                description: Number of read operations completed
+                example: 3844
+                format: int64
+                type: integer
+                x-go-name: ReadsCompleted
+            writes_completed:
+                description: Number of write operations completed
+                example: 2071
+                format: int64
+                type: integer
+                x-go-name: WritesCompleted
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
     InstanceStateMemory:
@@ -2890,6 +2932,42 @@ definitions:
                 type: integer
                 x-go-name: Timeout
         title: InstanceStatePut represents the modifiable fields of an instance's state.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
+    InstanceStateTPM:
+        properties:
+            endorsement_keys:
+                description: Endorsement keys, when known.
+                items:
+                    $ref: '#/definitions/InstanceStateTPMKey'
+                type: array
+                x-go-name: EndorsementKeys
+        title: InstanceStateTPM represents the state of a TPM device.
+        type: object
+        x-go-package: github.com/lxc/incus/v7/shared/api
+    InstanceStateTPMKey:
+        properties:
+            fingerprint:
+                description: SHA-256 fingerprint of the DER encoded public key.
+                example: 9ba3cb7ba7ac7f6a45cf0d21c8b5ebc0d1f9e1d3d1d7a4e0f1c1e7d1c3a2b5c6
+                type: string
+                x-go-name: Fingerprint
+            public_key:
+                description: PEM encoded public key.
+                type: string
+                x-go-name: PublicKey
+            size:
+                description: Key size in bits.
+                example: 2048
+                format: int64
+                type: integer
+                x-go-name: Size
+            type:
+                description: Key type (`rsa` or `ecc`).
+                example: rsa
+                type: string
+                x-go-name: Type
+        title: InstanceStateTPMKey represents a TPM key.
         type: object
         x-go-package: github.com/lxc/incus/v7/shared/api
     InstanceType:
