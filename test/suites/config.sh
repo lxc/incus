@@ -274,6 +274,38 @@ test_config_profiles() {
     incus delete foo
 }
 
+test_config_device_names() {
+    incus init --empty c1
+
+    # Device names are limited to QEMU identifier characters on all instance types and in profiles.
+    incus config device add c1 "a.b-c_d" none
+    ! incus config device add c1 "a:b" none || false
+    ! incus config device add c1 "a,b" none || false
+    incus profile create p1
+    ! incus profile device add p1 "a:b" none || false
+    incus profile delete p1
+
+    # Volatile keys of a device cover neither the instance itself nor a device extending its name.
+    incus config device add c1 foo none
+    incus config device add c1 foo.bar none
+    incus config device add c1 last_state none
+
+    # A device can't take over the volatile keys of another device though.
+    ! incus config device add c1 foo.last_state none || false
+    ! incus config device add c1 foo.last_state.vf none || false
+    ! incus config device add c1 foo.io none || false
+    incus config device add c1 x.last_state none
+    ! incus config device add c1 x none || false
+    incus config device remove c1 x.last_state
+    incus config set c1 volatile.foo.hwaddr=00:16:3e:11:22:33 volatile.foo.bar.hwaddr=00:16:3e:44:55:66 volatile.last_state.power=STOPPED
+    incus config device remove c1 foo last_state
+    [ "$(incus config get c1 volatile.foo.hwaddr)" = "" ]
+    [ "$(incus config get c1 volatile.foo.bar.hwaddr)" = "00:16:3e:44:55:66" ]
+    [ "$(incus config get c1 volatile.last_state.power)" = "STOPPED" ]
+
+    incus delete -f c1
+}
+
 test_config_edit() {
     if ! tty -s; then
         echo "==> SKIP: test_config_edit requires a terminal"
