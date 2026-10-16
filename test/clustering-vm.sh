@@ -263,6 +263,48 @@ check_vm v1 "$(member 2)"
 incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 1)"
 check_vm v1 "$(member 1)"
 
+log "Copy snapshots of a VM with a dependent volume to another member"
+DEP_DISK="/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3"
+incus init "${IMAGE}" "${REMOTE}:v3" --vm -s shared --target "$(member 1)" -d root,size=4GiB
+incus storage volume create "${REMOTE}:shared" vol3 --type=block size=64MiB
+incus config device add "${REMOTE}:v3" vol3 disk pool=shared source=vol3 dependent=true
+incus start "${REMOTE}:v3"
+incus wait "${REMOTE}:v3" agent --timeout=600 --interval=2
+incus exec "${REMOTE}:v3" -- sh -c "for _ in \$(seq 60); do [ -e ${DEP_DISK} ] && exit 0; sleep 1; done; exit 1"
+
+for snap in s1 s2; do
+    incus exec "${REMOTE}:v3" -- sh -c "echo ${snap} > /root/marker && echo ${snap} | dd of=${DEP_DISK} conv=notrunc,fsync status=none && sync"
+    incus snapshot create "${REMOTE}:v3" "${snap}"
+done
+
+incus exec "${REMOTE}:v3" -- sh -c "echo hd > /root/marker && echo hd | dd of=${DEP_DISK} conv=notrunc,fsync status=none && sync"
+
+# check_copy checks the dependent volume of a copy holds the given snapshot's data.
+check_copy() {
+    incus exec "$(member 2)" -- head -c 2 "/var/lib/incus/storage-pools/local/custom/default_vol3-${1}/root.img" | grep -Fx "${2}"
+}
+
+# check_copy_root checks the root disk of a copy holds the given snapshot's data.
+check_copy_root() {
+    incus start "${REMOTE}:${1}"
+    incus wait "${REMOTE}:${1}" agent --timeout=600 --interval=2
+    incus exec "${REMOTE}:${1}" -- cat /root/marker | grep -Fx "${2}"
+    incus stop -f "${REMOTE}:${1}"
+}
+
+incus copy "${REMOTE}:v3/s1" "${REMOTE}:v4" -s local --target "$(member 2)" -d vol3,pool=local -d vol3,source=vol3-v4
+incus copy "${REMOTE}:v3/s2" "${REMOTE}:v5" -s local --target "$(member 2)" -d vol3,pool=local -d vol3,source=vol3-v5
+check_copy v4 s1
+check_copy v5 s2
+check_copy_root v5 s2
+
+incus stop -f "${REMOTE}:v3"
+incus copy "${REMOTE}:v3/s1" "${REMOTE}:v6" -s local --target "$(member 2)" -d vol3,pool=local -d vol3,source=vol3-v6
+check_copy v6 s1
+check_copy_root v6 s1
+
+incus delete -f "${REMOTE}:v3" "${REMOTE}:v4" "${REMOTE}:v5" "${REMOTE}:v6"
+
 log "Heal the cluster after losing a member"
 incus config set "${REMOTE}:" cluster.offline_threshold=11 cluster.healing_threshold=15
 incus move "${REMOTE}:v2" "${REMOTE}:v2" --target "$(member 2)"
