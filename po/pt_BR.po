@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lxd\n"
 "Report-Msgid-Bugs-To: lxc-devel@lists.linuxcontainers.org\n"
-"POT-Creation-Date: 2026-10-13 22:58-0400\n"
+"POT-Creation-Date: 2026-10-16 03:31-0400\n"
 "PO-Revision-Date: 2026-04-21 03:00+0000\n"
 "Last-Translator: Kazantsev Mikhail <kazan417@mail.ru>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
@@ -2056,8 +2056,11 @@ msgid "Create a dirty bitmap on a virtual machine"
 msgstr "Copiar a imagem: %s"
 
 #: cmd/incus/low_level.go:107
-msgid "Create a dirty bitmap on all the disks of a running virtual machine"
-msgstr ""
+#, fuzzy
+msgid ""
+"Create a dirty bitmap on the root and dependent disks of a running virtual "
+"machine"
+msgstr "Copiar a imagem: %s"
 
 #: cmd/incus/admin_init_interactive.go:385
 #, fuzzy, c-format
@@ -6353,16 +6356,16 @@ msgstr "Apagar nomes alternativos da imagem"
 
 #: cmd/incus/low_level.go:272
 #, fuzzy
-msgid "NBD access to all of a virtual machine's disks"
+msgid "NBD access to a virtual machine's root and dependent disks"
 msgstr "Apagar nomes alternativos da imagem"
 
 #: cmd/incus/low_level.go:273
 msgid ""
-"NBD access to all of a virtual machine's disks\n"
+"NBD access to a virtual machine's root and dependent disks\n"
 "\n"
-"This exposes all the disks of a running virtual machine over a local NBD\n"
-"server, with each disk reachable as an NBD export named after its Incus\n"
-"device name."
+"This exposes the root and dependent disks of a running virtual machine over\n"
+"a local NBD server, with each disk reachable as an NBD export named after\n"
+"its Incus device name."
 msgstr ""
 
 #: cmd/incus/low_level.go:342 cmd/incus/storage_volume.go:2678
