@@ -1,5 +1,9 @@
 package bgp
 
+import (
+	"fmt"
+)
+
 // DebugInfo represents the internal debug state of the BGP server.
 type DebugInfo struct {
 	Server   DebugInfoServer   `json:"server" yaml:"server"`
@@ -17,9 +21,10 @@ type DebugInfoServer struct {
 
 // DebugInfoPrefix exposes details on a single BGP prefix.
 type DebugInfoPrefix struct {
-	Owner   string `json:"owner" yaml:"owner"`
-	Prefix  string `json:"prefix" yaml:"prefix"`
-	Nexthop string `json:"nexthop" yaml:"nexthop"`
+	Owner       string   `json:"owner" yaml:"owner"`
+	Prefix      string   `json:"prefix" yaml:"prefix"`
+	Nexthop     string   `json:"nexthop" yaml:"nexthop"`
+	Communities []string `json:"communities" yaml:"communities"`
 }
 
 // DebugInfoPeer exposes details on a single BGP peer.
@@ -74,6 +79,11 @@ func (s *Server) debug() DebugInfo {
 		entry.Prefix = path.prefix.String()
 		entry.Owner = path.owner
 		entry.Nexthop = path.nexthop.String()
+
+		entry.Communities = []string{}
+		for _, community := range path.communities {
+			entry.Communities = append(entry.Communities, fmt.Sprintf("%d:%d", community>>16, community&0xffff))
+		}
 
 		debug.Prefixes = append(debug.Prefixes, entry)
 	}

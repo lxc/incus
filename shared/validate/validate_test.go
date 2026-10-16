@@ -140,3 +140,32 @@ func ExampleIsValidCPUSet() {
 	// Cannot define CPU multiple times
 	// Cannot define CPU multiple times
 }
+
+func ExampleIsBGPCommunity() {
+	tests := []string{
+		"65000:100",   // valid
+		"0:0",         // valid
+		"65535:65535", // valid
+		"65000",       // missing value
+		"70000:1",     // ASN too large
+		"1:70000",     // value too large
+		"a:b",
+		"no-export",
+		"",
+	}
+
+	for _, v := range tests {
+		err := validate.IsBGPCommunity(v)
+		fmt.Printf("%s, %t\n", v, err == nil)
+	}
+
+	// Output: 65000:100, true
+	// 0:0, true
+	// 65535:65535, true
+	// 65000, false
+	// 70000:1, false
+	// 1:70000, false
+	// a:b, false
+	// no-export, false
+	// , false
+}

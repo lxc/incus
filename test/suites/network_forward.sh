@@ -32,6 +32,23 @@ test_network_forward() {
     # Check deleting network forward removes forward BGP prefix.
     ! incus query /internal/debug/bgp | grep "198.51.100.1/32" || false
 
+    # Check invalid BGP communities are rejected.
+    for community in invalid 65000 70000:1 1:70000 no-export; do
+        ! incus network set "${netName}" bgp.communities="${community}" || false
+    done
+
+    # Check communities are attached to exported prefixes.
+    incus network set "${netName}" bgp.communities=65000:100,65000:200
+    incus network forward create "${netName}" 198.51.100.1
+    incus query /internal/debug/bgp | jq -e '.prefixes[] | select(.prefix == "198.51.100.1/32") | .communities == ["65000:100", "65000:200"]'
+    incus network forward delete "${netName}" 198.51.100.1
+
+    # Check prefixes exported without communities don't carry any.
+    incus network unset "${netName}" bgp.communities
+    incus network forward create "${netName}" 198.51.100.1
+    incus query /internal/debug/bgp | jq -e '.prefixes[] | select(.prefix == "198.51.100.1/32") | .communities == []'
+    incus network forward delete "${netName}" 198.51.100.1
+
     # Check creating forward with default target creates valid firewall rules.
     incus network forward create "${netName}" 198.51.100.1 target_address=192.0.2.2
     nft -nn list chain inet incus "fwdprert.${netName}" | grep "ip daddr 198.51.100.1 dnat ip to 192.0.2.2"
