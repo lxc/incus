@@ -41,7 +41,7 @@ import (
 )
 
 type (
-	evacuateStopFunc    func(inst instance.Instance, action string) error
+	evacuateStopFunc    func(s *state.State, inst instance.Instance, action string) error
 	evacuateMigrateFunc func(ctx context.Context, s *state.State, inst instance.Instance, sourceMemberInfo *db.NodeInfo, targetMemberInfo *db.NodeInfo, action string, startInstance bool, op *operations.Operation) error
 )
 
@@ -142,7 +142,7 @@ func evacuateClusterSetState(s *state.State, name string, newState int) error {
 	})
 }
 
-func evacuateStopInstance(inst instance.Instance, action string) error {
+func evacuateStopInstance(s *state.State, inst instance.Instance, action string) error {
 	l := logger.AddContext(logger.Ctx{"project": inst.Project().Name, "instance": inst.Name()})
 
 	switch action {
@@ -162,7 +162,7 @@ func evacuateStopInstance(inst instance.Instance, action string) error {
 
 	default:
 		// Clean shutdown, falling back to a forced stop.
-		err := instanceShutdownOrForceStop(inst)
+		err := instanceShutdownOrForceStop(s, inst, "evacuation")
 		if err != nil {
 			return err
 		}
@@ -434,7 +434,7 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 		if opts.stopInstance != nil && isRunning {
 			_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
 
-			err := opts.stopInstance(inst, action)
+			err := opts.stopInstance(opts.s, inst, action)
 			if err != nil {
 				return err
 			}
@@ -459,7 +459,7 @@ func evacuateInstancesFunc(ctx context.Context, inst instance.Instance, opts eva
 			if opts.stopInstance != nil && isRunning {
 				_ = opts.op.ExtendMetadata(map[string]any{"evacuation_progress": fmt.Sprintf("Stopping %q in project %q", inst.Name(), instProject.Name)})
 
-				return opts.stopInstance(inst, "")
+				return opts.stopInstance(opts.s, inst, "")
 			}
 
 			return nil
@@ -703,7 +703,8 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 		// Wait for the stop operation to complete or timeout.
 		err = stopOp.Wait()
 		if err != nil {
-			l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"err": err})
+			l.Warn("Failed shutting down instance, forcing stop", logger.Ctx{"timeout": time.Duration(val) * time.Second, "err": err})
+			instanceForcedStopWarn(s, inst, fmt.Sprintf("Didn't shut down within %s during cluster member restore", time.Duration(val)*time.Second))
 
 			// On failure, attempt a forceful stop.
 			stopOp, err = source.UpdateInstanceState(inst.Name(), api.InstanceStatePut{Action: "stop", Force: true}, "")
@@ -717,6 +718,8 @@ func restoreClusterMemberFunc(inst instance.Instance, op *operations.Operation, 
 			if err != nil && !strings.Contains(err.Error(), "The instance is already stopped") {
 				return fmt.Errorf("Failed to stop instance %q: %w", inst.Name(), err)
 			}
+		} else {
+			instanceForcedStopResolve(s, inst)
 		}
 	}
 

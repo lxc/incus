@@ -1027,7 +1027,7 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 				return err
 			}
 
-			err = instanceShutdownOrForceStop(inst)
+			err = instanceShutdownOrForceStop(s, inst, "cluster move")
 			if err != nil {
 				return err
 			}
