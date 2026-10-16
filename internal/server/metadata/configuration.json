@@ -62,10 +62,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`0`",
 							"longdesc": "",
 							"required": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -626,10 +627,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1093,10 +1095,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1210,10 +1213,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1468,6 +1472,33 @@
 						}
 					},
 					{
+						"security.ipv4_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's IPv4 address (enables `security.mac_filtering`)",
+							"type": "bool"
+						}
+					},
+					{
+						"security.ipv6_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's IPv6 address (enables `security.mac_filtering`)",
+							"type": "bool"
+						}
+					},
+					{
+						"security.mac_filtering": {
+							"default": "false",
+							"longdesc": "",
+							"managed": "no",
+							"shortdesc": "Prevent the instance from spoofing another instance's MAC address",
+							"type": "bool"
+						}
+					},
+					{
 						"security.promiscuous": {
 							"default": "false",
 							"longdesc": "",
@@ -1499,9 +1530,10 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -1680,10 +1712,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -2069,10 +2102,11 @@
 					},
 					{
 						"boot.priority": {
+							"default": "`skip`",
 							"longdesc": "",
 							"managed": "no",
-							"shortdesc": "Boot priority for VMs (higher value boots first)",
-							"type": "integer"
+							"shortdesc": "Boot priority for VMs (higher value boots first), `skip` to skip",
+							"type": "string"
 						}
 					},
 					{
@@ -2623,6 +2657,15 @@
 							"longdesc": "Number of seconds to wait for the instance to shut down before it is force-stopped.",
 							"shortdesc": "How long to wait for the instance to shut down",
 							"type": "integer"
+						}
+					},
+					{
+						"boot.pxe": {
+							"defaultdesc": "no",
+							"liveupdate": "yes",
+							"longdesc": "",
+							"shortdesc": "Whether to enable PXE boot",
+							"type": "bool"
 						}
 					},
 					{
@@ -5127,7 +5170,7 @@
 						"ipv4.nat.address": {
 							"condition": "IPv4 address",
 							"longdesc": "",
-							"shortdesc": "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)",
+							"shortdesc": "The source address used for outbound traffic from the network",
 							"type": "string"
 						}
 					},
@@ -5180,7 +5223,7 @@
 						"ipv6.nat.address": {
 							"condition": "IPv6 address",
 							"longdesc": "",
-							"shortdesc": "The source address used for outbound traffic from the network (requires uplink `ovn.ingress_mode=routed`)",
+							"shortdesc": "The source address used for outbound traffic from the network",
 							"type": "string"
 						}
 					},
@@ -6968,7 +7011,7 @@
 				"keys": [
 					{
 						"oidc.audience": {
-							"longdesc": "This value is required by some providers.",
+							"longdesc": "This value is required by some providers.\nOpaque access tokens are rejected when set as the audience can't be verified on those.",
 							"scope": "global",
 							"shortdesc": "Expected audience value for the application",
 							"type": "string"
@@ -6976,7 +7019,7 @@
 					},
 					{
 						"oidc.claim": {
-							"longdesc": "Note that the claim must be contained in the access token.",
+							"longdesc": "Note that the claim must be contained in the access token or, for opaque access tokens, in the ID token.",
 							"scope": "global",
 							"shortdesc": "OpenID Connect claim to use as the username",
 							"type": "string"
