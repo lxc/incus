@@ -70,6 +70,10 @@ message btrfsFeatures {
 	optional bool       	header_subvolume_uuids = 3;
 }
 
+message blockFeatures {
+	optional bool		compress = 1;
+}
+
 message DependentVolume {
 	required string			name		= 1;
 	required string			pool		= 2;
@@ -81,6 +85,7 @@ message DependentVolume {
 	optional int64			volumeSize	= 8;
 	repeated Snapshot               snapshots	= 9;
 	optional string			deviceName	= 10;
+	optional blockFeatures		blockFeatures	= 11;
 }
 
 message MigrationHeader {
@@ -97,6 +102,7 @@ message MigrationHeader {
 	optional btrfsFeatures			btrfsFeatures 		= 12;
 	optional uint32				indexHeaderVersion	= 13;
 	repeated DependentVolume		dependentVolumes        = 14;
+	optional blockFeatures			blockFeatures		= 15;
 }
 
 message MigrationControl {
