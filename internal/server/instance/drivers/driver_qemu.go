@@ -10599,7 +10599,7 @@ func (d *qemu) PortForwardConn(address string, port int) (net.Conn, error) {
 }
 
 // Console gets access to the instance's console.
-func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
+func (d *qemu) Console(protocol string) (*os.File, chan struct{}, error) {
 	var path string
 	switch protocol {
 	case instance.ConsoleTypeConsole:
@@ -10636,7 +10636,7 @@ func (d *qemu) Console(protocol string) (*os.File, chan error, error) {
 	}
 
 	// Disconnection notification.
-	chDisconnect := make(chan error, 1)
+	chDisconnect := make(chan struct{})
 
 	// Open the console socket.
 	conn, err := linux.DialUnix(path)
