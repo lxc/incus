@@ -572,6 +572,23 @@ migration() {
     incus_remote storage volume delete l1:dir vol1
     incus_remote storage delete l1:dir
 
+    # Copying from a snapshot takes the dependent volume from the matching snapshot
+    incus_remote init testimage l1:c1
+    incus_remote storage volume create l1:"$remote_pool1" vol4
+    incus_remote config device add l1:c1 vol4 disk pool="$remote_pool1" source=vol4 path=/mnt/vol4 dependent=true
+    incus_remote start l1:c1
+    INC_LOCAL='' incus_remote exec l1:c1 -- sh -c 'echo before > /root/f; echo before > /mnt/vol4/f'
+    incus_remote stop l1:c1
+    incus_remote snapshot create l1:c1 snap0
+    incus_remote start l1:c1
+    INC_LOCAL='' incus_remote exec l1:c1 -- sh -c 'echo after > /root/f; echo after > /mnt/vol4/f'
+    incus_remote copy l1:c1/snap0 l2:c2 -s "$remote_pool2" -d vol4,pool="$remote_pool2" -d vol4,source=vol4-copy
+    incus_remote start l2:c2
+    [ "$(INC_LOCAL='' incus_remote exec l2:c2 -- cat /root/f)" = "before" ]
+    [ "$(INC_LOCAL='' incus_remote exec l2:c2 -- cat /mnt/vol4/f)" = "before" ]
+    incus_remote delete l1:c1 -f
+    incus_remote delete l2:c2 -f
+
     # Test optimized refresh
     incus_remote init testimage l1:c1
     echo test | incus_remote file push - l1:c1/tmp/foo
