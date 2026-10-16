@@ -258,6 +258,7 @@ run_standalone_core() {
     run_test test_tls_jwt "JWT authentication"
     run_test test_tls_restrictions "TLS restrictions"
     run_test test_warnings "Warnings"
+    run_test test_warnings_forced_stop "Warnings on forced stops"
 }
 
 # Tests related to storage and storage drivers (will be run on all drivers).

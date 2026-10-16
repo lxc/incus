@@ -65,3 +65,35 @@ test_warnings() {
     ! incus warning list | grep -q "${uuid}" || false
     ! incus warning show "${uuid}" || false
 }
+
+test_warnings_forced_stop() {
+    ensure_import_testimage
+
+    # A halt signal the busybox init ignores, so the clean shutdown always times out.
+    incus launch testimage wfs -c boot.host_shutdown_timeout=1 -c raw.lxc=lxc.signal.halt=SIGXCPU
+
+    shutdown_incus "${INCUS_DIR}"
+    respawn_incus "${INCUS_DIR}" true
+
+    # The forced stop is recorded and survives the restart.
+    incus warning list --format json | jq -e '.[] | select(.type == "Instance forcefully stopped" and .entity_url == "/1.0/instances/wfs" and .status == "new") | .last_message | contains("server shutdown")'
+
+    # The warning follows a rename.
+    incus stop -f wfs
+    incus rename wfs wfs2
+    incus warning list --format json | jq -e '.[] | select(.type == "Instance forcefully stopped" and .entity_url == "/1.0/instances/wfs2")'
+
+    # A clean shutdown resolves it.
+    incus config unset wfs2 raw.lxc
+    incus config set wfs2 boot.host_shutdown_timeout=10
+    incus start wfs2
+
+    shutdown_incus "${INCUS_DIR}"
+    respawn_incus "${INCUS_DIR}" true
+
+    incus warning list --all --format json | jq -e '.[] | select(.type == "Instance forcefully stopped" and .entity_url == "/1.0/instances/wfs2" and .status == "resolved")'
+
+    # Deleting the instance removes it.
+    incus delete -f wfs2
+    [ "$(incus warning list --all --format json | jq '[.[] | select(.type == "Instance forcefully stopped")] | length')" -eq 0 ]
+}
