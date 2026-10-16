@@ -3806,6 +3806,15 @@ User keys can be used in search.
 
 <!-- config group network_bridge-bgp end -->
 <!-- config group network_bridge-common start -->
+```{config:option} bgp.communities network_bridge-common
+:condition: "BGP server"
+:default: "-"
+:scope: "global"
+:shortdesc: "Comma-separated BGP communities to attach to advertised prefixes"
+:type: "string"
+
+```
+
 ```{config:option} bgp.ipv4.instances network_bridge-common
 :condition: "BGP server"
 :default: "`false`"
@@ -4425,6 +4434,14 @@ User keys can be used in search.
 
 <!-- config group network_macvlan-common end -->
 <!-- config group network_ovn-common start -->
+```{config:option} bgp.communities network_ovn-common
+:condition: "BGP server"
+:default: "-"
+:shortdesc: "Comma-separated BGP communities to attach to advertised prefixes"
+:type: "string"
+
+```
+
 ```{config:option} bridge.external_interfaces network_ovn-common
 :scope: "local"
 :shortdesc: "Comma-separated list of unconfigured network interfaces to include in the bridge"

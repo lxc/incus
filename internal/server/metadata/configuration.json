@@ -4227,6 +4227,16 @@
 			"common": {
 				"keys": [
 					{
+						"bgp.communities": {
+							"condition": "BGP server",
+							"default": "-",
+							"longdesc": "",
+							"scope": "global",
+							"shortdesc": "Comma-separated BGP communities to attach to advertised prefixes",
+							"type": "string"
+						}
+					},
+					{
 						"bgp.ipv4.instances": {
 							"condition": "BGP server",
 							"default": "`false`",
@@ -4941,6 +4951,15 @@
 		"network_ovn": {
 			"common": {
 				"keys": [
+					{
+						"bgp.communities": {
+							"condition": "BGP server",
+							"default": "-",
+							"longdesc": "",
+							"shortdesc": "Comma-separated BGP communities to attach to advertised prefixes",
+							"type": "string"
+						}
+					},
 					{
 						"bridge.external_interfaces": {
 							"longdesc": "",
