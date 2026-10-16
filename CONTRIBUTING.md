@@ -129,6 +129,13 @@ When updating API (`shared/api`), you may need a commit to update the swagger YA
     make update-api
     git commit -s -m "doc/rest-api: Refresh swagger YAML" doc/rest-api.yaml
 
+When adding or changing configuration options (documented through `gendoc:generate` comments), you may need a commit to update the generated metadata:
+
+    make update-metadata
+    git commit -s -m "doc: Update configs" doc/config_options.txt internal/server/metadata/configuration.json
+
+The generated files must not be mixed into the commit that changes the code.
+
 This structure makes it easier for contributions to be reviewed and also
 greatly simplifies the process of back-porting fixes to stable branches.
 
