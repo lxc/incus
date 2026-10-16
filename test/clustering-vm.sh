@@ -80,7 +80,7 @@ incus storage volume create "${POOL}" "${PREFIX}-shared" --type=block size=20GiB
 log "Launch ${MEMBERS} virtual machines"
 for i in $(seq "${MEMBERS}"); do
     incus init "${IMAGE}" "$(member "${i}")" --vm -c security.nesting=true -c limits.cpu=2 -c limits.memory=4GiB -d root,size=20GiB
-    incus config device add "$(member "${i}")" shared disk pool="${POOL}" source="${PREFIX}-shared"
+    incus config device add "$(member "${i}")" shared disk pool="${POOL}" source="${PREFIX}-shared" io.cache=writeback
     incus start "$(member "${i}")"
 done
 
