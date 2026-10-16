@@ -507,6 +507,26 @@ func IsNetworkMTU(value string) error {
 	return nil
 }
 
+// IsBGPCommunity validates whether the string is a standard BGP community (ASN:value).
+func IsBGPCommunity(value string) error {
+	asn, val, found := strings.Cut(value, ":")
+	if !found {
+		return fmt.Errorf("Invalid BGP community %q, expected ASN:value", value)
+	}
+
+	_, err := strconv.ParseUint(asn, 10, 16)
+	if err != nil {
+		return fmt.Errorf("Invalid ASN in BGP community %q: must be between 0 and 65535", value)
+	}
+
+	_, err = strconv.ParseUint(val, 10, 16)
+	if err != nil {
+		return fmt.Errorf("Invalid value in BGP community %q: must be between 0 and 65535", value)
+	}
+
+	return nil
+}
+
 // IsNetworkPort validates an IP port number >= 0 and <= 65535.
 func IsNetworkPort(value string) error {
 	port, err := strconv.ParseUint(value, 10, 32)
