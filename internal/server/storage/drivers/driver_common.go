@@ -229,15 +229,6 @@ func (d *common) updateVolume(vol Volume, changedConfig map[string]string) error
 // in preference order.
 func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	var transportType migration.MigrationFSType
-	var rsyncFeatures []string
-
-	// Do not pass compression argument to rsync if the associated
-	// config key, that is rsync.compression, is set to false.
-	if util.IsFalse(d.Config()["rsync.compression"]) {
-		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
-	} else {
-		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
-	}
 
 	if IsContentBlock(contentType) {
 		transportType = migration.MigrationFSType_BLOCK_AND_RSYNC
@@ -248,7 +239,7 @@ func (d *common) MigrationTypes(contentType ContentType, refresh bool, copySnaps
 	return []localMigration.Type{
 		{
 			FSType:   transportType,
-			Features: rsyncFeatures,
+			Features: genericVFSMigrationFeatures(d.Config(), transportType),
 		},
 	}
 }
