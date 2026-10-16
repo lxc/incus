@@ -487,7 +487,19 @@ func (op *Operation) mayCancel() bool {
 
 // Render renders the operation structure.
 // Returns URL of operation and operation info.
+// connectSecretKeys are the websocket operation metadata keys holding per-connection
+// secrets. They're returned to the operation's creator in the synchronous create
+// response but stripped from every other render, so they're never broadcast on the
+// event stream or exposed through operation queries.
+var connectSecretKeys = []string{api.SecretNameControl, api.SecretNameFilesystem, "fds"}
+
+// Render renders the operation for events and API queries, with any websocket
+// connection secrets removed.
 func (op *Operation) Render() (string, *api.Operation, error) {
+	return op.render(false)
+}
+
+func (op *Operation) render(connectSecrets bool) (string, *api.Operation, error) {
 	// Setup the resource URLs
 	renderedResources := make(map[string][]string)
 	resources := op.resources
@@ -511,6 +523,13 @@ func (op *Operation) Render() (string, *api.Operation, error) {
 	metadata := map[string]any{}
 	for k, v := range op.metadata {
 		metadata[k] = v
+	}
+
+	// Keep websocket connection secrets out of every render but the create response.
+	if !connectSecrets && op.class == OperationClassWebsocket {
+		for _, key := range connectSecretKeys {
+			delete(metadata, key)
+		}
 	}
 
 	// Put together the response struct.
