@@ -549,6 +549,46 @@ func (d *common) StoragePool() (string, error) {
 // SECTION: internal functions
 //
 
+// isInstanceVolatileKey returns whether a key belongs to the instance itself rather than to a device.
+func isInstanceVolatileKey(key string) bool {
+	for _, keys := range []map[string]func(value string) error{internalInstance.InstanceConfigKeysAny, internalInstance.InstanceConfigKeysContainer, internalInstance.InstanceConfigKeysVM} {
+		_, ok := keys[key]
+		if ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+// deviceVolatileKeys returns the volatile keys of the named device, leaving out instance keys and dotted sibling devices.
+func (d *common) deviceVolatileKeys(devName string) []string {
+	prefix := fmt.Sprintf("volatile.%s.", devName)
+
+	// Prefixes of devices whose keys also match, such as eth0.100 for eth0.
+	siblings := []string{}
+	for name := range d.expandedDevices {
+		if strings.HasPrefix(name, devName+".") {
+			siblings = append(siblings, fmt.Sprintf("volatile.%s.", name))
+		}
+	}
+
+	keys := []string{}
+	for k := range d.localConfig {
+		if !strings.HasPrefix(k, prefix) || isInstanceVolatileKey(k) {
+			continue
+		}
+
+		if slices.ContainsFunc(siblings, func(sibling string) bool { return strings.HasPrefix(k, sibling) }) {
+			continue
+		}
+
+		keys = append(keys, k)
+	}
+
+	return keys
+}
+
 // deviceVolatileReset resets a device's volatile data when its removed or updated in such a way
 // that it is removed then added immediately afterwards.
 func (d *common) deviceVolatileReset(devName string, oldConfig, newConfig deviceConfig.Device) error {
@@ -569,11 +609,7 @@ func (d *common) deviceVolatileReset(devName string, oldConfig, newConfig device
 	// This will occur if the newConfig is empty (i.e the device is actually being removed) or
 	// if the device type is being changed but keeping the same name.
 	if newConfig["type"] != oldConfig["type"] || newNICType != oldNICType {
-		for k := range d.localConfig {
-			if !strings.HasPrefix(k, devicePrefix) {
-				continue
-			}
-
+		for _, k := range d.deviceVolatileKeys(devName) {
 			volatileClear[k] = ""
 		}
 
@@ -583,11 +619,7 @@ func (d *common) deviceVolatileReset(devName string, oldConfig, newConfig device
 	// If the device type remains the same, then just remove any volatile keys that have
 	// the same key name present in the new config (i.e the new config is replacing the
 	// old volatile key).
-	for k := range d.localConfig {
-		if !strings.HasPrefix(k, devicePrefix) {
-			continue
-		}
-
+	for _, k := range d.deviceVolatileKeys(devName) {
 		devKey := strings.TrimPrefix(k, devicePrefix)
 		_, found := newConfig[devKey]
 		if found {
@@ -604,12 +636,10 @@ func (d *common) deviceVolatileGetFunc(devName string) func() map[string]string 
 	return func() map[string]string {
 		volatile := make(map[string]string)
 		prefix := fmt.Sprintf("volatile.%s.", devName)
-		for k, v := range d.localConfig {
-			after, ok := strings.CutPrefix(k, prefix)
-			if ok {
-				volatile[after] = v
-			}
+		for _, k := range d.deviceVolatileKeys(devName) {
+			volatile[strings.TrimPrefix(k, prefix)] = d.localConfig[k]
 		}
+
 		return volatile
 	}
 }
