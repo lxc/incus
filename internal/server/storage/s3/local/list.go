@@ -77,6 +77,8 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 		StartAfter: q.Get("start-after"),
 	}
 
+	// Last key returned or folded into a common prefix, where the next page starts after.
+	lastKey := ""
 	seenPrefix := map[string]bool{}
 
 	for _, k := range keys {
@@ -98,7 +100,6 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 					seenPrefix[cp] = true
 					if result.KeyCount >= maxKeys {
 						result.IsTruncated = true
-						result.NextContinuationToken = k
 						break
 					}
 
@@ -106,15 +107,17 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 					result.KeyCount++
 				}
 
+				lastKey = k
 				continue
 			}
 		}
 
 		if result.KeyCount >= maxKeys {
 			result.IsTruncated = true
-			result.NextContinuationToken = k
 			break
 		}
+
+		lastKey = k
 
 		dataPath := filepath.Join(s.dataDir(), k)
 		meta, err := loadOrInferMeta(dataPath)
@@ -132,6 +135,10 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 		})
 
 		result.KeyCount++
+	}
+
+	if result.IsTruncated {
+		result.NextContinuationToken = lastKey
 	}
 
 	body, err := xml.Marshal(result)
