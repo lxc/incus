@@ -2159,8 +2159,9 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 			return "", nil, err
 		}
 
-		// Check if we need to change idmap.
-		if nextMap != nil && d.state.OS.IdmapSet != nil && !d.state.OS.IdmapSet.Includes(nextMap) {
+		// Allocate a map when missing (e.g. after a rebuild of a never-started
+		// instance) or when the current one is outside the host's allowed range.
+		if d.state.OS.IdmapSet != nil && (nextMap == nil || !d.state.OS.IdmapSet.Includes(nextMap)) {
 			// Update the idmap, keeping the allocation locked until it's persisted.
 			err = func() error {
 				idmapLock.Lock()
