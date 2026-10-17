@@ -45,8 +45,9 @@ type Credential struct {
 
 // Server serves S3 requests for a single bucket directory.
 type Server struct {
-	bucketDir string
-	creds     []Credential
+	bucketDir  string
+	bucketName string
+	creds      []Credential
 
 	// OnAuthenticated, if set, is invoked once the request has been
 	// authenticated and authorised, before any data on disk is touched.
@@ -55,7 +56,7 @@ type Server struct {
 	OnAuthenticated func() error
 }
 
-// NewServer returns a Server rooted at bucketDir.
+// NewServer returns a Server rooted at bucketDir serving the bucket named bucketName.
 //
 // bucketDir is the per-bucket directory on the local filesystem. Object data
 // is read from and written to bucketDir/data/. The directory is created on
@@ -63,10 +64,11 @@ type Server struct {
 //
 // creds lists the access-key / secret-key pairs that can authenticate against
 // the bucket. The first matching access key is used for SigV4 verification.
-func NewServer(bucketDir string, creds []Credential) *Server {
+func NewServer(bucketDir string, bucketName string, creds []Credential) *Server {
 	return &Server{
-		bucketDir: bucketDir,
-		creds:     creds,
+		bucketDir:  bucketDir,
+		bucketName: bucketName,
+		creds:      creds,
 	}
 }
 
