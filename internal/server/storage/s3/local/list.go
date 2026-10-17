@@ -13,15 +13,17 @@ import (
 	"github.com/lxc/incus/v7/internal/server/storage/s3"
 )
 
-// listObjectsV2Result is the XML root for ListObjectsV2 responses.
-type listObjectsV2Result struct {
+// listObjectsResult is the XML root for ListObjects and ListObjectsV2 responses.
+type listObjectsResult struct {
 	XMLName               xml.Name              `xml:"ListBucketResult"`
 	Name                  string                `xml:"Name,omitempty"`
 	Prefix                string                `xml:"Prefix"`
 	Delimiter             string                `xml:"Delimiter,omitempty"`
 	MaxKeys               int                   `xml:"MaxKeys"`
-	KeyCount              int                   `xml:"KeyCount"`
+	KeyCount              *int                  `xml:"KeyCount,omitempty"`
 	IsTruncated           bool                  `xml:"IsTruncated"`
+	Marker                string                `xml:"Marker,omitempty"`
+	NextMarker            string                `xml:"NextMarker,omitempty"`
 	NextContinuationToken string                `xml:"NextContinuationToken,omitempty"`
 	StartAfter            string                `xml:"StartAfter,omitempty"`
 	Contents              []listObjectsV2Object `xml:"Contents"`
@@ -40,16 +42,21 @@ type listCommonPrefix struct {
 	Prefix string `xml:"Prefix"`
 }
 
-// listObjects implements ListObjectsV2.
+// listObjects implements ListObjects and ListObjectsV2.
 func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	prefix := q.Get("prefix")
 	delimiter := q.Get("delimiter")
 	startAfter := q.Get("start-after")
+	listV2 := q.Get("list-type") == "2"
 
 	token := q.Get("continuation-token")
 	if token != "" {
 		startAfter = token
+	}
+
+	if !listV2 {
+		startAfter = q.Get("marker")
 	}
 
 	maxKeys := 1000
@@ -70,13 +77,22 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 
 	sort.Strings(keys)
 
-	result := &listObjectsV2Result{
+	result := &listObjectsResult{
+		Name:       s.bucketName,
 		Prefix:     prefix,
 		Delimiter:  delimiter,
 		MaxKeys:    maxKeys,
 		StartAfter: q.Get("start-after"),
 	}
 
+	if !listV2 {
+		result.Marker = startAfter
+		result.StartAfter = ""
+	}
+
+	// Last key returned or folded into a common prefix, where the next page starts after.
+	lastKey := ""
+	keyCount := 0
 	seenPrefix := map[string]bool{}
 
 	for _, k := range keys {
@@ -96,25 +112,26 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 				cp := prefix + rest[:idx+len(delimiter)]
 				if !seenPrefix[cp] {
 					seenPrefix[cp] = true
-					if result.KeyCount >= maxKeys {
+					if keyCount >= maxKeys {
 						result.IsTruncated = true
-						result.NextContinuationToken = k
 						break
 					}
 
 					result.CommonPrefixes = append(result.CommonPrefixes, listCommonPrefix{Prefix: cp})
-					result.KeyCount++
+					keyCount++
 				}
 
+				lastKey = k
 				continue
 			}
 		}
 
-		if result.KeyCount >= maxKeys {
+		if keyCount >= maxKeys {
 			result.IsTruncated = true
-			result.NextContinuationToken = k
 			break
 		}
+
+		lastKey = k
 
 		dataPath := filepath.Join(s.dataDir(), k)
 		meta, err := loadOrInferMeta(dataPath)
@@ -131,7 +148,20 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 			StorageClass: "STANDARD",
 		})
 
-		result.KeyCount++
+		keyCount++
+	}
+
+	// KeyCount only exists in ListObjectsV2.
+	if listV2 {
+		result.KeyCount = &keyCount
+	}
+
+	if result.IsTruncated {
+		if listV2 {
+			result.NextContinuationToken = lastKey
+		} else {
+			result.NextMarker = lastKey
+		}
 	}
 
 	body, err := xml.Marshal(result)
