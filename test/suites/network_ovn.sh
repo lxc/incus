@@ -67,6 +67,19 @@ test_network_ovn_basic() {
     sleep 2
     incus network list | grep ovn-virtual-network
 
+    echo "==> Check the network is still listed when OVN can't be reached"
+    ovnRemote="$(ovs-vsctl get open_vswitch . external_ids:ovn-remote)"
+    ovs-vsctl remove open_vswitch . external_ids ovn-remote
+    shutdown_incus "${INCUS_DIR}"
+    respawn_incus "${INCUS_DIR}" true
+    incus network list -f csv -c ns | grep -xF "ovn-virtual-network,UNAVAILABLE"
+    incus network show ovn-virtual-network | grep -xF "status: Unavailable"
+    ! incus network info ovn-virtual-network || false
+    ovs-vsctl set open_vswitch . external_ids:ovn-remote="${ovnRemote}"
+    shutdown_incus "${INCUS_DIR}"
+    respawn_incus "${INCUS_DIR}" true
+    incus network list -f csv -c ns | grep -xF "ovn-virtual-network,CREATED"
+
     echo "==> Check we can get the network state (MAC address and MTU are reported in network info)"
     incus network info ovn-virtual-network | grep -P 'MAC address: [0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}'
     incus network info ovn-virtual-network | grep -P 'MTU: \d+'
