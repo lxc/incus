@@ -26,6 +26,37 @@ s3cmdrun() {
     fi
 }
 
+s3listkeys() {
+    # shellcheck disable=2039,3043
+    local accessKey secretKey bucket listType nextTag next out
+    accessKey="${1}"
+    secretKey="${2}"
+    bucket="${3}"
+    listType="${4}"
+    nextTag="NextMarker"
+    next=""
+
+    if [ "${listType}" = "2" ]; then
+        nextTag="NextContinuationToken"
+    fi
+
+    # List one key per page, following NextMarker (v1) or NextContinuationToken (v2).
+    for _ in 1 2 3 4 5; do
+        set -- -sS -k -f -G --aws-sigv4 "aws:amz:us-east-1:s3" --user "${accessKey}:${secretKey}" --data-urlencode "prefix=page/" --data-urlencode "max-keys=1"
+        if [ "${listType}" = "2" ]; then
+            set -- "$@" --data-urlencode "list-type=2"
+            [ -z "${next}" ] || set -- "$@" --data-urlencode "continuation-token=${next}"
+        else
+            [ -z "${next}" ] || set -- "$@" --data-urlencode "marker=${next}"
+        fi
+
+        out=$(curl "$@" "${s3Endpoint}/${bucket}")
+        echo "${out}" | sed -n "s:.*<Key>\([^<]*\)</Key>.*:\1:p"
+        next=$(echo "${out}" | sed -n "s:.*<${nextTag}>\([^<]*\)</${nextTag}>.*:\1:p")
+        [ -n "${next}" ] || break
+    done
+}
+
 test_storage_buckets() {
     # shellcheck disable=2039,3043
     local incus_backend
@@ -145,6 +176,22 @@ test_storage_buckets() {
         expiredURL=$(s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" signurl "s3://${bucketPrefix}.foo/${incusTestFile}" "${expiredEpoch}" | tr -d '[:space:]')
         expiredURL="https://${expiredURL#http://}"
         ! curl -sS -k -f "${expiredURL}" -o /dev/null || false
+
+        # Test paginated listing (ListObjects and ListObjectsV2).
+        echo "page" > "${incusTestFile}.page"
+        for i in 1 2 3; do
+            s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" put "${incusTestFile}.page" "s3://${bucketPrefix}.foo/page/${i}"
+        done
+
+        curl -sS -k -f --aws-sigv4 "aws:amz:us-east-1:s3" --user "${adAccessKey}:${adSecretKey}" "${s3Endpoint}/${bucketPrefix}.foo?list-type=2" | grep -F "<Name>${bucketPrefix}.foo</Name>"
+        [ "$(s3listkeys "${adAccessKey}" "${adSecretKey}" "${bucketPrefix}.foo" 1)" = "$(printf "page/1\npage/2\npage/3")" ]
+        [ "$(s3listkeys "${roAccessKey}" "${roSecretKey}" "${bucketPrefix}.foo" 2)" = "$(printf "page/1\npage/2\npage/3")" ]
+
+        for i in 1 2 3; do
+            s3cmdrun "${incus_backend}" "${adAccessKey}" "${adSecretKey}" del "s3://${bucketPrefix}.foo/page/${i}"
+        done
+
+        rm "${incusTestFile}.page"
     fi
 
     # Test copying a file within a bucket (S3 CopyObject).
