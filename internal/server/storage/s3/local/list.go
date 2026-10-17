@@ -78,6 +78,7 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request) {
 	sort.Strings(keys)
 
 	result := &listObjectsResult{
+		Name:       s.bucketName,
 		Prefix:     prefix,
 		Delimiter:  delimiter,
 		MaxKeys:    maxKeys,
