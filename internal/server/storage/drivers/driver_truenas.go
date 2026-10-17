@@ -522,22 +522,12 @@ func (d *truenas) GetResources() (*api.ResourcesStoragePool, error) {
 func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
 	// TODO: investigate "storageMove" that came from the linstor driver.
 
-	var rsyncFeatures []string
-
-	// Do not pass compression argument to rsync if the associated
-	// config key, that is rsync.compression, is set to false.
-	if util.IsFalse(d.Config()["rsync.compression"]) {
-		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
-	} else {
-		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
-	}
-
 	if IsContentBlock(contentType) {
 		return []localMigration.Type{
 			// TODO: optimized
 			{
 				FSType:   migration.MigrationFSType_BLOCK_AND_RSYNC,
-				Features: rsyncFeatures,
+				Features: genericVFSMigrationFeatures(d.Config(), migration.MigrationFSType_BLOCK_AND_RSYNC),
 			},
 		}
 	}
@@ -546,7 +536,7 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 		return []localMigration.Type{
 			{
 				FSType:   migration.MigrationFSType_RSYNC,
-				Features: rsyncFeatures,
+				Features: genericVFSMigrationFeatures(d.Config(), migration.MigrationFSType_RSYNC),
 			},
 		}
 	}
@@ -555,7 +545,7 @@ func (d *truenas) MigrationTypes(contentType ContentType, refresh bool, copySnap
 		// TODO: optimized
 		{
 			FSType:   migration.MigrationFSType_RSYNC,
-			Features: rsyncFeatures,
+			Features: genericVFSMigrationFeatures(d.Config(), migration.MigrationFSType_RSYNC),
 		},
 	}
 }

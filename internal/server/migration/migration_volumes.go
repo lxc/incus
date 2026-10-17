@@ -187,6 +187,24 @@ func TypesToHeader(types ...Type) *migration.MigrationHeader {
 		break // Only use the first rsync transport type found to generate rsync features list.
 	}
 
+	// Check all the types for a block transport, if found add its features to the header's BlockFeatures list.
+	for _, t := range types {
+		if t.FSType != migration.MigrationFSType_BLOCK_AND_RSYNC {
+			continue
+		}
+
+		features := migration.BlockFeatures{
+			Compress: &missingFeature,
+		}
+
+		if slices.Contains(t.Features, migration.BlockFeatureCompress) {
+			features.Compress = &hasFeature
+		}
+
+		header.BlockFeatures = &features
+		break
+	}
+
 	return &header
 }
 
@@ -219,6 +237,9 @@ func MatchTypes(offer *migration.MigrationHeader, fallbackType migration.Migrati
 				offeredFeatures = offer.GetBtrfsFeaturesSlice()
 			case migration.MigrationFSType_RSYNC:
 				offeredFeatures = offer.GetRsyncFeaturesSlice()
+			case migration.MigrationFSType_BLOCK_AND_RSYNC:
+				// The rsync features were never negotiated for this transport, keep it that way for compatibility.
+				offeredFeatures = offer.GetBlockFeaturesSlice()
 			}
 
 			// Find common features in both our type and offered type.
@@ -275,6 +296,7 @@ func DependentVolumeFromHeader(header *migration.MigrationHeader, volName string
 		BtrfsFeatures: header.GetBtrfsFeatures(),
 		RsyncFeatures: header.GetRsyncFeatures(),
 		ZfsFeatures:   header.GetZfsFeatures(),
+		BlockFeatures: header.GetBlockFeatures(),
 		Name:          &volName,
 		Pool:          &poolName,
 		ContentType:   &contentType,
@@ -290,6 +312,7 @@ func DependentVolumeUpdateHeader(header *migration.MigrationHeader, volume *migr
 	volume.BtrfsFeatures = header.BtrfsFeatures
 	volume.RsyncFeatures = header.RsyncFeatures
 	volume.ZfsFeatures = header.ZfsFeatures
+	volume.BlockFeatures = header.BlockFeatures
 }
 
 // HeaderFromDependentVolume creates a MigrationHeader from a DependentVolume.
@@ -299,6 +322,7 @@ func HeaderFromDependentVolume(volume *migration.DependentVolume) *migration.Mig
 		BtrfsFeatures: volume.GetBtrfsFeatures(),
 		RsyncFeatures: volume.GetRsyncFeatures(),
 		ZfsFeatures:   volume.GetZfsFeatures(),
+		BlockFeatures: volume.GetBlockFeatures(),
 	}
 }
 

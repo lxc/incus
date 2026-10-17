@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 
 	"golang.org/x/sys/unix"
@@ -92,6 +93,10 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 
 		offerHeader.VolumeSize = &size
 		rootfs = internalUtil.AddSlash(rootfs)
+
+		// Offer to compress the block volume.
+		blockCompress := true
+		offerHeader.BlockFeatures = &migration.BlockFeatures{Compress: &blockCompress}
 	}
 
 	err = migration.ProtoSend(wsControl, &offerHeader)
@@ -131,13 +136,23 @@ func transferRootfs(ctx context.Context, op incus.Operation, rootfs string, rsyn
 
 		conn := ws.NewWrapper(wsFs)
 
+		to, err := migration.NewBlockWriter(conn, slices.Contains(respHeader.GetBlockFeaturesSlice(), migration.BlockFeatureCompress))
+		if err != nil {
+			return abort(err)
+		}
+
 		go func() {
 			<-ctx.Done()
 			_ = conn.Close()
 			_ = f.Close()
 		}()
 
-		_, err = util.SafeCopy(conn, f)
+		_, err = util.SafeCopy(to, f)
+		if err != nil {
+			return abort(err)
+		}
+
+		err = to.Close()
 		if err != nil {
 			return abort(err)
 		}
