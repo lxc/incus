@@ -650,6 +650,12 @@ func (c *ClusterTx) UpdateInstanceNode(ctx context.Context, project string, oldN
 		return fmt.Errorf("Unexpected number of updated rows in instances table: %d", n)
 	}
 
+	// Move the instance's warnings along, replacing any stale ones the target still has for it.
+	_, err = c.tx.Exec("UPDATE OR REPLACE warnings SET node_id=? WHERE entity_type_code=? AND entity_id=?", member.ID, cluster.TypeInstance, instanceID)
+	if err != nil {
+		return fmt.Errorf("Failed to update instance warnings member ID: %w", err)
+	}
+
 	// No need to update storage_volumes if the name is identical
 	if newName == oldName {
 		return nil

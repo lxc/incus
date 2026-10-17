@@ -493,7 +493,7 @@ func migrateInstanceNearLive(ctx context.Context, s *state.State, inst instance.
 	}
 
 	// Stop the instance for the final transfer.
-	err = instanceShutdownOrForceStop(inst)
+	err = instanceShutdownOrForceStop(s, inst, "near-live migration")
 	if err != nil {
 		return err
 	}
