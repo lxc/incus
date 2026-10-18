@@ -2553,6 +2553,10 @@ func (d *lxc) startCommon() (string, []func() error, error) {
 					return "", nil, err
 				}
 
+				if idMap == nil {
+					return "", nil, errors.New("No ID map found for unprivileged container")
+				}
+
 				for _, entry := range idMap.Entries {
 					if entry.NSID+entry.MapRange-1 > maxGid {
 						maxGid = entry.NSID + entry.MapRange - 1
