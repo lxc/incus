@@ -34,6 +34,13 @@ test_container_oci() {
     incus exec caddy -- printenv XDG_CONFIG_HOME | grep -q .
     incus delete -f caddy
 
+    # Starting a rebuilt instance that was never started must not take the daemon down.
+    incus init docker:caddy caddy2 --network=inct$$
+    incus rebuild docker:caddy caddy2
+    incus start caddy2 || true
+    incus list caddy2 --format csv -c n | grep -xF caddy2
+    incus delete -f caddy2
+
     incus network delete inct$$
     incus remote remove docker
 }
