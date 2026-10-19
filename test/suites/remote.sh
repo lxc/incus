@@ -420,3 +420,51 @@ test_list_all_remotes() {
     incus_remote remote remove incus2
     kill_incus "${INCUS2_DIR}"
 }
+
+test_remote_keepalive() {
+    ensure_import_testimage
+    ensure_has_localhost_remote "${INCUS_ADDR}"
+
+    incus_remote launch testimage localhost:c1
+    incus_remote remote set-keepalive localhost 10
+
+    # Concurrent commands without a running proxy share a single one.
+    for _ in 1 2 3 4 5; do
+        incus exec localhost:c1 -- true &
+    done
+    sleep 5
+    incus exec localhost:c1 -- true
+    [ "$(pgrep -fc "incus remote proxy localhost: ${INCUS_CONF}/keepalive/localhost.socket")" -eq 1 ]
+
+    # Input, output and exit codes go through the proxy.
+    [ "$(echo hello | incus exec localhost:c1 -- cat)" = "hello" ]
+    incus exec localhost:c1 -- sh -c 'echo err >&2' 2> "${TEST_DIR}/keepalive.err"
+    grep -qx err "${TEST_DIR}/keepalive.err"
+    ! incus exec localhost:c1 -- false || false
+
+    # Event streams are served from the proxy's shared upstream connection.
+    incus_remote monitor localhost: --type=lifecycle > "${TEST_DIR}/keepalive.log" &
+    monitorPID=$!
+    sleep 1
+    incus exec localhost:c1 -- true
+    for _ in $(seq 20); do
+        if grep -q instance-exec "${TEST_DIR}/keepalive.log"; then
+            break
+        fi
+
+        sleep 0.5
+    done
+    grep -q instance-exec "${TEST_DIR}/keepalive.log"
+    kill -9 ${monitorPID} || true
+
+    # The proxy keeps working once an events client is gone.
+    incus exec localhost:c1 -- true
+    [ "$(pgrep -fc "incus remote proxy localhost: ${INCUS_CONF}/keepalive/localhost.socket")" -eq 1 ]
+
+    incus_remote remote set-keepalive localhost 0
+    for pid in $(pgrep -f "incus remote proxy localhost: ${INCUS_CONF}/keepalive/localhost.socket"); do
+        kill -9 "${pid}" || true
+    done
+
+    incus_remote delete -f localhost:c1
+}
