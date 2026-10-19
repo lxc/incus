@@ -1450,6 +1450,11 @@ func (n *ovn) checkRelatedListenAddress(listenAddress string) error {
 		return err
 	}
 
+	return n.checkListenAddressInNetworks(related, listenAddress)
+}
+
+// checkListenAddressInNetworks returns an error if another network uses the listen address.
+func (n *ovn) checkListenAddressInNetworks(related []*ovn, listenAddress string) error {
 	if len(related) < 2 {
 		return nil
 	}
@@ -1594,34 +1599,6 @@ func (n *ovn) checkReparentAllowed() error {
 
 	if peerCount > 0 {
 		return fmt.Errorf("Network has %d peering(s)", peerCount)
-	}
-
-	// Check for load balancers and address forwards.
-	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
-		networkID := n.ID()
-
-		forwards, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{NetworkID: &networkID})
-		if err != nil {
-			return fmt.Errorf("Failed loading network forwards: %w", err)
-		}
-
-		if len(forwards) > 0 {
-			return fmt.Errorf("Network has %d address forward(s)", len(forwards))
-		}
-
-		loadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{NetworkID: &networkID})
-		if err != nil {
-			return fmt.Errorf("Failed loading network load balancers: %w", err)
-		}
-
-		if len(loadBalancers) > 0 {
-			return fmt.Errorf("Network has %d load balancer(s)", len(loadBalancers))
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -5122,6 +5099,11 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 			return err
 		}
 
+		err = n.forwardBGPSetupPrefixes()
+		if err != nil {
+			return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
+		}
+
 		err = n.loadBalancerBGPSetupPrefixes()
 		if err != nil {
 			return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
@@ -5159,8 +5141,15 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 	// so the revert can remove anything we applied to it.
 	var parentNewNet *ovn
 
+	listenersDetached := false
+
 	// Define a function which reverts everything.
 	reverter.Add(func() {
+		// Remove the listeners from whichever router has them.
+		if listenersDetached {
+			_ = n.detachListeners()
+		}
+
 		// Remove what we applied to the logical router we joined before reverting the config.
 		if parentNewNet != nil {
 			_ = n.deleteRouterNetworkConfig()
@@ -5178,6 +5167,10 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		if clientType == request.ClientTypeNormal {
 			_ = n.refreshParent(n.config)
 			_ = n.setup(true)
+
+			if listenersDetached {
+				_ = n.attachListeners()
+			}
 
 			if parentOldNet != nil {
 				_ = n.peerRebuild()
@@ -5197,6 +5190,19 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		if err != nil {
 			return err
 		}
+
+		err = n.validateListenersForParent(newNetwork.Config)
+		if err != nil {
+			return err
+		}
+
+		// Move the listeners to the new logical router.
+		err = n.detachListeners()
+		if err != nil {
+			return err
+		}
+
+		listenersDetached = true
 	}
 
 	// Stop network before new config applied if uplink network is changing.
@@ -5293,6 +5299,13 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		err = n.setup(true)
 		if err != nil {
 			return err
+		}
+
+		if listenersDetached {
+			err = n.attachListeners()
+			if err != nil {
+				return err
+			}
 		}
 
 		// Our subnets are routed by the peers of the parents we joined and left.
@@ -7933,6 +7946,294 @@ func (n *ovn) loadBalancerApplyOVN(listenAddress string, portMaps []*loadBalance
 	err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(listenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
 	if err != nil {
 		return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+	}
+
+	return nil
+}
+
+// listenerRecords returns the network's forwards and load balancers.
+func (n *ovn) listenerRecords() ([]api.NetworkForward, []api.NetworkLoadBalancer, error) {
+	var forwards []api.NetworkForward
+	var loadBalancers []api.NetworkLoadBalancer
+
+	err := n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		networkID := n.ID()
+
+		dbForwards, err := dbCluster.GetNetworkForwards(ctx, tx.Tx(), dbCluster.NetworkForwardFilter{NetworkID: &networkID})
+		if err != nil {
+			return fmt.Errorf("Failed loading network forwards: %w", err)
+		}
+
+		for _, dbForward := range dbForwards {
+			forward, err := dbForward.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			forwards = append(forwards, *forward)
+		}
+
+		dbLoadBalancers, err := dbCluster.GetNetworkLoadBalancers(ctx, tx.Tx(), dbCluster.NetworkLoadBalancerFilter{NetworkID: &networkID})
+		if err != nil {
+			return fmt.Errorf("Failed loading network load balancers: %w", err)
+		}
+
+		for _, dbLoadBalancer := range dbLoadBalancers {
+			loadBalancer, err := dbLoadBalancer.ToAPI(ctx, tx.Tx())
+			if err != nil {
+				return err
+			}
+
+			loadBalancers = append(loadBalancers, *loadBalancer)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return forwards, loadBalancers, nil
+}
+
+// validateListenersForParent checks the listen addresses are usable with the new config.
+func (n *ovn) validateListenersForParent(config map[string]string) error {
+	forwards, loadBalancers, err := n.listenerRecords()
+	if err != nil {
+		return err
+	}
+
+	if len(forwards) == 0 && len(loadBalancers) == 0 {
+		return nil
+	}
+
+	uplinkName := config["network"]
+	routerConfig := config
+	related := []*ovn{n}
+
+	if config["parent"] != "" {
+		parentNet, err := LoadByName(n.state, n.project, config["parent"])
+		if err != nil {
+			return fmt.Errorf("Failed loading parent network %q: %w", config["parent"], err)
+		}
+
+		parentOVN, ok := parentNet.(*ovn)
+		if !ok {
+			return fmt.Errorf("Parent network %q isn't an OVN network", config["parent"])
+		}
+
+		uplinkName = parentOVN.config["network"]
+		routerConfig = parentOVN.config
+
+		related, err = parentOVN.relatedNetworks()
+		if err != nil {
+			return err
+		}
+	}
+
+	if uplinkName == "none" {
+		return errors.New("Network forwards and load balancers require an uplink")
+	}
+
+	var p *api.Project
+	var uplink *api.Network
+	var allAllocatedIPs []net.IP
+
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		project, err := dbCluster.GetProject(ctx, tx.Tx(), n.project)
+		if err != nil {
+			return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
+		}
+
+		p, err = project.ToAPI(ctx, tx.Tx())
+		if err != nil {
+			return fmt.Errorf("Failed to load network restrictions from project %q: %w", n.project, err)
+		}
+
+		_, uplink, _, err = tx.GetNetworkInAnyState(ctx, api.ProjectDefaultName, uplinkName)
+		if err != nil {
+			return fmt.Errorf("Failed to load uplink network %q: %w", uplinkName, err)
+		}
+
+		allocatedIPv4, allocatedIPv6, err := n.uplinkAllAllocatedIPs(ctx, tx, uplinkName)
+		if err != nil {
+			return err
+		}
+
+		allAllocatedIPs = append(allocatedIPv4, allocatedIPv6...)
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	projectRestrictedSubnets, err := n.projectRestrictedSubnets(p, uplinkName)
+	if err != nil {
+		return err
+	}
+
+	externalSubnetsInUse, err := n.getExternalSubnetInUse(uplinkName)
+	if err != nil {
+		return err
+	}
+
+	// The destination router addresses are valid listen addresses.
+	routerIPs := []net.IP{net.ParseIP(routerConfig[ovnVolatileUplinkIPv4]), net.ParseIP(routerConfig[ovnVolatileUplinkIPv6])}
+
+	listenAddresses := make([]string, 0, len(forwards)+len(loadBalancers))
+	for _, forward := range forwards {
+		listenAddresses = append(listenAddresses, forward.ListenAddress)
+	}
+
+	for _, loadBalancer := range loadBalancers {
+		listenAddresses = append(listenAddresses, loadBalancer.ListenAddress)
+	}
+
+	for _, listenAddress := range listenAddresses {
+		listenAddressNet, err := ParseIPToNet(listenAddress)
+		if err != nil {
+			return fmt.Errorf("Failed parsing %q: %w", listenAddress, err)
+		}
+
+		err = n.validateExternalSubnet(uplink, projectRestrictedSubnets, listenAddressNet)
+		if err != nil {
+			return err
+		}
+
+		for _, externalSubnetUser := range externalSubnetsInUse {
+			if externalSubnetUser.networkProject == n.project && externalSubnetUser.networkName == n.name {
+				continue
+			}
+
+			if SubnetContains(&externalSubnetUser.subnet, listenAddressNet) || SubnetContains(listenAddressNet, &externalSubnetUser.subnet) {
+				return fmt.Errorf("Listen address %q overlaps with another network or NIC", listenAddress)
+			}
+		}
+
+		for _, usedIP := range allAllocatedIPs {
+			if usedIP.Equal(listenAddressNet.IP) && !slices.ContainsFunc(routerIPs, usedIP.Equal) {
+				return fmt.Errorf("Listen address %q overlaps with another network or NIC", listenAddress)
+			}
+		}
+
+		err = n.checkListenAddressInNetworks(related, listenAddress)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// removeListenerOVN removes the load balancer and static route of a listen address.
+func (n *ovn) removeListenerOVN(listenAddress string) error {
+	err := n.ovnnb.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(listenAddress))
+	if err != nil {
+		return fmt.Errorf("Failed deleting OVN load balancer: %w", err)
+	}
+
+	listenAddressNet, err := ParseIPToNet(listenAddress)
+	if err != nil {
+		return err
+	}
+
+	err = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
+	if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+		return fmt.Errorf("Failed deleting OVN static route: %w", err)
+	}
+
+	return nil
+}
+
+// detachListeners removes the OVN objects of all forwards and load balancers from the current router.
+func (n *ovn) detachListeners() error {
+	forwards, loadBalancers, err := n.listenerRecords()
+	if err != nil {
+		return err
+	}
+
+	for _, forward := range forwards {
+		err = n.removeListenerOVN(forward.ListenAddress)
+		if err != nil {
+			return err
+		}
+
+		err = n.ovnnb.DeleteLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat", false, net.ParseIP(forward.ListenAddress))
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+			return fmt.Errorf("Failed deleting default target NAT rule: %w", err)
+		}
+	}
+
+	for _, loadBalancer := range loadBalancers {
+		err = n.removeListenerOVN(loadBalancer.ListenAddress)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// attachListeners applies the OVN objects of all forwards and load balancers to the current router.
+func (n *ovn) attachListeners() error {
+	forwards, loadBalancers, err := n.listenerRecords()
+	if err != nil {
+		return err
+	}
+
+	for _, forward := range forwards {
+		listenAddressNet, err := ParseIPToNet(forward.ListenAddress)
+		if err != nil {
+			return err
+		}
+
+		portMaps, err := n.forwardValidate(listenAddressNet.IP, &forward.NetworkForwardPut)
+		if err != nil {
+			return err
+		}
+
+		err = n.forwardApplyOVN(forward.ListenAddress, portMaps, net.ParseIP(forward.Config["target_address"]))
+		if err != nil {
+			return err
+		}
+
+		err = n.listenAddressRouteApply(listenAddressNet)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, loadBalancer := range loadBalancers {
+		listenAddressNet, err := ParseIPToNet(loadBalancer.ListenAddress)
+		if err != nil {
+			return err
+		}
+
+		portMaps, err := n.loadBalancerValidate(listenAddressNet.IP, &loadBalancer.NetworkLoadBalancerPut)
+		if err != nil {
+			return err
+		}
+
+		err = n.loadBalancerApplyOVN(loadBalancer.ListenAddress, portMaps, loadBalancer.NetworkLoadBalancerPut)
+		if err != nil {
+			return err
+		}
+
+		err = n.listenAddressRouteApply(listenAddressNet)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = n.forwardBGPSetupPrefixes()
+	if err != nil {
+		return fmt.Errorf("Failed applying BGP prefixes for address forwards: %w", err)
+	}
+
+	err = n.loadBalancerBGPSetupPrefixes()
+	if err != nil {
+		return fmt.Errorf("Failed applying BGP prefixes for load balancers: %w", err)
 	}
 
 	return nil
