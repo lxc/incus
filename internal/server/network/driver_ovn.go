@@ -5178,6 +5178,10 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		if clientType == request.ClientTypeNormal {
 			_ = n.refreshParent(n.config)
 			_ = n.setup(true)
+
+			if parentOldNet != nil {
+				_ = n.peerRebuild()
+			}
 		}
 
 		_ = n.Start()
@@ -5289,6 +5293,21 @@ func (n *ovn) Update(newNetwork api.NetworkPut, targetNode string, clientType re
 		err = n.setup(true)
 		if err != nil {
 			return err
+		}
+
+		// Our subnets are routed by the peers of the parents we joined and left.
+		if parentChanged && parentNewNet != nil {
+			err = n.peerRebuild()
+			if err != nil {
+				return err
+			}
+		}
+
+		if parentOldNet != nil {
+			err = parentOldNet.peerRebuild()
+			if err != nil {
+				return err
+			}
 		}
 
 		// Any child network shares our logical router, so re-apply those that are affected by the change.
