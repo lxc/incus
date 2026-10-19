@@ -301,16 +301,6 @@ func DependentVolumeFromHeader(header *migration.MigrationHeader, volName string
 	}
 }
 
-// DependentVolumeUpdateHeader updates the migration header for a dependent volume.
-func DependentVolumeUpdateHeader(header *migration.MigrationHeader, volume *migration.DependentVolume) {
-	fs := header.GetFs()
-	volume.Fs = &fs
-	volume.BtrfsFeatures = header.BtrfsFeatures
-	volume.RsyncFeatures = header.RsyncFeatures
-	volume.ZfsFeatures = header.ZfsFeatures
-	volume.BlockFeatures = header.BlockFeatures
-}
-
 // HeaderFromDependentVolume creates a MigrationHeader from a DependentVolume.
 func HeaderFromDependentVolume(volume *migration.DependentVolume) *migration.MigrationHeader {
 	return &migration.MigrationHeader{
