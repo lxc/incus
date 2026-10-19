@@ -1353,7 +1353,7 @@ func (b *backend) CreateInstanceFromCopy(inst instance.Instance, src instance.In
 			}
 		}
 
-		volumesWithTypes, err := DependentVolumesMatchMigrationType(b.state, dependentVolumesOffer, depSnapshots, newDevices, false, false)
+		volumesWithTypes, err := DependentVolumesMatchMigrationType(b.state, &migration.MigrationHeader{DependentVolumes: dependentVolumesOffer}, depSnapshots, newDevices, false, false)
 		if err != nil {
 			err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
 			return err
@@ -1947,7 +1947,7 @@ func (b *backend) RefreshInstance(inst instance.Instance, src instance.Instance,
 			return err
 		}
 
-		volumesWithTypes, err := DependentVolumesMatchMigrationType(b.state, dependentVolumesOffer, snapshots, newDevices, false, false)
+		volumesWithTypes, err := DependentVolumesMatchMigrationType(b.state, &migration.MigrationHeader{DependentVolumes: dependentVolumesOffer}, snapshots, newDevices, false, false)
 		if err != nil {
 			err := fmt.Errorf("Failed to negotiate migration types for dependent volumes: %w", err)
 			return err
