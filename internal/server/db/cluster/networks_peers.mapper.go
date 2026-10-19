@@ -166,7 +166,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkPeerObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkPeerObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkPeerObjects\" prepared statement: %w", err)
 		}
@@ -176,7 +176,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		if filter.Type != nil && filter.TargetNetworkProject != nil && filter.TargetNetworkName != nil && filter.ID == nil && filter.NetworkID == nil && filter.Name == nil && filter.TargetNetworkIntegrationID == nil && filter.TargetNetworkID == nil {
 			args = append(args, []any{filter.Type, filter.TargetNetworkProject, filter.TargetNetworkName}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByTypeAndTargetNetworkProjectAndTargetNetworkName)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByTypeAndTargetNetworkProjectAndTargetNetworkName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByTypeAndTargetNetworkProjectAndTargetNetworkName\" prepared statement: %w", err)
 				}
@@ -200,7 +200,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		} else if filter.NetworkID != nil && filter.TargetNetworkProject != nil && filter.TargetNetworkName != nil && filter.ID == nil && filter.Name == nil && filter.Type == nil && filter.TargetNetworkIntegrationID == nil && filter.TargetNetworkID == nil {
 			args = append(args, []any{filter.NetworkID, filter.TargetNetworkProject, filter.TargetNetworkName}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByNetworkIDAndTargetNetworkProjectAndTargetNetworkName)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByNetworkIDAndTargetNetworkProjectAndTargetNetworkName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByNetworkIDAndTargetNetworkProjectAndTargetNetworkName\" prepared statement: %w", err)
 				}
@@ -224,7 +224,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		} else if filter.NetworkID != nil && filter.Name != nil && filter.ID == nil && filter.Type == nil && filter.TargetNetworkProject == nil && filter.TargetNetworkName == nil && filter.TargetNetworkIntegrationID == nil && filter.TargetNetworkID == nil {
 			args = append(args, []any{filter.NetworkID, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByNetworkIDAndName)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByNetworkIDAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByNetworkIDAndName\" prepared statement: %w", err)
 				}
@@ -248,7 +248,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		} else if filter.NetworkID != nil && filter.ID != nil && filter.Name == nil && filter.Type == nil && filter.TargetNetworkProject == nil && filter.TargetNetworkName == nil && filter.TargetNetworkIntegrationID == nil && filter.TargetNetworkID == nil {
 			args = append(args, []any{filter.NetworkID, filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByNetworkIDAndID)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByNetworkIDAndID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByNetworkIDAndID\" prepared statement: %w", err)
 				}
@@ -272,7 +272,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		} else if filter.TargetNetworkID != nil && filter.ID == nil && filter.NetworkID == nil && filter.Name == nil && filter.Type == nil && filter.TargetNetworkProject == nil && filter.TargetNetworkName == nil && filter.TargetNetworkIntegrationID == nil {
 			args = append(args, []any{filter.TargetNetworkID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByTargetNetworkID)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByTargetNetworkID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByTargetNetworkID\" prepared statement: %w", err)
 				}
@@ -296,7 +296,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		} else if filter.NetworkID != nil && filter.ID == nil && filter.Name == nil && filter.Type == nil && filter.TargetNetworkProject == nil && filter.TargetNetworkName == nil && filter.TargetNetworkIntegrationID == nil && filter.TargetNetworkID == nil {
 			args = append(args, []any{filter.NetworkID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByNetworkID)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByNetworkID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByNetworkID\" prepared statement: %w", err)
 				}
@@ -320,7 +320,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		} else if filter.Name != nil && filter.ID == nil && filter.NetworkID == nil && filter.Type == nil && filter.TargetNetworkProject == nil && filter.TargetNetworkName == nil && filter.TargetNetworkIntegrationID == nil && filter.TargetNetworkID == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByName\" prepared statement: %w", err)
 				}
@@ -344,7 +344,7 @@ func GetNetworkPeers(ctx context.Context, db dbtx, filters ...NetworkPeerFilter)
 		} else if filter.ID != nil && filter.NetworkID == nil && filter.Name == nil && filter.Type == nil && filter.TargetNetworkProject == nil && filter.TargetNetworkName == nil && filter.TargetNetworkIntegrationID == nil && filter.TargetNetworkID == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkPeerObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, networkPeerObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkPeerObjectsByID\" prepared statement: %w", err)
 				}
@@ -448,7 +448,7 @@ func NetworkPeerExists(ctx context.Context, db dbtx, networkID int64, name strin
 		_err = mapErr(_err, "Network_peer")
 	}()
 
-	stmt, err := Stmt(db, networkPeerID)
+	stmt, err := StmtContext(ctx, db, networkPeerID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"networkPeerID\" prepared statement: %w", err)
 	}
@@ -487,7 +487,7 @@ func CreateNetworkPeer(ctx context.Context, db dbtx, object NetworkPeer) (_ int6
 	args[7] = object.TargetNetworkID
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, networkPeerCreate)
+	stmt, err := StmtContext(ctx, db, networkPeerCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkPeerCreate\" prepared statement: %w", err)
 	}
@@ -542,7 +542,7 @@ func GetNetworkPeerID(ctx context.Context, db tx, networkID int64, name string) 
 		_err = mapErr(_err, "Network_peer")
 	}()
 
-	stmt, err := Stmt(db, networkPeerID)
+	stmt, err := StmtContext(ctx, db, networkPeerID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkPeerID\" prepared statement: %w", err)
 	}
@@ -568,7 +568,7 @@ func DeleteNetworkPeer(ctx context.Context, db dbtx, networkID int64, id int64) 
 		_err = mapErr(_err, "Network_peer")
 	}()
 
-	stmt, err := Stmt(db, networkPeerDeleteByNetworkIDAndID)
+	stmt, err := StmtContext(ctx, db, networkPeerDeleteByNetworkIDAndID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkPeerDeleteByNetworkIDAndID\" prepared statement: %w", err)
 	}
@@ -604,7 +604,7 @@ func UpdateNetworkPeer(ctx context.Context, db tx, networkID int64, name string,
 		return err
 	}
 
-	stmt, err := Stmt(db, networkPeerUpdate)
+	stmt, err := StmtContext(ctx, db, networkPeerUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkPeerUpdate\" prepared statement: %w", err)
 	}

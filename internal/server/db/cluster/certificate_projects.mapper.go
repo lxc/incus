@@ -99,7 +99,7 @@ func GetCertificateProjects(ctx context.Context, db tx, certificateID int) (_ []
 	// Result slice.
 	objects := make([]CertificateProject, 0)
 
-	sqlStmt, err := Stmt(db, certificateProjectObjectsByCertificateID)
+	sqlStmt, err := StmtContext(ctx, db, certificateProjectObjectsByCertificateID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get \"certificateProjectObjectsByCertificateID\" prepared statement: %w", err)
 	}
@@ -132,7 +132,7 @@ func DeleteCertificateProjects(ctx context.Context, db tx, certificateID int) (_
 		_err = mapErr(_err, "Certificate_project")
 	}()
 
-	stmt, err := Stmt(db, certificateProjectDeleteByCertificateID)
+	stmt, err := StmtContext(ctx, db, certificateProjectDeleteByCertificateID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateProjectDeleteByCertificateID\" prepared statement: %w", err)
 	}
@@ -165,7 +165,7 @@ func CreateCertificateProjects(ctx context.Context, db tx, objects []Certificate
 		args[1] = object.ProjectID
 
 		// Prepared statement to use.
-		stmt, err := Stmt(db, certificateProjectCreate)
+		stmt, err := StmtContext(ctx, db, certificateProjectCreate)
 		if err != nil {
 			return fmt.Errorf("Failed to get \"certificateProjectCreate\" prepared statement: %w", err)
 		}

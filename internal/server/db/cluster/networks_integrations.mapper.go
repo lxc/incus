@@ -128,7 +128,7 @@ func GetNetworkIntegrations(ctx context.Context, db dbtx, filters ...NetworkInte
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkIntegrationObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkIntegrationObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkIntegrationObjects\" prepared statement: %w", err)
 		}
@@ -138,7 +138,7 @@ func GetNetworkIntegrations(ctx context.Context, db dbtx, filters ...NetworkInte
 		if filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkIntegrationObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, networkIntegrationObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkIntegrationObjectsByName\" prepared statement: %w", err)
 				}
@@ -162,7 +162,7 @@ func GetNetworkIntegrations(ctx context.Context, db dbtx, filters ...NetworkInte
 		} else if filter.ID != nil && filter.Name == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkIntegrationObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, networkIntegrationObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkIntegrationObjectsByID\" prepared statement: %w", err)
 				}
@@ -265,7 +265,7 @@ func NetworkIntegrationExists(ctx context.Context, db dbtx, name string) (_ bool
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	stmt, err := Stmt(db, networkIntegrationID)
+	stmt, err := StmtContext(ctx, db, networkIntegrationID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"networkIntegrationID\" prepared statement: %w", err)
 	}
@@ -299,7 +299,7 @@ func CreateNetworkIntegration(ctx context.Context, db dbtx, object NetworkIntegr
 	args[2] = object.Type
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, networkIntegrationCreate)
+	stmt, err := StmtContext(ctx, db, networkIntegrationCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkIntegrationCreate\" prepared statement: %w", err)
 	}
@@ -354,7 +354,7 @@ func GetNetworkIntegrationID(ctx context.Context, db tx, name string) (_ int64, 
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	stmt, err := Stmt(db, networkIntegrationID)
+	stmt, err := StmtContext(ctx, db, networkIntegrationID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkIntegrationID\" prepared statement: %w", err)
 	}
@@ -380,7 +380,7 @@ func RenameNetworkIntegration(ctx context.Context, db dbtx, name string, to stri
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	stmt, err := Stmt(db, networkIntegrationRename)
+	stmt, err := StmtContext(ctx, db, networkIntegrationRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkIntegrationRename\" prepared statement: %w", err)
 	}
@@ -409,7 +409,7 @@ func DeleteNetworkIntegration(ctx context.Context, db dbtx, name string) (_err e
 		_err = mapErr(_err, "Network_integration")
 	}()
 
-	stmt, err := Stmt(db, networkIntegrationDeleteByName)
+	stmt, err := StmtContext(ctx, db, networkIntegrationDeleteByName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkIntegrationDeleteByName\" prepared statement: %w", err)
 	}
@@ -445,7 +445,7 @@ func UpdateNetworkIntegration(ctx context.Context, db tx, name string, object Ne
 		return err
 	}
 
-	stmt, err := Stmt(db, networkIntegrationUpdate)
+	stmt, err := StmtContext(ctx, db, networkIntegrationUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkIntegrationUpdate\" prepared statement: %w", err)
 	}

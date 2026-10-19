@@ -139,7 +139,7 @@ func GetNetworkForwards(ctx context.Context, db dbtx, filters ...NetworkForwardF
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkForwardObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkForwardObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkForwardObjects\" prepared statement: %w", err)
 		}
@@ -149,7 +149,7 @@ func GetNetworkForwards(ctx context.Context, db dbtx, filters ...NetworkForwardF
 		if filter.NetworkID != nil && filter.ListenAddress != nil && filter.ID == nil && filter.NodeID == nil {
 			args = append(args, []any{filter.NetworkID, filter.ListenAddress}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkForwardObjectsByNetworkIDAndListenAddress)
+				sqlStmt, err = StmtContext(ctx, db, networkForwardObjectsByNetworkIDAndListenAddress)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkForwardObjectsByNetworkIDAndListenAddress\" prepared statement: %w", err)
 				}
@@ -173,7 +173,7 @@ func GetNetworkForwards(ctx context.Context, db dbtx, filters ...NetworkForwardF
 		} else if filter.NetworkID != nil && filter.ID == nil && filter.NodeID == nil && filter.ListenAddress == nil {
 			args = append(args, []any{filter.NetworkID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkForwardObjectsByNetworkID)
+				sqlStmt, err = StmtContext(ctx, db, networkForwardObjectsByNetworkID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkForwardObjectsByNetworkID\" prepared statement: %w", err)
 				}
@@ -277,7 +277,7 @@ func GetNetworkForwardID(ctx context.Context, db tx, networkID int64, listenAddr
 		_err = mapErr(_err, "Network_forward")
 	}()
 
-	stmt, err := Stmt(db, networkForwardID)
+	stmt, err := StmtContext(ctx, db, networkForwardID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkForwardID\" prepared statement: %w", err)
 	}
@@ -318,7 +318,7 @@ func CreateNetworkForward(ctx context.Context, db dbtx, object NetworkForward) (
 	args[4] = marshaledPorts
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, networkForwardCreate)
+	stmt, err := StmtContext(ctx, db, networkForwardCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkForwardCreate\" prepared statement: %w", err)
 	}
@@ -378,7 +378,7 @@ func UpdateNetworkForward(ctx context.Context, db tx, networkID int64, listenAdd
 		return err
 	}
 
-	stmt, err := Stmt(db, networkForwardUpdate)
+	stmt, err := StmtContext(ctx, db, networkForwardUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkForwardUpdate\" prepared statement: %w", err)
 	}
@@ -427,7 +427,7 @@ func DeleteNetworkForward(ctx context.Context, db dbtx, networkID int64, id int6
 		_err = mapErr(_err, "Network_forward")
 	}()
 
-	stmt, err := Stmt(db, networkForwardDeleteByNetworkIDAndID)
+	stmt, err := StmtContext(ctx, db, networkForwardDeleteByNetworkIDAndID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkForwardDeleteByNetworkIDAndID\" prepared statement: %w", err)
 	}

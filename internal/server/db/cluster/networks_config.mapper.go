@@ -104,7 +104,7 @@ func GetNetworkConfig(ctx context.Context, db dbtx, filters ...NetworkConfigFilt
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkConfigObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkConfigObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkConfigObjects\" prepared statement: %w", err)
 		}
@@ -114,7 +114,7 @@ func GetNetworkConfig(ctx context.Context, db dbtx, filters ...NetworkConfigFilt
 		if filter.NodeID != nil && filter.NetworkID != nil {
 			args = append(args, []any{filter.NodeID, filter.NetworkID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkConfigObjectsByNodeIDAndNetworkID)
+				sqlStmt, err = StmtContext(ctx, db, networkConfigObjectsByNodeIDAndNetworkID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkConfigObjectsByNodeIDAndNetworkID\" prepared statement: %w", err)
 				}
@@ -138,7 +138,7 @@ func GetNetworkConfig(ctx context.Context, db dbtx, filters ...NetworkConfigFilt
 		} else if filter.NodeID != nil && filter.NetworkID == nil {
 			args = append(args, []any{filter.NodeID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkConfigObjectsByNodeID)
+				sqlStmt, err = StmtContext(ctx, db, networkConfigObjectsByNodeID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkConfigObjectsByNodeID\" prepared statement: %w", err)
 				}

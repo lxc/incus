@@ -128,7 +128,7 @@ func GetProjects(ctx context.Context, db dbtx, filters ...ProjectFilter) (_ []Pr
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, projectObjects)
+		sqlStmt, err = StmtContext(ctx, db, projectObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"projectObjects\" prepared statement: %w", err)
 		}
@@ -138,7 +138,7 @@ func GetProjects(ctx context.Context, db dbtx, filters ...ProjectFilter) (_ []Pr
 		if filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, projectObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, projectObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"projectObjectsByName\" prepared statement: %w", err)
 				}
@@ -162,7 +162,7 @@ func GetProjects(ctx context.Context, db dbtx, filters ...ProjectFilter) (_ []Pr
 		} else if filter.ID != nil && filter.Name == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, projectObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, projectObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"projectObjectsByID\" prepared statement: %w", err)
 				}
@@ -265,7 +265,7 @@ func ProjectExists(ctx context.Context, db dbtx, name string) (_ bool, _err erro
 		_err = mapErr(_err, "Project")
 	}()
 
-	stmt, err := Stmt(db, projectID)
+	stmt, err := StmtContext(ctx, db, projectID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"projectID\" prepared statement: %w", err)
 	}
@@ -298,7 +298,7 @@ func CreateProject(ctx context.Context, db dbtx, object Project) (_ int64, _err 
 	args[1] = object.Name
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, projectCreate)
+	stmt, err := StmtContext(ctx, db, projectCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"projectCreate\" prepared statement: %w", err)
 	}
@@ -353,7 +353,7 @@ func GetProjectID(ctx context.Context, db tx, name string) (_ int64, _err error)
 		_err = mapErr(_err, "Project")
 	}()
 
-	stmt, err := Stmt(db, projectID)
+	stmt, err := StmtContext(ctx, db, projectID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"projectID\" prepared statement: %w", err)
 	}
@@ -379,7 +379,7 @@ func RenameProject(ctx context.Context, db dbtx, name string, to string) (_err e
 		_err = mapErr(_err, "Project")
 	}()
 
-	stmt, err := Stmt(db, projectRename)
+	stmt, err := StmtContext(ctx, db, projectRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"projectRename\" prepared statement: %w", err)
 	}
@@ -408,7 +408,7 @@ func DeleteProject(ctx context.Context, db dbtx, name string) (_err error) {
 		_err = mapErr(_err, "Project")
 	}()
 
-	stmt, err := Stmt(db, projectDeleteByName)
+	stmt, err := StmtContext(ctx, db, projectDeleteByName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"projectDeleteByName\" prepared statement: %w", err)
 	}
