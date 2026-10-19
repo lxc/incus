@@ -52,7 +52,7 @@ func GetProfileInstances(ctx context.Context, db tx, profileID int) (_ []Instanc
 	// Result slice.
 	objects := make([]InstanceProfile, 0)
 
-	sqlStmt, err := Stmt(db, instanceProfileObjectsByProfileID)
+	sqlStmt, err := StmtContext(ctx, db, instanceProfileObjectsByProfileID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get \"instanceProfileObjectsByProfileID\" prepared statement: %w", err)
 	}
@@ -144,7 +144,7 @@ func GetInstanceProfiles(ctx context.Context, db tx, instanceID int) (_ []Profil
 	// Result slice.
 	objects := make([]InstanceProfile, 0)
 
-	sqlStmt, err := Stmt(db, instanceProfileObjectsByInstanceID)
+	sqlStmt, err := StmtContext(ctx, db, instanceProfileObjectsByInstanceID)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get \"instanceProfileObjectsByInstanceID\" prepared statement: %w", err)
 	}
@@ -186,7 +186,7 @@ func CreateInstanceProfiles(ctx context.Context, db tx, objects []InstanceProfil
 		args[2] = object.ApplyOrder
 
 		// Prepared statement to use.
-		stmt, err := Stmt(db, instanceProfileCreate)
+		stmt, err := StmtContext(ctx, db, instanceProfileCreate)
 		if err != nil {
 			return fmt.Errorf("Failed to get \"instanceProfileCreate\" prepared statement: %w", err)
 		}
@@ -213,7 +213,7 @@ func DeleteInstanceProfiles(ctx context.Context, db tx, instanceID int) (_err er
 		_err = mapErr(_err, "Instance_profile")
 	}()
 
-	stmt, err := Stmt(db, instanceProfileDeleteByInstanceID)
+	stmt, err := StmtContext(ctx, db, instanceProfileDeleteByInstanceID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"instanceProfileDeleteByInstanceID\" prepared statement: %w", err)
 	}

@@ -113,7 +113,7 @@ func GetNodeClusterGroups(ctx context.Context, db dbtx, filters ...NodeClusterGr
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, nodeClusterGroupObjects)
+		sqlStmt, err = StmtContext(ctx, db, nodeClusterGroupObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"nodeClusterGroupObjects\" prepared statement: %w", err)
 		}
@@ -123,7 +123,7 @@ func GetNodeClusterGroups(ctx context.Context, db dbtx, filters ...NodeClusterGr
 		if filter.GroupID != nil {
 			args = append(args, []any{filter.GroupID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, nodeClusterGroupObjectsByGroupID)
+				sqlStmt, err = StmtContext(ctx, db, nodeClusterGroupObjectsByGroupID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"nodeClusterGroupObjectsByGroupID\" prepared statement: %w", err)
 				}
@@ -180,7 +180,7 @@ func CreateNodeClusterGroup(ctx context.Context, db dbtx, object NodeClusterGrou
 	args[1] = object.Node
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, nodeClusterGroupCreate)
+	stmt, err := StmtContext(ctx, db, nodeClusterGroupCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"nodeClusterGroupCreate\" prepared statement: %w", err)
 	}
@@ -210,7 +210,7 @@ func NodeClusterGroupExists(ctx context.Context, db dbtx, groupID int) (_ bool, 
 		_err = mapErr(_err, "Node_cluster_group")
 	}()
 
-	stmt, err := Stmt(db, nodeClusterGroupID)
+	stmt, err := StmtContext(ctx, db, nodeClusterGroupID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"nodeClusterGroupID\" prepared statement: %w", err)
 	}
@@ -236,7 +236,7 @@ func GetNodeClusterGroupID(ctx context.Context, db tx, groupID int) (_ int64, _e
 		_err = mapErr(_err, "Node_cluster_group")
 	}()
 
-	stmt, err := Stmt(db, nodeClusterGroupID)
+	stmt, err := StmtContext(ctx, db, nodeClusterGroupID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"nodeClusterGroupID\" prepared statement: %w", err)
 	}
@@ -262,7 +262,7 @@ func DeleteNodeClusterGroups(ctx context.Context, db dbtx, groupID int) (_err er
 		_err = mapErr(_err, "Node_cluster_group")
 	}()
 
-	stmt, err := Stmt(db, nodeClusterGroupDeleteByGroupID)
+	stmt, err := StmtContext(ctx, db, nodeClusterGroupDeleteByGroupID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"nodeClusterGroupDeleteByGroupID\" prepared statement: %w", err)
 	}

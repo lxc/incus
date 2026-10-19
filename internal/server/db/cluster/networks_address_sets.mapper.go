@@ -83,7 +83,7 @@ func GetNetworkAddressSetID(ctx context.Context, db tx, project string, name str
 		_err = mapErr(_err, "Network_address_set")
 	}()
 
-	stmt, err := Stmt(db, networkAddressSetID)
+	stmt, err := StmtContext(ctx, db, networkAddressSetID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkAddressSetID\" prepared statement: %w", err)
 	}
@@ -109,7 +109,7 @@ func NetworkAddressSetExists(ctx context.Context, db dbtx, project string, name 
 		_err = mapErr(_err, "Network_address_set")
 	}()
 
-	stmt, err := Stmt(db, networkAddressSetID)
+	stmt, err := StmtContext(ctx, db, networkAddressSetID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"networkAddressSetID\" prepared statement: %w", err)
 	}
@@ -212,7 +212,7 @@ func GetNetworkAddressSets(ctx context.Context, db dbtx, filters ...NetworkAddre
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkAddressSetObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkAddressSetObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkAddressSetObjects\" prepared statement: %w", err)
 		}
@@ -222,7 +222,7 @@ func GetNetworkAddressSets(ctx context.Context, db dbtx, filters ...NetworkAddre
 		if filter.Project != nil && filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Project, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkAddressSetObjectsByProjectAndName)
+				sqlStmt, err = StmtContext(ctx, db, networkAddressSetObjectsByProjectAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkAddressSetObjectsByProjectAndName\" prepared statement: %w", err)
 				}
@@ -246,7 +246,7 @@ func GetNetworkAddressSets(ctx context.Context, db dbtx, filters ...NetworkAddre
 		} else if filter.Project != nil && filter.ID == nil && filter.Name == nil {
 			args = append(args, []any{filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkAddressSetObjectsByProject)
+				sqlStmt, err = StmtContext(ctx, db, networkAddressSetObjectsByProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkAddressSetObjectsByProject\" prepared statement: %w", err)
 				}
@@ -270,7 +270,7 @@ func GetNetworkAddressSets(ctx context.Context, db dbtx, filters ...NetworkAddre
 		} else if filter.Name != nil && filter.ID == nil && filter.Project == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkAddressSetObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, networkAddressSetObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkAddressSetObjectsByName\" prepared statement: %w", err)
 				}
@@ -294,7 +294,7 @@ func GetNetworkAddressSets(ctx context.Context, db dbtx, filters ...NetworkAddre
 		} else if filter.ID != nil && filter.Name == nil && filter.Project == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkAddressSetObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, networkAddressSetObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkAddressSetObjectsByID\" prepared statement: %w", err)
 				}
@@ -412,7 +412,7 @@ func CreateNetworkAddressSet(ctx context.Context, db dbtx, object NetworkAddress
 	args[3] = marshaledAddresses
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, networkAddressSetCreate)
+	stmt, err := StmtContext(ctx, db, networkAddressSetCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkAddressSetCreate\" prepared statement: %w", err)
 	}
@@ -467,7 +467,7 @@ func RenameNetworkAddressSet(ctx context.Context, db dbtx, project string, name 
 		_err = mapErr(_err, "Network_address_set")
 	}()
 
-	stmt, err := Stmt(db, networkAddressSetRename)
+	stmt, err := StmtContext(ctx, db, networkAddressSetRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkAddressSetRename\" prepared statement: %w", err)
 	}
@@ -501,7 +501,7 @@ func UpdateNetworkAddressSet(ctx context.Context, db tx, project string, name st
 		return err
 	}
 
-	stmt, err := Stmt(db, networkAddressSetUpdate)
+	stmt, err := StmtContext(ctx, db, networkAddressSetUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkAddressSetUpdate\" prepared statement: %w", err)
 	}
@@ -550,7 +550,7 @@ func DeleteNetworkAddressSet(ctx context.Context, db dbtx, project string, name 
 		_err = mapErr(_err, "Network_address_set")
 	}()
 
-	stmt, err := Stmt(db, networkAddressSetDeleteByProjectAndName)
+	stmt, err := StmtContext(ctx, db, networkAddressSetDeleteByProjectAndName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkAddressSetDeleteByProjectAndName\" prepared statement: %w", err)
 	}

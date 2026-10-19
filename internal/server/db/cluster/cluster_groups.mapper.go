@@ -121,7 +121,7 @@ func GetClusterGroups(ctx context.Context, db dbtx, filters ...ClusterGroupFilte
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, clusterGroupObjects)
+		sqlStmt, err = StmtContext(ctx, db, clusterGroupObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"clusterGroupObjects\" prepared statement: %w", err)
 		}
@@ -131,7 +131,7 @@ func GetClusterGroups(ctx context.Context, db dbtx, filters ...ClusterGroupFilte
 		if filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, clusterGroupObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, clusterGroupObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"clusterGroupObjectsByName\" prepared statement: %w", err)
 				}
@@ -234,7 +234,7 @@ func GetClusterGroupID(ctx context.Context, db tx, name string) (_ int64, _err e
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
-	stmt, err := Stmt(db, clusterGroupID)
+	stmt, err := StmtContext(ctx, db, clusterGroupID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"clusterGroupID\" prepared statement: %w", err)
 	}
@@ -260,7 +260,7 @@ func ClusterGroupExists(ctx context.Context, db dbtx, name string) (_ bool, _err
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
-	stmt, err := Stmt(db, clusterGroupID)
+	stmt, err := StmtContext(ctx, db, clusterGroupID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"clusterGroupID\" prepared statement: %w", err)
 	}
@@ -286,7 +286,7 @@ func RenameClusterGroup(ctx context.Context, db dbtx, name string, to string) (_
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
-	stmt, err := Stmt(db, clusterGroupRename)
+	stmt, err := StmtContext(ctx, db, clusterGroupRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"clusterGroupRename\" prepared statement: %w", err)
 	}
@@ -322,7 +322,7 @@ func CreateClusterGroup(ctx context.Context, db dbtx, object ClusterGroup) (_ in
 	args[1] = object.Description
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, clusterGroupCreate)
+	stmt, err := StmtContext(ctx, db, clusterGroupCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"clusterGroupCreate\" prepared statement: %w", err)
 	}
@@ -382,7 +382,7 @@ func UpdateClusterGroup(ctx context.Context, db tx, name string, object ClusterG
 		return err
 	}
 
-	stmt, err := Stmt(db, clusterGroupUpdate)
+	stmt, err := StmtContext(ctx, db, clusterGroupUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"clusterGroupUpdate\" prepared statement: %w", err)
 	}
@@ -426,7 +426,7 @@ func DeleteClusterGroup(ctx context.Context, db dbtx, name string) (_err error) 
 		_err = mapErr(_err, "Cluster_group")
 	}()
 
-	stmt, err := Stmt(db, clusterGroupDeleteByName)
+	stmt, err := StmtContext(ctx, db, clusterGroupDeleteByName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"clusterGroupDeleteByName\" prepared statement: %w", err)
 	}

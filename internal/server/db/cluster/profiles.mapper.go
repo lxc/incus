@@ -83,7 +83,7 @@ func GetProfileID(ctx context.Context, db tx, project string, name string) (_ in
 		_err = mapErr(_err, "Profile")
 	}()
 
-	stmt, err := Stmt(db, profileID)
+	stmt, err := StmtContext(ctx, db, profileID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"profileID\" prepared statement: %w", err)
 	}
@@ -109,7 +109,7 @@ func ProfileExists(ctx context.Context, db dbtx, project string, name string) (_
 		_err = mapErr(_err, "Profile")
 	}()
 
-	stmt, err := Stmt(db, profileID)
+	stmt, err := StmtContext(ctx, db, profileID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"profileID\" prepared statement: %w", err)
 	}
@@ -200,7 +200,7 @@ func GetProfiles(ctx context.Context, db dbtx, filters ...ProfileFilter) (_ []Pr
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, profileObjects)
+		sqlStmt, err = StmtContext(ctx, db, profileObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"profileObjects\" prepared statement: %w", err)
 		}
@@ -210,7 +210,7 @@ func GetProfiles(ctx context.Context, db dbtx, filters ...ProfileFilter) (_ []Pr
 		if filter.Project != nil && filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Project, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, profileObjectsByProjectAndName)
+				sqlStmt, err = StmtContext(ctx, db, profileObjectsByProjectAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"profileObjectsByProjectAndName\" prepared statement: %w", err)
 				}
@@ -234,7 +234,7 @@ func GetProfiles(ctx context.Context, db dbtx, filters ...ProfileFilter) (_ []Pr
 		} else if filter.Project != nil && filter.ID == nil && filter.Name == nil {
 			args = append(args, []any{filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, profileObjectsByProject)
+				sqlStmt, err = StmtContext(ctx, db, profileObjectsByProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"profileObjectsByProject\" prepared statement: %w", err)
 				}
@@ -258,7 +258,7 @@ func GetProfiles(ctx context.Context, db dbtx, filters ...ProfileFilter) (_ []Pr
 		} else if filter.Name != nil && filter.ID == nil && filter.Project == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, profileObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, profileObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"profileObjectsByName\" prepared statement: %w", err)
 				}
@@ -282,7 +282,7 @@ func GetProfiles(ctx context.Context, db dbtx, filters ...ProfileFilter) (_ []Pr
 		} else if filter.ID != nil && filter.Project == nil && filter.Name == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, profileObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, profileObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"profileObjectsByID\" prepared statement: %w", err)
 				}
@@ -427,7 +427,7 @@ func CreateProfile(ctx context.Context, db dbtx, object Profile) (_ int64, _err 
 	args[2] = object.Description
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, profileCreate)
+	stmt, err := StmtContext(ctx, db, profileCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"profileCreate\" prepared statement: %w", err)
 	}
@@ -502,7 +502,7 @@ func RenameProfile(ctx context.Context, db dbtx, project string, name string, to
 		_err = mapErr(_err, "Profile")
 	}()
 
-	stmt, err := Stmt(db, profileRename)
+	stmt, err := StmtContext(ctx, db, profileRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"profileRename\" prepared statement: %w", err)
 	}
@@ -536,7 +536,7 @@ func UpdateProfile(ctx context.Context, db tx, project string, name string, obje
 		return err
 	}
 
-	stmt, err := Stmt(db, profileUpdate)
+	stmt, err := StmtContext(ctx, db, profileUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"profileUpdate\" prepared statement: %w", err)
 	}
@@ -595,7 +595,7 @@ func DeleteProfile(ctx context.Context, db dbtx, project string, name string) (_
 		_err = mapErr(_err, "Profile")
 	}()
 
-	stmt, err := Stmt(db, profileDeleteByProjectAndName)
+	stmt, err := StmtContext(ctx, db, profileDeleteByProjectAndName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"profileDeleteByProjectAndName\" prepared statement: %w", err)
 	}

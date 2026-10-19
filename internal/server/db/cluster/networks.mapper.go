@@ -107,7 +107,7 @@ func GetNetworks(ctx context.Context, db dbtx, filters ...NetworkFilter) (_ []Ne
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkObjects\" prepared statement: %w", err)
 		}
@@ -117,7 +117,7 @@ func GetNetworks(ctx context.Context, db dbtx, filters ...NetworkFilter) (_ []Ne
 		if filter.Project != nil && filter.State != nil && filter.ID == nil && filter.Name == nil && filter.Type == nil {
 			args = append(args, []any{filter.Project, filter.State}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkObjectsByProjectAndState)
+				sqlStmt, err = StmtContext(ctx, db, networkObjectsByProjectAndState)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkObjectsByProjectAndState\" prepared statement: %w", err)
 				}
@@ -141,7 +141,7 @@ func GetNetworks(ctx context.Context, db dbtx, filters ...NetworkFilter) (_ []Ne
 		} else if filter.State != nil && filter.ID == nil && filter.Project == nil && filter.Name == nil && filter.Type == nil {
 			args = append(args, []any{filter.State}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkObjectsByState)
+				sqlStmt, err = StmtContext(ctx, db, networkObjectsByState)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkObjectsByState\" prepared statement: %w", err)
 				}

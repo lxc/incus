@@ -62,16 +62,36 @@ var stmts = map[int]string{} // Statement code to statement SQL text.
 // PreparedStmts is a placeholder for transitioning to package-scoped transaction functions.
 var PreparedStmts = map[int]*sql.Stmt{}
 
+type preparedStmtsKey struct{}
+
+// WithPreparedStmts returns a copy of ctx that carries the given prepared statements.
+// StmtContext uses these statements instead of PreparedStmts.
+// This allows multiple databases in the same process, for example in parallel tests.
+func WithPreparedStmts(ctx context.Context, stmts map[int]*sql.Stmt) context.Context {
+	return context.WithValue(ctx, preparedStmtsKey{}, stmts)
+}
+
 // Stmt prepares the in-memory prepared statement for the transaction.
 func Stmt(db dbtx, code int) (*sql.Stmt, error) {
-	stmt, ok := PreparedStmts[code]
+	return StmtContext(context.Background(), db, code)
+}
+
+// StmtContext prepares the in-memory prepared statement for the transaction.
+// It uses the prepared statements from ctx if present, and PreparedStmts otherwise.
+func StmtContext(ctx context.Context, db dbtx, code int) (*sql.Stmt, error) {
+	stmts, ok := ctx.Value(preparedStmtsKey{}).(map[int]*sql.Stmt)
+	if !ok {
+		stmts = PreparedStmts
+	}
+
+	stmt, ok := stmts[code]
 	if !ok {
 		return nil, fmt.Errorf("No prepared statement registered with code %d", code)
 	}
 
 	tx, ok := db.(*sql.Tx)
 	if ok {
-		return tx.Stmt(stmt), nil
+		return tx.StmtContext(ctx, stmt), nil
 	}
 
 	return stmt, nil

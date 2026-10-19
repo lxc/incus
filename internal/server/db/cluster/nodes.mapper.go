@@ -23,7 +23,7 @@ func GetNodeID(ctx context.Context, db tx, name string) (_ int64, _err error) {
 		_err = mapErr(_err, "Node")
 	}()
 
-	stmt, err := Stmt(db, nodeID)
+	stmt, err := StmtContext(ctx, db, nodeID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"nodeID\" prepared statement: %w", err)
 	}
