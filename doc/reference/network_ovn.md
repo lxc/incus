@@ -79,7 +79,9 @@ The following applies to child networks:
   A child cannot set `network`, `parent` (networks can only be nested one level deep), `bridge.hwaddr`, `bridge.external_interfaces`, `bridge.multicast_relay` or any `tunnel.*` option, and cannot take part in a peering.
   A peering of the parent routes the subnets of its children as well, and ACL rules referring to that peering match their traffic.
 - The subnets of a child must not overlap those of its parent or of the other children of that parent.
-- A network's `parent` can be changed, detaching it from its current parent's logical router and attaching it to the new one, but only while the network has no address forwards, load balancers, peerings, or a running instance with `ipv4.routes`/`ipv6.routes` (such routes would be orphaned on the old logical router).
+- A network's `parent` can be changed, detaching it from its current parent's logical router and attaching it to the new one, but only while the network has no peerings, or a running instance with `ipv4.routes`/`ipv6.routes` (or their `.external` variants), or any running instance when `ipv4.l3only`/`ipv6.l3only` is set (such routes would be orphaned on the old logical router).
+  Address forwards, load balancers and the SNAT rules of NICs with `ipv4.address.external`/`ipv6.address.external` are moved to the new logical router, so their listen addresses must be valid for the new parent's uplink and not used by its other networks.
+  They stop working briefly while being moved.
   Removing the `parent` turns the network into a standalone network, which then needs a `network` to be set if external access is required.
 - A parent network cannot be renamed, deleted or given a `parent` of its own while it still has children.
 
