@@ -8217,7 +8217,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 			}
 
 			_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curLoadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
-			_ = n.forwardBGPSetupPrefixes()
+			_ = n.loadBalancerBGPSetupPrefixes()
 		})
 
 		err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
