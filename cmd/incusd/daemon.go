@@ -2604,6 +2604,10 @@ func (d *Daemon) setupOVN() error {
 		return fmt.Errorf("Failed to get OVN southbound connection string: %w", err)
 	}
 
+	if ovnSBAddr == "" {
+		return errors.New("OVN southbound connection string isn't set in Open vSwitch (external_ids:ovn-remote)")
+	}
+
 	// Get the OVN northbound address.
 	ovnNBAddr := d.globalConfig.NetworkOVNNorthboundConnection()
 
