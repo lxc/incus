@@ -91,7 +91,7 @@ func GetNetworkNodes(ctx context.Context, db dbtx, filters ...NetworkNodeFilter)
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkNodeObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkNodeObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkNodeObjects\" prepared statement: %w", err)
 		}

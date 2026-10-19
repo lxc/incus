@@ -148,7 +148,7 @@ func GetNetworkZones(ctx context.Context, db dbtx, filters ...NetworkZoneFilter)
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkZoneObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkZoneObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkZoneObjects\" prepared statement: %w", err)
 		}
@@ -158,7 +158,7 @@ func GetNetworkZones(ctx context.Context, db dbtx, filters ...NetworkZoneFilter)
 		if filter.Project != nil && filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Project, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkZoneObjectsByProjectAndName)
+				sqlStmt, err = StmtContext(ctx, db, networkZoneObjectsByProjectAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkZoneObjectsByProjectAndName\" prepared statement: %w", err)
 				}
@@ -182,7 +182,7 @@ func GetNetworkZones(ctx context.Context, db dbtx, filters ...NetworkZoneFilter)
 		} else if filter.Project != nil && filter.ID == nil && filter.Name == nil {
 			args = append(args, []any{filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkZoneObjectsByProject)
+				sqlStmt, err = StmtContext(ctx, db, networkZoneObjectsByProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkZoneObjectsByProject\" prepared statement: %w", err)
 				}
@@ -206,7 +206,7 @@ func GetNetworkZones(ctx context.Context, db dbtx, filters ...NetworkZoneFilter)
 		} else if filter.Name != nil && filter.ID == nil && filter.Project == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkZoneObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, networkZoneObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkZoneObjectsByName\" prepared statement: %w", err)
 				}
@@ -230,7 +230,7 @@ func GetNetworkZones(ctx context.Context, db dbtx, filters ...NetworkZoneFilter)
 		} else if filter.ID != nil && filter.Name == nil && filter.Project == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkZoneObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, networkZoneObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkZoneObjectsByID\" prepared statement: %w", err)
 				}
@@ -334,7 +334,7 @@ func NetworkZoneExists(ctx context.Context, db dbtx, project string, name string
 		_err = mapErr(_err, "NetworkZone")
 	}()
 
-	stmt, err := Stmt(db, networkZoneID)
+	stmt, err := StmtContext(ctx, db, networkZoneID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"networkZoneID\" prepared statement: %w", err)
 	}
@@ -368,7 +368,7 @@ func CreateNetworkZone(ctx context.Context, db dbtx, object NetworkZone) (_ int6
 	args[2] = object.Description
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, networkZoneCreate)
+	stmt, err := StmtContext(ctx, db, networkZoneCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkZoneCreate\" prepared statement: %w", err)
 	}
@@ -423,7 +423,7 @@ func GetNetworkZoneID(ctx context.Context, db tx, project string, name string) (
 		_err = mapErr(_err, "NetworkZone")
 	}()
 
-	stmt, err := Stmt(db, networkZoneID)
+	stmt, err := StmtContext(ctx, db, networkZoneID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkZoneID\" prepared statement: %w", err)
 	}
@@ -449,7 +449,7 @@ func RenameNetworkZone(ctx context.Context, db dbtx, project string, name string
 		_err = mapErr(_err, "NetworkZone")
 	}()
 
-	stmt, err := Stmt(db, networkZoneRename)
+	stmt, err := StmtContext(ctx, db, networkZoneRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkZoneRename\" prepared statement: %w", err)
 	}
@@ -483,7 +483,7 @@ func UpdateNetworkZone(ctx context.Context, db tx, project string, name string, 
 		return err
 	}
 
-	stmt, err := Stmt(db, networkZoneUpdate)
+	stmt, err := StmtContext(ctx, db, networkZoneUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkZoneUpdate\" prepared statement: %w", err)
 	}
@@ -527,7 +527,7 @@ func DeleteNetworkZone(ctx context.Context, db dbtx, id int) (_err error) {
 		_err = mapErr(_err, "NetworkZone")
 	}()
 
-	stmt, err := Stmt(db, networkZoneDeleteByID)
+	stmt, err := StmtContext(ctx, db, networkZoneDeleteByID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkZoneDeleteByID\" prepared statement: %w", err)
 	}

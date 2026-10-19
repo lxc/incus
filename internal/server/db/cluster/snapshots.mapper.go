@@ -139,7 +139,7 @@ func GetInstanceSnapshots(ctx context.Context, db dbtx, filters ...InstanceSnaps
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, instanceSnapshotObjects)
+		sqlStmt, err = StmtContext(ctx, db, instanceSnapshotObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"instanceSnapshotObjects\" prepared statement: %w", err)
 		}
@@ -149,7 +149,7 @@ func GetInstanceSnapshots(ctx context.Context, db dbtx, filters ...InstanceSnaps
 		if filter.Project != nil && filter.Instance != nil && filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Project, filter.Instance, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, instanceSnapshotObjectsByProjectAndInstanceAndName)
+				sqlStmt, err = StmtContext(ctx, db, instanceSnapshotObjectsByProjectAndInstanceAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceSnapshotObjectsByProjectAndInstanceAndName\" prepared statement: %w", err)
 				}
@@ -173,7 +173,7 @@ func GetInstanceSnapshots(ctx context.Context, db dbtx, filters ...InstanceSnaps
 		} else if filter.Project != nil && filter.Instance != nil && filter.ID == nil && filter.Name == nil {
 			args = append(args, []any{filter.Project, filter.Instance}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, instanceSnapshotObjectsByProjectAndInstance)
+				sqlStmt, err = StmtContext(ctx, db, instanceSnapshotObjectsByProjectAndInstance)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceSnapshotObjectsByProjectAndInstance\" prepared statement: %w", err)
 				}
@@ -197,7 +197,7 @@ func GetInstanceSnapshots(ctx context.Context, db dbtx, filters ...InstanceSnaps
 		} else if filter.ID != nil && filter.Project == nil && filter.Instance == nil && filter.Name == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, instanceSnapshotObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, instanceSnapshotObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"instanceSnapshotObjectsByID\" prepared statement: %w", err)
 				}
@@ -335,7 +335,7 @@ func GetInstanceSnapshotID(ctx context.Context, db tx, project string, instance 
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	stmt, err := Stmt(db, instanceSnapshotID)
+	stmt, err := StmtContext(ctx, db, instanceSnapshotID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"instanceSnapshotID\" prepared statement: %w", err)
 	}
@@ -361,7 +361,7 @@ func InstanceSnapshotExists(ctx context.Context, db dbtx, project string, instan
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	stmt, err := Stmt(db, instanceSnapshotID)
+	stmt, err := StmtContext(ctx, db, instanceSnapshotID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"instanceSnapshotID\" prepared statement: %w", err)
 	}
@@ -399,7 +399,7 @@ func CreateInstanceSnapshot(ctx context.Context, db dbtx, object InstanceSnapsho
 	args[6] = object.ExpiryDate
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, instanceSnapshotCreate)
+	stmt, err := StmtContext(ctx, db, instanceSnapshotCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"instanceSnapshotCreate\" prepared statement: %w", err)
 	}
@@ -474,7 +474,7 @@ func RenameInstanceSnapshot(ctx context.Context, db dbtx, project string, instan
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	stmt, err := Stmt(db, instanceSnapshotRename)
+	stmt, err := StmtContext(ctx, db, instanceSnapshotRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"instanceSnapshotRename\" prepared statement: %w", err)
 	}
@@ -503,7 +503,7 @@ func DeleteInstanceSnapshot(ctx context.Context, db dbtx, project string, instan
 		_err = mapErr(_err, "Instance_snapshot")
 	}()
 
-	stmt, err := Stmt(db, instanceSnapshotDeleteByProjectAndInstanceAndName)
+	stmt, err := StmtContext(ctx, db, instanceSnapshotDeleteByProjectAndInstanceAndName)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"instanceSnapshotDeleteByProjectAndInstanceAndName\" prepared statement: %w", err)
 	}

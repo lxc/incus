@@ -128,7 +128,7 @@ func GetOperations(ctx context.Context, db dbtx, filters ...OperationFilter) (_ 
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, operationObjects)
+		sqlStmt, err = StmtContext(ctx, db, operationObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"operationObjects\" prepared statement: %w", err)
 		}
@@ -138,7 +138,7 @@ func GetOperations(ctx context.Context, db dbtx, filters ...OperationFilter) (_ 
 		if filter.UUID != nil && filter.ID == nil && filter.NodeID == nil {
 			args = append(args, []any{filter.UUID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, operationObjectsByUUID)
+				sqlStmt, err = StmtContext(ctx, db, operationObjectsByUUID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"operationObjectsByUUID\" prepared statement: %w", err)
 				}
@@ -162,7 +162,7 @@ func GetOperations(ctx context.Context, db dbtx, filters ...OperationFilter) (_ 
 		} else if filter.NodeID != nil && filter.ID == nil && filter.UUID == nil {
 			args = append(args, []any{filter.NodeID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, operationObjectsByNodeID)
+				sqlStmt, err = StmtContext(ctx, db, operationObjectsByNodeID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"operationObjectsByNodeID\" prepared statement: %w", err)
 				}
@@ -186,7 +186,7 @@ func GetOperations(ctx context.Context, db dbtx, filters ...OperationFilter) (_ 
 		} else if filter.ID != nil && filter.NodeID == nil && filter.UUID == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, operationObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, operationObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"operationObjectsByID\" prepared statement: %w", err)
 				}
@@ -245,7 +245,7 @@ func CreateOrReplaceOperation(ctx context.Context, db dbtx, object Operation) (_
 	args[3] = object.Type
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, operationCreateOrReplace)
+	stmt, err := StmtContext(ctx, db, operationCreateOrReplace)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"operationCreateOrReplace\" prepared statement: %w", err)
 	}
@@ -275,7 +275,7 @@ func DeleteOperation(ctx context.Context, db dbtx, uuid string) (_err error) {
 		_err = mapErr(_err, "Operation")
 	}()
 
-	stmt, err := Stmt(db, operationDeleteByUUID)
+	stmt, err := StmtContext(ctx, db, operationDeleteByUUID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"operationDeleteByUUID\" prepared statement: %w", err)
 	}
@@ -306,7 +306,7 @@ func DeleteOperations(ctx context.Context, db dbtx, nodeID int64) (_err error) {
 		_err = mapErr(_err, "Operation")
 	}()
 
-	stmt, err := Stmt(db, operationDeleteByNodeID)
+	stmt, err := StmtContext(ctx, db, operationDeleteByNodeID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"operationDeleteByNodeID\" prepared statement: %w", err)
 	}

@@ -148,7 +148,7 @@ func GetNetworkLoadBalancers(ctx context.Context, db dbtx, filters ...NetworkLoa
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkLoadBalancerObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkLoadBalancerObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkLoadBalancerObjects\" prepared statement: %w", err)
 		}
@@ -158,7 +158,7 @@ func GetNetworkLoadBalancers(ctx context.Context, db dbtx, filters ...NetworkLoa
 		if filter.NetworkID != nil && filter.ListenAddress != nil && filter.ID == nil {
 			args = append(args, []any{filter.NetworkID, filter.ListenAddress}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkLoadBalancerObjectsByNetworkIDAndListenAddress)
+				sqlStmt, err = StmtContext(ctx, db, networkLoadBalancerObjectsByNetworkIDAndListenAddress)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkLoadBalancerObjectsByNetworkIDAndListenAddress\" prepared statement: %w", err)
 				}
@@ -182,7 +182,7 @@ func GetNetworkLoadBalancers(ctx context.Context, db dbtx, filters ...NetworkLoa
 		} else if filter.NetworkID != nil && filter.ID == nil && filter.ListenAddress == nil {
 			args = append(args, []any{filter.NetworkID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkLoadBalancerObjectsByNetworkID)
+				sqlStmt, err = StmtContext(ctx, db, networkLoadBalancerObjectsByNetworkID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkLoadBalancerObjectsByNetworkID\" prepared statement: %w", err)
 				}
@@ -286,7 +286,7 @@ func GetNetworkLoadBalancerID(ctx context.Context, db tx, networkID int64, liste
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
 
-	stmt, err := Stmt(db, networkLoadBalancerID)
+	stmt, err := StmtContext(ctx, db, networkLoadBalancerID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkLoadBalancerID\" prepared statement: %w", err)
 	}
@@ -332,7 +332,7 @@ func CreateNetworkLoadBalancer(ctx context.Context, db dbtx, object NetworkLoadB
 	args[4] = marshaledPorts
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, networkLoadBalancerCreate)
+	stmt, err := StmtContext(ctx, db, networkLoadBalancerCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkLoadBalancerCreate\" prepared statement: %w", err)
 	}
@@ -392,7 +392,7 @@ func UpdateNetworkLoadBalancer(ctx context.Context, db tx, networkID int64, list
 		return err
 	}
 
-	stmt, err := Stmt(db, networkLoadBalancerUpdate)
+	stmt, err := StmtContext(ctx, db, networkLoadBalancerUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkLoadBalancerUpdate\" prepared statement: %w", err)
 	}
@@ -446,7 +446,7 @@ func DeleteNetworkLoadBalancer(ctx context.Context, db dbtx, networkID int64, id
 		_err = mapErr(_err, "Network_load_balancer")
 	}()
 
-	stmt, err := Stmt(db, networkLoadBalancerDeleteByNetworkIDAndID)
+	stmt, err := StmtContext(ctx, db, networkLoadBalancerDeleteByNetworkIDAndID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkLoadBalancerDeleteByNetworkIDAndID\" prepared statement: %w", err)
 	}

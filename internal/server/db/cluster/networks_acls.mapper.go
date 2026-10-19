@@ -172,7 +172,7 @@ func GetNetworkACLs(ctx context.Context, db dbtx, filters ...NetworkACLFilter) (
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, networkACLObjects)
+		sqlStmt, err = StmtContext(ctx, db, networkACLObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"networkACLObjects\" prepared statement: %w", err)
 		}
@@ -182,7 +182,7 @@ func GetNetworkACLs(ctx context.Context, db dbtx, filters ...NetworkACLFilter) (
 		if filter.Project != nil && filter.Name != nil && filter.ID == nil {
 			args = append(args, []any{filter.Project, filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkACLObjectsByProjectAndName)
+				sqlStmt, err = StmtContext(ctx, db, networkACLObjectsByProjectAndName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkACLObjectsByProjectAndName\" prepared statement: %w", err)
 				}
@@ -206,7 +206,7 @@ func GetNetworkACLs(ctx context.Context, db dbtx, filters ...NetworkACLFilter) (
 		} else if filter.Project != nil && filter.ID == nil && filter.Name == nil {
 			args = append(args, []any{filter.Project}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkACLObjectsByProject)
+				sqlStmt, err = StmtContext(ctx, db, networkACLObjectsByProject)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkACLObjectsByProject\" prepared statement: %w", err)
 				}
@@ -230,7 +230,7 @@ func GetNetworkACLs(ctx context.Context, db dbtx, filters ...NetworkACLFilter) (
 		} else if filter.Name != nil && filter.ID == nil && filter.Project == nil {
 			args = append(args, []any{filter.Name}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkACLObjectsByName)
+				sqlStmt, err = StmtContext(ctx, db, networkACLObjectsByName)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkACLObjectsByName\" prepared statement: %w", err)
 				}
@@ -254,7 +254,7 @@ func GetNetworkACLs(ctx context.Context, db dbtx, filters ...NetworkACLFilter) (
 		} else if filter.ID != nil && filter.Name == nil && filter.Project == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, networkACLObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, networkACLObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"networkACLObjectsByID\" prepared statement: %w", err)
 				}
@@ -358,7 +358,7 @@ func NetworkACLExists(ctx context.Context, db dbtx, project string, name string)
 		_err = mapErr(_err, "NetworkACL")
 	}()
 
-	stmt, err := Stmt(db, networkACLID)
+	stmt, err := StmtContext(ctx, db, networkACLID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"networkACLID\" prepared statement: %w", err)
 	}
@@ -404,7 +404,7 @@ func CreateNetworkACL(ctx context.Context, db dbtx, object NetworkACL) (_ int64,
 	args[4] = marshaledEgress
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, networkACLCreate)
+	stmt, err := StmtContext(ctx, db, networkACLCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkACLCreate\" prepared statement: %w", err)
 	}
@@ -459,7 +459,7 @@ func GetNetworkACLID(ctx context.Context, db tx, project string, name string) (_
 		_err = mapErr(_err, "NetworkACL")
 	}()
 
-	stmt, err := Stmt(db, networkACLID)
+	stmt, err := StmtContext(ctx, db, networkACLID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"networkACLID\" prepared statement: %w", err)
 	}
@@ -485,7 +485,7 @@ func RenameNetworkACL(ctx context.Context, db dbtx, project string, name string,
 		_err = mapErr(_err, "NetworkACL")
 	}()
 
-	stmt, err := Stmt(db, networkACLRename)
+	stmt, err := StmtContext(ctx, db, networkACLRename)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkACLRename\" prepared statement: %w", err)
 	}
@@ -519,7 +519,7 @@ func UpdateNetworkACL(ctx context.Context, db tx, project string, name string, o
 		return err
 	}
 
-	stmt, err := Stmt(db, networkACLUpdate)
+	stmt, err := StmtContext(ctx, db, networkACLUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkACLUpdate\" prepared statement: %w", err)
 	}
@@ -573,7 +573,7 @@ func DeleteNetworkACL(ctx context.Context, db dbtx, id int) (_err error) {
 		_err = mapErr(_err, "NetworkACL")
 	}()
 
-	stmt, err := Stmt(db, networkACLDeleteByID)
+	stmt, err := StmtContext(ctx, db, networkACLDeleteByID)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"networkACLDeleteByID\" prepared statement: %w", err)
 	}

@@ -137,7 +137,7 @@ func GetCertificates(ctx context.Context, db dbtx, filters ...CertificateFilter)
 	queryParts := [2]string{}
 
 	if len(filters) == 0 {
-		sqlStmt, err = Stmt(db, certificateObjects)
+		sqlStmt, err = StmtContext(ctx, db, certificateObjects)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get \"certificateObjects\" prepared statement: %w", err)
 		}
@@ -147,7 +147,7 @@ func GetCertificates(ctx context.Context, db dbtx, filters ...CertificateFilter)
 		if filter.Name != nil && filter.Type != nil && filter.ID == nil && filter.Fingerprint == nil {
 			args = append(args, []any{filter.Name, filter.Type}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, certificateObjectsByNameAndType)
+				sqlStmt, err = StmtContext(ctx, db, certificateObjectsByNameAndType)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"certificateObjectsByNameAndType\" prepared statement: %w", err)
 				}
@@ -171,7 +171,7 @@ func GetCertificates(ctx context.Context, db dbtx, filters ...CertificateFilter)
 		} else if filter.ID != nil && filter.Fingerprint == nil && filter.Name == nil && filter.Type == nil {
 			args = append(args, []any{filter.ID}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, certificateObjectsByID)
+				sqlStmt, err = StmtContext(ctx, db, certificateObjectsByID)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"certificateObjectsByID\" prepared statement: %w", err)
 				}
@@ -195,7 +195,7 @@ func GetCertificates(ctx context.Context, db dbtx, filters ...CertificateFilter)
 		} else if filter.Fingerprint != nil && filter.ID == nil && filter.Name == nil && filter.Type == nil {
 			args = append(args, []any{filter.Fingerprint}...)
 			if len(filters) == 1 {
-				sqlStmt, err = Stmt(db, certificateObjectsByFingerprint)
+				sqlStmt, err = StmtContext(ctx, db, certificateObjectsByFingerprint)
 				if err != nil {
 					return nil, fmt.Errorf("Failed to get \"certificateObjectsByFingerprint\" prepared statement: %w", err)
 				}
@@ -270,7 +270,7 @@ func GetCertificateID(ctx context.Context, db tx, fingerprint string) (_ int64, 
 		_err = mapErr(_err, "Certificate")
 	}()
 
-	stmt, err := Stmt(db, certificateID)
+	stmt, err := StmtContext(ctx, db, certificateID)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"certificateID\" prepared statement: %w", err)
 	}
@@ -296,7 +296,7 @@ func CertificateExists(ctx context.Context, db dbtx, fingerprint string) (_ bool
 		_err = mapErr(_err, "Certificate")
 	}()
 
-	stmt, err := Stmt(db, certificateID)
+	stmt, err := StmtContext(ctx, db, certificateID)
 	if err != nil {
 		return false, fmt.Errorf("Failed to get \"certificateID\" prepared statement: %w", err)
 	}
@@ -333,7 +333,7 @@ func CreateCertificate(ctx context.Context, db dbtx, object Certificate) (_ int6
 	args[5] = object.Description
 
 	// Prepared statement to use.
-	stmt, err := Stmt(db, certificateCreate)
+	stmt, err := StmtContext(ctx, db, certificateCreate)
 	if err != nil {
 		return -1, fmt.Errorf("Failed to get \"certificateCreate\" prepared statement: %w", err)
 	}
@@ -363,7 +363,7 @@ func DeleteCertificate(ctx context.Context, db dbtx, fingerprint string) (_err e
 		_err = mapErr(_err, "Certificate")
 	}()
 
-	stmt, err := Stmt(db, certificateDeleteByFingerprint)
+	stmt, err := StmtContext(ctx, db, certificateDeleteByFingerprint)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateDeleteByFingerprint\" prepared statement: %w", err)
 	}
@@ -394,7 +394,7 @@ func DeleteCertificates(ctx context.Context, db dbtx, name string, certificateTy
 		_err = mapErr(_err, "Certificate")
 	}()
 
-	stmt, err := Stmt(db, certificateDeleteByNameAndType)
+	stmt, err := StmtContext(ctx, db, certificateDeleteByNameAndType)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateDeleteByNameAndType\" prepared statement: %w", err)
 	}
@@ -424,7 +424,7 @@ func UpdateCertificate(ctx context.Context, db tx, fingerprint string, object Ce
 		return err
 	}
 
-	stmt, err := Stmt(db, certificateUpdate)
+	stmt, err := StmtContext(ctx, db, certificateUpdate)
 	if err != nil {
 		return fmt.Errorf("Failed to get \"certificateUpdate\" prepared statement: %w", err)
 	}
