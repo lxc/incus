@@ -2515,6 +2515,16 @@ test_network_ovn_parent() {
     [ "$(ovn-nbctl --format=csv --bare --columns=name find logical_router_port | grep -cE "^${parentRouter}-lrp-int")" = "2" ]
     ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
 
+    echo "==> Check a network with peerings can't change its parent"
+    incus network create ovn6 --type=ovn network=incusbr0 ipv4.address=10.10.18.1/24 ipv4.nat=true ipv6.address=none
+    incus network peer create ovn4 peer6 ovn6
+    incus network peer create ovn6 peer4 ovn4
+    ! incus network set ovn4 parent=ovn1 network= || false
+    ! incus network set ovn6 parent=ovn1 network= || false
+    incus network peer delete ovn4 peer6
+    incus network peer delete ovn6 peer4
+    incus network delete ovn6
+
     echo "==> Check reparenting a network with instances attached"
     incus init "${instanceImage}" u1 -s "${poolName}" -n ovn2
     incus config device set u1 eth0 ipv4.routes=192.0.2.123/32
