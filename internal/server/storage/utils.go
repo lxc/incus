@@ -1453,10 +1453,10 @@ type DependentVolumeWithType struct {
 	VolumeTypes []localMigration.Type
 }
 
-// DependentVolumesMatchMigrationType returns the transport type matching the dependent volumes.
-func DependentVolumesMatchMigrationType(s *state.State, migrationDependentVolumes []*migration.DependentVolume, snapshots bool, overrides api.DevicesMap, source bool, clusterMove bool) ([]DependentVolumeWithType, error) {
+// DependentVolumesMatchMigrationType returns the transport type matching the header's dependent volumes.
+func DependentVolumesMatchMigrationType(s *state.State, header *migration.MigrationHeader, snapshots bool, overrides api.DevicesMap, source bool, clusterMove bool) ([]DependentVolumeWithType, error) {
 	dependentVolumes := []DependentVolumeWithType{}
-	for _, vol := range migrationDependentVolumes {
+	for _, vol := range header.DependentVolumes {
 		contentType := drivers.ContentType(*vol.ContentType)
 		poolName := *vol.Pool
 		storageMove := false
@@ -1477,6 +1477,11 @@ func DependentVolumesMatchMigrationType(s *state.State, migrationDependentVolume
 		poolMigrationTypes := pool.MigrationTypes(drivers.ContentType(contentType), false, snapshots, clusterMove, storageMove)
 		if len(poolMigrationTypes) == 0 {
 			return nil, errors.New("No migration types available")
+		}
+
+		// Older targets echo the offered block features back, only trust them from targets reporting their own.
+		if source && header.BlockFeatures == nil {
+			vol.BlockFeatures = nil
 		}
 
 		migrationTypes, err := localMigration.MatchTypes(localMigration.HeaderFromDependentVolume(vol), FallbackMigrationType(contentType), poolMigrationTypes)
