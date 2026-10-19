@@ -1484,9 +1484,11 @@ func DependentVolumesMatchMigrationType(s *state.State, migrationDependentVolume
 			return nil, fmt.Errorf("Failed to negotiate migration type: %w", err)
 		}
 
-		// Update header on target.
+		// Build a fresh header on the target rather than echoing the offered one back.
 		if !source {
-			localMigration.DependentVolumeUpdateHeader(localMigration.TypesToHeader(migrationTypes...), vol)
+			respVol := localMigration.DependentVolumeFromHeader(localMigration.TypesToHeader(migrationTypes...), *vol.Name, *vol.Pool, *vol.ContentType, vol.GetVolumeSize(), vol.GetDeviceName())
+			respVol.Snapshots = vol.Snapshots
+			vol = respVol
 		}
 
 		dependentVolumes = append(dependentVolumes, DependentVolumeWithType{Volume: vol, VolumeTypes: migrationTypes})
