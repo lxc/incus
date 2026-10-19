@@ -1442,7 +1442,7 @@ func (r *ProtocolIncus) ExecInstance(instanceName string, exec api.InstanceExecP
 func (r *ProtocolIncus) getExecWebsockets(opID string, fds map[string]string, names []string) (map[string]*websocket.Conn, error) {
 	var wg sync.WaitGroup
 	var lock sync.Mutex
-	var firstErr error
+	errs := map[string]error{}
 	conns := map[string]*websocket.Conn{}
 
 	for _, name := range names {
@@ -1456,10 +1456,7 @@ func (r *ProtocolIncus) getExecWebsockets(opID string, fds map[string]string, na
 			defer lock.Unlock()
 
 			if err != nil {
-				if firstErr == nil {
-					firstErr = err
-				}
-
+				errs[name] = err
 				return
 			}
 
@@ -1469,12 +1466,24 @@ func (r *ProtocolIncus) getExecWebsockets(opID string, fds map[string]string, na
 
 	wg.Wait()
 
-	if firstErr != nil {
+	// A short command can finish before the optional control websocket connects.
+	if len(errs) == 1 && errs[api.SecretNameControl] != nil {
+		op, _, err := r.GetOperation(opID)
+		if err == nil && op.StatusCode.IsFinal() {
+			delete(errs, api.SecretNameControl)
+		}
+	}
+
+	for _, name := range names {
+		if errs[name] == nil {
+			continue
+		}
+
 		for _, conn := range conns {
 			_ = conn.Close()
 		}
 
-		return nil, firstErr
+		return nil, errs[name]
 	}
 
 	return conns, nil
