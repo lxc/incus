@@ -148,7 +148,7 @@ func (m *Method) getNames(buf *file.Buffer) error {
 	buf.N()
 
 	buf.L("if len(filters) == 0 {")
-	buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "names"))
+	buf.L("sqlStmt, err = StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "names"))
 
 	m.ifErrNotNil(buf, false, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "names")))
 	buf.L("}")
@@ -186,7 +186,7 @@ func (m *Method) getNames(buf *file.Buffer) error {
 
 		buf.L("args = append(args, []any{%s}...)", args.String())
 		buf.L("if len(filters) == 1 {")
-		buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "names", filter...))
+		buf.L("sqlStmt, err = StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "names", filter...))
 
 		m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "names", filter...)))
 		buf.L("break")
@@ -370,7 +370,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 		buf.L("queryStr = strings.Join(queryParts, \" ORDER BY\")")
 	} else if mapping.Type == AssociationTable {
 		filter := m.config["struct"] + "ID"
-		buf.L("sqlStmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, "objects", filter))
+		buf.L("sqlStmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "objects", filter))
 
 		m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "objects", filter)))
 
@@ -385,7 +385,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 		buf.N()
 
 		buf.L("if len(filters) == 0 {")
-		buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "objects"))
+		buf.L("sqlStmt, err = StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "objects"))
 
 		m.ifErrNotNil(buf, false, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "objects")))
 		buf.L("}")
@@ -427,7 +427,7 @@ func (m *Method) getMany(buf *file.Buffer) error {
 
 			buf.L("args = append(args, []any{%s}...)", args.String())
 			buf.L("if len(filters) == 1 {")
-			buf.L("sqlStmt, err = Stmt(db, %s)", stmtCodeVar(m.entity, "objects", filter...))
+			buf.L("sqlStmt, err = StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "objects", filter...))
 
 			m.ifErrNotNil(buf, true, "nil", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "objects", filter...)))
 			buf.L("break")
@@ -794,7 +794,7 @@ func (m *Method) id(buf *file.Buffer) error {
 
 	defer m.end(buf)
 
-	buf.L("stmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, "ID"))
+	buf.L("stmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "ID"))
 
 	m.ifErrNotNil(buf, true, "-1", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "ID")))
 
@@ -844,7 +844,7 @@ func (m *Method) exists(buf *file.Buffer) error {
 
 	defer m.end(buf)
 
-	buf.L("stmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, "ID"))
+	buf.L("stmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "ID"))
 
 	m.ifErrNotNil(buf, true, "false", fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "ID")))
 
@@ -995,7 +995,7 @@ func (m *Method) create(buf *file.Buffer, replace bool) error {
 		buf.N()
 
 		buf.L("// Prepared statement to use. ")
-		buf.L("stmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, kind))
+		buf.L("stmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, kind))
 
 		if mapping.Type == AssociationTable {
 			m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, kind)))
@@ -1141,7 +1141,7 @@ func (m *Method) rename(buf *file.Buffer) error {
 
 	defer m.end(buf)
 
-	buf.L("stmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, "rename"))
+	buf.L("stmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "rename"))
 
 	m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "rename")))
 
@@ -1287,7 +1287,7 @@ func (m *Method) update(buf *file.Buffer) error {
 
 		buf.L("id, err := Get%sID(ctx, db, %s)", lex.PascalCase(m.entity), mapping.FieldParams(nk))
 		m.ifErrNotNil(buf, true, "err")
-		buf.L("stmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, "update"))
+		buf.L("stmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "update"))
 
 		m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "update")))
 
@@ -1395,7 +1395,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 	defer m.end(buf)
 	switch mapping.Type {
 	case AssociationTable:
-		buf.L("stmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, "delete", m.config["struct"]+"ID"))
+		buf.L("stmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "delete", m.config["struct"]+"ID"))
 
 		m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Failed to get \"%s\" prepared statement: %%w", err)`, stmtCodeVar(m.entity, "delete", m.config["struct"]+"ID")))
 		buf.L("result, err := stmt.Exec(int(%sID))", lex.Minuscule(m.config["struct"]))
@@ -1414,7 +1414,7 @@ func (m *Method) delete(buf *file.Buffer, deleteOne bool) error {
 		m.ifErrNotNil(buf, true, fmt.Sprintf(`fmt.Errorf("Delete entry for \"%%s_%s\" failed: %%w", parentTablePrefix, err)`, m.entity))
 	default:
 		activeFilters := mapping.ActiveFilters(m.kind)
-		buf.L("stmt, err := Stmt(db, %s)", stmtCodeVar(m.entity, "delete", FieldNames(activeFilters)...))
+		buf.L("stmt, err := StmtContext(ctx, db, %s)", stmtCodeVar(m.entity, "delete", FieldNames(activeFilters)...))
 
 		for _, field := range activeFilters {
 			if util.IsNeitherFalseNorEmpty(field.Config.Get("marshal")) {
