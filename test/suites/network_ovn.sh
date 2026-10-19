@@ -2515,6 +2515,53 @@ test_network_ovn_parent() {
     [ "$(ovn-nbctl --format=csv --bare --columns=name find logical_router_port | grep -cE "^${parentRouter}-lrp-int")" = "2" ]
     ovn-nbctl --bare --format=csv --columns=logical_ip,type find nat | grep -xF "10.10.12.0/24,snat"
 
+    echo "==> Check forwards and load balancers follow a network changing its parent"
+    incus network forward create ovn2 10.10.13.50 target_address=10.10.12.2
+    incus network forward port add ovn2 10.10.13.50 tcp 80 10.10.12.3
+    incus network load-balancer create ovn2 10.10.13.51
+    incus network load-balancer backend add ovn2 10.10.13.51 b1 10.10.12.2
+    incus network load-balancer port add ovn2 10.10.13.51 tcp 80 b1
+    [ "$(ovn-nbctl lr-lb-list "${parentRouter}" | grep -c '10.10.13.5[01]:80')" = "2" ]
+
+    # A child can't move to a network without an uplink.
+    incus network create ovn5 --type=ovn network=none ipv4.address=10.10.17.1/24 ipv6.address=none
+    ! incus network set ovn2 parent=ovn5 network= || false
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "${parentRouter}" ]
+    [ "$(ovn-nbctl lr-lb-list "${parentRouter}" | grep -c '10.10.13.5[01]:80')" = "2" ]
+    incus network delete ovn5
+
+    # Moving to another parent re-applies everything on the new logical router.
+    incus network set ovn2 parent=ovn4
+    sleep 2
+    newRouter="$(incus network info ovn4 | awk '/Logical router:/ {print $NF}')"
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "${newRouter}" ]
+    [ "$(ovn-nbctl lr-lb-list "${newRouter}" | grep -c '10.10.13.5[01]:80')" = "2" ]
+    [ "$(ovn-nbctl lr-lb-list "${parentRouter}" | grep -c '10.10.13.5[01]:80')" = "0" ]
+    ovn-nbctl --bare --format=csv --columns=external_ip,type find nat | grep -xF "10.10.13.50,dnat"
+    ovn-nbctl lr-route-list "${newRouter}" | grep -F "10.10.13.50"
+    ovn-nbctl lr-route-list "${newRouter}" | grep -F "10.10.13.51"
+    ! ovn-nbctl lr-route-list "${parentRouter}" | grep -F "10.10.13.5" || false
+
+    # Leaving the parent gives the network its own logical router back.
+    incus network set ovn2 parent= network=incusbr0
+    sleep 2
+    ownRouter="$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')"
+    [ "${ownRouter}" != "${newRouter}" ]
+    [ "$(ovn-nbctl lr-lb-list "${ownRouter}" | grep -c '10.10.13.5[01]:80')" = "2" ]
+    [ "$(ovn-nbctl lr-lb-list "${newRouter}" | grep -c '10.10.13.5[01]:80')" = "0" ]
+    ovn-nbctl lr-route-list "${ownRouter}" | grep -F "10.10.13.50"
+    ! ovn-nbctl lr-route-list "${newRouter}" | grep -F "10.10.13.5" || false
+
+    # Move back below the original parent.
+    incus network set ovn2 parent=ovn1 network=
+    sleep 2
+    [ "$(incus network info ovn2 | awk '/Logical router:/ {print $NF}')" = "${parentRouter}" ]
+    [ "$(ovn-nbctl lr-lb-list "${parentRouter}" | grep -c '10.10.13.5[01]:80')" = "2" ]
+    [ "$(ovn-nbctl lr-lb-list "${ownRouter}" | grep -c '10.10.13.5[01]:80')" = "0" ]
+
+    incus network forward delete ovn2 10.10.13.50
+    incus network load-balancer delete ovn2 10.10.13.51
+
     echo "==> Check a network with peerings can't change its parent"
     incus network create ovn6 --type=ovn network=incusbr0 ipv4.address=10.10.18.1/24 ipv4.nat=true ipv6.address=none
     incus network peer create ovn4 peer6 ovn6
