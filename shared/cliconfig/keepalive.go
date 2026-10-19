@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -30,6 +31,25 @@ func (c *Config) handleKeepAlive(remote Remote, name string) (incus.InstanceServ
 	socketPath := filepath.Join(socketDir, fmt.Sprintf("%s.socket", name))
 	d, err := incus.ConnectIncusUnix(socketPath, nil)
 	if err != nil {
+		// Serialize proxy startup so concurrent commands end up sharing one proxy.
+		lockFile, err := os.OpenFile(filepath.Join(socketDir, fmt.Sprintf("%s.lock", name)), os.O_CREATE|os.O_RDWR, 0o600)
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() { _ = lockFile.Close() }()
+
+		err = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX)
+		if err != nil {
+			return nil, err
+		}
+
+		// Another command may have started the proxy while we waited for the lock.
+		d, err = incus.ConnectIncusUnix(socketPath, nil)
+		if err == nil {
+			return d, nil
+		}
+
 		// Delete any existing sockets.
 		_ = os.Remove(socketPath)
 
