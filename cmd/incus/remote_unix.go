@@ -82,6 +82,13 @@ func (c *cmdRemoteProxy) run(cmd *cobra.Command, args []string) error {
 
 	s := resources[0].server
 
+	// Leave an existing proxy alone when it is still serving the socket.
+	existing, err := net.Dial("unix", path)
+	if err == nil {
+		_ = existing.Close()
+		return nil
+	}
+
 	// Create proxy socket.
 	err = os.Remove(path)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
