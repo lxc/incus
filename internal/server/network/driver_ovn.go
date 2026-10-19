@@ -1572,6 +1572,27 @@ func (n *ovn) checkReparentAllowed() error {
 		return fmt.Errorf("Network is used by running instance(s) with routes: %s", strings.Join(instancesWithRoutes, ", "))
 	}
 
+	var peerCount int
+	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
+		networkID := n.ID()
+
+		peers, err := dbCluster.GetNetworkPeers(ctx, tx.Tx(), dbCluster.NetworkPeerFilter{NetworkID: &networkID})
+		if err != nil {
+			return fmt.Errorf("Failed loading network peers: %w", err)
+		}
+
+		peerCount = len(peers)
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if peerCount > 0 {
+		return fmt.Errorf("Network has %d peering(s)", peerCount)
+	}
+
 	// Check for load balancers and address forwards.
 	err = n.state.DB.Cluster.Transaction(context.TODO(), func(ctx context.Context, tx *db.ClusterTx) error {
 		networkID := n.ID()
