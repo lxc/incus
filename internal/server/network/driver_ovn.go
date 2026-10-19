@@ -7388,6 +7388,46 @@ func (n *ovn) forwardApplyDefaultTargetNAT(listenAddress net.IP, targetAddress n
 	return n.ovnnb.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "dnat", nil, listenAddress, targetAddress, false, true)
 }
 
+// forwardApplyOVN applies the load balancer and default target NAT of a forward.
+func (n *ovn) forwardApplyOVN(listenAddress string, portMaps []*forwardPortMap, targetAddress net.IP) error {
+	listenIP := net.ParseIP(listenAddress)
+	vips := n.forwardFlattenVIPs(listenIP, portMaps)
+
+	err := n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(listenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
+	if err != nil {
+		return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+	}
+
+	err = n.forwardApplyDefaultTargetNAT(listenIP, targetAddress)
+	if err != nil {
+		return fmt.Errorf("Failed applying default target NAT rule: %w", err)
+	}
+
+	return nil
+}
+
+// listenAddressRouteApply adds the static route for a listen address.
+func (n *ovn) listenAddressRouteApply(listenAddress *net.IPNet) error {
+	var nexthop net.IP
+	if listenAddress.IP.To4() == nil {
+		routerV6, _, err := n.parseRouterIntPortIPv6Net()
+		if err == nil {
+			nexthop = routerV6
+		}
+	} else {
+		routerV4, _, err := n.parseRouterIntPortIPv4Net()
+		if err == nil {
+			nexthop = routerV4
+		}
+	}
+
+	if nexthop == nil {
+		return nil
+	}
+
+	return n.ovnnb.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddress})
+}
+
 // ForwardCreate creates a network forward.
 func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.ClientType) error {
 	if n.UplinkName() == "none" {
@@ -7581,42 +7621,20 @@ func (n *ovn) ForwardCreate(forward api.NetworkForwardsPost, clientType request.
 			_ = n.forwardBGPSetupPrefixes()
 		})
 
-		vips := n.forwardFlattenVIPs(net.ParseIP(forward.ListenAddress), portMaps)
-
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(forward.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
+		err = n.forwardApplyOVN(forward.ListenAddress, portMaps, net.ParseIP(forward.Config["target_address"]))
 		if err != nil {
-			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
-		}
-
-		err = n.forwardApplyDefaultTargetNAT(listenAddressNet.IP, net.ParseIP(forward.Config["target_address"]))
-		if err != nil {
-			return fmt.Errorf("Failed applying default target NAT rule: %w", err)
+			return err
 		}
 
 		// Add internal static route to the network forward (helps with OVN IC).
-		var nexthop net.IP
-		if listenAddressNet.IP.To4() == nil {
-			routerV6, _, err := n.parseRouterIntPortIPv6Net()
-			if err == nil {
-				nexthop = routerV6
-			}
-		} else {
-			routerV4, _, err := n.parseRouterIntPortIPv4Net()
-			if err == nil {
-				nexthop = routerV4
-			}
+		err = n.listenAddressRouteApply(listenAddressNet)
+		if err != nil {
+			return err
 		}
 
-		if nexthop != nil {
-			err = n.ovnnb.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
-			if err != nil {
-				return err
-			}
-
-			reverter.Add(func() {
-				_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
-			})
-		}
+		reverter.Add(func() {
+			_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
+		})
 
 		// Notify all other members to refresh their BGP prefixes.
 		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
@@ -7696,24 +7714,16 @@ func (n *ovn) ForwardUpdate(listenAddress string, req api.NetworkForwardPut, cli
 			return nil // Nothing has changed.
 		}
 
-		vips := n.forwardFlattenVIPs(net.ParseIP(newForward.ListenAddress), portMaps)
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(newForward.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
+		err = n.forwardApplyOVN(newForward.ListenAddress, portMaps, net.ParseIP(newForward.Config["target_address"]))
 		if err != nil {
-			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
-		}
-
-		err = n.forwardApplyDefaultTargetNAT(net.ParseIP(newForward.ListenAddress), net.ParseIP(newForward.Config["target_address"]))
-		if err != nil {
-			return fmt.Errorf("Failed applying default target NAT rule: %w", err)
+			return err
 		}
 
 		reverter.Add(func() {
 			// Apply old settings to OVN on failure.
 			portMaps, err := n.forwardValidate(net.ParseIP(curForward.ListenAddress), &curForward.NetworkForwardPut)
 			if err == nil {
-				vips := n.forwardFlattenVIPs(net.ParseIP(curForward.ListenAddress), portMaps)
-				_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curForward.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
-				_ = n.forwardApplyDefaultTargetNAT(net.ParseIP(curForward.ListenAddress), net.ParseIP(curForward.Config["target_address"]))
+				_ = n.forwardApplyOVN(curForward.ListenAddress, portMaps, net.ParseIP(curForward.Config["target_address"]))
 				_ = n.forwardBGPSetupPrefixes()
 			}
 		})
@@ -7904,6 +7914,30 @@ func (n *ovn) loadBalancerFlattenVIPs(listenAddress net.IP, portMaps []*loadBala
 	return vips
 }
 
+// loadBalancerApplyOVN applies the OVN load balancer.
+func (n *ovn) loadBalancerApplyOVN(listenAddress string, portMaps []*loadBalancerPortMap, put api.NetworkLoadBalancerPut) error {
+	vips := n.loadBalancerFlattenVIPs(net.ParseIP(listenAddress), portMaps)
+
+	// Look at health checking configuration.
+	healthCheck, err := n.getHealthCheck(put)
+	if err != nil {
+		return err
+	}
+
+	if healthCheck != nil {
+		for i := range vips {
+			vips[i].HealthCheck = healthCheck
+		}
+	}
+
+	err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(listenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
+	if err != nil {
+		return fmt.Errorf("Failed applying OVN load balancer: %w", err)
+	}
+
+	return nil
+}
+
 // LoadBalancerCreate creates a network load balancer.
 func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clientType request.ClientType) error {
 	if n.UplinkName() == "none" {
@@ -8089,49 +8123,20 @@ func (n *ovn) LoadBalancerCreate(loadBalancer api.NetworkLoadBalancersPost, clie
 			_ = n.loadBalancerBGPSetupPrefixes()
 		})
 
-		vips := n.loadBalancerFlattenVIPs(net.ParseIP(loadBalancer.ListenAddress), portMaps)
-
-		// Look at health checking configuration.
-		healthCheck, err := n.getHealthCheck(loadBalancer.NetworkLoadBalancerPut)
+		err = n.loadBalancerApplyOVN(loadBalancer.ListenAddress, portMaps, loadBalancer.NetworkLoadBalancerPut)
 		if err != nil {
 			return err
 		}
 
-		if healthCheck != nil {
-			for i := range vips {
-				vips[i].HealthCheck = healthCheck
-			}
-		}
-
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(loadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
-		if err != nil {
-			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
-		}
-
 		// Add internal static route to the load-balancer (helps with OVN IC).
-		var nexthop net.IP
-		if listenAddressNet.IP.To4() == nil {
-			routerV6, _, err := n.parseRouterIntPortIPv6Net()
-			if err == nil {
-				nexthop = routerV6
-			}
-		} else {
-			routerV4, _, err := n.parseRouterIntPortIPv4Net()
-			if err == nil {
-				nexthop = routerV4
-			}
+		err = n.listenAddressRouteApply(listenAddressNet)
+		if err != nil {
+			return err
 		}
 
-		if nexthop != nil {
-			err = n.ovnnb.CreateLogicalRouterRoute(context.TODO(), n.getRouterName(), true, networkOVN.OVNRouterRoute{NextHop: nexthop, Prefix: *listenAddressNet})
-			if err != nil {
-				return err
-			}
-
-			reverter.Add(func() {
-				_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
-			})
-		}
+		reverter.Add(func() {
+			_ = n.ovnnb.DeleteLogicalRouterRoute(context.TODO(), n.getRouterName(), *listenAddressNet)
+		})
 
 		// Notify all other members to refresh their BGP prefixes.
 		notifier, err := cluster.NewNotifier(n.state, n.state.Endpoints.NetworkCert(), n.state.ServerCert(), cluster.NotifyAll)
@@ -8220,23 +8225,9 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 			return nil // Nothing has changed.
 		}
 
-		vips := n.loadBalancerFlattenVIPs(net.ParseIP(newLoadBalancer.ListenAddress), portMaps)
-
-		// Look at health checking configuration.
-		healthCheck, err := n.getHealthCheck(newLoadBalancer.NetworkLoadBalancerPut)
+		err = n.loadBalancerApplyOVN(newLoadBalancer.ListenAddress, portMaps, newLoadBalancer.NetworkLoadBalancerPut)
 		if err != nil {
 			return err
-		}
-
-		if healthCheck != nil {
-			for i := range vips {
-				vips[i].HealthCheck = healthCheck
-			}
-		}
-
-		err = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(newLoadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
-		if err != nil {
-			return fmt.Errorf("Failed applying OVN load balancer: %w", err)
 		}
 
 		reverter.Add(func() {
@@ -8246,20 +8237,7 @@ func (n *ovn) LoadBalancerUpdate(listenAddress string, req api.NetworkLoadBalanc
 				return
 			}
 
-			vips := n.loadBalancerFlattenVIPs(net.ParseIP(curLoadBalancer.ListenAddress), portMaps)
-
-			healthCheck, err := n.getHealthCheck(curLoadBalancer.NetworkLoadBalancerPut)
-			if err != nil {
-				return
-			}
-
-			if healthCheck != nil {
-				for i := range vips {
-					vips[i].HealthCheck = healthCheck
-				}
-			}
-
-			_ = n.ovnnb.CreateLoadBalancer(context.TODO(), n.getLoadBalancerName(curLoadBalancer.ListenAddress), n.getRouterName(), n.getIntSwitchName(), vips...)
+			_ = n.loadBalancerApplyOVN(curLoadBalancer.ListenAddress, portMaps, curLoadBalancer.NetworkLoadBalancerPut)
 			_ = n.loadBalancerBGPSetupPrefixes()
 		})
 
