@@ -99,7 +99,7 @@ func validDevices(s *state.State, p api.Project, instanceType instancetype.Type,
 			}
 
 			// Validate the device name.
-			err := validate.IsAPIName(deviceName, false)
+			err := validate.IsDeviceName(deviceName)
 			if err != nil {
 				return fmt.Errorf("Invalid device name %q: %w", deviceName, err)
 			}
