@@ -212,6 +212,10 @@ log "Launch a VM on local storage and one on shared storage"
 incus init "${IMAGE}" "${REMOTE}:v1" --vm -s local --target "$(member 1)" -c migration.stateful=true
 incus init "${IMAGE}" "${REMOTE}:v2" --vm -s shared --target "$(member 1)" -c migration.stateful=true
 
+log "Attach a custom block volume following the local storage VM"
+incus storage volume create "${REMOTE}:local" vol3 --type=block size=64MiB migration.follow_instance=true --target "$(member 1)"
+incus storage volume attach "${REMOTE}:local" vol3 v1
+
 log "Attach custom block and ISO volumes to the shared storage VM"
 incus storage volume create "${REMOTE}:shared" vol1 --type=block size=64MiB
 incus storage volume attach "${REMOTE}:shared" vol1 v2
@@ -230,6 +234,10 @@ incus wait "${REMOTE}:v2" agent --timeout=600 --interval=2
 incus exec "${REMOTE}:v2" -- sh -c 'for _ in $(seq 60); do [ -e /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 ] && [ -e /dev/disk/by-id/scsi-0QEMU_QEMU_CD-ROM_incus_vol2 ] && exit 0; sleep 1; done; ls -l /dev/disk/by-id/; exit 1'
 incus exec "${REMOTE}:v2" -- sh -c "mkfs.ext4 -q /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 && mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol1 /mnt && echo data > /mnt/marker && umount /mnt"
 
+# shellcheck disable=SC2016
+incus exec "${REMOTE}:v1" -- sh -c 'for _ in $(seq 60); do [ -e /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3 ] && exit 0; sleep 1; done; ls -l /dev/disk/by-id/; exit 1'
+incus exec "${REMOTE}:v1" -- sh -c "mkfs.ext4 -q /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3 && mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3 /mnt && echo data > /mnt/marker && umount /mnt"
+
 # check_vm checks that a VM runs on the given member and kept its memory state.
 check_vm() {
     incus info "${REMOTE}:${1}" | grep -q "Location: ${2}"
@@ -246,9 +254,17 @@ check_volumes() {
     incus exec "${REMOTE}:v2" -- sh -c "mount -o ro /dev/disk/by-id/scsi-0QEMU_QEMU_CD-ROM_incus_vol2 /mnt && cat /mnt/foo && umount /mnt" | grep -Fx foo
 }
 
+# check_following_volume checks that the volume following v1 is readable and only exists on the given member.
+check_following_volume() {
+    incus exec "${REMOTE}:v1" -- sh -c "mount /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_incus_vol3 /mnt && cat /mnt/marker && umount /mnt" | grep -Fx data
+    [ "$(incus storage volume list "${REMOTE}:local" --format csv --columns nL | grep -c '^vol3,')" = "1" ]
+    incus storage volume list "${REMOTE}:local" --format csv --columns nL | grep -Fx "vol3,${1}"
+}
+
 incus exec "${REMOTE}:v1" -- sh -c "echo live > /dev/shm/marker"
 incus exec "${REMOTE}:v2" -- sh -c "echo live > /dev/shm/marker"
 check_volumes
+check_following_volume "$(member 1)"
 
 log "Live migrate the shared storage VM across the members"
 for i in $(seq 2 "${MEMBERS}") 1; do
@@ -260,8 +276,18 @@ done
 log "Live migrate the local storage VM"
 incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 2)"
 check_vm v1 "$(member 2)"
+check_following_volume "$(member 2)"
 incus move "${REMOTE}:v1" "${REMOTE}:v1" --target "$(member 1)"
 check_vm v1 "$(member 1)"
+check_following_volume "$(member 1)"
+
+log "Move the stopped local storage VM"
+incus stop -f "${REMOTE}:v1"
+incus move "${REMOTE}:v1" --target "$(member "${MEMBERS}")"
+incus info "${REMOTE}:v1" | grep -q "Location: $(member "${MEMBERS}")"
+incus start "${REMOTE}:v1"
+incus wait "${REMOTE}:v1" agent --timeout=600 --interval=2
+check_following_volume "$(member "${MEMBERS}")"
 
 log "Heal the cluster after losing a member"
 incus config set "${REMOTE}:" cluster.offline_threshold=11 cluster.healing_threshold=15
@@ -302,6 +328,7 @@ check_volumes
 
 log "Cleanup"
 incus delete -f "${REMOTE}:v1" "${REMOTE}:v2"
+incus storage volume delete "${REMOTE}:local" vol3
 incus storage volume delete "${REMOTE}:shared" vol1
 incus storage volume delete "${REMOTE}:shared" vol2
 incus storage delete "${REMOTE}:shared"
