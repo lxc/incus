@@ -8,10 +8,12 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
@@ -857,6 +859,9 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
 type cmdRemoteGenerateCertificate struct {
 	global *cmdGlobal
 	remote *cmdRemote
+
+	flagTLSCert string
+	flagTLSKey  string
 }
 
 var cmdRemoteGenerateCertificateUsage = u.Usage{}
@@ -866,8 +871,14 @@ func (c *cmdRemoteGenerateCertificate) command() *cobra.Command {
 	cmd.Use = cli.U("generate-certificate", cmdRemoteGenerateCertificateUsage...)
 	cmd.Short = i18n.G("Generate the client certificate")
 	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
-		`Manually trigger the generation of a client certificate`,
+		`Manually trigger the generation of a client certificate
+
+Use --tls-cert and --tls-key together to choose output files instead of the shared client credentials.
+Generation fails if either output file already exists.`,
 	))
+
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Path to the generated TLS client certificate"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Path to the generated TLS client key"))
 
 	cmd.RunE = c.run
 
@@ -881,9 +892,27 @@ func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) er
 		return err
 	}
 
-	// Check if we already have a certificate.
-	if conf.HasClientCertificate() {
-		return errors.New(i18n.G("A client certificate is already present"))
+	certPath := conf.ConfigPath("client.crt")
+	keyPath := conf.ConfigPath("client.key")
+	if (c.flagTLSCert != "") != (c.flagTLSKey != "") {
+		return errors.New(i18n.G("--tls-cert and --tls-key must be used together"))
+	}
+
+	if c.flagTLSCert != "" {
+		certPath = c.flagTLSCert
+		keyPath = c.flagTLSKey
+	}
+
+	// Refuse existing files, including incomplete keypairs and symbolic links.
+	for _, path := range []string{certPath, keyPath} {
+		_, err := os.Lstat(path)
+		if err == nil {
+			return errors.New(i18n.G("A client certificate is already present"))
+		}
+
+		if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
 	}
 
 	// Generate the certificate.
@@ -891,12 +920,58 @@ func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) er
 		fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
 	}
 
-	err = conf.GenerateClientCertificate()
+	err = c.generateCertificate(certPath, keyPath)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (c *cmdRemoteGenerateCertificate) generateCertificate(certPath string, keyPath string) error {
+	certPEM, keyPEM, err := localtls.GenerateMemCert(true, false)
+	if err != nil {
+		return err
+	}
+
+	for _, path := range []string{certPath, keyPath} {
+		err = os.MkdirAll(filepath.Dir(path), 0o750)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = writeClientCertificateFile(keyPath, keyPEM, 0o600)
+	if err != nil {
+		return err
+	}
+
+	err = writeClientCertificateFile(certPath, certPEM, 0o644)
+	if err != nil {
+		_ = os.Remove(keyPath)
+		return err
+	}
+
+	return nil
+}
+
+func writeClientCertificateFile(path string, content []byte, mode os.FileMode) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(content)
+	closeErr := file.Close()
+	if err == nil {
+		err = closeErr
+	}
+
+	if err != nil {
+		_ = os.Remove(path)
+	}
+
+	return err
 }
 
 // Get default.
