@@ -20,6 +20,9 @@ In both cases, you don't need to specify the source remote if it is your default
 If you want to move the instance to a specific cluster member, specify it with the `--target` flag.
 In this case, do not specify the source and target remote.
 
+When a virtual machine moves to another cluster member, custom volumes on a local storage pool that have `migration.follow_instance` set to `true` are moved along with it.
+Such a volume can only be attached to a single virtual machine.
+
 You can add the `--mode` flag to choose a transfer mode, depending on your network setup:
 
 `pull` (default)
