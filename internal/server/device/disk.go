@@ -704,6 +704,9 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 		return errors.New(`The "initial.copy" property can only be used with custom storage volumes`)
 	}
 
+	// Whether the custom volume follows the instance across cluster members.
+	followsInstance := false
+
 	if d.config["pool"] != "" {
 		if d.config["shift"] != "" {
 			return errors.New(`The "shift" property cannot be used with custom storage volumes (set "security.shifted=true" on the volume instead)`)
@@ -756,6 +759,24 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 				if count > 0 {
 					return errors.New("Cannot add dependent custom storage block volume to more than one instance")
 				}
+			}
+
+			// Check that a volume following its instance is attached to exactly one virtual machine.
+			if util.IsTrue(dbVolume.Config["migration.follow_instance"]) {
+				if instConf.Type() != instancetype.VM {
+					return errors.New("Custom storage volumes with migration.follow_instance can only be attached to virtual machines")
+				}
+
+				count, err := d.getAttachedInstanceCount(storageProjectName, dbVolume)
+				if err != nil {
+					return err
+				}
+
+				if count > 0 {
+					return errors.New("Cannot add custom storage volume with migration.follow_instance to more than one instance")
+				}
+
+				followsInstance = true
 			}
 
 			// Check that only shared custom storage block volume are added to profiles, or multiple instances.
@@ -958,7 +979,7 @@ func (d *disk) validateConfig(instConf instance.ConfigReader, partialValidation 
 			return errors.New("Virtiofs mounts aren't supported with migration.stateful=true")
 		}
 
-		if d.config["path"] != "/" && d.pool != nil && !d.pool.Driver().Info().Remote && util.IsFalseOrEmpty(d.config["dependent"]) {
+		if d.config["path"] != "/" && d.pool != nil && !d.pool.Driver().Info().Remote && util.IsFalseOrEmpty(d.config["dependent"]) && !followsInstance {
 			return errors.New("Only additional disks coming from a shared storage pool are supported with migration.stateful=true")
 		}
 	}
