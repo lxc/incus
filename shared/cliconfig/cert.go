@@ -91,52 +91,9 @@ func (c *Config) GetClientCertificate(name string) (string, string, string, erro
 			return "", "", "", err
 		}
 
-		pemKey, _ := pem.Decode(content)
-
-		// Golang has deprecated all methods relating to PEM encryption due to a vulnerability.
-		// However, the weakness does not make PEM unsafe for our purposes as it pertains to password protection on the
-		// key file (client.key is only readable to the user in any case), so we'll ignore deprecation.
-		isEncrypted := x509.IsEncryptedPEMBlock(pemKey) //nolint:staticcheck
-		isSSH := pemKey.Type == "OPENSSH PRIVATE KEY"
-		if isEncrypted || isSSH {
-			if c.PromptPassword == nil {
-				return "", "", "", errors.New("Private key is password protected and no helper was configured")
-			}
-
-			password, err := c.PromptPassword(pathClientKey)
-			if err != nil {
-				return "", "", "", err
-			}
-
-			if isSSH {
-				sshKey, err := ssh.ParseRawPrivateKeyWithPassphrase(content, []byte(password))
-				if err != nil {
-					return "", "", "", err
-				}
-
-				ecdsaKey, okEcdsa := sshKey.(*ecdsa.PrivateKey)
-				rsaKey, okRsa := sshKey.(*rsa.PrivateKey)
-				if okEcdsa {
-					derKey, err := x509.MarshalECPrivateKey(ecdsaKey)
-					if err != nil {
-						return "", "", "", err
-					}
-
-					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
-				} else if okRsa {
-					derKey := x509.MarshalPKCS1PrivateKey(rsaKey)
-					content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
-				} else {
-					return "", "", "", fmt.Errorf("Unsupported key type: %T", sshKey)
-				}
-			} else {
-				derKey, err := x509.DecryptPEMBlock(pemKey, []byte(password)) //nolint:staticcheck
-				if err != nil {
-					return "", "", "", err
-				}
-
-				content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
-			}
+		content, err = c.DecryptClientKey(content, pathClientKey)
+		if err != nil {
+			return "", "", "", err
 		}
 
 		tlsClientKey = string(content)
@@ -154,6 +111,62 @@ func (c *Config) GetClientCertificate(name string) (string, string, string, erro
 	c.Remotes[name] = remote
 
 	return tlsClientCert, tlsClientKey, tlsClientCA, nil
+}
+
+// DecryptClientKey decrypts a client key in memory, prompting for its password when needed.
+func (c *Config) DecryptClientKey(content []byte, path string) ([]byte, error) {
+	pemKey, _ := pem.Decode(content)
+	if pemKey == nil {
+		return content, nil
+	}
+
+	// Golang has deprecated all methods relating to PEM encryption due to a vulnerability.
+	// However, the weakness does not make PEM unsafe for our purposes as it pertains to password protection on the
+	// key file (client.key is only readable to the user in any case), so we'll ignore deprecation.
+	isEncrypted := x509.IsEncryptedPEMBlock(pemKey) //nolint:staticcheck
+	isSSH := pemKey.Type == "OPENSSH PRIVATE KEY"
+	if isEncrypted || isSSH {
+		if c.PromptPassword == nil {
+			return nil, errors.New("Private key is password protected and no helper was configured")
+		}
+
+		password, err := c.PromptPassword(path)
+		if err != nil {
+			return nil, err
+		}
+
+		if isSSH {
+			sshKey, err := ssh.ParseRawPrivateKeyWithPassphrase(content, []byte(password))
+			if err != nil {
+				return nil, err
+			}
+
+			ecdsaKey, okEcdsa := sshKey.(*ecdsa.PrivateKey)
+			rsaKey, okRsa := sshKey.(*rsa.PrivateKey)
+			if okEcdsa {
+				derKey, err := x509.MarshalECPrivateKey(ecdsaKey)
+				if err != nil {
+					return nil, err
+				}
+
+				content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+			} else if okRsa {
+				derKey := x509.MarshalPKCS1PrivateKey(rsaKey)
+				content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+			} else {
+				return nil, fmt.Errorf("Unsupported key type: %T", sshKey)
+			}
+		} else {
+			derKey, err := x509.DecryptPEMBlock(pemKey, []byte(password)) //nolint:staticcheck
+			if err != nil {
+				return nil, err
+			}
+
+			content = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: derKey})
+		}
+	}
+
+	return content, nil
 }
 
 // GenerateClientCertificate will generate the needed client.crt and client.key if needed.
