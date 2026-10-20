@@ -30,6 +30,118 @@ test_remote_url() {
     done
 }
 
+test_remote_generate_certificate() {
+    # shellcheck disable=SC2039,3043
+    local INCUS_CONF token cert_path key_path
+
+    # Use separate configurations to preserve the suite's client credentials.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    export INCUS_CONF
+
+    # Generate and use an unencrypted shared key.
+    incus_remote remote generate-certificate
+
+    [ -f "${INCUS_CONF}/client.crt" ]
+    [ "$(stat -c '%a' "${INCUS_CONF}/client.key")" = 600 ]
+
+    token="$(incus config trust add foo -q)"
+    incus_remote remote add test "https://${INCUS_ADDR}" \
+        --accept-certificate --token "${token}"
+
+    incus_remote list test:
+
+    incus config trust remove "$(cert_fingerprint "${INCUS_CONF}/client.crt")"
+    incus_remote remote remove test
+    rm -rf "${INCUS_CONF}"
+
+    # Generate and import an unencrypted key from an arbitrary path.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    cert_path="${INCUS_CONF}/certificates/client.pem"
+    key_path="${INCUS_CONF}/keys/private.pem"
+
+    ! incus_remote remote generate-certificate --tls-cert "${cert_path}" || false
+    ! incus_remote remote generate-certificate --tls-key "${key_path}" || false
+
+    (
+        cd "${INCUS_CONF}" || exit 1
+        incus_remote remote generate-certificate \
+            --tls-cert certificates/client.pem --tls-key keys/private.pem
+    )
+
+    [ ! -e "${INCUS_CONF}/client.key" ]
+    [ "$(stat -c '%a' "${key_path}")" = 600 ]
+
+    ! incus_remote remote generate-certificate --tls-cert "${cert_path}" --tls-key "${key_path}" || false
+
+    token="$(incus config trust add foo -q)"
+    incus_remote remote add test "https://${INCUS_ADDR}" \
+        --accept-certificate --token "${token}" \
+        --tls-cert "${cert_path}" --tls-key "${key_path}"
+
+    incus_remote list test:
+
+    incus config trust remove "$(cert_fingerprint "${cert_path}")"
+    incus_remote remote remove test
+    rm -rf "${INCUS_CONF}"
+
+    # Generate and use an encrypted shared key.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    printf '%s\n' test-password test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote generate-certificate --encrypt" /dev/null
+
+    grep -Fx -- "-----BEGIN OPENSSH PRIVATE KEY-----" "${INCUS_CONF}/client.key"
+    [ "$(stat -c '%a' "${INCUS_CONF}/client.key")" = 600 ]
+
+    token="$(incus config trust add foo -q)"
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote add test 'https://${INCUS_ADDR}' --accept-certificate --token '${token}'" \
+            /dev/null
+
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus list test:" /dev/null
+
+    incus config trust remove "$(cert_fingerprint "${INCUS_CONF}/client.crt")"
+    incus_remote remote remove test
+    rm -rf "${INCUS_CONF}"
+
+    # Generate and import an encrypted key from an arbitrary path.
+    INCUS_CONF=$(mktemp -d -p "${TEST_DIR}" XXX)
+    cert_path="${INCUS_CONF}/certificates/client.pem"
+    key_path="${INCUS_CONF}/keys/private.pem"
+    printf '%s\n' test-password test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote generate-certificate --tls-cert '${cert_path}' --tls-key '${key_path}' --encrypt" /dev/null
+
+    [ ! -e "${INCUS_CONF}/client.key" ]
+    grep -Fx -- "-----BEGIN OPENSSH PRIVATE KEY-----" "${key_path}"
+    [ "$(stat -c '%a' "${key_path}")" = 600 ]
+
+    ! printf '%s\n' wrong-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote add test 'https://${INCUS_ADDR}' --accept-certificate --tls-cert '${cert_path}' --tls-key '${key_path}'" \
+            /dev/null || false
+    [ ! -e "${INCUS_CONF}/clientcerts/test.key" ]
+
+    token="$(incus config trust add foo -q)"
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus remote add test '${token}' --tls-cert '${cert_path}' --tls-key '${key_path}'" \
+            /dev/null
+
+    printf '%s\n' test-password |
+        timeout --preserve-status "${INCUS_CLI_TIMEOUT:-120}" script -qefc \
+            "incus list test:" /dev/null
+
+    [ "$(stat -c '%a' "${INCUS_CONF}/clientcerts/test.key")" = 600 ]
+
+    incus config trust remove "$(cert_fingerprint "${cert_path}")"
+    incus_remote remote remove test
+    rm -rf "${INCUS_CONF}"
+}
+
 test_remote_url_with_token() {
     # Try adding remote using a correctly constructed but invalid token
     invalid_token="eyJjbGllbnRfbmFtZSI6IiIsImZpbmdlcnByaW50IjoiMWM0MmMzOTgxOWIyNGJiYjQxNGFhYTY2NDUwNzlmZGY2NDQ4MTUzMDcxNjA0YTFjODJjMjVhN2JhNjBkZmViMCIsImFkZHJlc3NlcyI6WyIxOTIuMTY4LjE3OC4yNDo4NDQzIiwiWzIwMDM6Zjc6MzcxMToyMzAwOmQ5ZmY6NWRiMDo3ZTA2OmQ1ODldOjg0NDMiLCIxMC41OC4yLjE6ODQ0MyIsIjEwLjAuMy4xOjg0NDMiLCIxOTIuMTY4LjE3OC43MDo4NDQzIiwiWzIwMDM6Zjc6MzcxMToyMzAwOjQwMTY6ODVkNDo2M2FlOjNhYWVdOjg0NDMiLCIxMC4xMjQuODYuMTo4NDQzIiwiW2ZkNDI6ZTY5Zjo3OTczOjIyMjU6OjFdOjg0NDMiXSwic2VjcmV0IjoiODVlMGU5YmViODk0ZTFhMTU3YmYxODI4YTk0Y2IwYTdjY2YxMzQ4NzMyN2ZjMTY3MDcyY2JlNjQ3NmVmOGJkMiJ9"
