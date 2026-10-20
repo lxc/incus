@@ -15,6 +15,9 @@ const ZFSFeatureMigrationHeader = "migration_header"
 // ZFSFeatureZvolFilesystems indicates migration can send/recv zvols.
 const ZFSFeatureZvolFilesystems = "header_zvol_filesystems"
 
+// BlockFeatureCompress indicates that block volume transfers can be compressed.
+const BlockFeatureCompress = "block_compress"
+
 // GetRsyncFeaturesSlice returns a slice of strings representing the supported RSYNC features.
 func (m *MigrationHeader) GetRsyncFeaturesSlice() []string {
 	features := []string{}
@@ -85,6 +88,22 @@ func (m *MigrationHeader) GetBtrfsFeaturesSlice() []string {
 
 		if m.BtrfsFeatures.HeaderSubvolumeUuids != nil && *m.BtrfsFeatures.HeaderSubvolumeUuids {
 			features = append(features, BTRFSFeatureSubvolumeUUIDs)
+		}
+	}
+
+	return features
+}
+
+// GetBlockFeaturesSlice returns a slice of strings representing the supported block transfer features.
+func (m *MigrationHeader) GetBlockFeaturesSlice() []string {
+	features := []string{}
+	if m == nil {
+		return features
+	}
+
+	if m.BlockFeatures != nil {
+		if m.BlockFeatures.Compress != nil && *m.BlockFeatures.Compress {
+			features = append(features, BlockFeatureCompress)
 		}
 	}
 

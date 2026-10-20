@@ -637,6 +637,50 @@ func (x *BtrfsFeatures) GetHeaderSubvolumeUuids() bool {
 	return false
 }
 
+type BlockFeatures struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Compress      *bool                  `protobuf:"varint,1,opt,name=compress" json:"compress,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BlockFeatures) Reset() {
+	*x = BlockFeatures{}
+	mi := &file_internal_migration_migrate_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockFeatures) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockFeatures) ProtoMessage() {}
+
+func (x *BlockFeatures) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_migration_migrate_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockFeatures.ProtoReflect.Descriptor instead.
+func (*BlockFeatures) Descriptor() ([]byte, []int) {
+	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *BlockFeatures) GetCompress() bool {
+	if x != nil && x.Compress != nil {
+		return *x.Compress
+	}
+	return false
+}
+
 type DependentVolume struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          *string                `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
@@ -649,13 +693,14 @@ type DependentVolume struct {
 	VolumeSize    *int64                 `protobuf:"varint,8,opt,name=volumeSize" json:"volumeSize,omitempty"`
 	Snapshots     []*Snapshot            `protobuf:"bytes,9,rep,name=snapshots" json:"snapshots,omitempty"`
 	DeviceName    *string                `protobuf:"bytes,10,opt,name=deviceName" json:"deviceName,omitempty"`
+	BlockFeatures *BlockFeatures         `protobuf:"bytes,11,opt,name=blockFeatures" json:"blockFeatures,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DependentVolume) Reset() {
 	*x = DependentVolume{}
-	mi := &file_internal_migration_migrate_proto_msgTypes[7]
+	mi := &file_internal_migration_migrate_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -667,7 +712,7 @@ func (x *DependentVolume) String() string {
 func (*DependentVolume) ProtoMessage() {}
 
 func (x *DependentVolume) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_migration_migrate_proto_msgTypes[7]
+	mi := &file_internal_migration_migrate_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -680,7 +725,7 @@ func (x *DependentVolume) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DependentVolume.ProtoReflect.Descriptor instead.
 func (*DependentVolume) Descriptor() ([]byte, []int) {
-	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{7}
+	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DependentVolume) GetName() string {
@@ -753,6 +798,13 @@ func (x *DependentVolume) GetDeviceName() string {
 	return ""
 }
 
+func (x *DependentVolume) GetBlockFeatures() *BlockFeatures {
+	if x != nil {
+		return x.BlockFeatures
+	}
+	return nil
+}
+
 type MigrationHeader struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	Fs                 *MigrationFSType       `protobuf:"varint,1,req,name=fs,enum=migration.MigrationFSType" json:"fs,omitempty"`
@@ -768,13 +820,14 @@ type MigrationHeader struct {
 	BtrfsFeatures      *BtrfsFeatures         `protobuf:"bytes,12,opt,name=btrfsFeatures" json:"btrfsFeatures,omitempty"`
 	IndexHeaderVersion *uint32                `protobuf:"varint,13,opt,name=indexHeaderVersion" json:"indexHeaderVersion,omitempty"`
 	DependentVolumes   []*DependentVolume     `protobuf:"bytes,14,rep,name=dependentVolumes" json:"dependentVolumes,omitempty"`
+	BlockFeatures      *BlockFeatures         `protobuf:"bytes,15,opt,name=blockFeatures" json:"blockFeatures,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
 
 func (x *MigrationHeader) Reset() {
 	*x = MigrationHeader{}
-	mi := &file_internal_migration_migrate_proto_msgTypes[8]
+	mi := &file_internal_migration_migrate_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -786,7 +839,7 @@ func (x *MigrationHeader) String() string {
 func (*MigrationHeader) ProtoMessage() {}
 
 func (x *MigrationHeader) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_migration_migrate_proto_msgTypes[8]
+	mi := &file_internal_migration_migrate_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +852,7 @@ func (x *MigrationHeader) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MigrationHeader.ProtoReflect.Descriptor instead.
 func (*MigrationHeader) Descriptor() ([]byte, []int) {
-	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{8}
+	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *MigrationHeader) GetFs() MigrationFSType {
@@ -893,6 +946,13 @@ func (x *MigrationHeader) GetDependentVolumes() []*DependentVolume {
 	return nil
 }
 
+func (x *MigrationHeader) GetBlockFeatures() *BlockFeatures {
+	if x != nil {
+		return x.BlockFeatures
+	}
+	return nil
+}
+
 type MigrationControl struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Success *bool                  `protobuf:"varint,1,req,name=success" json:"success,omitempty"`
@@ -904,7 +964,7 @@ type MigrationControl struct {
 
 func (x *MigrationControl) Reset() {
 	*x = MigrationControl{}
-	mi := &file_internal_migration_migrate_proto_msgTypes[9]
+	mi := &file_internal_migration_migrate_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -916,7 +976,7 @@ func (x *MigrationControl) String() string {
 func (*MigrationControl) ProtoMessage() {}
 
 func (x *MigrationControl) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_migration_migrate_proto_msgTypes[9]
+	mi := &file_internal_migration_migrate_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -929,7 +989,7 @@ func (x *MigrationControl) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MigrationControl.ProtoReflect.Descriptor instead.
 func (*MigrationControl) Descriptor() ([]byte, []int) {
-	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{9}
+	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *MigrationControl) GetSuccess() bool {
@@ -955,7 +1015,7 @@ type MigrationSync struct {
 
 func (x *MigrationSync) Reset() {
 	*x = MigrationSync{}
-	mi := &file_internal_migration_migrate_proto_msgTypes[10]
+	mi := &file_internal_migration_migrate_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1027,7 @@ func (x *MigrationSync) String() string {
 func (*MigrationSync) ProtoMessage() {}
 
 func (x *MigrationSync) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_migration_migrate_proto_msgTypes[10]
+	mi := &file_internal_migration_migrate_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +1040,7 @@ func (x *MigrationSync) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MigrationSync.ProtoReflect.Descriptor instead.
 func (*MigrationSync) Descriptor() ([]byte, []int) {
-	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{10}
+	return file_internal_migration_migrate_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *MigrationSync) GetFinalPreDump() bool {
@@ -1032,7 +1092,9 @@ const file_internal_migration_migrate_proto_rawDesc = "" +
 	"\rbtrfsFeatures\x12)\n" +
 	"\x10migration_header\x18\x01 \x01(\bR\x0fmigrationHeader\x12+\n" +
 	"\x11header_subvolumes\x18\x02 \x01(\bR\x10headerSubvolumes\x124\n" +
-	"\x16header_subvolume_uuids\x18\x03 \x01(\bR\x14headerSubvolumeUuids\"\xb4\x03\n" +
+	"\x16header_subvolume_uuids\x18\x03 \x01(\bR\x14headerSubvolumeUuids\"+\n" +
+	"\rblockFeatures\x12\x1a\n" +
+	"\bcompress\x18\x01 \x01(\bR\bcompress\"\xf4\x03\n" +
 	"\x0fDependentVolume\x12\x12\n" +
 	"\x04name\x18\x01 \x02(\tR\x04name\x12\x12\n" +
 	"\x04pool\x18\x02 \x02(\tR\x04pool\x12 \n" +
@@ -1048,7 +1110,8 @@ const file_internal_migration_migrate_proto_rawDesc = "" +
 	"\n" +
 	"deviceName\x18\n" +
 	" \x01(\tR\n" +
-	"deviceName\"\xf1\x04\n" +
+	"deviceName\x12>\n" +
+	"\rblockFeatures\x18\v \x01(\v2\x18.migration.blockFeaturesR\rblockFeatures\"\xb1\x05\n" +
 	"\x0fMigrationHeader\x12*\n" +
 	"\x02fs\x18\x01 \x02(\x0e2\x1a.migration.MigrationFSTypeR\x02fs\x12'\n" +
 	"\x04criu\x18\x02 \x01(\x0e2\x13.migration.CRIUTypeR\x04criu\x12*\n" +
@@ -1065,7 +1128,8 @@ const file_internal_migration_migrate_proto_rawDesc = "" +
 	"volumeSize\x12>\n" +
 	"\rbtrfsFeatures\x18\f \x01(\v2\x18.migration.btrfsFeaturesR\rbtrfsFeatures\x12.\n" +
 	"\x12indexHeaderVersion\x18\r \x01(\rR\x12indexHeaderVersion\x12F\n" +
-	"\x10dependentVolumes\x18\x0e \x03(\v2\x1a.migration.DependentVolumeR\x10dependentVolumes\"F\n" +
+	"\x10dependentVolumes\x18\x0e \x03(\v2\x1a.migration.DependentVolumeR\x10dependentVolumes\x12>\n" +
+	"\rblockFeatures\x18\x0f \x01(\v2\x18.migration.blockFeaturesR\rblockFeatures\"F\n" +
 	"\x10MigrationControl\x12\x18\n" +
 	"\asuccess\x18\x01 \x02(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"3\n" +
@@ -1098,7 +1162,7 @@ func file_internal_migration_migrate_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_migration_migrate_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_internal_migration_migrate_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_internal_migration_migrate_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_internal_migration_migrate_proto_goTypes = []any{
 	(MigrationFSType)(0),     // 0: migration.MigrationFSType
 	(CRIUType)(0),            // 1: migration.CRIUType
@@ -1109,10 +1173,11 @@ var file_internal_migration_migrate_proto_goTypes = []any{
 	(*RsyncFeatures)(nil),    // 6: migration.rsyncFeatures
 	(*ZfsFeatures)(nil),      // 7: migration.zfsFeatures
 	(*BtrfsFeatures)(nil),    // 8: migration.btrfsFeatures
-	(*DependentVolume)(nil),  // 9: migration.DependentVolume
-	(*MigrationHeader)(nil),  // 10: migration.MigrationHeader
-	(*MigrationControl)(nil), // 11: migration.MigrationControl
-	(*MigrationSync)(nil),    // 12: migration.MigrationSync
+	(*BlockFeatures)(nil),    // 9: migration.blockFeatures
+	(*DependentVolume)(nil),  // 10: migration.DependentVolume
+	(*MigrationHeader)(nil),  // 11: migration.MigrationHeader
+	(*MigrationControl)(nil), // 12: migration.MigrationControl
+	(*MigrationSync)(nil),    // 13: migration.MigrationSync
 }
 var file_internal_migration_migrate_proto_depIdxs = []int32{
 	3,  // 0: migration.Device.config:type_name -> migration.Config
@@ -1123,19 +1188,21 @@ var file_internal_migration_migrate_proto_depIdxs = []int32{
 	7,  // 5: migration.DependentVolume.zfsFeatures:type_name -> migration.zfsFeatures
 	8,  // 6: migration.DependentVolume.btrfsFeatures:type_name -> migration.btrfsFeatures
 	5,  // 7: migration.DependentVolume.snapshots:type_name -> migration.Snapshot
-	0,  // 8: migration.MigrationHeader.fs:type_name -> migration.MigrationFSType
-	1,  // 9: migration.MigrationHeader.criu:type_name -> migration.CRIUType
-	2,  // 10: migration.MigrationHeader.idmap:type_name -> migration.IDMapType
-	5,  // 11: migration.MigrationHeader.snapshots:type_name -> migration.Snapshot
-	6,  // 12: migration.MigrationHeader.rsyncFeatures:type_name -> migration.rsyncFeatures
-	7,  // 13: migration.MigrationHeader.zfsFeatures:type_name -> migration.zfsFeatures
-	8,  // 14: migration.MigrationHeader.btrfsFeatures:type_name -> migration.btrfsFeatures
-	9,  // 15: migration.MigrationHeader.dependentVolumes:type_name -> migration.DependentVolume
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	9,  // 8: migration.DependentVolume.blockFeatures:type_name -> migration.blockFeatures
+	0,  // 9: migration.MigrationHeader.fs:type_name -> migration.MigrationFSType
+	1,  // 10: migration.MigrationHeader.criu:type_name -> migration.CRIUType
+	2,  // 11: migration.MigrationHeader.idmap:type_name -> migration.IDMapType
+	5,  // 12: migration.MigrationHeader.snapshots:type_name -> migration.Snapshot
+	6,  // 13: migration.MigrationHeader.rsyncFeatures:type_name -> migration.rsyncFeatures
+	7,  // 14: migration.MigrationHeader.zfsFeatures:type_name -> migration.zfsFeatures
+	8,  // 15: migration.MigrationHeader.btrfsFeatures:type_name -> migration.btrfsFeatures
+	10, // 16: migration.MigrationHeader.dependentVolumes:type_name -> migration.DependentVolume
+	9,  // 17: migration.MigrationHeader.blockFeatures:type_name -> migration.blockFeatures
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_internal_migration_migrate_proto_init() }
@@ -1149,7 +1216,7 @@ func file_internal_migration_migrate_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_migration_migrate_proto_rawDesc), len(file_internal_migration_migrate_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

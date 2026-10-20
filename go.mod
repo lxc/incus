@@ -54,6 +54,7 @@ require (
 	github.com/openfga/go-sdk v0.8.3
 	github.com/osrg/gobgp/v4 v4.10.0
 	github.com/ovn-kubernetes/libovsdb v0.8.1
+	github.com/pierrec/lz4/v4 v4.1.33
 	github.com/pires/go-proxyproto v0.15.0
 	github.com/pkg/sftp v1.13.11
 	github.com/pkg/xattr v0.4.12
@@ -148,7 +149,6 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/orcaman/concurrent-map/v2 v2.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
-	github.com/pierrec/lz4/v4 v4.1.33 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20260916203055-22a1a467d9f0 // indirect
 	github.com/prometheus/client_golang v1.25.0 // indirect

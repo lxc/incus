@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/lxc/incus/v7/internal/instancewriter"
@@ -157,6 +158,21 @@ func genericVFSRenameVolumeSnapshot(d Driver, snapVol Volume, newSnapshotName st
 	return nil
 }
 
+// genericVFSMigrationFeatures returns the features to offer for the rsync and block transports.
+func genericVFSMigrationFeatures(config map[string]string, fsType migration.MigrationFSType) []string {
+	// Don't offer any compression if rsync.compression is set to false.
+	if util.IsFalse(config["rsync.compression"]) {
+		return []string{"xattrs", "delete", "bidirectional"}
+	}
+
+	features := []string{"xattrs", "delete", "compress", "bidirectional"}
+	if fsType == migration.MigrationFSType_BLOCK_AND_RSYNC {
+		features = append(features, migration.BlockFeatureCompress)
+	}
+
+	return features
+}
+
 // genericVFSMigrateVolume is a generic MigrateVolume implementation for VFS-only drivers.
 func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadWriteCloser, volSrcArgs *localMigration.VolumeSourceArgs, op *operations.Operation) error {
 	bwlimit := d.Config()["rsync.bwlimit"]
@@ -194,6 +210,9 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 		return err
 	}
 
+	// Compress block volumes if negotiated with the target.
+	compress := slices.Contains(volSrcArgs.MigrationType.Features, migration.BlockFeatureCompress)
+
 	// Define function to send a block volume.
 	sendBlockVol := func(vol Volume, conn io.ReadWriteCloser) error {
 		// Close when done to indicate to target side we are finished sending this volume.
@@ -225,10 +244,21 @@ func genericVFSMigrateVolume(d Driver, s *state.State, vol Volume, conn io.ReadW
 			}
 		}
 
-		d.Logger().Debug("Sending block volume", logger.Ctx{"volName": vol.name, "path": path})
-		_, err = util.SafeCopy(conn, fromPipe)
+		d.Logger().Debug("Sending block volume", logger.Ctx{"volName": vol.name, "path": path, "compress": compress})
+		to, err := migration.NewBlockWriter(conn, compress)
 		if err != nil {
+			return err
+		}
+
+		_, err = util.SafeCopy(to, fromPipe)
+		if err != nil {
+			_ = to.Close()
 			return fmt.Errorf("Error copying %q to migration connection: %w", path, err)
+		}
+
+		err = to.Close()
+		if err != nil {
+			return fmt.Errorf("Error completing transfer of %q: %w", path, err)
 		}
 
 		err = from.Close()
@@ -326,6 +356,9 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		return rsync.Recv(path, conn, wrapper, volTargetArgs.MigrationType.Features)
 	}
 
+	// Block volumes are compressed if negotiated with the source.
+	compress := slices.Contains(volTargetArgs.MigrationType.Features, migration.BlockFeatureCompress)
+
 	recvBlockVol := func(volName string, conn io.ReadWriteCloser, path string) error {
 		var wrapper *ioprogress.ProgressTracker
 		if volTargetArgs.TrackProgress {
@@ -358,7 +391,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 		defer logger.WarnOnErrorExcept(to.Close, []error{os.ErrClosed}, "Failed to close file")
 
 		// Setup progress tracker.
-		fromPipe := io.ReadCloser(conn)
+		fromPipe := migration.NewBlockReader(conn, compress)
 		if wrapper != nil {
 			fromPipe = &ioprogress.ProgressReader{
 				ReadCloser: fromPipe,
@@ -366,7 +399,7 @@ func genericVFSCreateVolumeFromMigration(d Driver, initVolume func(vol Volume) (
 			}
 		}
 
-		d.Logger().Debug("Receiving block volume started", logger.Ctx{"volName": volName, "path": path})
+		d.Logger().Debug("Receiving block volume started", logger.Ctx{"volName": volName, "path": path, "compress": compress})
 		defer d.Logger().Debug("Receiving block volume stopped", logger.Ctx{"volName": volName, "path": path})
 
 		toPipe := io.Writer(to)

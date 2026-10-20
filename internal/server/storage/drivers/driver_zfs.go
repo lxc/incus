@@ -769,16 +769,6 @@ func (d *zfs) GetResources() (*api.ResourcesStoragePool, error) {
 
 // MigrationTypes returns the type of transfer methods to be used when doing migrations between pools in preference order.
 func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshots bool, clusterMove bool, storageMove bool) []localMigration.Type {
-	var rsyncFeatures []string
-
-	// Do not pass compression argument to rsync if the associated
-	// config key, that is rsync.compression, is set to false.
-	if util.IsFalse(d.Config()["rsync.compression"]) {
-		rsyncFeatures = []string{"xattrs", "delete", "bidirectional"}
-	} else {
-		rsyncFeatures = []string{"xattrs", "delete", "compress", "bidirectional"}
-	}
-
 	// Detect ZFS features.
 	features := []string{migration.ZFSFeatureMigrationHeader, "compress"}
 
@@ -794,7 +784,7 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 			},
 			{
 				FSType:   migration.MigrationFSType_BLOCK_AND_RSYNC,
-				Features: rsyncFeatures,
+				Features: genericVFSMigrationFeatures(d.Config(), migration.MigrationFSType_BLOCK_AND_RSYNC),
 			},
 		}
 	}
@@ -803,7 +793,7 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 		return []localMigration.Type{
 			{
 				FSType:   migration.MigrationFSType_RSYNC,
-				Features: rsyncFeatures,
+				Features: genericVFSMigrationFeatures(d.Config(), migration.MigrationFSType_RSYNC),
 			},
 		}
 	}
@@ -815,7 +805,7 @@ func (d *zfs) MigrationTypes(contentType ContentType, refresh bool, copySnapshot
 		},
 		{
 			FSType:   migration.MigrationFSType_RSYNC,
-			Features: rsyncFeatures,
+			Features: genericVFSMigrationFeatures(d.Config(), migration.MigrationFSType_RSYNC),
 		},
 	}
 }
