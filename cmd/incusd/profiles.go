@@ -230,7 +230,13 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 			}
 
 			for _, profile := range profiles {
-				if !userHasPermission(auth.ObjectProfile(p.Name, profile.Name)) {
+				// In all-projects mode each profile must be checked against its own project.
+				objectProjectName := p.Name
+				if allProjects {
+					objectProjectName = profile.Project
+				}
+
+				if !userHasPermission(auth.ObjectProfile(objectProjectName, profile.Name)) {
 					continue
 				}
 
@@ -262,7 +268,13 @@ func profilesGet(d *Daemon, r *http.Request) response.Response {
 			}
 		} else {
 			for _, profile := range profiles {
-				if !userHasPermission(auth.ObjectProfile(p.Name, profile.Name)) {
+				// In all-projects mode each profile must be checked against its own project.
+				objectProjectName := p.Name
+				if allProjects {
+					objectProjectName = profile.Project
+				}
+
+				if !userHasPermission(auth.ObjectProfile(objectProjectName, profile.Name)) {
 					continue
 				}
 
