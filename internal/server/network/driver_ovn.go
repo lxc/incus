@@ -1546,9 +1546,12 @@ func (n *ovn) refreshParent(config map[string]string) error {
 func (n *ovn) checkReparentAllowed() error {
 	// Refuse to reparent a network used by a running instance with routes, as the instance's routes
 	// would be orphaned on the old logical router.
+	l3only := util.IsTrue(n.config["ipv4.l3only"]) || util.IsTrue(n.config["ipv6.l3only"])
+
 	var instancesWithRoutes []string
 	err := UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
-		if len(n.instanceNICGetRoutes(nicConfig)) == 0 {
+		// With l3only every running instance has its address routed by the logical router.
+		if !l3only && len(n.instanceNICGetRoutes(nicConfig)) == 0 {
 			return nil
 		}
 
@@ -1569,7 +1572,7 @@ func (n *ovn) checkReparentAllowed() error {
 	}
 
 	if len(instancesWithRoutes) > 0 {
-		return fmt.Errorf("Network is used by running instance(s) with routes: %s", strings.Join(instancesWithRoutes, ", "))
+		return fmt.Errorf("Network is used by running instance(s) with logical router routes: %s", strings.Join(instancesWithRoutes, ", "))
 	}
 
 	var peerCount int
