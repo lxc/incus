@@ -75,6 +75,14 @@ func (c *cmdFile) command() *cobra.Command {
 	fileEditCmd := cmdFileEdit{global: c.global, file: c, filePull: &filePullCmd, filePush: &filePushCmd}
 	cmd.AddCommand(fileEditCmd.command())
 
+	// Chmod
+	fileChmodCmd := cmdFileChmod{global: c.global, file: c}
+	cmd.AddCommand(fileChmodCmd.command())
+
+	// Chown
+	fileChownCmd := cmdFileChown{global: c.global, file: c}
+	cmd.AddCommand(fileChownCmd.command())
+
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
@@ -993,4 +1001,219 @@ func (c *cmdFileMount) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return sshSFTPServer(cmd.Context(), func() (net.Conn, error) { return d.GetInstanceFileSFTPConn(instanceName) }, c.flagAuthNone, c.flagAuthUser, c.flagListen)
+}
+
+// Chown.
+type cmdFileChown struct {
+	global *cmdGlobal
+	file   *cmdFile
+
+	flagRecursive    bool
+	flagTraverseRoot bool
+	flagTraverseAll  bool
+}
+
+var cmdFileChownUsage = u.Usage{u.Placeholder(i18n.G("owner")), u.MakePath(u.Instance, u.Path).Remote().List(1)}
+
+func (c *cmdFileChown) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("chown", cmdFileChownUsage...)
+	cmd.Short = i18n.G("Change the ownership of files in instances")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Change the ownership of files in instances
+
+The owner is given as a numeric UID, UID:GID or :GID.
+Symbolic links found during a recursive change are skipped by default.
+Use -H to traverse a symbolic link given on the command line, or -L for all of them.`,
+	))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus file chown 1000:1000 foo/bar
+   To set the owner of /bar in the foo instance to 1000:1000.
+
+incus file chown -R :100 foo/srv
+   To set the group of /srv and everything below it to 100.
+
+incus file chown -R 1000:1000 foo/srv foo/var/www
+   To set the owner of /srv, /var/www and everything below them to 1000:1000.
+
+incus file chown -R -H 1000 foo/link
+   To also traverse /link, a symbolic link to a directory given on the command line.
+
+incus file chown -R -L 1000:1000 foo/srv
+   To also traverse every symbolic link to a directory found below /srv.`,
+	))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRecursive, "recursive|R", i18n.G("Change files and directories recursively"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseRoot, "traverse-root|H", i18n.G("With -R, traverse a symbolic link to a directory given on the command line"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseAll, "traverse-all|L", i18n.G("With -R, traverse every symbolic link to a directory"))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return c.global.cmpFiles(toComplete, false)
+	}
+
+	return cmd
+}
+
+func (c *cmdFileChown) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdFileChownUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	uid, gid, err := parseFileOwner(parsed[0].String)
+	if err != nil {
+		return err
+	}
+
+	// Store clients.
+	sftpClients := map[string]*sftp.Client{}
+
+	defer func() {
+		for _, sftpClient := range sftpClients {
+			_ = sftpClient.Close()
+		}
+	}()
+
+	var errs []error
+
+	for _, p := range parsed[1].List {
+		err := func() error {
+			d := p.RemoteServer
+			instanceName := p.RemoteObject.List[0].String
+			filePath, _ := normalizePath(p.RemoteObject.List[1].String)
+			instanceID := p.RemoteName + ":" + instanceName
+
+			sftpConn, ok := sftpClients[instanceID]
+			if !ok {
+				sftpConn, err = d.GetInstanceFileSFTP(instanceName)
+				if err != nil {
+					return err
+				}
+
+				sftpClients[instanceID] = sftpConn
+			}
+
+			return sftpChown(sftpConn, filePath, uid, gid, c.flagRecursive, c.flagTraverseRoot, c.flagTraverseAll)
+		}()
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+// Chmod.
+type cmdFileChmod struct {
+	global *cmdGlobal
+	file   *cmdFile
+
+	flagRecursive    bool
+	flagTraverseAll  bool
+	flagTraverseNone bool
+}
+
+var cmdFileChmodUsage = u.Usage{u.Placeholder(i18n.G("mode")), u.MakePath(u.Instance, u.Path).Remote().List(1)}
+
+func (c *cmdFileChmod) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("chmod", cmdFileChmodUsage...)
+	cmd.Short = i18n.G("Change the mode of files in instances")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Change the mode of files in instances
+
+The mode is either octal or symbolic like in GNU chmod. No umask is applied.
+Modes starting with a dash need to follow "--".
+A symbolic link given on the command line is traversed (-H), unless -P is used.
+Symbolic links found during a recursive change are skipped, unless -L is used.`,
+	))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus file chmod 600 foo/root/secret
+   To set the mode of /root/secret in the foo instance to 600.
+
+incus file chmod -R u+rwX,go-w foo/srv
+   To make /srv and everything below it not writable by group and others.
+
+incus file chmod -R 750 foo/srv foo/var/www
+   To set the mode of /srv, /var/www and everything below them to 750.
+
+incus file chmod -R -L g+r foo/srv
+   To also traverse the symbolic links to directories found below /srv.
+
+incus file chmod -R -P 755 foo/link
+   To only change the target of the symbolic link /link and not what is below it.`,
+	))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRecursive, "recursive|R", i18n.G("Change files and directories recursively"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseAll, "traverse-all|L", i18n.G("With -R, traverse every symbolic link to a directory"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseNone, "traverse-none|P", i18n.G("With -R, do not traverse any symbolic link"))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return c.global.cmpFiles(toComplete, false)
+	}
+
+	return cmd
+}
+
+func (c *cmdFileChmod) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdFileChmodUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	// Reject invalid modes before connecting.
+	spec := parsed[0].String
+	_, err = parseMode(spec, 0, 0, false)
+	if err != nil {
+		return err
+	}
+
+	// Store clients.
+	sftpClients := map[string]*sftp.Client{}
+
+	defer func() {
+		for _, sftpClient := range sftpClients {
+			_ = sftpClient.Close()
+		}
+	}()
+
+	var errs []error
+
+	for _, p := range parsed[1].List {
+		err := func() error {
+			d := p.RemoteServer
+			instanceName := p.RemoteObject.List[0].String
+			filePath, _ := normalizePath(p.RemoteObject.List[1].String)
+			instanceID := p.RemoteName + ":" + instanceName
+
+			sftpConn, ok := sftpClients[instanceID]
+			if !ok {
+				sftpConn, err = d.GetInstanceFileSFTP(instanceName)
+				if err != nil {
+					return err
+				}
+
+				sftpClients[instanceID] = sftpConn
+			}
+
+			return sftpChmod(sftpConn, filePath, spec, c.flagRecursive, !c.flagTraverseNone, c.flagTraverseAll)
+		}()
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
 }
