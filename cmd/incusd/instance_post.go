@@ -1256,6 +1256,14 @@ func migrateInstance(ctx context.Context, s *state.State, inst instance.Instance
 			return fmt.Errorf("Failed deleting instance dependent volumes on source member: %w", err)
 		}
 
+		// The volumes following the instance were only transferred on a cluster move.
+		if clusterMoveSourceName != "" {
+			err = cleanupFollowingDisks(s, inst, op)
+			if err != nil {
+				return fmt.Errorf("Failed deleting instance following volumes on source member: %w", err)
+			}
+		}
+
 		localDiskTransfer.deleteSnapshots()
 
 		// Start the target instance for a near-live migration onto shared storage.
@@ -1327,6 +1335,20 @@ func cleanupDependentDisks(s *state.State, inst instance.Instance, deviceOverrid
 	}
 
 	return nil
+}
+
+// cleanupFollowingDisks removes the volumes that followed the instance from the source member.
+func cleanupFollowingDisks(s *state.State, inst instance.Instance, op *operations.Operation) error {
+	volProject, err := project.StorageVolumeProject(s.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	return storagePools.ForEachFollowingDisk(s, inst, func(dev deviceConfig.DeviceNamed, pool storagePools.Pool, dbVol *db.StorageVolume) error {
+		_ = pool.DeleteCustomVolume(volProject, dbVol.Name, op)
+
+		return nil
+	})
 }
 
 // checkProjectMove validates that an instance can be moved to the given project.
