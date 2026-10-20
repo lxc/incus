@@ -527,6 +527,92 @@ test_filemanip() {
     incus exec filemanip --project=test -- [ -f /tmp/foo/one/one/foo ]
     incus exec filemanip --project=test -- [ -f /tmp/foo/one/one/bar ]
 
+    # Test chmod.
+    incus file create --type=directory filemanip/tmp/perm --project=test
+    incus file create --type=directory filemanip/tmp/perm/sub --project=test
+    incus file create filemanip/tmp/perm/sub/file --project=test
+    incus exec filemanip --project=test -- ln -s /tmp/perm/sub/file /tmp/perm/link
+    incus file chmod 600 filemanip/tmp/perm/sub/file --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "600" ]
+    incus file chmod u+x,g=r,o-rwx filemanip/tmp/perm/sub/file --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "740" ]
+    incus file chmod 4755 filemanip/tmp/perm/sub/file --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "4755" ]
+    incus file chmod -- -x filemanip/tmp/perm/sub/file --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "4644" ]
+    incus file chmod 640 filemanip/tmp/perm/link --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "640" ]
+    incus file chmod 700 filemanip/tmp/perm/sub/file filemanip/tmp/perm/sub --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "700" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub)" = "700" ]
+    incus file chmod -R 755 filemanip/tmp/perm --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "755" ]
+    incus file chmod -R 600 filemanip/tmp/perm/sub/file --project=test
+    incus file chmod -R a-x,u+rwX filemanip/tmp/perm --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub)" = "744" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/sub/file)" = "600" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/link)" != "600" ]
+
+    # Test chmod symlink traversal.
+    incus file create --type=directory filemanip/tmp/perm/real --project=test
+    incus file create filemanip/tmp/perm/real/f --project=test
+    incus file create --type=directory filemanip/tmp/perm/top --project=test
+    incus exec filemanip --project=test -- ln -s /tmp/perm/real /tmp/perm/rootlink
+    incus exec filemanip --project=test -- ln -s /tmp/perm/real /tmp/perm/top/dl
+    incus file chmod -R 711 filemanip/tmp/perm/rootlink --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/real/f)" = "711" ]
+    incus file chmod -R -P 755 filemanip/tmp/perm/rootlink --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/real)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/real/f)" = "711" ]
+    incus file chmod -R 700 filemanip/tmp/perm/top --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/real/f)" = "711" ]
+    incus file chmod -R -L 702 filemanip/tmp/perm/top --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %a /tmp/perm/real/f)" = "702" ]
+    ! incus file chmod 644 filemanip/tmp/doesnotexist --project=test || false
+    ! incus file chmod 999 filemanip/tmp/perm --project=test || false
+    ! incus file chmod foo filemanip/tmp/perm --project=test || false
+    incus file delete -f filemanip/tmp/perm --project=test
+
+    # Test chown.
+    incus file create --type=directory filemanip/tmp/own --project=test
+    incus file create --type=directory filemanip/tmp/own/sub --project=test
+    incus file create filemanip/tmp/own/sub/file --project=test
+    incus exec filemanip --project=test -- ln -s /tmp/own/sub/file /tmp/own/link
+    incus file chown 1000:1001 filemanip/tmp/own/sub/file --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/sub/file)" = "1000:1001" ]
+    incus file chown :1002 filemanip/tmp/own/sub/file --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/sub/file)" = "1000:1002" ]
+    incus file chown 1003 filemanip/tmp/own/sub/file --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/sub/file)" = "1003:1002" ]
+    incus file chown -R 1004:1005 filemanip/tmp/own --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own)" = "1004:1005" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/sub)" = "1004:1005" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/sub/file)" = "1004:1005" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/link)" = "0:0" ]
+    ! incus file chown 1000 filemanip/tmp/doesnotexist --project=test || false
+    ! incus file chown foo filemanip/tmp/own --project=test || false
+    ! incus file chown : filemanip/tmp/own --project=test || false
+
+    # Test chown symlink traversal.
+    incus file create --type=directory filemanip/tmp/own/real --project=test
+    incus file create --type=directory filemanip/tmp/own/top --project=test
+    incus file create filemanip/tmp/own/real/f --project=test
+    incus exec filemanip --project=test -- ln -s /tmp/own/real /tmp/own/top/dl
+    incus exec filemanip --project=test -- ln -s /tmp/own/real /tmp/own/rootlink
+    incus file chown -R 2000:2000 filemanip/tmp/own/top --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/top)" = "2000:2000" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/real/f)" = "0:0" ]
+    incus file chown -R 2001:2001 filemanip/tmp/own/rootlink --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/real)" = "2001:2001" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/real/f)" = "0:0" ]
+    incus file chown -R -H 2002:2002 filemanip/tmp/own/rootlink --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/real/f)" = "2002:2002" ]
+    incus file chown -R -L 2004:2004 filemanip/tmp/own/top --project=test
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /tmp/own/real/f)" = "2004:2004" ]
+    incus file delete -f filemanip/tmp/own --project=test
+
     # Test SFTP functionality.
     cmd=$(
         unset -f incus
