@@ -7833,6 +7833,15 @@
 						}
 					},
 					{
+						"migration.follow_instance": {
+							"condition": "custom volume",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Move the volume along with the virtual machine it's attached to when it moves to another cluster member",
+							"type": "bool"
+						}
+					},
+					{
 						"security.shared": {
 							"condition": "custom block volume",
 							"default": "same as `volume.security.shared` or `false`",
@@ -8175,6 +8184,15 @@
 						}
 					},
 					{
+						"migration.follow_instance": {
+							"condition": "custom volume",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Move the volume along with the virtual machine it's attached to when it moves to another cluster member",
+							"type": "bool"
+						}
+					},
+					{
 						"security.shared": {
 							"condition": "custom block volume",
 							"default": "same as `volume.security.shared` or `false`",
@@ -8510,6 +8528,15 @@
 						}
 					},
 					{
+						"migration.follow_instance": {
+							"condition": "custom volume",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Move the volume along with the virtual machine it's attached to when it moves to another cluster member",
+							"type": "bool"
+						}
+					},
+					{
 						"security.shared": {
 							"condition": "custom block volume",
 							"default": "same as `volume.security.shared` or `false`",
@@ -8797,6 +8824,15 @@
 							"longdesc": "",
 							"shortdesc": "UID of the volume owner in the instance",
 							"type": "int"
+						}
+					},
+					{
+						"migration.follow_instance": {
+							"condition": "custom volume",
+							"default": "`false`",
+							"longdesc": "",
+							"shortdesc": "Move the volume along with the virtual machine it's attached to when it moves to another cluster member",
+							"type": "bool"
 						}
 					},
 					{
