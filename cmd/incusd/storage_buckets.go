@@ -692,6 +692,12 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the bucket is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(bucketProjectName), auth.EntitlementCanCreateStorageBuckets)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	poolName, err := pathVar(r, "poolName")
 	if err != nil {
 		return response.SmartError(err)
@@ -711,6 +717,14 @@ func storagePoolBucketsPost(d *Daemon, r *http.Request) response.Response {
 	pool, err := storagePools.LoadByName(s, poolName)
 	if err != nil {
 		return response.SmartError(fmt.Errorf("Failed loading storage pool: %w", err))
+	}
+
+	// Enforce the project's storage pool restrictions.
+	err = s.DB.Cluster.Transaction(r.Context(), func(ctx context.Context, tx *db.ClusterTx) error {
+		return project.AllowBucketCreation(tx, request.ProjectParam(r), poolName)
+	})
+	if err != nil {
+		return response.SmartError(err)
 	}
 
 	// Quick checks.

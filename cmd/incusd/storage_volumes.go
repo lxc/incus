@@ -859,6 +859,12 @@ func storagePoolVolumesPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the volume is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanCreateStorageVolumes)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	resp := forwardedResponseIfTargetIsRemote(s, r)
 	if resp != nil {
 		return resp

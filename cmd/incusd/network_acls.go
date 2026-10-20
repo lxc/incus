@@ -317,6 +317,12 @@ func networkACLsPost(d *Daemon, r *http.Request) response.Response {
 		return response.SmartError(err)
 	}
 
+	// Authorize against the project the ACL is actually created in.
+	err = s.Authorizer.CheckPermission(r.Context(), r, auth.ObjectProject(projectName), auth.EntitlementCanCreateNetworkACLs)
+	if err != nil {
+		return response.SmartError(err)
+	}
+
 	req := api.NetworkACLsPost{}
 
 	// Parse the request into a record.

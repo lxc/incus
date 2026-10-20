@@ -475,6 +475,24 @@ func AllowVolumeCreation(tx *db.ClusterTx, projectName string, poolName string, 
 	return nil
 }
 
+// AllowBucketCreation returns an error if the project's storage pool restrictions forbid the pool.
+func AllowBucketCreation(tx *db.ClusterTx, projectName string, poolName string) error {
+	info, err := fetchProject(tx, projectName, true)
+	if err != nil {
+		return err
+	}
+
+	if info == nil {
+		return nil
+	}
+
+	if !StoragePoolAllowed(info.Project.Config, poolName) {
+		return fmt.Errorf("Storage pool %q not allowed for project %q", poolName, projectName)
+	}
+
+	return nil
+}
+
 // AllowVolumeMove returns an error if moving the given custom volume into the target project would
 // violate the project's limits or restrictions.
 func AllowVolumeMove(tx *db.ClusterTx, srcProjectName string, srcPoolName string, projectName string, poolName string, vol *api.StorageVolume, newName string) error {
