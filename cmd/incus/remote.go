@@ -23,6 +23,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 	"software.sslmate.com/src/go-pkcs12"
 
 	incus "github.com/lxc/incus/v7/client"
@@ -860,6 +861,7 @@ type cmdRemoteGenerateCertificate struct {
 	global *cmdGlobal
 	remote *cmdRemote
 
+	flagEncrypt bool
 	flagTLSCert string
 	flagTLSKey  string
 }
@@ -877,6 +879,7 @@ Use --tls-cert and --tls-key together to choose output files instead of the shar
 Generation fails if either output file already exists.`,
 	))
 
+	cli.AddBoolFlag(cmd.Flags(), &c.flagEncrypt, "encrypt", i18n.G("Encrypt the private key with a password"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Path to the generated TLS client certificate"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Path to the generated TLS client key"))
 
@@ -915,12 +918,20 @@ func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) er
 		}
 	}
 
+	password := ""
+	if c.flagEncrypt {
+		password, err = c.global.asker.AskPassword(fmt.Sprintf(i18n.G("Password for %s: "), keyPath))
+		if err != nil {
+			return err
+		}
+	}
+
 	// Generate the certificate.
 	if !c.global.flagQuiet {
 		fmt.Fprint(os.Stderr, i18n.G("Generating a client certificate. This may take a minute...")+"\n")
 	}
 
-	err = c.generateCertificate(certPath, keyPath)
+	err = c.generateCertificate(certPath, keyPath, password)
 	if err != nil {
 		return err
 	}
@@ -928,10 +939,24 @@ func (c *cmdRemoteGenerateCertificate) run(cmd *cobra.Command, args []string) er
 	return nil
 }
 
-func (c *cmdRemoteGenerateCertificate) generateCertificate(certPath string, keyPath string) error {
+func (c *cmdRemoteGenerateCertificate) generateCertificate(certPath string, keyPath string, password string) error {
 	certPEM, keyPEM, err := localtls.GenerateMemCert(true, false)
 	if err != nil {
 		return err
+	}
+
+	if password != "" {
+		keypair, err := tls.X509KeyPair(certPEM, keyPEM)
+		if err != nil {
+			return err
+		}
+
+		key, err := ssh.MarshalPrivateKeyWithPassphrase(keypair.PrivateKey, "", []byte(password))
+		if err != nil {
+			return err
+		}
+
+		keyPEM = pem.EncodeToMemory(key)
 	}
 
 	for _, path := range []string{certPath, keyPath} {
