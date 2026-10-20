@@ -22,6 +22,7 @@ import (
 	backupConfig "github.com/lxc/incus/v7/internal/server/backup/config"
 	"github.com/lxc/incus/v7/internal/server/db"
 	"github.com/lxc/incus/v7/internal/server/db/cluster"
+	deviceConfig "github.com/lxc/incus/v7/internal/server/device/config"
 	"github.com/lxc/incus/v7/internal/server/instance"
 	"github.com/lxc/incus/v7/internal/server/instance/instancetype"
 	"github.com/lxc/incus/v7/internal/server/locking"
@@ -575,6 +576,7 @@ func validateVolumeCommonRules(vol drivers.Volume) map[string]func(string) error
 
 	if vol.Type() == drivers.VolumeTypeCustom {
 		rules["dependent"] = validate.Optional(validate.IsBool)
+		rules["migration.follow_instance"] = validate.Optional(validate.IsBool)
 	}
 
 	return rules
@@ -1445,6 +1447,129 @@ func GenerateDependentVolumesOffer(s *state.State, config *backupConfig.Config, 
 	}
 
 	return result, nil
+}
+
+// ForEachFollowingDisk executes the given function for each disk of a VM whose independent volume on
+// local storage follows the instance when it moves to another cluster member.
+func ForEachFollowingDisk(s *state.State, inst instance.Instance, diskAction func(dev deviceConfig.DeviceNamed, pool Pool, dbVol *db.StorageVolume) error) error {
+	if inst.Type() != instancetype.VM {
+		return nil
+	}
+
+	storageProjectName, err := project.StorageVolumeProject(s.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return err
+	}
+
+	for _, dev := range inst.ExpandedDevices().Sorted() {
+		if dev.Config["type"] != "disk" || util.IsTrue(dev.Config["dependent"]) || dev.Config["path"] == "/" || dev.Config["pool"] == "" || dev.Config["source"] == "" {
+			continue
+		}
+
+		pool, err := LoadByName(s, dev.Config["pool"])
+		if err != nil {
+			return fmt.Errorf("Failed loading storage pool: %w", err)
+		}
+
+		// Volumes on shared storage remain reachable from every member.
+		if pool.Driver().Info().Remote {
+			continue
+		}
+
+		volName, _ := internalInstance.SplitVolumeSource(dev.Config["source"])
+		dbVol, err := VolumeDBGet(pool, storageProjectName, volName, drivers.VolumeTypeCustom)
+		if err != nil {
+			if response.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("Failed loading custom volume for device %q: %w", dev.Name, err)
+		}
+
+		if util.IsFalseOrEmpty(dbVol.Config["migration.follow_instance"]) {
+			continue
+		}
+
+		err = diskAction(dev, pool, dbVol)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GenerateFollowingVolumesBackupConfig returns the backup config of the volumes following the instance
+// to another cluster member, so they can be migrated alongside its dependent volumes.
+func GenerateFollowingVolumesBackupConfig(s *state.State, inst instance.Instance, snapshots bool, op *operations.Operation) ([]*backupConfig.Config, error) {
+	storageProjectName, err := project.StorageVolumeProject(s.DB.Cluster, inst.Project().Name, db.StoragePoolVolumeTypeCustom)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []*backupConfig.Config{}
+	err = ForEachFollowingDisk(s, inst, func(dev deviceConfig.DeviceNamed, pool Pool, dbVol *db.StorageVolume) error {
+		// Moving the volume would break any other instance using it.
+		err := VolumeUsedByInstanceDevices(s, pool.Name(), storageProjectName, &dbVol.StorageVolume, true, func(dbInst db.InstanceArgs, p api.Project, usedByDevices []string) error {
+			if dbInst.Project == inst.Project().Name && dbInst.Name == inst.Name() {
+				return nil
+			}
+
+			return fmt.Errorf("Volume of device %q can't follow the instance as it's also used by instance %q in project %q", dev.Name, dbInst.Name, dbInst.Project)
+		})
+		if err != nil {
+			return err
+		}
+
+		volConfig, err := pool.GenerateCustomVolumeBackupConfig(storageProjectName, dbVol.Name, snapshots, op)
+		if err != nil {
+			return err
+		}
+
+		poolAPI := pool.ToAPI()
+		volConfig.Pool = &poolAPI
+		result = append(result, volConfig)
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GenerateMigrationVolumesOffer creates the dependent volumes offer of an instance migration, adding the
+// volumes following the instance on a cluster move, and reduces the config to the offered volumes.
+func GenerateMigrationVolumesOffer(s *state.State, inst instance.Instance, config *backupConfig.Config, snapshots bool, devices api.DevicesMap, skipDisks []string, clusterMove bool, op *operations.Operation) ([]*migration.DependentVolume, error) {
+	if clusterMove {
+		followingVolumes, err := GenerateFollowingVolumesBackupConfig(s, inst, snapshots, op)
+		if err != nil {
+			return nil, fmt.Errorf("Failed generating following volumes migration config: %w", err)
+		}
+
+		config.DependentVolumes = append(config.DependentVolumes, followingVolumes...)
+	}
+
+	offer, err := GenerateDependentVolumesOffer(s, config, inst.ExpandedDevices().CloneNative(), inst.Project().Name, snapshots, devices, skipDisks, clusterMove)
+	if err != nil {
+		return nil, err
+	}
+
+	// The target matches the volume configs to the offer by position, so only send the offered ones.
+	offeredVolumes := make([]*backupConfig.Config, 0, len(offer))
+	for _, volConfig := range config.DependentVolumes {
+		for _, vol := range offer {
+			if vol.GetPool() == volConfig.Pool.Name && vol.GetName() == volConfig.Volume.Name {
+				offeredVolumes = append(offeredVolumes, volConfig)
+				break
+			}
+		}
+	}
+
+	config.DependentVolumes = offeredVolumes
+
+	return offer, nil
 }
 
 // DependentVolumeWithType represents a volume and its supported migration types.
