@@ -69,6 +69,14 @@ func (c *cmdStorageVolumeFile) command() *cobra.Command {
 	storageVolumeFileEditCmd := cmdStorageVolumeFileEdit{global: c.global, filePull: &storageVolumeFilePullCmd, filePush: &storageVolumeFilePushCmd}
 	cmd.AddCommand(storageVolumeFileEditCmd.command())
 
+	// Chmod
+	storageVolumeFileChmodCmd := cmdStorageVolumeFileChmod{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
+	cmd.AddCommand(storageVolumeFileChmodCmd.command())
+
+	// Chown
+	storageVolumeFileChownCmd := cmdStorageVolumeFileChown{global: c.global, storage: c.storage, storageVolume: c.storageVolume, storageVolumeFile: c}
+	cmd.AddCommand(storageVolumeFileChownCmd.command())
+
 	// Workaround for subcommand usage errors. See: https://github.com/spf13/cobra/issues/706
 	cmd.Args = cobra.NoArgs
 	cmd.Run = func(cmd *cobra.Command, _ []string) { _ = cmd.Usage() }
@@ -900,4 +908,173 @@ func (c *cmdStorageVolumeFilePush) run(cmd *cobra.Command, args []string) error 
 	}
 
 	return c.push(parsed[0].String, parsed[1], parsed[2])
+}
+
+// Chown.
+type cmdStorageVolumeFileChown struct {
+	global            *cmdGlobal
+	storage           *cmdStorage
+	storageVolume     *cmdStorageVolume
+	storageVolumeFile *cmdStorageVolumeFile
+
+	flagRecursive    bool
+	flagTraverseRoot bool
+	flagTraverseAll  bool
+}
+
+var cmdStorageVolumeFileChownUsage = u.Usage{u.Placeholder(i18n.G("owner")), u.Pool.Remote(), u.MakePath(u.Volume, u.Path)}
+
+func (c *cmdStorageVolumeFileChown) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("chown", cmdStorageVolumeFileChownUsage...)
+	cmd.Short = i18n.G("Change the ownership of files in custom volumes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Change the ownership of files in custom volumes
+
+The owner is given as a numeric UID, UID:GID or :GID.
+Symbolic links found during a recursive change are skipped.
+Use -H to traverse a symbolic link given on the command line, or -L for all of them.`,
+	))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus storage volume file chown 1000:1000 foo bar/baz
+   To set the owner of baz in the bar volume on the foo pool to 1000:1000.
+
+incus storage volume file chown -R :100 foo bar/srv
+   To set the group of srv and everything below it to 100.
+
+incus storage volume file chown -R -H 1000 foo bar/link
+   To also traverse link, a symbolic link to a directory given on the command line.
+
+incus storage volume file chown -R -L 1000:1000 foo bar/srv
+   To also traverse every symbolic link to a directory found below srv.`,
+	))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRecursive, "recursive|R", i18n.G("Change files and directories recursively"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseRoot, "traverse-root|H", i18n.G("With -R, traverse a symbolic link to a directory given on the command line"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseAll, "traverse-all|L", i18n.G("With -R, traverse every symbolic link to a directory"))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return c.global.cmpFiles(toComplete, false)
+	}
+
+	return cmd
+}
+
+func (c *cmdStorageVolumeFileChown) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdStorageVolumeFileChownUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	uid, gid, err := parseFileOwner(parsed[0].String)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[1].RemoteServer
+	poolName := parsed[1].RemoteObject.String
+	volName := parsed[2].List[0].String
+	filePath, _ := normalizePath(parsed[2].List[1].String)
+
+	// Connect to SFTP.
+	sftpConn, err := d.GetStoragePoolVolumeFileSFTP(poolName, "custom", volName)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
+
+	return sftpChown(sftpConn, filePath, uid, gid, c.flagRecursive, c.flagTraverseRoot, c.flagTraverseAll)
+}
+
+// Chmod.
+type cmdStorageVolumeFileChmod struct {
+	global            *cmdGlobal
+	storage           *cmdStorage
+	storageVolume     *cmdStorageVolume
+	storageVolumeFile *cmdStorageVolumeFile
+
+	flagRecursive    bool
+	flagTraverseAll  bool
+	flagTraverseNone bool
+}
+
+var cmdStorageVolumeFileChmodUsage = u.Usage{u.Placeholder(i18n.G("mode")), u.Pool.Remote(), u.MakePath(u.Volume, u.Path)}
+
+func (c *cmdStorageVolumeFileChmod) command() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Use = cli.U("chmod", cmdStorageVolumeFileChmodUsage...)
+	cmd.Short = i18n.G("Change the mode of files in custom volumes")
+	cmd.Long = cli.FormatSection(color.DescriptionPrefix, i18n.G(
+		`Change the mode of files in custom volumes
+
+The mode is either octal or symbolic like in GNU chmod. No umask is applied.
+Modes starting with a dash need to follow "--".
+A symbolic link given on the command line is traversed (-H), unless -P is used.
+Symbolic links found during a recursive change are skipped, unless -L is used.`,
+	))
+	cmd.Example = cli.FormatSection("", i18n.G(
+		`incus storage volume file chmod 600 foo bar/baz
+   To set the mode of baz in the bar volume on the foo pool to 600.
+
+incus storage volume file chmod -R u+rwX,go-w foo bar/srv
+   To make srv and everything below it not writable by group and others.
+
+incus storage volume file chmod -R -L g+r foo bar/srv
+   To also traverse the symbolic links to directories found below srv.
+
+incus storage volume file chmod -R -P 755 foo bar/link
+   To only change the target of the symbolic link link and not what is below it.`,
+	))
+
+	cli.AddBoolFlag(cmd.Flags(), &c.flagRecursive, "recursive|R", i18n.G("Change files and directories recursively"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseAll, "traverse-all|L", i18n.G("With -R, traverse every symbolic link to a directory"))
+	cli.AddBoolFlag(cmd.Flags(), &c.flagTraverseNone, "traverse-none|P", i18n.G("With -R, do not traverse any symbolic link"))
+
+	cmd.RunE = c.run
+
+	cmd.ValidArgsFunction = func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) == 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return c.global.cmpFiles(toComplete, false)
+	}
+
+	return cmd
+}
+
+func (c *cmdStorageVolumeFileChmod) run(cmd *cobra.Command, args []string) error {
+	parsed, err := c.global.Parse(cmdStorageVolumeFileChmodUsage, cmd, args)
+	if err != nil {
+		return err
+	}
+
+	// Reject invalid modes before connecting.
+	spec := parsed[0].String
+	_, err = parseMode(spec, 0, 0, false)
+	if err != nil {
+		return err
+	}
+
+	d := parsed[1].RemoteServer
+	poolName := parsed[1].RemoteObject.String
+	volName := parsed[2].List[0].String
+	filePath, _ := normalizePath(parsed[2].List[1].String)
+
+	// Connect to SFTP.
+	sftpConn, err := d.GetStoragePoolVolumeFileSFTP(poolName, "custom", volName)
+	if err != nil {
+		return err
+	}
+
+	defer logger.WarnOnError(sftpConn.Close, "Failed to close SFTP connection")
+
+	return sftpChmod(sftpConn, filePath, spec, c.flagRecursive, !c.flagTraverseNone, c.flagTraverseAll)
 }
