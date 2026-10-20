@@ -73,7 +73,9 @@ user invoking it.
 - `go test ./...` is the baseline. The image build runs it and logs failures without
   aborting, so check that output rather than assuming the suite passed. The
   `cmd/lxc-to-incus` tests create a real LXC container and fail where that is not
-  possible; that is an environment limitation, not a finding.
+  possible, and `internal/server/sys` checks for `CAP_MAC_ADMIN`, which the image build
+  lacks but the scanner's privileged container has. Those are environment limitations,
+  not findings.
 - `incusd` can be started for API-level reproducers with
   `INCUS_DIR=/tmp/incus incusd --group root` and queried with `incus` (the `local:`
   remote talks to `$INCUS_DIR/unix.socket`). Use the `dir` storage driver. The container
