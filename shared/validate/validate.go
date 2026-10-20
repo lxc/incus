@@ -652,6 +652,26 @@ func IsAPIName(value string, allowSlashes bool) error {
 	return nil
 }
 
+// IsDeviceName checks whether the provided value is a suitable name for an instance device.
+func IsDeviceName(value string) error {
+	err := IsAPIName(value, false)
+	if err != nil {
+		return err
+	}
+
+	// Device names end up in QEMU identifiers, which only allow a limited character set.
+	match, err := regexp.MatchString(`^[A-Za-z0-9._-]+$`, value)
+	if err != nil {
+		return err
+	}
+
+	if !match {
+		return errors.New("Device names may only contain letters, digits, dots, dashes and underscores")
+	}
+
+	return nil
+}
+
 // IsUUID validates whether a value is a UUID.
 func IsUUID(value string) error {
 	_, err := uuid.Parse(value)
