@@ -6939,6 +6939,14 @@ has completed.
 
 ```
 
+```{config:option} migration.follow_instance storage_volume_btrfs-common
+:condition: "custom volume"
+:default: "`false`"
+:shortdesc: "Move the volume along with the virtual machine it's attached to when it moves to another cluster member"
+:type: "bool"
+
+```
+
 ```{config:option} security.shared storage_volume_btrfs-common
 :condition: "custom block volume"
 :default: "same as `volume.security.shared` or `false`"
@@ -7233,6 +7241,14 @@ has completed.
 
 ```
 
+```{config:option} migration.follow_instance storage_volume_dir-common
+:condition: "custom volume"
+:default: "`false`"
+:shortdesc: "Move the volume along with the virtual machine it's attached to when it moves to another cluster member"
+:type: "bool"
+
+```
+
 ```{config:option} security.shared storage_volume_dir-common
 :condition: "custom block volume"
 :default: "same as `volume.security.shared` or `false`"
@@ -7524,6 +7540,14 @@ has completed.
 
 ```
 
+```{config:option} migration.follow_instance storage_volume_lvm-common
+:condition: "custom volume"
+:default: "`false`"
+:shortdesc: "Move the volume along with the virtual machine it's attached to when it moves to another cluster member"
+:type: "bool"
+
+```
+
 ```{config:option} security.shared storage_volume_lvm-common
 :condition: "custom block volume"
 :default: "same as `volume.security.shared` or `false`"
@@ -7772,6 +7796,14 @@ has completed.
 :default: "same as `volume.initial.uid` or `0`"
 :shortdesc: "UID of the volume owner in the instance"
 :type: "int"
+
+```
+
+```{config:option} migration.follow_instance storage_volume_zfs-common
+:condition: "custom volume"
+:default: "`false`"
+:shortdesc: "Move the volume along with the virtual machine it's attached to when it moves to another cluster member"
+:type: "bool"
 
 ```
 
