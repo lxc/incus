@@ -597,6 +597,7 @@ var APIExtensions = []string{
 	"nic_sriov_migration",
 	"auth_tls_jwt_cookie",
 	"cluster_healing_delay",
+	"storage_volume_migration_follow_instance",
 }
 
 // APIExtensionsCount returns the number of available API extensions.

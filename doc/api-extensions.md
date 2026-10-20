@@ -3602,3 +3602,10 @@ endpoints and WebSocket connections. The cookie is `Secure`, `HttpOnly` and
 This adds the `cluster.healing_delay` server configuration key and the `cluster-member-offline` event.
 
 When cluster healing detects an offline member, the event is sent immediately and the evacuation only starts once the delay has elapsed, giving external tooling time to power the member off.
+
+## `storage_volume_migration_follow_instance`
+
+This adds a `migration.follow_instance` configuration key for custom storage volumes.
+
+When set on a volume in a local storage pool that's attached to a single virtual machine, the volume
+is moved along with the virtual machine when it moves to another cluster member.
