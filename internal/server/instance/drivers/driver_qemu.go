@@ -8903,7 +8903,7 @@ func (d *qemu) MigrateSend(args instance.MigrateSendArgs) error {
 
 	// On a cluster move the dependent volumes on shared storage are taken over by the target
 	// rather than transferred, so they're kept out of the offer.
-	dependentVolumesOffer, err := storagePools.GenerateDependentVolumesOffer(d.state, srcConfig, d.ExpandedDevices().CloneNative(), d.Project().Name, args.Snapshots, args.Devices, args.SkipDependentVolumes, clusterMove)
+	dependentVolumesOffer, err := storagePools.GenerateMigrationVolumesOffer(d.state, d, srcConfig, args.Snapshots, args.Devices, args.SkipDependentVolumes, clusterMove, d.op)
 	if err != nil {
 		err := fmt.Errorf("Failed generating instance depending volumes offer: %w", err)
 		op.Done(err)
