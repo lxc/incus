@@ -3056,7 +3056,8 @@ test_clustering_evacuation() {
     INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c2 --target=node1 -c cluster.evacuate=auto -s pool1
     INCUS_DIR="${INCUS_ONE_DIR}" incus config set c2 boot.host_shutdown_timeout=1
 
-    INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c3 --target=node1 -c cluster.evacuate=stop
+    # A halt signal the busybox init ignores, so the evacuation has to force stop c3.
+    INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c3 --target=node1 -c cluster.evacuate=stop -c raw.lxc=lxc.signal.halt=SIGXCPU
     INCUS_DIR="${INCUS_ONE_DIR}" incus config set c3 boot.host_shutdown_timeout=1
 
     INCUS_DIR="${INCUS_ONE_DIR}" incus launch testimage c4 --target=node1 -c cluster.evacuate=migrate -s pool1
@@ -3089,6 +3090,9 @@ test_clustering_evacuation() {
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c3 | grep -q "Location: node1"
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c4 | grep -q "Status: RUNNING"
     ! INCUS_DIR="${INCUS_TWO_DIR}" incus info c4 | grep -q "Location: node1" || false
+
+    # The forced stop of c3 was recorded against node1.
+    INCUS_DIR="${INCUS_TWO_DIR}" incus warning list --format json | jq -e '.[] | select(.type == "Instance forcefully stopped" and .location == "node1" and .entity_url == "/1.0/instances/c3" and .status == "new") | .last_message | contains("evacuation")'
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c5 | grep -q "Status: STOPPED"
     ! INCUS_DIR="${INCUS_TWO_DIR}" incus info c5 | grep -q "Location: node1" || false
     INCUS_DIR="${INCUS_TWO_DIR}" incus info c6 | grep -q "Status: RUNNING"

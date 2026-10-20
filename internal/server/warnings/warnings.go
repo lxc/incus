@@ -24,7 +24,7 @@ func ResolveWarningsByNodeOlderThan(dbCluster *db.Cluster, nodeName string, date
 		}
 
 		for _, w := range warnings {
-			if w.Node != nodeName {
+			if w.Node != nodeName || w.TypeCode.SurvivesRestart() {
 				continue
 			}
 
