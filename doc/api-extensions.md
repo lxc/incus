@@ -3578,3 +3578,10 @@ which are attached to all prefixes advertised by the network.
 ## `instances_migration_bwlimit`
 This adds the `instances.migration.bwlimit` server configuration key which limits
 the bandwidth used by the memory and state transfer of each virtual machine live migration.
+
+## `storage_volume_migration_follow_instance`
+
+This adds a `migration.follow_instance` configuration key for custom storage volumes.
+
+When set on a volume in a local storage pool that's attached to a single virtual machine, the volume
+is moved along with the virtual machine when it moves to another cluster member.
