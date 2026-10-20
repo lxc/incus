@@ -160,7 +160,7 @@ The remote name can be ignored if a single target is provided.
 	cli.AddIntFlag(cmd.Flags(), &c.flagKeepAlive, "keepalive", i18n.G("Maintain remote connection for faster commands"), 0)
 	cli.AddStringFlag(cmd.Flags(), &c.flagCredHelper, "credentials-helper", "", "", i18n.G("Binary helper for retrieving credentials"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTLSCert, "tls-cert", "", "", i18n.G("Remote-specific TLS client certificate (PEM)"))
-	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Remote-specific TLS client key (PEM)"))
+	cli.AddStringFlag(cmd.Flags(), &c.flagTLSKey, "tls-key", "", "", i18n.G("Remote-specific TLS client key (PEM or encrypted OpenSSH)"))
 	cli.AddStringFlag(cmd.Flags(), &c.flagTLSP12, "tls-p12", "", "", i18n.G("Remote-specific TLS client keypair (PKCS#12)"))
 
 	return cmd
@@ -265,9 +265,23 @@ func (c *cmdRemoteAdd) setupClientCertificate(server string) error {
 	}
 
 	// Validate the keypair.
-	_, err := tls.X509KeyPair(certPEM, keyPEM)
+	tlsKeyPEM, err := conf.DecryptClientKey(keyPEM, c.flagTLSKey)
+	if err != nil {
+		return err
+	}
+
+	_, err = tls.X509KeyPair(certPEM, tlsKeyPEM)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Invalid TLS client keypair: %w"), err)
+	}
+
+	var caPEM []byte
+	caPath := conf.ConfigPath("clientcerts", server+".ca")
+	if util.PathExists(caPath) {
+		caPEM, err = os.ReadFile(caPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Record the keypair.
@@ -286,6 +300,15 @@ func (c *cmdRemoteAdd) setupClientCertificate(server string) error {
 	if err != nil {
 		return err
 	}
+
+	remote := conf.Remotes[server]
+	remote.TLS = &config.RemoteTLS{
+		Certificate: string(certPEM),
+		Key:         string(tlsKeyPEM),
+		CA:          string(caPEM),
+	}
+
+	conf.Remotes[server] = remote
 
 	return nil
 }
@@ -342,12 +365,13 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addrs []string, server string, token s
 	var certificate *x509.Certificate
 	var err error
 
-	conf.Remotes[server] = config.Remote{
-		Addrs:     addrs,
-		Protocol:  c.flagProtocol,
-		AuthType:  c.flagAuthType,
-		KeepAlive: c.flagKeepAlive,
-	}
+	remote := conf.Remotes[server]
+	remote.Addrs = addrs
+	remote.Protocol = c.flagProtocol
+	remote.AuthType = c.flagAuthType
+	remote.KeepAlive = c.flagKeepAlive
+
+	conf.Remotes[server] = remote
 
 	_, err = conf.GetInstanceServer(server)
 	if err != nil {
@@ -410,7 +434,7 @@ func (c *cmdRemoteAdd) addRemoteFromToken(addrs []string, server string, token s
 	}
 
 	// Handle project.
-	remote := conf.Remotes[server]
+	remote = conf.Remotes[server]
 	project, err := c.findProject(d, c.flagProject)
 	if err != nil {
 		return fmt.Errorf(i18n.G("Failed to find project: %w"), err)
@@ -617,12 +641,13 @@ func (c *cmdRemoteAdd) run(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	conf.Remotes[server] = config.Remote{
-		Addrs:     normalizedAddrs,
-		Protocol:  c.flagProtocol,
-		AuthType:  c.flagAuthType,
-		KeepAlive: c.flagKeepAlive,
-	}
+	remote = conf.Remotes[server]
+	remote.Addrs = normalizedAddrs
+	remote.Protocol = c.flagProtocol
+	remote.AuthType = c.flagAuthType
+	remote.KeepAlive = c.flagKeepAlive
+
+	conf.Remotes[server] = remote
 
 	// Attempt to connect
 	var d incus.ImageServer
