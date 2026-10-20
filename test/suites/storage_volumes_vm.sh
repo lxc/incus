@@ -102,6 +102,11 @@ test_storage_volumes_vm() {
         incus config device remove v1 vol7
         incus storage volume delete "${poolName}" vol7
 
+        echo "==> Check a volume following its VM can only be attached to one instance"
+        incus storage volume set "${poolName}" vol4 migration.follow_instance=true
+        ! incus storage volume attach "${poolName}" vol4 v2 foo /foo || false
+        incus storage volume unset "${poolName}" vol4 migration.follow_instance
+
         echo "==> Stop VM and detach custom volumes"
         incus stop -f v1
         incus storage volume detach "${poolName}" vol1 v1
