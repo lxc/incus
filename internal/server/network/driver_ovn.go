@@ -8126,6 +8126,47 @@ func (n *ovn) validateListenersForParent(config map[string]string) error {
 	return nil
 }
 
+// forExternalAddressNICs runs f for each started NIC with an external address.
+func (n *ovn) forExternalAddressNICs(f func(extIP net.IP, intNet net.IPNet) error) error {
+	activePorts, err := n.ovnnb.GetLogicalSwitchActivePorts(context.TODO(), n.getIntSwitchName())
+	if err != nil {
+		return fmt.Errorf("Failed getting active ports: %w", err)
+	}
+
+	return UsedByInstanceDevices(n.state, n.Project(), n.Name(), n.Type(), func(inst db.InstanceArgs, nicName string, nicConfig map[string]string) error {
+		portName := n.getInstanceDevicePortName(inst.Config["volatile.uuid"], nicName)
+
+		_, found := activePorts[portName]
+		if !found {
+			return nil
+		}
+
+		portIPs, err := n.ovnnb.GetLogicalSwitchPortIPs(context.TODO(), portName)
+		if err != nil {
+			return err
+		}
+
+		for _, keyPrefix := range []string{"ipv4", "ipv6"} {
+			extIP := net.ParseIP(nicConfig[keyPrefix+".address.external"])
+			if extIP == nil {
+				continue
+			}
+
+			intIdx := slices.IndexFunc(portIPs, func(ip net.IP) bool { return (ip.To4() != nil) == (keyPrefix == "ipv4") })
+			if intIdx < 0 {
+				continue
+			}
+
+			err = f(extIP, IPToNet(portIPs[intIdx]))
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 // removeListenerOVN removes the load balancer and static route of a listen address.
 func (n *ovn) removeListenerOVN(listenAddress string) error {
 	err := n.ovnnb.DeleteLoadBalancer(context.TODO(), n.getLoadBalancerName(listenAddress))
@@ -8146,7 +8187,7 @@ func (n *ovn) removeListenerOVN(listenAddress string) error {
 	return nil
 }
 
-// detachListeners removes the OVN objects of all forwards and load balancers from the current router.
+// detachListeners removes the forwards, load balancers and NIC SNAT rules from the current router.
 func (n *ovn) detachListeners() error {
 	forwards, loadBalancers, err := n.listenerRecords()
 	if err != nil {
@@ -8172,10 +8213,17 @@ func (n *ovn) detachListeners() error {
 		}
 	}
 
-	return nil
+	return n.forExternalAddressNICs(func(_ net.IP, intNet net.IPNet) error {
+		err := n.ovnnb.DeleteLogicalRouterNATByLogicalIP(context.TODO(), n.getRouterName(), "snat", &intNet)
+		if err != nil && !errors.Is(err, networkOVN.ErrNotFound) {
+			return fmt.Errorf("Failed deleting NIC SNAT rule: %w", err)
+		}
+
+		return nil
+	})
 }
 
-// attachListeners applies the OVN objects of all forwards and load balancers to the current router.
+// attachListeners applies the forwards, load balancers and NIC SNAT rules to the current router.
 func (n *ovn) attachListeners() error {
 	forwards, loadBalancers, err := n.listenerRecords()
 	if err != nil {
@@ -8224,6 +8272,18 @@ func (n *ovn) attachListeners() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	err = n.forExternalAddressNICs(func(extIP net.IP, intNet net.IPNet) error {
+		err := n.ovnnb.CreateLogicalRouterNAT(context.TODO(), n.getRouterName(), "snat", &intNet, extIP, nil, false, true)
+		if err != nil {
+			return fmt.Errorf("Failed to add SNAT %q: %w", extIP.String(), err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	err = n.forwardBGPSetupPrefixes()
