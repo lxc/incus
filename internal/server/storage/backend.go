@@ -6372,6 +6372,34 @@ func (b *backend) UpdateCustomVolume(projectName string, volName string, newDesc
 			}
 		}
 
+		followInstance, ok := changedConfig["migration.follow_instance"]
+		if ok && util.IsTrue(followInstance) {
+			err = VolumeUsedByProfileDevices(b.state, b.name, projectName, &curVol.StorageVolume, func(profileID int64, profile api.Profile, project api.Project, usedByDevices []string) error {
+				return errors.New("Cannot set migration.follow_instance on a custom storage volume attached to a profile")
+			})
+			if err != nil {
+				return err
+			}
+
+			usedByInstances := 0
+			err = VolumeUsedByInstanceDevices(b.state, b.name, projectName, &curVol.StorageVolume, true, func(inst db.InstanceArgs, project api.Project, usedByDevices []string) error {
+				if inst.Type != instancetype.VM {
+					return errors.New("Cannot set migration.follow_instance on a custom storage volume attached to a container")
+				}
+
+				usedByInstances++
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+
+			if usedByInstances > 1 {
+				return errors.New("Cannot set migration.follow_instance on a custom storage volume attached to more than one instance")
+			}
+		}
+
 		curVol := b.GetVolume(drivers.VolumeTypeCustom, contentType, volStorageName, curVol.Config)
 		if !userOnly {
 			err = b.driver.UpdateVolume(curVol, changedConfig)
