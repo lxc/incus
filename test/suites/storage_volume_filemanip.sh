@@ -262,6 +262,95 @@ test_storage_volume_filemanip() {
     # ... and so does adding a trailing `/`.
     volfile_check_push_deref_dir -rL /tmp/qux/ "${pool}" baz barqux
 
+    # Test storage volume file chmod.
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/perm
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/perm/sub
+    incus storage volume file create "${pool}" vol1/tmp/perm/sub/file
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/perm/link /v1/tmp/perm/sub/file
+    incus storage volume file chmod 600 "${pool}" vol1/tmp/perm/sub/file
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "600" ]
+    incus storage volume file chmod u+x,g=r,o-rwx "${pool}" vol1/tmp/perm/sub/file
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "740" ]
+    incus storage volume file chmod 4755 "${pool}" vol1/tmp/perm/sub/file
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "4755" ]
+    incus storage volume file chmod -- -x "${pool}" vol1/tmp/perm/sub/file
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "4644" ]
+    incus storage volume file chmod -R 755 "${pool}" vol1/tmp/perm
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/link)" != "755" ]
+    incus storage volume file chmod -R a-x,u+rwX "${pool}" vol1/tmp/perm
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm)" = "744" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub)" = "744" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "644" ]
+    incus storage volume file chmod -R 000 "${pool}" vol1/tmp/perm
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub)" = "0" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/sub/file)" = "0" ]
+    incus storage volume file chmod -R 755 "${pool}" vol1/tmp/perm
+
+    # Test storage volume file chmod symlink traversal.
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/perm/real
+    incus storage volume file create "${pool}" vol1/tmp/perm/real/f
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/perm/top
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/perm/rootlink real
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/perm/top/dl ../real
+    incus storage volume file chmod -R 711 "${pool}" vol1/tmp/perm/rootlink
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/real/f)" = "711" ]
+    incus storage volume file chmod -R -P 755 "${pool}" vol1/tmp/perm/rootlink
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/real)" = "755" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/real/f)" = "711" ]
+    incus storage volume file chmod -R 700 "${pool}" vol1/tmp/perm/top
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/real/f)" = "711" ]
+    incus storage volume file chmod -R -L 702 "${pool}" vol1/tmp/perm/top
+    [ "$(incus exec filemanip --project=test -- stat -c %a /v1/tmp/perm/real/f)" = "702" ]
+
+    ! incus storage volume file chmod 644 "${pool}" vol1/tmp/doesnotexist || false
+    ! incus storage volume file chmod 999 "${pool}" vol1/tmp/perm || false
+    ! incus storage volume file chmod foo "${pool}" vol1/tmp/perm || false
+    incus storage volume file delete -f "${pool}" vol1/tmp/perm
+
+    # Test storage volume file chown.
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/own
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/own/sub
+    incus storage volume file create "${pool}" vol1/tmp/own/sub/file
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/own/link /v1/tmp/own/sub/file
+    incus storage volume file chown 1000:1001 "${pool}" vol1/tmp/own/sub/file
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/sub/file)" = "1000:1001" ]
+    incus storage volume file chown :1002 "${pool}" vol1/tmp/own/sub/file
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/sub/file)" = "1000:1002" ]
+    incus storage volume file chown 1003 "${pool}" vol1/tmp/own/sub/file
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/sub/file)" = "1003:1002" ]
+    incus storage volume file chown -R 1004:1005 "${pool}" vol1/tmp/own
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own)" = "1004:1005" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/sub)" = "1004:1005" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/sub/file)" = "1004:1005" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/link)" != "1004:1005" ]
+
+    # Test storage volume file chown symlink traversal.
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/own/real
+    incus storage volume file create "${pool}" vol1/tmp/own/real/f
+    incus storage volume file create --type=directory "${pool}" vol1/tmp/own/top
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/own/rootlink real
+    incus storage volume file create --type=symlink "${pool}" vol1/tmp/own/top/dl ../real
+    incus storage volume file chown -R 2000:2000 "${pool}" vol1/tmp/own/top
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/top)" = "2000:2000" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/real/f)" = "0:0" ]
+    incus storage volume file chown -R 2001:2001 "${pool}" vol1/tmp/own/rootlink
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/real)" = "2001:2001" ]
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/real/f)" = "0:0" ]
+    incus storage volume file chown -R -H 2002:2002 "${pool}" vol1/tmp/own/rootlink
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/real/f)" = "2002:2002" ]
+    incus storage volume file chown -R -H 2003:2003 "${pool}" vol1/tmp/own/top
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/real/f)" = "2002:2002" ]
+    incus storage volume file chown -R -L 2004:2004 "${pool}" vol1/tmp/own/top
+    [ "$(incus exec filemanip --project=test -- stat -c %u:%g /v1/tmp/own/real/f)" = "2004:2004" ]
+
+    ! incus storage volume file chown 1000 "${pool}" vol1/tmp/doesnotexist || false
+    ! incus storage volume file chown foo "${pool}" vol1/tmp/own || false
+    ! incus storage volume file chown : "${pool}" vol1/tmp/own || false
+    incus storage volume file delete -f "${pool}" vol1/tmp/own
 
     # Test SFTP functionality.
 
