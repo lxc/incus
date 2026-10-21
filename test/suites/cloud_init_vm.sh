@@ -15,6 +15,9 @@ test_cloud_init_vm() {
     incus profile device remove default eth0
     incus profile device add default eth0 nic network=incusbr0 name=eth0
 
+    # Use non-shared memory so the VMs can get transparent huge pages.
+    incus profile set default security.nesting=true
+
     poolName="vmpool$$"
 
     echo "==> Create storage pool"
@@ -75,5 +78,6 @@ EOF
     echo "==> Restoring profile and deleting network"
     incus profile device remove default eth0
     incus profile device add default eth0 nic nictype=p2p name=eth0
+    incus profile unset default security.nesting
     incus network delete incusbr0
 }
