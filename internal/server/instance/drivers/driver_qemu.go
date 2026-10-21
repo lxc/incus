@@ -6093,6 +6093,12 @@ func (d *qemu) addDriveConfig(qemuDev map[string]any, bootIndexes map[string]int
 					"file":      blockDevFile,
 				}
 
+				// Images stored directly on a block device must stay within their fully allocated size.
+				if isBlockDev && driveConf.DataFilePath == "" {
+					// Keep discarded clusters allocated so that fragmentation can't grow the image.
+					blockDev["discard-no-unref"] = true
+				}
+
 				// If there are any children, load block information about them.
 				if len(driveConf.BackingPath) > 0 {
 					backingBlockDev, err := d.qcow2BlockDev(m, nodeName, aioMode, directCache, noFlushCache, permissions, readonly, driveConf.BackingPath, 0)
@@ -12669,10 +12675,11 @@ func (d *qemu) CreateQcow2Snapshot(devPath string, devName string, snapshotName 
 	reverter.Add(func() { _ = monitor.RemoveFDFromFDSet(nextOverlayName) })
 
 	blockDev := map[string]any{
-		"driver":    "qcow2",
-		"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
-		"node-name": nextOverlayName,
-		"read-only": false,
+		"driver":           "qcow2",
+		"discard":          "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
+		"discard-no-unref": true,    // Keep discarded clusters allocated so that fragmentation can't grow the image.
+		"node-name":        nextOverlayName,
+		"read-only":        false,
 		"file": map[string]any{
 			"driver":   "host_device",
 			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
@@ -12899,10 +12906,11 @@ func (d *qemu) qcow2BlockDev(m *qmp.Monitor, nodeName string, aioMode string, di
 	}
 
 	blockDev := map[string]any{
-		"driver":    "qcow2",
-		"discard":   "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
-		"node-name": backingNodeName,
-		"read-only": false,
+		"driver":           "qcow2",
+		"discard":          "unmap", // Forward as an unmap request. This is the same as `discard=on` in the qemu config file.
+		"discard-no-unref": true,    // Keep discarded clusters allocated so that fragmentation can't grow the image.
+		"node-name":        backingNodeName,
+		"read-only":        false,
 		"file": map[string]any{
 			"driver":   "host_device",
 			"filename": fmt.Sprintf("/dev/fdset/%d", info.ID),
