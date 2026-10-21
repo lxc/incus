@@ -63,6 +63,8 @@ func Qcow2Create(path string, backingPath string, size int64) error {
 		"create",
 		"-f",
 		"qcow2",
+		"-o",
+		"lazy_refcounts=on",
 	}
 
 	if backingPath != "" {
