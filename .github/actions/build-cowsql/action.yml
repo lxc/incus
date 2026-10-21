@@ -1,0 +1,20 @@
+name: Build cowsql and raft
+description: Build cowsql and raft from source and export the matching CGO environment
+
+runs:
+  using: composite
+  steps:
+    - name: Build cowsql and raft
+      shell: bash
+      run: |
+        set -x
+        make deps
+
+        raft_path="$(go env GOPATH)/deps/raft"
+        cowsql_path="$(go env GOPATH)/deps/cowsql"
+        {
+          echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
+          echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
+          echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
+          echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
+        } >> "$GITHUB_ENV"

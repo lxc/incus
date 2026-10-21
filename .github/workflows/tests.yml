@@ -202,17 +202,11 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Performance tuning
-        run: |
-          set -eux
-          # optimize ext4 FSes for performance, not reliability
-          for fs in $(findmnt --noheading --type ext4 --list --uniq | awk '{print $1}'); do
-            # nombcache and data=writeback cannot be changed on remount
-            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}" || true
-          done
+      - name: Checkout
+        uses: actions/checkout@v7
 
-          # disable dpkg from calling sync()
-          echo "force-unsafe-io" | sudo tee /etc/dpkg/dpkg.cfg.d/force-unsafe-io
+      - name: Performance tuning
+        uses: ./.github/actions/performance-tuning
 
       - name: Reclaim some space
         run: |
@@ -235,20 +229,13 @@ jobs:
           df -h /
 
       - name: Remove docker
-        run: |
-          set -eux
-          sudo apt-get autopurge -y moby-containerd docker uidmap
-          sudo ip link delete docker0
-          sudo nft flush ruleset
+        uses: ./.github/actions/remove-docker
 
       - name: Remove pre-installed Java
         run: |
           set -eux
           sudo apt-get update
           sudo apt-get remove --yes --purge temurin.*
-
-      - name: Checkout
-        uses: actions/checkout@v7
 
       - name: Install Go (${{ matrix.go }})
         uses: actions/setup-go@v7
@@ -365,18 +352,7 @@ jobs:
           go mod download
 
       - name: Build cowsql and raft
-        run: |
-          set -x
-          make deps
-
-          raft_path="$(go env GOPATH)/deps/raft"
-          cowsql_path="$(go env GOPATH)/deps/cowsql"
-          {
-            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
-            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
-            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
-            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
-          } >> "$GITHUB_ENV"
+        uses: ./.github/actions/build-cowsql
 
       - name: Run Incus build
         run: |
@@ -528,32 +504,17 @@ jobs:
           - cluster_retry
 
     steps:
-      - name: Performance tuning
-        run: |
-          set -eux
-          # optimize ext4 FSes for performance, not reliability
-          for fs in $(findmnt --noheading --type ext4 --list --uniq | awk '{print $1}'); do
-            # nombcache and data=writeback cannot be changed on remount
-            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}" || true
-          done
-
-          # disable dpkg from calling sync()
-          echo "force-unsafe-io" | sudo tee /etc/dpkg/dpkg.cfg.d/force-unsafe-io
-
-      - name: Remove LXD
-        run: |
-          set -eux
-          sudo snap remove lxd --purge
-
-      - name: Remove docker
-        run: |
-          set -eux
-          sudo apt-get autopurge -y moby-containerd docker uidmap
-          sudo ip link delete docker0
-          sudo nft flush ruleset
-
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Performance tuning
+        uses: ./.github/actions/performance-tuning
+
+      - name: Remove LXD
+        uses: ./.github/actions/remove-lxd
+
+      - name: Remove docker
+        uses: ./.github/actions/remove-docker
 
       - name: Install Go (stable)
         uses: actions/setup-go@v7
@@ -641,18 +602,7 @@ jobs:
           go mod download
 
       - name: Build cowsql and raft
-        run: |
-          set -x
-          make deps
-
-          raft_path="$(go env GOPATH)/deps/raft"
-          cowsql_path="$(go env GOPATH)/deps/cowsql"
-          {
-            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
-            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
-            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
-            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
-          } >> "$GITHUB_ENV"
+        uses: ./.github/actions/build-cowsql
 
       - name: Run Incus build
         run: |
@@ -685,29 +635,17 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Performance tuning
-        run: |
-          set -eux
-          # optimize ext4 FSes for performance, not reliability
-          for fs in $(findmnt --noheading --type ext4 --list --uniq | awk '{print $1}'); do
-            # nombcache and data=writeback cannot be changed on remount
-            sudo mount -o remount,noatime,barrier=0,commit=6000 "${fs}" || true
-          done
+      - name: Checkout
+        uses: actions/checkout@v7
 
-          # disable dpkg from calling sync()
-          echo "force-unsafe-io" | sudo tee /etc/dpkg/dpkg.cfg.d/force-unsafe-io
+      - name: Performance tuning
+        uses: ./.github/actions/performance-tuning
 
       - name: Remove LXD
-        run: |
-          set -eux
-          sudo snap remove lxd --purge
+        uses: ./.github/actions/remove-lxd
 
       - name: Remove docker
-        run: |
-          set -eux
-          sudo apt-get autopurge -y moby-containerd docker uidmap
-          sudo ip link delete docker0
-          sudo nft flush ruleset
+        uses: ./.github/actions/remove-docker
 
       - name: Setup swap
         if: matrix.test == 'cgroup'
@@ -719,9 +657,6 @@ jobs:
             sudo mkswap /SWAP.img
             sudo swapon /SWAP.img
           fi
-
-      - name: Checkout
-        uses: actions/checkout@v7
 
       - name: Install Go (stable)
         uses: actions/setup-go@v7
@@ -791,18 +726,7 @@ jobs:
           go mod download
 
       - name: Build cowsql and raft
-        run: |
-          set -x
-          make deps
-
-          raft_path="$(go env GOPATH)/deps/raft"
-          cowsql_path="$(go env GOPATH)/deps/cowsql"
-          {
-            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
-            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
-            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
-            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
-          } >> "$GITHUB_ENV"
+        uses: ./.github/actions/build-cowsql
 
       - name: Run Incus build
         run: |
@@ -1034,18 +958,7 @@ jobs:
           go mod download
 
       - name: Build cowsql and raft
-        run: |
-          set -x
-          make deps
-
-          raft_path="$(go env GOPATH)/deps/raft"
-          cowsql_path="$(go env GOPATH)/deps/cowsql"
-          {
-            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
-            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
-            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
-            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
-          } >> "$GITHUB_ENV"
+        uses: ./.github/actions/build-cowsql
 
       - name: Run Incus build
         run: |
@@ -1124,18 +1037,7 @@ jobs:
           go mod download
 
       - name: Build cowsql and raft
-        run: |
-          set -x
-          make deps
-
-          raft_path="$(go env GOPATH)/deps/raft"
-          cowsql_path="$(go env GOPATH)/deps/cowsql"
-          {
-            echo "CGO_CFLAGS=-I${raft_path}/include/ -I${cowsql_path}/include/"
-            echo "CGO_LDFLAGS=-L${raft_path}/.libs -L${cowsql_path}/.libs/"
-            echo "LD_LIBRARY_PATH=${raft_path}/.libs/:${cowsql_path}/.libs/"
-            echo "CGO_LDFLAGS_ALLOW=(-Wl,-wrap,pthread_create)|(-Wl,-z,now)"
-          } >> "$GITHUB_ENV"
+        uses: ./.github/actions/build-cowsql
 
       - name: Run Incus build
         run: |
