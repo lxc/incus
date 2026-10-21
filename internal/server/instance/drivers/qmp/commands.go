@@ -478,33 +478,12 @@ func (m *Monitor) MigrateSetParameters(parameters map[string]any) error {
 
 // Migrate starts a migration stream.
 func (m *Monitor) Migrate(name string) error {
-	// Query the status.
+	return m.Run("migrate", migrateChannels(migrateFDAddress(name)), nil)
+}
 
-	type migrateArgsChannel struct {
-		ChannelType string            `json:"channel-type"`
-		Address     map[string]string `json:"addr"`
-	}
-
-	type migrateArgs struct {
-		Channels []migrateArgsChannel `json:"channels"`
-	}
-
-	args := migrateArgs{}
-	args.Channels = []migrateArgsChannel{{
-		ChannelType: "main",
-		Address: map[string]string{
-			"transport": "socket",
-			"type":      "fd",
-			"str":       name,
-		},
-	}}
-
-	err := m.Run("migrate", args, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+// MigrateUnix starts a migration to the given unix socket path, QEMU connects once per channel.
+func (m *Monitor) MigrateUnix(path string) error {
+	return m.Run("migrate", migrateChannels(migrateUnixAddress(path)), nil)
 }
 
 // QueryMigrate gets the current migration status.
@@ -593,34 +572,50 @@ func (m *Monitor) MigrateContinue(fromState string) error {
 	return nil
 }
 
-// MigrateIncoming starts the receiver of a migration stream.
-func (m *Monitor) MigrateIncoming(ctx context.Context, name string) error {
+// migrateChannels builds the channel list used by the migrate commands.
+func migrateChannels(addr map[string]any) any {
 	type migrateArgsChannel struct {
-		ChannelType string            `json:"channel-type"`
-		Address     map[string]string `json:"addr"`
+		ChannelType string         `json:"channel-type"`
+		Address     map[string]any `json:"addr"`
 	}
 
 	type migrateArgs struct {
 		Channels []migrateArgsChannel `json:"channels"`
 	}
 
-	args := migrateArgs{}
-	args.Channels = []migrateArgsChannel{{
-		ChannelType: "main",
-		Address: map[string]string{
-			"transport": "socket",
-			"type":      "fd",
-			"str":       name,
-		},
-	}}
+	return migrateArgs{Channels: []migrateArgsChannel{{ChannelType: "main", Address: addr}}}
+}
 
-	// Query the status.
-	err := m.Run("migrate-incoming", args, nil)
-	if err != nil {
-		return err
+// migrateFDAddress returns the channel address for a file descriptor previously sent through SendFile.
+func migrateFDAddress(name string) map[string]any {
+	return map[string]any{
+		"transport": "socket",
+		"type":      "fd",
+		"str":       name,
 	}
+}
 
-	// Wait until it completes or fails.
+// migrateUnixAddress returns the channel address for a unix socket path, multifd channels all use the same socket.
+func migrateUnixAddress(path string) map[string]any {
+	return map[string]any{
+		"transport": "socket",
+		"type":      "unix",
+		"path":      path,
+	}
+}
+
+// MigrateIncoming starts the receiver of a migration stream on the given file descriptor.
+func (m *Monitor) MigrateIncoming(name string) error {
+	return m.Run("migrate-incoming", migrateChannels(migrateFDAddress(name)), nil)
+}
+
+// MigrateIncomingUnix starts the receiver of a migration stream listening on the given unix socket path.
+func (m *Monitor) MigrateIncomingUnix(path string) error {
+	return m.Run("migrate-incoming", migrateChannels(migrateUnixAddress(path)), nil)
+}
+
+// MigrateIncomingWait waits for the incoming migration to complete or fail.
+func (m *Monitor) MigrateIncomingWait(ctx context.Context) error {
 	for {
 		// Prepare the response.
 		var resp struct {
