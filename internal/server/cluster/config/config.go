@@ -259,6 +259,11 @@ func (c *Config) InstancesLXCFSPerInstance() bool {
 	return c.m.GetBool("instances.lxcfs.per_instance")
 }
 
+// InstancesMigrationBwlimit returns the bandwidth limit to apply to live migrations.
+func (c *Config) InstancesMigrationBwlimit() string {
+	return c.m.GetString("instances.migration.bwlimit")
+}
+
 // InstancesTPMPlatformCert returns the platform CA certificate and matching
 // private key (both PEM-encoded) used to provision the EK and platform
 // certificate of newly created TPM devices.
@@ -965,6 +970,17 @@ var ConfigSchema = config.Schema{
 	//  defaultdesc: `false`
 	//  shortdesc: Whether to run LXCFS on a per-instance basis
 	"instances.lxcfs.per_instance": {Type: config.Bool, Validator: validate.Optional(validate.IsBool)},
+
+	// gendoc:generate(entity=server, group=miscellaneous, key=instances.migration.bwlimit)
+	// The upper limit to be placed on the bandwidth used by the memory and state
+	// transfer of each virtual machine live migration.
+	// When unset, the QEMU default of 128MiB/s (about 1Gbit/s) applies.
+	// ---
+	//  type: string
+	//  scope: global
+	//  defaultdesc: `128MiB` (QEMU default)
+	//  shortdesc: Bandwidth limit for virtual machine live migrations
+	"instances.migration.bwlimit": {Validator: validate.Optional(validate.IsSize)},
 
 	// gendoc:generate(entity=server, group=miscellaneous, key=instances.nic.host_name)
 	// Possible values are `random` and `mac`.
