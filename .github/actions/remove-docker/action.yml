@@ -1,0 +1,13 @@
+name: Remove docker
+description: Remove the pre-installed docker and its network and firewall leftovers
+
+runs:
+  using: composite
+  steps:
+    - name: Remove docker
+      shell: bash
+      run: |
+        set -eux
+        sudo apt-get autopurge -y moby-containerd docker uidmap
+        sudo ip link delete docker0
+        sudo nft flush ruleset
