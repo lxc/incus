@@ -1058,7 +1058,7 @@ func (c *cmdStorageVolumeFileChmod) run(cmd *cobra.Command, args []string) error
 
 	// Reject invalid modes before connecting.
 	spec := parsed[0].String
-	_, err = parseMode(spec, 0, 0, false)
+	_, err = parsePristineMode(spec)
 	if err != nil {
 		return err
 	}
